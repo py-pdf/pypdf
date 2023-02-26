@@ -39,7 +39,9 @@ from typing import (
     Callable,
     Dict,
     Iterable,
+    Iterator,
     List,
+    Mapping,
     Optional,
     Tuple,
     Union,
@@ -2002,7 +2004,8 @@ class PdfReader:
             password: The password to match.
 
         Returns:
-            A `PasswordType`.
+            An indicator if the document was decrypted and weather it was the
+            owner password or the user password.
         """
         if not self._encryption:
             raise PdfReadError("Not encrypted file")
@@ -2146,6 +2149,15 @@ class PdfReader:
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
 
+    @property
+    def attachments(self) -> Mapping[str, List[bytes]]:
+        return LazyDict(
+            {
+                name: (self._get_attachment_list, name)
+                for name in self._list_attachments()
+            }
+        )
+
     def _list_attachments(self) -> List[str]:
         """
         Retrieves the list of filenames of file attachments.
@@ -2171,6 +2183,12 @@ class PdfReader:
             if isinstance(f, str):
                 attachments_names.append(f)
         return attachments_names
+
+    def _get_attachment_list(self, name: str) -> List[bytes]:
+        out = self._get_attachments(name)[name]
+        if isinstance(out, list):
+            return out
+        return [out]
 
     def _get_attachments(
         self, filename: Optional[str] = None
@@ -2218,6 +2236,21 @@ class PdfReader:
                 else:
                     attachments[name] = f_data
         return attachments
+
+
+class LazyDict(Mapping):
+    def __init__(self, *args: Any, **kw: Any) -> None:
+        self._raw_dict = dict(*args, **kw)
+
+    def __getitem__(self, key: str) -> Any:
+        func, arg = self._raw_dict.__getitem__(key)
+        return func(arg)
+
+    def __iter__(self) -> Iterator[Any]:
+        return iter(self._raw_dict)
+
+    def __len__(self) -> int:
+        return len(self._raw_dict)
 
 
 class PdfFileReader(PdfReader):  # deprecated

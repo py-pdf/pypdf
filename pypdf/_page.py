@@ -92,23 +92,23 @@ def set_custom_rtl(
     Args:
         _min: The new minimum value for the range of custom characters that
             will be written right to left.
-            If set to `None`, the value will not be changed.
+            If set to ``None``, the value will not be changed.
             If set to an integer or string, it will be converted to its ASCII code.
             The default value is -1, which sets no additional range to be converted.
         _max: The new maximum value for the range of custom characters that will
             be written right to left.
-            If set to `None`, the value will not be changed.
+            If set to ``None``, the value will not be changed.
             If set to an integer or string, it will be converted to its ASCII code.
             The default value is -1, which sets no additional range to be converted.
         specials: The new list of special characters to be inserted in the
             current insertion order.
-            If set to `None`, the current value will not be changed.
+            If set to ``None``, the current value will not be changed.
             If set to a string, it will be converted to a list of ASCII codes.
             The default value is an empty list.
 
     Returns:
-        A tuple containing the new values for `CUSTOM_RTL_MIN`,
-        `CUSTOM_RTL_MAX`, and `CUSTOM_RTL_SPECIAL_CHARS`.
+        A tuple containing the new values for ``CUSTOM_RTL_MIN``,
+        ``CUSTOM_RTL_MAX``, and ``CUSTOM_RTL_SPECIAL_CHARS``.
     """
     global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
     if isinstance(_min, int):
@@ -260,7 +260,7 @@ class Transformation:
             ty: The translation along the y-axis.
 
         Returns:
-            A new `Transformation` instance
+            A new ``Transformation`` instance
         """
         m = self.ctm
         return Transformation(ctm=(m[0], m[1], m[2], m[3], m[4] + tx, m[5] + ty))
@@ -301,7 +301,7 @@ class Transformation:
             rotation: The angle of rotation in degrees.
 
         Returns:
-            A new `Transformation` instance with the rotated matrix.
+            A new ``Transformation`` instance with the rotated matrix.
         """
         rotation = math.radians(rotation)
         op: TransformationMatrixType = (
@@ -1265,8 +1265,6 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", rotation: float, scale: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        obsolete
-
         .. deprecated:: 1.28.0
 
             Use :meth:`merge_transformed_page` instead.

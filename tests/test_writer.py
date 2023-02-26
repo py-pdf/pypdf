@@ -5,11 +5,19 @@ from pathlib import Path
 
 import pytest
 
-from pypdf import PageObject, PdfMerger, PdfReader, PdfWriter, Transformation
+from pypdf import (
+    ObjectDeletionFlag,
+    PageObject,
+    PdfMerger,
+    PdfReader,
+    PdfWriter,
+    Transformation,
+)
 from pypdf.errors import DeprecationError, PageSizeNotDefinedError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
+    DictionaryObject,
     Fit,
     IndirectObject,
     NameObject,
@@ -276,13 +284,13 @@ def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
 
 
 @pytest.mark.parametrize(
-    ("input_path", "ignore_byte_string_object"),
+    ("input_path",),
     [
-        ("side-by-side-subfig.pdf", False),
-        ("reportlab-inline-image.pdf", True),
+        ("side-by-side-subfig.pdf",),
+        ("reportlab-inline-image.pdf",),
     ],
 )
-def test_remove_images(input_path, ignore_byte_string_object):
+def test_remove_images(input_path):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -290,7 +298,7 @@ def test_remove_images(input_path, ignore_byte_string_object):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_images(ignore_byte_string_object=ignore_byte_string_object)
+    writer.remove_images()
 
     # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_image.pdf"
@@ -308,15 +316,13 @@ def test_remove_images(input_path, ignore_byte_string_object):
 
 
 @pytest.mark.parametrize(
-    ("input_path", "ignore_byte_string_object"),
+    ("input_path",),
     [
-        ("side-by-side-subfig.pdf", False),
-        ("side-by-side-subfig.pdf", True),
-        ("reportlab-inline-image.pdf", False),
-        ("reportlab-inline-image.pdf", True),
+        ("side-by-side-subfig.pdf",),
+        ("reportlab-inline-image.pdf",),
     ],
 )
-def test_remove_text(input_path, ignore_byte_string_object):
+def test_remove_text(input_path):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -324,7 +330,7 @@ def test_remove_text(input_path, ignore_byte_string_object):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_text(ignore_byte_string_object=ignore_byte_string_object)
+    writer.remove_text()
 
     # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
@@ -335,11 +341,7 @@ def test_remove_text(input_path, ignore_byte_string_object):
     os.remove(tmp_filename)
 
 
-@pytest.mark.parametrize(
-    ("ignore_byte_string_object"),
-    [False, True],
-)
-def test_remove_text_all_operators(ignore_byte_string_object):
+def test_remove_text_all_operators():
     stream = (
         b"BT "
         b"/F0 36 Tf "
@@ -395,7 +397,7 @@ def test_remove_text_all_operators(ignore_byte_string_object):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_text(ignore_byte_string_object=ignore_byte_string_object)
+    writer.remove_text()
 
     # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
@@ -1203,24 +1205,41 @@ def test_attachments():
     b.seek(0)
     reader = PdfReader(b)
     b = None
+    assert reader.attachments == {}
     assert reader._list_attachments() == []
     assert reader._get_attachments() == {}
-    writer.add_attachment("foobar.txt", b"foobarcontent")
-    writer.add_attachment("foobar2.txt", b"foobarcontent2")
-    writer.add_attachment("foobar2.txt", b"2nd_foobarcontent")
+    to_add = [
+        ("foobar.txt", b"foobarcontent"),
+        ("foobar2.txt", b"foobarcontent2"),
+        ("foobar2.txt", b"2nd_foobarcontent"),
+    ]
+    for name, content in to_add:
+        writer.add_attachment(name, content)
 
     b = BytesIO()
     writer.write(b)
     b.seek(0)
     reader = PdfReader(b)
     b = None
-    assert reader._list_attachments() == ["foobar.txt", "foobar2.txt", "foobar2.txt"]
+    assert sorted(reader.attachments.keys()) == sorted({name for name, _ in to_add})
+    assert reader._list_attachments() == [name for name, _ in to_add]
+
+    # We've added the same key twice - hence only 2 and not 3:
     att = reader._get_attachments()
-    assert len(att) == 2
+    assert len(att) == 2  # we have 2 keys, but 3 attachments!
+
+    # The content for foobar.txt is clear and just a single value:
     assert att["foobar.txt"] == b"foobarcontent"
+
+    # The content for foobar2.txt is a list!
     att = reader._get_attachments("foobar2.txt")
     assert len(att) == 1
     assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
+
+    # Let's do both cases with the public interface:
+    assert reader.attachments["foobar.txt"][0] == b"foobarcontent"
+    assert reader.attachments["foobar2.txt"][0] == b"foobarcontent2"
+    assert reader.attachments["foobar2.txt"][1] == b"2nd_foobarcontent"
 
 
 @pytest.mark.external
@@ -1236,3 +1255,56 @@ def test_iss1614():
     name = "iss1614.2.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     out_pdf.append(in_pdf)
+
+
+def test_new_removes():
+    # test of an annotation(link) directly stored in the /Annots in the page
+    url = "https://github.com/py-pdf/pypdf/files/10807951/tt.pdf"
+    name = "iss1650.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+
+    out_pdf = PdfWriter()
+    out_pdf.clone_document_from_reader(in_pdf)
+    out_pdf.remove_images()
+    b = BytesIO()
+    out_pdf.write(b)
+    bb = bytes(b.getbuffer())
+    assert b"/Im0 Do" not in bb
+    assert b"/Fm0 Do" in bb
+    assert b" TJ" in bb
+
+    out_pdf = PdfWriter()
+    out_pdf.clone_document_from_reader(in_pdf)
+    out_pdf.remove_text()
+    b = BytesIO()
+    out_pdf.write(b)
+    bb = bytes(b.getbuffer())
+    assert b"/Im0" in bb
+    assert b"Chap" not in bb
+    assert b" TJ" not in bb
+
+    url = "https://github.com/py-pdf/pypdf/files/10832029/tt2.pdf"
+    name = "GeoBaseWithComments.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf.append(in_pdf)
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.LINKS)
+    assert "/Links" not in [
+        a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
+    ]
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.ATTACHMENTS)
+    assert "/FileAttachment" not in [
+        a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
+    ]
+
+    out_pdf.pages[0]["/Annots"].append(
+        DictionaryObject({NameObject("/Subtype"): TextStringObject("/3D")})
+    )
+    assert "/3D" in [a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]]
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.OBJECTS_3D)
+    assert "/3D" not in [
+        a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
+    ]
+
+    out_pdf.remove_links()
+    assert len(out_pdf.pages[0]["/Annots"]) == 0
+    assert len(out_pdf.pages[3]["/Annots"]) == 0

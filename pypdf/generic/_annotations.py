@@ -18,7 +18,7 @@ class AnnotationBuilder:
     The AnnotationBuilder creates dictionaries representing PDF annotations.
 
     Those dictionaries can be modified before they are added to a PdfWriter
-    instance via `writer.add_annotation`.
+    instance via ``writer.add_annotation``.
 
     See `adding PDF annotations <../user/adding-pdf-annotations.html>`_ for
     it's usage combined with PdfWriter.
@@ -68,8 +68,8 @@ class AnnotationBuilder:
         italic: bool = False,
         font_size: str = "14pt",
         font_color: str = "000000",
-        border_color: str = "000000",
-        background_color: str = "ffffff",
+        border_color: Optional[str] = "000000",
+        background_color: Optional[str] = "ffffff",
     ) -> DictionaryObject:
         """
         Add text in a rectangle to a page.
@@ -83,9 +83,10 @@ class AnnotationBuilder:
             italic: Print the text in italic
             font_size: How big the text will be, e.g. '14pt'
             font_color: Hex-string for the color, e.g. cdcdcd
-            border_color: Hex-string for the border color, e.g. cdcdcd
+            border_color: Hex-string for the border color, e.g. cdcdcd.
+                Use ``None`` for no border.
             background_color: Hex-string for the background of the annotation,
-                e.g. cdcdcd
+                e.g. cdcdcd. Use ``None`` for transparent background.
 
         Returns:
             A dictionary object representing the annotation.
@@ -98,10 +99,11 @@ class AnnotationBuilder:
         font_str = f"{font_str}{font} {font_size}"
         font_str = f"{font_str};text-align:left;color:#{font_color}"
 
-        bg_color_str = ""
-        for st in hex_to_rgb(border_color):
-            bg_color_str = f"{bg_color_str}{st} "
-        bg_color_str = f"{bg_color_str}rg"
+        default_appearance_string = ""
+        if border_color:
+            for st in hex_to_rgb(border_color):
+                default_appearance_string = f"{default_appearance_string}{st} "
+            default_appearance_string = f"{default_appearance_string}rg"
 
         free_text = DictionaryObject()
         free_text.update(
@@ -112,14 +114,21 @@ class AnnotationBuilder:
                 NameObject("/Contents"): TextStringObject(text),
                 # font size color
                 NameObject("/DS"): TextStringObject(font_str),
-                # border color
-                NameObject("/DA"): TextStringObject(bg_color_str),
-                # background color
-                NameObject("/C"): ArrayObject(
-                    [FloatObject(n) for n in hex_to_rgb(background_color)]
-                ),
+                NameObject("/DA"): TextStringObject(default_appearance_string),
             }
         )
+        if border_color is None:
+            # Border Style
+            free_text[NameObject("/BS")] = DictionaryObject(
+                {
+                    # width of 0 means no border
+                    NameObject("/W"): NumberObject(0)
+                }
+            )
+        if background_color is not None:
+            free_text[NameObject("/C")] = ArrayObject(
+                [FloatObject(n) for n in hex_to_rgb(background_color)]
+            )
         return free_text
 
     @staticmethod
