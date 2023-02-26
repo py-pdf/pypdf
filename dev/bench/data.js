@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677434231776,
+  "lastUpdate": 1677434999001,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -25454,6 +25454,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00241611538826301",
             "extra": "mean: 103.4745412000035 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "5e792c2519f101045e512ec047ebfcaf5e87ee28",
+          "message": "REL: Version 3.5.0, 2023-02-26\n\nNew Features (ENH)\n-  Add reader.attachments public interface (#1611, #1661)\n-  Add PdfWriter.remove_objects_from_page(page: PageObject, to_delete: ObjectDeletionFlag) (#1648)\n-  Allow free-text annotation to have transparent border/background (#1664)\n\nBug Fixes (BUG)\n-  Allow decryption with empty password for AlgV5 (#1663)\n-  Let PdfWriter.pages return PageObject after calling `clone_document_from_reader()` (#1613)\n-  Invalid font pointed during merge_resources (#1641)\n\nRobustness (ROB)\n-  Cope with invalid objects in IndirectObject.clone (#1637)\n-  Improve tolerance to invalid Names/Dests (#1658)\n-  Decode encoded values in get_fields (#1636)\n-  Let PdfWriter.merge cope with missing \"/Fields\" (#1628)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.4.1...3.5.0)",
+          "timestamp": "2023-02-26T19:08:19+01:00",
+          "tree_id": "2d072a96ba6405a1148cb129a1914f94eabb6cc5",
+          "url": "https://github.com/py-pdf/pypdf/commit/5e792c2519f101045e512ec047ebfcaf5e87ee28"
+        },
+        "date": 1677434996809,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.025153285465796,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007462202180028142",
+            "extra": "mean: 975.4638786000015 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.547980561045568,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006159009500364729",
+            "extra": "mean: 86.59522716666739 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25226372971015537,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0224226255492823",
+            "extra": "mean: 3.9641053477999977 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.345319766081122,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0002668076373013621",
+            "extra": "mean: 81.00235708333041 msec\nrounds: 12"
           }
         ]
       }
