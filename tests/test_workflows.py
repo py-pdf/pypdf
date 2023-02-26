@@ -944,7 +944,7 @@ def test_extra_test_iss1541():
     assert exc.value.args[0] == "Unexpected end of stream"
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_fields_returning_stream():
     """
     problem reported in #424

@@ -1223,7 +1223,7 @@ def test_attachments():
     assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_iss1614():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"

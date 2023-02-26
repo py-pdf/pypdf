@@ -1046,7 +1046,7 @@ def test_cloning(caplog):
     assert isinstance(obj21.get("/Test2"), IndirectObject)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_append_with_indirectobject_not_pointing(caplog):
     """
     reported in #1631

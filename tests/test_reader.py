@@ -1333,7 +1333,7 @@ def test_iss1559():
         p.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_iss1652():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10818844/tt.pdf"
