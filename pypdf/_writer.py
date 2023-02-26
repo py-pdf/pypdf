@@ -1873,7 +1873,7 @@ class PdfWriter:
         if to_delete == ObjectDeletionFlag.ALL_ANNOTS:
             return self._remove_annots_from_page(page, None)
 
-        if to_delete == ObjectDeletionFlag.IMAGES:
+        if to_delete & ObjectDeletionFlag.IMAGES:
             jump_operators = (
                 [b"w", b"J", b"j", b"M", b"d", b"i"]
                 + [b"W", b"W*"]
