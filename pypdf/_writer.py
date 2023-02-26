@@ -1914,7 +1914,7 @@ class PdfWriter:
             o = v.get_object()
             try:
                 content: Any = None
-                if to_delete == ObjectDeletionFlag.IMAGES and o["/Subtype"] == "/Image":
+                if to_delete & ObjectDeletionFlag.IMAGES and o["/Subtype"] == "/Image":
                     content = NullObject()
                     images.append(k)
                 if o["/Subtype"] == "/Form":
