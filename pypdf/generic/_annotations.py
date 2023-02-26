@@ -18,7 +18,7 @@ class AnnotationBuilder:
     The AnnotationBuilder creates dictionaries representing PDF annotations.
 
     Those dictionaries can be modified before they are added to a PdfWriter
-    instance via `writer.add_annotation`.
+    instance via ``writer.add_annotation``.
 
     See `adding PDF annotations <../user/adding-pdf-annotations.html>`_ for
     it's usage combined with PdfWriter.
@@ -84,9 +84,9 @@ class AnnotationBuilder:
             font_size: How big the text will be, e.g. '14pt'
             font_color: Hex-string for the color, e.g. cdcdcd
             border_color: Hex-string for the border color, e.g. cdcdcd.
-                Use `None` for no border.
+                Use ``None`` for no border.
             background_color: Hex-string for the background of the annotation,
-                e.g. cdcdcd. Use `None` for transparent background.
+                e.g. cdcdcd. Use ``None`` for transparent background.
 
         Returns:
             A dictionary object representing the annotation.
