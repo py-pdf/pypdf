@@ -1856,7 +1856,7 @@ class PdfWriter:
             page : page object to clean up
             to_delete: objects to be delete : See ObjectDeletionFlag or a list/tuple of ObjectDeletionFlag
         """
-        if isinstance(to_delete, (List, Tuple)):
+        if isinstance(to_delete, (list, tuple)):
             for to_d in to_delete:
                 self.remove_objects_from_page(page, to_d)
             return
