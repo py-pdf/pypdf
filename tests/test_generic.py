@@ -720,8 +720,8 @@ def test_annotation_builder_free_text():
         italic=True,
         font_size="20pt",
         font_color="00ff00",
-        border_color="0000ff",
-        background_color="cdcdcd",
+        border_color=None,
+        background_color=None,
     )
     writer.add_annotation(0, free_text_annotation)
 
