@@ -541,11 +541,11 @@ class PdfWriter:
     ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
         """
         Property to access the opening destination (``/OpenAction`` entry in
-        the PDF catalog). it returns `None` if the entry does not exist is not
+        the PDF catalog). It returns ``None`` if the entry does not exist is not
         set.
 
         Raises:
-            Exception: If a destination is invalid
+            Exception: If a destination is invalid.
         """
         if "/OpenAction" not in self._root_object:
             return None
@@ -733,7 +733,7 @@ class PdfWriter:
         Copy pages from reader to writer. Includes an optional callback
         parameter which is invoked after pages are appended to the writer.
 
-        `append` should be prefered.
+        ``append`` should be prefered.
 
         Args:
             reader: a PdfReader object from which to copy page
@@ -856,7 +856,7 @@ class PdfWriter:
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
         Copy the reader document root to the writer and all sub elements,
-        including pages, threads, outlines,... For partial insertion, `append`
+        including pages, threads, outlines,... For partial insertion, ``append``
         should be considered.
 
         Args:
@@ -1818,11 +1818,15 @@ class PdfWriter:
         deprecation_with_replacement("removeLinks", "remove_links", "3.0.0")
         return self.remove_links()
 
-    def remove_annots(self, subtypes: Optional[Union[str, Iterable[str]]]) -> None:
+    def remove_annotations(self, subtypes: Optional[Union[str, Iterable[str]]]) -> None:
         """
-        Remove annotations by Subtype
-        args:
-            subtypes : SubType or list of SubTypes to be removed. None=all
+        Remove annotations by annotation subtype.
+
+        Args:
+            subtypes: SubType or list of SubTypes to be removed.
+                Examples are: "/Link", "/FileAttachment", "/Sound",
+                "/Movie", "/Screen", ...
+                If you want to remove all annotations, use subtypes=None.
         """
         for page in self.pages:
             self._remove_annots_from_page(page, subtypes)
@@ -1851,11 +1855,12 @@ class PdfWriter:
         to_delete: Union[ObjectDeletionFlag, Iterable[ObjectDeletionFlag]],
     ) -> None:
         """
-        Remove objects specified by `to_delete` from the given page.
+        Remove objects specified by ``to_delete`` from the given page.
 
         Args:
-            page: Page object to clean up
-            to_delete: Objects to be deleted; can be a `ObjectDeletionFlag` or a list of ObjectDeletionFlag
+            page: Page object to clean up.
+            to_delete: Objects to be deleted; can be a ``ObjectDeletionFlag``
+                or a list of ObjectDeletionFlag
         """
         if isinstance(to_delete, (list, tuple)):
             for to_d in to_delete:
@@ -1954,13 +1959,19 @@ class PdfWriter:
                 pass
             page[NameObject("/Contents")] = self._add_object(content)
 
-    def remove_images(self, ignore_byte_string_object: bool = False) -> None:
+    def remove_images(self, ignore_byte_string_object: Optional[bool] = None) -> None:
         """
         Remove images from this output.
 
         Args:
-            ignore_byte_string_object: obsolete
+            ignore_byte_string_object: deprecated
         """
+        if ignore_byte_string_object is not None:
+            warnings.warn(
+                "The 'ignore_byte_string_object' argument of remove_images is "
+                "deprecated and will be removed in pypdf 4.0.0.",
+                category=DeprecationWarning,
+            )
         for page in self.pages:
             self.remove_objects_from_page(page, ObjectDeletionFlag.IMAGES)
 
@@ -1973,13 +1984,19 @@ class PdfWriter:
         deprecation_with_replacement("removeImages", "remove_images", "3.0.0")
         return self.remove_images(ignoreByteStringObject)
 
-    def remove_text(self, ignore_byte_string_object: bool = False) -> None:
+    def remove_text(self, ignore_byte_string_object: Optional[bool] = None) -> None:
         """
         Remove text from this output.
 
         Args:
-            ignore_byte_string_object: obsolete
+            ignore_byte_string_object: deprecated
         """
+        if ignore_byte_string_object is not None:
+            warnings.warn(
+                "The 'ignore_byte_string_object' argument of remove_images is "
+                "deprecated and will be removed in pypdf 4.0.0.",
+                category=DeprecationWarning,
+            )
         for page in self.pages:
             self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT)
 

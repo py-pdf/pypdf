@@ -2004,7 +2004,8 @@ class PdfReader:
             password: The password to match.
 
         Returns:
-            A `PasswordType`.
+            An indicator if the document was decrypted and weather it was the
+            owner password or the user password.
         """
         if not self._encryption:
             raise PdfReadError("Not encrypted file")
