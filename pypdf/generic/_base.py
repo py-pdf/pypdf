@@ -262,7 +262,12 @@ class IndirectObject(PdfObject):
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
         else:
             obj = self.get_object()
-            assert obj is not None
+            # case observed : a pointed object can not be found
+            if obj is None:
+                # this normally
+                obj = NullObject()
+                assert isinstance(self, (IndirectObject,))
+                obj.indirect_reference = self
             dup = obj.clone(pdf_dest, force_duplicate, ignore_fields)
         assert dup is not None
         assert dup.indirect_reference is not None
