@@ -1807,7 +1807,7 @@ class PdfWriter:
     def remove_links(self) -> None:
         """Remove links and annotations from this output."""
         for page in self.pages:
-            self.remove_objects_from_page(page, ObjectDeletionFlag.ALL_ANNOTS)
+            self.remove_objects_from_page(page, ObjectDeletionFlag.ALL_ANNOTATIONS)
 
     def removeLinks(self) -> None:  # deprecated
         """
@@ -1868,9 +1868,9 @@ class PdfWriter:
             return self._remove_annots_from_page(
                 page, ("/FileAttachment", "/Sound", "/Movie", "/Screen")
             )
-        if to_delete & ObjectDeletionFlag.OBJ_3D:
+        if to_delete & ObjectDeletionFlag.OBJECTS_3D:
             return self._remove_annots_from_page(page, ("/3D",))
-        if to_delete & ObjectDeletionFlag.ALL_ANNOTS:
+        if to_delete & ObjectDeletionFlag.ALL_ANNOTATIONS:
             return self._remove_annots_from_page(page, None)
 
         if to_delete & ObjectDeletionFlag.IMAGES:
