@@ -2055,7 +2055,7 @@ class PdfWriter:
         border: Optional[ArrayObject] = None,
         fit: FitType = "/Fit",
         *args: ZoomArgType,
-    ) -> None:
+    ) -> DictionaryObject:
         deprecation_with_replacement(
             "add_link", "add_annotation(AnnotationBuilder.link(...))"
         )
@@ -2076,7 +2076,7 @@ class PdfWriter:
             target_page_index=page_destination,
             fit=Fit(fit_type=fit, fit_args=args),
         )
-        return self.add_annotation(page_number=pagenum, annotation=annotation)
+        return self.add_annotation(page=pagenum, annotation=annotation)
 
     def addLink(
         self,
@@ -2095,7 +2095,7 @@ class PdfWriter:
         deprecate_with_replacement(
             "addLink", "add_annotation(AnnotationBuilder.link(...))", "4.0.0"
         )
-        return self.add_link(pagenum, page_destination, rect, border, fit, *args)
+        self.add_link(pagenum, page_destination, rect, border, fit, *args)
 
     _valid_layouts = (
         "/NoLayout",
@@ -2342,18 +2342,29 @@ class PdfWriter:
         self.page_mode = mode
 
     def add_annotation(
-        self, page: Union[int, PageObject], annotation: Dict[str, Any]
+        self,
+        page: Union[int, PageObject],
+        annotation: Dict[str, Any],
+        pagenumber: Any = None,
     ) -> DictionaryObject:
         """
         Add a single annotation to the page. Must be a new annotation (can not be recycled)
 
         Args:
-            page: page object or number
+            page: page object or number (used to be pagenumber : deprecated)
             annotation : annotation to be added (created with annotation)
 
         Returns:
             the inserted object (to be used in pop-up creation argument for example)
         """
+        if pagenumber is not None:
+            deprecation_with_replacement(
+                "add_annotation(page_number,annotation)",
+                "add_annotation(page,annotation)",
+                "3.0.0",
+            )
+            page = pagenumber
+
         if isinstance(page, int):
             page = self.pages[page]
         elif not isinstance(page, PageObject):
@@ -2382,7 +2393,7 @@ class PdfWriter:
         page.annotations.append(self._add_object(to_add))
 
         if to_add.get("/Subtype") == "/Popup" and NameObject("/Parent") in to_add:
-            to_add["/Parent"].get_object()[
+            cast(DictionaryObject, to_add["/Parent"].get_object())[
                 NameObject("/Popup")
             ] = to_add.indirect_reference
 
