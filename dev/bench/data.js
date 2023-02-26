@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677427276286,
+  "lastUpdate": 1677427558061,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -25298,6 +25298,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0003196246923106038",
             "extra": "mean: 87.03992381818053 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d3434454dc9ca7ba1a41457eac3446b37c81c9c2",
+          "message": "ENH: Add reader.attachments public interface (#1661)\n\nAdd `PdfReader.attachments -> Mapping[str, List[bytes]] as a public interface.\r\n\r\nThe heavy-lifting was done by @pubpub-zz in #1611 . This PR only adds the interface for the exiting functions.",
+          "timestamp": "2023-02-26T17:04:47+01:00",
+          "tree_id": "091d6be7b73d743f6d8230a5962fc6468d18d107",
+          "url": "https://github.com/py-pdf/pypdf/commit/d3434454dc9ca7ba1a41457eac3446b37c81c9c2"
+        },
+        "date": 1677427556046,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0190662613877122,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00872744946253792",
+            "extra": "mean: 981.2904595999981 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.876349305160984,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007331947740414766",
+            "extra": "mean: 84.20095892307918 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23224304143358224,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03835454650034127",
+            "extra": "mean: 4.305834068600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.496049068164453,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00039418038212486934",
+            "extra": "mean: 86.98640672726944 msec\nrounds: 11"
           }
         ]
       }
