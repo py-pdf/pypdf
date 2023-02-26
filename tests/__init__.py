@@ -80,7 +80,7 @@ class ReaderDummy:
 
     def get_object(self, indirect_reference):
         class DummyObj:
-            def get_object(self):
+            def get_object(self) -> "DummyObj":
                 return self
 
         return DictionaryObject()

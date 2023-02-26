@@ -206,8 +206,7 @@ class Transformation:
                                  e f 1
 
 
-    Example
-
+    Example:
         >>> from pypdf import Transformation
         >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
         >>> page.add_transformation(op)
@@ -361,7 +360,6 @@ class PageObject(DictionaryObject):
         indirect_reference: Optional[IndirectObject] = None,
         indirect_ref: Optional[IndirectObject] = None,  # deprecated
     ) -> None:
-
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
         if indirect_ref is not None:  # deprecated
@@ -699,9 +697,7 @@ class PageObject(DictionaryObject):
         pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
-        """
-        Add transformation matrix at the beginning of the given contents stream.
-        """
+        """Add transformation matrix at the beginning of the given contents stream."""
         a, b, c, d, e, f = ctm
         contents = ContentStream(contents, pdf)
         contents.operations.insert(

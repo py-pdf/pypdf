@@ -68,7 +68,7 @@ def test_writer_clone_bookmarks():
     # Act + test cat
     cat = ""
 
-    def cat1(p):
+    def cat1(p) -> None:
         nonlocal cat
         cat += p.__repr__()
 
@@ -389,7 +389,6 @@ def test_remove_text_all_operators():
         # inducing an error on startxref computation
         pdf_data.find(b"xref"),
     )
-    print(pdf_data.decode())
     pdf_stream = BytesIO(pdf_data)
 
     reader = PdfReader(pdf_stream, strict=False)

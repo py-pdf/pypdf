@@ -100,7 +100,7 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 120
-select = ["I"]
+select = ["ALL"]
 ignore = [
     "D212", "D407", "D408", "D409",
     "D404",  # First word of the docstring should not be "This"
@@ -134,9 +134,11 @@ ignore = [
     "D101",  # Missing docstring in public class
     "D102", # Missing docstring in public method
     "D103",  # Missing docstring in public function
+    "D100",  # Missing docstring in public module
     "SLF",
     "PTH", "PLR", "FBT", "PT", "N", "ARG", "TRY", "S", "EM", "RET", "TID",
-    "C", "PGH", "DTZ", "TCH", "B", "G", "BLE", "SIM", "E", "INP", "A", "RUF", "PLW"
+    "C901", "PGH", "DTZ", "TCH", "B", "G", "BLE", "SIM", "E", "INP", "A", "RUF",
+    "PLW", "PLE1205",
 ]
 
 [tool.ruff.per-file-ignores]

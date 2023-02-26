@@ -28,10 +28,10 @@ def test_read_xmp(src, has_xmp):
     xmp = reader.xmp_metadata
     assert (xmp is None) == (not has_xmp)
     if has_xmp:
-        for el in xmp.get_element(
+        for _ in xmp.get_element(
             about_uri="", namespace=pypdf.xmp.RDF_NAMESPACE, name="Artist"
         ):
-            print(f"el={el}")
+            pass
 
         assert get_all_tiff(xmp) == {"tiff:Artist": ["me"]}
         assert xmp.dc_contributor == []

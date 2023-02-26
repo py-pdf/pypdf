@@ -125,7 +125,7 @@ except ImportError:
 
         def encrypt(self, data: bytes) -> bytes:
             S = list(self.S)
-            out = list(0 for _ in range(len(data)))
+            out = [0 for _ in range(len(data))]
             i, j = 0, 0
             for k in range(len(data)):
                 i = (i + 1) % 256

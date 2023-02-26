@@ -89,7 +89,7 @@ def number2uppercase_roman_numeral(num: int) -> str:
             if num <= 0:
                 break
 
-    return "".join([a for a in roman_num(num)])
+    return "".join(list(roman_num(num)))
 
 
 def number2lowercase_roman_numeral(number: int) -> str:

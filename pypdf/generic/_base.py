@@ -512,10 +512,12 @@ class TextStringObject(str, PdfObject):
 
     @property
     def original_bytes(self) -> bytes:
-        """It is occasionally possible that a text string object gets created where
+        """
+        It is occasionally possible that a text string object gets created where
         a byte string object was expected due to the autodetection mechanism --
         if that occurs, this "original_bytes" property can be used to
-        back-calculate what the original encoded bytes were."""
+        back-calculate what the original encoded bytes were.
+        """
         return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:
