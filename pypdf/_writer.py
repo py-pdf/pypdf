@@ -2690,7 +2690,9 @@ class PdfWriter:
                         ind = IndirectObject(trslat[f.idnum], 0, self)
                         if ind not in arr:
                             arr.append(ind)
-                    except KeyError:  # for trslat[] which mean the field has not be copied through the page
+                    except KeyError:
+                        # for trslat[] which mean the field has not be copied
+                        # through the page
                         pass
             except KeyError:  # for /Acroform or /Fields are not existing
                 arr = self._add_object(ArrayObject())

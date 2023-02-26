@@ -974,7 +974,6 @@ class PdfReader:
             or (isinstance(array, ArrayObject) and len(array) == 0)
             or array is None
         ):
-
             page = NullObject()
             return Destination(title, page, Fit.fit())
         else:

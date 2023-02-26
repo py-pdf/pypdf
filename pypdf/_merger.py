@@ -579,7 +579,7 @@ class PdfMerger:
                 TypArguments.TOP,
             ),
         }
-        for arg_key in fit2arg_keys.get(oi_type, tuple()):
+        for arg_key in fit2arg_keys.get(oi_type, ()):
             if arg_key in outline_item and not isinstance(
                 outline_item[arg_key], NullObject
             ):

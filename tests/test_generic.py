@@ -487,7 +487,7 @@ def test_remove_child_not_in_that_tree():
 def test_remove_child_not_found_in_tree():
     class ChildDummy(DictionaryObject):
         @property
-        def indirect_reference(self):
+        def indirect_reference(self) -> "ChildDummy":
             return self
 
     tree = TreeObject()
@@ -516,7 +516,7 @@ def test_remove_child_found_in_tree():
     child1_ref = writer._add_object(child1)
     tree.add_child(child1_ref, writer)
     assert tree[NameObject("/Count")] == 1
-    assert len([el for el in tree.children()]) == 1
+    assert len(list(tree.children())) == 1
 
     # Add second child
     child2 = TreeObject()
@@ -524,12 +524,12 @@ def test_remove_child_found_in_tree():
     child2_ref = writer._add_object(child2)
     tree.add_child(child2_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     # Remove last child
     tree.remove_child(child2_ref)
     assert tree[NameObject("/Count")] == 1
-    assert len([el for el in tree.children()]) == 1
+    assert len(list(tree.children())) == 1
 
     # Add new child
     child3 = TreeObject()
@@ -537,32 +537,32 @@ def test_remove_child_found_in_tree():
     child3_ref = writer._add_object(child3)
     tree.add_child(child3_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     # Remove first child
     child1 = tree[NameObject("/First")]
     tree.remove_child(child1)
     assert tree[NameObject("/Count")] == 1
-    assert len([el for el in tree.children()]) == 1
+    assert len(list(tree.children())) == 1
 
     child4 = TreeObject()
     child4[NameObject("/Foo")] = TextStringObject("4")
     child4_ref = writer._add_object(child4)
     tree.add_child(child4_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     child5 = TreeObject()
     child5[NameObject("/Foo")] = TextStringObject("5")
     child5_ref = writer._add_object(child5)
     tree.add_child(child5_ref, writer)
     assert tree[NameObject("/Count")] == 3
-    assert len([el for el in tree.children()]) == 3
+    assert len(list(tree.children())) == 3
 
     # Remove middle child
     child4.remove_from_tree()
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     tree.empty_tree()
 
