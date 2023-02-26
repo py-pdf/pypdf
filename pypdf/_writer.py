@@ -117,6 +117,7 @@ from .generic import (
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
+    AnnotationSubtype,
     BorderArrayType,
     FitType,
     LayoutType,
@@ -1818,7 +1819,9 @@ class PdfWriter:
         deprecation_with_replacement("removeLinks", "remove_links", "3.0.0")
         return self.remove_links()
 
-    def remove_annotations(self, subtypes: Optional[Union[str, Iterable[str]]]) -> None:
+    def remove_annotations(
+        self, subtypes: Optional[Union[AnnotationSubtype, Iterable[AnnotationSubtype]]]
+    ) -> None:
         """
         Remove annotations by annotation subtype.
 
