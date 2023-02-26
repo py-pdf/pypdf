@@ -1289,7 +1289,7 @@ def test_new_removes():
         DictionaryObject({NameObject("/Subtype"): TextStringObject("/3D")})
     )
     assert "/3D" in [a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]]
-    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.OBJ_3D)
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.OBJECTS_3D)
     assert "/3D" not in [
         a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
     ]
