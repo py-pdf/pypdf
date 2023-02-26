@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677413621830,
+  "lastUpdate": 1677427276286,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -25246,6 +25246,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00033018941874527114",
             "extra": "mean: 81.26869325000759 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "67b085ba35d2fb9854563b5f69ad203ecb4e95a4",
+          "message": "ENH: Add PdfWriter.remove_objects_from_page(page: PageObject, to_delete: ObjectDeletionFlag) (#1648)\n\nThis fixes remove_text to set contents as indirect_objects in accordance with the PDF specification.\r\nIt wipes out text in XObject forms as well.\r\n\r\nThe same issues were fixed for remove_images()\r\n\r\nFinally, the new method\r\n    PdfWriter.remove_objects_from_page(page: PageObject, to_delete: ObjectDeletionFlag)\r\nwas created. This allows a more fine-granular control of what to delete. It also is easy to expand via the to_delete flag.\r\n\r\nCloses #1644\r\nCloses #1650",
+          "timestamp": "2023-02-26T17:00:07+01:00",
+          "tree_id": "2c9414d12eda7690dd9a4688c5089c049bdfb81c",
+          "url": "https://github.com/py-pdf/pypdf/commit/67b085ba35d2fb9854563b5f69ad203ecb4e95a4"
+        },
+        "date": 1677427275259,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.008181941884821,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01450559423256683",
+            "extra": "mean: 991.8844590000049 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.981612935683188,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006604908585274718",
+            "extra": "mean: 83.46121723076513 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23520958608899017,
+            "unit": "iter/sec",
+            "range": "stddev: 0.048981052896969954",
+            "extra": "mean: 4.251527399999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.488980643973452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003196246923106038",
+            "extra": "mean: 87.03992381818053 msec\nrounds: 11"
           }
         ]
       }
