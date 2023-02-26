@@ -1861,6 +1861,7 @@ class PdfWriter:
             for to_d in to_delete:
                 self.remove_objects_from_page(page, to_d)
             return
+        assert isinstance(to_delete, ObjectDeletionFlag)
 
         if to_delete & ObjectDeletionFlag.LINKS:
             return self._remove_annots_from_page(page, ("/Link",))
@@ -1896,9 +1897,9 @@ class PdfWriter:
                     del content.operations[i]
                 elif operator == b"Do":
                     if (
-                        to_delete & ObjectDeletionFlag.IMAGES
+                        cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.IMAGES
                         and operands[0] in images
-                        or to_delete & ObjectDeletionFlag.TEXT
+                        or cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.TEXT
                         and operands[0] in forms
                     ):
                         del content.operations[i]
