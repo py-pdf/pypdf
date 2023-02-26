@@ -316,15 +316,13 @@ def test_remove_images(input_path, ignore_byte_string_object):
 
 
 @pytest.mark.parametrize(
-    ("input_path", "ignore_byte_string_object"),
+    ("input_path",),
     [
-        ("side-by-side-subfig.pdf", False),
-        ("side-by-side-subfig.pdf", True),
-        ("reportlab-inline-image.pdf", False),
-        ("reportlab-inline-image.pdf", True),
+        ("side-by-side-subfig.pdf",),
+        ("reportlab-inline-image.pdf",),
     ],
 )
-def test_remove_text(input_path, ignore_byte_string_object):
+def test_remove_text(input_path):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -332,7 +330,7 @@ def test_remove_text(input_path, ignore_byte_string_object):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_text(ignore_byte_string_object=ignore_byte_string_object)
+    writer.remove_text()
 
     # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
@@ -343,11 +341,7 @@ def test_remove_text(input_path, ignore_byte_string_object):
     os.remove(tmp_filename)
 
 
-@pytest.mark.parametrize(
-    ("ignore_byte_string_object"),
-    [False, True],
-)
-def test_remove_text_all_operators(ignore_byte_string_object):
+def test_remove_text_all_operators():
     stream = (
         b"BT "
         b"/F0 36 Tf "
@@ -403,7 +397,7 @@ def test_remove_text_all_operators(ignore_byte_string_object):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_text(ignore_byte_string_object=ignore_byte_string_object)
+    writer.remove_text()
 
     # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
