@@ -138,7 +138,7 @@ ignore = [
     "SLF",
     "PTH", "PLR", "FBT", "PT", "N", "ARG", "TRY", "S", "EM", "RET", "TID",
     "C901", "PGH", "DTZ", "TCH", "B", "G", "BLE", "SIM", "E", "INP", "A", "RUF",
-    "PLW", "PLE1205",
+    "PLW", "PLE"
 ]
 
 [tool.ruff.per-file-ignores]
