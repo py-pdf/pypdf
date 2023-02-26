@@ -1851,10 +1851,11 @@ class PdfWriter:
         to_delete: Union[ObjectDeletionFlag, Iterable[ObjectDeletionFlag]],
     ) -> None:
         """
-        remove Images or Text iaw del_image from page
-        args:
-            page : page object to clean up
-            to_delete: objects to be delete : See ObjectDeletionFlag or a list/tuple of ObjectDeletionFlag
+        Remove objects specified by `to_delete` from the given page.
+
+        Args:
+            page: Page object to clean up
+            to_delete: Objects to be deleted; can be a `ObjectDeletionFlag` or a list of ObjectDeletionFlag
         """
         if isinstance(to_delete, (list, tuple)):
             for to_d in to_delete:
