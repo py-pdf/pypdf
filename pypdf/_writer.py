@@ -2341,17 +2341,34 @@ class PdfWriter:
         deprecation_with_replacement("pageMode", "page_mode", "3.0.0")
         self.page_mode = mode
 
-    def add_annotation(self, page_number: int, annotation: Dict[str, Any]) -> None:
+    def add_annotation(
+        self, page: Union[int, PageObject], annotation: Dict[str, Any]
+    ) -> DictionaryObject:
+        """
+        Add a single annotation to the page. Must be a new annotation (can not be recycled)
+
+        Args:
+            page: page object or number
+            annotation : annotation to be added (created with annotation)
+
+        Returns:
+            the inserted object (to be used in pop-up creation argument for example)
+        """
+        if isinstance(page, int):
+            page = self.pages[page]
+        elif not isinstance(page, PageObject):
+            raise TypeError("page_number: invalid type")
+
         to_add = cast(DictionaryObject, _pdf_objectify(annotation))
-        to_add[NameObject("/P")] = self.get_object(self._pages)["/Kids"][page_number]  # type: ignore
-        page = self.pages[page_number]
+        to_add[NameObject("/P")] = page.indirect_reference
+
         if page.annotations is None:
             page[NameObject("/Annots")] = ArrayObject()
         assert page.annotations is not None
 
         # Internal link annotations need the correct object type for the
         # destination
-        if to_add.get("/Subtype") == "/Link" and NameObject("/Dest") in to_add:
+        if to_add.get("/Subtype") == "/Link" and "/Dest" in to_add:
             tmp = cast(dict, to_add[NameObject("/Dest")])
             dest = Destination(
                 NameObject("/LinkName"),
@@ -2362,9 +2379,14 @@ class PdfWriter:
             )
             to_add[NameObject("/Dest")] = dest.dest_array
 
-        ind_obj = self._add_object(to_add)
+        page.annotations.append(self._add_object(to_add))
 
-        page.annotations.append(ind_obj)
+        if to_add.get("/Subtype") == "/Popup" and NameObject("/Parent") in to_add:
+            to_add["/Parent"].get_object()[
+                NameObject("/Popup")
+            ] = to_add.indirect_reference
+
+        return to_add
 
     def clean_page(self, page: Union[PageObject, IndirectObject]) -> PageObject:
         """

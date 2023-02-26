@@ -170,6 +170,42 @@ with open("annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
+## Popup
+
+Manage the Popup windows for markups. looks like this:
+
+![](annotation-popup.png)
+
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
+
+you have to use the returned result from add_annotation() to fill-up the
+
+```python
+# Arrange
+writer = pypdf.PdfWriter()
+writer.append(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), [0])
+
+# Act
+text_annotation = writer.add_annotation(
+    0,
+    AnnotationBuilder.text(
+        text="Hello World\nThis is the second line!",
+        rect=(50, 550, 200, 650),
+        open=True,
+    ),
+)
+
+popup_annotation = AnnotationBuilder.popup(
+    rect=(50, 550, 200, 650),
+    open=True,
+    parent=text_annotation,  # use the output of add_annotation
+)
+
+target = "annotated-pdf-popup.pdf"
+writer.write(target)
+os.remove(target)  # comment this out for manual inspection
+```
+
 ## Link
 
 If you want to add a link, you can use
