@@ -1896,9 +1896,9 @@ class PdfWriter:
                     del content.operations[i]
                 elif operator == b"Do":
                     if (
-                        to_delete == ObjectDeletionFlag.IMAGES
+                        to_delete & ObjectDeletionFlag.IMAGES
                         and operands[0] in images
-                        or to_delete == ObjectDeletionFlag.TEXT
+                        or to_delete & ObjectDeletionFlag.TEXT
                         and operands[0] in forms
                     ):
                         del content.operations[i]
