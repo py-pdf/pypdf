@@ -146,6 +146,7 @@ ignore = [
 "json_consistency.py" = ["T201"]
 "tests/test_workflows.py" =  ["T201"]
 "sample-files/*" = ["D100"]
+"docs/conf.py" = ["PTH"]
 
 [tool.docformatter]
 pre-summary-newline = true
