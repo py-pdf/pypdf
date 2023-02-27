@@ -1,6 +1,5 @@
 """Test the pypdf._utils module."""
 import io
-import os
 from pathlib import Path
 
 import pytest
@@ -85,7 +84,7 @@ def test_matrix_multiply(a, b, expected):
 def test_mark_location():
     stream = io.BytesIO(b"abde" * 6000)
     mark_location(stream)
-    os.remove("pypdf_pdfLocation.txt")  # cleanup
+    Path("pypdf_pdfLocation.txt").unlink()  # cleanup
 
 
 def test_hex_str():

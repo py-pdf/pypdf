@@ -1,5 +1,4 @@
 """Test the pypdf._merger module."""
-import os
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -192,7 +191,7 @@ def test_merger_operations_by_semi_traditional_usage(tmp_path):
         merger.write(path)  # Act
 
     # Assert
-    assert os.path.isfile(path)
+    assert Path(path).is_file()
     check_outline(path)
 
 
@@ -204,7 +203,7 @@ def test_merger_operations_by_semi_traditional_usage_with_writer(tmp_path):
         merger.write(path)  # Act
 
     # Assert
-    assert os.path.isfile(path)
+    assert Path(path).is_file()
     check_outline(path)
 
 
@@ -213,7 +212,7 @@ def test_merger_operation_by_new_usage(tmp_path):
     with PdfMerger(fileobj=path) as merger:
         merger_operate(merger)
     # Assert
-    assert os.path.isfile(path)
+    assert Path(path).is_file()
     check_outline(path)
 
 
@@ -223,7 +222,7 @@ def test_merger_operation_by_new_usage_with_writer(tmp_path):
         merger_operate(merger)
 
     # Assert
-    assert os.path.isfile(path)
+    assert Path(path).is_file()
     check_outline(path)
 
 
@@ -311,7 +310,7 @@ def test_merge_write_closed_fh_with_writer():
     merger.set_page_mode("/UseNone")
     merger.add_outline_item("An outline item", 0)
 
-    os.unlink("stream1.pdf")
+    Path("stream1.pdf").unlink()
 
 
 @pytest.mark.external
@@ -325,7 +324,7 @@ def test_trim_outline_list():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -339,7 +338,7 @@ def test_trim_outline_list_with_writer():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -353,7 +352,7 @@ def test_zoom():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -367,7 +366,7 @@ def test_zoom_with_writer():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -381,7 +380,7 @@ def test_zoom_xyz_no_left():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -395,7 +394,7 @@ def test_zoom_xyz_no_left_with_writer():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -409,7 +408,7 @@ def test_outline_item():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -424,7 +423,7 @@ def test_outline_item_with_writer():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -439,7 +438,7 @@ def test_trim_outline():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -454,7 +453,7 @@ def test_trim_outline_with_writer():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -469,7 +468,7 @@ def test1():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -484,7 +483,7 @@ def test1_with_writer():
     merger.close()
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -503,7 +502,7 @@ def test_sweep_recursion1():
     reader2.pages
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -522,7 +521,7 @@ def test_sweep_recursion1_with_writer():
     reader2.pages
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -552,7 +551,7 @@ def test_sweep_recursion2(url, name):
     reader2.pages
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -582,7 +581,7 @@ def test_sweep_recursion2_with_writer(url, name):
     reader2.pages
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -600,7 +599,7 @@ def test_sweep_indirect_list_newobj_is_none(caplog):
     reader2.pages
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external
@@ -618,7 +617,7 @@ def test_sweep_indirect_list_newobj_is_none_with_writer(caplog):
     reader2.pages
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.external

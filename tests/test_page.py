@@ -1,6 +1,5 @@
 """Test the pypdf._page module."""
 import json
-import os
 import random
 from copy import deepcopy
 from io import BytesIO
@@ -34,7 +33,7 @@ SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 def get_all_sample_files():
     meta_file = SAMPLE_ROOT / "files.json"
-    if not os.path.isfile(meta_file):
+    if not Path(meta_file).is_file():
         return {"data": []}
     with open(meta_file) as fp:
         data = fp.read()
@@ -853,7 +852,7 @@ def test_annotation_setter():
         writer.write(fp)
 
     # Cleanup
-    os.remove(target)  # remove for testing
+    Path(target).unlink()  # remove for testing
 
 
 @pytest.mark.external
