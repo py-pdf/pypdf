@@ -1,3 +1,4 @@
+"""Test the pypdf.pagerange module."""
 import pytest
 
 from pypdf.pagerange import PageRange, ParseError, parse_filename_page_ranges

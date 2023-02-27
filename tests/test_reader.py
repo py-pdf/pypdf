@@ -1,3 +1,4 @@
+"""Test the pypdf._reader module."""
 import io
 import os
 import time

@@ -134,7 +134,6 @@ ignore = [
     "D101",  # Missing docstring in public class
     "D102", # Missing docstring in public method
     "D103",  # Missing docstring in public function
-    "D100",  # Missing docstring in public module
     "SLF",
     "PTH", "PLR", "FBT", "PT", "N", "ARG", "TRY", "S", "EM", "RET", "TID",
     "C901", "PGH", "DTZ", "TCH", "B", "G", "BLE", "SIM", "E", "INP", "A", "RUF",

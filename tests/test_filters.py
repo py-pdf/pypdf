@@ -1,3 +1,4 @@
+"""Test the pypdf.filters module."""
 import string
 import sys
 from io import BytesIO

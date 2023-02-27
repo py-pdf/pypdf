@@ -1,3 +1,4 @@
+"""Test the pypdf._writer module."""
 import os
 import re
 from io import BytesIO

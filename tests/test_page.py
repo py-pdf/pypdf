@@ -1,3 +1,4 @@
+"""Test the pypdf._page module."""
 import json
 import os
 import random
