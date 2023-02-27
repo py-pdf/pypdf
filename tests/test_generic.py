@@ -1,5 +1,4 @@
 """Test the pypdf.generic module."""
-import os
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -701,7 +700,7 @@ def test_issue_997(mock_logger_warning):
     merger.close()
 
     # cleanup
-    os.remove(merged_filename)
+    Path(merged_filename).unlink()
 
 
 def test_annotation_builder_free_text():
@@ -744,7 +743,7 @@ def test_annotation_builder_free_text():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_polygon():
@@ -772,7 +771,7 @@ def test_annotation_builder_polygon():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_line():
@@ -797,7 +796,7 @@ def test_annotation_builder_line():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_square():
@@ -824,7 +823,7 @@ def test_annotation_builder_square():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_circle():
@@ -852,7 +851,7 @@ def test_annotation_builder_circle():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_link():
@@ -910,7 +909,7 @@ def test_annotation_builder_link():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_text():
@@ -934,7 +933,7 @@ def test_annotation_builder_text():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_CheckboxRadioButtonAttributes_opt():
