@@ -935,7 +935,11 @@ class PageObject(DictionaryObject):
                 trsf = Transformation(ctm)
             for a in cast(ArrayObject, page2[PG.ANNOTS]):
                 a = a.get_object()
-                aa = a.clone(pdf, ignore_fields=("/P", "/StructParent"))
+                aa = a.clone(
+                    pdf,
+                    ignore_fields=("/P", "/StructParent", "/Parent"),
+                    force_duplicate=True,
+                )
                 r = cast(ArrayObject, a["/Rect"])
                 pt1 = trsf.apply_on((r[0], r[1]), True)
                 pt2 = trsf.apply_on((r[2], r[3]), True)
@@ -955,6 +959,10 @@ class PageObject(DictionaryObject):
                         + cast(tuple, trsf.apply_on((q[4], q[5]), True))
                         + cast(tuple, trsf.apply_on((q[6], q[7]), True))
                     )
+                try:
+                    aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
+                except KeyError:
+                    pass
                 try:
                     aa[NameObject("/P")] = self.indirect_reference
                     annots.append(aa.indirect_reference)

@@ -180,6 +180,11 @@ def test_transformation_equivalence2():
     w.pages[0].merge_transformed_page(
         reader_comments.pages[0], Transformation().rotate(-15), True, True
     )
+    nb_annots1 = len(w.pages[0]["/Annots"])
+    w.pages[0].merge_transformed_page(
+        reader_comments.pages[0], Transformation().rotate(-30), True, True
+    )
+    assert len(w.pages[0]["/Annots"]) == 2 * nb_annots1
     # No special assert: Visual check the overlay has its comments at the good position
 
 
