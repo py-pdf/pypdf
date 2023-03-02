@@ -1,3 +1,4 @@
+"""Test the pypdf.filters module."""
 import string
 import sys
 from io import BytesIO
@@ -201,7 +202,7 @@ def test_CCITTFaxDecode():
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @patch("pypdf._reader.logger_warning")
 def test_decompress_zlib_error(mock_logger_warning):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/952/952445.pdf"
@@ -214,7 +215,7 @@ def test_decompress_zlib_error(mock_logger_warning):
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_lzw_decode_neg1():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/921/921632.pdf"
     name = "tika-921632.pdf"
@@ -225,7 +226,7 @@ def test_lzw_decode_neg1():
     assert exc.value.args[0] == "Missed the stop code in LZWDecode!"
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_issue_399():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976970.pdf"
     name = "tika-976970.pdf"
@@ -233,7 +234,7 @@ def test_issue_399():
     reader.pages[1].extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_image_without_imagemagic():
     with patch.dict(sys.modules):
         sys.modules["PIL"] = None

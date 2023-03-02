@@ -1,5 +1,25 @@
-
 # CHANGELOG
+
+## Version 3.5.0, 2023-02-26
+
+### New Features (ENH)
+-  Add reader.attachments public interface (#1611, #1661)
+-  Add PdfWriter.remove_objects_from_page(page: PageObject, to_delete: ObjectDeletionFlag) (#1648)
+-  Allow free-text annotation to have transparent border/background (#1664)
+
+### Bug Fixes (BUG)
+-  Allow decryption with empty password for AlgV5 (#1663)
+-  Let PdfWriter.pages return PageObject after calling `clone_document_from_reader()` (#1613)
+-  Invalid font pointed during merge_resources (#1641)
+
+### Robustness (ROB)
+-  Cope with invalid objects in IndirectObject.clone (#1637)
+-  Improve tolerance to invalid Names/Dests (#1658)
+-  Decode encoded values in get_fields (#1636)
+-  Let PdfWriter.merge cope with missing "/Fields" (#1628)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.4.1...3.5.0)
+
 
 ## Version 3.4.1, 2023-02-12
 

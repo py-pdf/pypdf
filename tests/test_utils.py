@@ -1,5 +1,5 @@
+"""Test the pypdf._utils module."""
 import io
-import os
 from pathlib import Path
 
 import pytest
@@ -84,7 +84,7 @@ def test_matrix_multiply(a, b, expected):
 def test_mark_location():
     stream = io.BytesIO(b"abde" * 6000)
     mark_location(stream)
-    os.remove("pypdf_pdfLocation.txt")  # cleanup
+    Path("pypdf_pdfLocation.txt").unlink()  # cleanup
 
 
 def test_hex_str():
@@ -229,7 +229,7 @@ def test_read_block_backwards_exception():
 
 def test_deprecation_bookmark():
     @deprecation_bookmark(old_param="new_param")
-    def foo(old_param=1, baz=2):
+    def foo(old_param: int = 1, baz: int = 2) -> float:
         return old_param * baz
 
     with pytest.raises(DeprecationError) as exc:
@@ -238,7 +238,7 @@ def test_deprecation_bookmark():
     assert exc.value.args[0] == expected_msg
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_escapedcode_followed_by_int():
     # iss #1294
     url = (

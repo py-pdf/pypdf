@@ -88,11 +88,16 @@ class ArrayObject(list, PdfObject):
                 return self
         except Exception:
             pass
-        arr = cast("ArrayObject", self._reference_clone(ArrayObject(), pdf_dest))
+        arr = cast(
+            "ArrayObject",
+            self._reference_clone(ArrayObject(), pdf_dest, force_duplicate),
+        )
         for data in self:
             if isinstance(data, StreamObject):
                 dup = data._reference_clone(
-                    data.clone(pdf_dest, force_duplicate, ignore_fields), pdf_dest
+                    data.clone(pdf_dest, force_duplicate, ignore_fields),
+                    pdf_dest,
+                    force_duplicate,
                 )
                 arr.append(dup.indirect_reference)
             elif hasattr(data, "clone"):
@@ -168,7 +173,8 @@ class DictionaryObject(dict, PdfObject):
             pass
 
         d__ = cast(
-            "DictionaryObject", self._reference_clone(self.__class__(), pdf_dest)
+            "DictionaryObject",
+            self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
         )
         if ignore_fields is None:
             ignore_fields = []
@@ -223,7 +229,9 @@ class DictionaryObject(dict, PdfObject):
                         while cur_obj is not None:
                             clon = cast(
                                 "DictionaryObject",
-                                cur_obj._reference_clone(cur_obj.__class__(), pdf_dest),
+                                cur_obj._reference_clone(
+                                    cur_obj.__class__(), pdf_dest, force_duplicate
+                                ),
                             )
                             objs.append((cur_obj, clon))
                             assert prev_obj is not None
@@ -236,8 +244,8 @@ class DictionaryObject(dict, PdfObject):
                                     cur_obj = cast("DictionaryObject", cur_obj[k])
                             except Exception:
                                 cur_obj = None
-                        for (s, c) in objs:
-                            c._clone(s, pdf_dest, force_duplicate, ignore_fields)
+                        for s, c in objs:
+                            c._clone(s, pdf_dest, force_duplicate, ignore_fields + [k])
 
         for k, v in src.items():
             if k not in ignore_fields:
@@ -931,7 +939,10 @@ class ContentStream(DecodedStreamObject):
             pass
 
         d__ = cast(
-            "ContentStream", self._reference_clone(self.__class__(None, None), pdf_dest)
+            "ContentStream",
+            self._reference_clone(
+                self.__class__(None, None), pdf_dest, force_duplicate
+            ),
         )
         if ignore_fields is None:
             ignore_fields = []
@@ -1169,6 +1180,13 @@ class Field(TreeObject):
                 self[NameObject(attr)] = data[attr]
             except KeyError:
                 pass
+        if isinstance(self.get("/V"), EncodedStreamObject):
+            d = cast(EncodedStreamObject, self[NameObject("/V")]).get_data()
+            if isinstance(d, bytes):
+                d = d.decode()
+            elif d is None:
+                d = ""
+            self[NameObject("/V")] = TextStringObject(d)
 
     # TABLE 8.69 Entries common to all field dictionaries
     @property
@@ -1238,8 +1256,10 @@ class Field(TreeObject):
 
     @property
     def flags(self) -> Optional[int]:
-        """Read-only property accessing the field flags, specifying various
-        characteristics of the field (see Table 8.70 of the PDF 1.7 reference)."""
+        """
+        Read-only property accessing the field flags, specifying various
+        characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
+        """
         return self.get(FieldDictionaryAttributes.Ff)
 
     @property

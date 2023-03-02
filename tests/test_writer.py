@@ -1,15 +1,23 @@
-import os
+"""Test the pypdf._writer module."""
 import re
 from io import BytesIO
 from pathlib import Path
 
 import pytest
 
-from pypdf import PageObject, PdfMerger, PdfReader, PdfWriter, Transformation
+from pypdf import (
+    ObjectDeletionFlag,
+    PageObject,
+    PdfMerger,
+    PdfReader,
+    PdfWriter,
+    Transformation,
+)
 from pypdf.errors import DeprecationError, PageSizeNotDefinedError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
+    DictionaryObject,
     Fit,
     IndirectObject,
     NameObject,
@@ -48,6 +56,7 @@ def test_writer_clone():
 
     writer.clone_document_from_reader(reader)
     assert len(writer.pages) == 4
+    assert "PageObject" in str(type(writer.pages[0]))
 
 
 def test_writer_clone_bookmarks():
@@ -59,7 +68,7 @@ def test_writer_clone_bookmarks():
     # Act + test cat
     cat = ""
 
-    def cat1(p):
+    def cat1(p) -> None:
         nonlocal cat
         cat += p.__repr__()
 
@@ -209,7 +218,7 @@ def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
         writer.write(output_stream)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        Path(write_data_here).unlink()
 
 
 @pytest.mark.parametrize(
@@ -233,7 +242,7 @@ def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_clea
             writer.write(output_stream)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        Path(write_data_here).unlink()
 
 
 @pytest.mark.parametrize(
@@ -254,7 +263,7 @@ def test_writer_operations_by_semi_new_traditional_usage(
         writer.write(write_data_here)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        Path(write_data_here).unlink()
 
 
 @pytest.mark.parametrize(
@@ -271,17 +280,17 @@ def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
         writer_operate(writer)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        Path(write_data_here).unlink()
 
 
 @pytest.mark.parametrize(
-    ("input_path", "ignore_byte_string_object"),
+    ("input_path",),
     [
-        ("side-by-side-subfig.pdf", False),
-        ("reportlab-inline-image.pdf", True),
+        ("side-by-side-subfig.pdf",),
+        ("reportlab-inline-image.pdf",),
     ],
 )
-def test_remove_images(input_path, ignore_byte_string_object):
+def test_remove_images(input_path):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -289,7 +298,7 @@ def test_remove_images(input_path, ignore_byte_string_object):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_images(ignore_byte_string_object=ignore_byte_string_object)
+    writer.remove_images()
 
     # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_image.pdf"
@@ -303,19 +312,17 @@ def test_remove_images(input_path, ignore_byte_string_object):
             assert "Lorem ipsum dolor sit amet" in extracted_text
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 @pytest.mark.parametrize(
-    ("input_path", "ignore_byte_string_object"),
+    ("input_path",),
     [
-        ("side-by-side-subfig.pdf", False),
-        ("side-by-side-subfig.pdf", True),
-        ("reportlab-inline-image.pdf", False),
-        ("reportlab-inline-image.pdf", True),
+        ("side-by-side-subfig.pdf",),
+        ("reportlab-inline-image.pdf",),
     ],
 )
-def test_remove_text(input_path, ignore_byte_string_object):
+def test_remove_text(input_path):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -323,7 +330,7 @@ def test_remove_text(input_path, ignore_byte_string_object):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_text(ignore_byte_string_object=ignore_byte_string_object)
+    writer.remove_text()
 
     # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
@@ -331,14 +338,10 @@ def test_remove_text(input_path, ignore_byte_string_object):
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
-@pytest.mark.parametrize(
-    ("ignore_byte_string_object"),
-    [False, True],
-)
-def test_remove_text_all_operators(ignore_byte_string_object):
+def test_remove_text_all_operators():
     stream = (
         b"BT "
         b"/F0 36 Tf "
@@ -386,7 +389,6 @@ def test_remove_text_all_operators(ignore_byte_string_object):
         # inducing an error on startxref computation
         pdf_data.find(b"xref"),
     )
-    print(pdf_data.decode())
     pdf_stream = BytesIO(pdf_data)
 
     reader = PdfReader(pdf_stream, strict=False)
@@ -394,7 +396,7 @@ def test_remove_text_all_operators(ignore_byte_string_object):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_text(ignore_byte_string_object=ignore_byte_string_object)
+    writer.remove_text()
 
     # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
@@ -402,7 +404,7 @@ def test_remove_text_all_operators(ignore_byte_string_object):
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_write_metadata():
@@ -431,7 +433,7 @@ def test_write_metadata():
     assert metadata.get("/Title") == "The Crazy Ones"
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_fill_form():
@@ -461,7 +463,7 @@ def test_fill_form():
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
 
-    os.remove(tmp_filename)  # cleanup
+    Path(tmp_filename).unlink()  # cleanup
 
 
 @pytest.mark.parametrize(
@@ -517,7 +519,7 @@ def test_encrypt(use_128bit, user_password, owner_password):
     assert new_text == orig_text
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_add_outline_item():
@@ -538,7 +540,7 @@ def test_add_outline_item():
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_add_named_destination():
@@ -577,7 +579,7 @@ def test_add_named_destination():
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_add_uri():
@@ -618,7 +620,7 @@ def test_add_uri():
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_add_link():
@@ -670,7 +672,7 @@ def test_add_link():
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_io_streams():
@@ -700,7 +702,7 @@ def test_regression_issue670():
             writer.write(f_pdf)
 
     # cleanup
-    os.remove(tmp_file)
+    Path(tmp_file).unlink()
 
 
 def test_issue301():
@@ -723,7 +725,7 @@ def test_append_pages_from_reader_append():
         writer.write(o)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.slow
 def test_sweep_indirect_references_nullobject_exception():
     # TODO: Check this more closely... this looks weird
@@ -732,24 +734,42 @@ def test_sweep_indirect_references_nullobject_exception():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    tmp_file = "tmp-merger-do-not-commit.pdf"
+    merger.write(tmp_file)
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path(tmp_file).unlink()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.slow
-def test_write_outline_item_on_page_fitv():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
-    name = "tika-922840.pdf"
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf",
+            "test_sweep_indirect_references_nullobject_exception.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf",
+            "test_write_outline_item_on_page_fitv.pdf",
+        ),
+        ("https://github.com/py-pdf/pypdf/files/10715624/test.pdf", "iss1627.pdf"),
+    ],
+)
+def test_some_appends(url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    tmp_file = "tmp-merger-do-not-commit.pdf"
+    # PdfMerger
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
-
+    merger.write(tmp_file)
+    # PdfWriter
+    merger = PdfWriter()
+    merger.append(reader)
+    merger.write(tmp_file)
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path(tmp_file).unlink()
 
 
 def test_pdf_header():
@@ -788,8 +808,8 @@ def test_write_dict_stream_object():
     page_object[NameObject("/Test")] = stream_object
 
     page_object = writer.add_page(page_object)
-
-    with open("tmp-writer-do-not-commit.pdf", "wb") as fp:
+    tmp_file = "tmp-writer-do-not-commit.pdf"
+    with open(tmp_file, "wb") as fp:
         writer.write(fp)
 
     for k, v in page_object.items():
@@ -807,7 +827,7 @@ def test_write_dict_stream_object():
         assert v.pdf == writer
         assert k in objects_hash, "Missing %s" % v
 
-    os.remove("tmp-writer-do-not-commit.pdf")
+    Path(tmp_file).unlink()
 
 
 def test_add_single_annotation():
@@ -839,7 +859,7 @@ def test_add_single_annotation():
         writer.write(fp)
 
     # Cleanup
-    os.remove(target)  # comment out for testing
+    Path(target).unlink()  # comment out for testing
 
 
 def test_deprecation_bookmark_decorator():
@@ -875,7 +895,7 @@ def test_colors_in_outline_item():
         assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
 
     # Cleanup
-    os.remove(target)  # comment out for testing
+    Path(target).unlink()  # comment out for testing
 
 
 @pytest.mark.samples
@@ -930,7 +950,7 @@ def test_startup_dest():
     pdf_file_writer.open_destination = None
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_iss471():
     url = "https://github.com/py-pdf/pypdf/files/9139245/book.pdf"
     name = "book_471.pdf"
@@ -943,7 +963,7 @@ def test_iss471():
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_reset_translation():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -979,7 +999,7 @@ def test_threads_empty():
     assert thr == thr2
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_append_without_annots_and_articles():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -998,7 +1018,7 @@ def test_append_without_annots_and_articles():
     assert len(writer.threads) >= 1
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_append_multiple():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -1109,7 +1129,7 @@ def test_set_page_label():
     ):
         writer.set_page_label(0, 5, "/r", start=-1)
 
-    os.remove(target)
+    Path(target).unlink()
 
     src = (
         SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
@@ -1133,7 +1153,7 @@ def test_set_page_label():
     writer.write(target)
     assert PdfReader(target).page_labels[: len(expected)] == expected
 
-    os.remove(target)
+    Path(target).unlink()
 
     # Tests prefix and start.
     src = RESOURCE_ROOT / "issue-604.pdf"  # File without page labels
@@ -1151,9 +1171,10 @@ def test_set_page_label():
     writer.set_page_label(31, 39, "/D", prefix="HURT-")
     writer.write(target)
 
-    os.remove(target)  # comment to see result
+    Path(target).unlink()  # comment to see result
 
 
+@pytest.mark.enable_socket
 def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
@@ -1177,6 +1198,52 @@ def test_iss1601():
     )
 
 
+def test_attachments():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    b = BytesIO()
+    writer.write(b)
+    b.seek(0)
+    reader = PdfReader(b)
+    b = None
+    assert reader.attachments == {}
+    assert reader._list_attachments() == []
+    assert reader._get_attachments() == {}
+    to_add = [
+        ("foobar.txt", b"foobarcontent"),
+        ("foobar2.txt", b"foobarcontent2"),
+        ("foobar2.txt", b"2nd_foobarcontent"),
+    ]
+    for name, content in to_add:
+        writer.add_attachment(name, content)
+
+    b = BytesIO()
+    writer.write(b)
+    b.seek(0)
+    reader = PdfReader(b)
+    b = None
+    assert sorted(reader.attachments.keys()) == sorted({name for name, _ in to_add})
+    assert reader._list_attachments() == [name for name, _ in to_add]
+
+    # We've added the same key twice - hence only 2 and not 3:
+    att = reader._get_attachments()
+    assert len(att) == 2  # we have 2 keys, but 3 attachments!
+
+    # The content for foobar.txt is clear and just a single value:
+    assert att["foobar.txt"] == b"foobarcontent"
+
+    # The content for foobar2.txt is a list!
+    att = reader._get_attachments("foobar2.txt")
+    assert len(att) == 1
+    assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
+
+    # Let's do both cases with the public interface:
+    assert reader.attachments["foobar.txt"][0] == b"foobarcontent"
+    assert reader.attachments["foobar2.txt"][0] == b"foobarcontent2"
+    assert reader.attachments["foobar2.txt"][1] == b"2nd_foobarcontent"
+
+
+@pytest.mark.enable_socket
 def test_iss1614():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"
@@ -1189,3 +1256,57 @@ def test_iss1614():
     name = "iss1614.2.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     out_pdf.append(in_pdf)
+
+
+@pytest.mark.enable_socket
+def test_new_removes():
+    # test of an annotation(link) directly stored in the /Annots in the page
+    url = "https://github.com/py-pdf/pypdf/files/10807951/tt.pdf"
+    name = "iss1650.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+
+    out_pdf = PdfWriter()
+    out_pdf.clone_document_from_reader(in_pdf)
+    out_pdf.remove_images()
+    b = BytesIO()
+    out_pdf.write(b)
+    bb = bytes(b.getbuffer())
+    assert b"/Im0 Do" not in bb
+    assert b"/Fm0 Do" in bb
+    assert b" TJ" in bb
+
+    out_pdf = PdfWriter()
+    out_pdf.clone_document_from_reader(in_pdf)
+    out_pdf.remove_text()
+    b = BytesIO()
+    out_pdf.write(b)
+    bb = bytes(b.getbuffer())
+    assert b"/Im0" in bb
+    assert b"Chap" not in bb
+    assert b" TJ" not in bb
+
+    url = "https://github.com/py-pdf/pypdf/files/10832029/tt2.pdf"
+    name = "GeoBaseWithComments.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf.append(in_pdf)
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.LINKS)
+    assert "/Links" not in [
+        a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
+    ]
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.ATTACHMENTS)
+    assert "/FileAttachment" not in [
+        a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
+    ]
+
+    out_pdf.pages[0]["/Annots"].append(
+        DictionaryObject({NameObject("/Subtype"): TextStringObject("/3D")})
+    )
+    assert "/3D" in [a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]]
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.OBJECTS_3D)
+    assert "/3D" not in [
+        a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
+    ]
+
+    out_pdf.remove_links()
+    assert len(out_pdf.pages[0]["/Annots"]) == 0
+    assert len(out_pdf.pages[3]["/Annots"]) == 0

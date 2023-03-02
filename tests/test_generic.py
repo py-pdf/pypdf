@@ -1,4 +1,4 @@
-import os
+"""Test the pypdf.generic module."""
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -487,7 +487,7 @@ def test_remove_child_not_in_that_tree():
 def test_remove_child_not_found_in_tree():
     class ChildDummy(DictionaryObject):
         @property
-        def indirect_reference(self):
+        def indirect_reference(self) -> "ChildDummy":
             return self
 
     tree = TreeObject()
@@ -516,7 +516,7 @@ def test_remove_child_found_in_tree():
     child1_ref = writer._add_object(child1)
     tree.add_child(child1_ref, writer)
     assert tree[NameObject("/Count")] == 1
-    assert len([el for el in tree.children()]) == 1
+    assert len(list(tree.children())) == 1
 
     # Add second child
     child2 = TreeObject()
@@ -524,12 +524,12 @@ def test_remove_child_found_in_tree():
     child2_ref = writer._add_object(child2)
     tree.add_child(child2_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     # Remove last child
     tree.remove_child(child2_ref)
     assert tree[NameObject("/Count")] == 1
-    assert len([el for el in tree.children()]) == 1
+    assert len(list(tree.children())) == 1
 
     # Add new child
     child3 = TreeObject()
@@ -537,32 +537,32 @@ def test_remove_child_found_in_tree():
     child3_ref = writer._add_object(child3)
     tree.add_child(child3_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     # Remove first child
     child1 = tree[NameObject("/First")]
     tree.remove_child(child1)
     assert tree[NameObject("/Count")] == 1
-    assert len([el for el in tree.children()]) == 1
+    assert len(list(tree.children())) == 1
 
     child4 = TreeObject()
     child4[NameObject("/Foo")] = TextStringObject("4")
     child4_ref = writer._add_object(child4)
     tree.add_child(child4_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     child5 = TreeObject()
     child5[NameObject("/Foo")] = TextStringObject("5")
     child5_ref = writer._add_object(child5)
     tree.add_child(child5_ref, writer)
     assert tree[NameObject("/Count")] == 3
-    assert len([el for el in tree.children()]) == 3
+    assert len(list(tree.children())) == 3
 
     # Remove middle child
     child4.remove_from_tree()
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     tree.empty_tree()
 
@@ -583,7 +583,7 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_dict_read_from_stream(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
     name = "tika-984877.pdf"
@@ -597,7 +597,7 @@ def test_dict_read_from_stream(caplog):
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_parse_content_stream_peek_percentage():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
     name = "tika-985770.pdf"
@@ -607,7 +607,7 @@ def test_parse_content_stream_peek_percentage():
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_read_inline_image_no_has_q():
     # pdf/df7e1add3156af17a372bc165e47a244.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
@@ -618,7 +618,7 @@ def test_read_inline_image_no_has_q():
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_read_inline_image_loc_neg_1():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
     name = "tika-935066.pdf"
@@ -629,7 +629,7 @@ def test_read_inline_image_loc_neg_1():
 
 
 @pytest.mark.slow
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_text_string_write_to_stream():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
     name = "tika-924562.pdf"
@@ -639,7 +639,7 @@ def test_text_string_write_to_stream():
         page.compress_content_streams()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_name_object_read_from_stream_unicode_error():  # L588
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
     name = "tika-974966.pdf"
@@ -649,7 +649,7 @@ def test_name_object_read_from_stream_unicode_error():  # L588
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_bool_repr(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
     name = "tika-932449.pdf"
@@ -669,7 +669,7 @@ def test_bool_repr(tmp_path):
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @patch("pypdf._reader.logger_warning")
 def test_issue_997(mock_logger_warning):
     url = (
@@ -700,7 +700,7 @@ def test_issue_997(mock_logger_warning):
     merger.close()
 
     # cleanup
-    os.remove(merged_filename)
+    Path(merged_filename).unlink()
 
 
 def test_annotation_builder_free_text():
@@ -720,8 +720,8 @@ def test_annotation_builder_free_text():
         italic=True,
         font_size="20pt",
         font_color="00ff00",
-        border_color="0000ff",
-        background_color="cdcdcd",
+        border_color=None,
+        background_color=None,
     )
     writer.add_annotation(0, free_text_annotation)
 
@@ -743,7 +743,7 @@ def test_annotation_builder_free_text():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_polygon():
@@ -771,7 +771,7 @@ def test_annotation_builder_polygon():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_line():
@@ -796,7 +796,7 @@ def test_annotation_builder_line():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_square():
@@ -823,7 +823,7 @@ def test_annotation_builder_square():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_circle():
@@ -851,7 +851,7 @@ def test_annotation_builder_circle():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_link():
@@ -909,7 +909,7 @@ def test_annotation_builder_link():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_text():
@@ -933,7 +933,7 @@ def test_annotation_builder_text():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_CheckboxRadioButtonAttributes_opt():
@@ -1046,10 +1046,26 @@ def test_cloning(caplog):
     assert isinstance(obj21.get("/Test2"), IndirectObject)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
+def test_append_with_indirectobject_not_pointing(caplog):
+    """
+    reported in #1631
+    the object 43 0 is not invalid
+    """
+    url = "https://github.com/py-pdf/pypdf/files/10729142/document.pdf"
+    name = "tst_iss1631.pdf"
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
+    writer = PdfWriter()
+    writer.append(reader)
+    assert "Object 43 0 not defined." in caplog.text
+
+
+@pytest.mark.enable_socket
 def test_iss1615_1673():
     """
     test cases where /N is not indicating chains of objects
+    test also where /N,... are not part of chains
     """
     # #1615
     url = "https://github.com/py-pdf/pypdf/files/10671366/graph_letter.pdf"

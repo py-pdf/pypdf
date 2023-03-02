@@ -94,7 +94,7 @@ class PdfObject(PdfObjectProtocol):
         raise Exception("clone PdfObject")
 
     def _reference_clone(
-        self, clone: Any, pdf_dest: PdfWriterProtocol
+        self, clone: Any, pdf_dest: PdfWriterProtocol, force_duplicate: bool = False
     ) -> PdfObjectProtocol:
         """
         Reference the object within the _objects of pdf_dest only if
@@ -110,25 +110,31 @@ class PdfObject(PdfObjectProtocol):
           The clone
         """
         try:
-            if clone.indirect_reference.pdf == pdf_dest:
+            if not force_duplicate and clone.indirect_reference.pdf == pdf_dest:
                 return clone
         except Exception:
             pass
-        if hasattr(self, "indirect_reference"):
+        # if hasattr(clone, "indirect_reference"):
+        try:
             ind = self.indirect_reference
-            i = len(pdf_dest._objects) + 1
-            if ind is not None:
-                if id(ind.pdf) not in pdf_dest._id_translated:
-                    pdf_dest._id_translated[id(ind.pdf)] = {}
-                if ind.idnum in pdf_dest._id_translated[id(ind.pdf)]:
-                    obj = pdf_dest.get_object(
-                        pdf_dest._id_translated[id(ind.pdf)][ind.idnum]
-                    )
-                    assert obj is not None
-                    return obj
-                pdf_dest._id_translated[id(ind.pdf)][ind.idnum] = i
-            pdf_dest._objects.append(clone)
-            clone.indirect_reference = IndirectObject(i, 0, pdf_dest)
+        except AttributeError:
+            return clone
+        i = len(pdf_dest._objects) + 1
+        if ind is not None:
+            if id(ind.pdf) not in pdf_dest._id_translated:
+                pdf_dest._id_translated[id(ind.pdf)] = {}
+            if (
+                not force_duplicate
+                and ind.idnum in pdf_dest._id_translated[id(ind.pdf)]
+            ):
+                obj = pdf_dest.get_object(
+                    pdf_dest._id_translated[id(ind.pdf)][ind.idnum]
+                )
+                assert obj is not None
+                return obj
+            pdf_dest._id_translated[id(ind.pdf)][ind.idnum] = i
+        pdf_dest._objects.append(clone)
+        clone.indirect_reference = IndirectObject(i, 0, pdf_dest)
         return clone
 
     def get_object(self) -> Optional["PdfObject"]:
@@ -153,7 +159,9 @@ class NullObject(PdfObject):
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NullObject":
         """Clone object into pdf_dest."""
-        return cast("NullObject", self._reference_clone(NullObject(), pdf_dest))
+        return cast(
+            "NullObject", self._reference_clone(NullObject(), pdf_dest, force_duplicate)
+        )
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -194,7 +202,8 @@ class BooleanObject(PdfObject):
     ) -> "BooleanObject":
         """Clone object into pdf_dest."""
         return cast(
-            "BooleanObject", self._reference_clone(BooleanObject(self.value), pdf_dest)
+            "BooleanObject",
+            self._reference_clone(BooleanObject(self.value), pdf_dest, force_duplicate),
         )
 
     def __eq__(self, __o: object) -> bool:
@@ -262,7 +271,12 @@ class IndirectObject(PdfObject):
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
         else:
             obj = self.get_object()
-            assert obj is not None
+            # case observed : a pointed object can not be found
+            if obj is None:
+                # this normally
+                obj = NullObject()
+                assert isinstance(self, (IndirectObject,))
+                obj.indirect_reference = self
             dup = obj.clone(pdf_dest, force_duplicate, ignore_fields)
         assert dup is not None
         assert dup.indirect_reference is not None
@@ -361,7 +375,10 @@ class FloatObject(float, PdfObject):
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "FloatObject":
         """Clone object into pdf_dest."""
-        return cast("FloatObject", self._reference_clone(FloatObject(self), pdf_dest))
+        return cast(
+            "FloatObject",
+            self._reference_clone(FloatObject(self), pdf_dest, force_duplicate),
+        )
 
     def myrepr(self) -> str:
         if self == 0:
@@ -405,7 +422,10 @@ class NumberObject(int, PdfObject):
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NumberObject":
         """Clone object into pdf_dest."""
-        return cast("NumberObject", self._reference_clone(NumberObject(self), pdf_dest))
+        return cast(
+            "NumberObject",
+            self._reference_clone(NumberObject(self), pdf_dest, force_duplicate),
+        )
 
     def as_numeric(self) -> int:
         return int(repr(self).encode("utf8"))
@@ -454,7 +474,9 @@ class ByteStringObject(bytes, PdfObject):
         """Clone object into pdf_dest."""
         return cast(
             "ByteStringObject",
-            self._reference_clone(ByteStringObject(bytes(self)), pdf_dest),
+            self._reference_clone(
+                ByteStringObject(bytes(self)), pdf_dest, force_duplicate
+            ),
         )
 
     @property
@@ -500,17 +522,21 @@ class TextStringObject(str, PdfObject):
         obj = TextStringObject(self)
         obj.autodetect_pdfdocencoding = self.autodetect_pdfdocencoding
         obj.autodetect_utf16 = self.autodetect_utf16
-        return cast("TextStringObject", self._reference_clone(obj, pdf_dest))
+        return cast(
+            "TextStringObject", self._reference_clone(obj, pdf_dest, force_duplicate)
+        )
 
     autodetect_pdfdocencoding = False
     autodetect_utf16 = False
 
     @property
     def original_bytes(self) -> bytes:
-        """It is occasionally possible that a text string object gets created where
+        """
+        It is occasionally possible that a text string object gets created where
         a byte string object was expected due to the autodetection mechanism --
         if that occurs, this "original_bytes" property can be used to
-        back-calculate what the original encoded bytes were."""
+        back-calculate what the original encoded bytes were.
+        """
         return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:
@@ -580,7 +606,10 @@ class NameObject(str, PdfObject):
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NameObject":
         """Clone object into pdf_dest."""
-        return cast("NameObject", self._reference_clone(NameObject(self), pdf_dest))
+        return cast(
+            "NameObject",
+            self._reference_clone(NameObject(self), pdf_dest, force_duplicate),
+        )
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]

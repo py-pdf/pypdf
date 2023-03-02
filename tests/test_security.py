@@ -1,3 +1,4 @@
+"""Test the pypdf._security module."""
 from pypdf._security import _alg32
 from pypdf.generic import ByteStringObject
 

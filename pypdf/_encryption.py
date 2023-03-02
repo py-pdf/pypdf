@@ -82,6 +82,8 @@ try:
             return iv + aes.encrypt(data)
 
         def decrypt(self, data: bytes) -> bytes:
+            if len(data) == 0:
+                return data
             iv = data[:16]
             data = data[16:]
             aes = AES.new(self.key, AES.MODE_CBC, iv)
@@ -123,7 +125,7 @@ except ImportError:
 
         def encrypt(self, data: bytes) -> bytes:
             S = list(self.S)
-            out = list(0 for _ in range(len(data)))
+            out = [0 for _ in range(len(data))]
             i, j = 0, 0
             for k in range(len(data)):
                 i = (i + 1) % 256

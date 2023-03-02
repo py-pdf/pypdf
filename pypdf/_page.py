@@ -92,23 +92,23 @@ def set_custom_rtl(
     Args:
         _min: The new minimum value for the range of custom characters that
             will be written right to left.
-            If set to `None`, the value will not be changed.
+            If set to ``None``, the value will not be changed.
             If set to an integer or string, it will be converted to its ASCII code.
             The default value is -1, which sets no additional range to be converted.
         _max: The new maximum value for the range of custom characters that will
             be written right to left.
-            If set to `None`, the value will not be changed.
+            If set to ``None``, the value will not be changed.
             If set to an integer or string, it will be converted to its ASCII code.
             The default value is -1, which sets no additional range to be converted.
         specials: The new list of special characters to be inserted in the
             current insertion order.
-            If set to `None`, the current value will not be changed.
+            If set to ``None``, the current value will not be changed.
             If set to a string, it will be converted to a list of ASCII codes.
             The default value is an empty list.
 
     Returns:
-        A tuple containing the new values for `CUSTOM_RTL_MIN`,
-        `CUSTOM_RTL_MAX`, and `CUSTOM_RTL_SPECIAL_CHARS`.
+        A tuple containing the new values for ``CUSTOM_RTL_MIN``,
+        ``CUSTOM_RTL_MAX``, and ``CUSTOM_RTL_SPECIAL_CHARS``.
     """
     global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
     if isinstance(_min, int):
@@ -206,8 +206,7 @@ class Transformation:
                                  e f 1
 
 
-    Example
-
+    Example:
         >>> from pypdf import Transformation
         >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
         >>> page.add_transformation(op)
@@ -260,7 +259,7 @@ class Transformation:
             ty: The translation along the y-axis.
 
         Returns:
-            A new `Transformation` instance
+            A new ``Transformation`` instance
         """
         m = self.ctm
         return Transformation(ctm=(m[0], m[1], m[2], m[3], m[4] + tx, m[5] + ty))
@@ -301,7 +300,7 @@ class Transformation:
             rotation: The angle of rotation in degrees.
 
         Returns:
-            A new `Transformation` instance with the rotated matrix.
+            A new ``Transformation`` instance with the rotated matrix.
         """
         rotation = math.radians(rotation)
         op: TransformationMatrixType = (
@@ -361,7 +360,6 @@ class PageObject(DictionaryObject):
         indirect_reference: Optional[IndirectObject] = None,
         indirect_ref: Optional[IndirectObject] = None,  # deprecated
     ) -> None:
-
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
         if indirect_ref is not None:  # deprecated
@@ -608,6 +606,9 @@ class PageObject(DictionaryObject):
                 value.
             """
             value = page2res.raw_get(base_key)
+            # TODO : possible improvement : in case of writer, the indirect_reference
+            # can not be found because translated : this may be improved
+
             # try the current key first (e.g. "foo"), but otherwise iterate
             # through "foo-0", "foo-1", etc. new_res can contain only finitely
             # many keys, thus this'll eventually end, even if it's been crafted
@@ -643,7 +644,7 @@ class PageObject(DictionaryObject):
                 if is_pdf_writer:
                     new_res[newname] = page2res.raw_get(key).clone(pdf)
                     try:
-                        new_res[newname] = new_res[key].indirect_reference
+                        new_res[newname] = new_res[newname].indirect_reference
                     except AttributeError:
                         pass
                 else:
@@ -696,9 +697,7 @@ class PageObject(DictionaryObject):
         pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
-        """
-        Add transformation matrix at the beginning of the given contents stream.
-        """
+        """Add transformation matrix at the beginning of the given contents stream."""
         a, b, c, d, e, f = ctm
         contents = ContentStream(contents, pdf)
         contents.operations.insert(
@@ -936,7 +935,11 @@ class PageObject(DictionaryObject):
                 trsf = Transformation(ctm)
             for a in cast(ArrayObject, page2[PG.ANNOTS]):
                 a = a.get_object()
-                aa = a.clone(pdf, ignore_fields=("/P", "/StructParent"))
+                aa = a.clone(
+                    pdf,
+                    ignore_fields=("/P", "/StructParent", "/Parent"),
+                    force_duplicate=True,
+                )
                 r = cast(ArrayObject, a["/Rect"])
                 pt1 = trsf.apply_on((r[0], r[1]), True)
                 pt2 = trsf.apply_on((r[2], r[3]), True)
@@ -956,6 +959,10 @@ class PageObject(DictionaryObject):
                         + cast(tuple, trsf.apply_on((q[4], q[5]), True))
                         + cast(tuple, trsf.apply_on((q[6], q[7]), True))
                     )
+                try:
+                    aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
+                except KeyError:
+                    pass
                 try:
                     aa[NameObject("/P")] = self.indirect_reference
                     annots.append(aa.indirect_reference)
@@ -1254,8 +1261,6 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", rotation: float, scale: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        obsolete
-
         .. deprecated:: 1.28.0
 
             Use :meth:`merge_transformed_page` instead.

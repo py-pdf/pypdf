@@ -3,7 +3,7 @@ from typing import Any, Optional, Tuple, Union
 
 class Fit:
     def __init__(
-        self, fit_type: str, fit_args: Tuple[Union[None, float, Any], ...] = tuple()
+        self, fit_type: str, fit_args: Tuple[Union[None, float, Any], ...] = ()
     ):
         from ._base import FloatObject, NameObject, NullObject
 
@@ -61,7 +61,7 @@ class Fit:
         magnified just enough to fit the entire width of the page within the
         window.
 
-        A null value for `top` specifies that the current value of that
+        A null value for ``top`` specifies that the current value of that
         parameter is to be retained unchanged.
 
         Args:
