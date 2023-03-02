@@ -1047,10 +1047,11 @@ def test_cloning(caplog):
 
 
 @pytest.mark.external
-def test_iss1615():
+def test_iss1615_1673():
     """
     test cases where /N is not indicating chains of objects
     """
+    # #1615
     url = "https://github.com/py-pdf/pypdf/files/10671366/graph_letter.pdf"
     name = "graph_letter.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -1062,3 +1063,9 @@ def test_iss1615():
         .get_object()["/AP"]["/N"]["/Resources"]["/ColorSpace"]["/Cs1"][1]
         .get_object()
     )
+    # #1673
+    url = "https://github.com/py-pdf/pypdf/files/10848750/budgeting-loan-form-sf500.pdf"
+    name = "budgeting-loan-form-sf500.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)

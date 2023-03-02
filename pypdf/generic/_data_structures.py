@@ -207,6 +207,14 @@ class DictionaryObject(dict, PdfObject):
                         k in src
                         and k not in self
                         and isinstance(src.raw_get(k), IndirectObject)
+                        and isinstance(src[k], DictionaryObject)
+                        # IF need to go further the idea is to check
+                        # that the types are the same:
+                        and (
+                            src.get("/Type", None) is None
+                            or src[k].get("/Type", None) is None
+                            or src.get("/Type", None) == src[k].get("/Type", None)
+                        )
                     ):
                         cur_obj: Optional["DictionaryObject"] = cast(
                             "DictionaryObject", src[k]
