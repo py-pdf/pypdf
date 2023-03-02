@@ -56,11 +56,12 @@ package = "./pypdf"
 exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", "tests/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_changelog.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
 
 [tool.pytest.ini_options]
+addopts = "--disable-socket"
 filterwarnings = ["error"]
 markers = [
     "slow: Test which require more than a second",
     "samples: Tests which use files from https://github.com/py-pdf/sample-files",
-    "external: Tests which need to download files"
+    "enable_socket: Tests which need to download files"
 ]
 testpaths = ["tests"]
 norecursedirs = ["tests/pdf_cache"]

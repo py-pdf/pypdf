@@ -68,7 +68,7 @@ def test_number2uppercase_letter():
         number2uppercase_letter(-1)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_index2label(caplog):
     url = "https://github.com/py-pdf/pypdf/files/10773829/waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf"
     name = "waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf"
