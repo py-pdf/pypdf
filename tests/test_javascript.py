@@ -1,3 +1,4 @@
+"""Test topics around the usage of JavaScript in PDF documents."""
 from pathlib import Path
 from typing import Any
 

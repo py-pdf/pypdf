@@ -1,4 +1,4 @@
-import os
+"""Test the pypdf._writer module."""
 import re
 from io import BytesIO
 from pathlib import Path
@@ -218,7 +218,7 @@ def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
         writer.write(output_stream)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        Path(write_data_here).unlink()
 
 
 @pytest.mark.parametrize(
@@ -242,7 +242,7 @@ def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_clea
             writer.write(output_stream)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        Path(write_data_here).unlink()
 
 
 @pytest.mark.parametrize(
@@ -263,7 +263,7 @@ def test_writer_operations_by_semi_new_traditional_usage(
         writer.write(write_data_here)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        Path(write_data_here).unlink()
 
 
 @pytest.mark.parametrize(
@@ -280,7 +280,7 @@ def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
         writer_operate(writer)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        Path(write_data_here).unlink()
 
 
 @pytest.mark.parametrize(
@@ -312,7 +312,7 @@ def test_remove_images(input_path):
             assert "Lorem ipsum dolor sit amet" in extracted_text
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 @pytest.mark.parametrize(
@@ -338,7 +338,7 @@ def test_remove_text(input_path):
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_remove_text_all_operators():
@@ -404,7 +404,7 @@ def test_remove_text_all_operators():
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_write_metadata():
@@ -433,7 +433,7 @@ def test_write_metadata():
     assert metadata.get("/Title") == "The Crazy Ones"
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_fill_form():
@@ -463,7 +463,7 @@ def test_fill_form():
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
 
-    os.remove(tmp_filename)  # cleanup
+    Path(tmp_filename).unlink()  # cleanup
 
 
 @pytest.mark.parametrize(
@@ -519,7 +519,7 @@ def test_encrypt(use_128bit, user_password, owner_password):
     assert new_text == orig_text
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_add_outline_item():
@@ -540,7 +540,7 @@ def test_add_outline_item():
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_add_named_destination():
@@ -579,7 +579,7 @@ def test_add_named_destination():
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_add_uri():
@@ -620,7 +620,7 @@ def test_add_uri():
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_add_link():
@@ -672,7 +672,7 @@ def test_add_link():
         writer.write(output_stream)
 
     # Cleanup
-    os.remove(tmp_filename)
+    Path(tmp_filename).unlink()
 
 
 def test_io_streams():
@@ -702,7 +702,7 @@ def test_regression_issue670():
             writer.write(f_pdf)
 
     # cleanup
-    os.remove(tmp_file)
+    Path(tmp_file).unlink()
 
 
 def test_issue301():
@@ -734,10 +734,11 @@ def test_sweep_indirect_references_nullobject_exception():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    tmp_file = "tmp-merger-do-not-commit.pdf"
+    merger.write(tmp_file)
 
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path(tmp_file).unlink()
 
 
 @pytest.mark.enable_socket
@@ -758,16 +759,17 @@ def test_sweep_indirect_references_nullobject_exception():
 )
 def test_some_appends(url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    tmp_file = "tmp-merger-do-not-commit.pdf"
     # PdfMerger
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(tmp_file)
     # PdfWriter
     merger = PdfWriter()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(tmp_file)
     # cleanup
-    os.remove("tmp-merger-do-not-commit.pdf")
+    Path(tmp_file).unlink()
 
 
 def test_pdf_header():
@@ -806,8 +808,8 @@ def test_write_dict_stream_object():
     page_object[NameObject("/Test")] = stream_object
 
     page_object = writer.add_page(page_object)
-
-    with open("tmp-writer-do-not-commit.pdf", "wb") as fp:
+    tmp_file = "tmp-writer-do-not-commit.pdf"
+    with open(tmp_file, "wb") as fp:
         writer.write(fp)
 
     for k, v in page_object.items():
@@ -825,7 +827,7 @@ def test_write_dict_stream_object():
         assert v.pdf == writer
         assert k in objects_hash, "Missing %s" % v
 
-    os.remove("tmp-writer-do-not-commit.pdf")
+    Path(tmp_file).unlink()
 
 
 def test_add_single_annotation():
@@ -857,7 +859,7 @@ def test_add_single_annotation():
         writer.write(fp)
 
     # Cleanup
-    os.remove(target)  # comment out for testing
+    Path(target).unlink()  # comment out for testing
 
 
 def test_deprecation_bookmark_decorator():
@@ -893,7 +895,7 @@ def test_colors_in_outline_item():
         assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
 
     # Cleanup
-    os.remove(target)  # comment out for testing
+    Path(target).unlink()  # comment out for testing
 
 
 @pytest.mark.samples
@@ -1127,7 +1129,7 @@ def test_set_page_label():
     ):
         writer.set_page_label(0, 5, "/r", start=-1)
 
-    os.remove(target)
+    Path(target).unlink()
 
     src = (
         SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
@@ -1151,7 +1153,7 @@ def test_set_page_label():
     writer.write(target)
     assert PdfReader(target).page_labels[: len(expected)] == expected
 
-    os.remove(target)
+    Path(target).unlink()
 
     # Tests prefix and start.
     src = RESOURCE_ROOT / "issue-604.pdf"  # File without page labels
@@ -1169,7 +1171,7 @@ def test_set_page_label():
     writer.set_page_label(31, 39, "/D", prefix="HURT-")
     writer.write(target)
 
-    os.remove(target)  # comment to see result
+    Path(target).unlink()  # comment to see result
 
 
 @pytest.mark.enable_socket

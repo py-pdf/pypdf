@@ -5,7 +5,6 @@ They don't mock/patch anything, they cover typical user needs.
 """
 
 import binascii
-import os
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -335,7 +334,7 @@ def test_overlay(base_path, overlay_path):
         writer.write(fp)
 
     # Cleanup
-    os.remove("dont_commit_overlay.pdf")  # remove for manual inspection
+    Path("dont_commit_overlay.pdf").unlink()  # remove for manual inspection
 
 
 @pytest.mark.enable_socket
@@ -667,7 +666,7 @@ def test_image_extraction(url, name):
     images_extracted = []
     root = Path("extracted-images")
     if not root.exists():
-        os.mkdir(root)
+        root.mkdir()
 
     for page in reader.pages:
         for image in page.images:
@@ -680,8 +679,8 @@ def test_image_extraction(url, name):
     do_cleanup = True  # set this to False for manual inspection
     if do_cleanup:
         for filepath in images_extracted:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            if Path(filepath).exists():
+                Path(filepath).unlink()
 
 
 @pytest.mark.enable_socket
@@ -695,7 +694,7 @@ def test_image_extraction_strict():
     images_extracted = []
     root = Path("extracted-images")
     if not root.exists():
-        os.mkdir(root)
+        root.mkdir()
 
     for page in reader.pages:
         for image in page.images:
@@ -708,8 +707,8 @@ def test_image_extraction_strict():
     do_cleanup = True  # set this to False for manual inspection
     if do_cleanup:
         for filepath in images_extracted:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            if Path(filepath).exists():
+                Path(filepath).unlink()
 
 
 @pytest.mark.enable_socket
@@ -729,7 +728,7 @@ def test_image_extraction2(url, name):
     images_extracted = []
     root = Path("extracted-images")
     if not root.exists():
-        os.mkdir(root)
+        root.mkdir()
 
     for page in reader.pages:
         for image in page.images:
@@ -742,8 +741,8 @@ def test_image_extraction2(url, name):
     do_cleanup = True  # set this to False for manual inspection
     if do_cleanup:
         for filepath in images_extracted:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            if Path(filepath).exists():
+                Path(filepath).unlink()
 
 
 @pytest.mark.enable_socket

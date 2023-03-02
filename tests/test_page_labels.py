@@ -1,3 +1,4 @@
+"""Test the pypdf._page_labels module."""
 from io import BytesIO
 
 import pytest

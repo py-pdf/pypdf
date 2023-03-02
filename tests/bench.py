@@ -1,3 +1,9 @@
+"""
+Benchmark the speed of pypdf.
+
+The results are on https://py-pdf.github.io/pypdf/dev/bench/
+Please keep in mind that the variance is high.
+"""
 from io import BytesIO
 from pathlib import Path
 

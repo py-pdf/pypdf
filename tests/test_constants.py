@@ -1,3 +1,4 @@
+"""Test the pypdf.constants module."""
 import re
 from typing import Callable
 

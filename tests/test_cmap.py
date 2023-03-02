@@ -1,3 +1,4 @@
+"""Test the pypdf_cmap module."""
 from io import BytesIO
 
 import pytest

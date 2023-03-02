@@ -1,5 +1,5 @@
+"""Test the pypdf._reader module."""
 import io
-import os
 import time
 from io import BytesIO
 from pathlib import Path
@@ -226,7 +226,7 @@ def test_get_images(src, expected_images):
                 )
         finally:
             try:
-                os.remove(fn)
+                Path(fn).unlink()
             except Exception:
                 pass
 
@@ -417,7 +417,7 @@ def test_get_form(src, expected, expected_get_fields):
             ]
 
     # cleanup
-    os.remove("tmp-fields-report.txt")
+    Path("tmp-fields-report.txt").unlink()
 
 
 @pytest.mark.parametrize(
@@ -966,7 +966,7 @@ def test_get_fields_read_write_report():
     assert fields
 
     # cleanup
-    os.remove("tmp-fields-report.txt")
+    Path("tmp-fields-report.txt").unlink()
 
 
 @pytest.mark.parametrize(
