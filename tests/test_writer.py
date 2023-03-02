@@ -1258,6 +1258,7 @@ def test_iss1614():
     out_pdf.append(in_pdf)
 
 
+@pytest.mark.enable_socket
 def test_new_removes():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10807951/tt.pdf"
