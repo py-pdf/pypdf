@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677703640470,
+  "lastUpdate": 1677739226274,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -25662,6 +25662,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009274940466069994",
             "extra": "mean: 101.26372340000103 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8588aa161b6b535ecf9a2c934cb1d8d6f1a9b24b",
+          "message": "TST: Replace pytest.mark.external by enable_socket (#1657)\n\npypdf has three types of tests: (1) Tests that work only with the repository itself, (2) tests that require the sample-files git submodule, and (3) tests that require PDF documents from external websites.\r\n\r\nAs people or projects might not be able to execute (2), they are marked with `@pytest.mark.samples`\r\n\r\nAs people or projects might not be able to execute (3), they are marked with `@pytest.mark.enable_socket` (formerly @pytest.mark.external).\r\n\r\nWe regularly had issues with people forgetting to mark their tests with `external` (see #1632).\r\n\r\nThe [pytest-socket](https://pypi.org/project/pytest-socket/) pytest plugin disables the usage of sockets on the whole project, except for the tests marked with `enable_socket`. This was, we can guarantee that the CI will catch missing `@pytest.mark.enable_socket`.",
+          "timestamp": "2023-03-02T07:39:12+01:00",
+          "tree_id": "eafe9270612d0a46406f6c8a9607f4a104cbade6",
+          "url": "https://github.com/py-pdf/pypdf/commit/8588aa161b6b535ecf9a2c934cb1d8d6f1a9b24b"
+        },
+        "date": 1677739223930,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0142471002120537,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012942179935025874",
+            "extra": "mean: 985.9530284000073 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.679105015700362,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006916394112113375",
+            "extra": "mean: 85.62299925000143 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24797612792854565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02203550938357792",
+            "extra": "mean: 4.032646240400004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.821459292368427,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00034209620146734217",
+            "extra": "mean: 84.59192518182331 msec\nrounds: 11"
           }
         ]
       }
