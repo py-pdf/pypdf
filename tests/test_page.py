@@ -196,11 +196,11 @@ def test_get_user_unit_property():
 
 def compare_dict_objects(d1, d2):
     assert sorted(d1.keys()) == sorted(d2.keys())
-    for k in d1.keys():
-        if isinstance(d1[k], DictionaryObject):
-            compare_dict_objects(d1[k], d2[k])
+    for key in d1:
+        if isinstance(d1[key], DictionaryObject):
+            compare_dict_objects(d1[key], d2[key])
         else:
-            assert d1[k] == d2[k]
+            assert d1[key] == d2[key]
 
 
 @pytest.mark.slow()

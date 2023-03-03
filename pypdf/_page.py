@@ -633,7 +633,7 @@ class PageObject(DictionaryObject):
             DictionaryObject, res2.get(resource, DictionaryObject()).get_object()
         )
         rename_res = {}
-        for key in page2res.keys():
+        for key in page2res:
             unique_key, same_value = compute_unique_key(key)
             newname = NameObject(unique_key)
             if key != unique_key:
@@ -1900,9 +1900,9 @@ class PageObject(DictionaryObject):
                         elif (
                             abs(delta_y) < f * 0.3
                             and abs(delta_x) > current_spacewidth() * f * 15
+                            and (output + text)[-1] != " "
                         ):
-                            if (output + text)[-1] != " ":
-                                text += " "
+                            text += " "
                     elif orientation == 180:
                         if delta_y > 0.8 * f:
                             if (output + text)[-1] != "\n":
@@ -1919,9 +1919,9 @@ class PageObject(DictionaryObject):
                         elif (
                             abs(delta_y) < f * 0.3
                             and abs(delta_x) > current_spacewidth() * f * 15
+                            and (output + text)[-1] != " "
                         ):
-                            if (output + text)[-1] != " ":
-                                text += " "
+                            text += " "
                     elif orientation == 90:
                         if delta_x > 0.8 * f:
                             if (output + text)[-1] != "\n":
@@ -1938,9 +1938,9 @@ class PageObject(DictionaryObject):
                         elif (
                             abs(delta_x) < f * 0.3
                             and abs(delta_y) > current_spacewidth() * f * 15
+                            and (output + text)[-1] != " "
                         ):
-                            if (output + text)[-1] != " ":
-                                text += " "
+                            text += " "
                     elif orientation == 270:
                         if delta_x < -0.8 * f:
                             if (output + text)[-1] != "\n":
@@ -1957,9 +1957,9 @@ class PageObject(DictionaryObject):
                         elif (
                             abs(delta_x) < f * 0.3
                             and abs(delta_y) > current_spacewidth() * f * 15
+                            and (output + text)[-1] != " "
                         ):
-                            if (output + text)[-1] != " ":
-                                text += " "
+                            text += " "
                 except Exception:
                     pass
 
@@ -1982,13 +1982,12 @@ class PageObject(DictionaryObject):
                 for op in operands[0]:
                     if isinstance(op, (str, bytes)):
                         process_operation(b"Tj", [op])
-                    if isinstance(op, (int, float, NumberObject, FloatObject)):
-                        if (
-                            (abs(float(op)) >= _space_width)
-                            and (len(text) > 0)
-                            and (text[-1] != " ")
-                        ):
-                            process_operation(b"Tj", [" "])
+                    if isinstance(op, (int, float, NumberObject, FloatObject)) and (
+                        (abs(float(op)) >= _space_width)
+                        and (len(text) > 0)
+                        and (text[-1] != " ")
+                    ):
+                        process_operation(b"Tj", [" "])
             elif operator == b"Do":
                 output += text
                 if visitor_text is not None:
@@ -2385,11 +2384,11 @@ def _get_fonts_walk(
     fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
     if "/BaseFont" in obj:
         fnt.add(cast(str, obj["/BaseFont"]))
-    if "/FontName" in obj:
-        if [x for x in fontkeys if x in obj]:  # test to see if there is FontFile
-            emb.add(cast(str, obj["/FontName"]))
+    if "/FontName" in obj and [x for x in fontkeys if x in obj]:
+        # the list comprehension ensures there is FontFile
+        emb.add(cast(str, obj["/FontName"]))
 
-    for key in obj.keys():
+    for key in obj:
         _get_fonts_walk(cast(DictionaryObject, obj[key]), fnt, emb)
 
     return fnt, emb  # return the sets for each page

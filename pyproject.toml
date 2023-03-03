@@ -116,7 +116,15 @@ ignore = [
     "D415",  # First line should end with a period
     # Introduces bugs
     "RUF001", "RUF002", "RUF005",
+    "ARG",
     # Personal preference
+    "SIM108",  # don't enforce ternary operators
+    "SIM105",  # contextlib.suppress
+    "SIM300",  # yoda conditions
+    "TID252",  # we want relative imports
+    "RET",
+    "BLE",  # we want to capture Exception sometimes
+    "TRY", # I don't know what this is about
     "D105",  # Missing docstring in magic method
     "D106",  # Missing docstring in public nested class
     "D107",  # Missing docstring in `__init__`
@@ -131,6 +139,7 @@ ignore = [
     # As long as we are not on Python 3.11+
     "UP006", "UP007",
     # for the moment, fix it later:
+    "PGH", # Use specific error messages
     "D417",  # Missing argument descriptions in the docstring
     "D101",  # Missing docstring in public class
     "D102", # Missing docstring in public method
@@ -146,9 +155,10 @@ ignore = [
     "FBT003", # Boolean positional value in function call
     "PT011", # `pytest.raises(ValueError)` is too broad, set the `match`
     "PT012",  # `pytest.raises()` block should contain a single simple statement
-    "PTH123", "N", "ARG", "TRY", "S", "EM", "RET", "TID",
-    "C901", "PGH", "DTZ", "TCH", "B", "G", "BLE", "SIM", "E", "INP", "A", "RUF",
-    "PLW", "PLE"
+    "PLW",  # global variables
+    "PTH123", "N", "S", "EM",
+    "C901", "DTZ", "TCH", "B", "G", "E", "INP", "A", "RUF",
+    "PLE",  # too many arguments for logging
 ]
 
 [tool.ruff.per-file-ignores]
