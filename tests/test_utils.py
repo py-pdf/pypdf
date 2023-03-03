@@ -238,7 +238,7 @@ def test_deprecation_bookmark():
     assert exc.value.args[0] == expected_msg
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_escapedcode_followed_by_int():
     # iss #1294
     url = (

@@ -284,10 +284,10 @@ def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
 
 
 @pytest.mark.parametrize(
-    ("input_path",),
+    "input_path",
     [
-        ("side-by-side-subfig.pdf",),
-        ("reportlab-inline-image.pdf",),
+        "side-by-side-subfig.pdf",
+        "reportlab-inline-image.pdf",
     ],
 )
 def test_remove_images(input_path):
@@ -316,10 +316,10 @@ def test_remove_images(input_path):
 
 
 @pytest.mark.parametrize(
-    ("input_path",),
+    "input_path",
     [
-        ("side-by-side-subfig.pdf",),
-        ("reportlab-inline-image.pdf",),
+        "side-by-side-subfig.pdf",
+        "reportlab-inline-image.pdf",
     ],
 )
 def test_remove_text(input_path):
@@ -725,8 +725,8 @@ def test_append_pages_from_reader_append():
         writer.write(o)
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test_sweep_indirect_references_nullobject_exception():
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
@@ -741,8 +741,8 @@ def test_sweep_indirect_references_nullobject_exception():
     Path(tmp_file).unlink()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -819,7 +819,7 @@ def test_write_dict_stream_object():
             assert str(v.get_object()) == str(stream_object)
             break
     else:
-        assert False, "/Test not found"
+        pytest.fail("/Test not found")
 
     # Check that every key in _idnum_hash is correct
     objects_hash = [o.hash_value() for o in writer._objects]
@@ -875,7 +875,7 @@ def test_deprecation_bookmark_decorator():
         writer.add_outline_item_dict(bookmark=outline_item)
 
 
-@pytest.mark.samples
+@pytest.mark.samples()
 def test_colors_in_outline_item():
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
@@ -898,7 +898,7 @@ def test_colors_in_outline_item():
     Path(target).unlink()  # comment out for testing
 
 
-@pytest.mark.samples
+@pytest.mark.samples()
 def test_write_empty_stream():
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
@@ -950,7 +950,7 @@ def test_startup_dest():
     pdf_file_writer.open_destination = None
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_iss471():
     url = "https://github.com/py-pdf/pypdf/files/9139245/book.pdf"
     name = "book_471.pdf"
@@ -963,7 +963,7 @@ def test_iss471():
     )
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_reset_translation():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -999,7 +999,7 @@ def test_threads_empty():
     assert thr == thr2
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_append_without_annots_and_articles():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -1018,7 +1018,7 @@ def test_append_without_annots_and_articles():
     assert len(writer.threads) >= 1
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_append_multiple():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -1033,7 +1033,7 @@ def test_append_multiple():
     assert pages[-1] not in pages[0:-1]  # page not repeated
 
 
-@pytest.mark.samples
+@pytest.mark.samples()
 def test_set_page_label():
     src = RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf"  # File without labels
     target = "pypdf-output.pdf"
@@ -1174,7 +1174,7 @@ def test_set_page_label():
     Path(target).unlink()  # comment to see result
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
@@ -1243,7 +1243,7 @@ def test_attachments():
     assert reader.attachments["foobar2.txt"][1] == b"2nd_foobarcontent"
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_iss1614():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"
@@ -1258,7 +1258,7 @@ def test_iss1614():
     out_pdf.append(in_pdf)
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_new_removes():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10807951/tt.pdf"

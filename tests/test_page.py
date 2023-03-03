@@ -44,7 +44,7 @@ def get_all_sample_files():
 all_files_meta = get_all_sample_files()
 
 
-@pytest.mark.samples
+@pytest.mark.samples()
 @pytest.mark.parametrize(
     "meta",
     [m for m in all_files_meta["data"] if not m["encrypted"]],
@@ -61,8 +61,8 @@ def test_read(meta):
     assert len(reader.pages) == meta["pages"]
 
 
-@pytest.mark.samples
-@pytest.mark.enable_socket
+@pytest.mark.samples()
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("pdf_path", "password"),
     [
@@ -203,7 +203,7 @@ def compare_dict_objects(d1, d2):
             assert d1[k] == d2[k]
 
 
-@pytest.mark.slow
+@pytest.mark.slow()
 def test_page_transformations():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -278,12 +278,10 @@ def test_page_rotation():
     # test transfer_rotate_to_content
     page.rotation -= 90
     page.transfer_rotation_to_content()
-    assert (
-        abs(float(page.mediabox.left) - 0) < 0.1
-        and abs(float(page.mediabox.bottom) - 0) < 0.1
-        and abs(float(page.mediabox.right) - 792) < 0.1
-        and abs(float(page.mediabox.top) - 612) < 0.1
-    )
+    assert abs(float(page.mediabox.left) - 0) < 0.1
+    assert abs(float(page.mediabox.bottom) - 0) < 0.1
+    assert abs(float(page.mediabox.right) - 792) < 0.1
+    assert abs(float(page.mediabox.top) - 612) < 0.1
 
 
 def test_page_indirect_rotation():
@@ -335,7 +333,7 @@ def test_multi_language():
     set_custom_rtl(-1, -1, [])  # to prevent further errors
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_extract_text_single_quote_op():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
@@ -343,7 +341,7 @@ def test_extract_text_single_quote_op():
         page.extract_text()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_no_ressources_on_text_extract():
     url = "https://github.com/py-pdf/pypdf/files/9428434/TelemetryTX_EM.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
@@ -351,7 +349,7 @@ def test_no_ressources_on_text_extract():
         page.extract_text()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
     url = "https://github.com/py-pdf/pypdf/files/9150656/ST.2019.PDF"
@@ -369,8 +367,8 @@ def test_iss_1142():
     assert txt.find("郑州分公司") > 0
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -402,8 +400,8 @@ def test_extract_text_page_pdf(url, name):
         page.extract_text()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
@@ -414,8 +412,8 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     assert warn_msgs == [""]  # text extraction recognise no text
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test_extract_text_operator_t_star():  # L1266, L1267
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/967/967943.pdf"
     name = "tika-967943.pdf"
@@ -860,7 +858,7 @@ def test_annotation_setter():
     Path(target).unlink()  # remove for testing
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 @pytest.mark.xfail(reason="#1091")
 def test_text_extraction_issue_1091():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
@@ -872,7 +870,7 @@ def test_text_extraction_issue_1091():
         page.extract_text()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_empyt_password_1088():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
@@ -881,17 +879,17 @@ def test_empyt_password_1088():
     len(reader.pages)
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_old_habibi():
     # this habibi has som multiple characters associated with the h
     reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
     txt = reader.pages[0].extract_text()  # very odd file
-    assert (
-        "habibi" in txt and "حَبيبي" in txt
-    )  # extract from acrobat reader "حَبيبي habibi􀀃􀏲􀎒􀏴􀎒􀎣􀋴
+    # extract from acrobat reader "حَبيبي habibi􀀃􀏲􀎒􀏴􀎒􀎣􀋴
+    assert "habibi" in txt
+    assert "حَبيبي" in txt
 
 
-@pytest.mark.samples
+@pytest.mark.samples()
 def test_read_link_annotation():
     reader = PdfReader(SAMPLE_ROOT / "016-libre-office-link/libre-office-link.pdf")
     assert len(reader.pages[0].annotations) == 1
@@ -921,7 +919,7 @@ def test_read_link_annotation():
     assert annot == expected
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_no_resources():
     url = "https://github.com/py-pdf/pypdf/files/9572045/108.pdf"
     name = "108.pdf"
@@ -1094,7 +1092,7 @@ def test_merge_page_resources_smoke_test():
     assert relevant_operations == expected_operations
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_merge_transformed_page_into_blank():
     url = "https://github.com/py-pdf/pypdf/files/10768334/badges_3vjrh_7LXDZ_1-1.pdf"
     name = "badges_3vjrh_7LXDZ_1.pdf"
