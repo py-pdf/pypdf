@@ -313,7 +313,7 @@ def test_merge_write_closed_fh_with_writer():
     Path("stream1.pdf").unlink()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_trim_outline_list():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/995/995175.pdf"
     name = "tika-995175.pdf"
@@ -327,7 +327,7 @@ def test_trim_outline_list():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_trim_outline_list_with_writer():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/995/995175.pdf"
     name = "tika-995175.pdf"
@@ -341,7 +341,7 @@ def test_trim_outline_list_with_writer():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_zoom():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/994/994759.pdf"
     name = "tika-994759.pdf"
@@ -355,7 +355,7 @@ def test_zoom():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_zoom_with_writer():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/994/994759.pdf"
     name = "tika-994759.pdf"
@@ -369,7 +369,7 @@ def test_zoom_with_writer():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_zoom_xyz_no_left():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/933/933322.pdf"
     name = "tika-933322.pdf"
@@ -383,7 +383,7 @@ def test_zoom_xyz_no_left():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_zoom_xyz_no_left_with_writer():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/933/933322.pdf"
     name = "tika-933322.pdf"
@@ -397,7 +397,7 @@ def test_zoom_xyz_no_left_with_writer():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_outline_item():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/997/997511.pdf"
     name = "tika-997511.pdf"
@@ -411,8 +411,8 @@ def test_outline_item():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test_outline_item_with_writer():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/997/997511.pdf"
     name = "tika-997511.pdf"
@@ -426,8 +426,8 @@ def test_outline_item_with_writer():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test_trim_outline():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/982/982336.pdf"
     name = "tika-982336.pdf"
@@ -441,8 +441,8 @@ def test_trim_outline():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test_trim_outline_with_writer():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/982/982336.pdf"
     name = "tika-982336.pdf"
@@ -456,8 +456,8 @@ def test_trim_outline_with_writer():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test1():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923621.pdf"
     name = "tika-923621.pdf"
@@ -471,8 +471,8 @@ def test1():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test1_with_writer():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923621.pdf"
     name = "tika-923621.pdf"
@@ -486,8 +486,8 @@ def test1_with_writer():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test_sweep_recursion1():
     # TODO: This test looks like an infinite loop.
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
@@ -505,8 +505,8 @@ def test_sweep_recursion1():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test_sweep_recursion1_with_writer():
     # TODO: This test looks like an infinite loop.
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
@@ -524,8 +524,8 @@ def test_sweep_recursion1_with_writer():
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -554,8 +554,8 @@ def test_sweep_recursion2(url, name):
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -584,7 +584,7 @@ def test_sweep_recursion2_with_writer(url, name):
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_sweep_indirect_list_newobj_is_none(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/906/906769.pdf"
     name = "tika-906769.pdf"
@@ -602,7 +602,7 @@ def test_sweep_indirect_list_newobj_is_none(caplog):
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_sweep_indirect_list_newobj_is_none_with_writer(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/906/906769.pdf"
     name = "tika-906769.pdf"
@@ -620,7 +620,7 @@ def test_sweep_indirect_list_newobj_is_none_with_writer(caplog):
     Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_iss1145():
     # issue with FitH destination with null param
     url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
@@ -630,7 +630,7 @@ def test_iss1145():
     merger.close()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_iss1145_with_writer():
     # issue with FitH destination with null param
     url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
@@ -680,7 +680,7 @@ def test_deprecation_bookmark_decorator_output_with_writer():
         merger.merge(0, reader, import_bookmarks=True)
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_iss1344(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9549001/input.pdf"
     name = "iss1344.pdf"
@@ -695,7 +695,7 @@ def test_iss1344(caplog):
     assert r.threads is None
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_iss1344_with_writer(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9549001/input.pdf"
     name = "iss1344.pdf"
@@ -708,7 +708,7 @@ def test_iss1344_with_writer(caplog):
     assert "adresse où le malade peut être visité" in p.extract_text()
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_articles_with_writer(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "924666.pdf"
