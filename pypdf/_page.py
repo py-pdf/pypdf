@@ -81,6 +81,28 @@ CUSTOM_RTL_SPECIAL_CHARS: List[int] = []
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
 
+def mult(m: List[float], n: List[float]) -> List[float]:
+    return [
+        m[0] * n[0] + m[1] * n[2],
+        m[0] * n[1] + m[1] * n[3],
+        m[2] * n[0] + m[3] * n[2],
+        m[2] * n[1] + m[3] * n[3],
+        m[4] * n[0] + m[5] * n[2] + n[4],
+        m[4] * n[1] + m[5] * n[3] + n[5],
+    ]
+
+
+def orient(m: List[float]) -> int:
+    if m[3] > 1e-6:
+        return 0
+    elif m[3] < -1e-6:
+        return 180
+    elif m[1] > 0:
+        return 90
+    else:
+        return 270
+
+
 def set_custom_rtl(
     _min: Union[str, int, None] = None,
     _max: Union[str, int, None] = None,
@@ -1648,26 +1670,6 @@ class PageObject(DictionaryObject):
         TL = 0.0
         font_size = 12.0  # init just in case of
 
-        def mult(m: List[float], n: List[float]) -> List[float]:
-            return [
-                m[0] * n[0] + m[1] * n[2],
-                m[0] * n[1] + m[1] * n[3],
-                m[2] * n[0] + m[3] * n[2],
-                m[2] * n[1] + m[3] * n[3],
-                m[4] * n[0] + m[5] * n[2] + n[4],
-                m[4] * n[1] + m[5] * n[3] + n[5],
-            ]
-
-        def orient(m: List[float]) -> int:
-            if m[3] > 1e-6:
-                return 0
-            elif m[3] < -1e-6:
-                return 180
-            elif m[1] > 0:
-                return 90
-            else:
-                return 270
-
         def current_spacewidth() -> float:
             return _space_width / 1000.0
 
@@ -1799,78 +1801,18 @@ class PageObject(DictionaryObject):
 
             elif operator == b"Tj":
                 check_crlf_space = True
-                m = mult(tm_matrix, cm_matrix)
-                orientation = orient(m)
-                if orientation in orientations:
-                    if isinstance(operands[0], str):
-                        text += operands[0]
-                    else:
-                        t: str = ""
-                        tt: bytes = (
-                            encode_pdfdocencoding(operands[0])
-                            if isinstance(operands[0], str)
-                            else operands[0]
-                        )
-                        if isinstance(cmap[0], str):
-                            try:
-                                t = tt.decode(
-                                    cmap[0], "surrogatepass"
-                                )  # apply str encoding
-                            except Exception:
-                                # the data does not match the expectation,
-                                # we use the alternative ;
-                                # text extraction may not be good
-                                t = tt.decode(
-                                    "utf-16-be" if cmap[0] == "charmap" else "charmap",
-                                    "surrogatepass",
-                                )  # apply str encoding
-                        else:  # apply dict encoding
-                            t = "".join(
-                                [
-                                    cmap[0][x] if x in cmap[0] else bytes((x,)).decode()
-                                    for x in tt
-                                ]
-                            )
-                        # "\u0590 - \u08FF \uFB50 - \uFDFF"
-                        for x in [cmap[1][x] if x in cmap[1] else x for x in t]:
-                            # x can be a sequence of bytes ; ex: habibi.pdf
-                            if len(x) == 1:
-                                xx = ord(x)
-                            else:
-                                xx = 1
-                            # fmt: off
-                            if (
-                                # cases where the current inserting order is kept
-                                (xx <= 0x2F)                        # punctuations but...
-                                or (0x3A <= xx and xx <= 0x40)      # numbers (x30-39)
-                                or (0x2000 <= xx and xx <= 0x206F)  # upper punctuations..
-                                or (0x20A0 <= xx and xx <= 0x21FF)  # but (numbers) indices/exponents
-                                or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
-                            ):
-                                text = x + text if rtl_dir else text + x
-                            elif (  # right-to-left characters set
-                                (0x0590 <= xx and xx <= 0x08FF)
-                                or (0xFB1D <= xx and xx <= 0xFDFF)
-                                or (0xFE70 <= xx and xx <= 0xFEFF)
-                                or (CUSTOM_RTL_MIN <= xx and xx <= CUSTOM_RTL_MAX)
-                            ):
-                                if not rtl_dir:
-                                    rtl_dir = True
-                                    output += text
-                                    if visitor_text is not None:
-                                        visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
-                                    text = ""
-                                text = x + text
-                            else:  # left-to-right
-                                # print(">",xx,x,end="")
-                                if rtl_dir:
-                                    rtl_dir = False
-                                    output += text
-                                    if visitor_text is not None:
-                                        visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
-                                    text = ""
-                                text = text + x
-                            # fmt: on
+                text, rtl_dir = handle_tj(
+                    text,
+                    operands,
+                    cm_matrix,
+                    tm_matrix,
+                    cmap,
+                    orientations,
+                    rtl_dir,
+                    visitor_text,
+                    output,
+                    font_size,
+                )
             else:
                 return None
             if check_crlf_space:
@@ -2392,3 +2334,87 @@ def _get_fonts_walk(
         _get_fonts_walk(cast(DictionaryObject, obj[key]), fnt, emb)
 
     return fnt, emb  # return the sets for each page
+
+
+def handle_tj(
+    text: str,
+    operands: List[Union[str, bytes]],
+    cm_matrix: List[float],
+    tm_matrix: List[float],
+    cmap: Tuple[
+        Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+    ],
+    orientations: Tuple[int, ...],
+    rtl_dir: bool,
+    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
+    output: str,
+    font_size: float,
+) -> Tuple[str, bool]:
+    m = mult(tm_matrix, cm_matrix)
+    orientation = orient(m)
+    if orientation in orientations:
+        if isinstance(operands[0], str):
+            text += operands[0]
+        else:
+            t: str = ""
+            tt: bytes = (
+                encode_pdfdocencoding(operands[0])
+                if isinstance(operands[0], str)
+                else operands[0]
+            )
+            if isinstance(cmap[0], str):
+                try:
+                    t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
+                except Exception:
+                    # the data does not match the expectation,
+                    # we use the alternative ;
+                    # text extraction may not be good
+                    t = tt.decode(
+                        "utf-16-be" if cmap[0] == "charmap" else "charmap",
+                        "surrogatepass",
+                    )  # apply str encoding
+            else:  # apply dict encoding
+                t = "".join(
+                    [cmap[0][x] if x in cmap[0] else bytes((x,)).decode() for x in tt]
+                )
+            # "\u0590 - \u08FF \uFB50 - \uFDFF"
+            for x in [cmap[1][x] if x in cmap[1] else x for x in t]:
+                # x can be a sequence of bytes ; ex: habibi.pdf
+                if len(x) == 1:
+                    xx = ord(x)
+                else:
+                    xx = 1
+                # fmt: off
+                if (
+                    # cases where the current inserting order is kept
+                    (xx <= 0x2F)                        # punctuations but...
+                    or (0x3A <= xx and xx <= 0x40)      # numbers (x30-39)
+                    or (0x2000 <= xx and xx <= 0x206F)  # upper punctuations..
+                    or (0x20A0 <= xx and xx <= 0x21FF)  # but (numbers) indices/exponents
+                    or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
+                ):
+                    text = x + text if rtl_dir else text + x
+                elif (  # right-to-left characters set
+                    (0x0590 <= xx and xx <= 0x08FF)
+                    or (0xFB1D <= xx and xx <= 0xFDFF)
+                    or (0xFE70 <= xx and xx <= 0xFEFF)
+                    or (CUSTOM_RTL_MIN <= xx and xx <= CUSTOM_RTL_MAX)
+                ):
+                    if not rtl_dir:
+                        rtl_dir = True
+                        output += text
+                        if visitor_text is not None:
+                            visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                        text = ""
+                    text = x + text
+                else:  # left-to-right
+                    # print(">",xx,x,end="")
+                    if rtl_dir:
+                        rtl_dir = False
+                        output += text
+                        if visitor_text is not None:
+                            visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                        text = ""
+                    text = text + x
+                # fmt: on
+    return text, rtl_dir
