@@ -132,53 +132,53 @@ def test_indirect_object_premature(value):
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_readHexStringFromStream():
+def test_read_hex_string_from_stream():
     stream = BytesIO(b"a1>")
     assert read_hex_string_from_stream(stream) == "\x10"
 
 
-def test_readHexStringFromStream_exception():
+def test_read_hex_string_from_stream_exception():
     stream = BytesIO(b"")
     with pytest.raises(PdfStreamError) as exc:
         read_hex_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_readStringFromStream_exception():
+def test_read_string_from_stream_exception():
     stream = BytesIO(b"x")
     with pytest.raises(PdfStreamError) as exc:
         read_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_readStringFromStream_not_in_escapedict_no_digit():
+def test_read_string_from_stream_not_in_escapedict_no_digit():
     stream = BytesIO(b"x\\y")
     with pytest.raises(PdfReadError) as exc:
         read_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_readStringFromStream_multichar_eol():
+def test_read_string_from_stream_multichar_eol():
     stream = BytesIO(b"x\\\n )")
     assert read_string_from_stream(stream) == " "
 
 
-def test_readStringFromStream_multichar_eol2():
+def test_read_string_from_stream_multichar_eol2():
     stream = BytesIO(b"x\\\n\n)")
     assert read_string_from_stream(stream) == ""
 
 
-def test_readStringFromStream_excape_digit():
+def test_read_string_from_stream_excape_digit():
     stream = BytesIO(b"x\\1a )")
     assert read_string_from_stream(stream) == "\x01a "
 
 
-def test_readStringFromStream_excape_digit2():
+def test_read_string_from_stream_excape_digit2():
     stream = BytesIO(b"(hello \\1\\2\\3\\4)")
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
 
 
-def test_NameObject(caplog):
+def test_name_object(caplog):
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
@@ -299,7 +299,7 @@ def test_read_object_comment():
     assert out == 1
 
 
-def test_ByteStringObject():
+def test_bytestringobject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")
     bo.write_to_stream(stream, encryption_key="foobar")
@@ -307,52 +307,52 @@ def test_ByteStringObject():
     assert stream.read() == b"<1cdd628b972e>"  # TODO: how can we verify this?
 
 
-def test_DictionaryObject_key_is_no_pdfobject():
+def test_dictionaryobject_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do["foo"] = NameObject("/GoTo")
     assert exc.value.args[0] == "key must be PdfObject"
 
 
-def test_DictionaryObject_xmp_meta():
+def test_dictionaryobject_xmp_meta():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     assert do.xmp_metadata is None
 
 
-def test_DictionaryObject_value_is_no_pdfobject():
+def test_dictionaryobject_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do[NameObject("/S")] = "/GoTo"
     assert exc.value.args[0] == "value must be PdfObject"
 
 
-def test_DictionaryObject_setdefault_key_is_no_pdfobject():
+def test_dictionaryobject_setdefault_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault("foo", NameObject("/GoTo"))
     assert exc.value.args[0] == "key must be PdfObject"
 
 
-def test_DictionaryObject_setdefault_value_is_no_pdfobject():
+def test_dictionaryobject_setdefault_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
     assert exc.value.args[0] == "value must be PdfObject"
 
 
-def test_DictionaryObject_setdefault_value():
+def test_dictionaryobject_setdefault_value():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     do.setdefault(NameObject("/S"), NameObject("/GoTo"))
 
 
-def test_DictionaryObject_read_from_stream():
+def test_dictionaryobject_read_from_stream():
     stream = BytesIO(b"<< /S /GoTo >>")
     pdf = None
     out = DictionaryObject.read_from_stream(stream, pdf)
     assert out.get_object() == {NameObject("/S"): NameObject("/GoTo")}
 
 
-def test_DictionaryObject_read_from_stream_broken():
+def test_dictionaryobject_read_from_stream_broken():
     stream = BytesIO(b"< /S /GoTo >>")
     pdf = None
     with pytest.raises(PdfReadError) as exc:
@@ -363,7 +363,7 @@ def test_DictionaryObject_read_from_stream_broken():
     )
 
 
-def test_DictionaryObject_read_from_stream_unexpected_end():
+def test_dictionaryobject_read_from_stream_unexpected_end():
     stream = BytesIO(b"<< \x00/S /GoTo")
     pdf = None
     with pytest.raises(PdfStreamError) as exc:
@@ -371,7 +371,7 @@ def test_DictionaryObject_read_from_stream_unexpected_end():
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_DictionaryObject_read_from_stream_stream_no_newline():
+def test_dictionaryobject_read_from_stream_stream_no_newline():
     stream = BytesIO(b"<< /S /GoTo >>stream")
     pdf = None
     with pytest.raises(PdfReadError) as exc:
@@ -380,7 +380,7 @@ def test_DictionaryObject_read_from_stream_stream_no_newline():
 
 
 @pytest.mark.parametrize(("strict"), [(True), (False)])
-def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
+def test_dictionaryobject_read_from_stream_stream_no_stream_length(strict):
     stream = BytesIO(b"<< /S /GoTo >>stream\n")
 
     class Tst:  # to replace pdf
@@ -403,7 +403,7 @@ def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
         (False, 10, False),
     ],
 )
-def test_DictionaryObject_read_from_stream_stream_stream_valid(
+def test_dictionaryobject_read_from_stream_stream_stream_valid(
     strict, length, should_fail
 ):
     stream = BytesIO(b"<< /S /GoTo /Length %d >>stream\nBT /F1\nendstream\n" % length)
@@ -423,7 +423,7 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid(
     assert should_fail ^ (exc.value.args[0] == "__ALLGOOD__")
 
 
-def test_RectangleObject():
+def test_rectangleobject():
     ro = RectangleObject((1, 2, 3, 4))
     assert ro.lower_left == (1, 2)
     assert ro.lower_right == (3, 2)
@@ -450,14 +450,14 @@ def test_RectangleObject():
     assert ro.upper_right == (14, 18)
 
 
-def test_TextStringObject_exc():
+def test_textstringobject_exc():
     tso = TextStringObject("foo")
     with pytest.raises(Exception) as exc:
         tso.get_original_bytes()
     assert exc.value.args[0] == "no information about original bytes"
 
 
-def test_TextStringObject_autodetect_utf16():
+def test_textstringobject_autodetect_utf16():
     tso = TextStringObject("foo")
     tso.autodetect_utf16 = True
     assert tso.get_original_bytes() == b"\xfe\xff\x00f\x00o\x00o"
@@ -936,7 +936,7 @@ def test_annotation_builder_text():
     Path(target).unlink()  # comment this out for manual inspection
 
 
-def test_CheckboxRadioButtonAttributes_opt():
+def test_checkboxradiobuttonattributes_opt():
     assert "/Opt" in CheckboxRadioButtonAttributes.attributes_dict()
 
 

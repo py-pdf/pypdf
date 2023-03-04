@@ -117,23 +117,30 @@ ignore = [
     # Introduces bugs
     "RUF001", "RUF002", "RUF005",
     "ARG",
+    "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)`
     # Personal preference
-    "SIM108",  # don't enforce ternary operators
-    "SIM105",  # contextlib.suppress
-    "SIM300",  # yoda conditions
-    "TID252",  # we want relative imports
-    "RET",
-    "BLE",  # we want to capture Exception sometimes
-    "TRY", # I don't know what this is about
-    "D105",  # Missing docstring in magic method
-    "D106",  # Missing docstring in public nested class
-    "D107",  # Missing docstring in `__init__`
-    "D203", # one-blank-line-before-class
-    "COM812",  # yes, they make the diff smaller
+    "N806",  # Variable `NO` in function should be lowercase
+    "N814", # Camelcase `PageAttributes` imported as constant `PG`
+    "N817",  # CamelCase `PagesAttributes` imported as acronym `PA`
     "ANN101",  # annotating 'self' seems weird (at least before 3.11)
     "ANN102",  # Missing type annotation for `cls` in classmethod
     "ANN204", # Missing return type annotation for special method `__init__`
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
+    "BLE",  # we want to capture Exception sometimes
+    "COM812",  # yes, they make the diff smaller
+    "D105",  # Missing docstring in magic method
+    "D106",  # Missing docstring in public nested class
+    "D107",  # Missing docstring in `__init__`
+    "D203", # one-blank-line-before-class
+    "EM",  # exception messages
+    "G004",  # f-string in logging statement
+    "RET",
+    "S110", # `try`-`except`-`pass` detected, consider logging the exception
+    "SIM105",  # contextlib.suppress
+    "SIM108",  # don't enforce ternary operators
+    "SIM300",  # yoda conditions
+    "TID252",  # we want relative imports
+    "TRY", # I don't know what this is about
     # As long as we are not on Python 3.9+
     "UP035", # PEP 585
     # As long as we are not on Python 3.11+
@@ -156,18 +163,26 @@ ignore = [
     "PT011", # `pytest.raises(ValueError)` is too broad, set the `match`
     "PT012",  # `pytest.raises()` block should contain a single simple statement
     "PLW",  # global variables
-    "PTH123", "N", "S", "EM",
-    "C901", "DTZ", "TCH", "B", "G", "E", "INP", "A", "RUF",
+    "A",  # Variable is shadowing a built-in
+    "PTH123", # `open()` should be replaced by `Path.open()`
+    #"N",
+    "S101",  # Use of `assert` detected
+    "C901", "DTZ", "TCH", "B", "RUF",
     "PLE",  # too many arguments for logging
 ]
 
 [tool.ruff.per-file-ignores]
-"tests/*" = ["S101", "ANN001", "ANN201","D104"]
+"tests/*" = ["S101", "ANN001", "ANN201","D104", "S105", "S106"]
+"sample-files/*" = ["D100", "INP001"]
+"_encryption.py" = ["S324"]
+"_security.py" = ["S324"]
+"_writer.py" = ["S324"]
 "make_changelog.py" = ["T201"]
 "json_consistency.py" = ["T201"]
 "tests/test_workflows.py" =  ["T201"]
-"sample-files/*" = ["D100"]
-"docs/conf.py" = ["PTH"]
+"docs/conf.py" = ["PTH", "INP001"]
+# We first need to deprecate old stuff:
+"pypdf/*" = ["N802", "N803"]
 
 [tool.docformatter]
 pre-summary-newline = true

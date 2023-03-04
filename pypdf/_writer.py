@@ -2968,13 +2968,12 @@ class PdfWriter:
                 or o.get("/Title", None) == outline_item
             ):
                 return [i]
-            else:
-                if "/First" in o:
-                    res = self.find_outline_item(
-                        outline_item, cast(OutlineType, o["/First"])
-                    )
-                    if res:
-                        return ([i] if "/Title" in o else []) + res
+            elif "/First" in o:
+                res = self.find_outline_item(
+                    outline_item, cast(OutlineType, o["/First"])
+                )
+                if res:
+                    return ([i] if "/Title" in o else []) + res
             if "/Next" in o:
                 i += 1
                 o = cast(TreeObject, o["/Next"])

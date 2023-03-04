@@ -685,19 +685,19 @@ def test_extract_text_visitor_callbacks():
     reader = PdfReader(RESOURCE_ROOT / "Sample_Td-matrix.pdf")
     page_td_model = reader.pages[0]
     # We store the translations of the Td-executions.
-    list_Td = []
+    list_td = []
 
     def visitor_td(op, args, cm, tm) -> None:
         if op == b"Td":
-            list_Td.append((tm[4], tm[5]))
+            list_td.append((tm[4], tm[5]))
 
     page_td_model.extract_text(visitor_operand_after=visitor_td)
-    assert len(list_Td) == 4
+    assert len(list_td) == 4
     # Check the translations of the four Td-executions.
-    assert list_Td[0] == (210.0, 110.0)
-    assert list_Td[1] == (410.0, 110.0)
-    assert list_Td[2] == (210.0, 210.0)
-    assert list_Td[3] == (410.0, 210.0)
+    assert list_td[0] == (210.0, 110.0)
+    assert list_td[1] == (410.0, 110.0)
+    assert list_td[2] == (210.0, 210.0)
+    assert list_td[3] == (410.0, 210.0)
 
 
 @pytest.mark.parametrize(
