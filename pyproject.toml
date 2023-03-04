@@ -117,6 +117,7 @@ ignore = [
     # Introduces bugs
     "RUF001", "RUF002", "RUF005",
     "ARG",
+    "DTZ001", # The use of `datetime.datetime()` without `tzinfo` is necessary
     "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)`
     # Personal preference
     "N806",  # Variable `NO` in function should be lowercase
@@ -169,7 +170,7 @@ ignore = [
     "B905",  # `zip()` without an explicit `strict=` parameter
     "B904", # Within an `except` clause, raise exceptions with
     "S101",  # Use of `assert` detected
-    "C901", "DTZ",
+    "C901",
     "PLE",  # too many arguments for logging
 ]
 
