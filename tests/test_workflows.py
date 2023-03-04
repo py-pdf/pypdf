@@ -77,7 +77,7 @@ def test_dropdown_items():
     assert "/Opt" in fields["Nationality"]
 
 
-def test_PdfReaderFileLoad():
+def test_pdfreader_file_load():
     """
     Test loading and parsing of a file.
 
@@ -105,7 +105,7 @@ def test_PdfReaderFileLoad():
         )
 
 
-def test_PdfReaderJpegImage():
+def test_pdfreader_jpeg_image():
     """
     Test loading and parsing of a file. Extract the image of the file and
     compare to expected textual output.

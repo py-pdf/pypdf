@@ -743,7 +743,7 @@ def test_convert_to_int_error():
     assert exc.value.args[0] == "invalid size in convert_to_int"
 
 
-def test_convertToInt_deprecated():
+def test_converttoint_deprecated():
     msg = (
         "convertToInt is deprecated and was removed in pypdf 3.0.0. "
         "Use convert_to_int instead."
@@ -1190,7 +1190,7 @@ def test_outline_with_invalid_destinations():
 
 
 @pytest.mark.enable_socket()
-def test_PdfReaderMultipleDefinitions(caplog):
+def test_pdfreader_multiple_definitions(caplog):
     # iss325
     url = "https://github.com/py-pdf/pypdf/files/9176644/multipledefs.pdf"
     name = "multipledefs.pdf"
