@@ -67,10 +67,13 @@ from ._utils import (
 )
 from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
-from .constants import CheckboxRadioButtonAttributes
+from .constants import (
+    CheckboxRadioButtonAttributes,
+    FieldDictionaryAttributes,
+    GoToActionArguments,
+)
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
-from .constants import FieldDictionaryAttributes, GoToActionArguments
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK

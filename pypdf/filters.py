@@ -38,9 +38,7 @@ import math
 import struct
 import zlib
 from io import BytesIO
-from typing import Any, Dict, Optional, Tuple, Union, cast, TYPE_CHECKING
-
-from .generic import ArrayObject, DictionaryObject, IndirectObject, NameObject
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union, cast
 
 from ._utils import b_, deprecate_with_replacement, ord_, paeth_predictor
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -52,6 +50,7 @@ from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
 from .errors import PdfReadError, PdfStreamError
+from .generic import ArrayObject, DictionaryObject, IndirectObject, NameObject
 
 if TYPE_CHECKING:
     try:
