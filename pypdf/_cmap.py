@@ -56,7 +56,7 @@ def build_char_map(
         space_width = _default_fonts_space_width[cast(str, ft["/BaseFont"])]
     except Exception:
         pass
-    # I conside the space_code is available on one byte
+    # I consider the space_code is available on one byte
     if isinstance(space_code, str):
         try:  # one byte
             sp = space_code.encode("charmap")[0]
@@ -140,7 +140,7 @@ def parse_encoding(
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
-            # allready done : enc = NameObject.unnumber(enc.encode()).decode()
+            # already done : enc = NameObject.unnumber(enc.encode()).decode()
             # for #xx decoding
             if enc in charset_encoding:
                 encoding = charset_encoding[enc].copy()

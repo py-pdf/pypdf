@@ -645,7 +645,7 @@ class NameObject(str, PdfObject):
                 sin = sin[:i] + unhexlify(sin[i + 1 : i + 3]) + sin[i + 3 :]
                 i = sin.find(b"#", i + 1)
             except ValueError:
-                # if the 2 characters after # can not be converted to hexa
+                # if the 2 characters after # can not be converted to hex
                 # we change nothing and carry on
                 i = i + 1
         return sin

@@ -142,8 +142,8 @@ class ArrayObject(list, PdfObject):
                 tok = stream.read(1)
             stream.seek(-1, 1)
             # check for array ending
-            peekahead = stream.read(1)
-            if peekahead == b"]":
+            peek_ahead = stream.read(1)
+            if peek_ahead == b"]":
                 break
             stream.seek(-1, 1)
             # read and append obj
@@ -1072,23 +1072,23 @@ class ContentStream(DecodedStreamObject):
 
     @property
     def _data(self) -> bytes:
-        newdata = BytesIO()
+        new_data = BytesIO()
         for operands, operator in self.operations:
             if operator == b"INLINE IMAGE":
-                newdata.write(b"BI")
-                dicttext = BytesIO()
-                operands["settings"].write_to_stream(dicttext, None)
-                newdata.write(dicttext.getvalue()[2:-2])
-                newdata.write(b"ID ")
-                newdata.write(operands["data"])
-                newdata.write(b"EI")
+                new_data.write(b"BI")
+                dict_text = BytesIO()
+                operands["settings"].write_to_stream(dict_text, None)
+                new_data.write(dict_text.getvalue()[2:-2])
+                new_data.write(b"ID ")
+                new_data.write(operands["data"])
+                new_data.write(b"EI")
             else:
                 for op in operands:
-                    op.write_to_stream(newdata, None)
-                    newdata.write(b" ")
-                newdata.write(b_(operator))
-            newdata.write(b"\n")
-        return newdata.getvalue()
+                    op.write_to_stream(new_data, None)
+                    new_data.write(b" ")
+                new_data.write(b_(operator))
+            new_data.write(b"\n")
+        return new_data.getvalue()
 
     @_data.setter
     def _data(self, value: Union[str, bytes]) -> None:
@@ -1316,7 +1316,7 @@ class Destination(TreeObject):
     node: Optional[
         DictionaryObject
     ] = None  # node provide access to the original Object
-    childs: List[Any] = []  # used in PdfWriter
+    childs: List[Any] = []  # used in PdfWriter - TODO: should be children
 
     def __init__(
         self,
@@ -1347,12 +1347,12 @@ class Destination(TreeObject):
                 self[NameObject(TA.TOP)],
             ) = args
         elif typ in [TF.FIT_H, TF.FIT_BH]:
-            try:  # Prefered to be more robust not only to null parameters
+            try:  # Preferred to be more robust not only to null parameters
                 (self[NameObject(TA.TOP)],) = args
             except Exception:
                 (self[NameObject(TA.TOP)],) = (NullObject(),)
         elif typ in [TF.FIT_V, TF.FIT_BV]:
-            try:  # Prefered to be more robust not only to null parameters
+            try:  # Preferred to be more robust not only to null parameters
                 (self[NameObject(TA.LEFT)],) = args
             except Exception:
                 (self[NameObject(TA.LEFT)],) = (NullObject(),)
@@ -1463,6 +1463,6 @@ class Destination(TreeObject):
 
         positive = expanded
         negative = collapsed
-        absolute value = number of visible descendents at all levels
+        absolute value = number of visible descendants at all levels
         """
         return self.get("/Count", None)
