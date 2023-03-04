@@ -203,6 +203,12 @@ class DictionaryObject(dict, PdfObject):
             field not in ignore_fields
             and field in src
             and isinstance(src.raw_get(field), IndirectObject)
+            and isinstance(src[field], DictionaryObject)
+            and (
+                src.get("/Type", None) is None
+                or src[field].get("/Type", None) is None
+                or src.get("/Type", None) == src[field].get("/Type", None)
+            )
             for field in ["/Next", "/Prev", "/N", "/V"]
         ):
             ignore_fields = list(ignore_fields)
@@ -245,7 +251,7 @@ class DictionaryObject(dict, PdfObject):
                             except Exception:
                                 cur_obj = None
                         for s, c in objs:
-                            c._clone(s, pdf_dest, force_duplicate, ignore_fields + [k])
+                            c._clone(s, pdf_dest, force_duplicate, ignore_fields)
 
         for k, v in src.items():
             if k not in ignore_fields:
