@@ -73,24 +73,25 @@ from ._utils import (
     deprecation_with_replacement,
     logger_warning,
 )
-from .constants import AnnotationDictionaryAttributes
-from .constants import CatalogAttributes as CA
-from .constants import CatalogDictionary
-from .constants import Core as CO
-from .constants import EncryptionDictAttributes as ED
 from .constants import (
+    AnnotationDictionaryAttributes,
+    CatalogDictionary,
     FieldDictionaryAttributes,
     FieldFlag,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
     InteractiveFormDictEntries,
+    PageLabelStyle,
+    TypFitArguments,
+    UserAccessPermissions,
 )
+from .constants import CatalogAttributes as CA
+from .constants import Core as CO
+from .constants import EncryptionDictAttributes as ED
 from .constants import PageAttributes as PG
-from .constants import PageLabelStyle
 from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
-from .constants import TypFitArguments, UserAccessPermissions
 from .generic import (
     PAGE_FIT,
     AnnotationBuilder,

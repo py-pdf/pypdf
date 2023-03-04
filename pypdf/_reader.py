@@ -67,10 +67,13 @@ from ._utils import (
 )
 from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
-from .constants import CheckboxRadioButtonAttributes
+from .constants import (
+    CheckboxRadioButtonAttributes,
+    FieldDictionaryAttributes,
+    GoToActionArguments,
+)
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
-from .constants import FieldDictionaryAttributes, GoToActionArguments
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
@@ -1434,7 +1437,7 @@ class PdfReader:
         stream.seek(-1, 1)
 
         # although it's not used, it might still be necessary to read
-        _obj = stream.read(3)  # noqa: F841
+        _obj = stream.read(3)
 
         read_non_whitespace(stream)
         stream.seek(-1, 1)
