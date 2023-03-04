@@ -206,8 +206,9 @@ class DictionaryObject(dict, PdfObject):
             and isinstance(src[field], DictionaryObject)
             and (
                 src.get("/Type", None) is None
-                or src[field].get("/Type", None) is None
-                or src.get("/Type", None) == src[field].get("/Type", None)
+                or cast(DictionaryObject, src[field]).get("/Type", None) is None
+                or src.get("/Type", None)
+                == cast(DictionaryObject, src[field]).get("/Type", None)
             )
             for field in ["/Next", "/Prev", "/N", "/V"]
         ):
@@ -224,8 +225,9 @@ class DictionaryObject(dict, PdfObject):
                         # that the types are the same:
                         and (
                             src.get("/Type", None) is None
-                            or src[k].get("/Type", None) is None
-                            or src.get("/Type", None) == src[k].get("/Type", None)
+                            or cast(DictionaryObject, src[k]).get("/Type", None) is None
+                            or src.get("/Type", None)
+                            == cast(DictionaryObject, src[k]).get("/Type", None)
                         )
                     ):
                         cur_obj: Optional["DictionaryObject"] = cast(
