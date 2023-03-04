@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677875767621,
+  "lastUpdate": 1677912613152,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -25766,6 +25766,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006605341065012866",
             "extra": "mean: 85.17208845455055 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "47bf835c3a3d27cb2db5f55b61cbb1e4e8b7aab6",
+          "message": "STY: Enable flake8-simplify rules (#1679)",
+          "timestamp": "2023-03-04T07:49:01+01:00",
+          "tree_id": "712b0de00121bb8030e12a97dc2e6495bbce9fdf",
+          "url": "https://github.com/py-pdf/pypdf/commit/47bf835c3a3d27cb2db5f55b61cbb1e4e8b7aab6"
+        },
+        "date": 1677912611592,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0108862416187259,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005744183661506655",
+            "extra": "mean: 989.2309924000017 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.174605134711717,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006052096432716612",
+            "extra": "mean: 89.48862066666645 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24981000226887565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01874373023141014",
+            "extra": "mean: 4.003042275799987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.421985968608277,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0001881108324610117",
+            "extra": "mean: 80.50242550000537 msec\nrounds: 12"
           }
         ]
       }
