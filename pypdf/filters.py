@@ -38,16 +38,9 @@ import math
 import struct
 import zlib
 from io import BytesIO
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast, TYPE_CHECKING
 
 from .generic import ArrayObject, DictionaryObject, IndirectObject, NameObject
-
-try:
-    from typing import Literal  # type: ignore[attr-defined]
-except ImportError:
-    # PEP 586 introduced typing.Literal with Python 3.8
-    # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import Literal  # type: ignore[misc]
 
 from ._utils import b_, deprecate_with_replacement, ord_, paeth_predictor
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -59,6 +52,14 @@ from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
 from .errors import PdfReadError, PdfStreamError
+
+if TYPE_CHECKING:
+    try:
+        from typing import Literal  # type: ignore[attr-defined]
+    except ImportError:
+        # PEP 586 introduced typing.Literal with Python 3.8
+        # For older Python versions, the backport typing_extensions is necessary:
+        from typing_extensions import Literal  # type: ignore[misc]
 
 
 def decompress(data: bytes) -> bytes:

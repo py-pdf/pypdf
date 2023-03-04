@@ -169,7 +169,7 @@ ignore = [
     "B905",  # `zip()` without an explicit `strict=` parameter
     "B904", # Within an `except` clause, raise exceptions with
     "S101",  # Use of `assert` detected
-    "C901", "DTZ", "TCH",
+    "C901", "DTZ",
     "PLE",  # too many arguments for logging
 ]
 

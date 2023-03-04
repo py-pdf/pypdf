@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, TYPE_CHECKING
 
 from ._base import (
     BooleanObject,
@@ -315,7 +315,8 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        from ..types import BorderArrayType
+        if TYPE_CHECKING:
+            from ..types import BorderArrayType
 
         is_external = url is not None
         is_internal = target_page_index is not None
