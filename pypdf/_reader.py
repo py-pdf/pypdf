@@ -1522,7 +1522,7 @@ class PdfReader:
                     continue
                 xref_k = sorted(
                     xref_entry.keys()
-                )  # must ensure ascendant to prevent damange
+                )  # must ensure ascendant to prevent damage
                 for id in xref_k:
                     stream.seek(xref_entry[id], 0)
                     try:
@@ -1600,10 +1600,10 @@ class PdfReader:
             raise PdfReadError("xref table read error")
         read_non_whitespace(stream)
         stream.seek(-1, 1)
-        firsttime = True  # check if the first time looking at the xref table
+        first_time = True  # check if the first time looking at the xref table
         while True:
             num = cast(int, read_object(stream, self))
-            if firsttime and num != 0:
+            if first_time and num != 0:
                 self.xref_index = num
                 if self.strict:
                     logger_warning(
@@ -1612,7 +1612,7 @@ class PdfReader:
                     )
                     # if table not zero indexed, could be due to error from when PDF was created
                     # which will lead to mismatched indices later on, only warned and corrected if self.strict==True
-            firsttime = False
+            first_time = False
             read_non_whitespace(stream)
             stream.seek(-1, 1)
             size = cast(int, read_object(stream, self))
@@ -1647,7 +1647,7 @@ class PdfReader:
 
                     offset, generation = int(offset_b), int(generation_b)
                 except Exception:
-                    # if something wrong occured
+                    # if something wrong occurred
                     if hasattr(stream, "getbuffer"):
                         buf = bytes(stream.getbuffer())  # type: ignore
                     else:
@@ -1695,8 +1695,8 @@ class PdfReader:
                 num += 1
             read_non_whitespace(stream)
             stream.seek(-1, 1)
-            trailertag = stream.read(7)
-            if trailertag != b"trailer":
+            trailer_tag = stream.read(7)
+            if trailer_tag != b"trailer":
                 # more xrefs!
                 stream.seek(-7, 1)
             else:

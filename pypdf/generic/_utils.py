@@ -90,7 +90,7 @@ def read_string_from_stream(
                         if b"0" <= ntok and ntok <= b"7":
                             tok += ntok
                         else:
-                            stream.seek(-1, 1)  # ntok has to be analysed
+                            stream.seek(-1, 1)  # ntok has to be analyzed
                             break
                     tok = b_(chr(int(tok, base=8)))
                 elif tok in b"\n\r":
