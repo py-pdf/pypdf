@@ -72,6 +72,7 @@ from .generic import (
     NullObject,
     NumberObject,
     RectangleObject,
+    TextStringObject,
     encode_pdfdocencoding,
 )
 
@@ -2338,7 +2339,7 @@ def _get_fonts_walk(
 
 def handle_tj(
     text: str,
-    operands: List[Union[str, bytes]],
+    operands: List[Union[str, TextStringObject]],
     cm_matrix: List[float],
     tm_matrix: List[float],
     cmap: Tuple[
