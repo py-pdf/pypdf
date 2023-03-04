@@ -1242,13 +1242,12 @@ class PdfWriter:
                             grant_parents + [parent] if parent is not None else [],
                         )
                     )
-            elif isinstance(data, IndirectObject):
-                if data.pdf != self:
-                    data = self._resolve_indirect_object(data)
+            elif isinstance(data, IndirectObject) and data.pdf != self:
+                data = self._resolve_indirect_object(data)
 
-                    if str(data) not in discovered:
-                        discovered.append(str(data))
-                        stack.append((data.get_object(), None, None, []))
+                if str(data) not in discovered:
+                    discovered.append(str(data))
+                    stack.append((data.get_object(), None, None, []))
 
             # Check if data has a parent and if it is a dict or
             # an array update the value
