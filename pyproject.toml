@@ -117,6 +117,7 @@ ignore = [
     # Introduces bugs
     "RUF001", "RUF002", "RUF005",
     "ARG",
+    "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)`
     # Personal preference
     "SIM108",  # don't enforce ternary operators
     "SIM105",  # contextlib.suppress

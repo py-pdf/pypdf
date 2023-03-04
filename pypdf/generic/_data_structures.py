@@ -248,13 +248,12 @@ class DictionaryObject(dict, PdfObject):
                     vv = v.clone(pdf_dest, force_duplicate, ignore_fields)
                     assert vv.indirect_reference is not None
                     self[k.clone(pdf_dest)] = vv.indirect_reference  # type: ignore[attr-defined]
-                else:
-                    if k not in self:
-                        self[NameObject(k)] = (
-                            v.clone(pdf_dest, force_duplicate, ignore_fields)
-                            if hasattr(v, "clone")
-                            else v
-                        )
+                elif k not in self:
+                    self[NameObject(k)] = (
+                        v.clone(pdf_dest, force_duplicate, ignore_fields)
+                        if hasattr(v, "clone")
+                        else v
+                    )
 
     def raw_get(self, key: Any) -> Any:
         return dict.__getitem__(self, key)

@@ -342,9 +342,8 @@ class PdfReader:
                 # raise if password provided
                 raise WrongPasswordError("Wrong password")
             self._override_encryption = False
-        else:
-            if password is not None:
-                raise PdfReadError("Not encrypted file")
+        elif password is not None:
+            raise PdfReadError("Not encrypted file")
 
     @property
     def pdf_header(self) -> str:
@@ -432,8 +431,6 @@ class PdfReader:
     def _get_num_pages(self) -> int:
         """
         Calculate the number of pages in this PDF file.
-
-        Args:
 
         Returns:
             The number of pages of the parsed PDF file
