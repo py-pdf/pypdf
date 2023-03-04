@@ -1061,7 +1061,7 @@ def test_append_with_indirectobject_not_pointing(caplog):
     assert "Object 43 0 not defined." in caplog.text
 
 
-@pytest.mark.enable_socket
+@pytest.mark.enable_socket()
 def test_iss1615_1673():
     """
     test cases where /N is not indicating chains of objects
