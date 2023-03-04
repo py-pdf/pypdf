@@ -202,7 +202,7 @@ class ASCIIHexDecode:
     @staticmethod
     def decode(
         data: str,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,  # noqa: F841
+        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> str:
         """

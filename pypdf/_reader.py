@@ -1434,7 +1434,7 @@ class PdfReader:
         stream.seek(-1, 1)
 
         # although it's not used, it might still be necessary to read
-        _obj = stream.read(3)  # noqa: F841
+        _obj = stream.read(3)
 
         read_non_whitespace(stream)
         stream.seek(-1, 1)
