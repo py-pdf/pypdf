@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678028115999,
+  "lastUpdate": 1678028346901,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26026,6 +26026,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00421747745352484",
             "extra": "mean: 107.87954755555045 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "39f52dceaef6b980d1e0e36214e373a97fb1fd15",
+          "message": "ROB: Some attributes not copied in DictionaryObject._clone (#1635)\n\n* \"/N\" attributes wrongly ignored during copy process\r\n* The object referenced via `src[field]` needs to be a dictionary\r\n\r\nFixes #1615, #1671\r\nFixes #1673",
+          "timestamp": "2023-03-05T15:58:01+01:00",
+          "tree_id": "1672f50e50bc09ff08a0e719c8c662999fdebfea",
+          "url": "https://github.com/py-pdf/pypdf/commit/39f52dceaef6b980d1e0e36214e373a97fb1fd15"
+        },
+        "date": 1678028345596,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0319131819277463,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0074257262223494155",
+            "extra": "mean: 969.0737723999916 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.535336881900367,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0053427940019086335",
+            "extra": "mean: 86.69014266666626 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2534511428314792,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014826570805888473",
+            "extra": "mean: 3.9455335999999988 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.830937587179688,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001109817602680974",
+            "extra": "mean: 77.93662724999706 msec\nrounds: 12"
           }
         ]
       }
