@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678028346901,
+  "lastUpdate": 1678028866880,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26078,6 +26078,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001109817602680974",
             "extra": "mean: 77.93662724999706 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "081751c468dc2d59854621bcf0b2c189cc3a7700",
+          "message": "REL: Version 3.5.1, 2023-03-05\n\nRobustness (ROB)\n-  Some attributes not copied in DictionaryObject._clone (#1635)\n-  Allow merging multiple time pages with annots (#1624)\n\nTesting (TST)\n-  Replace pytest.mark.external by enable_socket (#1657)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.5.0...3.5.1)",
+          "timestamp": "2023-03-05T16:06:09+01:00",
+          "tree_id": "9a8b9c490bcaa79d20fd1929ae62c18790ea90d7",
+          "url": "https://github.com/py-pdf/pypdf/commit/081751c468dc2d59854621bcf0b2c189cc3a7700"
+        },
+        "date": 1678028865233,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0311413304190333,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008567118876956945",
+            "extra": "mean: 969.7991638000019 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.48544866108651,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005817524081776122",
+            "extra": "mean: 87.06669016666879 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2537241311834845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013357897178450666",
+            "extra": "mean: 3.9412884983999987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.618310926253796,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00023715347119137212",
+            "extra": "mean: 79.24990958333329 msec\nrounds: 12"
           }
         ]
       }
