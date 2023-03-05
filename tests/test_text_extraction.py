@@ -7,7 +7,7 @@ The tested code might be in _page.py.
 from pathlib import Path
 
 from pypdf import PdfReader
-from pypdf.text_extraction import set_custom_rtl
+from pypdf._text_extraction import set_custom_rtl
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent

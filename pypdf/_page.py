@@ -46,6 +46,12 @@ from typing import (
 
 from ._cmap import build_char_map, unknown_char_map
 from ._protocols import PdfReaderProtocol, PdfWriterProtocol
+from ._text_extraction import (
+    OrientationNotFoundError,
+    crlf_space_check,
+    handle_tj,
+    mult,
+)
 from ._utils import (
     CompressedTransformationMatrix,
     File,
@@ -73,7 +79,6 @@ from .generic import (
     NumberObject,
     RectangleObject,
 )
-from .text_extraction import OrientationNotFoundError, crlf_space_check, handle_tj, mult
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
