@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## Version 3.5.1, 2023-03-05
+
+### Robustness (ROB)
+-  Some attributes not copied in DictionaryObject._clone (#1635)
+-  Allow merging multiple time pages with annots (#1624)
+
+### Testing (TST)
+-  Replace pytest.mark.external by enable_socket (#1657)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.5.0...3.5.1)
+
 ## Version 3.5.0, 2023-02-26
 
 ### New Features (ENH)
