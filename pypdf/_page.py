@@ -2055,7 +2055,7 @@ class PageObject(DictionaryObject):
         see function set_custom_rtl
 
         Additionally you can provide visitor-methods to get informed on all
-        operands and all text-objects.
+        operations and all text-objects.
         For example in some PDF files this can be useful to parse tables.
 
         Args:
@@ -2067,11 +2067,11 @@ class PageObject(DictionaryObject):
                 270 (turned Right)
             space_width: force default space width
                 if not extracted from font (default: 200)
-            visitor_operand_before: function to be called before processing an operand.
-                It has four arguments: operand, operand-arguments,
+            visitor_operand_before: function to be called before processing an operation.
+                It has four arguments: operator, operand-arguments,
                 current transformation matrix and text matrix.
-            visitor_operand_after: function to be called after processing an operand.
-                It has four arguments: operand, operand-arguments,
+            visitor_operand_after: function to be called after processing an operation.
+                It has four arguments: operator, operand-arguments,
                 current transformation matrix and text matrix.
             visitor_text: function to be called when extracting some text at some position.
                 It has five arguments: text, current transformation matrix,
