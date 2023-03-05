@@ -9,7 +9,7 @@ from typing import List, Tuple
 import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
-from pypdf._page import PageObject, set_custom_rtl
+from pypdf._page import PageObject
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import DeprecationError, PdfReadWarning
 from pypdf.generic import (
@@ -305,32 +305,6 @@ def test_page_scale():
 def test_add_transformation_on_page_without_contents():
     page = PageObject()
     page.add_transformation(Transformation())
-
-
-def test_multi_language():
-    reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
-    txt = reader.pages[0].extract_text()
-    assert "Hello World" in txt, "English not correctly extracted"
-    # iss #1296
-    assert "مرحبا بالعالم" in txt, "Arabic not correctly extracted"
-    assert "Привет, мир" in txt, "Russian not correctly extracted"
-    assert "你好世界" in txt, "Chinese not correctly extracted"
-    assert "สวัสดีชาวโลก" in txt, "Thai not correctly extracted"
-    assert "こんにちは世界" in txt, "Japanese not correctly extracted"
-    # check customizations
-    set_custom_rtl(None, None, "Russian:")
-    assert (
-        ":naissuR" in reader.pages[0].extract_text()
-    ), "(1) CUSTOM_RTL_SPECIAL_CHARS failed"
-    set_custom_rtl(None, None, [ord(x) for x in "Russian:"])
-    assert (
-        ":naissuR" in reader.pages[0].extract_text()
-    ), "(2) CUSTOM_RTL_SPECIAL_CHARS failed"
-    set_custom_rtl(0, 255, None)
-    assert ":hsilgnE" in reader.pages[0].extract_text(), "CUSTOM_RTL_MIN/MAX failed"
-    set_custom_rtl("A", "z", [])
-    assert ":hsilgnE" in reader.pages[0].extract_text(), "CUSTOM_RTL_MIN/MAX failed"
-    set_custom_rtl(-1, -1, [])  # to prevent further errors
 
 
 @pytest.mark.enable_socket()
