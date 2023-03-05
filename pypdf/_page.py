@@ -82,6 +82,10 @@ CUSTOM_RTL_SPECIAL_CHARS: List[int] = []
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
 
+class OrientationNotFoundError(Exception):
+    pass
+
+
 def mult(m: List[float], n: List[float]) -> List[float]:
     return [
         m[0] * n[0] + m[1] * n[2],
@@ -1806,105 +1810,32 @@ class PageObject(DictionaryObject):
                     text,
                     operands,
                     cm_matrix,
-                    tm_matrix,
+                    tm_matrix,  # text matrix
                     cmap,
                     orientations,
-                    rtl_dir,
-                    visitor_text,
                     output,
                     font_size,
+                    rtl_dir,
+                    visitor_text,
                 )
             else:
                 return None
             if check_crlf_space:
-                m = mult(tm_matrix, cm_matrix)
-                orientation = orient(m)
-                delta_x = m[4] - tm_prev[4]
-                delta_y = m[5] - tm_prev[5]
-                k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
-                f = font_size * k
-                tm_prev = m
-                if orientation not in orientations:
-                    return None
                 try:
-                    if orientation == 0:
-                        if delta_y < -0.8 * f:
-                            if (output + text)[-1] != "\n":
-                                output += text + "\n"
-                                if visitor_text is not None:
-                                    visitor_text(
-                                        text + "\n",
-                                        cm_matrix,
-                                        tm_matrix,
-                                        cmap[3],
-                                        font_size,
-                                    )
-                                text = ""
-                        elif (
-                            abs(delta_y) < f * 0.3
-                            and abs(delta_x) > current_spacewidth() * f * 15
-                            and (output + text)[-1] != " "
-                        ):
-                            text += " "
-                    elif orientation == 180:
-                        if delta_y > 0.8 * f:
-                            if (output + text)[-1] != "\n":
-                                output += text + "\n"
-                                if visitor_text is not None:
-                                    visitor_text(
-                                        text + "\n",
-                                        cm_matrix,
-                                        tm_matrix,
-                                        cmap[3],
-                                        font_size,
-                                    )
-                                text = ""
-                        elif (
-                            abs(delta_y) < f * 0.3
-                            and abs(delta_x) > current_spacewidth() * f * 15
-                            and (output + text)[-1] != " "
-                        ):
-                            text += " "
-                    elif orientation == 90:
-                        if delta_x > 0.8 * f:
-                            if (output + text)[-1] != "\n":
-                                output += text + "\n"
-                                if visitor_text is not None:
-                                    visitor_text(
-                                        text + "\n",
-                                        cm_matrix,
-                                        tm_matrix,
-                                        cmap[3],
-                                        font_size,
-                                    )
-                                text = ""
-                        elif (
-                            abs(delta_x) < f * 0.3
-                            and abs(delta_y) > current_spacewidth() * f * 15
-                            and (output + text)[-1] != " "
-                        ):
-                            text += " "
-                    elif orientation == 270:
-                        if delta_x < -0.8 * f:
-                            if (output + text)[-1] != "\n":
-                                output += text + "\n"
-                                if visitor_text is not None:
-                                    visitor_text(
-                                        text + "\n",
-                                        cm_matrix,
-                                        tm_matrix,
-                                        cmap[3],
-                                        font_size,
-                                    )
-                                text = ""
-                        elif (
-                            abs(delta_x) < f * 0.3
-                            and abs(delta_y) > current_spacewidth() * f * 15
-                            and (output + text)[-1] != " "
-                        ):
-                            text += " "
-                except Exception:
-                    pass
+                    text, output, tm_prev = crlf_space_check(
+                        text,
+                        tm_prev,
+                        cm_matrix,
+                        tm_matrix,
+                        cmap,
+                        orientations,
+                        output,
+                        font_size,
+                        visitor_text,
+                        current_spacewidth(),
+                    )
+                except OrientationNotFoundError:
+                    return None
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
@@ -2346,10 +2277,10 @@ def handle_tj(
         Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
     ],
     orientations: Tuple[int, ...],
-    rtl_dir: bool,
-    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
     output: str,
     font_size: float,
+    rtl_dir: bool,
+    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
 ) -> Tuple[str, bool]:
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
@@ -2419,3 +2350,108 @@ def handle_tj(
                     text = text + x
                 # fmt: on
     return text, rtl_dir
+
+
+def crlf_space_check(
+    text: str,
+    tm_prev: List[float],
+    cm_matrix: List[float],
+    tm_matrix: List[float],
+    cmap: Tuple[
+        Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+    ],
+    orientations: Tuple[int, ...],
+    output: str,
+    font_size: float,
+    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
+    spacewidth: float,
+) -> Tuple[str, str, List[float]]:
+    m = mult(tm_matrix, cm_matrix)
+    orientation = orient(m)
+    delta_x = m[4] - tm_prev[4]
+    delta_y = m[5] - tm_prev[5]
+    k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
+    f = font_size * k
+    tm_prev = m
+    if orientation not in orientations:
+        raise OrientationNotFoundError
+    try:
+        if orientation == 0:
+            if delta_y < -0.8 * f:
+                if (output + text)[-1] != "\n":
+                    output += text + "\n"
+                    if visitor_text is not None:
+                        visitor_text(
+                            text + "\n",
+                            cm_matrix,
+                            tm_matrix,
+                            cmap[3],
+                            font_size,
+                        )
+                    text = ""
+            elif (
+                abs(delta_y) < f * 0.3
+                and abs(delta_x) > spacewidth * f * 15
+                and (output + text)[-1] != " "
+            ):
+                text += " "
+        elif orientation == 180:
+            if delta_y > 0.8 * f:
+                if (output + text)[-1] != "\n":
+                    output += text + "\n"
+                    if visitor_text is not None:
+                        visitor_text(
+                            text + "\n",
+                            cm_matrix,
+                            tm_matrix,
+                            cmap[3],
+                            font_size,
+                        )
+                    text = ""
+            elif (
+                abs(delta_y) < f * 0.3
+                and abs(delta_x) > spacewidth * f * 15
+                and (output + text)[-1] != " "
+            ):
+                text += " "
+        elif orientation == 90:
+            if delta_x > 0.8 * f:
+                if (output + text)[-1] != "\n":
+                    output += text + "\n"
+                    if visitor_text is not None:
+                        visitor_text(
+                            text + "\n",
+                            cm_matrix,
+                            tm_matrix,
+                            cmap[3],
+                            font_size,
+                        )
+                    text = ""
+            elif (
+                abs(delta_x) < f * 0.3
+                and abs(delta_y) > spacewidth * f * 15
+                and (output + text)[-1] != " "
+            ):
+                text += " "
+        elif orientation == 270:
+            if delta_x < -0.8 * f:
+                if (output + text)[-1] != "\n":
+                    output += text + "\n"
+                    if visitor_text is not None:
+                        visitor_text(
+                            text + "\n",
+                            cm_matrix,
+                            tm_matrix,
+                            cmap[3],
+                            font_size,
+                        )
+                    text = ""
+            elif (
+                abs(delta_x) < f * 0.3
+                and abs(delta_y) > spacewidth * f * 15
+                and (output + text)[-1] != " "
+            ):
+                text += " "
+    except Exception:
+        pass
+    return text, output, tm_prev
