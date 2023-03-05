@@ -199,12 +199,18 @@ class DictionaryObject(dict, PdfObject):
             ignore_fields:
         """
         #  First check if this is a chain list, we need to loop to prevent recur
-        if (
-            ("/Next" not in ignore_fields and "/Next" in src)
-            or ("/Prev" not in ignore_fields and "/Prev" in src)
-        ) or (
-            ("/N" not in ignore_fields and "/N" in src)
-            or ("/V" not in ignore_fields and "/V" in src)
+        if any(
+            field not in ignore_fields
+            and field in src
+            and isinstance(src.raw_get(field), IndirectObject)
+            and isinstance(src[field], DictionaryObject)
+            and (
+                src.get("/Type", None) is None
+                or cast(DictionaryObject, src[field]).get("/Type", None) is None
+                or src.get("/Type", None)
+                == cast(DictionaryObject, src[field]).get("/Type", None)
+            )
+            for field in ["/Next", "/Prev", "/N", "/V"]
         ):
             ignore_fields = list(ignore_fields)
             for lst in (("/Next", "/Prev"), ("/N", "/V")):
@@ -214,6 +220,15 @@ class DictionaryObject(dict, PdfObject):
                         k in src
                         and k not in self
                         and isinstance(src.raw_get(k), IndirectObject)
+                        and isinstance(src[k], DictionaryObject)
+                        # IF need to go further the idea is to check
+                        # that the types are the same:
+                        and (
+                            src.get("/Type", None) is None
+                            or cast(DictionaryObject, src[k]).get("/Type", None) is None
+                            or src.get("/Type", None)
+                            == cast(DictionaryObject, src[k]).get("/Type", None)
+                        )
                     ):
                         cur_obj: Optional["DictionaryObject"] = cast(
                             "DictionaryObject", src[k]
@@ -238,7 +253,7 @@ class DictionaryObject(dict, PdfObject):
                             except Exception:
                                 cur_obj = None
                         for s, c in objs:
-                            c._clone(s, pdf_dest, force_duplicate, ignore_fields + [k])
+                            c._clone(s, pdf_dest, force_duplicate, ignore_fields)
 
         for k, v in src.items():
             if k not in ignore_fields:
