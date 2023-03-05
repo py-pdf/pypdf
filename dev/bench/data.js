@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678028866880,
+  "lastUpdate": 1678029174713,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26130,6 +26130,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00023715347119137212",
             "extra": "mean: 79.24990958333329 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cryzed@googlemail.com",
+            "name": "Chris Braun",
+            "username": "cryzed"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8b0f0911e4ca454728b672cdf7239d9a56923abd",
+          "message": "BUG: Write /Root/AcroForm in set_need_appearances_writer (#1639)\n\nPdfWriter.set_need_appearances_writer() (whether called directly or indirectly by PdfWriter.update_page_form_field_values()) fails to create the /Root/AcroForm object correctly when it doesn't already exist in the PdfWriter object.\r\n\r\nSee https://github.com/py-pdf/pypdf/issues/355#issuecomment-1433319593 for more details.\r\n\r\nFixes #355",
+          "timestamp": "2023-03-05T16:11:45+01:00",
+          "tree_id": "2f2a76f12241764a6b802ac5709f43bc45aa99be",
+          "url": "https://github.com/py-pdf/pypdf/commit/8b0f0911e4ca454728b672cdf7239d9a56923abd"
+        },
+        "date": 1678029173610,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0090626526268371,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00906976400896368",
+            "extra": "mean: 991.0187414000063 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.669786334440543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006908522547925033",
+            "extra": "mean: 85.69137183332505 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2350662008436736,
+            "unit": "iter/sec",
+            "range": "stddev: 0.046955976753280414",
+            "extra": "mean: 4.254120738800009 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.451750306599102,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0002473033738740364",
+            "extra": "mean: 87.32289590908624 msec\nrounds: 11"
           }
         ]
       }
