@@ -766,6 +766,22 @@ class PdfWriter:
         )
         self.append_pages_from_reader(reader, after_page_append)
 
+    def _get_qualified_field_name(self, parent: DictionaryObject) -> Optional[str]:
+        if "/TM" in parent:
+            return cast(str, parent["/TM"])
+        elif "/T" not in parent:
+            return None
+        elif "/Parent" in parent:
+            return (
+                self._get_qualified_field_name(
+                    cast(DictionaryObject, parent["/Parent"])
+                )
+                + "."
+                + cast(str, parent["/T"])
+            )
+        else:
+            return cast(str, parent["/T"])
+
     def update_page_form_field_values(
         self,
         page: PageObject,
@@ -799,7 +815,10 @@ class PdfWriter:
             if PG.PARENT in writer_annot:
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
-                if writer_annot.get(FieldDictionaryAttributes.T) == field:
+                if (
+                    writer_annot.get(FieldDictionaryAttributes.T) == field
+                    or self._get_qualified_field_name(writer_annot) == field
+                ):
                     if writer_annot.get(FieldDictionaryAttributes.FT) == "/Btn":
                         writer_annot.update(
                             {
@@ -823,7 +842,10 @@ class PdfWriter:
                                 )
                             }
                         )
-                elif writer_parent_annot.get(FieldDictionaryAttributes.T) == field:
+                elif (
+                    writer_parent_annot.get(FieldDictionaryAttributes.T) == field
+                    or self._get_qualified_field_name(writer_parent_annot) == field
+                ):
                     writer_parent_annot.update(
                         {
                             NameObject(FieldDictionaryAttributes.V): TextStringObject(
