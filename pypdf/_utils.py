@@ -150,6 +150,8 @@ def skip_over_whitespace(stream: StreamType) -> bool:
     cnt = 0
     while tok in WHITESPACES:
         tok = stream.read(1)
+        if tok == b"":
+            raise Exception("unexpected end of file")
         cnt += 1
     return cnt > 1
 
@@ -160,6 +162,8 @@ def skip_over_comment(stream: StreamType) -> None:
     if tok == b"%":
         while tok not in (b"\n", b"\r"):
             tok = stream.read(1)
+            if tok == b"":
+                raise Exception("unexpected end of file")
 
 
 def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
