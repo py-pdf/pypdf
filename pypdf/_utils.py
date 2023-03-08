@@ -132,6 +132,8 @@ def read_non_whitespace(stream: StreamType) -> bytes:
     tok = stream.read(1)
     while tok in WHITESPACES:
         tok = stream.read(1)
+        if tok == b"":
+            raise Exception("unexpected end of file")
     return tok
 
 
