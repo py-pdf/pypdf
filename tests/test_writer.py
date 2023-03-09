@@ -1310,3 +1310,16 @@ def test_new_removes():
     out_pdf.remove_links()
     assert len(out_pdf.pages[0]["/Annots"]) == 0
     assert len(out_pdf.pages[3]["/Annots"]) == 0
+
+
+@pytest.mark.enable_socket()
+def test_late_iss1654():
+    url = "https://github.com/py-pdf/pypdf/files/10935632/bid1.pdf"
+    name = "bid1.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    for p in writer.pages:
+        p.compress_content_streams()
+    b = BytesIO()
+    writer.write(b)

@@ -1516,8 +1516,18 @@ class PageObject(DictionaryObject):
         content = self.get_contents()
         if content is not None:
             if not isinstance(content, ContentStream):
-                content = ContentStream(content, self.pdf)
-            self[NameObject(PG.CONTENTS)] = content.flate_encode()
+                content_obj = ContentStream(content, self.pdf)
+            else:
+                content_obj = content
+            content_obj = content_obj.flate_encode()
+            try:
+                content.indirect_reference.pdf._objects[
+                    content.indirect_reference.idnum - 1
+                ] = content_obj
+            except AttributeError:
+                self[NameObject(PG.CONTENTS)] = self.indirect_reference.pdf._add_object(
+                    content_obj
+                )
 
     def compressContentStreams(self) -> None:  # deprecated
         """
