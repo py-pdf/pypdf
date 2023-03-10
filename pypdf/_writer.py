@@ -772,15 +772,16 @@ class PdfWriter:
         elif "/T" not in parent:
             return None
         elif "/Parent" in parent:
-            return (
-                self._get_qualified_field_name(
-                    cast(DictionaryObject, parent["/Parent"])
-                )
-                + "."
-                + cast(str, parent["/T"])
+            qualified_parent = self._get_qualified_field_name(
+                cast(DictionaryObject, parent["/Parent"])
             )
-        else:
-            return cast(str, parent["/T"])
+            if qualified_parent is not None:
+                return (
+                    qualified_parent
+                    + "."
+                    + cast(str, parent["/T"])
+                )
+        return cast(str, parent["/T"])
 
     def update_page_form_field_values(
         self,
@@ -811,7 +812,7 @@ class PdfWriter:
         for j in range(len(page[PG.ANNOTS])):  # type: ignore
             writer_annot = page[PG.ANNOTS][j].get_object()  # type: ignore
             # retrieve parent field values, if present
-            writer_parent_annot = {}  # fallback if it's not there
+            writer_parent_annot = cast(DictionaryObject, {})  # fallback if it's not there
             if PG.PARENT in writer_annot:
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
