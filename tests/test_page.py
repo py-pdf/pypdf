@@ -90,11 +90,13 @@ def test_page_operations(pdf_path, password):
     else:
         pdf_path = RESOURCE_ROOT / pdf_path
     reader = PdfReader(pdf_path)
+    writer = PdfWriter()
 
     if password:
         reader.decrypt(password)
 
-    page: PageObject = reader.pages[0]
+    writer.clone_document_from_reader(reader)
+    page: PageObject = writer.pages[0]
 
     t = Transformation().translate(50, 100).rotate(90)
     assert abs(t.ctm[4] + 100) < 0.01
@@ -242,9 +244,11 @@ def test_page_transformations():
 )
 def test_compress_content_streams(pdf_path, password):
     reader = PdfReader(pdf_path)
+    writer = PdfWriter()
     if password:
         reader.decrypt(password)
-    for page in reader.pages:
+    writer.clone_document_from_reader(reader)
+    for page in writer.pages:
         page.compress_content_streams()
 
 

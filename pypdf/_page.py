@@ -1532,8 +1532,8 @@ class PageObject(DictionaryObject):
                     self[
                         NameObject(PG.CONTENTS)
                     ] = self.indirect_reference.pdf._add_object(content_obj)
-                else:  # !!!! this is not respecting the standard
-                    self[NameObject(PG.CONTENTS)] = content_obj
+                else:
+                    raise ValueError("Page must be part of a PdfWriter")
 
     def compressContentStreams(self) -> None:  # deprecated
         """
