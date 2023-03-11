@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678029174713,
+  "lastUpdate": 1678529710904,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26182,6 +26182,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0002473033738740364",
             "extra": "mean: 87.32289590908624 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "roland@rolisz.ro",
+            "name": "Roland Szabo",
+            "username": "rolisz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7f1a3f81db9a4e709be59e8a81cce39a98a0c943",
+          "message": "BUG: Pass logging parameters correctly in set_need_appearances_writer (#1697)\n\nWithout this, the logging module logs another error:\r\n\r\n    TypeError: not all arguments converted during string formatting",
+          "timestamp": "2023-03-11T11:13:47+01:00",
+          "tree_id": "59bbf2a3adf554afbf1931aa141fa59a79cf2449",
+          "url": "https://github.com/py-pdf/pypdf/commit/7f1a3f81db9a4e709be59e8a81cce39a98a0c943"
+        },
+        "date": 1678529709004,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7752841072685988,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02318538974705046",
+            "extra": "mean: 1.2898497346 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.958048157976428,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009596577095860455",
+            "extra": "mean: 111.63146059999463 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20159141669407388,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06630297326578999",
+            "extra": "mean: 4.960528659399995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.189963857813348,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005604099600453764",
+            "extra": "mean: 108.81435612500212 msec\nrounds: 8"
           }
         ]
       }
