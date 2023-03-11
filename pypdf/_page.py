@@ -1526,12 +1526,14 @@ class PageObject(DictionaryObject):
                     content.indirect_reference.idnum - 1  # type: ignore
                 ] = content_obj
             except AttributeError:
-                assert (
-                    self.indirect_reference is not None
-                )  # OK if the page belongs to a PdfWriter
-                self[NameObject(PG.CONTENTS)] = self.indirect_reference.pdf._add_object(
-                    content_obj
-                )
+                if self.indirect_reference is not None and hasattr(
+                    self.indirect_reference.pdf, "_add_object"
+                ):
+                    self[
+                        NameObject(PG.CONTENTS)
+                    ] = self.indirect_reference.pdf._add_object(content_obj)
+                else:  # !!!! this is not respecting the standard
+                    self[NameObject(PG.CONTENTS)] = content_obj
 
     def compressContentStreams(self) -> None:  # deprecated
         """
