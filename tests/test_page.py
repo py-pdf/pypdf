@@ -251,6 +251,11 @@ def test_compress_content_streams(pdf_path, password):
     for page in writer.pages:
         page.compress_content_streams()
 
+    # test from reader should fail as adding_object out of
+    # PdfWriter not possible
+    with pytest.raises(ValueError):
+        reader.pages[0].compress_content_streams()
+
 
 def test_page_properties():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
