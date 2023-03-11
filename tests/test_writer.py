@@ -52,9 +52,11 @@ def test_writer_clone():
     src = RESOURCE_ROOT / "pdflatex-outline.pdf"
 
     reader = PdfReader(src)
-    writer = PdfWriter()
+    writer = PdfWriter(clone_from=reader)
+    assert len(writer.pages) == 4
+    assert "PageObject" in str(type(writer.pages[0]))
 
-    writer.clone_document_from_reader(reader)
+    writer = PdfWriter(clone_from=src)
     assert len(writer.pages) == 4
     assert "PageObject" in str(type(writer.pages[0]))
 
