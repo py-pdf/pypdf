@@ -318,7 +318,9 @@ class PdfWriter:
         try:
             # get the AcroForm tree
             if CatalogDictionary.ACRO_FORM not in self._root_object:
-                self._root_object[NameObject(CatalogDictionary.ACRO_FORM)] = self._add_object(DictionaryObject())
+                self._root_object[
+                    NameObject(CatalogDictionary.ACRO_FORM)
+                ] = self._add_object(DictionaryObject())
 
             need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
             self._root_object[CatalogDictionary.ACRO_FORM][need_appearances] = BooleanObject(True)  # type: ignore
@@ -2486,7 +2488,12 @@ class PdfWriter:
             str, None, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]
         ] = None,
         pages: Union[
-            None, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]
+            None,
+            PageRange,
+            Tuple[int, int],
+            Tuple[int, int, int],
+            List[int],
+            List[PageObject],
         ] = None,
         import_outline: bool = True,
         excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = None,
@@ -2547,7 +2554,7 @@ class PdfWriter:
         position: Optional[int],
         fileobj: Union[Path, StrByteType, PdfReader],
         outline_item: Optional[str] = None,
-        pages: Optional[PageRangeSpec] = None,
+        pages: Optional[Union[PageRangeSpec, List[PageObject]]] = None,
         import_outline: bool = True,
         excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = (),
     ) -> None:
@@ -2604,8 +2611,11 @@ class PdfWriter:
             )
 
         srcpages = {}
-        for i in pages:
-            pg = reader.pages[i]
+        for page in pages:
+            if isinstance(page, PageObject):
+                pg = page
+            else:
+                pg = reader.pages[page]
             assert pg.indirect_reference is not None
             if position is None:
                 srcpages[pg.indirect_reference.idnum] = self.add_page(
