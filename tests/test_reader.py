@@ -1342,3 +1342,11 @@ def test_iss1652():
     name = "invalidNamesDest.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     in_pdf.named_destinations
+
+
+@pytest.mark.enable_socket()
+def test_iss1689():
+    url = "https://github.com/py-pdf/pypdf/files/10948283/error_file_without_data.pdf"
+    name = "iss1689.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    in_pdf.pages[0]
