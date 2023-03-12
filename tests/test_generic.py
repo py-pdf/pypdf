@@ -635,7 +635,9 @@ def test_text_string_write_to_stream():
     name = "tika-924562.pdf"
 
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    for page in writer.pages:
         page.compress_content_streams()
 
 

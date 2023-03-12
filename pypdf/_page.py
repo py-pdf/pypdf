@@ -1515,9 +1515,25 @@ class PageObject(DictionaryObject):
         """
         content = self.get_contents()
         if content is not None:
+            content_obj: Any
             if not isinstance(content, ContentStream):
-                content = ContentStream(content, self.pdf)
-            self[NameObject(PG.CONTENTS)] = content.flate_encode()
+                content_obj = ContentStream(content, self.pdf)
+            else:
+                content_obj = content
+            content_obj = content_obj.flate_encode()
+            try:
+                content.indirect_reference.pdf._objects[  # type: ignore
+                    content.indirect_reference.idnum - 1  # type: ignore
+                ] = content_obj
+            except AttributeError:
+                if self.indirect_reference is not None and hasattr(
+                    self.indirect_reference.pdf, "_add_object"
+                ):
+                    self[
+                        NameObject(PG.CONTENTS)
+                    ] = self.indirect_reference.pdf._add_object(content_obj)
+                else:
+                    raise ValueError("Page must be part of a PdfWriter")
 
     def compressContentStreams(self) -> None:  # deprecated
         """
