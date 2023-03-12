@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Version 3.5.2, 2023-03-12
+
+### Bug Fixes (BUG)
+-  compress_content_stream not readable in Adobe Acrobat (#1698)
+-  Pass logging parameters correctly in set_need_appearances_writer (#1697)
+-  Write /Root/AcroForm in set_need_appearances_writer (#1639)
+
+### Robustness (ROB)
+-  Allow more whitespaces within linearized file (#1701)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.5.1...3.5.2)
+
+
 ## Version 3.5.1, 2023-03-05
 
 ### Robustness (ROB)
