@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678775026978,
+  "lastUpdate": 1678775594770,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26390,6 +26390,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006593543730415012",
             "extra": "mean: 78.2229199166693 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "tobias.bengfort@posteo.de",
+            "name": "Tobias Bengfort",
+            "username": "xi"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "98780348eb6e819679e1dfb14c65d27cf6be9cc4",
+          "message": "ENH: Support qualified names in update_page_form_field_values (#1695)\n\nPDF forms often use names like \"A.1\", \"A.2\", \"B.1\", \"B.2\", … for the fields. However, the `.` has a special meaning, so this creates a hierarchy instead.\r\n\r\nIt was impossible to fill those individual fields with `update_page_form_field_values()`:\r\n\r\n```python\r\nupdate_page_form_field_values({\"A\": \"foo\"})  # fills all \"A.*\" fields\r\nupdate_page_form_field_values({\"1\": \"foo\"})  # fills all \"*.1\" fields\r\nupdate_page_form_field_values({\"A.1\": \"foo\"})  # fills none of the fields\r\n```\r\n\r\nThis change makes `update_page_form_field_values()` to also check for qualified field names.\r\n\r\nSee also: #545",
+          "timestamp": "2023-03-14T07:31:57+01:00",
+          "tree_id": "98f628d4c11af4ecae8a6f8c98ac01f272497786",
+          "url": "https://github.com/py-pdf/pypdf/commit/98780348eb6e819679e1dfb14c65d27cf6be9cc4"
+        },
+        "date": 1678775593520,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1088075761844762,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006543479777850401",
+            "extra": "mean: 901.8697395999993 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.548466337020004,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009888349063836453",
+            "extra": "mean: 86.5915846153856 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24203510727392438,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1432302455286739",
+            "extra": "mean: 4.131632023399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.403067511409862,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00041516623262001897",
+            "extra": "mean: 87.69570109090421 msec\nrounds: 11"
           }
         ]
       }
