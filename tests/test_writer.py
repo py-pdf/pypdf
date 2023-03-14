@@ -466,6 +466,24 @@ def test_fill_form():
     Path(tmp_filename).unlink()  # cleanup
 
 
+def test_fill_form_with_qualified():
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    reader.add_form_topname("top")
+
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.add_page(reader.pages[0])
+    writer.update_page_form_field_values(
+        writer.pages[0], {"top.foo": "filling"}, flags=1
+    )
+    b = BytesIO()
+    writer.write(b)
+
+    reader2 = PdfReader(b)
+    fields = reader2.get_fields()
+    assert fields["top.foo"]["/V"] == "filling"
+
+
 @pytest.mark.parametrize(
     ("use_128bit", "user_password", "owner_password"),
     [(True, "userpwd", "ownerpwd"), (False, "userpwd", "ownerpwd")],
