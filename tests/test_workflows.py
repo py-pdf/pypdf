@@ -489,44 +489,27 @@ def test_extract_text(url, name, strict, exception):
             "https://corpora.tika.apache.org/base/docs/govdocs1/957/957304.pdf",
             "tika-957304.pdf",
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/915/915194.pdf",
+            "tika-915194.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/950/950337.pdf",
+            "tika-950337.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/962/962292.pdf",
+            "tika-962292.pdf",
+        ),
     ],
 )
 def test_compress_raised(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
     # no more error since iss #1090 fix
-    for page in reader.pages:
-        page.compress_content_streams()
-
-
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
-@pytest.mark.parametrize(
-    ("url", "name", "strict"),
-    [
-        (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/915/915194.pdf",
-            "tika-915194.pdf",
-            False,
-        ),
-        (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/950/950337.pdf",
-            "tika-950337.pdf",
-            False,
-        ),
-        (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/962/962292.pdf",
-            "tika-962292.pdf",
-            True,
-        ),
-    ],
-)
-def test_compress(url, name, strict):
-    data = BytesIO(get_pdf_from_url(url, name=name))
-    reader = PdfReader(data, strict=strict)
-    # TODO: which page exactly?
-    # TODO: Is it reasonable to have an exception here?
-    for page in reader.pages:
+    for page in writer.pages:
         page.compress_content_streams()
 
 

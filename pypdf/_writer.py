@@ -323,7 +323,7 @@ class PdfWriter:
             need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
             self._root_object[CatalogDictionary.ACRO_FORM][need_appearances] = BooleanObject(True)  # type: ignore
         except Exception as exc:
-            logger.error("set_need_appearances_writer() catch : ", repr(exc))
+            logger.error("set_need_appearances_writer() catch : %s", repr(exc))
 
     def add_page(
         self,

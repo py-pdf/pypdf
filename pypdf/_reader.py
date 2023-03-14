@@ -1801,7 +1801,7 @@ class PdfReader:
             return startxref
         # No explicit xref table, try finding a cross-reference stream.
         stream.seek(startxref, 0)
-        for look in range(5):
+        for look in range(25):  # value extended to cope with more linearized files
             if stream.read(1).isdigit():
                 # This is not a standard PDF, consider adding a warning
                 startxref += look

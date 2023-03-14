@@ -63,8 +63,11 @@ reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
 for page in reader.pages:
-    page.compress_content_streams()  # This is CPU intensive!
     writer.add_page(page)
+
+for page in writer.pages:
+    # ⚠️ This has to be done on the writer, not the reader!
+    page.compress_content_streams()  # This is CPU intensive!
 
 with open("out.pdf", "wb") as f:
     writer.write(f)
