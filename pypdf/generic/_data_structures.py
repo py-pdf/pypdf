@@ -447,7 +447,13 @@ class DictionaryObject(dict, PdfObject):
                 stream.seek(-1, 1)
             # this is a stream object, not a dictionary
             if SA.LENGTH not in data:
-                raise PdfStreamError("Stream length not defined")
+                if pdf is not None and pdf.strict:
+                    raise PdfStreamError("Stream length not defined")
+                else:
+                    logger_warning(
+                        f"Stream length not defined @pos={stream.tell()}", __name__
+                    )
+                data[NameObject(SA.LENGTH)] = NumberObject(-1)
             length = data[SA.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
@@ -455,7 +461,12 @@ class DictionaryObject(dict, PdfObject):
                 length = pdf.get_object(length)
                 stream.seek(t, 0)
             pstart = stream.tell()
-            data["__streamdata__"] = stream.read(length)
+            if length > 0:
+                data["__streamdata__"] = stream.read(length)
+            else:
+                data["__streamdata__"] = read_until_regex(
+                    stream, re.compile(b"endstream")
+                )
             e = read_non_whitespace(stream)
             ndstream = stream.read(8)
             if (e + ndstream) != b"endstream":
