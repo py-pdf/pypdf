@@ -778,6 +778,8 @@ class PdfReader:
         else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF1.1
             for k__, v__ in tree.items():
                 val = v__.get_object()
+                if isinstance(val, DictionaryObject):
+                    val = val["/D"].get_object()
                 dest = self._build_destination(k__, val)
                 if dest is not None:
                     retval[k__] = dest

@@ -1350,3 +1350,11 @@ def test_iss1689():
     name = "iss1689.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     in_pdf.pages[0]
+
+
+@pytest.mark.enable_socket()
+def test_iss1710():
+    url = "https://nlp.stanford.edu/IR-book/pdf/irbookonlinereading.pdf"
+    name = "irbookonlinereading.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    in_pdf.outline
