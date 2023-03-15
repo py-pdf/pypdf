@@ -2,6 +2,9 @@
 
 ## Version 3.5.2, 2023-03-12
 
+⚠️ We discovered that compress_content_stream has to be applied to a page of
+  the PdfWriter. It may not be applied to a page of the PdfReader!
+
 ### Bug Fixes (BUG)
 -  compress_content_stream not readable in Adobe Acrobat (#1698)
 -  Pass logging parameters correctly in set_need_appearances_writer (#1697)
