@@ -270,7 +270,7 @@ def test_merge_write_closed_fh():
 
     merger.close()
     with pytest.raises(RuntimeError) as exc:
-        merger.write("stream.pdf")
+        merger.write("test_merge_write_closed_fh.pdf")
     assert exc.value.args[0] == err_closed
 
     with pytest.raises(RuntimeError) as exc:
