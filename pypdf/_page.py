@@ -29,6 +29,7 @@
 
 import math
 import warnings
+from collections.abc import Sequence
 from decimal import Decimal
 from typing import (
     Any,
@@ -2139,7 +2140,7 @@ class PageObject(DictionaryObject):
             self[NameObject("/Annots")] = value
 
 
-class _VirtualList:
+class _VirtualList(Sequence):
     def __init__(
         self,
         length_function: Callable[[], int],
@@ -2170,6 +2171,10 @@ class _VirtualList:
     def __iter__(self) -> Iterator[PageObject]:
         for i in range(len(self)):
             yield self[i]
+
+    def __str__(self) -> str:
+        p = [f"PageObject({i})" for i in range(self.length_function())]
+        return f"[{', '.join(p)}]"
 
 
 def _get_fonts_walk(
