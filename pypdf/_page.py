@@ -29,7 +29,6 @@
 
 import math
 import warnings
-from collections.abc import Sequence
 from decimal import Decimal
 from typing import (
     Any,
@@ -39,6 +38,7 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
