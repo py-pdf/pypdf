@@ -2141,7 +2141,7 @@ class PageObject(DictionaryObject):
             self[NameObject("/Annots")] = value
 
 
-class _VirtualList(Sequence[PageObject]):
+class _VirtualList(Sequence):
     def __init__(
         self,
         length_function: Callable[[], int],
