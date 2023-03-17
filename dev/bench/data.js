@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678775594770,
+  "lastUpdate": 1679075479429,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26442,6 +26442,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00041516623262001897",
             "extra": "mean: 87.69570109090421 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "34194299b489bfaae15da4afa3cdcfc7e4bd7f4d",
+          "message": "ROB: Widths def in cmap calls IndirectObject (#1719)\n\nFixes #1718",
+          "timestamp": "2023-03-17T18:49:54+01:00",
+          "tree_id": "5a2ac1368bbc144100ada63c881d16f25e083e63",
+          "url": "https://github.com/py-pdf/pypdf/commit/34194299b489bfaae15da4afa3cdcfc7e4bd7f4d"
+        },
+        "date": 1679075477661,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8437079226986749,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009153998009915136",
+            "extra": "mean: 1.1852442925999924 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.046118231558491,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010014640055195142",
+            "extra": "mean: 110.54465290000053 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1853482616977083,
+            "unit": "iter/sec",
+            "range": "stddev: 0.054776040044341744",
+            "extra": "mean: 5.395248872799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.74891456834446,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004287297621949328",
+            "extra": "mean: 114.29989311110944 msec\nrounds: 9"
           }
         ]
       }
