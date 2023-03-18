@@ -2076,7 +2076,7 @@ class PdfWriter:
             target_page_index=page_destination,
             fit=Fit(fit_type=fit, fit_args=args),
         )
-        return self.add_annotation(page=pagenum, annotation=annotation)
+        return self.add_annotation(page_number=pagenum, annotation=annotation)
 
     def addLink(
         self,
