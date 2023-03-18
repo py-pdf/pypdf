@@ -38,10 +38,12 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
     cast,
+    overload,
 )
 
 from ._cmap import build_char_map, unknown_char_map
@@ -2139,7 +2141,7 @@ class PageObject(DictionaryObject):
             self[NameObject("/Annots")] = value
 
 
-class _VirtualList:
+class _VirtualList(Sequence):
     def __init__(
         self,
         length_function: Callable[[], int],
@@ -2152,11 +2154,21 @@ class _VirtualList:
     def __len__(self) -> int:
         return self.length_function()
 
+    @overload
     def __getitem__(self, index: int) -> PageObject:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[PageObject]:
+        ...
+
+    def __getitem__(
+        self, index: Union[int, slice]
+    ) -> Union[PageObject, Sequence[PageObject]]:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             cls = type(self)
-            return cls(indices.__len__, lambda idx: self[indices[idx]])  # type: ignore
+            return cls(indices.__len__, lambda idx: self[indices[idx]])
         if not isinstance(index, int):
             raise TypeError("sequence indices must be integers")
         len_self = len(self)
@@ -2170,6 +2182,10 @@ class _VirtualList:
     def __iter__(self) -> Iterator[PageObject]:
         for i in range(len(self)):
             yield self[i]
+
+    def __str__(self) -> str:
+        p = [f"PageObject({i})" for i in range(self.length_function())]
+        return f"[{', '.join(p)}]"
 
 
 def _get_fonts_walk(

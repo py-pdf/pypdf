@@ -1101,3 +1101,9 @@ def test_merge_transformed_page_into_blank():
                 True,
                 True,
             )
+
+
+def test_pages_printing():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    assert str(reader.pages) == "[PageObject(0)]"
