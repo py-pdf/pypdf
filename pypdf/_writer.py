@@ -2343,7 +2343,7 @@ class PdfWriter:
 
     def add_annotation(
         self,
-        page: Union[int, PageObject],
+        page_number: Union[int, PageObject],
         annotation: Dict[str, Any],
         pagenumber: Any = None,
     ) -> DictionaryObject:
