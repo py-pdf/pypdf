@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679154818730,
+  "lastUpdate": 1679155145616,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26702,6 +26702,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00031758357727474973",
             "extra": "mean: 79.37208016667086 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "e34088e4882bce167c29b78699300535db79a5be",
+          "message": "REL: 3.6.0\n\nNew Features (ENH)\n-  Extend PdfWriter.append() to PageObjects (#1704)\n-  Support qualified names in update_page_form_field_values (#1695)\n\nRobustness (ROB)\n-  Tolerate streams without length field (#1717)\n-  Accept DictionaryObject in /D of NamedDestination (#1720)\n-  Widths def in cmap calls IndirectObject (#1719)",
+          "timestamp": "2023-03-18T16:57:11+01:00",
+          "tree_id": "6dea1d68cd4b5126f8403863a7df1eb35826404c",
+          "url": "https://github.com/py-pdf/pypdf/commit/e34088e4882bce167c29b78699300535db79a5be"
+        },
+        "date": 1679155144502,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0749670582311197,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006658319296266022",
+            "extra": "mean: 930.2610645999891 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.334498191677287,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00967436781765938",
+            "extra": "mean: 88.22622608332864 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23905378512573014,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03845498071220851",
+            "extra": "mean: 4.183159030400003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.695099278156421,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005854766644519566",
+            "extra": "mean: 85.50590090908888 msec\nrounds: 11"
           }
         ]
       }
