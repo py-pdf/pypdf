@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679134826225,
+  "lastUpdate": 1679143768009,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26546,6 +26546,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003769507417136691",
             "extra": "mean: 106.81769611111098 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d5ac6acb431de05c8830601f5aa769a84f33c3fa",
+          "message": "ROB: Accept DictionaryObject in /D of NamedDestination (#1720)\n\nin accordance with §2 page 584\r\n\r\nFixes #1710",
+          "timestamp": "2023-03-18T13:48:04+01:00",
+          "tree_id": "920b8fef0dba230bb2861edc37e53c92e541bbdd",
+          "url": "https://github.com/py-pdf/pypdf/commit/d5ac6acb431de05c8830601f5aa769a84f33c3fa"
+        },
+        "date": 1679143766117,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9176963835099179,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03886863566804031",
+            "extra": "mean: 1.0896850177999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.772714443212633,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010004214610441877",
+            "extra": "mean: 102.32571572727393 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19970699082171844,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11866528753930754",
+            "extra": "mean: 5.007335977000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.351585441922145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026130851012208228",
+            "extra": "mean: 106.93373933334429 msec\nrounds: 9"
           }
         ]
       }
