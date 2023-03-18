@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679143768009,
+  "lastUpdate": 1679147904219,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26598,6 +26598,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0026130851012208228",
             "extra": "mean: 106.93373933334429 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1c7a6ebe5230b14c85360f34e96beb13b092a485",
+          "message": "STY: Add __str__ and make VirtualList inherit from typing.Sequence (#1721)",
+          "timestamp": "2023-03-18T14:57:00+01:00",
+          "tree_id": "3b643c2717b89f5606c670b8bb2738f8cfd550ab",
+          "url": "https://github.com/py-pdf/pypdf/commit/1c7a6ebe5230b14c85360f34e96beb13b092a485"
+        },
+        "date": 1679147902485,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8570684772141764,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008117197544451178",
+            "extra": "mean: 1.1667679148000047 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.844731359235354,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009920141280048707",
+            "extra": "mean: 113.06165889999988 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1949921372567824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.041625543400239925",
+            "extra": "mean: 5.1284119148 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.643435059110743,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010496411631450888",
+            "extra": "mean: 103.69748889999926 msec\nrounds: 10"
           }
         ]
       }
