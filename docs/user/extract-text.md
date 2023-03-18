@@ -37,7 +37,7 @@ If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
 **Caveat**: In complicated documents the calculated positions might be wrong.
 
 The function provided in argument visitor_operand_before has four arguments:
-operand, operand-arguments, current transformation matrix and text matrix.
+operator, operand-arguments, current transformation matrix and text matrix.
 
 ### Example 1: Ignore header and footer
 

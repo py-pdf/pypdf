@@ -125,7 +125,7 @@ except ImportError:
 
         def encrypt(self, data: bytes) -> bytes:
             S = list(self.S)
-            out = list(0 for _ in range(len(data)))
+            out = [0 for _ in range(len(data))]
             i, j = 0, 0
             for k in range(len(data)):
                 i = (i + 1) % 256
@@ -186,8 +186,8 @@ class CryptFilter:
         elif isinstance(obj, StreamObject):
             obj._data = self.stmCrypt.decrypt(obj._data)
         elif isinstance(obj, DictionaryObject):
-            for dictkey, value in list(obj.items()):
-                obj[dictkey] = self.decrypt_object(value)
+            for key, value in obj.items():
+                obj[key] = self.decrypt_object(value)
         elif isinstance(obj, ArrayObject):
             for i in range(len(obj)):
                 obj[i] = self.decrypt_object(obj[i])
@@ -484,7 +484,7 @@ class AlgV4:
            to decrypt the document.
 
         Args:
-            user_password: The user passwort as a bytes stream
+            user_password: The user password as a bytes stream
             rev: The encryption revision (see PDF standard)
             key_size: The size of the key in bytes
             o_entry: The owner entry
@@ -990,7 +990,7 @@ class Encryption:
         if isinstance(password, str):
             try:
                 pwd = password.encode("latin-1")
-            except Exception:  # noqa
+            except Exception:
                 pwd = password.encode("utf-8")
         else:
             pwd = password

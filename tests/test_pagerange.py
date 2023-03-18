@@ -1,3 +1,4 @@
+"""Test the pypdf.pagerange module."""
 import pytest
 
 from pypdf.pagerange import PageRange, ParseError, parse_filename_page_ranges
@@ -81,7 +82,7 @@ def test_parse_filename_page_ranges_err():
 
 
 @pytest.mark.parametrize(
-    "a, b, expected",
+    ("a", "b", "expected"),
     [
         (PageRange(slice(0, 5)), PageRange(slice(2, 10)), slice(0, 10)),
         (PageRange(slice(0, 5)), PageRange(slice(2, 3)), slice(0, 5)),
@@ -96,7 +97,7 @@ def test_addition(a, b, expected):
 
 
 @pytest.mark.parametrize(
-    "a, b",
+    ("a", "b"),
     [
         (PageRange(slice(0, 5)), PageRange(slice(7, 10))),
         (PageRange(slice(7, 10)), PageRange(slice(0, 5))),

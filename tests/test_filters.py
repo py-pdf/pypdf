@@ -1,3 +1,4 @@
+"""Test the pypdf.filters module."""
 import string
 import sys
 from io import BytesIO
@@ -34,7 +35,7 @@ filter_inputs = (
 @pytest.mark.parametrize(
     ("predictor", "s"), list(cartesian_product([1], filter_inputs))
 )
-def test_FlateDecode(predictor, s):
+def test_flatedecode(predictor, s):
     """Tests FlateDecode decode() and encode() methods."""
     codec = FlateDecode()
     s = s.encode()
@@ -42,7 +43,7 @@ def test_FlateDecode(predictor, s):
     assert codec.decode(encoded, DictionaryObject({"/Predictor": predictor})) == s
 
 
-def test_FlateDecode_unsupported_predictor():
+def test_flatedecode_unsupported_predictor():
     """
     Inputs an unsupported predictor (outside the [10, 15] range) checking that
     PdfReadError() is raised.
@@ -62,7 +63,7 @@ def test_FlateDecode_unsupported_predictor():
 @pytest.mark.parametrize(
     "params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}]), "a"]
 )
-def test_FlateDecode_decompress_array_params(params):
+def test_flatedecode_decompress_array_params(params):
     codec = FlateDecode()
     s = ""
     s = s.encode()
@@ -105,7 +106,7 @@ def test_FlateDecode_decompress_array_params(params):
         "whitespace",
     ],
 )
-def test_ASCIIHexDecode(data, expected):
+def test_ascii_hex_decode(data, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
     correct output is returned.
@@ -117,7 +118,7 @@ def test_ASCIIHexDecode(data, expected):
     assert ASCIIHexDecode.decode(data) == expected
 
 
-def test_ASCIIHexDecode_no_eod():
+def test_ascii_hex_decode_no_eod():
     """Ensuring an exception is raised when no EOD character is present."""
     with pytest.raises(PdfStreamError) as exc:
         ASCIIHexDecode.decode("")
@@ -125,7 +126,7 @@ def test_ASCIIHexDecode_no_eod():
 
 
 @pytest.mark.xfail()
-def test_ASCII85Decode_with_overflow():
+def test_ascii85decode_with_overflow():
     inputs = (
         v + "~>"
         for v in "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f"
@@ -143,7 +144,7 @@ def test_ASCII85Decode_with_overflow():
         assert exc.value.args[0] == ""
 
 
-def test_ASCII85Decode_five_zero_bytes():
+def test_ascii85decode_five_zero_bytes():
     """
     From ISO 32000 (2008) §7.4.3:
 
@@ -164,7 +165,7 @@ def test_ASCII85Decode_five_zero_bytes():
         assert ASCII85Decode.decode(i) == expected
 
 
-def test_CCITParameters():
+def test_ccitparameters():
     parms = CCITParameters()
     assert parms.K == 0  # zero is the default according to page 78
     assert parms.group == 3
@@ -177,12 +178,12 @@ def test_CCITParameters():
         (ArrayObject([{"/K": 1}, {"/Columns": 13}]), 1),
     ],
 )
-def test_CCIT_get_parameters(parameters, expected_k):
+def test_ccitt_get_parameters(parameters, expected_k):
     parmeters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
     assert parmeters.K == expected_k
 
 
-def test_CCITTFaxDecode():
+def test_ccitt_fax_decode():
     data = b""
     parameters = DictionaryObject(
         {"/K": NumberObject(-1), "/Columns": NumberObject(17)}
@@ -201,7 +202,7 @@ def test_CCITTFaxDecode():
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @patch("pypdf._reader.logger_warning")
 def test_decompress_zlib_error(mock_logger_warning):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/952/952445.pdf"
@@ -214,18 +215,18 @@ def test_decompress_zlib_error(mock_logger_warning):
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_lzw_decode_neg1():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/921/921632.pdf"
     name = "tika-921632.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    page = reader.pages[47]
     with pytest.raises(PdfReadError) as exc:
-        for page in reader.pages:
-            page.extract_text()
+        page.extract_text()
     assert exc.value.args[0] == "Missed the stop code in LZWDecode!"
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_issue_399():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976970.pdf"
     name = "tika-976970.pdf"
@@ -233,7 +234,7 @@ def test_issue_399():
     reader.pages[1].extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_image_without_imagemagic():
     with patch.dict(sys.modules):
         sys.modules["PIL"] = None

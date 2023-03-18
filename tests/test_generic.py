@@ -1,4 +1,4 @@
-import os
+"""Test the pypdf.generic module."""
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -132,53 +132,53 @@ def test_indirect_object_premature(value):
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_readHexStringFromStream():
+def test_read_hex_string_from_stream():
     stream = BytesIO(b"a1>")
     assert read_hex_string_from_stream(stream) == "\x10"
 
 
-def test_readHexStringFromStream_exception():
+def test_read_hex_string_from_stream_exception():
     stream = BytesIO(b"")
     with pytest.raises(PdfStreamError) as exc:
         read_hex_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_readStringFromStream_exception():
+def test_read_string_from_stream_exception():
     stream = BytesIO(b"x")
     with pytest.raises(PdfStreamError) as exc:
         read_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_readStringFromStream_not_in_escapedict_no_digit():
+def test_read_string_from_stream_not_in_escapedict_no_digit():
     stream = BytesIO(b"x\\y")
     with pytest.raises(PdfReadError) as exc:
         read_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_readStringFromStream_multichar_eol():
+def test_read_string_from_stream_multichar_eol():
     stream = BytesIO(b"x\\\n )")
     assert read_string_from_stream(stream) == " "
 
 
-def test_readStringFromStream_multichar_eol2():
+def test_read_string_from_stream_multichar_eol2():
     stream = BytesIO(b"x\\\n\n)")
     assert read_string_from_stream(stream) == ""
 
 
-def test_readStringFromStream_excape_digit():
+def test_read_string_from_stream_excape_digit():
     stream = BytesIO(b"x\\1a )")
     assert read_string_from_stream(stream) == "\x01a "
 
 
-def test_readStringFromStream_excape_digit2():
+def test_read_string_from_stream_excape_digit2():
     stream = BytesIO(b"(hello \\1\\2\\3\\4)")
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
 
 
-def test_NameObject(caplog):
+def test_name_object(caplog):
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
@@ -299,7 +299,7 @@ def test_read_object_comment():
     assert out == 1
 
 
-def test_ByteStringObject():
+def test_bytestringobject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")
     bo.write_to_stream(stream, encryption_key="foobar")
@@ -307,52 +307,52 @@ def test_ByteStringObject():
     assert stream.read() == b"<1cdd628b972e>"  # TODO: how can we verify this?
 
 
-def test_DictionaryObject_key_is_no_pdfobject():
+def test_dictionaryobject_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do["foo"] = NameObject("/GoTo")
     assert exc.value.args[0] == "key must be PdfObject"
 
 
-def test_DictionaryObject_xmp_meta():
+def test_dictionaryobject_xmp_meta():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     assert do.xmp_metadata is None
 
 
-def test_DictionaryObject_value_is_no_pdfobject():
+def test_dictionaryobject_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do[NameObject("/S")] = "/GoTo"
     assert exc.value.args[0] == "value must be PdfObject"
 
 
-def test_DictionaryObject_setdefault_key_is_no_pdfobject():
+def test_dictionaryobject_setdefault_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault("foo", NameObject("/GoTo"))
     assert exc.value.args[0] == "key must be PdfObject"
 
 
-def test_DictionaryObject_setdefault_value_is_no_pdfobject():
+def test_dictionaryobject_setdefault_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
     assert exc.value.args[0] == "value must be PdfObject"
 
 
-def test_DictionaryObject_setdefault_value():
+def test_dictionaryobject_setdefault_value():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     do.setdefault(NameObject("/S"), NameObject("/GoTo"))
 
 
-def test_DictionaryObject_read_from_stream():
+def test_dictionaryobject_read_from_stream():
     stream = BytesIO(b"<< /S /GoTo >>")
     pdf = None
     out = DictionaryObject.read_from_stream(stream, pdf)
     assert out.get_object() == {NameObject("/S"): NameObject("/GoTo")}
 
 
-def test_DictionaryObject_read_from_stream_broken():
+def test_dictionaryobject_read_from_stream_broken():
     stream = BytesIO(b"< /S /GoTo >>")
     pdf = None
     with pytest.raises(PdfReadError) as exc:
@@ -363,7 +363,7 @@ def test_DictionaryObject_read_from_stream_broken():
     )
 
 
-def test_DictionaryObject_read_from_stream_unexpected_end():
+def test_dictionaryobject_read_from_stream_unexpected_end():
     stream = BytesIO(b"<< \x00/S /GoTo")
     pdf = None
     with pytest.raises(PdfStreamError) as exc:
@@ -371,7 +371,7 @@ def test_DictionaryObject_read_from_stream_unexpected_end():
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_DictionaryObject_read_from_stream_stream_no_newline():
+def test_dictionaryobject_read_from_stream_stream_no_newline():
     stream = BytesIO(b"<< /S /GoTo >>stream")
     pdf = None
     with pytest.raises(PdfReadError) as exc:
@@ -380,17 +380,22 @@ def test_DictionaryObject_read_from_stream_stream_no_newline():
 
 
 @pytest.mark.parametrize(("strict"), [(True), (False)])
-def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
-    stream = BytesIO(b"<< /S /GoTo >>stream\n")
+def test_dictionaryobject_read_from_stream_stream_no_stream_length(strict, caplog):
+    stream = BytesIO(b"<< /S /GoTo >>stream\n123456789endstream abcd")
 
     class Tst:  # to replace pdf
         strict = False
 
     pdf = Tst()
     pdf.strict = strict
-    with pytest.raises(PdfReadError) as exc:
-        DictionaryObject.read_from_stream(stream, pdf)
-    assert exc.value.args[0] == "Stream length not defined"
+    if strict:
+        with pytest.raises(PdfReadError) as exc:
+            DictionaryObject.read_from_stream(stream, pdf)
+        assert exc.value.args[0] == "Stream length not defined"
+    else:
+        o = DictionaryObject.read_from_stream(stream, pdf)
+        assert "Stream length not defined" in caplog.text
+        assert o.get_data() == b"123456789"
 
 
 @pytest.mark.parametrize(
@@ -403,7 +408,7 @@ def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
         (False, 10, False),
     ],
 )
-def test_DictionaryObject_read_from_stream_stream_stream_valid(
+def test_dictionaryobject_read_from_stream_stream_stream_valid(
     strict, length, should_fail
 ):
     stream = BytesIO(b"<< /S /GoTo /Length %d >>stream\nBT /F1\nendstream\n" % length)
@@ -423,7 +428,7 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid(
     assert should_fail ^ (exc.value.args[0] == "__ALLGOOD__")
 
 
-def test_RectangleObject():
+def test_rectangleobject():
     ro = RectangleObject((1, 2, 3, 4))
     assert ro.lower_left == (1, 2)
     assert ro.lower_right == (3, 2)
@@ -450,14 +455,14 @@ def test_RectangleObject():
     assert ro.upper_right == (14, 18)
 
 
-def test_TextStringObject_exc():
+def test_textstringobject_exc():
     tso = TextStringObject("foo")
     with pytest.raises(Exception) as exc:
         tso.get_original_bytes()
     assert exc.value.args[0] == "no information about original bytes"
 
 
-def test_TextStringObject_autodetect_utf16():
+def test_textstringobject_autodetect_utf16():
     tso = TextStringObject("foo")
     tso.autodetect_utf16 = True
     assert tso.get_original_bytes() == b"\xfe\xff\x00f\x00o\x00o"
@@ -487,7 +492,7 @@ def test_remove_child_not_in_that_tree():
 def test_remove_child_not_found_in_tree():
     class ChildDummy(DictionaryObject):
         @property
-        def indirect_reference(self):
+        def indirect_reference(self) -> "ChildDummy":
             return self
 
     tree = TreeObject()
@@ -516,7 +521,7 @@ def test_remove_child_found_in_tree():
     child1_ref = writer._add_object(child1)
     tree.add_child(child1_ref, writer)
     assert tree[NameObject("/Count")] == 1
-    assert len([el for el in tree.children()]) == 1
+    assert len(list(tree.children())) == 1
 
     # Add second child
     child2 = TreeObject()
@@ -524,12 +529,12 @@ def test_remove_child_found_in_tree():
     child2_ref = writer._add_object(child2)
     tree.add_child(child2_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     # Remove last child
     tree.remove_child(child2_ref)
     assert tree[NameObject("/Count")] == 1
-    assert len([el for el in tree.children()]) == 1
+    assert len(list(tree.children())) == 1
 
     # Add new child
     child3 = TreeObject()
@@ -537,32 +542,32 @@ def test_remove_child_found_in_tree():
     child3_ref = writer._add_object(child3)
     tree.add_child(child3_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     # Remove first child
     child1 = tree[NameObject("/First")]
     tree.remove_child(child1)
     assert tree[NameObject("/Count")] == 1
-    assert len([el for el in tree.children()]) == 1
+    assert len(list(tree.children())) == 1
 
     child4 = TreeObject()
     child4[NameObject("/Foo")] = TextStringObject("4")
     child4_ref = writer._add_object(child4)
     tree.add_child(child4_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     child5 = TreeObject()
     child5[NameObject("/Foo")] = TextStringObject("5")
     child5_ref = writer._add_object(child5)
     tree.add_child(child5_ref, writer)
     assert tree[NameObject("/Count")] == 3
-    assert len([el for el in tree.children()]) == 3
+    assert len(list(tree.children())) == 3
 
     # Remove middle child
     child4.remove_from_tree()
     assert tree[NameObject("/Count")] == 2
-    assert len([el for el in tree.children()]) == 2
+    assert len(list(tree.children())) == 2
 
     tree.empty_tree()
 
@@ -583,7 +588,7 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_dict_read_from_stream(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
     name = "tika-984877.pdf"
@@ -597,7 +602,7 @@ def test_dict_read_from_stream(caplog):
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_parse_content_stream_peek_percentage():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
     name = "tika-985770.pdf"
@@ -607,7 +612,7 @@ def test_parse_content_stream_peek_percentage():
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_read_inline_image_no_has_q():
     # pdf/df7e1add3156af17a372bc165e47a244.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
@@ -618,7 +623,7 @@ def test_read_inline_image_no_has_q():
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_read_inline_image_loc_neg_1():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
     name = "tika-935066.pdf"
@@ -628,18 +633,20 @@ def test_read_inline_image_loc_neg_1():
         page.extract_text()
 
 
-@pytest.mark.slow
-@pytest.mark.external
+@pytest.mark.slow()
+@pytest.mark.enable_socket()
 def test_text_string_write_to_stream():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
     name = "tika-924562.pdf"
 
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    for page in writer.pages:
         page.compress_content_streams()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_name_object_read_from_stream_unicode_error():  # L588
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
     name = "tika-974966.pdf"
@@ -649,7 +656,7 @@ def test_name_object_read_from_stream_unicode_error():  # L588
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_bool_repr(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
     name = "tika-932449.pdf"
@@ -669,7 +676,7 @@ def test_bool_repr(tmp_path):
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @patch("pypdf._reader.logger_warning")
 def test_issue_997(mock_logger_warning):
     url = (
@@ -700,7 +707,7 @@ def test_issue_997(mock_logger_warning):
     merger.close()
 
     # cleanup
-    os.remove(merged_filename)
+    Path(merged_filename).unlink()
 
 
 def test_annotation_builder_free_text():
@@ -720,8 +727,8 @@ def test_annotation_builder_free_text():
         italic=True,
         font_size="20pt",
         font_color="00ff00",
-        border_color="0000ff",
-        background_color="cdcdcd",
+        border_color=None,
+        background_color=None,
     )
     writer.add_annotation(0, free_text_annotation)
 
@@ -743,7 +750,7 @@ def test_annotation_builder_free_text():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_polygon():
@@ -771,7 +778,7 @@ def test_annotation_builder_polygon():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_line():
@@ -796,7 +803,7 @@ def test_annotation_builder_line():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_square():
@@ -823,7 +830,7 @@ def test_annotation_builder_square():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_circle():
@@ -851,7 +858,7 @@ def test_annotation_builder_circle():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_link():
@@ -909,7 +916,7 @@ def test_annotation_builder_link():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_text():
@@ -933,7 +940,7 @@ def test_annotation_builder_text():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_popup():
@@ -965,7 +972,7 @@ def test_annotation_builder_popup():
     os.remove(target)  # comment this out for manual inspection
 
 
-def test_CheckboxRadioButtonAttributes_opt():
+def test_checkboxradiobuttonattributes_opt():
     assert "/Opt" in CheckboxRadioButtonAttributes.attributes_dict()
 
 
@@ -1075,7 +1082,7 @@ def test_cloning(caplog):
     assert isinstance(obj21.get("/Test2"), IndirectObject)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_append_with_indirectobject_not_pointing(caplog):
     """
     reported in #1631
@@ -1088,3 +1095,29 @@ def test_append_with_indirectobject_not_pointing(caplog):
     writer = PdfWriter()
     writer.append(reader)
     assert "Object 43 0 not defined." in caplog.text
+
+
+@pytest.mark.enable_socket()
+def test_iss1615_1673():
+    """
+    test cases where /N is not indicating chains of objects
+    test also where /N,... are not part of chains
+    """
+    # #1615
+    url = "https://github.com/py-pdf/pypdf/files/10671366/graph_letter.pdf"
+    name = "graph_letter.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+    assert (
+        "/N"
+        in writer.pages[0]["/Annots"][0]
+        .get_object()["/AP"]["/N"]["/Resources"]["/ColorSpace"]["/Cs1"][1]
+        .get_object()
+    )
+    # #1673
+    url = "https://github.com/py-pdf/pypdf/files/10848750/budgeting-loan-form-sf500.pdf"
+    name = "budgeting-loan-form-sf500.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)

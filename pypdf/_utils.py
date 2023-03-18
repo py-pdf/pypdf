@@ -178,10 +178,10 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
         tok = stream.read(16)
         if not tok:
             return name
-        m = regex.search(tok)
+        m = regex.search(name + tok)
         if m is not None:
-            name += tok[: m.start()]
-            stream.seek(m.start() - len(tok), 1)
+            stream.seek(m.start() - (len(name) + len(tok)), 1)
+            name = (name + tok)[: m.start()]
             break
         name += tok
     return name
@@ -428,15 +428,16 @@ def logger_warning(msg: str, src: str) -> None:
 
 def deprecation_bookmark(**aliases: str) -> Callable:
     """
-    Decorator for deprecated term "bookmark"
+    Decorator for deprecated term "bookmark".
+
     To be used for methods and function arguments
         outline_item = a bookmark
-        outline = a collection of outline items
+        outline = a collection of outline items.
     """
 
-    def decoration(func: Callable):  # type: ignore
+    def decoration(func: Callable) -> Any:  # type: ignore
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):  # type: ignore
+        def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore
             rename_kwargs(func.__name__, kwargs, aliases, fail=True)
             return func(*args, **kwargs)
 
@@ -447,7 +448,7 @@ def deprecation_bookmark(**aliases: str) -> Callable:
 
 def rename_kwargs(  # type: ignore
     func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str], fail: bool = False
-):
+) -> None:
     """
     Helper function to deprecate arguments.
 
@@ -457,7 +458,6 @@ def rename_kwargs(  # type: ignore
         aliases:
         fail:
     """
-
     for old_term, new_term in aliases.items():
         if old_term in kwargs:
             if fail:

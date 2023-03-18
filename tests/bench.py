@@ -1,8 +1,14 @@
+"""
+Benchmark the speed of pypdf.
+
+The results are on https://py-pdf.github.io/pypdf/dev/bench/
+Please keep in mind that the variance is high.
+"""
 from io import BytesIO
 from pathlib import Path
 
 import pypdf
-from pypdf import PdfReader, Transformation
+from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf.generic import Destination, read_string_from_stream
 
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -15,11 +21,13 @@ def page_ops(pdf_path, password):
     pdf_path = RESOURCE_ROOT / pdf_path
 
     reader = PdfReader(pdf_path)
+    writer = PdfWriter()
 
     if password:
         reader.decrypt(password)
 
     page = reader.pages[0]
+    writer.add_page(page)
 
     op = Transformation().rotate(90).scale(1.2)
     page.add_transformation(op)
@@ -37,6 +45,8 @@ def page_ops(pdf_path, password):
     page.scale(2, 2)
     page.scale_by(0.5)
     page.scale_to(100, 100)
+
+    page = writer.pages[0]
     page.compress_content_streams()
     page.extract_text()
 

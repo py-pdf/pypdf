@@ -38,14 +38,22 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
     cast,
+    overload,
 )
 
 from ._cmap import build_char_map, unknown_char_map
 from ._protocols import PdfReaderProtocol, PdfWriterProtocol
+from ._text_extraction import (
+    OrientationNotFoundError,
+    crlf_space_check,
+    handle_tj,
+    mult,
+)
 from ._utils import (
     CompressedTransformationMatrix,
     File,
@@ -72,58 +80,9 @@ from .generic import (
     NullObject,
     NumberObject,
     RectangleObject,
-    encode_pdfdocencoding,
 )
 
-CUSTOM_RTL_MIN: int = -1
-CUSTOM_RTL_MAX: int = -1
-CUSTOM_RTL_SPECIAL_CHARS: List[int] = []
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
-
-
-def set_custom_rtl(
-    _min: Union[str, int, None] = None,
-    _max: Union[str, int, None] = None,
-    specials: Union[str, List[int], None] = None,
-) -> Tuple[int, int, List[int]]:
-    """
-    Change the Right-To-Left and special characters custom parameters.
-
-    Args:
-        _min: The new minimum value for the range of custom characters that
-            will be written right to left.
-            If set to `None`, the value will not be changed.
-            If set to an integer or string, it will be converted to its ASCII code.
-            The default value is -1, which sets no additional range to be converted.
-        _max: The new maximum value for the range of custom characters that will
-            be written right to left.
-            If set to `None`, the value will not be changed.
-            If set to an integer or string, it will be converted to its ASCII code.
-            The default value is -1, which sets no additional range to be converted.
-        specials: The new list of special characters to be inserted in the
-            current insertion order.
-            If set to `None`, the current value will not be changed.
-            If set to a string, it will be converted to a list of ASCII codes.
-            The default value is an empty list.
-
-    Returns:
-        A tuple containing the new values for `CUSTOM_RTL_MIN`,
-        `CUSTOM_RTL_MAX`, and `CUSTOM_RTL_SPECIAL_CHARS`.
-    """
-    global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
-    if isinstance(_min, int):
-        CUSTOM_RTL_MIN = _min
-    elif isinstance(_min, str):
-        CUSTOM_RTL_MIN = ord(_min)
-    if isinstance(_max, int):
-        CUSTOM_RTL_MAX = _max
-    elif isinstance(_max, str):
-        CUSTOM_RTL_MAX = ord(_max)
-    if isinstance(specials, str):
-        CUSTOM_RTL_SPECIAL_CHARS = [ord(x) for x in specials]
-    elif isinstance(specials, list):
-        CUSTOM_RTL_SPECIAL_CHARS = specials
-    return CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -206,8 +165,7 @@ class Transformation:
                                  e f 1
 
 
-    Example
-
+    Example:
         >>> from pypdf import Transformation
         >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
         >>> page.add_transformation(op)
@@ -260,7 +218,7 @@ class Transformation:
             ty: The translation along the y-axis.
 
         Returns:
-            A new `Transformation` instance
+            A new ``Transformation`` instance
         """
         m = self.ctm
         return Transformation(ctm=(m[0], m[1], m[2], m[3], m[4] + tx, m[5] + ty))
@@ -301,7 +259,7 @@ class Transformation:
             rotation: The angle of rotation in degrees.
 
         Returns:
-            A new `Transformation` instance with the rotated matrix.
+            A new ``Transformation`` instance with the rotated matrix.
         """
         rotation = math.radians(rotation)
         op: TransformationMatrixType = (
@@ -361,7 +319,6 @@ class PageObject(DictionaryObject):
         indirect_reference: Optional[IndirectObject] = None,
         indirect_ref: Optional[IndirectObject] = None,  # deprecated
     ) -> None:
-
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
         if indirect_ref is not None:  # deprecated
@@ -635,7 +592,7 @@ class PageObject(DictionaryObject):
             DictionaryObject, res2.get(resource, DictionaryObject()).get_object()
         )
         rename_res = {}
-        for key in page2res.keys():
+        for key in page2res:
             unique_key, same_value = compute_unique_key(key)
             newname = NameObject(unique_key)
             if key != unique_key:
@@ -699,9 +656,7 @@ class PageObject(DictionaryObject):
         pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
-        """
-        Add transformation matrix at the beginning of the given contents stream.
-        """
+        """Add transformation matrix at the beginning of the given contents stream."""
         a, b, c, d, e, f = ctm
         contents = ContentStream(contents, pdf)
         contents.operations.insert(
@@ -939,7 +894,11 @@ class PageObject(DictionaryObject):
                 trsf = Transformation(ctm)
             for a in cast(ArrayObject, page2[PG.ANNOTS]):
                 a = a.get_object()
-                aa = a.clone(pdf, ignore_fields=("/P", "/StructParent"))
+                aa = a.clone(
+                    pdf,
+                    ignore_fields=("/P", "/StructParent", "/Parent"),
+                    force_duplicate=True,
+                )
                 r = cast(ArrayObject, a["/Rect"])
                 pt1 = trsf.apply_on((r[0], r[1]), True)
                 pt2 = trsf.apply_on((r[2], r[3]), True)
@@ -959,6 +918,10 @@ class PageObject(DictionaryObject):
                         + cast(tuple, trsf.apply_on((q[4], q[5]), True))
                         + cast(tuple, trsf.apply_on((q[6], q[7]), True))
                     )
+                try:
+                    aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
+                except KeyError:
+                    pass
                 try:
                     aa[NameObject("/P")] = self.indirect_reference
                     annots.append(aa.indirect_reference)
@@ -1257,8 +1220,6 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", rotation: float, scale: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        obsolete
-
         .. deprecated:: 1.28.0
 
             Use :meth:`merge_transformed_page` instead.
@@ -1513,9 +1474,25 @@ class PageObject(DictionaryObject):
         """
         content = self.get_contents()
         if content is not None:
+            content_obj: Any
             if not isinstance(content, ContentStream):
-                content = ContentStream(content, self.pdf)
-            self[NameObject(PG.CONTENTS)] = content.flate_encode()
+                content_obj = ContentStream(content, self.pdf)
+            else:
+                content_obj = content
+            content_obj = content_obj.flate_encode()
+            try:
+                content.indirect_reference.pdf._objects[  # type: ignore
+                    content.indirect_reference.idnum - 1  # type: ignore
+                ] = content_obj
+            except AttributeError:
+                if self.indirect_reference is not None and hasattr(
+                    self.indirect_reference.pdf, "_add_object"
+                ):
+                    self[
+                        NameObject(PG.CONTENTS)
+                    ] = self.indirect_reference.pdf._add_object(content_obj)
+                else:
+                    raise ValueError("Page must be part of a PdfWriter")
 
     def compressContentStreams(self) -> None:  # deprecated
         """
@@ -1645,26 +1622,6 @@ class PageObject(DictionaryObject):
         _space_width: float = 500.0  # will be set correctly at first Tf
         TL = 0.0
         font_size = 12.0  # init just in case of
-
-        def mult(m: List[float], n: List[float]) -> List[float]:
-            return [
-                m[0] * n[0] + m[1] * n[2],
-                m[0] * n[1] + m[1] * n[3],
-                m[2] * n[0] + m[3] * n[2],
-                m[2] * n[1] + m[3] * n[3],
-                m[4] * n[0] + m[5] * n[2] + n[4],
-                m[4] * n[1] + m[5] * n[3] + n[5],
-            ]
-
-        def orient(m: List[float]) -> int:
-            if m[3] > 1e-6:
-                return 0
-            elif m[3] < -1e-6:
-                return 180
-            elif m[1] > 0:
-                return 90
-            else:
-                return 270
 
         def current_spacewidth() -> float:
             return _space_width / 1000.0
@@ -1797,169 +1754,36 @@ class PageObject(DictionaryObject):
 
             elif operator == b"Tj":
                 check_crlf_space = True
-                m = mult(tm_matrix, cm_matrix)
-                orientation = orient(m)
-                if orientation in orientations:
-                    if isinstance(operands[0], str):
-                        text += operands[0]
-                    else:
-                        t: str = ""
-                        tt: bytes = (
-                            encode_pdfdocencoding(operands[0])
-                            if isinstance(operands[0], str)
-                            else operands[0]
-                        )
-                        if isinstance(cmap[0], str):
-                            try:
-                                t = tt.decode(
-                                    cmap[0], "surrogatepass"
-                                )  # apply str encoding
-                            except Exception:
-                                # the data does not match the expectation,
-                                # we use the alternative ;
-                                # text extraction may not be good
-                                t = tt.decode(
-                                    "utf-16-be" if cmap[0] == "charmap" else "charmap",
-                                    "surrogatepass",
-                                )  # apply str encoding
-                        else:  # apply dict encoding
-                            t = "".join(
-                                [
-                                    cmap[0][x] if x in cmap[0] else bytes((x,)).decode()
-                                    for x in tt
-                                ]
-                            )
-                        # "\u0590 - \u08FF \uFB50 - \uFDFF"
-                        for x in [cmap[1][x] if x in cmap[1] else x for x in t]:
-                            # x can be a sequence of bytes ; ex: habibi.pdf
-                            if len(x) == 1:
-                                xx = ord(x)
-                            else:
-                                xx = 1
-                            # fmt: off
-                            if (
-                                # cases where the current inserting order is kept
-                                (xx <= 0x2F)                        # punctuations but...
-                                or (0x3A <= xx and xx <= 0x40)      # numbers (x30-39)
-                                or (0x2000 <= xx and xx <= 0x206F)  # upper punctuations..
-                                or (0x20A0 <= xx and xx <= 0x21FF)  # but (numbers) indices/exponents
-                                or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
-                            ):
-                                text = x + text if rtl_dir else text + x
-                            elif (  # right-to-left characters set
-                                (0x0590 <= xx and xx <= 0x08FF)
-                                or (0xFB1D <= xx and xx <= 0xFDFF)
-                                or (0xFE70 <= xx and xx <= 0xFEFF)
-                                or (CUSTOM_RTL_MIN <= xx and xx <= CUSTOM_RTL_MAX)
-                            ):
-                                if not rtl_dir:
-                                    rtl_dir = True
-                                    output += text
-                                    if visitor_text is not None:
-                                        visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
-                                    text = ""
-                                text = x + text
-                            else:  # left-to-right
-                                # print(">",xx,x,end="")
-                                if rtl_dir:
-                                    rtl_dir = False
-                                    output += text
-                                    if visitor_text is not None:
-                                        visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
-                                    text = ""
-                                text = text + x
-                            # fmt: on
+                text, rtl_dir = handle_tj(
+                    text,
+                    operands,
+                    cm_matrix,
+                    tm_matrix,  # text matrix
+                    cmap,
+                    orientations,
+                    output,
+                    font_size,
+                    rtl_dir,
+                    visitor_text,
+                )
             else:
                 return None
             if check_crlf_space:
-                m = mult(tm_matrix, cm_matrix)
-                orientation = orient(m)
-                delta_x = m[4] - tm_prev[4]
-                delta_y = m[5] - tm_prev[5]
-                k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
-                f = font_size * k
-                tm_prev = m
-                if orientation not in orientations:
-                    return None
                 try:
-                    if orientation == 0:
-                        if delta_y < -0.8 * f:
-                            if (output + text)[-1] != "\n":
-                                output += text + "\n"
-                                if visitor_text is not None:
-                                    visitor_text(
-                                        text + "\n",
-                                        cm_matrix,
-                                        tm_matrix,
-                                        cmap[3],
-                                        font_size,
-                                    )
-                                text = ""
-                        elif (
-                            abs(delta_y) < f * 0.3
-                            and abs(delta_x) > current_spacewidth() * f * 15
-                        ):
-                            if (output + text)[-1] != " ":
-                                text += " "
-                    elif orientation == 180:
-                        if delta_y > 0.8 * f:
-                            if (output + text)[-1] != "\n":
-                                output += text + "\n"
-                                if visitor_text is not None:
-                                    visitor_text(
-                                        text + "\n",
-                                        cm_matrix,
-                                        tm_matrix,
-                                        cmap[3],
-                                        font_size,
-                                    )
-                                text = ""
-                        elif (
-                            abs(delta_y) < f * 0.3
-                            and abs(delta_x) > current_spacewidth() * f * 15
-                        ):
-                            if (output + text)[-1] != " ":
-                                text += " "
-                    elif orientation == 90:
-                        if delta_x > 0.8 * f:
-                            if (output + text)[-1] != "\n":
-                                output += text + "\n"
-                                if visitor_text is not None:
-                                    visitor_text(
-                                        text + "\n",
-                                        cm_matrix,
-                                        tm_matrix,
-                                        cmap[3],
-                                        font_size,
-                                    )
-                                text = ""
-                        elif (
-                            abs(delta_x) < f * 0.3
-                            and abs(delta_y) > current_spacewidth() * f * 15
-                        ):
-                            if (output + text)[-1] != " ":
-                                text += " "
-                    elif orientation == 270:
-                        if delta_x < -0.8 * f:
-                            if (output + text)[-1] != "\n":
-                                output += text + "\n"
-                                if visitor_text is not None:
-                                    visitor_text(
-                                        text + "\n",
-                                        cm_matrix,
-                                        tm_matrix,
-                                        cmap[3],
-                                        font_size,
-                                    )
-                                text = ""
-                        elif (
-                            abs(delta_x) < f * 0.3
-                            and abs(delta_y) > current_spacewidth() * f * 15
-                        ):
-                            if (output + text)[-1] != " ":
-                                text += " "
-                except Exception:
-                    pass
+                    text, output, tm_prev = crlf_space_check(
+                        text,
+                        tm_prev,
+                        cm_matrix,
+                        tm_matrix,
+                        cmap,
+                        orientations,
+                        output,
+                        font_size,
+                        visitor_text,
+                        current_spacewidth(),
+                    )
+                except OrientationNotFoundError:
+                    return None
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
@@ -1980,13 +1804,12 @@ class PageObject(DictionaryObject):
                 for op in operands[0]:
                     if isinstance(op, (str, bytes)):
                         process_operation(b"Tj", [op])
-                    if isinstance(op, (int, float, NumberObject, FloatObject)):
-                        if (
-                            (abs(float(op)) >= _space_width)
-                            and (len(text) > 0)
-                            and (text[-1] != " ")
-                        ):
-                            process_operation(b"Tj", [" "])
+                    if isinstance(op, (int, float, NumberObject, FloatObject)) and (
+                        (abs(float(op)) >= _space_width)
+                        and (len(text) > 0)
+                        and (text[-1] != " ")
+                    ):
+                        process_operation(b"Tj", [" "])
             elif operator == b"Do":
                 output += text
                 if visitor_text is not None:
@@ -2054,7 +1877,7 @@ class PageObject(DictionaryObject):
         see function set_custom_rtl
 
         Additionally you can provide visitor-methods to get informed on all
-        operands and all text-objects.
+        operations and all text-objects.
         For example in some PDF files this can be useful to parse tables.
 
         Args:
@@ -2066,11 +1889,11 @@ class PageObject(DictionaryObject):
                 270 (turned Right)
             space_width: force default space width
                 if not extracted from font (default: 200)
-            visitor_operand_before: function to be called before processing an operand.
-                It has four arguments: operand, operand-arguments,
+            visitor_operand_before: function to be called before processing an operation.
+                It has four arguments: operator, operand-arguments,
                 current transformation matrix and text matrix.
-            visitor_operand_after: function to be called after processing an operand.
-                It has four arguments: operand, operand-arguments,
+            visitor_operand_after: function to be called after processing an operation.
+                It has four arguments: operator, operand-arguments,
                 current transformation matrix and text matrix.
             visitor_text: function to be called when extracting some text at some position.
                 It has five arguments: text, current transformation matrix,
@@ -2318,7 +2141,7 @@ class PageObject(DictionaryObject):
             self[NameObject("/Annots")] = value
 
 
-class _VirtualList:
+class _VirtualList(Sequence):
     def __init__(
         self,
         length_function: Callable[[], int],
@@ -2331,11 +2154,21 @@ class _VirtualList:
     def __len__(self) -> int:
         return self.length_function()
 
+    @overload
     def __getitem__(self, index: int) -> PageObject:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[PageObject]:
+        ...
+
+    def __getitem__(
+        self, index: Union[int, slice]
+    ) -> Union[PageObject, Sequence[PageObject]]:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             cls = type(self)
-            return cls(indices.__len__, lambda idx: self[indices[idx]])  # type: ignore
+            return cls(indices.__len__, lambda idx: self[indices[idx]])
         if not isinstance(index, int):
             raise TypeError("sequence indices must be integers")
         len_self = len(self)
@@ -2349,6 +2182,10 @@ class _VirtualList:
     def __iter__(self) -> Iterator[PageObject]:
         for i in range(len(self)):
             yield self[i]
+
+    def __str__(self) -> str:
+        p = [f"PageObject({i})" for i in range(self.length_function())]
+        return f"[{', '.join(p)}]"
 
 
 def _get_fonts_walk(
@@ -2383,11 +2220,11 @@ def _get_fonts_walk(
     fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
     if "/BaseFont" in obj:
         fnt.add(cast(str, obj["/BaseFont"]))
-    if "/FontName" in obj:
-        if [x for x in fontkeys if x in obj]:  # test to see if there is FontFile
-            emb.add(cast(str, obj["/FontName"]))
+    if "/FontName" in obj and [x for x in fontkeys if x in obj]:
+        # the list comprehension ensures there is FontFile
+        emb.add(cast(str, obj["/FontName"]))
 
-    for key in obj.keys():
+    for key in obj:
         _get_fonts_walk(cast(DictionaryObject, obj[key]), fnt, emb)
 
     return fnt, emb  # return the sets for each page

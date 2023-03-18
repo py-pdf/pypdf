@@ -1,5 +1,66 @@
-
 # CHANGELOG
+
+## Version 3.6.0, 2023-03-18
+
+### New Features (ENH)
+-  Extend PdfWriter.append() to PageObjects (#1704)
+-  Support qualified names in update_page_form_field_values (#1695)
+
+### Robustness (ROB)
+-  Tolerate streams without length field (#1717)
+-  Accept DictionaryObject in /D of NamedDestination (#1720)
+-  Widths def in cmap calls IndirectObject (#1719)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.5.2...3.6.0)
+
+
+## Version 3.5.2, 2023-03-12
+
+⚠️ We discovered that compress_content_stream has to be applied to a page of
+  the PdfWriter. It may not be applied to a page of the PdfReader!
+
+### Bug Fixes (BUG)
+-  compress_content_stream not readable in Adobe Acrobat (#1698)
+-  Pass logging parameters correctly in set_need_appearances_writer (#1697)
+-  Write /Root/AcroForm in set_need_appearances_writer (#1639)
+
+### Robustness (ROB)
+-  Allow more whitespaces within linearized file (#1701)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.5.1...3.5.2)
+
+
+## Version 3.5.1, 2023-03-05
+
+### Robustness (ROB)
+-  Some attributes not copied in DictionaryObject._clone (#1635)
+-  Allow merging multiple time pages with annots (#1624)
+
+### Testing (TST)
+-  Replace pytest.mark.external by enable_socket (#1657)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.5.0...3.5.1)
+
+## Version 3.5.0, 2023-02-26
+
+### New Features (ENH)
+-  Add reader.attachments public interface (#1611, #1661)
+-  Add PdfWriter.remove_objects_from_page(page: PageObject, to_delete: ObjectDeletionFlag) (#1648)
+-  Allow free-text annotation to have transparent border/background (#1664)
+
+### Bug Fixes (BUG)
+-  Allow decryption with empty password for AlgV5 (#1663)
+-  Let PdfWriter.pages return PageObject after calling `clone_document_from_reader()` (#1613)
+-  Invalid font pointed during merge_resources (#1641)
+
+### Robustness (ROB)
+-  Cope with invalid objects in IndirectObject.clone (#1637)
+-  Improve tolerance to invalid Names/Dests (#1658)
+-  Decode encoded values in get_fields (#1636)
+-  Let PdfWriter.merge cope with missing "/Fields" (#1628)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.4.1...3.5.0)
+
 
 ## Version 3.4.1, 2023-02-12
 

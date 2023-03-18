@@ -1,3 +1,4 @@
+"""Test the pypdf.xmp module."""
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
@@ -28,10 +29,10 @@ def test_read_xmp(src, has_xmp):
     xmp = reader.xmp_metadata
     assert (xmp is None) == (not has_xmp)
     if has_xmp:
-        for el in xmp.get_element(
+        for _ in xmp.get_element(
             about_uri="", namespace=pypdf.xmp.RDF_NAMESPACE, name="Artist"
         ):
-            print(f"el={el}")
+            pass
 
         assert get_all_tiff(xmp) == {"tiff:Artist": ["me"]}
         assert xmp.dc_contributor == []
@@ -87,7 +88,7 @@ def test_identity(x):
     assert pypdf.xmp._identity(x) == x
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name", "xmpmm_instance_id"),
     [
@@ -106,7 +107,7 @@ def test_xmpmm(url, name, xmpmm_instance_id):
     assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_dc_description():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
     name = "tika-953770.pdf"
@@ -121,7 +122,7 @@ def test_dc_description():
     }
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_dc_creator():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
     name = "tika-953770.pdf"
@@ -132,7 +133,7 @@ def test_dc_creator():
     assert xmp_metadata.dc_creator == ["U.S. Fish and Wildlife Service"]
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_custom_properties():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/986/986065.pdf"
     name = "tika-986065.pdf"
@@ -143,7 +144,7 @@ def test_custom_properties():
     assert xmp_metadata.custom_properties == {"Style": "Searchable Image (Exact)"}
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_dc_subject():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/959/959519.pdf"
     name = "tika-959519.pdf"
@@ -174,7 +175,7 @@ def test_dc_subject():
     ]
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_issue585():
     url = "https://github.com/py-pdf/pypdf/files/5536984/test.pdf"
     name = "pypdf-5536984.pdf"

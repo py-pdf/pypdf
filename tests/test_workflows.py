@@ -5,7 +5,6 @@ They don't mock/patch anything, they cover typical user needs.
 """
 
 import binascii
-import os
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -78,7 +77,7 @@ def test_dropdown_items():
     assert "/Opt" in fields["Nationality"]
 
 
-def test_PdfReaderFileLoad():
+def test_pdfreader_file_load():
     """
     Test loading and parsing of a file.
 
@@ -106,7 +105,7 @@ def test_PdfReaderFileLoad():
         )
 
 
-def test_PdfReaderJpegImage():
+def test_pdfreader_jpeg_image():
     """
     Test loading and parsing of a file. Extract the image of the file and
     compare to expected textual output.
@@ -179,8 +178,8 @@ def test_rotate_45():
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
 
-@pytest.mark.external
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 @pytest.mark.parametrize(
     ("enable", "url", "pages"),
     [
@@ -261,7 +260,7 @@ def test_extract_textbench(enable, url, pages, print_result=False):
         pass
 
 
-@pytest.mark.slow
+@pytest.mark.slow()
 def test_orientations():
     p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
     with pytest.warns(DeprecationWarning):
@@ -288,7 +287,7 @@ def test_orientations():
     p.extract_text(0, 0)
     p.extract_text(orientations=0)
 
-    for (req, rst) in (
+    for req, rst in (
         (0, ["T"]),
         (90, ["L"]),
         (180, ["B"]),
@@ -302,8 +301,8 @@ def test_orientations():
         ), f"extract_text({req}) => {rst}"
 
 
-@pytest.mark.samples
-@pytest.mark.external
+@pytest.mark.samples()
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("base_path", "overlay_path"),
     [
@@ -335,11 +334,11 @@ def test_overlay(base_path, overlay_path):
         writer.write(fp)
 
     # Cleanup
-    os.remove("dont_commit_overlay.pdf")  # remove for manual inspection
+    Path("dont_commit_overlay.pdf").unlink()  # remove for manual inspection
 
 
-@pytest.mark.external
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -358,7 +357,7 @@ def test_merge_with_warning(tmp_path, url, name):
     merger.write(tmp_path / "tmp.merged.pdf")
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -376,7 +375,7 @@ def test_merge(tmp_path, url, name):
     merger.write(tmp_path / "tmp.merged.pdf")
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -392,7 +391,7 @@ def test_get_metadata(url, name):
     reader.metadata
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name", "strict", "exception"),
     [
@@ -478,7 +477,7 @@ def test_extract_text(url, name, strict, exception):
         assert ex_info.value.args[0] == exc_text
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -490,48 +489,31 @@ def test_extract_text(url, name, strict, exception):
             "https://corpora.tika.apache.org/base/docs/govdocs1/957/957304.pdf",
             "tika-957304.pdf",
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/915/915194.pdf",
+            "tika-915194.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/950/950337.pdf",
+            "tika-950337.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/962/962292.pdf",
+            "tika-962292.pdf",
+        ),
     ],
 )
 def test_compress_raised(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
     # no more error since iss #1090 fix
-    for page in reader.pages:
+    for page in writer.pages:
         page.compress_content_streams()
 
 
-@pytest.mark.external
-@pytest.mark.slow
-@pytest.mark.parametrize(
-    ("url", "name", "strict"),
-    [
-        (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/915/915194.pdf",
-            "tika-915194.pdf",
-            False,
-        ),
-        (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/950/950337.pdf",
-            "tika-950337.pdf",
-            False,
-        ),
-        (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/962/962292.pdf",
-            "tika-962292.pdf",
-            True,
-        ),
-    ],
-)
-def test_compress(url, name, strict):
-    data = BytesIO(get_pdf_from_url(url, name=name))
-    reader = PdfReader(data, strict=strict)
-    # TODO: which page exactly?
-    # TODO: Is it reasonable to have an exception here?
-    for page in reader.pages:
-        page.compress_content_streams()
-
-
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -552,7 +534,7 @@ def test_get_fields_warns(tmp_path, caplog, url, name):
     assert normalize_warnings(caplog.text) == ["Object 2 0 not defined."]
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -572,7 +554,7 @@ def test_get_fields_no_warning(tmp_path, url, name):
     assert len(retrieved_fields) == 10
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_scale_rectangle_indirect_object():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/999/999944.pdf"
     name = "tika-999944.pdf"
@@ -605,15 +587,15 @@ def test_merge_output(caplog):
         expected_data = fp.read()
     if actual != expected_data:
         # See https://github.com/pytest-dev/pytest/issues/9124
-        assert (
-            False
-        ), f"len(actual) = {len(actual):,} vs len(expected) = {len(expected_data):,}"
+        pytest.fail(
+            f"len(actual) = {len(actual):,} vs len(expected) = {len(expected_data):,}"
+        )
 
     # Cleanup
     merger.close()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -667,7 +649,7 @@ def test_image_extraction(url, name):
     images_extracted = []
     root = Path("extracted-images")
     if not root.exists():
-        os.mkdir(root)
+        root.mkdir()
 
     for page in reader.pages:
         for image in page.images:
@@ -680,11 +662,11 @@ def test_image_extraction(url, name):
     do_cleanup = True  # set this to False for manual inspection
     if do_cleanup:
         for filepath in images_extracted:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            if Path(filepath).exists():
+                Path(filepath).unlink()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_image_extraction_strict():
     # Emits log messages
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
@@ -695,7 +677,7 @@ def test_image_extraction_strict():
     images_extracted = []
     root = Path("extracted-images")
     if not root.exists():
-        os.mkdir(root)
+        root.mkdir()
 
     for page in reader.pages:
         for image in page.images:
@@ -708,11 +690,11 @@ def test_image_extraction_strict():
     do_cleanup = True  # set this to False for manual inspection
     if do_cleanup:
         for filepath in images_extracted:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            if Path(filepath).exists():
+                Path(filepath).unlink()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -729,7 +711,7 @@ def test_image_extraction2(url, name):
     images_extracted = []
     root = Path("extracted-images")
     if not root.exists():
-        os.mkdir(root)
+        root.mkdir()
 
     for page in reader.pages:
         for image in page.images:
@@ -742,11 +724,11 @@ def test_image_extraction2(url, name):
     do_cleanup = True  # set this to False for manual inspection
     if do_cleanup:
         for filepath in images_extracted:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            if Path(filepath).exists():
+                Path(filepath).unlink()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -766,7 +748,7 @@ def test_get_outline(url, name):
     reader.outline
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -786,7 +768,7 @@ def test_get_xfa(url, name):
     reader.xfa
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [
@@ -819,7 +801,7 @@ def test_get_fonts(url, name, strict):
         page._get_fonts()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [
@@ -877,7 +859,7 @@ def test_get_xmp(url, name, strict):
         xmp_info.custom_properties
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_tounicode_is_identity():
     url = "https://github.com/py-pdf/pypdf/files/9998335/FP_Thesis.pdf"
     name = "FP_Thesis.pdf"
@@ -886,7 +868,7 @@ def test_tounicode_is_identity():
     reader.pages[0].extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_append_forms():
     # from #1538
     writer = PdfWriter()
@@ -911,7 +893,7 @@ def test_append_forms():
     ) + len(reader2.get_form_text_fields())
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_extra_test_iss1541():
     url = "https://github.com/py-pdf/pypdf/files/10418158/tst_iss1541.pdf"
     name = "tst_iss1541.pdf"
@@ -944,11 +926,9 @@ def test_extra_test_iss1541():
     assert exc.value.args[0] == "Unexpected end of stream"
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_fields_returning_stream():
-    """
-    problem reported in #424
-    """
+    """This problem was reported in #424"""
     url = "https://github.com/mstamy2/PyPDF2/files/1948267/Simple.form.pdf"
     name = "tst_iss424.pdf"
     data = BytesIO(get_pdf_from_url(url, name=name))

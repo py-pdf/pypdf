@@ -2,7 +2,7 @@
 
 import subprocess
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 
@@ -15,7 +15,7 @@ class Change:
     message: str
 
 
-def main(changelog_path: str):
+def main(changelog_path: str) -> None:
     """
     Create a changelog.
 
@@ -29,7 +29,7 @@ def main(changelog_path: str):
     print(changes)
 
     new_version = version_bump(git_tag)
-    today = datetime.now()
+    today = datetime.now(tz=timezone.utc)
     header = f"Version {new_version}, {today:%Y-%m-%d}\n"
     header = header + "-" * (len(header) - 1) + "\n"
     url = f"https://github.com/py-pdf/pypdf/compare/{git_tag}...{new_version}"

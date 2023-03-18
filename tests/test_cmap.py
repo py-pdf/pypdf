@@ -1,3 +1,4 @@
+"""Test the pypdf_cmap module."""
 from io import BytesIO
 
 import pytest
@@ -9,8 +10,8 @@ from pypdf.errors import PdfReadWarning
 from . import get_pdf_from_url
 
 
-@pytest.mark.external
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test_compute_space_width():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923406.pdf"
     name = "tika-923406.pdf"
@@ -20,8 +21,8 @@ def test_compute_space_width():
         page.extract_text()
 
 
-@pytest.mark.external
-@pytest.mark.slow
+@pytest.mark.enable_socket()
+@pytest.mark.slow()
 def test_parse_to_unicode_process_rg():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/959/959173.pdf"
     name = "tika-959173.pdf"
@@ -35,7 +36,7 @@ def test_parse_to_unicode_process_rg():
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_parse_encoding_advanced_encoding_not_implemented():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957144.pdf"
     name = "tika-957144.pdf"
@@ -46,7 +47,7 @@ def test_parse_encoding_advanced_encoding_not_implemented():
             page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_get_font_width_from_default():  # L40
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/908/908104.pdf"
     name = "tika-908104.pdf"
@@ -55,7 +56,7 @@ def test_get_font_width_from_default():  # L40
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_multiline_bfrange():
     # non regression test for iss_1285
     url = (
@@ -76,7 +77,7 @@ def test_multiline_bfrange():
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_bfchar_on_2_chars():
     # iss #1293
     url = (
@@ -89,7 +90,7 @@ def test_bfchar_on_2_chars():
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_ascii_charset():
     # iss #1312
     url = "https://github.com/py-pdf/pypdf/files/9472500/main.pdf"
@@ -98,7 +99,7 @@ def test_ascii_charset():
     assert "/a" not in reader.pages[0].extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_iss1370():
     url = "https://github.com/py-pdf/pypdf/files/9667138/cmap1370.pdf"
     name = "cmap1370.pdf"
@@ -106,7 +107,7 @@ def test_iss1370():
     reader.pages[0].extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_iss1379():
     url = "https://github.com/py-pdf/pypdf/files/9712729/02voc.pdf"
     name = "02voc.pdf"
@@ -114,10 +115,20 @@ def test_iss1379():
     reader.pages[2].extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket()
 def test_iss1533():
     url = "https://github.com/py-pdf/pypdf/files/10376149/iss1533.pdf"
     name = "iss1533.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()  # no error
     assert build_char_map("/F", 200, reader.pages[0])[3]["\x01"] == "Ü"
+
+
+@pytest.mark.enable_socket()
+def test_iss1718(caplog):
+    url = "https://github.com/py-pdf/pypdf/files/10983477/Ballinasloe_WS.pdf"
+    name = "iss1718.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for p in reader.pages:
+        _txt = p.extract_text()
+    assert caplog.text == ""

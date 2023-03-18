@@ -51,9 +51,8 @@ from ._utils import (
     str_,
 )
 from ._writer import PdfWriter
-from .constants import GoToActionArguments
+from .constants import GoToActionArguments, TypArguments, TypFitArguments
 from .constants import PagesAttributes as PA
-from .constants import TypArguments, TypFitArguments
 from .generic import (
     PAGE_FIT,
     ArrayObject,
@@ -183,7 +182,7 @@ class PdfMerger:
                 )
 
         if page_number is None:  # deprecated
-            # The paremter is only marked as Optional as long as
+            # The parameter is only marked as Optional as long as
             # position is not fully deprecated
             raise ValueError("page_number may not be None")
         if fileobj is None:  # deprecated
@@ -272,8 +271,8 @@ class PdfMerger:
             fileobj.stream.seek(orig_tell)
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
             fileobj.seek(0)
-            filecontent = fileobj.read()
-            stream = BytesIO(filecontent)
+            file_content = fileobj.read()
+            stream = BytesIO(file_content)
         else:
             raise NotImplementedError(
                 "PdfMerger.merge requires an object that PdfReader can parse. "
@@ -522,14 +521,14 @@ class PdfMerger:
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         for named_dest in self.named_dests:
-            pageno = None
+            page_index = None
             if "/Page" in named_dest:
-                for pageno, page in enumerate(self.pages):  # noqa: B007
+                for page_index, page in enumerate(self.pages):  # noqa: B007
                     if page.id == named_dest["/Page"]:
                         named_dest[NameObject("/Page")] = page.out_pagedata
                         break
 
-            if pageno is not None:
+            if page_index is not None:
                 self.output.add_named_destination_object(named_dest)
 
     @deprecation_bookmark(bookmarks="outline")
@@ -579,7 +578,7 @@ class PdfMerger:
                 TypArguments.TOP,
             ),
         }
-        for arg_key in fit2arg_keys.get(oi_type, tuple()):
+        for arg_key in fit2arg_keys.get(oi_type, ()):
             if arg_key in outline_item and not isinstance(
                 outline_item[arg_key], NullObject
             ):
@@ -597,7 +596,7 @@ class PdfMerger:
 
     def _associate_dests_to_pages(self, pages: List[_MergedPage]) -> None:
         for named_dest in self.named_dests:
-            pageno = None
+            page_index = None
             np = named_dest["/Page"]
 
             if isinstance(np, NumberObject):
@@ -605,13 +604,13 @@ class PdfMerger:
 
             for page in pages:
                 if np.get_object() == page.pagedata.get_object():
-                    pageno = page.id
+                    page_index = page.id
 
-            if pageno is None:
+            if page_index is None:
                 raise ValueError(
                     f"Unresolved named destination '{named_dest['/Title']}'"
                 )
-            named_dest[NameObject("/Page")] = NumberObject(pageno)
+            named_dest[NameObject("/Page")] = NumberObject(page_index)
 
     @deprecation_bookmark(bookmarks="outline")
     def _associate_outline_items_to_pages(
@@ -625,7 +624,7 @@ class PdfMerger:
                 self._associate_outline_items_to_pages(pages, outline_item)
                 continue
 
-            pageno = None
+            page_index = None
             outline_item_page = outline_item["/Page"]
 
             if isinstance(outline_item_page, NumberObject):
@@ -633,10 +632,10 @@ class PdfMerger:
 
             for p in pages:
                 if outline_item_page.get_object() == p.pagedata.get_object():
-                    pageno = p.id
+                    page_index = p.id
 
-            if pageno is not None:
-                outline_item[NameObject("/Page")] = NumberObject(pageno)
+            if page_index is not None:
+                outline_item[NameObject("/Page")] = NumberObject(page_index)
 
     @deprecation_bookmark(bookmark="outline_item")
     def find_outline_item(

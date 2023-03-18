@@ -1,4 +1,6 @@
+"""Test topics around the usage of JavaScript in PDF documents."""
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -30,7 +32,7 @@ def test_add_js(pdf_file_writer):
 
 
 def test_added_js(pdf_file_writer):
-    def get_javascript_name():
+    def get_javascript_name() -> Any:
         assert "/Names" in pdf_file_writer._root_object
         assert "/JavaScript" in pdf_file_writer._root_object["/Names"]
         assert "/Names" in pdf_file_writer._root_object["/Names"]["/JavaScript"]

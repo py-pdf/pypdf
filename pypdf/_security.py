@@ -54,7 +54,7 @@ _encryption_padding = (
 def _alg32(
     password: str,
     rev: Literal[2, 3, 4],
-    keylen: int,
+    key_length: int,
     owner_entry: ByteStringObject,
     p_entry: int,
     id1_entry: ByteStringObject,
@@ -68,7 +68,7 @@ def _alg32(
     Args:
         password: The encryption secret as a bytes-string
         rev: The encryption revision (see PDF standard)
-        keylen:
+        key_length:
         owner_entry:
         p_entry: A set of flags specifying which operations shall be permitted
             when the document is opened with user access. If bit 2 is set to 1, all other
@@ -79,7 +79,7 @@ def _alg32(
         metadata_encrypt:  (Default value = True)
 
     Returns:
-        An MD5 hash of keylen characters.
+        An MD5 hash of key_length characters.
     """
     # 1. Pad or truncate the password string to exactly 32 bytes.  If the
     # password string is more than 32 bytes long, use only its first 32 bytes;
@@ -113,16 +113,16 @@ def _alg32(
     # /Length entry.
     if rev >= 3:
         for _ in range(50):
-            md5_hash = md5(md5_hash[:keylen]).digest()
+            md5_hash = md5(md5_hash[:key_length]).digest()
     # 9. Set the encryption key to the first n bytes of the output from the
     # final MD5 hash, where n is always 5 for revision 2 but, for revision 3 or
     # greater, depends on the value of the encryption dictionary's /Length
     # entry.
-    return md5_hash[:keylen]
+    return md5_hash[:key_length]
 
 
 def _alg33(
-    owner_password: str, user_password: str, rev: Literal[2, 3, 4], keylen: int
+    owner_password: str, user_password: str, rev: Literal[2, 3, 4], key_length: int
 ) -> bytes:
     """
     Implementation of algorithm 3.3 of the PDF standard security handler,
@@ -132,13 +132,13 @@ def _alg33(
         owner_password:
         user_password:
         rev: The encryption revision (see PDF standard)
-        keylen:
+        key_length:
 
     Returns:
         A transformed version of the owner and the user password
     """
     # steps 1 - 4
-    key = _alg33_1(owner_password, rev, keylen)
+    key = _alg33_1(owner_password, rev, key_length)
     # 5. Pad or truncate the user password string as described in step 1 of
     # algorithm 3.2.
     user_password_bytes = b_((user_password + str_(_encryption_padding))[:32])
@@ -160,14 +160,14 @@ def _alg33(
     return val
 
 
-def _alg33_1(password: str, rev: Literal[2, 3, 4], keylen: int) -> bytes:
+def _alg33_1(password: str, rev: Literal[2, 3, 4], key_length: int) -> bytes:
     """
     Steps 1-4 of algorithm 3.3.
 
     Args:
         password:
         rev: The encryption revision (see PDF standard)
-        keylen:
+        key_length:
 
     Returns:
         A transformed version of the password
@@ -189,7 +189,7 @@ def _alg33_1(password: str, rev: Literal[2, 3, 4], keylen: int) -> bytes:
     # from the final MD5 hash, where n is always 5 for revision 2 but, for
     # revision 3 or greater, depends on the value of the encryption
     # dictionary's /Length entry.
-    key = md5_hash[:keylen]
+    key = md5_hash[:key_length]
     return key
 
 
@@ -220,8 +220,8 @@ def _alg34(
     # 1. Create an encryption key based on the user password string, as
     # described in algorithm 3.2.
     rev: Literal[2] = 2
-    keylen = 5
-    key = _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry)
+    key_length = 5
+    key = _alg32(password, rev, key_length, owner_entry, p_entry, id1_entry)
     # 2. Encrypt the 32-byte padding string shown in step 1 of algorithm 3.2,
     # using an RC4 encryption function with the encryption key from the
     # preceding step.
@@ -234,7 +234,7 @@ def _alg34(
 def _alg35(
     password: str,
     rev: Literal[2, 3, 4],
-    keylen: int,
+    key_length: int,
     owner_entry: ByteStringObject,
     p_entry: int,
     id1_entry: ByteStringObject,
@@ -248,7 +248,7 @@ def _alg35(
     Args:
         password:
         rev: The encryption revision (see PDF standard)
-        keylen:
+        key_length:
         owner_entry:
         p_entry: A set of flags specifying which operations shall be permitted
             when the document is opened with user access. If bit 2 is set to 1, all other
@@ -263,7 +263,7 @@ def _alg35(
     """
     # 1. Create an encryption key based on the user password string, as
     # described in Algorithm 3.2.
-    key = _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry)
+    key = _alg32(password, rev, key_length, owner_entry, p_entry, id1_entry)
     # 2. Initialize the MD5 hash function and pass the 32-byte padding string
     # shown in step 1 of Algorithm 3.2 as input to this function.
     m = md5()

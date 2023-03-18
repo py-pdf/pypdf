@@ -30,6 +30,7 @@
 import codecs
 import collections
 import decimal
+import enum
 import logging
 import random
 import re
@@ -72,24 +73,25 @@ from ._utils import (
     deprecation_with_replacement,
     logger_warning,
 )
-from .constants import AnnotationDictionaryAttributes
-from .constants import CatalogAttributes as CA
-from .constants import CatalogDictionary
-from .constants import Core as CO
-from .constants import EncryptionDictAttributes as ED
 from .constants import (
+    AnnotationDictionaryAttributes,
+    CatalogDictionary,
     FieldDictionaryAttributes,
     FieldFlag,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
     InteractiveFormDictEntries,
+    PageLabelStyle,
+    TypFitArguments,
+    UserAccessPermissions,
 )
+from .constants import CatalogAttributes as CA
+from .constants import Core as CO
+from .constants import EncryptionDictAttributes as ED
 from .constants import PageAttributes as PG
-from .constants import PageLabelStyle
 from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
-from .constants import TypFitArguments, UserAccessPermissions
 from .generic import (
     PAGE_FIT,
     AnnotationBuilder,
@@ -116,6 +118,7 @@ from .generic import (
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
+    AnnotationSubtype,
     BorderArrayType,
     FitType,
     LayoutType,
@@ -130,6 +133,15 @@ logger = logging.getLogger(__name__)
 
 OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
+
+
+class ObjectDeletionFlag(enum.IntFlag):
+    TEXT = enum.auto()
+    IMAGES = enum.auto()
+    LINKS = enum.auto()
+    ATTACHMENTS = enum.auto()
+    OBJECTS_3D = enum.auto()
+    ALL_ANNOTATIONS = enum.auto()
 
 
 class PdfWriter:
@@ -304,21 +316,16 @@ class PdfWriter:
         # See 12.7.2 and 7.7.2 for more information:
         # http://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         try:
-            catalog = self._root_object
             # get the AcroForm tree
-            if CatalogDictionary.ACRO_FORM not in catalog:
-                self._root_object.update(
-                    {
-                        NameObject(CatalogDictionary.ACRO_FORM): IndirectObject(
-                            len(self._objects), 0, self
-                        )
-                    }
-                )
+            if CatalogDictionary.ACRO_FORM not in self._root_object:
+                self._root_object[
+                    NameObject(CatalogDictionary.ACRO_FORM)
+                ] = self._add_object(DictionaryObject())
 
             need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
             self._root_object[CatalogDictionary.ACRO_FORM][need_appearances] = BooleanObject(True)  # type: ignore
         except Exception as exc:
-            logger.error("set_need_appearances_writer() catch : ", repr(exc))
+            logger.error("set_need_appearances_writer() catch : %s", repr(exc))
 
     def add_page(
         self,
@@ -531,11 +538,11 @@ class PdfWriter:
     ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
         """
         Property to access the opening destination (``/OpenAction`` entry in
-        the PDF catalog). it returns `None` if the entry does not exist is not
+        the PDF catalog). It returns ``None`` if the entry does not exist is not
         set.
 
         Raises:
-            Exception: If a destination is invalid
+            Exception: If a destination is invalid.
         """
         if "/OpenAction" not in self._root_object:
             return None
@@ -723,7 +730,7 @@ class PdfWriter:
         Copy pages from reader to writer. Includes an optional callback
         parameter which is invoked after pages are appended to the writer.
 
-        `append` should be prefered.
+        ``append`` should be prefered.
 
         Args:
             reader: a PdfReader object from which to copy page
@@ -761,6 +768,23 @@ class PdfWriter:
         )
         self.append_pages_from_reader(reader, after_page_append)
 
+    def _get_qualified_field_name(self, parent: DictionaryObject) -> Optional[str]:
+        if "/TM" in parent:
+            return cast(str, parent["/TM"])
+        elif "/T" not in parent:
+            return None
+        elif "/Parent" in parent:
+            qualified_parent = self._get_qualified_field_name(
+                cast(DictionaryObject, parent["/Parent"])
+            )
+            if qualified_parent is not None:
+                return (
+                    qualified_parent
+                    + "."
+                    + cast(str, parent["/T"])
+                )
+        return cast(str, parent["/T"])
+
     def update_page_form_field_values(
         self,
         page: PageObject,
@@ -790,11 +814,14 @@ class PdfWriter:
         for j in range(len(page[PG.ANNOTS])):  # type: ignore
             writer_annot = page[PG.ANNOTS][j].get_object()  # type: ignore
             # retrieve parent field values, if present
-            writer_parent_annot = {}  # fallback if it's not there
+            writer_parent_annot = DictionaryObject()  # fallback if it's not there
             if PG.PARENT in writer_annot:
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
-                if writer_annot.get(FieldDictionaryAttributes.T) == field:
+                if (
+                    writer_annot.get(FieldDictionaryAttributes.T) == field
+                    or self._get_qualified_field_name(writer_annot) == field
+                ):
                     if writer_annot.get(FieldDictionaryAttributes.FT) == "/Btn":
                         writer_annot.update(
                             {
@@ -818,7 +845,10 @@ class PdfWriter:
                                 )
                             }
                         )
-                elif writer_parent_annot.get(FieldDictionaryAttributes.T) == field:
+                elif (
+                    writer_parent_annot.get(FieldDictionaryAttributes.T) == field
+                    or self._get_qualified_field_name(writer_parent_annot) == field
+                ):
                     writer_parent_annot.update(
                         {
                             NameObject(FieldDictionaryAttributes.V): TextStringObject(
@@ -846,7 +876,7 @@ class PdfWriter:
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
         Copy the reader document root to the writer and all sub elements,
-        including pages, threads, outlines,... For partial insertion, `append`
+        including pages, threads, outlines,... For partial insertion, ``append``
         should be considered.
 
         Args:
@@ -1231,13 +1261,12 @@ class PdfWriter:
                             grant_parents + [parent] if parent is not None else [],
                         )
                     )
-            elif isinstance(data, IndirectObject):
-                if data.pdf != self:
-                    data = self._resolve_indirect_object(data)
+            elif isinstance(data, IndirectObject) and data.pdf != self:
+                data = self._resolve_indirect_object(data)
 
-                    if str(data) not in discovered:
-                        discovered.append(str(data))
-                        stack.append((data.get_object(), None, None, []))
+                if str(data) not in discovered:
+                    discovered.append(str(data))
+                    stack.append((data.get_object(), None, None, []))
 
             # Check if data has a parent and if it is a dict or
             # an array update the value
@@ -1796,12 +1825,8 @@ class PdfWriter:
 
     def remove_links(self) -> None:
         """Remove links and annotations from this output."""
-        pg_dict = cast(DictionaryObject, self.get_object(self._pages))
-        pages = cast(ArrayObject, pg_dict[PA.KIDS])
-        for page in pages:
-            page_ref = cast(DictionaryObject, self.get_object(page))
-            if PG.ANNOTS in page_ref:
-                del page_ref[PG.ANNOTS]
+        for page in self.pages:
+            self.remove_objects_from_page(page, ObjectDeletionFlag.ALL_ANNOTATIONS)
 
     def removeLinks(self) -> None:  # deprecated
         """
@@ -1812,85 +1837,164 @@ class PdfWriter:
         deprecation_with_replacement("removeLinks", "remove_links", "3.0.0")
         return self.remove_links()
 
-    def remove_images(self, ignore_byte_string_object: bool = False) -> None:
+    def remove_annotations(
+        self, subtypes: Optional[Union[AnnotationSubtype, Iterable[AnnotationSubtype]]]
+    ) -> None:
+        """
+        Remove annotations by annotation subtype.
+
+        Args:
+            subtypes: SubType or list of SubTypes to be removed.
+                Examples are: "/Link", "/FileAttachment", "/Sound",
+                "/Movie", "/Screen", ...
+                If you want to remove all annotations, use subtypes=None.
+        """
+        for page in self.pages:
+            self._remove_annots_from_page(page, subtypes)
+
+    def _remove_annots_from_page(
+        self,
+        page: Union[IndirectObject, PageObject, DictionaryObject],
+        subtypes: Optional[Iterable[str]],
+    ) -> None:
+        page = cast(DictionaryObject, page.get_object())
+        if PG.ANNOTS in page:
+            i = 0
+            while i < len(cast(ArrayObject, page[PG.ANNOTS])):
+                an = cast(ArrayObject, page[PG.ANNOTS])[i]
+                obj = cast(DictionaryObject, an.get_object())
+                if subtypes is None or cast(str, obj["/Subtype"]) in subtypes:
+                    if isinstance(an, IndirectObject):
+                        self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
+                    del page[PG.ANNOTS][i]  # type:ignore
+                else:
+                    i += 1
+
+    def remove_objects_from_page(
+        self,
+        page: Union[PageObject, DictionaryObject],
+        to_delete: Union[ObjectDeletionFlag, Iterable[ObjectDeletionFlag]],
+    ) -> None:
+        """
+        Remove objects specified by ``to_delete`` from the given page.
+
+        Args:
+            page: Page object to clean up.
+            to_delete: Objects to be deleted; can be a ``ObjectDeletionFlag``
+                or a list of ObjectDeletionFlag
+        """
+        if isinstance(to_delete, (list, tuple)):
+            for to_d in to_delete:
+                self.remove_objects_from_page(page, to_d)
+            return
+        assert isinstance(to_delete, ObjectDeletionFlag)
+
+        if to_delete & ObjectDeletionFlag.LINKS:
+            return self._remove_annots_from_page(page, ("/Link",))
+        if to_delete & ObjectDeletionFlag.ATTACHMENTS:
+            return self._remove_annots_from_page(
+                page, ("/FileAttachment", "/Sound", "/Movie", "/Screen")
+            )
+        if to_delete & ObjectDeletionFlag.OBJECTS_3D:
+            return self._remove_annots_from_page(page, ("/3D",))
+        if to_delete & ObjectDeletionFlag.ALL_ANNOTATIONS:
+            return self._remove_annots_from_page(page, None)
+
+        if to_delete & ObjectDeletionFlag.IMAGES:
+            jump_operators = (
+                [b"w", b"J", b"j", b"M", b"d", b"i"]
+                + [b"W", b"W*"]
+                + [b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n"]
+                + [b"m", b"l", b"c", b"v", b"y", b"h", b"re"]
+                + [b"sh"]
+            )
+        else:  # del text
+            jump_operators = [b"Tj", b"TJ", b"'", b'"']
+
+        images = []
+        forms = []
+
+        def clean(content: ContentStream) -> None:
+            nonlocal images, forms, to_delete
+            i = 0
+            while i < len(content.operations):
+                operands, operator = content.operations[i]
+                if operator in jump_operators:
+                    del content.operations[i]
+                elif operator == b"Do":
+                    if (
+                        cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.IMAGES
+                        and operands[0] in images
+                        or cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.TEXT
+                        and operands[0] in forms
+                    ):
+                        del content.operations[i]
+                    i += 1
+                else:
+                    i += 1
+
+        try:
+            d = cast(dict, cast(DictionaryObject, page["/Resources"])["/XObject"])
+        except KeyError:
+            d = {}
+        for k, v in d.items():
+            o = v.get_object()
+            try:
+                content: Any = None
+                if to_delete & ObjectDeletionFlag.IMAGES and o["/Subtype"] == "/Image":
+                    content = NullObject()
+                    images.append(k)
+                if o["/Subtype"] == "/Form":
+                    forms.append(k)
+                    if isinstance(o, ContentStream):
+                        content = o
+                    else:
+                        content = ContentStream(o, self)
+                        content.update(o.items())
+                        for k1 in ["/Length", "/Filter", "/DecodeParms"]:
+                            try:
+                                del content[k1]
+                            except KeyError:
+                                pass
+                    clean(content)
+                if content is not None:
+                    if isinstance(v, IndirectObject):
+                        self._objects[v.idnum - 1] = content
+                    else:
+                        d[k] = self._add_object(content)
+            except (TypeError, KeyError):
+                pass
+        if "/Contents" in page:
+            content = page["/Contents"].get_object()
+            if not isinstance(content, ContentStream):
+                content = ContentStream(content, page)
+            clean(cast(ContentStream, content))
+            if isinstance(page["/Contents"], ArrayObject):
+                for o in cast(ArrayObject, page["/Contents"]):
+                    self._objects[o.idnum - 1] = NullObject()
+            try:
+                self._objects[
+                    cast(IndirectObject, page["/Contents"].indirect_reference).idnum - 1
+                ] = NullObject()
+            except AttributeError:
+                pass
+            page[NameObject("/Contents")] = self._add_object(content)
+
+    def remove_images(self, ignore_byte_string_object: Optional[bool] = None) -> None:
         """
         Remove images from this output.
 
         Args:
-            ignore_byte_string_object: optional parameter
-                to ignore ByteString Objects.
+            ignore_byte_string_object: deprecated
         """
-        pg_dict = cast(DictionaryObject, self.get_object(self._pages))
-        pages = cast(ArrayObject, pg_dict[PA.KIDS])
-        jump_operators = (
-            b"cm",
-            b"w",
-            b"J",
-            b"j",
-            b"M",
-            b"d",
-            b"ri",
-            b"i",
-            b"gs",
-            b"W",
-            b"b",
-            b"s",
-            b"S",
-            b"f",
-            b"F",
-            b"n",
-            b"m",
-            b"l",
-            b"c",
-            b"v",
-            b"y",
-            b"h",
-            b"B",
-            b"Do",
-            b"sh",
-        )
-        for page in pages:
-            page_ref = cast(DictionaryObject, self.get_object(page))
-            if "/Contents" not in page_ref:
-                return
-            content = page_ref["/Contents"].get_object()
-            if not isinstance(content, ContentStream):
-                content = ContentStream(content, page_ref)
-
-            _operations = []
-            seq_graphics = False
-            for operands, operator in content.operations:
-                if operator in [b"Tj", b"'"]:
-                    text = operands[0]
-                    if ignore_byte_string_object and not isinstance(
-                        text, TextStringObject
-                    ):
-                        operands[0] = TextStringObject()
-                elif operator == b'"':
-                    text = operands[2]
-                    if ignore_byte_string_object and not isinstance(
-                        text, TextStringObject
-                    ):
-                        operands[2] = TextStringObject()
-                elif operator == b"TJ":
-                    for i in range(len(operands[0])):
-                        if ignore_byte_string_object and not isinstance(
-                            operands[0][i], TextStringObject
-                        ):
-                            operands[0][i] = TextStringObject()
-
-                if operator == b"q":
-                    seq_graphics = True
-                if operator == b"Q":
-                    seq_graphics = False
-                if seq_graphics and operator in jump_operators:
-                    continue
-                if operator == b"re":
-                    continue
-                _operations.append((operands, operator))
-
-            content.operations = _operations
-            page_ref.__setitem__(NameObject("/Contents"), content)
+        if ignore_byte_string_object is not None:
+            warnings.warn(
+                "The 'ignore_byte_string_object' argument of remove_images is "
+                "deprecated and will be removed in pypdf 4.0.0.",
+                category=DeprecationWarning,
+            )
+        for page in self.pages:
+            self.remove_objects_from_page(page, ObjectDeletionFlag.IMAGES)
 
     def removeImages(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
@@ -1901,49 +2005,21 @@ class PdfWriter:
         deprecation_with_replacement("removeImages", "remove_images", "3.0.0")
         return self.remove_images(ignoreByteStringObject)
 
-    def remove_text(self, ignore_byte_string_object: bool = False) -> None:
+    def remove_text(self, ignore_byte_string_object: Optional[bool] = None) -> None:
         """
         Remove text from this output.
 
         Args:
-            ignore_byte_string_object: optional parameter
+            ignore_byte_string_object: deprecated
         """
-        pg_dict = cast(DictionaryObject, self.get_object(self._pages))
-        pages = cast(List[IndirectObject], pg_dict[PA.KIDS])
-        for page in pages:
-            page_ref = cast(PageObject, self.get_object(page))
-            content = page_ref["/Contents"].get_object()
-            if not isinstance(content, ContentStream):
-                content = ContentStream(content, page_ref)
-            for operands, operator in content.operations:
-                if operator in [b"Tj", b"'"]:
-                    text = operands[0]
-                    if not ignore_byte_string_object:
-                        if isinstance(text, TextStringObject):
-                            operands[0] = TextStringObject()
-                    else:
-                        if isinstance(text, (TextStringObject, ByteStringObject)):
-                            operands[0] = TextStringObject()
-                elif operator == b'"':
-                    text = operands[2]
-                    if not ignore_byte_string_object:
-                        if isinstance(text, TextStringObject):
-                            operands[2] = TextStringObject()
-                    else:
-                        if isinstance(text, (TextStringObject, ByteStringObject)):
-                            operands[2] = TextStringObject()
-                elif operator == b"TJ":
-                    for i in range(len(operands[0])):
-                        if not ignore_byte_string_object:
-                            if isinstance(operands[0][i], TextStringObject):
-                                operands[0][i] = TextStringObject()
-                        else:
-                            if isinstance(
-                                operands[0][i], (TextStringObject, ByteStringObject)
-                            ):
-                                operands[0][i] = TextStringObject()
-
-            page_ref.__setitem__(NameObject("/Contents"), content)
+        if ignore_byte_string_object is not None:
+            warnings.warn(
+                "The 'ignore_byte_string_object' argument of remove_images is "
+                "deprecated and will be removed in pypdf 4.0.0.",
+                category=DeprecationWarning,
+            )
+        for page in self.pages:
+            self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT)
 
     def removeText(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
@@ -2468,7 +2544,12 @@ class PdfWriter:
             str, None, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]
         ] = None,
         pages: Union[
-            None, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]
+            None,
+            PageRange,
+            Tuple[int, int],
+            Tuple[int, int, int],
+            List[int],
+            List[PageObject],
         ] = None,
         import_outline: bool = True,
         excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = None,
@@ -2529,7 +2610,7 @@ class PdfWriter:
         position: Optional[int],
         fileobj: Union[Path, StrByteType, PdfReader],
         outline_item: Optional[str] = None,
-        pages: Optional[PageRangeSpec] = None,
+        pages: Optional[Union[PageRangeSpec, List[PageObject]]] = None,
         import_outline: bool = True,
         excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = (),
     ) -> None:
@@ -2586,8 +2667,11 @@ class PdfWriter:
             )
 
         srcpages = {}
-        for i in pages:
-            pg = reader.pages[i]
+        for page in pages:
+            if isinstance(page, PageObject):
+                pg = page
+            else:
+                pg = reader.pages[page]
             assert pg.indirect_reference is not None
             if position is None:
                 srcpages[pg.indirect_reference.idnum] = self.add_page(
@@ -2665,7 +2749,9 @@ class PdfWriter:
                         ind = IndirectObject(trslat[f.idnum], 0, self)
                         if ind not in arr:
                             arr.append(ind)
-                    except KeyError:  # for trslat[] which mean the field has not be copied through the page
+                    except KeyError:
+                        # for trslat[] which mean the field has not be copied
+                        # through the page
                         pass
             except KeyError:  # for /Acroform or /Fields are not existing
                 arr = self._add_object(ArrayObject())
@@ -2942,13 +3028,12 @@ class PdfWriter:
                 or o.get("/Title", None) == outline_item
             ):
                 return [i]
-            else:
-                if "/First" in o:
-                    res = self.find_outline_item(
-                        outline_item, cast(OutlineType, o["/First"])
-                    )
-                    if res:
-                        return ([i] if "/Title" in o else []) + res
+            elif "/First" in o:
+                res = self.find_outline_item(
+                    outline_item, cast(OutlineType, o["/First"])
+                )
+                if res:
+                    return ([i] if "/Title" in o else []) + res
             if "/Next" in o:
                 i += 1
                 o = cast(TreeObject, o["/Next"])
