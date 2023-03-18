@@ -122,3 +122,13 @@ def test_iss1533():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()  # no error
     assert build_char_map("/F", 200, reader.pages[0])[3]["\x01"] == "Ü"
+
+
+@pytest.mark.enable_socket()
+def test_iss1718(caplog):
+    url = "https://github.com/py-pdf/pypdf/files/10983477/Ballinasloe_WS.pdf"
+    name = "iss1718.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for p in reader.pages:
+        _txt = p.extract_text()
+    assert caplog.text == ""

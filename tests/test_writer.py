@@ -1005,7 +1005,9 @@ def test_reset_translation():
     writer.reset_translation()
     writer.append(reader, (0, 10))
     assert len(writer._objects) >= nb + 200
-    nb = len(writer._objects)
+    nb = len(writer.pages)
+    writer.append(reader, [reader.pages[0], reader.pages[0]])
+    assert len(writer.pages) == nb + 2
 
 
 def test_threads_empty():
