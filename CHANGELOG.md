@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 3.6.0, 2023-03-18
+
+### New Features (ENH)
+-  Extend PdfWriter.append() to PageObjects (#1704)
+-  Support qualified names in update_page_form_field_values (#1695)
+
+### Robustness (ROB)
+-  Tolerate streams without length field (#1717)
+-  Accept DictionaryObject in /D of NamedDestination (#1720)
+-  Widths def in cmap calls IndirectObject (#1719)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.5.2...3.6.0)
+
+
 ## Version 3.5.2, 2023-03-12
 
 ⚠️ We discovered that compress_content_stream has to be applied to a page of
