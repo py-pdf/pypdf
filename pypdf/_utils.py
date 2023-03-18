@@ -178,10 +178,10 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
         tok = stream.read(16)
         if not tok:
             return name
-        m = regex.search(tok)
+        m = regex.search(name + tok)
         if m is not None:
-            name += tok[: m.start()]
-            stream.seek(m.start() - len(tok), 1)
+            stream.seek(m.start() - (len(name) + len(tok)), 1)
+            name = (name + tok)[: m.start()]
             break
         name += tok
     return name

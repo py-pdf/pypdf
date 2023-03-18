@@ -380,17 +380,22 @@ def test_dictionaryobject_read_from_stream_stream_no_newline():
 
 
 @pytest.mark.parametrize(("strict"), [(True), (False)])
-def test_dictionaryobject_read_from_stream_stream_no_stream_length(strict):
-    stream = BytesIO(b"<< /S /GoTo >>stream\n")
+def test_dictionaryobject_read_from_stream_stream_no_stream_length(strict, caplog):
+    stream = BytesIO(b"<< /S /GoTo >>stream\n123456789endstream abcd")
 
     class Tst:  # to replace pdf
         strict = False
 
     pdf = Tst()
     pdf.strict = strict
-    with pytest.raises(PdfReadError) as exc:
-        DictionaryObject.read_from_stream(stream, pdf)
-    assert exc.value.args[0] == "Stream length not defined"
+    if strict:
+        with pytest.raises(PdfReadError) as exc:
+            DictionaryObject.read_from_stream(stream, pdf)
+        assert exc.value.args[0] == "Stream length not defined"
+    else:
+        o = DictionaryObject.read_from_stream(stream, pdf)
+        assert "Stream length not defined" in caplog.text
+        assert o.get_data() == b"123456789"
 
 
 @pytest.mark.parametrize(
