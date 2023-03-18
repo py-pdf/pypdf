@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679147904219,
+  "lastUpdate": 1679154818730,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26650,6 +26650,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0010496411631450888",
             "extra": "mean: 103.69748889999926 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1d989691e61b749a5be668fdd737aa6211da5c2d",
+          "message": "ROB: Tolerate streams without length field (#1717)\n\nThe field /Length is normally required, but Acrobat Reader and other readers are tolerant\r\n\r\nCloses #1715",
+          "timestamp": "2023-03-18T16:52:26+01:00",
+          "tree_id": "9ed8923f8f458c0502b3311b00a8a242baa50483",
+          "url": "https://github.com/py-pdf/pypdf/commit/1d989691e61b749a5be668fdd737aa6211da5c2d"
+        },
+        "date": 1679154817143,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1018534578481576,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006677028610771443",
+            "extra": "mean: 907.5617023999996 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.203826813444632,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008562946409180955",
+            "extra": "mean: 89.2552175833347 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24538765047215216,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01166355226428337",
+            "extra": "mean: 4.075184704999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.598888650771562,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00031758357727474973",
+            "extra": "mean: 79.37208016667086 msec\nrounds: 12"
           }
         ]
       }
