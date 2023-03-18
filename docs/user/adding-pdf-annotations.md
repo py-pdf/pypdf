@@ -201,9 +201,7 @@ popup_annotation = AnnotationBuilder.popup(
     parent=text_annotation,  # use the output of add_annotation
 )
 
-target = "annotated-pdf-popup.pdf"
-writer.write(target)
-os.remove(target)  # comment this out for manual inspection
+writer.write("annotated-pdf-popup.pdf")
 ```
 
 ## Link
