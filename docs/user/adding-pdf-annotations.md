@@ -89,6 +89,32 @@ with open("annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
+## PolyLine
+
+If you want to add a line like this:
+
+![](annotation-polyline.png)
+
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
+
+```python
+pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+reader = PdfReader(pdf_path)
+page = reader.pages[0]
+writer = PdfWriter()
+writer.add_page(page)
+
+# Add the polyline
+annotation = AnnotationBuilder.polyline(
+    vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+)
+writer.add_annotation(page_number=0, annotation=annotation)
+
+# Write the annotated file to disk
+with open("annotated-pdf.pdf", "wb") as fp:
+    writer.write(fp)
+```
+
 ## Rectangle
 
 If you want to add a rectangle like this:
