@@ -290,7 +290,7 @@ def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
         "reportlab-inline-image.pdf",
     ],
 )
-def test_remove_images(input_path):
+def test_remove_images(pdf_file_path, input_path):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -301,18 +301,14 @@ def test_remove_images(input_path):
     writer.remove_images()
 
     # finally, write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_writer_removed_image.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    with open(tmp_filename, "rb") as input_stream:
+    with open(pdf_file_path, "rb") as input_stream:
         reader = PdfReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
             extracted_text = reader.pages[0].extract_text()
             assert "Lorem ipsum dolor sit amet" in extracted_text
-
-    # Cleanup
-    Path(tmp_filename).unlink()
 
 
 @pytest.mark.parametrize(
@@ -436,7 +432,7 @@ def test_write_metadata():
     Path(tmp_filename).unlink()
 
 
-def test_fill_form():
+def test_fill_form(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
@@ -459,11 +455,8 @@ def test_fill_form():
     )
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_filled_pdf.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
-
-    Path(tmp_filename).unlink()  # cleanup
 
 
 def test_fill_form_with_qualified():
@@ -709,18 +702,14 @@ def test_io_streams():
         writer.write(output_stream)
 
 
-def test_regression_issue670():
-    tmp_file = "dont_commit_issue670.pdf"
+def test_regression_issue670(pdf_file_path):
     filepath = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(filepath, strict=False)
     for _ in range(2):
         writer = PdfWriter()
         writer.add_page(reader.pages[0])
-        with open(tmp_file, "wb") as f_pdf:
+        with open(pdf_file_path, "wb") as f_pdf:
             writer.write(f_pdf)
-
-    # cleanup
-    Path(tmp_file).unlink()
 
 
 def test_issue301():
@@ -745,18 +734,14 @@ def test_append_pages_from_reader_append():
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
-def test_sweep_indirect_references_nullobject_exception():
+def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    tmp_file = "tmp-merger-do-not-commit.pdf"
-    merger.write(tmp_file)
-
-    # cleanup
-    Path(tmp_file).unlink()
+    merger.write(pdf_file_path)
 
 
 @pytest.mark.enable_socket()
@@ -775,19 +760,16 @@ def test_sweep_indirect_references_nullobject_exception():
         ("https://github.com/py-pdf/pypdf/files/10715624/test.pdf", "iss1627.pdf"),
     ],
 )
-def test_some_appends(url, name):
+def test_some_appends(pdf_file_path, url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    tmp_file = "tmp-merger-do-not-commit.pdf"
     # PdfMerger
     merger = PdfMerger()
     merger.append(reader)
-    merger.write(tmp_file)
+    merger.write(pdf_file_path)
     # PdfWriter
     merger = PdfWriter()
     merger.append(reader)
-    merger.write(tmp_file)
-    # cleanup
-    Path(tmp_file).unlink()
+    merger.write(pdf_file_path)
 
 
 def test_pdf_header():
