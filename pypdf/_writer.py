@@ -2869,9 +2869,7 @@ class PdfWriter:
                         if p is not None:
                             anc = ano.clone(self, ignore_fields=("/Dest",))
                             anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
-                            if not hasattr(anc, "IndirectObject"):
-                                anc = self._add_object(anc)
-                            outlist.append(anc.indirect_reference)
+                            outlist.append(self._add_object(anc))
             else:
                 d = cast("DictionaryObject", ano["/A"])["/D"]
                 if isinstance(d, str):
@@ -2887,7 +2885,7 @@ class PdfWriter:
                         cast("DictionaryObject", anc["/A"])[
                             NameObject("/D")
                         ] = ArrayObject([p] + d[1:])
-                        outlist.append(anc.indirect_reference)
+                        outlist.append(self._add_object(anc))
         return outlist
 
     def _get_filtered_outline(
