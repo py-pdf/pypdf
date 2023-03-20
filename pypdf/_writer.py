@@ -778,11 +778,7 @@ class PdfWriter:
                 cast(DictionaryObject, parent["/Parent"])
             )
             if qualified_parent is not None:
-                return (
-                    qualified_parent
-                    + "."
-                    + cast(str, parent["/T"])
-                )
+                return qualified_parent + "." + cast(str, parent["/T"])
         return cast(str, parent["/T"])
 
     def update_page_form_field_values(
@@ -2873,6 +2869,8 @@ class PdfWriter:
                         if p is not None:
                             anc = ano.clone(self, ignore_fields=("/Dest",))
                             anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
+                            if not hasattr(anc, "IndirectObject"):
+                                anc = self._add_object(anc)
                             outlist.append(anc.indirect_reference)
             else:
                 d = cast("DictionaryObject", ano["/A"])["/D"]
