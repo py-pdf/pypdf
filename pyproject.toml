@@ -114,6 +114,7 @@ ignore = [
     # Introduces bugs
     "RUF001", "RUF002", "RUF005",
     "ARG",
+    "PLC",  # `text != ""` can be simplified to `text` as an empty string is falsey
     "DTZ001", # The use of `datetime.datetime()` without `tzinfo` is necessary
     # Personal preference
     "D406", # Section name should end with a newline ("Returns")
@@ -149,6 +150,7 @@ ignore = [
     "UP006", "UP007",
     # for the moment, fix it later:
     "A",  # Variable is shadowing a built-in
+    "B028",  # No explicit `stacklevel` keyword argument found
     "B904", # Within an `except` clause, raise exceptions with
     "B905",  # `zip()` without an explicit `strict=` parameter
     "C901",

@@ -59,7 +59,7 @@ pytest-benchmark==4.0.0
     # via -r requirements/ci.in
 pytest-socket==0.6.0
     # via -r requirements/ci.in
-ruff==0.0.254
+ruff==0.0.257
     # via -r requirements/ci.in
 typeguard==2.13.3
     # via -r requirements/ci.in
