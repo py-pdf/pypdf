@@ -830,7 +830,7 @@ def test_write_dict_stream_object():
     Path(tmp_file).unlink()
 
 
-def test_add_single_annotation():
+def test_add_single_annotation(pdf_file_path):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
@@ -853,13 +853,10 @@ def test_add_single_annotation():
         "/T": "moose",
     }
     writer.add_annotation(0, annot_dict)
-    # Assert manually
-    target = "annot-single-out.pdf"
-    with open(target, "wb") as fp:
-        writer.write(fp)
 
-    # Cleanup
-    Path(target).unlink()  # comment out for testing
+    # Inspect manually by adding 'assert False' and viewing the PDF
+    with open(pdf_file_path, "wb") as fp:
+        writer.write(fp)
 
 
 def test_deprecation_bookmark_decorator():
@@ -876,7 +873,7 @@ def test_deprecation_bookmark_decorator():
 
 
 @pytest.mark.samples()
-def test_colors_in_outline_item():
+def test_colors_in_outline_item(pdf_file_path):
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -885,17 +882,13 @@ def test_colors_in_outline_item():
     writer.add_outline_item("Second Outline Item", page_number=3, color="#800080")
     writer.add_outline_item("Third Outline Item", page_number=4, color=purple_rgb)
 
-    target = "tmp-named-color-outline.pdf"
-    with open(target, "wb") as f:
+    with open(pdf_file_path, "wb") as f:
         writer.write(f)
 
-    reader2 = PdfReader(target)
+    reader2 = PdfReader(pdf_file_path)
     for outline_item in reader2.outline:
         # convert float to string because of mutability
         assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
-
-    # Cleanup
-    Path(target).unlink()  # comment out for testing
 
 
 @pytest.mark.samples()
@@ -1036,9 +1029,8 @@ def test_append_multiple():
 
 
 @pytest.mark.samples()
-def test_set_page_label():
+def test_set_page_label(pdf_file_path):
     src = RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf"  # File without labels
-    target = "pypdf-output.pdf"
     reader = PdfReader(src)
 
     expected = [
@@ -1073,8 +1065,8 @@ def test_set_page_label():
     writer.set_page_label(11, 11, "/r")
     writer.set_page_label(12, 13, "/R")
     writer.set_page_label(17, 18, "/R")
-    writer.write(target)
-    assert PdfReader(target).page_labels == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels == expected
 
     writer = PdfWriter()  # Same labels, different set order
     writer.clone_document_from_reader(reader)
@@ -1084,8 +1076,8 @@ def test_set_page_label():
     writer.set_page_label(0, 1, "/r")
     writer.set_page_label(12, 13, "/R")
     writer.set_page_label(11, 11, "/r")
-    writer.write(target)
-    assert PdfReader(target).page_labels == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels == expected
 
     # Tests labels assigned only in the middle
     # Tests label assigned to a range already containing labled ranges
@@ -1095,8 +1087,8 @@ def test_set_page_label():
     writer.set_page_label(3, 4, "/a")
     writer.set_page_label(5, 5, "/A")
     writer.set_page_label(2, 6, "/r")
-    writer.write(target)
-    assert PdfReader(target).page_labels[: len(expected)] == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels[: len(expected)] == expected
 
     # Tests labels assigned inside a previously existing range
     expected = ["1", "2", "i", "a", "b", "A", "1", "1", "2"]
@@ -1106,8 +1098,8 @@ def test_set_page_label():
     writer.set_page_label(2, 6, "/r")
     writer.set_page_label(3, 4, "/a")
     writer.set_page_label(5, 5, "/A")
-    writer.write(target)
-    assert PdfReader(target).page_labels[: len(expected)] == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels[: len(expected)] == expected
 
     # Tests invalid user input
     writer = PdfWriter()
@@ -1131,12 +1123,11 @@ def test_set_page_label():
     ):
         writer.set_page_label(0, 5, "/r", start=-1)
 
-    Path(target).unlink()
+    pdf_file_path.unlink()
 
     src = (
         SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
     )  # File with pre existing labels
-    target = "pypdf-output.pdf"
     reader = PdfReader(src)
 
     # Tests adding labels to existing ones
@@ -1144,22 +1135,21 @@ def test_set_page_label():
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     writer.set_page_label(2, 3, "/A")
-    writer.write(target)
-    assert PdfReader(target).page_labels[: len(expected)] == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels[: len(expected)] == expected
 
     # Tests replacing existing lables
     expected = ["A", "B", "1", "1", "2"]
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     writer.set_page_label(0, 1, "/A")
-    writer.write(target)
-    assert PdfReader(target).page_labels[: len(expected)] == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels[: len(expected)] == expected
 
-    Path(target).unlink()
+    pdf_file_path.unlink()
 
     # Tests prefix and start.
     src = RESOURCE_ROOT / "issue-604.pdf"  # File without page labels
-    target = "page_labels_test.pdf"
     reader = PdfReader(src)
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -1171,9 +1161,7 @@ def test_set_page_label():
     writer.set_page_label(11, 21, "/D", prefix="PAP-")
     writer.set_page_label(22, 30, "/D", prefix="FOLL-")
     writer.set_page_label(31, 39, "/D", prefix="HURT-")
-    writer.write(target)
-
-    Path(target).unlink()  # comment to see result
+    writer.write(pdf_file_path)
 
 
 @pytest.mark.enable_socket()
