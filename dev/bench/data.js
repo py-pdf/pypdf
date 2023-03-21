@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679254819782,
+  "lastUpdate": 1679419784341,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -26910,6 +26910,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0031329176164277897",
             "extra": "mean: 107.60678566666432 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "27d0e99428f7cf3b540086db4b6551cd661c0b44",
+          "message": "TST: Use fixtures to create files in temporary folders (#1730)\n\nThis change should make tests easier to read and ensure that the cleanup-step cannot be forgotten.\r\n\r\nIf the test run fails, you can see where the file was written. The file is not directly deleted.\r\n\r\nHowever, if the run does not fail (loudly) but you want to inspect the generated PDF, you have to 'assert False' or similar. That is  harder to figure out than commenting out a Path.unlink() line",
+          "timestamp": "2023-03-21T18:28:28+01:00",
+          "tree_id": "02840407dd37ea0045837832045ccddc7345b0dd",
+          "url": "https://github.com/py-pdf/pypdf/commit/27d0e99428f7cf3b540086db4b6551cd661c0b44"
+        },
+        "date": 1679419782741,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1043990154096373,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006077864363226651",
+            "extra": "mean: 905.4698401999985 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.21726704726687,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008577199529129295",
+            "extra": "mean: 89.14827433333272 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24694439900546777,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006174030459461403",
+            "extra": "mean: 4.049494558399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.410106193558203,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003285617821412703",
+            "extra": "mean: 80.5794877499982 msec\nrounds: 12"
           }
         ]
       }
