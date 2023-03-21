@@ -298,19 +298,17 @@ def test_merge_write_closed_fh():
     assert exc.value.args[0] == err_closed
 
 
-def test_merge_write_closed_fh_with_writer():
+def test_merge_write_closed_fh_with_writer(pdf_file_path):
     merger = pypdf.PdfWriter()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.append(pdf_path)
 
     merger.close()
-    merger.write("stream1.pdf")
+    merger.write(pdf_file_path)
     merger.add_metadata({"author": "Martin Thoma"})
     merger.set_page_layout("/SinglePage")
     merger.set_page_mode("/UseNone")
     merger.add_outline_item("An outline item", 0)
-
-    Path("stream1.pdf").unlink()
 
 
 @pytest.mark.enable_socket()

@@ -9,3 +9,9 @@ import pytest
 def pdf_file_path(tmp_path_factory):
     fn = tmp_path_factory.mktemp("pypdf-data") / f"{uuid.uuid4()}.pdf"
     return fn
+
+
+@pytest.fixture(scope="session")
+def txt_file_path(tmp_path_factory):
+    fn = tmp_path_factory.mktemp("pypdf-data") / f"{uuid.uuid4()}.txt"
+    return fn

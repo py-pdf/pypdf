@@ -318,7 +318,7 @@ def test_remove_images(pdf_file_path, input_path):
         "reportlab-inline-image.pdf",
     ],
 )
-def test_remove_text(input_path):
+def test_remove_text(input_path, pdf_file_path):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -329,15 +329,11 @@ def test_remove_text(input_path):
     writer.remove_text()
 
     # finally, write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_writer_removed_text.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_remove_text_all_operators():
+def test_remove_text_all_operators(pdf_file_path):
     stream = (
         b"BT "
         b"/F0 36 Tf "
@@ -395,15 +391,11 @@ def test_remove_text_all_operators():
     writer.remove_text()
 
     # finally, write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_writer_removed_text.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_write_metadata():
+def test_write_metadata(pdf_file_path):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
 
     reader = PdfReader(pdf_path)
@@ -419,17 +411,13 @@ def test_write_metadata():
     writer.add_metadata({"/Title": "The Crazy Ones"})
 
     # finally, write data to pypdf-output.pdf
-    tmp_filename = "dont_commit_writer_added_metadata.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
     # Check if the title was set
-    reader = PdfReader(tmp_filename)
+    reader = PdfReader(pdf_file_path)
     metadata = reader.metadata
     assert metadata.get("/Title") == "The Crazy Ones"
-
-    # Cleanup
-    Path(tmp_filename).unlink()
 
 
 def test_fill_form(pdf_file_path):
@@ -481,7 +469,7 @@ def test_fill_form_with_qualified():
     ("use_128bit", "user_password", "owner_password"),
     [(True, "userpwd", "ownerpwd"), (False, "userpwd", "ownerpwd")],
 )
-def test_encrypt(use_128bit, user_password, owner_password):
+def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
@@ -496,44 +484,40 @@ def test_encrypt(use_128bit, user_password, owner_password):
     )
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_encrypted.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
     # Test that the data is not there in clear text
-    with open(tmp_filename, "rb") as input_stream:
+    with open(pdf_file_path, "rb") as input_stream:
         data = input_stream.read()
     assert b"foo" not in data
 
     # Test the user password (str):
-    reader = PdfReader(tmp_filename, password="userpwd")
+    reader = PdfReader(pdf_file_path, password="userpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
     # Test the owner password (str):
-    reader = PdfReader(tmp_filename, password="ownerpwd")
+    reader = PdfReader(pdf_file_path, password="ownerpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
     # Test the user password (bytes):
-    reader = PdfReader(tmp_filename, password=b"userpwd")
+    reader = PdfReader(pdf_file_path, password=b"userpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
     # Test the owner password (stbytesr):
-    reader = PdfReader(tmp_filename, password=b"ownerpwd")
+    reader = PdfReader(pdf_file_path, password=b"ownerpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_add_outline_item():
+def test_add_outline_item(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
@@ -546,15 +530,11 @@ def test_add_outline_item():
     writer.add_outline_item("Another", 2, outline_item, None, False, False, Fit.fit())
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_outline_item.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_add_named_destination():
+def test_add_named_destination(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
     assert writer.get_named_dest_root() == []
@@ -585,15 +565,11 @@ def test_add_named_destination():
     assert exc.value.args[0] == "pdf must be self"
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_named_destination.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_add_uri():
+def test_add_uri(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
@@ -626,15 +602,11 @@ def test_add_uri():
     )
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_uri.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_add_link():
+def test_add_link(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
@@ -678,12 +650,8 @@ def test_add_link():
         )
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_link.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
-
-    # Cleanup
-    Path(tmp_filename).unlink()
 
 
 def test_io_streams():
@@ -784,7 +752,7 @@ def test_pdf_header():
     assert writer.pdf_header == b"%PDF-1.6"
 
 
-def test_write_dict_stream_object():
+def test_write_dict_stream_object(pdf_file_path):
     stream = (
         b"BT "
         b"/F0 36 Tf "
@@ -808,8 +776,7 @@ def test_write_dict_stream_object():
     page_object[NameObject("/Test")] = stream_object
 
     page_object = writer.add_page(page_object)
-    tmp_file = "tmp-writer-do-not-commit.pdf"
-    with open(tmp_file, "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
 
     for k, v in page_object.items():
@@ -826,8 +793,6 @@ def test_write_dict_stream_object():
     for k, v in writer._idnum_hash.items():
         assert v.pdf == writer
         assert k in objects_hash, "Missing %s" % v
-
-    Path(tmp_file).unlink()
 
 
 def test_add_single_annotation(pdf_file_path):

@@ -779,7 +779,7 @@ def test_annotation_getter():
     }
 
 
-def test_annotation_setter():
+def test_annotation_setter(pdf_file_path):
     # Arange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -833,12 +833,8 @@ def test_annotation_setter():
     arr.append(ind_obj)
 
     # Assert manually
-    target = "annot-out.pdf"
-    with open(target, "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
-
-    # Cleanup
-    Path(target).unlink()  # remove for testing
 
 
 @pytest.mark.enable_socket()
