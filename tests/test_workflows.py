@@ -316,7 +316,7 @@ def test_orientations():
         ),
     ],
 )
-def test_overlay(base_path, overlay_path):
+def test_overlay(pdf_file_path, base_path, overlay_path):
     if base_path.startswith("http"):
         base_path = BytesIO(get_pdf_from_url(base_path, name="tika-935981.pdf"))
     else:
@@ -330,11 +330,8 @@ def test_overlay(base_path, overlay_path):
     for page in reader.pages:
         page.merge_page(overlay)
         writer.add_page(page)
-    with open("dont_commit_overlay.pdf", "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
-
-    # Cleanup
-    Path("dont_commit_overlay.pdf").unlink()  # remove for manual inspection
 
 
 @pytest.mark.enable_socket()

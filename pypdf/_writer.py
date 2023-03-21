@@ -778,11 +778,7 @@ class PdfWriter:
                 cast(DictionaryObject, parent["/Parent"])
             )
             if qualified_parent is not None:
-                return (
-                    qualified_parent
-                    + "."
-                    + cast(str, parent["/T"])
-                )
+                return qualified_parent + "." + cast(str, parent["/T"])
         return cast(str, parent["/T"])
 
     def update_page_form_field_values(
@@ -2728,8 +2724,6 @@ class PdfWriter:
 
         if "/B" not in excluded_fields:
             self.add_filtered_articles("", srcpages, reader)
-
-        return
 
     def _add_articles_thread(
         self,

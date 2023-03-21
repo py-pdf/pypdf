@@ -298,230 +298,186 @@ def test_merge_write_closed_fh():
     assert exc.value.args[0] == err_closed
 
 
-def test_merge_write_closed_fh_with_writer():
+def test_merge_write_closed_fh_with_writer(pdf_file_path):
     merger = pypdf.PdfWriter()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.append(pdf_path)
 
     merger.close()
-    merger.write("stream1.pdf")
+    merger.write(pdf_file_path)
     merger.add_metadata({"author": "Martin Thoma"})
     merger.set_page_layout("/SinglePage")
     merger.set_page_mode("/UseNone")
     merger.add_outline_item("An outline item", 0)
 
-    Path("stream1.pdf").unlink()
-
 
 @pytest.mark.enable_socket()
-def test_trim_outline_list():
+def test_trim_outline_list(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/995/995175.pdf"
     name = "tika-995175.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
-def test_trim_outline_list_with_writer():
+def test_trim_outline_list_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/995/995175.pdf"
     name = "tika-995175.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
-def test_zoom():
+def test_zoom(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/994/994759.pdf"
     name = "tika-994759.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
-def test_zoom_with_writer():
+def test_zoom_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/994/994759.pdf"
     name = "tika-994759.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
-def test_zoom_xyz_no_left():
+def test_zoom_xyz_no_left(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/933/933322.pdf"
     name = "tika-933322.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
-def test_zoom_xyz_no_left_with_writer():
+def test_zoom_xyz_no_left_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/933/933322.pdf"
     name = "tika-933322.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
-def test_outline_item():
+def test_outline_item(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/997/997511.pdf"
     name = "tika-997511.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
-def test_outline_item_with_writer():
+def test_outline_item_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/997/997511.pdf"
     name = "tika-997511.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
-def test_trim_outline():
+def test_trim_outline(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/982/982336.pdf"
     name = "tika-982336.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
-def test_trim_outline_with_writer():
+def test_trim_outline_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/982/982336.pdf"
     name = "tika-982336.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
-def test1():
+def test1(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923621.pdf"
     name = "tika-923621.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
-def test1_with_writer():
+def test1_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923621.pdf"
     name = "tika-923621.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
-def test_sweep_recursion1():
+def test_sweep_recursion1(pdf_file_path):
     # TODO: This test looks like an infinite loop.
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
 
-    reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
+    reader2 = PdfReader(pdf_file_path)
     reader2.pages
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
-def test_sweep_recursion1_with_writer():
+def test_sweep_recursion1_with_writer(pdf_file_path):
     # TODO: This test looks like an infinite loop.
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
 
-    reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
+    reader2 = PdfReader(pdf_file_path)
     reader2.pages
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
@@ -540,18 +496,15 @@ def test_sweep_recursion1_with_writer():
         ),
     ],
 )
-def test_sweep_recursion2(url, name):
+def test_sweep_recursion2(url, name, pdf_file_path):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
 
-    reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
+    reader2 = PdfReader(pdf_file_path)
     reader2.pages
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
@@ -570,54 +523,45 @@ def test_sweep_recursion2(url, name):
         ),
     ],
 )
-def test_sweep_recursion2_with_writer(url, name):
+def test_sweep_recursion2_with_writer(url, name, pdf_file_path):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
 
-    reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
+    reader2 = PdfReader(pdf_file_path)
     reader2.pages
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
-def test_sweep_indirect_list_newobj_is_none(caplog):
+def test_sweep_indirect_list_newobj_is_none(caplog, pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/906/906769.pdf"
     name = "tika-906769.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
     # used to be: assert "Object 21 0 not defined." in caplog.text
 
-    reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
+    reader2 = PdfReader(pdf_file_path)
     reader2.pages
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
-def test_sweep_indirect_list_newobj_is_none_with_writer(caplog):
+def test_sweep_indirect_list_newobj_is_none_with_writer(caplog, pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/906/906769.pdf"
     name = "tika-906769.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
-    merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write(pdf_file_path)
     merger.close()
     # used to be: assert "Object 21 0 not defined." in caplog.text
 
-    reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
+    reader2 = PdfReader(pdf_file_path)
     reader2.pages
-
-    # cleanup
-    Path("tmp-merger-do-not-commit.pdf").unlink()
 
 
 @pytest.mark.enable_socket()
