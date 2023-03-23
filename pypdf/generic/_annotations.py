@@ -140,14 +140,20 @@ class AnnotationBuilder:
     ) -> DictionaryObject:
         """
         Add a popup to the document.
-        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
-                    integers specifying the clickable rectangular area
-                    ``[xLL, yLL, xUR, yUR]``
-        :param int flags: 1 - invisible, 2 - hidden, 3 - print, 4 - no zoom,
-                          5 - no rotate, 6 - no view, 7 - read only
-                          8 - locked,    9 - toggle no view, 10 - locked contents
-        :param bool open: Weather the popup should be shown directly or not (default is False)
-        :param dict parent: The contents of the popup. Create this via the AnnotationBuilder
+        Args:
+            rect: 
+                Specifies the clickable rectangular area as `[xLL, yLL, xUR, yUR]`
+            flags: 
+                1 - invisible, 2 - hidden, 3 - print, 4 - no zoom,
+                5 - no rotate, 6 - no view, 7 - read only, 8 - locked, 
+                9 - toggle no view, 10 - locked contents
+            open: 
+                Whether the popup should be shown directly (default is False).
+            parent: 
+                The contents of the popup. Create this via the AnnotationBuilder.
+            
+        Returns:
+            A dictionary object representing the annotation.
         """
         popup_obj = DictionaryObject(
             {
