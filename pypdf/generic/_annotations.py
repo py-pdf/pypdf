@@ -140,18 +140,19 @@ class AnnotationBuilder:
     ) -> DictionaryObject:
         """
         Add a popup to the document.
+
         Args:
-            rect: 
+            rect:
                 Specifies the clickable rectangular area as `[xLL, yLL, xUR, yUR]`
-            flags: 
+            flags:
                 1 - invisible, 2 - hidden, 3 - print, 4 - no zoom,
-                5 - no rotate, 6 - no view, 7 - read only, 8 - locked, 
+                5 - no rotate, 6 - no view, 7 - read only, 8 - locked,
                 9 - toggle no view, 10 - locked contents
-            open: 
+            open:
                 Whether the popup should be shown directly (default is False).
-            parent: 
+            parent:
                 The contents of the popup. Create this via the AnnotationBuilder.
-            
+
         Returns:
             A dictionary object representing the annotation.
         """

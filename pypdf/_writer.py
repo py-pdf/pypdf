@@ -778,11 +778,7 @@ class PdfWriter:
                 cast(DictionaryObject, parent["/Parent"])
             )
             if qualified_parent is not None:
-                return (
-                    qualified_parent
-                    + "."
-                    + cast(str, parent["/T"])
-                )
+                return qualified_parent + "." + cast(str, parent["/T"])
         return cast(str, parent["/T"])
 
     def update_page_form_field_values(
@@ -2432,13 +2428,7 @@ class PdfWriter:
         Returns:
             the inserted object (to be used in pop-up creation argument for example)
         """
-        if pagenumber is not None:  # deprecated
-            deprecation_with_replacement(
-                "add_annotation(page_number,annotation)",
-                "add_annotation(page,annotation)",
-                "3.0.0",
-            )
-            page = pagenumber
+        page = page_number
 
         if isinstance(page, int):
             page = self.pages[page]

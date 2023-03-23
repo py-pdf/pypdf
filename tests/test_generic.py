@@ -969,7 +969,7 @@ def test_annotation_builder_popup():
 
     target = "annotated-pdf-popup.pdf"
     writer.write(target)
-    os.remove(target)  # comment this out for manual inspection
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_checkboxradiobuttonattributes_opt():
