@@ -13,6 +13,18 @@ from ._rectangle import RectangleObject
 from ._utils import hex_to_rgb, logger_warning
 
 
+def _get_bounding_rectangle(vertices: List[Tuple[float, float]]) -> RectangleObject:
+    x_min, y_min = vertices[0][0], vertices[0][1]
+    x_max, y_max = vertices[0][0], vertices[0][1]
+    for x, y in vertices:
+        x_min = min(x_min, x)
+        y_min = min(y_min, y)
+        x_max = min(x_max, x)
+        y_max = min(y_max, y)
+    rect = RectangleObject((x_min, y_min, x_max, y_max))
+    return rect
+
+
 class AnnotationBuilder:
     """
     The AnnotationBuilder creates dictionaries representing PDF annotations.
@@ -233,6 +245,35 @@ class AnnotationBuilder:
         return line_obj
 
     @staticmethod
+    def polyline(
+        vertices: List[Tuple[float, float]],
+    ) -> DictionaryObject:
+        """
+        Draw a polyline on the PDF.
+
+        Args:
+            vertices: Array specifying the vertices (x, y) coordinates of the poly-line.
+
+        Returns:
+            A dictionary object representing the annotation.
+        """
+        if len(vertices) == 0:
+            raise ValueError("A polygon needs at least 1 vertex with two coordinates")
+        coord_list = []
+        for x, y in vertices:
+            coord_list.append(NumberObject(x))
+            coord_list.append(NumberObject(y))
+        polyline_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/PolyLine"),
+                NameObject("/Vertices"): ArrayObject(coord_list),
+                NameObject("/Rect"): RectangleObject(_get_bounding_rectangle(vertices)),
+            }
+        )
+        return polyline_obj
+
+    @staticmethod
     def rectangle(
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         interiour_color: Optional[str] = None,
@@ -304,14 +345,7 @@ class AnnotationBuilder:
     def polygon(vertices: List[Tuple[float, float]]) -> DictionaryObject:
         if len(vertices) == 0:
             raise ValueError("A polygon needs at least 1 vertex with two coordinates")
-        x_min, y_min = vertices[0][0], vertices[0][1]
-        x_max, y_max = vertices[0][0], vertices[0][1]
-        for x, y in vertices:
-            x_min = min(x_min, x)
-            y_min = min(y_min, y)
-            x_max = min(x_max, x)
-            y_max = min(y_max, y)
-        rect = RectangleObject((x_min, y_min, x_max, y_max))
+
         coord_list = []
         for x, y in vertices:
             coord_list.append(NumberObject(x))
@@ -322,7 +356,7 @@ class AnnotationBuilder:
                 NameObject("/Subtype"): NameObject("/Polygon"),
                 NameObject("/Vertices"): ArrayObject(coord_list),
                 NameObject("/IT"): NameObject("PolygonCloud"),
-                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Rect"): RectangleObject(_get_bounding_rectangle(vertices)),
             }
         )
         return obj

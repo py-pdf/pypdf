@@ -52,9 +52,11 @@ def test_writer_clone():
     src = RESOURCE_ROOT / "pdflatex-outline.pdf"
 
     reader = PdfReader(src)
-    writer = PdfWriter()
+    writer = PdfWriter(clone_from=reader)
+    assert len(writer.pages) == 4
+    assert "PageObject" in str(type(writer.pages[0]))
 
-    writer.clone_document_from_reader(reader)
+    writer = PdfWriter(clone_from=src)
     assert len(writer.pages) == 4
     assert "PageObject" in str(type(writer.pages[0]))
 
@@ -290,7 +292,7 @@ def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
         "reportlab-inline-image.pdf",
     ],
 )
-def test_remove_images(input_path):
+def test_remove_images(pdf_file_path, input_path):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -301,18 +303,14 @@ def test_remove_images(input_path):
     writer.remove_images()
 
     # finally, write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_writer_removed_image.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    with open(tmp_filename, "rb") as input_stream:
+    with open(pdf_file_path, "rb") as input_stream:
         reader = PdfReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
             extracted_text = reader.pages[0].extract_text()
             assert "Lorem ipsum dolor sit amet" in extracted_text
-
-    # Cleanup
-    Path(tmp_filename).unlink()
 
 
 @pytest.mark.parametrize(
@@ -322,7 +320,7 @@ def test_remove_images(input_path):
         "reportlab-inline-image.pdf",
     ],
 )
-def test_remove_text(input_path):
+def test_remove_text(input_path, pdf_file_path):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -333,15 +331,11 @@ def test_remove_text(input_path):
     writer.remove_text()
 
     # finally, write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_writer_removed_text.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_remove_text_all_operators():
+def test_remove_text_all_operators(pdf_file_path):
     stream = (
         b"BT "
         b"/F0 36 Tf "
@@ -399,15 +393,11 @@ def test_remove_text_all_operators():
     writer.remove_text()
 
     # finally, write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_writer_removed_text.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_write_metadata():
+def test_write_metadata(pdf_file_path):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
 
     reader = PdfReader(pdf_path)
@@ -423,20 +413,16 @@ def test_write_metadata():
     writer.add_metadata({"/Title": "The Crazy Ones"})
 
     # finally, write data to pypdf-output.pdf
-    tmp_filename = "dont_commit_writer_added_metadata.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
     # Check if the title was set
-    reader = PdfReader(tmp_filename)
+    reader = PdfReader(pdf_file_path)
     metadata = reader.metadata
     assert metadata.get("/Title") == "The Crazy Ones"
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_fill_form():
+def test_fill_form(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
@@ -459,11 +445,8 @@ def test_fill_form():
     )
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_filled_pdf.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
-
-    Path(tmp_filename).unlink()  # cleanup
 
 
 def test_fill_form_with_qualified():
@@ -488,7 +471,7 @@ def test_fill_form_with_qualified():
     ("use_128bit", "user_password", "owner_password"),
     [(True, "userpwd", "ownerpwd"), (False, "userpwd", "ownerpwd")],
 )
-def test_encrypt(use_128bit, user_password, owner_password):
+def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
@@ -503,44 +486,40 @@ def test_encrypt(use_128bit, user_password, owner_password):
     )
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_encrypted.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
     # Test that the data is not there in clear text
-    with open(tmp_filename, "rb") as input_stream:
+    with open(pdf_file_path, "rb") as input_stream:
         data = input_stream.read()
     assert b"foo" not in data
 
     # Test the user password (str):
-    reader = PdfReader(tmp_filename, password="userpwd")
+    reader = PdfReader(pdf_file_path, password="userpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
     # Test the owner password (str):
-    reader = PdfReader(tmp_filename, password="ownerpwd")
+    reader = PdfReader(pdf_file_path, password="ownerpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
     # Test the user password (bytes):
-    reader = PdfReader(tmp_filename, password=b"userpwd")
+    reader = PdfReader(pdf_file_path, password=b"userpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
     # Test the owner password (stbytesr):
-    reader = PdfReader(tmp_filename, password=b"ownerpwd")
+    reader = PdfReader(pdf_file_path, password=b"ownerpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_add_outline_item():
+def test_add_outline_item(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
@@ -553,15 +532,11 @@ def test_add_outline_item():
     writer.add_outline_item("Another", 2, outline_item, None, False, False, Fit.fit())
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_outline_item.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_add_named_destination():
+def test_add_named_destination(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
     assert writer.get_named_dest_root() == []
@@ -592,15 +567,11 @@ def test_add_named_destination():
     assert exc.value.args[0] == "pdf must be self"
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_named_destination.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_add_uri():
+def test_add_uri(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
@@ -633,15 +604,11 @@ def test_add_uri():
     )
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_uri.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 
-    # Cleanup
-    Path(tmp_filename).unlink()
 
-
-def test_add_link():
+def test_add_link(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
@@ -685,12 +652,8 @@ def test_add_link():
         )
 
     # write "output" to pypdf-output.pdf
-    tmp_filename = "dont_commit_link.pdf"
-    with open(tmp_filename, "wb") as output_stream:
+    with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
-
-    # Cleanup
-    Path(tmp_filename).unlink()
 
 
 def test_io_streams():
@@ -709,18 +672,14 @@ def test_io_streams():
         writer.write(output_stream)
 
 
-def test_regression_issue670():
-    tmp_file = "dont_commit_issue670.pdf"
+def test_regression_issue670(pdf_file_path):
     filepath = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(filepath, strict=False)
     for _ in range(2):
         writer = PdfWriter()
         writer.add_page(reader.pages[0])
-        with open(tmp_file, "wb") as f_pdf:
+        with open(pdf_file_path, "wb") as f_pdf:
             writer.write(f_pdf)
-
-    # cleanup
-    Path(tmp_file).unlink()
 
 
 def test_issue301():
@@ -745,18 +704,14 @@ def test_append_pages_from_reader_append():
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
-def test_sweep_indirect_references_nullobject_exception():
+def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    tmp_file = "tmp-merger-do-not-commit.pdf"
-    merger.write(tmp_file)
-
-    # cleanup
-    Path(tmp_file).unlink()
+    merger.write(pdf_file_path)
 
 
 @pytest.mark.enable_socket()
@@ -775,19 +730,16 @@ def test_sweep_indirect_references_nullobject_exception():
         ("https://github.com/py-pdf/pypdf/files/10715624/test.pdf", "iss1627.pdf"),
     ],
 )
-def test_some_appends(url, name):
+def test_some_appends(pdf_file_path, url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    tmp_file = "tmp-merger-do-not-commit.pdf"
     # PdfMerger
     merger = PdfMerger()
     merger.append(reader)
-    merger.write(tmp_file)
+    merger.write(pdf_file_path)
     # PdfWriter
     merger = PdfWriter()
     merger.append(reader)
-    merger.write(tmp_file)
-    # cleanup
-    Path(tmp_file).unlink()
+    merger.write(pdf_file_path)
 
 
 def test_pdf_header():
@@ -802,7 +754,7 @@ def test_pdf_header():
     assert writer.pdf_header == b"%PDF-1.6"
 
 
-def test_write_dict_stream_object():
+def test_write_dict_stream_object(pdf_file_path):
     stream = (
         b"BT "
         b"/F0 36 Tf "
@@ -826,8 +778,7 @@ def test_write_dict_stream_object():
     page_object[NameObject("/Test")] = stream_object
 
     page_object = writer.add_page(page_object)
-    tmp_file = "tmp-writer-do-not-commit.pdf"
-    with open(tmp_file, "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
 
     for k, v in page_object.items():
@@ -845,10 +796,8 @@ def test_write_dict_stream_object():
         assert v.pdf == writer
         assert k in objects_hash, "Missing %s" % v
 
-    Path(tmp_file).unlink()
 
-
-def test_add_single_annotation():
+def test_add_single_annotation(pdf_file_path):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
@@ -871,13 +820,10 @@ def test_add_single_annotation():
         "/T": "moose",
     }
     writer.add_annotation(0, annot_dict)
-    # Assert manually
-    target = "annot-single-out.pdf"
-    with open(target, "wb") as fp:
-        writer.write(fp)
 
-    # Cleanup
-    Path(target).unlink()  # comment out for testing
+    # Inspect manually by adding 'assert False' and viewing the PDF
+    with open(pdf_file_path, "wb") as fp:
+        writer.write(fp)
 
 
 def test_deprecation_bookmark_decorator():
@@ -894,7 +840,7 @@ def test_deprecation_bookmark_decorator():
 
 
 @pytest.mark.samples()
-def test_colors_in_outline_item():
+def test_colors_in_outline_item(pdf_file_path):
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -903,17 +849,13 @@ def test_colors_in_outline_item():
     writer.add_outline_item("Second Outline Item", page_number=3, color="#800080")
     writer.add_outline_item("Third Outline Item", page_number=4, color=purple_rgb)
 
-    target = "tmp-named-color-outline.pdf"
-    with open(target, "wb") as f:
+    with open(pdf_file_path, "wb") as f:
         writer.write(f)
 
-    reader2 = PdfReader(target)
+    reader2 = PdfReader(pdf_file_path)
     for outline_item in reader2.outline:
         # convert float to string because of mutability
         assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
-
-    # Cleanup
-    Path(target).unlink()  # comment out for testing
 
 
 @pytest.mark.samples()
@@ -1054,9 +996,8 @@ def test_append_multiple():
 
 
 @pytest.mark.samples()
-def test_set_page_label():
+def test_set_page_label(pdf_file_path):
     src = RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf"  # File without labels
-    target = "pypdf-output.pdf"
     reader = PdfReader(src)
 
     expected = [
@@ -1091,8 +1032,8 @@ def test_set_page_label():
     writer.set_page_label(11, 11, "/r")
     writer.set_page_label(12, 13, "/R")
     writer.set_page_label(17, 18, "/R")
-    writer.write(target)
-    assert PdfReader(target).page_labels == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels == expected
 
     writer = PdfWriter()  # Same labels, different set order
     writer.clone_document_from_reader(reader)
@@ -1102,8 +1043,8 @@ def test_set_page_label():
     writer.set_page_label(0, 1, "/r")
     writer.set_page_label(12, 13, "/R")
     writer.set_page_label(11, 11, "/r")
-    writer.write(target)
-    assert PdfReader(target).page_labels == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels == expected
 
     # Tests labels assigned only in the middle
     # Tests label assigned to a range already containing labled ranges
@@ -1113,8 +1054,8 @@ def test_set_page_label():
     writer.set_page_label(3, 4, "/a")
     writer.set_page_label(5, 5, "/A")
     writer.set_page_label(2, 6, "/r")
-    writer.write(target)
-    assert PdfReader(target).page_labels[: len(expected)] == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels[: len(expected)] == expected
 
     # Tests labels assigned inside a previously existing range
     expected = ["1", "2", "i", "a", "b", "A", "1", "1", "2"]
@@ -1124,8 +1065,8 @@ def test_set_page_label():
     writer.set_page_label(2, 6, "/r")
     writer.set_page_label(3, 4, "/a")
     writer.set_page_label(5, 5, "/A")
-    writer.write(target)
-    assert PdfReader(target).page_labels[: len(expected)] == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels[: len(expected)] == expected
 
     # Tests invalid user input
     writer = PdfWriter()
@@ -1149,12 +1090,11 @@ def test_set_page_label():
     ):
         writer.set_page_label(0, 5, "/r", start=-1)
 
-    Path(target).unlink()
+    pdf_file_path.unlink()
 
     src = (
         SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
     )  # File with pre existing labels
-    target = "pypdf-output.pdf"
     reader = PdfReader(src)
 
     # Tests adding labels to existing ones
@@ -1162,22 +1102,21 @@ def test_set_page_label():
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     writer.set_page_label(2, 3, "/A")
-    writer.write(target)
-    assert PdfReader(target).page_labels[: len(expected)] == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels[: len(expected)] == expected
 
     # Tests replacing existing lables
     expected = ["A", "B", "1", "1", "2"]
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     writer.set_page_label(0, 1, "/A")
-    writer.write(target)
-    assert PdfReader(target).page_labels[: len(expected)] == expected
+    writer.write(pdf_file_path)
+    assert PdfReader(pdf_file_path).page_labels[: len(expected)] == expected
 
-    Path(target).unlink()
+    pdf_file_path.unlink()
 
     # Tests prefix and start.
     src = RESOURCE_ROOT / "issue-604.pdf"  # File without page labels
-    target = "page_labels_test.pdf"
     reader = PdfReader(src)
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -1189,9 +1128,7 @@ def test_set_page_label():
     writer.set_page_label(11, 21, "/D", prefix="PAP-")
     writer.set_page_label(22, 30, "/D", prefix="FOLL-")
     writer.set_page_label(31, 39, "/D", prefix="HURT-")
-    writer.write(target)
-
-    Path(target).unlink()  # comment to see result
+    writer.write(pdf_file_path)
 
 
 @pytest.mark.enable_socket()
@@ -1243,6 +1180,7 @@ def test_attachments():
     reader = PdfReader(b)
     b = None
     assert sorted(reader.attachments.keys()) == sorted({name for name, _ in to_add})
+    assert str(reader.attachments) == "LazyDict(keys=['foobar.txt', 'foobar2.txt'])"
     assert reader._list_attachments() == [name for name, _ in to_add]
 
     # We've added the same key twice - hence only 2 and not 3:
@@ -1343,3 +1281,13 @@ def test_late_iss1654():
         p.compress_content_streams()
     b = BytesIO()
     writer.write(b)
+
+
+@pytest.mark.enable_socket()
+def test_iss1723():
+    # test of an annotation(link) directly stored in the /Annots in the page
+    url = "https://github.com/py-pdf/pypdf/files/11015242/inputFile.pdf"
+    name = "iss1723.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf = PdfWriter()
+    out_pdf.append(in_pdf, (3, 5))

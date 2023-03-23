@@ -754,7 +754,6 @@ class StreamObject(DictionaryObject):
         except Exception:
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
-        return
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
@@ -986,7 +985,6 @@ class ContentStream(DecodedStreamObject):
         self.forced_encoding = cast("ContentStream", src).forced_encoding
         # no need to call DictionaryObjection or anything
         # like super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields)
-        return
 
     def __parse_content_stream(self, stream: StreamType) -> None:
         stream.seek(0, 0)

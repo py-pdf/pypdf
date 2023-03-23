@@ -678,7 +678,7 @@ def test_bool_repr(tmp_path):
 
 @pytest.mark.enable_socket()
 @patch("pypdf._reader.logger_warning")
-def test_issue_997(mock_logger_warning):
+def test_issue_997(mock_logger_warning, pdf_file_path):
     url = (
         "https://github.com/py-pdf/pypdf/files/8908874/"
         "Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
@@ -686,9 +686,8 @@ def test_issue_997(mock_logger_warning):
     name = "gh-issue-997.pdf"
 
     merger = PdfMerger()
-    merged_filename = "tmp-out.pdf"
     merger.append(BytesIO(get_pdf_from_url(url, name=name)))  # here the error raises
-    with open(merged_filename, "wb") as f:
+    with open(pdf_file_path, "wb") as f:
         merger.write(f)
     merger.close()
 
@@ -696,21 +695,17 @@ def test_issue_997(mock_logger_warning):
 
     # Strict
     merger = PdfMerger(strict=True)
-    merged_filename = "tmp-out.pdf"
     with pytest.raises(PdfReadError) as exc:
         merger.append(
             BytesIO(get_pdf_from_url(url, name=name))
         )  # here the error raises
     assert exc.value.args[0] == "Could not find object."
-    with open(merged_filename, "wb") as f:
+    with open(pdf_file_path, "wb") as f:
         merger.write(f)
     merger.close()
 
-    # cleanup
-    Path(merged_filename).unlink()
 
-
-def test_annotation_builder_free_text():
+def test_annotation_builder_free_text(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -746,14 +741,11 @@ def test_annotation_builder_free_text():
     writer.add_annotation(0, free_text_annotation)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf.pdf"
-    with open(target, "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
 
-    Path(target).unlink()  # comment this out for manual inspection
 
-
-def test_annotation_builder_polygon():
+def test_annotation_builder_polygon(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -774,14 +766,36 @@ def test_annotation_builder_polygon():
     writer.add_annotation(0, annotation)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf.pdf"
-    with open(target, "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
 
-    Path(target).unlink()  # comment this out for manual inspection
+
+def test_annotation_builder_polyline(pdf_file_path):
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    with pytest.raises(ValueError) as exc:
+        AnnotationBuilder.polyline(
+            vertices=[],
+        )
+    assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
+
+    annotation = AnnotationBuilder.polyline(
+        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+    )
+    writer.add_annotation(0, annotation)
+
+    # Assert: You need to inspect the file manually
+    with open(pdf_file_path, "wb") as fp:
+        writer.write(fp)
 
 
-def test_annotation_builder_line():
+def test_annotation_builder_line(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -799,14 +813,11 @@ def test_annotation_builder_line():
     writer.add_annotation(0, line_annotation)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf.pdf"
-    with open(target, "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
 
-    Path(target).unlink()  # comment this out for manual inspection
 
-
-def test_annotation_builder_square():
+def test_annotation_builder_square(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -826,14 +837,11 @@ def test_annotation_builder_square():
     writer.add_annotation(0, square_annotation)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf-square.pdf"
-    with open(target, "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
 
-    Path(target).unlink()  # comment this out for manual inspection
 
-
-def test_annotation_builder_circle():
+def test_annotation_builder_circle(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -854,14 +862,11 @@ def test_annotation_builder_circle():
     writer.add_annotation(0, circle_annotation)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf-circle.pdf"
-    with open(target, "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
 
-    Path(target).unlink()  # comment this out for manual inspection
 
-
-def test_annotation_builder_link():
+def test_annotation_builder_link(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
@@ -912,14 +917,11 @@ def test_annotation_builder_link():
         writer.add_page(page)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf-link.pdf"
-    with open(target, "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
 
-    Path(target).unlink()  # comment this out for manual inspection
 
-
-def test_annotation_builder_text():
+def test_annotation_builder_text(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
@@ -936,11 +938,8 @@ def test_annotation_builder_text():
     writer.add_annotation(0, text_annotation)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf-popup.pdf"
-    with open(target, "wb") as fp:
+    with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
-
-    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_annotation_builder_popup():

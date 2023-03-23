@@ -2253,6 +2253,9 @@ class LazyDict(Mapping):
     def __len__(self) -> int:
         return len(self._raw_dict)
 
+    def __str__(self) -> str:
+        return f"LazyDict(keys={list(self.keys())})"
+
 
 class PdfFileReader(PdfReader):  # deprecated
     def __init__(self, *args: Any, **kwargs: Any) -> None:

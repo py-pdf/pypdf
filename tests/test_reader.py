@@ -390,14 +390,14 @@ def test_get_page_of_encrypted_file(pdffile, password, should_fail):
         ),
     ],
 )
-def test_get_form(src, expected, expected_get_fields):
+def test_get_form(src, expected, expected_get_fields, txt_file_path):
     """Check if we can read out form data."""
     src = RESOURCE_ROOT / src
     reader = PdfReader(src)
     fields = reader.get_form_text_fields()
     assert fields == expected
 
-    with open("tmp-fields-report.txt", "w") as f:
+    with open(txt_file_path, "w") as f:
         fields = reader.get_fields(fileobj=f)
     assert fields == expected_get_fields
     if fields:
@@ -415,9 +415,6 @@ def test_get_form(src, expected, expected_get_fields):
                 field.default_value,
                 field.additional_actions,
             ]
-
-    # cleanup
-    Path("tmp-fields-report.txt").unlink()
 
 
 @pytest.mark.parametrize(
@@ -957,16 +954,13 @@ def test_metadata_is_none():
 
 
 @pytest.mark.enable_socket()
-def test_get_fields_read_write_report():
+def test_get_fields_read_write_report(txt_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/909/909655.pdf"
     name = "tika-909655.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    with open("tmp-fields-report.txt", "w") as fp:
+    with open(txt_file_path, "w") as fp:
         fields = reader.get_fields(fileobj=fp)
     assert fields
-
-    # cleanup
-    Path("tmp-fields-report.txt").unlink()
 
 
 @pytest.mark.parametrize(
