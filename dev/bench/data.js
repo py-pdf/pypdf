@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679550041284,
+  "lastUpdate": 1679550824189,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27014,6 +27014,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00037256352529070234",
             "extra": "mean: 87.04184636363524 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0acf9493e8af156b9b9a2c304f8a95bf929703ec",
+          "message": "ENH: Add clone_from parameter in PdfWriter constructor (#1703)\n\nThis is a shortcut. It is syntactic sugar to prevent users from having to use `clone_document_from_reader`.",
+          "timestamp": "2023-03-23T06:52:32+01:00",
+          "tree_id": "5f7d141cdf013df660b5150aa9a3ecf7ad6e59bf",
+          "url": "https://github.com/py-pdf/pypdf/commit/0acf9493e8af156b9b9a2c304f8a95bf929703ec"
+        },
+        "date": 1679550822646,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.073405069752681,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006900320857158639",
+            "extra": "mean: 931.6147540000031 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.195051712509693,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011866767832009068",
+            "extra": "mean: 89.32517916666427 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23486024505321867,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02276083925125793",
+            "extra": "mean: 4.2578513012000085 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.397996530837764,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007125276603190023",
+            "extra": "mean: 87.73471699999712 msec\nrounds: 11"
           }
         ]
       }
