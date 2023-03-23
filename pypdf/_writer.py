@@ -2421,7 +2421,6 @@ class PdfWriter:
         self,
         page_number: Union[int, PageObject],
         annotation: Dict[str, Any],
-        pagenumber: Any = None,
     ) -> DictionaryObject:
         """
         Add a single annotation to the page. Must be a new annotation (can not be recycled)
