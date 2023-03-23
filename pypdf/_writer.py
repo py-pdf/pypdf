@@ -151,7 +151,11 @@ class PdfWriter:
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
     """
 
-    def __init__(self, fileobj: StrByteType = "") -> None:
+    def __init__(
+        self,
+        fileobj: StrByteType = "",
+        clone_from: Union[None, PdfReader, StrByteType, Path] = None,
+    ) -> None:
         self._header = b"%PDF-1.3"
         self._objects: List[PdfObject] = []  # array of indirect objects
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
@@ -188,6 +192,10 @@ class PdfWriter:
             }
         )
         self._root = self._add_object(self._root_object)
+        if clone_from is not None:
+            if not isinstance(clone_from, PdfReader):
+                clone_from = PdfReader(clone_from)
+            self.clone_document_from_reader(clone_from)
         self.fileobj = fileobj
         self.with_as_usage = False
 
