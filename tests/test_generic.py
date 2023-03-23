@@ -841,6 +841,38 @@ def test_annotation_builder_square(pdf_file_path):
         writer.write(fp)
 
 
+def test_annotation_builder_highlight(pdf_file_path):
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    highlight_annotation = AnnotationBuilder.highlight(
+        rect=(95.79332, 704.31777, 138.55779, 724.6855),
+        highlight_color="ff0000",
+        quad_points=ArrayObject(
+            [
+                FloatObject(100.060779),
+                FloatObject(723.55398),
+                FloatObject(134.29033),
+                FloatObject(723.55398),
+                FloatObject(100.060779),
+                FloatObject(705.4493),
+                FloatObject(134.29033),
+                FloatObject(705.4493),
+            ]
+        ),
+    )
+    writer.add_annotation(0, highlight_annotation)
+
+    # Assert: You need to inspect the file manually
+    with open(pdf_file_path, "wb") as fp:
+        writer.write(fp)
+
+
 def test_annotation_builder_circle(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
