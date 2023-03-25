@@ -63,7 +63,9 @@ Out of scope for the moment, but might be added if there are enough contributors
   [`fpdf2`](https://pypi.org/project/fpdf2/) or document conversion tools like
   [`pdfkit`](https://pypi.org/project/pdfkit/).
 * **Replacing words within a PDF**: [Extracting text from PDF is hard](https://pypdf.readthedocs.io/en/stable/user/extract-text.html#why-text-extraction-is-hard).
-   Replacing text in a reliable way is even harder.
+   Replacing text in a reliable way is even harder. For example, one word might
+   be split into multiple tokens. Hence it's not a simple "search and replace"
+   in some cases.
 * **(Not) Extracting headers/footers/page numbers**: While you can apply
   heuristics, there is no way to always make it work. PDF documents simply
   don't contain the information what a header/footer/page number is.
