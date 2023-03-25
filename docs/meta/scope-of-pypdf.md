@@ -16,6 +16,10 @@ Typical indicators that something should be done by pypdf:
 * It's neither mentioned in "belongs in user code" nor in "out of scope"
 * It already is in the issue list with the [is-feature tag](https://github.com/py-pdf/pypdf/labels/is-feature).
 
+The [moonshot extensions](https://github.com/py-pdf/pypdf/discussions/1181) are
+features we would like to have, but are currently not able to add (PRs are
+welcome 😉)
+
 ## Belongs in user code
 
 Here are a few indicators that a feature belongs into users code (and not into pypdf):
