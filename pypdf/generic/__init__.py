@@ -32,8 +32,8 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 from typing import Dict, List, Union
 
 from .._utils import StreamType, deprecate_with_replacement
+from ..annotations import AnnotationBuilder
 from ..constants import OutlineFontFlag
-from ._annotations import AnnotationBuilder
 from ._base import (
     BooleanObject,
     ByteStringObject,

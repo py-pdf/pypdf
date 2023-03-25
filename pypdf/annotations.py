@@ -1,19 +1,31 @@
+"""PDF annotations"""
+
+from abc import ABC
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
-from ._base import (
+from .generic._base import (
     BooleanObject,
     FloatObject,
     NameObject,
     NumberObject,
     TextStringObject,
 )
-from ._data_structures import ArrayObject, DictionaryObject
-from ._fit import DEFAULT_FIT, Fit
-from ._rectangle import RectangleObject
-from ._utils import hex_to_rgb
+from .generic._data_structures import ArrayObject, DictionaryObject
+from .generic._fit import DEFAULT_FIT, Fit
+from .generic._rectangle import RectangleObject
+from .generic._utils import hex_to_rgb
+
+try:
+    from typing import TypeAlias  # type: ignore[attr-defined]
+except ImportError:
+    # PEP 613 introduced typing.TypeAlias with Python 3.10
+    # For older Python versions, the backport typing_extensions is necessary:
+    from typing_extensions import TypeAlias  # type: ignore[misc]
+
+Vertex: TypeAlias = Tuple[float, float]
 
 
-def _get_bounding_rectangle(vertices: List[Tuple[float, float]]) -> RectangleObject:
+def _get_bounding_rectangle(vertices: List[Vertex]) -> RectangleObject:
     x_min, y_min = vertices[0][0], vertices[0][1]
     x_max, y_max = vertices[0][0], vertices[0][1]
     for x, y in vertices:
@@ -23,6 +35,153 @@ def _get_bounding_rectangle(vertices: List[Tuple[float, float]]) -> RectangleObj
         y_max = min(y_max, y)
     rect = RectangleObject((x_min, y_min, x_max, y_max))
     return rect
+
+
+class AnnotationDictionary(DictionaryObject, ABC):
+    def __init__(self) -> None:
+        # "rect" should not be added here as PolyLine can automatically set it
+        self[NameObject("/Type")] = NameObject("/Annot")
+
+
+class Text(AnnotationDictionary):
+    """
+    A text annotation.
+
+    Args:
+        rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+            specifying the clickable rectangular area
+        text: The text that is added to the document
+        open:
+        flags:
+    """
+
+    def __init__(
+        self,
+        *,
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        text: str,
+        open: bool = False,
+        flags: int = 0,
+    ):
+        self[NameObject("/Subtype")] = NameObject("/Text")
+        self[NameObject("/Rect")] = RectangleObject(rect)
+        self[NameObject("/Contents")] = TextStringObject(text)
+        self[NameObject("/Open")] = BooleanObject(open)
+        self[NameObject("/Flags")] = NumberObject(flags)
+
+
+class FreeText(AnnotationDictionary):
+    """A FreeText annotation"""
+
+    def __init__(
+        self,
+        *,
+        text: str,
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        font: str = "Helvetica",
+        bold: bool = False,
+        italic: bool = False,
+        font_size: str = "14pt",
+        font_color: str = "000000",
+        border_color: Optional[str] = "000000",
+        background_color: Optional[str] = "ffffff",
+    ):
+        self[NameObject("/Subtype")] = NameObject("/Text")
+        self[NameObject("/Rect")] = RectangleObject(rect)
+
+        font_str = "font: "
+        if bold is True:
+            font_str = f"{font_str}bold "
+        if italic is True:
+            font_str = f"{font_str}italic "
+        font_str = f"{font_str}{font} {font_size}"
+        font_str = f"{font_str};text-align:left;color:#{font_color}"
+
+        default_appearance_string = ""
+        if border_color:
+            for st in hex_to_rgb(border_color):
+                default_appearance_string = f"{default_appearance_string}{st} "
+            default_appearance_string = f"{default_appearance_string}rg"
+
+        self.update(
+            {
+                NameObject("/Subtype"): NameObject("/FreeText"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Contents"): TextStringObject(text),
+                # font size color
+                NameObject("/DS"): TextStringObject(font_str),
+                NameObject("/DA"): TextStringObject(default_appearance_string),
+            }
+        )
+        if border_color is None:
+            # Border Style
+            self[NameObject("/BS")] = DictionaryObject(
+                {
+                    # width of 0 means no border
+                    NameObject("/W"): NumberObject(0)
+                }
+            )
+        if background_color is not None:
+            self[NameObject("/C")] = ArrayObject(
+                [FloatObject(n) for n in hex_to_rgb(background_color)]
+            )
+
+
+class Line(AnnotationDictionary):
+    def __init__(
+        self,
+        p1: Vertex,
+        p2: Vertex,
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        text: str = "",
+        title_bar: str = "",
+    ):
+        self.update(
+            {
+                NameObject("/Subtype"): NameObject("/Line"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/T"): TextStringObject(title_bar),
+                NameObject("/L"): ArrayObject(
+                    [
+                        FloatObject(p1[0]),
+                        FloatObject(p1[1]),
+                        FloatObject(p2[0]),
+                        FloatObject(p2[1]),
+                    ]
+                ),
+                NameObject("/LE"): ArrayObject(
+                    [
+                        NameObject(None),
+                        NameObject(None),
+                    ]
+                ),
+                NameObject("/IC"): ArrayObject(
+                    [
+                        FloatObject(0.5),
+                        FloatObject(0.5),
+                        FloatObject(0.5),
+                    ]
+                ),
+                NameObject("/Contents"): TextStringObject(text),
+            }
+        )
+
+
+class PolyLine(AnnotationDictionary):
+    def __init__(self, vertices: List[Vertex]):
+        if len(vertices) == 0:
+            raise ValueError("A polygon needs at least 1 vertex with two coordinates")
+        coord_list = []
+        for x, y in vertices:
+            coord_list.append(NumberObject(x))
+            coord_list.append(NumberObject(y))
+        self.update(
+            {
+                NameObject("/Subtype"): NameObject("/PolyLine"),
+                NameObject("/Vertices"): ArrayObject(coord_list),
+                NameObject("/Rect"): RectangleObject(_get_bounding_rectangle(vertices)),
+            }
+        )
 
 
 class AnnotationBuilder:
@@ -36,15 +195,13 @@ class AnnotationBuilder:
     it's usage combined with PdfWriter.
     """
 
-    from ..types import FitType, ZoomArgType
-
     @staticmethod
     def text(
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         text: str,
         open: bool = False,
         flags: int = 0,
-    ) -> DictionaryObject:
+    ) -> Text:
         """
         Add text annotation.
 
@@ -58,18 +215,7 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        # TABLE 8.23 Additional entries specific to a text annotation
-        text_obj = DictionaryObject(
-            {
-                NameObject("/Type"): NameObject("/Annot"),
-                NameObject("/Subtype"): NameObject("/Text"),
-                NameObject("/Rect"): RectangleObject(rect),
-                NameObject("/Contents"): TextStringObject(text),
-                NameObject("/Open"): BooleanObject(open),
-                NameObject("/Flags"): NumberObject(flags),
-            }
-        )
-        return text_obj
+        return Text(rect=rect, text=text, open=open, flags=flags)
 
     @staticmethod
     def free_text(
@@ -103,45 +249,17 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        font_str = "font: "
-        if bold is True:
-            font_str = f"{font_str}bold "
-        if italic is True:
-            font_str = f"{font_str}italic "
-        font_str = f"{font_str}{font} {font_size}"
-        font_str = f"{font_str};text-align:left;color:#{font_color}"
-
-        default_appearance_string = ""
-        if border_color:
-            for st in hex_to_rgb(border_color):
-                default_appearance_string = f"{default_appearance_string}{st} "
-            default_appearance_string = f"{default_appearance_string}rg"
-
-        free_text = DictionaryObject()
-        free_text.update(
-            {
-                NameObject("/Type"): NameObject("/Annot"),
-                NameObject("/Subtype"): NameObject("/FreeText"),
-                NameObject("/Rect"): RectangleObject(rect),
-                NameObject("/Contents"): TextStringObject(text),
-                # font size color
-                NameObject("/DS"): TextStringObject(font_str),
-                NameObject("/DA"): TextStringObject(default_appearance_string),
-            }
+        return FreeText(
+            text=text,
+            rect=rect,
+            font=font,
+            bold=bold,
+            italic=italic,
+            font_size=font_size,
+            font_color=font_color,
+            background_color=background_color,
+            border_color=border_color,
         )
-        if border_color is None:
-            # Border Style
-            free_text[NameObject("/BS")] = DictionaryObject(
-                {
-                    # width of 0 means no border
-                    NameObject("/W"): NumberObject(0)
-                }
-            )
-        if background_color is not None:
-            free_text[NameObject("/C")] = ArrayObject(
-                [FloatObject(n) for n in hex_to_rgb(background_color)]
-            )
-        return free_text
 
     @staticmethod
     def line(
@@ -150,7 +268,7 @@ class AnnotationBuilder:
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         text: str = "",
         title_bar: str = "",
-    ) -> DictionaryObject:
+    ) -> Line:
         """
         Draw a line on the PDF.
 
@@ -166,42 +284,12 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        line_obj = DictionaryObject(
-            {
-                NameObject("/Type"): NameObject("/Annot"),
-                NameObject("/Subtype"): NameObject("/Line"),
-                NameObject("/Rect"): RectangleObject(rect),
-                NameObject("/T"): TextStringObject(title_bar),
-                NameObject("/L"): ArrayObject(
-                    [
-                        FloatObject(p1[0]),
-                        FloatObject(p1[1]),
-                        FloatObject(p2[0]),
-                        FloatObject(p2[1]),
-                    ]
-                ),
-                NameObject("/LE"): ArrayObject(
-                    [
-                        NameObject(None),
-                        NameObject(None),
-                    ]
-                ),
-                NameObject("/IC"): ArrayObject(
-                    [
-                        FloatObject(0.5),
-                        FloatObject(0.5),
-                        FloatObject(0.5),
-                    ]
-                ),
-                NameObject("/Contents"): TextStringObject(text),
-            }
-        )
-        return line_obj
+        return Line(p1=p1, p2=p2, rect=rect, text=text, title_bar=title_bar)
 
     @staticmethod
     def polyline(
         vertices: List[Tuple[float, float]],
-    ) -> DictionaryObject:
+    ) -> PolyLine:
         """
         Draw a polyline on the PDF.
 
@@ -211,21 +299,7 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        if len(vertices) == 0:
-            raise ValueError("A polygon needs at least 1 vertex with two coordinates")
-        coord_list = []
-        for x, y in vertices:
-            coord_list.append(NumberObject(x))
-            coord_list.append(NumberObject(y))
-        polyline_obj = DictionaryObject(
-            {
-                NameObject("/Type"): NameObject("/Annot"),
-                NameObject("/Subtype"): NameObject("/PolyLine"),
-                NameObject("/Vertices"): ArrayObject(coord_list),
-                NameObject("/Rect"): RectangleObject(_get_bounding_rectangle(vertices)),
-            }
-        )
-        return polyline_obj
+        return PolyLine(vertices=vertices)
 
     @staticmethod
     def rectangle(
@@ -350,7 +424,7 @@ class AnnotationBuilder:
             A dictionary object representing the annotation.
         """
         if TYPE_CHECKING:
-            from ..types import BorderArrayType
+            from .types import BorderArrayType
 
         is_external = url is not None
         is_internal = target_page_index is not None
