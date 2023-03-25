@@ -250,3 +250,13 @@ def test_image_without_imagemagic():
                 "pillow is required to do image extraction. "
                 "It can be installed via 'pip install pypdf[image]'"
             )
+
+
+@pytest.mark.enable_socket()
+def test_issue_1737():
+    url = "https://github.com/py-pdf/pypdf/files/11068604/tt1.pdf"
+    name = "iss1737.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0]["/Resources"]["/XObject"]["/Im0"]
+    reader.pages[0]["/Resources"]["/XObject"]["/Im1"]
+    reader.pages[0]["/Resources"]["/XObject"]["/Im2"]
