@@ -1,12 +1,20 @@
 # Documentation
 
+## Building
+
+Documentation can be build via `tox`
+
+```bash
+tox -e docs
+```
+
 ## API Reference
 
 ### Method / Function Docstrings
 
 We use Google-Style Docstrings:
 
-```
+```python
 def example(param1: int, param2: str) -> bool:
     """
     Example function with PEP 484 type annotations.
