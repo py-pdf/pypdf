@@ -770,13 +770,10 @@ def test_annotation_builder_polygon(pdf_file_path):
         writer.write(fp)
 
 
-def test_annotation_builder_polyline(pdf_file_path):
+def test_annotation_builder_polyline(pdf_file_path, pdf_reader_page):
     # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    writer.add_page(pdf_reader_page)
 
     # Act
     with pytest.raises(ValueError) as exc:
