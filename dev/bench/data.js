@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679550824189,
+  "lastUpdate": 1679723694592,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27066,6 +27066,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0007125276603190023",
             "extra": "mean: 87.73471699999712 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "20ebcfdd96aabce419c945633b3a1f76947cbe61",
+          "message": "ROB: Handle params NullObject in decode_stream_data (#1738)\n\nMultiple fiters in streams are not using their decodParms\r\n\r\nCloses #1737\r\n\r\nCo-authored-by: Martin Thoma <info@martin-thoma.de>",
+          "timestamp": "2023-03-25T06:53:37+01:00",
+          "tree_id": "34e9455fc04bdfae179455eefeb41b66e39a7f8b",
+          "url": "https://github.com/py-pdf/pypdf/commit/20ebcfdd96aabce419c945633b3a1f76947cbe61"
+        },
+        "date": 1679723692660,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0998118351947765,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0157507871355084",
+            "extra": "mean: 909.2464437999979 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.218044429380699,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008147094891151493",
+            "extra": "mean: 89.14209658333523 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24709764258534148,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013675911857228173",
+            "extra": "mean: 4.046983166399997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.72771478009195,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008196925484517485",
+            "extra": "mean: 78.56869966666362 msec\nrounds: 12"
           }
         ]
       }
