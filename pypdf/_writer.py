@@ -2437,7 +2437,10 @@ class PdfWriter:
             the inserted object (to be used in pop-up creation argument for example)
         """
         page = page_number
-
+        if isinstance(page, int):
+            page = self.pages[page]
+        elif not isinstance(page, PageObject):
+            raise TypeError("page: invalid type")
 
         to_add = cast(DictionaryObject, _pdf_objectify(annotation))
         to_add[NameObject("/P")] = page.indirect_reference
