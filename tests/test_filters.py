@@ -257,6 +257,6 @@ def test_issue_1737():
     url = "https://github.com/py-pdf/pypdf/files/11068604/tt1.pdf"
     name = "iss1737.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    reader.pages[0]["/Resources"]["/XObject"]["/Im0"]
-    reader.pages[0]["/Resources"]["/XObject"]["/Im1"]
-    reader.pages[0]["/Resources"]["/XObject"]["/Im2"]
+    reader.pages[0]["/Resources"]["/XObject"]["/Im0"].get_data()
+    reader.pages[0]["/Resources"]["/XObject"]["/Im1"].get_data()
+    reader.pages[0]["/Resources"]["/XObject"]["/Im2"].get_data()
