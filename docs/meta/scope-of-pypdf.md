@@ -60,3 +60,6 @@ Out of scope for the moment, but might be added if there are enough contributors
   [`pdfkit`](https://pypi.org/project/pdfkit/).
 * **Replacing words within a PDF**: [Extracting text from PDF is hard](https://pypdf.readthedocs.io/en/stable/user/extract-text.html#why-text-extraction-is-hard).
    Replacing text in a reliable way is even harder.
+* **(Not) Extracting headers/footers/page numbers**: While you can apply
+  heuristics, there is no way to always make it work. PDF documents simply
+  don't contain the information what a header/footer/page number is.
