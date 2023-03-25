@@ -2430,7 +2430,7 @@ class PdfWriter:
         Add a single annotation to the page. Must be a new annotation (can not be recycled)
 
         Args:
-            page: page object or number (used to be pagenumber : deprecated)
+            page_number: page object or number
             annotation : annotation to be added (created with annotation)
 
         Returns:
