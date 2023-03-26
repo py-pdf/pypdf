@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679839712061,
+  "lastUpdate": 1679840026165,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27482,6 +27482,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0002649167462590665",
             "extra": "mean: 87.11997727272997 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "050bca679ca1b7988977a9df784e874ff33d1b9e",
+          "message": "REL: 3.7.0\n\nSecurity (SEC):\n-  Use Python's secrets module instead of random module (#1748)\n\nNew Features (ENH):\n-  Add AnnotationBuilder.highlight text markup annotation (#1740)\n-  Add AnnotationBuilder.popup (#1665)\n-  Add AnnotationBuilder.polyline annotation support (#1726)\n-  Add clone_from parameter in PdfWriter constructor (#1703)\n\nBug Fixes (BUG):\n-  'DictionaryObject' object has no attribute 'indirect_reference' (#1729)\n\nRobustness (ROB):\n-  Handle params NullObject in decode_stream_data (#1738)\n\nDocumentation (DOC):\n-  Project scope (#1743)\n\nMaintenance (MAINT):\n-  Add AnnotationFlag (#1746)\n-  Add LazyDict.__str__ (#1727)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.6.0...3.7.0)",
+          "timestamp": "2023-03-26T16:11:32+02:00",
+          "tree_id": "ea5396cc368b8508549bff4caeae50af369b867d",
+          "url": "https://github.com/py-pdf/pypdf/commit/050bca679ca1b7988977a9df784e874ff33d1b9e"
+        },
+        "date": 1679840024124,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.103595042251306,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006342571959494803",
+            "extra": "mean: 906.1294783999983 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.134685074575135,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00862668620546932",
+            "extra": "mean: 89.80945516666594 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24394582428944855,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009270387935157578",
+            "extra": "mean: 4.099270823400002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.219113659342604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0002825760646412358",
+            "extra": "mean: 81.8389964999966 msec\nrounds: 12"
           }
         ]
       }
