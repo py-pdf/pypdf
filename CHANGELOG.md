@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## Version 3.7.0, 2023-03-26
+
+### Security (SEC)
+-  Use Python's secrets module instead of random module (#1748)
+
+### New Features (ENH)
+-  Add AnnotationBuilder.highlight text markup annotation (#1740)
+-  Add AnnotationBuilder.popup (#1665)
+-  Add AnnotationBuilder.polyline annotation support (#1726)
+-  Add clone_from parameter in PdfWriter constructor (#1703)
+
+### Bug Fixes (BUG)
+-  'DictionaryObject' object has no attribute 'indirect_reference' (#1729)
+
+### Robustness (ROB)
+-  Handle params NullObject in decode_stream_data (#1738)
+
+### Documentation (DOC)
+-  Project scope (#1743)
+
+### Maintenance (MAINT)
+-  Add AnnotationFlag (#1746)
+-  Add LazyDict.__str__ (#1727)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.6.0...3.7.0)
+
+
 ## Version 3.6.0, 2023-03-18
 
 ### New Features (ENH)
