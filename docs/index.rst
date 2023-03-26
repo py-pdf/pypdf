@@ -77,6 +77,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    meta/project-governance
    meta/history
    meta/CONTRIBUTORS
+   meta/scope-of-pypdf
    meta/comparisons
    meta/faq
 

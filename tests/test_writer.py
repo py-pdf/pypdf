@@ -52,9 +52,11 @@ def test_writer_clone():
     src = RESOURCE_ROOT / "pdflatex-outline.pdf"
 
     reader = PdfReader(src)
-    writer = PdfWriter()
+    writer = PdfWriter(clone_from=reader)
+    assert len(writer.pages) == 4
+    assert "PageObject" in str(type(writer.pages[0]))
 
-    writer.clone_document_from_reader(reader)
+    writer = PdfWriter(clone_from=src)
     assert len(writer.pages) == 4
     assert "PageObject" in str(type(writer.pages[0]))
 
@@ -1279,3 +1281,13 @@ def test_late_iss1654():
         p.compress_content_streams()
     b = BytesIO()
     writer.write(b)
+
+
+@pytest.mark.enable_socket()
+def test_iss1723():
+    # test of an annotation(link) directly stored in the /Annots in the page
+    url = "https://github.com/py-pdf/pypdf/files/11015242/inputFile.pdf"
+    name = "iss1723.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf = PdfWriter()
+    out_pdf.append(in_pdf, (3, 5))
