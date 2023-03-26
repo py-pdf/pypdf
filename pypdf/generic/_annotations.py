@@ -10,7 +10,7 @@ from ._base import (
 from ._data_structures import ArrayObject, DictionaryObject
 from ._fit import DEFAULT_FIT, Fit
 from ._rectangle import RectangleObject
-from ._utils import hex_to_rgb
+from ._utils import hex_to_rgb, logger_warning
 
 
 def _get_bounding_rectangle(vertices: List[Tuple[float, float]]) -> RectangleObject:
@@ -142,6 +142,52 @@ class AnnotationBuilder:
                 [FloatObject(n) for n in hex_to_rgb(background_color)]
             )
         return free_text
+
+    @staticmethod
+    def popup(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        flags: int = 0,
+        parent: Optional[DictionaryObject] = None,
+        open: bool = False,
+    ) -> DictionaryObject:
+        """
+        Add a popup to the document.
+
+        Args:
+            rect:
+                Specifies the clickable rectangular area as `[xLL, yLL, xUR, yUR]`
+            flags:
+                1 - invisible, 2 - hidden, 3 - print, 4 - no zoom,
+                5 - no rotate, 6 - no view, 7 - read only, 8 - locked,
+                9 - toggle no view, 10 - locked contents
+            open:
+                Whether the popup should be shown directly (default is False).
+            parent:
+                The contents of the popup. Create this via the AnnotationBuilder.
+
+        Returns:
+            A dictionary object representing the annotation.
+        """
+        popup_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Popup"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Open"): BooleanObject(open),
+                NameObject("/Flags"): NumberObject(flags),
+            }
+        )
+        if parent:
+            # This needs to be an indirect object
+            try:
+                popup_obj[NameObject("/Parent")] = parent.indirect_reference
+            except AttributeError:
+                logger_warning(
+                    "Unregistered Parent object : No Parent field set",
+                    __name__,
+                )
+
+        return popup_obj
 
     @staticmethod
     def line(
