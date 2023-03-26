@@ -5,7 +5,7 @@ import pytest
 
 import pypdf
 from pypdf import PasswordType, PdfReader
-from pypdf._encryption import AlgV5, CryptRC4
+from pypdf._encryption import AlgV5, CryptRC4, _randint, _randrange
 from pypdf.errors import DependencyError, PdfReadError
 
 try:
@@ -205,3 +205,15 @@ def test_generate_values():
         "/OE": values["/OE"],
         "/Perms": values["/Perms"],
     }
+
+
+def test_randrange():
+    # This might randomly fail in very rare cases
+    random_set = {_randrange(0, 10) for _ in range(1000)}
+    assert random_set == {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+
+def test_randint():
+    # This might randomly fail in very rare cases
+    random_set = {_randint(0, 10) for _ in range(1000)}
+    assert random_set == {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
