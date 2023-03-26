@@ -50,7 +50,12 @@ from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
 from .errors import PdfReadError, PdfStreamError
-from .generic import ArrayObject, DictionaryObject, IndirectObject, NameObject
+from .generic import (
+    ArrayObject,
+    DictionaryObject,
+    IndirectObject,
+    NullObject,
+)
 
 if TYPE_CHECKING:
     try:
@@ -534,19 +539,24 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     filters = stream.get(SA.FILTER, ())
     if isinstance(filters, IndirectObject):
         filters = cast(ArrayObject, filters.get_object())
-    if len(filters) and not isinstance(filters[0], NameObject):
+    if not isinstance(filters, ArrayObject):
         # we have a single filter instance
         filters = (filters,)
+    decodparms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
+    if not isinstance(decodparms, (list, tuple)):
+        decodparms = (decodparms,)
     data: bytes = stream._data
     # If there is not data to decode we should not try to decode the data.
     if data:
-        for filter_type in filters:
+        for filter_type, params in zip(filters, decodparms):
+            if isinstance(params, NullObject):
+                params = {}
             if filter_type in (FT.FLATE_DECODE, FTA.FL):
-                data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))
+                data = FlateDecode.decode(data, params)
             elif filter_type in (FT.ASCII_HEX_DECODE, FTA.AHx):
                 data = ASCIIHexDecode.decode(data)  # type: ignore
             elif filter_type in (FT.LZW_DECODE, FTA.LZW):
-                data = LZWDecode.decode(data, stream.get(SA.DECODE_PARMS))  # type: ignore
+                data = LZWDecode.decode(data, params)  # type: ignore
             elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
                 data = ASCII85Decode.decode(data)
             elif filter_type == FT.DCT_DECODE:
@@ -555,10 +565,9 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
                 data = JPXDecode.decode(data)
             elif filter_type == FT.CCITT_FAX_DECODE:
                 height = stream.get(IA.HEIGHT, ())
-                data = CCITTFaxDecode.decode(data, stream.get(SA.DECODE_PARMS), height)
+                data = CCITTFaxDecode.decode(data, params, height)
             elif filter_type == "/Crypt":
-                decode_parms = stream.get(SA.DECODE_PARMS, {})
-                if "/Name" not in decode_parms and "/Type" not in decode_parms:
+                if "/Name" not in params and "/Type" not in params:
                     pass
                 else:
                     raise NotImplementedError(
