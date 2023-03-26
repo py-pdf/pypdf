@@ -4,53 +4,48 @@
 #
 #    pip-compile --output-file=requirements/ci-3.11.txt requirements/ci.in
 #
-attrs==22.1.0
+attrs==22.2.0
     # via
     #   flake8-bugbear
-    #   flake8-implicit-str-concat
     #   pytest
-coverage==6.5.0
+coverage==7.2.2
     # via -r requirements/ci.in
-flake8==5.0.4
+flake8==6.0.0
     # via
     #   -r requirements/ci.in
     #   flake8-bugbear
     #   flake8-print
-flake8-bugbear==22.10.27
+flake8-bugbear==23.3.23
     # via -r requirements/ci.in
-flake8-implicit-str-concat==0.3.0
+flake8-implicit-str-concat==0.4.0
     # via -r requirements/ci.in
 flake8-print==5.0.0
     # via -r requirements/ci.in
-iniconfig==1.1.1
+iniconfig==2.0.0
     # via pytest
 mccabe==0.7.0
     # via flake8
-more-itertools==8.14.0
-    # via flake8-implicit-str-concat
-mypy==0.982
+mypy==1.1.1
     # via -r requirements/ci.in
-mypy-extensions==0.4.3
+mypy-extensions==1.0.0
     # via mypy
-packaging==21.3
+packaging==23.0
     # via pytest
-pillow==9.3.0
+pillow==9.4.0
     # via -r requirements/ci.in
 pluggy==1.0.0
     # via pytest
 py-cpuinfo==9.0.0
     # via pytest-benchmark
-pycodestyle==2.9.1
+pycodestyle==2.10.0
     # via
     #   flake8
     #   flake8-print
-pycryptodome==3.15.0
+pycryptodome==3.17
     # via -r requirements/ci.in
-pyflakes==2.5.0
+pyflakes==3.0.1
     # via flake8
-pyparsing==3.0.9
-    # via packaging
-pytest==7.2.0
+pytest==7.2.2
     # via
     #   -r requirements/ci.in
     #   pytest-benchmark
@@ -59,13 +54,13 @@ pytest-benchmark==4.0.0
     # via -r requirements/ci.in
 pytest-socket==0.6.0
     # via -r requirements/ci.in
-ruff==0.0.254
+ruff==0.0.259
     # via -r requirements/ci.in
-typeguard==2.13.3
+typeguard==3.0.2
     # via -r requirements/ci.in
 types-dataclasses==0.6.6
     # via -r requirements/ci.in
-types-pillow==9.2.2.2
+types-pillow==9.4.0.17
     # via -r requirements/ci.in
-typing-extensions==4.4.0
+typing-extensions==4.5.0
     # via mypy
