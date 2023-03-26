@@ -2427,14 +2427,18 @@ class PdfWriter:
         annotation: Dict[str, Any],
     ) -> DictionaryObject:
         """
-        Add a single annotation to the page. Must be a new annotation (can not be recycled)
+        Add a single annotation to the page.
+        
+        The added annotation must be a new annotation.
+        It can not be recycled.
 
         Args:
-            page_number: page object or number
-            annotation : annotation to be added (created with annotation)
+            page_number: PageObject or page index.
+            annotation: Annotation to be added (created with annotation).
 
         Returns:
-            the inserted object (to be used in pop-up creation argument for example)
+            The inserted object
+            This can be used for pop-up creation, for example
         """
         page = page_number
         if isinstance(page, int):
