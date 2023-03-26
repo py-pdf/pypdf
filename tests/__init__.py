@@ -34,9 +34,9 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
         cpt = 3
         while cpt > 0:
             try:
-                with urllib.request.urlopen(url) as response, cache_path.open(
-                    "wb"
-                ) as out_file:
+                with urllib.request.urlopen(  # noqa: S310
+                    url
+                ) as response, cache_path.open("wb") as out_file:
                     out_file.write(response.read())
                 cpt = 0
             except HTTPError as e:
