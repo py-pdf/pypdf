@@ -2428,7 +2428,6 @@ class PdfWriter:
     ) -> DictionaryObject:
         """
         Add a single annotation to the page.
-        
         The added annotation must be a new annotation.
         It can not be recycled.
 
