@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679823993594,
+  "lastUpdate": 1679826036589,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27274,6 +27274,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.000263989616901639",
             "extra": "mean: 89.36102763636521 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3da3b252767c7a4949c4dfa23afe44d1caf6a14f",
+          "message": "ENH: Add Highlight text markup annotation (#1740)\n\nSee #107",
+          "timestamp": "2023-03-26T12:19:11+02:00",
+          "tree_id": "e5d93cf50f6b86da4af3d8d533ee85f88c0381c5",
+          "url": "https://github.com/py-pdf/pypdf/commit/3da3b252767c7a4949c4dfa23afe44d1caf6a14f"
+        },
+        "date": 1679826034797,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.874144093611688,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024947633904439454",
+            "extra": "mean: 1.1439761559999966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.791017267044001,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020554344948779054",
+            "extra": "mean: 102.1344332999945 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21347646720284585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13810817742116663",
+            "extra": "mean: 4.6843570774 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.164979477104113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007203639168288833",
+            "extra": "mean: 98.37698170000522 msec\nrounds: 10"
           }
         ]
       }
