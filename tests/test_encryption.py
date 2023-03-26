@@ -208,9 +208,9 @@ def test_generate_values():
 
 
 def test_randrange():
-    values = [_randrange(0, 1) for _ in range(1000)]
-    assert min(values) > 0
-    assert max(values) < 1
+    # This might randomly fail in very rare cases
+    random_set = {_randrange(0, 10) for _ in range(1000)}
+    assert random_set == {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 
 def test_randint():
