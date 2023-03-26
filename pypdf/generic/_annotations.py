@@ -308,6 +308,39 @@ class AnnotationBuilder:
         return square_obj
 
     @staticmethod
+    def highlight(
+        *,
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        quad_points: ArrayObject,
+        highlight_color: str = "ff0000",
+    ) -> DictionaryObject:
+        """
+        Add a highlight annotation to the document.
+
+        Args:
+            rect: Array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the highlighted area
+            quad_points: An ArrayObject of 8 FloatObjects. Must match a word or
+                a group of words, otherwise no highlight will be shown.
+            highlight_color: The color used for the hightlight
+
+        Returns:
+            A dictionary object representing the annotation.
+        """
+        obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Highlight"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/QuadPoints"): quad_points,
+                NameObject("/C"): ArrayObject(
+                    [FloatObject(n) for n in hex_to_rgb(highlight_color)]
+                ),
+            }
+        )
+        return obj
+
+    @staticmethod
     def ellipse(
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         interiour_color: Optional[str] = None,

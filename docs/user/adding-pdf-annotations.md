@@ -273,3 +273,36 @@ writer.add_annotation(page_number=0, annotation=annotation)
 with open("annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
+
+## Text Markup Annotations
+
+Text markup annotations refer to a specific piece of text within the document.
+
+Those are a bit more complicated as you need to know exactly where the text
+is. Those are the "Quad points".
+
+### Highlighting
+
+If you want to highlight text like this:
+
+![](annotation-highlight.png)
+
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
+
+```python
+pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+reader = PdfReader(pdf_path)
+page = reader.pages[0]
+writer = PdfWriter()
+writer.add_page(page)
+
+# Add the line
+annotation = AnnotationBuilder.polygon(
+    vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+)
+writer.add_annotation(page_number=0, annotation=annotation)
+
+# Write the annotated file to disk
+with open("annotated-pdf.pdf", "wb") as fp:
+    writer.write(fp)
+```
