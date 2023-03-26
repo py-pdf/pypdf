@@ -198,6 +198,40 @@ with open("annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
+## Popup
+
+Manage the Popup windows for markups. looks like this:
+
+![](annotation-popup.png)
+
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
+
+you have to use the returned result from add_annotation() to fill-up the
+
+```python
+# Arrange
+writer = pypdf.PdfWriter()
+writer.append(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), [0])
+
+# Act
+text_annotation = writer.add_annotation(
+    0,
+    AnnotationBuilder.text(
+        text="Hello World\nThis is the second line!",
+        rect=(50, 550, 200, 650),
+        open=True,
+    ),
+)
+
+popup_annotation = AnnotationBuilder.popup(
+    rect=(50, 550, 200, 650),
+    open=True,
+    parent=text_annotation,  # use the output of add_annotation
+)
+
+writer.write("annotated-pdf-popup.pdf")
+```
+
 ## Link
 
 If you want to add a link, you can use
@@ -234,6 +268,39 @@ writer.add_page(page)
 # Add the line
 annotation = Link(
     rect=(50, 550, 200, 650), target_page_index=3, fit="/FitH", fit_args=(123,)
+)
+writer.add_annotation(page_number=0, annotation=annotation)
+
+# Write the annotated file to disk
+with open("annotated-pdf.pdf", "wb") as fp:
+    writer.write(fp)
+```
+
+## Text Markup Annotations
+
+Text markup annotations refer to a specific piece of text within the document.
+
+Those are a bit more complicated as you need to know exactly where the text
+is. Those are the "Quad points".
+
+### Highlighting
+
+If you want to highlight text like this:
+
+![](annotation-highlight.png)
+
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
+
+```python
+pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+reader = PdfReader(pdf_path)
+page = reader.pages[0]
+writer = PdfWriter()
+writer.add_page(page)
+
+# Add the line
+annotation = AnnotationBuilder.polygon(
+    vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
 )
 writer.add_annotation(page_number=0, annotation=annotation)
 

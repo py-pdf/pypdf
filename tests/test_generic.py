@@ -838,6 +838,38 @@ def test_annotation_builder_square(pdf_file_path):
         writer.write(fp)
 
 
+def test_annotation_builder_highlight(pdf_file_path):
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    highlight_annotation = AnnotationBuilder.highlight(
+        rect=(95.79332, 704.31777, 138.55779, 724.6855),
+        highlight_color="ff0000",
+        quad_points=ArrayObject(
+            [
+                FloatObject(100.060779),
+                FloatObject(723.55398),
+                FloatObject(134.29033),
+                FloatObject(723.55398),
+                FloatObject(100.060779),
+                FloatObject(705.4493),
+                FloatObject(134.29033),
+                FloatObject(705.4493),
+            ]
+        ),
+    )
+    writer.add_annotation(0, highlight_annotation)
+
+    # Assert: You need to inspect the file manually
+    with open(pdf_file_path, "wb") as fp:
+        writer.write(fp)
+
+
 def test_annotation_builder_circle(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
@@ -937,6 +969,35 @@ def test_annotation_builder_text(pdf_file_path):
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
+
+
+def test_annotation_builder_popup():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    text_annotation = AnnotationBuilder.text(
+        text="Hello World\nThis is the second line!",
+        rect=(50, 550, 200, 650),
+        open=True,
+    )
+    ta = writer.add_annotation(0, text_annotation)
+
+    popup_annotation = AnnotationBuilder.popup(
+        rect=(50, 550, 200, 650),
+        open=True,
+        parent=ta,  # prefer to use for evolutivity
+    )
+
+    writer.add_annotation(writer.pages[0], popup_annotation)
+
+    target = "annotated-pdf-popup.pdf"
+    writer.write(target)
+    Path(target).unlink()  # comment this out for manual inspection
 
 
 def test_checkboxradiobuttonattributes_opt():

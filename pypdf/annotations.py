@@ -3,6 +3,7 @@
 from abc import ABC
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
+from .constants import AnnotationFlag
 from .generic._base import (
     BooleanObject,
     FloatObject,
@@ -13,7 +14,7 @@ from .generic._base import (
 from .generic._data_structures import ArrayObject, DictionaryObject
 from .generic._fit import DEFAULT_FIT, Fit
 from .generic._rectangle import RectangleObject
-from .generic._utils import hex_to_rgb
+from .generic._utils import hex_to_rgb, logger_warning
 
 try:
     from typing import TypeAlias  # type: ignore[attr-defined]
@@ -23,6 +24,7 @@ except ImportError:
     from typing_extensions import TypeAlias  # type: ignore[misc]
 
 Vertex: TypeAlias = Tuple[float, float]
+NO_FLAGS = AnnotationFlag(0)
 
 
 def _get_bounding_rectangle(vertices: List[Vertex]) -> RectangleObject:
@@ -262,6 +264,53 @@ class AnnotationBuilder:
         )
 
     @staticmethod
+    def popup(
+        *,
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        flags: AnnotationFlag = NO_FLAGS,
+        parent: Optional[DictionaryObject] = None,
+        open: bool = False,
+    ) -> DictionaryObject:
+        """
+        Add a popup to the document.
+
+        Args:
+            rect:
+                Specifies the clickable rectangular area as `[xLL, yLL, xUR, yUR]`
+            flags:
+                1 - invisible, 2 - hidden, 3 - print, 4 - no zoom,
+                5 - no rotate, 6 - no view, 7 - read only, 8 - locked,
+                9 - toggle no view, 10 - locked contents
+            open:
+                Whether the popup should be shown directly (default is False).
+            parent:
+                The contents of the popup. Create this via the AnnotationBuilder.
+
+        Returns:
+            A dictionary object representing the annotation.
+        """
+        popup_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Popup"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Open"): BooleanObject(open),
+                NameObject("/F"): NumberObject(flags),
+            }
+        )
+        if parent:
+            # This needs to be an indirect object
+            try:
+                popup_obj[NameObject("/Parent")] = parent.indirect_reference
+            except AttributeError:
+                logger_warning(
+                    "Unregistered Parent object : No Parent field set",
+                    __name__,
+                )
+
+        return popup_obj
+
+    @staticmethod
     def line(
         p1: Tuple[float, float],
         p2: Tuple[float, float],
@@ -334,6 +383,39 @@ class AnnotationBuilder:
             )
 
         return square_obj
+
+    @staticmethod
+    def highlight(
+        *,
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        quad_points: ArrayObject,
+        highlight_color: str = "ff0000",
+    ) -> DictionaryObject:
+        """
+        Add a highlight annotation to the document.
+
+        Args:
+            rect: Array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the highlighted area
+            quad_points: An ArrayObject of 8 FloatObjects. Must match a word or
+                a group of words, otherwise no highlight will be shown.
+            highlight_color: The color used for the hightlight
+
+        Returns:
+            A dictionary object representing the annotation.
+        """
+        obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Highlight"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/QuadPoints"): quad_points,
+                NameObject("/C"): ArrayObject(
+                    [FloatObject(n) for n in hex_to_rgb(highlight_color)]
+                ),
+            }
+        )
+        return obj
 
     @staticmethod
     def ellipse(
