@@ -309,6 +309,7 @@ class AnnotationBuilder:
 
     @staticmethod
     def highlight(
+        *,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         quad_points: ArrayObject,
         highlight_color: str = "ff0000",
