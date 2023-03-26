@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679829343992,
+  "lastUpdate": 1679836231063,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27378,6 +27378,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0038415178685200714",
             "extra": "mean: 100.86697589999574 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c75bb16efe0671fef8ba5e3e03c2a0fa867b4cbe",
+          "message": "SEC: Use secrets instead of random (#1748)\n\nThe implication of this is that PDFs which were encrypted with pypdf before might be less secure than they should be.\r\n\r\nIt's unclear to me if \"less secure\" means \"insecure\" or if it's just a theoretical advantage.",
+          "timestamp": "2023-03-26T15:09:18+02:00",
+          "tree_id": "34d878b32e84cbb444915187e205f76dcd1ce5ea",
+          "url": "https://github.com/py-pdf/pypdf/commit/c75bb16efe0671fef8ba5e3e03c2a0fa867b4cbe"
+        },
+        "date": 1679836229402,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0599821027194676,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008108556121347444",
+            "extra": "mean: 943.4121551999993 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.021349384253602,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011953640233813873",
+            "extra": "mean: 90.73299149999887 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22505464056945046,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07028694938290174",
+            "extra": "mean: 4.443365386599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.419705394730954,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006271276582506696",
+            "extra": "mean: 87.56793327272692 msec\nrounds: 11"
           }
         ]
       }
