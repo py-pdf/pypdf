@@ -33,9 +33,10 @@ repos:
         additional_dependencies: [black==22.1.0]
         exclude: "docs/user/robustness.md"
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.0.254'
+    rev: 'v0.0.259'
     hooks:
     -   id: ruff
+        args: ['--fix']
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.3.1
     hooks:
