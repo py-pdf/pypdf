@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
+from ..constants import AnnotationFlag
 from ._base import (
     BooleanObject,
     FloatObject,
@@ -11,6 +12,8 @@ from ._data_structures import ArrayObject, DictionaryObject
 from ._fit import DEFAULT_FIT, Fit
 from ._rectangle import RectangleObject
 from ._utils import hex_to_rgb, logger_warning
+
+NO_FLAGS = AnnotationFlag(0)
 
 
 def _get_bounding_rectangle(vertices: List[Tuple[float, float]]) -> RectangleObject:
@@ -145,8 +148,9 @@ class AnnotationBuilder:
 
     @staticmethod
     def popup(
+        *,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
-        flags: int = 0,
+        flags: AnnotationFlag = NO_FLAGS,
         parent: Optional[DictionaryObject] = None,
         open: bool = False,
     ) -> DictionaryObject:
@@ -174,7 +178,7 @@ class AnnotationBuilder:
                 NameObject("/Subtype"): NameObject("/Popup"),
                 NameObject("/Rect"): RectangleObject(rect),
                 NameObject("/Open"): BooleanObject(open),
-                NameObject("/Flags"): NumberObject(flags),
+                NameObject("/F"): NumberObject(flags),
             }
         )
         if parent:
