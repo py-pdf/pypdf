@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679900091037,
+  "lastUpdate": 1679902029448,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27586,6 +27586,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00022718250232529866",
             "extra": "mean: 80.20332733333409 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1563e8e90b672226d1d0d9e0ab4af550b29a6379",
+          "message": "DOC: Pin myst_parser==0.16.1 and rename .readthedocs.yaml (#1752)\n\nmyst_parser is pinned to that version as links are otherwise broken,\r\nsee https://github.com/py-pdf/pypdf/issues/1569\r\n\r\nCausing-commit: 0476799bce16ed5d527c04be1a4b3ba783be50f9",
+          "timestamp": "2023-03-27T09:25:57+02:00",
+          "tree_id": "8aec2146613241658c797854c6e3c6ca8087133a",
+          "url": "https://github.com/py-pdf/pypdf/commit/1563e8e90b672226d1d0d9e0ab4af550b29a6379"
+        },
+        "date": 1679902027370,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1088740636467773,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006587612117200607",
+            "extra": "mean: 901.8156640000029 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.251471098202305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008002415377648245",
+            "extra": "mean: 88.87726691665894 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24620180384109372,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011342709187629306",
+            "extra": "mean: 4.061708664999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.642448005923027,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006151688053502147",
+            "extra": "mean: 79.0986049166662 msec\nrounds: 12"
           }
         ]
       }
