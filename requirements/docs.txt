@@ -4,13 +4,15 @@
 #
 #    pip-compile --output-file=requirements/docs.txt requirements/docs.in
 #
-alabaster==0.7.12
+alabaster==0.7.13
     # via sphinx
-babel==2.11.0
+attrs==22.2.0
+    # via -r requirements/docs.in
+babel==2.12.1
     # via sphinx
 certifi==2022.9.24
     # via requests
-charset-normalizer==2.1.1
+charset-normalizer==3.1.0
     # via requests
 colorama==0.4.6
     # via sphinx
@@ -23,19 +25,19 @@ idna==3.4
     # via requests
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==5.0.0
+importlib-metadata==6.1.0
     # via sphinx
 jinja2==3.1.2
     # via
     #   myst-parser
     #   sphinx
-markdown-it-py==2.1.0
+markdown-it-py==2.2.0
     # via
     #   mdit-py-plugins
     #   myst-parser
 markupsafe==2.1.1
     # via jinja2
-mdit-py-plugins==0.3.1
+mdit-py-plugins==0.3.5
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
@@ -45,9 +47,7 @@ packaging==21.3
     # via sphinx
 pygments==2.13.0
     # via sphinx
-pyparsing==3.0.9
-    # via packaging
-pytz==2022.6
+pytz==2023.2
     # via babel
 pyyaml==6.0
     # via myst-parser
@@ -60,7 +60,8 @@ sphinx==5.3.0
     #   -r requirements/docs.in
     #   myst-parser
     #   sphinx-rtd-theme
-sphinx-rtd-theme==1.1.1
+    #   sphinxcontrib-jquery
+sphinx-rtd-theme==1.2.0
     # via -r requirements/docs.in
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
@@ -68,15 +69,19 @@ sphinxcontrib-devhelp==1.0.2
     # via sphinx
 sphinxcontrib-htmlhelp==2.0.0
     # via sphinx
+sphinxcontrib-jquery==4.1
+    # via sphinx-rtd-theme
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
 sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
-typing-extensions==4.4.0
-    # via myst-parser
-urllib3==1.26.12
+typing-extensions==4.5.0
+    # via
+    #   importlib-metadata
+    #   markdown-it-py
+urllib3==1.26.15
     # via requests
 zipp==3.15.0
     # via importlib-metadata
