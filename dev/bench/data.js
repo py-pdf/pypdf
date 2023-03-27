@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679840026165,
+  "lastUpdate": 1679900091037,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27534,6 +27534,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0002825760646412358",
             "extra": "mean: 81.8389964999966 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "26027314+adehad@users.noreply.github.com",
+            "name": "Adel Haddad",
+            "username": "adehad"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0476799bce16ed5d527c04be1a4b3ba783be50f9",
+          "message": "DOC: Add readthedocs.yml and bump docs dependencies using `tox -e deps` (#1750)",
+          "timestamp": "2023-03-27T08:53:35+02:00",
+          "tree_id": "1a09601b40a6339d7d46466cef39c17461c34238",
+          "url": "https://github.com/py-pdf/pypdf/commit/0476799bce16ed5d527c04be1a4b3ba783be50f9"
+        },
+        "date": 1679900089657,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1021632402375843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007267704835664362",
+            "extra": "mean: 907.3066162000089 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.23217971864915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008239068423337891",
+            "extra": "mean: 89.02991450000286 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24652544693103648,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017065342123756475",
+            "extra": "mean: 4.056376380000001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.468310645565701,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00022718250232529866",
+            "extra": "mean: 80.20332733333409 msec\nrounds: 12"
           }
         ]
       }
