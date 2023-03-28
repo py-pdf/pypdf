@@ -1027,6 +1027,12 @@ class PdfWriter:
                 5 and 6 control annotations, 9 for form fields,
                 10 for extraction of text and graphics.
         """
+        warnings.warn(
+            "pypdf only implements RC4 encryption so far. "
+            "The RC4 algorithm is insecure. Either use a library that supports "
+            "AES for encryption or put the PDF in an encrypted container, "
+            "for example an encrypted ZIP file."
+        )
         if user_pwd is not None:
             if user_password is not None:
                 raise ValueError(
