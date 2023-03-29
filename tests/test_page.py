@@ -1,9 +1,9 @@
 """Test the pypdf._page module."""
 import json
-import random
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
+from random import shuffle
 from typing import List, Tuple
 
 import pytest
@@ -915,7 +915,7 @@ def test_merge_page_reproducible_with_proc_set():
     ordered = sorted(NameObject(f"/{x}") for x in range(20))
 
     shuffled = list(ordered)
-    random.shuffle(shuffled)
+    shuffle(shuffled)
 
     # each page has some overlap in their /ProcSet, and they're in a weird order
     page1[NameObject("/Resources")][NameObject("/ProcSet")] = ArrayObject(shuffled[:15])

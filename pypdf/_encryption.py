@@ -26,7 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import hashlib
-import random
+import secrets
 import struct
 from enum import IntEnum
 from typing import Any, Dict, Optional, Tuple, Union, cast
@@ -56,6 +56,14 @@ class CryptIdentity(CryptBase):
     pass
 
 
+def _randrange(lower_inclusive: int, upper_exclusive: int) -> int:
+    return secrets.choice(range(lower_inclusive, upper_exclusive))
+
+
+def _randint(lower_inclusive: int, upper_inclusive: int) -> int:
+    return secrets.choice(range(lower_inclusive, upper_inclusive + 1))
+
+
 try:
     from Crypto.Cipher import AES, ARC4  # type: ignore[import]
     from Crypto.Util.Padding import pad  # type: ignore[import]
@@ -75,7 +83,7 @@ try:
             self.key = key
 
         def encrypt(self, data: bytes) -> bytes:
-            iv = bytes(bytearray(random.randint(0, 255) for _ in range(16)))
+            iv = bytes(bytearray(_randint(0, 255) for _ in range(16)))
             p = 16 - len(data) % 16
             data += bytes(bytearray(p for _ in range(p)))
             aes = AES.new(self.key, AES.MODE_CBC, iv)
@@ -773,7 +781,7 @@ class AlgV5:
         Returns:
             A tuple (u-value, ue value)
         """
-        random_bytes = bytes(random.randrange(0, 256) for _ in range(16))
+        random_bytes = bytes(_randrange(0, 256) for _ in range(16))
         val_salt = random_bytes[:8]
         key_salt = random_bytes[8:]
         u_value = hashlib.sha256(password + val_salt).digest() + val_salt + key_salt
@@ -816,7 +824,7 @@ class AlgV5:
         Returns:
             A tuple (O value, OE value)
         """
-        random_bytes = bytes(random.randrange(0, 256) for _ in range(16))
+        random_bytes = bytes(_randrange(0, 256) for _ in range(16))
         val_salt = random_bytes[:8]
         key_salt = random_bytes[8:]
         o_value = (
@@ -861,7 +869,7 @@ class AlgV5:
             The perms value
         """
         b8 = b"T" if metadata_encrypted else b"F"
-        rr = bytes(random.randrange(0, 256) for _ in range(4))
+        rr = bytes(_randrange(0, 256) for _ in range(4))
         data = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb" + rr
         perms = AES_ECB_encrypt(key, data)
         return perms

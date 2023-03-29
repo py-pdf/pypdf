@@ -41,7 +41,7 @@ try:
 except ImportError:
     # PEP 586 introduced typing.Literal with Python 3.8
     # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import Literal  # type: ignore[misc]
+    from typing_extensions import Literal  # type: ignore[misc, assignment]
 
 # ref: pdf1.8 spec section 3.5.2 algorithm 3.2
 _encryption_padding = (

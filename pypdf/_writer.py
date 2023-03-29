@@ -32,8 +32,8 @@ import collections
 import decimal
 import enum
 import logging
-import random
 import re
+import secrets
 import struct
 import time
 import uuid
@@ -1027,6 +1027,12 @@ class PdfWriter:
                 5 and 6 control annotations, 9 for form fields,
                 10 for extraction of text and graphics.
         """
+        warnings.warn(
+            "pypdf only implements RC4 encryption so far. "
+            "The RC4 algorithm is insecure. Either use a library that supports "
+            "AES for encryption or put the PDF in an encrypted container, "
+            "for example an encrypted ZIP file."
+        )
         if user_pwd is not None:
             if user_password is not None:
                 raise ValueError(
@@ -1072,10 +1078,13 @@ class PdfWriter:
             V = 1
             rev = 2
             keylen = int(40 / 8)
+        secrets_generator = secrets.SystemRandom()
         P = permissions_flag
         O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]  # noqa
         ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
-        ID_2 = ByteStringObject(md5((repr(random.random())).encode("utf8")).digest())
+        ID_2 = ByteStringObject(
+            md5((repr(secrets_generator.uniform(0, 1))).encode("utf8")).digest()
+        )
         self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
             U, key = _alg34(user_password, O, P, ID_1)

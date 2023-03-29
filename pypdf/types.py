@@ -6,7 +6,7 @@ try:
     # Python 3.8+: https://peps.python.org/pep-0586
     from typing import Literal  # type: ignore[attr-defined]
 except ImportError:
-    from typing_extensions import Literal  # type: ignore[misc]
+    from typing_extensions import Literal  # type: ignore[misc, assignment]
 
 try:
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
