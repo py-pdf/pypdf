@@ -479,11 +479,12 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     orig_text = page.extract_text()
 
     writer.add_page(page)
-    writer.encrypt(
-        user_password=user_password,
-        owner_password=owner_password,
-        use_128bit=use_128bit,
-    )
+    with pytest.warns(UserWarning, match="*pypdf only implements RC4 encryption*"):
+        writer.encrypt(
+            user_password=user_password,
+            owner_password=owner_password,
+            use_128bit=use_128bit,
+        )
 
     # write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
