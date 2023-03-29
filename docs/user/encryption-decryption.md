@@ -5,6 +5,11 @@
 
 ## Encrypt
 
+> ⚠️ WARNING ⚠️: pypdf only implements [RC4 encryption](https://en.wikipedia.org/wiki/RC4).
+> This encryption algorithm is insecure. The more modern and secure AES
+> encryption is not implemented. pypdf can only decrypt, but not encrypt with
+> AES.
+
 Add a password to a PDF (encrypt it):
 
 ```python
