@@ -62,7 +62,7 @@ def test_basic_features(tmp_path):
 
     # encrypt your new PDF and add a password
     password = "secret"
-    with pytest.warns(UserWarning, match="*pypdf only implements RC4 encryption*"):
+    with pytest.warns(UserWarning, match="pypdf only implements RC4 encryption"):
         writer.encrypt(password)
 
     # finally, write "output" to pypdf-output.pdf

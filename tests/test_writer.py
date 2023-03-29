@@ -479,7 +479,7 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     orig_text = page.extract_text()
 
     writer.add_page(page)
-    with pytest.warns(UserWarning, match="*pypdf only implements RC4 encryption*"):
+    with pytest.warns(UserWarning, match="pypdf only implements RC4 encryption"):
         writer.encrypt(
             user_password=user_password,
             owner_password=owner_password,

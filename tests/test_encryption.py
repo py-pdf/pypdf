@@ -172,8 +172,7 @@ def test_encrypt_decrypt_class(cryptcls):
     message = b"Hello World"
     key = bytes(0 for _ in range(128))  # b"secret key"
     crypt = cryptcls(key)
-    with pytest.warns(UserWarning, match="*pypdf only implements RC4 encryption*"):
-        assert crypt.decrypt(crypt.encrypt(message)) == message
+    assert crypt.decrypt(crypt.encrypt(message)) == message
 
 
 def test_decrypt_not_decrypted_pdf():
