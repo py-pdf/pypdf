@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 from ..generic import ArrayObject, DictionaryObject
@@ -36,7 +37,15 @@ def _get_bounding_rectangle(vertices: List[Vertex]) -> RectangleObject:
     return rect
 
 
-class MarkupAnnotation(AnnotationDictionary):
+class MarkupAnnotation(AnnotationDictionary, ABC):
+    """
+    Base class for all markup annotations.
+
+    Args:
+        title_bar: Text to be displayed in the title bar of the annotation;
+            by convention this is the name of the author
+    """
+
     def __init__(self, *, title_bar: Optional[str] = None):
         if title_bar is not None:
             self[NameObject("T")] = TextStringObject(title_bar)
