@@ -37,7 +37,7 @@ def _get_bounding_rectangle(vertices: List[Vertex]) -> RectangleObject:
 
 
 class MarkupAnnotation(AnnotationDictionary):
-    def __init__(self, *, title_bar: str):
+    def __init__(self, *, title_bar: str = ""):
         self[NameObject("T")] = TextStringObject(title_bar)
 
 
