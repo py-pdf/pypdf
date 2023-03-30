@@ -84,7 +84,7 @@ class FreeText(MarkupAnnotation):
         border_color: Optional[str] = "000000",
         background_color: Optional[str] = "ffffff",
     ):
-        self[NameObject("/Subtype")] = NameObject("/Text")
+        self[NameObject("/Subtype")] = NameObject("/FreeText")
         self[NameObject("/Rect")] = RectangleObject(rect)
 
         font_str = "font: "
