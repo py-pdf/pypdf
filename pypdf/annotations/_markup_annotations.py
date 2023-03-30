@@ -60,7 +60,10 @@ class Text(MarkupAnnotation):
         text: str,
         open: bool = False,
         flags: int = NO_FLAGS,
+        **kwargs: Any,
     ):
+        super().__init__(**kwargs)
+        super()
         self[NameObject("/Subtype")] = NameObject("/Text")
         self[NameObject("/Rect")] = RectangleObject(rect)
         self[NameObject("/Contents")] = TextStringObject(text)
@@ -83,7 +86,9 @@ class FreeText(MarkupAnnotation):
         font_color: str = "000000",
         border_color: Optional[str] = "000000",
         background_color: Optional[str] = "ffffff",
+        **kwargs: Any,
     ):
+        super().__init__(**kwargs)
         self[NameObject("/Subtype")] = NameObject("/FreeText")
         self[NameObject("/Rect")] = RectangleObject(rect)
 
@@ -166,7 +171,12 @@ class Line(MarkupAnnotation):
 
 
 class PolyLine(MarkupAnnotation):
-    def __init__(self, vertices: List[Vertex]):
+    def __init__(
+        self,
+        vertices: List[Vertex],
+        **kwargs: Any,
+    ):
+        super().__init__(**kwargs)
         if len(vertices) == 0:
             raise ValueError("A polygon needs at least 1 vertex with two coordinates")
         coord_list = []
@@ -187,7 +197,9 @@ class Rectangle(MarkupAnnotation):
         self,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         interiour_color: Optional[str] = None,
+        **kwargs: Any,
     ):
+        super().__init__(**kwargs)
         self.update(
             {
                 NameObject("/Type"): NameObject("/Annot"),
@@ -209,7 +221,9 @@ class Highlight(MarkupAnnotation):
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         quad_points: ArrayObject,
         highlight_color: str = "ff0000",
+        **kwargs: Any,
     ):
+        super().__init__(**kwargs)
         self.update(
             {
                 NameObject("/Subtype"): NameObject("/Highlight"),
@@ -227,7 +241,9 @@ class Ellipse(MarkupAnnotation):
         self,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         interiour_color: Optional[str] = None,
+        **kwargs: Any,
     ):
+        super().__init__(**kwargs)
         self.update(
             {
                 NameObject("/Type"): NameObject("/Annot"),
@@ -243,7 +259,12 @@ class Ellipse(MarkupAnnotation):
 
 
 class Polygon(MarkupAnnotation):
-    def __init__(self, vertices: List[Tuple[float, float]]):
+    def __init__(
+        self,
+        vertices: List[Tuple[float, float]],
+        **kwargs: Any,
+    ):
+        super().__init__(**kwargs)
         if len(vertices) == 0:
             raise ValueError("A polygon needs at least 1 vertex with two coordinates")
 
@@ -270,7 +291,9 @@ class Link(MarkupAnnotation):
         url: Optional[str] = None,
         target_page_index: Optional[int] = None,
         fit: Fit = DEFAULT_FIT,
+        **kwargs: Any,
     ):
+        super().__init__(**kwargs)
         if TYPE_CHECKING:
             from ..types import BorderArrayType
 
