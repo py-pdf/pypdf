@@ -8,6 +8,7 @@ from ._markup_annotations import (
     Highlight,
     Line,
     Link,
+    MarkupAnnotation,
     Polygon,
     PolyLine,
     Rectangle,
@@ -15,14 +16,15 @@ from ._markup_annotations import (
 )
 
 __all__ = [
-    "Line",
-    "Text",
+    "Ellipse",
     "FreeText",
+    "Highlight",
+    "Line",
+    "Link",
+    "MarkupAnnotation",
+    "NO_FLAGS",
+    "Polygon",
     "PolyLine",
     "Rectangle",
-    "Highlight",
-    "Ellipse",
-    "Polygon",
-    "Link",
-    "NO_FLAGS",
+    "Text",
 ]
