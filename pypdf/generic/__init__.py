@@ -218,7 +218,10 @@ class AnnotationBuilder:
         )
         from ..annotations import Popup
 
-        return Popup(rect=rect, open=open, flags=flags, parent=parent)
+        popup = Popup(rect=rect, open=open, parent=parent)
+        popup.flags = flags  # type: ignore
+
+        return popup
 
     @staticmethod
     def line(
