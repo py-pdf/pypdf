@@ -353,6 +353,9 @@ class AnnotationBuilder:
 
     @staticmethod
     def polygon(vertices: List[Tuple[float, float]]) -> DictionaryObject:
+        deprecate_with_replacement(
+            "AnnotationBuilder.polygon", "pypdf.annotations.Polygon", "4.0.0"
+        )
         from ..annotations import Polygon
 
         return Polygon(vertices=vertices)

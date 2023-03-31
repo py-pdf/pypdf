@@ -714,30 +714,32 @@ def test_annotation_builder_free_text(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    free_text_annotation = AnnotationBuilder.free_text(
-        "Hello World - bold and italic\nThis is the second line!",
-        rect=(50, 550, 200, 650),
-        font="Arial",
-        bold=True,
-        italic=True,
-        font_size="20pt",
-        font_color="00ff00",
-        border_color=None,
-        background_color=None,
-    )
+    with pytest.warns(DeprecationWarning):
+        free_text_annotation = AnnotationBuilder.free_text(
+            "Hello World - bold and italic\nThis is the second line!",
+            rect=(50, 550, 200, 650),
+            font="Arial",
+            bold=True,
+            italic=True,
+            font_size="20pt",
+            font_color="00ff00",
+            border_color=None,
+            background_color=None,
+        )
     writer.add_annotation(0, free_text_annotation)
 
-    free_text_annotation = AnnotationBuilder.free_text(
-        "Another free text annotation (not bold, not italic)",
-        rect=(500, 550, 200, 650),
-        font="Arial",
-        bold=False,
-        italic=False,
-        font_size="20pt",
-        font_color="00ff00",
-        border_color="0000ff",
-        background_color="cdcdcd",
-    )
+    with pytest.warns(DeprecationWarning):
+        free_text_annotation = AnnotationBuilder.free_text(
+            "Another free text annotation (not bold, not italic)",
+            rect=(500, 550, 200, 650),
+            font="Arial",
+            bold=False,
+            italic=False,
+            font_size="20pt",
+            font_color="00ff00",
+            border_color="0000ff",
+            background_color="cdcdcd",
+        )
     writer.add_annotation(0, free_text_annotation)
 
     # Assert: You need to inspect the file manually
@@ -754,15 +756,16 @@ def test_annotation_builder_polygon(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.raises(ValueError) as exc:
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
         AnnotationBuilder.polygon(
             vertices=[],
         )
     assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
 
-    annotation = AnnotationBuilder.polygon(
-        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
-    )
+    with pytest.warns(DeprecationWarning):
+        annotation = AnnotationBuilder.polygon(
+            vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+        )
     writer.add_annotation(0, annotation)
 
     # Assert: You need to inspect the file manually
@@ -776,15 +779,16 @@ def test_annotation_builder_polyline(pdf_file_path, pdf_reader_page):
     writer.add_page(pdf_reader_page)
 
     # Act
-    with pytest.raises(ValueError) as exc:
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
         AnnotationBuilder.polyline(
             vertices=[],
         )
     assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
 
-    annotation = AnnotationBuilder.polyline(
-        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
-    )
+    with pytest.warns(DeprecationWarning):
+        annotation = AnnotationBuilder.polyline(
+            vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+        )
     writer.add_annotation(0, annotation)
 
     # Assert: You need to inspect the file manually
@@ -801,12 +805,13 @@ def test_annotation_builder_line(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    line_annotation = AnnotationBuilder.line(
-        text="Hello World\nLine2",
-        rect=(50, 550, 200, 650),
-        p1=(50, 550),
-        p2=(200, 650),
-    )
+    with pytest.warns(DeprecationWarning):
+        line_annotation = AnnotationBuilder.line(
+            text="Hello World\nLine2",
+            rect=(50, 550, 200, 650),
+            p1=(50, 550),
+            p2=(200, 650),
+        )
     writer.add_annotation(0, line_annotation)
 
     # Assert: You need to inspect the file manually
@@ -823,14 +828,16 @@ def test_annotation_builder_square(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    square_annotation = AnnotationBuilder.rectangle(
-        rect=(50, 550, 200, 650), interiour_color="ff0000"
-    )
+    with pytest.warns(DeprecationWarning):
+        square_annotation = AnnotationBuilder.rectangle(
+            rect=(50, 550, 200, 650), interiour_color="ff0000"
+        )
     writer.add_annotation(0, square_annotation)
 
-    square_annotation = AnnotationBuilder.rectangle(
-        rect=(40, 400, 150, 450),
-    )
+    with pytest.warns(DeprecationWarning):
+        square_annotation = AnnotationBuilder.rectangle(
+            rect=(40, 400, 150, 450),
+        )
     writer.add_annotation(0, square_annotation)
 
     # Assert: You need to inspect the file manually
@@ -847,22 +854,23 @@ def test_annotation_builder_highlight(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    highlight_annotation = AnnotationBuilder.highlight(
-        rect=(95.79332, 704.31777, 138.55779, 724.6855),
-        highlight_color="ff0000",
-        quad_points=ArrayObject(
-            [
-                FloatObject(100.060779),
-                FloatObject(723.55398),
-                FloatObject(134.29033),
-                FloatObject(723.55398),
-                FloatObject(100.060779),
-                FloatObject(705.4493),
-                FloatObject(134.29033),
-                FloatObject(705.4493),
-            ]
-        ),
-    )
+    with pytest.warns(DeprecationWarning):
+        highlight_annotation = AnnotationBuilder.highlight(
+            rect=(95.79332, 704.31777, 138.55779, 724.6855),
+            highlight_color="ff0000",
+            quad_points=ArrayObject(
+                [
+                    FloatObject(100.060779),
+                    FloatObject(723.55398),
+                    FloatObject(134.29033),
+                    FloatObject(723.55398),
+                    FloatObject(100.060779),
+                    FloatObject(705.4493),
+                    FloatObject(134.29033),
+                    FloatObject(705.4493),
+                ]
+            ),
+        )
     writer.add_annotation(0, highlight_annotation)
 
     # Assert: You need to inspect the file manually
@@ -879,15 +887,17 @@ def test_annotation_builder_circle(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    circle_annotation = AnnotationBuilder.ellipse(
-        rect=(50, 550, 200, 650), interiour_color="ff0000"
-    )
+    with pytest.warns(DeprecationWarning):
+        circle_annotation = AnnotationBuilder.ellipse(
+            rect=(50, 550, 200, 650), interiour_color="ff0000"
+        )
     writer.add_annotation(0, circle_annotation)
 
     diameter = 100
-    circle_annotation = AnnotationBuilder.ellipse(
-        rect=(110, 500, 110 + diameter, 500 + diameter),
-    )
+    with pytest.warns(DeprecationWarning):
+        circle_annotation = AnnotationBuilder.ellipse(
+            rect=(110, 500, 110 + diameter, 500 + diameter),
+        )
     writer.add_annotation(0, circle_annotation)
 
     # Assert: You need to inspect the file manually
@@ -905,7 +915,7 @@ def test_annotation_builder_link(pdf_file_path):
 
     # Act
     # Part 1: Too many args
-    with pytest.raises(ValueError) as exc:
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
         AnnotationBuilder.link(
             rect=(50, 550, 200, 650),
             url="https://martin-thoma.com/",
@@ -917,7 +927,7 @@ def test_annotation_builder_link(pdf_file_path):
     )
 
     # Part 2: Too few args
-    with pytest.raises(ValueError) as exc:
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
         AnnotationBuilder.link(
             rect=(50, 550, 200, 650),
         )
@@ -927,19 +937,21 @@ def test_annotation_builder_link(pdf_file_path):
     )
 
     # Part 3: External Link
-    link_annotation = AnnotationBuilder.link(
-        rect=(50, 50, 100, 100),
-        url="https://martin-thoma.com/",
-        border=[1, 0, 6, [3, 2]],
-    )
+    with pytest.warns(DeprecationWarning):
+        link_annotation = AnnotationBuilder.link(
+            rect=(50, 50, 100, 100),
+            url="https://martin-thoma.com/",
+            border=[1, 0, 6, [3, 2]],
+        )
     writer.add_annotation(0, link_annotation)
 
     # Part 4: Internal Link
-    link_annotation = AnnotationBuilder.link(
-        rect=(100, 100, 300, 200),
-        target_page_index=1,
-        border=[50, 10, 4],
-    )
+    with pytest.warns(DeprecationWarning):
+        link_annotation = AnnotationBuilder.link(
+            rect=(100, 100, 300, 200),
+            target_page_index=1,
+            border=[50, 10, 4],
+        )
     writer.add_annotation(0, link_annotation)
 
     for page in reader.pages[1:]:
@@ -959,11 +971,12 @@ def test_annotation_builder_text(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    text_annotation = AnnotationBuilder.text(
-        text="Hello World\nThis is the second line!",
-        rect=(50, 550, 500, 650),
-        open=True,
-    )
+    with pytest.warns(DeprecationWarning):
+        text_annotation = AnnotationBuilder.text(
+            text="Hello World\nThis is the second line!",
+            rect=(50, 550, 500, 650),
+            open=True,
+        )
     writer.add_annotation(0, text_annotation)
 
     # Assert: You need to inspect the file manually
@@ -980,18 +993,20 @@ def test_annotation_builder_popup():
     writer.add_page(page)
 
     # Act
-    text_annotation = AnnotationBuilder.text(
-        text="Hello World\nThis is the second line!",
-        rect=(50, 550, 200, 650),
-        open=True,
-    )
+    with pytest.warns(DeprecationWarning):
+        text_annotation = AnnotationBuilder.text(
+            text="Hello World\nThis is the second line!",
+            rect=(50, 550, 200, 650),
+            open=True,
+        )
     ta = writer.add_annotation(0, text_annotation)
 
-    popup_annotation = AnnotationBuilder.popup(
-        rect=(50, 550, 200, 650),
-        open=True,
-        parent=ta,  # prefer to use for evolutivity
-    )
+    with pytest.warns(DeprecationWarning):
+        popup_annotation = AnnotationBuilder.popup(
+            rect=(50, 550, 200, 650),
+            open=True,
+            parent=ta,  # prefer to use for evolutivity
+        )
 
     writer.add_annotation(writer.pages[0], popup_annotation)
 

@@ -206,6 +206,7 @@ class Rectangle(MarkupAnnotation):
     def __init__(
         self,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        *,
         interiour_color: Optional[str] = None,
         **kwargs: Any,
     ):
@@ -250,6 +251,7 @@ class Ellipse(MarkupAnnotation):
     def __init__(
         self,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        *,
         interiour_color: Optional[str] = None,
         **kwargs: Any,
     ):
@@ -296,6 +298,7 @@ class Polygon(MarkupAnnotation):
 class Link(MarkupAnnotation):
     def __init__(
         self,
+        *,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         border: Optional[ArrayObject] = None,
         url: Optional[str] = None,
