@@ -974,7 +974,7 @@ class PdfWriter:
         self.clone_reader_document_root(reader)
         self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
         try:
-            self._ID = reader.trailer[TK.ID].clone(self)  # type: ignore
+            self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))  # type: ignore
         except KeyError:
             pass
         if callable(after_page_append):
