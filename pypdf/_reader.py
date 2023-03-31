@@ -360,7 +360,10 @@ class PdfReader:
         #       but that needs a deprecation
         loc = self.stream.tell()
         self.stream.seek(0, 0)
-        pdf_file_version = self.stream.read(8).decode("utf-8")
+        try:
+            pdf_file_version = self.stream.read(8).decode("utf-8")
+        except UnicodeDecodeError:
+            return "unknown"
         self.stream.seek(loc, 0)  # return to where it was
         return pdf_file_version
 
