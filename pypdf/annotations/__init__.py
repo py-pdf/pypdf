@@ -11,7 +11,7 @@ does not implement a feature, users can easily extend the given functionality.
 """
 
 
-from ._base import NO_FLAGS
+from ._base import NO_FLAGS, AnnotationDictionary
 from ._markup_annotations import (
     Ellipse,
     FreeText,
@@ -27,8 +27,10 @@ from ._markup_annotations import (
 from ._non_markup_annotations import Popup
 
 __all__ = [
-    "MarkupAnnotation",  # abstract base class
     "NO_FLAGS",
+    # Export abstract base classes so that they are shown in the docs
+    "AnnotationDictionary",
+    "MarkupAnnotation",
     # markup annotations
     "Ellipse",
     "FreeText",
