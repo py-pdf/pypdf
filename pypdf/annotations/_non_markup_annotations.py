@@ -1,30 +1,32 @@
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
+from ..constants import AnnotationFlag
 from ..generic._base import (
     BooleanObject,
     NameObject,
-    NumberObject,
 )
 from ..generic._data_structures import DictionaryObject
 from ..generic._rectangle import RectangleObject
+from ._base import AnnotationDictionary
+
+DEFAULT_ANNOTATION_FLAG = AnnotationFlag(0)
 
 
-class Popup(DictionaryObject):
+class Popup(AnnotationDictionary):
     def __init__(
         self,
         *,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
-        flags: int = 0,
         parent: Optional[DictionaryObject] = None,
         open: bool = False,
+        **kwargs: Any,
     ):
+        super().__init__(**kwargs)
         self.update(
             {
-                NameObject("/Type"): NameObject("/Annot"),
                 NameObject("/Subtype"): NameObject("/Popup"),
                 NameObject("/Rect"): RectangleObject(rect),
                 NameObject("/Open"): BooleanObject(open),
-                NameObject("/F"): NumberObject(flags),
             }
         )
         if parent:
