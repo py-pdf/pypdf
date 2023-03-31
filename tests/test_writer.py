@@ -621,7 +621,7 @@ def test_add_link(pdf_file_path):
         match=(
             re.escape(
                 "add_link is deprecated and was removed in pypdf 3.0.0. "
-                "Use add_annotation(AnnotationBuilder.link(...)) instead."
+                "Use add_annotation(pypdf.annotations.Link(...)) instead."
             )
         ),
     ):

@@ -73,6 +73,7 @@ from ._utils import (
     deprecation_with_replacement,
     logger_warning,
 )
+from .annotations import Link
 from .constants import (
     AnnotationDictionaryAttributes,
     CatalogDictionary,
@@ -94,7 +95,6 @@ from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .generic import (
     PAGE_FIT,
-    AnnotationBuilder,
     ArrayObject,
     BooleanObject,
     ByteStringObject,
@@ -2146,7 +2146,7 @@ class PdfWriter:
         *args: ZoomArgType,
     ) -> DictionaryObject:
         deprecation_with_replacement(
-            "add_link", "add_annotation(AnnotationBuilder.link(...))"
+            "add_link", "add_annotation(pypdf.annotations.Link(...))"
         )
 
         if isinstance(rect, str):
@@ -2159,7 +2159,7 @@ class PdfWriter:
         else:
             rect = RectangleObject(rect)
 
-        annotation = AnnotationBuilder.link(
+        annotation = Link(
             rect=rect,
             border=border,
             target_page_index=page_destination,
@@ -2182,7 +2182,7 @@ class PdfWriter:
         .. deprecated:: 1.28.0
         """
         deprecate_with_replacement(
-            "addLink", "add_annotation(AnnotationBuilder.link(...))", "4.0.0"
+            "addLink", "add_annotation(pypdf.annotations.Link(...))", "4.0.0"
         )
         self.add_link(pagenum, page_destination, rect, border, fit, *args)
 

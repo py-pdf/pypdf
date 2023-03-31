@@ -204,11 +204,13 @@ Manage the Popup windows for markups. looks like this:
 
 ![](annotation-popup.png)
 
-you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
+you can use the {py:class}`Popup <pypdf.annotations.Popup>`:
 
 you have to use the returned result from add_annotation() to fill-up the
 
 ```python
+from pypdf.annotations import Popup, Text
+
 # Arrange
 writer = pypdf.PdfWriter()
 writer.append(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), [0])
@@ -216,14 +218,14 @@ writer.append(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), [0])
 # Act
 text_annotation = writer.add_annotation(
     0,
-    AnnotationBuilder.text(
+    Text(
         text="Hello World\nThis is the second line!",
         rect=(50, 550, 200, 650),
         open=True,
     ),
 )
 
-popup_annotation = AnnotationBuilder.popup(
+popup_annotation = Popup(
     rect=(50, 550, 200, 650),
     open=True,
     parent=text_annotation,  # use the output of add_annotation
@@ -289,7 +291,7 @@ If you want to highlight text like this:
 
 ![](annotation-highlight.png)
 
-you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
+you can use the {py:class}`Highlight <pypdf.annotations.Highlight>`:
 
 ```python
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
@@ -298,8 +300,8 @@ page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
 
-# Add the line
-annotation = AnnotationBuilder.polygon(
+# Add the highlight
+annotation = Hihglihgt(
     vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
 )
 writer.add_annotation(page_number=0, annotation=annotation)
