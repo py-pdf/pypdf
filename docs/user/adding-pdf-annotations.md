@@ -69,6 +69,9 @@ If you want to add a line like this:
 you can use  {py:class}`Line <pypdf.annotations.Line>`:
 
 ```python
+from pypdf import PdfReader, PdfWriter
+from pypdf.annotations import Line
+
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
 page = reader.pages[0]
@@ -98,6 +101,9 @@ If you want to add a line like this:
 you can use  {py:class}`PolyLine <pypdf.annotations.PolyLine>`:
 
 ```python
+from pypdf import PdfReader, PdfWriter
+from pypdf.annotations import Polyline
+
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
 page = reader.pages[0]
@@ -124,6 +130,9 @@ If you want to add a rectangle like this:
 you can use  {py:class}`Rectangle <pypdf.annotations.Rectangle>`:
 
 ```python
+from pypdf import PdfReader, PdfWriter
+from pypdf.annotations import Rectangle
+
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
 page = reader.pages[0]
@@ -155,6 +164,9 @@ If you want to add a circle like this:
 you can use  {py:class}`Ellipse <pypdf.annotations.Ellipse>`:
 
 ```python
+from pypdf import PdfReader, PdfWriter
+from pypdf.annotations import Ellipse
+
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
 page = reader.pages[0]
@@ -181,6 +193,9 @@ If you want to add a polygon like this:
 you can use  {py:class}`Polygon <pypdf.annotations.Polygon>`:
 
 ```python
+from pypdf import PdfReader, PdfWriter
+from pypdf.annotations import Polygon
+
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
 page = reader.pages[0]
@@ -240,6 +255,9 @@ If you want to add a link, you can use
 {py:class}`Link <pypdf.annotations.Link>`:
 
 ```python
+from pypdf import PdfReader, PdfWriter
+from pypdf.annotations import Link
+
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
 page = reader.pages[0]
@@ -261,6 +279,9 @@ with open("annotated-pdf.pdf", "wb") as fp:
 You can also add internal links:
 
 ```python
+from pypdf import PdfReader, PdfWriter
+from pypdf.annotations import Link
+
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
 page = reader.pages[0]
@@ -294,6 +315,9 @@ If you want to highlight text like this:
 you can use the {py:class}`Highlight <pypdf.annotations.Highlight>`:
 
 ```python
+from pypdf import PdfReader, PdfWriter
+from pypdf.annotations import Hihglight
+
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
 page = reader.pages[0]
@@ -301,7 +325,7 @@ writer = PdfWriter()
 writer.add_page(page)
 
 # Add the highlight
-annotation = Hihglihgt(
+annotation = Hihglight(
     vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
 )
 writer.add_annotation(page_number=0, annotation=annotation)

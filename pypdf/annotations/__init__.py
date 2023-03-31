@@ -24,17 +24,21 @@ from ._markup_annotations import (
     Rectangle,
     Text,
 )
+from ._non_markup_annotations import Popup
 
 __all__ = [
+    "MarkupAnnotation",  # abstract base class
+    "NO_FLAGS",
+    # markup annotations
     "Ellipse",
     "FreeText",
     "Highlight",
     "Line",
     "Link",
-    "MarkupAnnotation",
-    "NO_FLAGS",
     "Polygon",
     "PolyLine",
     "Rectangle",
     "Text",
+    # Non-markup annotations
+    "Popup",
 ]

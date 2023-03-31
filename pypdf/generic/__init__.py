@@ -208,28 +208,9 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        popup_obj = DictionaryObject(
-            {
-                NameObject("/Type"): NameObject("/Annot"),
-                NameObject("/Subtype"): NameObject("/Popup"),
-                NameObject("/Rect"): RectangleObject(rect),
-                NameObject("/Open"): BooleanObject(open),
-                NameObject("/F"): NumberObject(flags),
-            }
-        )
-        if parent:
-            # This needs to be an indirect object
-            try:
-                popup_obj[NameObject("/Parent")] = parent.indirect_reference
-            except AttributeError:
-                from ._utils import logger_warning
+        from ..annotations import Popup
 
-                logger_warning(
-                    "Unregistered Parent object : No Parent field set",
-                    __name__,
-                )
-
-        return popup_obj
+        return Popup(rect=rect, open=open, flags=flags, parent=parent)
 
     @staticmethod
     def line(
