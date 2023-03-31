@@ -37,8 +37,11 @@ def main(changelog_path: str) -> None:
     new_entry = header + changes + trailer
     print(new_entry)
 
-    # TODO: Make idempotent - multiple calls to this script
-    # should not change the changelog
+    # Make the script idempotent by checking if the new entry is already in the changelog
+    if new_entry in changelog:
+        print("Changelog is already up-to-date!")
+        return
+
     new_changelog = new_entry + changelog
     write_changelog(new_changelog, changelog_path)
 
@@ -105,8 +108,21 @@ def get_formatted_changes(git_tag: str) -> str:
         grouped[commit.prefix].append({"msg": commit.message})
 
     # Order prefixes
-    order = ["DEP", "ENH", "PI", "BUG", "ROB", "DOC", "DEV", "MAINT", "TST", "STY"]
+    order = [
+        "SEC",
+        "DEP",
+        "ENH",
+        "PI",
+        "BUG",
+        "ROB",
+        "DOC",
+        "DEV",
+        "MAINT",
+        "TST",
+        "STY",
+    ]
     abbrev2long = {
+        "SEC": "Security",
         "DEP": "Deprecations",
         "ENH": "New Features",
         "BUG": "Bug Fixes",
