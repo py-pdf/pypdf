@@ -998,6 +998,20 @@ class PdfWriter:
         )
         self.clone_document_from_reader(reader, after_page_append)
 
+    def generate_file_identifiers(self) -> None:
+        """
+        Generate an identifier for the PDF that will be written.
+
+        The only point of this is ensuring uniqueness. Reproducibility is not
+        required; see 14.4 "File Identifiers".
+        """
+        secrets_generator = secrets.SystemRandom()
+        ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
+        ID_2 = ByteStringObject(
+            md5((repr(secrets_generator.uniform(0, 1))).encode("utf8")).digest()
+        )
+        self._ID = ArrayObject((ID_1, ID_2))
+
     def encrypt(
         self,
         user_password: Optional[str] = None,
@@ -1078,19 +1092,14 @@ class PdfWriter:
             V = 1
             rev = 2
             keylen = int(40 / 8)
-        secrets_generator = secrets.SystemRandom()
         P = permissions_flag
         O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]  # noqa
-        ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
-        ID_2 = ByteStringObject(
-            md5((repr(secrets_generator.uniform(0, 1))).encode("utf8")).digest()
-        )
-        self._ID = ArrayObject((ID_1, ID_2))
+        self.generate_file_identifiers()
         if rev == 2:
-            U, key = _alg34(user_password, O, P, ID_1)
+            U, key = _alg34(user_password, O, P, self._ID[0])
         else:
             assert rev == 3
-            U, key = _alg35(user_password, rev, keylen, O, P, ID_1, False)  # type: ignore[arg-type]
+            U, key = _alg35(user_password, rev, keylen, O, P, self._ID[0], False)  # type: ignore[arg-type]
         encrypt = DictionaryObject()
         encrypt[NameObject(SA.FILTER)] = NameObject("/Standard")
         encrypt[NameObject("/V")] = NumberObject(V)
