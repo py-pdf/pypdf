@@ -101,10 +101,9 @@ PAGE_FIT = Fit.fit()
 
 class AnnotationBuilder:
     """
-    The AnnotationBuilder creates dictionaries representing PDF annotations.
+    The AnnotationBuilder is deprecated.
 
-    Those dictionaries can be modified before they are added to a PdfWriter
-    instance via ``writer.add_annotation``.
+    Instead, use the annotation classes in pypdf.annotations.
 
     See `adding PDF annotations <../user/adding-pdf-annotations.html>`_ for
     it's usage combined with PdfWriter.
@@ -132,6 +131,9 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
+        deprecate_with_replacement(
+            "AnnotationBuilder.text", "pypdf.annotations.Text", "4.0.0"
+        )
         from ..annotations import Text
 
         return Text(rect=rect, text=text, open=open, flags=flags)
@@ -168,6 +170,9 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
+        deprecate_with_replacement(
+            "AnnotationBuilder.free_text", "pypdf.annotations.FreeText", "4.0.0"
+        )
         from ..annotations import FreeText
 
         return FreeText(
@@ -208,6 +213,9 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
+        deprecate_with_replacement(
+            "AnnotationBuilder.popup", "pypdf.annotations.Popup", "4.0.0"
+        )
         from ..annotations import Popup
 
         return Popup(rect=rect, open=open, flags=flags, parent=parent)
@@ -235,6 +243,9 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
+        deprecate_with_replacement(
+            "AnnotationBuilder.line", "pypdf.annotations.Line", "4.0.0"
+        )
         from ..annotations import Line
 
         return Line(p1=p1, p2=p2, rect=rect, text=text, title_bar=title_bar)
@@ -252,6 +263,9 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
+        deprecate_with_replacement(
+            "AnnotationBuilder.polyline", "pypdf.annotations.PolyLine", "4.0.0"
+        )
         from ..annotations import PolyLine
 
         return PolyLine(vertices=vertices)
@@ -275,6 +289,9 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
+        deprecate_with_replacement(
+            "AnnotationBuilder.rectangle", "pypdf.annotations.Rectangle", "4.0.0"
+        )
         from ..annotations import Rectangle
 
         return Rectangle(rect=rect, interiour_color=interiour_color)
@@ -299,6 +316,9 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
+        deprecate_with_replacement(
+            "AnnotationBuilder.highlight", "pypdf.annotations.Highlight", "4.0.0"
+        )
         from ..annotations import Highlight
 
         return Highlight(
@@ -324,6 +344,9 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
+        deprecate_with_replacement(
+            "AnnotationBuilder.ellipse", "pypdf.annotations.Ellipse", "4.0.0"
+        )
         from ..annotations import Ellipse
 
         return Ellipse(rect=rect, interiour_color=interiour_color)
@@ -370,6 +393,9 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
+        deprecate_with_replacement(
+            "AnnotationBuilder.link", "pypdf.annotations.Link", "4.0.0"
+        )
         from ..annotations import Link
 
         return Link(
