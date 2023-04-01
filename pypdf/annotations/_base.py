@@ -1,7 +1,7 @@
 from abc import ABC
 
 from ..constants import AnnotationFlag
-from ..generic import NameObject
+from ..generic import NameObject, NumberObject
 from ..generic._data_structures import DictionaryObject
 
 
@@ -21,7 +21,7 @@ class AnnotationDictionary(DictionaryObject, ABC):
 
     @flags.setter
     def flags(self, value: AnnotationFlag) -> None:
-        self[NameObject("/F")] = value
+        self[NameObject("/F")] = NumberObject(value)
 
 
 NO_FLAGS = AnnotationFlag(0)
