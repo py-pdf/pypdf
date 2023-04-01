@@ -33,7 +33,6 @@ import decimal
 import enum
 import logging
 import re
-import secrets
 import struct
 import time
 import uuid
@@ -998,6 +997,10 @@ class PdfWriter:
         )
         self.clone_document_from_reader(reader, after_page_append)
 
+    def _compute_document_identifier_from_content(self) -> ByteStringObject:
+        # TODO: Actually compute it from content!
+        return ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
+
     def generate_file_identifiers(self) -> None:
         """
         Generate an identifier for the PDF that will be written.
@@ -1005,11 +1008,11 @@ class PdfWriter:
         The only point of this is ensuring uniqueness. Reproducibility is not
         required; see 14.4 "File Identifiers".
         """
-        secrets_generator = secrets.SystemRandom()
-        ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
-        ID_2 = ByteStringObject(
-            md5((repr(secrets_generator.uniform(0, 1))).encode("utf8")).digest()
-        )
+        if hasattr(self, "_ID") and self._ID and len(self._ID) == 2:
+            ID_1 = self._ID[0]
+        else:
+            ID_1 = self._compute_document_identifier_from_content()
+        ID_2 = self._compute_document_identifier_from_content()
         self._ID = ArrayObject((ID_1, ID_2))
 
     def encrypt(
