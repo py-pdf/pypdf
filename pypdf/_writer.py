@@ -31,10 +31,10 @@ import codecs
 import collections
 import decimal
 import enum
+import hashlib
 import logging
 import re
 import struct
-import time
 import uuid
 import warnings
 from hashlib import md5
@@ -141,6 +141,13 @@ class ObjectDeletionFlag(enum.IntFlag):
     ATTACHMENTS = enum.auto()
     OBJECTS_3D = enum.auto()
     ALL_ANNOTATIONS = enum.auto()
+
+
+def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
+    hash = hashlib.md5()
+    for block in iter(lambda: stream.read(blocksize), b""):
+        hash.update(block)
+    return hash.hexdigest()
 
 
 class PdfWriter:
@@ -998,8 +1005,10 @@ class PdfWriter:
         self.clone_document_from_reader(reader, after_page_append)
 
     def _compute_document_identifier_from_content(self) -> ByteStringObject:
-        # TODO: Actually compute it from content!
-        return ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
+        stream = BytesIO()
+        self._write_header(stream)
+        stream.seek(0)
+        return ByteStringObject(_rolling_checksum(stream).encode("utf8"))
 
     def generate_file_identifiers(self) -> None:
         """
