@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, Iterable, Optional
 from ..constants import AnnotationFlag
 from ..generic import (
     ArrayObject,
+    BooleanObject,
     DictionaryObject,
     FloatObject,
     NameObject,
@@ -65,6 +66,13 @@ class AnnotationDictionary(DictionaryObject, ABC):
     """
     internal functions used to modify properties
     """
+
+    def _set_bool(self, key: str, value: Optional[bool]) -> None:
+        if value is None:
+            if key in self:
+                del self[NameObject(key)]
+        else:
+            self[NameObject(key)] = BooleanObject(value)
 
     def _set_int(self, key: str, value: Optional[int]) -> None:
         if value is None:
