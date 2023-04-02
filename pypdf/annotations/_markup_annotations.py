@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 from ..generic import ArrayObject, DictionaryObject
 from ..generic._base import (
-    BooleanObject,
     FloatObject,
     NameObject,
     NumberObject,
@@ -12,7 +11,7 @@ from ..generic._base import (
 from ..generic._fit import DEFAULT_FIT, Fit
 from ..generic._rectangle import RectangleObject
 from ..generic._utils import hex_to_rgb
-from ._base import NO_FLAGS, AnnotationDictionary
+from ._base import AnnotationDictionary
 
 try:
     from typing import TypeAlias  # type: ignore[attr-defined]
@@ -31,8 +30,8 @@ def _get_bounding_rectangle(vertices: List[Vertex]) -> RectangleObject:
     for x, y in vertices:
         x_min = min(x_min, x)
         y_min = min(y_min, y)
-        x_max = min(x_max, x)
-        y_max = min(y_max, y)
+        x_max = max(x_max, x)  ## !!! error? : min -> max
+        y_max = max(y_max, y)  ## !!! error? : min -> max
     rect = RectangleObject((x_min, y_min, x_max, y_max))
     return rect
 
@@ -46,9 +45,28 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
             by convention this is the name of the author
     """
 
-    def __init__(self, *, title_bar: Optional[str] = None):
+    def __init__(
+        self,
+        *,
+        title_bar: Optional[str] = None,
+        call_post_init: bool = False,
+        **kwargs: Any,
+    ):
+        super().__init__()
         if title_bar is not None:
-            self[NameObject("T")] = TextStringObject(title_bar)
+            self.title_bar = title_bar
+        self = super().__init__()
+        if call_post_init:
+            self._post_init(**kwargs)
+
+    @property
+    def title_bar(self) -> str:
+        return self.get("/T", "")
+
+    @title_bar.setter
+    def title_bar(self, value: Optional[str]) -> AnnotationDictionary:
+        self._set_str("/T", value)
+        return self
 
 
 class Text(MarkupAnnotation):
@@ -65,20 +83,29 @@ class Text(MarkupAnnotation):
 
     def __init__(
         self,
-        *,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         text: str,
+        *,
         open: bool = False,
-        flags: int = NO_FLAGS,
+        #### !!!! for me by default no Flags as it is optional
+        #### int = NO_FLAGS,
         **kwargs: Any,
     ):
-        super().__init__(**kwargs)
-        super()
-        self[NameObject("/Subtype")] = NameObject("/Text")
-        self[NameObject("/Rect")] = RectangleObject(rect)
-        self[NameObject("/Contents")] = TextStringObject(text)
-        self[NameObject("/Open")] = BooleanObject(open)
-        self[NameObject("/Flags")] = NumberObject(flags)
+        super().__init__()
+        self._set_name("/SubType", "/Text")
+        self._set_name("/Rect", rect)
+        self._set_str("/Contents", text)
+        kwargs["open"] = open
+        self._post_init(**kwargs)
+
+    @property
+    def open(self) -> bool:
+        return self.get("/Open", False)
+
+    @open.setter
+    def open(self, value: Optional[bool]) -> AnnotationDictionary:
+        self._set_bool("/Open", value)
+        return self
 
 
 class FreeText(MarkupAnnotation):
@@ -86,9 +113,9 @@ class FreeText(MarkupAnnotation):
 
     def __init__(
         self,
-        *,
-        text: str,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        text: str,
+        *,
         font: str = "Helvetica",
         bold: bool = False,
         italic: bool = False,
