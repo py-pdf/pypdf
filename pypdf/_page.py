@@ -209,6 +209,25 @@ class Transformation:
             matrix[2][1],
         )
 
+    def transform(self, m: "Transformation") -> "Transformation":
+        """
+        Apply one transformation to another.
+
+        Args:
+            m: a Transformation to apply.
+
+        Returns:
+            A new ``Transformation`` instance
+
+        Example:
+            >>> from pypdf import Transformation
+            >>> op = Transformation((1, 0, 0, -1, 0, height)) # vertical mirror
+            >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, iwidth, 0))) # horizontal mirror
+            >>> page.add_transformation(op)
+        """
+        ctm = Transformation.compress(matrix_multiply(self.matrix, m.matrix))
+        return Transformation(ctm)
+
     def translate(self, tx: float = 0, ty: float = 0) -> "Transformation":
         """
         Translate the contents of a page.
