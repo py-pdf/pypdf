@@ -835,18 +835,19 @@ class PdfWriter:
                     if writer_annot.get(FieldDictionaryAttributes.FT) == "/Btn":
                         writer_annot.update(
                             {
-                                NameObject(
-                                    AnnotationDictionaryAttributes.AS
-                                ): NameObject(fields[field])
+                                NameObject(FieldDictionaryAttributes.V): NameObject(fields[field]),
+                                NameObject(FieldDictionaryAttributes.DV): NameObject(fields[field]),
+                                NameObject(AnnotationDictionaryAttributes.AS): NameObject(fields[field])
                             }
                         )
-                    writer_annot.update(
-                        {
-                            NameObject(FieldDictionaryAttributes.V): TextStringObject(
-                                fields[field]
+                    else:
+                        writer_annot.update(
+                                {
+                                    NameObject(FieldDictionaryAttributes.V): TextStringObject(
+                                        fields[field]
+                                    )
+                                }
                             )
-                        }
-                    )
                     if flags:
                         writer_annot.update(
                             {
