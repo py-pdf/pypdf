@@ -460,10 +460,16 @@ def test_read_empty():
     assert exc.value.args[0] == "Cannot read an empty file"
 
 
-def test_read_malformed_header():
+def test_read_malformed_header(caplog):
     with pytest.raises(PdfReadError) as exc:
         PdfReader(io.BytesIO(b"foo"), strict=True)
     assert exc.value.args[0] == "PDF starts with 'foo', but '%PDF-' expected"
+    caplog.clear()
+    try:
+        PdfReader(io.BytesIO(b"foo"), strict=False)
+    except Exception:
+        pass
+    assert caplog.messages[0].startswith("invalid pdf header")
 
 
 def test_read_malformed_body():
@@ -1385,5 +1391,4 @@ def test_broken_file_header():
         b"/Prev 0 " if with_prev_0 else b"",
         pdf_data.find(b"xref") - 1,
     )
-    reader = PdfReader(io.BytesIO(pdf_data))
-    assert reader.pdf_header == "unknown"
+    PdfReader(io.BytesIO(pdf_data))

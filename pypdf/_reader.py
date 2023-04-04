@@ -32,7 +32,7 @@ import re
 import struct
 import zlib
 from datetime import datetime
-from io import BytesIO
+from io import BytesIO, UnsupportedOperation
 from pathlib import Path
 from typing import (
     Any,
@@ -1542,7 +1542,10 @@ class PdfReader:
     def _basic_validation(self, stream: StreamType) -> None:
         """Ensure file is not empty. Read at most 5 bytes."""
         stream.seek(0, os.SEEK_SET)
-        header_byte = stream.read(5)
+        try:
+            header_byte = stream.read(5)
+        except UnicodeDecodeError:
+            raise UnsupportedOperation("cannot read header")
         if header_byte == b"":
             raise EmptyFileError("Cannot read an empty file")
         elif header_byte != b"%PDF-":
@@ -1567,7 +1570,10 @@ class PdfReader:
         line = b""
         while line[:5] != b"%%EOF":
             if stream.tell() < HEADER_SIZE:
-                raise PdfReadError("EOF marker not found")
+                if self.strict:
+                    raise PdfReadError("EOF marker not found")
+                else:
+                    logger_warning("EOF marker not found", __name__)
             line = read_previous_line(stream)
 
     def _find_startxref_pos(self, stream: StreamType) -> int:
