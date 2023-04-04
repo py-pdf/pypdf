@@ -360,7 +360,7 @@ class PdfReader:
         #       but that needs a deprecation
         loc = self.stream.tell()
         self.stream.seek(0, 0)
-        pdf_file_version = self.stream.read(8).decode("utf-8")
+        pdf_file_version = self.stream.read(8).decode("utf-8", "backslashreplace")
         self.stream.seek(loc, 0)  # return to where it was
         return pdf_file_version
 
@@ -1541,19 +1541,19 @@ class PdfReader:
 
     def _basic_validation(self, stream: StreamType) -> None:
         """Ensure file is not empty. Read at most 5 bytes."""
-        # start at the end:
-        stream.seek(0, os.SEEK_END)
-        if not stream.tell():
+        stream.seek(0, os.SEEK_SET)
+        header_byte = stream.read(5)
+        if header_byte == b"":
             raise EmptyFileError("Cannot read an empty file")
-        if self.strict:
-            stream.seek(0, os.SEEK_SET)
-            header_byte = stream.read(5)
-            if header_byte != b"%PDF-":
+        elif header_byte != b"%PDF-":
+            if self.strict:
                 raise PdfReadError(
                     f"PDF starts with '{header_byte.decode('utf8')}', "
                     "but '%PDF-' expected"
                 )
-            stream.seek(0, os.SEEK_END)
+            else:
+                logger_warning(f"invalid pdf header: {header_byte}", __name__)
+        stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
         """
