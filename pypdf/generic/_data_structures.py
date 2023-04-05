@@ -750,7 +750,9 @@ class StreamObject(DictionaryObject):
             if decoded_self is None:
                 self.decoded_self = None
             else:
-                self.decoded_self = decoded_self.clone(pdf_dest, True, ignore_fields)  # type: ignore[assignment]
+                self.decoded_self = decoded_self.clone(
+                    pdf_dest, force_duplicate, ignore_fields
+                )  # type: ignore[assignment]
         except Exception:
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
