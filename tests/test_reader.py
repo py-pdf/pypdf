@@ -460,10 +460,16 @@ def test_read_empty():
     assert exc.value.args[0] == "Cannot read an empty file"
 
 
-def test_read_malformed_header():
+def test_read_malformed_header(caplog):
     with pytest.raises(PdfReadError) as exc:
         PdfReader(io.BytesIO(b"foo"), strict=True)
     assert exc.value.args[0] == "PDF starts with 'foo', but '%PDF-' expected"
+    caplog.clear()
+    try:
+        PdfReader(io.BytesIO(b"foo"), strict=False)
+    except Exception:
+        pass
+    assert caplog.messages[0].startswith("invalid pdf header")
 
 
 def test_read_malformed_body():
@@ -1352,3 +1358,37 @@ def test_iss1710():
     name = "irbookonlinereading.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     in_pdf.outline
+
+
+def test_broken_file_header():
+    pdf_data = (
+        b"%%PDF-\xa0sd\n"
+        b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref 1 5\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << %s/Root 5 0 R /Size 6 >>\n"
+        b"startxref %d\n"
+        b"%%%%EOF"
+    )
+    with_prev_0 = True
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj"),
+        pdf_data.find(b"2 0 obj"),
+        pdf_data.find(b"3 0 obj"),
+        pdf_data.find(b"4 0 obj"),
+        pdf_data.find(b"5 0 obj"),
+        b"/Prev 0 " if with_prev_0 else b"",
+        pdf_data.find(b"xref") - 1,
+    )
+    PdfReader(io.BytesIO(pdf_data))
