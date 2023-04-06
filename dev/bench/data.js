@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1680283466867,
+  "lastUpdate": 1680783177901,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27690,6 +27690,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009063849975541897",
             "extra": "mean: 90.65302663635646 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8146729eeb0f90478f2686f1dc395b545b49ba8c",
+          "message": "ROB: Capture UnicodeDecodeError at PdfReader.pdf_header (#1768)\n\nFixes #1758",
+          "timestamp": "2023-04-06T14:11:27+02:00",
+          "tree_id": "5f223de349552eaf1d401302dd75782677c8ea72",
+          "url": "https://github.com/py-pdf/pypdf/commit/8146729eeb0f90478f2686f1dc395b545b49ba8c"
+        },
+        "date": 1680783175963,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8967848132429003,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00607274587956421",
+            "extra": "mean: 1.1150947086000031 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.433503137333025,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012534365608216561",
+            "extra": "mean: 106.00515900000147 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20136117883930382,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023993100907283026",
+            "extra": "mean: 4.9662005644 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.076373814872133,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008574240887647004",
+            "extra": "mean: 99.24205059999451 msec\nrounds: 10"
           }
         ]
       }
