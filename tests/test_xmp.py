@@ -53,25 +53,14 @@ def get_all_tiff(xmp: pypdf.xmp.XmpInformation):
 
 def test_regression_issue774():
     date = pypdf.xmp._converter_date("2021-04-28T12:23:34.123Z")
-    assert date.year == 2021
-    assert date.month == 4
-    assert date.day == 28
-    assert date.hour == 12
-    assert date.minute == 23
-    assert date.second == 34
-    assert date.microsecond == 123000
+    assert date == datetime(2021, 4, 28, 12, 23, 34, 123000)
+
     with pytest.raises(ValueError) as exc:
         pypdf.xmp._converter_date("today")
     assert exc.value.args[0].startswith("Invalid date format")
 
     date = pypdf.xmp._converter_date("2021-04-28T12:23:01-03:00")
-    assert date.year == 2021
-    assert date.month == 4
-    assert date.day == 28
-    assert date.hour == 15
-    assert date.minute == 23
-    assert date.second == 1
-    assert date.microsecond == 0
+    assert date == datetime(2021, 4, 28, 15, 23, 1)
 
 
 def test_regression_issue914():
