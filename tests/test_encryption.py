@@ -70,6 +70,15 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
     ],
 )
 def test_encryption(name, requires_pycryptodome):
+    """
+    Encrypted PDFs are handled correctly.
+
+    This test function ensures that:
+    - If PyCryptodome is not available and required, a DependencyError is raised
+    - Encrypted PDFs are identified correctly
+    - Decryption works for encrypted PDFs
+    - Metadata is properly extracted from the decrypted PDF
+    """
     inputfile = RESOURCE_ROOT / "encryption" / name
     if requires_pycryptodome and not HAS_PYCRYPTODOME:
         with pytest.raises(DependencyError) as exc:
@@ -108,7 +117,16 @@ def test_encryption(name, requires_pycryptodome):
     ],
 )
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
-def test_both_password(name, user_passwd, owner_passwd):
+def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
+    """
+    PDFs with both user and owner passwords are handled correctly.
+
+    This test function ensures that:
+    - Encrypted PDFs with both user and owner passwords are identified correctly
+    - Decryption works for both user and owner passwords
+    - The correct password type is returned after decryption
+    - The number of pages is correctly identified after decryption
+    """
     inputfile = RESOURCE_ROOT / "encryption" / name
     ipdf = pypdf.PdfReader(inputfile)
     assert ipdf.is_encrypted
@@ -125,9 +143,9 @@ def test_both_password(name, user_passwd, owner_passwd):
     ],
 )
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
-def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
+def test_read_page_from_encrypted_file_aes_256(pdffile, password):
     """
-    Check if we can read a page of an encrypted file.
+    A page can be read from an encrypted.
 
     This is a regression test for issue 327:
     IndexError for get_page() of decrypted file
@@ -150,7 +168,8 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
     ],
 )
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
-def test_encryption_merge(names):
+def test_merge_encrypted_pdfs(names):
+    """Encrypted PDFs can be merged after decryption."""
     merger = pypdf.PdfMerger()
     files = [RESOURCE_ROOT / "encryption" / x for x in names]
     pdfs = [pypdf.PdfReader(x) for x in files]
@@ -168,24 +187,27 @@ def test_encryption_merge(names):
         CryptRC4,
     ],
 )
-def test_encrypt_decrypt_class(cryptcls):
+def test_encrypt_decrypt_with_cipher_class(cryptcls):
+    """Encryption and decryption using a cipher class work as expected."""
     message = b"Hello World"
     key = bytes(0 for _ in range(128))  # b"secret key"
     crypt = cryptcls(key)
     assert crypt.decrypt(crypt.encrypt(message)) == message
 
 
-def test_decrypt_not_decrypted_pdf():
+def test_attempt_decrypt_unencrypted_pdf():
+    """Attempting to decrypt an unencrypted PDF raises a PdfReadError."""
     path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(PdfReadError) as exc:
         PdfReader(path, password="nonexistant")
     assert exc.value.args[0] == "Not encrypted file"
 
 
-def test_generate_values():
+def test_alg_v5_generate_values():
     """
-    This test only checks if there is an exception.
+    Algorithm V5 values are generated without raising exceptions.
 
+    This test function checks if there is an exception during the value generation.
     It does not verify that the content is correct.
     """
     if not HAS_PYCRYPTODOME:
@@ -207,13 +229,21 @@ def test_generate_values():
     }
 
 
-def test_randrange():
-    # This might randomly fail in very rare cases
+def test_randrange_function():
+    """
+    _randrange() function generates a range of unique random numbers.
+
+    This test might randomly fail in very rare cases.
+    """
     random_set = {_randrange(0, 10) for _ in range(1000)}
     assert random_set == {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 
-def test_randint():
-    # This might randomly fail in very rare cases
+def test_randint_function():
+    """
+    _randint() function generates a range of unique random numbers, including the upper bound.
+
+    This test might randomly fail in very rare cases.
+    """
     random_set = {_randint(0, 10) for _ in range(1000)}
     assert random_set == {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
