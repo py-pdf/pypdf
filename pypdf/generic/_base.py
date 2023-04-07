@@ -277,7 +277,10 @@ class IndirectObject(PdfObject):
                 obj = NullObject()
                 assert isinstance(self, (IndirectObject,))
                 obj.indirect_reference = self
-            dup = obj.clone(pdf_dest, force_duplicate, ignore_fields)
+            dup = pdf_dest._add_object(
+                obj.clone(pdf_dest, force_duplicate, ignore_fields)
+            )
+        # asserts added to prevent errors in mypy
         assert dup is not None
         assert dup.indirect_reference is not None
         return dup.indirect_reference

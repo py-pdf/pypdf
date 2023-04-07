@@ -1292,3 +1292,14 @@ def test_iss1723():
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     out_pdf = PdfWriter()
     out_pdf.append(in_pdf, (3, 5))
+
+
+@pytest.mark.enable_socket()
+def test_iss1767():
+    # test with a pdf which is buggy because the object 389,0 exists 3 times:
+    # twice to define catalog and one as an XObject inducing a loop when
+    # cloning
+    url = "https://github.com/py-pdf/pypdf/files/11138472/test.pdf"
+    name = "iss1723.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    PdfWriter(clone_from=in_pdf)
