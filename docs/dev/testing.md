@@ -34,3 +34,17 @@ pyenv install 3.10.2
 
 Then you can execute `tox` which will create a coverage report in HTML form
 in the end. The execution takes about 30 minutes.
+
+
+## Docstrings in Unit tests
+
+The first line of a docstring in a unit test should be written in a way that
+you could prefix it with "This tests ensures that ...", e.g.:
+
+* Invalid XML in xmp_metadata is gracefully handled.
+* The identity is returning its input.
+* xmp_modify_date is extracted correctly.
+
+This way, plugins like [`pytest-spec`](https://pypi.org/project/pytest-spec/)
+and [`pytest-pspec`](https://pypi.org/project/pytest-spec/) can generate really
+nice output when the tests are running.
