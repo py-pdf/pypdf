@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1680783177901,
+  "lastUpdate": 1680873459460,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27742,6 +27742,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0008574240887647004",
             "extra": "mean: 99.24205059999451 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f26388e7d85eeb4e216046c8fd70c71ab4fb5dfd",
+          "message": "ROB: Prevent loop in Cloning (#1770)\n\nAn issue was occurring with object 589/0 of file https://github.com/py-pdf/pypdf/files/11138472/test.pdf, which caused a loop during cloning due to its correspondence with both the file trailer and an XObject for filled text (\"test\"). This behavior was not intended, and a robustness improvement has been made to prevent the loop. Please note that if you run your code, the text \"test\" may be hidden by the trailer object.\r\n\r\nFixes  #1767",
+          "timestamp": "2023-04-07T15:16:32+02:00",
+          "tree_id": "2cf8c8a396120a2c4507086ce3ce46331514f224",
+          "url": "https://github.com/py-pdf/pypdf/commit/f26388e7d85eeb4e216046c8fd70c71ab4fb5dfd"
+        },
+        "date": 1680873458036,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1055036915143936,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005340089933776796",
+            "extra": "mean: 904.5650482000042 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.11462080991451,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008451659235991083",
+            "extra": "mean: 89.97158041666846 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24524006262873352,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013320507480513713",
+            "extra": "mean: 4.077637190600012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.357202739560524,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003427866419723756",
+            "extra": "mean: 80.92446333332266 msec\nrounds: 12"
           }
         ]
       }
