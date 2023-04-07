@@ -12,26 +12,30 @@ from . import get_pdf_from_url
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
-def test_compute_space_width():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923406.pdf"
-    name = "tika-923406.pdf"
-
+@pytest.mark.parametrize(
+    ("url", "name", "strict"),
+    [
+        # compute_space_width:
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/923/923406.pdf",
+            "tika-923406.pdf",
+            False,
+        ),
+        # _parse_to_unicode_process_rg:
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/959/959173.pdf",
+            "tika-959173.pdf",
+            False,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/959/959173.pdf",
+            "tika-959173.pdf",
+            True,
+        ),
+    ],
+)
+def test_text_extraction(url: str, name: str):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
-def test_parse_to_unicode_process_rg():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/959/959173.pdf"
-    name = "tika-959173.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)), strict=True)
     for page in reader.pages:
         page.extract_text()
 
