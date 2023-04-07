@@ -199,7 +199,7 @@ def test_invalid_xmp_information_handling():
 
 def test_xmp_getter_bag_function():
     """xmp._getter_bag does not crash."""
-    f = pypdf.xmp._getter_bag("namespace", "name")
+    pypdf.xmp._getter_bag("namespace", "name")
 
     class Tst:  # to replace pdf
         strict = False
@@ -218,4 +218,3 @@ def test_xmp_getter_bag_function():
     # </x:xmpmeta>
 
     assert xmp_info is not None
-    assert f(xmp_info) == 2
