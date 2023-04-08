@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1680873459460,
+  "lastUpdate": 1680961743792,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27794,6 +27794,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0003427866419723756",
             "extra": "mean: 80.92446333332266 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "117ce458c5cc3d8e2dfbdda1dbdd4d18d1e7c60e",
+          "message": "MAINT: Move generation of file identifiers to a method (#1760)\n\n* Ensure that the content is used to generate the file identifiers\r\n* Ensure /ID[0] is not overwritten\r\n* MAINT: Rename PdfWriter._write_header to PdfWriter._write_pdf_structure",
+          "timestamp": "2023-04-08T15:47:53+02:00",
+          "tree_id": "2fad09ce3eac086e52d2a33a78f5dc8b133728c0",
+          "url": "https://github.com/py-pdf/pypdf/commit/117ce458c5cc3d8e2dfbdda1dbdd4d18d1e7c60e"
+        },
+        "date": 1680961742498,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0735361918940796,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011141562448908047",
+            "extra": "mean: 931.5009661999966 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.627437601524619,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011087831623079109",
+            "extra": "mean: 94.09605941666872 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22304330866973449,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02493343477787976",
+            "extra": "mean: 4.483434208200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.540827299105057,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004980969148387505",
+            "extra": "mean: 86.6489008181888 msec\nrounds: 11"
           }
         ]
       }
