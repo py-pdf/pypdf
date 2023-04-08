@@ -34,8 +34,8 @@ from . import get_pdf_from_url
         ),
     ],
 )
-def test_text_extraction(url: str, name: str):
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+def test_text_extraction(url: str, name: str, strict: bool):
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)), strict=strict)
     for page in reader.pages:
         page.extract_text()
 
