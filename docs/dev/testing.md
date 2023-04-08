@@ -39,12 +39,19 @@ in the end. The execution takes about 30 minutes.
 ## Docstrings in Unit tests
 
 The first line of a docstring in a unit test should be written in a way that
-you could prefix it with "This tests ensures that ...", e.g.:
+you could prefix it with "This tests ensures that ...", e.g.
 
 * Invalid XML in xmp_metadata is gracefully handled.
 * The identity is returning its input.
 * xmp_modify_date is extracted correctly.
 
-This way, plugins like [`pytest-spec`](https://pypi.org/project/pytest-spec/)
-and [`pytest-pspec`](https://pypi.org/project/pytest-spec/) can generate really
-nice output when the tests are running.
+This way, plugins like [`pytest-testdox`](https://pypi.org/project/pytest-testdox/)
+can generate really nice output when the tests are running. This looks similar
+to the output of [mocha.js](https://mochajs.org/).
+
+If the test is a regression test, write
+
+> This test is a regression test for issue #1234
+
+If the regression test is just one parameter of other tests, then add it as
+a comment for that parameter.
