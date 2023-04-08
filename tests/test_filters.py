@@ -35,8 +35,8 @@ filter_inputs = (
 @pytest.mark.parametrize(
     ("predictor", "s"), list(cartesian_product([1], filter_inputs))
 )
-def test_flatedecode(predictor, s):
-    """Tests FlateDecode decode() and encode() methods."""
+def test_flate_decode_encode(predictor, s):
+    """FlateDecode encode() and decode() methods work as expected."""
     codec = FlateDecode()
     s = s.encode()
     encoded = codec.encode(s)
@@ -45,11 +45,13 @@ def test_flatedecode(predictor, s):
 
 def test_flatedecode_unsupported_predictor():
     """
-    Inputs an unsupported predictor (outside the [10, 15] range) checking that
-    PdfReadError() is raised.
+    FlateDecode raises PdfReadError for unsupported predictors.
 
-    Once this predictor support is updated in the future, this test case may be
-    removed.
+    Predictors outside the [10, 15] range are not supported.
+
+    This test function checks that a PdfReadError is raised when decoding with
+    unsupported predictors. Once this predictor support is updated in the
+    future, this test case may be removed.
     """
     codec = FlateDecode()
     predictors = (-10, -1, 0, 9, 16, 20, 100)
@@ -63,7 +65,8 @@ def test_flatedecode_unsupported_predictor():
 @pytest.mark.parametrize(
     "params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}]), "a"]
 )
-def test_flatedecode_decompress_array_params(params):
+def test_flate_decode_decompress_with_array_params(params):
+    """FlateDecode decode() method works correctly with array parameters."""
     codec = FlateDecode()
     s = ""
     s = s.encode()
@@ -106,7 +109,7 @@ def test_flatedecode_decompress_array_params(params):
         "whitespace",
     ],
 )
-def test_ascii_hex_decode(data, expected):
+def test_ascii_hex_decode_method(data, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
     correct output is returned.
@@ -118,8 +121,8 @@ def test_ascii_hex_decode(data, expected):
     assert ASCIIHexDecode.decode(data) == expected
 
 
-def test_ascii_hex_decode_no_eod():
-    """Ensuring an exception is raised when no EOD character is present."""
+def test_ascii_hex_decode_missing_eod():
+    """ASCIIHexDecode.decode() raises error when no EOD character is present."""
     with pytest.raises(PdfStreamError) as exc:
         ASCIIHexDecode.decode("")
     assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
@@ -146,6 +149,8 @@ def test_ascii85decode_with_overflow():
 
 def test_ascii85decode_five_zero_bytes():
     """
+    ASCII85Decode handles the special case of five zero bytes correctly.
+
     From ISO 32000 (2008) §7.4.3:
 
     «As a special case, if all five bytes are 0, they shall be represented by
