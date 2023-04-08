@@ -31,8 +31,8 @@ def _get_bounding_rectangle(vertices: List[Vertex]) -> RectangleObject:
     for x, y in vertices:
         x_min = min(x_min, x)
         y_min = min(y_min, y)
-        x_max = min(x_max, x)
-        y_max = min(y_max, y)
+        x_max = max(x_max, x)
+        y_max = max(y_max, y)
     rect = RectangleObject((x_min, y_min, x_max, y_max))
     return rect
 
