@@ -1,6 +1,9 @@
 from abc import ABC
-from typing import Any, Callable, Dict, Iterable, Optional
+from datetime import datetime
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
+from .._page import PageObject
+from .._utils import from_timestamp, to_timestamp
 from ..constants import AnnotationFlag
 from ..generic import (
     ArrayObject,
@@ -9,9 +12,15 @@ from ..generic import (
     FloatObject,
     NameObject,
     NumberObject,
+    PdfObject,
     RectangleObject,
     TextStringObject,
 )
+
+try:
+    from PIL import ImageColor as ImageColorLoaded
+except ImportError:
+    ImageColorLoaded = None  # type: ignore
 
 DEFAULT_FLAGS = AnnotationFlag(0)
 ### !!!!!!! 0 is not actually no flags but the default value !!!!!
@@ -40,6 +49,11 @@ class AnnotationDictionary(DictionaryObject, ABC):
         }
 
     @property
+    def subtype(self) -> str:
+        """Return SubType"""
+        return self.get("/SubType", "")
+
+    @property
     def flags(self) -> AnnotationFlag:
         return self.get("/F", DEFAULT_FLAGS)
 
@@ -53,7 +67,7 @@ class AnnotationDictionary(DictionaryObject, ABC):
     @property
     def rect(self) -> str:
         """
-        gets/sets the rectangle area containing the annotation
+        Gets/sets the rectangle area containing the annotation.
         Changing directly this value is not recommended for Lines, Polylines, Freetext with callouts
         """
         return self.get("/Rect", "")
@@ -62,6 +76,114 @@ class AnnotationDictionary(DictionaryObject, ABC):
     def rect(self, value: Optional[RectangleObject]) -> "AnnotationDictionary":
         self._set_str("/Rect", value)
         return self
+
+    @property
+    def page(self) -> Optional[PageObject]:
+        """Gets/sets the page where the annotation is present"""
+        o = self.get("/P", None)
+        if o is not None:
+            o = o.get_object()
+        return o
+
+    @page.setter
+    def page(self, value: Optional[PageObject]) -> "AnnotationDictionary":
+        self._set_indirect("/P", value.indirect_reference)
+        return self
+
+    @property
+    def name(self) -> str:
+        return self.get("/NM", DEFAULT_FLAGS)
+
+    @name.setter
+    def name(
+        self, value: Optional[str]
+    ) -> "AnnotationDictionary":  # to return cascading
+        self._set_str("/NM", value)
+        return self
+
+    @property
+    def color(self) -> ArrayObject:
+        return self.get("/C", ArrayObject())
+
+    @color.setter
+    def color(
+        self, value: Union[None, ArrayObject, Iterable[float], str]
+    ) -> "AnnotationDictionary":  # to return cascading
+        if isinstance(value, str):
+            if ImageColorLoaded is None:
+                raise ImportError("PIL required but not installed")
+            value = (x / 255.0 for x in ImageColorLoaded.getrgb(value)[:3])
+        if isinstance(value, (list, tuple)):
+            value = ArrayObject(
+                [FloatObject(n if n <= 1.0 else n / 255.0) for n in value[:3]]
+            )
+        self._set_str("/C", value)
+        return self
+
+    def _decode_border(self, value: List[Any]) -> Dict[str, Any]:
+        d = {}
+        d["hor_corner_radius"] = value[0]
+        d["ver_corner_radius"] = value[1]
+        d["width"] = value[2]
+        if len(value) >= 4:
+            d["dash"] = value[3:]
+        return d
+
+    def _undecode_border(self, d: Dict[str, Any]) -> List[Any]:
+        value = []
+        value[0] = d["hor_corner_radius"]
+        value[1] = d["ver_corner_radius"]
+        value[2] = d["width"]
+        if "dash" in d:
+            value[3:] = d["dash"]
+        return value
+
+    @property
+    def border(self) -> Dict:
+        v = self.get("/Border", [0, 0, 1])
+        return self._decode_border(v)
+
+    @border.setter
+    def border(
+        self, value: Optional[List[Any], Dict[str, Any]]
+    ) -> "AnnotationDictionary":  # to return cascading
+        if isinstance(value, dict):
+            value = self._undecode_border(value)
+        self._set_str("/Border", value)
+        return self
+
+    @property
+    def text(self) -> str:
+        return self.get("/Contents", "")
+
+    @text.setter
+    def text(
+        self, value: Optional[str]
+    ) -> "AnnotationDictionary":  # to return cascading
+        self._set_str("/Contents", value)
+        return self
+
+    @property
+    def modified_date(self) -> datetime:
+        d = self.get("/M", None)
+        if d is None:
+            return None
+        else:
+            return from_timestamp(d)
+
+    @name.setter
+    def name(
+        self, value: Optional[datetime, str]
+    ) -> "AnnotationDictionary":  # to return cascading
+        if isinstance(value, datetime):
+            value = to_timestamp(value)
+        elif isinstance(value, str) and value[:2] == "D:":
+            self._set_str("/M", value)
+        else:
+            raise ValueError(f"can not process {value} as a date")
+        return self
+
+    # TODO : add /AP, /AS
 
     """
     internal functions used to modify properties
@@ -108,6 +230,13 @@ class AnnotationDictionary(DictionaryObject, ABC):
                 del self[NameObject(key)]
         else:
             self[NameObject(key)] = DictionaryObject(value)
+
+    def _set_indirect(self, key: str, value: Optional[PdfObject]) -> None:
+        if value is None:
+            if key in self:
+                del self[NameObject(key)]
+        else:
+            self[NameObject(key)] = value.indirect_reference
 
     def _set_array(self, key: str, value: Optional[Iterable]) -> None:
         if value is None:

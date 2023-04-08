@@ -34,6 +34,7 @@ import logging
 import warnings
 from codecs import getencoder
 from dataclasses import dataclass
+from datetime import datetime
 from io import DEFAULT_BUFFER_SIZE
 from os import SEEK_CUR
 from typing import (
@@ -488,6 +489,14 @@ def _human_readable_bytes(bytes: int) -> str:
         return f"{bytes / 10**6:.1f} MB"
     else:
         return f"{bytes / 10**9:.1f} GB"
+
+
+def from_timestamp(text: str) -> datetime:
+    return datetime.strptime(text.replace("'", ""), "D:%Y%m%d%H%M%S%z")
+
+
+def to_timestamp(value: datetime) -> str:
+    return value.strftime("D:%Y%m%d%H%M%S%z")
 
 
 @dataclass
