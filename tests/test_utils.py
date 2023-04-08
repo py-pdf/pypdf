@@ -125,21 +125,6 @@ def test_paeth_predictor(left, up, upleft, expected):
 
 
 @pytest.mark.parametrize(
-    ("dat", "pos", "to_read"),
-    [
-        (b"", 0, 1),
-        (b"a", 0, 1),
-        (b"abc", 0, 10),
-    ],
-)
-def test_read_block_backwards_errs(dat, pos, to_read):
-    with pytest.raises(PdfStreamError) as _:
-        s = io.BytesIO(dat)
-        s.seek(pos)
-        read_block_backwards(s, to_read)
-
-
-@pytest.mark.parametrize(
     ("dat", "pos", "to_read", "expected", "expected_pos"),
     [
         (b"abc", 1, 0, b"", 1),
@@ -149,12 +134,19 @@ def test_read_block_backwards_errs(dat, pos, to_read):
         (b"abc", 3, 1, b"c", 2),
         (b"abc", 3, 2, b"bc", 1),
         (b"abc", 3, 3, b"abc", 0),
+        (b"", 0, 1, None, 0),
+        (b"a", 0, 1, None, 0),
+        (b"abc", 0, 10, None, 0),
     ],
 )
 def test_read_block_backwards(dat, pos, to_read, expected, expected_pos):
     s = io.BytesIO(dat)
     s.seek(pos)
-    assert read_block_backwards(s, to_read) == expected
+    if expected is not None:
+        assert read_block_backwards(s, to_read) == expected
+    else:
+        with pytest.raises(PdfStreamError):
+            read_block_backwards(s, to_read)
     assert s.tell() == expected_pos
 
 
@@ -264,10 +256,12 @@ def test_escapedcode_followed_by_int():
     ],
 )
 def test_human_readable_bytes(input_int, expected_output):
+    """_human_readable_bytes correctly transforms the integer to a string."""
     assert _human_readable_bytes(input_int) == expected_output
 
 
-def test_file():
+def test_file_class():
+    """File class can be instanciated and string representation is ok."""
     f = File(name="image.png", data=b"")
     assert str(f) == "File(name=image.png, data: 0 Byte)"
     assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"

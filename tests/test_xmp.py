@@ -24,7 +24,8 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
         (RESOURCE_ROOT / "crazyones.pdf", False),
     ],
 )
-def test_read_xmp(src, has_xmp):
+def test_read_xmp_metadata(src, has_xmp):
+    """Read XMP metadata from PDF files."""
     reader = PdfReader(src)
     xmp = reader.xmp_metadata
     assert (xmp is None) == (not has_xmp)
@@ -39,6 +40,7 @@ def test_read_xmp(src, has_xmp):
 
 
 def get_all_tiff(xmp: pypdf.xmp.XmpInformation):
+    """Return all TIFF metadata as a dictionary."""
     data = {}
     tiff_ns = xmp.get_nodes_in_namespace(
         about_uri="", namespace="http://ns.adobe.com/tiff/1.0/"
@@ -51,30 +53,29 @@ def get_all_tiff(xmp: pypdf.xmp.XmpInformation):
     return data
 
 
-def test_regression_issue774():
+def test_converter_date():
+    """
+    _converter_date returns the correct datetime.
+
+    This is a regression test for issue #774.
+    """
     date = pypdf.xmp._converter_date("2021-04-28T12:23:34.123Z")
-    assert date.year == 2021
-    assert date.month == 4
-    assert date.day == 28
-    assert date.hour == 12
-    assert date.minute == 23
-    assert date.second == 34
-    assert date.microsecond == 123000
+    assert date == datetime(2021, 4, 28, 12, 23, 34, 123000)
+
     with pytest.raises(ValueError) as exc:
         pypdf.xmp._converter_date("today")
     assert exc.value.args[0].startswith("Invalid date format")
 
     date = pypdf.xmp._converter_date("2021-04-28T12:23:01-03:00")
-    assert date.year == 2021
-    assert date.month == 4
-    assert date.day == 28
-    assert date.hour == 15
-    assert date.minute == 23
-    assert date.second == 1
-    assert date.microsecond == 0
+    assert date == datetime(2021, 4, 28, 15, 23, 1)
 
 
-def test_regression_issue914():
+def test_modify_date():
+    """
+    xmp_modify_date is extracted correctly.
+
+    This is a regression test for issue #914.
+    """
     path = RESOURCE_ROOT / "issue-914-xmp-data.pdf"
     reader = PdfReader(path)
     assert reader.xmp_metadata.xmp_modify_date == datetime(2022, 4, 9, 15, 22, 43)
@@ -84,7 +85,8 @@ def test_regression_issue914():
     "x",
     ["a", 42, 3.141, False, True],
 )
-def test_identity(x):
+def test_identity_function(x):
+    """The identity is returning its input."""
     assert pypdf.xmp._identity(x) == x
 
 
@@ -99,7 +101,8 @@ def test_identity(x):
         )
     ],
 )
-def test_xmpmm(url, name, xmpmm_instance_id):
+def test_xmpmm_instance_id(url, name, xmpmm_instance_id):
+    """XMPMM instance id is correctly extracted."""
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id
@@ -108,7 +111,8 @@ def test_xmpmm(url, name, xmpmm_instance_id):
 
 
 @pytest.mark.enable_socket()
-def test_dc_description():
+def test_xmp_dc_description_extraction():
+    """XMP dc_description is correctly extracted."""
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
     name = "tika-953770.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -123,7 +127,8 @@ def test_dc_description():
 
 
 @pytest.mark.enable_socket()
-def test_dc_creator():
+def test_dc_creator_extraction():
+    """XMP dc_creator is correctly extracted."""
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
     name = "tika-953770.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -134,7 +139,8 @@ def test_dc_creator():
 
 
 @pytest.mark.enable_socket()
-def test_custom_properties():
+def test_custom_properties_extraction():
+    """XMP custom_properties is correctly extracted."""
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/986/986065.pdf"
     name = "tika-986065.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -145,7 +151,8 @@ def test_custom_properties():
 
 
 @pytest.mark.enable_socket()
-def test_dc_subject():
+def test_dc_subject_extraction():
+    """XMP dc_subject is correctly extracted."""
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/959/959519.pdf"
     name = "tika-959519.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -176,7 +183,12 @@ def test_dc_subject():
 
 
 @pytest.mark.enable_socket()
-def test_issue585():
+def test_invalid_xmp_information_handling():
+    """
+    Invalid XML in xmp_metadata is gracefully handled.
+
+    This is a regression test for issue #585.
+    """
     url = "https://github.com/py-pdf/pypdf/files/5536984/test.pdf"
     name = "pypdf-5536984.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -185,7 +197,8 @@ def test_issue585():
     assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
 
 
-def test_getter_bag():
+def test_xmp_getter_bag_function():
+    """xmp._getter_bag does not crash."""
     f = pypdf.xmp._getter_bag("namespace", "name")
 
     class Tst:  # to replace pdf
