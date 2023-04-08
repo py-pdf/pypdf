@@ -156,7 +156,6 @@ ignore = [
     "C901",
     "D101",  # Missing docstring in public class
     "D102", # Missing docstring in public method
-    "D103",  # Missing docstring in public function
     "D417",  # Missing argument descriptions in the docstring
     "FBT001", # Boolean positional arg in function definition
     "FBT002", # Boolean default value in function definition
