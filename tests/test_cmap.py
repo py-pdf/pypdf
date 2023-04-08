@@ -32,12 +32,32 @@ from . import get_pdf_from_url
             "tika-959173.pdf",
             True,
         ),
+        # L40, get_font_width_from_default
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/908/908104.pdf",
+            "tika-908104.pdf",
+            False,
+        ),
+        # bfchar_on_2_chars: issue #1293
+        (
+            "https://github.com/xyegithub/myBlog/raw/main/posts/c94b2364/paper_pdfs/ImageClassification/"
+            "2007%2CASurveyofImageClassificationBasedTechniques.pdf",
+            "ASurveyofImageClassificationBasedTechniques.pdf",
+            False,
+        ),
+        # issue #1718:
+        (
+            "https://github.com/py-pdf/pypdf/files/10983477/Ballinasloe_WS.pdf",
+            "iss1718.pdf",
+            False,
+        ),
     ],
 )
-def test_text_extraction(url: str, name: str, strict: bool):
+def test_text_extraction(caplog, url: str, name: str, strict: bool):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)), strict=strict)
     for page in reader.pages:
         page.extract_text()
+    assert caplog.text == ""
 
 
 @pytest.mark.enable_socket()
@@ -49,15 +69,6 @@ def test_parse_encoding_advanced_encoding_not_implemented():
     with pytest.warns(PdfReadWarning, match="Advanced encoding .* not implemented yet"):
         for page in reader.pages:
             page.extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_get_font_width_from_default():  # L40
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/908/908104.pdf"
-    name = "tika-908104.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
 
 
 @pytest.mark.enable_socket()
@@ -76,19 +87,6 @@ def test_multiline_bfrange():
         "Giacalone%20Llobell%20Jaeger%20(2022)%20Food%20Qual%20Prefer.pdf"
     )
     name = "Giacalone.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_bfchar_on_2_chars():
-    # iss #1293
-    url = (
-        "https://github.com/xyegithub/myBlog/raw/main/posts/c94b2364/paper_pdfs/ImageClassification/"
-        "2007%2CASurveyofImageClassificationBasedTechniques.pdf"
-    )
-    name = "ASurveyofImageClassificationBasedTechniques.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
@@ -126,13 +124,3 @@ def test_iss1533():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()  # no error
     assert build_char_map("/F", 200, reader.pages[0])[3]["\x01"] == "Ü"
-
-
-@pytest.mark.enable_socket()
-def test_iss1718(caplog):
-    url = "https://github.com/py-pdf/pypdf/files/10983477/Ballinasloe_WS.pdf"
-    name = "iss1718.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for p in reader.pages:
-        _txt = p.extract_text()
-    assert caplog.text == ""
