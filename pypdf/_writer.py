@@ -1006,7 +1006,7 @@ class PdfWriter:
 
     def _compute_document_identifier_from_content(self) -> ByteStringObject:
         stream = BytesIO()
-        self._write_header(stream)
+        self._write_pdf_structure(stream)
         stream.seek(0)
         return ByteStringObject(_rolling_checksum(stream).encode("utf8"))
 
@@ -1145,7 +1145,7 @@ class PdfWriter:
         # copying in a new copy of the page object.
         self._sweep_indirect_references(self._root)
 
-        object_positions = self._write_header(stream)
+        object_positions = self._write_pdf_structure(stream)
         xref_location = self._write_xref_table(stream, object_positions)
         self._write_trailer(stream)
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
@@ -1180,7 +1180,7 @@ class PdfWriter:
 
         return my_file, stream
 
-    def _write_header(self, stream: StreamType) -> List[int]:
+    def _write_pdf_structure(self, stream: StreamType) -> List[int]:
         object_positions = []
         stream.write(self.pdf_header + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
