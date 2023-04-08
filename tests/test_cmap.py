@@ -80,6 +80,7 @@ def test_text_extraction_slow(caplog, url: str, name: str, strict: bool):
     ],
 )
 def test_text_extraction_fast(caplog, url: str, name: str, strict: bool):
+    """Text extraction runs without exceptions or warnings"""
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)), strict=strict)
     for page in reader.pages:
         page.extract_text()

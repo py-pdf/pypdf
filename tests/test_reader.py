@@ -1191,7 +1191,7 @@ def test_outline_with_invalid_destinations():
 
 @pytest.mark.enable_socket()
 def test_pdfreader_multiple_definitions(caplog):
-    # iss325
+    """iss325"""
     url = "https://github.com/py-pdf/pypdf/files/9176644/multipledefs.pdf"
     name = "multipledefs.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
