@@ -31,11 +31,10 @@ import codecs
 import collections
 import decimal
 import enum
+import hashlib
 import logging
 import re
-import secrets
 import struct
-import time
 import uuid
 import warnings
 from hashlib import md5
@@ -142,6 +141,13 @@ class ObjectDeletionFlag(enum.IntFlag):
     ATTACHMENTS = enum.auto()
     OBJECTS_3D = enum.auto()
     ALL_ANNOTATIONS = enum.auto()
+
+
+def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
+    hash = hashlib.md5()
+    for block in iter(lambda: stream.read(blocksize), b""):
+        hash.update(block)
+    return hash.hexdigest()
 
 
 class PdfWriter:
@@ -974,7 +980,7 @@ class PdfWriter:
         self.clone_reader_document_root(reader)
         self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
         try:
-            self._ID = reader.trailer[TK.ID].clone(self)  # type: ignore
+            self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))  # type: ignore
         except KeyError:
             pass
         if callable(after_page_append):
@@ -997,6 +1003,26 @@ class PdfWriter:
             "cloneDocumentFromReader", "clone_document_from_reader", "3.0.0"
         )
         self.clone_document_from_reader(reader, after_page_append)
+
+    def _compute_document_identifier_from_content(self) -> ByteStringObject:
+        stream = BytesIO()
+        self._write_pdf_structure(stream)
+        stream.seek(0)
+        return ByteStringObject(_rolling_checksum(stream).encode("utf8"))
+
+    def generate_file_identifiers(self) -> None:
+        """
+        Generate an identifier for the PDF that will be written.
+
+        The only point of this is ensuring uniqueness. Reproducibility is not
+        required; see 14.4 "File Identifiers".
+        """
+        if hasattr(self, "_ID") and self._ID and len(self._ID) == 2:
+            ID_1 = self._ID[0]
+        else:
+            ID_1 = self._compute_document_identifier_from_content()
+        ID_2 = self._compute_document_identifier_from_content()
+        self._ID = ArrayObject((ID_1, ID_2))
 
     def encrypt(
         self,
@@ -1078,19 +1104,14 @@ class PdfWriter:
             V = 1
             rev = 2
             keylen = int(40 / 8)
-        secrets_generator = secrets.SystemRandom()
         P = permissions_flag
         O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]  # noqa
-        ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
-        ID_2 = ByteStringObject(
-            md5((repr(secrets_generator.uniform(0, 1))).encode("utf8")).digest()
-        )
-        self._ID = ArrayObject((ID_1, ID_2))
+        self.generate_file_identifiers()
         if rev == 2:
-            U, key = _alg34(user_password, O, P, ID_1)
+            U, key = _alg34(user_password, O, P, self._ID[0])
         else:
             assert rev == 3
-            U, key = _alg35(user_password, rev, keylen, O, P, ID_1, False)  # type: ignore[arg-type]
+            U, key = _alg35(user_password, rev, keylen, O, P, self._ID[0], False)  # type: ignore[arg-type]
         encrypt = DictionaryObject()
         encrypt[NameObject(SA.FILTER)] = NameObject("/Standard")
         encrypt[NameObject("/V")] = NumberObject(V)
@@ -1124,7 +1145,7 @@ class PdfWriter:
         # copying in a new copy of the page object.
         self._sweep_indirect_references(self._root)
 
-        object_positions = self._write_header(stream)
+        object_positions = self._write_pdf_structure(stream)
         xref_location = self._write_xref_table(stream, object_positions)
         self._write_trailer(stream)
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
@@ -1159,7 +1180,7 @@ class PdfWriter:
 
         return my_file, stream
 
-    def _write_header(self, stream: StreamType) -> List[int]:
+    def _write_pdf_structure(self, stream: StreamType) -> List[int]:
         object_positions = []
         stream.write(self.pdf_header + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
