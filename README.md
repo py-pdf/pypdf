@@ -60,7 +60,7 @@ For questions and answers, visit
 
 ## Contributions
 
-Maintaining pypdf is a collaborative effort. YYou can support the project by
+Maintaining pypdf is a collaborative effort. You can support the project by
 writing documentation, helping to narrow down issues, and submitting code.
 
 ### Q&A
