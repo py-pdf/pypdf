@@ -176,7 +176,7 @@ ignore = [
 ]
 
 [tool.ruff.per-file-ignores]
-"tests/*" = ["S101", "ANN001", "ANN201","D104", "S105", "S106"]
+"tests/*" = ["S101", "ANN001", "ANN201","D104", "S105", "S106", "D103"]
 "sample-files/*" = ["D100", "INP001"]
 "_encryption.py" = ["S324", "S311"]
 "_security.py" = ["S324"]
