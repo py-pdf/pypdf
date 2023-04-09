@@ -31,6 +31,7 @@ def test_read_xmp_metadata_samples(src):
     assert xmp
     assert xmp.dc_contributor == []
     assert xmp.dc_creator == ["John Doe"]
+    assert xmp.dc_date == []
     assert xmp.dc_title == {"x-default": "Sample PDF with XMP Metadata"}
 
 
