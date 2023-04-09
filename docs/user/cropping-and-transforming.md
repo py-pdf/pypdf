@@ -1,5 +1,9 @@
 # Cropping and Transforming PDFs
 
+> **Notice**: Just because content is no longer visible, it is not gone.
+> Cropping works by adjusting the viewbox. That means content that was cropped
+> away can still be restored.
+
 ```python
 from pypdf import PdfWriter, PdfReader
 
