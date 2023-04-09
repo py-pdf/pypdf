@@ -22,7 +22,7 @@ SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 @pytest.mark.parametrize(
     "src",
     [
-        (SAMPLE_ROOT / "020-xmp/output_with_metadata_pymupdf.pdf",),
+        (SAMPLE_ROOT / "020-xmp/output_with_metadata_pymupdf.pdf"),
     ],
 )
 def test_read_xmp_metadata_samples(src):
