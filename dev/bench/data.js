@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1681068839636,
+  "lastUpdate": 1681072084212,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -27950,6 +27950,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0004051992292793877",
             "extra": "mean: 86.78951599999866 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "a876a77b3af5ecd64699cfc0b687d2657de8f526",
+          "message": "REL: 3.7.1\n\nSecurity (SEC):\n-  Warn about PDF encryption security (#1755)\n\nRobustness (ROB):\n-  Prevent loop in Cloning (#1770)\n-  Capture UnicodeDecodeError at PdfReader.pdf_header (#1768)\n\nDocumentation (DOC):\n-  Pin myst_parser==0.16.1 and rename .readthedocs.yaml (#1752)\n-  Add readthedocs.yml and bump docs dependencies using `tox -e deps` (#1750)\n\nDeveloper Experience (DEV):\n-  Make make_changelog.py idempotent\n\nMaintenance (MAINT):\n-  Move generation of file identifiers to a method (#1760)\n\nTesting (TST):\n-  Add xmp test (#1775)\n\nCode Style (STY):\n-  Improve language, add docstrings, fix TODOs (#1772)\n-  Test names, docstrings, and parametrization (#1771)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.7.0...3.7.1)",
+          "timestamp": "2023-04-09T22:25:11+02:00",
+          "tree_id": "d7a7b2128c44e71f756cd8f8fe8655c1aa4b1f67",
+          "url": "https://github.com/py-pdf/pypdf/commit/a876a77b3af5ecd64699cfc0b687d2657de8f526"
+        },
+        "date": 1681072082858,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.076891108499308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008714153975688314",
+            "extra": "mean: 928.5989939999979 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.245625188232586,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01040393073561571",
+            "extra": "mean: 88.92346874999883 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22677767649097555,
+            "unit": "iter/sec",
+            "range": "stddev: 0.059326501094228594",
+            "extra": "mean: 4.409605105200001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.462336267715308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00032520436835254063",
+            "extra": "mean: 87.24224945455396 msec\nrounds: 11"
           }
         ]
       }
