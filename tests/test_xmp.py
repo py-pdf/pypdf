@@ -31,6 +31,8 @@ def test_read_xmp_metadata_samples(src):
     assert xmp
     assert xmp.dc_contributor == []
     assert xmp.dc_creator == ["John Doe"]
+    assert xmp.dc_source == "Martin Thoma"  # attribute node
+    assert xmp.dc_description == {"x-default": "This is a text"}
     assert xmp.dc_date == [datetime(1990, 4, 28, 0, 0)]
     assert xmp.dc_title == {"x-default": "Sample PDF with XMP Metadata"}
 
