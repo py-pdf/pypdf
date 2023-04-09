@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## Version 3.7.1, 2023-04-09
+
+### Security (SEC)
+-  Warn about PDF encryption security (#1755)
+
+### Robustness (ROB)
+-  Prevent loop in Cloning (#1770)
+-  Capture UnicodeDecodeError at PdfReader.pdf_header (#1768)
+
+### Documentation (DOC)
+-  Add .readthedocs.yaml and bump docs dependencies using `tox -e deps` (#1750, #1752)
+
+### Developer Experience (DEV)
+-  Make make_changelog.py idempotent
+
+### Maintenance (MAINT)
+-  Move generation of file identifiers to a method (#1760)
+
+### Testing (TST)
+-  Add xmp test (#1775)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.7.0...3.7.1)
+
 ## Version 3.7.0, 2023-03-26
 
 ### Security (SEC)
