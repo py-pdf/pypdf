@@ -221,8 +221,8 @@ def test_read_block_backwards_exception():
 
 def test_deprecation_bookmark():
     @deprecation_bookmark(old_param="new_param")
-    def foo(old_param: int = 1, baz: int = 2) -> float:
-        return old_param * baz
+    def foo(old_param: int = 1, baz: int = 2) -> None:
+        pass
 
     with pytest.raises(DeprecationError) as exc:
         foo(old_param=12, new_param=13)

@@ -15,6 +15,26 @@ from . import get_pdf_from_url
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
+
+
+@pytest.mark.samples()
+@pytest.mark.parametrize(
+    "src",
+    [
+        (SAMPLE_ROOT / "020-xmp/output_with_metadata_pymupdf.pdf"),
+    ],
+)
+def test_read_xmp_metadata_samples(src):
+    reader = PdfReader(src)
+    xmp = reader.xmp_metadata
+    assert xmp
+    assert xmp.dc_contributor == []
+    assert xmp.dc_creator == ["John Doe"]
+    assert xmp.dc_source == "Martin Thoma"  # attribute node
+    assert xmp.dc_description == {"x-default": "This is a text"}
+    assert xmp.dc_date == [datetime(1990, 4, 28, 0, 0)]
+    assert xmp.dc_title == {"x-default": "Sample PDF with XMP Metadata"}
 
 
 @pytest.mark.parametrize(
