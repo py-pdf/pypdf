@@ -67,6 +67,19 @@ if TYPE_CHECKING:
 
 
 def decompress(data: bytes) -> bytes:
+    """
+    Decompress the given data using zlib.
+
+    This function attempts to decompress the input data using zlib. If the
+    decompression fails due to a zlib error, it falls back to using a
+    decompression object with a larger window size.
+
+    Args:
+        data: The input data to be decompressed.
+
+    Returns:
+        The decompressed data.
+    """
     try:
         return zlib.decompress(data)
     except zlib.error:
@@ -195,6 +208,15 @@ class FlateDecode:
 
     @staticmethod
     def encode(data: bytes) -> bytes:
+        """
+        Compress the input data using zlib.
+
+        Args:
+            data: The data to be compressed.
+
+        Returns:
+            The compressed data.
+        """
         return zlib.compress(data)
 
 
@@ -376,7 +398,7 @@ class ASCII85Decode:
         group_index = b = 0
         out = bytearray()
         for char in data:
-            if ord("!") <= char and char <= ord("u"):
+            if ord("!") <= char <= ord("u"):
                 group_index += 1
                 b = b * 85 + (char - 33)
                 if group_index == 5:
@@ -536,6 +558,23 @@ class CCITTFaxDecode:
 
 
 def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
+    """
+    Decode the stream data based on the specified filters.
+
+    This function decodes the stream data using the filters provided in the
+    stream. It supports various filter types, including FlateDecode,
+    ASCIIHexDecode, LZWDecode, ASCII85Decode, DCTDecode, JPXDecode, and
+    CCITTFaxDecode.
+
+    Args:
+        stream: The input stream object containing the data and filters.
+
+    Returns:
+        The decoded stream data.
+
+    Raises:
+        NotImplementedError: If an unsupported filter type is encountered.
+    """
     filters = stream.get(SA.FILTER, ())
     if isinstance(filters, IndirectObject):
         filters = cast(ArrayObject, filters.get_object())
@@ -580,6 +619,7 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
 
 
 def decodeStreamData(stream: Any) -> Union[str, bytes]:  # deprecated
+    """Deprecated. Use decode_stream_data."""
     deprecate_with_replacement("decodeStreamData", "decode_stream_data", "4.0.0")
     return decode_stream_data(stream)
 

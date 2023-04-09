@@ -2,7 +2,7 @@
 import re
 from typing import Callable
 
-from pypdf.constants import PDF_KEYS
+from pypdf.constants import PDF_KEYS, GraphicsStateParameters
 
 
 def test_slash_prefix():
@@ -18,11 +18,19 @@ def test_slash_prefix():
     pattern = re.compile(r"^\/[A-Z]+[a-zA-Z0-9]*$")
     for cls in PDF_KEYS:
         for attr in dir(cls):
+            # Skip magic methods
             if attr.startswith("__") and attr.endswith("__"):
                 continue
+
+            # Skip methods
             constant_value = getattr(cls, attr)
             if isinstance(constant_value, Callable):
                 continue
+
             assert constant_value.startswith("/")
-            assert pattern.match(constant_value)
             assert attr.replace("_", "").lower() == constant_value[1:].lower()
+
+            # There are a few exceptions that may be lowercase
+            if cls == GraphicsStateParameters and attr in ["ca", "op"]:
+                continue
+            assert pattern.match(constant_value)

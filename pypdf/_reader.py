@@ -1273,8 +1273,8 @@ class PdfReader:
         This is equivalent to generic.IndirectObject(num,gen,self).get_object()
 
         Args:
-            num:
-            gen:
+            num: The object number of the indirect object.
+            gen: The generation number of the indirect object.
 
         Returns:
             A PdfObject

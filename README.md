@@ -21,23 +21,22 @@ from PDFs as well.
 
 ## Installation
 
-You can install pypdf via pip:
+Install pypdf using pip:
 
 ```
 pip install pypdf
 ```
 
-If you plan to use pypdf for encrypting or decrypting PDFs that use AES, you
-will need to install some extra dependencies. Encryption using RC4 is supported
-using the regular installation.
+For using pypdf with AES encryption or decryption, install extra dependencies:
 
 ```
 pip install pypdf[crypto]
 ```
 
-> **NOTE**: `pypdf>=3.1.0` improved a lot compared to `pyPdf<2.0.0` and compared to
-> `PyPDF2 < 2.0.0`. Please
-> read [the migration guide](https://pypdf.readthedocs.io/en/latest/user/migration-1-to-2.html).
+> **NOTE**: `pypdf` 3.1.0 and above include significant improvements compared to
+> previous versions. Please refer to [the migration
+> guide](https://pypdf.readthedocs.io/en/latest/user/migration-1-to-2.html) for
+> more information.
 
 ## Usage
 
@@ -51,19 +50,18 @@ text = page.extract_text()
 ```
 
 pypdf can do a lot more, e.g. splitting, merging, reading and creating
-annotations, decrypting and encrypting, and more.
+annotations, decrypting and encrypting, and more. Check out [the
+documentation](https://pypdf.readthedocs.io/en/stable/) for additional usage
+examples!
 
-Please see [the documentation](https://pypdf.readthedocs.io/en/stable/)
-for more usage examples!
-
-A lot of questions are asked and answered
-[on StackOverflow](https://stackoverflow.com/questions/tagged/pypdf)
-(formerly tagged with [PyPDF2](https://stackoverflow.com/questions/tagged/pypdf2)).
+For questions and answers, visit
+[StackOverflow](https://stackoverflow.com/questions/tagged/pypdf)
+(tagged with [pypdf](https://stackoverflow.com/questions/tagged/pypdf)).
 
 ## Contributions
 
-Maintaining pypdf is a collaborative effort. You can support pypdf by writing
-documentation, helping to narrow down issues, and adding code.
+Maintaining pypdf is a collaborative effort. You can support the project by
+writing documentation, helping to narrow down issues, and submitting code.
 
 ### Q&A
 
