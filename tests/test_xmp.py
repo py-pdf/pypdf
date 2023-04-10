@@ -35,6 +35,7 @@ def test_read_xmp_metadata_samples(src):
     assert xmp.dc_description == {"x-default": "This is a text"}
     assert xmp.dc_date == [datetime(1990, 4, 28, 0, 0)]
     assert xmp.dc_title == {"x-default": "Sample PDF with XMP Metadata"}
+    assert xmp.custom_properties == {"Style": "FooBarStyle", "other": "worlds"}
 
 
 @pytest.mark.parametrize(
