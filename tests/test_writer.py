@@ -479,7 +479,22 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     orig_text = page.extract_text()
 
     writer.add_page(page)
+
     with pytest.warns(UserWarning, match="pypdf only implements RC4 encryption"):
+        with pytest.raises(ValueError, match="owner_pwd of encrypt is deprecated."):
+            writer.encrypt(
+                owner_pwd=user_password,
+                owner_password=owner_password,
+                user_password=user_password,
+                use_128bit=use_128bit,
+            )
+        with pytest.raises(ValueError, match="'user_pwd' argument is deprecated"):
+            writer.encrypt(
+                owner_password=owner_password,
+                user_password=user_password,
+                user_pwd=user_password,
+                use_128bit=use_128bit,
+            )
         writer.encrypt(
             user_password=user_password,
             owner_password=owner_password,
