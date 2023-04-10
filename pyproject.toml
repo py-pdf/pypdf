@@ -85,6 +85,9 @@ exclude_lines = [
     "@overload",
     "deprecated",
 
+    # Don't complain about type-checking code not being hit by unit tests
+    "if TYPE_CHECKING",
+
     # Don't complain about missing debug-only code:
     "def __repr__",
     "def __str__",
