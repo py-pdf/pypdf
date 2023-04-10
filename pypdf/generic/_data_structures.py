@@ -297,6 +297,7 @@ class DictionaryObject(dict, PdfObject):
         object, if available.
 
         Stability: Added in v1.12, will exist for all future v1.x releases.
+        See Table 315 – Additional entries in a metadata stream dictionary
 
         Returns:
           Returns a {@link #xmp.XmpInformation XmlInformation} instance
@@ -990,6 +991,7 @@ class ContentStream(DecodedStreamObject):
         # like super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields)
 
     def __parse_content_stream(self, stream: StreamType) -> None:
+        # 7.8.2 Content Streams
         stream.seek(0, 0)
         operands: List[Union[int, str, PdfObject]] = []
         while True:
