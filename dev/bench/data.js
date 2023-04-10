@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1681113892615,
+  "lastUpdate": 1681116510450,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -28158,6 +28158,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0003663883730917411",
             "extra": "mean: 83.71486616666364 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "432229e9abaa1a6acb7bbd35d6457ead7335716f",
+          "message": "TST: Deprecation error for arguments of PdfWriter.encrypt (#1780)",
+          "timestamp": "2023-04-10T10:47:19+02:00",
+          "tree_id": "e45f56b2a4476587f8ff4820208bf14a4eaac24d",
+          "url": "https://github.com/py-pdf/pypdf/commit/432229e9abaa1a6acb7bbd35d6457ead7335716f"
+        },
+        "date": 1681116509252,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.068331254390997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008254772837648012",
+            "extra": "mean: 936.0392629999865 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.195923079251811,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010294726497164475",
+            "extra": "mean: 89.31822708332031 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22580037809988765,
+            "unit": "iter/sec",
+            "range": "stddev: 0.043778841088254875",
+            "extra": "mean: 4.4286905470000075 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.743394062913211,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006627263123515734",
+            "extra": "mean: 85.15425733332904 msec\nrounds: 12"
           }
         ]
       }
