@@ -1879,6 +1879,8 @@ class PdfReader:
         """
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
+        if line == b"j":
+            line = stream.read(1)
         if line not in b"\r\n \t":
             return 1
         line = stream.read(4)

@@ -1392,3 +1392,12 @@ def test_broken_file_header():
         pdf_data.find(b"xref") - 1,
     )
     PdfReader(io.BytesIO(pdf_data))
+
+
+@pytest.mark.enable_socket()
+def test_iss1756():
+    url = "https://github.com/py-pdf/pypdf/files/11105591/641-Attachment-B-Pediatric-Cardiac-Arrest-8-1-2019.pdf"
+    name = "iss1756.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    in_pdf.trailer["/ID"]
+    len(in_pdf.pages)
