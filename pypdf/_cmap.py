@@ -93,6 +93,7 @@ _predefined_cmap: Dict[str, str] = {
     "/GB-EUC-V": "gbk",  # TBC
     "/GBpc-EUC-H": "gb2312",  # TBC
     "/GBpc-EUC-V": "gb2312",  # TBC
+    # UCS2 in code
 }
 
 
@@ -146,6 +147,8 @@ def parse_encoding(
                 encoding = charset_encoding[enc].copy()
             elif enc in _predefined_cmap:
                 encoding = _predefined_cmap[enc]
+            elif "-UCS2-" in enc:
+                encoding = "utf-16-be"
             else:
                 raise Exception("not found")
         except Exception:
