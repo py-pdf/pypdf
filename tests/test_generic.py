@@ -930,7 +930,6 @@ def test_annotation_builder_link(pdf_file_path):
     link_annotation = AnnotationBuilder.link(
         rect=(50, 50, 100, 100),
         url="https://martin-thoma.com/",
-        border=[1, 0, 6, [3, 2]],
     )
     writer.add_annotation(0, link_annotation)
 
@@ -971,7 +970,7 @@ def test_annotation_builder_text(pdf_file_path):
         writer.write(fp)
 
 
-def test_annotation_builder_popup():
+def test_annotation_builder_popup(caplog):
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
@@ -992,6 +991,14 @@ def test_annotation_builder_popup():
         open=True,
         parent=ta,  # prefer to use for evolutivity
     )
+
+    assert caplog.text == ""
+    AnnotationBuilder.popup(
+        rect=(50, 550, 200, 650),
+        open=True,
+        parent=True,  # broken parameter  # type: ignore
+    )
+    assert "Unregistered Parent object : No Parent field set" in caplog.text
 
     writer.add_annotation(writer.pages[0], popup_annotation)
 
