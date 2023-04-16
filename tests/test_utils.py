@@ -289,7 +289,7 @@ def test_rename_kwargs():
         return decoration
 
     @deprecation_bookmark_nofail(old_param="new_param")
-    def foo(old_param: int = 1, baz: int = 2) -> None:
+    def foo(old_param: int = 1, baz: int = 2, new_param: int = 1) -> None:
         pass
 
     expected_msg = (
@@ -298,6 +298,12 @@ def test_rename_kwargs():
     )
     with pytest.raises(TypeError, match=expected_msg):
         foo(old_param=12, new_param=13)
+
+    with pytest.warns(
+        DeprecationWarning,
+        match="old_param is deprecated as an argument. Use new_param instead",
+    ):
+        foo(old_param=12)
 
 
 @pytest.mark.enable_socket()
