@@ -10,7 +10,9 @@ from pypdf._utils import (
     File,
     _get_max_pdf_version_header,
     _human_readable_bytes,
+    deprecate_with_replacement,
     deprecation_bookmark,
+    deprecation_no_replacement,
     mark_location,
     matrix_multiply,
     read_block_backwards,
@@ -228,6 +230,30 @@ def test_deprecation_bookmark():
         foo(old_param=12, new_param=13)
     expected_msg = "old_param is deprecated as an argument. Use new_param instead"
     assert exc.value.args[0] == expected_msg
+
+
+def test_deprecate_with_replacement():
+    def foo() -> None:
+        deprecate_with_replacement("foo", "bar", removed_in="4.3.2")
+        pass
+
+    with pytest.warns(
+        DeprecationWarning,
+        match="foo is deprecated and will be removed in pypdf 4.3.2. Use bar instead.",
+    ):
+        foo()
+
+
+def test_deprecation_no_replacement():
+    def foo() -> None:
+        deprecation_no_replacement("foo", removed_in="4.3.2")
+        pass
+
+    with pytest.raises(
+        DeprecationError,
+        match="foo is deprecated and was removed in pypdf 4.3.2.",
+    ):
+        foo()
 
 
 @pytest.mark.enable_socket()
