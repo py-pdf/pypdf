@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1681668642620,
+  "lastUpdate": 1681672903912,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -28782,6 +28782,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006830375259566396",
             "extra": "mean: 84.26375508333332 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "f8295a9a41d9ac6d295a1e1d974752f5ec073050",
+          "message": "REL: 3.8.0\n\nNew Features (ENH)\n-  Add transform method to Transformation class (#1765)\n-  Cope with UC2 fonts in text_extraction (#1785)\n\nRobustness (ROB)\n-  Invalid startxref pointing 1 char before (#1784)\n\nMaintenance (MAINT)\n-  Mark code handling old parameters as deprecated (#1798)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.7.1...3.8.0)",
+          "timestamp": "2023-04-16T21:20:02+02:00",
+          "tree_id": "7071837dd6bea3dc4c623a9b57a094eaf600ed5b",
+          "url": "https://github.com/py-pdf/pypdf/commit/f8295a9a41d9ac6d295a1e1d974752f5ec073050"
+        },
+        "date": 1681672902624,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.095639903611211,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005536324710357971",
+            "extra": "mean: 912.7086341999927 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.429811216928348,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00955509189539529",
+            "extra": "mean: 87.49050890000092 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23424456143203695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03087382153065709",
+            "extra": "mean: 4.269042550599994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.050031102536291,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005517169197734965",
+            "extra": "mean: 82.98733766666544 msec\nrounds: 12"
           }
         ]
       }
