@@ -2,11 +2,11 @@
 
 pypdf uses {py:class}`PdfWriter <pypdf.PdfWriter>` to write PDF files. pypdf has
 {py:class}`PdfObject <pypdf.generic.PdfObject>` and several subclasses with the
-{py:method}`write_to_stream <pypdf.generic.PdfObject.write_to_stream>` method.
-The {py:method}`PdfWriter.write <pypdf.PdfWriter.write>` method uses the
+{py:meth}`write_to_stream <pypdf.generic.PdfObject.write_to_stream>` method.
+The {py:meth}`PdfWriter.write <pypdf.PdfWriter.write>` method uses the
 `write_to_stream` methods of the referenced objects.
 
-The {py:method}`PdfWriter.write_stream <pypdf.PdfWriter.write_stream>` method
+The {py:meth}`PdfWriter.write_stream <pypdf.PdfWriter.write_stream>` method
 has the following core steps:
 
 1. `_sweep_indirect_references`: This step ensures that any circular references
@@ -28,3 +28,15 @@ has the following core steps:
    the PDF, the location of the root object (Catalog), and the Info object
    containing metadata. The trailer also specifies the location of the xref
    table.
+
+
+## How others do it
+
+fpdf has a [`PDFObject` class](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py)
+with a serialize method which roughly maps to `pypdf.PdfObject.write_to_stream`.
+Some other similarities include:
+
+* [fpdf.output.OutputProducer.buffersize](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/output.py#L370-L485) vs {py:meth}`pypdf.PdfWriter.write_stream <pypdf.PdfWriter.write_stream>`
+* [fpdpf.syntax.Name](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py#L124) vs {py:class}`pypdf.generic.NameObject <pypdf.generic.NameObject>`
+* [fpdf.syntax.build_obj_dict](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py#L222) vs {py:class}`pypdf.generic.DictionaryObject <pypdf.generic.DictionaryObject>`
+* pypdf chose to represent all PDF types as classes of PdfObject type, wheres fpdf
