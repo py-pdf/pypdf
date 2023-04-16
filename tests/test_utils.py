@@ -299,6 +299,12 @@ def test_rename_kwargs():
     with pytest.raises(TypeError, match=expected_msg):
         foo(old_param=12, new_param=13)
 
+    with pytest.warns(
+        DeprecationWarning,
+        match="old_param is deprecated as an argument. Use new_param instead",
+    ):
+        foo(old_param=12)
+
 
 @pytest.mark.enable_socket()
 def test_escapedcode_followed_by_int():
