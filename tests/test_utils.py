@@ -19,6 +19,7 @@ from pypdf._utils import (
     read_previous_line,
     read_until_regex,
     read_until_whitespace,
+    rename_kwargs,
     skip_over_comment,
     skip_over_whitespace,
 )
@@ -254,6 +255,41 @@ def test_deprecation_no_replacement():
         match="foo is deprecated and was removed in pypdf 4.3.2.",
     ):
         foo()
+
+
+def test_rename_kwargs():
+    import functools
+    from typing import Any, Callable
+
+    def deprecation_bookmark_nofail(**aliases: str) -> Callable:
+        """
+        Decorator for deprecated term "bookmark".
+
+        To be used for methods and function arguments
+            outline_item = a bookmark
+            outline = a collection of outline items.
+        """
+
+        def decoration(func: Callable) -> Any:  # type: ignore
+            @functools.wraps(func)
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore
+                rename_kwargs(func.__name__, kwargs, aliases, fail=False)
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return decoration
+
+    @deprecation_bookmark_nofail(old_param="new_param")
+    def foo(old_param: int = 1, baz: int = 2) -> None:
+        pass
+
+    expected_msg = (
+        "foo received both old_param and new_param as an argument. "
+        "old_param is deprecated. Use new_param instead."
+    )
+    with pytest.raises(TypeError, match=expected_msg):
+        foo(old_param=12, new_param=13)
 
 
 @pytest.mark.enable_socket()
