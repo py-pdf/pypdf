@@ -14,20 +14,22 @@ has the following core steps:
    circularly referenced objects to an external reference map, so that
    self-page-referencing trees can reference the correct new object location,
    rather than copying in a new copy of the page object.
-2. `_write_pdf_structure`: In this step, the PDF header and objects are written
-   to the output stream. This includes the PDF version (e.g., %PDF-1.7) and the
-   objects that make up the content of the PDF, such as pages, annotations, and
-   form fields. The locations (byte offsets) of these objects are stored for
-   later use in generating the xref table.
-3. `_write_xref_table`: Using the stored object locations, this step generates
-   and writes the cross-reference table (xref table) to the output stream. The
-   xref table contains the byte offsets for each object in the PDF file,
-   allowing for quick random access to objects when reading the PDF.
-4. `_write_trailer`: The trailer is written to the output stream in this step.
-   The trailer contains essential information, such as the number of objects in
-   the PDF, the location of the root object (Catalog), and the Info object
-   containing metadata. The trailer also specifies the location of the xref
+2. **Write the File Header and Body** with `_write_pdf_structure`: In this step,
+   the PDF header and objects are written to the output stream. This includes
+   the PDF version (e.g., %PDF-1.7) and the objects that make up the content of
+   the PDF, such as pages, annotations, and form fields. The locations (byte
+   offsets) of these objects are stored for later use in generating the xref
    table.
+3. **Write the Cross-Reference Table** with `_write_xref_table`: Using the stored
+   object locations, this step generates and writes the cross-reference table
+   (xref table) to the output stream. The cross-reference table contains the
+   byte offsets for each object in the PDF file, allowing for quick random
+   access to objects when reading the PDF.
+4. **Write the File Trailer** with `_write_trailer`: The trailer is written to
+   the output stream in this step. The trailer contains essential information,
+   such as the number of objects in the PDF, the location of the root object
+   (Catalog), and the Info object containing metadata. The trailer also
+   specifies the location of the xref table.
 
 
 ## How others do it
