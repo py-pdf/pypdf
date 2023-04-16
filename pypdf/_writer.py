@@ -164,7 +164,10 @@ class PdfWriter:
     ) -> None:
         self._header = b"%PDF-1.3"
         self._objects: List[PdfObject] = []  # array of indirect objects
+
+        # map hash values of indirect objects to the indirect object
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
+
         self._id_translated: Dict[int, Dict[int, int]] = {}
 
         # The root of our page tree node.
@@ -1135,14 +1138,6 @@ class PdfWriter:
         if not self._root:
             self._root = self._add_object(self._root_object)
 
-        # PDF objects sometimes have circular references to their /Page objects
-        # inside their object tree (for example, annotations).  Those will be
-        # indirect references to objects that we've recreated in this PDF.  To
-        # address this problem, PageObject's store their original object
-        # reference number, and we add it to the external reference map before
-        # we sweep for indirect references.  This forces self-page-referencing
-        # trees to reference the correct new object location, rather than
-        # copying in a new copy of the page object.
         self._sweep_indirect_references(self._root)
 
         object_positions = self._write_pdf_structure(stream)
@@ -1272,6 +1267,21 @@ class PdfWriter:
             NullObject,
         ],
     ) -> None:
+        """
+        Resolving any circular references to Page objects.
+
+        Circular references to Page objects can arise when objects such as
+        annotations refer to their associated page. If these references are not
+        properly handled, the PDF file will contain multiple copies of the same
+        Page object. To address this problem, Page objects store their original
+        object reference number. This method adds the reference number of any
+        circularly referenced Page objects to an external reference map. This
+        ensures that self-referencing trees reference the correct new object
+        location, rather than copying in a new copy of the Page object.
+
+        Args:
+            root: The root of the PDF object tree to sweep.
+        """
         stack: Deque[
             Tuple[
                 Any,
@@ -1340,16 +1350,28 @@ class PdfWriter:
 
     def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
         """
-        Resolves indirect object to this pdf indirect objects.
+        Resolves an indirect object to an indirect object in this PDF file.
 
-        If it is a new object then it is added to self._objects
-        and new idnum is given and generation is always 0.
+        If the input indirect object already belongs to this PDF file, it is
+        returned directly. Otherwise, the object is retrieved from the input
+        object's PDF file using the object's ID number and generation number. If
+        the object cannot be found, a warning is logged and a `NullObject` is
+        returned.
+
+        If the object is not already in this PDF file, it is added to the file's
+        list of objects and assigned a new ID number and generation number of 0.
+        The hash value of the object is then added to the `_idnum_hash`
+        dictionary, with the corresponding `IndirectObject` reference as the
+        value.
 
         Args:
-            data:
+            data: The `IndirectObject` to resolve.
 
         Returns:
-            The resolved indirect object
+            The resolved `IndirectObject` in this PDF file.
+
+        Raises:
+            ValueError: If the input stream is closed.
         """
         if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
             raise ValueError(f"I/O operation on closed file: {data.pdf.stream.name}")

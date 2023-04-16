@@ -7,7 +7,11 @@ method uses the `write_to_stream` methods of the referenced objects.
 
 The `PdfWriter.write_stream` function has the following core steps:
 
-1. `_sweep_indirect_references`
+1. `_sweep_indirect_references`: This step ensures that any circular references
+   to objects are correctly handled. It adds the object reference numbers of any
+   circularly referenced objects to an external reference map, so that
+   self-page-referencing trees can reference the correct new object location,
+   rather than copying in a new copy of the page object.
 2. `_write_pdf_structure`: In this step, the PDF header and objects are written
    to the output stream. This includes the PDF version (e.g., %PDF-1.7) and the
    objects that make up the content of the PDF, such as pages, annotations, and
