@@ -930,7 +930,6 @@ def test_annotation_builder_link(pdf_file_path):
     link_annotation = AnnotationBuilder.link(
         rect=(50, 50, 100, 100),
         url="https://martin-thoma.com/",
-        border=[1, 0, 6, [3, 2]],
     )
     writer.add_annotation(0, link_annotation)
 
@@ -991,6 +990,12 @@ def test_annotation_builder_popup():
         rect=(50, 550, 200, 650),
         open=True,
         parent=ta,  # prefer to use for evolutivity
+    )
+
+    AnnotationBuilder.popup(
+        rect=(50, 550, 200, 650),
+        open=True,
+        parent=True,  # broken parameter  # type: ignore
     )
 
     writer.add_annotation(writer.pages[0], popup_annotation)
