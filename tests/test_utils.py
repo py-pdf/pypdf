@@ -289,7 +289,7 @@ def test_rename_kwargs():
         return decoration
 
     @deprecation_bookmark_nofail(old_param="new_param")
-    def foo(old_param: int = 1, baz: int = 2) -> None:
+    def foo(old_param: int = 1, baz: int = 2, new_param: int = 1) -> None:
         pass
 
     expected_msg = (
