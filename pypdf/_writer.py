@@ -1147,8 +1147,7 @@ class PdfWriter:
 
         object_positions = self._write_pdf_structure(stream)
         xref_location = self._write_xref_table(stream, object_positions)
-        self._write_trailer(stream)
-        stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
+        self._write_trailer(stream, xref_location)
 
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
         """
@@ -1212,7 +1211,14 @@ class PdfWriter:
             stream.write(b_(f"{offset:0>10} {0:0>5} n \n"))
         return xref_location
 
-    def _write_trailer(self, stream: StreamType) -> None:
+    def _write_trailer(self, stream: StreamType, xref_location: int) -> None:
+        """
+        Write the PDF trailer to the stream.
+
+        To quote the PDF specification:
+            [The] trailer [gives] the location of the cross-reference table and
+            of certain special objects within the body of the file.
+        """
         stream.write(b"trailer\n")
         trailer = DictionaryObject()
         trailer.update(
@@ -1227,6 +1233,7 @@ class PdfWriter:
         if hasattr(self, "_encrypt"):
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt
         trailer.write_to_stream(stream, None)
+        stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
     def add_metadata(self, infos: Dict[str, Any]) -> None:
         """
