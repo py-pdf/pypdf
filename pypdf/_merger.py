@@ -704,7 +704,7 @@ class PdfMerger:
                 "The argument pagenum of add_outline_item is deprecated. "
                 "Use page_number only."
             )
-        if pagenum is not None:
+        if pagenum is not None:  # deprecated
             old_term = "pagenum"
             new_term = "page_number"
             warnings.warn(
@@ -715,7 +715,7 @@ class PdfMerger:
                 DeprecationWarning,
             )
             page_number = pagenum
-        if page_number is None:
+        if page_number is None:  # deprecated
             raise ValueError("page_number may not be None")
         writer = self.output
         if writer is None:
@@ -811,7 +811,7 @@ class PdfMerger:
                 "The argument pagenum of add_named_destination is deprecated. "
                 "Use page_number only."
             )
-        if pagenum is not None:
+        if pagenum is not None:  # deprecated
             old_term = "pagenum"
             new_term = "page_number"
             warnings.warn(
@@ -822,7 +822,7 @@ class PdfMerger:
                 DeprecationWarning,
             )
             page_number = pagenum
-        if page_number is None:
+        if page_number is None:  # deprecated
             raise ValueError("page_number may not be None")
         dest = Destination(
             TextStringObject(title),
