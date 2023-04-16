@@ -163,10 +163,12 @@ class PdfWriter:
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
     ) -> None:
         self._header = b"%PDF-1.3"
-        self._objects: List[PdfObject] = []  # array of indirect objects
 
-        # map hash values of indirect objects to the indirect object
+        self._objects: List[PdfObject] = []
+        """The indirect objects in the PDF."""
+
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
+        """Maps hash values of indirect objects to their IndirectObject instances."""
 
         self._id_translated: Dict[int, Dict[int, int]] = {}
 
@@ -201,6 +203,7 @@ class PdfWriter:
             }
         )
         self._root = self._add_object(self._root_object)
+
         if clone_from is not None:
             if not isinstance(clone_from, PdfReader):
                 clone_from = PdfReader(clone_from)
