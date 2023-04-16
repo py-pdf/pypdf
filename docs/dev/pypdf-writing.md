@@ -33,7 +33,9 @@ has the following core steps:
 ## How others do it
 
 Looking at altrnative software designs and implementations can help to improve
-our choices. Let's collect:
+our choices.
+
+### fpdf
 
 [fpdf](https://pypi.org/project/fpdf2/) has a [`PDFObject` class](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py)
 with a serialize method which roughly maps to `pypdf.PdfObject.write_to_stream`.
@@ -44,3 +46,21 @@ Some other similarities include:
 * [fpdf.syntax.build_obj_dict](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py#L222) vs {py:class}`pypdf.generic.DictionaryObject <pypdf.generic.DictionaryObject>`
 * [fpdf.structure_tree.NumberTree](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/structure_tree.py#L17) vs
  {py:class}`pypdf.generic.TreeObject <pypdf.generic.TreeObject>`
+
+
+### pdfrw
+
+[pdfrw](https://pypi.org/project/pdfrw/), in contrast, seems to work more with
+the standard Python objects (bool, float, string) and not wrap them in custom
+objects, if possible. It still has:
+
+* [PdfArray](https://github.com/pmaupin/pdfrw/blob/master/pdfrw/objects/pdfarray.py#L13)
+* [PdfDict](https://github.com/pmaupin/pdfrw/blob/master/pdfrw/objects/pdfdict.py#L49)
+* [PdfName](https://github.com/pmaupin/pdfrw/blob/master/pdfrw/objects/pdfname.py#L65)
+* [PdfString](https://github.com/pmaupin/pdfrw/blob/master/pdfrw/objects/pdfstring.py#L322)
+* [PdfIndirect](https://github.com/pmaupin/pdfrw/blob/master/pdfrw/objects/pdfindirect.py#L10)
+
+The core classes of pdfrw are
+[PdfReader](https://github.com/pmaupin/pdfrw/blob/master/pdfrw/pdfreader.py#L26)
+and
+[PdfWriter](https://github.com/pmaupin/pdfrw/blob/master/pdfrw/pdfwriter.py#L224)
