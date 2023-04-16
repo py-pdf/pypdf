@@ -2,10 +2,12 @@
 
 pypdf uses {py:class}`PdfWriter <pypdf.PdfWriter>` to write PDF files. pypdf has
 {py:class}`PdfObject <pypdf.generic.PdfObject>` and several subclasses with the
-`write_to_stream` method. The {py:class}`PdfWriter.write <pypdf.PdfWriter.write>`
-method uses the `write_to_stream` methods of the referenced objects.
+{py:method}`write_to_stream <pypdf.generic.PdfObject.write_to_stream>` method.
+The {py:method}`PdfWriter.write <pypdf.PdfWriter.write>` method uses the
+`write_to_stream` methods of the referenced objects.
 
-The `PdfWriter.write_stream` function has the following core steps:
+The {py:method}`PdfWriter.write_stream <pypdf.PdfWriter.write_stream>` method
+has the following core steps:
 
 1. `_sweep_indirect_references`: This step ensures that any circular references
    to objects are correctly handled. It adds the object reference numbers of any
