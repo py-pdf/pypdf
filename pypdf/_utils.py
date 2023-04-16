@@ -72,7 +72,7 @@ StrByteType = Union[str, StreamType]
 
 DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in pypdf {}."
 DEPR_MSG_NO_REPLACEMENT_HAPPENED = "{} is deprecated and was removed in pypdf {}."
-DEPR_MSG = "{} is deprecated and will be removed in pypdf 3.0.0. Use {} instead."
+DEPR_MSG = "{} is deprecated and will be removed in pypdf {}. Use {} instead."
 DEPR_MSG_HAPPENED = "{} is deprecated and was removed in pypdf {}. Use {} instead."
 
 
@@ -387,7 +387,7 @@ def deprecate_with_replacement(
     old_name: str, new_name: str, removed_in: str = "3.0.0"
 ) -> None:
     """Raise an exception that a feature will be removed, but has a replacement."""
-    deprecate(DEPR_MSG.format(old_name, new_name, removed_in), 4)
+    deprecate(DEPR_MSG.format(old_name, removed_in, new_name), 4)
 
 
 def deprecation_with_replacement(
