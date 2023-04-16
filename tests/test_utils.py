@@ -94,12 +94,20 @@ def test_hex_str():
     assert pypdf._utils.hex_str(10) == "0xa"
 
 
-def test_b():
-    assert pypdf._utils.b_("foo") == b"foo"
-    assert pypdf._utils.b_("😀") == "😀".encode()
-    assert pypdf._utils.b_("‰") == "‰".encode()
-    assert pypdf._utils.b_("▷") == "▷".encode()
-    assert pypdf._utils.b_("世") == "世".encode()
+@pytest.mark.parametrize(
+    ("input_str", "expected"),
+    [
+        ("foo", b"foo"),
+        ("😀", "😀".encode()),
+        ("‰", "‰".encode()),
+        ("▷", "▷".encode()),
+        ("世", "世".encode()),
+        # A multi-character string example with non-latin-1 characters:
+        ("😀😃", "😀😃".encode()),
+    ],
+)
+def test_b(input_str: str, expected: str):
+    assert pypdf._utils.b_(input_str) == expected
 
 
 def test_deprecate_no_replacement():
