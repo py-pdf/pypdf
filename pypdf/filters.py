@@ -687,7 +687,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
                 img.putalpha(alpha)
             img_byte_arr = BytesIO()
-            img.save(img_byte_arr, format="PNG")
+            img.convert("RGB").save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
         elif x_object_obj[SA.FILTER] in (
             [FT.LZW_DECODE],
