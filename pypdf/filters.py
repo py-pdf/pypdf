@@ -695,10 +695,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                     "/DeviceRGB": "RGB",
                     "/DeviceCMYK": "RGBA",
                 }
-                if color_space in mode_map:
-                    mode = mode_map[color_space]  # type: ignore
-                elif color_components in [1, 3, 4]:
-                    mode = {1: "L", 3: "RGB", 4: "RGBA"}.get(color_components)  # type: ignore
+                mode = (
+                    mode_map.get(color_space)
+                    or {1: "L", 3: "RGB", 4: "RGBA"}.get(color_components)
+                    or mode
+                )  # type: ignore
                 img = Image.frombytes(mode, size, data)
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
