@@ -652,7 +652,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
         and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: Literal["RGB", "P"] = "RGB"
+        mode: Literal["RGB", "P", "L", "RGBA"] = "RGB"
     else:
         mode = "P"
     extension = None
@@ -696,9 +696,9 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                     "/DeviceCMYK": "RGBA",
                 }
                 if color_space in mode_map:
-                    mode = mode_map.get(color_space)
+                    mode = mode_map[color_space]  # type: ignore
                 elif color_components in [1, 3, 4]:
-                    mode = {1: "L", 3: "RGB", 4: "RGBA"}.get(color_components)
+                    mode = {1: "L", 3: "RGB", 4: "RGBA"}.get(color_components)  # type: ignore
                 img = Image.frombytes(mode, size, data)
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
