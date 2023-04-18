@@ -683,6 +683,23 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 else:
                     img.putpalette(lookup.get_data())
                 img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
+            elif color_space is not None and color_space[0] == "/ICCBased":
+                # see Table 66 - Additional Entries Specific to an ICC Profile
+                # Stream Dictionary
+                icc_profile = color_space[1].get_object()
+                color_components = cast(int, icc_profile["/N"])
+                alternate_colorspace = icc_profile["/Alternate"]
+                color_space = alternate_colorspace
+                mode_map = {
+                    "/DeviceGray": "L",
+                    "/DeviceRGB,": "RGB",
+                    "/DeviceCMYK": "RGBA",
+                }
+                if color_space in mode_map:
+                    mode = mode_map.get(color_space)
+                elif color_components in [1, 3, 4]:
+                    mode = {1: "L", 3: "RGB", 4: "RGBA"}.get(color_components)
+                img = Image.frombytes(mode, size, data)
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
                 img.putalpha(alpha)
