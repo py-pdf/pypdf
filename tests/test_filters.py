@@ -282,3 +282,11 @@ def test_pa_image_extraction():
     images = page0.images
     assert len(images) == 1
     assert images[0].name == "Im1.png"
+
+    # Ensure visual appearence
+    data = get_pdf_from_url(
+        "https://user-images.githubusercontent.com/"
+        "1658117/232842886-9d1b0726-3a5b-430d-8464-595d919c266c.png",
+        "issue-1801.png",
+    )
+    assert data == images[0].data

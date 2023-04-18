@@ -692,7 +692,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 color_space = alternate_colorspace
                 mode_map = {
                     "/DeviceGray": "L",
-                    "/DeviceRGB,": "RGB",
+                    "/DeviceRGB": "RGB",
                     "/DeviceCMYK": "RGBA",
                 }
                 if color_space in mode_map:
