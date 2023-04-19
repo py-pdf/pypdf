@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1681672903912,
+  "lastUpdate": 1681922723134,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -28834,6 +28834,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0005517169197734965",
             "extra": "mean: 82.98733766666544 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bd140cb419ecaf72a27b27a1c928b114920bf79a",
+          "message": "BUG: Convert color space before saving (#1802)\n\nThe PDF contained an image in PA mode:\r\n* P: 8-bit pixels, mapped to any other mode using a color palette\r\n* PA: P with alpha\r\n\r\nSee #1801",
+          "timestamp": "2023-04-19T18:43:59+02:00",
+          "tree_id": "9c25d81b2b1945e32d317b1803b6ba395e342b15",
+          "url": "https://github.com/py-pdf/pypdf/commit/bd140cb419ecaf72a27b27a1c928b114920bf79a"
+        },
+        "date": 1681922721380,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0855620540349213,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007351449830742566",
+            "extra": "mean: 921.1817936000102 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.205348942342265,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011554339013126115",
+            "extra": "mean: 89.24309320000248 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23790386758973803,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01679866325545536",
+            "extra": "mean: 4.20337849120001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.575848562501523,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00006832086330695588",
+            "extra": "mean: 86.38675554545277 msec\nrounds: 11"
           }
         ]
       }
