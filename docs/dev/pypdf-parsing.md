@@ -1,7 +1,7 @@
 # How pypdf parses PDF files
 
 pypdf uses {py:class}`PdfReader <pypdf.PdfReader>` to parse PDF files.
-The method {py:meth}`PdfReader.reader <pypdf.PdfReader.reader>` shows the basic
+The method {py:meth}`PdfReader.read <pypdf.PdfReader.read>` shows the basic
 structure of parsing:
 
 1. **Finding and reading the cross-reference tables / trailer**: The
@@ -16,11 +16,17 @@ structure of parsing:
    {py:meth}`PdfReader.resolved_objects <pypdf.PdfReader.resolved_objects>`
    via {py:meth}`cache_indirect_object <pypdf.PdfReader.cache_indirect_object>`.
 3. **Decoding content streams**: The content of a PDF is typically stored in
-   content streams (see "7.8 Content Streams and Resources" in the PDF
-   specification), which are sequences of PDF operators and operands. pypdf
-   decodes these content streams by applying filters (e.g., FlateDecode,
-   LZWDecode) specified in the stream's dictionary. This is only done when the
+   content streams, which are sequences of PDF operators and operands. pypdf
+   decodes these content streams by applying filters (e.g., `FlateDecode`,
+   `LZWDecode`) specified in the stream's dictionary. This is only done when the
    object is requested via {py:meth}`PdfReader.get_object
    <pypdf.PdfReader.get_object>` in the
    {py:meth}`PdfReader._get_object_from_stream
    <pypdf.PdfReader._get_object_from_stream>` method.
+
+## References
+
+[PDF 1.7 specification](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf):
+* 7.5 File Structure
+* 7.5.4 Cross-Reference Table
+* 7.8 Content Streams and Resources

@@ -37,9 +37,9 @@ has the following core steps:
 Looking at altrnative software designs and implementations can help to improve
 our choices.
 
-### fpdf
+### fpdf2
 
-[fpdf](https://pypi.org/project/fpdf2/) has a [`PDFObject` class](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py)
+[fpdf2](https://pypi.org/project/fpdf2/) has a [`PDFObject` class](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py)
 with a serialize method which roughly maps to `pypdf.PdfObject.write_to_stream`.
 Some other similarities include:
 
