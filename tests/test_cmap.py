@@ -132,3 +132,12 @@ def test_iss1533():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()  # no error
     assert build_char_map("/F", 200, reader.pages[0])[3]["\x01"] == "Ü"
+
+
+@pytest.mark.enable_socket()
+def test_ucs2(caplog):
+    url = "https://github.com/py-pdf/pypdf/files/11190189/pdf_font_garbled.pdf"
+    name = "tstUCS2.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[1].extract_text()  # no error
+    assert caplog.text == ""

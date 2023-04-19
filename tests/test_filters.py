@@ -265,3 +265,28 @@ def test_issue_1737():
     reader.pages[0]["/Resources"]["/XObject"]["/Im0"].get_data()
     reader.pages[0]["/Resources"]["/XObject"]["/Im1"].get_data()
     reader.pages[0]["/Resources"]["/XObject"]["/Im2"].get_data()
+
+
+@pytest.mark.enable_socket()
+def test_pa_image_extraction():
+    """
+    PNG images with PA mode can be extracted.
+
+    This is a regression test for issue #1801
+    """
+    url = "https://github.com/py-pdf/pypdf/files/11250359/test_img.pdf"
+    name = "issue-1801.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+
+    page0 = reader.pages[0]
+    images = page0.images
+    assert len(images) == 1
+    assert images[0].name == "Im1.png"
+
+    # Ensure visual appearence
+    data = get_pdf_from_url(
+        "https://user-images.githubusercontent.com/"
+        "1658117/232842886-9d1b0726-3a5b-430d-8464-595d919c266c.png",
+        "issue-1801.png",
+    )
+    assert data == images[0].data

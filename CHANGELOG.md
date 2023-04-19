@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## Version 3.8.0, 2023-04-16
+
+### New Features (ENH)
+-  Add transform method to Transformation class (#1765)
+-  Cope with UC2 fonts in text_extraction (#1785)
+
+### Robustness (ROB)
+-  Invalid startxref pointing 1 char before (#1784)
+
+### Maintenance (MAINT)
+-  Mark code handling old parameters as deprecated (#1798)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.7.1...3.8.0)
+
+
 ## Version 3.7.1, 2023-04-09
 
 ### Security (SEC)
