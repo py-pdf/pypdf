@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1681922723134,
+  "lastUpdate": 1681936901445,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -28886,6 +28886,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00006832086330695588",
             "extra": "mean: 86.38675554545277 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "914c43eed09d9153322ccbc2de8f4f16d4b21ba3",
+          "message": "DOC: Document core mechanics of pypdf (#1783)\n\nAlso add pdfrw and fpdf2 comparisons\r\n\r\nThanks to Lucas for the review / suggestions!\r\n\r\nCo-authored-by: Lucas Cimon <925560+Lucas-C@users.noreply.github.com>",
+          "timestamp": "2023-04-19T22:40:19+02:00",
+          "tree_id": "7c0796b1ca33b98ef7af523522bd621f1726a16a",
+          "url": "https://github.com/py-pdf/pypdf/commit/914c43eed09d9153322ccbc2de8f4f16d4b21ba3"
+        },
+        "date": 1681936899292,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9564791682886924,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021437838400874827",
+            "extra": "mean: 1.045501076399995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.155188796875384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002052391520450313",
+            "extra": "mean: 98.47182755555333 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2104951261283861,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07911148305802475",
+            "extra": "mean: 4.7507038209999966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.519107167132915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020088763541774883",
+            "extra": "mean: 95.06510239999386 msec\nrounds: 10"
           }
         ]
       }
