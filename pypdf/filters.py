@@ -696,7 +696,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                     "/DeviceCMYK": "RGBA",
                 }
                 mode = (
-                    mode_map.get(color_space)
+                    mode_map.get(color_space)  # type: ignore
                     or {1: "L", 3: "RGB", 4: "RGBA"}.get(color_components)
                     or mode
                 )  # type: ignore
