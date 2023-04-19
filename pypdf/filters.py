@@ -652,7 +652,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
         and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: Literal["RGB", "P"] = "RGB"
+        mode: Literal["RGB", "P", "L", "RGBA"] = "RGB"
     else:
         mode = "P"
     extension = None
@@ -683,11 +683,29 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 else:
                     img.putpalette(lookup.get_data())
                 img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
+            elif color_space is not None and color_space[0] == "/ICCBased":
+                # see Table 66 - Additional Entries Specific to an ICC Profile
+                # Stream Dictionary
+                icc_profile = color_space[1].get_object()
+                color_components = cast(int, icc_profile["/N"])
+                alternate_colorspace = icc_profile["/Alternate"]
+                color_space = alternate_colorspace
+                mode_map = {
+                    "/DeviceGray": "L",
+                    "/DeviceRGB": "RGB",
+                    "/DeviceCMYK": "RGBA",
+                }
+                mode = (
+                    mode_map.get(color_space)  # type: ignore
+                    or {1: "L", 3: "RGB", 4: "RGBA"}.get(color_components)
+                    or mode
+                )  # type: ignore
+                img = Image.frombytes(mode, size, data)
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
                 img.putalpha(alpha)
             img_byte_arr = BytesIO()
-            img.save(img_byte_arr, format="PNG")
+            img.convert("RGBA").save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
         elif x_object_obj[SA.FILTER] in (
             [FT.LZW_DECODE],
