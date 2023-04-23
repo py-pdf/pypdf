@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1681936901445,
+  "lastUpdate": 1682240135042,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -28938,6 +28938,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0020088763541774883",
             "extra": "mean: 95.06510239999386 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "neversphere@gmail.com",
+            "name": "neversphere",
+            "username": "neversphere"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "190b4dc890c65d8814e0fe19afa62083414b11a6",
+          "message": "DOC: Use append instead of add_page\n\nUpdate docs to use append rather than add_page so that the PDF structure is copied. This ensures the form structure is kept which is necessary for some PDFs.\r\n\r\nSee #1790\r\nCloses #1792\r\nCloses #1804",
+          "timestamp": "2023-04-23T10:54:19+02:00",
+          "tree_id": "46e70f9844c9cce1e996701a5db941b7be096412",
+          "url": "https://github.com/py-pdf/pypdf/commit/190b4dc890c65d8814e0fe19afa62083414b11a6"
+        },
+        "date": 1682240133811,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0791062734364394,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005377673727032402",
+            "extra": "mean: 926.6927870000018 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.143624468003463,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01150898316501809",
+            "extra": "mean: 89.73741020000148 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2318392894467196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024208901191502197",
+            "extra": "mean: 4.313332750399996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.695726961476858,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00016134991207318177",
+            "extra": "mean: 85.50131199999616 msec\nrounds: 11"
           }
         ]
       }
