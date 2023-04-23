@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## Version 3.8.1, 2023-04-23
+
+### Bug Fixes (BUG)
+-  Convert color space before saving (#1802)
+
+### Documentation (DOC)
+-  PDF/A (#1807)
+-  Use append instead of add_page
+-  Document core mechanics of pypdf (#1783)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.0...3.8.1)
+
 ## Version 3.8.0, 2023-04-16
 
 ### New Features (ENH)
