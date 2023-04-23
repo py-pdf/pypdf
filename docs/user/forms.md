@@ -21,7 +21,7 @@ writer = PdfWriter()
 page = reader.pages[0]
 fields = reader.get_fields()
 
-writer.add_page(page)
+writer.append(reader)
 
 writer.update_page_form_field_values(
     writer.pages[0], {"fieldname": "some filled in text"}
