@@ -74,6 +74,7 @@ There are several online-validators which allow you to simply upload the documen
 * [pdfa.org](https://pdfa.org/pdfa-online-verification-service/)
 * [visual-paradigm.com](https://online.visual-paradigm.com/de/online-pdf-editor/pdfa-validator/) - can convert the PDF to a PDF/A
 * [pdf2go.com](https://www.pdf2go.com/validate-pdfa)
+* [slub-dresden.de](https://www.slub-dresden.de/veroeffentlichen/dissertationen-habilitationen/elektronische-veroeffentlichung/slub-pdfa-validator) links to relevant parts in the specification.
 
 ## pypdf and PDF/A
 
