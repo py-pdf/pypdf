@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1682250258516,
+  "lastUpdate": 1682255891082,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -29094,6 +29094,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0008198792092744503",
             "extra": "mean: 79.44057208333295 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "60531671f0a9c4e7bd3cb3afa1ad85edcf36b90a",
+          "message": "REL: 3.8.1\n\nBug Fixes (BUG)\n-  Convert color space before saving (#1802)\n\nDocumentation (DOC)\n-  PDF/A (#1807)\n-  Use append instead of add_page\n-  Document core mechanics of pypdf (#1783)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.0...3.8.1)",
+          "timestamp": "2023-04-23T15:15:36+02:00",
+          "tree_id": "9dfa5cde1ba7777a8abdf3d7d4e43ea15756f9c4",
+          "url": "https://github.com/py-pdf/pypdf/commit/60531671f0a9c4e7bd3cb3afa1ad85edcf36b90a"
+        },
+        "date": 1682255889002,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.950377316597351,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0028816939236854192",
+            "extra": "mean: 1.05221366560001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.247651183125491,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012821057416324121",
+            "extra": "mean: 97.58333711110998 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21123238648314147,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02850030999095195",
+            "extra": "mean: 4.734122530399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.129556162303142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001580716470657263",
+            "extra": "mean: 98.72100850000436 msec\nrounds: 10"
           }
         ]
       }
