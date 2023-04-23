@@ -69,10 +69,13 @@ requirements:
 
 There are several online-validators which allow you to simply upload the document:
 
-* https://www.pdfen.com/pdf-a-validator
-* https://avepdf.com/pdfa-validation : Gives an error report
-* https://pdfa.org/pdfa-online-verification-service/
-* https://online.visual-paradigm.com/de/online-pdf-editor/pdfa-validator/ - can convert the PDF to a PDF/A
-* https://www.pdf2go.com/validate-pdfa
+* [pdfen.com](https://www.pdfen.com/pdf-a-validator)
+* [avepdf.com](https://avepdf.com/pdfa-validation) : Gives an error report
+* [pdfa.org](https://pdfa.org/pdfa-online-verification-service/)
+* [visual-paradigm.com](https://online.visual-paradigm.com/de/online-pdf-editor/pdfa-validator/) - can convert the PDF to a PDF/A
+* [pdf2go.com](https://www.pdf2go.com/validate-pdfa)
 
 ## pypdf and PDF/A
+
+At the moment, pypdf does not make any guarantees regarding PDF/A.
+[Support is very welcome](https://github.com/py-pdf/pypdf/labels/is-pdf%2Fa-compliance).
