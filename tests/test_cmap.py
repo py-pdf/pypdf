@@ -135,9 +135,17 @@ def test_iss1533():
 
 
 @pytest.mark.enable_socket()
-def test_ucs2(caplog):
+def test_ucs2_gbk(caplog):
     url = "https://github.com/py-pdf/pypdf/files/11190189/pdf_font_garbled.pdf"
     name = "tstUCS2.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[1].extract_text()  # no error
     assert caplog.text == ""
+    # iss 1809
+    url = "https://github.com/py-pdf/pypdf/files/11315397/3.pdf"
+    name = "tst-GBK_EUC.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    t = reader.pages[0].extract_text()
+    assert "NJA" in t
+    assert "中华男科学杂志" in t
+    # assert caplog.text == "" a duplicate field confirmed in page 0, so no check of caplog
