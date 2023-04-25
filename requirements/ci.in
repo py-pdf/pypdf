@@ -1,0 +1,14 @@
+coverage
+flake8
+flake8_implicit_str_concat
+flake8-bugbear
+flake8-print
+mypy
+pillow
+pycryptodome
+pytest
+pytest-benchmark
+pytest-socket
+typeguard
+types-dataclasses
+types-Pillow

@@ -1,0 +1,15 @@
+# This file helps us to ignore style / formatting / doc changes
+# in git blame. That is useful when we're trying to find the root cause of an
+# error.
+
+# Docstring formatting
+a89ff74d8c0203278a039d9496a3d8df4d134f84
+
+# STY: Apply pre-commit (black, isort) + use snake_case variables (#832)
+eef03d935dfeacaa75848b39082cf94d833d3174
+
+# STY: Apply black and isort
+baeb7d23278de0f8d00ca9f2b656bf0674f08937
+
+# STY: Documentation, Variable names (#839)
+444fca22836df061d9d23e71ffb7d68edcdfa766
