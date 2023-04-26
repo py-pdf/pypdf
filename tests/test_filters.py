@@ -290,3 +290,13 @@ def test_pa_image_extraction():
         "issue-1801.png",
     )
     assert data == images[0].data
+
+
+@pytest.mark.enable_socket()
+def test_1bit_image_extraction():
+    """Cf issue #1814"""
+    url = "https://github.com/py-pdf/pypdf/files/11336817/grimm10.pdf"
+    name = "grimm10"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for p in reader.pages:
+        p.images
