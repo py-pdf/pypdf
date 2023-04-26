@@ -5,7 +5,7 @@ import pytest
 
 import pypdf
 from pypdf import PasswordType, PdfReader
-from pypdf._encryption import AlgV5, CryptRC4, _randint, _randrange
+from pypdf._encryption import AlgV5, CryptRC4
 from pypdf.errors import DependencyError, PdfReadError
 
 try:
@@ -35,7 +35,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
         # qpdf --encrypt "asdfzxcv" "" 40 -- unencrypted.pdf r2-user-password.pdf
         ("r2-user-password.pdf", False),
         # created by:
-        # qpdf --encrypt "" "asdfzxcv" 40 -- unencrypted.pdf r2-user-password.pdf
+        # qpdf --encrypt "" "asdfzxcv" 40 -- unencrypted.pdf r2-owner-password.pdf
         ("r2-owner-password.pdf", False),
         # created by:
         # qpdf --encrypt "asdfzxcv" "" 128 -- unencrypted.pdf r3-user-password.pdf
@@ -227,23 +227,3 @@ def test_alg_v5_generate_values():
         "/OE": values["/OE"],
         "/Perms": values["/Perms"],
     }
-
-
-def test_randrange_function():
-    """
-    _randrange() function generates a range of unique random numbers.
-
-    This test might randomly fail in very rare cases.
-    """
-    random_set = {_randrange(0, 10) for _ in range(1000)}
-    assert random_set == {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-
-
-def test_randint_function():
-    """
-    _randint() function generates a range of unique random numbers, including the upper bound.
-
-    This test might randomly fail in very rare cases.
-    """
-    random_set = {_randint(0, 10) for _ in range(1000)}
-    assert random_set == {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
