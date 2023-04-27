@@ -234,17 +234,6 @@ class XmpInformation(PdfObject):
     def write_to_stream(self, stream: StreamType) -> None:
         self.stream.write_to_stream(stream)
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        """
-        Use :meth:`write_to_stream` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
-
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
         for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:

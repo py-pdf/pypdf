@@ -171,12 +171,6 @@ class NullObject(PdfObject):
             raise PdfReadError("Could not read Null object")
         return NullObject()
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
-
     def __repr__(self) -> str:
         return "NullObject"
 
@@ -218,12 +212,6 @@ class BooleanObject(PdfObject):
             stream.write(b"true")
         else:
             stream.write(b"false")
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
 
     @staticmethod
     def read_from_stream(stream: StreamType) -> "BooleanObject":
@@ -307,12 +295,6 @@ class IndirectObject(PdfObject):
     def write_to_stream(self, stream: StreamType) -> None:
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
-
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
         idnum = b""
@@ -391,12 +373,6 @@ class FloatObject(float, PdfObject):
     def write_to_stream(self, stream: StreamType) -> None:
         stream.write(self.myrepr().encode("utf8"))
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
-
 
 class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b"[^+-.0-9]")
@@ -425,12 +401,6 @@ class NumberObject(int, PdfObject):
 
     def write_to_stream(self, stream: StreamType) -> None:
         stream.write(repr(self).encode("utf8"))
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
 
     @staticmethod
     def read_from_stream(stream: StreamType) -> Union["NumberObject", "FloatObject"]:
@@ -479,12 +449,6 @@ class ByteStringObject(bytes, PdfObject):
         stream.write(b"<")
         stream.write(hexencode(self))
         stream.write(b">")
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
 
 
 class TextStringObject(str, PdfObject):
@@ -564,12 +528,6 @@ class TextStringObject(str, PdfObject):
                 stream.write(b_(chr(c)))
         stream.write(b")")
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
-
 
 class NameObject(str, PdfObject):
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
@@ -596,12 +554,6 @@ class NameObject(str, PdfObject):
 
     def write_to_stream(self, stream: StreamType) -> None:
         stream.write(self.renumber())  # b_(renumber(self)))
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
 
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")

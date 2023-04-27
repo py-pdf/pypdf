@@ -117,12 +117,6 @@ class ArrayObject(list, PdfObject):
             data.write_to_stream(stream)
         stream.write(b" ]")
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
-
     @staticmethod
     def read_from_stream(
         stream: StreamType,
@@ -343,12 +337,6 @@ class DictionaryObject(dict, PdfObject):
             value.write_to_stream(stream)
             stream.write(b"\n")
         stream.write(b">>")
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
 
     @staticmethod
     def read_from_stream(
