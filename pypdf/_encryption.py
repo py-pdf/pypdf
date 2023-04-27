@@ -24,7 +24,6 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
 import hashlib
 import secrets
 import struct
@@ -182,14 +181,20 @@ class CryptFilter:
             data = self.strCrypt.encrypt(obj.original_bytes)
             obj = ByteStringObject(data)
         elif isinstance(obj, StreamObject):
-            data = self.stmCrypt.encrypt(obj._data)
-            obj._data = data
+            obj2 = StreamObject()
+            obj2.update(obj)
+            obj2._data = self.stmCrypt.encrypt(obj._data)
+            obj = obj2
         elif isinstance(obj, DictionaryObject):
+            obj2 = DictionaryObject()  # type: ignore  # noqa
             for key, value in obj.items():
-                obj[key] = self.encrypt_object(value)
+                obj2[key] = self.encrypt_object(value)
+            obj = obj2
         elif isinstance(obj, ArrayObject):
-            for i in range(len(obj)):
-                obj[i] = self.encrypt_object(obj[i])
+            obj2 = ArrayObject()  # type: ignore  # noqa
+            for x in obj:
+                obj2.append(self.encrypt_object(x))  # type: ignore  # noqa
+            obj = obj2
         return obj
 
     def decrypt_object(self, obj: PdfObject) -> PdfObject:

@@ -273,3 +273,36 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
     assert reader.is_encrypted
     assert reader.decrypt(owner_password) == PasswordType.OWNER_PASSWORD
     assert reader.decrypt(user_password) == PasswordType.USER_PASSWORD
+
+
+@pytest.mark.parametrize(
+    "count", [1, 2, 3, 4, 5, 10],
+)
+def test_pdf_encrypt_multiple(pdf_file_path, count):
+    user_password = secrets.token_urlsafe(10)
+    owner_password = secrets.token_urlsafe(10)
+
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
+    page = reader.pages[0]
+    text0 = page.extract_text()
+
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    for i in range(count):
+        writer.encrypt(
+            user_password=user_password,
+            owner_password=owner_password,
+            algorithm="RC4-128"
+        )
+    with open(pdf_file_path, "wb") as output_stream:
+        writer.write(output_stream)
+
+    reader = PdfReader(pdf_file_path)
+    assert reader.is_encrypted
+    assert reader.decrypt(owner_password) == PasswordType.OWNER_PASSWORD
+    assert reader.decrypt(user_password) == PasswordType.USER_PASSWORD
+
+    page = reader.pages[0]
+    text1 = page.extract_text()
+    assert text0 == text1
