@@ -302,9 +302,9 @@ def test_read_object_comment():
 def test_bytestringobject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")
-    bo.write_to_stream(stream, encryption_key="foobar")
+    bo.write_to_stream(stream)
     stream.seek(0, 0)
-    assert stream.read() == b"<1cdd628b972e>"  # TODO: how can we verify this?
+    assert stream.read() == b"<73747265616d>"
 
 
 def test_dictionaryobject_key_is_no_pdfobject():
