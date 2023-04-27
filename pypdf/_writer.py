@@ -1033,8 +1033,8 @@ class PdfWriter:
         owner_password: Optional[str] = None,
         use_128bit: bool = True,
         permissions_flag: UserAccessPermissions = ALL_DOCUMENT_PERMISSIONS,
-        user_pwd: Optional[str] = None,  # deprecated
-        owner_pwd: Optional[str] = None,  # deprecated
+        *,
+        algorithm: Optional[str] = None,
     ) -> None:
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
@@ -1055,54 +1055,26 @@ class PdfWriter:
                 Bit position 3 is for printing, 4 is for modifying content,
                 5 and 6 control annotations, 9 for form fields,
                 10 for extraction of text and graphics.
+            algorithm: encrypt algorithm. Values maybe one of "RC4-40", "RC4-128",
+                "AES-128", "AES-256-R5", "AES-256". If it's valid,
+                `use_128bit` will be ignored.
         """
-        warnings.warn(
-            "pypdf only implements RC4 encryption so far. "
-            "The RC4 algorithm is insecure. Either use a library that supports "
-            "AES for encryption or put the PDF in an encrypted container, "
-            "for example an encrypted ZIP file."
-        )
-        if user_pwd is not None:
-            if user_password is not None:
-                raise ValueError(
-                    "Please only set 'user_password'. "
-                    "The 'user_pwd' argument is deprecated."
-                )
-            else:
-                warnings.warn(
-                    "Please use 'user_password' instead of 'user_pwd'. "
-                    "The 'user_pwd' argument is deprecated and "
-                    "will be removed in pypdf 4.0.0."
-                )
-                user_password = user_pwd
         if user_password is None:  # deprecated
             # user_password is only Optional for due to the deprecated user_pwd
             raise ValueError("user_password may not be None")
 
-        if owner_pwd is not None:  # deprecated
-            if owner_password is not None:
-                raise ValueError(
-                    "The argument owner_pwd of encrypt is deprecated. "
-                    "Use owner_password only."
-                )
-            else:
-                old_term = "owner_pwd"
-                new_term = "owner_password"
-                warnings.warn(
-                    message=(
-                        f"{old_term} is deprecated as an argument and will be "
-                        f"removed in pypdf 4.0.0. Use {new_term} instead"
-                    ),
-                    category=DeprecationWarning,
-                )
-                owner_password = owner_pwd
-
         if owner_password is None:
             owner_password = user_password
 
-        alg = EncryptAlgorithm.RC4_128
-        if not use_128bit:
-            alg = EncryptAlgorithm.RC4_40
+        if algorithm is not None:
+            try:
+                alg = getattr(EncryptAlgorithm, algorithm.replace('-', '_'))
+            except AttributeError:
+                raise ValueError(f"algorithm '{algorithm}' NOT supported")
+        else:
+            alg = EncryptAlgorithm.RC4_128
+            if not use_128bit:
+                alg = EncryptAlgorithm.RC4_40
         self.generate_file_identifiers()
         self._encryption = Encryption.make(alg, permissions_flag, self._ID[0])
         self._encrypt_entry = self._encryption.write_entry(user_password, owner_password)

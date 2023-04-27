@@ -1,10 +1,11 @@
 """Test the pypdf.encryption module."""
+import secrets
 from pathlib import Path
 
 import pytest
 
 import pypdf
-from pypdf import PasswordType, PdfReader
+from pypdf import PasswordType, PdfReader, PdfWriter
 from pypdf._encryption import AlgV5, CryptRC4
 from pypdf.errors import DependencyError, PdfReadError
 
@@ -214,6 +215,7 @@ def test_alg_v5_generate_values():
         return
     key = b"0123456789123451"
     values = AlgV5.generate_values(
+        R=5,
         user_password=b"foo",
         owner_password=b"bar",
         key=key,
@@ -227,3 +229,47 @@ def test_alg_v5_generate_values():
         "/OE": values["/OE"],
         "/Perms": values["/Perms"],
     }
+
+
+@pytest.mark.parametrize(
+    ("alg", "requires_pycryptodome"),
+    [
+        ("RC4-40", False),
+        ("RC4-128", False),
+        ("AES-128", True),
+        ("AES-256-R5", True),
+        ("AES-256", True),
+    ],
+)
+def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
+    user_password = secrets.token_urlsafe(10)
+    owner_password = secrets.token_urlsafe(10)
+
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
+    page = reader.pages[0]
+
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    if requires_pycryptodome and not HAS_PYCRYPTODOME:
+        with pytest.raises(DependencyError) as exc:
+            writer.encrypt(
+                user_password=user_password,
+                owner_password=owner_password,
+                algorithm=alg
+            )
+        assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
+        return
+
+    writer.encrypt(
+        user_password=user_password,
+        owner_password=owner_password,
+        algorithm=alg
+    )
+    with open(pdf_file_path, "wb") as output_stream:
+        writer.write(output_stream)
+
+    reader = PdfReader(pdf_file_path)
+    assert reader.is_encrypted
+    assert reader.decrypt(owner_password) == PasswordType.OWNER_PASSWORD
+    assert reader.decrypt(user_password) == PasswordType.USER_PASSWORD

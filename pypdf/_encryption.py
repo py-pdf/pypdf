@@ -744,14 +744,17 @@ class AlgV5:
 
     @staticmethod
     def generate_values(
+        R: int,
         user_password: bytes,
         owner_password: bytes,
         key: bytes,
         p: int,
         metadata_encrypted: bool,
     ) -> Dict[Any, Any]:
-        u_value, ue_value = AlgV5.compute_U_value(user_password, key)
-        o_value, oe_value = AlgV5.compute_O_value(owner_password, key, u_value)
+        user_password = user_password[:127]
+        owner_password = owner_password[:127]
+        u_value, ue_value = AlgV5.compute_U_value(R, user_password, key)
+        o_value, oe_value = AlgV5.compute_O_value(R, owner_password, key, u_value)
         perms = AlgV5.compute_Perms_value(key, p, metadata_encrypted)
         return {
             "/U": u_value,
@@ -762,7 +765,7 @@ class AlgV5:
         }
 
     @staticmethod
-    def compute_U_value(password: bytes, key: bytes) -> Tuple[bytes, bytes]:
+    def compute_U_value(R: int, password: bytes, key: bytes) -> Tuple[bytes, bytes]:
         """
         Algorithm 3.8 Computing the encryption dictionary’s U (user password)
         and UE (user encryption key) values.
@@ -780,6 +783,7 @@ class AlgV5:
            as the UE key.
 
         Args:
+            R:
             password:
             key:
 
@@ -789,16 +793,16 @@ class AlgV5:
         random_bytes = secrets.token_bytes(16)
         val_salt = random_bytes[:8]
         key_salt = random_bytes[8:]
-        u_value = hashlib.sha256(password + val_salt).digest() + val_salt + key_salt
+        u_value = AlgV5.calculate_hash(R, password, val_salt, b"") + val_salt + key_salt
 
-        tmp_key = hashlib.sha256(password + key_salt).digest()
+        tmp_key = AlgV5.calculate_hash(R, password, key_salt, b"")
         iv = bytes(0 for _ in range(16))
         ue_value = AES_CBC_encrypt(tmp_key, iv, key)
         return u_value, ue_value
 
     @staticmethod
     def compute_O_value(
-        password: bytes, key: bytes, u_value: bytes
+        R: int, password: bytes, key: bytes, u_value: bytes
     ) -> Tuple[bytes, bytes]:
         """
         Algorithm 3.9 Computing the encryption dictionary’s O (owner password)
@@ -820,6 +824,7 @@ class AlgV5:
            The resulting 32-byte string is stored as the OE key.
 
         Args:
+            R:
             password:
             key:
             u_value: A 32-byte string, based on the user password, that shall be
@@ -832,11 +837,8 @@ class AlgV5:
         random_bytes = secrets.token_bytes(16)
         val_salt = random_bytes[:8]
         key_salt = random_bytes[8:]
-        o_value = (
-            hashlib.sha256(password + val_salt + u_value).digest() + val_salt + key_salt
-        )
-
-        tmp_key = hashlib.sha256(password + key_salt + u_value).digest()
+        o_value = AlgV5.calculate_hash(R, password, val_salt, u_value) + val_salt + key_salt
+        tmp_key = AlgV5.calculate_hash(R, password, key_salt, u_value[:48])
         iv = bytes(0 for _ in range(16))
         oe_value = AES_CBC_encrypt(tmp_key, iv, key)
         return o_value, oe_value
@@ -1106,7 +1108,7 @@ class Encryption:
             self.compute_values_v4(user_pwd, owner_pwd)
         else:
             self._key = secrets.token_bytes(self.Length // 8)
-            values = AlgV5.generate_values(user_pwd, owner_pwd, self._key, self.P, self.EncryptMetadata)
+            values = AlgV5.generate_values(self.R, user_pwd, owner_pwd, self._key, self.P, self.EncryptMetadata)
             self.values.O = values["/O"]
             self.values.U = values["/U"]
             self.values.OE = values["/OE"]
