@@ -289,7 +289,7 @@ def test_pdf_encrypt_multiple(pdf_file_path, count):
     writer = PdfWriter()
     writer.add_page(page)
 
-    for i in range(count):
+    for _i in range(count):
         writer.encrypt(
             user_password=user_password,
             owner_password=owner_password,

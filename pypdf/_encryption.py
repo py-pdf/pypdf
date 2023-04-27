@@ -189,14 +189,14 @@ class CryptFilter:
             obj2._data = self.stmCrypt.encrypt(obj._data)
             obj = obj2
         elif isinstance(obj, DictionaryObject):
-            obj2 = DictionaryObject()  # type: ignore  # noqa
+            obj2 = DictionaryObject()  # type: ignore
             for key, value in obj.items():
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
         elif isinstance(obj, ArrayObject):
-            obj2 = ArrayObject()  # type: ignore  # noqa
+            obj2 = ArrayObject()  # type: ignore
             for x in obj:
-                obj2.append(self.encrypt_object(x))  # type: ignore  # noqa
+                obj2.append(self.encrypt_object(x))  # type: ignore
             obj = obj2
         return obj
 
@@ -906,7 +906,7 @@ class EncryptAlgorithm(tuple, Enum):
 
 
 class EncryptionValues:
-    O: bytes
+    O: bytes  # noqa
     U: bytes
     OE: bytes
     UE: bytes
@@ -1047,7 +1047,7 @@ class Encryption:
         if isinstance(password, str):
             try:
                 pwd = password.encode("latin-1")
-            except Exception:  # noqa
+            except Exception:
                 pwd = password.encode("utf-8")
         else:
             pwd = password

@@ -15,7 +15,6 @@ from typing import (
     List,
     Optional,
     TypeVar,
-    Union,
     cast,
 )
 from xml.dom.minidom import Document, parseString

@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any
 
 from .._utils import StreamType, deprecation_with_replacement
 from ._base import NameObject

@@ -55,7 +55,7 @@ from typing import (
     cast,
 )
 
-from ._encryption import Encryption, EncryptAlgorithm
+from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import nums_clear_range, nums_insert, nums_next
 from ._reader import PdfReader
@@ -1068,7 +1068,7 @@ class PdfWriter:
 
         if algorithm is not None:
             try:
-                alg = getattr(EncryptAlgorithm, algorithm.replace('-', '_'))
+                alg = getattr(EncryptAlgorithm, algorithm.replace("-", "_"))
             except AttributeError:
                 raise ValueError(f"algorithm '{algorithm}' NOT supported")
         else:
