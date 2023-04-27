@@ -86,7 +86,7 @@ def test_boolean_object(value, expected, tell):
 def test_boolean_object_write():
     stream = BytesIO()
     boolobj = BooleanObject(None)
-    boolobj.write_to_stream(stream, encryption_key=None)
+    boolobj.write_to_stream(stream)
     stream.seek(0, 0)
     assert stream.read() == b"false"
 
@@ -213,23 +213,23 @@ def test_name_object(caplog):
 
     # test write
     b = BytesIO()
-    NameObject("/hello").write_to_stream(b, None)
+    NameObject("/hello").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/hello"
 
     caplog.clear()
     b = BytesIO()
-    NameObject("hello").write_to_stream(b, None)
+    NameObject("hello").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"hello"
     assert "Incorrect first char" in caplog.text
 
     caplog.clear()
     b = BytesIO()
-    NameObject("/DIJMAC+Arial Black#1").write_to_stream(b, None)
+    NameObject("/DIJMAC+Arial Black#1").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
     assert caplog.text == ""
 
     b = BytesIO()
-    NameObject("/你好世界").write_to_stream(b, None)
+    NameObject("/你好世界").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C"
     assert caplog.text == ""
 
@@ -259,7 +259,7 @@ def test_destination_fit_v():
 def test_outline_item_write_to_stream():
     stream = BytesIO()
     oi = OutlineItem(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
-    oi.write_to_stream(stream, None)
+    oi.write_to_stream(stream)
     stream.seek(0, 0)
     assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0.0 ]\n>>"
 

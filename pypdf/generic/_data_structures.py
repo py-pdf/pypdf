@@ -110,13 +110,11 @@ class ArrayObject(list, PdfObject):
         """Emulate DictionaryObject.items for a list (index, object)."""
         return enumerate(self)
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(b"[")
         for data in self:
             stream.write(b" ")
-            data.write_to_stream(stream, encryption_key)
+            data.write_to_stream(stream)
         stream.write(b" ]")
 
     def writeToStream(
@@ -337,14 +335,12 @@ class DictionaryObject(dict, PdfObject):
         deprecation_with_replacement("xmpMetadata", "xmp_metadata", "3.0.0")
         return self.xmp_metadata
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(b"<<\n")
         for key, value in list(self.items()):
-            key.write_to_stream(stream, encryption_key)
+            key.write_to_stream(stream)
             stream.write(b" ")
-            value.write_to_stream(stream, encryption_key)
+            value.write_to_stream(stream)
             stream.write(b"\n")
         stream.write(b">>")
 
@@ -782,19 +778,12 @@ class StreamObject(DictionaryObject):
     def _data(self, value: Any) -> None:
         self.__data = value
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    def write_to_stream(self, stream: StreamType) -> None:
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
-        DictionaryObject.write_to_stream(self, stream, encryption_key)
+        DictionaryObject.write_to_stream(self, stream)
         del self[SA.LENGTH]
         stream.write(b"\nstream\n")
-        data = self._data
-        if encryption_key:
-            from .._security import RC4_encrypt
-
-            data = RC4_encrypt(encryption_key, data)
-        stream.write(data)
+        stream.write(self._data)
         stream.write(b"\nendstream")
 
     @staticmethod
@@ -1106,14 +1095,14 @@ class ContentStream(DecodedStreamObject):
             if operator == b"INLINE IMAGE":
                 new_data.write(b"BI")
                 dict_text = BytesIO()
-                operands["settings"].write_to_stream(dict_text, None)
+                operands["settings"].write_to_stream(dict_text)
                 new_data.write(dict_text.getvalue()[2:-2])
                 new_data.write(b"ID ")
                 new_data.write(operands["data"])
                 new_data.write(b"EI")
             else:
                 for op in operands:
-                    op.write_to_stream(new_data, None)
+                    op.write_to_stream(new_data)
                     new_data.write(b" ")
                 new_data.write(b_(operator))
             new_data.write(b"\n")
@@ -1410,21 +1399,19 @@ class Destination(TreeObject):
         deprecation_with_replacement("getDestArray", "dest_array", "3.0.0")
         return self.dest_array
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    def write_to_stream(self, stream: StreamType) -> None:
         stream.write(b"<<\n")
         key = NameObject("/D")
-        key.write_to_stream(stream, encryption_key)
+        key.write_to_stream(stream)
         stream.write(b" ")
         value = self.dest_array
-        value.write_to_stream(stream, encryption_key)
+        value.write_to_stream(stream)
 
         key = NameObject("/S")
-        key.write_to_stream(stream, encryption_key)
+        key.write_to_stream(stream)
         stream.write(b" ")
         value_s = NameObject("/GoTo")
-        value_s.write_to_stream(stream, encryption_key)
+        value_s.write_to_stream(stream)
 
         stream.write(b"\n")
         stream.write(b">>")

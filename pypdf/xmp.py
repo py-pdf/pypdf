@@ -231,10 +231,8 @@ class XmpInformation(PdfObject):
         deprecate_with_replacement("rdfRoot", "rdf_root", "4.0.0")
         return self.rdf_root
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
-        self.stream.write_to_stream(stream, encryption_key)
+    def write_to_stream(self, stream: StreamType) -> None:
+        self.stream.write_to_stream(stream)
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]

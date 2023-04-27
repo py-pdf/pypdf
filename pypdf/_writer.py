@@ -34,10 +34,8 @@ import enum
 import hashlib
 import logging
 import re
-import struct
 import uuid
 import warnings
-from hashlib import md5
 from io import BytesIO, FileIO, IOBase
 from pathlib import Path
 from types import TracebackType
@@ -57,11 +55,10 @@ from typing import (
     cast,
 )
 
-from ._encryption import Encryption
+from ._encryption import Encryption, EncryptAlgorithm
 from ._page import PageObject, _VirtualList
 from ._page_labels import nums_clear_range, nums_insert, nums_next
 from ._reader import PdfReader
-from ._security import _alg33, _alg34, _alg35
 from ._utils import (
     StrByteType,
     StreamType,
@@ -86,10 +83,8 @@ from .constants import (
 )
 from .constants import CatalogAttributes as CA
 from .constants import Core as CO
-from .constants import EncryptionDictAttributes as ED
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
-from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .generic import (
     PAGE_FIT,
@@ -129,9 +124,8 @@ from .types import (
 
 logger = logging.getLogger(__name__)
 
-
 OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
-ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
+ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2 ** 31 - 1) - 3)
 
 
 class ObjectDeletionFlag(enum.IntFlag):
@@ -210,6 +204,9 @@ class PdfWriter:
             self.clone_document_from_reader(clone_from)
         self.fileobj = fileobj
         self.with_as_usage = False
+
+        self._encryption: Optional[Encryption] = None
+        self._encrypt_entry: Optional[DictionaryObject] = None
 
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""
@@ -1102,33 +1099,13 @@ class PdfWriter:
 
         if owner_password is None:
             owner_password = user_password
-        if use_128bit:
-            V = 2
-            rev = 3
-            keylen = int(128 / 8)
-        else:
-            V = 1
-            rev = 2
-            keylen = int(40 / 8)
-        P = permissions_flag
-        O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]  # noqa
+
+        alg = EncryptAlgorithm.RC4_128
+        if not use_128bit:
+            alg = EncryptAlgorithm.RC4_40
         self.generate_file_identifiers()
-        if rev == 2:
-            U, key = _alg34(user_password, O, P, self._ID[0])
-        else:
-            assert rev == 3
-            U, key = _alg35(user_password, rev, keylen, O, P, self._ID[0], False)  # type: ignore[arg-type]
-        encrypt = DictionaryObject()
-        encrypt[NameObject(SA.FILTER)] = NameObject("/Standard")
-        encrypt[NameObject("/V")] = NumberObject(V)
-        if V == 2:
-            encrypt[NameObject(SA.LENGTH)] = NumberObject(keylen * 8)
-        encrypt[NameObject(ED.R)] = NumberObject(rev)
-        encrypt[NameObject(ED.O)] = ByteStringObject(O)
-        encrypt[NameObject(ED.U)] = ByteStringObject(U)
-        encrypt[NameObject(ED.P)] = NumberObject(P)
-        self._encrypt = self._add_object(encrypt)
-        self._encrypt_key = key
+        self._encryption = Encryption.make(alg, permissions_flag, self._ID[0])
+        self._encrypt_entry = self._encryption.write_entry(user_password, owner_password)
 
     def write_stream(self, stream: StreamType) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
@@ -1181,23 +1158,32 @@ class PdfWriter:
         object_positions = []
         stream.write(self.pdf_header + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
-        for i, obj in enumerate(self._objects):
-            obj = self._objects[i]
-            # If the obj is None we can't write anything
+
+        def _do_encrypt_or_not(objx: PdfObject, idx: int, gx: int) -> PdfObject:
+            return objx
+
+        if self._encryption:
+            def _do_encrypt_or_not(objx: PdfObject, idx: int, gx: int) -> PdfObject:
+                assert self._encryption
+                return self._encryption.encrypt_object(objx, idx, gx)
+
+        idnum = 0
+        for obj in self._objects:
             if obj is not None:
-                idnum = i + 1
+                idnum += 1
                 object_positions.append(stream.tell())
                 stream.write(b_(str(idnum)) + b" 0 obj\n")
-                key = None
-                if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
-                    pack1 = struct.pack("<i", i + 1)[:3]
-                    pack2 = struct.pack("<i", 0)[:2]
-                    key = self._encrypt_key + pack1 + pack2
-                    assert len(key) == (len(self._encrypt_key) + 5)
-                    md5_hash = md5(key).digest()
-                    key = md5_hash[: min(16, len(self._encrypt_key) + 5)]
-                obj.write_to_stream(stream, key)
+                obj2 = _do_encrypt_or_not(obj, idnum, 0)
+                obj2.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
+        # write "/Encrypt" entry
+        if self._encrypt_entry:
+            self._add_object(self._encrypt_entry)
+            idnum += 1
+            object_positions.append(stream.tell())
+            stream.write(b_(str(idnum)) + b" 0 obj\n")
+            self._encrypt_entry.write_to_stream(stream)
+            stream.write(b"\nendobj\n")
         return object_positions
 
     def _write_xref_table(self, stream: StreamType, object_positions: List[int]) -> int:
@@ -1228,9 +1214,9 @@ class PdfWriter:
         )
         if hasattr(self, "_ID"):
             trailer[NameObject(TK.ID)] = self._ID
-        if hasattr(self, "_encrypt"):
-            trailer[NameObject(TK.ENCRYPT)] = self._encrypt
-        trailer.write_to_stream(stream, None)
+        if self._encrypt_entry:
+            trailer[NameObject(TK.ENCRYPT)] = self._encrypt_entry.indirect_reference
+        trailer.write_to_stream(stream)
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
     def add_metadata(self, infos: Dict[str, Any]) -> None:
