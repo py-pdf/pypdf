@@ -177,8 +177,11 @@ class CryptFilter:
         self.efCrypt = efCrypt
 
     def encrypt_object(self, obj: PdfObject) -> PdfObject:
-        if isinstance(obj, (ByteStringObject, TextStringObject)):
+        if isinstance(obj, ByteStringObject):
             data = self.strCrypt.encrypt(obj.original_bytes)
+            obj = ByteStringObject(data)
+        if isinstance(obj, TextStringObject):
+            data = self.strCrypt.encrypt(obj.get_encoded_bytes())
             obj = ByteStringObject(data)
         elif isinstance(obj, StreamObject):
             obj2 = StreamObject()
