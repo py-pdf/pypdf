@@ -258,6 +258,8 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
                 owner_password=owner_password,
                 algorithm=alg
             )
+            with open(pdf_file_path, "wb") as output_stream:
+                writer.write(output_stream)
         assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
         return
 
