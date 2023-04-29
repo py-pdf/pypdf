@@ -1077,7 +1077,16 @@ class PdfWriter:
                 alg = EncryptAlgorithm.RC4_40
         self.generate_file_identifiers()
         self._encryption = Encryption.make(alg, permissions_flag, self._ID[0])
-        self._encrypt_entry = self._encryption.write_entry(user_password, owner_password)
+        # in case call `encrypt` again
+        entry = self._encryption.write_entry(user_password, owner_password)
+        if self._encrypt_entry:
+            # replace old encrypt_entry
+            assert self._encrypt_entry.indirect_reference is not None
+            entry.indirect_reference = self._encrypt_entry.indirect_reference
+            self._objects[entry.indirect_reference.idnum - 1] = entry
+        else:
+            self._add_object(entry)
+        self._encrypt_entry = entry
 
     def write_stream(self, stream: StreamType) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
@@ -1131,31 +1140,15 @@ class PdfWriter:
         stream.write(self.pdf_header + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
 
-        def _do_encrypt_or_not(objx: PdfObject, idx: int, gx: int) -> PdfObject:
-            return objx
-
-        if self._encryption:
-            def _do_encrypt_or_not(objx: PdfObject, idx: int, gx: int) -> PdfObject:
-                assert self._encryption
-                return self._encryption.encrypt_object(objx, idx, gx)
-
-        idnum = 0
-        for obj in self._objects:
+        for i, obj in enumerate(self._objects):
             if obj is not None:
-                idnum += 1
+                idnum = i + 1
                 object_positions.append(stream.tell())
                 stream.write(b_(str(idnum)) + b" 0 obj\n")
-                obj2 = _do_encrypt_or_not(obj, idnum, 0)
-                obj2.write_to_stream(stream)
+                if self._encryption and obj != self._encrypt_entry:
+                    obj = self._encryption.encrypt_object(obj, idnum, 0)
+                obj.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
-        # write "/Encrypt" entry
-        if self._encrypt_entry:
-            self._add_object(self._encrypt_entry)
-            idnum += 1
-            object_positions.append(stream.tell())
-            stream.write(b_(str(idnum)) + b" 0 obj\n")
-            self._encrypt_entry.write_to_stream(stream)
-            stream.write(b"\nendobj\n")
         return object_positions
 
     def _write_xref_table(self, stream: StreamType, object_positions: List[int]) -> int:

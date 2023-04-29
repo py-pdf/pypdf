@@ -247,6 +247,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
 
     reader = PdfReader(RESOURCE_ROOT / "encryption" / "unencrypted.pdf")
     page = reader.pages[0]
+    text0 = page.extract_text()
 
     writer = PdfWriter()
     writer.add_page(page)
@@ -275,6 +276,10 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
     assert reader.is_encrypted
     assert reader.decrypt(owner_password) == PasswordType.OWNER_PASSWORD
     assert reader.decrypt(user_password) == PasswordType.USER_PASSWORD
+
+    page = reader.pages[0]
+    text1 = page.extract_text()
+    assert text0 == text1
 
 
 @pytest.mark.parametrize(
