@@ -1122,7 +1122,9 @@ class Encryption:
         )
         rc = PasswordType.OWNER_PASSWORD
         if not key:
-            key = AlgV5.verify_user_password(self.R, password, self.values.U, self.values.UE)
+            key = AlgV5.verify_user_password(
+                self.R, password, self.values.U, self.values.UE
+            )
             rc = PasswordType.USER_PASSWORD
         if not key:
             return b"", PasswordType.NOT_DECRYPTED
