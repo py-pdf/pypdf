@@ -1181,6 +1181,7 @@ class PdfWriter:
         object_positions = []
         stream.write(self.pdf_header + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
+
         for i, obj in enumerate(self._objects):
             obj = self._objects[i]
             # If the obj is None we can't write anything
