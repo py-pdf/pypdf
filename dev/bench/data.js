@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1682854036144,
+  "lastUpdate": 1682855703687,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -29302,6 +29302,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00043598661733894756",
             "extra": "mean: 84.22322072726988 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a2d1e5a7b44cf8e1c696bc41e4dfb4847c6bb2c0",
+          "message": "MAINT: Add R parameter to generate_values (#1820)\n\nPass it through to compute_U_value / compute_O_value\r\n\r\nAlso fix a bug I (Martin) just introduced in\r\ncompute_O_value by setting the token_bytes=4 and not 16.\r\n\r\nAll credit for refactoring goes to exiledkingcc\r\n\r\nCo-authored-by: exiledkingcc <exiledkingcc@gmail.com>",
+          "timestamp": "2023-04-30T13:53:54+02:00",
+          "tree_id": "b1e4647b44b68a4c4a27c45f5f8e9d66811265da",
+          "url": "https://github.com/py-pdf/pypdf/commit/a2d1e5a7b44cf8e1c696bc41e4dfb4847c6bb2c0"
+        },
+        "date": 1682855701891,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0985086582522392,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004265303020564924",
+            "extra": "mean: 910.3250961999976 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.332013758791103,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00766277845622287",
+            "extra": "mean: 88.24556881818327 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2474004789280395,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009554728483713994",
+            "extra": "mean: 4.042029362000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.431645400642356,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009724767299381675",
+            "extra": "mean: 80.43987483332889 msec\nrounds: 12"
           }
         ]
       }
