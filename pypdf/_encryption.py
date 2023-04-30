@@ -874,26 +874,41 @@ class PasswordType(IntEnum):
     OWNER_PASSWORD = 2
 
 
+class EncryptionValues:
+    O: bytes  # noqa
+    U: bytes
+    OE: bytes
+    UE: bytes
+    Perms: bytes
+
+
 class Encryption:
     def __init__(
         self,
-        algV: int,
-        algR: int,
+        V: int,
+        R: int,
+        Length: int,
+        P: int,
         entry: DictionaryObject,
+        EncryptMetadata: bool,
         first_id_entry: bytes,
         StmF: str,
         StrF: str,
         EFF: str,
+        values: Optional[EncryptionValues],
     ) -> None:
         # See TABLE 3.18 Entries common to all encryption dictionaries
-        self.algV = algV
-        self.algR = algR
+        self.V = V
+        self.R = R
+        self.Length = Length  # key_size
+        self.P = (P + 0x100000000) % 0x100000000  # maybe P < 0
         self.entry = entry
-        self.key_size = entry.get("/Length", 40)
+        self.EncryptMetadata = EncryptMetadata
         self.id1_entry = first_id_entry
         self.StmF = StmF
         self.StrF = StrF
         self.EFF = EFF
+        self.values: EncryptionValues = values if values else EncryptionValues()
 
         self._password_type = PasswordType.NOT_DECRYPTED
         self._key: Optional[bytes] = None
@@ -954,7 +969,7 @@ class Encryption:
 
         assert self._key
         key = self._key
-        n = 5 if self.algV == 1 else self.key_size // 8
+        n = 5 if self.V == 1 else self.Length // 8
         key_data = key[:n] + pack1 + pack2
         key_hash = hashlib.md5(key_data)
         rc4_key = key_hash.digest()[: min(n + 5, 16)]
@@ -994,44 +1009,35 @@ class Encryption:
         else:
             pwd = password
 
-        key, rc = self.verify_v4(pwd) if self.algV <= 4 else self.verify_v5(pwd)
+        key, rc = self.verify_v4(pwd) if self.V <= 4 else self.verify_v5(pwd)
         if rc != PasswordType.NOT_DECRYPTED:
             self._password_type = rc
             self._key = key
         return rc
 
     def verify_v4(self, password: bytes) -> Tuple[bytes, PasswordType]:
-        R = cast(int, self.entry["/R"])
-        P = cast(int, self.entry["/P"])
-        P = (P + 0x100000000) % 0x100000000  # maybe < 0
-        # make type(metadata_encrypted) == bool
-        em = self.entry.get("/EncryptMetadata")
-        metadata_encrypted = em.value if em else True
-        o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
-        u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
-
         # verify owner password first
         key = AlgV4.verify_owner_password(
             password,
-            R,
-            self.key_size,
-            o_entry,
-            u_entry,
-            P,
+            self.R,
+            self.Length,
+            self.values.O,
+            self.values.U,
+            self.P,
             self.id1_entry,
-            metadata_encrypted,
+            self.EncryptMetadata,
         )
         if key:
             return key, PasswordType.OWNER_PASSWORD
         key = AlgV4.verify_user_password(
             password,
-            R,
-            self.key_size,
-            o_entry,
-            u_entry,
-            P,
+            self.R,
+            self.Length,
+            self.values.O,
+            self.values.U,
+            self.P,
             self.id1_entry,
-            metadata_encrypted,
+            self.EncryptMetadata,
         )
         if key:
             return key, PasswordType.USER_PASSWORD
@@ -1039,28 +1045,22 @@ class Encryption:
 
     def verify_v5(self, password: bytes) -> Tuple[bytes, PasswordType]:
         # TODO: use SASLprep process
-        o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
-        u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
-        oe_entry = cast(ByteStringObject, self.entry["/OE"].get_object()).original_bytes
-        ue_entry = cast(ByteStringObject, self.entry["/UE"].get_object()).original_bytes
-
         # verify owner password first
         key = AlgV5.verify_owner_password(
-            self.algR, password, o_entry, oe_entry, u_entry
+            self.R, password, self.values.O, self.values.OE, self.values.U
         )
         rc = PasswordType.OWNER_PASSWORD
         if not key:
-            key = AlgV5.verify_user_password(self.algR, password, u_entry, ue_entry)
+            key = AlgV5.verify_user_password(
+                self.R, password, self.values.U, self.values.UE
+            )
             rc = PasswordType.USER_PASSWORD
         if not key:
             return b"", PasswordType.NOT_DECRYPTED
 
         # verify Perms
-        perms = cast(ByteStringObject, self.entry["/Perms"].get_object()).original_bytes
-        P = cast(int, self.entry["/P"])
-        P = (P + 0x100000000) % 0x100000000  # maybe < 0
-        metadata_encrypted = self.entry.get("/EncryptMetadata", True)
-        if not AlgV5.verify_perms(key, perms, P, metadata_encrypted):
+        cast(ByteStringObject, self.entry["/Perms"].get_object()).original_bytes
+        if not AlgV5.verify_perms(key, self.values.Perms, self.P, self.EncryptMetadata):
             logger_warning("ignore '/Perms' verify failed", __name__)
         return key, rc
 
@@ -1097,11 +1097,33 @@ class Encryption:
 
             allowed_methods = ("/Identity", "/V2", "/AESV2", "/AESV3")
             if StmF not in allowed_methods:
-                raise NotImplementedError("StmF Method {StmF} NOT supported!")
+                raise NotImplementedError(f"StmF Method {StmF} NOT supported!")
             if StrF not in allowed_methods:
                 raise NotImplementedError(f"StrF Method {StrF} NOT supported!")
             if EFF not in allowed_methods:
                 raise NotImplementedError(f"EFF Method {EFF} NOT supported!")
 
         R = cast(int, encryption_entry["/R"])
-        return Encryption(V, R, encryption_entry, first_id_entry, StmF, StrF, EFF)
+        Length = encryption_entry.get("/Length", 40)
+        P = cast(int, encryption_entry["/P"])
+        EncryptMetadata = encryption_entry.get("/EncryptMetadata")
+        EncryptMetadata = EncryptMetadata.value if EncryptMetadata is not None else True
+        values = EncryptionValues()
+        values.O = cast(ByteStringObject, encryption_entry["/O"]).original_bytes
+        values.U = cast(ByteStringObject, encryption_entry["/U"]).original_bytes
+        values.OE = encryption_entry.get("/OE", ByteStringObject()).original_bytes
+        values.UE = encryption_entry.get("/UE", ByteStringObject()).original_bytes
+        values.Perms = encryption_entry.get("/Perms", ByteStringObject()).original_bytes
+        return Encryption(
+            V=V,
+            R=R,
+            Length=Length,
+            P=P,
+            EncryptMetadata=EncryptMetadata,
+            entry=encryption_entry,
+            first_id_entry=first_id_entry,
+            StmF=StmF,
+            StrF=StrF,
+            EFF=EFF,
+            values=values,
+        )
