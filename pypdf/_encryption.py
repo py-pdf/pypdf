@@ -1118,11 +1118,7 @@ class Encryption:
         # TODO: use SASLprep process
         # verify owner password first
         key = AlgV5.verify_owner_password(
-            self.R,
-            password,
-            self.values.O,
-            self.values.OE,
-            self.values.U
+            self.R, password, self.values.O, self.values.OE, self.values.U
         )
         rc = PasswordType.OWNER_PASSWORD
         if not key:
