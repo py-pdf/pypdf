@@ -845,7 +845,9 @@ class AlgV5:
         random_bytes = secrets.token_bytes(16)
         val_salt = random_bytes[:8]
         key_salt = random_bytes[8:]
-        o_value = AlgV5.calculate_hash(R, password, val_salt, u_value) + val_salt + key_salt
+        o_value = (
+            AlgV5.calculate_hash(R, password, val_salt, u_value) + val_salt + key_salt
+        )
         tmp_key = AlgV5.calculate_hash(R, password, key_salt, u_value[:48])
         iv = bytes(0 for _ in range(16))
         oe_value = AES_CBC_encrypt(tmp_key, iv, key)
