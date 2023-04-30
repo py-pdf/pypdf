@@ -916,6 +916,29 @@ class EncryptionValues:
 
 
 class Encryption:
+    """
+    Collects and manages parameters for PDF document encryption and decryption.
+
+    Args:
+        V: A code specifying the algorithm to be used in encrypting and
+           decrypting the document.
+        R: The revision of the standard security handler.
+        Length: The length of the encryption key in bits.
+        P: A set of flags specifying which operations shall be permitted
+           when the document is opened with user access
+        entry: The encryption dictionary object.
+        EncryptMetadata: Whether to encrypt metadata in the document.
+        first_id_entry: The first 16 bytes of the file's original ID.
+        StmF: The name of the crypt filter that shall be used by default
+              when decrypting streams.
+        StrF: The name of the crypt filter that shall be used when decrypting
+              all strings in the document.
+        EFF: The name of the crypt filter that shall be used when
+             encrypting embedded file streams that do not have their own
+             crypt filter specifier.
+        values: Additional encryption parameters.
+    """
+
     def __init__(
         self,
         *,
@@ -1057,7 +1080,6 @@ class Encryption:
 
     def verify(self, password: Union[bytes, str]) -> PasswordType:
         pwd = self._encode_password(password)
-
         key, rc = self.verify_v4(pwd) if self.V <= 4 else self.verify_v5(pwd)
         if rc != PasswordType.NOT_DECRYPTED:
             self._password_type = rc
