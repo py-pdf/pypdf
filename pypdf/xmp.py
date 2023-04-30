@@ -232,7 +232,7 @@ class XmpInformation(PdfObject):
         return self.rdf_root
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         self.stream.write_to_stream(stream, encryption_key)
 

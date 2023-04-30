@@ -146,7 +146,7 @@ class PdfObject(PdfObjectProtocol):
         return self.get_object()
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         raise NotImplementedError
 
@@ -164,7 +164,7 @@ class NullObject(PdfObject):
         )
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(b"null")
 
@@ -218,7 +218,7 @@ class BooleanObject(PdfObject):
         return "True" if self.value else "False"
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if self.value:
             stream.write(b"true")
@@ -311,7 +311,7 @@ class IndirectObject(PdfObject):
         return not self.__eq__(other)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
@@ -397,7 +397,7 @@ class FloatObject(float, PdfObject):
         return float(self)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(self.myrepr().encode("utf8"))
 
@@ -434,7 +434,7 @@ class NumberObject(int, PdfObject):
         return int(repr(self).encode("utf8"))
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(repr(self).encode("utf8"))
 
@@ -488,7 +488,7 @@ class ByteStringObject(bytes, PdfObject):
         return self
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         bytearr = self
         if encryption_key:
@@ -556,7 +556,7 @@ class TextStringObject(str, PdfObject):
             raise Exception("no information about original bytes")
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
@@ -570,7 +570,7 @@ class TextStringObject(str, PdfObject):
 
             bytearr = RC4_encrypt(encryption_key, bytearr)
             obj = ByteStringObject(bytearr)
-            obj.write_to_stream(stream, None)
+            obj.write_to_stream(stream)
         else:
             stream.write(b"(")
             for c in bytearr:
@@ -615,7 +615,7 @@ class NameObject(str, PdfObject):
         )
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(self.renumber())  # b_(renumber(self)))
 
