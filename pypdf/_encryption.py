@@ -921,6 +921,7 @@ class Encryption:
         values: Optional[EncryptionValues],
     ) -> None:
         # See TABLE 3.18 Entries common to all encryption dictionaries
+        # use same name as keys of encryption dictionaries entries
         self.V = V
         self.R = R
         self.Length = Length  # key_size
@@ -940,6 +941,27 @@ class Encryption:
         return self._password_type != PasswordType.NOT_DECRYPTED
 
     def decrypt_object(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
+        # skip calculate key
+        if not self._is_encryption_object(obj):
+            return obj
+
+        cf = self._make_crypt_filter(idnum, generation)
+        return cf.decrypt_object(obj)
+
+    @staticmethod
+    def _is_encryption_object(obj: PdfObject) -> bool:
+        return isinstance(
+            obj,
+            (
+                ByteStringObject,
+                TextStringObject,
+                StreamObject,
+                ArrayObject,
+                DictionaryObject,
+            ),
+        )
+
+    def _make_crypt_filter(self, idnum: int, generation: int) -> CryptFilter:
         """
         Algorithm 1: Encryption of data using the RC4 or AES algorithms.
 
@@ -978,14 +1000,6 @@ class Encryption:
            16 bytes, and the initialization vector is a 16-byte random number
            that is stored as the first 16 bytes of the encrypted stream or string.
            The output is the encrypted data to be stored in the PDF file.
-
-        Args:
-            obj:
-            idnum:
-            generation:
-
-        Returns:
-            The PdfObject
         """
         pack1 = struct.pack("<i", idnum)[:3]
         pack2 = struct.pack("<i", generation)[:2]
@@ -1007,8 +1021,7 @@ class Encryption:
         StrCrypt = self._get_crypt(self.StrF, rc4_key, aes128_key, aes256_key)
         efCrypt = self._get_crypt(self.EFF, rc4_key, aes128_key, aes256_key)
 
-        cf = CryptFilter(stmCrypt, StrCrypt, efCrypt)
-        return cf.decrypt_object(obj)
+        return CryptFilter(stmCrypt, StrCrypt, efCrypt)
 
     @staticmethod
     def _get_crypt(
@@ -1023,7 +1036,8 @@ class Encryption:
         else:
             return CryptRC4(rc4_key)
 
-    def verify(self, password: Union[bytes, str]) -> PasswordType:
+    @staticmethod
+    def _encode_password(password: Union[bytes, str]) -> bytes:
         if isinstance(password, str):
             try:
                 pwd = password.encode("latin-1")
@@ -1031,7 +1045,10 @@ class Encryption:
                 pwd = password.encode("utf-8")
         else:
             pwd = password
+        return pwd
 
+    def verify(self, password: Union[bytes, str]) -> PasswordType:
+        pwd = self._encode_password(password)
         key, rc = self.verify_v4(pwd) if self.V <= 4 else self.verify_v5(pwd)
         if rc != PasswordType.NOT_DECRYPTED:
             self._password_type = rc
@@ -1082,7 +1099,6 @@ class Encryption:
             return b"", PasswordType.NOT_DECRYPTED
 
         # verify Perms
-        cast(ByteStringObject, self.entry["/Perms"].get_object()).original_bytes
         if not AlgV5.verify_perms(key, self.values.Perms, self.P, self.EncryptMetadata):
             logger_warning("ignore '/Perms' verify failed", __name__)
         return key, rc
@@ -1127,8 +1143,8 @@ class Encryption:
                 raise NotImplementedError(f"EFF Method {EFF} NOT supported!")
 
         R = cast(int, encryption_entry["/R"])
-        Length = encryption_entry.get("/Length", 40)
         P = cast(int, encryption_entry["/P"])
+        Length = encryption_entry.get("/Length", 40)
         EncryptMetadata = encryption_entry.get("/EncryptMetadata")
         EncryptMetadata = EncryptMetadata.value if EncryptMetadata is not None else True
         values = EncryptionValues()
@@ -1143,10 +1159,10 @@ class Encryption:
             Length=Length,
             P=P,
             EncryptMetadata=EncryptMetadata,
-            entry=encryption_entry,
             first_id_entry=first_id_entry,
+            values=values,
             StmF=StmF,
             StrF=StrF,
             EFF=EFF,
-            values=values,
+            entry=encryption_entry,  # can be deleted?
         )

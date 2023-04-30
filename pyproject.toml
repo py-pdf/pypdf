@@ -176,7 +176,7 @@ ignore = [
     "PTH123", # `open()` should be replaced by `Path.open()`
     "S101",  # Use of `assert` detected
     "SLF001",  # Private member accessed
-    "PD011", # Use `.to_numpy()` instead of `.values`
+    "PD011",  # Use `.to_numpy()` instead of `.values`
 ]
 
 [tool.ruff.per-file-ignores]
