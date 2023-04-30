@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1682855703687,
+  "lastUpdate": 1682875077545,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -29354,6 +29354,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009724767299381675",
             "extra": "mean: 80.43987483332889 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4504703cd7a1f2f3f90503b261a3e3d108635319",
+          "message": "MAINT: Refactor internal Encryption class (#1821)\n\n* Rename parameters of Encryption class\r\n* Rename attribute key_size to Length\r\n* Add P attribute explicitly instead of using \"entry\"\r\n* Add EncryptMetadata attribute\r\n* Add values attribute",
+          "timestamp": "2023-04-30T19:16:45+02:00",
+          "tree_id": "710b9e26ae437f727ee803e0eabeb2c50e687310",
+          "url": "https://github.com/py-pdf/pypdf/commit/4504703cd7a1f2f3f90503b261a3e3d108635319"
+        },
+        "date": 1682875075869,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0936463184670735,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010534231052237273",
+            "extra": "mean: 914.3723917999978 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.436450332496143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01165803797888213",
+            "extra": "mean: 87.43971870000138 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2372760024502487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03476583468028544",
+            "extra": "mean: 4.214501212400006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.871354523430421,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009250152724786199",
+            "extra": "mean: 84.2363858333357 msec\nrounds: 12"
           }
         ]
       }
