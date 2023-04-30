@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1682278597175,
+  "lastUpdate": 1682844760634,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -29198,6 +29198,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00032695619833223057",
             "extra": "mean: 80.48157583333548 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a6b628a7ff9fb0075dc8f0bc65e22f8ef8c27007",
+          "message": "MAINT: Prepare for adding AES enryption support (#1818)\n\nFull credit goes to exiledkingcc\r\n\r\nCo-authored-by: exiledkingcc <exiledkingcc@gmail.com>",
+          "timestamp": "2023-04-30T10:51:30+02:00",
+          "tree_id": "900bca2d42626325dd76c262276003e182c596db",
+          "url": "https://github.com/py-pdf/pypdf/commit/a6b628a7ff9fb0075dc8f0bc65e22f8ef8c27007"
+        },
+        "date": 1682844758979,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.096521891246821,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005039696085393293",
+            "extra": "mean: 911.9744967999964 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.448135952741607,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010475462689337769",
+            "extra": "mean: 87.35046509999904 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2359924771913429,
+            "unit": "iter/sec",
+            "range": "stddev: 0.047494497637289",
+            "extra": "mean: 4.237423209000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.70302000239927,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00154830740822026",
+            "extra": "mean: 85.44802963636626 msec\nrounds: 11"
           }
         ]
       }
