@@ -1117,7 +1117,13 @@ class Encryption:
     def verify_v5(self, password: bytes) -> Tuple[bytes, PasswordType]:
         # TODO: use SASLprep process
         # verify owner password first
-        key = AlgV5.verify_owner_password(self.R, password, self.values.O, self.values.OE, self.values.U)
+        key = AlgV5.verify_owner_password(
+            self.R,
+            password,
+            self.values.O,
+            self.values.OE,
+            self.values.U
+        )
         rc = PasswordType.OWNER_PASSWORD
         if not key:
             key = AlgV5.verify_user_password(self.R, password, self.values.U, self.values.UE)
