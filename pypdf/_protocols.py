@@ -33,7 +33,7 @@ class PdfObjectProtocol(Protocol):
         ...
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         ...
 

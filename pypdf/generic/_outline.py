@@ -7,7 +7,7 @@ from ._data_structures import Destination
 
 class OutlineItem(Destination):
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(b"<<\n")
         for key in [

@@ -111,7 +111,7 @@ class ArrayObject(list, PdfObject):
         return enumerate(self)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(b"[")
         for data in self:
@@ -338,7 +338,7 @@ class DictionaryObject(dict, PdfObject):
         return self.xmp_metadata
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(b"<<\n")
         for key, value in list(self.items()):
@@ -783,7 +783,7 @@ class StreamObject(DictionaryObject):
         self.__data = value
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.write_to_stream(self, stream, encryption_key)
@@ -1106,14 +1106,14 @@ class ContentStream(DecodedStreamObject):
             if operator == b"INLINE IMAGE":
                 new_data.write(b"BI")
                 dict_text = BytesIO()
-                operands["settings"].write_to_stream(dict_text, None)
+                operands["settings"].write_to_stream(dict_text)
                 new_data.write(dict_text.getvalue()[2:-2])
                 new_data.write(b"ID ")
                 new_data.write(operands["data"])
                 new_data.write(b"EI")
             else:
                 for op in operands:
-                    op.write_to_stream(new_data, None)
+                    op.write_to_stream(new_data)
                     new_data.write(b" ")
                 new_data.write(b_(operator))
             new_data.write(b"\n")
@@ -1411,7 +1411,7 @@ class Destination(TreeObject):
         return self.dest_array
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(b"<<\n")
         key = NameObject("/D")

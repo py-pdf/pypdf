@@ -1181,6 +1181,7 @@ class PdfWriter:
         object_positions = []
         stream.write(self.pdf_header + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
+
         for i, obj in enumerate(self._objects):
             obj = self._objects[i]
             # If the obj is None we can't write anything
@@ -1230,7 +1231,7 @@ class PdfWriter:
             trailer[NameObject(TK.ID)] = self._ID
         if hasattr(self, "_encrypt"):
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt
-        trailer.write_to_stream(stream, None)
+        trailer.write_to_stream(stream)
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
     def add_metadata(self, infos: Dict[str, Any]) -> None:
