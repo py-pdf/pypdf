@@ -1240,8 +1240,16 @@ class Encryption:
         values.UE = encryption_entry.get("/UE", ByteStringObject()).original_bytes
         values.Perms = encryption_entry.get("/Perms", ByteStringObject()).original_bytes
         return Encryption(
-            V=V, R=R, Length=Length, P=P, EncryptMetadata=EncryptMetadata, first_id_entry=first_id_entry,
-            values=values, StrF=StrF, StmF=StmF, EFF=EFF
+            V=V,
+            R=R,
+            Length=Length,
+            P=P,
+            EncryptMetadata=EncryptMetadata,
+            first_id_entry=first_id_entry,
+            values=values,
+            StrF=StrF,
+            StmF=StmF,
+            EFF=EFF
         )
 
     @staticmethod
