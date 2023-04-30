@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1682875077545,
+  "lastUpdate": 1682887849537,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -29406,6 +29406,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009250152724786199",
             "extra": "mean: 84.2363858333357 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dc9fb51a5a31c09b9eeb9d6f7a6c628b2649fdcc",
+          "message": "STY: Minor refactorings in _encryption.py (#1822)\n\nCo-authored-by: exiledkingcc <exiledkingcc@gmail.com>",
+          "timestamp": "2023-04-30T22:49:40+02:00",
+          "tree_id": "bf5db382ca7856a6fb3a2a30db4cc34d7dd46eec",
+          "url": "https://github.com/py-pdf/pypdf/commit/dc9fb51a5a31c09b9eeb9d6f7a6c628b2649fdcc"
+        },
+        "date": 1682887848245,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.081449281708835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006952524543835012",
+            "extra": "mean: 924.6850655999935 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.130673244603685,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011173406981536026",
+            "extra": "mean: 89.8418251999999 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23662344515658226,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03752314993562893",
+            "extra": "mean: 4.226123913199996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.62265862149731,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000328733389441374",
+            "extra": "mean: 86.03883436362801 msec\nrounds: 11"
           }
         ]
       }
