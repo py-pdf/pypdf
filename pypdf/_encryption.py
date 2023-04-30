@@ -990,7 +990,16 @@ class Encryption:
 
     @staticmethod
     def _is_encryption_object(obj: PdfObject) -> bool:
-        return isinstance(obj, (ByteStringObject, TextStringObject, StreamObject, ArrayObject, DictionaryObject))
+        return isinstance(
+            obj,
+            (
+                ByteStringObject,
+                TextStringObject,
+                StreamObject,
+                ArrayObject,
+                DictionaryObject,
+            ),
+        )
 
     def _make_crypt_filter(self, idnum: int, generation: int) -> CryptFilter:
         """
@@ -1273,6 +1282,14 @@ class Encryption:
             StmF, StrF, EFF = "/AESV3", "/AESV3", "/AESV3"
 
         return Encryption(
-            V=V, R=R, Length=Length, P=P, EncryptMetadata=True, first_id_entry=first_id_entry,
-            values=None, StrF=StrF, StmF=StmF, EFF=EFF
+            V=V,
+            R=R,
+            Length=Length,
+            P=P,
+            EncryptMetadata=True,
+            first_id_entry=first_id_entry,
+            values=None,
+            StrF=StrF,
+            StmF=StmF,
+            EFF=EFF,
         )
