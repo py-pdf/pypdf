@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1682923505230,
+  "lastUpdate": 1682923648603,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -29510,6 +29510,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006628110908199528",
             "extra": "mean: 83.02913875001157 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dde4c79b98ee67cda54e6356fcf841223d5dea80",
+          "message": "ENH: Extend cmap compatibilty to GBK_EUC_H/V (#1812)\n\nFixes #1809",
+          "timestamp": "2023-05-01T08:46:04+02:00",
+          "tree_id": "9d69d72629bc03cf1c1bdc80793f0777fcc94a06",
+          "url": "https://github.com/py-pdf/pypdf/commit/dde4c79b98ee67cda54e6356fcf841223d5dea80"
+        },
+        "date": 1682923646719,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9137333244588874,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011125534032181859",
+            "extra": "mean: 1.0944112173999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.134964507072622,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005842589940171487",
+            "extra": "mean: 98.66832777777921 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20521382291134646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038405735006609876",
+            "extra": "mean: 4.872966088800001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.962313752589226,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001061946606762283",
+            "extra": "mean: 100.37828810000065 msec\nrounds: 10"
           }
         ]
       }
