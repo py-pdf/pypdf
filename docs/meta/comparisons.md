@@ -41,7 +41,7 @@ updates. PyPDF4 has only one release from 2018.
 I (Martin Thoma, the current maintainer of pypdf and PyPDF2), hope that we can
 bring the community back to one path of development. I deprecated PyPDF2 in
 favor of pypdf already and pypdf has now more features and a cleaner interface
-than PyPDF2. See [history of pypdf](history.html).
+than PyPDF2. See [history of pypdf](history.md).
 
   [free]: https://en.wikipedia.org/wiki/Free_software
   [PyMuPDF]: https://pypi.org/project/PyMuPDF/
