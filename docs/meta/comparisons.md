@@ -38,8 +38,10 @@ As pypdf is free software, there were attempts to fork it and continue
 the development. PyPDF3 was first released in 2018 and still receives
 updates. PyPDF4 has only one release from 2018.
 
-I, Martin Thoma, the current maintainer of pypdf, hope that we can
-bring the community back to one path of development. Let's see.
+I (Martin Thoma, the current maintainer of pypdf and PyPDF2), hope that we can
+bring the community back to one path of development. I deprecated PyPDF2 in
+favor of pypdf already and pypdf has now more features and a cleaner interface
+than PyPDF2. See [history of pypdf](history.html).
 
   [free]: https://en.wikipedia.org/wiki/Free_software
   [PyMuPDF]: https://pypi.org/project/PyMuPDF/
