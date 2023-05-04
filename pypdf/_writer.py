@@ -67,6 +67,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
+    default_delete_decide_function,
     deprecate_with_replacement,
     deprecation_bookmark,
     deprecation_with_replacement,
@@ -1948,9 +1949,7 @@ class PdfWriter:
                 Default behaviour: remove all annotations
         """
         if delete_decide_function is None:
-
-            def delete_decide_function(an: ArrayObject, obj: DictionaryObject) -> bool:
-                return True
+            delete_decide_function = default_delete_decide_function
 
         page = cast(DictionaryObject, page.get_object())
         if PG.ANNOTS in page:
