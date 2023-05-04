@@ -1948,7 +1948,10 @@ class PdfWriter:
                 Default behaviour: remove all annotations
         """
         if delete_decide_function is None:
-            delete_decide_function = lambda an, obj: True
+
+            def delete_decide_function(an: ArrayObject, obj: DictionaryObject) -> bool:
+                return True
+
         page = cast(DictionaryObject, page.get_object())
         if PG.ANNOTS in page:
             i = 0
