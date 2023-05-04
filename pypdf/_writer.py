@@ -1917,20 +1917,38 @@ class PdfWriter:
                 If you want to remove all annotations, use subtypes=None.
         """
         for page in self.pages:
-            self._remove_annots_from_page(page, subtypes)
+            self.remove_annots_from_page(
+                page, lambda an, obj: cast(str, obj["/Subtype"]) in subtypes
+            )
 
-    def _remove_annots_from_page(
+    def remove_annots_from_page(
         self,
         page: Union[IndirectObject, PageObject, DictionaryObject],
-        subtypes: Optional[Iterable[str]],
+        delete_decide_function: Optional[Callable] = lambda an, obj: True,
     ) -> None:
+        """
+        Remove annotations using a custom delete_decide_function.
+
+        Args:
+            page: Page object to clean up.
+            delete_decide_function: Function that takes two arguments,
+                ArrayObject and DictionaryObject, and decides whether to remove
+                them from the page. For example:
+                    def is_google_link(an: ArrayObject, obj: DictionaryObject) -> bool:
+                        try:
+                            uri = obj['/A']['/URI']
+                            return uri.startswith('https://google.com/')
+                        except KeyError:
+                            return False
+                Default behaviour: remove all annotations
+        """
         page = cast(DictionaryObject, page.get_object())
         if PG.ANNOTS in page:
             i = 0
             while i < len(cast(ArrayObject, page[PG.ANNOTS])):
                 an = cast(ArrayObject, page[PG.ANNOTS])[i]
                 obj = cast(DictionaryObject, an.get_object())
-                if subtypes is None or cast(str, obj["/Subtype"]) in subtypes:
+                if delete_decide_function(an, obj):
                     if isinstance(an, IndirectObject):
                         self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
                     del page[PG.ANNOTS][i]  # type:ignore
@@ -1957,15 +1975,21 @@ class PdfWriter:
         assert isinstance(to_delete, ObjectDeletionFlag)
 
         if to_delete & ObjectDeletionFlag.LINKS:
-            return self._remove_annots_from_page(page, ("/Link",))
+            return self.remove_annots_from_page(
+                page, lambda an, obj: cast(str, obj["/Subtype"]) == "/Link"
+            )
         if to_delete & ObjectDeletionFlag.ATTACHMENTS:
-            return self._remove_annots_from_page(
-                page, ("/FileAttachment", "/Sound", "/Movie", "/Screen")
+            return self.remove_annots_from_page(
+                page,
+                lambda an, obj: cast(str, obj["/Subtype"])
+                in ("/FileAttachment", "/Sound", "/Movie", "/Screen"),
             )
         if to_delete & ObjectDeletionFlag.OBJECTS_3D:
-            return self._remove_annots_from_page(page, ("/3D",))
+            return self.remove_annots_from_page(
+                page, lambda an, obj: cast(str, obj["/Subtype"]) == "/3D"
+            )
         if to_delete & ObjectDeletionFlag.ALL_ANNOTATIONS:
-            return self._remove_annots_from_page(page, None)
+            return self.remove_annots_from_page(page)
 
         if to_delete & ObjectDeletionFlag.IMAGES:
             jump_operators = (
