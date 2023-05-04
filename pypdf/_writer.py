@@ -1905,7 +1905,10 @@ class PdfWriter:
         return self.remove_links()
 
     def remove_annotations(
-        self, subtypes: Optional[Union[AnnotationSubtype, Iterable[AnnotationSubtype]]]
+        self,
+        subtypes: Optional[
+            Union[AnnotationSubtype, Iterable[AnnotationSubtype]]
+        ] = None,
     ) -> None:
         """
         Remove annotations by annotation subtype.
@@ -1918,13 +1921,15 @@ class PdfWriter:
         """
         for page in self.pages:
             self.remove_annots_from_page(
-                page, lambda an, obj: cast(str, obj["/Subtype"]) in subtypes
+                page,
+                lambda an, obj: cast(str, obj["/Subtype"])
+                in cast(ArrayObject, subtypes),
             )
 
     def remove_annots_from_page(
         self,
         page: Union[IndirectObject, PageObject, DictionaryObject],
-        delete_decide_function: Optional[Callable] = lambda an, obj: True,
+        delete_decide_function: Optional[Callable] = None,
     ) -> None:
         """
         Remove annotations using a custom delete_decide_function.
@@ -1942,6 +1947,8 @@ class PdfWriter:
                             return False
                 Default behaviour: remove all annotations
         """
+        if delete_decide_function is None:
+            delete_decide_function = lambda an, obj: True
         page = cast(DictionaryObject, page.get_object())
         if PG.ANNOTS in page:
             i = 0
