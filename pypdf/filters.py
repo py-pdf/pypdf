@@ -626,7 +626,7 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # deprecated
     return decode_stream_data(stream)
 
 
-def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
+def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
 
@@ -637,7 +637,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
       x_object_obj:
 
     Returns:
-        Tuple[file extension, bytes]
+        Tuple[file extension, bytes, PIL.Image.Image]
     """
     try:
         from PIL import Image
@@ -672,8 +672,12 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     else:
         mode = "P"
     extension = None
+    alpha = None
+
     if SA.FILTER in x_object_obj:
-        if x_object_obj[SA.FILTER] == FT.FLATE_DECODE:
+        if x_object_obj[SA.FILTER] == FT.FLATE_DECODE or x_object_obj[SA.FILTER] == [
+            FT.FLATE_DECODE
+        ]:
             extension = ".png"  # mime_type = "image/png"
             if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
                 color_space, base, hival, lookup = (
@@ -713,12 +717,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                     or mode
                 )  # type: ignore
                 img = Image.frombytes(mode, size, data)
-            alpha = None
             if G.S_MASK in x_object_obj:  # add alpha channel
-                alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
+                alpha = _xobj_to_image(x_object_obj[G.S_MASK])[2]
             elif G.MASK in x_object_obj:  # add alpha channel
-                alpha = Image.frombytes("1", size, x_object_obj[G.MASK].get_data())
+                alpha = _xobj_to_image(x_object_obj[G.MASK])[2]
             if alpha is not None:
+                if alpha.mode != "L":
+                    alpha = alpha.convert("L")
                 scale = x_object_obj[G.S_MASK].get("/Decode", [0.0, 1.0])
                 if (scale[1] - scale[0]) != 1.0:
                     alpha = alpha.point(
@@ -727,7 +732,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 img.putalpha(alpha)
 
             img_byte_arr = BytesIO()
-            img.convert("RGBA").save(img_byte_arr, format="PNG")
+            img = img.convert("RGBA")
+            img.save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
         elif x_object_obj[SA.FILTER] in (
             [FT.LZW_DECODE],
@@ -742,16 +748,18 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
             else:
                 extension = ".png"  # mime_type = "image/png"
             data = b_(data)
+            img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         elif x_object_obj[SA.FILTER] == FT.DCT_DECODE:
             img = Image.open(BytesIO(data))
-            alpha = None
             if G.S_MASK in x_object_obj:  # add alpha channel
-                alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
+                alpha = _xobj_to_image(x_object_obj[G.S_MASK])[2]
             elif G.MASK in x_object_obj:  # add alpha channel
-                alpha = Image.frombytes("1", size, x_object_obj[G.MASK].get_data())
+                alpha = _xobj_to_image(x_object_obj[G.MASK])[2]
             else:
                 extension = ".jpg"  # mime_type = "image/jpeg"
             if alpha is not None:
+                if alpha.mode != "L":
+                    alpha = alpha.convert("L")
                 scale = x_object_obj[G.S_MASK].get("/Decode", [0.0, 1.0])
                 if (scale[1] - scale[0]) != 1.0:
                     alpha = alpha.point(
@@ -764,8 +772,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 data = img_byte_arr.getvalue()
         elif x_object_obj[SA.FILTER] == "/JPXDecode":
             extension = ".jp2"  # mime_type = "image/x-jp2"
+            img = Image.open(BytesIO(data), formats=("JPEG2000",))
         elif x_object_obj[SA.FILTER] == FT.CCITT_FAX_DECODE:
             extension = ".tiff"  # mime_type = "image/tiff"
+            img = Image.open(BytesIO(data), formats=("TIFF",))
     else:
         extension = ".png"  # mime_type = "image/png"
         img = Image.frombytes(mode, size, data)
@@ -773,4 +783,4 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
         img.save(img_byte_arr, format="PNG")
         data = img_byte_arr.getvalue()
 
-    return extension, data
+    return extension, data, img

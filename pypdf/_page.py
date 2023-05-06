@@ -460,10 +460,11 @@ class PageObject(DictionaryObject):
         x_object = self[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for obj in x_object:
             if x_object[obj][IA.SUBTYPE] == "/Image":
-                extension, byte_stream = _xobj_to_image(x_object[obj])
+                extension, byte_stream, img = _xobj_to_image(x_object[obj])
                 if extension is not None:
                     filename = f"{obj[1:]}{extension}"
                     images_extracted.append(File(name=filename, data=byte_stream))
+                    images_extracted[-1].image = img
         return images_extracted
 
     @property
