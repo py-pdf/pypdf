@@ -736,7 +736,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                 scale = x_object_obj[G.S_MASK].get("/Decode", [0.0, 1.0])
                 if (scale[1] - scale[0]) != 1.0:
                     alpha = alpha.point(
-                        lambda v: 255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
+                        [
+                            255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
+                            for v in range(256)
+                        ]
                     )
                 img.putalpha(alpha)
 
@@ -772,7 +775,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                 scale = x_object_obj[G.S_MASK].get("/Decode", [0.0, 1.0])
                 if (scale[1] - scale[0]) != 1.0:
                     alpha = alpha.point(
-                        lambda v: 255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
+                        [
+                            255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
+                            for v in range(256)
+                        ]
                     )
                 img.putalpha(alpha)
                 extension = ".jp2"  # mime_type = "image/jp2"
