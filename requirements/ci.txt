@@ -39,7 +39,7 @@ mypy-extensions==0.4.3
     # via mypy
 packaging==21.3
     # via pytest
-pillow==9.5.0
+pillow==8.4.0
     # via -r requirements/ci.in
 pluggy==1.0.0
     # via pytest
