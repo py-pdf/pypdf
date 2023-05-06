@@ -451,6 +451,7 @@ class GraphicsStateParameters:
     SM = "/SM"
     SA = "/SA"
     BM = "/BM"
+    MASK = "/Mask"  # 1-bit image mask stream
     S_MASK = "/SMask"  # dictionary or name, optional
     CA = "/CA"
     ca = "/ca"

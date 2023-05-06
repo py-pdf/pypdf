@@ -147,6 +147,7 @@ class FlateDecode:
                 columns = (
                     1 if decode_parms is None else decode_parms.get(LZW.COLUMNS, 1)
                 )
+                colors = 1 if decode_parms is None else decode_parms.get(LZW.COLORS, 1)
                 bits_per_component = (
                     decode_parms.get(LZW.BITS_PER_COMPONENT, DEFAULT_BITS_PER_COMPONENT)
                     if decode_parms
@@ -155,7 +156,7 @@ class FlateDecode:
 
             # PNG predictor can vary by row and so is the lead byte on each row
             rowlength = (
-                math.ceil(columns * bits_per_component / 8) + 1
+                math.ceil(columns * colors * bits_per_component / 8) + 1
             )  # number of bytes
 
             # PNG prediction:
@@ -173,6 +174,7 @@ class FlateDecode:
         if len(data) % rowlength != 0:
             raise PdfReadError("Image data is not rectangular")
         prev_rowdata = (0,) * rowlength
+        bpp = (rowlength - 1) // columns  # recomputed locally to not change params
         for row in range(len(data) // rowlength):
             rowdata = [
                 ord_(x) for x in data[(row * rowlength) : ((row + 1) * rowlength)]
@@ -182,21 +184,21 @@ class FlateDecode:
             if filter_byte == 0:
                 pass
             elif filter_byte == 1:
-                for i in range(2, rowlength):
-                    rowdata[i] = (rowdata[i] + rowdata[i - 1]) % 256
+                for i in range(bpp + 1, rowlength):
+                    rowdata[i] = (rowdata[i] + rowdata[i - bpp]) % 256
             elif filter_byte == 2:
                 for i in range(1, rowlength):
                     rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
             elif filter_byte == 3:
                 for i in range(1, rowlength):
-                    left = rowdata[i - 1] if i > 1 else 0
+                    left = rowdata[i - bpp] if i > bpp else 0
                     floor = math.floor(left + prev_rowdata[i]) / 2
                     rowdata[i] = (rowdata[i] + int(floor)) % 256
             elif filter_byte == 4:
                 for i in range(1, rowlength):
-                    left = rowdata[i - 1] if i > 1 else 0
+                    left = rowdata[i - bpp] if i > bpp else 0
                     up = prev_rowdata[i]
-                    up_left = prev_rowdata[i - 1] if i > 1 else 0
+                    up_left = prev_rowdata[i - bpp] if i > bpp else 0
                     paeth = paeth_predictor(left, up, up_left)
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
@@ -647,31 +649,36 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.get_data()  # type: ignore
+    colors = x_object_obj.get("/Colors", 1)
+    color_space: Any = x_object_obj.get("/ColorSpace", NullObject()).get_object()
     if (
         IA.COLOR_SPACE in x_object_obj
         and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: Literal["1", "RGB", "P", "L", "RGBA"] = "RGB"
+        mode: Literal["1", "RGB", "P", "L", "RGBA", "CMYK"] = "RGB"
     elif x_object_obj.get("/BitsPerComponent", 8) == 1:
         mode = "1"
+    elif colors == 3:
+        mode = "RGB"
+    elif colors == 4:
+        mode = "CMYK"
+    # elif isinstance(colorspace,ArrayObject):
+    #    logger_warning("ColorSpace Array not implemented; considered as RGB.\n"+
+    #                   "Please share your sample with pypdf dev team.", __name__)
+    #    mode = "RGB"
+    elif "Gray" in str(color_space):
+        mode = "L"
     else:
         mode = "P"
     extension = None
     if SA.FILTER in x_object_obj:
         if x_object_obj[SA.FILTER] == FT.FLATE_DECODE:
             extension = ".png"  # mime_type = "image/png"
-            color_space = None
-            if "/ColorSpace" in x_object_obj:
-                color_space = x_object_obj["/ColorSpace"].get_object()
-                if (
-                    isinstance(color_space, ArrayObject)
-                    and color_space[0] == "/Indexed"
-                ):
-                    color_space, base, hival, lookup = (
-                        value.get_object() for value in color_space
-                    )
-
+            if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
+                color_space, base, hival, lookup = (
+                    value.get_object() for value in color_space
+                )
             img = Image.frombytes(mode, size, data)
             if color_space == "/Indexed":
                 from .generic import ByteStringObject
@@ -685,7 +692,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 else:
                     img.putpalette(lookup.get_data())
                 img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
-            elif color_space is not None and color_space[0] == "/ICCBased":
+            elif (
+                not isinstance(color_space, NullObject)
+                and color_space[0] == "/ICCBased"
+            ):
                 # see Table 66 - Additional Entries Specific to an ICC Profile
                 # Stream Dictionary
                 icc_profile = color_space[1].get_object()
@@ -695,17 +705,27 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 mode_map = {
                     "/DeviceGray": "L",
                     "/DeviceRGB": "RGB",
-                    "/DeviceCMYK": "RGBA",
+                    "/DeviceCMYK": "CMYK",  # used to be "RGBA" but this is seems not in accordance withFlateEncode Spec
                 }
                 mode = (
                     mode_map.get(color_space)  # type: ignore
-                    or {1: "L", 3: "RGB", 4: "RGBA"}.get(color_components)
+                    or list(mode_map.values())[color_components]
                     or mode
                 )  # type: ignore
                 img = Image.frombytes(mode, size, data)
+            alpha = None
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
+            elif G.MASK in x_object_obj:  # add alpha channel
+                alpha = Image.frombytes("1", size, x_object_obj[G.MASK].get_data())
+            if alpha is not None:
+                scale = x_object_obj[G.S_MASK].get("/Decode", [0.0, 1.0])
+                if (scale[1] - scale[0]) != 1.0:
+                    alpha = alpha.point(
+                        lambda v: 255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
+                    )
                 img.putalpha(alpha)
+
             img_byte_arr = BytesIO()
             img.convert("RGBA").save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
@@ -723,7 +743,25 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 extension = ".png"  # mime_type = "image/png"
             data = b_(data)
         elif x_object_obj[SA.FILTER] == FT.DCT_DECODE:
-            extension = ".jpg"  # mime_type = "image/jpeg"
+            img = Image.open(BytesIO(data))
+            alpha = None
+            if G.S_MASK in x_object_obj:  # add alpha channel
+                alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
+            elif G.MASK in x_object_obj:  # add alpha channel
+                alpha = Image.frombytes("1", size, x_object_obj[G.MASK].get_data())
+            else:
+                extension = ".jpg"  # mime_type = "image/jpeg"
+            if alpha is not None:
+                scale = x_object_obj[G.S_MASK].get("/Decode", [0.0, 1.0])
+                if (scale[1] - scale[0]) != 1.0:
+                    alpha = alpha.point(
+                        lambda v: 255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
+                    )
+                img.putalpha(alpha)
+                extension = ".jp2"  # mime_type = "image/jp2"
+                img_byte_arr = BytesIO()
+                img.save(img_byte_arr, format="JPEG2000")
+                data = img_byte_arr.getvalue()
         elif x_object_obj[SA.FILTER] == "/JPXDecode":
             extension = ".jp2"  # mime_type = "image/x-jp2"
         elif x_object_obj[SA.FILTER] == FT.CCITT_FAX_DECODE:
