@@ -3,9 +3,11 @@ import string
 import sys
 from io import BytesIO
 from itertools import product as cartesian_product
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from PIL import Image
 
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError, PdfStreamError
@@ -30,6 +32,10 @@ filter_inputs = (
     string.punctuation,
     string.whitespace,  # Add more...
 )
+
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
@@ -300,3 +306,36 @@ def test_1bit_image_extraction():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for p in reader.pages:
         p.images
+
+
+@pytest.mark.enable_socket()
+def test_png_transparency_reverse():
+    """Cf issue #1599"""
+    pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
+    reader = PdfReader(pdf_path)
+    url_png = "https://user-images.githubusercontent.com/4083478/236633756-9733d2be-95ba-441c-ba9e-98cd44831d08.png"
+    name_png = "labeled-edges-center-image.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    img = Image.open(BytesIO(data.data))
+    assert ".jp2" in data.name
+    assert list(img.getdata()) == list(refimg.getdata())
+
+
+@pytest.mark.enable_socket()
+def test_iss1787():
+    """Cf issue #1787"""
+    url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
+    name = "pdf_font_garbled.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/236633985-34e98c8e-4389-4a8b-88d3-20946957452d.png"
+    name_png = "watermark1.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    img = Image.open(BytesIO(data.data))
+    assert ".png" in data.name
+    assert list(img.getdata()) == list(refimg.getdata())
