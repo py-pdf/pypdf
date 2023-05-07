@@ -737,7 +737,9 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                 if (scale[1] - scale[0]) != 1.0:
                     alpha = alpha.point(
                         [
-                            255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
+                            round(
+                                255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
+                            )
                             for v in range(256)
                         ]
                     )
@@ -776,7 +778,9 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                 if (scale[1] - scale[0]) != 1.0:
                     alpha = alpha.point(
                         [
-                            255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
+                            round(
+                                255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
+                            )
                             for v in range(256)
                         ]
                     )
