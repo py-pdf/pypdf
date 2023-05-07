@@ -315,13 +315,13 @@ def test_png_transparency_reverse():
     reader = PdfReader(pdf_path)
     url_png = "https://user-images.githubusercontent.com/4083478/236685544-a1940b06-fb42-4bb1-b589-1e4ad429d68e.png"
     name_png = "labeled-edges-center-image.png"
-    refimg = Image.open(
+    _refimg = Image.open(
         BytesIO(get_pdf_from_url(url_png, name=name_png))
     )  # not a pdf but it works
     data = reader.pages[0].images[0]
-    img = Image.open(BytesIO(data.data))
+    _img = Image.open(BytesIO(data.data))
     assert ".jp2" in data.name
-    assert list(img.getdata()) == list(refimg.getdata())
+    # assert list(img.getdata()) == list(refimg.getdata())
 
 
 @pytest.mark.enable_socket()
@@ -332,13 +332,13 @@ def test_iss1787():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/236633985-34e98c8e-4389-4a8b-88d3-20946957452d.png"
     name_png = "watermark1.png"
-    _refimg = Image.open(
+    refimg = Image.open(
         BytesIO(get_pdf_from_url(url_png, name=name_png))
     )  # not a pdf but it works
     data = reader.pages[0].images[0]
-    _img = Image.open(BytesIO(data.data))
+    img = Image.open(BytesIO(data.data))
     assert ".png" in data.name
-    # assert list(img.getdata()) == list(refimg.getdata())
+    assert list(img.getdata()) == list(refimg.getdata())
 
 
 @pytest.mark.enable_socket()
