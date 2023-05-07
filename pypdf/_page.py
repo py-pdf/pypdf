@@ -465,6 +465,9 @@ class PageObject(DictionaryObject):
                     filename = f"{obj[1:]}{extension}"
                     images_extracted.append(File(name=filename, data=byte_stream))
                     images_extracted[-1].image = img
+                    images_extracted[-1].indirect_reference = x_object[
+                        obj
+                    ].indirect_reference
         return images_extracted
 
     def _get_ids_image(
@@ -503,8 +506,12 @@ class PageObject(DictionaryObject):
         if isinstance(id, str):
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
-            f = File(name=f"{id[1:]}{extension}", data=byte_stream)
-            f.image = imgd[2]
+            f = File(
+                name=f"{id[1:]}{extension}",
+                data=byte_stream,
+                image=imgd[2],
+                indirect_reference=xobjs[id].indirect_reference,
+            )
             return f
         else:  # in a sub object
             ids = id[1:]
@@ -534,6 +541,7 @@ class PageObject(DictionaryObject):
             .name : name of the object
             .data : bytes of the object
             .image  : PIL Image Object
+            .indirect_reference : object reference
 
         For the moment, this does NOT include inline images but They will be added
         in future.
@@ -2327,7 +2335,7 @@ class _VirtualListImages(Sequence):
     def __init__(
         self,
         ids_function: Callable[[], List[Union[str, List[str]]]],
-        get_function: Callable[[Union[str, List[str]]], File],
+        get_function: Callable[[Union[str, List[str], Tuple[str]]], File],
     ) -> None:
         self.ids_function = ids_function
         self.get_function = get_function
@@ -2359,9 +2367,7 @@ class _VirtualListImages(Sequence):
             lst = [lst[x] for x in indices]
             cls = type(self)
             return cls((lambda: lst), self.get_function)
-        if isinstance(index, tuple):
-            index = list(index)
-        if isinstance(index, (str, list)):
+        if isinstance(index, (str, list, tuple)):
             return self.get_function(index)
         if not isinstance(index, int):
             raise TypeError("invalid sequence indices type")

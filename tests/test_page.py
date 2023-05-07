@@ -1130,7 +1130,14 @@ def test_image_new_property():
     reader.pages[0].images.keys()
     reader.pages[0].images.items()
     reader.pages[0].images[0].name
-    reader.pages[0].images["/I0"].data
+    reader.pages[0].images[-1].data
     reader.pages[0].images["/TPL1", "/Image5"].image
-    reader.pages[0].images[-1].name
+    assert (
+        reader.pages[0].images["/I0"].indirect_reference.get_object()
+        == reader.pages[0]["/Resources"]["/XObject"]["/I0"]
+    )
     list(reader.pages[0].images[0:2])
+    with pytest.raises(TypeError):
+        reader.pages[0].images[b"0"]
+    with pytest.raises(IndexError):
+        reader.pages[0].images[9999]

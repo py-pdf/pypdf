@@ -18,7 +18,7 @@ from pypdf.filters import (
     CCITTFaxDecode,
     FlateDecode,
 )
-from pypdf.generic import ArrayObject, DictionaryObject, NumberObject
+from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject
 
 from . import get_pdf_from_url
 
@@ -339,6 +339,12 @@ def test_iss1787():
     img = Image.open(BytesIO(data.data))
     assert ".png" in data.name
     assert list(img.getdata()) == list(refimg.getdata())
+    obj = data.indirect_reference.get_object()
+    obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
+    obj.decoded_self = None
+    with pytest.raises(PdfReadError) as exc:
+        reader.pages[0].images[0]
+    assert exc.value.args[0] == "Image data is not rectangular"
 
 
 @pytest.mark.enable_socket()
