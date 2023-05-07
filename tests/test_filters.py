@@ -313,7 +313,7 @@ def test_png_transparency_reverse():
     """Cf issue #1599"""
     pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
     reader = PdfReader(pdf_path)
-    url_png = "https://user-images.githubusercontent.com/4083478/236633756-9733d2be-95ba-441c-ba9e-98cd44831d08.png"
+    url_png = "https://user-images.githubusercontent.com/4083478/236685544-a1940b06-fb42-4bb1-b589-1e4ad429d68e.png"
     name_png = "labeled-edges-center-image.png"
     refimg = Image.open(
         BytesIO(get_pdf_from_url(url_png, name=name_png))
