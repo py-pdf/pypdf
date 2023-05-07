@@ -444,7 +444,7 @@ class PageObject(DictionaryObject):
         return PageObject.create_blank_page(pdf, width, height)
 
     @property
-    def _old_images(self) -> List[File]:
+    def _old_images(self) -> List[File]:  # deprecated
         """
         Get a list of all images of the page.
 
