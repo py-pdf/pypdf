@@ -30,7 +30,7 @@ It depends on the PDF how well this works, but we have seen an 86% file
 reduction (from 5.7 MB to 0.8 MB) within a real PDF.
 
 
-## Remove images
+## Removing Images
 
 
 ```python
@@ -75,3 +75,7 @@ with open("out.pdf", "wb") as f:
 
 Using this method, we have seen a reduction by 70% (from 11.8 MB to 3.5 MB)
 with a real PDF.
+
+## Removing Sources
+
+Often times when deleting pages, the source will persist. This will reduce the page count, while marginally reducing the file size. This issue can arise with poor pdf formatting such as when all pages are linked to the same resource.
