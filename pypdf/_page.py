@@ -468,11 +468,13 @@ class PageObject(DictionaryObject):
         return images_extracted
 
     def _get_ids_image(
-        self, obj: DictionaryObject = None, ancest: Sequence[str] = []
-    ) -> List[str]:
+        self, obj: Optional[DictionaryObject] = None, ancest: Optional[List[str]] = None
+    ) -> List[Union[str, List[str]]]:
         if obj is None:
             obj = self
-        lst = []
+        if ancest is None:
+            ancest = []
+        lst: List[Union[str, List[str]]] = []
         if RES.XOBJECT not in obj[PG.RESOURCES]:  # type: ignore
             return lst
 
@@ -485,22 +487,28 @@ class PageObject(DictionaryObject):
         return lst  # type: ignore
 
     def _get_image(
-        self, id: Union[str, Iterable[str]], obj: Optional[DictionaryObject] = None
+        self,
+        id: Union[str, List[str], Tuple[str]],
+        obj: Optional[DictionaryObject] = None,
     ) -> File:
         if obj is None:
-            obj = self
+            obj = cast(DictionaryObject, self)
         if isinstance(id, tuple):
             id = list(id)
         if isinstance(id, List) and len(id) == 1:
             id = id[0]
+        xobjs = cast(
+            DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
+        )
         if isinstance(id, str):
-            imgd = _xobj_to_image(obj[PG.RESOURCES][RES.XOBJECT][id])
+            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
             f = File(name=f"{id[1:]}{extension}", data=byte_stream)
             f.image = imgd[2]
             return f
         else:  # in a sub object
-            return self._get_image(id[1:], obj[PG.RESOURCES][RES.XOBJECT][id[0]])
+            ids = id[1:]
+            return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
     def images(self) -> List[File]:
@@ -2318,8 +2326,8 @@ def _get_fonts_walk(
 class _VirtualListImages(Sequence):
     def __init__(
         self,
-        ids_function: Callable[[], List[str]],
-        get_function: Callable[[str], File],
+        ids_function: Callable[[], List[Union[str, List[str]]]],
+        get_function: Callable[[Union[str, List[str]]], File],
     ) -> None:
         self.ids_function = ids_function
         self.get_function = get_function
@@ -2328,14 +2336,14 @@ class _VirtualListImages(Sequence):
     def __len__(self) -> int:
         return len(self.ids_function())
 
-    def keys(self) -> List[str]:
+    def keys(self) -> List[Union[str, List[str]]]:
         return self.ids_function()
 
-    def items(self) -> List[File]:
+    def items(self) -> List[Tuple[Union[str, List[str]], File]]:
         return [(x, self[x]) for x in self.ids_function()]
 
     @overload
-    def __getitem__(self, index: Union[int, str, Iterable]) -> File:
+    def __getitem__(self, index: Union[int, str, List[str]]) -> File:
         ...
 
     @overload
@@ -2343,17 +2351,18 @@ class _VirtualListImages(Sequence):
         ...
 
     def __getitem__(
-        self, index: Union[int, slice, str, Iterable]
+        self, index: Union[int, slice, str, List[str]]
     ) -> Union[File, Sequence[File]]:
+        lst = self.ids_function()
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
+            lst = [lst[x] for x in indices]
             cls = type(self)
-            return cls(indices.__len__, lambda idx: self[indices[idx]])
-        if isinstance(index, (str, Iterable)):
+            return cls((lambda: lst), self.get_function)
+        if isinstance(index, (str, list)):
             return self.get_function(index)
         if not isinstance(index, int):
             raise TypeError("invalid sequence indices type")
-        lst = self.ids_function()
         len_self = len(lst)
         if index < 0:
             # support negative indexes

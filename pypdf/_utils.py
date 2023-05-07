@@ -494,6 +494,7 @@ def _human_readable_bytes(bytes: int) -> str:
 class File:
     name: str
     data: bytes
+    image: Optional[Any] = None  # optional option to provide a direct image access
 
     def __str__(self) -> str:
         return f"File(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
