@@ -2351,7 +2351,7 @@ class _VirtualListImages(Sequence):
         ...
 
     def __getitem__(
-        self, index: Union[int, slice, str, List[str]]
+        self, index: Union[int, slice, str, List[str], Tuple[str]]
     ) -> Union[File, Sequence[File]]:
         lst = self.ids_function()
         if isinstance(index, slice):
@@ -2359,6 +2359,8 @@ class _VirtualListImages(Sequence):
             lst = [lst[x] for x in indices]
             cls = type(self)
             return cls((lambda: lst), self.get_function)
+        if isinstance(index, tuple):
+            index = list(index)
         if isinstance(index, (str, list)):
             return self.get_function(index)
         if not isinstance(index, int):
