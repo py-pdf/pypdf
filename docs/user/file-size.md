@@ -78,4 +78,6 @@ with a real PDF.
 
 ## Removing Sources
 
-Often times when deleting pages, the source will persist. This will reduce the page count, while marginally reducing the file size. This issue can arise with poor pdf formatting such as when all pages are linked to the same resource.
+Often times when deleting pages, the source will persist. This will reduce the page count, while marginally reducing the file size. Make sure to remove all refrences to objects inorder to remove the sources. 
+- Issues can arise with poor pdf formatting such as when all pages are linked to the same resource, making dropping refrences useless since there is 1 source for all pages.
+- Cropping / (adjust viewboxes) is an innefective way of reducing filesize, as the source image will remain unchanged.
