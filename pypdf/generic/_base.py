@@ -501,13 +501,6 @@ class TextStringObject(str, PdfObject):
             raise Exception("no information about original bytes")
 
     def get_encoded_bytes(self) -> bytes:
-        try:
-            bytearr = encode_pdfdocencoding(self)
-        except UnicodeEncodeError:
-            bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
-        return bytearr
-
-    def write_to_stream(self, stream: StreamType) -> None:
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
         # here for trying...
@@ -515,6 +508,10 @@ class TextStringObject(str, PdfObject):
             bytearr = encode_pdfdocencoding(self)
         except UnicodeEncodeError:
             bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
+        return bytearr
+
+    def write_to_stream(self, stream: StreamType) -> None:
+        bytearr = self.get_encoded_bytes()
 
         stream.write(b"(")
         for c in bytearr:

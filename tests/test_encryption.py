@@ -239,6 +239,7 @@ def test_alg_v5_generate_values():
         ("AES-128", True),
         ("AES-256-R5", True),
         ("AES-256", True),
+        ("ABCD", False),
     ],
 )
 def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
@@ -251,6 +252,17 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
 
     writer = PdfWriter()
     writer.add_page(page)
+
+    # test with invalid algorithm name
+    if alg == "ABCD":
+        with pytest.raises(ValueError) as exc:
+            writer.encrypt(
+                user_password=user_password,
+                owner_password=owner_password,
+                algorithm=alg
+            )
+        assert exc.value.args[0] == "algorithm 'ABCD' NOT supported"
+        return
 
     if requires_pycryptodome and not HAS_PYCRYPTODOME:
         with pytest.raises(DependencyError) as exc:
@@ -296,6 +308,9 @@ def test_pdf_encrypt_multiple(pdf_file_path, count):
     writer = PdfWriter()
     writer.add_page(page)
 
+    if count == 1:
+        owner_password = None
+
     for _i in range(count):
         writer.encrypt(
             user_password=user_password,
@@ -307,8 +322,12 @@ def test_pdf_encrypt_multiple(pdf_file_path, count):
 
     reader = PdfReader(pdf_file_path)
     assert reader.is_encrypted
-    assert reader.decrypt(owner_password) == PasswordType.OWNER_PASSWORD
-    assert reader.decrypt(user_password) == PasswordType.USER_PASSWORD
+    if owner_password is None:
+        # NOTICE: owner_password will set to user_password if it's None
+        assert reader.decrypt(user_password) == PasswordType.OWNER_PASSWORD
+    else:
+        assert reader.decrypt(owner_password) == PasswordType.OWNER_PASSWORD
+        assert reader.decrypt(user_password) == PasswordType.USER_PASSWORD
 
     page = reader.pages[0]
     text1 = page.extract_text()
