@@ -668,7 +668,7 @@ def _get_imagemode(
         "/DeviceRGB": "RGB",
         "/DeviceCMYK": "CMYK",  # used to be "RGBA" but this is seems not in accordance withFlateEncode Spec
     }
-    mode = (
+    mode: mode_str_type = (
         mode_map.get(color_space)  # type: ignore
         or list(mode_map.values())[color_components]
         or prev_mode
