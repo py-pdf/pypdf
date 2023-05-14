@@ -330,7 +330,7 @@ def test_iss1787():
     url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
     name = "pdf_font_garbled.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    url_png = "https://user-images.githubusercontent.com/4083478/236633985-34e98c8e-4389-4a8b-88d3-20946957452d.png"
+    url_png = "https://user-images.githubusercontent.com/4083478/236793172-09340aef-3440-4c8a-af85-a91cdad27d46.png"
     name_png = "watermark1.png"
     refimg = Image.open(
         BytesIO(get_pdf_from_url(url_png, name=name_png))
@@ -353,7 +353,7 @@ def test_tiff_predictor():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977609.pdf"
     name = "tika-977609.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    url_png = "https://user-images.githubusercontent.com/4083478/236646692-615117c0-0796-41fc-95ea-6f32a5fc1914.png"
+    url_png = "https://user-images.githubusercontent.com/4083478/236793166-288b4b59-dee3-49fd-a04e-410aab06199a.png"
     name_png = "tifimage.png"
     refimg = Image.open(
         BytesIO(get_pdf_from_url(url_png, name=name_png))

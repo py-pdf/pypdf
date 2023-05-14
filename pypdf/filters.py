@@ -38,14 +38,13 @@ import math
 import struct
 import zlib
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import b_, deprecate_with_replacement, ord_, paeth_predictor
 from .constants import CcittFaxDecodeParameters as CCITT
 from .constants import ColorSpaces
 from .constants import FilterTypeAbbreviations as FTA
 from .constants import FilterTypes as FT
-from .constants import GraphicsStateParameters as G
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
@@ -635,6 +634,46 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # deprecated
     return decode_stream_data(stream)
 
 
+def _get_imagemode(
+    color_space: Union[str, List[Any]], color_components: int, prev_mode: str
+) -> str:
+    """Returns the image mode not taking into account mask(transparency)"""
+    if isinstance(color_space, str):
+        pass
+    elif not isinstance(color_space, list):
+        raise PdfReadError("can not interprete colorspace", color_space)
+    elif color_space[0] == "/ICCBased":
+        icc_profile = color_space[1].get_object()
+        color_components = cast(int, icc_profile["/N"])
+        color_space = icc_profile["/Alternate"]
+    elif color_space[0] == "/Indexed":
+        color_space = color_space[1].get_object()
+        if isinstance(color_space, list):
+            color_space = color_space[1].get_object()["/Alternate"]
+        color_components = 1 if "Gray" in color_space else "palette"
+        if not (isinstance(color_space, str) and "Gray" in color_space):
+            color_space = "palette"
+    elif color_space[0] == "/Separation":
+        color_space = color_space[2]
+    elif color_space[0] == "/DeviceN":
+        color_space = color_space[2]
+        color_components = len(color_space[1])
+
+    mode_map = {
+        "1bit": "1",  # 0 will be used for 1 bit
+        "/DeviceGray": "L",
+        "palette": "P",  # reserved for color_components alignment
+        "/DeviceRGB": "RGB",
+        "/DeviceCMYK": "CMYK",  # used to be "RGBA" but this is seems not in accordance withFlateEncode Spec
+    }
+    mode = (
+        mode_map.get(color_space)  # type: ignore
+        or list(mode_map.values())[color_components]
+        or prev_mode
+    )  # type: ignore
+    return mode
+
+
 def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
@@ -666,20 +705,22 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: Literal["1", "RGB", "P", "L", "RGBA", "CMYK"] = "RGB"
-    elif x_object_obj.get("/BitsPerComponent", 8) == 1:
-        mode = "1"
-    elif colors == 3:
-        mode = "RGB"
-    elif colors == 4:
-        mode = "CMYK"
-    # elif isinstance(colorspace,ArrayObject):
-    #    logger_warning("ColorSpace Array not implemented; considered as RGB.\n"+
-    #                   "Please share your sample with pypdf dev team.", __name__)
-    #    mode = "RGB"
-    elif "Gray" in str(color_space):
-        mode = "L"
+    if x_object_obj.get("/BitsPerComponent", 8) == 1:
+        mode = _get_imagemode("1bit", 0, "")
     else:
-        mode = "P"
+        mode = _get_imagemode(
+            color_space,
+            2
+            if (
+                colors == 1
+                and (
+                    not isinstance(color_space, NullObject)
+                    and "Gray" not in color_space
+                )
+            )
+            else colors,
+            "",
+        )
     extension = None
     alpha = None
 
@@ -711,44 +752,12 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             ):
                 # see Table 66 - Additional Entries Specific to an ICC Profile
                 # Stream Dictionary
-                icc_profile = color_space[1].get_object()
-                color_components = cast(int, icc_profile["/N"])
-                alternate_colorspace = icc_profile["/Alternate"]
-                color_space = alternate_colorspace
-                mode_map = {
-                    "/DeviceGray": "L",
-                    "/DeviceRGB": "RGB",
-                    "/DeviceCMYK": "CMYK",  # used to be "RGBA" but this is seems not in accordance withFlateEncode Spec
-                }
-                mode = (
-                    mode_map.get(color_space)  # type: ignore
-                    or list(mode_map.values())[color_components]
-                    or mode
-                )  # type: ignore
-                img = Image.frombytes(mode, size, data)
-            if G.S_MASK in x_object_obj:  # add alpha channel
-                alpha = _xobj_to_image(x_object_obj[G.S_MASK])[2]
-            elif G.MASK in x_object_obj:  # add alpha channel
-                alpha = _xobj_to_image(x_object_obj[G.MASK])[2]
-            if alpha is not None:
-                if alpha.mode != "L":
-                    alpha = alpha.convert("L")
-                scale = x_object_obj[G.S_MASK].get("/Decode", [0.0, 1.0])
-                if (scale[1] - scale[0]) != 1.0:
-                    alpha = alpha.point(
-                        [
-                            round(
-                                255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
-                            )
-                            for v in range(256)
-                        ]
-                    )
-                img.putalpha(alpha)
-
-            img_byte_arr = BytesIO()
-            img = img.convert("RGBA")
-            img.save(img_byte_arr, format="PNG")
-            data = img_byte_arr.getvalue()
+                mode = _get_imagemode(color_space, colors, mode)
+                extension = ".png"
+                img = Image.frombytes(
+                    mode, size, data
+                )  # reloaded as mode may have change
+            image_format = "PNG"
         elif x_object_obj[SA.FILTER] in (
             [FT.LZW_DECODE],
             [FT.ASCII_85_DECODE],
@@ -759,47 +768,73 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             # extension
             if x_object_obj[SA.FILTER] in [[FT.LZW_DECODE], [FT.CCITT_FAX_DECODE]]:
                 extension = ".tiff"  # mime_type = "image/tiff"
+                image_format = "TIFF"
             else:
                 extension = ".png"  # mime_type = "image/png"
+                image_format = "PNG"
             data = b_(data)
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         elif x_object_obj[SA.FILTER] == FT.DCT_DECODE:
+            extension = ".jpg"
             img = Image.open(BytesIO(data))
-            if G.S_MASK in x_object_obj:  # add alpha channel
-                alpha = _xobj_to_image(x_object_obj[G.S_MASK])[2]
-            elif G.MASK in x_object_obj:  # add alpha channel
-                alpha = _xobj_to_image(x_object_obj[G.MASK])[2]
-            else:
-                extension = ".jpg"  # mime_type = "image/jpeg"
-            if alpha is not None:
-                if alpha.mode != "L":
-                    alpha = alpha.convert("L")
-                scale = x_object_obj[G.S_MASK].get("/Decode", [0.0, 1.0])
-                if (scale[1] - scale[0]) != 1.0:
-                    alpha = alpha.point(
-                        [
-                            round(
-                                255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0])
-                            )
-                            for v in range(256)
-                        ]
-                    )
-                img.putalpha(alpha)
-                extension = ".jp2"  # mime_type = "image/jp2"
-                img_byte_arr = BytesIO()
-                img.save(img_byte_arr, format="JPEG2000")
-                data = img_byte_arr.getvalue()
+            image_format = "JPEG"
         elif x_object_obj[SA.FILTER] == "/JPXDecode":
             extension = ".jp2"  # mime_type = "image/x-jp2"
-            img = Image.open(BytesIO(data), formats=("JPEG2000",))
+            img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
+            mode = _get_imagemode(color_space, colors, mode)
+            # we need to convert to the good mode
+            try:
+                img = Image.frombytes(mode, img1.size, img1.tobytes())
+            except OSError:
+                img = Image.frombytes(mode, img1.size, img1.tobytes())
+            # for CMYK conversion :
+            # https://stackoverflow.com/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
+            # not implemented for the moment as I need to get properly the ICC
+            if img.mode == "CMYK":
+                img = img.convert("RGB")
+            image_format = "JPEG2000"
         elif x_object_obj[SA.FILTER] == FT.CCITT_FAX_DECODE:
             extension = ".tiff"  # mime_type = "image/tiff"
             img = Image.open(BytesIO(data), formats=("TIFF",))
+            image_format = "TIFF"
     else:
         extension = ".png"  # mime_type = "image/png"
         img = Image.frombytes(mode, size, data)
+        image_format = "PNG"
+
+    if IA.S_MASK in x_object_obj:  # add alpha channel
+        alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
+        # TODO : implement mask
+        if alpha.mode != "L":
+            alpha = alpha.convert("L")
+        scale = x_object_obj[IA.S_MASK].get("/Decode", [0.0, 1.0])
+        if (scale[1] - scale[0]) != 1.0:
+            alpha = alpha.point(
+                [
+                    round(255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0]))
+                    for v in range(256)
+                ]
+            )
+        if img.mode == "P":
+            img = img.convert("RGB")
+        img.putalpha(alpha)
+        ##        try:
+        ##            img.putalpha(alpha)
+        ##        except OSError:
+        ##            img.putalpha(alpha)
+        if "JPEG" in image_format:
+            extension = ".jp2"
+            image_format = "JPEG2000"
+        else:
+            extension = ".png"
+            image_format = "PNG"
+
+    img_byte_arr = BytesIO()
+    try:
+        img.save(img_byte_arr, format=image_format)
+    except OSError:  # odd error
         img_byte_arr = BytesIO()
-        img.save(img_byte_arr, format="PNG")
-        data = img_byte_arr.getvalue()
+        img.save(img_byte_arr, format=image_format)
+    data = img_byte_arr.getvalue()
 
     return extension, data, img
