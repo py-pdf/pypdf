@@ -38,7 +38,7 @@ import math
 import struct
 import zlib
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import b_, deprecate_with_replacement, ord_, paeth_predictor
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -56,13 +56,12 @@ from .generic import (
     NullObject,
 )
 
-if TYPE_CHECKING:
-    try:
-        from typing import Literal  # type: ignore[attr-defined]
-    except ImportError:
-        # PEP 586 introduced typing.Literal with Python 3.8
-        # For older Python versions, the backport typing_extensions is necessary:
-        from typing_extensions import Literal  # type: ignore[misc, assignment]
+try:
+    from typing import Literal  # type: ignore[attr-defined]
+except ImportError:
+    # PEP 586 introduced typing.Literal with Python 3.8
+    # For older Python versions, the backport typing_extensions is necessary:
+    from typing_extensions import Literal  # type: ignore[misc, assignment]
 
 
 def decompress(data: bytes) -> bytes:
@@ -634,9 +633,12 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # deprecated
     return decode_stream_data(stream)
 
 
+mode_str_type = Literal["", "1", "RGB", "P", "L", "RGBA", "CMYK"]
+
+
 def _get_imagemode(
-    color_space: Union[str, List[Any]], color_components: int, prev_mode: str
-) -> str:
+    color_space: Union[str, List[Any]], color_components: int, prev_mode: mode_str_type
+) -> mode_str_type:
     """Returns the image mode not taking into account mask(transparency)"""
     if isinstance(color_space, str):
         pass
@@ -650,7 +652,7 @@ def _get_imagemode(
         color_space = color_space[1].get_object()
         if isinstance(color_space, list):
             color_space = color_space[1].get_object()["/Alternate"]
-        color_components = 1 if "Gray" in color_space else "palette"
+        color_components = 1 if "Gray" in color_space else 2
         if not (isinstance(color_space, str) and "Gray" in color_space):
             color_space = "palette"
     elif color_space[0] == "/Separation":
@@ -704,7 +706,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: Literal["1", "RGB", "P", "L", "RGBA", "CMYK"] = "RGB"
+        mode: mode_str_type = "RGB"
     if x_object_obj.get("/BitsPerComponent", 8) == 1:
         mode = _get_imagemode("1bit", 0, "")
     else:
