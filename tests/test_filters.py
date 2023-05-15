@@ -362,3 +362,19 @@ def test_tiff_predictor():
     img = Image.open(BytesIO(data.data))
     assert ".png" in data.name
     assert list(img.getdata()) == list(refimg.getdata())
+
+
+@pytest.mark.enable_socket()
+def test_cmyk():
+    """Decode cmyk with transparency"""
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf"
+    name = "tika-972174.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/238288207-b77dd38c-34b4-4f4f-810a-bf9db7ca0414.png"
+    name_png = "tika-972174_p0-im0.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    assert ".jp2" in data.name
+    assert list(data.image.getdata()) == list(refimg.getdata())
