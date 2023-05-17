@@ -11,7 +11,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
 from pypdf.constants import PageAttributes as PG
-from pypdf.errors import DeprecationError, PdfReadWarning
+from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -1126,23 +1126,37 @@ def test_pages_printing():
 def test_del_pages():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
-    reader = PdfWriter(clone_from=BytesIO(get_pdf_from_url(url, name=name)))
-    ll = len(reader.pages)
-    pp = reader.pages[1].indirect_reference
-    del reader.pages[1]
-    assert len(reader.pages) == ll - 1
-    pages = reader._pages.get_object()
+    writer = PdfWriter(clone_from=BytesIO(get_pdf_from_url(url, name=name)))
+    ll = len(writer.pages)
+    pp = writer.pages[1].indirect_reference
+    del writer.pages[1]
+    assert len(writer.pages) == ll - 1
+    pages = writer._pages.get_object()
     assert pages["/Count"] == ll - 1
     assert len(pages["/Kids"]) == ll - 1
     assert pp not in pages["/Kids"]
-    del reader.pages[-2]
+    del writer.pages[-2]
     with pytest.raises(TypeError):
-        del reader.pages["aa"]
+        del writer.pages["aa"]
     with pytest.raises(IndexError):
-        del reader.pages[9999]
-    pp = tuple(p.indirect_reference for p in reader.pages[3:5])
-    ll = len(reader.pages)
-    del reader.pages[3:5]
-    assert len(reader.pages) == ll - 2
+        del writer.pages[9999]
+    pp = tuple(p.indirect_reference for p in writer.pages[3:5])
+    ll = len(writer.pages)
+    del writer.pages[3:5]
+    assert len(writer.pages) == ll - 2
     for p in pp:
         assert p not in pages["/Kids"]
+    # del whole arborescence
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # error case
+    pp = reader.pages[2]
+    i = pp["/Parent"].get_object()["/Kids"].index(pp.indirect_reference)
+    del pp["/Parent"].get_object()["/Kids"][i]
+    with pytest.raises(PdfReadError):
+        del reader.pages[2]
+    # reader is corrupted we have to reload it
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    del reader.pages[:]
+    assert len(reader.pages) == 0
+    assert len(reader.trailer["/Root"]["/Pages"]["/Kids"]) == 0
+    assert len(reader.flattened_pages) == 0

@@ -67,7 +67,7 @@ from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
-from .errors import PageSizeNotDefinedError, PdfReadWarning
+from .errors import PageSizeNotDefinedError, PdfReadError
 from .filters import _xobj_to_image
 from .generic import (
     ArrayObject,
@@ -2215,16 +2215,17 @@ class _VirtualList(Sequence):
             index = len_self + index
         if index < 0 or index >= len_self:
             raise IndexError("index out of range")
-        pg_ind = self[index].indirect_reference
-        if pg_ind is None:
-            raise IndexError("Can not get pointer to page")
-        ind = pg_ind
-        parent = cast(DictionaryObject, pg_ind.get_object()).get("/Parent", None)
+        ind = self[index].indirect_reference
+        parent = cast(DictionaryObject, ind.get_object()).get("/Parent", None)
         while parent is not None:
             parent = cast(DictionaryObject, parent.get_object())
-            i = parent["/Kids"].index(ind)
-            if i >= 0:
+            try:
+                i = parent["/Kids"].index(ind)
                 del parent["/Kids"][i]
+                try:
+                    del ind.pdf.flattened_pages[index]  # case of page in a Reader
+                except AttributeError:
+                    pass
                 if "/Count" in parent:
                     parent[NameObject("/Count")] = NumberObject(parent["/Count"] - 1)
                 if len(parent["/Kids"]) == 0:
@@ -2233,8 +2234,8 @@ class _VirtualList(Sequence):
                     parent = cast(DictionaryObject, parent.get("/Parent", None))
                 else:
                     parent = None
-            else:
-                warnings.warn("Page Not Found in Page Tree", PdfReadWarning)
+            except ValueError:  # from index
+                raise PdfReadError(f"Page Not Found in Page Tree {ind}")
 
     def __iter__(self) -> Iterator[PageObject]:
         for i in range(len(self)):
