@@ -1127,16 +1127,22 @@ def test_del_pages():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
     reader = PdfWriter(clone_from=BytesIO(get_pdf_from_url(url, name=name)))
-    l = len(reader.pages)
+    ll = len(reader.pages)
     pp = reader.pages[1].indirect_reference
     del reader.pages[1]
-    assert len(reader.pages) == l - 1
+    assert len(reader.pages) == ll - 1
     pages = reader._pages.get_object()
-    assert pages["/Count"] == l - 1
-    assert len(pages["/Kids"]) == l - 1
-    assert pp not in pages
+    assert pages["/Count"] == ll - 1
+    assert len(pages["/Kids"]) == ll - 1
+    assert pp not in pages["/Kids"]
     del reader.pages[-2]
     with pytest.raises(TypeError):
         del reader.pages["aa"]
     with pytest.raises(IndexError):
         del reader.pages[9999]
+    pp = tuple(p.indirect_reference for p in reader.pages[3:5])
+    ll = len(reader.pages)
+    del reader.pages[3:5]
+    assert len(reader.pages) == ll - 2
+    for p in pp:
+        assert p not in pages["/Kids"]

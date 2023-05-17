@@ -2198,7 +2198,15 @@ class _VirtualList(Sequence):
             raise IndexError("sequence index out of range")
         return self.get_function(index)
 
-    def __delitem__(self, index: int) -> None:
+    def __delitem__(self, index: Union[int, slice]) -> None:
+        if isinstance(index, slice):
+            r = list(range(*index.indices(len(self))))
+            # pages have to be deleted from last to first
+            r.sort()
+            r.reverse()
+            for p in r:
+                del self[p]
+            return
         if not isinstance(index, int):
             raise TypeError("index must be integers")
         len_self = len(self)
