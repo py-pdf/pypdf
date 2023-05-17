@@ -2213,8 +2213,7 @@ class _VirtualList(Sequence):
         ind = pg_ind
         parent = cast(DictionaryObject, pg_ind.get_object()).get("/Parent", None)
         while parent is not None:
-            assert isinstance(DictionaryObject, parent)
-            parent = parent.get_object()
+            parent = cast(DictionaryObject, parent.get_object())
             i = parent["/Kids"].index(ind)
             if i >= 0:
                 del parent["/Kids"][i]

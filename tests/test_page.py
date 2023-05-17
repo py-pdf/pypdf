@@ -102,7 +102,13 @@ def test_page_operations(pdf_path, password):
     assert abs(t.ctm[4] + 100) < 0.01
     assert abs(t.ctm[5] - 50) < 0.01
 
-    transformation = Transformation().rotate(90).scale(1).translate(1, 1).transform(Transformation((1, 0, 0, -1, 0, 0)))
+    transformation = (
+        Transformation()
+        .rotate(90)
+        .scale(1)
+        .translate(1, 1)
+        .transform(Transformation((1, 0, 0, -1, 0, 0)))
+    )
     page.add_transformation(transformation, expand=True)
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
@@ -178,7 +184,10 @@ def test_transformation_equivalence2():
     w.append(reader_add)
     height = reader_add.pages[0].mediabox.height
     w.pages[0].merge_transformed_page(
-        reader_base.pages[0], Transformation().transform(Transformation((1, 0, 0, -1, 0, height))), False, False
+        reader_base.pages[0],
+        Transformation().transform(Transformation((1, 0, 0, -1, 0, height))),
+        False,
+        False,
     )
     # No special assert: Visual check the page has been  increased and all is visible (box+graph)
 
@@ -1111,3 +1120,23 @@ def test_pages_printing():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     assert str(reader.pages) == "[PageObject(0)]"
+
+
+@pytest.mark.enable_socket()
+def test_del_pages():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
+    name = "tika-941536.pdf"
+    reader = PdfWriter(clone_from=BytesIO(get_pdf_from_url(url, name=name)))
+    l = len(reader.pages)
+    pp = reader.pages[1].indirect_reference
+    del reader.pages[1]
+    assert len(reader.pages) == l - 1
+    pages = reader._pages.get_object()
+    assert pages["/Count"] == l - 1
+    assert len(pages["/Kids"]) == l - 1
+    assert pp not in pages
+    del reader.pages[-2]
+    with pytest.raises(TypeError):
+        del reader.pages["aa"]
+    with pytest.raises(IndexError):
+        del reader.pages[9999]
