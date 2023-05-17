@@ -2216,6 +2216,7 @@ class _VirtualList(Sequence):
         if index < 0 or index >= len_self:
             raise IndexError("index out of range")
         ind = self[index].indirect_reference
+        assert ind is not None
         parent = cast(DictionaryObject, ind.get_object()).get("/Parent", None)
         while parent is not None:
             parent = cast(DictionaryObject, parent.get_object())
@@ -2223,6 +2224,7 @@ class _VirtualList(Sequence):
                 i = parent["/Kids"].index(ind)
                 del parent["/Kids"][i]
                 try:
+                    assert ind is not None
                     del ind.pdf.flattened_pages[index]  # case of page in a Reader
                 except AttributeError:
                     pass
