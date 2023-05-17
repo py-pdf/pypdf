@@ -67,7 +67,7 @@ from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
-from .errors import PageSizeNotDefinedError, PyPdfError
+from .errors import PageSizeNotDefinedError, PdfReadWarning
 from .filters import _xobj_to_image
 from .generic import (
     ArrayObject,
@@ -2198,7 +2198,7 @@ class _VirtualList(Sequence):
             raise IndexError("sequence index out of range")
         return self.get_function(index)
 
-    def __delitem__(self, index: int) -> PageObject:
+    def __delitem__(self, index: int) -> None:
         if not isinstance(index, int):
             raise TypeError("index must be integers")
         len_self = len(self)
@@ -2208,9 +2208,12 @@ class _VirtualList(Sequence):
         if index < 0 or index >= len_self:
             raise IndexError("index out of range")
         pg_ind = self[index].indirect_reference
+        if pg_ind is None:
+            raise IndexError("Can not get pointer to page")
         ind = pg_ind
-        parent = cast(DictionaryObject, pg_ind.get_object().get("/Parent", None))
+        parent = cast(DictionaryObject, pg_ind.get_object()).get("/Parent", None)
         while parent is not None:
+            assert isinstance(DictionaryObject, parent)
             parent = parent.get_object()
             i = parent["/Kids"].index(ind)
             if i >= 0:
@@ -2224,7 +2227,7 @@ class _VirtualList(Sequence):
                 else:
                     parent = None
             else:
-                warnings.warn("Page Not Found in Page Tree", PyPdfError)
+                warnings.warn("Page Not Found in Page Tree", PdfReadWarning)
 
     def __iter__(self) -> Iterator[PageObject]:
         for i in range(len(self)):
