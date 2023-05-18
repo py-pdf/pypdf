@@ -102,7 +102,13 @@ def test_page_operations(pdf_path, password):
     assert abs(t.ctm[4] + 100) < 0.01
     assert abs(t.ctm[5] - 50) < 0.01
 
-    transformation = Transformation().rotate(90).scale(1).translate(1, 1).transform(Transformation((1, 0, 0, -1, 0, 0)))
+    transformation = (
+        Transformation()
+        .rotate(90)
+        .scale(1)
+        .translate(1, 1)
+        .transform(Transformation((1, 0, 0, -1, 0, 0)))
+    )
     page.add_transformation(transformation, expand=True)
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
@@ -178,7 +184,10 @@ def test_transformation_equivalence2():
     w.append(reader_add)
     height = reader_add.pages[0].mediabox.height
     w.pages[0].merge_transformed_page(
-        reader_base.pages[0], Transformation().transform(Transformation((1, 0, 0, -1, 0, height))), False, False
+        reader_base.pages[0],
+        Transformation().transform(Transformation((1, 0, 0, -1, 0, height))),
+        False,
+        False,
     )
     # No special assert: Visual check the page has been  increased and all is visible (box+graph)
 
@@ -255,7 +264,9 @@ def test_compress_content_streams(pdf_path, password):
     writer = PdfWriter()
     if password:
         reader.decrypt(password)
+    assert isinstance(reader.pages[0].get_contents(), ContentStream)
     writer.clone_document_from_reader(reader)
+    assert isinstance(writer.pages[0].get_contents(), ContentStream)
     for page in writer.pages:
         page.compress_content_streams()
 
