@@ -508,9 +508,11 @@ class PageObject(DictionaryObject):
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
             )
         except KeyError:
-            xobjs = None
+            if id[0] != "~":
+                raise
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
+                assert self.inline_images is not None
                 return self.inline_images[id]
 
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
@@ -563,8 +565,10 @@ class PageObject(DictionaryObject):
         entries will be identified as ~1~
         """
         content = self.get_contents()
+        if content is None:
+            return {}
         imgs_data = []
-        img_data = {}
+        img_data: Dict[str, Any] = {}
         for param, ope in content.operations:
             if ope == b"INLINE IMAGE":
                 imgs_data.append(
@@ -615,7 +619,7 @@ class PageObject(DictionaryObject):
                             res = cast(DictionaryObject, self["/Resources"])[
                                 "/ColorSpace"
                             ]
-                            v = res[v]
+                            v = cast(DictionaryObject, res)[v]
                         except KeyError:  # for res and v
                             raise PdfReadError(
                                 f"Can not find resource entry {v} for {k}"
@@ -884,7 +888,7 @@ class PageObject(DictionaryObject):
         """
         if PG.CONTENTS in self:
             try:
-                pdf = self.indirect_object.pdf
+                pdf = cast(IndirectObject, self.indirect_reference).pdf
             except AttributeError:
                 pdf = None
             return ContentStream(self[PG.CONTENTS].get_object(), pdf)
