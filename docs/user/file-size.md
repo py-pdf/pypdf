@@ -78,7 +78,9 @@ with a real PDF.
 
 ## Removing Sources
 
-When a page is deleting (removed from page list), the source will persist(the data may be still be used somewhere else). This will reduce the page count, while not reducing the file size. 
+When a page is removed from page list, the source will remain in the PDF file. The data may be still be used somewhere else.
+
+Hence just removing a page from the page list will reduce the page count, but not the file size. 
 To not include the code, the pages should not be added using `PdfWriter.append()` selecting the good pages only
 - Issues can arise with poor pdf formatting such as when all pages are linked to the same resource, making dropping refrences useless since there is 1 source for all pages.
 - Cropping / (adjust viewboxes) is an innefective way of reducing filesize, as the external part of the source image will still be present.
