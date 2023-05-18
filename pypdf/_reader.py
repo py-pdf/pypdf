@@ -1190,7 +1190,6 @@ class PdfReader:
         t = "/Pages"
         if PA.TYPE in pages:
             t = pages[PA.TYPE]  # type: ignore
-
         # if pdf has no type, considered as a page if /Kids is missing
         if PA.KIDS not in pages:
             t = "/Page"
