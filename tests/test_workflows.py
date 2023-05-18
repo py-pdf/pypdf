@@ -11,6 +11,7 @@ from pathlib import Path
 from re import findall
 
 import pytest
+from PIL import Image
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
@@ -934,3 +935,15 @@ def test_fields_returning_stream():
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data, strict=False)
     assert "BtchIssQATit_time" in reader.get_form_text_fields()["TimeStampData"]
+
+
+@pytest.mark.enable_socket()
+def test_inline_images():
+    """This problem was reported in #424"""
+    url = "https://arxiv.org/pdf/2201.00151.pdf"
+    name = "2201.00151.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/28e8b87c-be2c-40d9-9c86-15c7819021bf"
+    name = "inline4.png"
+    img_ref = Image.open(BytesIO(get_pdf_from_url(url, name=name)))
+    assert list(reader.pages[1].images[4].image.getdata()) == list(img_ref.getdata())
