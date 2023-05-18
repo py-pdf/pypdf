@@ -785,7 +785,11 @@ class PageObject(DictionaryObject):
             ``/Contents`` is optional, as described in PDF Reference  7.7.3.3
         """
         if PG.CONTENTS in self:
-            return self[PG.CONTENTS].get_object()  # type: ignore
+            try:
+                pdf = self.indirect_object.pdf
+            except AttributeError:
+                pdf = None
+            return ContentStream(self[PG.CONTENTS].get_object(), pdf)
         else:
             return None
 
