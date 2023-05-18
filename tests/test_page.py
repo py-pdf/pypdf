@@ -332,7 +332,10 @@ def test_page_scale():
 
 def test_add_transformation_on_page_without_contents():
     page = PageObject()
+    assert page.get_contents() is None
     page.add_transformation(Transformation())
+    page[NameObject("/Contents")] = ContentStream(None, None)
+    assert isinstance(page.get_contents(), ContentStream)
 
 
 @pytest.mark.enable_socket()
