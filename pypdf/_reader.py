@@ -1191,8 +1191,8 @@ class PdfReader:
         if PA.TYPE in pages:
             t = pages[PA.TYPE]  # type: ignore
 
-        # if pdf has no type, contents present means it is a page
-        if PG.CONTENTS in pages:
+        # if pdf has no type, considered as a page if /Kids is missing
+        if PA.KIDS not in pages:
             t = "/Page"
 
         if t == "/Pages":
