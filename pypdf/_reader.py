@@ -1191,6 +1191,10 @@ class PdfReader:
         if PA.TYPE in pages:
             t = pages[PA.TYPE]  # type: ignore
 
+        # if pdf has no type, contents present means it is a page
+        if PG.CONTENTS in pages:
+            t = "/Page"
+
         if t == "/Pages":
             for attr in inheritable_page_attributes:
                 if attr in pages:
