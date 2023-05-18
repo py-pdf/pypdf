@@ -704,7 +704,7 @@ class PageObject(DictionaryObject):
         """
         if PG.CONTENTS in self:
             try:
-                pdf = self.indirect_object.pdf
+                pdf = cast(IndirectObject, self.indirect_reference).pdf
             except AttributeError:
                 pdf = None
             return ContentStream(self[PG.CONTENTS].get_object(), pdf)
