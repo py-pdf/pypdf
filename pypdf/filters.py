@@ -666,7 +666,7 @@ def _get_imagemode(
         "/DeviceGray": "L",
         "palette": "P",  # reserved for color_components alignment
         "/DeviceRGB": "RGB",
-        "/DeviceCMYK": "CMYK",  # used to be "RGBA" but this is seems not in accordance withFlateEncode Spec
+        "/DeviceCMYK": "CMYK",
     }
     mode: mode_str_type = (
         mode_map.get(color_space)  # type: ignore
