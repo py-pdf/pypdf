@@ -1124,7 +1124,7 @@ def test_pages_printing():
     assert str(reader.pages) == "[PageObject(0)]"
     assert len(reader.pages[0].images) == 0
     with pytest.raises(KeyError):
-        reader.pages[0]["~1~"]
+        reader.pages[0].images["~1~"]
 
 
 @pytest.mark.enable_socket()
@@ -1149,3 +1149,4 @@ def test_image_new_property():
     # just for test coverage:
     with pytest.raises(KeyError):
         reader.pages[0]._get_image(["test"], reader.pages[0])
+    assert list(PageObject(None, None).images) == []
