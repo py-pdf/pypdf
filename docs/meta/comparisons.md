@@ -50,7 +50,7 @@ than PyPDF2. See [history of pypdf](history.md).
   [QPDF]: https://github.com/qpdf/qpdf
 
 
-## pdfminer.six
+## pdfminer.six and pdfplumber
 
 [`pdfminer.six`](https://pypi.org/project/pdfminer.six/) is capable of
 extracting the [font size](https://stackoverflow.com/a/69962459/562769)
