@@ -481,8 +481,10 @@ class PageObject(DictionaryObject):
         if ancest is None:
             ancest = []
         lst: List[Union[str, List[str]]] = []
-        if PG.RESOURCES not in obj or RES.XOBJECT not in obj[PG.RESOURCES]:
-            return lst + list(self.inline_images.keys())
+        if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
+            DictionaryObject, obj[PG.RESOURCES]
+        ):
+            return list(self.inline_images.keys())
 
         x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
