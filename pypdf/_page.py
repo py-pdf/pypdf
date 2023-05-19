@@ -508,11 +508,12 @@ class PageObject(DictionaryObject):
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
             )
         except KeyError:
-            if id[0] != "~":
+            if not (id[0] == "~" and id[-1] == "~"):
                 raise
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
-                assert self.inline_images is not None
+                if self.inline_images is None:
+                    raise KeyError("no inline image can be found")
                 return self.inline_images[id]
 
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
@@ -568,13 +569,18 @@ class PageObject(DictionaryObject):
         if content is None:
             return {}
         imgs_data = []
-        img_data: Dict[str, Any] = {}
         for param, ope in content.operations:
             if ope == b"INLINE IMAGE":
                 imgs_data.append(
                     {"settings": param["settings"], "__streamdata__": param["data"]}
                 )
-            if ope == b"BI":
+            elif ope in (b"BI", b"EI", b"ID"):
+                raise PdfReadError(
+                    f"{ope} operator met whereas not expected,"
+                    "please share usecase with pypdf dev team"
+                )
+            """backup
+            elif ope == b"BI":
                 img_data["settings"] = {}
             elif ope == b"EI":
                 imgs_data.append(img_data)
@@ -588,6 +594,7 @@ class PageObject(DictionaryObject):
                 img_data["__streamdata__"] += param
             elif "settings" in img_data:
                 img_data["settings"][ope.decode()] = param
+            """
         files = {}
         for num, ii in enumerate(imgs_data):
             init = {

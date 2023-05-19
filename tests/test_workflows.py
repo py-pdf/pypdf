@@ -947,3 +947,9 @@ def test_inline_images():
     name = "inline4.png"
     img_ref = Image.open(BytesIO(get_pdf_from_url(url, name=name)))
     assert list(reader.pages[1].images[4].image.getdata()) == list(img_ref.getdata())
+    with pytest.raises(KeyError):
+        reader.pages[0].images["~999~"]
+    del reader.pages[1]["/Resources"]["/ColorSpace"]["/R124"]
+    reader.pages[1].inline_images = None  # to force recalculation
+    with pytest.raises(PdfReadError):
+        reader.pages[1].images["~1~"]

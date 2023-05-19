@@ -1122,6 +1122,9 @@ def test_pages_printing():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     assert str(reader.pages) == "[PageObject(0)]"
+    assert len(reader.pages[0].images) == 0
+    with pytest.raises(KeyError):
+        reader.pages[0]["~1~"]
 
 
 @pytest.mark.enable_socket()
@@ -1143,3 +1146,6 @@ def test_image_new_property():
         reader.pages[0].images[b"0"]
     with pytest.raises(IndexError):
         reader.pages[0].images[9999]
+    # just for test coverage:
+    with pytest.raises(KeyError):
+        reader.pages[0]._get_image(["test"], reader.pages[0])
