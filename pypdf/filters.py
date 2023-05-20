@@ -749,5 +749,5 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     try:  # temporary try/except until other fixes of images
         img = Image.open(BytesIO(data))
     except Exception:
-        img = None
+        img = None  # type: ignore
     return extension, data, img
