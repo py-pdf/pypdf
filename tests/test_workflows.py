@@ -11,12 +11,12 @@ from pathlib import Path
 from re import findall
 
 import pytest
-from PIL import ImageChops
+from PIL import Image, ImageChops
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning
-from pypdf.generic import ContentStream, read_object
+from pypdf.generic import ContentStream, NameObject, read_object
 
 from . import get_pdf_from_url, normalize_warnings
 
@@ -964,4 +964,33 @@ def test_replace_image(tmp_path):
     i.indirect_reference = None  # to behave like an inline image
     with pytest.raises(TypeError) as exc:
         i.replace(reader.pages[0].images[0].image)
+    assert exc.value.args[0] == "Can not update an inline image"
+
+
+@pytest.mark.enable_socket()
+def test_inline_images():
+    """This problem was reported in #424"""
+    url = "https://arxiv.org/pdf/2201.00151.pdf"
+    name = "2201.00151.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url2 = "https://github.com/py-pdf/pypdf/assets/4083478/28e8b87c-be2c-40d9-9c86-15c7819021bf"
+    name2 = "inline4.png"
+    img_ref = Image.open(BytesIO(get_pdf_from_url(url2, name=name2)))
+    # in the assert below, the convert will have to be remove with other fixes
+    assert list(reader.pages[1].images[4].image.convert("RGB").getdata()) == list(
+        img_ref.getdata()
+    )
+    with pytest.raises(KeyError):
+        reader.pages[0].images["~999~"]
+    del reader.pages[1]["/Resources"]["/ColorSpace"]["/R124"]
+    reader.pages[1].inline_images = None  # to force recalculation
+    with pytest.raises(PdfReadError):
+        reader.pages[1].images["~1~"]
+    co = reader.pages[0].get_contents()
+    co.operations.append(([], b"BI"))
+    reader.pages[0][NameObject("/Contents")] = co
+    reader.pages[0].images.keys()
+
+    with pytest.raises(TypeError) as exc:
+        reader.pages[0].images[0].replace(img_ref)
     assert exc.value.args[0] == "Can not update an inline image"
