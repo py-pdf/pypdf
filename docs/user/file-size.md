@@ -80,7 +80,7 @@ with a real PDF.
 
 When a page is removed from the page list, its content will still be present in the PDF file. This means that the data may still be used elsewhere.
 
-Simply removing a page from the page list will reduce the page count but not the file size. In order to exclude the content completely, the pages should not be added to the PDF using the PdfWriter.append() function. Instead, only the desired pages should be selected for inclusion.
+Simply removing a page from the page list will reduce the page count but not the file size. In order to exclude the content completely, the pages should not be added to the PDF using the PdfWriter.append() function. Instead, only the desired pages should be selected for inclusion (note: [PR #1843](https://github.com/py-pdf/pypdf/pull/1843) will add a page deletion feature).
 
 There can be issues with poor PDF formatting, such as when all pages are linked to the same resource. In such cases, dropping references to specific pages becomes useless because there is only one source for all pages.
 
