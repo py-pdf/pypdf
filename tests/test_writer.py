@@ -192,7 +192,9 @@ def writer_operate(writer: PdfWriter) -> None:
 
     writer.remove_images()
 
-    writer.add_metadata({"author": "Martin Thoma"})
+    writer.add_metadata(reader.metadata)
+    writer.add_metadata({"/Author": "Martin Thoma"})
+    writer.add_metadata({"/MyCustom": 1234})
 
     writer.add_attachment("foobar.gif", b"foobarcontent")
 
