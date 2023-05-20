@@ -34,7 +34,7 @@ import logging
 import warnings
 from codecs import getencoder
 from dataclasses import dataclass
-from io import DEFAULT_BUFFER_SIZE
+from io import DEFAULT_BUFFER_SIZE, BytesIO
 from os import SEEK_CUR
 from typing import (
     IO,
@@ -45,6 +45,7 @@ from typing import (
     Pattern,
     Tuple,
     Union,
+    cast,
     overload,
 )
 
@@ -508,3 +509,42 @@ class FileImage(File):
 
     image: Optional[Any] = None  # optional ; direct PIL image access
     indirect_reference: Optional[IndirectObject] = None  # optional ; link to PdfObject
+
+    def replace(self, new_image: Any, **kwargs: Any) -> None:
+        """
+        replace the Image with a new PIL image
+        This is not allowed for inline image or image in a PdfReader
+        kwargs allows to pass parameters to `Image.Image.save()` such as quality
+        """
+        from PIL import Image
+
+        from ._reader import PdfReader
+
+        # to prevent circular import
+        from .filters import _xobj_to_image
+        from .generic import DictionaryObject, PdfObject
+
+        if self.indirect_reference is None:
+            raise TypeError("Can not update an inline image")
+        if not hasattr(self.indirect_reference.pdf, "_id_translated"):
+            raise TypeError("Can not update an image not belonging to a PdfWriter")
+        if not isinstance(new_image, Image.Image):
+            raise TypeError("new_image shall be a PIL Image")
+        b = BytesIO()
+        new_image.save(b, "PDF", **kwargs)
+        reader = PdfReader(b)
+        assert reader.pages[0].images[0].indirect_reference is not None
+        self.indirect_reference.pdf._objects[self.indirect_reference.idnum - 1] = (
+            reader.pages[0].images[0].indirect_reference.get_object()
+        )
+        cast(
+            PdfObject, self.indirect_reference.get_object()
+        ).indirect_reference = self.indirect_reference
+        # change the object attributes
+        extension, byte_stream, img = _xobj_to_image(
+            cast(DictionaryObject, self.indirect_reference.get_object())
+        )
+        assert extension is not None
+        self.name = self.name[: self.name.rfind(".")] + extension
+        self.data = byte_stream
+        self.image = img

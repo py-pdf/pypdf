@@ -540,11 +540,18 @@ class PageObject(DictionaryObject):
 
         images.keys() and image.items() work
 
-        The File object properties are:
-            .name : name of the object
-            .data : bytes of the object
-            .image  : PIL Image Object
-            .indirect_reference : object reference
+        The FileImage object:
+        properties:
+            `.name` : name of the object
+            `.data` : bytes of the object
+            `.image`  : PIL Image Object
+            `.indirect_reference` : object reference
+        methods:
+            `.replace(new_image: PIL.Image.Image, **kwargs)` :
+                replace the image in the pdf with the new image
+                applying the saving parameters indicated (such as quality)
+            e.g. :
+            `reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)`
         """
         return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
 

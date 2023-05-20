@@ -11,6 +11,7 @@ from pathlib import Path
 from re import findall
 
 import pytest
+from PIL import ImageChops
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
@@ -934,3 +935,21 @@ def test_fields_returning_stream():
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data, strict=False)
     assert "BtchIssQATit_time" in reader.get_form_text_fields()["TimeStampData"]
+
+
+def test_replace_image(tmp_path):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "labeled-edges-center-image.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "jpeg.pdf")
+    img = reader.pages[0].images[0].image
+    writer.pages[0].images[0].replace(img)
+    b = BytesIO()
+    writer.write(b)
+    reader2 = PdfReader(b)
+    # very simple image distance evaluation
+    diff = ImageChops.difference(reader2.pages[0].images[0].image, img)
+    d = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
+    assert d < 1
+    writer.pages[0].images[0].replace(img, quality=20)
+    diff = ImageChops.difference(writer.pages[0].images[0].image, img)
+    d1 = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
+    assert d1 > d
