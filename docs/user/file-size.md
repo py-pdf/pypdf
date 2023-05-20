@@ -78,9 +78,10 @@ with a real PDF.
 
 ## Removing Sources
 
-When a page is removed from page list, the source will remain in the PDF file. The data may be still be used somewhere else.
+When a page is removed from the page list, its content will still be present in the PDF file. This means that the data may still be used elsewhere.
 
-Hence just removing a page from the page list will reduce the page count, but not the file size. 
-To not include the code, the pages should not be added using `PdfWriter.append()` selecting the good pages only
-- Issues can arise with poor PDF formatting such as when all pages are linked to the same resource, making dropping references useless since there is one source for all pages.
-- Cropping is an ineffective way of reducing the file size, as the external part of the source image will still be present. Just the viewboxes are adjusted.
+Simply removing a page from the page list will reduce the page count but not the file size. In order to exclude the content completely, the pages should not be added to the PDF using the PdfWriter.append() function. Instead, only the desired pages should be selected for inclusion.
+
+There can be issues with poor PDF formatting, such as when all pages are linked to the same resource. In such cases, dropping references to specific pages becomes useless because there is only one source for all pages.
+
+Cropping is an ineffective method for reducing the file size because it only adjusts the viewboxes and not the external parts of the source image. Therefore, the content that is no longer visible will still be present in the PDF.
