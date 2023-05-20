@@ -953,3 +953,15 @@ def test_replace_image(tmp_path):
     diff = ImageChops.difference(writer.pages[0].images[0].image, img)
     d1 = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
     assert d1 > d
+    # extra tests for coverage
+    with pytest.raises(TypeError) as exc:
+        reader.pages[0].images[0].replace(img)
+    assert exc.value.args[0] == "Can not update an image not belonging to a PdfWriter"
+    i = writer.pages[0].images[0]
+    with pytest.raises(TypeError) as exc:
+        i.replace(reader.pages[0].images[0])  # missing .image
+    assert exc.value.args[0] == "new_image shall be a PIL Image"
+    i.indirect_reference = None  # to behave like an inline image
+    with pytest.raises(TypeError) as exc:
+        i.replace(reader.pages[0].images[0].image)
+    assert exc.value.args[0] == "Can not update an inline image"
