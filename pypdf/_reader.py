@@ -1187,9 +1187,13 @@ class PdfReader:
             pages = catalog["/Pages"].get_object()  # type: ignore
             self.flattened_pages = []
 
-        t = "/Pages"
         if PA.TYPE in pages:
             t = pages[PA.TYPE]  # type: ignore
+        # if pdf has no type, considered as a page if /Kids is missing
+        elif PA.KIDS not in pages:
+            t = "/Page"
+        else:
+            t = "/Pages"
 
         if t == "/Pages":
             for attr in inheritable_page_attributes:

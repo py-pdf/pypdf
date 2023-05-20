@@ -332,7 +332,10 @@ def test_page_scale():
 
 def test_add_transformation_on_page_without_contents():
     page = PageObject()
+    assert page.get_contents() is None
     page.add_transformation(Transformation())
+    page[NameObject("/Contents")] = ContentStream(None, None)
+    assert isinstance(page.get_contents(), ContentStream)
 
 
 @pytest.mark.enable_socket()
@@ -1125,6 +1128,13 @@ def test_pages_printing():
     assert len(reader.pages[0].images) == 0
     with pytest.raises(KeyError):
         reader.pages[0].images["~1~"]
+
+
+def test_pdf_pages_missing_type():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    del reader.trailer["/Root"]["/Pages"]["/Kids"][0].get_object()["/Type"]
+    reader.pages[0]
 
 
 @pytest.mark.enable_socket()

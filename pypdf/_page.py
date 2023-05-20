@@ -837,13 +837,11 @@ class PageObject(DictionaryObject):
         stream = ContentStream(stream, pdf)
         for operands, _operator in stream.operations:
             if isinstance(operands, list):
-                for i in range(len(operands)):
-                    op = operands[i]
+                for i, op in enumerate(operands):
                     if isinstance(op, NameObject):
                         operands[i] = rename.get(op, op)
             elif isinstance(operands, dict):
-                for i in operands:
-                    op = operands[i]
+                for i, op in operands.items():
                     if isinstance(op, NameObject):
                         operands[i] = rename.get(op, op)
             else:
@@ -1018,7 +1016,6 @@ class PageObject(DictionaryObject):
 
         page2content = page2.get_contents()
         if page2content is not None:
-            page2content = ContentStream(page2content, self.pdf)
             rect = getattr(page2, MERGE_CROP_BOX)
             page2content.operations.insert(
                 0,
@@ -1154,7 +1151,6 @@ class PageObject(DictionaryObject):
 
         page2content = page2.get_contents()
         if page2content is not None:
-            page2content = ContentStream(page2content, self.pdf)
             rect = getattr(page2, MERGE_CROP_BOX)
             page2content.operations.insert(
                 0,
@@ -1690,12 +1686,7 @@ class PageObject(DictionaryObject):
         """
         content = self.get_contents()
         if content is not None:
-            content_obj: Any
-            if not isinstance(content, ContentStream):
-                content_obj = ContentStream(content, self.pdf)
-            else:
-                content_obj = content
-            content_obj = content_obj.flate_encode()
+            content_obj = content.flate_encode()
             try:
                 content.indirect_reference.pdf._objects[  # type: ignore
                     content.indirect_reference.idnum - 1  # type: ignore
