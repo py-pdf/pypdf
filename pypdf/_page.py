@@ -57,6 +57,7 @@ from ._text_extraction import (
 from ._utils import (
     CompressedTransformationMatrix,
     File,
+    FileImage,
     TransformationMatrixType,
     deprecation_no_replacement,
     deprecation_with_replacement,
@@ -340,7 +341,6 @@ class PageObject(DictionaryObject):
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
-        self.inline_images: Optional[Dict[str, File]] = None
         if indirect_ref is not None:  # deprecated
             warnings.warn(
                 (
@@ -465,17 +465,11 @@ class PageObject(DictionaryObject):
                 if extension is not None:
                     filename = f"{obj[1:]}{extension}"
                     images_extracted.append(File(name=filename, data=byte_stream))
-                    images_extracted[-1].image = img
-                    images_extracted[-1].indirect_reference = x_object[
-                        obj
-                    ].indirect_reference
         return images_extracted
 
     def _get_ids_image(
         self, obj: Optional[DictionaryObject] = None, ancest: Optional[List[str]] = None
     ) -> List[Union[str, List[str]]]:
-        if self.inline_images is None:
-            self.inline_images = self._get_inline_images()
         if obj is None:
             obj = self
         if ancest is None:
@@ -484,7 +478,7 @@ class PageObject(DictionaryObject):
         if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
             DictionaryObject, obj[PG.RESOURCES]
         ):
-            return list(self.inline_images.keys())
+            return lst
 
         x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
@@ -492,13 +486,13 @@ class PageObject(DictionaryObject):
                 lst.append(o if len(ancest) == 0 else ancest + [o])
             else:  # is a form with possible images inside
                 lst.extend(self._get_ids_image(x_object[o], ancest + [o]))
-        return lst + list(self.inline_images.keys())
+        return lst
 
     def _get_image(
         self,
         id: Union[str, List[str], Tuple[str]],
         obj: Optional[DictionaryObject] = None,
-    ) -> File:
+    ) -> FileImage:
         if obj is None:
             obj = cast(DictionaryObject, self)
         if isinstance(id, tuple):
@@ -510,20 +504,15 @@ class PageObject(DictionaryObject):
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
             )
         except KeyError:
-            if not (id[0] == "~" and id[-1] == "~"):
-                raise
+            raise
         if isinstance(id, str):
-            if id[0] == "~" and id[-1] == "~":
-                if self.inline_images is None:
-                    raise KeyError("no inline image can be found")
-                return self.inline_images[id]
-
-            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
-            extension, byte_stream = imgd[:2]
-            f = File(
+            extension, byte_stream, img = _xobj_to_image(
+                cast(DictionaryObject, xobjs[id])
+            )
+            f = FileImage(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
-                image=imgd[2],
+                image=img,
                 indirect_reference=xobjs[id].indirect_reference,
             )
             return f
@@ -532,7 +521,7 @@ class PageObject(DictionaryObject):
             return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
-    def images(self) -> List[File]:
+    def images(self) -> List[FileImage]:
         """
             Read-only property that emulates a list of files
             Get a list of all images of the page.
@@ -556,9 +545,6 @@ class PageObject(DictionaryObject):
             .data : bytes of the object
             .image  : PIL Image Object
             .indirect_reference : object reference
-
-        Inline Image are now extracted : they are names ~0~, ~1~, ...
-        Note that the indirect_reference is None in these cases.
         """
         return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
 
@@ -2344,7 +2330,7 @@ class _VirtualListImages(Sequence):
     def __init__(
         self,
         ids_function: Callable[[], List[Union[str, List[str]]]],
-        get_function: Callable[[Union[str, List[str], Tuple[str]]], File],
+        get_function: Callable[[Union[str, List[str], Tuple[str]]], FileImage],
     ) -> None:
         self.ids_function = ids_function
         self.get_function = get_function
@@ -2356,20 +2342,20 @@ class _VirtualListImages(Sequence):
     def keys(self) -> List[Union[str, List[str]]]:
         return self.ids_function()
 
-    def items(self) -> List[Tuple[Union[str, List[str]], File]]:
+    def items(self) -> List[Tuple[Union[str, List[str]], FileImage]]:
         return [(x, self[x]) for x in self.ids_function()]
 
     @overload
-    def __getitem__(self, index: Union[int, str, List[str]]) -> File:
+    def __getitem__(self, index: Union[int, str, List[str]]) -> FileImage:
         ...
 
     @overload
-    def __getitem__(self, index: slice) -> Sequence[File]:
+    def __getitem__(self, index: slice) -> Sequence[FileImage]:
         ...
 
     def __getitem__(
         self, index: Union[int, slice, str, List[str], Tuple[str]]
-    ) -> Union[File, Sequence[File]]:
+    ) -> Union[FileImage, Sequence[FileImage]]:
         lst = self.ids_function()
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
@@ -2388,7 +2374,7 @@ class _VirtualListImages(Sequence):
             raise IndexError("sequence index out of range")
         return self.get_function(lst[index])
 
-    def __iter__(self) -> Iterator[File]:
+    def __iter__(self) -> Iterator[FileImage]:
         for i in range(len(self)):
             yield self[i]
 

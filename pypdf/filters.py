@@ -157,8 +157,17 @@ class FlateDecode:
                 math.ceil(columns * bits_per_component / 8) + 1
             )  # number of bytes
 
+            # TIFF prediction:
+            if predictor == 2:
+                rowlength -= 1  # remove the predictor byte
+                bpp = rowlength // columns
+                str_data = bytearray(str_data)
+                for i in range(len(str_data)):
+                    if i % rowlength >= bpp:
+                        str_data[i] = (str_data[i] + str_data[i - bpp]) % 256
+                str_data = bytes(str_data)
             # PNG prediction:
-            if 10 <= predictor <= 15:
+            elif 10 <= predictor <= 15:
                 str_data = FlateDecode._decode_png_prediction(str_data, columns, rowlength)  # type: ignore
             else:
                 # unsupported predictor
@@ -735,6 +744,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         img = Image.frombytes(mode, size, data)
         img_byte_arr = BytesIO()
         img.save(img_byte_arr, format="PNG")
-    data = img_byte_arr.getvalue()
+        data = img_byte_arr.getvalue()
 
+    try:  # temporary try/except until other fixes of images
+        img = Image.open(BytesIO(data))
+    except Exception:
+        img = None
     return extension, data, img
