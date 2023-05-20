@@ -38,7 +38,7 @@ import math
 import struct
 import zlib
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 from ._utils import b_, deprecate_with_replacement, ord_, paeth_predictor
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -57,13 +57,12 @@ from .generic import (
     NullObject,
 )
 
-if TYPE_CHECKING:
-    try:
-        from typing import Literal  # type: ignore[attr-defined]
-    except ImportError:
-        # PEP 586 introduced typing.Literal with Python 3.8
-        # For older Python versions, the backport typing_extensions is necessary:
-        from typing_extensions import Literal  # type: ignore[misc, assignment]
+try:
+    from typing import Literal, TypeAlias  # type: ignore[attr-defined]
+except ImportError:
+    # PEP 586 introduced typing.Literal with Python 3.8
+    # For older Python versions, the backport typing_extensions is necessary:
+    from typing_extensions import Literal, TypeAlias  # type: ignore[misc, assignment]
 
 
 def decompress(data: bytes) -> bytes:
@@ -624,7 +623,10 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # deprecated
     return decode_stream_data(stream)
 
 
-def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
+mode_str_type: TypeAlias = Literal["", "1", "RGB", "P", "L", "RGBA", "CMYK"]
+
+
+def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
 
@@ -635,7 +637,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
       x_object_obj:
 
     Returns:
-        Tuple[file extension, bytes]
+        Tuple[file extension, bytes, PIL.Image.Image]
     """
     try:
         from PIL import Image
@@ -733,6 +735,6 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
         img = Image.frombytes(mode, size, data)
         img_byte_arr = BytesIO()
         img.save(img_byte_arr, format="PNG")
-        data = img_byte_arr.getvalue()
+    data = img_byte_arr.getvalue()
 
-    return extension, data
+    return extension, data, img
