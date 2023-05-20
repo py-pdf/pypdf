@@ -60,7 +60,7 @@ extracting the [font size](https://stackoverflow.com/a/69962459/562769)
 
 The `pdfplumber` community is active in answering questions and the library is maintained as of May 2023.
 
-## pdfrw / pdfminer
+## pdfrw / pdfrw2
 
 I don't have experience with any of those libraries. Please add a
 comparison if you know pypdf and [`pdfrw`](https://pypi.org/project/pdfrw/)!
