@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1684559068224,
+  "lastUpdate": 1684559595932,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -29770,6 +29770,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0003965048956560795",
             "extra": "mean: 86.81999199999976 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "29e7eb94499985c5ffa9cce7c3690ddccec6bb03",
+          "message": "ROB: Handle missing /Type entry in Page tree (#1845)\n\n/Type is mandatory in page tree nodes according to the the PDF specification. Hence dealing with such files is a robustness improvements.\r\nAcrobat Reader can open such PDF documents as well.\r\n\r\nFixes #500",
+          "timestamp": "2023-05-20T07:12:05+02:00",
+          "tree_id": "d32bb22a24cd9df0d7fda1012a166ea748c4ffd4",
+          "url": "https://github.com/py-pdf/pypdf/commit/29e7eb94499985c5ffa9cce7c3690ddccec6bb03"
+        },
+        "date": 1684559594179,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1015627830224566,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004719829032379998",
+            "extra": "mean: 907.8011852000031 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.504863266771672,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010509330655729156",
+            "extra": "mean: 86.91976399999456 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24055668682017692,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03948564502944753",
+            "extra": "mean: 4.1570243306000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.725189160772072,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010986696297687383",
+            "extra": "mean: 85.28647054544857 msec\nrounds: 11"
           }
         ]
       }
