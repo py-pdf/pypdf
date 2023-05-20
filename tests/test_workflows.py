@@ -994,3 +994,12 @@ def test_inline_images():
     with pytest.raises(TypeError) as exc:
         reader.pages[0].images[0].replace(img_ref)
     assert exc.value.args[0] == "Can not update an inline image"
+
+    _a = {}
+    for x, y in reader.pages[2].images[0:-2].items():
+        _a[x] = y
+    with pytest.raises(KeyError) as exc:
+        reader.pages[2]._get_image(("test",))
+    reader.pages[2].inline_images = None
+    with pytest.raises(KeyError) as exc:
+        reader.pages[2]._get_image(("~1~",))
