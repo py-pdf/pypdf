@@ -644,13 +644,11 @@ class PageObject(DictionaryObject):
         stream = ContentStream(stream, pdf)
         for operands, _operator in stream.operations:
             if isinstance(operands, list):
-                for i in range(len(operands)):
-                    op = operands[i]
+                for i, op in enumerate(operands):
                     if isinstance(op, NameObject):
                         operands[i] = rename.get(op, op)
             elif isinstance(operands, dict):
-                for i in operands:
-                    op = operands[i]
+                for i, op in operands.items():
                     if isinstance(op, NameObject):
                         operands[i] = rename.get(op, op)
             else:
