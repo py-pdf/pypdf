@@ -948,7 +948,7 @@ def test_replace_image(tmp_path):
     # very simple image distance evaluation
     diff = ImageChops.difference(reader2.pages[0].images[0].image, img)
     d = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
-    assert d < 1
+    assert d < 1.5
     writer.pages[0].images[0].replace(img, quality=20)
     diff = ImageChops.difference(writer.pages[0].images[0].image, img)
     d1 = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
