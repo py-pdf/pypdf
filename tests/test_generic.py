@@ -1156,3 +1156,15 @@ def test_iss1615_1673():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
+
+
+@pytest.mark.enable_socket()
+def test_destination_withoutzoom():
+    """Cf issue #1832"""
+    url = (
+        "https://raw.githubusercontent.com/xrkk/tmpppppp/main/"
+        "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
+    )
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.outline

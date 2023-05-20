@@ -109,20 +109,28 @@ def test_ascii_charset():
 
 @pytest.mark.enable_socket()
 @pytest.mark.parametrize(
-    ("url", "name", "page_nb"),
+    ("url", "name", "page_nb", "within_text"),
     [
         (
             "https://github.com/py-pdf/pypdf/files/9667138/cmap1370.pdf",
             "cmap1370.pdf",
             0,
+            "",
         ),
-        ("https://github.com/py-pdf/pypdf/files/9712729/02voc.pdf", "02voc.pdf", 2),
+        (
+            "https://github.com/py-pdf/pypdf/files/9712729/02voc.pdf",
+            "02voc.pdf",
+            2,
+            "Document delineation and character sequence decoding",
+        ),
     ],
     ids=["iss1370", "iss1379"],
 )
-def test_text_extraction_of_specific_pages(url: str, name: str, page_nb: int):
+def test_text_extraction_of_specific_pages(
+    url: str, name: str, page_nb: int, within_text
+):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    reader.pages[page_nb].extract_text()
+    assert within_text in reader.pages[page_nb].extract_text()
 
 
 @pytest.mark.enable_socket()
@@ -135,9 +143,28 @@ def test_iss1533():
 
 
 @pytest.mark.enable_socket()
-def test_ucs2(caplog):
-    url = "https://github.com/py-pdf/pypdf/files/11190189/pdf_font_garbled.pdf"
-    name = "tstUCS2.pdf"
+@pytest.mark.parametrize(
+    ("url", "name", "page_index", "within_text", "caplog_text"),
+    [
+        (
+            "https://github.com/py-pdf/pypdf/files/11190189/pdf_font_garbled.pdf",
+            "tstUCS2.pdf",
+            1,
+            ["2 / 12", "S0490520090001", "于博"],
+            "",
+        ),
+        (
+            "https://github.com/py-pdf/pypdf/files/11315397/3.pdf",
+            "tst-GBK_EUC.pdf",
+            0,
+            ["NJA", "中华男科学杂志"],
+            "Multiple definitions in dictionary at byte 0x5cb42 for key /MediaBox\n",
+        ),
+    ],
+)
+def test_cmap_encodings(caplog, url, name, page_index, within_text, caplog_text):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    reader.pages[1].extract_text()  # no error
-    assert caplog.text == ""
+    extracted = reader.pages[page_index].extract_text()  # no error
+    for contained in within_text:
+        assert contained in extracted
+    assert caplog_text in caplog.text

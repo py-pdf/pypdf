@@ -652,7 +652,9 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
         and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: Literal["RGB", "P", "L", "RGBA"] = "RGB"
+        mode: Literal["1", "RGB", "P", "L", "RGBA"] = "RGB"
+    elif x_object_obj.get("/BitsPerComponent", 8) == 1:
+        mode = "1"
     else:
         mode = "P"
     extension = None

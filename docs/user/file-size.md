@@ -30,7 +30,7 @@ It depends on the PDF how well this works, but we have seen an 86% file
 reduction (from 5.7 MB to 0.8 MB) within a real PDF.
 
 
-## Remove images
+## Removing Images
 
 
 ```python
@@ -75,3 +75,13 @@ with open("out.pdf", "wb") as f:
 
 Using this method, we have seen a reduction by 70% (from 11.8 MB to 3.5 MB)
 with a real PDF.
+
+## Removing Sources
+
+When a page is removed from the page list, its content will still be present in the PDF file. This means that the data may still be used elsewhere.
+
+Simply removing a page from the page list will reduce the page count but not the file size. In order to exclude the content completely, the pages should not be added to the PDF using the PdfWriter.append() function. Instead, only the desired pages should be selected for inclusion (note: [PR #1843](https://github.com/py-pdf/pypdf/pull/1843) will add a page deletion feature).
+
+There can be issues with poor PDF formatting, such as when all pages are linked to the same resource. In such cases, dropping references to specific pages becomes useless because there is only one source for all pages.
+
+Cropping is an ineffective method for reducing the file size because it only adjusts the viewboxes and not the external parts of the source image. Therefore, the content that is no longer visible will still be present in the PDF.

@@ -1340,6 +1340,8 @@ class Destination(TreeObject):
 
         # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":
+            if len(args) < 3:  # zoom is missing
+                args.append(NumberObject(0.0))
             (
                 self[NameObject(TA.LEFT)],
                 self[NameObject(TA.TOP)],
