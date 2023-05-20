@@ -499,7 +499,7 @@ class File:
         return f"{self.__class__.__name__}(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
 
     def __repr__(self) -> str:
-        return self.__str__()[:-2] + f", hash: {hash(self.data)})"
+        return self.__str__()[:-1] + f", hash: {hash(self.data)})"
 
 
 @dataclass
