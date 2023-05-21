@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1684679948752,
+  "lastUpdate": 1684680550350,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -30030,6 +30030,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0010595592233556446",
             "extra": "mean: 81.04681016666504 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "exiledkingcc@gmail.com",
+            "name": "exiledkingcc",
+            "username": "exiledkingcc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b0e5c689df689ab173df84dacd77b6fc3c161932",
+          "message": "BUG: Prevent infinite loop when no character follows after a comment (#1828)\n\nFixes #1825",
+          "timestamp": "2023-05-21T16:48:01+02:00",
+          "tree_id": "2e4be37972d3351ffc58083b6cc3c7f5a9378c59",
+          "url": "https://github.com/py-pdf/pypdf/commit/b0e5c689df689ab173df84dacd77b6fc3c161932"
+        },
+        "date": 1684680549093,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7759268585371322,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033414468410791903",
+            "extra": "mean: 1.2887812671999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.352840929995166,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010818931906267093",
+            "extra": "mean: 88.08367933333017 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2339401275527786,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03742579200586347",
+            "extra": "mean: 4.274597994200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.981957642950805,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002402503642038994",
+            "extra": "mean: 91.05844627272704 msec\nrounds: 11"
           }
         ]
       }
