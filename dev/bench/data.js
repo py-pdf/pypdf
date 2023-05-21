@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1684680550350,
+  "lastUpdate": 1684681162640,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -30082,6 +30082,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002402503642038994",
             "extra": "mean: 91.05844627272704 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "0096c99031955b15bd30834e5566076d9528f59d",
+          "message": "REL: 3.9.0\n\nNew Features (ENH)\n-  Simplify metadata input (Document Information Dictionary) (#1851)\n-  Extend cmap compatibilty to GBK_EUC_H/V (#1812)\n\nBug Fixes (BUG)\n-  Prevent infinite loop when no character follows after a comment (#1828)\n-  get_contents does not return ContentStream (#1847)\n-  Accept XYZ destination with zoom missing (default to zoom=0.0) (#1844)\n-  Cope with 1 Bit images (#1815)\n\nRobustness (ROB)\n-  Handle missing /Type entry in Page tree (#1845)\n\nDocumentation (DOC)\n-  Expand file size explanations (#1835)\n-  Add comparison with pdfplumber (#1837)\n-  Clarify that PyPDF2 is dead (#1827)\n-  Add Hunter King as Contributor for #1806\n\nMaintenance (MAINT)\n-  Refactor internal Encryption class (#1821)\n-  Add R parameter to generate_values (#1820)\n-  Make encryption_key parameter of write_to_stream optional (#1819)\n-  Prepare for adding AES enryption support (#1818)\n\nCode Style (STY):\n-  Iterate directly over the list instead of using range (#1839)\n-  Minor refactorings in _encryption.py (#1822)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.1...3.9.0)",
+          "timestamp": "2023-05-21T16:57:13+02:00",
+          "tree_id": "7e7f7a63a1dea1b76b8731eef6cda04499def6ee",
+          "url": "https://github.com/py-pdf/pypdf/commit/0096c99031955b15bd30834e5566076d9528f59d"
+        },
+        "date": 1684681160511,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6627475169132724,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005293738790912281",
+            "extra": "mean: 1.5088702325999974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.803552869411515,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011634463027301612",
+            "extra": "mean: 102.0038360909077 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20613197253594426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02206738298203869",
+            "extra": "mean: 4.851261003800005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.889657853411308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00034061517526184015",
+            "extra": "mean: 101.11573270000065 msec\nrounds: 10"
           }
         ]
       }
