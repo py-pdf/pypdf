@@ -912,6 +912,7 @@ class EncodedStreamObject(StreamObject):
         if self.get(SA.FILTER, "") == FT.FLATE_DECODE:
             if not isinstance(data, bytes):
                 raise TypeError("data must be bytes")
+            assert self.decoded_self is not None
             self.decoded_self._data = data
             self._data = FlateDecode.encode(data)
         else:
