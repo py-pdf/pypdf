@@ -43,6 +43,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
 * [Wilson, Huon](https://github.com/huonw)
 * ztravis
+* [RitchieP](https://github.com/RitchieP) | [LinkedIn](https://www.linkedin.com/in/ritchie-p-892b31115/) | [StackOverflow](https://stackoverflow.com/users/13328625/casual-r?tab=profile)
 
 ## Adding a new contributor
 
