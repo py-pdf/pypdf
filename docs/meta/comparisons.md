@@ -56,7 +56,7 @@ than PyPDF2. See [history of pypdf](history.md).
 extracting the [font size](https://stackoverflow.com/a/69962459/562769)
 / font weight (bold-ness). It has no capabilities for writing PDF files.
 
-[`pdfplumber`](https://pypi.org/project/pdfplumber/) is a library focused on extracting data from PDF documents. Since `pdfplumber` is built on top of `pdfminer.six`, there are **no capabilities of exporting or modifying a PDF file** (see [#440 (discussions)](https://github.com/jsvine/pdfplumber/discussions/440#discussioncomment-803880)). However, `pdfplumber` is capable of converting a PDF file into an image, [draw lines and rectangles on the image](https://github.com/jsvine/pdfplumber#drawing-methods), and save it as an image file. **Please also be reminded** that the image conversion is done via ImageMagick. Check out `pdfplumber`'s documentation [here](https://github.com/jsvine/pdfplumber#visual-debugging) for more information.
+[`pdfplumber`](https://pypi.org/project/pdfplumber/) is a library focused on extracting data from PDF documents. Since `pdfplumber` is built on top of `pdfminer.six`, there are **no capabilities of exporting or modifying a PDF file** (see [#440 (discussions)](https://github.com/jsvine/pdfplumber/discussions/440#discussioncomment-803880)). However, `pdfplumber` is capable of converting a PDF file into an image, [draw lines and rectangles on the image](https://github.com/jsvine/pdfplumber#drawing-methods), and save it as an image file. Please note that the image conversion is done via ImageMagick (see [`pdfplumber`'s documentation](https://github.com/jsvine/pdfplumber#visual-debugging)).
 
 The `pdfplumber` community is active in answering questions and the library is maintained as of May 2023.
 
