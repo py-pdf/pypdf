@@ -1339,3 +1339,20 @@ def test_iss1767():
     name = "iss1723.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     PdfWriter(clone_from=in_pdf)
+
+
+@pytest.mark.enable_socket()
+def test_named_dest_page_number():
+    """
+    Closes iss471
+    tests appending with named destinations as integers
+    """
+    url = "https://github.com/py-pdf/pypdf/files/10704333/central.pdf"
+    name = "central.pdf"
+    w = PdfWriter()
+    w.add_blank_page(100, 100)
+    w.append(BytesIO(get_pdf_from_url(url, name=name)), pages=[0, 1, 2])
+    assert len(w._root_object["/Names"]["/Dests"]["/Names"]) == 2
+    assert w._root_object["/Names"]["/Dests"]["/Names"][-1][0] == (1 + 1)
+    w.append(BytesIO(get_pdf_from_url(url, name=name)))
+    assert len(w._root_object["/Names"]["/Dests"]["/Names"]) == 6

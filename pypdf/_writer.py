@@ -2755,8 +2755,25 @@ class PdfWriter:
         )  # need for the outline processing below
         for dest in reader._namedDests.values():
             arr = dest.dest_array
-            if isinstance(dest["/Page"], NullObject):
-                pass  # self.add_named_destination_array(dest["/Title"],arr)
+            if (  # noqa: SIM114
+                "/Names" in self._root_object
+                and dest["/Title"] in self._root_object["/Names"]["/Dests"]["/Names"]
+            ):
+                # already exists : should not duplicate it
+                pass
+            elif isinstance(dest["/Page"], NullObject):
+                pass
+            elif isinstance(dest["/Page"], int):
+                # the page reference is a page number normally not iaw Pdf Reference
+                # page numbers as int are normally accepted only in external goto
+                p = reader.pages[dest["/Page"]]
+                try:
+                    arr[NumberObject(0)] = NumberObject(
+                        srcpages[p.indirect_reference.idnum].page_number
+                    )
+                    self.add_named_destination_array(dest["/Title"], arr)
+                except KeyError:
+                    pass
             elif dest["/Page"].indirect_reference.idnum in srcpages:
                 arr[NumberObject(0)] = srcpages[
                     dest["/Page"].indirect_reference.idnum
