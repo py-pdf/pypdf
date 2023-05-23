@@ -1519,6 +1519,23 @@ class PageObject(DictionaryObject):
         )
         self.compress_content_streams()
 
+    @property
+    def page_number(self) -> int:
+        """
+        Read-only property which return the page number with the pdf file.
+
+        Returns:
+            int : page number ; -1 if the page is not attached to a pdf
+        """
+        if self.indirect_reference is None:
+            return -1
+        else:
+            try:
+                lst = self.indirect_reference.pdf.pages
+                return lst.index(self)
+            except ValueError:
+                return -1
+
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
         for ope, op in ContentStream(
