@@ -1129,6 +1129,8 @@ def test_merge_transformed_page_into_blank():
     inserted_blank = w.add_page(blank)
     assert blank.page_number == -1  # the inserted page is a clone
     assert inserted_blank.page_number == len(w.pages) - 1
+    del w._pages.get_object()["/Kids"][-1]
+    assert inserted_blank.page_number == -1
 
 
 def test_pages_printing():
