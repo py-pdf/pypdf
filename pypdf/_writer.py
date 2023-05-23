@@ -2755,9 +2755,12 @@ class PdfWriter:
         )  # need for the outline processing below
         for dest in reader._namedDests.values():
             arr = dest.dest_array
-            if (  # noqa: SIM114
-                "/Names" in self._root_object
-                and dest["/Title"] in self._root_object["/Names"]["/Dests"]["/Names"]
+            if "/Names" in self._root_object and dest["/Title"] in cast(  # noqa: SIM114
+                list,
+                cast(
+                    DictionaryObject,
+                    cast(DictionaryObject, self._root_object["/Names"])["/Dests"],
+                )["/Names"],
             ):
                 # already exists : should not duplicate it
                 pass
@@ -2767,6 +2770,7 @@ class PdfWriter:
                 # the page reference is a page number normally not iaw Pdf Reference
                 # page numbers as int are normally accepted only in external goto
                 p = reader.pages[dest["/Page"]]
+                assert p.indirect_reference is not None
                 try:
                     arr[NumberObject(0)] = NumberObject(
                         srcpages[p.indirect_reference.idnum].page_number
