@@ -942,7 +942,7 @@ class PdfWriter:
         assert pages is not None  # hint for mypy
 
         if PA.TYPE in pages:
-            t = pages[PA.TYPE]  # type: ignore
+            t = str(pages[PA.TYPE])
         # if pdf has no type, considered as a page if /Kids is missing
         elif PA.KIDS not in pages:
             t = "/Page"
