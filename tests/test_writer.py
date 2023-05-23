@@ -21,6 +21,7 @@ from pypdf.generic import (
     Fit,
     IndirectObject,
     NameObject,
+    NullObject,
     NumberObject,
     RectangleObject,
     StreamObject,
@@ -1355,4 +1356,13 @@ def test_named_dest_page_number():
     assert len(w._root_object["/Names"]["/Dests"]["/Names"]) == 2
     assert w._root_object["/Names"]["/Dests"]["/Names"][-1][0] == (1 + 1)
     w.append(BytesIO(get_pdf_from_url(url, name=name)))
+    assert len(w._root_object["/Names"]["/Dests"]["/Names"]) == 6
+    w2 = PdfWriter()
+    w2.add_blank_page(100, 100)
+    dest = w2.add_named_destination("toto", 0)
+    dest.get_object()[NameObject("/D")][0] = NullObject()
+    b = BytesIO()
+    w2.write(b)
+    b.seek(0)
+    w.append(b)
     assert len(w._root_object["/Names"]["/Dests"]["/Names"]) == 6
