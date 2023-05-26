@@ -175,6 +175,7 @@ class FilterTypes:
     RUN_LENGTH_DECODE = "/RunLengthDecode"  # abbreviation: RL
     CCITT_FAX_DECODE = "/CCITTFaxDecode"  # abbreviation: CCF
     DCT_DECODE = "/DCTDecode"  # abbreviation: DCT
+    JPX_DECODE = "/JPXDecode"
 
 
 class FilterTypeAbbreviations:

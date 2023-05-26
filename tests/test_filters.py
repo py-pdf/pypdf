@@ -378,3 +378,14 @@ def test_cmyk():
     data = reader.pages[0].images[0]
     assert ".jp2" in data.name
     assert list(data.image.getdata()) == list(refimg.getdata())
+
+
+@pytest.mark.enable_socket()
+def test_iss1863():
+    """Test doc from iss1863"""
+    url = "https://github.com/py-pdf/pypdf/files/11578953/USC.EMBA.-.Pre-Season.and.Theme.I.pdf"
+    name = "o1whh9b3.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for p in reader.pages:
+        for i in p.images:
+            i.name

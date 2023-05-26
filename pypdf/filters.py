@@ -40,7 +40,13 @@ import zlib
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-from ._utils import b_, deprecate_with_replacement, ord_, paeth_predictor
+from ._utils import (
+    b_,
+    deprecate_with_replacement,
+    logger_warning,
+    ord_,
+    paeth_predictor,
+)
 from .constants import CcittFaxDecodeParameters as CCITT
 from .constants import ColorSpaces
 from .constants import FilterTypeAbbreviations as FTA
@@ -609,7 +615,7 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
                 data = ASCII85Decode.decode(data)
             elif filter_type == FT.DCT_DECODE:
                 data = DCTDecode.decode(data)
-            elif filter_type == "/JPXDecode":
+            elif filter_type == FT.JPX_DECODE:
                 data = JPXDecode.decode(data)
             elif filter_type == FT.CCITT_FAX_DECODE:
                 height = stream.get(IA.HEIGHT, ())
@@ -647,7 +653,7 @@ def _get_imagemode(
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
         color_components = cast(int, icc_profile["/N"])
-        color_space = icc_profile["/Alternate"]
+        color_space = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space = color_space[1].get_object()
         if isinstance(color_space, list):
@@ -696,6 +702,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             "pillow is required to do image extraction. "
             "It can be installed via 'pip install pypdf[image]'"
         )
+    # for error reporting
+    if hasattr(x_object_obj, "indirect_reference") and x_object_obj is None:
+        obj_as_text = x_object_obj.indirect_reference.__repr__()
+    else:
+        obj_as_text = x_object_obj.__repr__()
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.get_data()  # type: ignore
@@ -740,11 +751,33 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                 from .generic import ByteStringObject
 
                 if isinstance(lookup, ByteStringObject):
-                    if base == ColorSpaces.DEVICE_GRAY and len(lookup) == hival + 1:
-                        lookup = b"".join(
-                            [lookup[i : i + 1] * 3 for i in range(len(lookup))]
+                    try:
+                        nb, conv, mode = {
+                            "1": (0, "", ""),
+                            "L": (1, "P", "L"),
+                            "P": (0, "", ""),
+                            "RGB": (3, "P", "RGB"),
+                            "CMYK": (4, "P", "CMYK"),
+                        }[_get_imagemode(base, 0, "")]
+                    except KeyError:
+                        logger_warning(
+                            f"Base {base} not coded please share the pdf file with pypdf dev team",
+                            __name__,
                         )
-                    img.putpalette(lookup)
+                        lookup = None
+                    else:
+                        img = img.convert(conv)
+                        if len(lookup) != (hival + 1) * nb:
+                            logger_warning(
+                                f"Invalid Lookup Table in {obj_as_text}", __name__
+                            )
+                            lookup = None
+                        if mode == "L":
+                            # gray lookup does not work : it is converted to a similar RGB lookup
+                            lookup = b"".join([bytes([b, b, b]) for b in lookup])
+                            mode = "RGB"
+                        if lookup is not None:
+                            img.putpalette(lookup, rawmode=mode)
                 else:
                     img.putpalette(lookup.get_data())
                 img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
@@ -776,11 +809,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                 image_format = "PNG"
             data = b_(data)
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
-        elif x_object_obj[SA.FILTER] == FT.DCT_DECODE:
+        elif x_object_obj[SA.FILTER] in [FT.DCT_DECODE, [FT.DCT_DECODE]]:
             extension = ".jpg"
             img = Image.open(BytesIO(data))
             image_format = "JPEG"
-        elif x_object_obj[SA.FILTER] == "/JPXDecode":
+        elif x_object_obj[SA.FILTER] in [FT.JPX_DECODE, [FT.JPX_DECODE]]:
             extension = ".jp2"  # mime_type = "image/x-jp2"
             img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
             mode = _get_imagemode(color_space, colors, mode)
@@ -790,12 +823,12 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             except OSError:
                 img = Image.frombytes(mode, img1.size, img1.tobytes())
             # for CMYK conversion :
-            # https://stackoverflow.com/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
+            # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
             # not implemented for the moment as I need to get properly the ICC
             if img.mode == "CMYK":
                 img = img.convert("RGB")
             image_format = "JPEG2000"
-        elif x_object_obj[SA.FILTER] == FT.CCITT_FAX_DECODE:
+        elif x_object_obj[SA.FILTER] in [FT.CCITT_FAX_DECODE, [FT.CCITT_FAX_DECODE]]:
             extension = ".tiff"  # mime_type = "image/tiff"
             img = Image.open(BytesIO(data), formats=("TIFF",))
             image_format = "TIFF"
@@ -806,24 +839,23 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     if IA.S_MASK in x_object_obj:  # add alpha channel
         alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
-        # TODO : implement mask
-        if alpha.mode != "L":
-            alpha = alpha.convert("L")
-        scale = x_object_obj[IA.S_MASK].get("/Decode", [0.0, 1.0])
-        if (scale[1] - scale[0]) != 1.0:
-            alpha = alpha.point(
-                [
-                    round(255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0]))
-                    for v in range(256)
-                ]
-            )
-        if img.mode == "P":
-            img = img.convert("RGB")
-        img.putalpha(alpha)
-        ##        try:
-        ##            img.putalpha(alpha)
-        ##        except OSError:
-        ##            img.putalpha(alpha)
+        if img.size != alpha.size:
+            logger_warning(f"image and mask size not matching: {obj_as_text}", __name__)
+        else:
+            # TODO : implement mask
+            if alpha.mode != "L":
+                alpha = alpha.convert("L")
+            scale = x_object_obj[IA.S_MASK].get("/Decode", [0.0, 1.0])
+            if (scale[1] - scale[0]) != 1.0:
+                alpha = alpha.point(
+                    [
+                        round(255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0]))
+                        for v in range(256)
+                    ]
+                )
+            if img.mode == "P":
+                img = img.convert("RGB")
+            img.putalpha(alpha)
         if "JPEG" in image_format:
             extension = ".jp2"
             image_format = "JPEG2000"
