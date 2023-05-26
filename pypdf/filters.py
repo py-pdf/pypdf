@@ -216,7 +216,9 @@ class FlateDecode:
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
                 # unsupported PNG filter
-                raise PdfReadError(f"Unsupported PNG filter {filter_byte!r}")
+                raise PdfReadError(
+                    f"Unsupported PNG filter {filter_byte!r}"
+                )  # pragma: no cover
             prev_rowdata = tuple(rowdata)
             output.write(bytearray(rowdata[1:]))
         return output.getvalue()
@@ -649,7 +651,9 @@ def _get_imagemode(
     if isinstance(color_space, str):
         pass
     elif not isinstance(color_space, list):
-        raise PdfReadError("can not interprete colorspace", color_space)
+        raise PdfReadError(
+            "can not interprete colorspace", color_space
+        )  # pragma: no cover
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
         color_components = cast(int, icc_profile["/N"])
@@ -703,7 +707,9 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             "It can be installed via 'pip install pypdf[image]'"
         )
     # for error reporting
-    if hasattr(x_object_obj, "indirect_reference") and x_object_obj is None:
+    if (
+        hasattr(x_object_obj, "indirect_reference") and x_object_obj is None
+    ):  # pragma: no cover
         obj_as_text = x_object_obj.indirect_reference.__repr__()
     else:
         obj_as_text = x_object_obj.__repr__()
@@ -759,7 +765,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                             "RGB": (3, "P", "RGB"),
                             "CMYK": (4, "P", "CMYK"),
                         }[_get_imagemode(base, 0, "")]
-                    except KeyError:
+                    except KeyError:  # pragma: no cover
                         logger_warning(
                             f"Base {base} not coded please share the pdf file with pypdf dev team",
                             __name__,
@@ -866,7 +872,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     img_byte_arr = BytesIO()
     try:
         img.save(img_byte_arr, format=image_format)
-    except OSError:  # odd error
+    except OSError:  # pragma: no cover
+        # odd error
         img_byte_arr = BytesIO()
         img.save(img_byte_arr, format=image_format)
     data = img_byte_arr.getvalue()

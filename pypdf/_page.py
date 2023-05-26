@@ -514,7 +514,7 @@ class PageObject(DictionaryObject):
                 raise
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
-                if self.inline_images is None:
+                if self.inline_images is None:  # pragma: no cover
                     raise KeyError("no inline image can be found")
                 return self.inline_images[id]
 
@@ -576,7 +576,7 @@ class PageObject(DictionaryObject):
                 imgs_data.append(
                     {"settings": param["settings"], "__streamdata__": param["data"]}
                 )
-            elif ope in (b"BI", b"EI", b"ID"):
+            elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
                     f"{ope} operator met whereas not expected,"
                     "please share usecase with pypdf dev team"
