@@ -752,7 +752,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
                 if isinstance(lookup, ByteStringObject):
                     try:
-                        nb, conv, mode = {
+                        nb, conv, mode = {  # type: ignore
                             "1": (0, "", ""),
                             "L": (1, "P", "L"),
                             "P": (0, "", ""),
