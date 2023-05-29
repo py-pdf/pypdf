@@ -804,16 +804,52 @@ class PdfWriter:
         return cast(str, parent["/T"])
 
     def _update_text_field(self, field: DictionaryObject) -> None:
-        dct = ContentStream(None, None)
-        rct = cast(RectangleObject, field["/Rect"])
-        dct[NameObject("/Type")] = NameObject("/XObject")
-        dct[NameObject("/Subtype")] = NameObject("/Form")
-        dct[NameObject("/BBox")] = RectangleObject(0, 0, rct.width, rct.height)
-        # [(['/Tx'], b'BMC'), ([], b'q'), ([1, 1, 171.999, 16], b're'),
-        # ([], b'W'), ([], b'n'), ([], b'BT'), (['/CourierNewPS-BoldMT', 10], b'Tf'),
-        # ([0], b'g'), ([2, 6.4451000000000001], b'Td'), (['hello'], b'Tj'),
-        # ([], b'ET'), ([], b'Q'), ([], b'EMC')]
-        field[NameObject("/AP")] = DictionaryObject({NameObject("/N"): dct})
+        _rct = cast(RectangleObject, field["/Rect"])
+        rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
+        yf: Any = cast(str, field["/DA"]).replace("\n", " ").split(" ")
+        fnt = yf[yf.index("Tf") - 2]
+        yf = float(yf[yf.index("Tf") - 1])
+        yf = rct.height - 1 - yf
+        dct = DecodedStreamObject.initialize_from_dictionary(
+            {
+                NameObject("/Type"): NameObject("/XObject"),
+                NameObject("/Subtype"): NameObject("/Form"),
+                NameObject("/BBox"): rct,
+                "__streamdata__": ByteStringObject(
+                    (
+                        f"/Tx BMC \nq\n 1 1 {rct.width - 1} {rct.height - 1} re\n"
+                        f"W\nn\nBT\n{field['/DA']}\n"
+                        f"2 {yf} Td\n("
+                    ).encode()
+                    + cast(str, field["/V"]).encode("UTF-8")
+                    + b") Tj\nET\nQ\nEMC\n"
+                ),
+                "/Length": 0,
+            }
+        )
+        dr = cast(
+            dict, cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {})
+        )
+        dr = dr.get("/Font", {})
+        if fnt in dr:
+            dct[NameObject("/Resources")] = DictionaryObject(
+                {
+                    NameObject("/Font"): DictionaryObject(
+                        {NameObject(fnt): dr[fnt].indirect_reference}
+                    )
+                }
+            )
+        if "/AP" not in field:
+            field[NameObject("/AP")] = DictionaryObject(
+                {NameObject("/N"): self._add_object(dct)}
+            )
+        elif "/N" not in field:
+            cast(DictionaryObject, field[NameObject("/AP")])[
+                NameObject("/N")
+            ] = self._add_object(dct)
+        else:  # [/AP][/N exists
+            n = field["/AP"]["/N"].indirect_reference.idnum  # type: ignore
+            self._objects[n - 1] = dct
 
     def update_page_form_field_values(
         self,
@@ -846,7 +882,7 @@ class PdfWriter:
         for writer_annot in page[PG.ANNOTS]:  # type: ignore
             writer_annot = cast(DictionaryObject, writer_annot.get_object())
             # retrieve parent field values, if present
-            writer_parent_annot = writer_annot.get(PG.PARENT, {})
+            writer_parent_annot = writer_annot.get(PG.PARENT, {}).get_object()
             for field, value in fields.items():
                 if (
                     writer_annot.get(FA.T) == field
@@ -855,7 +891,9 @@ class PdfWriter:
                     writer_annot[NameObject(FA.V)] = TextStringObject(value)
                     if writer_annot.get(FA.FT) in ("/Btn", "/Ch"):
                         # case of Checkbox button or RdoBtn
-                        writer_annot[NameObject(FA.AS)] = NameObject(value)
+                        writer_annot[
+                            NameObject(AnnotationDictionaryAttributes.AS)
+                        ] = NameObject(value)
                     elif writer_annot.get(FA.FT) == "/Tx":
                         # textbox
                         self._update_text_field(writer_annot)
