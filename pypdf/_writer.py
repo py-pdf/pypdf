@@ -75,7 +75,6 @@ from ._utils import (
 from .constants import (
     AnnotationDictionaryAttributes,
     CatalogDictionary,
-    FieldDictionaryAttributes,
     FieldFlag,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
@@ -87,6 +86,9 @@ from .constants import (
 from .constants import CatalogAttributes as CA
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
+from .constants import (
+    FieldDictionaryAttributes as FA,
+)
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
@@ -801,11 +803,24 @@ class PdfWriter:
                 return qualified_parent + "." + cast(str, parent["/T"])
         return cast(str, parent["/T"])
 
+    def _update_text_field(self, field: DictionaryObject) -> None:
+        dct = ContentStream(None, None)
+        rct = cast(RectangleObject, field["/Rect"])
+        dct[NameObject("/Type")] = NameObject("/XObject")
+        dct[NameObject("/Subtype")] = NameObject("/Form")
+        dct[NameObject("/BBox")] = RectangleObject(0, 0, rct.width, rct.height)
+        # [(['/Tx'], b'BMC'), ([], b'q'), ([1, 1, 171.999, 16], b're'),
+        # ([], b'W'), ([], b'n'), ([], b'BT'), (['/CourierNewPS-BoldMT', 10], b'Tf'),
+        # ([0], b'g'), ([2, 6.4451000000000001], b'Td'), (['hello'], b'Tj'),
+        # ([], b'ET'), ([], b'Q'), ([], b'EMC')]
+        field[NameObject("/AP")] = DictionaryObject({NameObject("/N"): dct})
+
     def update_page_form_field_values(
         self,
         page: PageObject,
         fields: Dict[str, Any],
         flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
+        auto_regen: bool = True,
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -822,56 +837,38 @@ class PdfWriter:
                 second bit sets Required, the third bit sets NoExport. See
                 PDF Reference Table 8.70 for details.
         """
-        self.set_need_appearances_writer()
+        if auto_regen:
+            self.set_need_appearances_writer()
         # Iterate through pages, update field values
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
-        for j in range(len(page[PG.ANNOTS])):  # type: ignore
-            writer_annot = page[PG.ANNOTS][j].get_object()  # type: ignore
+        for writer_annot in page[PG.ANNOTS]:  # type: ignore
+            writer_annot = cast(DictionaryObject, writer_annot.get_object())
             # retrieve parent field values, if present
-            writer_parent_annot = DictionaryObject()  # fallback if it's not there
-            if PG.PARENT in writer_annot:
-                writer_parent_annot = writer_annot[PG.PARENT]
-            for field in fields:
+            writer_parent_annot = writer_annot.get(PG.PARENT, {})
+            for field, value in fields.items():
                 if (
-                    writer_annot.get(FieldDictionaryAttributes.T) == field
+                    writer_annot.get(FA.T) == field
                     or self._get_qualified_field_name(writer_annot) == field
                 ):
-                    if writer_annot.get(FieldDictionaryAttributes.FT) == "/Btn":
-                        writer_annot.update(
-                            {
-                                NameObject(
-                                    AnnotationDictionaryAttributes.AS
-                                ): NameObject(fields[field])
-                            }
-                        )
-                    writer_annot.update(
-                        {
-                            NameObject(FieldDictionaryAttributes.V): TextStringObject(
-                                fields[field]
-                            )
-                        }
-                    )
+                    writer_annot[NameObject(FA.V)] = TextStringObject(value)
+                    if writer_annot.get(FA.FT) in ("/Btn", "/Ch"):
+                        # case of Checkbox button or RdoBtn
+                        writer_annot[NameObject(FA.AS)] = NameObject(value)
+                    elif writer_annot.get(FA.FT) == "/Tx":
+                        # textbox
+                        self._update_text_field(writer_annot)
+                    elif writer_annot.get(FA.FT) == "/Sig":
+                        # signature
+                        logger_warning("Signature forms not implemented yet", __name__)
                     if flags:
-                        writer_annot.update(
-                            {
-                                NameObject(FieldDictionaryAttributes.Ff): NumberObject(
-                                    flags
-                                )
-                            }
-                        )
+                        writer_annot[NameObject(FA.Ff)] = NumberObject(flags)
                 elif (
-                    writer_parent_annot.get(FieldDictionaryAttributes.T) == field
+                    writer_parent_annot.get(FA.T) == field
                     or self._get_qualified_field_name(writer_parent_annot) == field
                 ):
-                    writer_parent_annot.update(
-                        {
-                            NameObject(FieldDictionaryAttributes.V): TextStringObject(
-                                fields[field]
-                            )
-                        }
-                    )
+                    writer_parent_annot[NameObject(FA.V)] = TextStringObject(value)
 
     def updatePageFormFieldValues(
         self,
@@ -1243,13 +1240,9 @@ class PdfWriter:
                 and each value is your new metadata.
         """
         args = {}
-        if isinstance(infos, PdfObject):
-            infos = cast(DictionaryObject, infos.get_object())
         for key, value in list(infos.items()):
-            if isinstance(value, PdfObject):
-                value = value.get_object()
-            args[NameObject(key)] = create_string_object(str(value))
-        cast(DictionaryObject, self._info.get_object()).update(args)
+            args[NameObject(key)] = create_string_object(value)
+        self.get_object(self._info).update(args)  # type: ignore
 
     def addMetadata(self, infos: Dict[str, Any]) -> None:  # deprecated
         """
