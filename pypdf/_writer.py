@@ -1278,9 +1278,13 @@ class PdfWriter:
                 and each value is your new metadata.
         """
         args = {}
+        if isinstance(infos, PdfObject):
+            infos = cast(DictionaryObject, infos.get_object())
         for key, value in list(infos.items()):
-            args[NameObject(key)] = create_string_object(value)
-        self.get_object(self._info).update(args)  # type: ignore
+            if isinstance(value, PdfObject):
+                value = value.get_object()
+            args[NameObject(key)] = create_string_object(str(value))
+        cast(DictionaryObject, self._info.get_object()).update(args)
 
     def addMetadata(self, infos: Dict[str, Any]) -> None:  # deprecated
         """
