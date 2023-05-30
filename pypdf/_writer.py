@@ -882,7 +882,9 @@ class PdfWriter:
         for writer_annot in page[PG.ANNOTS]:  # type: ignore
             writer_annot = cast(DictionaryObject, writer_annot.get_object())
             # retrieve parent field values, if present
-            writer_parent_annot = writer_annot.get(PG.PARENT, {}).get_object()
+            writer_parent_annot = writer_annot.get(
+                PG.PARENT, DictionaryObject()
+            ).get_object()
             for field, value in fields.items():
                 if (
                     writer_annot.get(FA.T) == field
