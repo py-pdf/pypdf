@@ -69,11 +69,11 @@ from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
-    FieldDictionaryAttributes,
     GoToActionArguments,
 )
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
+from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
@@ -542,7 +542,7 @@ class PdfReader:
             default, the mapping name is used for keys.
             ``None`` if form data could not be located.
         """
-        field_attributes = FieldDictionaryAttributes.attributes_dict()
+        field_attributes = FA.attributes_dict()
         field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
         if retval is None:
             retval = {}
@@ -627,18 +627,23 @@ class PdfReader:
             fileobj.write("\n")
         retval[key] = Field(field)
         obj = retval[key].indirect_reference.get_object()  # to get the full object
-        if obj["/FT"] == "/Btn" and "/AP" in obj:
+        if obj.get(FA.FT, "") == "/Btn" and "/AP" in obj:
+            #  Checkbox
             retval[key][NameObject("/_States_")] = ArrayObject(
                 list(obj["/AP"]["/N"].keys())
             )
-        elif obj["/FT"] == "/Btn":
+            if "/Off" not in retval[key]["/_States_"]:
+                retval[key][NameObject("/_States_")].append(NameObject("/Off"))
+        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
             states = []
-            for k in obj["/Kids"]:
+            for k in obj.get(FA.Kids, {}):
                 k = k.get_object()
                 for s in list(k["/AP"]["/N"].keys()):
                     if s not in states:
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
+            if obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0:
+                del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
 
     def _check_kids(
         self, tree: Union[TreeObject, DictionaryObject], retval: Any, fileobj: Any
@@ -649,20 +654,20 @@ class PdfReader:
                 self.get_fields(kid.get_object(), retval, fileobj)
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
-        field_attributes_tuple = FieldDictionaryAttributes.attributes()
+        field_attributes_tuple = FA.attributes()
         field_attributes_tuple = (
             field_attributes_tuple + CheckboxRadioButtonAttributes.attributes()
         )
 
         for attr in field_attributes_tuple:
             if attr in (
-                FieldDictionaryAttributes.Kids,
-                FieldDictionaryAttributes.AA,
+                FA.Kids,
+                FA.AA,
             ):
                 continue
             attr_name = field_attributes[attr]
             try:
-                if attr == FieldDictionaryAttributes.FT:
+                if attr == FA.FT:
                     # Make the field type value more clear
                     types = {
                         "/Btn": "Button",
@@ -672,12 +677,12 @@ class PdfReader:
                     }
                     if field[attr] in types:
                         fileobj.write(f"{attr_name}: {types[field[attr]]}\n")
-                elif attr == FieldDictionaryAttributes.Parent:
+                elif attr == FA.Parent:
                     # Let's just write the name of the parent
                     try:
-                        name = field[attr][FieldDictionaryAttributes.TM]
+                        name = field[attr][FA.TM]
                     except KeyError:
-                        name = field[attr][FieldDictionaryAttributes.T]
+                        name = field[attr][FA.T]
                     fileobj.write(f"{attr_name}: {name}\n")
                 else:
                     fileobj.write(f"{attr_name}: {field[attr]}\n")

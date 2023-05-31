@@ -902,7 +902,9 @@ def test_get_fields():
     fields = reader.get_fields()
     assert fields is not None
     assert "c1-1" in fields
-    assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
+    assert dict(fields["c1-1"]) == (
+        {"/FT": "/Btn", "/T": "c1-1", "/_States_": ["/On", "/Off"]}
+    )
 
 
 @pytest.mark.enable_socket()
