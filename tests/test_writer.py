@@ -1339,3 +1339,48 @@ def test_iss1767():
     name = "iss1723.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     PdfWriter(clone_from=in_pdf)
+
+
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        (
+            "dont_commit_writer.pdf",
+            True,
+        )
+    ],
+)
+def test_update_form_fields(write_data_here, needs_cleanup):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {
+            "CheckBox1": "/Yes",
+            "Text1": "mon Text1",
+            "Text2": "ligne1\nligne2",
+            "RadioGroup1": "/2",
+            "RdoS1": "/",
+            "Combo1": "!!monCombo!!",
+            "Liste1": "Liste2",
+            "Liste2": ["Lst1", "Lst3"],
+            "DropList1": "DropListe3",
+        },
+        auto_regen=False,
+    )
+    writer.write("dont_commit_writer.pdf")
+    reader = PdfReader("dont_commit_writer.pdf")
+    flds = reader.get_fields()
+    assert flds["CheckBox1"]["/V"] == "/Yes"
+    assert flds["CheckBox1"].indirect_reference.get_object()["/AS"] == "/Yes"
+    assert flds["Text2"]["/V"] == "ligne1\nligne2"
+    assert (
+        b"(ligne2)"
+        in flds["Text2"].indirect_reference.get_object()["/AP"]["/N"].get_data()
+    )
+    assert flds["RadioGroup1"]["/V"] == "/2"
+    assert flds["RadioGroup1"]["/Kids"][0].get_object()["/AS"] == "/O"
+    assert flds["RadioGroup1"]["/Kids"][1].get_object()["/AS"] == "/2"
+    assert all(x in flds["Liste2"]["/V"] for x in ["Lst1", "Lst3"])
+
+    if needs_cleanup:
+        Path(write_data_here).unlink()
