@@ -895,8 +895,8 @@ class PdfWriter:
                     or self._get_qualified_field_name(writer_annot) == field
                 ):
                     writer_annot[NameObject(FA.V)] = TextStringObject(value)
-                    if writer_annot.get(FA.FT) in ("/Btn", "/Ch"):
-                        # case of Checkbox button or RdoBtn
+                    if writer_annot.get(FA.FT) in ("/Btn"):
+                        # case of Checkbox button (no /FT found in Radio widgets
                         writer_annot[
                             NameObject(AnnotationDictionaryAttributes.AS)
                         ] = NameObject(value)
@@ -913,6 +913,11 @@ class PdfWriter:
                     or self._get_qualified_field_name(writer_parent_annot) == field
                 ):
                     writer_parent_annot[NameObject(FA.V)] = TextStringObject(value)
+                    for k in writer_parent_annot[NameObject(FA.Kids)]:
+                        k = k.get_object()
+                        k[NameObject(AnnotationDictionaryAttributes.AS)] = NameObject(
+                            value if value in k["/AP"]["/N"] else "/Off"
+                        )
 
     def updatePageFormFieldValues(
         self,
