@@ -627,6 +627,8 @@ class PdfReader:
             fileobj.write("\n")
         retval[key] = Field(field)
         obj = retval[key].indirect_reference.get_object()  # to get the full object
+        if obj.get(FA.FT, "") == "/Ch":
+            retval[key][NameObject("/_States_")] = obj[NameObject(FA.Opt)]
         if obj.get(FA.FT, "") == "/Btn" and "/AP" in obj:
             #  Checkbox
             retval[key][NameObject("/_States_")] = ArrayObject(

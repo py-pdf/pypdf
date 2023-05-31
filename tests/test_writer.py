@@ -1393,5 +1393,9 @@ def test_update_form_fields(write_data_here, needs_cleanup):
     assert flds["RadioGroup1"]["/Kids"][1].get_object()["/AS"] == "/2"
     assert all(x in flds["Liste2"]["/V"] for x in ["Lst1", "Lst3"])
 
+    assert all(x in flds["CheckBox1"]["/_States_"] for x in ["/Off", "/Yes"])
+    assert all(x in flds["RadioGroup1"]["/_States_"] for x in ["/1", "/2", "/3"])
+    assert all(x in flds["Liste1"]["/_States_"] for x in ["Liste1", "Liste2", "Liste3"])
+
     if needs_cleanup:
         Path(write_data_here).unlink()
