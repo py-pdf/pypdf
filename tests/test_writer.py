@@ -1367,14 +1367,18 @@ def test_update_form_fields(write_data_here, needs_cleanup):
         },
         auto_regen=False,
     )
+    writer.update_page_form_field_values(
+        writer.pages[0], {"Text2": "ligne1\nligne2\nligne3"}, auto_regen=False
+    )
+
     writer.write("dont_commit_writer.pdf")
     reader = PdfReader("dont_commit_writer.pdf")
     flds = reader.get_fields()
     assert flds["CheckBox1"]["/V"] == "/Yes"
     assert flds["CheckBox1"].indirect_reference.get_object()["/AS"] == "/Yes"
-    assert flds["Text2"]["/V"] == "ligne1\nligne2"
+    assert flds["Text2"]["/V"] == "ligne1\nligne2\nligne3"
     assert (
-        b"(ligne2)"
+        b"(ligne3)"
         in flds["Text2"].indirect_reference.get_object()["/AP"]["/N"].get_data()
     )
     assert flds["RadioGroup1"]["/V"] == "/2"
