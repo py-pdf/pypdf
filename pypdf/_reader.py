@@ -626,6 +626,19 @@ class PdfReader:
             self._write_field(fileobj, field, field_attributes)
             fileobj.write("\n")
         retval[key] = Field(field)
+        obj = retval[key].indirect_reference.get_object()  # to get the full object
+        if obj["/FT"] == "/Btn" and "/AP" in obj:
+            retval[key][NameObject("/_States_")] = ArrayObject(
+                list(obj["/AP"]["/N"].keys())
+            )
+        elif obj["/FT"] == "/Btn":
+            states = []
+            for k in obj["/Kids"]:
+                k = k.get_object()
+                for s in list(k["/AP"]["/N"].keys()):
+                    if s not in states:
+                        states.append(s)
+                retval[key][NameObject("/_States_")] = ArrayObject(states)
 
     def _check_kids(
         self, tree: Union[TreeObject, DictionaryObject], retval: Any, fileobj: Any
