@@ -72,8 +72,9 @@ from ._utils import (
     deprecation_with_replacement,
     logger_warning,
 )
+from .constants import AnnotationDictionaryAttributes as AA
+from .constants import CatalogAttributes as CA
 from .constants import (
-    AnnotationDictionaryAttributes,
     CatalogDictionary,
     FieldFlag,
     FileSpecificationDictionaryEntries,
@@ -83,7 +84,6 @@ from .constants import (
     TypFitArguments,
     UserAccessPermissions,
 )
-from .constants import CatalogAttributes as CA
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
 from .constants import (
@@ -806,21 +806,39 @@ class PdfWriter:
         return cast(str, parent["/T"])
 
     def _update_text_field(self, field: DictionaryObject) -> None:
-        _rct = cast(RectangleObject, field["/Rect"])
+        _rct = cast(RectangleObject, field[AA.Rect])
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
-        yf: Any = cast(str, field["/DA"]).replace("\n", " ").split(" ")
+        yf: Any = (
+            cast(str, field[AA.DA]).replace("\n", " ").replace("\r", " ").split(" ")
+        )
         fnt = yf[yf.index("Tf") - 2]
         h = float(yf[yf.index("Tf") - 1])
         yf = rct.height - 1 - h
-        ap_stream = f"/Tx BMC \nq\n 1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{field['/DA']}\n".encode()
-        for ln, ll in enumerate(field["/V"].replace("\n", "\r").split("\r")):
+        Ff = field.get(FA.Ff, 0)
+        if field.get(FA.FT, "/Tx") == "/Ch" and Ff & FA.FfBits.Combo == 0:
+            txt = "\n".join(field.get(FA.Opt, {}))
+            sel = field.get("/V", [])
+            if not isinstance(sel, list):
+                sel = [sel]
+        else:  # /Tx
+            txt = field.get("/V", "")
+            sel = []
+
+        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{field[AA.DA]}\n".encode()
+        for ln, ll in enumerate(txt.replace("\n", "\r").split("\r")):
+            if ll in sel:
+                # may be improved but can not find how get fill working => replaced with lined box
+                ap_stream += (
+                    f"1 {yf - (ln * h * 1.4) - 1} {rct.width - 2} {h + 2} re\n"
+                    f"0.5 0.5 0.5 rg s\n{field[AA.DA]}\n"
+                ).encode()
             if ln == 0:
                 ap_stream += f"2 {yf} Td\n".encode()
             else:
                 # Td is a relative translation
                 ap_stream += f"0 {- h * 1.4} Td\n".encode()
             ap_stream += b"(" + str(ll).encode("UTF-8") + b") Tj\n"
-        ap_stream += b"ET\nQ\nEMC\n"
+        ap_stream += b"ET\nQ\nEMC\nQ\n"
 
         dct = DecodedStreamObject.initialize_from_dictionary(
             {
@@ -831,7 +849,7 @@ class PdfWriter:
                 "/Length": 0,
             }
         )
-        dr = cast(
+        dr: Any = cast(
             dict, cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {})
         )
         if isinstance(dr, IndirectObject):
@@ -900,13 +918,20 @@ class PdfWriter:
                     writer_annot.get(FA.T) == field
                     or self._get_qualified_field_name(writer_annot) == field
                 ):
-                    writer_annot[NameObject(FA.V)] = TextStringObject(value)
+                    if isinstance(value, list):
+                        lst = ArrayObject()
+                        for v in value:
+                            lst.append(TextStringObject(v))
+                        writer_annot[NameObject(FA.V)] = lst
+                    else:
+                        writer_annot[NameObject(FA.V)] = TextStringObject(value)
                     if writer_annot.get(FA.FT) in ("/Btn"):
                         # case of Checkbox button (no /FT found in Radio widgets
-                        writer_annot[
-                            NameObject(AnnotationDictionaryAttributes.AS)
-                        ] = NameObject(value)
-                    elif writer_annot.get(FA.FT) == "/Tx":
+                        writer_annot[NameObject(AA.AS)] = NameObject(value)
+                    elif (
+                        writer_annot.get(FA.FT) == "/Tx"
+                        or writer_annot.get(FA.FT) == "/Ch"
+                    ):
                         # textbox
                         self._update_text_field(writer_annot)
                     elif writer_annot.get(FA.FT) == "/Sig":
@@ -921,8 +946,8 @@ class PdfWriter:
                     writer_parent_annot[NameObject(FA.V)] = TextStringObject(value)
                     for k in writer_parent_annot[NameObject(FA.Kids)]:
                         k = k.get_object()
-                        k[NameObject(AnnotationDictionaryAttributes.AS)] = NameObject(
-                            value if value in k["/AP"]["/N"] else "/Off"
+                        k[NameObject(AA.AS)] = NameObject(
+                            value if value in k["/AP"]["/N"] else "/O"
                         )
 
     def updatePageFormFieldValues(
@@ -2213,14 +2238,12 @@ class PdfWriter:
         lnk = DictionaryObject()
         lnk.update(
             {
-                NameObject(AnnotationDictionaryAttributes.Type): NameObject(PG.ANNOTS),
-                NameObject(AnnotationDictionaryAttributes.Subtype): NameObject("/Link"),
-                NameObject(AnnotationDictionaryAttributes.P): page_link,
-                NameObject(AnnotationDictionaryAttributes.Rect): rect,
+                NameObject(AA.Type): NameObject(PG.ANNOTS),
+                NameObject(AA.Subtype): NameObject("/Link"),
+                NameObject(AA.P): page_link,
+                NameObject(AA.Rect): rect,
                 NameObject("/H"): NameObject("/I"),
-                NameObject(AnnotationDictionaryAttributes.Border): ArrayObject(
-                    border_arr
-                ),
+                NameObject(AA.Border): ArrayObject(border_arr),
                 NameObject("/A"): lnk2,
             }
         )
