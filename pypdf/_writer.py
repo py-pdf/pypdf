@@ -32,7 +32,6 @@ import collections
 import decimal
 import enum
 import hashlib
-import logging
 import re
 import struct
 import uuid
@@ -128,9 +127,6 @@ from .types import (
     PagemodeType,
     ZoomArgType,
 )
-
-logger = logging.getLogger(__name__)
-
 
 OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
@@ -348,8 +344,10 @@ class PdfWriter:
             cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])[
                 need_appearances
             ] = BooleanObject(state)
-        except Exception as exc:
-            logger.error("set_need_appearances_writer() catch : %s", repr(exc))
+        except Exception as exc:  # pragma: no cover
+            logger_warning(
+                f"set_need_appearances_writer({state}) catch : {exc}", __name__
+            )
 
     def add_page(
         self,
