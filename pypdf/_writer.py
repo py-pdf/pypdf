@@ -874,6 +874,7 @@ class PdfWriter:
         else:  # [/AP][/N] exists
             n = field[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
             self._objects[n - 1] = dct
+            dct.indirect_reference = IndirectObject(n, 0, self)
 
     def update_page_form_field_values(
         self,
