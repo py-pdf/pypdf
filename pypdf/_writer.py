@@ -863,16 +863,16 @@ class PdfWriter:
                     )
                 }
             )
-        if "/AP" not in field:
-            field[NameObject("/AP")] = DictionaryObject(
+        if AA.AP not in field:
+            field[NameObject(AA.AP)] = DictionaryObject(
                 {NameObject("/N"): self._add_object(dct)}
             )
-        elif "/N" not in field:
-            cast(DictionaryObject, field[NameObject("/AP")])[
+        elif "/N" not in field[AA.AP]:
+            cast(DictionaryObject, field[NameObject(AA.AP)])[
                 NameObject("/N")
             ] = self._add_object(dct)
-        else:  # [/AP][/N exists
-            n = field["/AP"]["/N"].indirect_reference.idnum  # type: ignore
+        else:  # [/AP][/N] exists
+            n = field[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
             self._objects[n - 1] = dct
 
     def update_page_form_field_values(
@@ -945,7 +945,7 @@ class PdfWriter:
                     for k in writer_parent_annot[NameObject(FA.Kids)]:
                         k = k.get_object()
                         k[NameObject(AA.AS)] = NameObject(
-                            value if value in k["/AP"]["/N"] else "/O"
+                            value if value in k[AA.AP]["/N"] else "/Off"
                         )
 
     def updatePageFormFieldValues(

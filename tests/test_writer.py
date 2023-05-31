@@ -1382,7 +1382,7 @@ def test_update_form_fields(write_data_here, needs_cleanup):
         in flds["Text2"].indirect_reference.get_object()["/AP"]["/N"].get_data()
     )
     assert flds["RadioGroup1"]["/V"] == "/2"
-    assert flds["RadioGroup1"]["/Kids"][0].get_object()["/AS"] == "/O"
+    assert flds["RadioGroup1"]["/Kids"][0].get_object()["/AS"] == "/Off"
     assert flds["RadioGroup1"]["/Kids"][1].get_object()["/AS"] == "/2"
     assert all(x in flds["Liste2"]["/V"] for x in ["Lst1", "Lst3"])
 
