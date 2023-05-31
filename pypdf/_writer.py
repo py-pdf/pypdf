@@ -867,7 +867,7 @@ class PdfWriter:
             field[NameObject(AA.AP)] = DictionaryObject(
                 {NameObject("/N"): self._add_object(dct)}
             )
-        elif "/N" not in field[AA.AP]:
+        elif "/N" not in cast(DictionaryObject, field[AA.AP]):
             cast(DictionaryObject, field[NameObject(AA.AP)])[
                 NameObject("/N")
             ] = self._add_object(dct)
