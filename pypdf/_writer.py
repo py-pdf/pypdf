@@ -810,29 +810,35 @@ class PdfWriter:
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
         yf: Any = cast(str, field["/DA"]).replace("\n", " ").split(" ")
         fnt = yf[yf.index("Tf") - 2]
-        yf = float(yf[yf.index("Tf") - 1])
-        yf = rct.height - 1 - yf
+        h = float(yf[yf.index("Tf") - 1])
+        yf = rct.height - 1 - h
+        ap_stream = f"/Tx BMC \nq\n 1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{field['/DA']}\n".encode()
+        for ln, ll in enumerate(field["/V"].replace("\n", "\r").split("\r")):
+            if ln == 0:
+                ap_stream += f"2 {yf} Td\n".encode()
+            else:
+                # Td is a relative translation
+                ap_stream += f"0 {- h * 1.4} Td\n".encode()
+            ap_stream += b"(" + str(ll).encode("UTF-8") + b") Tj\n"
+        ap_stream += b"ET\nQ\nEMC\n"
+
         dct = DecodedStreamObject.initialize_from_dictionary(
             {
                 NameObject("/Type"): NameObject("/XObject"),
                 NameObject("/Subtype"): NameObject("/Form"),
                 NameObject("/BBox"): rct,
-                "__streamdata__": ByteStringObject(
-                    (
-                        f"/Tx BMC \nq\n 1 1 {rct.width - 1} {rct.height - 1} re\n"
-                        f"W\nn\nBT\n{field['/DA']}\n"
-                        f"2 {yf} Td\n("
-                    ).encode()
-                    + cast(str, field["/V"]).encode("UTF-8")
-                    + b") Tj\nET\nQ\nEMC\n"
-                ),
+                "__streamdata__": ByteStringObject(ap_stream),
                 "/Length": 0,
             }
         )
         dr = cast(
             dict, cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {})
         )
+        if isinstance(dr, IndirectObject):
+            dr = dr.get_object()
         dr = dr.get("/Font", {})
+        if isinstance(dr, IndirectObject):
+            dr = dr.get_object()
         if fnt in dr:
             dct[NameObject("/Resources")] = DictionaryObject(
                 {
