@@ -28,13 +28,11 @@ def main(changelog_path: str) -> None:
     if changes == "":
         print("No changes")
         return
-    print("-" * 80)
     print(changes)
 
     new_version = version_bump(git_tag)
     today = datetime.now(tz=timezone.utc)
-    header = f"Version {new_version}, {today:%Y-%m-%d}\n"
-    header = header + "-" * (len(header) - 1) + "\n"
+    header = f"## Version {new_version}, {today:%Y-%m-%d}\n"
     url = f"https://github.com/py-pdf/pypdf/compare/{git_tag}...{new_version}"
     trailer = f"\n[Full Changelog]({url})\n\n"
     new_entry = header + changes + trailer
@@ -45,8 +43,13 @@ def main(changelog_path: str) -> None:
         print("Changelog is already up-to-date!")
         return
 
-    new_changelog = new_entry + changelog
+    new_changelog = "# CHANGELOG\n\n" + new_entry + strip_header(changelog)
     write_changelog(new_changelog, changelog_path)
+
+
+def strip_header(md: str) -> str:
+    """Remove the 'CHANGELOG' header."""
+    return md.lstrip("# CHANGELOG").strip()  # noqa
 
 
 def version_bump(git_tag: str) -> str:
@@ -120,6 +123,7 @@ def get_formatted_changes(git_tag: str) -> str:
         "ROB",
         "DOC",
         "DEV",
+        "CI",
         "MAINT",
         "TST",
         "STY",
@@ -132,6 +136,7 @@ def get_formatted_changes(git_tag: str) -> str:
         "ROB": "Robustness",
         "DOC": "Documentation",
         "DEV": "Developer Experience",
+        "CI": "Continuous Integration",
         "MAINT": "Maintenance",
         "TST": "Testing",
         "STY": "Code Style",
@@ -143,17 +148,15 @@ def get_formatted_changes(git_tag: str) -> str:
     for prefix in order:
         if prefix not in grouped:
             continue
-        output += f"\n{abbrev2long[prefix]} ({prefix}):\n"  # header
+        output += f"\n### {abbrev2long[prefix]} ({prefix})\n"  # header
         for commit in grouped[prefix]:
             output += f"- {commit['msg']}\n"
         del grouped[prefix]
 
     if grouped:
-        print("@" * 80)
-        output += "\nYou forgot something!:\n"
+        output += "\n### Other\n"
         for prefix in grouped:
             output += f"- {prefix}: {grouped[prefix]}\n"
-        print("@" * 80)
 
     return output
 
