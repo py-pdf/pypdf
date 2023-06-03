@@ -137,16 +137,6 @@ jobs:
         working-directory: /tmp
         run: python -c "import pypdf;print(pypdf.__version__)"
 
-      # - name: Release to pypi if tagged.
-      #   if: startsWith(github.ref, 'refs/tags')
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     user: __token__
-      #     password: ${{ secrets.PYPI_API_TOKEN }}
-      - name: Create GitHub release if tagged.
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-
   coverage:
     name: Combine & check coverage.
     runs-on: ubuntu-latest
@@ -174,3 +164,29 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
+
+    publish:
+      # this doesn't make sense if you don't have the PyPI secret
+      if: github.repository == 'py-pdf/pypdf'
+      name: Publish a new version of pypdf
+      runs-on: ubuntu-latest
+      needs: package
+
+      steps:
+      - name: Install requirements
+        run: pip install jq
+      - name: Is it a new version? 🚀
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo Versions already released on Pypi: $(curl -Ls 'https://pypi.org/pypi/pypdf/json' | jq -r '.releases|keys[]')
+          echo Current code version: $(python setup.py -V)
+          # Checking if current code version has already been released:
+          curl -Ls 'https://pypi.org/pypi/fpdf2/json' | jq -r '.releases|keys[]' | grep "^$(python setup.py -V)\$" && exit 0
+      - name: Publish to TestPyPI 🚀
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
