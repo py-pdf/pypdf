@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685774843823,
+  "lastUpdate": 1685775115796,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -30186,6 +30186,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0005588828339308967",
             "extra": "mean: 98.47733759999642 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ritchiepoh@gmail.com",
+            "name": "Ritchie Poh",
+            "username": "RitchieP"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c52a502e2989517b8d6a74e13e1c127591edb22f",
+          "message": "DOC: Clarification of pdfplumbers image conversion capabilities (#1853)",
+          "timestamp": "2023-06-03T08:50:37+02:00",
+          "tree_id": "3d45019645d1b8333074f0d18da2f1337f8e7614",
+          "url": "https://github.com/py-pdf/pypdf/commit/c52a502e2989517b8d6a74e13e1c127591edb22f"
+        },
+        "date": 1685775113655,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6923036550057892,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014632687396567184",
+            "extra": "mean: 1.4444528680000075 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.242827741552917,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010770228865876065",
+            "extra": "mean: 97.6292899999888 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21413872901548597,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04835711546474849",
+            "extra": "mean: 4.669869876399997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.77241461409414,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010663100529385767",
+            "extra": "mean: 102.32885519999968 msec\nrounds: 10"
           }
         ]
       }
