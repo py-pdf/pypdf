@@ -1,41 +1,34 @@
-Version 3.9.0, 2023-05-21
--------------------------
+# CHANGELOG
 
-New Features (ENH):
+## Version 3.9.0, 2023-05-21
+
+### New Features (ENH)
 -  Simplify metadata input (Document Information Dictionary) (#1851)
 -  Extend cmap compatibilty to GBK_EUC_H/V (#1812)
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  Prevent infinite loop when no character follows after a comment (#1828)
 -  get_contents does not return ContentStream (#1847)
 -  Accept XYZ destination with zoom missing (default to zoom=0.0) (#1844)
 -  Cope with 1 Bit images (#1815)
 
-Robustness (ROB):
+### Robustness (ROB)
 -  Handle missing /Type entry in Page tree (#1845)
 
-Documentation (DOC):
+### Documentation (DOC)
 -  Expand file size explanations (#1835)
 -  Add comparison with pdfplumber (#1837)
 -  Clarify that PyPDF2 is dead (#1827)
 -  Add Hunter King as Contributor for #1806
 
-Maintenance (MAINT):
+### Maintenance (MAINT)
 -  Refactor internal Encryption class (#1821)
 -  Add R parameter to generate_values (#1820)
 -  Make encryption_key parameter of write_to_stream optional (#1819)
 -  Prepare for adding AES enryption support (#1818)
 
-Testing (TST):
--  Parametrize test_cmap_encodings (#1823)
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.1...3.9.0)
 
-Code Style (STY):
--  Iterate directly over the list instead of using range (#1839)
--  Minor refactorings in _encryption.py (#1822)
-
-[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.1...3.8.2)
-
-# CHANGELOG
 
 ## Version 3.8.1, 2023-04-23
 
