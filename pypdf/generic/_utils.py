@@ -104,7 +104,7 @@ def read_string_from_stream(
                     # line break was escaped:
                     tok = b""
                 else:
-                    msg = rf"Unexpected escaped string: {tok.decode('utf8','ignore')}"
+                    msg = f"Unexpected escaped string: {tok.decode('utf-8','ignore')}"
                     logger_warning(msg, __name__)
         txt.append(tok)
     return create_string_object(b"".join(txt), forced_encoding)
