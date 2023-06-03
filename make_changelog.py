@@ -25,6 +25,9 @@ def main(changelog_path: str) -> None:
     changelog = get_changelog(changelog_path)
     git_tag = get_most_recent_git_tag()
     changes = get_formatted_changes(git_tag)
+    if changes == "":
+        print("No changes")
+        return
     print("-" * 80)
     print(changes)
 
@@ -193,7 +196,7 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
             stderr=subprocess.STDOUT,
         )
     ).strip("'b\\n")
-    return [parse_commit_line(line) for line in commits.split("\\n")]
+    return [parse_commit_line(line) for line in commits.split("\\n") if line != ""]
 
 
 def parse_commit_line(line: str) -> Change:
@@ -210,7 +213,7 @@ def parse_commit_line(line: str) -> Change:
         ValueError: The commit line is not well-structured
     """
     if "\\t" not in line:
-        raise ValueError(f"Invalid commit line: {line}")
+        raise ValueError(f"Invalid commit line: '{line}'")
     commit_hash, rest = line.split("\\t", 1)
     if ":" in rest:
         prefix, message = rest.split(":", 1)
