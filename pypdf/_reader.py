@@ -34,7 +34,6 @@ import zlib
 from datetime import datetime
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
-from types import NoneType
 from typing import (
     Any,
     Callable,
@@ -2097,10 +2096,10 @@ class PdfReader:
         tree: Optional[TreeObject] = None
         retval: Dict[str, Any] = {}
 
-        if isinstance(self._root_object.get("/AcroForm", None), (NoneType, NullObject)):
+        if isinstance(self.root_object.get("/AcroForm", None), (type(None), NullObject)):
             return None
 
-        tree = cast(TreeObject, self._root_object["/AcroForm"])
+        tree = cast(TreeObject, self.root_object["/AcroForm"])
 
         if "/XFA" in tree:
             fields = cast(ArrayObject, tree["/XFA"])
@@ -2125,10 +2124,10 @@ class PdfReader:
         Returns:
             The created object. ``None`` means no object was created.
         """
-        if isinstance(self._root_object.get("/AcroForm", None), (NoneType, NullObject)):
+        if isinstance(self.root_object.get("/AcroForm", None), (type(None), NullObject)):
             return None
 
-        acroform = cast(DictionaryObject, self._root_object["/AcroForm"])
+        acroform = cast(DictionaryObject, self.root_object["/AcroForm"])
         if "/Fields" not in acroform:
             # TODO: :No error returns but may be extended for XFA Forms
             return None
@@ -2164,10 +2163,10 @@ class PdfReader:
         Returns:
             The modified object. ``None`` means no object was modified.
         """
-        if isinstance(self._root_object.get("/AcroForm", None), (NoneType, NullObject)):
+        if isinstance(self.root_object.get("/AcroForm", None), (type(None), NullObject)):
             return None
 
-        acroform = cast(DictionaryObject, self._root_object["/AcroForm"])
+        acroform = cast(DictionaryObject, self.root_object["/AcroForm"])
         if "/Fields" not in acroform:
             return None
 
