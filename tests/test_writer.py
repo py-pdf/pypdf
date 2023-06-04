@@ -1339,3 +1339,8 @@ def test_iss1767():
     name = "iss1723.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     PdfWriter(clone_from=in_pdf)
+
+
+def test_deprecate_root_object():
+    with pytest.warns(DeprecationWarning), PdfWriter() as writer:
+        writer._root_object
