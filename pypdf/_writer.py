@@ -195,14 +195,14 @@ class PdfWriter:
         self._info = self._add_object(info)
 
         # root object
-        self._root_object = DictionaryObject()
-        self._root_object.update(
+        self.root_object = DictionaryObject()
+        self.root_object.update(
             {
                 NameObject(PA.TYPE): NameObject(CO.CATALOG),
                 NameObject(CO.PAGES): self._pages,
             }
         )
-        self._root = self._add_object(self._root_object)
+        self._root = self._add_object(self.root_object)
 
         if clone_from is not None:
             if not isinstance(clone_from, PdfReader):
@@ -225,6 +225,11 @@ class PdfWriter:
         """Write data to the fileobj."""
         if self.fileobj:
             self.write(self.fileobj)
+
+    @property
+    def _root_object(self) -> DictionaryObject:
+        deprecate_with_replacement("_root_object", "root_object")
+        return self.root_object
 
     @property
     def pdf_header(self) -> bytes:
@@ -337,13 +342,13 @@ class PdfWriter:
         # http://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         try:
             # get the AcroForm tree
-            if CatalogDictionary.ACRO_FORM not in self._root_object:
-                self._root_object[
+            if CatalogDictionary.ACRO_FORM not in self.root_object:
+                self.root_object[
                     NameObject(CatalogDictionary.ACRO_FORM)
                 ] = self._add_object(DictionaryObject())
 
             need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
-            self._root_object[CatalogDictionary.ACRO_FORM][need_appearances] = BooleanObject(True)  # type: ignore
+            self.root_object[CatalogDictionary.ACRO_FORM][need_appearances] = BooleanObject(True)  # type: ignore
         except Exception as exc:
             logger.error("set_need_appearances_writer() catch : %s", repr(exc))
 
@@ -564,9 +569,9 @@ class PdfWriter:
         Raises:
             Exception: If a destination is invalid.
         """
-        if "/OpenAction" not in self._root_object:
+        if "/OpenAction" not in self.root_object:
             return None
-        oa = self._root_object["/OpenAction"]
+        oa = self.root_object["/OpenAction"]
         if isinstance(oa, (str, bytes)):
             return create_string_object(str(oa))
         elif isinstance(oa, ArrayObject):
@@ -584,15 +589,15 @@ class PdfWriter:
     def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
         if dest is None:
             try:
-                del self._root_object["/OpenAction"]
+                del self.root_object["/OpenAction"]
             except KeyError:
                 pass
         elif isinstance(dest, str):
-            self._root_object[NameObject("/OpenAction")] = TextStringObject(dest)
+            self.root_object[NameObject("/OpenAction")] = TextStringObject(dest)
         elif isinstance(dest, Destination):
-            self._root_object[NameObject("/OpenAction")] = dest.dest_array
+            self.root_object[NameObject("/OpenAction")] = dest.dest_array
         elif isinstance(dest, PageObject):
-            self._root_object[NameObject("/OpenAction")] = Destination(
+            self.root_object[NameObject("/OpenAction")] = Destination(
                 "Opening",
                 dest.indirect_reference
                 if dest.indirect_reference is not None
@@ -611,9 +616,9 @@ class PdfWriter:
         # Example: This will launch the print window when the PDF is opened.
         """
         # Names / JavaScript prefered to be able to add multiple scripts
-        if "/Names" not in self._root_object:
-            self._root_object[NameObject(CA.NAMES)] = DictionaryObject()
-        names = cast(DictionaryObject, self._root_object[CA.NAMES])
+        if "/Names" not in self.root_object:
+            self.root_object[NameObject(CA.NAMES)] = DictionaryObject()
+        names = cast(DictionaryObject, self.root_object[CA.NAMES])
         if "/JavaScript" not in names:
             names[NameObject("/JavaScript")] = DictionaryObject(
                 {NameObject("/Names"): ArrayObject()}
@@ -712,21 +717,21 @@ class PdfWriter:
         # >>
         # endobj
 
-        if CA.NAMES not in self._root_object:
-            self._root_object[NameObject(CA.NAMES)] = self._add_object(
+        if CA.NAMES not in self.root_object:
+            self.root_object[NameObject(CA.NAMES)] = self._add_object(
                 DictionaryObject()
             )
-        if "/EmbeddedFiles" not in cast(DictionaryObject, self._root_object[CA.NAMES]):
+        if "/EmbeddedFiles" not in cast(DictionaryObject, self.root_object[CA.NAMES]):
             embedded_files_names_dictionary = DictionaryObject(
                 {NameObject(CA.NAMES): ArrayObject()}
             )
-            cast(DictionaryObject, self._root_object[CA.NAMES])[
+            cast(DictionaryObject, self.root_object[CA.NAMES])[
                 NameObject("/EmbeddedFiles")
             ] = self._add_object(embedded_files_names_dictionary)
         else:
             embedded_files_names_dictionary = cast(
                 DictionaryObject,
-                cast(DictionaryObject, self._root_object[CA.NAMES])["/EmbeddedFiles"],
+                cast(DictionaryObject, self.root_object[CA.NAMES])["/EmbeddedFiles"],
             )
         cast(ArrayObject, embedded_files_names_dictionary[CA.NAMES]).extend(
             [create_string_object(filename), filespec]
@@ -898,15 +903,15 @@ class PdfWriter:
         Args:
             reader: PdfReader from the document root should be copied.
         """
-        self._root_object = cast(DictionaryObject, reader._root_object.clone(self))
-        self._root = self._root_object.indirect_reference  # type: ignore[assignment]
-        self._pages = self._root_object.raw_get("/Pages")
+        self.root_object = cast(DictionaryObject, reader.root_object.clone(self))
+        self._root = self.root_object.indirect_reference  # type: ignore[assignment]
+        self._pages = self.root_object.raw_get("/Pages")
         self._flatten()
         for p in self.flattened_pages:
             o = p.get_object()
             self._objects[p.idnum - 1] = PageObject(self, p)
             self._objects[p.idnum - 1].update(o.items())
-        self._root_object[NameObject("/Pages")][  # type: ignore[index]
+        self.root_object[NameObject("/Pages")][  # type: ignore[index]
             NameObject("/Kids")
         ] = self.flattened_pages
         del self.flattened_pages
@@ -937,7 +942,7 @@ class PdfWriter:
         if inherit is None:
             inherit = {}
         if pages is None:
-            pages = cast(DictionaryObject, self._root_object["/Pages"])
+            pages = cast(DictionaryObject, self.root_object["/Pages"])
             self.flattened_pages = ArrayObject()
         assert pages is not None  # hint for mypy
 
@@ -965,7 +970,7 @@ class PdfWriter:
                 if attr_in not in pages:
                     pages[attr_in] = value
             pages[NameObject("/Parent")] = cast(
-                IndirectObject, self._root_object.raw_get("/Pages")
+                IndirectObject, self.root_object.raw_get("/Pages")
             )
             self.flattened_pages.append(indirect_reference)
 
@@ -1143,7 +1148,7 @@ class PdfWriter:
             )
 
         if not self._root:
-            self._root = self._add_object(self._root_object)
+            self._root = self._add_object(self.root_object)
 
         self._sweep_indirect_references(self._root)
 
@@ -1432,9 +1437,9 @@ class PdfWriter:
         return self.get_reference(obj)
 
     def get_outline_root(self) -> TreeObject:
-        if CO.OUTLINES in self._root_object:
+        if CO.OUTLINES in self.root_object:
             # TABLE 3.25 Entries in the catalog dictionary
-            outline = cast(TreeObject, self._root_object[CO.OUTLINES])
+            outline = cast(TreeObject, self.root_object[CO.OUTLINES])
             idnum = self._objects.index(outline) + 1
             outline_ref = IndirectObject(idnum, 0, self)
             assert outline_ref.get_object() == outline
@@ -1442,7 +1447,7 @@ class PdfWriter:
             outline = TreeObject()
             outline.update({})
             outline_ref = self._add_object(outline)
-            self._root_object[NameObject(CO.OUTLINES)] = outline_ref
+            self.root_object[NameObject(CO.OUTLINES)] = outline_ref
 
         return outline
 
@@ -1456,12 +1461,12 @@ class PdfWriter:
             An array (possibly empty) of Dictionaries with ``/F`` and
             ``/I`` properties.
         """
-        if CO.THREADS in self._root_object:
+        if CO.THREADS in self.root_object:
             # TABLE 3.25 Entries in the catalog dictionary
-            threads = cast(ArrayObject, self._root_object[CO.THREADS])
+            threads = cast(ArrayObject, self.root_object[CO.THREADS])
         else:
             threads = ArrayObject()
-            self._root_object[NameObject(CO.THREADS)] = threads
+            self.root_object[NameObject(CO.THREADS)] = threads
         return threads
 
     @property
@@ -1485,10 +1490,10 @@ class PdfWriter:
         return self.get_outline_root()
 
     def get_named_dest_root(self) -> ArrayObject:
-        if CA.NAMES in self._root_object and isinstance(
-            self._root_object[CA.NAMES], DictionaryObject
+        if CA.NAMES in self.root_object and isinstance(
+            self.root_object[CA.NAMES], DictionaryObject
         ):
-            names = cast(DictionaryObject, self._root_object[CA.NAMES])
+            names = cast(DictionaryObject, self.root_object[CA.NAMES])
             names_ref = names.indirect_reference
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
                 # 3.6.3 Name Dictionary (PDF spec 1.7)
@@ -1510,7 +1515,7 @@ class PdfWriter:
         else:
             names = DictionaryObject()
             names_ref = self._add_object(names)
-            self._root_object[NameObject(CA.NAMES)] = names_ref
+            self.root_object[NameObject(CA.NAMES)] = names_ref
             dests = DictionaryObject()
             dests_ref = self._add_object(dests)
             names[NameObject(CA.DESTS)] = dests_ref
@@ -2260,7 +2265,7 @@ class PdfWriter:
 
     def _get_page_layout(self) -> Optional[LayoutType]:
         try:
-            return cast(LayoutType, self._root_object["/PageLayout"])
+            return cast(LayoutType, self.root_object["/PageLayout"])
         except KeyError:
             return None
 
@@ -2305,7 +2310,7 @@ class PdfWriter:
                     __name__,
                 )
             layout = NameObject(layout)
-        self._root_object.update({NameObject("/PageLayout"): layout})
+        self.root_object.update({NameObject("/PageLayout"): layout})
 
     def set_page_layout(self, layout: LayoutType) -> None:
         """
@@ -2405,7 +2410,7 @@ class PdfWriter:
 
     def _get_page_mode(self) -> Optional[PagemodeType]:
         try:
-            return cast(PagemodeType, self._root_object["/PageMode"])
+            return cast(PagemodeType, self.root_object["/PageMode"])
         except KeyError:
             return None
 
@@ -2432,7 +2437,7 @@ class PdfWriter:
                     f"Mode should be one of: {', '.join(self._valid_modes)}", __name__
                 )
             mode_name = NameObject(mode)
-        self._root_object.update({NameObject("/PageMode"): mode_name})
+        self.root_object.update({NameObject("/PageMode"): mode_name})
 
     def setPageMode(self, mode: PagemodeType) -> None:  # deprecated
         """
@@ -2780,9 +2785,9 @@ class PdfWriter:
         else:
             outline_item_typ = self.get_outline_root()
 
-        if import_outline and CO.OUTLINES in reader._root_object:
+        if import_outline and CO.OUTLINES in reader.root_object:
             outline = self._get_filtered_outline(
-                reader._root_object.get(CO.OUTLINES, None), srcpages, reader
+                reader.root_object.get(CO.OUTLINES, None), srcpages, reader
             )
             self._insert_filtered_outline(
                 outline, outline_item_typ, None
@@ -2797,23 +2802,23 @@ class PdfWriter:
                     pag[NameObject("/Annots")] = lst
                 self.clean_page(pag)
 
-        if "/AcroForm" in cast(DictionaryObject, reader._root_object):
-            if "/AcroForm" not in self._root_object:
-                self._root_object[NameObject("/AcroForm")] = self._add_object(
+        if "/AcroForm" in cast(DictionaryObject, reader.root_object):
+            if "/AcroForm" not in self.root_object:
+                self.root_object[NameObject("/AcroForm")] = self._add_object(
                     cast(
                         DictionaryObject,
-                        reader._root_object["/AcroForm"],
+                        reader.root_object["/AcroForm"],
                     ).clone(self, False, ("/Fields",))
                 )
                 arr = ArrayObject()
             else:
                 arr = cast(
                     ArrayObject,
-                    cast(DictionaryObject, self._root_object["/AcroForm"])["/Fields"],
+                    cast(DictionaryObject, self.root_object["/AcroForm"])["/Fields"],
                 )
             trslat = self._id_translated[id(reader)]
             try:
-                for f in reader._root_object["/AcroForm"]["/Fields"]:  # type: ignore
+                for f in reader.root_object["/AcroForm"]["/Fields"]:  # type: ignore
                     try:
                         ind = IndirectObject(trslat[f.idnum], 0, self)
                         if ind not in arr:
@@ -2824,7 +2829,7 @@ class PdfWriter:
                         pass
             except KeyError:  # for /Acroform or /Fields are not existing
                 arr = self._add_object(ArrayObject())
-            cast(DictionaryObject, self._root_object["/AcroForm"])[
+            cast(DictionaryObject, self.root_object["/AcroForm"])[
                 NameObject("/Fields")
             ] = arr
 
@@ -3238,15 +3243,15 @@ class PdfWriter:
         if start != 0:
             new_page_label[NameObject("/St")] = NumberObject(start)
 
-        if NameObject(CatalogDictionary.PAGE_LABELS) not in self._root_object:
+        if NameObject(CatalogDictionary.PAGE_LABELS) not in self.root_object:
             nums = ArrayObject()
             nums_insert(NumberObject(0), default_page_label, nums)
             page_labels = TreeObject()
             page_labels[NameObject("/Nums")] = nums
-            self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
+            self.root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
 
         page_labels = cast(
-            TreeObject, self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)]
+            TreeObject, self.root_object[NameObject(CatalogDictionary.PAGE_LABELS)]
         )
         nums = cast(ArrayObject, page_labels[NameObject("/Nums")])
 
@@ -3257,7 +3262,7 @@ class PdfWriter:
             nums_insert(NumberObject(page_index_to + 1), default_page_label, nums)
 
         page_labels[NameObject("/Nums")] = nums
-        self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
+        self.root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
 
 
 def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:

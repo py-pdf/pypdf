@@ -11,12 +11,12 @@ page label. This makes things more complicated.
 Example 1
 ---------
 
->>> reader._root_object["/PageLabels"]["/Nums"]
+>>> reader.root_object["/PageLabels"]["/Nums"]
 [0, IndirectObject(18, 0, 139929798197504),
  8, IndirectObject(19, 0, 139929798197504)]
->>> reader.get_object(reader._root_object["/PageLabels"]["/Nums"][1])
+>>> reader.get_object(reader.root_object["/PageLabels"]["/Nums"][1])
 {'/S': '/r'}
->>> reader.get_object(reader._root_object["/PageLabels"]["/Nums"][3])
+>>> reader.get_object(reader.root_object["/PageLabels"]["/Nums"][3])
 {'/S': '/D'}
 
 Example 2
@@ -127,7 +127,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
     Returns:
         The label of the page, e.g. "iv" or "4".
     """
-    root = cast(DictionaryObject, reader._root_object)
+    root = cast(DictionaryObject, reader.root_object)
     if "/PageLabels" not in root:
         return str(index + 1)  # Fallback
     number_tree = cast(DictionaryObject, root["/PageLabels"])

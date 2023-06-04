@@ -348,7 +348,7 @@ class PdfReader:
             raise PdfReadError("Not encrypted file")
 
     @property
-    def _root_object(self) -> DictionaryObject:
+    def root_object(self) -> DictionaryObject:
         """Provide access to "/Root". standardized with PdfWriter."""
         return cast(DictionaryObject, self.trailer[TK.ROOT])
 
@@ -435,7 +435,7 @@ class PdfReader:
         """XMP (Extensible Metadata Platform) data."""
         try:
             self._override_encryption = True
-            return self._root_object.xmp_metadata  # type: ignore
+            return self.root_object.xmp_metadata  # type: ignore
         finally:
             self._override_encryption = False
 
@@ -473,7 +473,7 @@ class PdfReader:
         # the PDF file's page count is used in this case. Otherwise,
         # the original method (flattened page count) is used.
         if self.is_encrypted:
-            return self._root_object["/Pages"]["/Count"]  # type: ignore
+            return self.root_object["/Pages"]["/Count"]  # type: ignore
         else:
             if self.flattened_pages is None:
                 self._flatten()
@@ -574,8 +574,8 @@ class PdfReader:
         if retval is None:
             retval = {}
             # get the AcroForm tree
-            if CD.ACRO_FORM in self._root_object:
-                tree = cast(Optional[TreeObject], self._root_object[CD.ACRO_FORM])
+            if CD.ACRO_FORM in self.root_object:
+                tree = cast(Optional[TreeObject], self.root_object[CD.ACRO_FORM])
             else:
                 return None
         if tree is None:
@@ -767,10 +767,10 @@ class PdfReader:
             retval = {}
 
             # get the name tree
-            if CA.DESTS in self._root_object:
-                tree = cast(TreeObject, self._root_object[CA.DESTS])
-            elif CA.NAMES in self._root_object:
-                names = cast(DictionaryObject, self._root_object[CA.NAMES])
+            if CA.DESTS in self.root_object:
+                tree = cast(TreeObject, self.root_object[CA.DESTS])
+            elif CA.NAMES in self.root_object:
+                names = cast(DictionaryObject, self.root_object[CA.NAMES])
                 if CA.DESTS in names:
                     tree = cast(TreeObject, names[CA.DESTS])
 
@@ -852,8 +852,8 @@ class PdfReader:
             outline = []
 
             # get the outline dictionary and named destinations
-            if CO.OUTLINES in self._root_object:
-                lines = cast(DictionaryObject, self._root_object[CO.OUTLINES])
+            if CO.OUTLINES in self.root_object:
+                lines = cast(DictionaryObject, self.root_object[CO.OUTLINES])
 
                 if isinstance(lines, NullObject):
                     return outline
@@ -906,8 +906,8 @@ class PdfReader:
         It's an array of dictionaries with "/F" and "/I" properties or
         None if there are no articles.
         """
-        if CO.THREADS in self._root_object:
-            return cast("ArrayObject", self._root_object[CO.THREADS])
+        if CO.THREADS in self.root_object:
+            return cast("ArrayObject", self.root_object[CO.THREADS])
         else:
             return None
 
@@ -1120,8 +1120,8 @@ class PdfReader:
            * - /TwoPageRight
              - Show two pages at a time, odd-numbered pages on the right
         """
-        if CD.PAGE_LAYOUT in self._root_object:
-            return cast(NameObject, self._root_object[CD.PAGE_LAYOUT])
+        if CD.PAGE_LAYOUT in self.root_object:
+            return cast(NameObject, self.root_object[CD.PAGE_LAYOUT])
         return None
 
     def getPageLayout(self) -> Optional[str]:  # deprecated
@@ -1165,7 +1165,7 @@ class PdfReader:
              - Show attachments panel
         """
         try:
-            return self._root_object["/PageMode"]  # type: ignore
+            return self.root_object["/PageMode"]  # type: ignore
         except KeyError:
             return None
 
@@ -1205,7 +1205,7 @@ class PdfReader:
         if pages is None:
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
-            catalog = self._root_object.get_object()
+            catalog = self.root_object.get_object()
             pages = catalog["/Pages"].get_object()  # type: ignore
             self.flattened_pages = []
 
@@ -2096,7 +2096,9 @@ class PdfReader:
         tree: Optional[TreeObject] = None
         retval: Dict[str, Any] = {}
 
-        if isinstance(self.root_object.get("/AcroForm", None), (type(None), NullObject)):
+        if isinstance(
+            self.root_object.get("/AcroForm", None), (type(None), NullObject)
+        ):
             return None
 
         tree = cast(TreeObject, self.root_object["/AcroForm"])
@@ -2124,7 +2126,9 @@ class PdfReader:
         Returns:
             The created object. ``None`` means no object was created.
         """
-        if isinstance(self.root_object.get("/AcroForm", None), (type(None), NullObject)):
+        if isinstance(
+            self.root_object.get("/AcroForm", None), (type(None), NullObject)
+        ):
             return None
 
         acroform = cast(DictionaryObject, self.root_object["/AcroForm"])
@@ -2163,7 +2167,9 @@ class PdfReader:
         Returns:
             The modified object. ``None`` means no object was modified.
         """
-        if isinstance(self.root_object.get("/AcroForm", None), (type(None), NullObject)):
+        if isinstance(
+            self.root_object.get("/AcroForm", None), (type(None), NullObject)
+        ):
             return None
 
         acroform = cast(DictionaryObject, self.root_object["/AcroForm"])
@@ -2198,7 +2204,7 @@ class PdfReader:
                 ArrayObject,
                 cast(
                     DictionaryObject,
-                    cast(DictionaryObject, self._root_object["/Names"])[
+                    cast(DictionaryObject, self.root_object["/Names"])[
                         "/EmbeddedFiles"
                     ],
                 )["/Names"],
@@ -2241,7 +2247,7 @@ class PdfReader:
                 ArrayObject,
                 cast(
                     DictionaryObject,
-                    cast(DictionaryObject, self._root_object["/Names"])[
+                    cast(DictionaryObject, self.root_object["/Names"])[
                         "/EmbeddedFiles"
                     ],
                 )["/Names"],

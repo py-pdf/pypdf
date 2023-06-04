@@ -911,7 +911,7 @@ def test_startup_dest():
     assert pdf_file_writer.open_destination is None
     pdf_file_writer.open_destination = pdf_file_writer.pages[9]
     # checked also using Acrobrat to verify the good page is opened
-    op = pdf_file_writer._root_object["/OpenAction"]
+    op = pdf_file_writer.root_object["/OpenAction"]
     assert op[0] == pdf_file_writer.pages[9].indirect_reference
     assert op[1] == "/Fit"
     op = pdf_file_writer.open_destination
@@ -921,16 +921,16 @@ def test_startup_dest():
     assert pdf_file_writer.open_destination == op
 
     # irrelevant, just for coverage
-    pdf_file_writer._root_object[NameObject("/OpenAction")][0] = NumberObject(0)
+    pdf_file_writer.root_object[NameObject("/OpenAction")][0] = NumberObject(0)
     pdf_file_writer.open_destination
     with pytest.raises(Exception) as exc:
-        del pdf_file_writer._root_object[NameObject("/OpenAction")][0]
+        del pdf_file_writer.root_object[NameObject("/OpenAction")][0]
         pdf_file_writer.open_destination
     assert "Invalid Destination" in str(exc.value)
 
     pdf_file_writer.open_destination = "Test"
     # checked also using Acrobrat to verify open_destination
-    op = pdf_file_writer._root_object["/OpenAction"]
+    op = pdf_file_writer.root_object["/OpenAction"]
     assert isinstance(op, TextStringObject)
     assert op == "Test"
     op = pdf_file_writer.open_destination
@@ -938,10 +938,10 @@ def test_startup_dest():
     assert op == "Test"
 
     # irrelevant, this is just for coverage
-    pdf_file_writer._root_object[NameObject("/OpenAction")] = NumberObject(0)
+    pdf_file_writer.root_object[NameObject("/OpenAction")] = NumberObject(0)
     assert pdf_file_writer.open_destination is None
     pdf_file_writer.open_destination = None
-    assert "/OpenAction" not in pdf_file_writer._root_object
+    assert "/OpenAction" not in pdf_file_writer.root_object
     pdf_file_writer.open_destination = None
 
 
@@ -1025,7 +1025,7 @@ def test_append_multiple():
         reader, [0, 0, 0]
     )  # to demonstre multiple insertion of same page at once
     writer.append(reader, [0, 0, 0])  # second pack
-    pages = writer._root_object["/Pages"]["/Kids"]
+    pages = writer.root_object["/Pages"]["/Kids"]
     assert pages[0] not in pages[1:]  # page not repeated
     assert pages[-1] not in pages[0:-1]  # page not repeated
 

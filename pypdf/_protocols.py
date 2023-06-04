@@ -60,7 +60,7 @@ class PdfReaderProtocol(Protocol):  # deprecated
         ...
 
     @property
-    def _root_object(self) -> PdfObjectProtocol:
+    def root_object(self) -> PdfObjectProtocol:
         ...
 
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
@@ -89,5 +89,5 @@ class PdfWriterProtocol(Protocol):  # deprecated
         ...
 
     @property
-    def _root_object(self) -> PdfObjectProtocol:
+    def root_object(self) -> PdfObjectProtocol:
         ...
