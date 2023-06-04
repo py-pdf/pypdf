@@ -34,6 +34,7 @@ import zlib
 from datetime import datetime
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
+from types import NoneType
 from typing import (
     Any,
     Callable,
@@ -329,8 +330,7 @@ class PdfReader:
             # Some documents may not have a /ID, use two empty
             # byte strings instead. Solves
             # https://github.com/py-pdf/pypdf/issues/608
-            id_entry = self.trailer.get(TK.ID)
-            id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
+            id1_entry = self._ID[0].get_object().original_bytes if self._ID else b""
             encrypt_entry = cast(
                 DictionaryObject, self.trailer[TK.ENCRYPT].get_object()
             )
@@ -347,6 +347,34 @@ class PdfReader:
             self._override_encryption = False
         elif password is not None:
             raise PdfReadError("Not encrypted file")
+
+    @property
+    def _root_object(self) -> DictionaryObject:
+        """Provide access to "/Root". standardized with PdfWriter."""
+        return cast(DictionaryObject, self.trailer[TK.ROOT])
+
+    @property
+    def _info(self) -> Optional[DictionaryObject]:
+        """
+        Provide access to "/Info". standardized with PdfWriter.
+
+        Returns:
+            /Info Dictionary ; None if the entry does not exists
+
+        """
+        info = self.trailer.get(TK.INFO, None)
+        return None if info is None else cast(DictionaryObject, info.get_object())
+
+    @property
+    def _ID(self) -> Optional[ArrayObject]:
+        """
+        Provide access to "/ID". standardized with PdfWriter.
+
+        Returns:
+            /ID array ; None if the entry does not exists
+        """
+        id = self.trailer.get(TK.ID, None)
+        return None if id is None else cast(ArrayObject, id.get_object())
 
     @property
     def pdf_header(self) -> str:
@@ -375,9 +403,9 @@ class PdfReader:
         """
         if TK.INFO not in self.trailer:
             return None
-        obj = self.trailer[TK.INFO]
+        obj = self._info
         retval = DocumentInformation()
-        if isinstance(obj, type(None)):
+        if obj is None:
             raise PdfReadError(
                 "trailer not found or does not point to document information directory"
             )
@@ -408,7 +436,7 @@ class PdfReader:
         """XMP (Extensible Metadata Platform) data."""
         try:
             self._override_encryption = True
-            return self.trailer[TK.ROOT].xmp_metadata  # type: ignore
+            return self._root_object.xmp_metadata  # type: ignore
         finally:
             self._override_encryption = False
 
@@ -446,7 +474,7 @@ class PdfReader:
         # the PDF file's page count is used in this case. Otherwise,
         # the original method (flattened page count) is used.
         if self.is_encrypted:
-            return self.trailer[TK.ROOT]["/Pages"]["/Count"]  # type: ignore
+            return self._root_object["/Pages"]["/Count"]  # type: ignore
         else:
             if self.flattened_pages is None:
                 self._flatten()
@@ -546,10 +574,9 @@ class PdfReader:
         field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
         if retval is None:
             retval = {}
-            catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
             # get the AcroForm tree
-            if CD.ACRO_FORM in catalog:
-                tree = cast(Optional[TreeObject], catalog[CD.ACRO_FORM])
+            if CD.ACRO_FORM in self._root_object:
+                tree = cast(Optional[TreeObject], self._root_object[CD.ACRO_FORM])
             else:
                 return None
         if tree is None:
@@ -739,13 +766,12 @@ class PdfReader:
         """
         if retval is None:
             retval = {}
-            catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
 
             # get the name tree
-            if CA.DESTS in catalog:
-                tree = cast(TreeObject, catalog[CA.DESTS])
-            elif CA.NAMES in catalog:
-                names = cast(DictionaryObject, catalog[CA.NAMES])
+            if CA.DESTS in self._root_object:
+                tree = cast(TreeObject, self._root_object[CA.DESTS])
+            elif CA.NAMES in self._root_object:
+                names = cast(DictionaryObject, self._root_object[CA.NAMES])
                 if CA.DESTS in names:
                     tree = cast(TreeObject, names[CA.DESTS])
 
@@ -825,11 +851,10 @@ class PdfReader:
     ) -> OutlineType:
         if outline is None:
             outline = []
-            catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
 
             # get the outline dictionary and named destinations
-            if CO.OUTLINES in catalog:
-                lines = cast(DictionaryObject, catalog[CO.OUTLINES])
+            if CO.OUTLINES in self._root_object:
+                lines = cast(DictionaryObject, self._root_object[CO.OUTLINES])
 
                 if isinstance(lines, NullObject):
                     return outline
@@ -882,9 +907,8 @@ class PdfReader:
         It's an array of dictionaries with "/F" and "/I" properties or
         None if there are no articles.
         """
-        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
-        if CO.THREADS in catalog:
-            return cast("ArrayObject", catalog[CO.THREADS])
+        if CO.THREADS in self._root_object:
+            return cast("ArrayObject", self._root_object[CO.THREADS])
         else:
             return None
 
@@ -1097,9 +1121,8 @@ class PdfReader:
            * - /TwoPageRight
              - Show two pages at a time, odd-numbered pages on the right
         """
-        trailer = cast(DictionaryObject, self.trailer[TK.ROOT])
-        if CD.PAGE_LAYOUT in trailer:
-            return cast(NameObject, trailer[CD.PAGE_LAYOUT])
+        if CD.PAGE_LAYOUT in self._root_object:
+            return cast(NameObject, self._root_object[CD.PAGE_LAYOUT])
         return None
 
     def getPageLayout(self) -> Optional[str]:  # deprecated
@@ -1143,7 +1166,7 @@ class PdfReader:
              - Show attachments panel
         """
         try:
-            return self.trailer[TK.ROOT]["/PageMode"]  # type: ignore
+            return self._root_object["/PageMode"]  # type: ignore
         except KeyError:
             return None
 
@@ -1183,7 +1206,7 @@ class PdfReader:
         if pages is None:
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
-            catalog = self.trailer[TK.ROOT].get_object()
+            catalog = self._root_object.get_object()
             pages = catalog["/Pages"].get_object()  # type: ignore
             self.flattened_pages = []
 
@@ -2073,12 +2096,11 @@ class PdfReader:
     def xfa(self) -> Optional[Dict[str, Any]]:
         tree: Optional[TreeObject] = None
         retval: Dict[str, Any] = {}
-        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
 
-        if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
+        if isinstance(self._root_object.get("/AcroForm", None), (NoneType, NullObject)):
             return None
 
-        tree = cast(TreeObject, catalog["/AcroForm"])
+        tree = cast(TreeObject, self._root_object["/AcroForm"])
 
         if "/XFA" in tree:
             fields = cast(ArrayObject, tree["/XFA"])
@@ -2103,13 +2125,10 @@ class PdfReader:
         Returns:
             The created object. ``None`` means no object was created.
         """
-        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
-
-        if "/AcroForm" not in catalog or not isinstance(
-            catalog["/AcroForm"], DictionaryObject
-        ):
+        if isinstance(self._root_object.get("/AcroForm", None), (NoneType, NullObject)):
             return None
-        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
+
+        acroform = cast(DictionaryObject, self._root_object["/AcroForm"])
         if "/Fields" not in acroform:
             # TODO: :No error returns but may be extended for XFA Forms
             return None
@@ -2145,13 +2164,10 @@ class PdfReader:
         Returns:
             The modified object. ``None`` means no object was modified.
         """
-        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
-
-        if "/AcroForm" not in catalog or not isinstance(
-            catalog["/AcroForm"], DictionaryObject
-        ):
+        if isinstance(self._root_object.get("/AcroForm", None), (NoneType, NullObject)):
             return None
-        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
+
+        acroform = cast(DictionaryObject, self._root_object["/AcroForm"])
         if "/Fields" not in acroform:
             return None
 
@@ -2178,14 +2194,14 @@ class PdfReader:
         Returns:
             list of filenames
         """
-        catalog = cast(DictionaryObject, self.trailer["/Root"])
-        # From the catalog get the embedded file names
         try:
             filenames = cast(
                 ArrayObject,
                 cast(
                     DictionaryObject,
-                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
+                    cast(DictionaryObject, self._root_object["/Names"])[
+                        "/EmbeddedFiles"
+                    ],
                 )["/Names"],
             )
         except KeyError:
@@ -2220,14 +2236,15 @@ class PdfReader:
             dictionary of filename -> Union[bytestring or List[ByteString]]
             if the filename exists multiple times a List of the different version will be provided
         """
-        catalog = cast(DictionaryObject, self.trailer["/Root"])
         # From the catalog get the embedded file names
         try:
             filenames = cast(
                 ArrayObject,
                 cast(
                     DictionaryObject,
-                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
+                    cast(DictionaryObject, self._root_object["/Names"])[
+                        "/EmbeddedFiles"
+                    ],
                 )["/Names"],
             )
         except KeyError:
