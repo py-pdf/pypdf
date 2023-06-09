@@ -198,6 +198,18 @@ class DictionaryObject(dict, PdfObject):
             force_duplicate:
             ignore_fields:
         """
+        # first we remove for the ignore_fields
+        # that are for a limited number of levels
+        x = 0
+        while x < len(ignore_fields):
+            if isinstance(ignore_fields[x], int):
+                if ignore_fields[x] <= 0:
+                    del ignore_fields[x]
+                    del ignore_fields[x]
+                    continue
+                else:
+                    ignore_fields[x] -= 1
+            x += 1
         #  First check if this is a chain list, we need to loop to prevent recur
         if any(
             field not in ignore_fields

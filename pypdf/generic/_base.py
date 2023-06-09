@@ -81,6 +81,10 @@ class PdfObject(PdfObjectProtocol):
             a new copy is always performed
         ignore_fields : list/tuple of Fields names (for dictionaries that will
             be ignored during cloning (apply also to childs duplication)
+            if fields are to be considered for a limited number of levels
+            you have to add it as integer:
+            eg  [1,"/B","/TOTO"] means "/B" will be ignored at first level only
+            but "/TOTO" on all levels
         in standard, clone function call _reference_clone (see _reference)
 
         Args:
