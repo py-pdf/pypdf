@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 3.9.1, 2023-06-04
+
+### Deprecations (DEP)
+-  Deprecate PdfMerger (#1866)
+
+### Bug Fixes (BUG)
+-  Ignore UTF-8 decode errors (#1865)
+
+### Robustness (ROB)
+-  Handle missing /Type entry in Page tree (#1859)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.9.0...3.9.1)
+
 ## Version 3.9.0, 2023-05-21
 
 ### New Features (ENH)
