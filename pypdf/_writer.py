@@ -905,7 +905,7 @@ class PdfWriter:
         page: PageObject,
         fields: Dict[str, Any],
         flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
-        auto_regen: Optional[bool] = True,
+        auto_regenerate: Optional[bool] = True,
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -921,11 +921,11 @@ class PdfWriter:
             flags: An integer (0 to 7). The first bit sets ReadOnly, the
                 second bit sets Required, the third bit sets NoExport. See
                 PDF Reference Table 8.70 for details.
-            auto_regen: set/unset the need_appearances flag ;
-                the flag is unchanged if auto_regen is None
+            auto_regenerate: set/unset the need_appearances flag ;
+                the flag is unchanged if auto_regenerate is None
         """
-        if isinstance(auto_regen, bool):
-            self.set_need_appearances_writer(auto_regen)
+        if isinstance(auto_regenerate, bool):
+            self.set_need_appearances_writer(auto_regenerate)
         # Iterate through pages, update field values
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
