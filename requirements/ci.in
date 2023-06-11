@@ -9,6 +9,8 @@ pycryptodome
 pytest
 pytest-benchmark
 pytest-socket
+pytest-timeout
+# ruff  # only take this for 3.11
 typeguard
 types-dataclasses
 types-Pillow

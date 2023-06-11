@@ -951,9 +951,14 @@ class PdfWriter:
             pages = cast(DictionaryObject, self._root_object["/Pages"])
             self.flattened_pages = ArrayObject()
         assert pages is not None  # hint for mypy
-        t = "/Pages"
+
         if PA.TYPE in pages:
-            t = cast(str, pages[PA.TYPE])
+            t = str(pages[PA.TYPE])
+        # if pdf has no type, considered as a page if /Kids is missing
+        elif PA.KIDS not in pages:
+            t = "/Page"
+        else:
+            t = "/Pages"
 
         if t == "/Pages":
             for attr in inheritable_page_attributes:
@@ -1254,9 +1259,13 @@ class PdfWriter:
                 and each value is your new metadata.
         """
         args = {}
+        if isinstance(infos, PdfObject):
+            infos = cast(DictionaryObject, infos.get_object())
         for key, value in list(infos.items()):
-            args[NameObject(key)] = create_string_object(value)
-        self.get_object(self._info).update(args)  # type: ignore
+            if isinstance(value, PdfObject):
+                value = value.get_object()
+            args[NameObject(key)] = create_string_object(str(value))
+        cast(DictionaryObject, self._info.get_object()).update(args)
 
     def addMetadata(self, infos: Dict[str, Any]) -> None:  # deprecated
         """

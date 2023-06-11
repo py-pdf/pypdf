@@ -264,7 +264,9 @@ def test_compress_content_streams(pdf_path, password):
     writer = PdfWriter()
     if password:
         reader.decrypt(password)
+    assert isinstance(reader.pages[0].get_contents(), ContentStream)
     writer.clone_document_from_reader(reader)
+    assert isinstance(writer.pages[0].get_contents(), ContentStream)
     for page in writer.pages:
         page.compress_content_streams()
 
@@ -330,7 +332,10 @@ def test_page_scale():
 
 def test_add_transformation_on_page_without_contents():
     page = PageObject()
+    assert page.get_contents() is None
     page.add_transformation(Transformation())
+    page[NameObject("/Contents")] = ContentStream(None, None)
+    assert isinstance(page.get_contents(), ContentStream)
 
 
 @pytest.mark.enable_socket()
@@ -1160,3 +1165,12 @@ def test_del_pages():
     assert len(reader.pages) == 0
     assert len(reader.trailer["/Root"]["/Pages"]["/Kids"]) == 0
     assert len(reader.flattened_pages) == 0
+
+
+def test_pdf_pages_missing_type():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    del reader.trailer["/Root"]["/Pages"]["/Kids"][0].get_object()["/Type"]
+    reader.pages[0]
+    writer = PdfWriter(clone_from=reader)
+    writer.pages[0]

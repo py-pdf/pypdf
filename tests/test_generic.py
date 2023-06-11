@@ -678,6 +678,7 @@ def test_bool_repr(tmp_path):
 
 @pytest.mark.enable_socket()
 @patch("pypdf._reader.logger_warning")
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_issue_997(mock_logger_warning, pdf_file_path):
     url = (
         "https://github.com/py-pdf/pypdf/files/8908874/"
@@ -1156,3 +1157,15 @@ def test_iss1615_1673():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
+
+
+@pytest.mark.enable_socket()
+def test_destination_withoutzoom():
+    """Cf issue #1832"""
+    url = (
+        "https://raw.githubusercontent.com/xrkk/tmpppppp/main/"
+        "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
+    )
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.outline
