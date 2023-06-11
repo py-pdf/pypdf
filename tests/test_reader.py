@@ -1154,13 +1154,14 @@ def test_outline_missing_title(caplog):
             "lorem_ipsum.pdf",
         ),
         # 2nd case : Dest below names and with Kids...
-        (
-            (
-                "https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/"
-                "pdfstandards/pdf/PDF32000_2008.pdf"
-            ),
-            "PDF32000_2008.pdf",
-        )
+        # File seems to be no longer availabe:
+        # (
+        #     (
+        #         "https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/"
+        #         "pdfstandards/pdf/PDF32000_2008.pdf"
+        #     ),
+        #     "PDF32000_2008.pdf",
+        # )
         # 3nd case : Dests with Name tree (TODO: Add this case)
     ],
     ids=["stored_directly", "dest_below_names_with_kids"],
