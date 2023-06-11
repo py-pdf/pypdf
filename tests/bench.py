@@ -102,7 +102,6 @@ def merge():
     assert [
         el.title for el in reader._get_outline() if isinstance(el, Destination)
     ] == [
-        "An outline item",
         "Foo",
         "Bar",
         "Baz",
@@ -113,6 +112,7 @@ def merge():
         "Bar",
         "Baz",
         "True",
+        "An outline item",
     ]
 
 
