@@ -1145,22 +1145,26 @@ def test_outline_missing_title(caplog):
 
 
 @pytest.mark.enable_socket()
-def test_named_destination():
-    # 1st case : the named_dest are stored directly as a dictionnary, PDF1.1 style
-    url = "https://github.com/py-pdf/pypdf/files/9197028/lorem_ipsum.pdf"
-    name = "lorem_ipsum.pdf"
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        # 1st case : the named_dest are stored directly as a dictionnary, PDF1.1 style
+        (
+            "https://github.com/py-pdf/pypdf/files/9197028/lorem_ipsum.pdf",
+            "lorem_ipsum.pdf",
+        ),
+        # 2nd case : Dest below names and with Kids...
+        (
+            "https://github.com/py-pdf/pypdf/files/11714214/PDF32000_2008.pdf",
+            "PDF32000_2008.pdf",
+        )
+        # 3nd case : Dests with Name tree (TODO: Add this case)
+    ],
+    ids=["stored_directly", "dest_below_names_with_kids"],
+)
+def test_named_destination(url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert len(reader.named_destinations) > 0
-    # 2nd case : Dest below names and with Kids...
-    url = (
-        "https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/"
-        "pdfstandards/pdf/PDF32000_2008.pdf"
-    )
-    name = "PDF32000_2008.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert len(reader.named_destinations) > 0
-    # 3nd case : Dests with Name tree
-    # TODO : case to be added
 
 
 @pytest.mark.enable_socket()
