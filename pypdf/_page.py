@@ -57,7 +57,7 @@ from ._text_extraction import (
 from ._utils import (
     CompressedTransformationMatrix,
     File,
-    FileImage,
+    ImageFile,
     TransformationMatrixType,
     deprecation_no_replacement,
     deprecation_with_replacement,
@@ -341,7 +341,7 @@ class PageObject(DictionaryObject):
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
-        self.inline_images: Optional[Dict[str, FileImage]] = None
+        self.inline_images: Optional[Dict[str, ImageFile]] = None
         if indirect_ref is not None:  # deprecated
             warnings.warn(
                 (
@@ -495,7 +495,7 @@ class PageObject(DictionaryObject):
         self,
         id: Union[str, List[str], Tuple[str]],
         obj: Optional[DictionaryObject] = None,
-    ) -> FileImage:
+    ) -> ImageFile:
         if obj is None:
             obj = cast(DictionaryObject, self)
         if isinstance(id, tuple):
@@ -518,7 +518,7 @@ class PageObject(DictionaryObject):
             extension, byte_stream, img = _xobj_to_image(
                 cast(DictionaryObject, xobjs[id])
             )
-            f = FileImage(
+            f = ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
                 image=img,
@@ -530,7 +530,7 @@ class PageObject(DictionaryObject):
             return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
-    def images(self) -> List[FileImage]:
+    def images(self) -> List[ImageFile]:
         """
         Read-only property that emulates a list of files representing images on a page.
 
@@ -540,7 +540,6 @@ class PageObject(DictionaryObject):
         - An integer
 
         Examples:
-
             reader.pages[0].images[0]  # Returns the first image
             reader.pages[0].images['/I0']  # Returns the image '/I0'
             reader.pages[0].images['/TP1', '/Image1']  # Returns the image '/Image1' within '/TP1' Xobject/Form
@@ -548,7 +547,7 @@ class PageObject(DictionaryObject):
 
         images.keys() and images.items() can be used.
 
-        The FileImage object:
+        The ImageFile object:
         Properties:
             `.name` : name of the object
             `.data` : bytes of the object
@@ -561,7 +560,7 @@ class PageObject(DictionaryObject):
                 applying the saving parameters indicated (such as quality)
 
         Example usage:
-            
+
             reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)
 
         Inline images are extracted and named ~0~, ~1~, ..., with the
@@ -569,7 +568,7 @@ class PageObject(DictionaryObject):
         """
         return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
 
-    def _get_inline_images(self) -> Dict[str, FileImage]:
+    def _get_inline_images(self) -> Dict[str, ImageFile]:
         """
         get inline_images
         entries will be identified as ~1~
@@ -658,7 +657,7 @@ class PageObject(DictionaryObject):
                 ] = v
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
             extension, byte_stream, img = _xobj_to_image(ii["object"])
-            files[f"~{num}~"] = FileImage(
+            files[f"~{num}~"] = ImageFile(
                 name=f"~{num}~{extension}",
                 data=byte_stream,
                 image=img,
@@ -2448,7 +2447,7 @@ class _VirtualListImages(Sequence):
     def __init__(
         self,
         ids_function: Callable[[], List[Union[str, List[str]]]],
-        get_function: Callable[[Union[str, List[str], Tuple[str]]], FileImage],
+        get_function: Callable[[Union[str, List[str], Tuple[str]]], ImageFile],
     ) -> None:
         self.ids_function = ids_function
         self.get_function = get_function
@@ -2460,20 +2459,20 @@ class _VirtualListImages(Sequence):
     def keys(self) -> List[Union[str, List[str]]]:
         return self.ids_function()
 
-    def items(self) -> List[Tuple[Union[str, List[str]], FileImage]]:
+    def items(self) -> List[Tuple[Union[str, List[str]], ImageFile]]:
         return [(x, self[x]) for x in self.ids_function()]
 
     @overload
-    def __getitem__(self, index: Union[int, str, List[str]]) -> FileImage:
+    def __getitem__(self, index: Union[int, str, List[str]]) -> ImageFile:
         ...
 
     @overload
-    def __getitem__(self, index: slice) -> Sequence[FileImage]:
+    def __getitem__(self, index: slice) -> Sequence[ImageFile]:
         ...
 
     def __getitem__(
         self, index: Union[int, slice, str, List[str], Tuple[str]]
-    ) -> Union[FileImage, Sequence[FileImage]]:
+    ) -> Union[ImageFile, Sequence[ImageFile]]:
         lst = self.ids_function()
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
@@ -2492,7 +2491,7 @@ class _VirtualListImages(Sequence):
             raise IndexError("sequence index out of range")
         return self.get_function(lst[index])
 
-    def __iter__(self) -> Iterator[FileImage]:
+    def __iter__(self) -> Iterator[ImageFile]:
         for i in range(len(self)):
             yield self[i]
 
