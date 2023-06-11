@@ -1152,10 +1152,7 @@ def test_named_destination():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert len(reader.named_destinations) > 0
     # 2nd case : Dest below names and with Kids...
-    url = (
-        "https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/"
-        "pdfstandards/pdf/PDF32000_2008.pdf"
-    )
+    url = "https://github.com/py-pdf/pypdf/files/11714214/PDF32000_2008.pdf"
     name = "PDF32000_2008.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert len(reader.named_destinations) > 0
