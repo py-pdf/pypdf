@@ -41,7 +41,7 @@ Changelog = "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html"
 full = ["PyCryptodome", "Pillow"]
 crypto = ["PyCryptodome"]
 image = ["Pillow"]
-dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "flit", "wheel"]
+dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "flit", "wheel"]
 docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
 
 [tool.mutmut]
