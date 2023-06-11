@@ -9,6 +9,7 @@ pycryptodome
 pytest
 pytest-benchmark
 pytest-socket
+pytest-timeout
 typeguard
 types-dataclasses
 types-Pillow

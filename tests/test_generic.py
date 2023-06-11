@@ -678,6 +678,7 @@ def test_bool_repr(tmp_path):
 
 @pytest.mark.enable_socket()
 @patch("pypdf._reader.logger_warning")
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_issue_997(mock_logger_warning, pdf_file_path):
     url = (
         "https://github.com/py-pdf/pypdf/files/8908874/"

@@ -347,6 +347,7 @@ def test_overlay(pdf_file_path, base_path, overlay_path):
         )
     ],
 )
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_with_warning(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
@@ -366,6 +367,7 @@ def test_merge_with_warning(tmp_path, url, name):
         )
     ],
 )
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
@@ -564,6 +566,7 @@ def test_scale_rectangle_indirect_object():
         page.scale(sx=2, sy=3)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_output(caplog):
     # Arrange
     base = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf"

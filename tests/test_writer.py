@@ -192,7 +192,9 @@ def writer_operate(writer: PdfWriter) -> None:
 
     writer.remove_images()
 
-    writer.add_metadata({"author": "Martin Thoma"})
+    writer.add_metadata(reader.metadata)
+    writer.add_metadata({"/Author": "Martin Thoma"})
+    writer.add_metadata({"/MyCustom": 1234})
 
     writer.add_attachment("foobar.gif", b"foobarcontent")
 
@@ -721,6 +723,7 @@ def test_append_pages_from_reader_append():
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
@@ -747,6 +750,7 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
         ("https://github.com/py-pdf/pypdf/files/10715624/test.pdf", "iss1627.pdf"),
     ],
 )
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_some_appends(pdf_file_path, url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     # PdfMerger

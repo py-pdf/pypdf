@@ -50,9 +50,12 @@ pytest==7.2.2
     #   -r requirements/ci.in
     #   pytest-benchmark
     #   pytest-socket
+    #   pytest-timeout
 pytest-benchmark==4.0.0
     # via -r requirements/ci.in
 pytest-socket==0.6.0
+    # via -r requirements/ci.in
+pytest-timeout==2.1.0
     # via -r requirements/ci.in
 ruff==0.0.259
     # via -r requirements/ci.in
