@@ -113,6 +113,7 @@ jobs:
         pip install .
     - name: Test with ruff
       run: |
+        echo `ruff --version`
         ruff .
 
   package:
