@@ -1343,6 +1343,66 @@ def test_iss1767():
     PdfWriter(clone_from=in_pdf)
 
 
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        (
+            "dont_commit_writer.pdf",
+            True,
+        )
+    ],
+)
+def test_update_form_fields(write_data_here, needs_cleanup):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {
+            "CheckBox1": "/Yes",
+            "Text1": "mon Text1",
+            "Text2": "ligne1\nligne2",
+            "RadioGroup1": "/2",
+            "RdoS1": "/",
+            "Combo1": "!!monCombo!!",
+            "Liste1": "Liste2",
+            "Liste2": ["Lst1", "Lst3"],
+            "DropList1": "DropListe3",
+        },
+        auto_regenerate=False,
+    )
+    del writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"]
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        auto_regenerate=False,
+    )
+
+    writer.write("dont_commit_writer.pdf")
+    reader = PdfReader("dont_commit_writer.pdf")
+    flds = reader.get_fields()
+    assert flds["CheckBox1"]["/V"] == "/Yes"
+    assert flds["CheckBox1"].indirect_reference.get_object()["/AS"] == "/Yes"
+    assert (
+        b"(my Text1)"
+        in flds["Text1"].indirect_reference.get_object()["/AP"]["/N"].get_data()
+    )
+    assert flds["Text2"]["/V"] == "ligne1\nligne2\nligne3"
+    assert (
+        b"(ligne3)"
+        in flds["Text2"].indirect_reference.get_object()["/AP"]["/N"].get_data()
+    )
+    assert flds["RadioGroup1"]["/V"] == "/2"
+    assert flds["RadioGroup1"]["/Kids"][0].get_object()["/AS"] == "/Off"
+    assert flds["RadioGroup1"]["/Kids"][1].get_object()["/AS"] == "/2"
+    assert all(x in flds["Liste2"]["/V"] for x in ["Lst1", "Lst3"])
+
+    assert all(x in flds["CheckBox1"]["/_States_"] for x in ["/Off", "/Yes"])
+    assert all(x in flds["RadioGroup1"]["/_States_"] for x in ["/1", "/2", "/3"])
+    assert all(x in flds["Liste1"]["/_States_"] for x in ["Liste1", "Liste2", "Liste3"])
+
+    if needs_cleanup:
+        Path(write_data_here).unlink()
+
+        
 @pytest.mark.enable_socket()
 def test_iss1862():
     # The file here has "/B" entry to define the font in a object below the page
