@@ -817,16 +817,21 @@ class PdfWriter:
         return cast(str, parent["/T"])
 
     def _update_text_field(self, field: DictionaryObject) -> None:
+        # Calculate rectangle dimensions
         _rct = cast(RectangleObject, field[AA.Rect])
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
-        yf: Any = (
+
+        # Extract font information
+        font_properties: Any = (
             cast(str, field[AA.DA]).replace("\n", " ").replace("\r", " ").split(" ")
         )
-        fnt = yf[yf.index("Tf") - 2]
-        h = float(yf[yf.index("Tf") - 1])
-        yf = rct.height - 1 - h
-        Ff = field.get(FA.Ff, 0)
-        if field.get(FA.FT, "/Tx") == "/Ch" and Ff & FA.FfBits.Combo == 0:
+        font_name = font_properties[font_properties.index("Tf") - 2]
+        font_height = float(font_properties[font_properties.index("Tf") - 1])
+        y_offset = rct.height - 1 - font_height
+
+        # Retrieve field text and selected values
+        field_flags = field.get(FA.Ff, 0)
+        if field.get(FA.FT, "/Tx") == "/Ch" and field_flags & FA.FfBits.Combo == 0:
             txt = "\n".join(field.get(FA.Opt, {}))
             sel = field.get("/V", [])
             if not isinstance(sel, list):
@@ -835,22 +840,24 @@ class PdfWriter:
             txt = field.get("/V", "")
             sel = []
 
+        # Generate appearance stream
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{field[AA.DA]}\n".encode()
-        for ln, ll in enumerate(txt.replace("\n", "\r").split("\r")):
-            if ll in sel:
+        for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
+            if line in sel:
                 # may be improved but can not find how get fill working => replaced with lined box
                 ap_stream += (
-                    f"1 {yf - (ln * h * 1.4) - 1} {rct.width - 2} {h + 2} re\n"
+                    f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{field[AA.DA]}\n"
                 ).encode()
-            if ln == 0:
-                ap_stream += f"2 {yf} Td\n".encode()
+            if line_number == 0:
+                ap_stream += f"2 {y_offset} Td\n".encode()
             else:
                 # Td is a relative translation
-                ap_stream += f"0 {- h * 1.4} Td\n".encode()
-            ap_stream += b"(" + str(ll).encode("UTF-8") + b") Tj\n"
+                ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
+            ap_stream += b"(" + str(line).encode("UTF-8") + b") Tj\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
 
+        # Create appearance dictionary
         dct = DecodedStreamObject.initialize_from_dictionary(
             {
                 NameObject("/Type"): NameObject("/XObject"),
@@ -860,6 +867,8 @@ class PdfWriter:
                 "/Length": 0,
             }
         )
+
+        # Retrieve font information from AcroForm dictionary
         dr: Any = cast(
             dict, cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {})
         )
@@ -868,11 +877,13 @@ class PdfWriter:
         dr = dr.get("/Font", {})
         if isinstance(dr, IndirectObject):
             dr = dr.get_object()
-        if fnt in dr:
+
+        # Update Resources with font information if necessary
+        if font_name in dr:
             dct[NameObject("/Resources")] = DictionaryObject(
                 {
                     NameObject("/Font"): DictionaryObject(
-                        {NameObject(fnt): dr[fnt].indirect_reference}
+                        {NameObject(font_name): dr[font_name].indirect_reference}
                     )
                 }
             )
