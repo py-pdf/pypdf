@@ -1173,8 +1173,9 @@ def test_destination_withoutzoom():
 
 def test_encodedstream_set_data():
     """
-    test the encoded stream set_data to extend data stream
-    checks also the flate_encode
+    EncodedStreamObject.set_data to extend data stream works.
+
+    Checks also the flate_encode.
     """
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
