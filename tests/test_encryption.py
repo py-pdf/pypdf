@@ -168,6 +168,7 @@ def test_read_page_from_encrypted_file_aes_256(pdffile, password):
     ],
 )
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_encrypted_pdfs(names):
     """Encrypted PDFs can be merged after decryption."""
     merger = pypdf.PdfMerger()
