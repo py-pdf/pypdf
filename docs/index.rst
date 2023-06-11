@@ -36,6 +36,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    user/streaming-data
    user/file-size
    user/pdf-version-support
+   user/pdfa-compliance
 
 
 .. toctree::
@@ -63,6 +64,8 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
 
    dev/intro
    dev/pdf-format
+   dev/pypdf-parsing
+   dev/pypdf-writing
    dev/cmaps
    dev/deprecations
    dev/documentation

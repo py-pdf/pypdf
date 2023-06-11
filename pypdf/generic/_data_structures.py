@@ -111,7 +111,7 @@ class ArrayObject(list, PdfObject):
         return enumerate(self)
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(b"[")
         for data in self:
@@ -297,6 +297,7 @@ class DictionaryObject(dict, PdfObject):
         object, if available.
 
         Stability: Added in v1.12, will exist for all future v1.x releases.
+        See Table 315 – Additional entries in a metadata stream dictionary
 
         Returns:
           Returns a {@link #xmp.XmpInformation XmlInformation} instance
@@ -337,7 +338,7 @@ class DictionaryObject(dict, PdfObject):
         return self.xmp_metadata
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(b"<<\n")
         for key, value in list(self.items()):
@@ -750,7 +751,10 @@ class StreamObject(DictionaryObject):
             if decoded_self is None:
                 self.decoded_self = None
             else:
-                self.decoded_self = decoded_self.clone(pdf_dest, True, ignore_fields)  # type: ignore[assignment]
+                self.decoded_self = cast(
+                    "DecodedStreamObject",
+                    decoded_self.clone(pdf_dest, force_duplicate, ignore_fields),
+                )
         except Exception:
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
@@ -779,7 +783,7 @@ class StreamObject(DictionaryObject):
         self.__data = value
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.write_to_stream(self, stream, encryption_key)
@@ -987,6 +991,7 @@ class ContentStream(DecodedStreamObject):
         # like super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields)
 
     def __parse_content_stream(self, stream: StreamType) -> None:
+        # 7.8.2 Content Streams
         stream.seek(0, 0)
         operands: List[Union[int, str, PdfObject]] = []
         while True:
@@ -1011,7 +1016,7 @@ class ContentStream(DecodedStreamObject):
                 # encountering a comment -- but read_object assumes that
                 # following the comment must be the object we're trying to
                 # read.  In this case, it could be an operator instead.
-                while peek not in (b"\r", b"\n"):
+                while peek not in (b"\r", b"\n", b""):
                     peek = stream.read(1)
             else:
                 operands.append(read_object(stream, None, self.forced_encoding))
@@ -1101,14 +1106,14 @@ class ContentStream(DecodedStreamObject):
             if operator == b"INLINE IMAGE":
                 new_data.write(b"BI")
                 dict_text = BytesIO()
-                operands["settings"].write_to_stream(dict_text, None)
+                operands["settings"].write_to_stream(dict_text)
                 new_data.write(dict_text.getvalue()[2:-2])
                 new_data.write(b"ID ")
                 new_data.write(operands["data"])
                 new_data.write(b"EI")
             else:
                 for op in operands:
-                    op.write_to_stream(new_data, None)
+                    op.write_to_stream(new_data)
                     new_data.write(b" ")
                 new_data.write(b_(operator))
             new_data.write(b"\n")
@@ -1358,6 +1363,8 @@ class Destination(TreeObject):
 
         # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":
+            if len(args) < 3:  # zoom is missing
+                args.append(NumberObject(0.0))
             (
                 self[NameObject(TA.LEFT)],
                 self[NameObject(TA.TOP)],
@@ -1406,7 +1413,7 @@ class Destination(TreeObject):
         return self.dest_array
 
     def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         stream.write(b"<<\n")
         key = NameObject("/D")

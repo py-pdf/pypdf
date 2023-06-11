@@ -169,6 +169,12 @@ def writer_operate(writer: PdfWriter) -> None:
     )
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
+    with pytest.warns(
+        DeprecationWarning, match="'pagenum' argument of add_uri is deprecated"
+    ):
+        writer.add_uri(
+            2, "https://example.com", RectangleObject([0, 0, 100, 100]), pagenum=2
+        )
     with pytest.raises(DeprecationError):
         writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
     assert writer._get_page_layout() is None
@@ -179,12 +185,16 @@ def writer_operate(writer: PdfWriter) -> None:
     assert writer._get_page_mode() is None
     writer.set_page_mode("/UseNone")
     assert writer._get_page_mode() == "/UseNone"
+    writer.set_page_mode(NameObject("/UseOC"))
+    assert writer._get_page_mode() == "/UseOC"
     writer.insert_blank_page(width=100, height=100)
     writer.insert_blank_page()  # without parameters
 
     writer.remove_images()
 
-    writer.add_metadata({"author": "Martin Thoma"})
+    writer.add_metadata(reader.metadata)
+    writer.add_metadata({"/Author": "Martin Thoma"})
+    writer.add_metadata({"/MyCustom": 1234})
 
     writer.add_attachment("foobar.gif", b"foobarcontent")
 
@@ -479,7 +489,22 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     orig_text = page.extract_text()
 
     writer.add_page(page)
+
     with pytest.warns(UserWarning, match="pypdf only implements RC4 encryption"):
+        with pytest.raises(ValueError, match="owner_pwd of encrypt is deprecated."):
+            writer.encrypt(
+                owner_pwd=user_password,
+                owner_password=owner_password,
+                user_password=user_password,
+                use_128bit=use_128bit,
+            )
+        with pytest.raises(ValueError, match="'user_pwd' argument is deprecated"):
+            writer.encrypt(
+                owner_password=owner_password,
+                user_password=user_password,
+                user_pwd=user_password,
+                use_128bit=use_128bit,
+            )
         writer.encrypt(
             user_password=user_password,
             owner_password=owner_password,
@@ -550,6 +575,14 @@ def test_add_named_destination(pdf_file_path):
     writer.add_named_destination(TextStringObject("A named dest"), 2)
     writer.add_named_destination(TextStringObject("A named dest2"), 2)
 
+    with pytest.warns(DeprecationWarning, match="pagenum is deprecated as an argument"):
+        writer.add_named_destination(TextStringObject("A named dest3"), pagenum=2)
+
+    with pytest.raises(ValueError):
+        writer.add_named_destination(
+            TextStringObject("A named dest3"), pagenum=2, page_number=2
+        )
+
     root = writer.get_named_dest_root()
     assert root[0] == "A named dest"
     assert root[1].pdf == writer
@@ -559,6 +592,7 @@ def test_add_named_destination(pdf_file_path):
     assert root[3].pdf == writer
     assert root[3].get_object()["/S"] == NameObject("/GoTo")
     assert root[3].get_object()["/D"][0] == writer.pages[2].indirect_reference
+    assert root[4] == "A named dest3"
 
     # test get_object
 
@@ -705,6 +739,7 @@ def test_append_pages_from_reader_append():
 
 @pytest.mark.enable_socket()
 @pytest.mark.slow()
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
@@ -731,6 +766,7 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
         ("https://github.com/py-pdf/pypdf/files/10715624/test.pdf", "iss1627.pdf"),
     ],
 )
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_some_appends(pdf_file_path, url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     # PdfMerger
@@ -1248,7 +1284,7 @@ def test_new_removes():
     name = "GeoBaseWithComments.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     out_pdf.append(in_pdf)
-    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.LINKS)
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], [ObjectDeletionFlag.LINKS])
     assert "/Links" not in [
         a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
     ]
@@ -1269,6 +1305,8 @@ def test_new_removes():
     out_pdf.remove_links()
     assert len(out_pdf.pages[0]["/Annots"]) == 0
     assert len(out_pdf.pages[3]["/Annots"]) == 0
+
+    out_pdf.remove_annotations("/Text")
 
 
 @pytest.mark.enable_socket()
@@ -1292,3 +1330,14 @@ def test_iss1723():
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     out_pdf = PdfWriter()
     out_pdf.append(in_pdf, (3, 5))
+
+
+@pytest.mark.enable_socket()
+def test_iss1767():
+    # test with a pdf which is buggy because the object 389,0 exists 3 times:
+    # twice to define catalog and one as an XObject inducing a loop when
+    # cloning
+    url = "https://github.com/py-pdf/pypdf/files/11138472/test.pdf"
+    name = "iss1723.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    PdfWriter(clone_from=in_pdf)

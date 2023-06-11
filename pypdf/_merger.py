@@ -46,6 +46,7 @@ from ._page import PageObject
 from ._reader import PdfReader
 from ._utils import (
     StrByteType,
+    deprecate_with_replacement,
     deprecation_bookmark,
     deprecation_with_replacement,
     str_,
@@ -86,26 +87,16 @@ class _MergedPage:
 
 class PdfMerger:
     """
-    Initialize a ``PdfMerger`` object.
+    Use :class:`PdfWriter` instead.
 
-    ``PdfMerger`` merges multiple PDFs into a single PDF.
-    It can concatenate, slice, insert, or any combination of the above.
-
-    See the functions :meth:`merge()<merge>` (or :meth:`append()<append>`)
-    and :meth:`write()<write>` for usage information.
-
-    Args:
-        strict: Determines whether user should be warned of all
-            problems and also causes some correctable problems to be fatal.
-            Defaults to ``False``.
-        fileobj: Output file. Can be a filename or any kind of
-            file-like object.
+    .. deprecated:: 5.0.0
     """
 
     @deprecation_bookmark(bookmarks="outline")
     def __init__(
         self, strict: bool = False, fileobj: Union[Path, StrByteType] = ""
     ) -> None:
+        deprecate_with_replacement("PdfMerger", "PdfWriter", "5.0.0")
         self.inputs: List[Tuple[Any, PdfReader]] = []
         self.pages: List[Any] = []
         self.output: Optional[PdfWriter] = PdfWriter()
@@ -117,6 +108,7 @@ class PdfMerger:
 
     def __enter__(self) -> "PdfMerger":
         # There is nothing to do.
+        deprecate_with_replacement("PdfMerger", "PdfWriter", "5.0.0")
         return self
 
     def __exit__(
@@ -522,13 +514,13 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         for named_dest in self.named_dests:
             page_index = None
-            if "/Page" in named_dest:
+            if "/Page" in named_dest:  # deprecated
                 for page_index, page in enumerate(self.pages):  # noqa: B007
                     if page.id == named_dest["/Page"]:
                         named_dest[NameObject("/Page")] = page.out_pagedata
                         break
 
-            if page_index is not None:
+            if page_index is not None:  # deprecated
                 self.output.add_named_destination_object(named_dest)
 
     @deprecation_bookmark(bookmarks="outline")
@@ -606,7 +598,7 @@ class PdfMerger:
                 if np.get_object() == page.pagedata.get_object():
                     page_index = page.id
 
-            if page_index is None:
+            if page_index is None:  # deprecated
                 raise ValueError(
                     f"Unresolved named destination '{named_dest['/Title']}'"
                 )
@@ -651,7 +643,7 @@ class PdfMerger:
                 # oi_enum is still an inner node
                 # (OutlineType, if recursive types were supported by mypy)
                 res = self.find_outline_item(outline_item, oi_enum)  # type: ignore
-                if res:
+                if res:  # deprecated
                     return [i] + res
             elif (
                 oi_enum == outline_item
@@ -704,7 +696,7 @@ class PdfMerger:
                 "The argument pagenum of add_outline_item is deprecated. "
                 "Use page_number only."
             )
-        if pagenum is not None:
+        if pagenum is not None:  # deprecated
             old_term = "pagenum"
             new_term = "page_number"
             warnings.warn(
@@ -715,7 +707,7 @@ class PdfMerger:
                 DeprecationWarning,
             )
             page_number = pagenum
-        if page_number is None:
+        if page_number is None:  # deprecated
             raise ValueError("page_number may not be None")
         writer = self.output
         if writer is None:
@@ -811,7 +803,7 @@ class PdfMerger:
                 "The argument pagenum of add_named_destination is deprecated. "
                 "Use page_number only."
             )
-        if pagenum is not None:
+        if pagenum is not None:  # deprecated
             old_term = "pagenum"
             new_term = "page_number"
             warnings.warn(
@@ -822,7 +814,7 @@ class PdfMerger:
                 DeprecationWarning,
             )
             page_number = pagenum
-        if page_number is None:
+        if page_number is None:  # deprecated
             raise ValueError("page_number may not be None")
         dest = Destination(
             TextStringObject(title),

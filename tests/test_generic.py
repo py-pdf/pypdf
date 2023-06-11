@@ -86,7 +86,7 @@ def test_boolean_object(value, expected, tell):
 def test_boolean_object_write():
     stream = BytesIO()
     boolobj = BooleanObject(None)
-    boolobj.write_to_stream(stream, encryption_key=None)
+    boolobj.write_to_stream(stream)
     stream.seek(0, 0)
     assert stream.read() == b"false"
 
@@ -213,23 +213,23 @@ def test_name_object(caplog):
 
     # test write
     b = BytesIO()
-    NameObject("/hello").write_to_stream(b, None)
+    NameObject("/hello").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/hello"
 
     caplog.clear()
     b = BytesIO()
-    NameObject("hello").write_to_stream(b, None)
+    NameObject("hello").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"hello"
     assert "Incorrect first char" in caplog.text
 
     caplog.clear()
     b = BytesIO()
-    NameObject("/DIJMAC+Arial Black#1").write_to_stream(b, None)
+    NameObject("/DIJMAC+Arial Black#1").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
     assert caplog.text == ""
 
     b = BytesIO()
-    NameObject("/你好世界").write_to_stream(b, None)
+    NameObject("/你好世界").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C"
     assert caplog.text == ""
 
@@ -259,7 +259,7 @@ def test_destination_fit_v():
 def test_outline_item_write_to_stream():
     stream = BytesIO()
     oi = OutlineItem(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
-    oi.write_to_stream(stream, None)
+    oi.write_to_stream(stream)
     stream.seek(0, 0)
     assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0.0 ]\n>>"
 
@@ -678,6 +678,7 @@ def test_bool_repr(tmp_path):
 
 @pytest.mark.enable_socket()
 @patch("pypdf._reader.logger_warning")
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_issue_997(mock_logger_warning, pdf_file_path):
     url = (
         "https://github.com/py-pdf/pypdf/files/8908874/"
@@ -984,7 +985,7 @@ def test_annotation_builder_text(pdf_file_path):
         writer.write(fp)
 
 
-def test_annotation_builder_popup():
+def test_annotation_builder_popup(caplog):
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
@@ -1007,6 +1008,14 @@ def test_annotation_builder_popup():
             open=True,
             parent=ta,  # prefer to use for evolutivity
         )
+
+    assert caplog.text == ""
+    AnnotationBuilder.popup(
+        rect=(50, 550, 200, 650),
+        open=True,
+        parent=True,  # broken parameter  # type: ignore
+    )
+    assert "Unregistered Parent object : No Parent field set" in caplog.text
 
     writer.add_annotation(writer.pages[0], popup_annotation)
 
@@ -1164,3 +1173,15 @@ def test_iss1615_1673():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
+
+
+@pytest.mark.enable_socket()
+def test_destination_withoutzoom():
+    """Cf issue #1832"""
+    url = (
+        "https://raw.githubusercontent.com/xrkk/tmpppppp/main/"
+        "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
+    )
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.outline

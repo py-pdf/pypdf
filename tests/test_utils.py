@@ -10,13 +10,16 @@ from pypdf._utils import (
     File,
     _get_max_pdf_version_header,
     _human_readable_bytes,
+    deprecate_with_replacement,
     deprecation_bookmark,
+    deprecation_no_replacement,
     mark_location,
     matrix_multiply,
     read_block_backwards,
     read_previous_line,
     read_until_regex,
     read_until_whitespace,
+    rename_kwargs,
     skip_over_comment,
     skip_over_whitespace,
 )
@@ -91,12 +94,20 @@ def test_hex_str():
     assert pypdf._utils.hex_str(10) == "0xa"
 
 
-def test_b():
-    assert pypdf._utils.b_("foo") == b"foo"
-    assert pypdf._utils.b_("😀") == "😀".encode()
-    assert pypdf._utils.b_("‰") == "‰".encode()
-    assert pypdf._utils.b_("▷") == "▷".encode()
-    assert pypdf._utils.b_("世") == "世".encode()
+@pytest.mark.parametrize(
+    ("input_str", "expected"),
+    [
+        ("foo", b"foo"),
+        ("😀", "😀".encode()),
+        ("‰", "‰".encode()),
+        ("▷", "▷".encode()),
+        ("世", "世".encode()),
+        # A multi-character string example with non-latin-1 characters:
+        ("😀😃", "😀😃".encode()),
+    ],
+)
+def test_b(input_str: str, expected: str):
+    assert pypdf._utils.b_(input_str) == expected
 
 
 def test_deprecate_no_replacement():
@@ -125,21 +136,6 @@ def test_paeth_predictor(left, up, upleft, expected):
 
 
 @pytest.mark.parametrize(
-    ("dat", "pos", "to_read"),
-    [
-        (b"", 0, 1),
-        (b"a", 0, 1),
-        (b"abc", 0, 10),
-    ],
-)
-def test_read_block_backwards_errs(dat, pos, to_read):
-    with pytest.raises(PdfStreamError) as _:
-        s = io.BytesIO(dat)
-        s.seek(pos)
-        read_block_backwards(s, to_read)
-
-
-@pytest.mark.parametrize(
     ("dat", "pos", "to_read", "expected", "expected_pos"),
     [
         (b"abc", 1, 0, b"", 1),
@@ -149,12 +145,19 @@ def test_read_block_backwards_errs(dat, pos, to_read):
         (b"abc", 3, 1, b"c", 2),
         (b"abc", 3, 2, b"bc", 1),
         (b"abc", 3, 3, b"abc", 0),
+        (b"", 0, 1, None, 0),
+        (b"a", 0, 1, None, 0),
+        (b"abc", 0, 10, None, 0),
     ],
 )
 def test_read_block_backwards(dat, pos, to_read, expected, expected_pos):
     s = io.BytesIO(dat)
     s.seek(pos)
-    assert read_block_backwards(s, to_read) == expected
+    if expected is not None:
+        assert read_block_backwards(s, to_read) == expected
+    else:
+        with pytest.raises(PdfStreamError):
+            read_block_backwards(s, to_read)
     assert s.tell() == expected_pos
 
 
@@ -229,13 +232,78 @@ def test_read_block_backwards_exception():
 
 def test_deprecation_bookmark():
     @deprecation_bookmark(old_param="new_param")
-    def foo(old_param: int = 1, baz: int = 2) -> float:
-        return old_param * baz
+    def foo(old_param: int = 1, baz: int = 2) -> None:
+        pass
 
     with pytest.raises(DeprecationError) as exc:
         foo(old_param=12, new_param=13)
     expected_msg = "old_param is deprecated as an argument. Use new_param instead"
     assert exc.value.args[0] == expected_msg
+
+
+def test_deprecate_with_replacement():
+    def foo() -> None:
+        deprecate_with_replacement("foo", "bar", removed_in="4.3.2")
+        pass
+
+    with pytest.warns(
+        DeprecationWarning,
+        match="foo is deprecated and will be removed in pypdf 4.3.2. Use bar instead.",
+    ):
+        foo()
+
+
+def test_deprecation_no_replacement():
+    def foo() -> None:
+        deprecation_no_replacement("foo", removed_in="4.3.2")
+        pass
+
+    with pytest.raises(
+        DeprecationError,
+        match="foo is deprecated and was removed in pypdf 4.3.2.",
+    ):
+        foo()
+
+
+def test_rename_kwargs():
+    import functools
+    from typing import Any, Callable
+
+    def deprecation_bookmark_nofail(**aliases: str) -> Callable:
+        """
+        Decorator for deprecated term "bookmark".
+
+        To be used for methods and function arguments
+            outline_item = a bookmark
+            outline = a collection of outline items.
+        """
+
+        def decoration(func: Callable) -> Any:  # type: ignore
+            @functools.wraps(func)
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore
+                rename_kwargs(func.__name__, kwargs, aliases, fail=False)
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return decoration
+
+    @deprecation_bookmark_nofail(old_param="new_param")
+    def foo(old_param: int = 1, baz: int = 2, new_param: int = 1) -> None:
+        pass
+
+    expected_msg = (
+        "foo received both old_param and new_param as an argument. "
+        "old_param is deprecated. Use new_param instead."
+    )
+    with pytest.raises(TypeError, match=expected_msg):
+        foo(old_param=12, new_param=13)
+
+    with pytest.warns(
+        DeprecationWarning,
+        match="old_param is deprecated as an argument. Use new_param instead",
+    ):
+        foo(old_param=12)
 
 
 @pytest.mark.enable_socket()
@@ -264,10 +332,12 @@ def test_escapedcode_followed_by_int():
     ],
 )
 def test_human_readable_bytes(input_int, expected_output):
+    """_human_readable_bytes correctly transforms the integer to a string."""
     assert _human_readable_bytes(input_int) == expected_output
 
 
-def test_file():
+def test_file_class():
+    """File class can be instanciated and string representation is ok."""
     f = File(name="image.png", data=b"")
     assert str(f) == "File(name=image.png, data: 0 Byte)"
     assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"

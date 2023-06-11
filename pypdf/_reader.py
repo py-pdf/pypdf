@@ -32,7 +32,7 @@ import re
 import struct
 import zlib
 from datetime import datetime
-from io import BytesIO
+from io import BytesIO, UnsupportedOperation
 from pathlib import Path
 from typing import (
     Any,
@@ -360,7 +360,7 @@ class PdfReader:
         #       but that needs a deprecation
         loc = self.stream.tell()
         self.stream.seek(0, 0)
-        pdf_file_version = self.stream.read(8).decode("utf-8")
+        pdf_file_version = self.stream.read(8).decode("utf-8", "backslashreplace")
         self.stream.seek(loc, 0)  # return to where it was
         return pdf_file_version
 
@@ -1187,9 +1187,13 @@ class PdfReader:
             pages = catalog["/Pages"].get_object()  # type: ignore
             self.flattened_pages = []
 
-        t = "/Pages"
         if PA.TYPE in pages:
             t = pages[PA.TYPE]  # type: ignore
+        # if pdf has no type, considered as a page if /Kids is missing
+        elif PA.KIDS not in pages:
+            t = "/Page"
+        else:
+            t = "/Pages"
 
         if t == "/Pages":
             for attr in inheritable_page_attributes:
@@ -1273,8 +1277,8 @@ class PdfReader:
         This is equivalent to generic.IndirectObject(num,gen,self).get_object()
 
         Args:
-            num:
-            gen:
+            num: The object number of the indirect object.
+            gen: The generation number of the indirect object.
 
         Returns:
             A PdfObject
@@ -1541,19 +1545,22 @@ class PdfReader:
 
     def _basic_validation(self, stream: StreamType) -> None:
         """Ensure file is not empty. Read at most 5 bytes."""
-        # start at the end:
-        stream.seek(0, os.SEEK_END)
-        if not stream.tell():
-            raise EmptyFileError("Cannot read an empty file")
-        if self.strict:
-            stream.seek(0, os.SEEK_SET)
+        stream.seek(0, os.SEEK_SET)
+        try:
             header_byte = stream.read(5)
-            if header_byte != b"%PDF-":
+        except UnicodeDecodeError:
+            raise UnsupportedOperation("cannot read header")
+        if header_byte == b"":
+            raise EmptyFileError("Cannot read an empty file")
+        elif header_byte != b"%PDF-":
+            if self.strict:
                 raise PdfReadError(
                     f"PDF starts with '{header_byte.decode('utf8')}', "
                     "but '%PDF-' expected"
                 )
-            stream.seek(0, os.SEEK_END)
+            else:
+                logger_warning(f"invalid pdf header: {header_byte}", __name__)
+        stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
         """
@@ -1567,7 +1574,10 @@ class PdfReader:
         line = b""
         while line[:5] != b"%%EOF":
             if stream.tell() < HEADER_SIZE:
-                raise PdfReadError("EOF marker not found")
+                if self.strict:
+                    raise PdfReadError("EOF marker not found")
+                else:
+                    logger_warning("EOF marker not found", __name__)
             line = read_previous_line(stream)
 
     def _find_startxref_pos(self, stream: StreamType) -> int:
@@ -1873,6 +1883,8 @@ class PdfReader:
         """
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
+        if line == b"j":
+            line = stream.read(1)
         if line not in b"\r\n \t":
             return 1
         line = stream.read(4)

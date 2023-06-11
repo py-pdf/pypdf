@@ -306,6 +306,17 @@ class FieldDictionaryAttributes:
 
     @classmethod
     def attributes(cls) -> Tuple[str, ...]:
+        """
+        Get a tuple of all the attributes present in a Field Dictionary.
+
+        This method returns a tuple of all the attribute constants defined in
+        the FieldDictionaryAttributes class. These attributes correspond to the
+        entries that are common to all field dictionaries as specified in the
+        PDF 1.7 reference.
+
+        Returns:
+            A tuple containing all the attribute constants.
+        """
         return (
             cls.TM,
             cls.T,
@@ -321,6 +332,18 @@ class FieldDictionaryAttributes:
 
     @classmethod
     def attributes_dict(cls) -> Dict[str, str]:
+        """
+        Get a dictionary of attribute keys and their human-readable names.
+
+        This method returns a dictionary where the keys are the attribute
+        constants defined in the FieldDictionaryAttributes class and the values
+        are their corresponding human-readable names. These attributes
+        correspond to the entries that are common to all field dictionaries as
+        specified in the PDF 1.7 reference.
+
+        Returns:
+            A dictionary containing attribute keys and their names.
+        """
         return {
             cls.FT: "Field Type",
             cls.Parent: "Parent",
@@ -340,10 +363,33 @@ class CheckboxRadioButtonAttributes:
 
     @classmethod
     def attributes(cls) -> Tuple[str, ...]:
+        """
+        Get a tuple of all the attributes present in a Field Dictionary.
+
+        This method returns a tuple of all the attribute constants defined in
+        the CheckboxRadioButtonAttributes class. These attributes correspond to
+        the entries that are common to all field dictionaries as specified in
+        the PDF 1.7 reference.
+
+        Returns:
+            A tuple containing all the attribute constants.
+        """
         return (cls.Opt,)
 
     @classmethod
     def attributes_dict(cls) -> Dict[str, str]:
+        """
+        Get a dictionary of attribute keys and their human-readable names.
+
+        This method returns a dictionary where the keys are the attribute
+        constants defined in the CheckboxRadioButtonAttributes class and the
+        values are their corresponding human-readable names. These attributes
+        correspond to the entries that are common to all field dictionaries as
+        specified in the PDF 1.7 reference.
+
+        Returns:
+            A dictionary containing attribute keys and their names.
+        """
         return {
             cls.Opt: "Options",
         }
@@ -381,13 +427,35 @@ class PageLayouts:
 
 
 class GraphicsStateParameters:
-    """Table 4.8 of the 1.7 reference."""
+    """Table 58 – Entries in a Graphics State Parameter Dictionary"""
 
     TYPE = "/Type"  # name, optional
     LW = "/LW"  # number, optional
-    # TODO: Many more!
+    LC = "/LC"  # integer, optional
+    LJ = "/LJ"  # integer, optional
+    ML = "/ML"  # number, optional
+    D = "/D"  # array, optional
+    RI = "/RI"  # name, optional
+    OP = "/OP"
+    op = "/op"
+    OPM = "/OPM"
     FONT = "/Font"  # array, optional
+    BG = "/BG"
+    BG2 = "/BG2"
+    UCR = "/UCR"
+    UCR2 = "/UCR2"
+    TR = "/TR"
+    TR2 = "/TR2"
+    HT = "/HT"
+    FL = "/FL"
+    SM = "/SM"
+    SA = "/SA"
+    BM = "/BM"
     S_MASK = "/SMask"  # dictionary or name, optional
+    CA = "/CA"
+    ca = "/ca"
+    AIS = "/AIS"
+    TK = "/TK"
 
 
 class CatalogDictionary:

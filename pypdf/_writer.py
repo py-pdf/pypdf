@@ -31,11 +31,10 @@ import codecs
 import collections
 import decimal
 import enum
+import hashlib
 import logging
 import re
-import secrets
 import struct
-import time
 import uuid
 import warnings
 from hashlib import md5
@@ -144,6 +143,13 @@ class ObjectDeletionFlag(enum.IntFlag):
     ALL_ANNOTATIONS = enum.auto()
 
 
+def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
+    hash = hashlib.md5()
+    for block in iter(lambda: stream.read(blocksize), b""):
+        hash.update(block)
+    return hash.hexdigest()
+
+
 class PdfWriter:
     """
     Write a PDF file out, given pages produced by another class.
@@ -157,8 +163,13 @@ class PdfWriter:
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
     ) -> None:
         self._header = b"%PDF-1.3"
-        self._objects: List[PdfObject] = []  # array of indirect objects
+
+        self._objects: List[PdfObject] = []
+        """The indirect objects in the PDF."""
+
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
+        """Maps hash values of indirect objects to their IndirectObject instances."""
+
         self._id_translated: Dict[int, Dict[int, int]] = {}
 
         # The root of our page tree node.
@@ -192,6 +203,7 @@ class PdfWriter:
             }
         )
         self._root = self._add_object(self._root_object)
+
         if clone_from is not None:
             if not isinstance(clone_from, PdfReader):
                 clone_from = PdfReader(clone_from)
@@ -928,9 +940,14 @@ class PdfWriter:
             pages = cast(DictionaryObject, self._root_object["/Pages"])
             self.flattened_pages = ArrayObject()
         assert pages is not None  # hint for mypy
-        t = "/Pages"
+
         if PA.TYPE in pages:
-            t = cast(str, pages[PA.TYPE])
+            t = str(pages[PA.TYPE])
+        # if pdf has no type, considered as a page if /Kids is missing
+        elif PA.KIDS not in pages:
+            t = "/Page"
+        else:
+            t = "/Pages"
 
         if t == "/Pages":
             for attr in inheritable_page_attributes:
@@ -974,7 +991,7 @@ class PdfWriter:
         self.clone_reader_document_root(reader)
         self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
         try:
-            self._ID = reader.trailer[TK.ID].clone(self)  # type: ignore
+            self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))  # type: ignore
         except KeyError:
             pass
         if callable(after_page_append):
@@ -997,6 +1014,26 @@ class PdfWriter:
             "cloneDocumentFromReader", "clone_document_from_reader", "3.0.0"
         )
         self.clone_document_from_reader(reader, after_page_append)
+
+    def _compute_document_identifier_from_content(self) -> ByteStringObject:
+        stream = BytesIO()
+        self._write_pdf_structure(stream)
+        stream.seek(0)
+        return ByteStringObject(_rolling_checksum(stream).encode("utf8"))
+
+    def generate_file_identifiers(self) -> None:
+        """
+        Generate an identifier for the PDF that will be written.
+
+        The only point of this is ensuring uniqueness. Reproducibility is not
+        required; see 14.4 "File Identifiers".
+        """
+        if hasattr(self, "_ID") and self._ID and len(self._ID) == 2:
+            ID_1 = self._ID[0]
+        else:
+            ID_1 = self._compute_document_identifier_from_content()
+        ID_2 = self._compute_document_identifier_from_content()
+        self._ID = ArrayObject((ID_1, ID_2))
 
     def encrypt(
         self,
@@ -1078,19 +1115,14 @@ class PdfWriter:
             V = 1
             rev = 2
             keylen = int(40 / 8)
-        secrets_generator = secrets.SystemRandom()
         P = permissions_flag
         O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]  # noqa
-        ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
-        ID_2 = ByteStringObject(
-            md5((repr(secrets_generator.uniform(0, 1))).encode("utf8")).digest()
-        )
-        self._ID = ArrayObject((ID_1, ID_2))
+        self.generate_file_identifiers()
         if rev == 2:
-            U, key = _alg34(user_password, O, P, ID_1)
+            U, key = _alg34(user_password, O, P, self._ID[0])
         else:
             assert rev == 3
-            U, key = _alg35(user_password, rev, keylen, O, P, ID_1, False)  # type: ignore[arg-type]
+            U, key = _alg35(user_password, rev, keylen, O, P, self._ID[0], False)  # type: ignore[arg-type]
         encrypt = DictionaryObject()
         encrypt[NameObject(SA.FILTER)] = NameObject("/Standard")
         encrypt[NameObject("/V")] = NumberObject(V)
@@ -1114,20 +1146,11 @@ class PdfWriter:
         if not self._root:
             self._root = self._add_object(self._root_object)
 
-        # PDF objects sometimes have circular references to their /Page objects
-        # inside their object tree (for example, annotations).  Those will be
-        # indirect references to objects that we've recreated in this PDF.  To
-        # address this problem, PageObject's store their original object
-        # reference number, and we add it to the external reference map before
-        # we sweep for indirect references.  This forces self-page-referencing
-        # trees to reference the correct new object location, rather than
-        # copying in a new copy of the page object.
         self._sweep_indirect_references(self._root)
 
-        object_positions = self._write_header(stream)
+        object_positions = self._write_pdf_structure(stream)
         xref_location = self._write_xref_table(stream, object_positions)
-        self._write_trailer(stream)
-        stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
+        self._write_trailer(stream, xref_location)
 
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
         """
@@ -1159,10 +1182,11 @@ class PdfWriter:
 
         return my_file, stream
 
-    def _write_header(self, stream: StreamType) -> List[int]:
+    def _write_pdf_structure(self, stream: StreamType) -> List[int]:
         object_positions = []
         stream.write(self.pdf_header + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
+
         for i, obj in enumerate(self._objects):
             obj = self._objects[i]
             # If the obj is None we can't write anything
@@ -1191,7 +1215,14 @@ class PdfWriter:
             stream.write(b_(f"{offset:0>10} {0:0>5} n \n"))
         return xref_location
 
-    def _write_trailer(self, stream: StreamType) -> None:
+    def _write_trailer(self, stream: StreamType, xref_location: int) -> None:
+        """
+        Write the PDF trailer to the stream.
+
+        To quote the PDF specification:
+            [The] trailer [gives] the location of the cross-reference table and
+            of certain special objects within the body of the file.
+        """
         stream.write(b"trailer\n")
         trailer = DictionaryObject()
         trailer.update(
@@ -1205,7 +1236,8 @@ class PdfWriter:
             trailer[NameObject(TK.ID)] = self._ID
         if hasattr(self, "_encrypt"):
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt
-        trailer.write_to_stream(stream, None)
+        trailer.write_to_stream(stream)
+        stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
     def add_metadata(self, infos: Dict[str, Any]) -> None:
         """
@@ -1216,9 +1248,13 @@ class PdfWriter:
                 and each value is your new metadata.
         """
         args = {}
+        if isinstance(infos, PdfObject):
+            infos = cast(DictionaryObject, infos.get_object())
         for key, value in list(infos.items()):
-            args[NameObject(key)] = create_string_object(value)
-        self.get_object(self._info).update(args)  # type: ignore
+            if isinstance(value, PdfObject):
+                value = value.get_object()
+            args[NameObject(key)] = create_string_object(str(value))
+        cast(DictionaryObject, self._info.get_object()).update(args)
 
     def addMetadata(self, infos: Dict[str, Any]) -> None:  # deprecated
         """
@@ -1244,6 +1280,21 @@ class PdfWriter:
             NullObject,
         ],
     ) -> None:
+        """
+        Resolving any circular references to Page objects.
+
+        Circular references to Page objects can arise when objects such as
+        annotations refer to their associated page. If these references are not
+        properly handled, the PDF file will contain multiple copies of the same
+        Page object. To address this problem, Page objects store their original
+        object reference number. This method adds the reference number of any
+        circularly referenced Page objects to an external reference map. This
+        ensures that self-referencing trees reference the correct new object
+        location, rather than copying in a new copy of the Page object.
+
+        Args:
+            root: The root of the PDF object tree to sweep.
+        """
         stack: Deque[
             Tuple[
                 Any,
@@ -1312,16 +1363,28 @@ class PdfWriter:
 
     def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
         """
-        Resolves indirect object to this pdf indirect objects.
+        Resolves an indirect object to an indirect object in this PDF file.
 
-        If it is a new object then it is added to self._objects
-        and new idnum is given and generation is always 0.
+        If the input indirect object already belongs to this PDF file, it is
+        returned directly. Otherwise, the object is retrieved from the input
+        object's PDF file using the object's ID number and generation number. If
+        the object cannot be found, a warning is logged and a `NullObject` is
+        returned.
+
+        If the object is not already in this PDF file, it is added to the file's
+        list of objects and assigned a new ID number and generation number of 0.
+        The hash value of the object is then added to the `_idnum_hash`
+        dictionary, with the corresponding `IndirectObject` reference as the
+        value.
 
         Args:
-            data:
+            data: The `IndirectObject` to resolve.
 
         Returns:
-            The resolved indirect object
+            The resolved `IndirectObject` in this PDF file.
+
+        Raises:
+            ValueError: If the input stream is closed.
         """
         if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
             raise ValueError(f"I/O operation on closed file: {data.pdf.stream.name}")

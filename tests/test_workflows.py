@@ -64,6 +64,8 @@ def test_basic_features(tmp_path):
     password = "secret"
     with pytest.warns(UserWarning, match="pypdf only implements RC4 encryption"):
         writer.encrypt(password)
+        # doing it twice should not change anything
+        writer.encrypt(password)
 
     # finally, write "output" to pypdf-output.pdf
     write_path = tmp_path / "pypdf-output.pdf"
@@ -346,6 +348,7 @@ def test_overlay(pdf_file_path, base_path, overlay_path):
         )
     ],
 )
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_with_warning(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
@@ -365,6 +368,7 @@ def test_merge_with_warning(tmp_path, url, name):
         )
     ],
 )
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
@@ -563,6 +567,7 @@ def test_scale_rectangle_indirect_object():
         page.scale(sx=2, sy=3)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_output(caplog):
     # Arrange
     base = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf"
@@ -902,14 +907,14 @@ def test_extra_test_iss1541():
     cs = ContentStream(reader.pages[0]["/Contents"], None, None)
     cs.operations.insert(-1, ([], b"EMC"))
     bu = BytesIO()
-    cs.write_to_stream(bu, None)
+    cs.write_to_stream(bu)
     bu.seek(0)
     ContentStream(read_object(bu, None, None), None, None).operations
 
     cs = ContentStream(reader.pages[0]["/Contents"], None, None)
     cs.operations.insert(-1, ([], b"E!C"))
     bu = BytesIO()
-    cs.write_to_stream(bu, None)
+    cs.write_to_stream(bu)
     bu.seek(0)
     with pytest.raises(PdfReadError) as exc:
         ContentStream(read_object(bu, None, None), None, None).operations

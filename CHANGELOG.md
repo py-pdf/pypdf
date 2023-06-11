@@ -1,5 +1,99 @@
 # CHANGELOG
 
+## Version 3.9.1, 2023-06-04
+
+### Deprecations (DEP)
+-  Deprecate PdfMerger (#1866)
+
+### Bug Fixes (BUG)
+-  Ignore UTF-8 decode errors (#1865)
+
+### Robustness (ROB)
+-  Handle missing /Type entry in Page tree (#1859)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.9.0...3.9.1)
+
+## Version 3.9.0, 2023-05-21
+
+### New Features (ENH)
+-  Simplify metadata input (Document Information Dictionary) (#1851)
+-  Extend cmap compatibilty to GBK_EUC_H/V (#1812)
+
+### Bug Fixes (BUG)
+-  Prevent infinite loop when no character follows after a comment (#1828)
+-  get_contents does not return ContentStream (#1847)
+-  Accept XYZ destination with zoom missing (default to zoom=0.0) (#1844)
+-  Cope with 1 Bit images (#1815)
+
+### Robustness (ROB)
+-  Handle missing /Type entry in Page tree (#1845)
+
+### Documentation (DOC)
+-  Expand file size explanations (#1835)
+-  Add comparison with pdfplumber (#1837)
+-  Clarify that PyPDF2 is dead (#1827)
+-  Add Hunter King as Contributor for #1806
+
+### Maintenance (MAINT)
+-  Refactor internal Encryption class (#1821)
+-  Add R parameter to generate_values (#1820)
+-  Make encryption_key parameter of write_to_stream optional (#1819)
+-  Prepare for adding AES enryption support (#1818)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.1...3.9.0)
+
+
+## Version 3.8.1, 2023-04-23
+
+### Bug Fixes (BUG)
+-  Convert color space before saving (#1802)
+
+### Documentation (DOC)
+-  PDF/A (#1807)
+-  Use append instead of add_page
+-  Document core mechanics of pypdf (#1783)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.0...3.8.1)
+
+## Version 3.8.0, 2023-04-16
+
+### New Features (ENH)
+-  Add transform method to Transformation class (#1765)
+-  Cope with UC2 fonts in text_extraction (#1785)
+
+### Robustness (ROB)
+-  Invalid startxref pointing 1 char before (#1784)
+
+### Maintenance (MAINT)
+-  Mark code handling old parameters as deprecated (#1798)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.7.1...3.8.0)
+
+
+## Version 3.7.1, 2023-04-09
+
+### Security (SEC)
+-  Warn about PDF encryption security (#1755)
+
+### Robustness (ROB)
+-  Prevent loop in Cloning (#1770)
+-  Capture UnicodeDecodeError at PdfReader.pdf_header (#1768)
+
+### Documentation (DOC)
+-  Add .readthedocs.yaml and bump docs dependencies using `tox -e deps` (#1750, #1752)
+
+### Developer Experience (DEV)
+-  Make make_changelog.py idempotent
+
+### Maintenance (MAINT)
+-  Move generation of file identifiers to a method (#1760)
+
+### Testing (TST)
+-  Add xmp test (#1775)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.7.0...3.7.1)
+
 ## Version 3.7.0, 2023-03-26
 
 ### Security (SEC)

@@ -19,12 +19,14 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Hale, Joseph](https://github.com/thehale)
 * [JianzhengLuo](https://github.com/JianzhengLuo)
 * [Karvonen, Harry](https://github.com/Hatell/)
+* [King, Hunter](https://github.com/neversphere)
 * [Kotler, Mitchell](https://github.com/mitchelljkotler)
 * [KourFrost](https://github.com/KourFrost)
 * [Lightup1](https://github.com/Lightup1)
 * [Majumder, Jonah](https://github.com/jonahmajumder)
 * [Manini, Lorenzo](https://github.com/lorenzomanini)
 * [maxbeer99](https://github.com/maxbeer99)
+* [nalin-udhaar](https://github.com/nalin-udhaar)
 * [McNeil, Karen](https://github.com/karenlmcneil): Arabic Language Support
 * [Mérino, Antoine](https://github.com/Merinorus)
 * [Paternault, Louis](https://framagit.org/spalax)
@@ -32,11 +34,13 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Pinheiro, Arthur](https://github.com/xilopaint)
 * [programmarchy](https://github.com/programmarchy)
 * [pubpub-zz](https://github.com/pubpub-zz): involved in community development
+* [RitchieP](https://github.com/RitchieP) | [LinkedIn](https://www.linkedin.com/in/ritchie-p-892b31115/) | [StackOverflow](https://stackoverflow.com/users/13328625/casual-r?tab=profile)
 * [Rogmann, Sascha](https://github.com/srogmann)
 * [robbiebusinessacc](https://github.com/robbiebusinessacc)
 * [sietzeberends](https://github.com/sietzeberends)
 * [Stüber, Timo](https://github.com/omit66)
 * [Thoma, Martin](https://github.com/MartinThoma): Maintainer of pypdf since April 2022. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
+* [Thomas, Reuben](https://github.com/rrthomas)
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
 * [Wilson, Huon](https://github.com/huonw)
 * ztravis
