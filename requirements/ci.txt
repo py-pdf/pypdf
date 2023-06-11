@@ -62,9 +62,12 @@ pytest==7.0.1
     #   -r requirements/ci.in
     #   pytest-benchmark
     #   pytest-socket
+    #   pytest-timeout
 pytest-benchmark==3.4.1
     # via -r requirements/ci.in
 pytest-socket==0.4.1
+    # via -r requirements/ci.in
+pytest-timeout==2.1.0
     # via -r requirements/ci.in
 six==1.16.0
     # via flake8-print

@@ -1401,3 +1401,13 @@ def test_iss1756():
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     in_pdf.trailer["/ID"]
     # removed to cope with missing cryptodome during commit check : len(in_pdf.pages)
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.timeout(30)
+def test_iss1825():
+    url = "https://github.com/py-pdf/pypdf/files/11367871/MiFO_LFO_FEIS_NOA_Published.3.pdf"
+    name = "iss1825.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    page = reader.pages[0]
+    page.extract_text()
