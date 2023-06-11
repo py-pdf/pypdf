@@ -532,38 +532,40 @@ class PageObject(DictionaryObject):
     @property
     def images(self) -> List[FileImage]:
         """
-            Read-only property that emulates a list of files
-            Get a list of all images of the page.
+        Read-only property that emulates a list of files representing images on a page.
 
-            the key can be:
-              µan str (for top object) or a tuple for image within XObject forms
-              or an int
-        ex:
-        ```
-        reader.pages[0].images[0]        # return fist image
-        reader.pages[0].images['/I0']    # return image '/I0'
-        reader.pages[0].images['/TP1','/Image1'] # return image '/Image1'
-                                                        within '/TP1' Xobject/Form
-        for img in reader.pages[0].images: # loop within all objects
-        ```
+        Get a list of all images on the page. The key can be:
+        - A string (for the top object)
+        - A tuple (for images within XObject forms)
+        - An integer
 
-        images.keys() and image.items() work
+        Examples:
+
+            reader.pages[0].images[0]  # Returns the first image
+            reader.pages[0].images['/I0']  # Returns the image '/I0'
+            reader.pages[0].images['/TP1', '/Image1']  # Returns the image '/Image1' within '/TP1' Xobject/Form
+            for img in reader.pages[0].images:  # Loop through all objects
+
+        images.keys() and images.items() can be used.
 
         The FileImage object:
-        properties:
+        Properties:
             `.name` : name of the object
             `.data` : bytes of the object
             `.image`  : PIL Image Object
             `.indirect_reference` : object reference
-        methods:
+
+        Methods:
             `.replace(new_image: PIL.Image.Image, **kwargs)` :
                 replace the image in the pdf with the new image
                 applying the saving parameters indicated (such as quality)
-            e.g. :
-            `reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)`
 
-        Inline Image are now extracted : they are names ~0~, ~1~, ...
-        Note that the indirect_reference is None in these cases.
+        Example usage:
+            
+            reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)
+
+        Inline images are extracted and named ~0~, ~1~, ..., with the
+        indirect_reference set to None.
         """
         return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
 
