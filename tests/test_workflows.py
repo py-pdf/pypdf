@@ -349,6 +349,7 @@ def test_overlay(pdf_file_path, base_path, overlay_path):
         )
     ],
 )
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_with_warning(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
@@ -368,6 +369,7 @@ def test_merge_with_warning(tmp_path, url, name):
         )
     ],
 )
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
@@ -378,18 +380,28 @@ def test_merge(tmp_path, url, name):
 
 @pytest.mark.enable_socket()
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "expected_metadata"),
     [
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/935/935996.pdf",
             "tika-935996.pdf",
+            {
+                "/Author": "Unknown",
+                "/CreationDate": "Thursday, May 06, 1999 3:56:54 PM",
+                "/Creator": "C:DEBÆł8",
+                "/Keywords": "",
+                "/Producer": "Acrobat PDFWriter 3.02 for Windows",
+                "/Subject": "",
+                "/Title": "C:DEBÆł8-6R.PDF",
+            },
         )
     ],
 )
-def test_get_metadata(url, name):
+def test_get_metadata(url, name, expected_metadata):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    reader.metadata
+    data = reader.metadata
+    assert expected_metadata == data
 
 
 @pytest.mark.enable_socket()
@@ -566,6 +578,7 @@ def test_scale_rectangle_indirect_object():
         page.scale(sx=2, sy=3)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_output(caplog):
     # Arrange
     base = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf"
