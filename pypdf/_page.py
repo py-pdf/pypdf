@@ -57,7 +57,7 @@ from ._text_extraction import (
 from ._utils import (
     CompressedTransformationMatrix,
     File,
-    FileImage,
+    ImageFile,
     TransformationMatrixType,
     deprecation_no_replacement,
     deprecation_with_replacement,
@@ -492,7 +492,7 @@ class PageObject(DictionaryObject):
         self,
         id: Union[str, List[str], Tuple[str]],
         obj: Optional[DictionaryObject] = None,
-    ) -> FileImage:
+    ) -> ImageFile:
         if obj is None:
             obj = cast(DictionaryObject, self)
         if isinstance(id, tuple):
@@ -509,7 +509,7 @@ class PageObject(DictionaryObject):
             extension, byte_stream, img = _xobj_to_image(
                 cast(DictionaryObject, xobjs[id])
             )
-            f = FileImage(
+            f = ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
                 image=img,
@@ -521,7 +521,7 @@ class PageObject(DictionaryObject):
             return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
-    def images(self) -> List[FileImage]:
+    def images(self) -> List[ImageFile]:
         """
             Read-only property that emulates a list of files
             Get a list of all images of the page.
@@ -2330,7 +2330,7 @@ class _VirtualListImages(Sequence):
     def __init__(
         self,
         ids_function: Callable[[], List[Union[str, List[str]]]],
-        get_function: Callable[[Union[str, List[str], Tuple[str]]], FileImage],
+        get_function: Callable[[Union[str, List[str], Tuple[str]]], ImageFile],
     ) -> None:
         self.ids_function = ids_function
         self.get_function = get_function
@@ -2342,20 +2342,20 @@ class _VirtualListImages(Sequence):
     def keys(self) -> List[Union[str, List[str]]]:
         return self.ids_function()
 
-    def items(self) -> List[Tuple[Union[str, List[str]], FileImage]]:
+    def items(self) -> List[Tuple[Union[str, List[str]], ImageFile]]:
         return [(x, self[x]) for x in self.ids_function()]
 
     @overload
-    def __getitem__(self, index: Union[int, str, List[str]]) -> FileImage:
+    def __getitem__(self, index: Union[int, str, List[str]]) -> ImageFile:
         ...
 
     @overload
-    def __getitem__(self, index: slice) -> Sequence[FileImage]:
+    def __getitem__(self, index: slice) -> Sequence[ImageFile]:
         ...
 
     def __getitem__(
         self, index: Union[int, slice, str, List[str], Tuple[str]]
-    ) -> Union[FileImage, Sequence[FileImage]]:
+    ) -> Union[ImageFile, Sequence[ImageFile]]:
         lst = self.ids_function()
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
@@ -2374,7 +2374,7 @@ class _VirtualListImages(Sequence):
             raise IndexError("sequence index out of range")
         return self.get_function(lst[index])
 
-    def __iter__(self) -> Iterator[FileImage]:
+    def __iter__(self) -> Iterator[ImageFile]:
         for i in range(len(self)):
             yield self[i]
 

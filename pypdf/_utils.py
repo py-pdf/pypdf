@@ -503,7 +503,7 @@ class File:
 
 
 @dataclass
-class FileImage(File):
+class ImageFile(File):
     from .generic import IndirectObject
 
     image: Optional[Any] = None  # optional ; direct PIL image access
