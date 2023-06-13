@@ -512,9 +512,22 @@ class ImageFile(File):
 
     def replace(self, new_image: Any, **kwargs: Any) -> None:
         """
-        replace the Image with a new PIL image
-        This is not allowed for inline image or image in a PdfReader
-        kwargs allows to pass parameters to `Image.Image.save()` such as quality
+        Replace the Image with a new PIL image.
+
+        Args:
+            new_image (Image.Image): The new PIL image to replace the existing image.
+            **kwargs: Additional keyword arguments to pass to `Image.Image.save()`.
+
+        Raises:
+            TypeError: If the image is inline or in a PdfReader.
+            TypeError: If the image does not belong to a PdfWriter.
+            TypeError: If `new_image` is not a PIL Image.
+
+        Note:
+            This method replaces the existing image with a new image.
+            It is not allowed for inline images or images within a PdfReader.
+            The `kwargs` parameter allows passing additional parameters
+            to `Image.Image.save()`, such as quality.
         """
         from PIL import Image
 
