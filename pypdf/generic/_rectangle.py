@@ -48,7 +48,7 @@ class RectangleObject(ArrayObject):
         return self._ensure_is_number(value)
 
     def __repr__(self) -> str:
-        return f"RectangleObject({repr(list(self))})"
+        return f"RectangleObject({list(self)!r})"
 
     @property
     def left(self) -> FloatObject:

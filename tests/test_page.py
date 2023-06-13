@@ -1135,6 +1135,8 @@ def test_pdf_pages_missing_type():
     reader = PdfReader(pdf_path)
     del reader.trailer["/Root"]["/Pages"]["/Kids"][0].get_object()["/Type"]
     reader.pages[0]
+    writer = PdfWriter(clone_from=reader)
+    writer.pages[0]
 
 
 @pytest.mark.enable_socket()

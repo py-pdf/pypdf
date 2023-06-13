@@ -828,16 +828,29 @@ class StreamObject(DictionaryObject):
         if SA.FILTER in self:
             f = self[SA.FILTER]
             if isinstance(f, ArrayObject):
-                f.insert(0, NameObject(FT.FLATE_DECODE))
+                f = ArrayObject([NameObject(FT.FLATE_DECODE), *f])
+                try:
+                    parms = ArrayObject(
+                        [NullObject(), *self.get(SA.DECODE_PARMS, ArrayObject())]
+                    )
+                except TypeError:
+                    # case of error where the * operator is not working (not an array
+                    parms = ArrayObject(
+                        [NullObject(), self.get(SA.DECODE_PARMS, ArrayObject())]
+                    )
             else:
-                newf = ArrayObject()
-                newf.append(NameObject("/FlateDecode"))
-                newf.append(f)
-                f = newf
+                f = ArrayObject([NameObject(FT.FLATE_DECODE), f])
+                parms = ArrayObject(
+                    [NullObject(), self.get(SA.DECODE_PARMS, NullObject())]
+                )
         else:
-            f = NameObject("/FlateDecode")
+            f = NameObject(FT.FLATE_DECODE)
+            parms = None
         retval = EncodedStreamObject()
+        retval.update(self)
         retval[NameObject(SA.FILTER)] = f
+        if parms is not None:
+            retval[NameObject(SA.DECODE_PARMS)] = parms
         retval._data = FlateDecode.encode(self._data)
         return retval
 
@@ -894,7 +907,18 @@ class EncodedStreamObject(StreamObject):
         return self.get_data()
 
     def set_data(self, data: Any) -> None:  # deprecated
-        raise PdfReadError("Creating EncodedStreamObject is not currently supported")
+        from ..filters import FlateDecode
+
+        if self.get(SA.FILTER, "") == FT.FLATE_DECODE:
+            if not isinstance(data, bytes):
+                raise TypeError("data must be bytes")
+            assert self.decoded_self is not None
+            self.decoded_self._data = data
+            self._data = FlateDecode.encode(data)
+        else:
+            raise PdfReadError(
+                "Streams encoded with different filter from only FlateDecode is not supported"
+            )
 
     def setData(self, data: Any) -> None:  # deprecated
         deprecation_with_replacement("setData", "set_data", "3.0.0")
@@ -1016,7 +1040,7 @@ class ContentStream(DecodedStreamObject):
                 # encountering a comment -- but read_object assumes that
                 # following the comment must be the object we're trying to
                 # read.  In this case, it could be an operator instead.
-                while peek not in (b"\r", b"\n"):
+                while peek not in (b"\r", b"\n", b""):
                     peek = stream.read(1)
             else:
                 operands.append(read_object(stream, None, self.forced_encoding))
