@@ -496,7 +496,15 @@ class File:
     data: bytes
 
     def __str__(self) -> str:
-        return f"File(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
+        return f"{self.__class__.__name__}(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
 
     def __repr__(self) -> str:
-        return f"File(name={self.name}, data: {_human_readable_bytes(len(self.data))}, hash: {hash(self.data)})"
+        return self.__str__()[:-1] + f", hash: {hash(self.data)})"
+
+
+@dataclass
+class ImageFile(File):
+    from .generic import IndirectObject
+
+    image: Optional[Any] = None  # optional ; direct PIL image access
+    indirect_reference: Optional[IndirectObject] = None  # optional ; link to PdfObject
