@@ -532,7 +532,7 @@ class PageObject(DictionaryObject):
     @property
     def images(self) -> List[ImageFile]:
         """
-        Read-only property that emulates a list of files representing images on a page.
+        Read-only property emulating a list of images on a page.
 
         Get a list of all images on the page. The key can be:
         - A string (for the top object)
@@ -540,21 +540,21 @@ class PageObject(DictionaryObject):
         - An integer
 
         Examples:
-            reader.pages[0].images[0]  # Returns the first image
-            reader.pages[0].images['/I0']  # Returns the image '/I0'
-            reader.pages[0].images['/TP1', '/Image1']  # Returns the image '/Image1' within '/TP1' Xobject/Form
-            for img in reader.pages[0].images:  # Loop through all objects
+            reader.pages[0].images[0]        # return fist image
+            reader.pages[0].images['/I0']    # return image '/I0'
+            reader.pages[0].images['/TP1','/Image1'] # return image '/Image1'
+                                                            within '/TP1' Xobject/Form
+            for img in reader.pages[0].images: # loop within all objects
 
         images.keys() and images.items() can be used.
 
-        The ImageFile object:
-        Properties:
+        The ImageFile has the following properties:
             `.name` : name of the object
             `.data` : bytes of the object
             `.image`  : PIL Image Object
             `.indirect_reference` : object reference
 
-        Methods:
+        and the following methods:
             `.replace(new_image: PIL.Image.Image, **kwargs)` :
                 replace the image in the pdf with the new image
                 applying the saving parameters indicated (such as quality)
@@ -664,6 +664,7 @@ class PageObject(DictionaryObject):
                 indirect_reference=None,
             )
         return files
+
 
     @property
     def rotation(self) -> int:
