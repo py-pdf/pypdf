@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686689450117,
+  "lastUpdate": 1686691219847,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -30706,6 +30706,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0016265371869154438",
             "extra": "mean: 81.48437827272593 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4a0d73f30d3158a54e40d1c42f9997014b167037",
+          "message": "ENH: Add capability to replace image (#1849)\n\nHaving the capability to replace images trivially extends to compressing a PDF file size by reducing the contained images.\r\n\r\nCloses #1546",
+          "timestamp": "2023-06-13T23:19:10+02:00",
+          "tree_id": "863e15463b49c526fcce4739459cd4768260d6a9",
+          "url": "https://github.com/py-pdf/pypdf/commit/4a0d73f30d3158a54e40d1c42f9997014b167037"
+        },
+        "date": 1686691218394,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.787917274973078,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008840242600134834",
+            "extra": "mean: 1.269168771599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.519656518862101,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00911927784424433",
+            "extra": "mean: 86.80814383333531 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2442936716572683,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010822121671918516",
+            "extra": "mean: 4.093433911800014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.308918036062146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005481772744094337",
+            "extra": "mean: 81.24190908333635 msec\nrounds: 12"
           }
         ]
       }
