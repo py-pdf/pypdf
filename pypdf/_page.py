@@ -523,35 +523,35 @@ class PageObject(DictionaryObject):
     @property
     def images(self) -> List[ImageFile]:
         """
-            Read-only property that emulates a list of files
-            Get a list of all images of the page.
+        Read-only property emulating a list of images on a page.
 
-            the key can be:
-              µan str (for top object) or a tuple for image within XObject forms
-              or an int
-        ex:
-        ```
-        reader.pages[0].images[0]        # return fist image
-        reader.pages[0].images['/I0']    # return image '/I0'
-        reader.pages[0].images['/TP1','/Image1'] # return image '/Image1'
-                                                        within '/TP1' Xobject/Form
-        for img in reader.pages[0].images: # loop within all objects
-        ```
+        Get a list of all images on the page. The key can be:
+        - A string (for the top object)
+        - A tuple (for images within XObject forms)
+        - An integer
 
-        images.keys() and image.items() work
+        Examples:
+            reader.pages[0].images[0]        # return fist image
+            reader.pages[0].images['/I0']    # return image '/I0'
+            reader.pages[0].images['/TP1','/Image1'] # return image '/Image1'
+                                                            within '/TP1' Xobject/Form
+            for img in reader.pages[0].images: # loop within all objects
 
-        The ImageFile object:
-        properties:
+        images.keys() and images.items() can be used.
+
+        The ImageFile has the following properties:
             `.name` : name of the object
             `.data` : bytes of the object
             `.image`  : PIL Image Object
             `.indirect_reference` : object reference
-        methods:
+
+        and the following methods:
             `.replace(new_image: PIL.Image.Image, **kwargs)` :
                 replace the image in the pdf with the new image
                 applying the saving parameters indicated (such as quality)
             e.g. :
             `reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)`
+
         """
         return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
 
