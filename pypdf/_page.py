@@ -68,7 +68,7 @@ from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
-from .errors import PageSizeNotDefinedError
+from .errors import PageSizeNotDefinedError, PdfReadError
 from .filters import _xobj_to_image
 from .generic import (
     ArrayObject,
@@ -341,6 +341,7 @@ class PageObject(DictionaryObject):
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
+        self.inline_images: Optional[Dict[str, ImageFile]] = None
         if indirect_ref is not None:  # deprecated
             warnings.warn(
                 (
@@ -470,6 +471,8 @@ class PageObject(DictionaryObject):
     def _get_ids_image(
         self, obj: Optional[DictionaryObject] = None, ancest: Optional[List[str]] = None
     ) -> List[Union[str, List[str]]]:
+        if self.inline_images is None:
+            self.inline_images = self._get_inline_images()
         if obj is None:
             obj = self
         if ancest is None:
@@ -478,7 +481,7 @@ class PageObject(DictionaryObject):
         if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
             DictionaryObject, obj[PG.RESOURCES]
         ):
-            return lst
+            return list(self.inline_images.keys())
 
         x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
@@ -504,8 +507,14 @@ class PageObject(DictionaryObject):
                 DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
             )
         except KeyError:
-            raise
+            if not (id[0] == "~" and id[-1] == "~"):
+                raise
         if isinstance(id, str):
+            if id[0] == "~" and id[-1] == "~":
+                if self.inline_images is None:
+                    raise KeyError("no inline image can be found")
+                return self.inline_images[id]
+
             extension, byte_stream, img = _xobj_to_image(
                 cast(DictionaryObject, xobjs[id])
             )
@@ -549,11 +558,113 @@ class PageObject(DictionaryObject):
             `.replace(new_image: PIL.Image.Image, **kwargs)` :
                 replace the image in the pdf with the new image
                 applying the saving parameters indicated (such as quality)
-            e.g. :
-            `reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)`
 
+        Example usage:
+
+            reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)
+
+        Inline images are extracted and named ~0~, ~1~, ..., with the
+        indirect_reference set to None.
         """
         return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
+
+    def _get_inline_images(self) -> Dict[str, ImageFile]:
+        """
+        get inline_images
+        entries will be identified as ~1~
+        """
+        content = self.get_contents()
+        if content is None:
+            return {}
+        imgs_data = []
+        for param, ope in content.operations:
+            if ope == b"INLINE IMAGE":
+                imgs_data.append(
+                    {"settings": param["settings"], "__streamdata__": param["data"]}
+                )
+            elif ope in (b"BI", b"EI", b"ID"):
+                raise PdfReadError(
+                    f"{ope} operator met whereas not expected,"
+                    "please share usecase with pypdf dev team"
+                )
+            """backup
+            elif ope == b"BI":
+                img_data["settings"] = {}
+            elif ope == b"EI":
+                imgs_data.append(img_data)
+                img_data = {}
+            elif ope == b"ID":
+                img_data["__streamdata__"] = b""
+            elif "__streamdata__" in img_data:
+                if len(img_data["__streamdata__"]) > 0:
+                    img_data["__streamdata__"] += b"\n"
+                    raise Exception("check append")
+                img_data["__streamdata__"] += param
+            elif "settings" in img_data:
+                img_data["settings"][ope.decode()] = param
+            """
+        files = {}
+        for num, ii in enumerate(imgs_data):
+            init = {
+                "__streamdata__": ii["__streamdata__"],
+                "/Length": len(ii["__streamdata__"]),
+            }
+            for k, v in ii["settings"].items():
+                try:
+                    v = NameObject(
+                        {
+                            "/G": "/DeviceGray",
+                            "/RGB": "/DeviceRGB",
+                            "/CMYK": "/DeviceCMYK",
+                            "/I": "/Indexed",
+                            "/AHx": "/ASCIIHexDecode",
+                            "/A85": "/ASCII85Decode",
+                            "/LZW": "/LZWDecode",
+                            "/Fl": "/FlateDecode",
+                            "/RL": "/RunLengthDecode",
+                            "/CCF": "/CCITTFaxDecode",
+                            "/DCT": "/DCTDecode",
+                        }[v]
+                    )
+                except (TypeError, KeyError):
+                    if isinstance(v, NameObject):
+                        #  it is a custom name : we have to look in resources :
+                        # the only applicable case is for ColorSpace
+                        try:
+                            res = cast(DictionaryObject, self["/Resources"])[
+                                "/ColorSpace"
+                            ]
+                            v = cast(DictionaryObject, res)[v]
+                        except KeyError:  # for res and v
+                            raise PdfReadError(
+                                f"Can not find resource entry {v} for {k}"
+                            )
+                init[
+                    NameObject(
+                        {
+                            "/BPC": "/BitsPerComponent",
+                            "/CS": "/ColorSpace",
+                            "/D": "/Decode",
+                            "/DP": "/DecodeParms",
+                            "/F": "/Filter",
+                            "/H": "/Height",
+                            "/W": "/Width",
+                            "/I": "/Interpolate",
+                            "/Intent": "/Intent",
+                            "/IM": "/ImageMask",
+                        }[k]
+                    )
+                ] = v
+            ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
+            extension, byte_stream, img = _xobj_to_image(ii["object"])
+            files[f"~{num}~"] = ImageFile(
+                name=f"~{num}~{extension}",
+                data=byte_stream,
+                image=img,
+                indirect_reference=None,
+            )
+        return files
+
 
     @property
     def rotation(self) -> int:
