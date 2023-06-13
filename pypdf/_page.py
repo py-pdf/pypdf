@@ -57,6 +57,7 @@ from ._text_extraction import (
 from ._utils import (
     CompressedTransformationMatrix,
     File,
+    ImageFile,
     TransformationMatrixType,
     deprecation_no_replacement,
     deprecation_with_replacement,
@@ -444,7 +445,7 @@ class PageObject(DictionaryObject):
         return PageObject.create_blank_page(pdf, width, height)
 
     @property
-    def images(self) -> List[File]:
+    def _old_images(self) -> List[File]:  # deprecated
         """
         Get a list of all images of the page.
 
@@ -460,11 +461,92 @@ class PageObject(DictionaryObject):
         x_object = self[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for obj in x_object:
             if x_object[obj][IA.SUBTYPE] == "/Image":
-                extension, byte_stream = _xobj_to_image(x_object[obj])
+                extension, byte_stream, img = _xobj_to_image(x_object[obj])
                 if extension is not None:
                     filename = f"{obj[1:]}{extension}"
                     images_extracted.append(File(name=filename, data=byte_stream))
         return images_extracted
+
+    def _get_ids_image(
+        self, obj: Optional[DictionaryObject] = None, ancest: Optional[List[str]] = None
+    ) -> List[Union[str, List[str]]]:
+        if obj is None:
+            obj = self
+        if ancest is None:
+            ancest = []
+        lst: List[Union[str, List[str]]] = []
+        if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
+            DictionaryObject, obj[PG.RESOURCES]
+        ):
+            return lst
+
+        x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
+        for o in x_object:
+            if x_object[o][IA.SUBTYPE] == "/Image":
+                lst.append(o if len(ancest) == 0 else ancest + [o])
+            else:  # is a form with possible images inside
+                lst.extend(self._get_ids_image(x_object[o], ancest + [o]))
+        return lst
+
+    def _get_image(
+        self,
+        id: Union[str, List[str], Tuple[str]],
+        obj: Optional[DictionaryObject] = None,
+    ) -> ImageFile:
+        if obj is None:
+            obj = cast(DictionaryObject, self)
+        if isinstance(id, tuple):
+            id = list(id)
+        if isinstance(id, List) and len(id) == 1:
+            id = id[0]
+        try:
+            xobjs = cast(
+                DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
+            )
+        except KeyError:
+            raise
+        if isinstance(id, str):
+            extension, byte_stream, img = _xobj_to_image(
+                cast(DictionaryObject, xobjs[id])
+            )
+            f = ImageFile(
+                name=f"{id[1:]}{extension}",
+                data=byte_stream,
+                image=img,
+                indirect_reference=xobjs[id].indirect_reference,
+            )
+            return f
+        else:  # in a sub object
+            ids = id[1:]
+            return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
+
+    @property
+    def images(self) -> List[ImageFile]:
+        """
+        Read-only property emulating a list of images on a page.
+
+        Get a list of all images on the page. The key can be:
+        - A string (for the top object)
+        - A tuple (for images within XObject forms)
+        - An integer
+
+        Examples:
+            reader.pages[0].images[0]        # return fist image
+            reader.pages[0].images['/I0']    # return image '/I0'
+            reader.pages[0].images['/TP1','/Image1'] # return image '/Image1'
+                                                            within '/TP1' Xobject/Form
+            for img in reader.pages[0].images: # loop within all objects
+
+        images.keys() and images.items() can be used.
+
+        The ImageFile has the following properties:
+            `.name` : name of the object
+            `.data` : bytes of the object
+            `.image`  : PIL Image Object
+            `.indirect_reference` : object reference
+
+        """
+        return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
 
     @property
     def rotation(self) -> int:
@@ -2242,3 +2324,60 @@ def _get_fonts_walk(
         _get_fonts_walk(cast(DictionaryObject, obj[key]), fnt, emb)
 
     return fnt, emb  # return the sets for each page
+
+
+class _VirtualListImages(Sequence):
+    def __init__(
+        self,
+        ids_function: Callable[[], List[Union[str, List[str]]]],
+        get_function: Callable[[Union[str, List[str], Tuple[str]]], ImageFile],
+    ) -> None:
+        self.ids_function = ids_function
+        self.get_function = get_function
+        self.current = -1
+
+    def __len__(self) -> int:
+        return len(self.ids_function())
+
+    def keys(self) -> List[Union[str, List[str]]]:
+        return self.ids_function()
+
+    def items(self) -> List[Tuple[Union[str, List[str]], ImageFile]]:
+        return [(x, self[x]) for x in self.ids_function()]
+
+    @overload
+    def __getitem__(self, index: Union[int, str, List[str]]) -> ImageFile:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[ImageFile]:
+        ...
+
+    def __getitem__(
+        self, index: Union[int, slice, str, List[str], Tuple[str]]
+    ) -> Union[ImageFile, Sequence[ImageFile]]:
+        lst = self.ids_function()
+        if isinstance(index, slice):
+            indices = range(*index.indices(len(self)))
+            lst = [lst[x] for x in indices]
+            cls = type(self)
+            return cls((lambda: lst), self.get_function)
+        if isinstance(index, (str, list, tuple)):
+            return self.get_function(index)
+        if not isinstance(index, int):
+            raise TypeError("invalid sequence indices type")
+        len_self = len(lst)
+        if index < 0:
+            # support negative indexes
+            index = len_self + index
+        if index < 0 or index >= len_self:
+            raise IndexError("sequence index out of range")
+        return self.get_function(lst[index])
+
+    def __iter__(self) -> Iterator[ImageFile]:
+        for i in range(len(self)):
+            yield self[i]
+
+    def __str__(self) -> str:
+        p = [f"Image_{i}={n}" for i, n in enumerate(self.ids_function())]
+        return f"[{', '.join(p)}]"
