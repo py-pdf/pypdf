@@ -1402,7 +1402,7 @@ def test_update_form_fields(write_data_here, needs_cleanup):
     if needs_cleanup:
         Path(write_data_here).unlink()
 
-        
+
 @pytest.mark.enable_socket()
 def test_iss1862():
     # The file here has "/B" entry to define the font in a object below the page
