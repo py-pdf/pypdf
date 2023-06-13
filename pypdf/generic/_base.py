@@ -30,7 +30,7 @@ import hashlib
 import re
 from binascii import unhexlify
 from math import log10
-from typing import Any, Callable, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Optional, Sequence, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
@@ -72,7 +72,7 @@ class PdfObject(PdfObjectProtocol):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "PdfObject":
         """
         clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
@@ -160,7 +160,7 @@ class NullObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "NullObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -202,7 +202,7 @@ class BooleanObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "BooleanObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -262,7 +262,7 @@ class IndirectObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "IndirectObject":
         """Clone object into pdf_dest."""
         if self.pdf == pdf_dest and not force_duplicate:
@@ -379,7 +379,7 @@ class FloatObject(float, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "FloatObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -426,7 +426,7 @@ class NumberObject(int, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "NumberObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -476,7 +476,7 @@ class ByteStringObject(bytes, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "ByteStringObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -523,7 +523,7 @@ class TextStringObject(str, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "TextStringObject":
         """Clone object into pdf_dest."""
         obj = TextStringObject(self)
@@ -610,7 +610,7 @@ class NameObject(str, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "NameObject":
         """Clone object into pdf_dest."""
         return cast(

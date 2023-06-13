@@ -32,7 +32,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import logging
 import re
 from io import BytesIO
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union, cast
 
 from .._protocols import PdfReaderProtocol, PdfWriterProtocol
 from .._utils import (
@@ -80,7 +80,7 @@ class ArrayObject(list, PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "ArrayObject":
         """Clone object into pdf_dest."""
         try:
@@ -163,7 +163,7 @@ class DictionaryObject(dict, PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "DictionaryObject":
         """Clone object into pdf_dest."""
         try:
@@ -187,7 +187,7 @@ class DictionaryObject(dict, PdfObject):
         src: "DictionaryObject",
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
@@ -201,14 +201,16 @@ class DictionaryObject(dict, PdfObject):
         # first we remove for the ignore_fields
         # that are for a limited number of levels
         x = 0
+        assert ignore_fields is not None
+        ignore_fields = list(ignore_fields)
         while x < len(ignore_fields):
             if isinstance(ignore_fields[x], int):
-                if ignore_fields[x] <= 0:
+                if cast(int, ignore_fields[x]) <= 0:
                     del ignore_fields[x]
                     del ignore_fields[x]
                     continue
                 else:
-                    ignore_fields[x] -= 1
+                    ignore_fields[x] -= 1  # type:ignore
             x += 1
         #  First check if this is a chain list, we need to loop to prevent recur
         if any(
@@ -746,7 +748,7 @@ class StreamObject(DictionaryObject):
         src: DictionaryObject,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
@@ -974,7 +976,7 @@ class ContentStream(DecodedStreamObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "ContentStream":
         """
         Clone object into pdf_dest.
@@ -1009,7 +1011,7 @@ class ContentStream(DecodedStreamObject):
         src: DictionaryObject,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
