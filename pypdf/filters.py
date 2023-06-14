@@ -878,4 +878,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         img.save(img_byte_arr, format=image_format)
     data = img_byte_arr.getvalue()
 
+    try:  # temporary try/except until other fixes of images
+        img = Image.open(BytesIO(data))
+    except Exception:
+        img = None  # type: ignore
     return extension, data, img
