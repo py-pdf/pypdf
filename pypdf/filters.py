@@ -829,6 +829,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             try:
                 if img1.mode != mode:
                     img = Image.frombytes(mode, img1.size, img1.tobytes())
+                else:
+                    img = img1
             except OSError:
                 img = Image.frombytes(mode, img1.size, img1.tobytes())
             # for CMYK conversion :

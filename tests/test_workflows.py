@@ -12,6 +12,7 @@ from re import findall
 
 import pytest
 from PIL import Image, ImageChops
+from PIL import __version__ as pil_version
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
@@ -954,10 +955,14 @@ def test_replace_image(tmp_path):
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "labeled-edges-center-image.pdf")
     reader = PdfReader(RESOURCE_ROOT / "jpeg.pdf")
     img = reader.pages[0].images[0].image
+    if int(pil_version.split(".")[0]) < 9:
+        img = img.convert("RGB")
     writer.pages[0].images[0].replace(img)
     b = BytesIO()
     writer.write(b)
     reader2 = PdfReader(b)
+    if int(pil_version.split(".")[0]) >= 9:
+        assert reader2.pages[0].images[0].image.mode == "RGBA"
     # very simple image distance evaluation
     diff = ImageChops.difference(reader2.pages[0].images[0].image, img)
     d = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
