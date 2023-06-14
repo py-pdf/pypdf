@@ -823,9 +823,12 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             extension = ".jp2"  # mime_type = "image/x-jp2"
             img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
             mode = _get_imagemode(color_space, colors, mode)
+            if img1.mode == "RGBA" and mode == "RGB":
+                mode = "RGBA"
             # we need to convert to the good mode
             try:
-                img = Image.frombytes(mode, img1.size, img1.tobytes())
+                if img1.mode != mode:
+                    img = Image.frombytes(mode, img1.size, img1.tobytes())
             except OSError:
                 img = Image.frombytes(mode, img1.size, img1.tobytes())
             # for CMYK conversion :

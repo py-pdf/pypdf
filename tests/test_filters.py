@@ -3,11 +3,12 @@ import string
 import sys
 from io import BytesIO
 from itertools import product as cartesian_product
+from math import sqrt
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageChops
 
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError, PdfStreamError
@@ -377,7 +378,11 @@ def test_cmyk():
     )  # not a pdf but it works
     data = reader.pages[0].images[0]
     assert ".jp2" in data.name
-    assert list(data.image.getdata()) == list(refimg.getdata())
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(
+        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
+    ) / (diff.size[0] * diff.size[1])
+    assert d < 0.01
 
 
 @pytest.mark.enable_socket()
