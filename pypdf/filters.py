@@ -38,7 +38,7 @@ import math
 import struct
 import zlib
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 from ._utils import b_, deprecate_with_replacement, ord_, paeth_predictor
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -57,13 +57,12 @@ from .generic import (
     NullObject,
 )
 
-if TYPE_CHECKING:
-    try:
-        from typing import Literal  # type: ignore[attr-defined]
-    except ImportError:
-        # PEP 586 introduced typing.Literal with Python 3.8
-        # For older Python versions, the backport typing_extensions is necessary:
-        from typing_extensions import Literal  # type: ignore[misc, assignment]
+try:
+    from typing import Literal, TypeAlias  # type: ignore[attr-defined]
+except ImportError:
+    # PEP 586 introduced typing.Literal with Python 3.8
+    # For older Python versions, the backport typing_extensions is necessary:
+    from typing_extensions import Literal, TypeAlias  # type: ignore[misc, assignment]
 
 
 def decompress(data: bytes) -> bytes:
@@ -158,8 +157,17 @@ class FlateDecode:
                 math.ceil(columns * bits_per_component / 8) + 1
             )  # number of bytes
 
+            # TIFF prediction:
+            if predictor == 2:
+                rowlength -= 1  # remove the predictor byte
+                bpp = rowlength // columns
+                str_data = bytearray(str_data)
+                for i in range(len(str_data)):
+                    if i % rowlength >= bpp:
+                        str_data[i] = (str_data[i] + str_data[i - bpp]) % 256
+                str_data = bytes(str_data)
             # PNG prediction:
-            if 10 <= predictor <= 15:
+            elif 10 <= predictor <= 15:
                 str_data = FlateDecode._decode_png_prediction(str_data, columns, rowlength)  # type: ignore
             else:
                 # unsupported predictor
@@ -624,7 +632,10 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # deprecated
     return decode_stream_data(stream)
 
 
-def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
+mode_str_type: TypeAlias = Literal["", "1", "RGB", "P", "L", "RGBA", "CMYK"]
+
+
+def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
 
@@ -635,7 +646,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
       x_object_obj:
 
     Returns:
-        Tuple[file extension, bytes]
+        Tuple[file extension, bytes, PIL.Image.Image]
     """
     try:
         from PIL import Image
@@ -735,4 +746,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
         img.save(img_byte_arr, format="PNG")
         data = img_byte_arr.getvalue()
 
-    return extension, data
+    try:  # temporary try/except until other fixes of images
+        img = Image.open(BytesIO(data))
+    except Exception:
+        img = None  # type: ignore
+    return extension, data, img

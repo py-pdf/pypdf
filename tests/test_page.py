@@ -1144,3 +1144,31 @@ def test_pdf_pages_missing_type():
     reader = PdfReader(pdf_path)
     del reader.trailer["/Root"]["/Pages"]["/Kids"][0].get_object()["/Type"]
     reader.pages[0]
+    writer = PdfWriter(clone_from=reader)
+    writer.pages[0]
+
+
+@pytest.mark.enable_socket()
+def test_image_new_property():
+    url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
+    name = "pdf_font_garbled.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].images.keys()
+    # many tests disabled until other image fixes:
+    # reader.pages[0].images.items()
+    # reader.pages[0].images[0].name
+    reader.pages[0].images[-1].data
+    reader.pages[0].images["/TPL1", "/Image5"].image
+    # assert (
+    #    reader.pages[0].images["/I0"].indirect_reference.get_object()
+    #     == reader.pages[0]["/Resources"]["/XObject"]["/I0"]
+    # )
+    # list(reader.pages[0].images[0:2])
+    with pytest.raises(TypeError):
+        reader.pages[0].images[b"0"]
+    with pytest.raises(IndexError):
+        reader.pages[0].images[9999]
+    # just for test coverage:
+    with pytest.raises(KeyError):
+        reader.pages[0]._get_image(["test"], reader.pages[0])
+    assert list(PageObject(None, None).images) == []
