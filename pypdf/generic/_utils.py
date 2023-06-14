@@ -144,7 +144,7 @@ def create_string_object(
             return TextStringObject(string.decode(forced_encoding))
         else:
             try:
-                if string.startswith(codecs.BOM_UTF16_BE):
+                if string.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
                     retval = TextStringObject(string.decode("utf-16"))
                     retval.autodetect_utf16 = True
                     return retval

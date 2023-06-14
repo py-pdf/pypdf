@@ -1031,6 +1031,22 @@ def test_indirect_object_invalid_read():
     assert exc.value.args[0] == "Error reading indirect object reference at byte 0x5"
 
 
+def test_create_string_object_utf16be_bom():
+    result = create_string_object(
+        b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
+    )
+    assert result == "PaperPort 14\x00"
+    assert result.autodetect_utf16 is True
+
+
+def test_create_string_object_utf16le_bom():
+    result = create_string_object(
+        b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
+    assert result == "PaperPort 14\x00"
+    assert result.autodetect_utf16 is True
+
+
 def test_create_string_object_force():
     assert create_string_object(b"Hello World", []) == "Hello World"
     assert create_string_object(b"Hello World", {72: "A"}) == "Aello World"
