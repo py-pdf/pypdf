@@ -3,6 +3,7 @@ import string
 import sys
 from io import BytesIO
 from itertools import product as cartesian_product
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -30,6 +31,10 @@ filter_inputs = (
     string.punctuation,
     string.whitespace,  # Add more...
 )
+
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
@@ -250,7 +255,7 @@ def test_image_without_imagemagic():
 
         for page in reader.pages:
             with pytest.raises(ImportError) as exc:
-                page.images
+                page.images[0]
             assert exc.value.args[0] == (
                 "pillow is required to do image extraction. "
                 "It can be installed via 'pip install pypdf[image]'"

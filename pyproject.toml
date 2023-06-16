@@ -41,7 +41,7 @@ Changelog = "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html"
 full = ["PyCryptodome", "Pillow"]
 crypto = ["PyCryptodome"]
 image = ["Pillow"]
-dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "flit", "wheel"]
+dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "flit", "wheel"]
 docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
 
 [tool.mutmut]
@@ -120,6 +120,9 @@ ignore = [
     "DTZ001", # The use of `datetime.datetime()` without `tzinfo` is necessary
     "PLC",
     # Personal preference
+    "FA100", # Missing `from __future__ import annotations`, but uses `typing.Dict`
+    "TD002",  # Authors of TODOs can be found via git
+    "FIX002",  # TODOs should typically not be in the code, but sometimes are ok
     "D406", # Section name should end with a newline ("Returns")
     "D212",  # I want multiline-docstrings to start at the second line
     "D407",  # google-style docstrings don't have dashses
@@ -152,6 +155,9 @@ ignore = [
     # As long as we are not on Python 3.11+
     "UP006", "UP007",
     # for the moment, fix it later:
+    "TD003", # Missing issue link on the line following this TODO
+    "TD004",  # Missing colon in TODO
+    "TD005", # Missing issue description after `TODO`
     "A",  # Variable is shadowing a built-in
     "B028",  # No explicit `stacklevel` keyword argument found
     "B904", # Within an `except` clause, raise exceptions with
@@ -180,11 +186,11 @@ ignore = [
 ]
 
 [tool.ruff.per-file-ignores]
-"tests/*" = ["S101", "ANN001", "ANN201","D104", "S105", "S106", "D103"]
+"tests/*" = ["S101", "ANN001", "ANN201","D104", "S105", "S106", "D103", "B018", "B017"]
 "sample-files/*" = ["D100", "INP001"]
 "_encryption.py" = ["S324", "S311"]
 "_writer.py" = ["S324"]
-"make_changelog.py" = ["T201"]
+"make_changelog.py" = ["T201", "S603", "S607"]
 "json_consistency.py" = ["T201"]
 "tests/test_workflows.py" =  ["T201"]
 "docs/conf.py" = ["PTH", "INP001"]

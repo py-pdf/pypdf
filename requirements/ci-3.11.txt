@@ -57,7 +57,7 @@ pytest-socket==0.6.0
     # via -r requirements/ci.in
 pytest-timeout==2.1.0
     # via -r requirements/ci.in
-ruff==0.0.259
+ruff==0.0.272
     # via -r requirements/ci.in
 typeguard==3.0.2
     # via -r requirements/ci.in
