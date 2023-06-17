@@ -67,7 +67,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
-    default_delete_decide_function,
+    default_annotation_filter_function,
     deprecate_with_replacement,
     deprecation_bookmark,
     deprecation_with_replacement,
@@ -1919,6 +1919,7 @@ class PdfWriter:
         subtypes: Optional[
             Union[AnnotationSubtype, Iterable[AnnotationSubtype]]
         ] = None,
+        annotation_filter_function: Optional[Callable] = None,
     ) -> None:
         """
         Remove annotations by annotation subtype.
@@ -1928,28 +1929,58 @@ class PdfWriter:
                 Examples are: "/Link", "/FileAttachment", "/Sound",
                 "/Movie", "/Screen", ...
                 If you want to remove all annotations, use subtypes=None.
+            annotation_filter_function: Function that takes three arguments,
+                DictionaryObject, ArrayObject and DictionaryObject, and decides whether to remove them. For example:
+                    def is_google_link(
+                        page: DictionaryObject,
+                        annotation: ArrayObject,
+                        obj: DictionaryObject
+                    ) -> bool:
+                        try:
+                            uri = obj['/A']['/URI']
+                            return uri.startswith('https://google.com/')
+                        except KeyError:
+                            return False
+                Default behaviour: remove all annotations
+            page: PageObject from which to remove annotations. Default: remove annotations from all pages.
         """
-        for page in self.pages:
-            self.remove_annots_from_page(
-                page,
-                lambda an, obj: cast(str, obj["/Subtype"])
-                in cast(ArrayObject, subtypes),
-            )
+        if subtypes is not None:
+            if annotation_filter_function is not None:
+                logger.warning(
+                    "PdfWriter.remove_annotations: Argument annotation_filter_function was ignored"
+                    "because argument subtypes was set."
+                )
 
-    def remove_annots_from_page(
+            def _annotation_filter_function(
+                page: DictionaryObject, an: ArrayObject, obj: DictionaryObject
+            ) -> bool:
+                return cast(str, obj["/Subtype"]) in cast(ArrayObject, subtypes)
+
+            annotation_filter_function = _annotation_filter_function
+
+        if annotation_filter_function is None:
+            annotation_filter_function = default_annotation_filter_function
+
+        for page in self.pages:
+            self._remove_annots_from_page(page, annotation_filter_function)
+
+    def _remove_annots_from_page(
         self,
         page: Union[IndirectObject, PageObject, DictionaryObject],
-        delete_decide_function: Optional[Callable] = None,
+        annotation_filter_function: Optional[Callable] = None,
     ) -> None:
         """
         Remove annotations using a custom delete_decide_function.
 
         Args:
             page: Page object to clean up.
-            delete_decide_function: Function that takes two arguments,
-                ArrayObject and DictionaryObject, and decides whether to remove
-                them from the page. For example:
-                    def is_google_link(an: ArrayObject, obj: DictionaryObject) -> bool:
+            annotation_filter_function: Function that takes three arguments,
+                DictionaryObject, ArrayObject and DictionaryObject, and decides whether to remove them. For example:
+                    def is_google_link(
+                        page: DictionaryObject,
+                        annotation: ArrayObject,
+                        obj: DictionaryObject
+                    ) -> bool:
                         try:
                             uri = obj['/A']['/URI']
                             return uri.startswith('https://google.com/')
@@ -1957,8 +1988,8 @@ class PdfWriter:
                             return False
                 Default behaviour: remove all annotations
         """
-        if delete_decide_function is None:
-            delete_decide_function = default_delete_decide_function
+        if annotation_filter_function is None:
+            annotation_filter_function = default_annotation_filter_function
 
         page = cast(DictionaryObject, page.get_object())
         if PG.ANNOTS in page:
@@ -1966,7 +1997,7 @@ class PdfWriter:
             while i < len(cast(ArrayObject, page[PG.ANNOTS])):
                 an = cast(ArrayObject, page[PG.ANNOTS])[i]
                 obj = cast(DictionaryObject, an.get_object())
-                if delete_decide_function(an, obj):
+                if annotation_filter_function(page, an, obj):
                     if isinstance(an, IndirectObject):
                         self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
                     del page[PG.ANNOTS][i]  # type:ignore
@@ -1993,21 +2024,21 @@ class PdfWriter:
         assert isinstance(to_delete, ObjectDeletionFlag)
 
         if to_delete & ObjectDeletionFlag.LINKS:
-            return self.remove_annots_from_page(
-                page, lambda an, obj: cast(str, obj["/Subtype"]) == "/Link"
+            return self._remove_annots_from_page(
+                page, lambda pg, an, obj: cast(str, obj["/Subtype"]) == "/Link"
             )
         if to_delete & ObjectDeletionFlag.ATTACHMENTS:
-            return self.remove_annots_from_page(
+            return self._remove_annots_from_page(
                 page,
-                lambda an, obj: cast(str, obj["/Subtype"])
+                lambda pg, an, obj: cast(str, obj["/Subtype"])
                 in ("/FileAttachment", "/Sound", "/Movie", "/Screen"),
             )
         if to_delete & ObjectDeletionFlag.OBJECTS_3D:
-            return self.remove_annots_from_page(
-                page, lambda an, obj: cast(str, obj["/Subtype"]) == "/3D"
+            return self._remove_annots_from_page(
+                page, lambda pg, an, obj: cast(str, obj["/Subtype"]) == "/3D"
             )
         if to_delete & ObjectDeletionFlag.ALL_ANNOTATIONS:
-            return self.remove_annots_from_page(page)
+            return self._remove_annots_from_page(page)
 
         if to_delete & ObjectDeletionFlag.IMAGES:
             jump_operators = (

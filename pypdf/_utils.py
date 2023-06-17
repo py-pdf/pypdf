@@ -502,6 +502,6 @@ class File:
         return f"File(name={self.name}, data: {_human_readable_bytes(len(self.data))}, hash: {hash(self.data)})"
 
 
-def default_delete_decide_function(an: Any, obj: Any) -> bool:
-    """Default delete_decide_function used in _writer.remove_annots_from_page"""
+def default_annotation_filter_function(page: Any, an: Any, obj: Any) -> bool:
+    """Default annotation_filter_function used in _writer.remove_annots_from_page"""
     return True
