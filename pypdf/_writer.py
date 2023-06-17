@@ -2046,9 +2046,10 @@ class PdfWriter:
         """
         if subtypes is not None:
             if annotation_filter_function is not None:
-                logger.warning(
+                logger_warning(
                     "PdfWriter.remove_annotations: Argument annotation_filter_function was ignored"
-                    "because argument subtypes was set."
+                    "because argument subtypes was set.",
+                    __name__,
                 )
 
             def _annotation_filter_function(
