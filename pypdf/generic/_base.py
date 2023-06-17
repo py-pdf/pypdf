@@ -672,13 +672,11 @@ class NameObject(str, PdfObject):
             raise UnicodeDecodeError("", name, 0, 0, "Code Not Found")
         except (UnicodeEncodeError, UnicodeDecodeError) as e:
             if not pdf.strict:
-                logger_warning(
-                    f"Illegal character in Name Object ({repr(name)})", __name__
-                )
+                logger_warning(f"Illegal character in Name Object ({name!r})", __name__)
                 return NameObject(name.decode("charmap"))
             else:
                 raise PdfReadError(
-                    f"Illegal character in Name Object ({repr(name)})"
+                    f"Illegal character in Name Object ({name!r})"
                 ) from e
 
     @staticmethod
