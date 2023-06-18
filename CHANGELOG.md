@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 3.10.0, 2023-06-18
+
+### New Features (ENH)
+-  Extraction of inline images (#1850)
+-  Add capability to replace image (#1849)
+-  Extend images interface by returning an ImageFile(File) class (#1848)
+-  Add set_data to EncodedStreamObject (#1854)
+
+### Bug Fixes (BUG)
+-  Fix RGB FlateEncode Images(PNG) and transparency (#1834)
+-  Generate static appearance for fields (#1864)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.9.1...3.10.0)
+
 ## Version 3.9.1, 2023-06-04
 
 ### Deprecations (DEP)

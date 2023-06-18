@@ -12,6 +12,7 @@ from re import findall
 
 import pytest
 from PIL import Image, ImageChops
+from PIL import __version__ as pil_version
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
@@ -954,14 +955,19 @@ def test_replace_image(tmp_path):
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "labeled-edges-center-image.pdf")
     reader = PdfReader(RESOURCE_ROOT / "jpeg.pdf")
     img = reader.pages[0].images[0].image
+    if int(pil_version.split(".")[0]) < 9:
+        img = img.convert("RGB")
     writer.pages[0].images[0].replace(img)
     b = BytesIO()
     writer.write(b)
     reader2 = PdfReader(b)
+    if int(pil_version.split(".")[0]) >= 9:
+        assert reader2.pages[0].images[0].image.mode == "RGBA"
     # very simple image distance evaluation
     diff = ImageChops.difference(reader2.pages[0].images[0].image, img)
     d = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
     assert d < 1.5
+    img = img.convert("RGB")  # quality does not apply to RGBA/JP2
     writer.pages[0].images[0].replace(img, quality=20)
     diff = ImageChops.difference(writer.pages[0].images[0].image, img)
     d1 = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
@@ -986,19 +992,17 @@ def test_inline_images():
     url = "https://arxiv.org/pdf/2201.00151.pdf"
     name = "2201.00151.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    url2 = "https://github.com/py-pdf/pypdf/assets/4083478/28e8b87c-be2c-40d9-9c86-15c7819021bf"
-    name2 = "inline4.png"
-    img_ref = Image.open(BytesIO(get_pdf_from_url(url2, name=name2)))
-    # in the assert below, the convert will have to be remove with other fixes
-    assert list(reader.pages[1].images[4].image.convert("RGB").getdata()) == list(
-        img_ref.getdata()
-    )
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/28e8b87c-be2c-40d9-9c86-15c7819021bf"
+    name = "inline4.png"
+    img_ref = Image.open(BytesIO(get_pdf_from_url(url, name=name)))
+    assert list(reader.pages[1].images[4].image.getdata()) == list(img_ref.getdata())
     with pytest.raises(KeyError):
         reader.pages[0].images["~999~"]
     del reader.pages[1]["/Resources"]["/ColorSpace"]["/R124"]
     reader.pages[1].inline_images = None  # to force recalculation
     with pytest.raises(PdfReadError):
         reader.pages[1].images["~1~"]
+
     co = reader.pages[0].get_contents()
     co.operations.append(([], b"BI"))
     reader.pages[0][NameObject("/Contents")] = co
