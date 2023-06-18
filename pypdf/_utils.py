@@ -355,10 +355,6 @@ def hexencode(b: bytes) -> bytes:
     return coded[0]
 
 
-def hex_str(num: int) -> str:
-    return hex(num).replace("L", "")
-
-
 WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
 
 

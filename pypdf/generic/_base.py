@@ -38,7 +38,6 @@ from .._utils import (
     StreamType,
     b_,
     deprecation_with_replacement,
-    hex_str,
     hexencode,
     logger_warning,
     read_non_whitespace,
@@ -344,7 +343,7 @@ class IndirectObject(PdfObject):
         r = read_non_whitespace(stream)
         if r != b"R":
             raise PdfReadError(
-                f"Error reading indirect object reference at byte {hex_str(stream.tell())}"
+                f"Error reading indirect object reference at byte {hex(stream.tell())}"
             )
         return IndirectObject(int(idnum), int(generation), pdf)
 
