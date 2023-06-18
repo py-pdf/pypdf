@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687072097231,
+  "lastUpdate": 1687072727420,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -30966,6 +30966,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0001781891918079402",
             "extra": "mean: 87.39275045455356 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "68e2cf0c25961f8ae5277dfc9ffa8978c00e3305",
+          "message": "BUG: Fix RGB FlateEncode Images(PNG) and transparency (#1834)\n\nTake the number of colors into account for PNG images\r\n\r\nProperly process the mask for transparency:\r\n\r\nFixes #1787\r\nFixes #1599\r\n\r\nAdds support for inline images extraction:\r\n\r\nFixes #1368\r\nFixes #1863\r\n\r\nAdditional changes:\r\n\r\n* Process TIFF predictor 2\r\n* Upgrades Pillow requirement to version 9.5 for Python 9.11",
+          "timestamp": "2023-06-18T09:17:15+02:00",
+          "tree_id": "78f779ac074a26e2a4aeb94c2a08159eb2d0732d",
+          "url": "https://github.com/py-pdf/pypdf/commit/68e2cf0c25961f8ae5277dfc9ffa8978c00e3305"
+        },
+        "date": 1687072725229,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5957844551880481,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04279337685902958",
+            "extra": "mean: 1.6784593678000022 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.025831997064646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013037678057359692",
+            "extra": "mean: 110.79311029999417 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1969139036056283,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0672883591907212",
+            "extra": "mean: 5.0783615666 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.265284048339911,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003156894708808652",
+            "extra": "mean: 107.92977255556163 msec\nrounds: 9"
           }
         ]
       }
