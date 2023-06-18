@@ -32,7 +32,6 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import functools
 import logging
 import warnings
-from codecs import getencoder
 from dataclasses import dataclass
 from io import DEFAULT_BUFFER_SIZE, BytesIO
 from os import SEEK_CUR
@@ -347,12 +346,6 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
     if isinstance(b, str):
         return ord(b)
     return b
-
-
-def hexencode(b: bytes) -> bytes:
-    coder = getencoder("hex_codec")
-    coded = coder(b)  # type: ignore
-    return coded[0]
 
 
 WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
