@@ -661,7 +661,7 @@ def _get_imagemode(
     elif color_space[0] == "/Indexed":
         color_space = color_space[1].get_object()
         if isinstance(color_space, list):
-            color_space = color_space[1].get_object()["/Alternate"]
+            color_space = color_space[1].get_object().get("/Alternate", "")
         color_components = 1 if "Gray" in color_space else 2
         if not (isinstance(color_space, str) and "Gray" in color_space):
             color_space = "palette"
