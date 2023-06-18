@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687073480218,
+  "lastUpdate": 1687073508443,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -31226,6 +31226,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00025139036877141243",
             "extra": "mean: 112.25183788888495 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "303736b221b3ddef35b970266319ecd40605a599",
+          "message": "REL: 3.10.0\n\nNew Features (ENH):\n-  Extraction of inline images (#1850)\n-  Add capability to replace image (#1849)\n-  Extend images interface by returning an ImageFile(File) class (#1848)\n-  Add set_data to EncodedStreamObject (#1854)\n\nBug Fixes (BUG):\n-  Fix RGB FlateEncode Images(PNG) and transparency (#1834)\n-  Generate static appearance for fields (#1864)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.9.1...3.10.0)",
+          "timestamp": "2023-06-18T09:30:06+02:00",
+          "tree_id": "33767778770f02e4c4cfcef32ff19ea4e47e2a26",
+          "url": "https://github.com/py-pdf/pypdf/commit/303736b221b3ddef35b970266319ecd40605a599"
+        },
+        "date": 1687073506210,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7732025451207584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009039132819033431",
+            "extra": "mean: 1.2933221783999955 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.435618089111843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009835635205877623",
+            "extra": "mean: 87.44608224999457 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24107562750487926,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01823017143352957",
+            "extra": "mean: 4.148075897799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.147806098322771,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004656216370036359",
+            "extra": "mean: 82.31939099999863 msec\nrounds: 12"
           }
         ]
       }
