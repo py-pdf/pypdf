@@ -1417,3 +1417,14 @@ def test_iss1825():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     page = reader.pages[0]
     page.extract_text()
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.xfail(reason="Raises KeyError: '/Alternate'")
+def test_read_images():
+    url = "https://www.selbst.de/paidcontent/dl/64733/72916"
+    name = "selbst.72916.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    page = reader.pages[0]
+    for _ in page.images:
+        pass
