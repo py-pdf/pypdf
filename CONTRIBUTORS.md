@@ -37,6 +37,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [RitchieP](https://github.com/RitchieP) | [LinkedIn](https://www.linkedin.com/in/ritchie-p-892b31115/) | [StackOverflow](https://stackoverflow.com/users/13328625/casual-r?tab=profile)
 * [Rogmann, Sascha](https://github.com/srogmann)
 * [robbiebusinessacc](https://github.com/robbiebusinessacc)
+* [Roder, Thomas](https://github.com/MrTomRod)
 * [sietzeberends](https://github.com/sietzeberends)
 * [Stüber, Timo](https://github.com/omit66)
 * [Thoma, Martin](https://github.com/MartinThoma): Maintainer of pypdf since April 2022. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
