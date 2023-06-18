@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687086674455,
+  "lastUpdate": 1687093185686,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -31330,6 +31330,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00039841726524096",
             "extra": "mean: 80.13425833333561 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e3bbf844c3705e5d263a484391328d6752879c29",
+          "message": "FIX : missing Alternate in indexed/ICCbased colorspaces (#1896)\n\napplies the same solution as for original ICCbased\r\n\r\nFixes #1893",
+          "timestamp": "2023-06-18T14:58:33+02:00",
+          "tree_id": "574facc60fb610069b0fad2ee334ccd384bc235f",
+          "url": "https://github.com/py-pdf/pypdf/commit/e3bbf844c3705e5d263a484391328d6752879c29"
+        },
+        "date": 1687093183761,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7820994339180738,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001095991356397899",
+            "extra": "mean: 1.2786097989999974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.50489861853138,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00833065473473",
+            "extra": "mean: 86.9194969166666 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24743149656086813,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009684106944286383",
+            "extra": "mean: 4.041522659399993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.286059304294048,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004333129543022609",
+            "extra": "mean: 81.39306308333498 msec\nrounds: 12"
           }
         ]
       }
