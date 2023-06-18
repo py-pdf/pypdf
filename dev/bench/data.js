@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687072727420,
+  "lastUpdate": 1687072861839,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -31018,6 +31018,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003156894708808652",
             "extra": "mean: 107.92977255556163 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "90784837+Ineffable22@users.noreply.github.com",
+            "name": "Miguel Grillo",
+            "username": "Ineffable22"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9a2c51773e1fd1088877ff855f5ae9a1afd2eb8c",
+          "message": "DOC: Add details how to write metadata (#1861)",
+          "timestamp": "2023-06-18T09:19:49+02:00",
+          "tree_id": "7caee2cb780c2157339d8e93b0fc75e0b604d0e7",
+          "url": "https://github.com/py-pdf/pypdf/commit/9a2c51773e1fd1088877ff855f5ae9a1afd2eb8c"
+        },
+        "date": 1687072860276,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7872928117270146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0061856803581522395",
+            "extra": "mean: 1.2701754482000012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.620201128193271,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008224734957675601",
+            "extra": "mean: 86.05703024999893 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24883068980851333,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017013685079132847",
+            "extra": "mean: 4.018796880600002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.612010934474306,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009912123442607135",
+            "extra": "mean: 79.28949675000278 msec\nrounds: 12"
           }
         ]
       }
