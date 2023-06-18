@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687072861839,
+  "lastUpdate": 1687072980547,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -31070,6 +31070,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009912123442607135",
             "extra": "mean: 79.28949675000278 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "exiledkingcc@gmail.com",
+            "name": "exiledkingcc",
+            "username": "exiledkingcc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "edf34677336f61d646b4657233d36caaece16476",
+          "message": "MAINT: Remove residual Python 2 code (#1887)\n\nThere are `int` and `long` in Python 2, hex a `long` value will get a suffix 'L', which is no longer in Python 3.",
+          "timestamp": "2023-06-18T09:21:49+02:00",
+          "tree_id": "6bed70b4ee3f2de702e47d88e53ca825a0b0a645",
+          "url": "https://github.com/py-pdf/pypdf/commit/edf34677336f61d646b4657233d36caaece16476"
+        },
+        "date": 1687072978708,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7731684403268408,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004836048307102689",
+            "extra": "mean: 1.2933792274000098 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.583675698843242,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008305263063146376",
+            "extra": "mean: 86.32838366666817 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24746868243003783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0063436575262028425",
+            "extra": "mean: 4.040915360200017 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.21833648010675,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006626639218290381",
+            "extra": "mean: 81.84420208333165 msec\nrounds: 12"
           }
         ]
       }
