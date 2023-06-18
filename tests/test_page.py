@@ -1125,6 +1125,9 @@ def test_pages_printing():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     assert str(reader.pages) == "[PageObject(0)]"
+    assert len(reader.pages[0].images) == 0
+    with pytest.raises(KeyError):
+        reader.pages[0].images["~1~"]
 
 
 def test_pdf_pages_missing_type():
@@ -1142,16 +1145,15 @@ def test_image_new_property():
     name = "pdf_font_garbled.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].images.keys()
-    # many tests disabled until other image fixes:
-    # reader.pages[0].images.items()
-    # reader.pages[0].images[0].name
+    reader.pages[0].images.items()
+    reader.pages[0].images[0].name
     reader.pages[0].images[-1].data
     reader.pages[0].images["/TPL1", "/Image5"].image
-    # assert (
-    #    reader.pages[0].images["/I0"].indirect_reference.get_object()
-    #     == reader.pages[0]["/Resources"]["/XObject"]["/I0"]
-    # )
-    # list(reader.pages[0].images[0:2])
+    assert (
+        reader.pages[0].images["/I0"].indirect_reference.get_object()
+        == reader.pages[0]["/Resources"]["/XObject"]["/I0"]
+    )
+    list(reader.pages[0].images[0:2])
     with pytest.raises(TypeError):
         reader.pages[0].images[b"0"]
     with pytest.raises(IndexError):

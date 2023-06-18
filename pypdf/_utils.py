@@ -493,8 +493,12 @@ def _human_readable_bytes(bytes: int) -> str:
 
 @dataclass
 class File:
+    from .generic import IndirectObject
+
     name: str
     data: bytes
+    image: Optional[Any] = None  # optional ; direct image access
+    indirect_reference: Optional[IndirectObject] = None  # optional ; link to PdfObject
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name}, data: {_human_readable_bytes(len(self.data))})"

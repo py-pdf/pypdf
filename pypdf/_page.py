@@ -466,6 +466,10 @@ class PageObject(DictionaryObject):
                 if extension is not None:
                     filename = f"{obj[1:]}{extension}"
                     images_extracted.append(File(name=filename, data=byte_stream))
+                    images_extracted[-1].image = img
+                    images_extracted[-1].indirect_reference = x_object[
+                        obj
+                    ].indirect_reference
         return images_extracted
 
     def _get_ids_image(
@@ -489,7 +493,7 @@ class PageObject(DictionaryObject):
                 lst.append(o if len(ancest) == 0 else ancest + [o])
             else:  # is a form with possible images inside
                 lst.extend(self._get_ids_image(x_object[o], ancest + [o]))
-        return lst
+        return lst + list(self.inline_images.keys())
 
     def _get_image(
         self,
@@ -511,17 +515,16 @@ class PageObject(DictionaryObject):
                 raise
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
-                if self.inline_images is None:
+                if self.inline_images is None:  # pragma: no cover
                     raise KeyError("no inline image can be found")
                 return self.inline_images[id]
 
-            extension, byte_stream, img = _xobj_to_image(
-                cast(DictionaryObject, xobjs[id])
-            )
+            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
+            extension, byte_stream = imgd[:2]
             f = ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
-                image=img,
+                image=imgd[2],
                 indirect_reference=xobjs[id].indirect_reference,
             )
             return f
@@ -582,7 +585,7 @@ class PageObject(DictionaryObject):
                 imgs_data.append(
                     {"settings": param["settings"], "__streamdata__": param["data"]}
                 )
-            elif ope in (b"BI", b"EI", b"ID"):
+            elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
                     f"{ope} operator met whereas not expected,"
                     "please share usecase with pypdf dev team"
@@ -664,7 +667,6 @@ class PageObject(DictionaryObject):
                 indirect_reference=None,
             )
         return files
-
 
     @property
     def rotation(self) -> int:
