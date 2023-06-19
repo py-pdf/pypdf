@@ -16,6 +16,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [ediamondscience](https://github.com/ediamondscience)
 * [Ermeson, Felipe](https://github.com/FelipeErmeson)
 * [Górny, Michał](https://github.com/mgorny)
+* [Grillo, Miguel](https://github.com/Ineffable22)
 * [Hale, Joseph](https://github.com/thehale)
 * [JianzhengLuo](https://github.com/JianzhengLuo)
 * [Karvonen, Harry](https://github.com/Hatell/)
