@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687175002367,
+  "lastUpdate": 1687175219499,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -31538,6 +31538,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0033175920189946737",
             "extra": "mean: 95.67961450000269 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8938d982d02b07ae6ae500c0d984d0f33af19bd2",
+          "message": "ENH: Add page_number property (#1856)\n\nThe property returns \"-1\" if the page is not attached to a document.\r\n\r\nThis behavior is chosen to keep the property consistent with `get_page_number` and `get_destination_page_number`",
+          "timestamp": "2023-06-19T13:45:46+02:00",
+          "tree_id": "a746d699fcf31c669826846eedfe0cb6f54566b9",
+          "url": "https://github.com/py-pdf/pypdf/commit/8938d982d02b07ae6ae500c0d984d0f33af19bd2"
+        },
+        "date": 1687175217914,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7298963022134286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013210636112978168",
+            "extra": "mean: 1.3700576327999954 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.281904563293125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01012052280150595",
+            "extra": "mean: 88.63751633333312 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22465102835845624,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02135373081802521",
+            "extra": "mean: 4.451348419400006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.77113919666067,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005781817019421206",
+            "extra": "mean: 92.84069045454596 msec\nrounds: 11"
           }
         ]
       }
