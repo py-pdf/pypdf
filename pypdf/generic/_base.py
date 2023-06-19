@@ -24,7 +24,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
+import binascii
 import codecs
 import hashlib
 import re
@@ -38,8 +38,6 @@ from .._utils import (
     StreamType,
     b_,
     deprecation_with_replacement,
-    hex_str,
-    hexencode,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -344,7 +342,7 @@ class IndirectObject(PdfObject):
         r = read_non_whitespace(stream)
         if r != b"R":
             raise PdfReadError(
-                f"Error reading indirect object reference at byte {hex_str(stream.tell())}"
+                f"Error reading indirect object reference at byte {hex(stream.tell())}"
             )
         return IndirectObject(int(idnum), int(generation), pdf)
 
@@ -496,7 +494,7 @@ class ByteStringObject(bytes, PdfObject):
 
             bytearr = RC4_encrypt(encryption_key, bytearr)  # type: ignore
         stream.write(b"<")
-        stream.write(hexencode(bytearr))
+        stream.write(binascii.hexlify(bytearr))
         stream.write(b">")
 
     def writeToStream(

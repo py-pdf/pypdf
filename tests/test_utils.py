@@ -90,10 +90,6 @@ def test_mark_location():
     Path("pypdf_pdfLocation.txt").unlink()  # cleanup
 
 
-def test_hex_str():
-    assert pypdf._utils.hex_str(10) == "0xa"
-
-
 @pytest.mark.parametrize(
     ("input_str", "expected"),
     [
