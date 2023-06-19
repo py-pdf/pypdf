@@ -18,6 +18,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Górny, Michał](https://github.com/mgorny)
 * [Grillo, Miguel](https://github.com/Ineffable22)
 * [Hale, Joseph](https://github.com/thehale)
+* [harshhes](https://github.com/harshhes)
 * [JianzhengLuo](https://github.com/JianzhengLuo)
 * [Karvonen, Harry](https://github.com/Hatell/)
 * [King, Hunter](https://github.com/neversphere)
