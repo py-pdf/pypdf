@@ -920,6 +920,50 @@ class PageObject(DictionaryObject):
         deprecation_with_replacement("getContents", "get_contents", "3.0.0")
         return self.get_contents()
 
+    def replace_contents(self, content: Optional[ContentStream]) -> None:
+        """
+        Replace the page contents with the new content and nullify old objects
+        Args:
+            content : new content. if None delete the content field.
+        """
+        if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
+            for o in self[PG.CONTENTS]:
+                try:
+                    self._objects[o.indirect_reference.idnum - 1] = NullObject()
+                except AttributeError:
+                    pass
+        if content is None:
+            if PG.CONTENTS not in self:
+                return
+            else:
+                self.indirect_reference.pdf._objects[
+                    self[PG.CONTENTS].indirect_reference.idnum - 1
+                ] = NullObject()
+                del self[PG.CONTENTS]
+        elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
+            try:
+                self[NameObject(PG.CONTENTS)] = self.indirect_reference.pdf._add_object(
+                    content
+                )
+            except AttributeError:
+                # applies at least for page not in writer
+                # as a backup solution, we put content as an object although not in accordance with pdf ref
+                # this will be fixed with the _add_object
+                self[NameObject(PG.CONTENTS)] = content
+        else:
+            content.indirect_reference = self[
+                PG.CONTENTS
+            ].indirect_reference  # TODO: in a future may required generation managment
+            try:
+                self.indirect_reference.pdf._objects[
+                    content.indirect_reference.idnum - 1
+                ] = content
+            except AttributeError:
+                # applies at least for page not in writer
+                # as a backup solution, we put content as an object although not in accordance with pdf ref
+                # this will be fixed with the _add_object
+                self[NameObject(PG.CONTENTS)] = content
+
     def merge_page(self, page2: "PageObject", expand: bool = False) -> None:
         """
         Merge the content streams of two pages into one.
@@ -1058,7 +1102,7 @@ class PageObject(DictionaryObject):
         if expand:
             self._expand_mediabox(page2, ctm)
 
-        self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
+        self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
 
@@ -1193,18 +1237,7 @@ class PageObject(DictionaryObject):
         if expand:
             self._expand_mediabox(page2, ctm)
 
-        if PG.CONTENTS not in self:
-            self[NameObject(PG.CONTENTS)] = pdf._add_object(ContentStream(None, pdf))
-        ind = self.raw_get(PG.CONTENTS)
-        try:
-            if not isinstance(ind, IndirectObject):
-                raise KeyError
-            pdf._replace_object(ind, ContentStream(new_content_array, pdf))
-        except KeyError:
-            self[NameObject(PG.CONTENTS)] = pdf._add_object(
-                ContentStream(new_content_array, pdf)
-            )
-
+        self.replace_contents(new_content_array)
         # self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, pdf)
         # self[NameObject(PG.RESOURCES)] = new_resources
         # self[NameObject(PG.ANNOTS)] = new_annots
@@ -1545,7 +1578,7 @@ class PageObject(DictionaryObject):
         if content is not None:
             content = PageObject._add_transformation_matrix(content, self.pdf, ctm)
             content = PageObject._push_pop_gs(content, self.pdf)
-            self[NameObject(PG.CONTENTS)] = content
+            self.replace_contents(content)
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
             corners = [
@@ -1704,9 +1737,7 @@ class PageObject(DictionaryObject):
                 if self.indirect_reference is not None and hasattr(
                     self.indirect_reference.pdf, "_add_object"
                 ):
-                    self[
-                        NameObject(PG.CONTENTS)
-                    ] = self.indirect_reference.pdf._add_object(content_obj)
+                    self.replace_contents(content_obj)
                 else:
                     raise ValueError("Page must be part of a PdfWriter")
 

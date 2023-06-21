@@ -242,6 +242,11 @@ class PdfWriter:
     def _add_object(self, obj: PdfObject) -> IndirectObject:
         if hasattr(obj, "indirect_reference") and obj.indirect_reference.pdf == self:  # type: ignore
             return obj.indirect_reference  # type: ignore
+        # check for /Contents in Pages (/Contents in annotation are strings)
+        if isinstance(obj, DictionaryObject) and isinstance(
+            obj.get(PG.CONTENTS, None), (ArrayObject, DictionaryObject)
+        ):
+            obj[NameObject(PG.CONTENTS)] = self._add_object(obj[PG.CONTENTS])
         self._objects.append(obj)
         obj.indirect_reference = IndirectObject(len(self._objects), 0, self)
         return obj.indirect_reference
