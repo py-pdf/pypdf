@@ -41,7 +41,6 @@ from .._utils import (
     b_,
     deprecate_with_replacement,
     deprecation_with_replacement,
-    hex_str,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -374,7 +373,7 @@ class DictionaryObject(dict, PdfObject):
         tmp = stream.read(2)
         if tmp != b"<<":
             raise PdfReadError(
-                f"Dictionary read error at byte {hex_str(stream.tell())}: "
+                f"Dictionary read error at byte {hex(stream.tell())}: "
                 "stream must begin with '<<'"
             )
         data: Dict[Any, Any] = {}
@@ -412,7 +411,7 @@ class DictionaryObject(dict, PdfObject):
                 # multiple definitions of key not permitted
                 msg = (
                     f"Multiple definitions in dictionary at byte "
-                    f"{hex_str(stream.tell())} for key {key}"
+                    f"{hex(stream.tell())} for key {key}"
                 )
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
@@ -475,7 +474,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
                     raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at byte "
-                        f"{hex_str(stream.tell())} (nd='{ndstream!r}', end='{end!r}')."
+                        f"{hex(stream.tell())} (nd='{ndstream!r}', end='{end!r}')."
                     )
         else:
             stream.seek(pos, 0)

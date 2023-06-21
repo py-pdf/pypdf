@@ -32,7 +32,6 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import functools
 import logging
 import warnings
-from codecs import getencoder
 from dataclasses import dataclass
 from io import DEFAULT_BUFFER_SIZE, BytesIO
 from os import SEEK_CUR
@@ -349,16 +348,6 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
     return b
 
 
-def hexencode(b: bytes) -> bytes:
-    coder = getencoder("hex_codec")
-    coded = coder(b)  # type: ignore
-    return coded[0]
-
-
-def hex_str(num: int) -> str:
-    return hex(num).replace("L", "")
-
-
 WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
 
 
@@ -493,8 +482,12 @@ def _human_readable_bytes(bytes: int) -> str:
 
 @dataclass
 class File:
+    from .generic import IndirectObject
+
     name: str
     data: bytes
+    image: Optional[Any] = None  # optional ; direct image access
+    indirect_reference: Optional[IndirectObject] = None  # optional ; link to PdfObject
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
