@@ -920,12 +920,18 @@ class PageObject(DictionaryObject):
         deprecation_with_replacement("getContents", "get_contents", "3.0.0")
         return self.get_contents()
 
-    def replace_contents(self, content: Union[None, ContentStream, EncodedStreamObject, ArrayObject]) -> None:
+    def replace_contents(
+        self, content: Union[None, ContentStream, EncodedStreamObject, ArrayObject]
+    ) -> None:
         """
         Replace the page contents with the new content and nullify old objects
         Args:
             content : new content. if None delete the content field.
         """
+        if not hasattr(self, "indirect_reference") or self.indirect_reference is None:
+            # the page is not attached : the content is directly attached.
+            self[NameObject(PG.CONTENTS)] = content
+            return
         if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
             for o in self[PG.CONTENTS]:  # type: ignore[attr-defined]
                 try:
@@ -936,8 +942,10 @@ class PageObject(DictionaryObject):
             if PG.CONTENTS not in self:
                 return
             else:
+                assert self.indirect_reference is not None
+                assert self[PG.CONTENTS].indirect_reference is not None
                 self.indirect_reference.pdf._objects[
-                    self[PG.CONTENTS].indirect_reference.idnum - 1
+                    self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
                 ] = NullObject()
                 del self[PG.CONTENTS]
         elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
@@ -956,7 +964,7 @@ class PageObject(DictionaryObject):
             ].indirect_reference  # TODO: in a future may required generation managment
             try:
                 self.indirect_reference.pdf._objects[
-                    content.indirect_reference.idnum - 1
+                    content.indirect_reference.idnum - 1  # type: ignore
                 ] = content
             except AttributeError:
                 # applies at least for page not in writer
