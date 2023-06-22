@@ -1174,3 +1174,32 @@ def test_image_new_property():
     with pytest.raises(KeyError):
         reader.pages[0]._get_image(["test"], reader.pages[0])
     assert list(PageObject(None, None).images) == []
+
+
+@pytest.mark.samples()
+@pytest.mark.xfail(reason="issue #1897")
+def test_compression():
+    """Test for issue #1897"""
+
+    def create_stamp_pdf() -> BytesIO:
+        from fpdf import FPDF
+
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("helvetica", "B", 16)
+        pdf.cell(40, 10, "Hello World!")
+        byte_string = pdf.output()
+        return BytesIO(byte_string)
+
+    template = PdfReader(create_stamp_pdf())
+    template_page = template.pages[0]
+    writer = PdfWriter()
+    writer.append(SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf", [1])
+    nb1 = len(writer._objects)
+
+    for page in writer.pages:
+        page.merge_page(template_page)
+    assert len(writer._objects) == nb1 + 1  # font is added that's all
+    for page in writer.pages:
+        page.compress_content_streams()
+    assert len(writer._objects) == nb1 + 1
