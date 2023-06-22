@@ -929,7 +929,7 @@ class PageObject(DictionaryObject):
         if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
             for o in self[PG.CONTENTS]:  # type: ignore[attr-defined]
                 try:
-                    self._objects[o.indirect_reference.idnum - 1] = NullObject()
+                    self._objects[o.indirect_reference.idnum - 1] = NullObject()  # type: ignore
                 except AttributeError:
                     pass
         if content is None:
