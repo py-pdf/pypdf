@@ -927,7 +927,7 @@ class PageObject(DictionaryObject):
             content : new content. if None delete the content field.
         """
         if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
-            for o in self[PG.CONTENTS]:
+            for o in self[PG.CONTENTS]:  # type: ignore[attr-defined]
                 try:
                     self._objects[o.indirect_reference.idnum - 1] = NullObject()
                 except AttributeError:
