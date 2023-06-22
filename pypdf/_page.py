@@ -920,7 +920,7 @@ class PageObject(DictionaryObject):
         deprecation_with_replacement("getContents", "get_contents", "3.0.0")
         return self.get_contents()
 
-    def replace_contents(self, content: Optional[ContentStream]) -> None:
+    def replace_contents(self, content: Union[None, ContentStream, EncodedStreamObject, ArrayObject]) -> None:
         """
         Replace the page contents with the new content and nullify old objects
         Args:
