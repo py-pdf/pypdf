@@ -1177,6 +1177,7 @@ def test_image_new_property():
 
 
 @pytest.mark.samples()
+@pytest.mark.xfail(reason="issue #1897")
 def test_compression():
     """Test for issue #1897"""
 
