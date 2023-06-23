@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687500519507,
+  "lastUpdate": 1687501524174,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -31850,6 +31850,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00038494843126417024",
             "extra": "mean: 83.30357983333177 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "cd4c9d8af3d5d5d86210dfe7e9d519d6c2619a4f",
+          "message": "REL: 3.11.0\n\nNew Features (ENH):\n-  Add page_number property (#1856)\n\nBug Fixes (BUG):\n- File expansion when updating with Page Contents (#1906)\n- Missing Alternate in indexed/ICCbased colorspaces (#1896)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.10.0...3.11.0)",
+          "timestamp": "2023-06-23T08:23:32+02:00",
+          "tree_id": "1dbc96d1fd6cca3cedf3dba268410014af7d6f19",
+          "url": "https://github.com/py-pdf/pypdf/commit/cd4c9d8af3d5d5d86210dfe7e9d519d6c2619a4f"
+        },
+        "date": 1687501522155,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7797317739072095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024333660957262727",
+            "extra": "mean: 1.2824923050000052 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.98173985187886,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010208566078813383",
+            "extra": "mean: 91.06025215384342 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24630272563550384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023967247916689267",
+            "extra": "mean: 4.060044392199989 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.486737095131119,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003290689638249253",
+            "extra": "mean: 80.08497275000082 msec\nrounds: 12"
           }
         ]
       }
