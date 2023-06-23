@@ -1020,3 +1020,13 @@ def test_inline_images():
     reader.pages[2].inline_images = None
     with pytest.raises(KeyError) as exc:
         reader.pages[2]._get_image(("~1~",))
+
+
+@pytest.mark.enable_socket()
+def test_iss():
+    url = "https://github.com/py-pdf/pypdf/files/11801077/lv2018tconv.pdf"
+    name = "lv2018tconv.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for i, page in enumerate(reader.pages):
+        print(i)
+        page.extract_text()
