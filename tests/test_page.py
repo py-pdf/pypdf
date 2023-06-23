@@ -19,6 +19,7 @@ from pypdf.generic import (
     FloatObject,
     IndirectObject,
     NameObject,
+    NullObject,
     RectangleObject,
     TextStringObject,
 )
@@ -1177,7 +1178,6 @@ def test_image_new_property():
 
 
 @pytest.mark.samples()
-@pytest.mark.xfail(reason="issue #1897")
 def test_compression():
     """Test for issue #1897"""
 
@@ -1203,3 +1203,10 @@ def test_compression():
     for page in writer.pages:
         page.compress_content_streams()
     assert len(writer._objects) == nb1 + 1
+
+    contents = writer.pages[0]["/Contents"]
+    writer.pages[0].replace_contents(None)
+    writer.pages[0].replace_contents(None)
+    assert isinstance(
+        writer._objects[contents.indirect_reference.idnum - 1], NullObject
+    )
