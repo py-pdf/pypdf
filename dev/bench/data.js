@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687501524174,
+  "lastUpdate": 1687641693458,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -31902,6 +31902,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003290689638249253",
             "extra": "mean: 80.08497275000082 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e611f91443c1af5741ab9ace47489d1386585c54",
+          "message": "BUG: ignore \"/B\" fields only on pages in PdfWriter.append() (#1875)\n\nAdd capability to limit ignore_fields propagation during  cloning process\r\n\r\nCloses #1862",
+          "timestamp": "2023-06-24T23:20:00+02:00",
+          "tree_id": "d10d8a86667308f7dccc0070f2fe8c889ff4f018",
+          "url": "https://github.com/py-pdf/pypdf/commit/e611f91443c1af5741ab9ace47489d1386585c54"
+        },
+        "date": 1687641691327,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6160225786783649,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04974266938757145",
+            "extra": "mean: 1.6233171228000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.915815261215679,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014915297707596139",
+            "extra": "mean: 112.1602423000013 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20291531379279754,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08969631693164222",
+            "extra": "mean: 4.928164273600009 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.513135106710495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009011459252117117",
+            "extra": "mean: 105.11781749999614 msec\nrounds: 10"
           }
         ]
       }
