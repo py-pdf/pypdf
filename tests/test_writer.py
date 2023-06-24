@@ -1401,3 +1401,16 @@ def test_update_form_fields(write_data_here, needs_cleanup):
 
     if needs_cleanup:
         Path(write_data_here).unlink()
+
+
+@pytest.mark.enable_socket()
+def test_iss1862():
+    # The file here has "/B" entry to define the font in a object below the page
+    # The excluded field shall be considered only at first level (page) and not
+    # below
+    url = "https://github.com/py-pdf/pypdf/files/11708801/intro.pdf"
+    name = "iss1862.pdf"
+    writer = PdfWriter()
+    writer.append(BytesIO(get_pdf_from_url(url, name=name)))
+    # check that "/B" is in the font
+    writer.pages[0]["/Resources"]["/Font"]["/F1"]["/CharProcs"]["/B"].get_data()

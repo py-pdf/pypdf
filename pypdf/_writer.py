@@ -2848,12 +2848,14 @@ class PdfWriter:
                 pg = reader.pages[page]
             assert pg.indirect_reference is not None
             if position is None:
+                # numbers in the exclude list identifies that the exclusion is
+                # only applicable to 1st level of cloning
                 srcpages[pg.indirect_reference.idnum] = self.add_page(
-                    pg, list(excluded_fields) + ["/B", "/Annots"]  # type: ignore
+                    pg, list(excluded_fields) + [1, "/B", 1, "/Annots"]  # type: ignore
                 )
             else:
                 srcpages[pg.indirect_reference.idnum] = self.insert_page(
-                    pg, position, list(excluded_fields) + ["/B", "/Annots"]  # type: ignore
+                    pg, position, list(excluded_fields) + [1, "/B", 1, "/Annots"]  # type: ignore
                 )
                 position += 1
             srcpages[pg.indirect_reference.idnum].original_page = pg
