@@ -75,12 +75,12 @@ def merge():
     writer.append(pdf_forms)
 
     # Merging an encrypted file
-    reader = pypdf.PdfReader(pdf_pw)
+    reader = PdfReader(pdf_pw)
     reader.decrypt("openpassword")
     writer.append(reader)
 
     # PdfReader object:
-    writer.append(pypdf.PdfReader(pdf_path, "rb"), outline_item=True)
+    writer.append(PdfReader(pdf_path, "rb"), outline_item=True)
 
     # File handle
     with open(pdf_path, "rb") as fh:
@@ -98,7 +98,7 @@ def merge():
     writer.close()
 
     # Check if outline is correct
-    reader = pypdf.PdfReader(write_path)
+    reader = PdfReader(write_path)
     assert [
         el.title for el in reader._get_outline() if isinstance(el, Destination)
     ] == [

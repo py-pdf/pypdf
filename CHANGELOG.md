@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## Version 3.11.0, 2023-06-23
+
+### New Features (ENH)
+-  Add page_number property (#1856)
+
+### Bug Fixes (BUG)
+- File expansion when updating with Page Contents (#1906)
+- Missing Alternate in indexed/ICCbased colorspaces (#1896)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.10.0...3.11.0)
+
 ## Version 3.10.0, 2023-06-18
 
 ### New Features (ENH)

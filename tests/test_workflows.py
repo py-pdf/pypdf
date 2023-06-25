@@ -917,23 +917,23 @@ def test_extra_test_iss1541():
 
     cs = ContentStream(reader.pages[0]["/Contents"], None, None)
     cs.operations.insert(-1, ([], b"EMC"))
-    bu = BytesIO()
-    cs.write_to_stream(bu)
-    bu.seek(0)
-    ContentStream(read_object(bu, None, None), None, None).operations
+    stream = BytesIO()
+    cs.write_to_stream(stream)
+    stream.seek(0)
+    ContentStream(read_object(stream, None, None), None, None).operations
 
     cs = ContentStream(reader.pages[0]["/Contents"], None, None)
     cs.operations.insert(-1, ([], b"E!C"))
-    bu = BytesIO()
-    cs.write_to_stream(bu)
-    bu.seek(0)
+    stream = BytesIO()
+    cs.write_to_stream(stream)
+    stream.seek(0)
     with pytest.raises(PdfReadError) as exc:
-        ContentStream(read_object(bu, None, None), None, None).operations
+        ContentStream(read_object(stream, None, None), None, None).operations
     assert exc.value.args[0] == "Unexpected end of stream"
 
-    buf2 = BytesIO(data.getbuffer())
+    b = BytesIO(data.getbuffer())
     reader = PdfReader(
-        BytesIO(bytes(buf2.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
+        BytesIO(bytes(b.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
     )
     with pytest.raises(PdfReadError) as exc:
         reader.pages[0].extract_text()
@@ -1019,3 +1019,13 @@ def test_inline_images():
     reader.pages[2].inline_images = None
     with pytest.raises(KeyError) as exc:
         reader.pages[2]._get_image(("~1~",))
+
+
+@pytest.mark.enable_socket()
+def test_iss():
+    url = "https://github.com/py-pdf/pypdf/files/11801077/lv2018tconv.pdf"
+    name = "lv2018tconv.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for i, page in enumerate(reader.pages):
+        print(i)
+        page.extract_text()

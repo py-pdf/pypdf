@@ -21,6 +21,8 @@ flake8-implicit-str-concat==0.4.0
     # via -r requirements/ci.in
 flake8-print==5.0.0
     # via -r requirements/ci.in
+fpdf2==2.4.1
+    # via -r requirements/ci.in
 iniconfig==2.0.0
     # via pytest
 mccabe==0.7.0
@@ -32,7 +34,9 @@ mypy-extensions==1.0.0
 packaging==23.0
     # via pytest
 pillow==9.5.0
-    # via -r requirements/ci.in
+    # via
+    #   -r requirements/ci.in
+    #   fpdf2
 pluggy==1.0.0
     # via pytest
 py-cpuinfo==9.0.0
@@ -57,7 +61,7 @@ pytest-socket==0.6.0
     # via -r requirements/ci.in
 pytest-timeout==2.1.0
     # via -r requirements/ci.in
-ruff==0.0.272
+ruff==0.0.275
     # via -r requirements/ci.in
 typeguard==3.0.2
     # via -r requirements/ci.in
