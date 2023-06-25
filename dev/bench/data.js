@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687641693458,
+  "lastUpdate": 1687680899495,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -31954,6 +31954,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.009011459252117117",
             "extra": "mean: 105.11781749999614 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b1fa953bf7585e799c1541fd4bd5b0b8daa247bc",
+          "message": "BUG: Append pdf with named destination using numbers for pages (#1858)\n\nThe issue was with named destination using numbers instead of indirect object to point pages. This is normally not expected.\r\n\r\nCloses #471\r\nCloses #1898",
+          "timestamp": "2023-06-25T10:13:42+02:00",
+          "tree_id": "312c5a555d9480388e5a7544537424aa4b6eab82",
+          "url": "https://github.com/py-pdf/pypdf/commit/b1fa953bf7585e799c1541fd4bd5b0b8daa247bc"
+        },
+        "date": 1687680897610,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7652158987314466,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006352744637058288",
+            "extra": "mean: 1.30682073079999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.231093580576664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011283330700633063",
+            "extra": "mean: 89.03852441666278 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24188597814850477,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026163682067692852",
+            "extra": "mean: 4.13417928419999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.026428425231554,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007938730255852534",
+            "extra": "mean: 83.15020591666193 msec\nrounds: 12"
           }
         ]
       }
