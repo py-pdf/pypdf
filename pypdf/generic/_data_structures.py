@@ -32,7 +32,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import logging
 import re
 from io import BytesIO
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union, cast
 
 from .._protocols import PdfReaderProtocol, PdfWriterProtocol
 from .._utils import (
@@ -41,7 +41,6 @@ from .._utils import (
     b_,
     deprecate_with_replacement,
     deprecation_with_replacement,
-    hex_str,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -80,7 +79,7 @@ class ArrayObject(list, PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "ArrayObject":
         """Clone object into pdf_dest."""
         try:
@@ -163,7 +162,7 @@ class DictionaryObject(dict, PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "DictionaryObject":
         """Clone object into pdf_dest."""
         try:
@@ -187,7 +186,7 @@ class DictionaryObject(dict, PdfObject):
         src: "DictionaryObject",
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
@@ -198,6 +197,20 @@ class DictionaryObject(dict, PdfObject):
             force_duplicate:
             ignore_fields:
         """
+        # first we remove for the ignore_fields
+        # that are for a limited number of levels
+        x = 0
+        assert ignore_fields is not None
+        ignore_fields = list(ignore_fields)
+        while x < len(ignore_fields):
+            if isinstance(ignore_fields[x], int):
+                if cast(int, ignore_fields[x]) <= 0:
+                    del ignore_fields[x]
+                    del ignore_fields[x]
+                    continue
+                else:
+                    ignore_fields[x] -= 1  # type:ignore
+            x += 1
         #  First check if this is a chain list, we need to loop to prevent recur
         if any(
             field not in ignore_fields
@@ -390,7 +403,7 @@ class DictionaryObject(dict, PdfObject):
         tmp = stream.read(2)
         if tmp != b"<<":
             raise PdfReadError(
-                f"Dictionary read error at byte {hex_str(stream.tell())}: "
+                f"Dictionary read error at byte {hex(stream.tell())}: "
                 "stream must begin with '<<'"
             )
         data: Dict[Any, Any] = {}
@@ -428,7 +441,7 @@ class DictionaryObject(dict, PdfObject):
                 # multiple definitions of key not permitted
                 msg = (
                     f"Multiple definitions in dictionary at byte "
-                    f"{hex_str(stream.tell())} for key {key}"
+                    f"{hex(stream.tell())} for key {key}"
                 )
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
@@ -491,7 +504,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
                     raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at byte "
-                        f"{hex_str(stream.tell())} (nd='{ndstream!r}', end='{end!r}')."
+                        f"{hex(stream.tell())} (nd='{ndstream!r}', end='{end!r}')."
                     )
         else:
             stream.seek(pos, 0)
@@ -734,7 +747,7 @@ class StreamObject(DictionaryObject):
         src: DictionaryObject,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
@@ -962,7 +975,7 @@ class ContentStream(DecodedStreamObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "ContentStream":
         """
         Clone object into pdf_dest.
@@ -997,7 +1010,7 @@ class ContentStream(DecodedStreamObject):
         src: DictionaryObject,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
@@ -1369,7 +1382,9 @@ class Destination(TreeObject):
     node: Optional[
         DictionaryObject
     ] = None  # node provide access to the original Object
-    childs: List[Any] = []  # used in PdfWriter - TODO: should be children
+    childs: List[
+        Any
+    ] = []  # used in PdfWriter - TODO: should be children  # noqa: RUF012
 
     def __init__(
         self,

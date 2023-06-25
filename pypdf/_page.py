@@ -57,6 +57,7 @@ from ._text_extraction import (
 from ._utils import (
     CompressedTransformationMatrix,
     File,
+    ImageFile,
     TransformationMatrixType,
     deprecation_no_replacement,
     deprecation_with_replacement,
@@ -340,6 +341,7 @@ class PageObject(DictionaryObject):
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
+        self.inline_images: Optional[Dict[str, ImageFile]] = None
         if indirect_ref is not None:  # deprecated
             warnings.warn(
                 (
@@ -444,7 +446,7 @@ class PageObject(DictionaryObject):
         return PageObject.create_blank_page(pdf, width, height)
 
     @property
-    def images(self) -> List[File]:
+    def _old_images(self) -> List[File]:  # deprecated
         """
         Get a list of all images of the page.
 
@@ -460,11 +462,211 @@ class PageObject(DictionaryObject):
         x_object = self[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for obj in x_object:
             if x_object[obj][IA.SUBTYPE] == "/Image":
-                extension, byte_stream = _xobj_to_image(x_object[obj])
+                extension, byte_stream, img = _xobj_to_image(x_object[obj])
                 if extension is not None:
                     filename = f"{obj[1:]}{extension}"
                     images_extracted.append(File(name=filename, data=byte_stream))
+                    images_extracted[-1].image = img
+                    images_extracted[-1].indirect_reference = x_object[
+                        obj
+                    ].indirect_reference
         return images_extracted
+
+    def _get_ids_image(
+        self, obj: Optional[DictionaryObject] = None, ancest: Optional[List[str]] = None
+    ) -> List[Union[str, List[str]]]:
+        if self.inline_images is None:
+            self.inline_images = self._get_inline_images()
+        if obj is None:
+            obj = self
+        if ancest is None:
+            ancest = []
+        lst: List[Union[str, List[str]]] = []
+        if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
+            DictionaryObject, obj[PG.RESOURCES]
+        ):
+            return list(self.inline_images.keys())
+
+        x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
+        for o in x_object:
+            if x_object[o][IA.SUBTYPE] == "/Image":
+                lst.append(o if len(ancest) == 0 else ancest + [o])
+            else:  # is a form with possible images inside
+                lst.extend(self._get_ids_image(x_object[o], ancest + [o]))
+        return lst + list(self.inline_images.keys())
+
+    def _get_image(
+        self,
+        id: Union[str, List[str], Tuple[str]],
+        obj: Optional[DictionaryObject] = None,
+    ) -> ImageFile:
+        if obj is None:
+            obj = cast(DictionaryObject, self)
+        if isinstance(id, tuple):
+            id = list(id)
+        if isinstance(id, List) and len(id) == 1:
+            id = id[0]
+        try:
+            xobjs = cast(
+                DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
+            )
+        except KeyError:
+            if not (id[0] == "~" and id[-1] == "~"):
+                raise
+        if isinstance(id, str):
+            if id[0] == "~" and id[-1] == "~":
+                if self.inline_images is None:  # pragma: no cover
+                    raise KeyError("no inline image can be found")
+                return self.inline_images[id]
+
+            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
+            extension, byte_stream = imgd[:2]
+            f = ImageFile(
+                name=f"{id[1:]}{extension}",
+                data=byte_stream,
+                image=imgd[2],
+                indirect_reference=xobjs[id].indirect_reference,
+            )
+            return f
+        else:  # in a sub object
+            ids = id[1:]
+            return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
+
+    @property
+    def images(self) -> List[ImageFile]:
+        """
+        Read-only property emulating a list of images on a page.
+
+        Get a list of all images on the page. The key can be:
+        - A string (for the top object)
+        - A tuple (for images within XObject forms)
+        - An integer
+
+        Examples:
+            reader.pages[0].images[0]        # return fist image
+            reader.pages[0].images['/I0']    # return image '/I0'
+            reader.pages[0].images['/TP1','/Image1'] # return image '/Image1'
+                                                            within '/TP1' Xobject/Form
+            for img in reader.pages[0].images: # loop within all objects
+
+        images.keys() and images.items() can be used.
+
+        The ImageFile has the following properties:
+            `.name` : name of the object
+            `.data` : bytes of the object
+            `.image`  : PIL Image Object
+            `.indirect_reference` : object reference
+
+        and the following methods:
+            `.replace(new_image: PIL.Image.Image, **kwargs)` :
+                replace the image in the pdf with the new image
+                applying the saving parameters indicated (such as quality)
+
+        Example usage:
+
+            reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)
+
+        Inline images are extracted and named ~0~, ~1~, ..., with the
+        indirect_reference set to None.
+        """
+        return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
+
+    def _get_inline_images(self) -> Dict[str, ImageFile]:
+        """
+        get inline_images
+        entries will be identified as ~1~
+        """
+        content = self.get_contents()
+        if content is None:
+            return {}
+        imgs_data = []
+        for param, ope in content.operations:
+            if ope == b"INLINE IMAGE":
+                imgs_data.append(
+                    {"settings": param["settings"], "__streamdata__": param["data"]}
+                )
+            elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
+                raise PdfReadError(
+                    f"{ope} operator met whereas not expected,"
+                    "please share usecase with pypdf dev team"
+                )
+            """backup
+            elif ope == b"BI":
+                img_data["settings"] = {}
+            elif ope == b"EI":
+                imgs_data.append(img_data)
+                img_data = {}
+            elif ope == b"ID":
+                img_data["__streamdata__"] = b""
+            elif "__streamdata__" in img_data:
+                if len(img_data["__streamdata__"]) > 0:
+                    img_data["__streamdata__"] += b"\n"
+                    raise Exception("check append")
+                img_data["__streamdata__"] += param
+            elif "settings" in img_data:
+                img_data["settings"][ope.decode()] = param
+            """
+        files = {}
+        for num, ii in enumerate(imgs_data):
+            init = {
+                "__streamdata__": ii["__streamdata__"],
+                "/Length": len(ii["__streamdata__"]),
+            }
+            for k, v in ii["settings"].items():
+                try:
+                    v = NameObject(
+                        {
+                            "/G": "/DeviceGray",
+                            "/RGB": "/DeviceRGB",
+                            "/CMYK": "/DeviceCMYK",
+                            "/I": "/Indexed",
+                            "/AHx": "/ASCIIHexDecode",
+                            "/A85": "/ASCII85Decode",
+                            "/LZW": "/LZWDecode",
+                            "/Fl": "/FlateDecode",
+                            "/RL": "/RunLengthDecode",
+                            "/CCF": "/CCITTFaxDecode",
+                            "/DCT": "/DCTDecode",
+                        }[v]
+                    )
+                except (TypeError, KeyError):
+                    if isinstance(v, NameObject):
+                        #  it is a custom name : we have to look in resources :
+                        # the only applicable case is for ColorSpace
+                        try:
+                            res = cast(DictionaryObject, self["/Resources"])[
+                                "/ColorSpace"
+                            ]
+                            v = cast(DictionaryObject, res)[v]
+                        except KeyError:  # for res and v
+                            raise PdfReadError(
+                                f"Can not find resource entry {v} for {k}"
+                            )
+                init[
+                    NameObject(
+                        {
+                            "/BPC": "/BitsPerComponent",
+                            "/CS": "/ColorSpace",
+                            "/D": "/Decode",
+                            "/DP": "/DecodeParms",
+                            "/F": "/Filter",
+                            "/H": "/Height",
+                            "/W": "/Width",
+                            "/I": "/Interpolate",
+                            "/Intent": "/Intent",
+                            "/IM": "/ImageMask",
+                        }[k]
+                    )
+                ] = v
+            ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
+            extension, byte_stream, img = _xobj_to_image(ii["object"])
+            files[f"~{num}~"] = ImageFile(
+                name=f"~{num}~{extension}",
+                data=byte_stream,
+                image=img,
+                indirect_reference=None,
+            )
+        return files
 
     @property
     def rotation(self) -> int:
@@ -718,6 +920,58 @@ class PageObject(DictionaryObject):
         deprecation_with_replacement("getContents", "get_contents", "3.0.0")
         return self.get_contents()
 
+    def replace_contents(
+        self, content: Union[None, ContentStream, EncodedStreamObject, ArrayObject]
+    ) -> None:
+        """
+        Replace the page contents with the new content and nullify old objects
+        Args:
+            content : new content. if None delete the content field.
+        """
+        if not hasattr(self, "indirect_reference") or self.indirect_reference is None:
+            # the page is not attached : the content is directly attached.
+            self[NameObject(PG.CONTENTS)] = content
+            return
+        if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
+            for o in self[PG.CONTENTS]:  # type: ignore[attr-defined]
+                try:
+                    self._objects[o.indirect_reference.idnum - 1] = NullObject()  # type: ignore
+                except AttributeError:
+                    pass
+        if content is None:
+            if PG.CONTENTS not in self:
+                return
+            else:
+                assert self.indirect_reference is not None
+                assert self[PG.CONTENTS].indirect_reference is not None
+                self.indirect_reference.pdf._objects[
+                    self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
+                ] = NullObject()
+                del self[PG.CONTENTS]
+        elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
+            try:
+                self[NameObject(PG.CONTENTS)] = self.indirect_reference.pdf._add_object(
+                    content
+                )
+            except AttributeError:
+                # applies at least for page not in writer
+                # as a backup solution, we put content as an object although not in accordance with pdf ref
+                # this will be fixed with the _add_object
+                self[NameObject(PG.CONTENTS)] = content
+        else:
+            content.indirect_reference = self[
+                PG.CONTENTS
+            ].indirect_reference  # TODO: in a future may required generation managment
+            try:
+                self.indirect_reference.pdf._objects[
+                    content.indirect_reference.idnum - 1  # type: ignore
+                ] = content
+            except AttributeError:
+                # applies at least for page not in writer
+                # as a backup solution, we put content as an object although not in accordance with pdf ref
+                # this will be fixed with the _add_object
+                self[NameObject(PG.CONTENTS)] = content
+
     def merge_page(self, page2: "PageObject", expand: bool = False) -> None:
         """
         Merge the content streams of two pages into one.
@@ -856,7 +1110,7 @@ class PageObject(DictionaryObject):
         if expand:
             self._expand_mediabox(page2, ctm)
 
-        self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
+        self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
 
@@ -991,18 +1245,7 @@ class PageObject(DictionaryObject):
         if expand:
             self._expand_mediabox(page2, ctm)
 
-        if PG.CONTENTS not in self:
-            self[NameObject(PG.CONTENTS)] = pdf._add_object(ContentStream(None, pdf))
-        ind = self.raw_get(PG.CONTENTS)
-        try:
-            if not isinstance(ind, IndirectObject):
-                raise KeyError
-            pdf._replace_object(ind, ContentStream(new_content_array, pdf))
-        except KeyError:
-            self[NameObject(PG.CONTENTS)] = pdf._add_object(
-                ContentStream(new_content_array, pdf)
-            )
-
+        self.replace_contents(new_content_array)
         # self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, pdf)
         # self[NameObject(PG.RESOURCES)] = new_resources
         # self[NameObject(PG.ANNOTS)] = new_annots
@@ -1343,7 +1586,7 @@ class PageObject(DictionaryObject):
         if content is not None:
             content = PageObject._add_transformation_matrix(content, self.pdf, ctm)
             content = PageObject._push_pop_gs(content, self.pdf)
-            self[NameObject(PG.CONTENTS)] = content
+            self.replace_contents(content)
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
             corners = [
@@ -1502,9 +1745,7 @@ class PageObject(DictionaryObject):
                 if self.indirect_reference is not None and hasattr(
                     self.indirect_reference.pdf, "_add_object"
                 ):
-                    self[
-                        NameObject(PG.CONTENTS)
-                    ] = self.indirect_reference.pdf._add_object(content_obj)
+                    self.replace_contents(content_obj)
                 else:
                     raise ValueError("Page must be part of a PdfWriter")
 
@@ -1518,6 +1759,23 @@ class PageObject(DictionaryObject):
             "compressContentStreams", "compress_content_streams", "3.0.0"
         )
         self.compress_content_streams()
+
+    @property
+    def page_number(self) -> int:
+        """
+        Read-only property which return the page number with the pdf file.
+
+        Returns:
+            int : page number ; -1 if the page is not attached to a pdf
+        """
+        if self.indirect_reference is None:
+            return -1
+        else:
+            try:
+                lst = self.indirect_reference.pdf.pages
+                return lst.index(self)
+            except ValueError:
+                return -1
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
@@ -2283,3 +2541,60 @@ def _get_fonts_walk(
         _get_fonts_walk(cast(DictionaryObject, obj[key]), fnt, emb)
 
     return fnt, emb  # return the sets for each page
+
+
+class _VirtualListImages(Sequence):
+    def __init__(
+        self,
+        ids_function: Callable[[], List[Union[str, List[str]]]],
+        get_function: Callable[[Union[str, List[str], Tuple[str]]], ImageFile],
+    ) -> None:
+        self.ids_function = ids_function
+        self.get_function = get_function
+        self.current = -1
+
+    def __len__(self) -> int:
+        return len(self.ids_function())
+
+    def keys(self) -> List[Union[str, List[str]]]:
+        return self.ids_function()
+
+    def items(self) -> List[Tuple[Union[str, List[str]], ImageFile]]:
+        return [(x, self[x]) for x in self.ids_function()]
+
+    @overload
+    def __getitem__(self, index: Union[int, str, List[str]]) -> ImageFile:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[ImageFile]:
+        ...
+
+    def __getitem__(
+        self, index: Union[int, slice, str, List[str], Tuple[str]]
+    ) -> Union[ImageFile, Sequence[ImageFile]]:
+        lst = self.ids_function()
+        if isinstance(index, slice):
+            indices = range(*index.indices(len(self)))
+            lst = [lst[x] for x in indices]
+            cls = type(self)
+            return cls((lambda: lst), self.get_function)
+        if isinstance(index, (str, list, tuple)):
+            return self.get_function(index)
+        if not isinstance(index, int):
+            raise TypeError("invalid sequence indices type")
+        len_self = len(lst)
+        if index < 0:
+            # support negative indexes
+            index = len_self + index
+        if index < 0 or index >= len_self:
+            raise IndexError("sequence index out of range")
+        return self.get_function(lst[index])
+
+    def __iter__(self) -> Iterator[ImageFile]:
+        for i in range(len(self)):
+            yield self[i]
+
+    def __str__(self) -> str:
+        p = [f"Image_{i}={n}" for i, n in enumerate(self.ids_function())]
+        return f"[{', '.join(p)}]"

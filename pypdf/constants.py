@@ -175,6 +175,7 @@ class FilterTypes:
     RUN_LENGTH_DECODE = "/RunLengthDecode"  # abbreviation: RL
     CCITT_FAX_DECODE = "/CCITTFaxDecode"  # abbreviation: CCF
     DCT_DECODE = "/DCTDecode"  # abbreviation: DCT
+    JPX_DECODE = "/JPXDecode"
 
 
 class FilterTypeAbbreviations:
@@ -213,7 +214,7 @@ class CcittFaxDecodeParameters:
 
 
 class ImageAttributes:
-    """Table 6.20."""
+    """Table 4.39 Pdf Reference 1.7 page 340+"""
 
     TYPE = "/Type"  # name, required; must be /XObject
     SUBTYPE = "/Subtype"  # name, required; must be /Image
@@ -225,6 +226,8 @@ class ImageAttributes:
     DECODE = "/Decode"  # array, optional
     INTERPOLATE = "/Interpolate"  # boolean, optional
     IMAGE_MASK = "/ImageMask"  # boolean, optional
+    MASK = "/Mask"  # 1-bit image mask stream
+    S_MASK = "/SMask"  # dictionary or name, optional
 
 
 class ColorSpaces:
