@@ -898,7 +898,7 @@ class PasswordType(IntEnum):
     OWNER_PASSWORD = 2
 
 
-class EncryptAlgorithm(tuple, Enum):
+class EncryptAlgorithm(tuple, Enum):  # noqa: SLOT001
     # V, R, Length
     RC4_40 = (1, 2, 40)
     RC4_128 = (2, 3, 128)
@@ -1143,7 +1143,9 @@ class Encryption:
             logger_warning("ignore '/Perms' verify failed", __name__)
         return key, rc
 
-    def write_entry(self, user_password: str, owner_password: Optional[str]) -> DictionaryObject:
+    def write_entry(
+        self, user_password: str, owner_password: Optional[str]
+    ) -> DictionaryObject:
         user_pwd = self._encode_password(user_password)
         owner_pwd = self._encode_password(owner_password) if owner_password else None
         if owner_pwd is None:
@@ -1153,7 +1155,9 @@ class Encryption:
             self.compute_values_v4(user_pwd, owner_pwd)
         else:
             self._key = secrets.token_bytes(self.Length // 8)
-            values = AlgV5.generate_values(self.R, user_pwd, owner_pwd, self._key, self.P, self.EncryptMetadata)
+            values = AlgV5.generate_values(
+                self.R, user_pwd, owner_pwd, self._key, self.P, self.EncryptMetadata
+            )
             self.values.O = values["/O"]
             self.values.U = values["/U"]
             self.values.OE = values["/OE"]
@@ -1196,7 +1200,13 @@ class Encryption:
         o_value = AlgV4.compute_O_value(rc4_key, user_password, self.R)
 
         key = AlgV4.compute_key(
-            user_password, self.R, self.Length, o_value, self.P, self.id1_entry, self.EncryptMetadata
+            user_password,
+            self.R,
+            self.Length,
+            o_value,
+            self.P,
+            self.id1_entry,
+            self.EncryptMetadata,
         )
         u_value = AlgV4.compute_U_value(key, self.R, self.id1_entry)
 
@@ -1292,4 +1302,32 @@ class Encryption:
             StrF=StrF,
             StmF=StmF,
             EFF=EFF,
+        )
+
+    @staticmethod
+    def make(
+        alg: EncryptAlgorithm, permissions: int, first_id_entry: bytes
+    ) -> "Encryption":
+        V, R, Length = cast(tuple, alg)
+        P = permissions
+
+        StmF, StrF, EFF = "/V2", "/V2", "/V2"
+
+        if alg == EncryptAlgorithm.AES_128:
+            StmF, StrF, EFF = "/AESV2", "/AESV2", "/AESV2"
+        elif alg in (EncryptAlgorithm.AES_256_R5, EncryptAlgorithm.AES_256):
+            StmF, StrF, EFF = "/AESV3", "/AESV3", "/AESV3"
+
+        return Encryption(
+            V=V,
+            R=R,
+            Length=Length,
+            P=P,
+            EncryptMetadata=True,
+            first_id_entry=first_id_entry,
+            values=None,
+            StrF=StrF,
+            StmF=StmF,
+            EFF=EFF,
+            entry=DictionaryObject(),  # Dummy entry for the moment; will get removed
         )
