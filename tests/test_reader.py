@@ -1346,24 +1346,24 @@ def test_iss1652():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10818844/tt.pdf"
     name = "invalidNamesDest.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.named_destinations
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.named_destinations
 
 
 @pytest.mark.enable_socket()
 def test_iss1689():
     url = "https://github.com/py-pdf/pypdf/files/10948283/error_file_without_data.pdf"
     name = "iss1689.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.pages[0]
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0]
 
 
 @pytest.mark.enable_socket()
 def test_iss1710():
     url = "https://nlp.stanford.edu/IR-book/pdf/irbookonlinereading.pdf"
     name = "irbookonlinereading.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.outline
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.outline
 
 
 def test_broken_file_header():
@@ -1404,9 +1404,9 @@ def test_broken_file_header():
 def test_iss1756():
     url = "https://github.com/py-pdf/pypdf/files/11105591/641-Attachment-B-Pediatric-Cardiac-Arrest-8-1-2019.pdf"
     name = "iss1756.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.trailer["/ID"]
-    # removed to cope with missing cryptodome during commit check : len(in_pdf.pages)
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.trailer["/ID"]
+    # removed to cope with missing cryptodome during commit check : len(reader.pages)
 
 
 @pytest.mark.enable_socket()
