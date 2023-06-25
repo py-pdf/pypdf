@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## Version 3.11.1, 2023-06-25
+
+### Bug Fixes (BUG)
+- Cascaded filters in image objects (#1913)
+- Append pdf with named destination using numbers for pages (#1858)
+- Ignore "/B" fields only on pages in PdfWriter.append() (#1875)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.11.0...3.11.1)
+
 ## Version 3.11.0, 2023-06-23
 
 ### New Features (ENH)
