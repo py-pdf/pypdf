@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687691667717,
+  "lastUpdate": 1687698029293,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -32058,6 +32058,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006354511327890357",
             "extra": "mean: 93.84084849999397 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "34a9abf2b2a3e3bb90c9d58d03bc76eff78c097a",
+          "message": "MAINT: Prepare for adding AES support via #1816 (#1917)\n\n* `CryptFilter.encrypt_object` implemented\r\n* `AlgV5.generate_values` now crops the user_password / owner_password to 127 bytes\r\n* The `EncryptAlgorithm` Enum was added. It contains the parameter V (version), R (revision), and length\r\n* `Encryption.encrypt_object` was added\r\n* `Encryption.write_entry` was added\r\n* The static method `Encryption.make` was added\r\n\r\nThis PR was only made to make it easier to merge the other changes / to avoid merge conflicts of other changes with #1816 . Full credit goes to exiledkingcc.\r\n\r\nThe PR is marked as \"MAINT\" as it doesn't add a new feature that an end-user could use.\r\n\r\nCo-authored-by: exiledkingcc <exiledkingcc@gmail.com>",
+          "timestamp": "2023-06-25T14:59:14+02:00",
+          "tree_id": "3073379553eb268bb6c7dd58b3dff15a8c5ab50b",
+          "url": "https://github.com/py-pdf/pypdf/commit/34a9abf2b2a3e3bb90c9d58d03bc76eff78c097a"
+        },
+        "date": 1687698026836,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7772062640565393,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0034742926941446852",
+            "extra": "mean: 1.2866597275999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.58564330214663,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008448334623733941",
+            "extra": "mean: 86.31372241666686 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24784637881930174,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008770236075283086",
+            "extra": "mean: 4.034757355599993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.213954143162981,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005230898642717127",
+            "extra": "mean: 81.87356758333426 msec\nrounds: 12"
           }
         ]
       }
