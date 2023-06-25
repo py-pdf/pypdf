@@ -30,7 +30,7 @@ import hashlib
 import re
 from binascii import unhexlify
 from math import log10
-from typing import Any, Callable, Optional, Sequence, Union, cast
+from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
@@ -508,7 +508,7 @@ class ByteStringObject(bytes, PdfObject):
         self.write_to_stream(stream, encryption_key)
 
 
-class TextStringObject(str, PdfObject):
+class TextStringObject(str, PdfObject):  # noqa: SLOT000
     """
     A string object that has been decoded into a real unicode string.
 
@@ -593,10 +593,10 @@ class TextStringObject(str, PdfObject):
         self.write_to_stream(stream, encryption_key)
 
 
-class NameObject(str, PdfObject):
+class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     surfix = b"/"
-    renumber_table = {
+    renumber_table: ClassVar[Dict[str, bytes]] = {
         "#": b"#23",
         "(": b"#28",
         ")": b"#29",
