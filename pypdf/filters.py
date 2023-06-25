@@ -709,7 +709,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     def _handle_flate(
         size: int, data: bytes, mode: str, color_space: str, colors: int
-    ) -> Tuple[Image, str, str]:
+    ) -> Tuple[Image.Image, str, str]:
         """
         Process image encoded in flateEncode
         Returns img, image_format, extension
@@ -765,7 +765,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     def _handle_jpx(
         size: int, data: bytes, mode: str, color_space: str, colors: int
-    ) -> Tuple[Image, str, str]:
+    ) -> Tuple[Image.Image, str, str]:
         """
         Process image encoded in flateEncode
         Returns img, image_format, extension
