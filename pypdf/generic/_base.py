@@ -24,13 +24,13 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
+import binascii
 import codecs
 import hashlib
 import re
 from binascii import unhexlify
 from math import log10
-from typing import Any, Callable, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Optional, Sequence, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
@@ -38,8 +38,6 @@ from .._utils import (
     StreamType,
     b_,
     deprecation_with_replacement,
-    hex_str,
-    hexencode,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -72,7 +70,7 @@ class PdfObject(PdfObjectProtocol):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "PdfObject":
         """
         clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
@@ -81,6 +79,10 @@ class PdfObject(PdfObjectProtocol):
             a new copy is always performed
         ignore_fields : list/tuple of Fields names (for dictionaries that will
             be ignored during cloning (apply also to childs duplication)
+            if fields are to be considered for a limited number of levels
+            you have to add it as integer:
+            eg  [1,"/B","/TOTO"] means "/B" will be ignored at first level only
+            but "/TOTO" on all levels
         in standard, clone function call _reference_clone (see _reference)
 
         Args:
@@ -156,7 +158,7 @@ class NullObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "NullObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -198,7 +200,7 @@ class BooleanObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "BooleanObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -258,7 +260,7 @@ class IndirectObject(PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "IndirectObject":
         """Clone object into pdf_dest."""
         if self.pdf == pdf_dest and not force_duplicate:
@@ -344,7 +346,7 @@ class IndirectObject(PdfObject):
         r = read_non_whitespace(stream)
         if r != b"R":
             raise PdfReadError(
-                f"Error reading indirect object reference at byte {hex_str(stream.tell())}"
+                f"Error reading indirect object reference at byte {hex(stream.tell())}"
             )
         return IndirectObject(int(idnum), int(generation), pdf)
 
@@ -375,7 +377,7 @@ class FloatObject(float, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "FloatObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -422,7 +424,7 @@ class NumberObject(int, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "NumberObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -472,7 +474,7 @@ class ByteStringObject(bytes, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "ByteStringObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -496,7 +498,7 @@ class ByteStringObject(bytes, PdfObject):
 
             bytearr = RC4_encrypt(encryption_key, bytearr)  # type: ignore
         stream.write(b"<")
-        stream.write(hexencode(bytearr))
+        stream.write(binascii.hexlify(bytearr))
         stream.write(b">")
 
     def writeToStream(
@@ -519,7 +521,7 @@ class TextStringObject(str, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "TextStringObject":
         """Clone object into pdf_dest."""
         obj = TextStringObject(self)
@@ -606,7 +608,7 @@ class NameObject(str, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "NameObject":
         """Clone object into pdf_dest."""
         return cast(
@@ -672,13 +674,11 @@ class NameObject(str, PdfObject):
             raise UnicodeDecodeError("", name, 0, 0, "Code Not Found")
         except (UnicodeEncodeError, UnicodeDecodeError) as e:
             if not pdf.strict:
-                logger_warning(
-                    f"Illegal character in Name Object ({repr(name)})", __name__
-                )
+                logger_warning(f"Illegal character in Name Object ({name!r})", __name__)
                 return NameObject(name.decode("charmap"))
             else:
                 raise PdfReadError(
-                    f"Illegal character in Name Object ({repr(name)})"
+                    f"Illegal character in Name Object ({name!r})"
                 ) from e
 
     @staticmethod

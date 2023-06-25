@@ -3,9 +3,12 @@ import string
 import sys
 from io import BytesIO
 from itertools import product as cartesian_product
+from math import sqrt
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from PIL import Image, ImageChops
 
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError, PdfStreamError
@@ -16,7 +19,7 @@ from pypdf.filters import (
     CCITTFaxDecode,
     FlateDecode,
 )
-from pypdf.generic import ArrayObject, DictionaryObject, NumberObject
+from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject
 
 from . import get_pdf_from_url
 
@@ -30,6 +33,10 @@ filter_inputs = (
     string.punctuation,
     string.whitespace,  # Add more...
 )
+
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
@@ -250,7 +257,7 @@ def test_image_without_imagemagic():
 
         for page in reader.pages:
             with pytest.raises(ImportError) as exc:
-                page.images
+                page.images[0]
             assert exc.value.args[0] == (
                 "pillow is required to do image extraction. "
                 "It can be installed via 'pip install pypdf[image]'"
@@ -300,3 +307,100 @@ def test_1bit_image_extraction():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for p in reader.pages:
         p.images
+
+
+@pytest.mark.enable_socket()
+def test_png_transparency_reverse():
+    """Cf issue #1599"""
+    pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
+    reader = PdfReader(pdf_path)
+    url_png = "https://user-images.githubusercontent.com/4083478/236685544-a1940b06-fb42-4bb1-b589-1e4ad429d68e.png"
+    name_png = "labeled-edges-center-image.png"
+    _refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    _img = Image.open(BytesIO(data.data))
+    assert ".jp2" in data.name
+    # assert list(img.getdata()) == list(refimg.getdata())
+
+
+@pytest.mark.enable_socket()
+def test_iss1787():
+    """Cf issue #1787"""
+    url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
+    name = "pdf_font_garbled.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/236793172-09340aef-3440-4c8a-af85-a91cdad27d46.png"
+    name_png = "watermark1.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    img = Image.open(BytesIO(data.data))
+    assert ".png" in data.name
+    assert list(img.getdata()) == list(refimg.getdata())
+    obj = data.indirect_reference.get_object()
+    obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
+    obj.decoded_self = None
+    with pytest.raises(PdfReadError) as exc:
+        reader.pages[0].images[0]
+    assert exc.value.args[0] == "Image data is not rectangular"
+
+
+@pytest.mark.enable_socket()
+def test_tiff_predictor():
+    """Decode Tiff Predictor 2 Images"""
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977609.pdf"
+    name = "tika-977609.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/236793166-288b4b59-dee3-49fd-a04e-410aab06199a.png"
+    name_png = "tifimage.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    img = Image.open(BytesIO(data.data))
+    assert ".png" in data.name
+    assert list(img.getdata()) == list(refimg.getdata())
+
+
+@pytest.mark.enable_socket()
+def test_cmyk():
+    """Decode cmyk with transparency"""
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf"
+    name = "tika-972174.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/238288207-b77dd38c-34b4-4f4f-810a-bf9db7ca0414.png"
+    name_png = "tika-972174_p0-im0.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    assert ".jp2" in data.name
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(
+        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
+    ) / (diff.size[0] * diff.size[1])
+    assert d < 0.01
+
+
+@pytest.mark.enable_socket()
+def test_iss1863():
+    """Test doc from iss1863"""
+    url = "https://github.com/py-pdf/pypdf/files/11578953/USC.EMBA.-.Pre-Season.and.Theme.I.pdf"
+    name = "o1whh9b3.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for p in reader.pages:
+        for i in p.images:
+            i.name
+
+
+@pytest.mark.enable_socket()
+def test_read_images():
+    url = "https://www.selbst.de/paidcontent/dl/64733/72916"
+    name = "selbst.72916.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    page = reader.pages[0]
+    for _ in page.images:
+        pass

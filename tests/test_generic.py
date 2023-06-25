@@ -1185,3 +1185,34 @@ def test_destination_withoutzoom():
     name = "2021_book_security.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.outline
+
+
+def test_encodedstream_set_data():
+    """
+    EncodedStreamObject.set_data to extend data stream works.
+
+    Checks also the flate_encode.
+    """
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    co = reader.pages[0]["/Contents"][0].get_object()
+    co.set_data(b"%hello\n" + co.get_data())
+    assert b"hello" in co.get_data()
+    b = BytesIO()
+    co.write_to_stream(b)
+    b.seek(0)
+    aa = read_object(b, None)
+    assert b"hello" in aa.get_data()
+    assert aa["/Filter"] == "/FlateDecode"
+    assert "/DecodeParms" not in aa
+    bb = aa.flate_encode()
+    assert b"hello" in bb.get_data()
+    assert bb["/Filter"] == ["/FlateDecode", "/FlateDecode"]
+    assert str(bb["/DecodeParms"]) == "[NullObject, NullObject]"
+    bb[NameObject("/Test")] = NameObject("/MyTest")
+    cc = bb.flate_encode()
+    assert bb["/Filter"] == ["/FlateDecode", "/FlateDecode"]
+    assert b"hello" in cc.get_data()
+    assert cc["/Filter"] == ["/FlateDecode", "/FlateDecode", "/FlateDecode"]
+    assert str(cc["/DecodeParms"]) == "[NullObject, NullObject, NullObject]"
+    assert cc[NameObject("/Test")] == "/MyTest"

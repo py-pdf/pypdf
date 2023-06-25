@@ -175,6 +175,7 @@ class FilterTypes:
     RUN_LENGTH_DECODE = "/RunLengthDecode"  # abbreviation: RL
     CCITT_FAX_DECODE = "/CCITTFaxDecode"  # abbreviation: CCF
     DCT_DECODE = "/DCTDecode"  # abbreviation: DCT
+    JPX_DECODE = "/JPXDecode"
 
 
 class FilterTypeAbbreviations:
@@ -213,7 +214,7 @@ class CcittFaxDecodeParameters:
 
 
 class ImageAttributes:
-    """Table 6.20."""
+    """Table 4.39 Pdf Reference 1.7 page 340+"""
 
     TYPE = "/Type"  # name, required; must be /XObject
     SUBTYPE = "/Subtype"  # name, required; must be /Image
@@ -225,6 +226,8 @@ class ImageAttributes:
     DECODE = "/Decode"  # array, optional
     INTERPOLATE = "/Interpolate"  # boolean, optional
     IMAGE_MASK = "/ImageMask"  # boolean, optional
+    MASK = "/Mask"  # 1-bit image mask stream
+    S_MASK = "/SMask"  # dictionary or name, optional
 
 
 class ColorSpaces:
@@ -273,6 +276,7 @@ class AnnotationDictionaryAttributes:
     F = "/F"
     AP = "/AP"
     AS = "/AS"
+    DA = "/DA"
     Border = "/Border"
     C = "/C"
     StructParent = "/StructParent"
@@ -300,9 +304,39 @@ class FieldDictionaryAttributes:
     TU = "/TU"  # text string, optional
     TM = "/TM"  # text string, optional
     Ff = "/Ff"  # integer, optional
-    V = "/V"  # text string, optional
+    V = "/V"  # text string or array, optional
     DV = "/DV"  # text string, optional
     AA = "/AA"  # dictionary, optional
+    Opt = "/Opt"
+
+    class FfBits:
+        ReadOnly = 1 << 0
+        Required = 1 << 1
+        NoExport = 1 << 2
+        Multiline = 1 << 12  # Tx Table 8.77
+        Password = 1 << 13  # Tx
+
+        NoToggleToOff = 1 << 14  # Btn table 8.75
+        Radio = 1 << 15  # Btn
+        Pushbutton = 1 << 16  # Btn
+
+        Combo = 1 << 17  # Ch table 8.79
+        Edit = 1 << 18  # Ch
+        Sort = 1 << 19  # Ch
+
+        FileSelect = 1 << 20  # Tx
+
+        MultiSelect = 1 << 21  # Ch
+
+        DoNotSpellCheck = 1 << 22  # Tx / Ch
+        DoNotScroll = 1 << 23  # Tx
+        Comb = 1 << 24  # Tx
+
+        RadiosInUnison = 1 << 25  # Btn
+
+        RichText = 1 << 25  # Tx
+
+        CommitOnSelChange = 1 << 26  # Ch
 
     @classmethod
     def attributes(cls) -> Tuple[str, ...]:

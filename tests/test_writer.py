@@ -21,6 +21,7 @@ from pypdf.generic import (
     Fit,
     IndirectObject,
     NameObject,
+    NullObject,
     NumberObject,
     RectangleObject,
     StreamObject,
@@ -1341,3 +1342,102 @@ def test_iss1767():
     name = "iss1723.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     PdfWriter(clone_from=in_pdf)
+
+
+@pytest.mark.enable_socket()
+def test_named_dest_page_number():
+    """
+    Closes iss471
+    tests appending with named destinations as integers
+    """
+    url = "https://github.com/py-pdf/pypdf/files/10704333/central.pdf"
+    name = "central.pdf"
+    w = PdfWriter()
+    w.add_blank_page(100, 100)
+    w.append(BytesIO(get_pdf_from_url(url, name=name)), pages=[0, 1, 2])
+    assert len(w._root_object["/Names"]["/Dests"]["/Names"]) == 2
+    assert w._root_object["/Names"]["/Dests"]["/Names"][-1][0] == (1 + 1)
+    w.append(BytesIO(get_pdf_from_url(url, name=name)))
+    assert len(w._root_object["/Names"]["/Dests"]["/Names"]) == 6
+    w2 = PdfWriter()
+    w2.add_blank_page(100, 100)
+    dest = w2.add_named_destination("toto", 0)
+    dest.get_object()[NameObject("/D")][0] = NullObject()
+    b = BytesIO()
+    w2.write(b)
+    b.seek(0)
+    w.append(b)
+    assert len(w._root_object["/Names"]["/Dests"]["/Names"]) == 6
+
+
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        (
+            "dont_commit_writer.pdf",
+            True,
+        )
+    ],
+)
+def test_update_form_fields(write_data_here, needs_cleanup):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {
+            "CheckBox1": "/Yes",
+            "Text1": "mon Text1",
+            "Text2": "ligne1\nligne2",
+            "RadioGroup1": "/2",
+            "RdoS1": "/",
+            "Combo1": "!!monCombo!!",
+            "Liste1": "Liste2",
+            "Liste2": ["Lst1", "Lst3"],
+            "DropList1": "DropListe3",
+        },
+        auto_regenerate=False,
+    )
+    del writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"]
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        auto_regenerate=False,
+    )
+
+    writer.write("dont_commit_writer.pdf")
+    reader = PdfReader("dont_commit_writer.pdf")
+    flds = reader.get_fields()
+    assert flds["CheckBox1"]["/V"] == "/Yes"
+    assert flds["CheckBox1"].indirect_reference.get_object()["/AS"] == "/Yes"
+    assert (
+        b"(my Text1)"
+        in flds["Text1"].indirect_reference.get_object()["/AP"]["/N"].get_data()
+    )
+    assert flds["Text2"]["/V"] == "ligne1\nligne2\nligne3"
+    assert (
+        b"(ligne3)"
+        in flds["Text2"].indirect_reference.get_object()["/AP"]["/N"].get_data()
+    )
+    assert flds["RadioGroup1"]["/V"] == "/2"
+    assert flds["RadioGroup1"]["/Kids"][0].get_object()["/AS"] == "/Off"
+    assert flds["RadioGroup1"]["/Kids"][1].get_object()["/AS"] == "/2"
+    assert all(x in flds["Liste2"]["/V"] for x in ["Lst1", "Lst3"])
+
+    assert all(x in flds["CheckBox1"]["/_States_"] for x in ["/Off", "/Yes"])
+    assert all(x in flds["RadioGroup1"]["/_States_"] for x in ["/1", "/2", "/3"])
+    assert all(x in flds["Liste1"]["/_States_"] for x in ["Liste1", "Liste2", "Liste3"])
+
+    if needs_cleanup:
+        Path(write_data_here).unlink()
+
+
+@pytest.mark.enable_socket()
+def test_iss1862():
+    # The file here has "/B" entry to define the font in a object below the page
+    # The excluded field shall be considered only at first level (page) and not
+    # below
+    url = "https://github.com/py-pdf/pypdf/files/11708801/intro.pdf"
+    name = "iss1862.pdf"
+    writer = PdfWriter()
+    writer.append(BytesIO(get_pdf_from_url(url, name=name)))
+    # check that "/B" is in the font
+    writer.pages[0]["/Resources"]["/Font"]["/F1"]["/CharProcs"]["/B"].get_data()

@@ -19,6 +19,7 @@ from pypdf.generic import (
     FloatObject,
     IndirectObject,
     NameObject,
+    NullObject,
     RectangleObject,
     TextStringObject,
 )
@@ -261,13 +262,18 @@ def test_page_transformations():
 )
 def test_compress_content_streams(pdf_path, password):
     reader = PdfReader(pdf_path)
+
     writer = PdfWriter()
     if password:
         reader.decrypt(password)
+    for i, page in enumerate(reader.pages):
+        assert i == page.page_number
+
     assert isinstance(reader.pages[0].get_contents(), ContentStream)
     writer.clone_document_from_reader(reader)
     assert isinstance(writer.pages[0].get_contents(), ContentStream)
-    for page in writer.pages:
+    for i, page in enumerate(writer.pages):
+        assert i == page.page_number
         page.compress_content_streams()
 
     # test from reader should fail as adding_object out of
@@ -1119,12 +1125,22 @@ def test_merge_transformed_page_into_blank():
                 True,
                 True,
             )
+    blank = PageObject.create_blank_page(width=100, height=100)
+    assert blank.page_number == -1
+    inserted_blank = w.add_page(blank)
+    assert blank.page_number == -1  # the inserted page is a clone
+    assert inserted_blank.page_number == len(w.pages) - 1
+    del w._pages.get_object()["/Kids"][-1]
+    assert inserted_blank.page_number == -1
 
 
 def test_pages_printing():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     assert str(reader.pages) == "[PageObject(0)]"
+    assert len(reader.pages[0].images) == 0
+    with pytest.raises(KeyError):
+        reader.pages[0].images["~1~"]
 
 
 def test_pdf_pages_missing_type():
@@ -1134,3 +1150,63 @@ def test_pdf_pages_missing_type():
     reader.pages[0]
     writer = PdfWriter(clone_from=reader)
     writer.pages[0]
+
+
+@pytest.mark.enable_socket()
+def test_image_new_property():
+    url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
+    name = "pdf_font_garbled.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].images.keys()
+    reader.pages[0].images.items()
+    reader.pages[0].images[0].name
+    reader.pages[0].images[-1].data
+    reader.pages[0].images["/TPL1", "/Image5"].image
+    assert (
+        reader.pages[0].images["/I0"].indirect_reference.get_object()
+        == reader.pages[0]["/Resources"]["/XObject"]["/I0"]
+    )
+    list(reader.pages[0].images[0:2])
+    with pytest.raises(TypeError):
+        reader.pages[0].images[b"0"]
+    with pytest.raises(IndexError):
+        reader.pages[0].images[9999]
+    # just for test coverage:
+    with pytest.raises(KeyError):
+        reader.pages[0]._get_image(["test"], reader.pages[0])
+    assert list(PageObject(None, None).images) == []
+
+
+@pytest.mark.samples()
+def test_compression():
+    """Test for issue #1897"""
+
+    def create_stamp_pdf() -> BytesIO:
+        from fpdf import FPDF
+
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("helvetica", "B", 16)
+        pdf.cell(40, 10, "Hello World!")
+        byte_string = pdf.output()
+        return BytesIO(byte_string)
+
+    template = PdfReader(create_stamp_pdf())
+    template_page = template.pages[0]
+    writer = PdfWriter()
+    writer.append(SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf", [1])
+    nb1 = len(writer._objects)
+
+    for page in writer.pages:
+        page.merge_page(template_page)
+    assert len(writer._objects) == nb1 + 1  # font is added that's all
+    for page in writer.pages:
+        page.compress_content_streams()
+    assert len(writer._objects) == nb1 + 1
+
+    contents = writer.pages[0]["/Contents"]
+    writer.pages[0].replace_contents(None)
+    writer.pages[0].replace_contents(None)
+    assert isinstance(
+        writer._objects[contents.indirect_reference.idnum - 1], NullObject
+    )

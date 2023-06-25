@@ -32,9 +32,8 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import functools
 import logging
 import warnings
-from codecs import getencoder
 from dataclasses import dataclass
-from io import DEFAULT_BUFFER_SIZE
+from io import DEFAULT_BUFFER_SIZE, BytesIO
 from os import SEEK_CUR
 from typing import (
     IO,
@@ -45,6 +44,7 @@ from typing import (
     Pattern,
     Tuple,
     Union,
+    cast,
     overload,
 )
 
@@ -348,16 +348,6 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
     return b
 
 
-def hexencode(b: bytes) -> bytes:
-    coder = getencoder("hex_codec")
-    coded = coder(b)  # type: ignore
-    return coded[0]
-
-
-def hex_str(num: int) -> str:
-    return hex(num).replace("L", "")
-
-
 WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
 
 
@@ -492,11 +482,75 @@ def _human_readable_bytes(bytes: int) -> str:
 
 @dataclass
 class File:
+    from .generic import IndirectObject
+
     name: str
     data: bytes
+    image: Optional[Any] = None  # optional ; direct image access
+    indirect_reference: Optional[IndirectObject] = None  # optional ; link to PdfObject
 
     def __str__(self) -> str:
-        return f"File(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
+        return f"{self.__class__.__name__}(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
 
     def __repr__(self) -> str:
-        return f"File(name={self.name}, data: {_human_readable_bytes(len(self.data))}, hash: {hash(self.data)})"
+        return self.__str__()[:-1] + f", hash: {hash(self.data)})"
+
+
+@dataclass
+class ImageFile(File):
+    from .generic import IndirectObject
+
+    image: Optional[Any] = None  # optional ; direct PIL image access
+    indirect_reference: Optional[IndirectObject] = None  # optional ; link to PdfObject
+
+    def replace(self, new_image: Any, **kwargs: Any) -> None:
+        """
+        Replace the Image with a new PIL image.
+
+        Args:
+            new_image (Image.Image): The new PIL image to replace the existing image.
+            **kwargs: Additional keyword arguments to pass to `Image.Image.save()`.
+
+        Raises:
+            TypeError: If the image is inline or in a PdfReader.
+            TypeError: If the image does not belong to a PdfWriter.
+            TypeError: If `new_image` is not a PIL Image.
+
+        Note:
+            This method replaces the existing image with a new image.
+            It is not allowed for inline images or images within a PdfReader.
+            The `kwargs` parameter allows passing additional parameters
+            to `Image.Image.save()`, such as quality.
+        """
+        from PIL import Image
+
+        from ._reader import PdfReader
+
+        # to prevent circular import
+        from .filters import _xobj_to_image
+        from .generic import DictionaryObject, PdfObject
+
+        if self.indirect_reference is None:
+            raise TypeError("Can not update an inline image")
+        if not hasattr(self.indirect_reference.pdf, "_id_translated"):
+            raise TypeError("Can not update an image not belonging to a PdfWriter")
+        if not isinstance(new_image, Image.Image):
+            raise TypeError("new_image shall be a PIL Image")
+        b = BytesIO()
+        new_image.save(b, "PDF", **kwargs)
+        reader = PdfReader(b)
+        assert reader.pages[0].images[0].indirect_reference is not None
+        self.indirect_reference.pdf._objects[self.indirect_reference.idnum - 1] = (
+            reader.pages[0].images[0].indirect_reference.get_object()
+        )
+        cast(
+            PdfObject, self.indirect_reference.get_object()
+        ).indirect_reference = self.indirect_reference
+        # change the object attributes
+        extension, byte_stream, img = _xobj_to_image(
+            cast(DictionaryObject, self.indirect_reference.get_object())
+        )
+        assert extension is not None
+        self.name = self.name[: self.name.rfind(".")] + extension
+        self.data = byte_stream
+        self.image = img

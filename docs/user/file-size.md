@@ -48,6 +48,29 @@ with open("out.pdf", "wb") as f:
     writer.write(f)
 ```
 
+## Reducing Image Quality
+
+If we reduce the quality of the images within the PDF, we can **sometimes**
+reduce the file size of the PDF overall. That depends on how well the reduced
+quality image can be compressed.
+
+```python
+from pypdf import PdfReader, PdfWriter
+
+reader = PdfReader("example.pdf")
+writer = PdfWriter()
+
+for page in reader.pages:
+    writer.add_page(page)
+
+for page in writer.pages:
+    for img in page.images:
+        img.replace(img.image, quality=80)
+
+with open("out.pdf", "wb") as f:
+    writer.write(f)
+```
+
 ## Lossless Compression
 
 pypdf supports the FlateDecode filter which uses the zlib/deflate compression

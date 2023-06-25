@@ -32,7 +32,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import logging
 import re
 from io import BytesIO
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union, cast
 
 from .._protocols import PdfReaderProtocol, PdfWriterProtocol
 from .._utils import (
@@ -41,7 +41,6 @@ from .._utils import (
     b_,
     deprecate_with_replacement,
     deprecation_with_replacement,
-    hex_str,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -80,7 +79,7 @@ class ArrayObject(list, PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "ArrayObject":
         """Clone object into pdf_dest."""
         try:
@@ -163,7 +162,7 @@ class DictionaryObject(dict, PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "DictionaryObject":
         """Clone object into pdf_dest."""
         try:
@@ -187,7 +186,7 @@ class DictionaryObject(dict, PdfObject):
         src: "DictionaryObject",
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
@@ -198,6 +197,20 @@ class DictionaryObject(dict, PdfObject):
             force_duplicate:
             ignore_fields:
         """
+        # first we remove for the ignore_fields
+        # that are for a limited number of levels
+        x = 0
+        assert ignore_fields is not None
+        ignore_fields = list(ignore_fields)
+        while x < len(ignore_fields):
+            if isinstance(ignore_fields[x], int):
+                if cast(int, ignore_fields[x]) <= 0:
+                    del ignore_fields[x]
+                    del ignore_fields[x]
+                    continue
+                else:
+                    ignore_fields[x] -= 1  # type:ignore
+            x += 1
         #  First check if this is a chain list, we need to loop to prevent recur
         if any(
             field not in ignore_fields
@@ -390,7 +403,7 @@ class DictionaryObject(dict, PdfObject):
         tmp = stream.read(2)
         if tmp != b"<<":
             raise PdfReadError(
-                f"Dictionary read error at byte {hex_str(stream.tell())}: "
+                f"Dictionary read error at byte {hex(stream.tell())}: "
                 "stream must begin with '<<'"
             )
         data: Dict[Any, Any] = {}
@@ -428,7 +441,7 @@ class DictionaryObject(dict, PdfObject):
                 # multiple definitions of key not permitted
                 msg = (
                     f"Multiple definitions in dictionary at byte "
-                    f"{hex_str(stream.tell())} for key {key}"
+                    f"{hex(stream.tell())} for key {key}"
                 )
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
@@ -491,7 +504,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
                     raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at byte "
-                        f"{hex_str(stream.tell())} (nd='{ndstream!r}', end='{end!r}')."
+                        f"{hex(stream.tell())} (nd='{ndstream!r}', end='{end!r}')."
                     )
         else:
             stream.seek(pos, 0)
@@ -734,7 +747,7 @@ class StreamObject(DictionaryObject):
         src: DictionaryObject,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
@@ -828,16 +841,29 @@ class StreamObject(DictionaryObject):
         if SA.FILTER in self:
             f = self[SA.FILTER]
             if isinstance(f, ArrayObject):
-                f.insert(0, NameObject(FT.FLATE_DECODE))
+                f = ArrayObject([NameObject(FT.FLATE_DECODE), *f])
+                try:
+                    parms = ArrayObject(
+                        [NullObject(), *self.get(SA.DECODE_PARMS, ArrayObject())]
+                    )
+                except TypeError:
+                    # case of error where the * operator is not working (not an array
+                    parms = ArrayObject(
+                        [NullObject(), self.get(SA.DECODE_PARMS, ArrayObject())]
+                    )
             else:
-                newf = ArrayObject()
-                newf.append(NameObject("/FlateDecode"))
-                newf.append(f)
-                f = newf
+                f = ArrayObject([NameObject(FT.FLATE_DECODE), f])
+                parms = ArrayObject(
+                    [NullObject(), self.get(SA.DECODE_PARMS, NullObject())]
+                )
         else:
-            f = NameObject("/FlateDecode")
+            f = NameObject(FT.FLATE_DECODE)
+            parms = None
         retval = EncodedStreamObject()
+        retval.update(self)
         retval[NameObject(SA.FILTER)] = f
+        if parms is not None:
+            retval[NameObject(SA.DECODE_PARMS)] = parms
         retval._data = FlateDecode.encode(self._data)
         return retval
 
@@ -894,7 +920,18 @@ class EncodedStreamObject(StreamObject):
         return self.get_data()
 
     def set_data(self, data: Any) -> None:  # deprecated
-        raise PdfReadError("Creating EncodedStreamObject is not currently supported")
+        from ..filters import FlateDecode
+
+        if self.get(SA.FILTER, "") == FT.FLATE_DECODE:
+            if not isinstance(data, bytes):
+                raise TypeError("data must be bytes")
+            assert self.decoded_self is not None
+            self.decoded_self._data = data
+            self._data = FlateDecode.encode(data)
+        else:
+            raise PdfReadError(
+                "Streams encoded with different filter from only FlateDecode is not supported"
+            )
 
     def setData(self, data: Any) -> None:  # deprecated
         deprecation_with_replacement("setData", "set_data", "3.0.0")
@@ -938,7 +975,7 @@ class ContentStream(DecodedStreamObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "ContentStream":
         """
         Clone object into pdf_dest.
@@ -973,7 +1010,7 @@ class ContentStream(DecodedStreamObject):
         src: DictionaryObject,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.

@@ -107,7 +107,7 @@ During the cloning, if an object has been already cloned, it will not be cloned 
 To reset, call  `writer.reset_translation(reader)`
 
 ## Advanced cloning
-In order to prevent side effect between pages/objects objects and all objects linked are linked during merging.
+In order to prevent side effect between pages/objects and all objects linked are linked during merging.
 
 This process will be automatically applied if you use PdfWriter.append/merge/add_page/insert_page.
 If you want to clone an object before attaching it "manually", use clone function of any PdfObject:
