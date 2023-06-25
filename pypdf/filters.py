@@ -706,6 +706,102 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             "pillow is required to do image extraction. "
             "It can be installed via 'pip install pypdf[image]'"
         )
+
+    def _handle_flate(
+        size: Tuple[int, int],
+        data: bytes,
+        mode: mode_str_type,
+        color_space: str,
+        colors: int,
+    ) -> Tuple[Image.Image, str, str]:
+        """
+        Process image encoded in flateEncode
+        Returns img, image_format, extension
+        """
+        extension = ".png"  # mime_type = "image/png"
+        lookup: Any
+        base: Any
+        hival: Any
+        if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
+            color_space, base, hival, lookup = (
+                value.get_object() for value in color_space
+            )
+        img = Image.frombytes(mode, size, data)
+        if color_space == "/Indexed":
+            from .generic import ByteStringObject
+
+            if isinstance(lookup, ByteStringObject):
+                try:
+                    nb, conv, mode = {  # type: ignore
+                        "1": (0, "", ""),
+                        "L": (1, "P", "L"),
+                        "P": (0, "", ""),
+                        "RGB": (3, "P", "RGB"),
+                        "CMYK": (4, "P", "CMYK"),
+                    }[_get_imagemode(base, 0, "")]
+                except KeyError:  # pragma: no cover
+                    logger_warning(
+                        f"Base {base} not coded please share the pdf file with pypdf dev team",
+                        __name__,
+                    )
+                    lookup = None
+                else:
+                    img = img.convert(conv)
+                    if len(lookup) != (hival + 1) * nb:
+                        logger_warning(
+                            f"Invalid Lookup Table in {obj_as_text}", __name__
+                        )
+                        lookup = None
+                    if mode == "L":
+                        # gray lookup does not work : it is converted to a similar RGB lookup
+                        lookup = b"".join([bytes([b, b, b]) for b in lookup])
+                        mode = "RGB"
+                    if lookup is not None:
+                        img.putpalette(lookup, rawmode=mode)
+            else:
+                img.putpalette(lookup.get_data())
+            img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
+        elif not isinstance(color_space, NullObject) and color_space[0] == "/ICCBased":
+            # see Table 66 - Additional Entries Specific to an ICC Profile
+            # Stream Dictionary
+            mode = _get_imagemode(color_space, colors, mode)
+            extension = ".png"
+            img = Image.frombytes(mode, size, data)  # reloaded as mode may have change
+        image_format = "PNG"
+        return img, image_format, extension
+
+    def _handle_jpx(
+        size: Tuple[int, int],
+        data: bytes,
+        mode: mode_str_type,
+        color_space: str,
+        colors: int,
+    ) -> Tuple[Image.Image, str, str]:
+        """
+        Process image encoded in flateEncode
+        Returns img, image_format, extension
+        """
+        extension = ".jp2"  # mime_type = "image/x-jp2"
+        img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
+        mode = _get_imagemode(color_space, colors, mode)
+        if img1.mode == "RGBA" and mode == "RGB":
+            mode = "RGBA"
+        # we need to convert to the good mode
+        try:
+            if img1.mode != mode:
+                img = Image.frombytes(mode, img1.size, img1.tobytes())
+            else:
+                img = img1
+        except OSError:
+            img = Image.frombytes(mode, img1.size, img1.tobytes())
+        # for CMYK conversion :
+        # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
+        # not implemented for the moment as I need to get properly the ICC
+        if img.mode == "CMYK":
+            img = img.convert("RGB")
+        image_format = "JPEG2000"
+        return img, image_format, extension
+
     # for error reporting
     if (
         hasattr(x_object_obj, "indirect_reference") and x_object_obj is None
@@ -742,111 +838,38 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         )
     extension = None
     alpha = None
-
-    if SA.FILTER in x_object_obj:
-        if x_object_obj[SA.FILTER] == FT.FLATE_DECODE or x_object_obj[SA.FILTER] == [
-            FT.FLATE_DECODE
-        ]:
-            extension = ".png"  # mime_type = "image/png"
-            if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
-                color_space, base, hival, lookup = (
-                    value.get_object() for value in color_space
-                )
-            img = Image.frombytes(mode, size, data)
-            if color_space == "/Indexed":
-                from .generic import ByteStringObject
-
-                if isinstance(lookup, ByteStringObject):
-                    try:
-                        nb, conv, mode = {  # type: ignore
-                            "1": (0, "", ""),
-                            "L": (1, "P", "L"),
-                            "P": (0, "", ""),
-                            "RGB": (3, "P", "RGB"),
-                            "CMYK": (4, "P", "CMYK"),
-                        }[_get_imagemode(base, 0, "")]
-                    except KeyError:  # pragma: no cover
-                        logger_warning(
-                            f"Base {base} not coded please share the pdf file with pypdf dev team",
-                            __name__,
-                        )
-                        lookup = None
-                    else:
-                        img = img.convert(conv)
-                        if len(lookup) != (hival + 1) * nb:
-                            logger_warning(
-                                f"Invalid Lookup Table in {obj_as_text}", __name__
-                            )
-                            lookup = None
-                        if mode == "L":
-                            # gray lookup does not work : it is converted to a similar RGB lookup
-                            lookup = b"".join([bytes([b, b, b]) for b in lookup])
-                            mode = "RGB"
-                        if lookup is not None:
-                            img.putpalette(lookup, rawmode=mode)
-                else:
-                    img.putpalette(lookup.get_data())
-                img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
-            elif (
-                not isinstance(color_space, NullObject)
-                and color_space[0] == "/ICCBased"
-            ):
-                # see Table 66 - Additional Entries Specific to an ICC Profile
-                # Stream Dictionary
-                mode = _get_imagemode(color_space, colors, mode)
-                extension = ".png"
-                img = Image.frombytes(
-                    mode, size, data
-                )  # reloaded as mode may have change
-            image_format = "PNG"
-        elif x_object_obj[SA.FILTER] in (
-            [FT.LZW_DECODE],
-            [FT.ASCII_85_DECODE],
-            [FT.CCITT_FAX_DECODE],
-        ):
-            # I'm not sure if the following logic is correct.
-            # There might not be any relationship between the filters and the
-            # extension
-            if x_object_obj[SA.FILTER] in [[FT.LZW_DECODE], [FT.CCITT_FAX_DECODE]]:
-                extension = ".tiff"  # mime_type = "image/tiff"
-                image_format = "TIFF"
-            else:
-                extension = ".png"  # mime_type = "image/png"
-                image_format = "PNG"
-            data = b_(data)
-            img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
-        elif x_object_obj[SA.FILTER] in [FT.DCT_DECODE, [FT.DCT_DECODE]]:
-            extension = ".jpg"
-            img = Image.open(BytesIO(data))
-            image_format = "JPEG"
-        elif x_object_obj[SA.FILTER] in [FT.JPX_DECODE, [FT.JPX_DECODE]]:
-            extension = ".jp2"  # mime_type = "image/x-jp2"
-            img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
-            mode = _get_imagemode(color_space, colors, mode)
-            if img1.mode == "RGBA" and mode == "RGB":
-                mode = "RGBA"
-            # we need to convert to the good mode
-            try:
-                if img1.mode != mode:
-                    img = Image.frombytes(mode, img1.size, img1.tobytes())
-                else:
-                    img = img1
-            except OSError:
-                img = Image.frombytes(mode, img1.size, img1.tobytes())
-            # for CMYK conversion :
-            # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
-            # not implemented for the moment as I need to get properly the ICC
-            if img.mode == "CMYK":
-                img = img.convert("RGB")
-            image_format = "JPEG2000"
-        elif x_object_obj[SA.FILTER] in [FT.CCITT_FAX_DECODE, [FT.CCITT_FAX_DECODE]]:
+    filters = x_object_obj.get(SA.FILTER, [None])
+    lfilters = filters[-1] if isinstance(filters, list) else filters
+    if lfilters == FT.FLATE_DECODE:
+        img, image_format, extension = _handle_flate(
+            size, data, mode, color_space, colors
+        )
+    elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE, FT.CCITT_FAX_DECODE):
+        # I'm not sure if the following logic is correct.
+        # There might not be any relationship between the filters and the
+        # extension
+        if x_object_obj[SA.FILTER] in [[FT.LZW_DECODE], [FT.CCITT_FAX_DECODE]]:
             extension = ".tiff"  # mime_type = "image/tiff"
-            img = Image.open(BytesIO(data), formats=("TIFF",))
             image_format = "TIFF"
-    else:
-        extension = ".png"  # mime_type = "image/png"
-        img = Image.frombytes(mode, size, data)
-        image_format = "PNG"
+        else:
+            extension = ".png"  # mime_type = "image/png"
+            image_format = "PNG"
+        data = b_(data)
+        img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
+    elif lfilters == FT.DCT_DECODE:
+        img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
+    elif lfilters == FT.JPX_DECODE:
+        img, image_format, extension = _handle_jpx(
+            size, data, mode, color_space, colors
+        )
+    elif lfilters == FT.CCITT_FAX_DECODE:
+        img, image_format, extension = (
+            Image.open(BytesIO(data), formats=("TIFF",)),
+            "TIFF",
+            ".tiff",
+        )
+    elif lfilters is None:
+        img, image_format, extension = Image.frombytes(mode, size, data), "PNG", ".png"
 
     if IA.S_MASK in x_object_obj:  # add alpha channel
         alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]

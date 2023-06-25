@@ -404,3 +404,14 @@ def test_read_images():
     page = reader.pages[0]
     for _ in page.images:
         pass
+
+
+@pytest.mark.enable_socket()
+def test_cascaded_filters_images():
+    url = "https://github.com/py-pdf/pypdf/files/11845099/GeoTopo-komprimiert.pdf"
+    name = "iss1912.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # for focus, analyse the page 23
+    for p in reader.pages:
+        for i in p.images:
+            _ = i.name, i.image
