@@ -35,7 +35,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
         # qpdf --encrypt "asdfzxcv" "" 40 -- unencrypted.pdf r2-user-password.pdf
         ("r2-user-password.pdf", False),
         # created by:
-        # qpdf --encrypt "" "asdfzxcv" 40 -- unencrypted.pdf r2-user-password.pdf
+        # qpdf --encrypt "" "asdfzxcv" 40 -- unencrypted.pdf r2-owner-password.pdf
         ("r2-owner-password.pdf", False),
         # created by:
         # qpdf --encrypt "asdfzxcv" "" 128 -- unencrypted.pdf r3-user-password.pdf

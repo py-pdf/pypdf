@@ -557,9 +557,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         else:
             raise Exception("no information about original bytes")
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
-    ) -> None:
+    def get_encoded_bytes(self) -> bytes:
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
         # here for trying...
@@ -567,6 +565,12 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
             bytearr = encode_pdfdocencoding(self)
         except UnicodeEncodeError:
             bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
+        return bytearr
+
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+    ) -> None:
+        bytearr = self.get_encoded_bytes()
         if encryption_key:
             from .._security import RC4_encrypt
 
