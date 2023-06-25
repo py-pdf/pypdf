@@ -918,23 +918,23 @@ def test_extra_test_iss1541():
 
     cs = ContentStream(reader.pages[0]["/Contents"], None, None)
     cs.operations.insert(-1, ([], b"EMC"))
-    bu = BytesIO()
-    cs.write_to_stream(bu)
-    bu.seek(0)
-    ContentStream(read_object(bu, None, None), None, None).operations
+    stream = BytesIO()
+    cs.write_to_stream(stream)
+    stream.seek(0)
+    ContentStream(read_object(stream, None, None), None, None).operations
 
     cs = ContentStream(reader.pages[0]["/Contents"], None, None)
     cs.operations.insert(-1, ([], b"E!C"))
-    bu = BytesIO()
-    cs.write_to_stream(bu)
-    bu.seek(0)
+    stream = BytesIO()
+    cs.write_to_stream(stream)
+    stream.seek(0)
     with pytest.raises(PdfReadError) as exc:
-        ContentStream(read_object(bu, None, None), None, None).operations
+        ContentStream(read_object(stream, None, None), None, None).operations
     assert exc.value.args[0] == "Unexpected end of stream"
 
-    buf2 = BytesIO(data.getbuffer())
+    b = BytesIO(data.getbuffer())
     reader = PdfReader(
-        BytesIO(bytes(buf2.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
+        BytesIO(bytes(b.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
     )
     with pytest.raises(PdfReadError) as exc:
         reader.pages[0].extract_text()

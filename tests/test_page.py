@@ -164,27 +164,27 @@ def test_transformation_equivalence2():
     pdf_path = RESOURCE_ROOT / "box.pdf"
     reader_add = PdfReader(pdf_path)
 
-    w = PdfWriter()
-    w.append(reader_base)
-    w.pages[0].merge_transformed_page(
+    writer = PdfWriter()
+    writer.append(reader_base)
+    writer.pages[0].merge_transformed_page(
         reader_add.pages[0], Transformation().scale(2).rotate(-45), False, False
     )
-    w.pages[0].merge_transformed_page(
+    writer.pages[0].merge_transformed_page(
         reader_add.pages[0], Transformation().scale(2).translate(100, 100), True, False
     )
     # No special assert: the test should be visual in a viewer; 2 box with a arrow rotated  and translated
 
-    w = PdfWriter()
-    w.append(reader_add)
-    w.pages[0].merge_transformed_page(
+    writer = PdfWriter()
+    writer.append(reader_add)
+    writer.pages[0].merge_transformed_page(
         reader_base.pages[0], Transformation(), True, True
     )
     # No special assert: Visual check the page has been  increased and all is visible (box+graph)
 
-    w = PdfWriter()
-    w.append(reader_add)
+    writer = PdfWriter()
+    writer.append(reader_add)
     height = reader_add.pages[0].mediabox.height
-    w.pages[0].merge_transformed_page(
+    writer.pages[0].merge_transformed_page(
         reader_base.pages[0],
         Transformation().transform(Transformation((1, 0, 0, -1, 0, height))),
         False,
@@ -195,16 +195,16 @@ def test_transformation_equivalence2():
     pdf_path = RESOURCE_ROOT / "commented-xmp.pdf"
     reader_comments = PdfReader(pdf_path)
 
-    w = PdfWriter()
-    w.append(reader_base)
-    w.pages[0].merge_transformed_page(
+    writer = PdfWriter()
+    writer.append(reader_base)
+    writer.pages[0].merge_transformed_page(
         reader_comments.pages[0], Transformation().rotate(-15), True, True
     )
-    nb_annots1 = len(w.pages[0]["/Annots"])
-    w.pages[0].merge_transformed_page(
+    nb_annots1 = len(writer.pages[0]["/Annots"])
+    writer.pages[0].merge_transformed_page(
         reader_comments.pages[0], Transformation().rotate(-30), True, True
     )
-    assert len(w.pages[0]["/Annots"]) == 2 * nb_annots1
+    assert len(writer.pages[0]["/Annots"]) == 2 * nb_annots1
     # No special assert: Visual check the overlay has its comments at the good position
 
 
@@ -1107,18 +1107,18 @@ def test_merge_transformed_page_into_blank():
     url = "https://github.com/py-pdf/pypdf/files/10768335/badges_3vjrh_7LXDZ_2-1.pdf"
     name = "badges_3vjrh_7LXDZ_2.pdf"
     r2 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    w = PdfWriter()
-    w.add_blank_page(100, 100)
-    w.pages[0].merge_translated_page(r1.pages[0], 0, 0, True, True)
-    w.pages[0].merge_translated_page(r2.pages[0], 1000, 1000, True, True)
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.pages[0].merge_translated_page(r1.pages[0], 0, 0, True, True)
+    writer.pages[0].merge_translated_page(r2.pages[0], 1000, 1000, True, True)
     assert (
-        w.pages[0]["/Resources"]["/Font"].raw_get("/F2+0").idnum
-        != w.pages[0]["/Resources"]["/Font"].raw_get("/F2+0-0").idnum
+        writer.pages[0]["/Resources"]["/Font"].raw_get("/F2+0").idnum
+        != writer.pages[0]["/Resources"]["/Font"].raw_get("/F2+0-0").idnum
     )
-    w.add_blank_page(100, 100)
+    writer.add_blank_page(100, 100)
     for x in range(4):
         for y in range(7):
-            w.pages[1].merge_translated_page(
+            writer.pages[1].merge_translated_page(
                 r1.pages[0],
                 x * r1.pages[0].trimbox[2],
                 y * r1.pages[0].trimbox[3],
@@ -1127,10 +1127,10 @@ def test_merge_transformed_page_into_blank():
             )
     blank = PageObject.create_blank_page(width=100, height=100)
     assert blank.page_number == -1
-    inserted_blank = w.add_page(blank)
+    inserted_blank = writer.add_page(blank)
     assert blank.page_number == -1  # the inserted page is a clone
-    assert inserted_blank.page_number == len(w.pages) - 1
-    del w._pages.get_object()["/Kids"][-1]
+    assert inserted_blank.page_number == len(writer.pages) - 1
+    del writer._pages.get_object()["/Kids"][-1]
     assert inserted_blank.page_number == -1
 
 
