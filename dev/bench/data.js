@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687812595835,
+  "lastUpdate": 1687813358392,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -32318,6 +32318,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00040736988197615854",
             "extra": "mean: 95.1588471000008 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "112568273+talcher@users.noreply.github.com",
+            "name": "talcher",
+            "username": "talcher"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fcf5cca30bf5b44757ef7b36d60638e8343f8b57",
+          "message": "BUG: Add the TK.SIZE into the trailer (#1911)\n\nCloses #1901",
+          "timestamp": "2023-06-26T23:01:26+02:00",
+          "tree_id": "cee6090e6a43474594941b64947f0aa7e901609d",
+          "url": "https://github.com/py-pdf/pypdf/commit/fcf5cca30bf5b44757ef7b36d60638e8343f8b57"
+        },
+        "date": 1687813357010,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7276478774343265,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005723913495504798",
+            "extra": "mean: 1.3742910973999982 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.365256332403664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010151271673538543",
+            "extra": "mean: 87.98745674999726 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22802738247504006,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02151635735199349",
+            "extra": "mean: 4.385438227399993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.728234603231819,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021752887069806503",
+            "extra": "mean: 93.21198100000122 msec\nrounds: 11"
           }
         ]
       }
