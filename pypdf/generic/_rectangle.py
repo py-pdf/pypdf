@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple, Union
+from typing import Any, Tuple, Union
 
 from .._utils import deprecation_no_replacement, deprecation_with_replacement
 from ._base import FloatObject, NumberObject
