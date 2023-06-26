@@ -36,6 +36,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Pinheiro, Arthur](https://github.com/xilopaint)
 * [programmarchy](https://github.com/programmarchy)
 * [pubpub-zz](https://github.com/pubpub-zz): involved in community development
+* [Ramos, Leodanis Pozo](https://github.com/lpozo)
 * [RitchieP](https://github.com/RitchieP) | [LinkedIn](https://www.linkedin.com/in/ritchie-p-892b31115/) | [StackOverflow](https://stackoverflow.com/users/13328625/casual-r?tab=profile)
 * [Rogmann, Sascha](https://github.com/srogmann)
 * [robbiebusinessacc](https://github.com/robbiebusinessacc)
