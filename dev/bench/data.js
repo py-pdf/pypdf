@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687724952888,
+  "lastUpdate": 1687812126610,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -32214,6 +32214,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00035707013174436707",
             "extra": "mean: 103.6080536666696 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "poddararka27@gmail.com",
+            "name": "Arka Poddar",
+            "username": "postmeback"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2491783e7ed103247fa9c19f40301c7337799dd5",
+          "message": "MAINT: Adjust type annotations in _rectangle.py (#1920)\n\nThe setters lower_left / lower_right / upper_left / upper_right are now consistent with the getters.\r\n\r\nCloses #1842",
+          "timestamp": "2023-06-26T22:40:33+02:00",
+          "tree_id": "d0ffcc4287ea8efea237ebcc6241bdae12f0418f",
+          "url": "https://github.com/py-pdf/pypdf/commit/2491783e7ed103247fa9c19f40301c7337799dd5"
+        },
+        "date": 1687812124228,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5561241467698652,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014955710385064252",
+            "extra": "mean: 1.798159647999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.453326328118337,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012839515930959052",
+            "extra": "mean: 118.29662799999754 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18111457594024938,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0327389196217282",
+            "extra": "mean: 5.521366763599994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.951432988807078,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001528459132020956",
+            "extra": "mean: 111.71395700000275 msec\nrounds: 8"
           }
         ]
       }
