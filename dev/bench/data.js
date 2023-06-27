@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687844651754,
+  "lastUpdate": 1687844724130,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -32422,6 +32422,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0005047679209065526",
             "extra": "mean: 94.26903010000274 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "john.olheiser@gmail.com",
+            "name": "John Olheiser",
+            "username": "jolheiser"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ee5e303997cb8b1ab946a8f7dd47a0440ee20e41",
+          "message": "DOC: Fix typo in cropping-and-transforming.md (#1921)",
+          "timestamp": "2023-06-27T07:44:11+02:00",
+          "tree_id": "8cfadbcf8b4857378bbc0c3c826e3031227c8f28",
+          "url": "https://github.com/py-pdf/pypdf/commit/ee5e303997cb8b1ab946a8f7dd47a0440ee20e41"
+        },
+        "date": 1687844721894,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.768786494139196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007272301828494908",
+            "extra": "mean: 1.3007512588000025 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.533538447575015,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008342186266981444",
+            "extra": "mean: 86.70366033333465 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24691281779232532,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010666169760405715",
+            "extra": "mean: 4.0500125062000025 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.477210258488842,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005713716904690274",
+            "extra": "mean: 80.14612075000116 msec\nrounds: 12"
           }
         ]
       }
