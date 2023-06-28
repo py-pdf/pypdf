@@ -1439,3 +1439,17 @@ def test_iss1862():
     writer.append(BytesIO(get_pdf_from_url(url, name=name)))
     # check that "/B" is in the font
     writer.pages[0]["/Resources"]["/Font"]["/F1"]["/CharProcs"]["/B"].get_data()
+
+
+def test_empty_objects_before_cloning():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=reader)
+    nb_obj_reader = len(reader.xref_objStm) + sum(
+        len(reader.xref[i]) for i in reader.xref
+    )
+    nb_obj_reader -= 1  # for trailer
+    nb_obj_reader -= len(
+        {x: 1 for x, y in reader.xref_objStm.values()}
+    )  # to remove object streams
+    assert len(writer._objects) == nb_obj_reader
