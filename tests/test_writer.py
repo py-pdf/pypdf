@@ -607,6 +607,32 @@ def test_add_named_destination(pdf_file_path):
         writer.write(output_stream)
 
 
+def test_add_named_destination_sort_order(pdf_file_path):
+    """
+    This test is regression test for issue #1927
+
+    add_named_destination() maintains the named destination list sort order
+    """
+    writer = PdfWriter()
+
+    assert writer.get_named_dest_root() == []
+
+    writer.add_blank_page(200, 200)
+    writer.add_named_destination("b", 0)
+    # "a" should be moved before "b" on insert
+    writer.add_named_destination("a", 0)
+
+    root = writer.get_named_dest_root()
+
+    assert len(root) == 4
+    assert root[0] == "a", '"a" was not inserted before "b" in the named destination root'
+    assert root[2] == "b"
+
+    # write "output" to pypdf-output.pdf
+    with open(pdf_file_path, "wb") as output_stream:
+        writer.write(output_stream)
+
+
 def test_add_uri(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
