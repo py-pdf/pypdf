@@ -2451,6 +2451,47 @@ class _VirtualList(Sequence):
             raise IndexError("sequence index out of range")
         return self.get_function(index)
 
+    def __delitem__(self, index: Union[int, slice]) -> None:
+        if isinstance(index, slice):
+            r = list(range(*index.indices(len(self))))
+            # pages have to be deleted from last to first
+            r.sort()
+            r.reverse()
+            for p in r:
+                del self[p]
+            return
+        if not isinstance(index, int):
+            raise TypeError("index must be integers")
+        len_self = len(self)
+        if index < 0:
+            # support negative indexes
+            index = len_self + index
+        if index < 0 or index >= len_self:
+            raise IndexError("index out of range")
+        ind = self[index].indirect_reference
+        assert ind is not None
+        parent = cast(DictionaryObject, ind.get_object()).get("/Parent", None)
+        while parent is not None:
+            parent = cast(DictionaryObject, parent.get_object())
+            try:
+                i = parent["/Kids"].index(ind)
+                del parent["/Kids"][i]
+                try:
+                    assert ind is not None
+                    del ind.pdf.flattened_pages[index]  # case of page in a Reader
+                except AttributeError:
+                    pass
+                if "/Count" in parent:
+                    parent[NameObject("/Count")] = NumberObject(parent["/Count"] - 1)
+                if len(parent["/Kids"]) == 0:
+                    # No more objects in this part of this sub tree
+                    ind = parent.indirect_reference
+                    parent = cast(DictionaryObject, parent.get("/Parent", None))
+                else:
+                    parent = None
+            except ValueError:  # from index
+                raise PdfReadError(f"Page Not Found in Page Tree {ind}")
+
     def __iter__(self) -> Iterator[PageObject]:
         for i in range(len(self)):
             yield self[i]
