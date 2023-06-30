@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688140514639,
+  "lastUpdate": 1688146025823,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -32526,6 +32526,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006698073061859668",
             "extra": "mean: 97.54042720001621 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "115fbfc80aa3dfe61b07da7e1b251360febee56b",
+          "message": "ENH: Add page deletion feature to PdfWriter (#1843)\n\nNote: This does not delete the objects from the PDF, just the page entry",
+          "timestamp": "2023-06-30T19:25:53+02:00",
+          "tree_id": "6e56962b19328f354033a7ee409e7c5fbae78c82",
+          "url": "https://github.com/py-pdf/pypdf/commit/115fbfc80aa3dfe61b07da7e1b251360febee56b"
+        },
+        "date": 1688146023950,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7791820139239002,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0053454174494252885",
+            "extra": "mean: 1.2833971808000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.595950918128036,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008234269590723346",
+            "extra": "mean: 86.23699833333139 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24729741738285124,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01048123045636849",
+            "extra": "mean: 4.0437138834 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.14497088612094,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004828769389941429",
+            "extra": "mean: 82.33860825000268 msec\nrounds: 12"
           }
         ]
       }
