@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688147280273,
+  "lastUpdate": 1688147611939,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -32630,6 +32630,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0012416397719248724",
             "extra": "mean: 102.69265599999737 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "52675269+robertkearns@users.noreply.github.com",
+            "name": "Robert Kearns",
+            "username": "robertkearns"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "014de9bd84d485b1862c9da80ac503bc8f7d27e7",
+          "message": "Bug: add_named_destination() maintains named destination list sort order (#1930)\n\nTo quote the \"Table 36 – Entries in a name tree node dictionary\" the part about the `Names` key:\r\n\r\n> The keys shall be sorted in lexical order, as described below. [...]\r\n>\r\n> The Names entries in the leaf (or root) nodes shall contain the tree’s keys and their\r\nassociated values, arranged in key-value pairs and shall be sorted lexically in ascending order by key. Shorter\r\nkeys shall appear before longer ones beginning with the same byte sequence. Any encoding of the keys may\r\nbe used as long as it is self-consistent; keys shall be compared for equality on a simple byte-by-byte basis.\r\n\r\nFixes #1927",
+          "timestamp": "2023-06-30T19:52:15+02:00",
+          "tree_id": "f97c0062c3bab1d56852cd1496d79a5ccf394db8",
+          "url": "https://github.com/py-pdf/pypdf/commit/014de9bd84d485b1862c9da80ac503bc8f7d27e7"
+        },
+        "date": 1688147609637,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.728302354954551,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036970097439732626",
+            "extra": "mean: 1.3730561121999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.154290557584886,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01073079356827827",
+            "extra": "mean: 89.65160041666682 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22698543610865024,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006035169751417524",
+            "extra": "mean: 4.405568996600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.519217034268761,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004907962084360688",
+            "extra": "mean: 95.06410950000088 msec\nrounds: 10"
           }
         ]
       }
