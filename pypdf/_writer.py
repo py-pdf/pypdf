@@ -1997,10 +1997,10 @@ class PdfWriter:
         )
 
         dest_ref = self._add_object(dest)
-        nd = self.get_named_dest_root()
         if not isinstance(title, TextStringObject):
             title = TextStringObject(str(title))
-        nd.extend([title, dest_ref])
+
+        self.add_named_destination_array(title, dest_ref)
         return dest_ref
 
     def addNamedDestination(
