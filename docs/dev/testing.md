@@ -2,7 +2,7 @@
 
 pypdf uses [`pytest`](https://docs.pytest.org/en/7.1.x/) for testing.
 
-To run the tests you need to install the ci requirements by running `pip install -r requirements/ci.txt` or
+To run the tests you need to install the CI (Continuous Integration) requirements by running `pip install -r requirements/ci.txt` or
 `pip install -r requirements/ci-3.11.txt` if running python 3.11.
 
 ## De-selecting groups of tests
