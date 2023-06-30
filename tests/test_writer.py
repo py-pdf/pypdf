@@ -609,7 +609,7 @@ def test_add_named_destination(pdf_file_path):
 
 def test_add_named_destination_sort_order(pdf_file_path):
     """
-    This test is regression test for issue #1927
+    Issue #1927 does not appear.
 
     add_named_destination() maintains the named destination list sort order
     """
