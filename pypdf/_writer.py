@@ -1014,6 +1014,7 @@ class PdfWriter:
         Args:
             reader: PdfReader from the document root should be copied.
         """
+        self._objects.clear()
         self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT].clone(self))
         self._root = self._root_object.indirect_reference  # type: ignore[assignment]
         self._pages = self._root_object.raw_get("/Pages")
