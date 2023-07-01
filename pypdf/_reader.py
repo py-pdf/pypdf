@@ -644,7 +644,7 @@ class PdfReader:
                     if s not in states:
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
-            if obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0:
+            if obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0  and "/Off" in retval[key]["/_States_"]:
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
 
     def _check_kids(
