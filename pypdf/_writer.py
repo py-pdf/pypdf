@@ -1221,6 +1221,7 @@ class PdfWriter:
 
         if owner_password is None:
             owner_password = user_password
+
         if algorithm is not None:
             try:
                 alg = getattr(EncryptAlgorithm, algorithm.replace("-", "_"))
@@ -1296,8 +1297,6 @@ class PdfWriter:
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
 
         for i, obj in enumerate(self._objects):
-            obj = self._objects[i]
-            # If the obj is None we can't write anything
             if obj is not None:
                 idnum = i + 1
                 object_positions.append(stream.tell())

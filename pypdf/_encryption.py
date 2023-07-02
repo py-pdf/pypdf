@@ -959,7 +959,6 @@ class Encryption:
         self.R = R
         self.Length = Length  # key_size
         self.P = (P + 0x100000000) % 0x100000000  # maybe P < 0
-        self.entry = entry
         self.EncryptMetadata = EncryptMetadata
         self.id1_entry = first_id_entry
         self.StmF = StmF
