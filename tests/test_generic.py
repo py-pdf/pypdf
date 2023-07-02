@@ -250,7 +250,10 @@ def test_destination_fit_r():
 
 
 def test_destination_fit_v():
-    Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
+    d = Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
+
+    writer = PdfWriter()
+    writer.add_named_destination_object(d)
 
     # Trigger Exception
     Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=None))
@@ -1077,7 +1080,7 @@ def test_cloning(caplog):
     writer = PdfWriter()
     with pytest.raises(Exception) as exc:
         PdfObject().clone(writer)
-    assert "clone PdfObject" in exc.value.args[0]
+    assert "PdfObject does not implement .clone so far" in exc.value.args[0]
 
     obj1 = DictionaryObject()
     obj1.indirect_reference = None
@@ -1169,6 +1172,10 @@ def test_destination_withoutzoom():
     name = "2021_book_security.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.outline
+
+    out = BytesIO()
+    writer = PdfWriter(clone_from=reader)
+    writer.write(out)
 
 
 def test_encodedstream_set_data():

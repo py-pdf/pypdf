@@ -39,6 +39,7 @@ from .._utils import (
     WHITESPACES,
     StreamType,
     b_,
+    deprecate_no_replacement,
     deprecate_with_replacement,
     deprecation_with_replacement,
     logger_warning,
@@ -109,12 +110,24 @@ class ArrayObject(list, PdfObject):
         """Emulate DictionaryObject.items for a list (index, object)."""
         return enumerate(self)
 
-    def write_to_stream(self, stream: StreamType) -> None:
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+    ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"[")
         for data in self:
             stream.write(b" ")
             data.write_to_stream(stream)
         stream.write(b" ]")
+
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:  # deprecated
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
+        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(
@@ -342,7 +355,13 @@ class DictionaryObject(dict, PdfObject):
         deprecation_with_replacement("xmpMetadata", "xmp_metadata", "3.0.0")
         return self.xmp_metadata
 
-    def write_to_stream(self, stream: StreamType) -> None:
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+    ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"<<\n")
         for key, value in list(self.items()):
             key.write_to_stream(stream)
@@ -350,6 +369,12 @@ class DictionaryObject(dict, PdfObject):
             value.write_to_stream(stream)
             stream.write(b"\n")
         stream.write(b">>")
+
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:  # deprecated
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
+        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(
@@ -779,7 +804,13 @@ class StreamObject(DictionaryObject):
     def _data(self, value: Any) -> None:
         self.__data = value
 
-    def write_to_stream(self, stream: StreamType) -> None:
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+    ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.write_to_stream(self, stream)
         del self[SA.LENGTH]
@@ -1428,7 +1459,13 @@ class Destination(TreeObject):
         deprecation_with_replacement("getDestArray", "dest_array", "3.0.0")
         return self.dest_array
 
-    def write_to_stream(self, stream: StreamType) -> None:
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+    ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"<<\n")
         key = NameObject("/D")
         key.write_to_stream(stream)
