@@ -447,7 +447,9 @@ class ByteStringObject(bytes, PdfObject):
         """For compatibility with TextStringObject.original_bytes."""
         return self
 
-    def write_to_stream(self, stream: StreamType) -> None:
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+    ) -> None:
         stream.write(b"<")
         stream.write(binascii.hexlify(self))
         stream.write(b">")
@@ -514,7 +516,6 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
     def write_to_stream(self, stream: StreamType) -> None:
         bytearr = self.get_encoded_bytes()
-
         stream.write(b"(")
         for c in bytearr:
             if not chr(c).isalnum() and c != b" ":
@@ -526,6 +527,12 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
             else:
                 stream.write(b_(chr(c)))
         stream.write(b")")
+
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:  # deprecated
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
+        self.write_to_stream(stream, encryption_key)
 
 
 class NameObject(str, PdfObject):  # noqa: SLOT000
