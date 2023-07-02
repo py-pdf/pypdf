@@ -802,12 +802,7 @@ class StreamObject(DictionaryObject):
         DictionaryObject.write_to_stream(self, stream, encryption_key)
         del self[SA.LENGTH]
         stream.write(b"\nstream\n")
-        data = self._data
-        if encryption_key:
-            from .._security import RC4_encrypt
-
-            data = RC4_encrypt(encryption_key, data)
-        stream.write(data)
+        stream.write(self._data)
         stream.write(b"\nendstream")
 
     @staticmethod
