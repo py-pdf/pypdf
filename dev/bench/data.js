@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688333270594,
+  "lastUpdate": 1688333457075,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -32942,6 +32942,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0007237566845231555",
             "extra": "mean: 80.9418658333314 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "8963a5705af0cb70cc267b933d2ee74a862c65bb",
+          "message": "REL: 3.12.0\n\nNew Features (ENH):\n-  Add AES support for encrypting PDF files (#1918, #1935, #1936, #1938)\n-  Add page deletion feature to PdfWriter (#1843)\n\nBug Fixes (BUG):\n-  PdfReader.get_fields() attempts to delete non-existing index \"/Off\" (#1933)\n-  Remove unused objects when cloning_from (#1926)\n-  Add the TK.SIZE into the trailer (#1911)\n-  add_named_destination() maintains named destination list sort order (#1930)",
+          "timestamp": "2023-07-02T23:29:15+02:00",
+          "tree_id": "e66c09a9b37319ffb77e36ff37f1546adbd6ef6c",
+          "url": "https://github.com/py-pdf/pypdf/commit/8963a5705af0cb70cc267b933d2ee74a862c65bb"
+        },
+        "date": 1688333455528,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7624604261003763,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004898743253692691",
+            "extra": "mean: 1.3115434791999974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.306341094696611,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008688396612817203",
+            "extra": "mean: 88.44594299999169 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24379582406605196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02275116147309578",
+            "extra": "mean: 4.101792981199992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.944761902482469,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003876700151391886",
+            "extra": "mean: 83.71870516666984 msec\nrounds: 12"
           }
         ]
       }
