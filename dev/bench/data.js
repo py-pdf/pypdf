@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688304118067,
+  "lastUpdate": 1688307298287,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -32786,6 +32786,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004332724358385039",
             "extra": "mean: 93.07959544444897 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c3279f7604cdb5a075f1458c2fc2460855267a5b",
+          "message": "MAINT: Remove private _security submodule (#1935)\n\nThis PR was made to avoid breaking changes the original PR introduced.\r\nWe want to remove the outdated parameters, but not at the moment.\r\nSee https://pypdf.readthedocs.io/en/latest/dev/deprecations.html\r\n\r\nFull credit for the work goes to exiledkingcc via PR #1816\r\n\r\nCo-authored-by: exiledkingcc <exiledkingcc@gmail.com>",
+          "timestamp": "2023-07-02T16:13:29+02:00",
+          "tree_id": "87b3912cc477eaa6453b421a9a2a9993427c4f0b",
+          "url": "https://github.com/py-pdf/pypdf/commit/c3279f7604cdb5a075f1458c2fc2460855267a5b"
+        },
+        "date": 1688307296113,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6284783689964272,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02106457640867029",
+            "extra": "mean: 1.591144658799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.586978714968886,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014018726763795236",
+            "extra": "mean: 104.30814855556353 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18889791339351145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12252598386391801",
+            "extra": "mean: 5.293864723200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.92636629424025,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004548154663384119",
+            "extra": "mean: 100.74179920000006 msec\nrounds: 10"
           }
         ]
       }
