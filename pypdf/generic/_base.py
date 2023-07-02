@@ -169,7 +169,7 @@ class NullObject(PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
@@ -227,7 +227,7 @@ class BooleanObject(PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
@@ -324,7 +324,7 @@ class IndirectObject(PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
@@ -414,7 +414,7 @@ class FloatObject(float, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
@@ -455,7 +455,7 @@ class NumberObject(int, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
@@ -513,7 +513,7 @@ class ByteStringObject(bytes, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
@@ -590,7 +590,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
@@ -640,7 +640,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )

@@ -113,7 +113,7 @@ class ArrayObject(list, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
@@ -358,7 +358,7 @@ class DictionaryObject(dict, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
@@ -807,7 +807,7 @@ class StreamObject(DictionaryObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
@@ -1462,7 +1462,7 @@ class Destination(TreeObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        if encryption_key is not None:
+        if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
