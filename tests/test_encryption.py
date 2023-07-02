@@ -260,7 +260,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
             writer.encrypt(
                 user_password=user_password,
                 owner_password=owner_password,
-                algorithm=alg
+                algorithm=alg,
             )
         assert exc.value.args[0] == "algorithm 'ABCD' NOT supported"
         return
@@ -270,7 +270,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
             writer.encrypt(
                 user_password=user_password,
                 owner_password=owner_password,
-                algorithm=alg
+                algorithm=alg,
             )
             with open(pdf_file_path, "wb") as output_stream:
                 writer.write(output_stream)
@@ -278,9 +278,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
         return
 
     writer.encrypt(
-        user_password=user_password,
-        owner_password=owner_password,
-        algorithm=alg
+        user_password=user_password, owner_password=owner_password, algorithm=alg
     )
     with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
@@ -296,7 +294,8 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
 
 
 @pytest.mark.parametrize(
-    "count", [1, 2, 3, 4, 5, 10],
+    "count",
+    [1, 2, 3, 4, 5, 10],
 )
 def test_pdf_encrypt_multiple(pdf_file_path, count):
     user_password = secrets.token_urlsafe(10)
@@ -316,7 +315,7 @@ def test_pdf_encrypt_multiple(pdf_file_path, count):
         writer.encrypt(
             user_password=user_password,
             owner_password=owner_password,
-            algorithm="RC4-128"
+            algorithm="RC4-128",
         )
     with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)

@@ -485,7 +485,18 @@ class PdfWriter:
 
     @property
     def pages(self) -> List[PageObject]:
-        """Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`."""
+        """
+        Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`.
+        this property allows to get a page or  a range of pages.
+
+        It provides also capability to remove a page/range of page from the list
+        (through del operator)
+        Note: only the page entry is removed. As the objects beneath can be used
+        somewhere else.
+        a solution to completely remove them - if they are not used somewhere -
+        is to write to a buffer/temporary and to then load it into a new PdfWriter
+        object.
+        """
         return _VirtualList(self._get_num_pages, self.get_page)  # type: ignore
 
     def add_blank_page(
@@ -1001,6 +1012,7 @@ class PdfWriter:
         Args:
             reader: PdfReader from the document root should be copied.
         """
+        self._objects.clear()
         self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT].clone(self))
         self._root = self._root_object.indirect_reference  # type: ignore[assignment]
         self._pages = self._root_object.raw_get("/Pages")
@@ -1969,10 +1981,10 @@ class PdfWriter:
         )
 
         dest_ref = self._add_object(dest)
-        nd = self.get_named_dest_root()
         if not isinstance(title, TextStringObject):
             title = TextStringObject(str(title))
-        nd.extend([title, dest_ref])
+
+        self.add_named_destination_array(title, dest_ref)
         return dest_ref
 
     def addNamedDestination(

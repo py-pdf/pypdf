@@ -50,6 +50,8 @@ def test_get_num_pages(src, num_pages):
     src = RESOURCE_ROOT / src
     reader = PdfReader(src)
     assert len(reader.pages) == num_pages
+    # from #1911
+    assert "/Size" in reader.trailer
 
 
 @pytest.mark.parametrize(

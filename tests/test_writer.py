@@ -490,6 +490,21 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     orig_text = page.extract_text()
 
     writer.add_page(page)
+
+    with pytest.raises(ValueError, match="owner_pwd of encrypt is deprecated."):
+        writer.encrypt(
+            owner_pwd=user_password,
+            owner_password=owner_password,
+            user_password=user_password,
+            use_128bit=use_128bit,
+        )
+    with pytest.raises(ValueError, match="'user_pwd' argument is deprecated"):
+        writer.encrypt(
+            owner_password=owner_password,
+            user_password=user_password,
+            user_pwd=user_password,
+            use_128bit=use_128bit,
+        )
     writer.encrypt(
         user_password=user_password,
         owner_password=owner_password,
@@ -585,6 +600,32 @@ def test_add_named_destination(pdf_file_path):
     with pytest.raises(ValueError) as exc:
         writer.get_object(reader.pages[0].indirect_reference)
     assert exc.value.args[0] == "pdf must be self"
+
+    # write "output" to pypdf-output.pdf
+    with open(pdf_file_path, "wb") as output_stream:
+        writer.write(output_stream)
+
+
+def test_add_named_destination_sort_order(pdf_file_path):
+    """
+    Issue #1927 does not appear.
+
+    add_named_destination() maintains the named destination list sort order
+    """
+    writer = PdfWriter()
+
+    assert writer.get_named_dest_root() == []
+
+    writer.add_blank_page(200, 200)
+    writer.add_named_destination("b", 0)
+    # "a" should be moved before "b" on insert
+    writer.add_named_destination("a", 0)
+
+    root = writer.get_named_dest_root()
+
+    assert len(root) == 4
+    assert root[0] == "a", '"a" was not inserted before "b" in the named destination root'
+    assert root[2] == "b"
 
     # write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
@@ -1423,3 +1464,17 @@ def test_iss1862():
     writer.append(BytesIO(get_pdf_from_url(url, name=name)))
     # check that "/B" is in the font
     writer.pages[0]["/Resources"]["/Font"]["/F1"]["/CharProcs"]["/B"].get_data()
+
+
+def test_empty_objects_before_cloning():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=reader)
+    nb_obj_reader = len(reader.xref_objStm) + sum(
+        len(reader.xref[i]) for i in reader.xref
+    )
+    nb_obj_reader -= 1  # for trailer
+    nb_obj_reader -= len(
+        {x: 1 for x, y in reader.xref_objStm.values()}
+    )  # to remove object streams
+    assert len(writer._objects) == nb_obj_reader

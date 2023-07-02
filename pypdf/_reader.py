@@ -644,7 +644,7 @@ class PdfReader:
                     if s not in states:
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
-            if obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0:
+            if obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0  and "/Off" in retval[key]["/_States_"]:
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
 
     def _check_kids(
@@ -1767,7 +1767,7 @@ class PdfReader:
                         break
                     else:
                         raise PdfReadError(f"trailer can not be read {e.args}")
-                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
+                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE
                 for key in trailer_keys:
                     if key in xrefstream and key not in self.trailer:
                         self.trailer[NameObject(key)] = xrefstream.raw_get(key)

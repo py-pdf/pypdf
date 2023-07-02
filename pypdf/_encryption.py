@@ -1272,36 +1272,8 @@ class Encryption:
             values=values,
             StrF=StrF,
             StmF=StmF,
-            EFF=EFF
-        )
-
-    @staticmethod
-    def make(
-        alg: EncryptAlgorithm,
-        permissions: int,
-        first_id_entry: bytes
-    ) -> "Encryption":
-        V, R, Length = cast(tuple, alg)
-        P = permissions
-
-        StmF, StrF, EFF = "/V2", "/V2", "/V2"
-
-        if alg == EncryptAlgorithm.AES_128:
-            StmF, StrF, EFF = "/AESV2", "/AESV2", "/AESV2"
-        elif alg in (EncryptAlgorithm.AES_256_R5, EncryptAlgorithm.AES_256):
-            StmF, StrF, EFF = "/AESV3", "/AESV3", "/AESV3"
-
-        return Encryption(
-            V=V,
-            R=R,
-            Length=Length,
-            P=P,
-            EncryptMetadata=True,
-            first_id_entry=first_id_entry,
-            values=None,
-            StrF=StrF,
-            StmF=StmF,
             EFF=EFF,
+            entry=encryption_entry,  # Dummy entry for the moment; will get removed
         )
 
     @staticmethod
