@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 3.12.0, 2023-07-02
+
+### New Features (ENH)
+-  Add AES support for encrypting PDF files (#1918, #1935, #1936, #1938)
+-  Add page deletion feature to PdfWriter (#1843)
+
+### Bug Fixes (BUG)
+-  PdfReader.get_fields() attempts to delete non-existing index "/Off" (#1933)
+-  Remove unused objects when cloning_from (#1926)
+-  Add the TK.SIZE into the trailer (#1911)
+-  add_named_destination() maintains named destination list sort order (#1930)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.11.1...3.12.0)
+
 ## Version 3.11.1, 2023-06-25
 
 ### Bug Fixes (BUG)
