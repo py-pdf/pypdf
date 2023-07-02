@@ -302,7 +302,7 @@ def test_read_object_comment():
 def test_bytestringobject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")
-    bo.write_to_stream(stream, encryption_key="foobar")
+    bo.write_to_stream(stream)
     stream.seek(0, 0)
     assert stream.read() == b"<73747265616d>"  # TODO: how can we verify this?
 
