@@ -1273,10 +1273,10 @@ class Encryption:
             EncryptMetadata=EncryptMetadata,
             first_id_entry=first_id_entry,
             values=values,
-            StmF=StmF,
             StrF=StrF,
+            StmF=StmF,
             EFF=EFF,
-            entry=encryption_entry,  # can be deleted?
+            entry=encryption_entry,  # Dummy entry for the moment; will get removed
         )
 
     @staticmethod
