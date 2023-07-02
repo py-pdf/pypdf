@@ -94,7 +94,9 @@ class PdfObject(PdfObjectProtocol):
         Returns:
           The cloned PdfObject
         """
-        raise Exception("clone PdfObject")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement .clone so far"
+        )
 
     def _reference_clone(
         self, clone: Any, pdf_dest: PdfWriterProtocol, force_duplicate: bool = False
