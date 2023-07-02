@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688196191253,
+  "lastUpdate": 1688304118067,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -32734,6 +32734,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00496742843372427",
             "extra": "mean: 105.70920644444628 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "71be38bf5ef9684ab94dbf728b5e10f80acd9c00",
+          "message": "ENH: Add AES support for encrypting PDF files (#1918)\n\n* PdfWriter.encrypt: Add 'algorithm' parameter\r\n* PdfWriter: Add _encryption property\r\n* PdfWriter: Add _encrypt_entry property\r\n\r\nThis change was made in #1816 to avoid merge conflicts /\r\nget it merged soon.\r\n\r\nFull credit for the work goes to exiledkingcc\r\nwho did all of the work in #1816\r\n\r\nCo-authored-by: exiledkingcc <exiledkingcc@gmail.com>",
+          "timestamp": "2023-07-02T15:20:36+02:00",
+          "tree_id": "f46f1c53589ab9a89a878a3f023a58d19cad38f2",
+          "url": "https://github.com/py-pdf/pypdf/commit/71be38bf5ef9684ab94dbf728b5e10f80acd9c00"
+        },
+        "date": 1688304115899,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6742315714177477,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0283994787143329",
+            "extra": "mean: 1.4831699410000028 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.562717287887427,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01022546271709544",
+            "extra": "mean: 104.57278719999863 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21672180742513217,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05753013569721297",
+            "extra": "mean: 4.6142103182000085 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.743493192305634,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004332724358385039",
+            "extra": "mean: 93.07959544444897 msec\nrounds: 9"
           }
         ]
       }
