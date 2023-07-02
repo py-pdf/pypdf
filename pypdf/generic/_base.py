@@ -492,13 +492,8 @@ class ByteStringObject(bytes, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        bytearr = self
-        if encryption_key:
-            from .._security import RC4_encrypt
-
-            bytearr = RC4_encrypt(encryption_key, bytearr)  # type: ignore
         stream.write(b"<")
-        stream.write(binascii.hexlify(bytearr))
+        stream.write(binascii.hexlify(self))
         stream.write(b">")
 
     def writeToStream(
@@ -571,24 +566,17 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         bytearr = self.get_encoded_bytes()
-        if encryption_key:
-            from .._security import RC4_encrypt
-
-            bytearr = RC4_encrypt(encryption_key, bytearr)
-            obj = ByteStringObject(bytearr)
-            obj.write_to_stream(stream)
-        else:
-            stream.write(b"(")
-            for c in bytearr:
-                if not chr(c).isalnum() and c != b" ":
-                    # This:
-                    #   stream.write(b_(rf"\{c:0>3o}"))
-                    # gives
-                    #   https://github.com/davidhalter/parso/issues/207
-                    stream.write(b_("\\%03o" % c))
-                else:
-                    stream.write(b_(chr(c)))
-            stream.write(b")")
+        stream.write(b"(")
+        for c in bytearr:
+            if not chr(c).isalnum() and c != b" ":
+                # This:
+                #   stream.write(b_(rf"\{c:0>3o}"))
+                # gives
+                #   https://github.com/davidhalter/parso/issues/207
+                stream.write(b_("\\%03o" % c))
+            else:
+                stream.write(b_(chr(c)))
+        stream.write(b")")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
