@@ -29,12 +29,12 @@ def stamp(
     if page_indices == "ALL":
         page_indices = list(range(0, len(reader.pages)))
     for index in page_indices:
-        content_page = reader.pages[index]
+        writer.append(reader.pages[index])
+    for content_page in writer.pages:
         content_page.merge_transformed_page(
             stamp_page,
             Transformation(),
         )
-        writer.add_page(content_page)
 
     with open(pdf_result, "wb") as fp:
         writer.write(fp)
@@ -68,13 +68,13 @@ def watermark(
     writer = PdfWriter()
     watermark_page = PdfReader(stamp_pdf).pages[0]
     for index in page_indices:
-        content_page = reader.pages[index]
+        writer.append(reader.pages[index])
+    for content_page in writer.pages:
         content_page.merge_transformed_page(
             watermark_page,
             Transformation(),
             over=False,
         )
-        writer.add_page(content_page)
 
     with open(pdf_result, "wb") as fp:
         writer.write(fp)
@@ -112,12 +112,12 @@ def stamp_img(
     if page_indices == "ALL":
         page_indices = list(range(0, len(reader.pages)))
     for index in page_indices:
-        content_page = reader.pages[index]
+        writer.append(reader.pages[index])
+    for content_page in writer.pages:
         content_page.merge_transformed_page(
             stamp_page,
             Transformation(),
         )
-        writer.add_page(content_page)
 
     with open(pdf_result, "wb") as fp:
         writer.write(fp)
