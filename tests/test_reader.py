@@ -125,6 +125,8 @@ def test_iss1943():
     docinfo.creation_date_raw
     docinfo.modification_date
     docinfo.modification_date_raw
+    docinfo.update({NameObject("/CreationDate"): NumberObject(1)})
+    assert docinfo.creation_date is None
 
 
 @pytest.mark.samples()
