@@ -81,3 +81,44 @@ def watermark(
 ```
 
 ![watermark.png](watermark.png)
+
+## Stamping images not in PDF format
+
+The above code only works for images that are already in PDF format. However, you can easilly convert an image to PDF image using [Pillow](https://pypi.org/project/Pillow/).
+
+```python
+from PIL import Image
+from io import BytesIO
+from pypdf import PdfWriter, PdfReader, Transformation
+
+def stamp_img(
+    content_pdf: Path,
+    stamp_img: Path,
+    pdf_result: Path,
+    page_indices: Union[Literal["ALL"], List[int]] = "ALL",
+):
+    # Convert the image to a PDF
+    img = Image.open(stamp_img)
+    img_as_pdf = BytesIO()
+    img.save(img_as_pdf, 'pdf')
+    stamp_pdf = PdfReader(img_as_pdf)
+
+    # Then use the same stamp code from above
+    stamp_page = stamp_pdf.pages[0]
+
+    writer = PdfWriter()
+
+    reader = PdfReader(content_pdf)
+    if page_indices == "ALL":
+        page_indices = list(range(0, len(reader.pages)))
+    for index in page_indices:
+        content_page = reader.pages[index]
+        content_page.merge_transformed_page(
+            stamp_page,
+            Transformation(),
+        )
+        writer.add_page(content_page)
+
+    with open(pdf_result, "wb") as fp:
+        writer.write(fp)
+```
