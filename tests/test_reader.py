@@ -112,6 +112,23 @@ def test_read_metadata(pdf_path, expected):
             assert metadict["/Title"] == docinfo.title
 
 
+def test_iss1943():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    docinfo = reader.metadata
+    docinfo.update(
+        {
+            NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
+            NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
+        }
+    )
+    docinfo.creation_date
+    docinfo.creation_date_raw
+    docinfo.modification_date
+    docinfo.modification_date_raw
+    docinfo.update({NameObject("/CreationDate"): NumberObject(1)})
+    assert docinfo.creation_date is None
+
+
 @pytest.mark.samples()
 @pytest.mark.parametrize(
     "pdf_path", [SAMPLE_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
