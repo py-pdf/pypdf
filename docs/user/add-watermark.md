@@ -10,26 +10,23 @@ Using the ``Transformation()`` class, one can translate, rotate, scale, etc. the
 
 ```python
 from pathlib import Path
-from typing import Union, Literal, List
+from typing import Union, List
 
-from pypdf import PdfWriter, PdfReader
+from pypdf import PdfWriter, PdfReader, PageRange
 
 
 def stamp(
     content_pdf: Path,
     stamp_pdf: Path,
     pdf_result: Path,
-    page_indices: Union[Literal["ALL"], List[int]] = "ALL",
+    page_indices: Union[PageRange, List[int]] = None,
 ):
     stamp_page = PdfReader(stamp_pdf).pages[0]
 
     writer = PdfWriter()
 
     reader = PdfReader(content_pdf)
-    if page_indices == "ALL":
-        page_indices = list(range(0, len(reader.pages)))
-    for index in page_indices:
-        writer.append(reader.pages[index])
+    writer.append(reader, pages=page_indices)
     for content_page in writer.pages:
         content_page.merge_transformed_page(
             stamp_page,
@@ -50,25 +47,23 @@ Once again, watermark size and position (and more) can be customized using the `
 
 ```python
 from pathlib import Path
-from typing import Union, Literal, List
+from typing import Union, List
 
-from pypdf import PdfWriter, PdfReader, Transformation
+from pypdf import PdfWriter, PdfReader, Transformation, PageRange
 
 
 def watermark(
     content_pdf: Path,
     stamp_pdf: Path,
     pdf_result: Path,
-    page_indices: Union[Literal["ALL"], List[int]] = "ALL",
+    page_indices: Union[PageRange, List[int]] = None,
 ):
     reader = PdfReader(content_pdf)
-    if page_indices == "ALL":
-        page_indices = range(len(reader.pages))
+
 
     writer = PdfWriter()
+    writer.append(reader, pages=page_indices)
     watermark_page = PdfReader(stamp_pdf).pages[0]
-    for index in page_indices:
-        writer.append(reader.pages[index])
     for content_page in writer.pages:
         content_page.merge_transformed_page(
             watermark_page,
@@ -89,13 +84,15 @@ The above code only works for images that are already in PDF format. However, yo
 ```python
 from PIL import Image
 from io import BytesIO
+from pathlib import Path
+from typing import Union, List
 from pypdf import PdfWriter, PdfReader, Transformation
 
 def stamp_img(
     content_pdf: Path,
     stamp_img: Path,
     pdf_result: Path,
-    page_indices: Union[Literal["ALL"], List[int]] = "ALL",
+    page_indices: Union[PageRange, List[int]] = None,
 ):
     # Convert the image to a PDF
     img = Image.open(stamp_img)
@@ -109,10 +106,7 @@ def stamp_img(
     writer = PdfWriter()
 
     reader = PdfReader(content_pdf)
-    if page_indices == "ALL":
-        page_indices = list(range(0, len(reader.pages)))
-    for index in page_indices:
-        writer.append(reader.pages[index])
+    writer.append(reader, pages=page_indices)
     for content_page in writer.pages:
         content_page.merge_transformed_page(
             stamp_page,
