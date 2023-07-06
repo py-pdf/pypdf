@@ -30,13 +30,14 @@ import hashlib
 import re
 from binascii import unhexlify
 from math import log10
-from typing import Any, Callable, Optional, Sequence, Union, cast
+from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
     b_,
+    deprecate_no_replacement,
     deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
@@ -93,7 +94,9 @@ class PdfObject(PdfObjectProtocol):
         Returns:
           The cloned PdfObject
         """
-        raise Exception("clone PdfObject")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement .clone so far"
+        )
 
     def _reference_clone(
         self, clone: Any, pdf_dest: PdfWriterProtocol, force_duplicate: bool = False
@@ -168,6 +171,10 @@ class NullObject(PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"null")
 
     @staticmethod
@@ -181,7 +188,7 @@ class NullObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
     def __repr__(self) -> str:
         return "NullObject"
@@ -222,6 +229,10 @@ class BooleanObject(PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         if self.value:
             stream.write(b"true")
         else:
@@ -231,7 +242,7 @@ class BooleanObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(stream: StreamType) -> "BooleanObject":
@@ -315,13 +326,17 @@ class IndirectObject(PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
@@ -401,13 +416,17 @@ class FloatObject(float, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(self.myrepr().encode("utf8"))
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
 
 class NumberObject(int, PdfObject):
@@ -438,13 +457,17 @@ class NumberObject(int, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(repr(self).encode("utf8"))
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(stream: StreamType) -> Union["NumberObject", "FloatObject"]:
@@ -492,23 +515,22 @@ class ByteStringObject(bytes, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        bytearr = self
-        if encryption_key:
-            from .._security import RC4_encrypt
-
-            bytearr = RC4_encrypt(encryption_key, bytearr)  # type: ignore
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"<")
-        stream.write(binascii.hexlify(bytearr))
+        stream.write(binascii.hexlify(self))
         stream.write(b">")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
 
-class TextStringObject(str, PdfObject):
+class TextStringObject(str, PdfObject):  # noqa: SLOT000
     """
     A string object that has been decoded into a real unicode string.
 
@@ -557,9 +579,7 @@ class TextStringObject(str, PdfObject):
         else:
             raise Exception("no information about original bytes")
 
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
-    ) -> None:
+    def get_encoded_bytes(self) -> bytes:
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
         # here for trying...
@@ -567,36 +587,39 @@ class TextStringObject(str, PdfObject):
             bytearr = encode_pdfdocencoding(self)
         except UnicodeEncodeError:
             bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
-        if encryption_key:
-            from .._security import RC4_encrypt
+        return bytearr
 
-            bytearr = RC4_encrypt(encryption_key, bytearr)
-            obj = ByteStringObject(bytearr)
-            obj.write_to_stream(stream)
-        else:
-            stream.write(b"(")
-            for c in bytearr:
-                if not chr(c).isalnum() and c != b" ":
-                    # This:
-                    #   stream.write(b_(rf"\{c:0>3o}"))
-                    # gives
-                    #   https://github.com/davidhalter/parso/issues/207
-                    stream.write(b_("\\%03o" % c))
-                else:
-                    stream.write(b_(chr(c)))
-            stream.write(b")")
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+    ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
+        bytearr = self.get_encoded_bytes()
+        stream.write(b"(")
+        for c in bytearr:
+            if not chr(c).isalnum() and c != b" ":
+                # This:
+                #   stream.write(b_(rf"\{c:0>3o}"))
+                # gives
+                #   https://github.com/davidhalter/parso/issues/207
+                stream.write(b_("\\%03o" % c))
+            else:
+                stream.write(b_(chr(c)))
+        stream.write(b")")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
 
-class NameObject(str, PdfObject):
+class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     surfix = b"/"
-    renumber_table = {
+    renumber_table: ClassVar[Dict[str, bytes]] = {
         "#": b"#23",
         "(": b"#28",
         ")": b"#29",
@@ -619,13 +642,17 @@ class NameObject(str, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(self.renumber())  # b_(renumber(self)))
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")

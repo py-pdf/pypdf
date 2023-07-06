@@ -176,7 +176,7 @@ page.artbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
 
 ### Scaling the content
 
-The content is scaled towords the origin of the coordinate system. Typically,
+The content is scaled towards the origin of the coordinate system. Typically,
 that is the lower-left corner.
 
 ```python

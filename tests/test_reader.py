@@ -50,6 +50,8 @@ def test_get_num_pages(src, num_pages):
     src = RESOURCE_ROOT / src
     reader = PdfReader(src)
     assert len(reader.pages) == num_pages
+    # from #1911
+    assert "/Size" in reader.trailer
 
 
 @pytest.mark.parametrize(
@@ -108,6 +110,23 @@ def test_read_metadata(pdf_path, expected):
         docinfo.modification_date_raw
         if "/Title" in metadict:
             assert metadict["/Title"] == docinfo.title
+
+
+def test_iss1943():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    docinfo = reader.metadata
+    docinfo.update(
+        {
+            NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
+            NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
+        }
+    )
+    docinfo.creation_date
+    docinfo.creation_date_raw
+    docinfo.modification_date
+    docinfo.modification_date_raw
+    docinfo.update({NameObject("/CreationDate"): NumberObject(1)})
+    assert docinfo.creation_date is None
 
 
 @pytest.mark.samples()
@@ -1346,24 +1365,24 @@ def test_iss1652():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10818844/tt.pdf"
     name = "invalidNamesDest.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.named_destinations
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.named_destinations
 
 
 @pytest.mark.enable_socket()
 def test_iss1689():
     url = "https://github.com/py-pdf/pypdf/files/10948283/error_file_without_data.pdf"
     name = "iss1689.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.pages[0]
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0]
 
 
 @pytest.mark.enable_socket()
 def test_iss1710():
     url = "https://nlp.stanford.edu/IR-book/pdf/irbookonlinereading.pdf"
     name = "irbookonlinereading.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.outline
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.outline
 
 
 def test_broken_file_header():
@@ -1404,9 +1423,9 @@ def test_broken_file_header():
 def test_iss1756():
     url = "https://github.com/py-pdf/pypdf/files/11105591/641-Attachment-B-Pediatric-Cardiac-Arrest-8-1-2019.pdf"
     name = "iss1756.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.trailer["/ID"]
-    # removed to cope with missing cryptodome during commit check : len(in_pdf.pages)
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.trailer["/ID"]
+    # removed to cope with missing cryptodome during commit check : len(reader.pages)
 
 
 @pytest.mark.enable_socket()

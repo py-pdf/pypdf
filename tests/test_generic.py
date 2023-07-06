@@ -250,7 +250,10 @@ def test_destination_fit_r():
 
 
 def test_destination_fit_v():
-    Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
+    d = Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
+
+    writer = PdfWriter()
+    writer.add_named_destination_object(d)
 
     # Trigger Exception
     Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=None))
@@ -302,9 +305,9 @@ def test_read_object_comment():
 def test_bytestringobject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")
-    bo.write_to_stream(stream, encryption_key="foobar")
+    bo.write_to_stream(stream)
     stream.seek(0, 0)
-    assert stream.read() == b"<1cdd628b972e>"  # TODO: how can we verify this?
+    assert stream.read() == b"<73747265616d>"  # TODO: how can we verify this?
 
 
 def test_dictionaryobject_key_is_no_pdfobject():
@@ -1048,6 +1051,22 @@ def test_indirect_object_invalid_read():
     assert exc.value.args[0] == "Error reading indirect object reference at byte 0x5"
 
 
+def test_create_string_object_utf16be_bom():
+    result = create_string_object(
+        b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
+    )
+    assert result == "PaperPort 14\x00"
+    assert result.autodetect_utf16 is True
+
+
+def test_create_string_object_utf16le_bom():
+    result = create_string_object(
+        b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
+    assert result == "PaperPort 14\x00"
+    assert result.autodetect_utf16 is True
+
+
 def test_create_string_object_force():
     assert create_string_object(b"Hello World", []) == "Hello World"
     assert create_string_object(b"Hello World", {72: "A"}) == "Aello World"
@@ -1093,7 +1112,7 @@ def test_cloning(caplog):
     writer = PdfWriter()
     with pytest.raises(Exception) as exc:
         PdfObject().clone(writer)
-    assert "clone PdfObject" in exc.value.args[0]
+    assert "PdfObject does not implement .clone so far" in exc.value.args[0]
 
     obj1 = DictionaryObject()
     obj1.indirect_reference = None
@@ -1185,6 +1204,10 @@ def test_destination_withoutzoom():
     name = "2021_book_security.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.outline
+
+    out = BytesIO()
+    writer = PdfWriter(clone_from=reader)
+    writer.write(out)
 
 
 def test_encodedstream_set_data():

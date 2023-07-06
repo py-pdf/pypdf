@@ -39,6 +39,7 @@ from .._utils import (
     WHITESPACES,
     StreamType,
     b_,
+    deprecate_no_replacement,
     deprecate_with_replacement,
     deprecation_with_replacement,
     logger_warning,
@@ -112,17 +113,21 @@ class ArrayObject(list, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"[")
         for data in self:
             stream.write(b" ")
-            data.write_to_stream(stream, encryption_key)
+            data.write_to_stream(stream)
         stream.write(b" ]")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(
@@ -353,11 +358,15 @@ class DictionaryObject(dict, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"<<\n")
         for key, value in list(self.items()):
-            key.write_to_stream(stream, encryption_key)
+            key.write_to_stream(stream)
             stream.write(b" ")
-            value.write_to_stream(stream, encryption_key)
+            value.write_to_stream(stream)
             stream.write(b"\n")
         stream.write(b">>")
 
@@ -365,7 +374,7 @@ class DictionaryObject(dict, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(
@@ -798,16 +807,15 @@ class StreamObject(DictionaryObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
-        DictionaryObject.write_to_stream(self, stream, encryption_key)
+        DictionaryObject.write_to_stream(self, stream)
         del self[SA.LENGTH]
         stream.write(b"\nstream\n")
-        data = self._data
-        if encryption_key:
-            from .._security import RC4_encrypt
-
-            data = RC4_encrypt(encryption_key, data)
-        stream.write(data)
+        stream.write(self._data)
         stream.write(b"\nendstream")
 
     @staticmethod
@@ -1382,7 +1390,9 @@ class Destination(TreeObject):
     node: Optional[
         DictionaryObject
     ] = None  # node provide access to the original Object
-    childs: List[Any] = []  # used in PdfWriter - TODO: should be children
+    childs: List[
+        Any
+    ] = []  # used in PdfWriter - TODO: should be children  # noqa: RUF012
 
     def __init__(
         self,
@@ -1452,18 +1462,22 @@ class Destination(TreeObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"<<\n")
         key = NameObject("/D")
-        key.write_to_stream(stream, encryption_key)
+        key.write_to_stream(stream)
         stream.write(b" ")
         value = self.dest_array
-        value.write_to_stream(stream, encryption_key)
+        value.write_to_stream(stream)
 
         key = NameObject("/S")
-        key.write_to_stream(stream, encryption_key)
+        key.write_to_stream(stream)
         stream.write(b" ")
         value_s = NameObject("/GoTo")
-        value_s.write_to_stream(stream, encryption_key)
+        value_s.write_to_stream(stream)
 
         stream.write(b"\n")
         stream.write(b">>")

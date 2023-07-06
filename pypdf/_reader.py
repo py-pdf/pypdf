@@ -242,14 +242,16 @@ class DocumentInformation(DictionaryObject):
         text = self._get_text(DI.CREATION_DATE)
         if text is None:
             return None
-        return datetime.strptime(text.replace("'", ""), "D:%Y%m%d%H%M%S%z")
+        return datetime.strptime(
+            text.replace("Z", "+").replace("'", ""), "D:%Y%m%d%H%M%S%z"
+        )
 
     @property
     def creation_date_raw(self) -> Optional[str]:
         """
         The "raw" version of creation date; can return a ``ByteStringObject``.
 
-        Typically in the format ``D:YYYYMMDDhhmmss[+-]hh'mm`` where the suffix
+        Typically in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
         return self.get(DI.CREATION_DATE)
@@ -264,7 +266,9 @@ class DocumentInformation(DictionaryObject):
         text = self._get_text(DI.MOD_DATE)
         if text is None:
             return None
-        return datetime.strptime(text.replace("'", ""), "D:%Y%m%d%H%M%S%z")
+        return datetime.strptime(
+            text.replace("Z", "+").replace("'", ""), "D:%Y%m%d%H%M%S%z"
+        )
 
     @property
     def modification_date_raw(self) -> Optional[str]:
@@ -272,7 +276,7 @@ class DocumentInformation(DictionaryObject):
         The "raw" version of modification date; can return a
         ``ByteStringObject``.
 
-        Typically in the format ``D:YYYYMMDDhhmmss[+-]hh'mm`` where the suffix
+        Typically in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
         return self.get(DI.MOD_DATE)
@@ -644,7 +648,10 @@ class PdfReader:
                     if s not in states:
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
-            if obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0:
+            if (
+                obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0
+                and "/Off" in retval[key]["/_States_"]
+            ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
 
     def _check_kids(
@@ -1767,7 +1774,7 @@ class PdfReader:
                         break
                     else:
                         raise PdfReadError(f"trailer can not be read {e.args}")
-                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
+                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE
                 for key in trailer_keys:
                     if key in xrefstream and key not in self.trailer:
                         self.trailer[NameObject(key)] = xrefstream.raw_get(key)
