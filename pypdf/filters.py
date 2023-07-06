@@ -873,10 +873,14 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     # CMYK image without decode requires reverting scale (cf p243,2§ last sentence)
     decode = x_object_obj.get(
-        IA.DECODE,
-        ([1.0, 0.0] * 4) if img.mode == "CMYK" else ([0.0, 1.0] * len(img.getbands())),
+        IA.DECODE, ([1.0, 0.0] * 4) if img.mode == "CMYK" else None
     )
-    if not all(decode[i] == i % 2 for i in range(len(decode))):
+    if (
+        isinstance(color_space, ArrayObject)
+        and color_space[0].get_object() == "/Indexed"
+    ):
+        decode = None  # decode is meanless of Indexed
+    if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
         lut = []
         for i in range(0, len(decode), 2):
             dmin = decode[i]
