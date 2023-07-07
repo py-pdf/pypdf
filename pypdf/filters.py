@@ -881,7 +881,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     ):
         decode = None  # decode is meanless of Indexed
     if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
-        lut = []
+        lut: List[int] = []
         for i in range(0, len(decode), 2):
             dmin = decode[i]
             dmax = decode[i + 1]
