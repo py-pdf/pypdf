@@ -388,6 +388,10 @@ def test_rgba():
 @pytest.mark.enable_socket()
 def test_cmyk():
     """Decode cmyk"""
+    try:
+        from Crypto.Cipher import AES  # noqa: F401
+    except ImportError:
+        return  # the file is encrypted
     url = "https://github.com/py-pdf/pypdf/files/11962229/DB-5368770_Vitocal_200-G.pdf"
     name = "Vitocal.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
