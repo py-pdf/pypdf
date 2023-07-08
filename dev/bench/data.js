@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688623333432,
+  "lastUpdate": 1688831109150,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -33098,6 +33098,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00035915250651122674",
             "extra": "mean: 94.11123489999795 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8753663ce2cf2344eaa9a4083ea66df2a1045439",
+          "message": "BUG: Inverse color in CMYK images (#1947)\n\nCloses #1895\r\n\r\nCMYK image without decode requires reverting scale (see PDF 1.7 spec, p243, §2, last sentence)",
+          "timestamp": "2023-07-08T17:43:49+02:00",
+          "tree_id": "16b2ddae9a4da2bfe0d974f3b1f0aca122631178",
+          "url": "https://github.com/py-pdf/pypdf/commit/8753663ce2cf2344eaa9a4083ea66df2a1045439"
+        },
+        "date": 1688831107035,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6619437530622898,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02641426345911168",
+            "extra": "mean: 1.5107023751999946 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.473959383188916,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01126862106696988",
+            "extra": "mean: 95.47487854545591 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21933135005466234,
+            "unit": "iter/sec",
+            "range": "stddev: 0.041983708589915014",
+            "extra": "mean: 4.559311743400007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.798518162978278,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015051972024931457",
+            "extra": "mean: 92.60529870000198 msec\nrounds: 10"
           }
         ]
       }
