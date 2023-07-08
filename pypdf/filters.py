@@ -871,6 +871,25 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     elif lfilters is None:
         img, image_format, extension = Image.frombytes(mode, size, data), "PNG", ".png"
 
+    # CMYK image without decode requires reverting scale (cf p243,2§ last sentence)
+    decode = x_object_obj.get(
+        IA.DECODE, ([1.0, 0.0] * 4) if img.mode == "CMYK" else None
+    )
+    if (
+        isinstance(color_space, ArrayObject)
+        and color_space[0].get_object() == "/Indexed"
+    ):
+        decode = None  # decode is meanless of Indexed
+    if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
+        lut: List[int] = []
+        for i in range(0, len(decode), 2):
+            dmin = decode[i]
+            dmax = decode[i + 1]
+            lut.extend(
+                round(255.0 * (j / 255.0 * (dmax - dmin) + dmin)) for j in range(256)
+            )
+        img = img.point(lut)
+
     if IA.S_MASK in x_object_obj:  # add alpha channel
         alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
         if img.size != alpha.size:
