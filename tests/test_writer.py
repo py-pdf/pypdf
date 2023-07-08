@@ -624,7 +624,9 @@ def test_add_named_destination_sort_order(pdf_file_path):
     root = writer.get_named_dest_root()
 
     assert len(root) == 4
-    assert root[0] == "a", '"a" was not inserted before "b" in the named destination root'
+    assert (
+        root[0] == "a"
+    ), '"a" was not inserted before "b" in the named destination root'
     assert root[2] == "b"
 
     # write "output" to pypdf-output.pdf
@@ -1478,3 +1480,22 @@ def test_empty_objects_before_cloning():
         {x: 1 for x, y in reader.xref_objStm.values()}
     )  # to remove object streams
     assert len(writer._objects) == nb_obj_reader
+
+
+@pytest.mark.enable_socket()
+def test_watermark():
+    url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
+    name = "bgwatermark.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/files/11985888/source.pdf"
+    name = "srcwatermark.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_pdf_from_url(url, name=name)))
+    for p in writer.pages:
+        p.merge_page(reader.pages[0], over=False)
+
+    assert isinstance(p["/Contents"], ArrayObject)
+    assert isinstance(p["/Contents"][0], IndirectObject)
+
+    b = BytesIO()
+    writer.write(b)
+    assert len(b.getvalue()) < 2.1 * 1024 * 1024
