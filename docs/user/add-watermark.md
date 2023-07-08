@@ -12,10 +12,10 @@ if you don't need to transform the stamp, you can use `merge_page()`:
 ```python
 from pypdf import PdfWriter, PdfReader
 
-reader = PdfReader("bg.pdf")
+stamp = PdfReader("bg.pdf").pages[0]
 writer = PdfWriter(clone_from="source.pdf")
 for page in writer.pages:
-    page.merge_page(reader.pages[0], over=False)  # here set to False for watermarking
+    page.merge_page(stamp, over=False)  # here set to False for watermarking
 
 writer.write("out.pdf")
 ```
