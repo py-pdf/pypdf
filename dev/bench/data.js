@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688912740787,
+  "lastUpdate": 1688912862159,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -33306,6 +33306,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0008348848069020764",
             "extra": "mean: 80.10870341666632 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "2b6941b625fe741f31034cfa4ae94cf47687f89e",
+          "message": "REL: 3.12.1\n\nBug Fixes (BUG):\n-  Prevent updating page contents after merging page (stamping/watermarking) (#1952)\n-  % to be hex encoded in names (#1958)\n-  Inverse color in CMYK images (#1947)\n-  Dates conversion not working with Z00\\'00\\' (#1946)\n-  Support UTF-16-LE Strings (#1884)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.0...3.12.1)",
+          "timestamp": "2023-07-09T16:25:21+02:00",
+          "tree_id": "18cdef49c8ebfe48104f41ed2842f18820bb05df",
+          "url": "https://github.com/py-pdf/pypdf/commit/2b6941b625fe741f31034cfa4ae94cf47687f89e"
+        },
+        "date": 1688912860697,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.719447634305784,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00340619296090193",
+            "extra": "mean: 1.3899552272000022 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.202245015038194,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010721543531481156",
+            "extra": "mean: 89.26782074999906 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22859661126528155,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01672589528111254",
+            "extra": "mean: 4.3745180406000035 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.538866725540808,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005934718501692987",
+            "extra": "mean: 94.88686270000102 msec\nrounds: 10"
           }
         ]
       }
