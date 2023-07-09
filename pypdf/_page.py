@@ -978,7 +978,7 @@ class PageObject(DictionaryObject):
                 self[NameObject(PG.CONTENTS)] = content
 
     def merge_page(
-        self, page2: "PageObject", over: bool = True, expand: bool = False
+        self, page2: "PageObject", expand: bool = False,  over: bool = True
     ) -> None:
         """
         Merge the content streams of two pages into one.
