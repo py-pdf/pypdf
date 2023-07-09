@@ -8,7 +8,7 @@ background of the document.
 
 actually the process is the same, you just need to set `over` parameter to `True` for Stamping and `False` for watermarking
 
-if you don't need to transform the stamp, you can use `merge_page()`:
+You can use `merge_page()` if you don't need to transform the stamp:
 ```python
 from pypdf import PdfWriter, PdfReader
 
