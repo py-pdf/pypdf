@@ -316,7 +316,7 @@ you can use the {py:class}`Highlight <pypdf.annotations.Highlight>`:
 
 ```python
 from pypdf import PdfReader, PdfWriter
-from pypdf.annotations import Hihglight
+from pypdf.annotations import Highlight
 
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
@@ -325,7 +325,7 @@ writer = PdfWriter()
 writer.add_page(page)
 
 # Add the highlight
-annotation = Hihglight(
+annotation = Highlight(
     vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
 )
 writer.add_annotation(page_number=0, annotation=annotation)
