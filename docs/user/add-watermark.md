@@ -6,7 +6,7 @@ background of the document.
 
 ## Stamp (Overlay) / Watermark(Undelay)
 
-actually the process is the same, you just need to set `over` parameter to `True` for Stamping and `False` for watermarking
+The process of stamping and watermarking is the same, you just need to set `over` parameter to `True` for stamping and `False` for watermarking.
 
 You can use `merge_page()` if you don't need to transform the stamp:
 ```python
