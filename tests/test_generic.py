@@ -229,8 +229,8 @@ def test_name_object(caplog):
     assert caplog.text == ""
 
     b = BytesIO()
-    NameObject("/你好世界").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C"
+    NameObject("/你好世界 (%)").write_to_stream(b)
+    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
     assert caplog.text == ""
 
 

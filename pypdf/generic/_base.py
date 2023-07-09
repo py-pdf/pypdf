@@ -624,6 +624,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         "(": b"#28",
         ")": b"#29",
         "/": b"#2F",
+        "%": b"#25",
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
 
