@@ -1237,12 +1237,15 @@ def test_compression():
     writer.append(SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf", [1])
     nb1 = len(writer._objects)
 
+    # 1 page only is modified
     for page in writer.pages:
         page.merge_page(template_page)
-    assert len(writer._objects) == nb1 + 1  # font is added that's all
+    # font is added; +1 streamobjects + 1 ArrayObject
+    assert len(writer._objects) == nb1 + 1 + 2
     for page in writer.pages:
         page.compress_content_streams()
-    assert len(writer._objects) == nb1 + 1
+    # objects are recycled
+    assert len(writer._objects) == nb1 + 1 + 2
 
     contents = writer.pages[0]["/Contents"]
     writer.pages[0].replace_contents(None)

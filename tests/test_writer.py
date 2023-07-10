@@ -1516,3 +1516,22 @@ def test_empty_objects_before_cloning():
         {x: 1 for x, y in reader.xref_objStm.values()}
     )  # to remove object streams
     assert len(writer._objects) == nb_obj_reader
+
+
+@pytest.mark.enable_socket()
+def test_watermark():
+    url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
+    name = "bgwatermark.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/files/11985888/source.pdf"
+    name = "srcwatermark.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_pdf_from_url(url, name=name)))
+    for p in writer.pages:
+        p.merge_page(reader.pages[0], over=False)
+
+    assert isinstance(p["/Contents"], ArrayObject)
+    assert isinstance(p["/Contents"][0], IndirectObject)
+
+    b = BytesIO()
+    writer.write(b)
+    assert len(b.getvalue()) < 2.1 * 1024 * 1024

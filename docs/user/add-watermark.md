@@ -4,9 +4,23 @@ Adding stamps or watermarks are two common ways to manipulate PDF files.
 A stamp is adding something on top of the document, a watermark is in the
 background of the document.
 
-## Stamp (Overlay)
+## Stamp (Overlay) / Watermark(Undelay)
 
-Using the ``Transformation()`` class, one can translate, rotate, scale, etc. the stamp before merging it to the content page.
+The process of stamping and watermarking is the same, you just need to set `over` parameter to `True` for stamping and `False` for watermarking.
+
+You can use `merge_page()` if you don't need to transform the stamp:
+```python
+from pypdf import PdfWriter, PdfReader
+
+stamp = PdfReader("bg.pdf").pages[0]
+writer = PdfWriter(clone_from="source.pdf")
+for page in writer.pages:
+    page.merge_page(stamp, over=False)  # here set to False for watermarking
+
+writer.write("out.pdf")
+```
+
+Else use `merge_transformed_page()` with Transformation() if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
 
 ```python
 from pathlib import Path
@@ -24,60 +38,20 @@ def stamp(
     stamp_page = PdfReader(stamp_pdf).pages[0]
 
     writer = PdfWriter()
+    # page_indices can be a List(array) of page, tuples are for range definition
+    writer.append(content, pages=None if page_indices == "ALL" else page_indices)
 
-    reader = PdfReader(content_pdf)
-    if page_indices == "ALL":
-        page_indices = list(range(0, len(reader.pages)))
-    for index in page_indices:
-        content_page = reader.pages[index]
+    for content_page in writer.pages:
         content_page.merge_transformed_page(
             stamp_page,
-            Transformation(),
+            Transformation().scale(0.5),
         )
-        writer.add_page(content_page)
 
-    with open(pdf_result, "wb") as fp:
-        writer.write(fp)
+    writer.write(pdf_result)
 ```
 
+example of stamp:
 ![stamp.png](stamp.png)
 
-## Watermark (Underlay)
-
-To merge the watermark *under* the content, use the argument ``over=False`` of the method ``merge_transformed_page()``.
-
-Once again, watermark size and position (and more) can be customized using the ``Transformation()`` class.
-
-```python
-from pathlib import Path
-from typing import Union, Literal, List
-
-from pypdf import PdfWriter, PdfReader, Transformation
-
-
-def watermark(
-    content_pdf: Path,
-    stamp_pdf: Path,
-    pdf_result: Path,
-    page_indices: Union[Literal["ALL"], List[int]] = "ALL",
-):
-    reader = PdfReader(content_pdf)
-    if page_indices == "ALL":
-        page_indices = range(len(reader.pages))
-
-    writer = PdfWriter()
-    watermark_page = PdfReader(stamp_pdf).pages[0]
-    for index in page_indices:
-        content_page = reader.pages[index]
-        content_page.merge_transformed_page(
-            watermark_page,
-            Transformation(),
-            over=False,
-        )
-        writer.add_page(content_page)
-
-    with open(pdf_result, "wb") as fp:
-        writer.write(fp)
-```
-
+example of watermark:
 ![watermark.png](watermark.png)
