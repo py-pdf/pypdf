@@ -12,6 +12,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 ## Contributors to the pypdf (formerly pyPdf / PyPDF2) project
 
 * [abyesilyurt](https://github.com/abyesilyurt)
+* [ArkieCoder](https://github.com/ArkieCoder)
 * [DL6ER](https://github.com/DL6ER)
 * [ediamondscience](https://github.com/ediamondscience)
 * [Ermeson, Felipe](https://github.com/FelipeErmeson)
