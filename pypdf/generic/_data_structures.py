@@ -599,7 +599,8 @@ class TreeObject(DictionaryObject):
         if parent is None:
             return
         parent = cast("TreeObject", parent.get_object())
-        opn = parent.get("/%is_open%", True) is True  # BooleanObject
+        #  BooleanObject requires comparison with == not is
+        opn = parent.get("/%is_open%", True) == True  # noqa
         c = cast(int, parent.get("/Count", 0))
         if c < 0:
             c = abs(c)

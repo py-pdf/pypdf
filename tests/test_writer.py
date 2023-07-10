@@ -592,9 +592,9 @@ def test_add_outline_item(pdf_file_path):
         reader = PdfReader(output_stream)
         assert reader.trailer["/Root"]["/Outlines"]["/Count"] == 3
         assert reader.outline[0]["/Count"] == -2
-        assert reader.outline[0]["/%is_open%"] is False
+        assert reader.outline[0]["/%is_open%"] == False  # noqa
         assert reader.outline[2]["/Count"] == 2
-        assert reader.outline[2]["/%is_open%"] is True
+        assert reader.outline[2]["/%is_open%"] == True  # noqa
         assert reader.outline[1][0]["/Count"] == 0
 
 
