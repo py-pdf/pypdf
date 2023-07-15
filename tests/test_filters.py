@@ -438,3 +438,11 @@ def test_cascaded_filters_images():
     for p in reader.pages:
         for i in p.images:
             _ = i.name, i.image
+
+
+@pytest.mark.enable_socket()
+def test_calrgb():
+    url = "https://github.com/py-pdf/pypdf/files/12061061/tt.pdf"
+    name = "calRGB.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].images[0]
