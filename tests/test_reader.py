@@ -712,7 +712,7 @@ def test_issue604(caplog, strict):
 
         # oi can be destination or a list:preferred to just print them
         for oi in outline:
-            out.append(get_dest_pages(oi))
+            out.append(get_dest_pages(oi))  # noqa: PERF401
 
 
 def test_decode_permissions():
