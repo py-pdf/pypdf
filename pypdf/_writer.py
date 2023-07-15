@@ -956,9 +956,7 @@ class PdfWriter:
                     or self._get_qualified_field_name(writer_annot) == field
                 ):
                     if isinstance(value, list):
-                        lst = ArrayObject()
-                        for v in value:
-                            lst.append(TextStringObject(v))
+                        lst = ArrayObject(TextStringObject(v) for v in value)
                         writer_annot[NameObject(FA.V)] = lst
                     else:
                         writer_annot[NameObject(FA.V)] = TextStringObject(value)
@@ -3395,10 +3393,7 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject
             to_add[name_key] = casted_value
         return to_add
     elif isinstance(obj, list):
-        arr = ArrayObject()
-        for el in obj:
-            arr.append(_pdf_objectify(el))
-        return arr
+        return ArrayObject(_pdf_objectify(el) for el in obj)
     elif isinstance(obj, str):
         if obj.startswith("/"):
             return NameObject(obj)
