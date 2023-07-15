@@ -3,7 +3,7 @@
 # and it's decided what should be in the release.
 # This action only ensures the release is done with the proper contents
 # and that it's announced with a Github release.
-name: Build and Publish Python Package to PyPI
+name: Publish Python Package to PyPI
 on:
   push:
     tags:
@@ -36,9 +36,9 @@ jobs:
           FLIT_USERNAME: '__token__'
           FLIT_PASSWORD: ${{ secrets.FLIT_PASSWORD }}
         run: |
-          git fetch --tags
+          git fetch --tags --force
           latest_tag=$(git describe --tags --abbrev=0)
-          flit publish --repository pypi --tag $latest_tag
+          flit publish
 
       # Create the Github Page
       - name: Prepare variables
