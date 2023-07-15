@@ -194,10 +194,7 @@ class CryptFilter:
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
         elif isinstance(obj, ArrayObject):
-            obj2 = ArrayObject()  # type: ignore
-            for x in obj:
-                obj2.append(self.encrypt_object(x))  # type: ignore
-            obj = obj2
+            obj = ArrayObject(self.encrypt_object(x) for x in obj)  # type: ignore
         return obj
 
     def decrypt_object(self, obj: PdfObject) -> PdfObject:
