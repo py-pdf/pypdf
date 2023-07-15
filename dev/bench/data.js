@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1689433775114,
+  "lastUpdate": 1689434876096,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -33514,6 +33514,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006001342928576753",
             "extra": "mean: 95.97065389999955 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c864f4e903084be77a408d8d3cce46b128df9f68",
+          "message": "BUG: Process 2bits and 4bits images (#1967)\n\nCloses #1954",
+          "timestamp": "2023-07-15T17:26:39+02:00",
+          "tree_id": "3cf83e6e9462cb6488324822d34176733b0a9fa2",
+          "url": "https://github.com/py-pdf/pypdf/commit/c864f4e903084be77a408d8d3cce46b128df9f68"
+        },
+        "date": 1689434874398,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6638762475945348,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014833666984845898",
+            "extra": "mean: 1.5063048325999973 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.333853056936926,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010949236428863918",
+            "extra": "mean: 96.76932645454238 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21756850619608964,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06571403212769221",
+            "extra": "mean: 4.596253462799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.957182006449923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036464806939221746",
+            "extra": "mean: 100.43002119999755 msec\nrounds: 10"
           }
         ]
       }
