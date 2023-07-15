@@ -978,7 +978,7 @@ class PageObject(DictionaryObject):
                 self[NameObject(PG.CONTENTS)] = content
 
     def merge_page(
-        self, page2: "PageObject", expand: bool = False,  over: bool = True
+        self, page2: "PageObject", expand: bool = False, over: bool = True
     ) -> None:
         """
         Merge the content streams of two pages into one.
@@ -1046,7 +1046,7 @@ class PageObject(DictionaryObject):
                 annots = page[PG.ANNOTS]
                 if isinstance(annots, ArrayObject):
                     for ref in annots:
-                        new_annots.append(ref)
+                        new_annots.append(ref)  # noqa: PERF402
 
         for res in (
             RES.EXT_G_STATE,
