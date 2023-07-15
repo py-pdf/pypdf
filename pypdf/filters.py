@@ -656,7 +656,6 @@ def _get_imagemode(
         )  # pragma: no cover
     elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
         color_space = "/Device" + color_space[0][4:]
-        # color_components =
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
         color_components = cast(int, icc_profile["/N"])
