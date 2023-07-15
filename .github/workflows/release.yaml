@@ -11,6 +11,9 @@ on:
 
 jobs:
   build_and_publish:
+    # this doesn't make sense if you don't have the PyPI secret
+    if: github.repository == 'py-pdf/pypdf'
+    name: Publish a new version of pypdf
     runs-on: ubuntu-latest
 
     steps:
@@ -28,7 +31,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install flit
 
-      - name: Build and Publish Package
+      - name: Publish Package to PyPI🚀
         env:
           FLIT_USERNAME: '__token__'
           FLIT_PASSWORD: ${{ secrets.FLIT_PASSWORD }}
@@ -42,7 +45,7 @@ jobs:
         run: |
           latest_tag=$(git describe --tags --abbrev=0)
           tag_body=$(git tag -l "${latest_tag}" --format='%(contents:body)')
-      - name: Create GitHub Release
+      - name: Create GitHub Release 🚀
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
