@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1689541100249,
+  "lastUpdate": 1689541275014,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -33670,6 +33670,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0005941291702045155",
             "extra": "mean: 93.08001750000301 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "1d16ca5d508439faac9e38bcdd84c0fc351a2909",
+          "message": "REL: 3.12.2\n\nBug Fixes (BUG):\n-  Accept calRGB and calGray color_spaces (#1968)\n-  Process 2bits and 4bits images (#1967)\n-  Check for AcroForm and ensure it is not None (#1965)\n\nDeveloper Experience (DEV):\n-  Automate the release process (#1970)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.1...3.12.2)",
+          "timestamp": "2023-07-16T22:58:53+02:00",
+          "tree_id": "5b578ec9b082c04f8fd0a7418c16375fe3dcda2a",
+          "url": "https://github.com/py-pdf/pypdf/commit/1d16ca5d508439faac9e38bcdd84c0fc351a2909"
+        },
+        "date": 1689541272674,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6291261001716687,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01670297250540489",
+            "extra": "mean: 1.589506459400002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.890395589155725,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014036976920593231",
+            "extra": "mean: 101.10819036363368 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20124260006875846,
+            "unit": "iter/sec",
+            "range": "stddev: 0.036961595310972574",
+            "extra": "mean: 4.969126813399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.05901242711058,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017061746566811805",
+            "extra": "mean: 110.38730855554807 msec\nrounds: 9"
           }
         ]
       }
