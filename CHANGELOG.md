@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## Version 3.12.2, 2023-07-16
+
+### Bug Fixes (BUG)
+-  Accept calRGB and calGray color_spaces (#1968)
+-  Process 2bits and 4bits images (#1967)
+-  Check for AcroForm and ensure it is not None (#1965)
+
+### Developer Experience (DEV)
+-  Automate the release process (#1970)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.1...3.12.2)
+
 ## Version 3.12.1, 2023-07-09
 
 ### Bug Fixes (BUG)
