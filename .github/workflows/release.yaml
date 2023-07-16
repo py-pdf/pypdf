@@ -19,10 +19,10 @@ jobs:
     steps:
       # Ensure it's on PyPI
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.x
 
@@ -36,14 +36,16 @@ jobs:
           FLIT_USERNAME: '__token__'
           FLIT_PASSWORD: ${{ secrets.FLIT_PASSWORD }}
         run: |
-          git fetch --tags --force
-          latest_tag=$(git describe --tags --abbrev=0)
           flit publish
 
       # Create the Github Page
       - name: Prepare variables
+        id: prepare_variables
         run: |
+          git fetch --tags --force
           latest_tag=$(git describe --tags --abbrev=0)
+          echo "latest_tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
+          echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
           tag_body=$(git tag -l "${latest_tag}" --format='%(contents:body)')
       - name: Create GitHub Release 🚀
         uses: actions/create-release@v1
@@ -51,7 +53,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Version ${{ github.ref }}
+          release_name: Version ${{ env.latest_tag }}, ${{ env.date }}
           draft: false
           prerelease: false
-          body: ${{ steps.build_and_publish.outputs.tag_body }}
+          body: Body is ${{ env.tag_body }}
