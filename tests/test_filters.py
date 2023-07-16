@@ -441,6 +441,14 @@ def test_cascaded_filters_images():
 
 
 @pytest.mark.enable_socket()
+def test_calrgb():
+    url = "https://github.com/py-pdf/pypdf/files/12061061/tt.pdf"
+    name = "calRGB.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].images[0]
+
+
+@pytest.mark.enable_socket()
 def test_2bits_image():
     """From #1954, test with 2bits image. TODO: 4bits also"""
     url = "https://github.com/py-pdf/pypdf/files/12050253/tt.pdf"
