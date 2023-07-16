@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1689539605466,
+  "lastUpdate": 1689541100249,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -33618,6 +33618,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.000882974336148387",
             "extra": "mean: 84.81320936363606 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "21e4a75765f4cd75fb2019888ed85563e42f5f2c",
+          "message": "DEV: Automate the release process (#1970)\n\nThis PR has two goals:\r\n\r\n* Ensure that I, as a maintainer, do releases more consistently and with less effort.\r\n* Enable other trusted members of the pypdf community and the py-pdf organization to make releases to PyPI. That should typically not be done, but is a last resort in case I become inactive.\r\n\r\nWhat was done:\r\n\r\n* A new repository secret `FLIT_PASSWORD` was created via PyPI. It is a PyPI token for pypdf.\r\n* A Github Action `release.yaml` (this PR) was created.\r\n\r\n## Hints\r\n\r\nTo ensure that you can write Markdown-style git tags, you can do this:\r\n\r\n```\r\ngit config --global core.commentChar \";\" \r\n```\r\n\r\n## Testing\r\n\r\nI used pdfly for that. Looks mostly fine. It especially published to PyPI.\r\nSee \"TODO\" for what is missing.\r\n\r\n## TODO\r\n\r\n* Make the release have rendered Markdown. I think I struggle with the fact that the body is a multi-line string ... maybe :thinking: \r\n* Ensure the package is only pushed if it passes our test suite\r\n\r\n## Resources\r\n\r\n* https://github.com/actions/create-release\r\n* https://flit.pypa.io/en/stable/cmdline.html#envvar-FLIT_INDEX_URL\r\n* https://git-scm.com/docs/git-config#Documentation/git-config.txt-corecommentChar\r\n\r\nCloses #1836",
+          "timestamp": "2023-07-16T22:57:07+02:00",
+          "tree_id": "9731d16edd8e501220fcc9e7bd31dedc6586966d",
+          "url": "https://github.com/py-pdf/pypdf/commit/21e4a75765f4cd75fb2019888ed85563e42f5f2c"
+        },
+        "date": 1689541098730,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7242691303045391,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004444212438841632",
+            "extra": "mean: 1.3807022254000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.330707845919028,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009791715332535018",
+            "extra": "mean: 88.25573949999684 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2245057256048348,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033304649959810334",
+            "extra": "mean: 4.4542293846000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.743444477757729,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005941291702045155",
+            "extra": "mean: 93.08001750000301 msec\nrounds: 10"
           }
         ]
       }
