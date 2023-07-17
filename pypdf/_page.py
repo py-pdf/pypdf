@@ -938,6 +938,11 @@ class PageObject(DictionaryObject):
                     self._objects[o.indirect_reference.idnum - 1] = NullObject()  # type: ignore
                 except AttributeError:
                     pass
+
+        if isinstance(content, ArrayObject):
+            for i in range(len(content)):
+                content[i] = self.indirect_reference.pdf._add_object(content[i])
+
         if content is None:
             if PG.CONTENTS not in self:
                 return
@@ -972,7 +977,9 @@ class PageObject(DictionaryObject):
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
 
-    def merge_page(self, page2: "PageObject", expand: bool = False) -> None:
+    def merge_page(
+        self, page2: "PageObject", expand: bool = False, over: bool = True
+    ) -> None:
         """
         Merge the content streams of two pages into one.
 
@@ -985,10 +992,11 @@ class PageObject(DictionaryObject):
         Args:
             page2: The page to be merged into this one. Should be
                 an instance of :class:`PageObject<PageObject>`.
+            over: set the page2 content over page1 if True(default) else under
             expand: If true, the current page dimensions will be
                 expanded to accommodate the dimensions of the page to be merged.
         """
-        self._merge_page(page2, expand=expand)
+        self._merge_page(page2, over=over, expand=expand)
 
     def mergePage(self, page2: "PageObject") -> None:  # deprecated
         """
@@ -1038,7 +1046,7 @@ class PageObject(DictionaryObject):
                 annots = page[PG.ANNOTS]
                 if isinstance(annots, ArrayObject):
                     for ref in annots:
-                        new_annots.append(ref)
+                        new_annots.append(ref)  # noqa: PERF402
 
         for res in (
             RES.EXT_G_STATE,

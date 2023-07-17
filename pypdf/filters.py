@@ -641,7 +641,9 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # deprecated
     return decode_stream_data(stream)
 
 
-mode_str_type: TypeAlias = Literal["", "1", "RGB", "P", "L", "RGBA", "CMYK"]
+mode_str_type: TypeAlias = Literal[
+    "", "1", "RGB", "2bits", "4bits", "P", "L", "RGBA", "CMYK"
+]
 
 
 def _get_imagemode(
@@ -654,6 +656,8 @@ def _get_imagemode(
         raise PdfReadError(
             "can not interprete colorspace", color_space
         )  # pragma: no cover
+    elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
+        color_space = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
         color_components = cast(int, icc_profile["/N"])
@@ -673,6 +677,8 @@ def _get_imagemode(
 
     mode_map = {
         "1bit": "1",  # 0 will be used for 1 bit
+        "2bit": "2bits",  # 2 bits images
+        "4bit": "4bits",  # 4 bits
         "/DeviceGray": "L",
         "palette": "P",  # reserved for color_components alignment
         "/DeviceRGB": "RGB",
@@ -718,6 +724,24 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         Process image encoded in flateEncode
         Returns img, image_format, extension
         """
+
+        def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
+            mask = (2 << bits) - 1
+            nbuff = bytearray(size[0] * size[1])
+            by = 0
+            bit = 8 - bits
+            for y in range(size[1]):
+                if (bit != 0) and (bit != 8 - bits):
+                    by += 1
+                    bit = 8 - bits
+                for x in range(size[0]):
+                    nbuff[y * size[0] + x] = (data[by] >> bit) & mask
+                    bit -= bits
+                    if bit < 0:
+                        by += 1
+                        bit = 8 - bits
+            return bytes(nbuff)
+
         extension = ".png"  # mime_type = "image/png"
         lookup: Any
         base: Any
@@ -726,6 +750,12 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             color_space, base, hival, lookup = (
                 value.get_object() for value in color_space
             )
+        if mode == "2bits":
+            mode = "P"
+            data = bits2byte(data, size, 2)
+        elif mode == "4bits":
+            mode = "P"
+            data = bits2byte(data, size, 4)
         img = Image.frombytes(mode, size, data)
         if color_space == "/Indexed":
             from .generic import ByteStringObject
@@ -820,8 +850,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: mode_str_type = "RGB"
-    if x_object_obj.get("/BitsPerComponent", 8) == 1:
-        mode = _get_imagemode("1bit", 0, "")
+    if x_object_obj.get("/BitsPerComponent", 8) < 8:
+        mode = _get_imagemode(f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, "")
     else:
         mode = _get_imagemode(
             color_space,
@@ -842,7 +872,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     lfilters = filters[-1] if isinstance(filters, list) else filters
     if lfilters == FT.FLATE_DECODE:
         img, image_format, extension = _handle_flate(
-            size, data, mode, color_space, colors
+            size,
+            data,
+            mode,
+            color_space,
+            colors,
         )
     elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE, FT.CCITT_FAX_DECODE):
         # I'm not sure if the following logic is correct.
@@ -871,6 +905,25 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     elif lfilters is None:
         img, image_format, extension = Image.frombytes(mode, size, data), "PNG", ".png"
 
+    # CMYK image without decode requires reverting scale (cf p243,2§ last sentence)
+    decode = x_object_obj.get(
+        IA.DECODE, ([1.0, 0.0] * 4) if img.mode == "CMYK" else None
+    )
+    if (
+        isinstance(color_space, ArrayObject)
+        and color_space[0].get_object() == "/Indexed"
+    ):
+        decode = None  # decode is meanless of Indexed
+    if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
+        lut: List[int] = []
+        for i in range(0, len(decode), 2):
+            dmin = decode[i]
+            dmax = decode[i + 1]
+            lut.extend(
+                round(255.0 * (j / 255.0 * (dmax - dmin) + dmin)) for j in range(256)
+            )
+        img = img.point(lut)
+
     if IA.S_MASK in x_object_obj:  # add alpha channel
         alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
         if img.size != alpha.size:
@@ -879,14 +932,6 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             # TODO : implement mask
             if alpha.mode != "L":
                 alpha = alpha.convert("L")
-            scale = x_object_obj[IA.S_MASK].get("/Decode", [0.0, 1.0])
-            if (scale[1] - scale[0]) != 1.0:
-                alpha = alpha.point(
-                    [
-                        round(255.0 * (v / 255.0 * (scale[1] - scale[0]) + scale[0]))
-                        for v in range(256)
-                    ]
-                )
             if img.mode == "P":
                 img = img.convert("RGB")
             img.putalpha(alpha)

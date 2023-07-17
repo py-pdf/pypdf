@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## Version 3.12.2, 2023-07-16
+
+### Bug Fixes (BUG)
+-  Accept calRGB and calGray color_spaces (#1968)
+-  Process 2bits and 4bits images (#1967)
+-  Check for AcroForm and ensure it is not None (#1965)
+
+### Developer Experience (DEV)
+-  Automate the release process (#1970)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.1...3.12.2)
+
+## Version 3.12.1, 2023-07-09
+
+### Bug Fixes (BUG)
+-  Prevent updating page contents after merging page (stamping/watermarking) (#1952)
+-  % to be hex encoded in names (#1958)
+-  Inverse color in CMYK images (#1947)
+-  Dates conversion not working with Z00\'00\' (#1946)
+-  Support UTF-16-LE Strings (#1884)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.0...3.12.1)
+
 ## Version 3.12.0, 2023-07-02
 
 ### New Features (ENH)

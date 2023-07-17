@@ -366,8 +366,8 @@ def test_tiff_predictor():
 
 
 @pytest.mark.enable_socket()
-def test_cmyk():
-    """Decode cmyk with transparency"""
+def test_rgba():
+    """Decode rgb with transparency"""
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf"
     name = "tika-972174.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -378,6 +378,29 @@ def test_cmyk():
     )  # not a pdf but it works
     data = reader.pages[0].images[0]
     assert ".jp2" in data.name
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(
+        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
+    ) / (diff.size[0] * diff.size[1])
+    assert d < 0.01
+
+
+@pytest.mark.enable_socket()
+def test_cmyk():
+    """Decode cmyk"""
+    try:
+        from Crypto.Cipher import AES  # noqa: F401
+    except ImportError:
+        return  # the file is encrypted
+    url = "https://github.com/py-pdf/pypdf/files/11962229/DB-5368770_Vitocal_200-G.pdf"
+    name = "Vitocal.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/251283945-38c5b92c-cf94-473c-bb57-a51b74fc39be.jpg"
+    name_png = "VitocalImage.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[1].images[0]
     diff = ImageChops.difference(data.image, refimg)
     d = sqrt(
         sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
@@ -415,3 +438,30 @@ def test_cascaded_filters_images():
     for p in reader.pages:
         for i in p.images:
             _ = i.name, i.image
+
+
+@pytest.mark.enable_socket()
+def test_calrgb():
+    url = "https://github.com/py-pdf/pypdf/files/12061061/tt.pdf"
+    name = "calRGB.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].images[0]
+
+
+@pytest.mark.enable_socket()
+def test_2bits_image():
+    """From #1954, test with 2bits image. TODO: 4bits also"""
+    url = "https://github.com/py-pdf/pypdf/files/12050253/tt.pdf"
+    name = "paid.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/253568117-ca95cc85-9dea-4145-a5e0-032f1c1aa322.png"
+    name_png = "Paid.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(
+        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
+    ) / (diff.size[0] * diff.size[1])
+    assert d < 0.01
