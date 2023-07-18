@@ -743,6 +743,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             return bytes(nbuff)
 
         extension = ".png"  # mime_type = "image/png"
+        image_format = "PNG"
         lookup: Any
         base: Any
         hival: Any
@@ -794,10 +795,14 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         elif not isinstance(color_space, NullObject) and color_space[0] == "/ICCBased":
             # see Table 66 - Additional Entries Specific to an ICC Profile
             # Stream Dictionary
-            mode = _get_imagemode(color_space, colors, mode)
-            extension = ".png"
-            img = Image.frombytes(mode, size, data)  # reloaded as mode may have change
-        image_format = "PNG"
+            mode2 = _get_imagemode(color_space, colors, mode)
+            if mode != mode2:
+                img = Image.frombytes(
+                    mode2, size, data
+                )  # reloaded as mode may have change
+        if mode == "CMYK":
+            extension = ".tif"
+            image_format = "TIFF"
         return img, image_format, extension
 
     def _handle_jpx(
@@ -907,7 +912,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     # CMYK image without decode requires reverting scale (cf p243,2§ last sentence)
     decode = x_object_obj.get(
-        IA.DECODE, ([1.0, 0.0] * 4) if img.mode == "CMYK" else None
+        IA.DECODE,
+        ([1.0, 0.0] * 4)
+        if img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE)
+        else None,
     )
     if (
         isinstance(color_space, ArrayObject)
