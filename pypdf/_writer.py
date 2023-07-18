@@ -2920,7 +2920,7 @@ class PdfWriter:
                 self.clean_page(pag)
 
         if "/AcroForm" in _ro and _ro["/AcroForm"] is not None:
-            if "/AcroForm" not in self._root_object:
+            if "/AcroForm" not in self._root_object or "/Fields" not in self._root_object["/AcroForm"]: # type: ignore
                 self._root_object[NameObject("/AcroForm")] = self._add_object(
                     cast(
                         DictionaryObject,
