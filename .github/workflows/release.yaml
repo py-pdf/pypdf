@@ -46,7 +46,9 @@ jobs:
           latest_tag=$(git describe --tags --abbrev=0)
           echo "latest_tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
           echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
-          echo "tag_body=$(git tag -l ${latest_tag} --format='%(contents:body)')" >> "$GITHUB_ENV"
+          echo "tag_body<<$EOF" >> "$GITHUB_ENV"
+          git tag -l "${latest_tag}" --format='%(contents:body)' >> "$GITHUB_ENV"
+          echo "$EOF" >> "$GITHUB_ENV"
       - name: Create GitHub Release 🚀
         uses: actions/create-release@v1
         env:
