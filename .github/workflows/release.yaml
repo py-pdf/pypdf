@@ -46,6 +46,7 @@ jobs:
           latest_tag=$(git describe --tags --abbrev=0)
           echo "latest_tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
           echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "tag_body<<$EOF" >> "$GITHUB_ENV"
           git tag -l "${latest_tag}" --format='%(contents:body)' >> "$GITHUB_ENV"
           echo "$EOF" >> "$GITHUB_ENV"
