@@ -184,7 +184,7 @@ jobs:
           echo "latest_tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
           echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
           echo "tag_body<<$EOF" >> "$GITHUB_ENV"
-          git tag -l "${latest_tag}"" --format='%(contents:body)' >> "$GITHUB_ENV"
+          git tag -l "${latest_tag}" --format='%(contents:body)' >> "$GITHUB_ENV"
           echo "$EOF" >> "$GITHUB_ENV"
       - run: echo "latest_tag is ${{ env.latest_tag }}"
       - run: echo "Body is ${{ env.tag_body }}"
