@@ -647,7 +647,9 @@ mode_str_type: TypeAlias = Literal[
 
 
 def _get_imagemode(
-    color_space: Union[str, List[Any]], color_components: int, prev_mode: mode_str_type
+    color_space: Union[str, List[Any], Any],
+    color_components: int,
+    prev_mode: mode_str_type,
 ) -> mode_str_type:
     """Returns the image mode not taking into account mask(transparency)"""
     if isinstance(color_space, str):
