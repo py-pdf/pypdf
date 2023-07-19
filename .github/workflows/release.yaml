@@ -56,4 +56,4 @@ jobs:
           release_name: Version ${{ env.latest_tag }}, ${{ env.date }}
           draft: false
           prerelease: false
-          body: Body is ${{ env.tag_body }}
+          body: ${{ env.tag_body }}
