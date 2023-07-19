@@ -176,6 +176,7 @@ jobs:
       - name: Prepare variables
         id: prepare_variables
         run: |
+          git fetch
           git fetch --tags --force
           latest_tag=$(git describe --tags --abbrev=0)
           echo "latest_tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
