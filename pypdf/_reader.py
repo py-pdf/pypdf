@@ -2226,11 +2226,7 @@ class PdfReader:
             )
         except KeyError:
             return []
-        attachments_names = []
-        # Loop through attachments
-        for f in filenames:
-            if isinstance(f, str):
-                attachments_names.append(f)
+        attachments_names = [f for f in filenames if isinstance(f, str)]
         return attachments_names
 
     def _get_attachment_list(self, name: str) -> List[bytes]:

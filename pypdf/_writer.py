@@ -956,9 +956,7 @@ class PdfWriter:
                     or self._get_qualified_field_name(writer_annot) == field
                 ):
                     if isinstance(value, list):
-                        lst = ArrayObject()
-                        for v in value:
-                            lst.append(TextStringObject(v))
+                        lst = ArrayObject(TextStringObject(v) for v in value)
                         writer_annot[NameObject(FA.V)] = lst
                     else:
                         writer_annot[NameObject(FA.V)] = TextStringObject(value)
@@ -2943,7 +2941,7 @@ class PdfWriter:
                     pag[NameObject("/Annots")] = lst
                 self.clean_page(pag)
 
-        if "/AcroForm" in cast(DictionaryObject, reader.trailer["/Root"]):
+        if "/AcroForm" in _ro and _ro["/AcroForm"] is not None:
             if "/AcroForm" not in self._root_object:
                 self._root_object[NameObject("/AcroForm")] = self._add_object(
                     cast(
@@ -3417,10 +3415,7 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject
             to_add[name_key] = casted_value
         return to_add
     elif isinstance(obj, list):
-        arr = ArrayObject()
-        for el in obj:
-            arr.append(_pdf_objectify(el))
-        return arr
+        return ArrayObject(_pdf_objectify(el) for el in obj)
     elif isinstance(obj, str):
         if obj.startswith("/"):
             return NameObject(obj)
