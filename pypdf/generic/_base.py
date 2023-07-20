@@ -128,7 +128,7 @@ class PdfObject(PdfObjectProtocol):
         if ind is not None:
             if id(ind.pdf) not in pdf_dest._id_translated:
                 pdf_dest._id_translated[id(ind.pdf)] = {}
-                pdf_dest._id_translated[id(ind.pdf)][-10] = ind.pdf
+                pdf_dest._id_translated[id(ind.pdf)]["PreventGC"] = ind.pdf  # type: ignore
             if (
                 not force_duplicate
                 and ind.idnum in pdf_dest._id_translated[id(ind.pdf)]
