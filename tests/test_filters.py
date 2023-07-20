@@ -388,6 +388,7 @@ def test_rgba():
 @pytest.mark.enable_socket()
 def test_cmyk():
     """Decode cmyk"""
+    # JPEG compression
     try:
         from Crypto.Cipher import AES  # noqa: F401
     except ImportError:
@@ -401,11 +402,30 @@ def test_cmyk():
         BytesIO(get_pdf_from_url(url_png, name=name_png))
     )  # not a pdf but it works
     data = reader.pages[1].images[0]
+    assert data.image.mode == "CMYK"
+    assert ".jpg" in data.name
     diff = ImageChops.difference(data.image, refimg)
     d = sqrt(
         sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
     ) / (diff.size[0] * diff.size[1])
     assert d < 0.01
+    # deflate
+    url = "https://github.com/py-pdf/pypdf/files/12078533/cmyk2.pdf"
+    name = "cmyk_deflate.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://github.com/py-pdf/pypdf/files/12078556/cmyk.tif.txt"
+    name_png = "cmyk_deflate.tif"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    assert data.image.mode == "CMYK"
+    assert ".tif" in data.name
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(
+        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
+    ) / (diff.size[0] * diff.size[1])
+    assert d < 0.001  # lossless compression expected
 
 
 @pytest.mark.enable_socket()
@@ -465,3 +485,24 @@ def test_2bits_image():
         sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
     ) / (diff.size[0] * diff.size[1])
     assert d < 0.01
+
+
+@pytest.mark.enable_socket()
+def test_gray_devicen_cmyk():
+    """
+    Cf #1979
+    Gray Image in CMYK : requiring reverse
+    """
+    url = "https://github.com/py-pdf/pypdf/files/12080338/example_121.pdf"
+    name = "gray_cmyk.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/254545494-42df4949-1557-4f2d-acca-6be6e8de1122.png"
+    name_png = "velo.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    assert data.image.mode == "L"
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(sum([(a * a) for a in diff.getdata()])) / (diff.size[0] * diff.size[1])
+    assert d < 0.001
