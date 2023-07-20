@@ -647,7 +647,9 @@ mode_str_type: TypeAlias = Literal[
 
 
 def _get_imagemode(
-    color_space: Union[str, List[Any]], color_components: int, prev_mode: mode_str_type
+    color_space: Union[str, List[Any], Any],
+    color_components: int,
+    prev_mode: mode_str_type,
 ) -> mode_str_type:
     """Returns the image mode not taking into account mask(transparency)"""
     if isinstance(color_space, str):
@@ -663,26 +665,29 @@ def _get_imagemode(
         color_components = cast(int, icc_profile["/N"])
         color_space = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
-        color_space = color_space[1].get_object()
-        if isinstance(color_space, list):
-            color_space = color_space[1].get_object().get("/Alternate", "")
-        color_components = 1 if "Gray" in color_space else 2
-        if not (isinstance(color_space, str) and "Gray" in color_space):
-            color_space = "palette"
+        color_space = color_space[1]
+        if isinstance(color_space, IndirectObject):
+            color_space = color_space.get_object()
+        mode2 = _get_imagemode(color_space, color_components, prev_mode)
+        if mode2 in ("RGB", "CMYK"):
+            mode2 = "P"
+        return mode2
     elif color_space[0] == "/Separation":
         color_space = color_space[2]
     elif color_space[0] == "/DeviceN":
-        color_space = color_space[2]
         color_components = len(color_space[1])
+        color_space = color_space[2]
+        if isinstance(color_space, IndirectObject):  # pragma: no cover
+            color_space = color_space.get_object()
 
     mode_map = {
-        "1bit": "1",  # 0 will be used for 1 bit
+        "1bit": "1",  # pos [0] will be used for 1 bit
+        "/DeviceGray": "L",  # must be in pos [1]
+        "palette": "P",  # must be in pos [2] for color_components align.
+        "/DeviceRGB": "RGB",  # must be in pos [3]
+        "/DeviceCMYK": "CMYK",  # must be in pos [4]
         "2bit": "2bits",  # 2 bits images
         "4bit": "4bits",  # 4 bits
-        "/DeviceGray": "L",
-        "palette": "P",  # reserved for color_components alignment
-        "/DeviceRGB": "RGB",
-        "/DeviceCMYK": "CMYK",
     }
     mode: mode_str_type = (
         mode_map.get(color_space)  # type: ignore
@@ -913,8 +918,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     # CMYK image without decode requires reverting scale (cf p243,2§ last sentence)
     decode = x_object_obj.get(
         IA.DECODE,
-        ([1.0, 0.0] * 4)
-        if img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE)
+        ([1.0, 0.0] * len(img.getbands()))
+        if (
+            (img.mode == "CMYK" or (mode == "CMYK" and img.mode == "L"))
+            and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE)
+        )
         else None,
     )
     if (
