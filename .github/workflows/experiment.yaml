@@ -1,0 +1,45 @@
+# This action assumes that there is a REL-commit which already has a
+# Markdown-formatted git tag. Hence the CHANGELOG is already adjusted
+# and it's decided what should be in the release.
+# This action only ensures the release is done with the proper contents
+# and that it's announced with a Github release.
+name: Experiment for the release
+on:
+  push:
+    branches: [ main, 2.0.0-dev ]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.rst'
+  pull_request:
+    branches: [ main, 2.0.0-dev ]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.rst'
+
+jobs:
+  build_and_publish:
+    # this doesn't make sense if you don't have the PyPI secret
+    name: Publish a new version of pypdf
+    runs-on: ubuntu-latest
+
+    steps:
+      # Ensure it's on PyPI
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Create the Github Page
+      - name: Prepare variables
+        id: prepare_variables
+        run: |
+          git fetch --tags --force
+          latest_tag=3.12.0
+          echo "latest_tag=3.12.0" >> "$GITHUB_ENV"
+          echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "tag_body<<$EOF" >> $GITHUB_ENV
+          echo "$(git --no-pager tag -l ${latest_tag} --format='%(contents:body)')" >> $GITHUB_ENV
+          echo "$EOF" >> $GITHUB_ENV
+      - name: Create GitHub Release 🚀
+        run: |
+          echo ${{ env.latest_tag }}
+          echo ${{ env.tag_body }}
