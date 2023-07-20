@@ -113,6 +113,7 @@ jobs:
         pip install .
     - name: Test with ruff
       run: |
+        echo `ruff --version`
         ruff .
 
   package:
@@ -136,16 +137,6 @@ jobs:
       - name: Test running installed package
         working-directory: /tmp
         run: python -c "import pypdf;print(pypdf.__version__)"
-
-      # - name: Release to pypi if tagged.
-      #   if: startsWith(github.ref, 'refs/tags')
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     user: __token__
-      #     password: ${{ secrets.PYPI_API_TOKEN }}
-      - name: Create GitHub release if tagged.
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
 
   coverage:
     name: Combine & check coverage.

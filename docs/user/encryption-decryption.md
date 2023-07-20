@@ -5,10 +5,10 @@
 
 ## Encrypt
 
-> ⚠️ WARNING ⚠️: pypdf only implements [RC4 encryption](https://en.wikipedia.org/wiki/RC4).
+> ⚠️ WARNING ⚠️: pypdf uses by default [RC4 encryption](https://en.wikipedia.org/wiki/RC4)
+> if you ommit the "algorithm" parameter.
 > This encryption algorithm is insecure. The more modern and secure AES
-> encryption is not implemented. pypdf can only decrypt, but not encrypt with
-> AES.
+> encryption requires [`pycryptodome`](https://pypi.org/project/pycryptodome/) to be installed.
 
 Add a password to a PDF (encrypt it):
 
@@ -23,12 +23,18 @@ for page in reader.pages:
     writer.add_page(page)
 
 # Add a password to the new PDF
-writer.encrypt("my-secret-password")
+writer.encrypt("my-secret-password", algorithm="AES-256")
 
 # Save the new PDF to a file
 with open("encrypted-pdf.pdf", "wb") as f:
     writer.write(f)
 ```
+
+We recommend using `AES-256-R5`:
+
+* Using the [Advanced Encryption Standard](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard) encryption
+* with a key size of 256 bit
+
 
 ## Decrypt
 

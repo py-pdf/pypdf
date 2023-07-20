@@ -11,11 +11,13 @@ from pathlib import Path
 from re import findall
 
 import pytest
+from PIL import Image, ImageChops
+from PIL import __version__ as pil_version
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning
-from pypdf.generic import ContentStream, read_object
+from pypdf.generic import ContentStream, NameObject, read_object
 
 from . import get_pdf_from_url, normalize_warnings
 
@@ -62,10 +64,9 @@ def test_basic_features(tmp_path):
 
     # encrypt your new PDF and add a password
     password = "secret"
-    with pytest.warns(UserWarning, match="pypdf only implements RC4 encryption"):
-        writer.encrypt(password)
-        # doing it twice should not change anything
-        writer.encrypt(password)
+    writer.encrypt(password)
+    # doing it twice should not change anything
+    writer.encrypt(password)
 
     # finally, write "output" to pypdf-output.pdf
     write_path = tmp_path / "pypdf-output.pdf"
@@ -348,6 +349,7 @@ def test_overlay(pdf_file_path, base_path, overlay_path):
         )
     ],
 )
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_with_warning(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
@@ -367,6 +369,7 @@ def test_merge_with_warning(tmp_path, url, name):
         )
     ],
 )
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
@@ -377,18 +380,28 @@ def test_merge(tmp_path, url, name):
 
 @pytest.mark.enable_socket()
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "expected_metadata"),
     [
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/935/935996.pdf",
             "tika-935996.pdf",
+            {
+                "/Author": "Unknown",
+                "/CreationDate": "Thursday, May 06, 1999 3:56:54 PM",
+                "/Creator": "C:DEBÆł8",
+                "/Keywords": "",
+                "/Producer": "Acrobat PDFWriter 3.02 for Windows",
+                "/Subject": "",
+                "/Title": "C:DEBÆł8-6R.PDF",
+            },
         )
     ],
 )
-def test_get_metadata(url, name):
+def test_get_metadata(url, name, expected_metadata):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    reader.metadata
+    data = reader.metadata
+    assert expected_metadata == data
 
 
 @pytest.mark.enable_socket()
@@ -565,6 +578,7 @@ def test_scale_rectangle_indirect_object():
         page.scale(sx=2, sy=3)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_output(caplog):
     # Arrange
     base = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf"
@@ -903,23 +917,23 @@ def test_extra_test_iss1541():
 
     cs = ContentStream(reader.pages[0]["/Contents"], None, None)
     cs.operations.insert(-1, ([], b"EMC"))
-    bu = BytesIO()
-    cs.write_to_stream(bu)
-    bu.seek(0)
-    ContentStream(read_object(bu, None, None), None, None).operations
+    stream = BytesIO()
+    cs.write_to_stream(stream)
+    stream.seek(0)
+    ContentStream(read_object(stream, None, None), None, None).operations
 
     cs = ContentStream(reader.pages[0]["/Contents"], None, None)
     cs.operations.insert(-1, ([], b"E!C"))
-    bu = BytesIO()
-    cs.write_to_stream(bu)
-    bu.seek(0)
+    stream = BytesIO()
+    cs.write_to_stream(stream)
+    stream.seek(0)
     with pytest.raises(PdfReadError) as exc:
-        ContentStream(read_object(bu, None, None), None, None).operations
+        ContentStream(read_object(stream, None, None), None, None).operations
     assert exc.value.args[0] == "Unexpected end of stream"
 
-    buf2 = BytesIO(data.getbuffer())
+    b = BytesIO(data.getbuffer())
     reader = PdfReader(
-        BytesIO(bytes(buf2.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
+        BytesIO(bytes(b.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
     )
     with pytest.raises(PdfReadError) as exc:
         reader.pages[0].extract_text()
@@ -934,3 +948,84 @@ def test_fields_returning_stream():
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data, strict=False)
     assert "BtchIssQATit_time" in reader.get_form_text_fields()["TimeStampData"]
+
+
+def test_replace_image(tmp_path):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "labeled-edges-center-image.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "jpeg.pdf")
+    img = reader.pages[0].images[0].image
+    if int(pil_version.split(".")[0]) < 9:
+        img = img.convert("RGB")
+    writer.pages[0].images[0].replace(img)
+    b = BytesIO()
+    writer.write(b)
+    reader2 = PdfReader(b)
+    if int(pil_version.split(".")[0]) >= 9:
+        assert reader2.pages[0].images[0].image.mode == "RGBA"
+    # very simple image distance evaluation
+    diff = ImageChops.difference(reader2.pages[0].images[0].image, img)
+    d = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
+    assert d < 1.5
+    img = img.convert("RGB")  # quality does not apply to RGBA/JP2
+    writer.pages[0].images[0].replace(img, quality=20)
+    diff = ImageChops.difference(writer.pages[0].images[0].image, img)
+    d1 = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
+    assert d1 > d
+    # extra tests for coverage
+    with pytest.raises(TypeError) as exc:
+        reader.pages[0].images[0].replace(img)
+    assert exc.value.args[0] == "Can not update an image not belonging to a PdfWriter"
+    i = writer.pages[0].images[0]
+    with pytest.raises(TypeError) as exc:
+        i.replace(reader.pages[0].images[0])  # missing .image
+    assert exc.value.args[0] == "new_image shall be a PIL Image"
+    i.indirect_reference = None  # to behave like an inline image
+    with pytest.raises(TypeError) as exc:
+        i.replace(reader.pages[0].images[0].image)
+    assert exc.value.args[0] == "Can not update an inline image"
+
+
+@pytest.mark.enable_socket()
+def test_inline_images():
+    """This problem was reported in #424"""
+    url = "https://arxiv.org/pdf/2201.00151.pdf"
+    name = "2201.00151.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/28e8b87c-be2c-40d9-9c86-15c7819021bf"
+    name = "inline4.png"
+    img_ref = Image.open(BytesIO(get_pdf_from_url(url, name=name)))
+    assert list(reader.pages[1].images[4].image.getdata()) == list(img_ref.getdata())
+    with pytest.raises(KeyError):
+        reader.pages[0].images["~999~"]
+    del reader.pages[1]["/Resources"]["/ColorSpace"]["/R124"]
+    reader.pages[1].inline_images = None  # to force recalculation
+    with pytest.raises(PdfReadError):
+        reader.pages[1].images["~1~"]
+
+    co = reader.pages[0].get_contents()
+    co.operations.append(([], b"BI"))
+    reader.pages[0][NameObject("/Contents")] = co
+    reader.pages[0].images.keys()
+
+    with pytest.raises(TypeError) as exc:
+        reader.pages[0].images[0].replace(img_ref)
+    assert exc.value.args[0] == "Can not update an inline image"
+
+    _a = {}
+    for x, y in reader.pages[2].images[0:-2].items():
+        _a[x] = y
+    with pytest.raises(KeyError) as exc:
+        reader.pages[2]._get_image(("test",))
+    reader.pages[2].inline_images = None
+    with pytest.raises(KeyError) as exc:
+        reader.pages[2]._get_image(("~1~",))
+
+
+@pytest.mark.enable_socket()
+def test_iss():
+    url = "https://github.com/py-pdf/pypdf/files/11801077/lv2018tconv.pdf"
+    name = "lv2018tconv.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for i, page in enumerate(reader.pages):
+        print(i)
+        page.extract_text()

@@ -71,9 +71,7 @@ def get_all_tiff(xmp: pypdf.xmp.XmpInformation):
         about_uri="", namespace="http://ns.adobe.com/tiff/1.0/"
     )
     for tag in tiff_ns:
-        contents = []
-        for content in tag.childNodes:
-            contents.append(content.data)
+        contents = [content.data for content in tag.childNodes]
         data[tag.tagName] = contents
     return data
 

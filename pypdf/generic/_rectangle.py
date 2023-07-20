@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple, Union
+from typing import Any, Tuple, Union
 
 from .._utils import deprecation_no_replacement, deprecation_with_replacement
 from ._base import FloatObject, NumberObject
@@ -48,7 +48,7 @@ class RectangleObject(ArrayObject):
         return self._ensure_is_number(value)
 
     def __repr__(self) -> str:
-        return f"RectangleObject({repr(list(self))})"
+        return f"RectangleObject({list(self)!r})"
 
     @property
     def left(self) -> FloatObject:
@@ -123,7 +123,7 @@ class RectangleObject(ArrayObject):
         return self.left, self.bottom
 
     @lower_left.setter
-    def lower_left(self, value: List[Any]) -> None:
+    def lower_left(self, value: Tuple[float, float]) -> None:
         self[0], self[1] = (self._ensure_is_number(x) for x in value)
 
     @property
@@ -135,7 +135,7 @@ class RectangleObject(ArrayObject):
         return self.right, self.bottom
 
     @lower_right.setter
-    def lower_right(self, value: List[Any]) -> None:
+    def lower_right(self, value: Tuple[float, float]) -> None:
         self[2], self[1] = (self._ensure_is_number(x) for x in value)
 
     @property
@@ -147,7 +147,7 @@ class RectangleObject(ArrayObject):
         return self.left, self.top
 
     @upper_left.setter
-    def upper_left(self, value: List[Any]) -> None:
+    def upper_left(self, value: Tuple[float, float]) -> None:
         self[0], self[3] = (self._ensure_is_number(x) for x in value)
 
     @property
@@ -159,7 +159,7 @@ class RectangleObject(ArrayObject):
         return self.right, self.top
 
     @upper_right.setter
-    def upper_right(self, value: List[Any]) -> None:
+    def upper_right(self, value: Tuple[float, float]) -> None:
         self[2], self[3] = (self._ensure_is_number(x) for x in value)
 
     def getLowerLeft(

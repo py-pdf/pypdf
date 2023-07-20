@@ -229,8 +229,8 @@ def test_name_object(caplog):
     assert caplog.text == ""
 
     b = BytesIO()
-    NameObject("/你好世界").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C"
+    NameObject("/你好世界 (%)").write_to_stream(b)
+    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
     assert caplog.text == ""
 
 
@@ -250,7 +250,10 @@ def test_destination_fit_r():
 
 
 def test_destination_fit_v():
-    Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
+    d = Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
+
+    writer = PdfWriter()
+    writer.add_named_destination_object(d)
 
     # Trigger Exception
     Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=None))
@@ -302,9 +305,9 @@ def test_read_object_comment():
 def test_bytestringobject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")
-    bo.write_to_stream(stream, encryption_key="foobar")
+    bo.write_to_stream(stream)
     stream.seek(0, 0)
-    assert stream.read() == b"<1cdd628b972e>"  # TODO: how can we verify this?
+    assert stream.read() == b"<73747265616d>"  # TODO: how can we verify this?
 
 
 def test_dictionaryobject_key_is_no_pdfobject():
@@ -678,6 +681,7 @@ def test_bool_repr(tmp_path):
 
 @pytest.mark.enable_socket()
 @patch("pypdf._reader.logger_warning")
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_issue_997(mock_logger_warning, pdf_file_path):
     url = (
         "https://github.com/py-pdf/pypdf/files/8908874/"
@@ -1031,6 +1035,22 @@ def test_indirect_object_invalid_read():
     assert exc.value.args[0] == "Error reading indirect object reference at byte 0x5"
 
 
+def test_create_string_object_utf16be_bom():
+    result = create_string_object(
+        b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
+    )
+    assert result == "PaperPort 14\x00"
+    assert result.autodetect_utf16 is True
+
+
+def test_create_string_object_utf16le_bom():
+    result = create_string_object(
+        b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
+    assert result == "PaperPort 14\x00"
+    assert result.autodetect_utf16 is True
+
+
 def test_create_string_object_force():
     assert create_string_object(b"Hello World", []) == "Hello World"
     assert create_string_object(b"Hello World", {72: "A"}) == "Aello World"
@@ -1076,7 +1096,7 @@ def test_cloning(caplog):
     writer = PdfWriter()
     with pytest.raises(Exception) as exc:
         PdfObject().clone(writer)
-    assert "clone PdfObject" in exc.value.args[0]
+    assert "PdfObject does not implement .clone so far" in exc.value.args[0]
 
     obj1 = DictionaryObject()
     obj1.indirect_reference = None
@@ -1156,3 +1176,50 @@ def test_iss1615_1673():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
+
+
+@pytest.mark.enable_socket()
+def test_destination_withoutzoom():
+    """Cf issue #1832"""
+    url = (
+        "https://raw.githubusercontent.com/xrkk/tmpppppp/main/"
+        "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
+    )
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.outline
+
+    out = BytesIO()
+    writer = PdfWriter(clone_from=reader)
+    writer.write(out)
+
+
+def test_encodedstream_set_data():
+    """
+    EncodedStreamObject.set_data to extend data stream works.
+
+    Checks also the flate_encode.
+    """
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    co = reader.pages[0]["/Contents"][0].get_object()
+    co.set_data(b"%hello\n" + co.get_data())
+    assert b"hello" in co.get_data()
+    b = BytesIO()
+    co.write_to_stream(b)
+    b.seek(0)
+    aa = read_object(b, None)
+    assert b"hello" in aa.get_data()
+    assert aa["/Filter"] == "/FlateDecode"
+    assert "/DecodeParms" not in aa
+    bb = aa.flate_encode()
+    assert b"hello" in bb.get_data()
+    assert bb["/Filter"] == ["/FlateDecode", "/FlateDecode"]
+    assert str(bb["/DecodeParms"]) == "[NullObject, NullObject]"
+    bb[NameObject("/Test")] = NameObject("/MyTest")
+    cc = bb.flate_encode()
+    assert bb["/Filter"] == ["/FlateDecode", "/FlateDecode"]
+    assert b"hello" in cc.get_data()
+    assert cc["/Filter"] == ["/FlateDecode", "/FlateDecode", "/FlateDecode"]
+    assert str(cc["/DecodeParms"]) == "[NullObject, NullObject, NullObject]"
+    assert cc[NameObject("/Test")] == "/MyTest"

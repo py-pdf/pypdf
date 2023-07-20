@@ -66,43 +66,42 @@ def merge():
     pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
     pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
-    merger = pypdf.PdfMerger()
+    writer = PdfWriter()
 
     # string path:
-    merger.append(pdf_path)
-    merger.append(outline)
-    merger.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
-    merger.append(pdf_forms)
+    writer.append(pdf_path)
+    writer.append(outline)
+    writer.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
+    writer.append(pdf_forms)
 
     # Merging an encrypted file
-    reader = pypdf.PdfReader(pdf_pw)
+    reader = PdfReader(pdf_pw)
     reader.decrypt("openpassword")
-    merger.append(reader)
+    writer.append(reader)
 
     # PdfReader object:
-    merger.append(pypdf.PdfReader(pdf_path, "rb"), outline_item=True)
+    writer.append(PdfReader(pdf_path, "rb"), outline_item=True)
 
     # File handle
     with open(pdf_path, "rb") as fh:
-        merger.append(fh)
+        writer.append(fh)
 
-    outline_item = merger.add_outline_item("An outline item", 0)
-    merger.add_outline_item("deeper", 0, parent=outline_item)
-    merger.add_metadata({"author": "Martin Thoma"})
-    merger.add_named_destination("title", 0)
-    merger.set_page_layout("/SinglePage")
-    merger.set_page_mode("/UseThumbs")
+    outline_item = writer.add_outline_item("An outline item", 0)
+    writer.add_outline_item("deeper", 0, parent=outline_item)
+    writer.add_metadata({"author": "Martin Thoma"})
+    writer.add_named_destination("title", 0)
+    writer.set_page_layout("/SinglePage")
+    writer.set_page_mode("/UseThumbs")
 
     write_path = "dont_commit_merged.pdf"
-    merger.write(write_path)
-    merger.close()
+    writer.write(write_path)
+    writer.close()
 
     # Check if outline is correct
-    reader = pypdf.PdfReader(write_path)
+    reader = PdfReader(write_path)
     assert [
         el.title for el in reader._get_outline() if isinstance(el, Destination)
     ] == [
-        "An outline item",
         "Foo",
         "Bar",
         "Baz",
@@ -113,6 +112,7 @@ def merge():
         "Bar",
         "Baz",
         "True",
+        "An outline item",
     ]
 
 

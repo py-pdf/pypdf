@@ -1,5 +1,120 @@
 # CHANGELOG
 
+## Version 3.12.2, 2023-07-16
+
+### Bug Fixes (BUG)
+-  Accept calRGB and calGray color_spaces (#1968)
+-  Process 2bits and 4bits images (#1967)
+-  Check for AcroForm and ensure it is not None (#1965)
+
+### Developer Experience (DEV)
+-  Automate the release process (#1970)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.1...3.12.2)
+
+## Version 3.12.1, 2023-07-09
+
+### Bug Fixes (BUG)
+-  Prevent updating page contents after merging page (stamping/watermarking) (#1952)
+-  % to be hex encoded in names (#1958)
+-  Inverse color in CMYK images (#1947)
+-  Dates conversion not working with Z00\'00\' (#1946)
+-  Support UTF-16-LE Strings (#1884)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.0...3.12.1)
+
+## Version 3.12.0, 2023-07-02
+
+### New Features (ENH)
+-  Add AES support for encrypting PDF files (#1918, #1935, #1936, #1938)
+-  Add page deletion feature to PdfWriter (#1843)
+
+### Bug Fixes (BUG)
+-  PdfReader.get_fields() attempts to delete non-existing index "/Off" (#1933)
+-  Remove unused objects when cloning_from (#1926)
+-  Add the TK.SIZE into the trailer (#1911)
+-  add_named_destination() maintains named destination list sort order (#1930)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.11.1...3.12.0)
+
+## Version 3.11.1, 2023-06-25
+
+### Bug Fixes (BUG)
+- Cascaded filters in image objects (#1913)
+- Append pdf with named destination using numbers for pages (#1858)
+- Ignore "/B" fields only on pages in PdfWriter.append() (#1875)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.11.0...3.11.1)
+
+## Version 3.11.0, 2023-06-23
+
+### New Features (ENH)
+-  Add page_number property (#1856)
+
+### Bug Fixes (BUG)
+- File expansion when updating with Page Contents (#1906)
+- Missing Alternate in indexed/ICCbased colorspaces (#1896)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.10.0...3.11.0)
+
+## Version 3.10.0, 2023-06-18
+
+### New Features (ENH)
+-  Extraction of inline images (#1850)
+-  Add capability to replace image (#1849)
+-  Extend images interface by returning an ImageFile(File) class (#1848)
+-  Add set_data to EncodedStreamObject (#1854)
+
+### Bug Fixes (BUG)
+-  Fix RGB FlateEncode Images(PNG) and transparency (#1834)
+-  Generate static appearance for fields (#1864)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.9.1...3.10.0)
+
+## Version 3.9.1, 2023-06-04
+
+### Deprecations (DEP)
+-  Deprecate PdfMerger (#1866)
+
+### Bug Fixes (BUG)
+-  Ignore UTF-8 decode errors (#1865)
+
+### Robustness (ROB)
+-  Handle missing /Type entry in Page tree (#1859)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.9.0...3.9.1)
+
+## Version 3.9.0, 2023-05-21
+
+### New Features (ENH)
+-  Simplify metadata input (Document Information Dictionary) (#1851)
+-  Extend cmap compatibilty to GBK_EUC_H/V (#1812)
+
+### Bug Fixes (BUG)
+-  Prevent infinite loop when no character follows after a comment (#1828)
+-  get_contents does not return ContentStream (#1847)
+-  Accept XYZ destination with zoom missing (default to zoom=0.0) (#1844)
+-  Cope with 1 Bit images (#1815)
+
+### Robustness (ROB)
+-  Handle missing /Type entry in Page tree (#1845)
+
+### Documentation (DOC)
+-  Expand file size explanations (#1835)
+-  Add comparison with pdfplumber (#1837)
+-  Clarify that PyPDF2 is dead (#1827)
+-  Add Hunter King as Contributor for #1806
+
+### Maintenance (MAINT)
+-  Refactor internal Encryption class (#1821)
+-  Add R parameter to generate_values (#1820)
+-  Make encryption_key parameter of write_to_stream optional (#1819)
+-  Prepare for adding AES enryption support (#1818)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.1...3.9.0)
+
+
 ## Version 3.8.1, 2023-04-23
 
 ### Bug Fixes (BUG)

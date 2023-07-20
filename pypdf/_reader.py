@@ -69,11 +69,11 @@ from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
-    FieldDictionaryAttributes,
     GoToActionArguments,
 )
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
+from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
@@ -242,14 +242,16 @@ class DocumentInformation(DictionaryObject):
         text = self._get_text(DI.CREATION_DATE)
         if text is None:
             return None
-        return datetime.strptime(text.replace("'", ""), "D:%Y%m%d%H%M%S%z")
+        return datetime.strptime(
+            text.replace("Z", "+").replace("'", ""), "D:%Y%m%d%H%M%S%z"
+        )
 
     @property
     def creation_date_raw(self) -> Optional[str]:
         """
         The "raw" version of creation date; can return a ``ByteStringObject``.
 
-        Typically in the format ``D:YYYYMMDDhhmmss[+-]hh'mm`` where the suffix
+        Typically in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
         return self.get(DI.CREATION_DATE)
@@ -264,7 +266,9 @@ class DocumentInformation(DictionaryObject):
         text = self._get_text(DI.MOD_DATE)
         if text is None:
             return None
-        return datetime.strptime(text.replace("'", ""), "D:%Y%m%d%H%M%S%z")
+        return datetime.strptime(
+            text.replace("Z", "+").replace("'", ""), "D:%Y%m%d%H%M%S%z"
+        )
 
     @property
     def modification_date_raw(self) -> Optional[str]:
@@ -272,7 +276,7 @@ class DocumentInformation(DictionaryObject):
         The "raw" version of modification date; can return a
         ``ByteStringObject``.
 
-        Typically in the format ``D:YYYYMMDDhhmmss[+-]hh'mm`` where the suffix
+        Typically in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
         return self.get(DI.MOD_DATE)
@@ -542,7 +546,7 @@ class PdfReader:
             default, the mapping name is used for keys.
             ``None`` if form data could not be located.
         """
-        field_attributes = FieldDictionaryAttributes.attributes_dict()
+        field_attributes = FA.attributes_dict()
         field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
         if retval is None:
             retval = {}
@@ -626,6 +630,29 @@ class PdfReader:
             self._write_field(fileobj, field, field_attributes)
             fileobj.write("\n")
         retval[key] = Field(field)
+        obj = retval[key].indirect_reference.get_object()  # to get the full object
+        if obj.get(FA.FT, "") == "/Ch":
+            retval[key][NameObject("/_States_")] = obj[NameObject(FA.Opt)]
+        if obj.get(FA.FT, "") == "/Btn" and "/AP" in obj:
+            #  Checkbox
+            retval[key][NameObject("/_States_")] = ArrayObject(
+                list(obj["/AP"]["/N"].keys())
+            )
+            if "/Off" not in retval[key]["/_States_"]:
+                retval[key][NameObject("/_States_")].append(NameObject("/Off"))
+        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
+            states = []
+            for k in obj.get(FA.Kids, {}):
+                k = k.get_object()
+                for s in list(k["/AP"]["/N"].keys()):
+                    if s not in states:
+                        states.append(s)
+                retval[key][NameObject("/_States_")] = ArrayObject(states)
+            if (
+                obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0
+                and "/Off" in retval[key]["/_States_"]
+            ):
+                del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
 
     def _check_kids(
         self, tree: Union[TreeObject, DictionaryObject], retval: Any, fileobj: Any
@@ -636,20 +663,20 @@ class PdfReader:
                 self.get_fields(kid.get_object(), retval, fileobj)
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
-        field_attributes_tuple = FieldDictionaryAttributes.attributes()
+        field_attributes_tuple = FA.attributes()
         field_attributes_tuple = (
             field_attributes_tuple + CheckboxRadioButtonAttributes.attributes()
         )
 
         for attr in field_attributes_tuple:
             if attr in (
-                FieldDictionaryAttributes.Kids,
-                FieldDictionaryAttributes.AA,
+                FA.Kids,
+                FA.AA,
             ):
                 continue
             attr_name = field_attributes[attr]
             try:
-                if attr == FieldDictionaryAttributes.FT:
+                if attr == FA.FT:
                     # Make the field type value more clear
                     types = {
                         "/Btn": "Button",
@@ -659,12 +686,12 @@ class PdfReader:
                     }
                     if field[attr] in types:
                         fileobj.write(f"{attr_name}: {types[field[attr]]}\n")
-                elif attr == FieldDictionaryAttributes.Parent:
+                elif attr == FA.Parent:
                     # Let's just write the name of the parent
                     try:
-                        name = field[attr][FieldDictionaryAttributes.TM]
+                        name = field[attr][FA.TM]
                     except KeyError:
-                        name = field[attr][FieldDictionaryAttributes.T]
+                        name = field[attr][FA.T]
                     fileobj.write(f"{attr_name}: {name}\n")
                 else:
                     fileobj.write(f"{attr_name}: {field[attr]}\n")
@@ -1187,9 +1214,13 @@ class PdfReader:
             pages = catalog["/Pages"].get_object()  # type: ignore
             self.flattened_pages = []
 
-        t = "/Pages"
         if PA.TYPE in pages:
             t = pages[PA.TYPE]  # type: ignore
+        # if pdf has no type, considered as a page if /Kids is missing
+        elif PA.KIDS not in pages:
+            t = "/Page"
+        else:
+            t = "/Pages"
 
         if t == "/Pages":
             for attr in inheritable_page_attributes:
@@ -1743,7 +1774,7 @@ class PdfReader:
                         break
                     else:
                         raise PdfReadError(f"trailer can not be read {e.args}")
-                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
+                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE
                 for key in trailer_keys:
                     if key in xrefstream and key not in self.trailer:
                         self.trailer[NameObject(key)] = xrefstream.raw_get(key)
@@ -2186,11 +2217,7 @@ class PdfReader:
             )
         except KeyError:
             return []
-        attachments_names = []
-        # Loop through attachments
-        for f in filenames:
-            if isinstance(f, str):
-                attachments_names.append(f)
+        attachments_names = [f for f in filenames if isinstance(f, str)]
         return attachments_names
 
     def _get_attachment_list(self, name: str) -> List[bytes]:

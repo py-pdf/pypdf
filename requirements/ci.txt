@@ -22,6 +22,8 @@ flake8-implicit-str-concat==0.2.0
     # via -r requirements/ci.in
 flake8-print==4.0.1
     # via -r requirements/ci.in
+fpdf2==2.4.1
+    # via -r requirements/ci.in
 importlib-metadata==4.2.0
     # via
     #   flake8
@@ -35,12 +37,14 @@ more-itertools==8.14.0
     # via flake8-implicit-str-concat
 mypy==0.971
     # via -r requirements/ci.in
-mypy-extensions==0.4.3
+mypy-extensions==1.0.0
     # via mypy
 packaging==21.3
     # via pytest
 pillow==8.4.0
-    # via -r requirements/ci.in
+    # via
+    #   -r requirements/ci.in
+    #   fpdf2
 pluggy==1.0.0
     # via pytest
 py==1.11.0
@@ -51,7 +55,7 @@ pycodestyle==2.9.1
     # via
     #   flake8
     #   flake8-print
-pycryptodome==3.16.0
+pycryptodome==3.18.0
     # via -r requirements/ci.in
 pyflakes==2.5.0
     # via flake8
@@ -62,9 +66,12 @@ pytest==7.0.1
     #   -r requirements/ci.in
     #   pytest-benchmark
     #   pytest-socket
+    #   pytest-timeout
 pytest-benchmark==3.4.1
     # via -r requirements/ci.in
 pytest-socket==0.4.1
+    # via -r requirements/ci.in
+pytest-timeout==2.1.0
     # via -r requirements/ci.in
 six==1.16.0
     # via flake8-print
@@ -78,7 +85,7 @@ typeguard==2.13.3
     # via -r requirements/ci.in
 types-dataclasses==0.6.6
     # via -r requirements/ci.in
-types-pillow==9.3.0.4
+types-pillow==9.5.0.4
     # via -r requirements/ci.in
 typing-extensions==4.1.1
     # via

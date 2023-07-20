@@ -11,7 +11,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
 from pypdf.constants import PageAttributes as PG
-from pypdf.errors import DeprecationError, PdfReadWarning
+from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -19,6 +19,7 @@ from pypdf.generic import (
     FloatObject,
     IndirectObject,
     NameObject,
+    NullObject,
     RectangleObject,
     TextStringObject,
 )
@@ -102,7 +103,13 @@ def test_page_operations(pdf_path, password):
     assert abs(t.ctm[4] + 100) < 0.01
     assert abs(t.ctm[5] - 50) < 0.01
 
-    transformation = Transformation().rotate(90).scale(1).translate(1, 1).transform(Transformation((1, 0, 0, -1, 0, 0)))
+    transformation = (
+        Transformation()
+        .rotate(90)
+        .scale(1)
+        .translate(1, 1)
+        .transform(Transformation((1, 0, 0, -1, 0, 0)))
+    )
     page.add_transformation(transformation, expand=True)
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
@@ -157,44 +164,47 @@ def test_transformation_equivalence2():
     pdf_path = RESOURCE_ROOT / "box.pdf"
     reader_add = PdfReader(pdf_path)
 
-    w = PdfWriter()
-    w.append(reader_base)
-    w.pages[0].merge_transformed_page(
+    writer = PdfWriter()
+    writer.append(reader_base)
+    writer.pages[0].merge_transformed_page(
         reader_add.pages[0], Transformation().scale(2).rotate(-45), False, False
     )
-    w.pages[0].merge_transformed_page(
+    writer.pages[0].merge_transformed_page(
         reader_add.pages[0], Transformation().scale(2).translate(100, 100), True, False
     )
     # No special assert: the test should be visual in a viewer; 2 box with a arrow rotated  and translated
 
-    w = PdfWriter()
-    w.append(reader_add)
-    w.pages[0].merge_transformed_page(
+    writer = PdfWriter()
+    writer.append(reader_add)
+    writer.pages[0].merge_transformed_page(
         reader_base.pages[0], Transformation(), True, True
     )
     # No special assert: Visual check the page has been  increased and all is visible (box+graph)
 
-    w = PdfWriter()
-    w.append(reader_add)
+    writer = PdfWriter()
+    writer.append(reader_add)
     height = reader_add.pages[0].mediabox.height
-    w.pages[0].merge_transformed_page(
-        reader_base.pages[0], Transformation().transform(Transformation((1, 0, 0, -1, 0, height))), False, False
+    writer.pages[0].merge_transformed_page(
+        reader_base.pages[0],
+        Transformation().transform(Transformation((1, 0, 0, -1, 0, height))),
+        False,
+        False,
     )
     # No special assert: Visual check the page has been  increased and all is visible (box+graph)
 
     pdf_path = RESOURCE_ROOT / "commented-xmp.pdf"
     reader_comments = PdfReader(pdf_path)
 
-    w = PdfWriter()
-    w.append(reader_base)
-    w.pages[0].merge_transformed_page(
+    writer = PdfWriter()
+    writer.append(reader_base)
+    writer.pages[0].merge_transformed_page(
         reader_comments.pages[0], Transformation().rotate(-15), True, True
     )
-    nb_annots1 = len(w.pages[0]["/Annots"])
-    w.pages[0].merge_transformed_page(
+    nb_annots1 = len(writer.pages[0]["/Annots"])
+    writer.pages[0].merge_transformed_page(
         reader_comments.pages[0], Transformation().rotate(-30), True, True
     )
-    assert len(w.pages[0]["/Annots"]) == 2 * nb_annots1
+    assert len(writer.pages[0]["/Annots"]) == 2 * nb_annots1
     # No special assert: Visual check the overlay has its comments at the good position
 
 
@@ -252,11 +262,18 @@ def test_page_transformations():
 )
 def test_compress_content_streams(pdf_path, password):
     reader = PdfReader(pdf_path)
+
     writer = PdfWriter()
     if password:
         reader.decrypt(password)
+    for i, page in enumerate(reader.pages):
+        assert i == page.page_number
+
+    assert isinstance(reader.pages[0].get_contents(), ContentStream)
     writer.clone_document_from_reader(reader)
-    for page in writer.pages:
+    assert isinstance(writer.pages[0].get_contents(), ContentStream)
+    for i, page in enumerate(writer.pages):
+        assert i == page.page_number
         page.compress_content_streams()
 
     # test from reader should fail as adding_object out of
@@ -321,7 +338,10 @@ def test_page_scale():
 
 def test_add_transformation_on_page_without_contents():
     page = PageObject()
+    assert page.get_contents() is None
     page.add_transformation(Transformation())
+    page[NameObject("/Contents")] = ContentStream(None, None)
+    assert isinstance(page.get_contents(), ContentStream)
 
 
 @pytest.mark.enable_socket()
@@ -1087,27 +1107,149 @@ def test_merge_transformed_page_into_blank():
     url = "https://github.com/py-pdf/pypdf/files/10768335/badges_3vjrh_7LXDZ_2-1.pdf"
     name = "badges_3vjrh_7LXDZ_2.pdf"
     r2 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    w = PdfWriter()
-    w.add_blank_page(100, 100)
-    w.pages[0].merge_translated_page(r1.pages[0], 0, 0, True, True)
-    w.pages[0].merge_translated_page(r2.pages[0], 1000, 1000, True, True)
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.pages[0].merge_translated_page(r1.pages[0], 0, 0, True, True)
+    writer.pages[0].merge_translated_page(r2.pages[0], 1000, 1000, True, True)
     assert (
-        w.pages[0]["/Resources"]["/Font"].raw_get("/F2+0").idnum
-        != w.pages[0]["/Resources"]["/Font"].raw_get("/F2+0-0").idnum
+        writer.pages[0]["/Resources"]["/Font"].raw_get("/F2+0").idnum
+        != writer.pages[0]["/Resources"]["/Font"].raw_get("/F2+0-0").idnum
     )
-    w.add_blank_page(100, 100)
+    writer.add_blank_page(100, 100)
     for x in range(4):
         for y in range(7):
-            w.pages[1].merge_translated_page(
+            writer.pages[1].merge_translated_page(
                 r1.pages[0],
                 x * r1.pages[0].trimbox[2],
                 y * r1.pages[0].trimbox[3],
                 True,
                 True,
             )
+    blank = PageObject.create_blank_page(width=100, height=100)
+    assert blank.page_number == -1
+    inserted_blank = writer.add_page(blank)
+    assert blank.page_number == -1  # the inserted page is a clone
+    assert inserted_blank.page_number == len(writer.pages) - 1
+    del writer._pages.get_object()["/Kids"][-1]
+    assert inserted_blank.page_number == -1
 
 
 def test_pages_printing():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     assert str(reader.pages) == "[PageObject(0)]"
+    assert len(reader.pages[0].images) == 0
+    with pytest.raises(KeyError):
+        reader.pages[0].images["~1~"]
+
+
+@pytest.mark.enable_socket()
+def test_del_pages():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
+    name = "tika-941536.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_pdf_from_url(url, name=name)))
+    ll = len(writer.pages)
+    pp = writer.pages[1].indirect_reference
+    del writer.pages[1]
+    assert len(writer.pages) == ll - 1
+    pages = writer._pages.get_object()
+    assert pages["/Count"] == ll - 1
+    assert len(pages["/Kids"]) == ll - 1
+    assert pp not in pages["/Kids"]
+    del writer.pages[-2]
+    with pytest.raises(TypeError):
+        del writer.pages["aa"]
+    with pytest.raises(IndexError):
+        del writer.pages[9999]
+    pp = tuple(p.indirect_reference for p in writer.pages[3:5])
+    ll = len(writer.pages)
+    del writer.pages[3:5]
+    assert len(writer.pages) == ll - 2
+    for p in pp:
+        assert p not in pages["/Kids"]
+    # del whole arborescence
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # error case
+    pp = reader.pages[2]
+    i = pp["/Parent"].get_object()["/Kids"].index(pp.indirect_reference)
+    del pp["/Parent"].get_object()["/Kids"][i]
+    with pytest.raises(PdfReadError):
+        del reader.pages[2]
+    # reader is corrupted we have to reload it
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    del reader.pages[:]
+    assert len(reader.pages) == 0
+    assert len(reader.trailer["/Root"]["/Pages"]["/Kids"]) == 0
+    assert len(reader.flattened_pages) == 0
+
+
+def test_pdf_pages_missing_type():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    del reader.trailer["/Root"]["/Pages"]["/Kids"][0].get_object()["/Type"]
+    reader.pages[0]
+    writer = PdfWriter(clone_from=reader)
+    writer.pages[0]
+
+
+@pytest.mark.enable_socket()
+def test_image_new_property():
+    url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
+    name = "pdf_font_garbled.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].images.keys()
+    reader.pages[0].images.items()
+    reader.pages[0].images[0].name
+    reader.pages[0].images[-1].data
+    reader.pages[0].images["/TPL1", "/Image5"].image
+    assert (
+        reader.pages[0].images["/I0"].indirect_reference.get_object()
+        == reader.pages[0]["/Resources"]["/XObject"]["/I0"]
+    )
+    list(reader.pages[0].images[0:2])
+    with pytest.raises(TypeError):
+        reader.pages[0].images[b"0"]
+    with pytest.raises(IndexError):
+        reader.pages[0].images[9999]
+    # just for test coverage:
+    with pytest.raises(KeyError):
+        reader.pages[0]._get_image(["test"], reader.pages[0])
+    assert list(PageObject(None, None).images) == []
+
+
+@pytest.mark.samples()
+def test_compression():
+    """Test for issue #1897"""
+
+    def create_stamp_pdf() -> BytesIO:
+        from fpdf import FPDF
+
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("helvetica", "B", 16)
+        pdf.cell(40, 10, "Hello World!")
+        byte_string = pdf.output()
+        return BytesIO(byte_string)
+
+    template = PdfReader(create_stamp_pdf())
+    template_page = template.pages[0]
+    writer = PdfWriter()
+    writer.append(SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf", [1])
+    nb1 = len(writer._objects)
+
+    # 1 page only is modified
+    for page in writer.pages:
+        page.merge_page(template_page)
+    # font is added; +1 streamobjects + 1 ArrayObject
+    assert len(writer._objects) == nb1 + 1 + 2
+    for page in writer.pages:
+        page.compress_content_streams()
+    # objects are recycled
+    assert len(writer._objects) == nb1 + 1 + 2
+
+    contents = writer.pages[0]["/Contents"]
+    writer.pages[0].replace_contents(None)
+    writer.pages[0].replace_contents(None)
+    assert isinstance(
+        writer._objects[contents.indirect_reference.idnum - 1], NullObject
+    )
