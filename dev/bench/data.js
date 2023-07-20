@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1689882465976,
+  "lastUpdate": 1689890063360,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -33826,6 +33826,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006138503770135719",
             "extra": "mean: 80.12667974999961 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6df64af3ec22eebe52590f975b2a9bba6e497176",
+          "message": "DEV: Add body to created GitHub release (#1985)\n\nPR fixes that new GitHub releases were lacking a body, where this was due to the fact that we were not outputting `tag_body` to `$GITHUB_ENV` so that it wasn't available in follow-up steps. However, because the body is a multiline string, we've got to wrap it in special syntax to get it to work (see [docs](https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#example-of-a-multiline-string) for example).\r\n\r\nSee https://github.com/py-pdf/pypdf/actions/runs/5601580443/jobs/10245662760?pr=1985 as an example test run that shows it working in a test workflow.\r\n\r\nCloses #1971",
+          "timestamp": "2023-07-20T23:53:10+02:00",
+          "tree_id": "0aa2d8c13e2344f5466fb7310913e7bd7c2f24a7",
+          "url": "https://github.com/py-pdf/pypdf/commit/6df64af3ec22eebe52590f975b2a9bba6e497176"
+        },
+        "date": 1689890061612,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.753666666942105,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010919206642997777",
+            "extra": "mean: 1.326846527600003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.252404237918702,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009452162252354387",
+            "extra": "mean: 88.86989650000032 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24171574982940067,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01987797464931298",
+            "extra": "mean: 4.137090779999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.982403600664655,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00032441357926282267",
+            "extra": "mean: 83.4557099999979 msec\nrounds: 12"
           }
         ]
       }
