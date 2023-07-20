@@ -668,10 +668,10 @@ def _get_imagemode(
         color_space = color_space[1]
         if isinstance(color_space, IndirectObject):
             color_space = color_space.get_object()
-        mode = _get_imagemode(color_space, color_components, prev_mode)
-        if mode in ("RGB", "CMYK"):
-            mode = "P"
-        return mode
+        mode2 = _get_imagemode(color_space, color_components, prev_mode)
+        if mode2 in ("RGB", "CMYK"):
+            mode2 = "P"
+        return mode2
     elif color_space[0] == "/Separation":
         color_space = color_space[2]
     elif color_space[0] == "/DeviceN":
