@@ -668,39 +668,22 @@ def _get_imagemode(
         color_space = color_space[1]
         if isinstance(color_space, IndirectObject):
             color_space = color_space.get_object()
-        if isinstance(color_space, list):
-            typ = color_space[0]
-            if isinstance(color_space[0], IndirectObject):
-                typ = typ.get_object()
-            if typ == "/DeviceN":
-                """
-                x = color_space[1]
-                if isinstance(x,IndirectObject):
-                    x = x.get_object()
-                color_components = x
-                """
-                color_space = color_space[2]
-                if isinstance(color_space, IndirectObject):
-                    color_space = color_space.get_object()
-            else:
-                color_space = color_space[1].get_object().get("/Alternate", "")
-        elif not isinstance(color_space, str):
-            color_space = color_space[1].get_object().get("/Alternate", "")
-        color_components = 1 if "Gray" in color_space else 2
-        if not (isinstance(color_space, str) and "Gray" in color_space):
-            color_space = "palette"
+        mode = _get_imagemode(color_space, color_components, prev_mode)
+        if mode in ("RGB", "CMYK"):
+            mode = "P"
+        return mode
     elif color_space[0] == "/Separation":
         color_space = color_space[2]
     elif color_space[0] == "/DeviceN":
         color_components = len(color_space[1])
         color_space = color_space[2]
-        if isinstance(color_space, IndirectObject):
+        if isinstance(color_space, IndirectObject):  # pragma: no cover
             color_space = color_space.get_object()
 
     mode_map = {
-        "1bit": "1",  # 0 will be used for 1 bit
+        "1bit": "1",  # pos [0] will be used for 1 bit
         "/DeviceGray": "L",  # must be in pos [1]
-        "palette": "P",  # reserved for color_components alignment
+        "palette": "P",  # must be in pos [2] for color_components align.
         "/DeviceRGB": "RGB",  # must be in pos [3]
         "/DeviceCMYK": "CMYK",  # must be in pos [4]
         "2bit": "2bits",  # 2 bits images
