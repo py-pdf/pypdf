@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1689696412750,
+  "lastUpdate": 1689882465976,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -33774,6 +33774,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003532522459309185",
             "extra": "mean: 94.1871619999998 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "85ca63e87ca94a550957bd66fe58844cf084e118",
+          "message": "BUG: Decode Black only/CMYK deviceN images (#1984)\n\nCloses #1979",
+          "timestamp": "2023-07-20T21:46:33+02:00",
+          "tree_id": "610885c86291f3440790776bc359a54258af5a5c",
+          "url": "https://github.com/py-pdf/pypdf/commit/85ca63e87ca94a550957bd66fe58844cf084e118"
+        },
+        "date": 1689882464283,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7554778803216664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004129578476320068",
+            "extra": "mean: 1.3236654918 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.373121579342117,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00871057081113896",
+            "extra": "mean: 87.926607750011 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24304956837882324,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013334195831157903",
+            "extra": "mean: 4.114387063799984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.480237582788456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006138503770135719",
+            "extra": "mean: 80.12667974999961 msec\nrounds: 12"
           }
         ]
       }
