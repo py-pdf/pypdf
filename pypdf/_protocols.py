@@ -2,7 +2,6 @@
 
 from pathlib import Path
 from typing import IO, Any, Dict, List, Optional, Tuple, Union
-from weakref import WeakKeyDictionary
 
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
@@ -66,7 +65,7 @@ class PdfReaderProtocol(Protocol):  # deprecated
 
 class PdfWriterProtocol(Protocol):  # deprecated
     _objects: List[Any]
-    _id_translated: Dict[PdfReaderProtocol, Dict[int, int]]
+    _id_translated: "WeakKeyDictionary[Any, Dict[int, int]]"
 
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
         ...
