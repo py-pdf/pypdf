@@ -66,7 +66,7 @@ class PdfReaderProtocol(Protocol):  # deprecated
 
 class PdfWriterProtocol(Protocol):  # deprecated
     _objects: List[Any]
-    _id_translated: WeakKeyDictionary[PdfReaderProtocol, Dict[int, int]]
+    _id_translated: Dict[PdfReaderProtocol, Dict[int, int]]
 
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
         ...
