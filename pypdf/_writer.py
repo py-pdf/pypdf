@@ -53,6 +53,7 @@ from typing import (
     Union,
     cast,
 )
+from weakref import WeakKeyDictionary
 
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject, _VirtualList
@@ -163,7 +164,7 @@ class PdfWriter:
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
         """Maps hash values of indirect objects to their IndirectObject instances."""
 
-        self._id_translated: Dict[int, Dict[int, int]] = {}
+        self._id_translated: WeakKeyDictionary[PdfReader, Dict[int, int]] = WeakKeyDictionary()
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -314,7 +315,7 @@ class PdfWriter:
         # page, we need to create a new dictionary for the page, however the "
         # objects below (including content) is not duplicated
         try:  # delete an already existing page
-            del self._id_translated[id(page_org.indirect_reference.pdf)][  # type: ignore
+            del self._id_translated[page_org.indirect_reference.pdf][  # type: ignore
                 page_org.indirect_reference.idnum  # type: ignore
             ]
         except Exception:
@@ -2933,7 +2934,7 @@ class PdfWriter:
                     ArrayObject,
                     cast(DictionaryObject, self._root_object["/AcroForm"])["/Fields"],
                 )
-            trslat = self._id_translated[id(reader)]
+            trslat = self._id_translated[reader]
             try:
                 for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
                     try:
@@ -3040,7 +3041,7 @@ class PdfWriter:
             for a in pp.get("/B", ()):
                 thr = a.get_object()["/T"]
                 if thr.indirect_reference.idnum not in self._id_translated[
-                    id(reader)
+                    reader
                 ] and fltr.search(thr["/I"]["/Title"]):
                     self._add_articles_thread(thr, pages, reader)
 
@@ -3254,15 +3255,15 @@ class PdfWriter:
                 if set to None or omitted, all tables will be reset.
         """
         if reader is None:
-            self._id_translated = {}
+            self._id_translated = WeakKeyDictionary()
         elif isinstance(reader, PdfReader):
             try:
-                del self._id_translated[id(reader)]
+                del self._id_translated[reader]
             except Exception:
                 pass
         elif isinstance(reader, IndirectObject):
             try:
-                del self._id_translated[id(reader.pdf)]
+                del self._id_translated[reader.pdf]
             except Exception:
                 pass
         else:

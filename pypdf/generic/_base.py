@@ -126,18 +126,18 @@ class PdfObject(PdfObjectProtocol):
             return clone
         i = len(pdf_dest._objects) + 1
         if ind is not None:
-            if id(ind.pdf) not in pdf_dest._id_translated:
-                pdf_dest._id_translated[id(ind.pdf)] = {}
+            if ind.pdf not in pdf_dest._id_translated:
+                pdf_dest._id_translated[ind.pdf] = {}
             if (
                 not force_duplicate
-                and ind.idnum in pdf_dest._id_translated[id(ind.pdf)]
+                and ind.idnum in pdf_dest._id_translated[ind.pdf]
             ):
                 obj = pdf_dest.get_object(
-                    pdf_dest._id_translated[id(ind.pdf)][ind.idnum]
+                    pdf_dest._id_translated[ind.pdf][ind.idnum]
                 )
                 assert obj is not None
                 return obj
-            pdf_dest._id_translated[id(ind.pdf)][ind.idnum] = i
+            pdf_dest._id_translated[ind.pdf][ind.idnum] = i
         pdf_dest._objects.append(clone)
         clone.indirect_reference = IndirectObject(i, 0, pdf_dest)
         return clone
@@ -277,11 +277,11 @@ class IndirectObject(PdfObject):
         if self.pdf == pdf_dest and not force_duplicate:
             # Already duplicated and no extra duplication required
             return self
-        if id(self.pdf) not in pdf_dest._id_translated:
-            pdf_dest._id_translated[id(self.pdf)] = {}
+        if self.pdf not in pdf_dest._id_translated:
+            pdf_dest._id_translated[self.pdf] = {}
 
-        if not force_duplicate and self.idnum in pdf_dest._id_translated[id(self.pdf)]:
-            dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
+        if not force_duplicate and self.idnum in pdf_dest._id_translated[self.pdf]:
+            dup = pdf_dest.get_object(pdf_dest._id_translated[self.pdf][self.idnum])
         else:
             obj = self.get_object()
             # case observed : a pointed object can not be found

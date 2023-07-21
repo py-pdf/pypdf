@@ -1499,3 +1499,31 @@ def test_watermark():
     b = BytesIO()
     writer.write(b)
     assert len(b.getvalue()) < 2.1 * 1024 * 1024
+
+
+def test_merging_many_temporary_files():
+
+    def create_number_pdf(n) -> BytesIO:
+        from fpdf import FPDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("helvetica", "B", 16)
+        pdf.cell(40, 10, str(n))
+        byte_string = pdf.output()
+        return BytesIO(byte_string)
+
+    writer = PdfWriter()
+    for n in range(100):
+        reader = PdfReader(create_number_pdf(n))
+        for page in reader.pages:
+            # Should only be one page.
+            writer.add_page(page)
+
+    out = BytesIO()
+    writer.write(out)
+
+    out.seek(0)
+    reader = PdfReader(out)
+    for n, page in enumerate(reader.pages):
+        text = page.extract_text()
+        assert text == str(n)
