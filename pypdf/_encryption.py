@@ -30,8 +30,20 @@ import struct
 from enum import Enum, IntEnum
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
+from pypdf._crypt_providers import (
+    CryptAES,
+    CryptBase,
+    CryptIdentity,
+    CryptRC4,
+)
+from pypdf._crypt_providers import aes_cbc_decrypt as AES_CBC_decrypt  # noqa: N812
+from pypdf._crypt_providers import aes_cbc_encrypt as AES_CBC_encrypt  # noqa: N812
+from pypdf._crypt_providers import aes_ecb_decrypt as AES_ECB_decrypt  # noqa: N812
+from pypdf._crypt_providers import aes_ecb_encrypt as AES_ECB_encrypt  # noqa: N812
+from pypdf._crypt_providers import rc4_decrypt as RC4_decrypt  # noqa: N812
+from pypdf._crypt_providers import rc4_encrypt as RC4_encrypt  # noqa: N812
+
 from ._utils import logger_warning
-from .errors import DependencyError
 from .generic import (
     ArrayObject,
     ByteStringObject,
@@ -43,129 +55,6 @@ from .generic import (
     TextStringObject,
     create_string_object,
 )
-
-
-class CryptBase:
-    def encrypt(self, data: bytes) -> bytes:  # pragma: no cover
-        return data
-
-    def decrypt(self, data: bytes) -> bytes:  # pragma: no cover
-        return data
-
-
-class CryptIdentity(CryptBase):
-    pass
-
-
-try:
-    from Crypto.Cipher import AES, ARC4  # type: ignore[import]
-    from Crypto.Util.Padding import pad  # type: ignore[import]
-
-    class CryptRC4(CryptBase):
-        def __init__(self, key: bytes) -> None:
-            self.key = key
-
-        def encrypt(self, data: bytes) -> bytes:
-            return ARC4.ARC4Cipher(self.key).encrypt(data)
-
-        def decrypt(self, data: bytes) -> bytes:
-            return ARC4.ARC4Cipher(self.key).decrypt(data)
-
-    class CryptAES(CryptBase):
-        def __init__(self, key: bytes) -> None:
-            self.key = key
-
-        def encrypt(self, data: bytes) -> bytes:
-            iv = secrets.token_bytes(16)
-            p = 16 - len(data) % 16
-            data += bytes(bytearray(p for _ in range(p)))
-            aes = AES.new(self.key, AES.MODE_CBC, iv)
-            return iv + aes.encrypt(data)
-
-        def decrypt(self, data: bytes) -> bytes:
-            if len(data) == 0:
-                return data
-            iv = data[:16]
-            data = data[16:]
-            aes = AES.new(self.key, AES.MODE_CBC, iv)
-            if len(data) % 16:
-                data = pad(data, 16)
-            d = aes.decrypt(data)
-            if len(d) == 0:
-                return d
-            else:
-                return d[: -d[-1]]
-
-    def RC4_encrypt(key: bytes, data: bytes) -> bytes:
-        return ARC4.ARC4Cipher(key).encrypt(data)
-
-    def RC4_decrypt(key: bytes, data: bytes) -> bytes:
-        return ARC4.ARC4Cipher(key).decrypt(data)
-
-    def AES_ECB_encrypt(key: bytes, data: bytes) -> bytes:
-        return AES.new(key, AES.MODE_ECB).encrypt(data)
-
-    def AES_ECB_decrypt(key: bytes, data: bytes) -> bytes:
-        return AES.new(key, AES.MODE_ECB).decrypt(data)
-
-    def AES_CBC_encrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
-        return AES.new(key, AES.MODE_CBC, iv).encrypt(data)
-
-    def AES_CBC_decrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
-        return AES.new(key, AES.MODE_CBC, iv).decrypt(data)
-
-except ImportError:
-
-    class CryptRC4(CryptBase):  # type: ignore
-        def __init__(self, key: bytes) -> None:
-            self.S = list(range(256))
-            j = 0
-            for i in range(256):
-                j = (j + self.S[i] + key[i % len(key)]) % 256
-                self.S[i], self.S[j] = self.S[j], self.S[i]
-
-        def encrypt(self, data: bytes) -> bytes:
-            S = list(self.S)
-            out = [0 for _ in range(len(data))]
-            i, j = 0, 0
-            for k in range(len(data)):
-                i = (i + 1) % 256
-                j = (j + S[i]) % 256
-                S[i], S[j] = S[j], S[i]
-                x = S[(S[i] + S[j]) % 256]
-                out[k] = data[k] ^ x
-            return bytes(bytearray(out))
-
-        def decrypt(self, data: bytes) -> bytes:
-            return self.encrypt(data)
-
-    class CryptAES(CryptBase):  # type: ignore
-        def __init__(self, key: bytes) -> None:
-            pass
-
-        def encrypt(self, data: bytes) -> bytes:
-            raise DependencyError("PyCryptodome is required for AES algorithm")
-
-        def decrypt(self, data: bytes) -> bytes:
-            raise DependencyError("PyCryptodome is required for AES algorithm")
-
-    def RC4_encrypt(key: bytes, data: bytes) -> bytes:
-        return CryptRC4(key).encrypt(data)
-
-    def RC4_decrypt(key: bytes, data: bytes) -> bytes:
-        return CryptRC4(key).decrypt(data)
-
-    def AES_ECB_encrypt(key: bytes, data: bytes) -> bytes:
-        raise DependencyError("PyCryptodome is required for AES algorithm")
-
-    def AES_ECB_decrypt(key: bytes, data: bytes) -> bytes:
-        raise DependencyError("PyCryptodome is required for AES algorithm")
-
-    def AES_CBC_encrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
-        raise DependencyError("PyCryptodome is required for AES algorithm")
-
-    def AES_CBC_decrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
-        raise DependencyError("PyCryptodome is required for AES algorithm")
 
 
 class CryptFilter:
