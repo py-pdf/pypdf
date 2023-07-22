@@ -13,8 +13,16 @@ try:
     from Crypto.Cipher import AES  # noqa: F401
 
     HAS_PYCRYPTODOME = True
+    HAS_CRYPTOGRAPHY = False
 except ImportError:
     HAS_PYCRYPTODOME = False
+
+    try:
+        from cryptography.hazmat.primitives import padding  # noqa: F401
+
+        HAS_CRYPTOGRAPHY = True
+    except ImportError:
+        HAS_CRYPTOGRAPHY = False
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -75,13 +83,13 @@ def test_encryption(name, requires_pycryptodome):
     Encrypted PDFs are handled correctly.
 
     This test function ensures that:
-    - If PyCryptodome is not available and required, a DependencyError is raised
+    - If PyCryptodome or cryptography is not available and required, a DependencyError is raised
     - Encrypted PDFs are identified correctly
     - Decryption works for encrypted PDFs
     - Metadata is properly extracted from the decrypted PDF
     """
     inputfile = RESOURCE_ROOT / "encryption" / name
-    if requires_pycryptodome and not HAS_PYCRYPTODOME:
+    if requires_pycryptodome and not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY:
         with pytest.raises(DependencyError) as exc:
             ipdf = pypdf.PdfReader(inputfile)
             ipdf.decrypt("asdfzxcv")
@@ -183,6 +191,10 @@ def test_merge_encrypted_pdfs(names):
     merger.close()
 
 
+@pytest.mark.skipif(
+    HAS_CRYPTOGRAPHY,
+    reason="Limitations of cryptography. see https://github.com/pyca/cryptography/issues/2494"
+)
 @pytest.mark.parametrize(
     "cryptcls",
     [
@@ -265,7 +277,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
         assert exc.value.args[0] == "algorithm 'ABCD' NOT supported"
         return
 
-    if requires_pycryptodome and not HAS_PYCRYPTODOME:
+    if requires_pycryptodome and not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY:
         with pytest.raises(DependencyError) as exc:
             writer.encrypt(
                 user_password=user_password,
