@@ -837,11 +837,14 @@ class PdfWriter:
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
 
         # Extract font information
-        font_properties: Any = (
-            cast(str, field[AA.DA]).replace("\n", " ").replace("\r", " ").split(" ")
-        )
+        da = cast(str, field[AA.DA])
+        font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
         font_name = font_properties[font_properties.index("Tf") - 2]
         font_height = float(font_properties[font_properties.index("Tf") - 1])
+        if font_height == 0:
+            font_height = rct.height - 2
+            font_properties[font_properties.index("Tf") - 1] = str(font_height)
+            da = " ".join(font_properties)
         y_offset = rct.height - 1 - font_height
 
         # Retrieve field text and selected values
@@ -856,7 +859,7 @@ class PdfWriter:
             sel = []
 
         # Generate appearance stream
-        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{field[AA.DA]}\n".encode()
+        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
             if line in sel:
                 # may be improved but can not find how get fill working => replaced with lined box
@@ -985,6 +988,7 @@ class PdfWriter:
                                 f = f.get("/Parent")
                                 if f is None:
                                     break
+                                f = f.get_object()
                                 if AA.DA in f:
                                     da = f[AA.DA]
                             writer_annot[NameObject(AA.DA)] = da
