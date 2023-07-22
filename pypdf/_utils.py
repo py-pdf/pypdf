@@ -77,7 +77,7 @@ DEPR_MSG = "{} is deprecated and will be removed in pypdf {}. Use {} instead."
 DEPR_MSG_HAPPENED = "{} is deprecated and was removed in pypdf {}. Use {} instead."
 
 
-def parse_iso8824_date(text: str) -> Optional[datetime]:
+def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
     orgtext = text
     if text is None:
         return None
