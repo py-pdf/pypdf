@@ -1505,9 +1505,25 @@ def test_da_missing_in_annot():
     name = "BuildingDivisionPermitApplication.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     writer = PdfWriter(clone_from=reader)
-    fields = reader.get_form_text_fields()
-    fields["PCN-1"] = "0"
-    writer.update_page_form_field_values(writer.pages[0], fields)
+    writer.update_page_form_field_values(
+        writer.pages[0], {"PCN-1": "0"}, auto_regenerate=False
+    )
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(BytesIO(b.getvalue()))
+    ff = reader.get_fields()
+    # check for autosize processing
+    assert (
+        b"0 Tf"
+        not in ff["PCN-1"].indirect_reference.get_object()["/AP"]["/N"].get_data()
+    )
+    f2 = writer.get_object(ff["PCN-2"].indirect_reference.idnum)
+    f2[NameObject("/Parent")] = writer.get_object(
+        ff["PCN-1"].indirect_reference.idnum
+    ).indirect_reference
+    writer.update_page_form_field_values(
+        writer.pages[0], {"PCN-2": "1"}, auto_regenerate=False
+    )
 
 
 def test_missing_fields(pdf_file_path):
