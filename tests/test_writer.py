@@ -13,7 +13,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
-from pypdf.errors import DeprecationError, PageSizeNotDefinedError
+from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -1508,3 +1508,25 @@ def test_da_missing_in_annot():
     fields = reader.get_form_text_fields()
     fields["PCN-1"] = "0"
     writer.update_page_form_field_values(writer.pages[0], fields)
+
+
+def test_missing_fields(pdf_file_path):
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+
+    with pytest.raises(PyPdfError) as exc:
+        writer.update_page_form_field_values(
+            writer.pages[0], {"foo": "some filled in text"}, flags=1
+        )
+    assert exc.value.args[0] == "No /AcroForm dictionary in PdfWriter Object"
+
+    writer = PdfWriter()
+    writer.append(reader, [0])
+    del writer._root_object["/AcroForm"]["/Fields"]
+    with pytest.raises(PyPdfError) as exc:
+        writer.update_page_form_field_values(
+            writer.pages[0], {"foo": "some filled in text"}, flags=1
+        )
+    assert exc.value.args[0] == "No /Fields dictionary in Pdf in PdfWriter Object"

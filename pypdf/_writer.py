@@ -939,17 +939,17 @@ class PdfWriter:
             auto_regenerate: set/unset the need_appearances flag ;
                 the flag is unchanged if auto_regenerate is None
         """
+        if CatalogDictionary.ACRO_FORM not in self._root_object:
+            raise PyPdfError("No /AcroForm dictionary in PdfWriter Object")
+        af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        if InteractiveFormDictEntries.Fields not in af:
+            raise PyPdfError("No /Fields dictionary in Pdf in PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
         # Iterate through pages, update field values
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
-        if CatalogDictionary.ACRO_FORM not in self._root_object:
-            raise PyPdfError("No /AcroForm dictionary in PdfWriter Object")
-        af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
-        if InteractiveFormDictEntries.Fields not in af:
-            raise PyPdfError("No /Fields dictionary in Pdf in PdfWriter Object")
         # /Helvetica is just in case of but this is normally insufficient as we miss the font ressource
         default_da = af.get(
             InteractiveFormDictEntries.DA, TextStringObject("/Helvetica 0 Tf 0 g")
