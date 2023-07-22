@@ -437,10 +437,8 @@ def test_fill_form(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
-    page = reader.pages[0]
-
-    writer.add_page(page)
-    writer.add_page(PdfReader(RESOURCE_ROOT / "crazyones.pdf").pages[0])
+    writer.append(reader, [0])
+    writer.append(RESOURCE_ROOT / "crazyones.pdf", [0])
 
     writer.update_page_form_field_values(
         writer.pages[0], {"foo": "some filled in text"}, flags=1
@@ -1499,3 +1497,14 @@ def test_watermark():
     b = BytesIO()
     writer.write(b)
     assert len(b.getvalue()) < 2.1 * 1024 * 1024
+
+
+@pytest.mark.enable_socket()
+def test_da_missing_in_annot():
+    url = "https://github.com/py-pdf/pypdf/files/12136285/Building.Division.Permit.Application.pdf"
+    name = "BuildingDivisionPermitApplication.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=reader)
+    fields = reader.get_form_text_fields()
+    fields["PCN-1"] = "0"
+    writer.update_page_form_field_values(writer.pages[0], fields)

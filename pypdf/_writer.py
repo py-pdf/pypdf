@@ -87,6 +87,7 @@ from .constants import (
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
+from .errors import PyPdfError
 from .generic import (
     PAGE_FIT,
     AnnotationBuilder,
@@ -944,6 +945,15 @@ class PdfWriter:
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
+        if CatalogDictionary.ACRO_FORM not in self._root_object:
+            raise PyPdfError("No /AcroForm dictionary in PdfWriter Object")
+        af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        if InteractiveFormDictEntries.Fields not in af:
+            raise PyPdfError("No /Fields dictionary in Pdf in PdfWriter Object")
+        # /Helvetica is just in case of but this is normally insufficient as we miss the font ressource
+        default_da = af.get(
+            InteractiveFormDictEntries.DA, TextStringObject("/Helvetica 0 Tf 0 g")
+        )
         for writer_annot in page[PG.ANNOTS]:  # type: ignore
             writer_annot = cast(DictionaryObject, writer_annot.get_object())
             # retrieve parent field values, if present
@@ -968,6 +978,16 @@ class PdfWriter:
                         or writer_annot.get(FA.FT) == "/Ch"
                     ):
                         # textbox
+                        if AA.DA not in writer_annot:
+                            f = writer_annot
+                            da = default_da
+                            while AA.DA not in f:
+                                f = f.get("/Parent")
+                                if f is None:
+                                    break
+                                if AA.DA in f:
+                                    da = f[AA.DA]
+                            writer_annot[NameObject(AA.DA)] = da
                         self._update_text_field(writer_annot)
                     elif writer_annot.get(FA.FT) == "/Sig":
                         # signature
