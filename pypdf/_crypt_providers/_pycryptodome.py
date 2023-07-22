@@ -55,18 +55,19 @@ class CryptAES(CryptBase):
         return iv + aes.encrypt(data)
 
     def decrypt(self, data: bytes) -> bytes:
-        if len(data) == 0:
-            return data
         iv = data[:16]
         data = data[16:]
-        if len(data) % 16:
+        # for empty encrypted data
+        if not data:
+            return data
+
+        # just for robustness, it does not happen under normal circumstances
+        if len(data) % 16 != 0:
             data = pad(data, 16)
+
         aes = AES.new(self.key, AES.MODE_CBC, iv)
         d = aes.decrypt(data)
-        if len(d) == 0:
-            return d
-        else:
-            return d[: -d[-1]]
+        return d[: -d[-1]]
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:

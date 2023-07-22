@@ -62,21 +62,21 @@ class CryptAES(CryptBase):
         return iv + encryptor.update(data) + encryptor.finalize()
 
     def decrypt(self, data: bytes) -> bytes:
-        if len(data) == 0:
-            return data
         iv = data[:16]
         data = data[16:]
-        if len(data) % 16:
+        # for empty encrypted data
+        if not data:
+            return data
+
+        # just for robustness, it does not happen under normal circumstances
+        if len(data) % 16 != 0:
             pad = padding.PKCS7(128).padder()
             data = pad.update(data) + pad.finalize()
 
         cipher = Cipher(self.alg, CBC(iv))
         decryptor = cipher.decryptor()
         d = decryptor.update(data) + decryptor.finalize()
-        if len(d) == 0:
-            return d
-        else:
-            return d[: -d[-1]]
+        return d[: -d[-1]]
 
 
 def rc4_encrypt(key: bytes, data: bytes) -> bytes:

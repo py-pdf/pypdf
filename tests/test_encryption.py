@@ -1,4 +1,4 @@
-"""Test the pypdf.encryption module."""
+"""Test the pypdf._encryption module."""
 import secrets
 from pathlib import Path
 
@@ -6,7 +6,7 @@ import pytest
 
 import pypdf
 from pypdf import PasswordType, PdfReader, PdfWriter
-from pypdf._encryption import AlgV5, CryptRC4
+from pypdf._encryption import AlgV5, CryptAES, CryptRC4
 from pypdf.errors import DependencyError, PdfReadError
 
 try:
@@ -344,3 +344,11 @@ def test_pdf_encrypt_multiple(pdf_file_path, count):
     page = reader.pages[0]
     text1 = page.extract_text()
     assert text0 == text1
+
+
+@pytest.mark.skipif(not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY, reason="No pycryptodome / cryptography")
+def test_aes_decrypt_corrupted_data():
+    """Just for robustness"""
+    aes = CryptAES(secrets.token_bytes(16))
+    for num in [0, 17, 32]:
+        aes.decrypt(secrets.token_bytes(num))
