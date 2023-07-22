@@ -47,3 +47,10 @@ repos:
     hooks:
     -   id: flake8
         args: ["--ignore", "E,W,F"]
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.4.1'
+    hooks:
+      - id: mypy
+        files: ^pypdf/.*
+        args: [--ignore-missing-imports]
