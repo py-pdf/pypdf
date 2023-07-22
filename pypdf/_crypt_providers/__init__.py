@@ -40,7 +40,7 @@ try:
     )
 except ImportError:
     try:
-        from pypdf._crypt_providers._cryptography import (
+        from pypdf._crypt_providers._cryptography import (  # type: ignore
             CryptAES,
             CryptRC4,
             aes_cbc_decrypt,
@@ -51,7 +51,7 @@ except ImportError:
             rc4_encrypt,
         )
     except ImportError:
-        from pypdf._crypt_providers._fallback import (
+        from pypdf._crypt_providers._fallback import (  # type: ignore
             CryptAES,
             CryptRC4,
             aes_cbc_decrypt,
