@@ -125,7 +125,7 @@ def test_encryption(name, requires_pycryptodome):
         ("r6-both-passwords.pdf", "foo", "bar"),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
+@pytest.mark.skipif(not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY, reason="No pycryptodome / cryptography")
 def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
     """
     PDFs with both user and owner passwords are handled correctly.
@@ -151,7 +151,7 @@ def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
         ("crazyones-encrypted-256.pdf", b"password"),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
+@pytest.mark.skipif(not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY, reason="No pycryptodome / cryptography")
 def test_read_page_from_encrypted_file_aes_256(pdffile, password):
     """
     A page can be read from an encrypted.
@@ -176,7 +176,7 @@ def test_read_page_from_encrypted_file_aes_256(pdffile, password):
         ),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
+@pytest.mark.skipif(not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY, reason="No pycryptodome / cryptography")
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_encrypted_pdfs(names):
     """Encrypted PDFs can be merged after decryption."""
