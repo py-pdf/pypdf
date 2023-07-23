@@ -1633,6 +1633,7 @@ class PdfWriter:
         page_destination: Union[None, PageObject, TreeObject] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
+        is_open: bool = True,
         dest: Union[None, PageObject, TreeObject] = None,  # deprecated
     ) -> IndirectObject:
         if page_destination is not None and dest is not None:  # deprecated
@@ -1655,14 +1656,33 @@ class PdfWriter:
             # argument is only Optional due to deprecated argument.
             raise ValueError("page_destination may not be None")
 
+        if isinstance(page_destination, PageObject):
+            return self.add_outline_item_destination(
+                Destination(
+                    f"page #{page_destination.page_number}",
+                    cast(IndirectObject, page_destination.indirect_reference),
+                    Fit.fit(),
+                )
+            )
+
         if parent is None:
             parent = self.get_outline_root()
 
+        page_destination[NameObject("/%is_open%")] = BooleanObject(is_open)
         parent = cast(TreeObject, parent.get_object())
         page_destination_ref = self._add_object(page_destination)
         if before is not None:
             before = before.indirect_reference
-        parent.insert_child(page_destination_ref, before, self)
+        parent.insert_child(
+            page_destination_ref,
+            before,
+            self,
+            page_destination.inc_parent_counter_outline
+            if is_open
+            else (lambda x, y: 0),
+        )
+        if "/Count" not in page_destination:
+            page_destination[NameObject("/Count")] = NumberObject(0)
 
         return page_destination_ref
 
@@ -1700,10 +1720,9 @@ class PdfWriter:
         outline_item: OutlineItemType,
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
+        is_open: bool = True,
     ) -> IndirectObject:
         outline_item_object = TreeObject()
-        for k, v in list(outline_item.items()):
-            outline_item_object[NameObject(str(k))] = v
         outline_item_object.update(outline_item)
 
         if "/A" in outline_item:
@@ -1714,7 +1733,9 @@ class PdfWriter:
             action_ref = self._add_object(action)
             outline_item_object[NameObject("/A")] = action_ref
 
-        return self.add_outline_item_destination(outline_item_object, parent, before)
+        return self.add_outline_item_destination(
+            outline_item_object, parent, before, is_open
+        )
 
     @deprecation_bookmark(bookmark="outline_item")
     def add_bookmark_dict(
@@ -1754,6 +1775,7 @@ class PdfWriter:
         bold: bool = False,
         italic: bool = False,
         fit: Fit = PAGE_FIT,
+        is_open: bool = True,
         pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
@@ -1779,7 +1801,7 @@ class PdfWriter:
             if fit is not None and page_number is None:
                 page_number = fit  # type: ignore
             return self.add_outline_item(
-                title, page_number, parent, None, before, color, bold, italic  # type: ignore
+                title, page_number, parent, None, before, color, bold, italic, is_open=is_open  # type: ignore
             )
         if page_number is not None and pagenum is not None:
             raise ValueError(
@@ -1822,7 +1844,7 @@ class PdfWriter:
 
         if parent is None:
             parent = self.get_outline_root()
-        return self.add_outline_item_destination(outline_item, parent, before)
+        return self.add_outline_item_destination(outline_item, parent, before, is_open)
 
     def add_bookmark(
         self,

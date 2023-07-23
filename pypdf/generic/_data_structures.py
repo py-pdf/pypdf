@@ -32,7 +32,18 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import logging
 import re
 from io import BytesIO
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 from .._protocols import PdfReaderProtocol, PdfWriterProtocol
 from .._utils import (
@@ -364,7 +375,9 @@ class DictionaryObject(dict, PdfObject):
             )
         stream.write(b"<<\n")
         for key, value in list(self.items()):
-            key.write_to_stream(stream)
+            if len(key) > 2 and key[1] == "%" and key[-1] == "%":
+                continue
+            key.write_to_stream(stream, encryption_key)
             stream.write(b" ")
             value.write_to_stream(stream)
             stream.write(b"\n")
@@ -568,19 +581,43 @@ class TreeObject(DictionaryObject):
     def add_child(self, child: Any, pdf: PdfWriterProtocol) -> None:
         self.insert_child(child, None, pdf)
 
-    def insert_child(self, child: Any, before: Any, pdf: PdfWriterProtocol) -> None:
-        def inc_parent_counter(
-            parent: Union[None, IndirectObject, TreeObject], n: int
-        ) -> None:
-            if parent is None:
-                return
-            parent = cast("TreeObject", parent.get_object())
-            if "/Count" in parent:
-                parent[NameObject("/Count")] = NumberObject(
-                    cast(int, parent[NameObject("/Count")]) + n
-                )
-                inc_parent_counter(parent.get("/Parent", None), n)
+    def inc_parent_counter_default(
+        self, parent: Union[None, IndirectObject, "TreeObject"], n: int
+    ) -> None:
+        if parent is None:
+            return
+        parent = cast("TreeObject", parent.get_object())
+        if "/Count" in parent:
+            parent[NameObject("/Count")] = NumberObject(
+                max(0, cast(int, parent[NameObject("/Count")]) + n)
+            )
+            self.inc_parent_counter_default(parent.get("/Parent", None), n)
 
+    def inc_parent_counter_outline(
+        self, parent: Union[None, IndirectObject, "TreeObject"], n: int
+    ) -> None:
+        if parent is None:
+            return
+        parent = cast("TreeObject", parent.get_object())
+        #  BooleanObject requires comparison with == not is
+        opn = parent.get("/%is_open%", True) == True  # noqa
+        c = cast(int, parent.get("/Count", 0))
+        if c < 0:
+            c = abs(c)
+        parent[NameObject("/Count")] = NumberObject((c + n) * (1 if opn else -1))
+        if not opn:
+            return
+        self.inc_parent_counter_outline(parent.get("/Parent", None), n)
+
+    def insert_child(
+        self,
+        child: Any,
+        before: Any,
+        pdf: PdfWriterProtocol,
+        inc_parent_counter: Optional[Callable] = None,
+    ) -> IndirectObject:
+        if inc_parent_counter is None:
+            inc_parent_counter = self.inc_parent_counter_default
         child_obj = child.get_object()
         child = child.indirect_reference  # get_reference(child_obj)
 
@@ -595,7 +632,7 @@ class TreeObject(DictionaryObject):
                 del child_obj["/Next"]
             if "/Prev" in child_obj:
                 del child_obj["/Prev"]
-            return
+            return child
         else:
             prev = cast("DictionaryObject", self["/Last"])
 
@@ -610,7 +647,7 @@ class TreeObject(DictionaryObject):
                     del child_obj["/Next"]
                 self[NameObject("/Last")] = child
                 inc_parent_counter(self, child_obj.get("/Count", 1))
-                return
+                return child
         try:  # insert as first or in the middle
             assert isinstance(prev["/Prev"], DictionaryObject)
             prev["/Prev"][NameObject("/Next")] = child
@@ -621,6 +658,7 @@ class TreeObject(DictionaryObject):
         prev[NameObject("/Prev")] = child
         child_obj[NameObject("/Parent")] = self.indirect_reference
         inc_parent_counter(self, child_obj.get("/Count", 1))
+        return child
 
     def removeChild(self, child: Any) -> None:  # deprecated
         deprecation_with_replacement("removeChild", "remove_child", "3.0.0")
@@ -651,8 +689,7 @@ class TreeObject(DictionaryObject):
 
             else:
                 # Removing only tree node
-                assert self[NameObject("/Count")] == 1
-                del self[NameObject("/Count")]
+                self[NameObject("/Count")] = NumberObject(0)
                 del self[NameObject("/First")]
                 if NameObject("/Last") in self:
                     del self[NameObject("/Last")]
