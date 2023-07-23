@@ -138,7 +138,7 @@ def test_ascii_hex_decode_missing_eod():
 @pytest.mark.enable_socket()
 def test_decode_ahx():
     """
-    Cf #1979
+    See #1979
     Gray Image in CMYK : requiring reverse
     """
     url = "https://github.com/py-pdf/pypdf/files/12090692/New.Jersey.Coinbase.staking.securities.charges.2023-0606_Coinbase-Penalty-and-C-D.pdf"
