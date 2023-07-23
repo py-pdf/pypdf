@@ -15,6 +15,7 @@ from pypdf._utils import (
     deprecation_no_replacement,
     mark_location,
     matrix_multiply,
+    parse_iso8824_date,
     read_block_backwards,
     read_previous_line,
     read_until_regex,
@@ -337,3 +338,33 @@ def test_file_class():
     f = File(name="image.png", data=b"")
     assert str(f) == "File(name=image.png, data: 0 Byte)"
     assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("D:20210318000756", "2021-03-18T00:07:56"),
+        ("20210318000756", "2021-03-18T00:07:56"),
+        ("D:2021", "2021-01-01T00:00:00"),
+        ("D:202103", "2021-03-01T00:00:00"),
+        ("D:20210304", "2021-03-04T00:00:00"),
+        ("D:2021030402", "2021-03-04T02:00:00"),
+        ("D:20210408054711", "2021-04-08T05:47:11"),
+        ("D:20210408054711Z", "2021-04-08T05:47:11+00:00"),
+        ("D:20210408054711Z00", "2021-04-08T05:47:11+00:00"),
+        ("D:20210408054711Z0000", "2021-04-08T05:47:11+00:00"),
+        ("D:20210408075331+02'00'", "2021-04-08T07:53:31+02:00"),
+        ("D:20210408075331-03'00'", "2021-04-08T07:53:31-03:00"),
+    ],
+)
+def test_parse_datetime(text, expected):
+    date = parse_iso8824_date(text)
+    date_str = (date.isoformat() + date.strftime("%z"))[: len(expected)]
+    assert date_str == expected
+
+
+def test_parse_datetime_err():
+    with pytest.raises(ValueError) as ex:
+        parse_iso8824_date("D:20210408T054711Z")
+    assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
+    assert parse_iso8824_date("D:20210408054711").tzinfo is None
