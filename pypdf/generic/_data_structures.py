@@ -259,10 +259,10 @@ class DictionaryObject(dict, PdfObject):
                             == cast(DictionaryObject, src[k]).get("/Type", None)
                         )
                     ):
-                        cur_obj: Optional["DictionaryObject"] = cast(
+                        cur_obj: Optional[DictionaryObject] = cast(
                             "DictionaryObject", src[k]
                         )
-                        prev_obj: Optional["DictionaryObject"] = self
+                        prev_obj: Optional[DictionaryObject] = self
                         while cur_obj is not None:
                             clon = cast(
                                 "DictionaryObject",
@@ -786,7 +786,7 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
         self.__data: Optional[str] = None
-        self.decoded_self: Optional["DecodedStreamObject"] = None
+        self.decoded_self: Optional[DecodedStreamObject] = None
 
     def _clone(
         self,
@@ -865,7 +865,7 @@ class StreamObject(DictionaryObject):
     def initialize_from_dictionary(
         data: Dict[str, Any]
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
-        retval: Union["EncodedStreamObject", "DecodedStreamObject"]
+        retval: Union[EncodedStreamObject, DecodedStreamObject]
         if SA.FILTER in data:
             retval = EncodedStreamObject()
         else:
@@ -931,7 +931,7 @@ class DecodedStreamObject(StreamObject):
 
 class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
-        self.decoded_self: Optional["DecodedStreamObject"] = None
+        self.decoded_self: Optional[DecodedStreamObject] = None
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # deprecated

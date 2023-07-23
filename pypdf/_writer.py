@@ -2905,7 +2905,7 @@ class PdfWriter:
         )  # need for the outline processing below
         for dest in reader._namedDests.values():
             arr = dest.dest_array
-            if "/Names" in self._root_object and dest["/Title"] in cast(  # noqa: SIM114
+            if "/Names" in self._root_object and dest["/Title"] in cast(
                 list,
                 cast(
                     DictionaryObject,
@@ -2940,7 +2940,7 @@ class PdfWriter:
                 "TreeObject",
                 self.add_outline_item(
                     TextStringObject(outline_item),
-                    list(srcpages.values())[0].indirect_reference,
+                    next(iter(srcpages.values())).indirect_reference,
                     fit=PAGE_FIT,
                 ).get_object(),
             )
