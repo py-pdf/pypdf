@@ -120,6 +120,7 @@ ignore = [
     "DTZ001", # The use of `datetime.datetime()` without `tzinfo` is necessary
     "PLC",
     # Personal preference
+    "PLR1714",  # Consider merging multiple comparisons
     "FA100", # Missing `from __future__ import annotations`, but uses `typing.Dict`
     "TD002",  # Authors of TODOs can be found via git
     "FIX002",  # TODOs should typically not be in the code, but sometimes are ok
