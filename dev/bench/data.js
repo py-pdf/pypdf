@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1689890063360,
+  "lastUpdate": 1690129883094,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -33878,6 +33878,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00032441357926282267",
             "extra": "mean: 83.4557099999979 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8c1095a9416429ed23beeed50d71348e3d73f931",
+          "message": "ENH: Add is_open in outlines in PdfReader and PdfWriter (#1960)\n\nCloses #1922",
+          "timestamp": "2023-07-23T18:29:56+02:00",
+          "tree_id": "cae2f3c8438e6191fa240a723dceeb9ee8d4a52a",
+          "url": "https://github.com/py-pdf/pypdf/commit/8c1095a9416429ed23beeed50d71348e3d73f931"
+        },
+        "date": 1690129881046,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6125863982988954,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021792880799807714",
+            "extra": "mean: 1.632422794200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.885838668769726,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014721308618563227",
+            "extra": "mean: 112.53861760000348 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19938126141546425,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08020401566843324",
+            "extra": "mean: 5.015516467800012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.577665319683481,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007572905965788293",
+            "extra": "mean: 104.4095786000014 msec\nrounds: 10"
           }
         ]
       }
