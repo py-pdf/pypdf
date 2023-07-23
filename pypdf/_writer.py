@@ -87,6 +87,7 @@ from .constants import (
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
+from .errors import PyPdfError
 from .generic import (
     PAGE_FIT,
     AnnotationBuilder,
@@ -836,11 +837,14 @@ class PdfWriter:
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
 
         # Extract font information
-        font_properties: Any = (
-            cast(str, field[AA.DA]).replace("\n", " ").replace("\r", " ").split(" ")
-        )
+        da = cast(str, field[AA.DA])
+        font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
         font_name = font_properties[font_properties.index("Tf") - 2]
         font_height = float(font_properties[font_properties.index("Tf") - 1])
+        if font_height == 0:
+            font_height = rct.height - 2
+            font_properties[font_properties.index("Tf") - 1] = str(font_height)
+            da = " ".join(font_properties)
         y_offset = rct.height - 1 - font_height
 
         # Retrieve field text and selected values
@@ -855,7 +859,7 @@ class PdfWriter:
             sel = []
 
         # Generate appearance stream
-        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{field[AA.DA]}\n".encode()
+        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
             if line in sel:
                 # may be improved but can not find how get fill working => replaced with lined box
@@ -938,12 +942,21 @@ class PdfWriter:
             auto_regenerate: set/unset the need_appearances flag ;
                 the flag is unchanged if auto_regenerate is None
         """
+        if CatalogDictionary.ACRO_FORM not in self._root_object:
+            raise PyPdfError("No /AcroForm dictionary in PdfWriter Object")
+        af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        if InteractiveFormDictEntries.Fields not in af:
+            raise PyPdfError("No /Fields dictionary in Pdf in PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
         # Iterate through pages, update field values
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
+        # /Helvetica is just in case of but this is normally insufficient as we miss the font ressource
+        default_da = af.get(
+            InteractiveFormDictEntries.DA, TextStringObject("/Helvetica 0 Tf 0 g")
+        )
         for writer_annot in page[PG.ANNOTS]:  # type: ignore
             writer_annot = cast(DictionaryObject, writer_annot.get_object())
             # retrieve parent field values, if present
@@ -968,6 +981,17 @@ class PdfWriter:
                         or writer_annot.get(FA.FT) == "/Ch"
                     ):
                         # textbox
+                        if AA.DA not in writer_annot:
+                            f = writer_annot
+                            da = default_da
+                            while AA.DA not in f:
+                                f = f.get("/Parent")
+                                if f is None:
+                                    break
+                                f = f.get_object()
+                                if AA.DA in f:
+                                    da = f[AA.DA]
+                            writer_annot[NameObject(AA.DA)] = da
                         self._update_text_field(writer_annot)
                     elif writer_annot.get(FA.FT) == "/Sig":
                         # signature
