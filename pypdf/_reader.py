@@ -86,6 +86,7 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
+    BooleanObject,
     ContentStream,
     DecodedStreamObject,
     Destination,
@@ -1083,7 +1084,15 @@ class PdfReader:
                 # absolute value = num. visible children
                 # with positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
+            #  if count is 0 we will consider it as open ( in order to have always an is_open to simplify
+            outline_item[NameObject("/%is_open%")] = BooleanObject(
+                node.get("/Count", 0) >= 0
+            )
         outline_item.node = node
+        try:
+            outline_item.indirect_reference = node.indirect_reference
+        except AttributeError:
+            pass
         return outline_item
 
     @property

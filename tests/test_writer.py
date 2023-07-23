@@ -553,13 +553,49 @@ def test_add_outline_item(pdf_file_path):
         writer.add_page(page)
 
     outline_item = writer.add_outline_item(
-        "An outline item", 1, None, (255, 0, 15), True, True, Fit.fit()
+        "An outline item",
+        1,
+        None,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit(),
+        is_open=False,
     )
-    writer.add_outline_item("Another", 2, outline_item, None, False, False, Fit.fit())
+    _o2a = writer.add_outline_item(
+        "Another", 2, outline_item, None, False, False, Fit.fit()
+    )
+    _o2b = writer.add_outline_item(
+        "Another bis", 2, outline_item, None, False, False, Fit.fit()
+    )
+    outline_item2 = writer.add_outline_item(
+        "An outline item 2",
+        1,
+        None,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit(),
+        is_open=True,
+    )
+    _o3a = writer.add_outline_item(
+        "Another 2", 2, outline_item2, None, False, False, Fit.fit()
+    )
+    _o3b = writer.add_outline_item(
+        "Another 2bis", 2, outline_item2, None, False, False, Fit.fit()
+    )
 
     # write "output" to pypdf-output.pdf
-    with open(pdf_file_path, "wb") as output_stream:
+    with open(pdf_file_path, "w+b") as output_stream:
         writer.write(output_stream)
+        output_stream.seek(0)
+        reader = PdfReader(output_stream)
+        assert reader.trailer["/Root"]["/Outlines"]["/Count"] == 3
+        assert reader.outline[0]["/Count"] == -2
+        assert reader.outline[0]["/%is_open%"] == False  # noqa
+        assert reader.outline[2]["/Count"] == 2
+        assert reader.outline[2]["/%is_open%"] == True  # noqa
+        assert reader.outline[1][0]["/Count"] == 0
 
 
 def test_add_named_destination(pdf_file_path):
