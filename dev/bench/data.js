@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690143524842,
+  "lastUpdate": 1690143966232,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -34190,6 +34190,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00029995616743632705",
             "extra": "mean: 94.89853599999947 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "74f81752093788dbe9933ac56c924858a3eed048",
+          "message": "REL: 3.13.0\n\nNew Features (ENH):\n-  Add is_open in outlines in PdfReader and PdfWriter (#1960)\n\nBug Fixes (BUG):\n-  Search /DA in hierarchy fields (#2002)\n-  Cope with different ISO date length (#1999)\n-  Decode Black only/CMYK deviceN images (#1984)\n-  Process CMYK in deflate images (#1977)\n\nDeveloper Experience (DEV):\n-  Add mypy to pre-commit (#2001)\n-  Release automation (#1991, #1985)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.2...3.13.0)",
+          "timestamp": "2023-07-23T22:23:12+02:00",
+          "tree_id": "58792d87fe25f93cf752289e7eaff112da446c33",
+          "url": "https://github.com/py-pdf/pypdf/commit/74f81752093788dbe9933ac56c924858a3eed048"
+        },
+        "date": 1690143964677,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7243395299917598,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004235198985753046",
+            "extra": "mean: 1.3805680327999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.162651024354298,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010823099987844495",
+            "extra": "mean: 89.5844542500015 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22780059640304634,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018972634878638966",
+            "extra": "mean: 4.389804134800005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.596524175824639,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00027710855298160693",
+            "extra": "mean: 94.37056749999613 msec\nrounds: 10"
           }
         ]
       }
