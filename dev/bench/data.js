@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690129972984,
+  "lastUpdate": 1690130544214,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -33982,6 +33982,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00023322166828638867",
             "extra": "mean: 82.59803158333767 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "965b98e6251f918e1516feebdae05b5858057a9f",
+          "message": "BUG: Cope with different ISO date length (#1999)\n\nEnsure compatibility with all optional date field formats as specified in the PDF  1.7 specification.\r\n\r\ncloses #1972\r\ncloses #1996",
+          "timestamp": "2023-07-23T18:39:48+02:00",
+          "tree_id": "324e9569b873f6a85a9f0e878a2b15fffbd741bd",
+          "url": "https://github.com/py-pdf/pypdf/commit/965b98e6251f918e1516feebdae05b5858057a9f"
+        },
+        "date": 1690130541823,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5553062534661892,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0303921527457429",
+            "extra": "mean: 1.8008081014000084 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.287302013074557,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015287906378936386",
+            "extra": "mean: 120.66653277777719 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18418453131660467,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029230890165006632",
+            "extra": "mean: 5.429337593399993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.07212957192852,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003042853676047265",
+            "extra": "mean: 110.22770255555594 msec\nrounds: 9"
           }
         ]
       }
