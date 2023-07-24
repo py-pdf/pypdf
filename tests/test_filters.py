@@ -469,6 +469,40 @@ def test_calrgb():
 
 
 @pytest.mark.enable_socket()
+def test_index_lookup():
+    """The lookup is provided as an str and bytes"""
+    url = "https://github.com/py-pdf/pypdf/files/12090523/2023.USDC_Circle.Examination.Report.May.2023.pdf"
+    name = "2023USDC.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # TextStringObject Lookup
+    url_png = "https://github.com/py-pdf/pypdf/files/12144094/im1.png.txt"
+    name_png = "iss1982_im1.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[-1]
+    assert data.image.mode == "RGB"
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(sum([(a * a + b * b + c * c) for a, b, c in diff.getdata()])) / (
+        diff.size[0] * diff.size[1]
+    )
+    assert d < 0.001
+    # ByteStringObject Lookup
+    url_png = "https://github.com/py-pdf/pypdf/files/12144093/im2.png.txt"
+    name_png = "iss1982_im2.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[-1].images[-1]
+    assert data.image.mode == "RGB"
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(sum([(a * a + b * b + c * c) for a, b, c in diff.getdata()])) / (
+        diff.size[0] * diff.size[1]
+    )
+    assert d < 0.001
+
+
+@pytest.mark.enable_socket()
 def test_2bits_image():
     """From #1954, test with 2bits image. TODO: 4bits also"""
     url = "https://github.com/py-pdf/pypdf/files/12050253/tt.pdf"
