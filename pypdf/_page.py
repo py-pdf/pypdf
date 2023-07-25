@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
+import re
 import warnings
 from decimal import Decimal
 from typing import (
@@ -55,6 +56,7 @@ from ._text_extraction import (
     mult,
 )
 from ._utils import (
+    WHITESPACES_AS_REGEXP,
     CompressedTransformationMatrix,
     File,
     ImageFile,
@@ -342,6 +344,7 @@ class PageObject(DictionaryObject):
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
         self.inline_images: Optional[Dict[str, ImageFile]] = None
+        self.inline_images_keys: Optional[List[str]] = None
         if indirect_ref is not None:  # deprecated
             warnings.warn(
                 (
@@ -475,8 +478,14 @@ class PageObject(DictionaryObject):
     def _get_ids_image(
         self, obj: Optional[DictionaryObject] = None, ancest: Optional[List[str]] = None
     ) -> List[Union[str, List[str]]]:
-        if self.inline_images is None:
-            self.inline_images = self._get_inline_images()
+        if self.inline_images_keys is None:
+            nb_inlines = len(
+                re.findall(
+                    WHITESPACES_AS_REGEXP + b"BI" + WHITESPACES_AS_REGEXP,
+                    self._get_contents_as_bytes() or b"",
+                )
+            )
+            self.inline_images_keys = [f"~{x}~" for x in range(nb_inlines)]
         if obj is None:
             obj = self
         if ancest is None:
@@ -485,7 +494,7 @@ class PageObject(DictionaryObject):
         if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
             DictionaryObject, obj[PG.RESOURCES]
         ):
-            return list(self.inline_images.keys())
+            return self.inline_images_keys
 
         x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
@@ -493,7 +502,7 @@ class PageObject(DictionaryObject):
                 lst.append(o if len(ancest) == 0 else ancest + [o])
             else:  # is a form with possible images inside
                 lst.extend(self._get_ids_image(x_object[o], ancest + [o]))
-        return lst + list(self.inline_images.keys())
+        return lst + self.inline_images_keys
 
     def _get_image(
         self,
@@ -515,6 +524,8 @@ class PageObject(DictionaryObject):
                 raise
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
+                if self.inline_images is None:
+                    self.inline_images = self._get_inline_images()
                 if self.inline_images is None:  # pragma: no cover
                     raise KeyError("no inline image can be found")
                 return self.inline_images[id]
@@ -893,6 +904,23 @@ class PageObject(DictionaryObject):
             ],
         )
         return contents
+
+    def _get_contents_as_bytes(self) -> Optional[bytes]:
+        """
+        Return the page contents as bytes .
+
+        Returns:
+            The ``/Contents`` object as bytes, or ``None`` if it doesn't exist.
+
+        """
+        if PG.CONTENTS in self:
+            obj = self[PG.CONTENTS].get_object()
+            if isinstance(obj, list):
+                return b"".join(x.get_object().get_data() for x in obj)
+            else:
+                return cast(bytes, cast(EncodedStreamObject, obj).get_data())
+        else:
+            return None
 
     def get_contents(self) -> Optional[ContentStream]:
         """

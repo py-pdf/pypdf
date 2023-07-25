@@ -1016,9 +1016,6 @@ def test_inline_images():
         _a[x] = y
     with pytest.raises(KeyError) as exc:
         reader.pages[2]._get_image(("test",))
-    reader.pages[2].inline_images = None
-    with pytest.raises(KeyError) as exc:
-        reader.pages[2]._get_image(("~1~",))
 
 
 @pytest.mark.enable_socket()
