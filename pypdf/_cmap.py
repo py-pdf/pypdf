@@ -200,12 +200,15 @@ def parse_to_unicode(
     int_entry: List[int] = []
 
     if "/ToUnicode" not in ft:
-        return {}, space_code, []
+        if ft.get("/Subtype", "") == "/Type1":
+            return type1_alternative(ft, map_dict, space_code, int_entry)
+        else:
+            return {}, space_code, []
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
         None, Tuple[int, int]
-    ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
+    ] = None  # tuple = (current_chaxr, remaining size) ; cf #1285 for example of file
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
@@ -434,3 +437,35 @@ def compute_space_width(
                         cpt += 1
                 sp_width = m / max(1, cpt) / 2
     return sp_width
+
+
+def type1_alternative(
+    ft: DictionaryObject,
+    map_dict: Dict[Any, Any],
+    space_code: int,
+    int_entry: List[int],
+) -> Tuple[Dict[Any, Any], int, List[int]]:
+    if "/FontDescriptor" not in ft:
+        return map_dict, space_code, int_entry
+    ft_desc = cast(DictionaryObject, ft["/FontDescriptor"]).get("/FontFile")
+    if ft_desc is None:
+        return map_dict, space_code, int_entry
+    txt = ft_desc.get_object().get_data()
+    txt = txt.split(b"eexec\n")[0]  # only clear part
+    txt = txt.split(b"/Encoding")[1]  # to get the encoding part
+    lines = txt.replace(b"\r", b"\n").split(b"\n")
+    for li in lines:
+        if li.startswith(b"dup"):
+            words = [_w for _w in li.split(b" ") if _w != b""]
+            if words[3] != b"put":
+                continue
+            try:
+                i = int(words[1])
+                v = adobe_glyphs[words[2].decode()]
+            except (ValueError, KeyError):
+                continue
+            if v == " ":
+                space_code = i
+            map_dict[chr(i)] = v
+            int_entry.append(i)
+    return map_dict, space_code, int_entry
