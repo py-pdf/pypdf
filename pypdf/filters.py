@@ -764,9 +764,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             data = bits2byte(data, size, 4)
         img = Image.frombytes(mode, size, data)
         if color_space == "/Indexed":
-            from .generic import ByteStringObject
+            from .generic import TextStringObject
 
-            if isinstance(lookup, ByteStringObject):
+            if isinstance(lookup, TextStringObject):
+                lookup = lookup.original_bytes
+            if isinstance(lookup, bytes):
                 try:
                     nb, conv, mode = {  # type: ignore
                         "1": (0, "", ""),
