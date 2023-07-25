@@ -506,3 +506,20 @@ def test_gray_devicen_cmyk():
     diff = ImageChops.difference(data.image, refimg)
     d = sqrt(sum([(a * a) for a in diff.getdata()])) / (diff.size[0] * diff.size[1])
     assert d < 0.001
+
+
+@pytest.mark.enable_socket()
+def test_runlengthdecode():
+    """From #1954, test with 2bits image. TODO: 4bits also"""
+    url = "https://github.com/py-pdf/pypdf/files/12159941/out.pdf"
+    name = "RunLengthDecode.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/255940800-6d63972e-a3d6-4cf9-aa6f-0793af24cded.png"
+    name_png = "RunLengthDecode.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(sum([(a * a) for a in diff.getdata()])) / (diff.size[0] * diff.size[1])
+    assert d < 0.001

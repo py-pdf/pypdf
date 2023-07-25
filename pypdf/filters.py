@@ -289,6 +289,65 @@ class ASCIIHexDecode:
         return retval
 
 
+class RunLengthDecode:
+    """
+    The RunLengthDecode filter decodes data that has been encoded in a
+    simple byte-oriented format based on run length.
+    The encoded data is a sequence of runs, where each run consists of
+    a length byte followed by 1 to 128 bytes of data. If the length byte is
+    in the range 0 to 127,
+    the following length + 1 (1 to 128) bytes are copied literally during
+    decompression.
+    If length is in the range 129 to 255, the following single byte is to be
+    copied 257 − length (2 to 128) times during decompression. A length value
+    of 128 denotes EOD.
+    """
+
+    @staticmethod
+    def decode(
+        data: bytes,
+        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> bytes:
+        """
+        Decode an ASCII-Hex encoded data stream.
+
+        Args:
+          data: a bytes sequence of length/data
+          decode_parms: ignored.
+
+        Returns:
+          A bytes decompressed sequence.
+
+        Raises:
+          PdfStreamError:
+        """
+        if "decodeParms" in kwargs:  # deprecated
+            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
+            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        lst = []
+        index = 0
+        while True:
+            if index >= len(data):
+                raise PdfStreamError("Unexpected EOD in RunLengthDecode")
+            length = data[index]
+            index += 1
+            if length == 128:
+                if index < len(data):
+                    raise PdfStreamError("early EOD in RunLengthDecode")
+                else:
+                    break
+            elif length < 128:
+                length += 1
+                lst.append(data[index : (index + length)])
+                index += length
+            else:  # >128
+                length = 257 - length
+                lst.append(bytes((data[index],)) * length)
+                index += 1
+        return b"".join(lst)
+
+
 class LZWDecode:
     """
     Taken from:
@@ -580,7 +639,7 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
 
     This function decodes the stream data using the filters provided in the
     stream. It supports various filter types, including FlateDecode,
-    ASCIIHexDecode, LZWDecode, ASCII85Decode, DCTDecode, JPXDecode, and
+    ASCIIHexDecode, RunLengthDecode, LZWDecode, ASCII85Decode, DCTDecode, JPXDecode, and
     CCITTFaxDecode.
 
     Args:
@@ -611,6 +670,8 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
                 data = FlateDecode.decode(data, params)
             elif filter_type in (FT.ASCII_HEX_DECODE, FTA.AHx):
                 data = ASCIIHexDecode.decode(data)  # type: ignore
+            elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
+                data = RunLengthDecode.decode(data)
             elif filter_type in (FT.LZW_DECODE, FTA.LZW):
                 data = LZWDecode.decode(data, params)  # type: ignore
             elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
@@ -912,7 +973,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             "TIFF",
             ".tiff",
         )
-    elif lfilters is None:
+    else:
         img, image_format, extension = Image.frombytes(mode, size, data), "PNG", ".png"
 
     # CMYK image without decode requires reverting scale (cf p243,2§ last sentence)
