@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690304171563,
+  "lastUpdate": 1690315839466,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -34294,6 +34294,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00047299233478201026",
             "extra": "mean: 98.14419439999256 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "11ee6480a3f795d770da89944f32a977e3c110e2",
+          "message": "ENH: ASCIIHexDecode.decode now returns bytes instead of str (#1994)\n\nPlease note that this is potentially backwards-incompatible!\r\n\r\nThis also fixes a bug.\r\n\r\nCloses  #1983",
+          "timestamp": "2023-07-25T22:09:06+02:00",
+          "tree_id": "61d1e814176952a0cc5a6a408da005b9266ab2d6",
+          "url": "https://github.com/py-pdf/pypdf/commit/11ee6480a3f795d770da89944f32a977e3c110e2"
+        },
+        "date": 1690315837336,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.583033348216449,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028707983194800304",
+            "extra": "mean: 1.7151677567999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.588432087303147,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015260010530274799",
+            "extra": "mean: 116.43568812500327 msec\nrounds: 8"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19343445568994616,
+            "unit": "iter/sec",
+            "range": "stddev: 0.19604113159153905",
+            "extra": "mean: 5.169709793600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.701469672425583,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033777468282365102",
+            "extra": "mean: 93.44510899999973 msec\nrounds: 11"
           }
         ]
       }
