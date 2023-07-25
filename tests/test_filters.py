@@ -84,26 +84,26 @@ def test_flate_decode_decompress_with_array_params(params):
 @pytest.mark.parametrize(
     ("data", "expected"),
     [
-        (">", ""),
+        (">", b""),
         (
             "6162636465666768696a6b6c6d6e6f707172737475767778797a>",
-            string.ascii_lowercase,
+            string.ascii_lowercase.encode(),
         ),
         (
             "4142434445464748494a4b4c4d4e4f505152535455565758595a>",
-            string.ascii_uppercase,
+            string.ascii_uppercase.encode(),
         ),
         (
             "6162636465666768696a6b6c6d6e6f707172737475767778797a4142434445464748494a4b4c4d4e4f505152535455565758595a>",
-            string.ascii_letters,
+            string.ascii_letters.encode(),
         ),
-        ("30313233343536373839>", string.digits),
+        ("30313233343536373839>", string.digits.encode()),
         (
             "3  031323334353637   3839>",
-            string.digits,
+            string.digits.encode(),
         ),  # Same as previous, but whitespaced
-        ("30313233343536373839616263646566414243444546>", string.hexdigits),
-        ("20090a0d0b0c>", string.whitespace),
+        ("30313233343536373839616263646566414243444546>", string.hexdigits.encode()),
+        ("20090a0d0b0c>", string.whitespace.encode()),
     ],
     ids=[
         "empty",
@@ -133,6 +133,19 @@ def test_ascii_hex_decode_missing_eod():
     with pytest.raises(PdfStreamError) as exc:
         ASCIIHexDecode.decode("")
     assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
+
+
+@pytest.mark.enable_socket()
+def test_decode_ahx():
+    """
+    See #1979
+    Gray Image in CMYK : requiring reverse
+    """
+    url = "https://github.com/py-pdf/pypdf/files/12090692/New.Jersey.Coinbase.staking.securities.charges.2023-0606_Coinbase-Penalty-and-C-D.pdf"
+    name = "NewJersey.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for p in reader.pages:
+        _ = list(p.images.keys())
 
 
 @pytest.mark.xfail()
