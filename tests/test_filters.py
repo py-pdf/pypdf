@@ -523,3 +523,14 @@ def test_runlengthdecode():
     diff = ImageChops.difference(data.image, refimg)
     d = sqrt(sum([(a * a) for a in diff.getdata()])) / (diff.size[0] * diff.size[1])
     assert d < 0.001
+    url = "https://github.com/py-pdf/pypdf/files/12162905/out.pdf"
+    name = "FailedRLE1.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    with pytest.raises(PdfStreamError) as exc:
+        reader.pages[0].images[0]
+    assert exc.value.args[0] == "Unexpected EOD in RunLengthDecode"
+    url = "https://github.com/py-pdf/pypdf/files/12162926/out.pdf"
+    name = "FailedRLE2.pdf"
+    with pytest.raises(PdfStreamError) as exc:
+        reader.pages[0].images[0]
+    assert exc.value.args[0] == "Unexpected EOD in RunLengthDecode"
