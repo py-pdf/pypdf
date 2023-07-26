@@ -430,6 +430,20 @@ def deprecation_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
     deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
 
 
+custom_logger_warning = None
+
+
+def overload_logger_warning(fn: Optional[Callable[[str, str], None]] = None) -> None:
+    """
+    overload the logger_warning with a customed function
+    Parameters:
+        fn : Customed function ; parameters : msg: str, src: str
+             None: reset to default
+    """
+    global custom_logger_warning
+    custom_logger_warning = fn
+
+
 def logger_warning(msg: str, src: str) -> None:
     """
     Use this instead of logger.warning directly.
@@ -446,7 +460,10 @@ def logger_warning(msg: str, src: str) -> None:
       pypdf could apply a robustness fix to still read it. This applies mainly
       to strict=False mode.
     """
-    logging.getLogger(src).warning(msg)
+    if custom_logger_warning is None:
+        logging.getLogger(src).warning(msg)
+    else:
+        custom_logger_warning(msg, src)
 
 
 def deprecation_bookmark(**aliases: str) -> Callable:

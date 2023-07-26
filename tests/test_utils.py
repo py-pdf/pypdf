@@ -15,6 +15,7 @@ from pypdf._utils import (
     deprecation_no_replacement,
     mark_location,
     matrix_multiply,
+    overload_logger_warning,
     parse_iso8824_date,
     read_block_backwards,
     read_previous_line,
@@ -368,3 +369,16 @@ def test_parse_datetime_err():
         parse_iso8824_date("D:20210408T054711Z")
     assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
     assert parse_iso8824_date("D:20210408054711").tzinfo is None
+
+
+def test_overload_logger_warning(capsys):
+    path = RESOURCE_ROOT / "issue-297.pdf"
+
+    def my_logger(msg: str, src: str) -> None:
+        print("!!!!")  # noqa
+
+    overload_logger_warning(my_logger)
+    PdfReader(path, strict=False)
+    captured = capsys.readouterr()
+    assert captured.out == "!!!!\n"
+    overload_logger_warning()
