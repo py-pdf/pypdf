@@ -168,3 +168,14 @@ def test_cmap_encodings(caplog, url, name, page_index, within_text, caplog_text)
     for contained in within_text:
         assert contained in extracted
     assert caplog_text in caplog.text
+
+
+@pytest.mark.enable_socket()
+def test_latex():
+    url = "https://github.com/py-pdf/pypdf/files/12163370/math-in-text-created-via-latex.pdf"
+    name = "math_latex.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    txt = reader.pages[0].extract_text()  # no error
+    for pat in ("α", "β", "γ", "ϕ", "φ", "ℏ", "∫", "∂", "·", "×"):
+        assert pat in txt
+    # actually the ϕ and φ seems to be crossed in latex
