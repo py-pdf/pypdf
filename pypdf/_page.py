@@ -344,7 +344,8 @@ class PageObject(DictionaryObject):
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
         self.inline_images: Optional[Dict[str, ImageFile]] = None
-        self.inline_images_keys: Optional[List[str]] = None
+        # below Union for mypy but actually Optional[List[str]]
+        self.inline_images_keys: Optional[List[Union[str, List[str]]]] = None
         if indirect_ref is not None:  # deprecated
             warnings.warn(
                 (
