@@ -792,7 +792,6 @@ class PdfReader:
                 if isinstance(value, DictionaryObject) and "/D" in value:
                     value = value["/D"]
                 else:
-                    # Not an Array
                     continue
                 dest = self._build_destination(key, value)  # type: ignore
                 if dest is not None:
@@ -803,7 +802,6 @@ class PdfReader:
                 if isinstance(val, DictionaryObject) and "/D" in val:
                     val = val["/D"].get_object()
                 else:
-                    # Not an array
                     continue
                 dest = self._build_destination(k__, val) # type: ignore
                 if dest is not None:
