@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690402463245,
+  "lastUpdate": 1690402921581,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -34398,6 +34398,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003451369727587832",
             "extra": "mean: 96.65032819999908 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a327df6cdf5ff00110f082877360f9ce8526f3dd",
+          "message": "ENH: Extract LaTeX characters (#2016)\n\nnote: code clean up removed duplicates from adobe_glyphs\r\n\r\nCloses #2009",
+          "timestamp": "2023-07-26T22:20:47+02:00",
+          "tree_id": "4c348a13e600706608e037035fdd8bff68d71696",
+          "url": "https://github.com/py-pdf/pypdf/commit/a327df6cdf5ff00110f082877360f9ce8526f3dd"
+        },
+        "date": 1690402920050,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7110982574886353,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003979107948846735",
+            "extra": "mean: 1.4062754189999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.98307501915717,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013225134384543981",
+            "extra": "mean: 91.04918233334065 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21912845146341794,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015637346397283553",
+            "extra": "mean: 4.563533367400003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.53531565495565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00013676085476363952",
+            "extra": "mean: 94.91884560000017 msec\nrounds: 10"
           }
         ]
       }
