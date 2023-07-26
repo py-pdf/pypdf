@@ -38,9 +38,9 @@ Source = "https://github.com/py-pdf/pypdf"
 Changelog = "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html"
 
 [project.optional-dependencies]
-full = ["PyCryptodome", "Pillow"]
+full = ["PyCryptodome", "Pillow>=8.0.0"]
 crypto = ["PyCryptodome"]
-image = ["Pillow"]
+image = ["Pillow>=8.0.0"]
 dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "flit", "wheel"]
 docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
 
