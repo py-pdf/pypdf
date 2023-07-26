@@ -208,7 +208,7 @@ def parse_to_unicode(
     process_char: bool = False
     multiline_rg: Union[
         None, Tuple[int, int]
-    ] = None  # tuple = (current_chaxr, remaining size) ; cf #1285 for example of file
+    ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
