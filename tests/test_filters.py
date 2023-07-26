@@ -553,3 +553,12 @@ def test_gray_devicen_cmyk():
     diff = ImageChops.difference(data.image, refimg)
     d = sqrt(sum([(a * a) for a in diff.getdata()])) / (diff.size[0] * diff.size[1])
     assert d < 0.001
+
+
+@pytest.mark.enable_socket()
+def test_singleton_device():
+    """From #2023"""
+    url = "https://github.com/py-pdf/pypdf/files/12177287/tt.pdf"
+    name = "pypdf_with_arr_deviceRGB.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].images[0]

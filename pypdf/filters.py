@@ -860,6 +860,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         data = data.encode()
     colors = x_object_obj.get("/Colors", 1)
     color_space: Any = x_object_obj.get("/ColorSpace", NullObject()).get_object()
+    if isinstance(color_space, list) and len(color_space) == 1:
+        color_space = color_space[0].get_object()
     if (
         IA.COLOR_SPACE in x_object_obj
         and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
