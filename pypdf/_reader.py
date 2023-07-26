@@ -791,15 +791,21 @@ class PdfReader:
                 i += 1
                 if isinstance(value, DictionaryObject) and "/D" in value:
                     value = value["/D"]
+                else:
+                    # Not an Array
+                    continue
                 dest = self._build_destination(key, value)  # type: ignore
                 if dest is not None:
                     retval[key] = dest
         else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF1.1
             for k__, v__ in tree.items():
                 val = v__.get_object()
-                if isinstance(val, DictionaryObject):
+                if isinstance(val, DictionaryObject) and "/D" in val:
                     val = val["/D"].get_object()
-                dest = self._build_destination(k__, val)
+                else:
+                    # Not an array
+                    continue
+                dest = self._build_destination(k__, val) # type: ignore
                 if dest is not None:
                     retval[k__] = dest
         return retval
