@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690315839466,
+  "lastUpdate": 1690402463245,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -34346,6 +34346,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0033777468282365102",
             "extra": "mean: 93.44510899999973 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ff884c0ddb28d572e7e9b3c94062011e93dee8f3",
+          "message": "MAINT: Add minimum Pillow version requirement (#2022)\n\npypdf uses the `formats` option for `Image.open`, which is not available before Pillow 8.0.0\r\n\r\nSee https://pillow.readthedocs.io/en/stable/releasenotes/8.0.0.html#api-additions\r\n\r\nCloses #2019",
+          "timestamp": "2023-07-26T22:13:01+02:00",
+          "tree_id": "4d1326511e110bf7adc6dc4d1bac6da72d510bf8",
+          "url": "https://github.com/py-pdf/pypdf/commit/ff884c0ddb28d572e7e9b3c94062011e93dee8f3"
+        },
+        "date": 1690402460663,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6936236738672977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030494485496736622",
+            "extra": "mean: 1.4417039637999978 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.870898901412733,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011529236826613519",
+            "extra": "mean: 91.98871308333523 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21681871773212058,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07633762561151738",
+            "extra": "mean: 4.612147929200003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.346576350270578,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003451369727587832",
+            "extra": "mean: 96.65032819999908 msec\nrounds: 10"
           }
         ]
       }
