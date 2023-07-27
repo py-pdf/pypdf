@@ -9,7 +9,7 @@ assignees: MartinThoma
 
 ## Explanation
 
-Explain briefly what you want to achive.
+Explain briefly what you want to achieve.
 
 ## Code Example
 
