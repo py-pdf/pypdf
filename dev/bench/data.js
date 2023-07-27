@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690486603242,
+  "lastUpdate": 1690488812853,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -34554,6 +34554,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00017075251169193926",
             "extra": "mean: 81.90891083333203 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "exiledkingcc@gmail.com",
+            "name": "exiledkingcc",
+            "username": "exiledkingcc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "277643f0bf9892790e61f5369108a78dbef7e37f",
+          "message": "ENH: Use `cryptography` for encryption/decryption as a fallback for PyCryptodome (#2000)\n\nUse the [`cryptography` package](https://pypi.org/project/cryptography/) (maintained by the Python Cryptographic Authority, pyca) as a fallback if [PyCryptodome](https://pypi.org/project/pycryptodome/) (maintained by Legrandin / Helder Eijs) is not installed.\r\n\r\nCloses #1998",
+          "timestamp": "2023-07-27T22:12:07+02:00",
+          "tree_id": "cb3590830ee2e89aa93a02f9caefc78ddde3639f",
+          "url": "https://github.com/py-pdf/pypdf/commit/277643f0bf9892790e61f5369108a78dbef7e37f"
+        },
+        "date": 1690488810542,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6471680838967758,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01435915752250241",
+            "extra": "mean: 1.545193628799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.04411854416781,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009894114989259984",
+            "extra": "mean: 99.56075245454538 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19834301986441805,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04100813684131437",
+            "extra": "mean: 5.041770568400002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.240133769909576,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026177678360065878",
+            "extra": "mean: 108.22354144444229 msec\nrounds: 9"
           }
         ]
       }
