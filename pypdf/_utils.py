@@ -382,6 +382,7 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
 
 
 WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
+WHITESPACES_AS_REGEXP = b"[ \n\r\t\x00]"
 
 
 def paeth_predictor(left: int, up: int, up_left: int) -> int:
