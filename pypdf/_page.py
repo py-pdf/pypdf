@@ -908,7 +908,7 @@ class PageObject(DictionaryObject):
 
     def _get_contents_as_bytes(self) -> Optional[bytes]:
         """
-        Return the page contents as bytes .
+        Return the page contents as bytes.
 
         Returns:
             The ``/Contents`` object as bytes, or ``None`` if it doesn't exist.
