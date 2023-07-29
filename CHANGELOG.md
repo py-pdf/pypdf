@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## Version 3.14.0, 2023-07-29
+
+### New Features (ENH)
+-  Accelerate image list keys generation (#2014)
+-  Use `cryptography` for encryption/decryption as a fallback for PyCryptodome (#2000)
+-  Extract LaTeX characters (#2016)
+-  ASCIIHexDecode.decode now returns bytes instead of str (#1994)
+
+### Bug Fixes (BUG)
+-  Add RunLengthDecode filter (#2012)
+-  Process /Separation ColorSpace (#2007)
+-  Handle single element ColorSpace list (#2026)
+-  Process lookup decoded as TextStringObjects (#2008)
+
+### Robustness (ROB)
+-  Cope with garbage collector during cloning (#1841)
+
+### Maintenance (MAINT)
+-  Cleanup of annotations (#1745)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.13.0...3.14.0)
+
 ## Version 3.13.0, 2023-07-23
 
 ### New Features (ENH)
