@@ -1013,11 +1013,12 @@ def test_annotation_builder_popup(caplog):
         )
 
     assert caplog.text == ""
-    AnnotationBuilder.popup(
-        rect=(50, 550, 200, 650),
-        open=True,
-        parent=True,  # broken parameter  # type: ignore
-    )
+    with pytest.warns(DeprecationWarning):
+        AnnotationBuilder.popup(
+            rect=(50, 550, 200, 650),
+            open=True,
+            parent=True,  # broken parameter  # type: ignore
+        )
     assert "Unregistered Parent object : No Parent field set" in caplog.text
 
     writer.add_annotation(writer.pages[0], popup_annotation)
