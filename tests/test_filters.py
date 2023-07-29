@@ -583,4 +583,3 @@ def test_singleton_device():
     name = "pypdf_with_arr_deviceRGB.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].images[0]
-
