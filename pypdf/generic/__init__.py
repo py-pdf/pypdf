@@ -232,7 +232,7 @@ class AnnotationBuilder:
         p2: Tuple[float, float],
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         text: str = "",
-        title_bar: str = "",
+        title_bar: Optional[str] = None,
     ) -> DictionaryObject:
         """
         Draw a line on the PDF.
