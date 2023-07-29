@@ -584,6 +584,27 @@ def test_runlengthdecode():
 
 
 @pytest.mark.enable_socket()
+def test_gray_separation_cmyk():
+    """
+    Cf #1955
+    Gray Image in Separation/RGB : requiring reverse
+    """
+    url = "https://github.com/py-pdf/pypdf/files/12143372/tt.pdf"
+    name = "TestWithSeparationBlack.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/254545494-42df4949-1557-4f2d-acca-6be6e8de1122.png"
+    name_png = "velo.png"  # reused
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    assert data.image.mode == "L"
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(sum([(a * a) for a in diff.getdata()])) / (diff.size[0] * diff.size[1])
+    assert d < 0.001
+
+    
+@pytest.mark.enable_socket()
 def test_singleton_device():
     """From #2023"""
     url = "https://github.com/py-pdf/pypdf/files/12177287/tt.pdf"
