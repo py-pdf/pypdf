@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690625911859,
+  "lastUpdate": 1690626272689,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -34918,6 +34918,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006072870837381575",
             "extra": "mean: 93.20782209091115 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "29a29fed96347f2404429540a1d0f73ab93a51ac",
+          "message": "REL: 3.14.0\n\n## What's new\n\n### New Features (ENH)\n-  Accelerate image list keys generation (#2014)\n-  Use `cryptography` for encryption/decryption as a fallback for PyCryptodome (#2000)\n-  Extract LaTeX characters (#2016)\n-  ASCIIHexDecode.decode now returns bytes instead of str (#1994)\n\n### Bug Fixes (BUG)\n-  Add RunLengthDecode filter (#2012)\n-  Process /Separation ColorSpace (#2007)\n-  Handle single element ColorSpace list (#2026)\n-  Process lookup decoded as TextStringObjects (#2008)\n\n### Robustness (ROB)\n-  Cope with garbage collector during cloning (#1841)\n\n### Maintenance (MAINT)\n-  Cleanup of annotations (#1745)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.13.0...3.14.0)",
+          "timestamp": "2023-07-29T12:22:37+02:00",
+          "tree_id": "3be19d0e758c268c4e64f21b3dd1e2fa93c1ce40",
+          "url": "https://github.com/py-pdf/pypdf/commit/29a29fed96347f2404429540a1d0f73ab93a51ac"
+        },
+        "date": 1690626270274,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7615673457351688,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003732872101578422",
+            "extra": "mean: 1.3130815095999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.38395335693731,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008356707283161964",
+            "extra": "mean: 87.84294600000327 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23686458676051475,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012307246939645453",
+            "extra": "mean: 4.221821478999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.510820373963586,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010663041751393606",
+            "extra": "mean: 79.93080949999982 msec\nrounds: 12"
           }
         ]
       }
