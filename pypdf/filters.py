@@ -886,7 +886,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                         # gray lookup does not work : it is converted to a similar RGB lookup
                         lookup = b"".join([bytes([b, b, b]) for b in lookup])
                         mode = "RGB"
-                    # TODO : this is a work around until PIL is able to process CMYK images
+                    # TODO : cf https://github.com/py-pdf/pypdf/pull/2039
+                    # this is a work around until PIL is able to process CMYK images
                     elif mode == "CMYK":
                         _rgb = []
                         for _c, _m, _y, _k in (
