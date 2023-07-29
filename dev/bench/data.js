@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690614851624,
+  "lastUpdate": 1690622478331,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -34710,6 +34710,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0032717191744315367",
             "extra": "mean: 107.06658244444611 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "abd2673e4463ec1d02ab244b4bce9331dec99182",
+          "message": "MAINT: Cleanup of annotations (#1745)\n\nThe goal of this PR is to create a more intuitive interface for creating annotations. The AnnotationBuild gets deprecated in favor of several annotation classes, e.g.\r\n\r\n```python\r\n# old\r\nfrom pypdf.generic import AnnotationBuilder\r\nannotation = AnnotationBuilder.free_text(\r\n    \"Hello World\\nThis is the second line!\",\r\n    rect=(50, 550, 200, 650),\r\n    font=\"Arial\",\r\n    bold=True,\r\n    italic=True,\r\n    font_size=\"20pt\",\r\n    font_color=\"00ff00\",\r\n    border_color=\"0000ff\",\r\n    background_color=\"cdcdcd\",\r\n)\r\n\r\n# new\r\nfrom pypdf.annotations import FreeText\r\nannotation = FreeText(\r\n    text=\"Hello World\\nThis is the second line!\",\r\n    rect=(50, 550, 200, 650),\r\n    font=\"Arial\",\r\n    bold=True,\r\n    italic=True,\r\n    font_size=\"20pt\",\r\n    font_color=\"00ff00\",\r\n    border_color=\"0000ff\",\r\n    background_color=\"cdcdcd\",\r\n)\r\n```\r\n\r\n* `pypdf/generic/_annotations.py` ➔ `pypdf/annotations/`\r\n* Create abstract base class AnnotationDictionary\r\n* Create abstract base class MarkupAnnotation which inherits from AnnotationDictionary. Most annotations are MarkupAnnotations.\r\n* Deprecated AnnotationBuilder\r\n* Ensure the AnnotationBuilder is not used in the docs\r\n\r\nCloses #107",
+          "timestamp": "2023-07-29T11:20:03+02:00",
+          "tree_id": "e2fb9d9e7617fb68baf0fee47528de8067fd3bfc",
+          "url": "https://github.com/py-pdf/pypdf/commit/abd2673e4463ec1d02ab244b4bce9331dec99182"
+        },
+        "date": 1690622476345,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7295686609595721,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004810757788994876",
+            "extra": "mean: 1.3706729105999984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.345011915070437,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010366108508444844",
+            "extra": "mean: 88.14446449999973 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22485680628163288,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03291075788242507",
+            "extra": "mean: 4.447274763600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.6191035264029,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000531104480358501",
+            "extra": "mean: 94.1699077999985 msec\nrounds: 10"
           }
         ]
       }
