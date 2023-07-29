@@ -245,10 +245,10 @@ class ASCIIHexDecode:
 
     @staticmethod
     def decode(
-        data: str,
+        data: Union[str, bytes],
         decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
-    ) -> str:
+    ) -> bytes:
         """
         Decode an ASCII-Hex encoded data stream.
 
@@ -268,24 +268,26 @@ class ASCIIHexDecode:
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
-        retval = ""
-        hex_pair = ""
+        if isinstance(data, str):
+            data = data.encode()
+        retval = b""
+        hex_pair = b""
         index = 0
         while True:
             if index >= len(data):
                 raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
-            char = data[index]
-            if char == ">":
+            char = data[index : index + 1]
+            if char == b">":
                 break
             elif char.isspace():
                 index += 1
                 continue
             hex_pair += char
             if len(hex_pair) == 2:
-                retval += chr(int(hex_pair, base=16))
-                hex_pair = ""
+                retval += bytes((int(hex_pair, base=16),))
+                hex_pair = b""
             index += 1
-        assert hex_pair == ""
+        assert hex_pair == b""
         return retval
 
 
@@ -825,9 +827,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             data = bits2byte(data, size, 4)
         img = Image.frombytes(mode, size, data)
         if color_space == "/Indexed":
-            from .generic import ByteStringObject
+            from .generic import TextStringObject
 
-            if isinstance(lookup, ByteStringObject):
+            if isinstance(lookup, TextStringObject):
+                lookup = lookup.original_bytes
+            if isinstance(lookup, bytes):
                 try:
                     nb, conv, mode = {  # type: ignore
                         "1": (0, "", ""),
@@ -913,8 +917,12 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.get_data()  # type: ignore
+    if isinstance(data, str):  # pragma: no cover
+        data = data.encode()
     colors = x_object_obj.get("/Colors", 1)
     color_space: Any = x_object_obj.get("/ColorSpace", NullObject()).get_object()
+    if isinstance(color_space, list) and len(color_space) == 1:
+        color_space = color_space[0].get_object()
     if (
         IA.COLOR_SPACE in x_object_obj
         and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB

@@ -84,26 +84,26 @@ def test_flate_decode_decompress_with_array_params(params):
 @pytest.mark.parametrize(
     ("data", "expected"),
     [
-        (">", ""),
+        (">", b""),
         (
             "6162636465666768696a6b6c6d6e6f707172737475767778797a>",
-            string.ascii_lowercase,
+            string.ascii_lowercase.encode(),
         ),
         (
             "4142434445464748494a4b4c4d4e4f505152535455565758595a>",
-            string.ascii_uppercase,
+            string.ascii_uppercase.encode(),
         ),
         (
             "6162636465666768696a6b6c6d6e6f707172737475767778797a4142434445464748494a4b4c4d4e4f505152535455565758595a>",
-            string.ascii_letters,
+            string.ascii_letters.encode(),
         ),
-        ("30313233343536373839>", string.digits),
+        ("30313233343536373839>", string.digits.encode()),
         (
             "3  031323334353637   3839>",
-            string.digits,
+            string.digits.encode(),
         ),  # Same as previous, but whitespaced
-        ("30313233343536373839616263646566414243444546>", string.hexdigits),
-        ("20090a0d0b0c>", string.whitespace),
+        ("30313233343536373839616263646566414243444546>", string.hexdigits.encode()),
+        ("20090a0d0b0c>", string.whitespace.encode()),
     ],
     ids=[
         "empty",
@@ -133,6 +133,19 @@ def test_ascii_hex_decode_missing_eod():
     with pytest.raises(PdfStreamError) as exc:
         ASCIIHexDecode.decode("")
     assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
+
+
+@pytest.mark.enable_socket()
+def test_decode_ahx():
+    """
+    See #1979
+    Gray Image in CMYK : requiring reverse
+    """
+    url = "https://github.com/py-pdf/pypdf/files/12090692/New.Jersey.Coinbase.staking.securities.charges.2023-0606_Coinbase-Penalty-and-C-D.pdf"
+    name = "NewJersey.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for p in reader.pages:
+        _ = list(p.images.keys())
 
 
 @pytest.mark.xfail()
@@ -469,6 +482,40 @@ def test_calrgb():
 
 
 @pytest.mark.enable_socket()
+def test_index_lookup():
+    """The lookup is provided as an str and bytes"""
+    url = "https://github.com/py-pdf/pypdf/files/12090523/2023.USDC_Circle.Examination.Report.May.2023.pdf"
+    name = "2023USDC.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # TextStringObject Lookup
+    url_png = "https://github.com/py-pdf/pypdf/files/12144094/im1.png.txt"
+    name_png = "iss1982_im1.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[-1]
+    assert data.image.mode == "RGB"
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(sum([(a * a + b * b + c * c) for a, b, c in diff.getdata()])) / (
+        diff.size[0] * diff.size[1]
+    )
+    assert d < 0.001
+    # ByteStringObject Lookup
+    url_png = "https://github.com/py-pdf/pypdf/files/12144093/im2.png.txt"
+    name_png = "iss1982_im2.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[-1].images[-1]
+    assert data.image.mode == "RGB"
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(sum([(a * a + b * b + c * c) for a, b, c in diff.getdata()])) / (
+        diff.size[0] * diff.size[1]
+    )
+    assert d < 0.001
+
+
+@pytest.mark.enable_socket()
 def test_2bits_image():
     """From #1954, test with 2bits image. TODO: 4bits also"""
     url = "https://github.com/py-pdf/pypdf/files/12050253/tt.pdf"
@@ -534,3 +581,12 @@ def test_runlengthdecode():
     with pytest.raises(PdfStreamError) as exc:
         reader.pages[0].images[0]
     assert exc.value.args[0] == "Unexpected EOD in RunLengthDecode"
+
+
+@pytest.mark.enable_socket()
+def test_singleton_device():
+    """From #2023"""
+    url = "https://github.com/py-pdf/pypdf/files/12177287/tt.pdf"
+    name = "pypdf_with_arr_deviceRGB.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].images[0]
