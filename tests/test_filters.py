@@ -603,7 +603,6 @@ def test_gray_separation_cmyk():
     d = sqrt(sum([(a * a) for a in diff.getdata()])) / (diff.size[0] * diff.size[1])
     assert d < 0.001
 
-    
 @pytest.mark.enable_socket()
 def test_singleton_device():
     """From #2023"""
