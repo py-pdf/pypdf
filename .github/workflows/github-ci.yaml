@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12.0-beta.4"]
         use-crypto-lib: ["pycryptodome"]
         include:
           - python-version: "3.9"
@@ -59,11 +59,11 @@ jobs:
     - name: Install requirements (Python 3)
       run: |
         pip install -r requirements/ci.txt
-      if: matrix.python-version != '3.11'
+      if: matrix.python-version < '3.11'
     - name: Install requirements (Python 3.11)
       run: |
         pip install -r requirements/ci-3.11.txt
-      if: matrix.python-version == '3.11'
+      if: matrix.python-version >= '3.11'
     - name: Remove pycryptodome
       run: |
         pip uninstall pycryptodome -y
