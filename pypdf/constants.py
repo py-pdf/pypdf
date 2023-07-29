@@ -224,6 +224,7 @@ class ImageAttributes:
     BITS_PER_COMPONENT = "/BitsPerComponent"  # integer, required
     COLOR_SPACE = "/ColorSpace"  # name, required
     DECODE = "/Decode"  # array, optional
+    INTENT = "/Intent"  # string, optional
     INTERPOLATE = "/Interpolate"  # boolean, optional
     IMAGE_MASK = "/ImageMask"  # boolean, optional
     MASK = "/Mask"  # 1-bit image mask stream

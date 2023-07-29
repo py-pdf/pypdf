@@ -59,6 +59,7 @@ from ._utils import (
     deprecation_no_replacement,
     deprecation_with_replacement,
     logger_warning,
+    parse_iso8824_date,
     read_non_whitespace,
     read_previous_line,
     read_until_whitespace,
@@ -86,6 +87,7 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
+    BooleanObject,
     ContentStream,
     DecodedStreamObject,
     Destination,
@@ -239,12 +241,7 @@ class DocumentInformation(DictionaryObject):
     @property
     def creation_date(self) -> Optional[datetime]:
         """Read-only property accessing the document's creation date."""
-        text = self._get_text(DI.CREATION_DATE)
-        if text is None:
-            return None
-        return datetime.strptime(
-            text.replace("Z", "+").replace("'", ""), "D:%Y%m%d%H%M%S%z"
-        )
+        return parse_iso8824_date(self._get_text(DI.CREATION_DATE))
 
     @property
     def creation_date_raw(self) -> Optional[str]:
@@ -263,12 +260,7 @@ class DocumentInformation(DictionaryObject):
 
         The date and time the document was most recently modified.
         """
-        text = self._get_text(DI.MOD_DATE)
-        if text is None:
-            return None
-        return datetime.strptime(
-            text.replace("Z", "+").replace("'", ""), "D:%Y%m%d%H%M%S%z"
-        )
+        return parse_iso8824_date(self._get_text(DI.MOD_DATE))
 
     @property
     def modification_date_raw(self) -> Optional[str]:
@@ -1083,7 +1075,15 @@ class PdfReader:
                 # absolute value = num. visible children
                 # with positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
+            #  if count is 0 we will consider it as open ( in order to have always an is_open to simplify
+            outline_item[NameObject("/%is_open%")] = BooleanObject(
+                node.get("/Count", 0) >= 0
+            )
         outline_item.node = node
+        try:
+            outline_item.indirect_reference = node.indirect_reference
+        except AttributeError:
+            pass
         return outline_item
 
     @property

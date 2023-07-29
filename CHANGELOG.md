@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## Version 3.13.0, 2023-07-23
+
+### New Features (ENH)
+-  Add is_open in outlines in PdfReader and PdfWriter (#1960)
+
+### Bug Fixes (BUG)
+-  Search /DA in hierarchy fields (#2002)
+-  Cope with different ISO date length (#1999)
+-  Decode Black only/CMYK deviceN images (#1984)
+-  Process CMYK in deflate images (#1977)
+
+### Developer Experience (DEV)
+-  Add mypy to pre-commit (#2001)
+-  Release automation (#1991, #1985)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.2...3.13.0)
+
 ## Version 3.12.2, 2023-07-16
 
 ### Bug Fixes (BUG)

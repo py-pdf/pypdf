@@ -13,7 +13,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
-from pypdf.errors import DeprecationError, PageSizeNotDefinedError
+from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -437,10 +437,8 @@ def test_fill_form(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
-    page = reader.pages[0]
-
-    writer.add_page(page)
-    writer.add_page(PdfReader(RESOURCE_ROOT / "crazyones.pdf").pages[0])
+    writer.append(reader, [0])
+    writer.append(RESOURCE_ROOT / "crazyones.pdf", [0])
 
     writer.update_page_form_field_values(
         writer.pages[0], {"foo": "some filled in text"}, flags=1
@@ -553,13 +551,49 @@ def test_add_outline_item(pdf_file_path):
         writer.add_page(page)
 
     outline_item = writer.add_outline_item(
-        "An outline item", 1, None, (255, 0, 15), True, True, Fit.fit()
+        "An outline item",
+        1,
+        None,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit(),
+        is_open=False,
     )
-    writer.add_outline_item("Another", 2, outline_item, None, False, False, Fit.fit())
+    _o2a = writer.add_outline_item(
+        "Another", 2, outline_item, None, False, False, Fit.fit()
+    )
+    _o2b = writer.add_outline_item(
+        "Another bis", 2, outline_item, None, False, False, Fit.fit()
+    )
+    outline_item2 = writer.add_outline_item(
+        "An outline item 2",
+        1,
+        None,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit(),
+        is_open=True,
+    )
+    _o3a = writer.add_outline_item(
+        "Another 2", 2, outline_item2, None, False, False, Fit.fit()
+    )
+    _o3b = writer.add_outline_item(
+        "Another 2bis", 2, outline_item2, None, False, False, Fit.fit()
+    )
 
     # write "output" to pypdf-output.pdf
-    with open(pdf_file_path, "wb") as output_stream:
+    with open(pdf_file_path, "w+b") as output_stream:
         writer.write(output_stream)
+        output_stream.seek(0)
+        reader = PdfReader(output_stream)
+        assert reader.trailer["/Root"]["/Outlines"]["/Count"] == 3
+        assert reader.outline[0]["/Count"] == -2
+        assert reader.outline[0]["/%is_open%"] == False  # noqa
+        assert reader.outline[2]["/Count"] == 2
+        assert reader.outline[2]["/%is_open%"] == True  # noqa
+        assert reader.outline[1][0]["/Count"] == 0
 
 
 def test_add_named_destination(pdf_file_path):
@@ -1499,3 +1533,52 @@ def test_watermark():
     b = BytesIO()
     writer.write(b)
     assert len(b.getvalue()) < 2.1 * 1024 * 1024
+
+
+@pytest.mark.enable_socket()
+def test_da_missing_in_annot():
+    url = "https://github.com/py-pdf/pypdf/files/12136285/Building.Division.Permit.Application.pdf"
+    name = "BuildingDivisionPermitApplication.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=reader)
+    writer.update_page_form_field_values(
+        writer.pages[0], {"PCN-1": "0"}, auto_regenerate=False
+    )
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(BytesIO(b.getvalue()))
+    ff = reader.get_fields()
+    # check for autosize processing
+    assert (
+        b"0 Tf"
+        not in ff["PCN-1"].indirect_reference.get_object()["/AP"]["/N"].get_data()
+    )
+    f2 = writer.get_object(ff["PCN-2"].indirect_reference.idnum)
+    f2[NameObject("/Parent")] = writer.get_object(
+        ff["PCN-1"].indirect_reference.idnum
+    ).indirect_reference
+    writer.update_page_form_field_values(
+        writer.pages[0], {"PCN-2": "1"}, auto_regenerate=False
+    )
+
+
+def test_missing_fields(pdf_file_path):
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+
+    with pytest.raises(PyPdfError) as exc:
+        writer.update_page_form_field_values(
+            writer.pages[0], {"foo": "some filled in text"}, flags=1
+        )
+    assert exc.value.args[0] == "No /AcroForm dictionary in PdfWriter Object"
+
+    writer = PdfWriter()
+    writer.append(reader, [0])
+    del writer._root_object["/AcroForm"]["/Fields"]
+    with pytest.raises(PyPdfError) as exc:
+        writer.update_page_form_field_values(
+            writer.pages[0], {"foo": "some filled in text"}, flags=1
+        )
+    assert exc.value.args[0] == "No /Fields dictionary in Pdf in PdfWriter Object"

@@ -33,7 +33,7 @@ repos:
         additional_dependencies: [black==22.1.0]
         exclude: "docs/user/robustness.md"
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.0.278'
+    rev: 'v0.0.280'
     hooks:
     -   id: ruff
         args: ['--fix']
@@ -47,3 +47,10 @@ repos:
     hooks:
     -   id: flake8
         args: ["--ignore", "E,W,F"]
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.4.1'
+    hooks:
+      - id: mypy
+        files: ^pypdf/.*
+        args: [--ignore-missing-imports]

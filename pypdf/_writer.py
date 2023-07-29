@@ -88,6 +88,7 @@ from .constants import (
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
+from .errors import PyPdfError
 from .generic import (
     PAGE_FIT,
     ArrayObject,
@@ -836,11 +837,14 @@ class PdfWriter:
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
 
         # Extract font information
-        font_properties: Any = (
-            cast(str, field[AA.DA]).replace("\n", " ").replace("\r", " ").split(" ")
-        )
+        da = cast(str, field[AA.DA])
+        font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
         font_name = font_properties[font_properties.index("Tf") - 2]
         font_height = float(font_properties[font_properties.index("Tf") - 1])
+        if font_height == 0:
+            font_height = rct.height - 2
+            font_properties[font_properties.index("Tf") - 1] = str(font_height)
+            da = " ".join(font_properties)
         y_offset = rct.height - 1 - font_height
 
         # Retrieve field text and selected values
@@ -855,7 +859,7 @@ class PdfWriter:
             sel = []
 
         # Generate appearance stream
-        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{field[AA.DA]}\n".encode()
+        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
             if line in sel:
                 # may be improved but can not find how get fill working => replaced with lined box
@@ -938,12 +942,21 @@ class PdfWriter:
             auto_regenerate: set/unset the need_appearances flag ;
                 the flag is unchanged if auto_regenerate is None
         """
+        if CatalogDictionary.ACRO_FORM not in self._root_object:
+            raise PyPdfError("No /AcroForm dictionary in PdfWriter Object")
+        af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        if InteractiveFormDictEntries.Fields not in af:
+            raise PyPdfError("No /Fields dictionary in Pdf in PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
         # Iterate through pages, update field values
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
+        # /Helvetica is just in case of but this is normally insufficient as we miss the font ressource
+        default_da = af.get(
+            InteractiveFormDictEntries.DA, TextStringObject("/Helvetica 0 Tf 0 g")
+        )
         for writer_annot in page[PG.ANNOTS]:  # type: ignore
             writer_annot = cast(DictionaryObject, writer_annot.get_object())
             # retrieve parent field values, if present
@@ -968,6 +981,17 @@ class PdfWriter:
                         or writer_annot.get(FA.FT) == "/Ch"
                     ):
                         # textbox
+                        if AA.DA not in writer_annot:
+                            f = writer_annot
+                            da = default_da
+                            while AA.DA not in f:
+                                f = f.get("/Parent")
+                                if f is None:
+                                    break
+                                f = f.get_object()
+                                if AA.DA in f:
+                                    da = f[AA.DA]
+                            writer_annot[NameObject(AA.DA)] = da
                         self._update_text_field(writer_annot)
                     elif writer_annot.get(FA.FT) == "/Sig":
                         # signature
@@ -1633,6 +1657,7 @@ class PdfWriter:
         page_destination: Union[None, PageObject, TreeObject] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
+        is_open: bool = True,
         dest: Union[None, PageObject, TreeObject] = None,  # deprecated
     ) -> IndirectObject:
         if page_destination is not None and dest is not None:  # deprecated
@@ -1655,14 +1680,33 @@ class PdfWriter:
             # argument is only Optional due to deprecated argument.
             raise ValueError("page_destination may not be None")
 
+        if isinstance(page_destination, PageObject):
+            return self.add_outline_item_destination(
+                Destination(
+                    f"page #{page_destination.page_number}",
+                    cast(IndirectObject, page_destination.indirect_reference),
+                    Fit.fit(),
+                )
+            )
+
         if parent is None:
             parent = self.get_outline_root()
 
+        page_destination[NameObject("/%is_open%")] = BooleanObject(is_open)
         parent = cast(TreeObject, parent.get_object())
         page_destination_ref = self._add_object(page_destination)
         if before is not None:
             before = before.indirect_reference
-        parent.insert_child(page_destination_ref, before, self)
+        parent.insert_child(
+            page_destination_ref,
+            before,
+            self,
+            page_destination.inc_parent_counter_outline
+            if is_open
+            else (lambda x, y: 0),
+        )
+        if "/Count" not in page_destination:
+            page_destination[NameObject("/Count")] = NumberObject(0)
 
         return page_destination_ref
 
@@ -1700,10 +1744,9 @@ class PdfWriter:
         outline_item: OutlineItemType,
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
+        is_open: bool = True,
     ) -> IndirectObject:
         outline_item_object = TreeObject()
-        for k, v in list(outline_item.items()):
-            outline_item_object[NameObject(str(k))] = v
         outline_item_object.update(outline_item)
 
         if "/A" in outline_item:
@@ -1714,7 +1757,9 @@ class PdfWriter:
             action_ref = self._add_object(action)
             outline_item_object[NameObject("/A")] = action_ref
 
-        return self.add_outline_item_destination(outline_item_object, parent, before)
+        return self.add_outline_item_destination(
+            outline_item_object, parent, before, is_open
+        )
 
     @deprecation_bookmark(bookmark="outline_item")
     def add_bookmark_dict(
@@ -1754,6 +1799,7 @@ class PdfWriter:
         bold: bool = False,
         italic: bool = False,
         fit: Fit = PAGE_FIT,
+        is_open: bool = True,
         pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
@@ -1779,7 +1825,7 @@ class PdfWriter:
             if fit is not None and page_number is None:
                 page_number = fit  # type: ignore
             return self.add_outline_item(
-                title, page_number, parent, None, before, color, bold, italic  # type: ignore
+                title, page_number, parent, None, before, color, bold, italic, is_open=is_open  # type: ignore
             )
         if page_number is not None and pagenum is not None:
             raise ValueError(
@@ -1822,7 +1868,7 @@ class PdfWriter:
 
         if parent is None:
             parent = self.get_outline_root()
-        return self.add_outline_item_destination(outline_item, parent, before)
+        return self.add_outline_item_destination(outline_item, parent, before, is_open)
 
     def add_bookmark(
         self,
@@ -2859,7 +2905,7 @@ class PdfWriter:
         )  # need for the outline processing below
         for dest in reader._namedDests.values():
             arr = dest.dest_array
-            if "/Names" in self._root_object and dest["/Title"] in cast(  # noqa: SIM114
+            if "/Names" in self._root_object and dest["/Title"] in cast(
                 list,
                 cast(
                     DictionaryObject,
@@ -2894,7 +2940,7 @@ class PdfWriter:
                 "TreeObject",
                 self.add_outline_item(
                     TextStringObject(outline_item),
-                    list(srcpages.values())[0].indirect_reference,
+                    next(iter(srcpages.values())).indirect_reference,
                     fit=PAGE_FIT,
                 ).get_object(),
             )
