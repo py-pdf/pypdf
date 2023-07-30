@@ -53,3 +53,7 @@ In BibTeX format:
  note          = {See https://pypdf.readthedocs.io/en/latest/meta/CONTRIBUTORS.html for all contributors}
 }
 ```
+
+## Which License does pypdf use?
+
+`pypdf` uses the [BSD-3-Clause license](https://en.wikipedia.org/wiki/BSD_licenses#3-clause), see the LICENSE file.
