@@ -54,6 +54,7 @@ from typing import (
     cast,
 )
 
+from ._cmap import build_char_map_from_dict
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import nums_clear_range, nums_insert, nums_next
@@ -847,6 +848,47 @@ class PdfWriter:
             da = " ".join(font_properties)
         y_offset = rct.height - 1 - font_height
 
+        # Retrieve font information from local DR ...
+        dr: Any = cast(dict, cast(DictionaryObject, field.get("/DR", {})))
+        if isinstance(dr, IndirectObject):
+            dr = dr.get_object()
+        dr = dr.get("/Font", {})
+        if isinstance(dr, IndirectObject):
+            dr = dr.get_object()
+        if font_name not in dr:
+            # ...or AcroForm dictionary
+            dr = cast(
+                dict,
+                cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {}),
+            )
+            if isinstance(dr, IndirectObject):
+                dr = dr.get_object()
+            dr = dr.get("/Font", {})
+            if isinstance(dr, IndirectObject):
+                dr = dr.get_object()
+        font_res = dr.get(font_name)
+        if font_res is not None:
+            font_res = cast(DictionaryObject, font_res.get_object())
+            font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
+                200, font_res
+            )
+            font_full_rev: dict[str, int]
+            if isinstance(font_encoding, str):
+                if font_encoding not in ("charmap", "utf-16-be"):
+                    logger_warning(
+                        f"unexpected {font_encoding} : please share pdf with pypdf dev team",
+                        __name__,
+                    )
+                font_full_rev = {v: k for k, v in font_map.items()}
+            else:
+                font_full_rev = {v: k for k, v in font_encoding.items()}
+                font_encoding_rev = {v: k for k, v in font_encoding.items()}
+                for k, v in font_map.items():
+                    font_full_rev[v] = font_encoding_rev.get(k, ord(k))
+        else:
+            logger_warning(f"can not find font dictionnary for {font_name}", __name__)
+            font_full_rev = {}
+
         # Retrieve field text and selected values
         field_flags = field.get(FA.Ff, 0)
         if field.get(FA.FT, "/Tx") == "/Ch" and field_flags & FA.FfBits.Combo == 0:
@@ -872,7 +914,15 @@ class PdfWriter:
             else:
                 # Td is a relative translation
                 ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
-            ap_stream += b"(" + str(line).encode("UTF-8") + b") Tj\n"
+            enc_line: list[Any] = [font_full_rev.get(c, ord(c)) for c in line]
+            if all(c > 255 for c in enc_line):
+                ap_stream += (
+                    b"<"
+                    + b"".join(b"%04X" % x for x in line.encode("UTF-16-BE"))
+                    + b"> Tj\n"
+                )
+            else:
+                ap_stream += b"(" + bytes(enc_line) + b") Tj\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
 
         # Create appearance dictionary
@@ -886,22 +936,16 @@ class PdfWriter:
             }
         )
 
-        # Retrieve font information from AcroForm dictionary
-        dr: Any = cast(
-            dict, cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {})
-        )
-        if isinstance(dr, IndirectObject):
-            dr = dr.get_object()
-        dr = dr.get("/Font", {})
-        if isinstance(dr, IndirectObject):
-            dr = dr.get_object()
-
         # Update Resources with font information if necessary
-        if font_name in dr:
+        if font_res is not None:
             dct[NameObject("/Resources")] = DictionaryObject(
                 {
                     NameObject("/Font"): DictionaryObject(
-                        {NameObject(font_name): dr[font_name].indirect_reference}
+                        {
+                            NameObject(font_name): getattr(
+                                font_res, "indirect_reference", font_res
+                            )
+                        }
                     )
                 }
             )

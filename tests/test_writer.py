@@ -1582,3 +1582,26 @@ def test_missing_fields(pdf_file_path):
             writer.pages[0], {"foo": "some filled in text"}, flags=1
         )
     assert exc.value.args[0] == "No /Fields dictionary in Pdf in PdfWriter Object"
+
+
+@pytest.mark.enable_socket()
+def test_germanfields():
+    """Cf #2035"""
+    url = "https://github.com/py-pdf/pypdf/files/12194195/test.pdf"
+    name = "germanfields.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=reader)
+    form_fields = {"Text Box 1": "test æ ø å"}
+    writer.update_page_form_field_values(
+        writer.pages[0], form_fields, auto_regenerate=False
+    )
+    bytes_stream = BytesIO()
+    writer.write(bytes_stream)
+    bytes_stream.seek(0)
+    reader2 = PdfReader(bytes_stream)
+    assert (
+        b"test \xe6 \xf8 \xe5"
+        in reader2.get_fields()["Text Box 1"]
+        .indirect_reference.get_object()["/AP"]["/N"]
+        .get_data()
+    )
