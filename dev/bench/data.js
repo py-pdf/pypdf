@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690626272689,
+  "lastUpdate": 1690698368845,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -34970,6 +34970,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0010663041751393606",
             "extra": "mean: 79.93080949999982 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3189c4d8ff651c80f7ed62f8c532e349dff4e793",
+          "message": "MAINT: Remove dead configuration from setup.cfg (#2040)\n\nNow that we use `flit` for building the packages, we have the `pyproject.toml` as the ground truth (see #1382).\r\n\r\nThis PR removes the duplicated data from the `setup.cfg` to avoid confusion. Only the name of the license is additionally added to the docs to simplify peoples lives.",
+          "timestamp": "2023-07-30T08:24:50+02:00",
+          "tree_id": "0755ff6e9217d7461be406eab070b520ca80f05d",
+          "url": "https://github.com/py-pdf/pypdf/commit/3189c4d8ff651c80f7ed62f8c532e349dff4e793"
+        },
+        "date": 1690698366867,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7606367274528512,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036478565750264935",
+            "extra": "mean: 1.3146880290000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.312191036194662,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0086667459435031",
+            "extra": "mean: 88.40020441666734 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23752672115696916,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004183142068370851",
+            "extra": "mean: 4.210052642199997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.475325430689521,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003245249406256663",
+            "extra": "mean: 80.15822958333274 msec\nrounds: 12"
           }
         ]
       }
