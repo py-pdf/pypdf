@@ -850,11 +850,9 @@ class PdfWriter:
 
         # Retrieve font information from local DR ...
         dr: Any = cast(dict, cast(DictionaryObject, field.get("/DR", {})))
-        if isinstance(dr, IndirectObject):
+        if isinstance(dr, IndirectObject):  # pragma: no cover
             dr = dr.get_object()
-        dr = dr.get("/Font", {})
-        if isinstance(dr, IndirectObject):
-            dr = dr.get_object()
+        dr = dr.get("/Font", {}).get_object()
         if font_name not in dr:
             # ...or AcroForm dictionary
             dr = cast(
@@ -863,9 +861,7 @@ class PdfWriter:
             )
             if isinstance(dr, IndirectObject):
                 dr = dr.get_object()
-            dr = dr.get("/Font", {})
-            if isinstance(dr, IndirectObject):
-                dr = dr.get_object()
+            dr = dr.get("/Font", {}).get_object()
         font_res = dr.get(font_name)
         if font_res is not None:
             font_res = cast(DictionaryObject, font_res.get_object())
@@ -874,6 +870,7 @@ class PdfWriter:
             )
             font_full_rev: Dict[str, int]
             if isinstance(font_encoding, str):
+                assert font_encoding in ("charmap", "utf-16-be")
                 if font_encoding not in ("charmap", "utf-16-be"):
                     logger_warning(
                         f"unexpected {font_encoding} : please share pdf with pypdf dev team",
@@ -886,7 +883,8 @@ class PdfWriter:
                 for k, v in font_map.items():
                     font_full_rev[v] = font_encoding_rev.get(k, ord(k))
         else:
-            logger_warning(f"can not find font dictionnary for {font_name}", __name__)
+            raise AssertionError("can not find font dictionary")
+            logger_warning(f"can not find font dictionary for {font_name}", __name__)
             font_full_rev = {}
 
         # Retrieve field text and selected values
@@ -915,7 +913,7 @@ class PdfWriter:
                 # Td is a relative translation
                 ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
             enc_line: List[Any] = [font_full_rev.get(c, ord(c)) for c in line]
-            if all(c > 255 for c in enc_line):
+            if any(c > 255 for c in enc_line):
                 ap_stream += (
                     b"<"
                     + b"".join(b"%04X" % x for x in line.encode("UTF-16-BE"))
