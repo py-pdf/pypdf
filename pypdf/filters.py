@@ -57,6 +57,7 @@ from .constants import StreamAttributes as SA
 from .errors import PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
+    DecodedStreamObject,
     DictionaryObject,
     IndirectObject,
     NullObject,
@@ -837,23 +838,43 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         if color_space == "/Indexed":
             from .generic import TextStringObject
 
+            if isinstance(lookup, DecodedStreamObject):
+                lookup = lookup.get_data()
             if isinstance(lookup, TextStringObject):
                 lookup = lookup.original_bytes
-            if isinstance(lookup, bytes):
-                try:
-                    nb, conv, mode = {  # type: ignore
-                        "1": (0, "", ""),
-                        "L": (1, "P", "L"),
-                        "P": (0, "", ""),
-                        "RGB": (3, "P", "RGB"),
-                        "CMYK": (4, "P", "CMYK"),
-                    }[_get_imagemode(base, 0, "")[0]]
-                except KeyError:  # pragma: no cover
-                    logger_warning(
-                        f"Base {base} not coded please share the pdf file with pypdf dev team",
-                        __name__,
+            if isinstance(lookup, str):
+                lookup = lookup.encode()
+            try:
+                nb, conv, mode = {  # type: ignore
+                    "1": (0, "", ""),
+                    "L": (1, "P", "L"),
+                    "P": (0, "", ""),
+                    "RGB": (3, "P", "RGB"),
+                    "CMYK": (4, "P", "CMYK"),
+                }[_get_imagemode(base, 0, "")[0]]
+            except KeyError:  # pragma: no cover
+                logger_warning(
+                    f"Base {base} not coded please share the pdf file with pypdf dev team",
+                    __name__,
+                )
+                lookup = None
+            else:
+                if img.mode == "1":
+                    colors_arr = [
+                        lookup[x - nb : x] for x in range(nb, len(lookup), nb)
+                    ]
+                    arr = b"".join(
+                        [
+                            b"".join(
+                                [
+                                    colors_arr[1 if img.getpixel((x, y)) > 127 else 0]
+                                    for x in range(img.size[0])
+                                ]
+                            )
+                            for y in range(img.size[1])
+                        ]
                     )
-                    lookup = None
+                    img = Image.frombytes(mode, img.size, arr)
                 else:
                     img = img.convert(conv)
                     if len(lookup) != (hival + 1) * nb:
@@ -865,11 +886,23 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                         # gray lookup does not work : it is converted to a similar RGB lookup
                         lookup = b"".join([bytes([b, b, b]) for b in lookup])
                         mode = "RGB"
+                    # TODO : cf https://github.com/py-pdf/pypdf/pull/2039
+                    # this is a work around until PIL is able to process CMYK images
+                    elif mode == "CMYK":
+                        _rgb = []
+                        for _c, _m, _y, _k in (
+                            lookup[n : n + 4]
+                            for n in range(0, 4 * (len(lookup) // 4), 4)
+                        ):
+                            _r = int(255 * (1 - _c / 255) * (1 - _k / 255))
+                            _g = int(255 * (1 - _m / 255) * (1 - _k / 255))
+                            _b = int(255 * (1 - _y / 255) * (1 - _k / 255))
+                            _rgb.append(bytes((_r, _g, _b)))
+                        lookup = b"".join(_rgb)
+                        mode = "RGB"
                     if lookup is not None:
                         img.putpalette(lookup, rawmode=mode)
-            else:
-                img.putpalette(lookup.get_data())
-            img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
+                img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
         elif not isinstance(color_space, NullObject) and color_space[0] == "/ICCBased":
             # see Table 66 - Additional Entries Specific to an ICC Profile
             # Stream Dictionary
