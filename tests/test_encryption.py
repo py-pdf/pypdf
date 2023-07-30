@@ -125,7 +125,10 @@ def test_encryption(name, requires_pycryptodome):
         ("r6-both-passwords.pdf", "foo", "bar"),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY, reason="No pycryptodome / cryptography")
+@pytest.mark.skipif(
+    not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY,
+    reason="No pycryptodome / cryptography",
+)
 def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
     """
     PDFs with both user and owner passwords are handled correctly.
@@ -151,7 +154,10 @@ def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
         ("crazyones-encrypted-256.pdf", b"password"),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY, reason="No pycryptodome / cryptography")
+@pytest.mark.skipif(
+    not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY,
+    reason="No pycryptodome / cryptography",
+)
 def test_read_page_from_encrypted_file_aes_256(pdffile, password):
     """
     A page can be read from an encrypted.
@@ -176,7 +182,10 @@ def test_read_page_from_encrypted_file_aes_256(pdffile, password):
         ),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY, reason="No pycryptodome / cryptography")
+@pytest.mark.skipif(
+    not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY,
+    reason="No pycryptodome / cryptography",
+)
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_encrypted_pdfs(names):
     """Encrypted PDFs can be merged after decryption."""
@@ -193,7 +202,7 @@ def test_merge_encrypted_pdfs(names):
 
 @pytest.mark.skipif(
     HAS_CRYPTOGRAPHY,
-    reason="Limitations of cryptography. see https://github.com/pyca/cryptography/issues/2494"
+    reason="Limitations of cryptography. see https://github.com/pyca/cryptography/issues/2494",
 )
 @pytest.mark.parametrize(
     "cryptcls",
@@ -346,7 +355,10 @@ def test_pdf_encrypt_multiple(pdf_file_path, count):
     assert text0 == text1
 
 
-@pytest.mark.skipif(not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY, reason="No pycryptodome / cryptography")
+@pytest.mark.skipif(
+    not HAS_PYCRYPTODOME and not HAS_CRYPTOGRAPHY,
+    reason="No pycryptodome / cryptography",
+)
 def test_aes_decrypt_corrupted_data():
     """Just for robustness"""
     aes = CryptAES(secrets.token_bytes(16))

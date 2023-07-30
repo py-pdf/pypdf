@@ -461,10 +461,19 @@ def type1_alternative(
                 continue
             try:
                 i = int(words[1])
-                v = adobe_glyphs[words[2].decode()]
-            except (ValueError, KeyError):
+            except ValueError:  # pragma: no cover
                 continue
-            if v == " ":
+            try:
+                v = adobe_glyphs[words[2].decode()]
+            except KeyError:
+                if words[2].startswith(b"/uni"):
+                    try:
+                        v = chr(int(words[2][4:], 16))
+                    except ValueError:  # pragma: no cover
+                        continue
+                else:
+                    continue
+            if words[2].decode() == b" ":
                 space_code = i
             map_dict[chr(i)] = v
             int_entry.append(i)
