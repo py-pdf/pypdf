@@ -1,4 +1,4 @@
-# Reduce PDF Size
+# Reduce PDF File Size
 
 There are multiple ways to reduce the size of a given PDF file. The easiest
 one is to remove content (e.g. images) or pages.
@@ -95,6 +95,10 @@ for page in writer.pages:
 with open("out.pdf", "wb") as f:
     writer.write(f)
 ```
+
+`page.compress_content_streams` uses [`zlib.compress`](https://docs.python.org/3/library/zlib.html#zlib.compress) and support the
+`level` paramter: `level=0` is no compression, `level=9` is the
+highest compression.
 
 Using this method, we have seen a reduction by 70% (from 11.8 MB to 3.5 MB)
 with a real PDF.

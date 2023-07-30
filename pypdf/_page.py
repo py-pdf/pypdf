@@ -1763,7 +1763,7 @@ class PageObject(DictionaryObject):
         deprecation_with_replacement("scaleTo", "scale_to", "3.0.0")
         self.scale_to(width, height)
 
-    def compress_content_streams(self) -> None:
+    def compress_content_streams(self, level: int = -1) -> None:
         """
         Compress the size of this page by joining all content streams and
         applying a FlateDecode filter.
@@ -1773,7 +1773,7 @@ class PageObject(DictionaryObject):
         """
         content = self.get_contents()
         if content is not None:
-            content_obj = content.flate_encode()
+            content_obj = content.flate_encode(level)
             try:
                 content.indirect_reference.pdf._objects[  # type: ignore
                     content.indirect_reference.idnum - 1  # type: ignore
