@@ -179,3 +179,13 @@ def test_latex():
     for pat in ("α", "β", "γ", "ϕ", "φ", "ℏ", "∫", "∂", "·", "×"):
         assert pat in txt
     # actually the ϕ and φ seems to be crossed in latex
+
+
+@pytest.mark.enable_socket()
+def test_unixxx_glyphs():
+    url = "https://arxiv.org/pdf/2201.00021.pdf"
+    name = "unixxx_glyphs.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    txt = reader.pages[0].extract_text()  # no error
+    for pat in ("闫耀庭", "龚龑", "张江水", "1′′.2"):
+        assert pat in txt
