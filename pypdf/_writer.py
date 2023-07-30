@@ -849,10 +849,11 @@ class PdfWriter:
         y_offset = rct.height - 1 - font_height
 
         # Retrieve font information from local DR ...
-        dr: Any = cast(dict, cast(DictionaryObject, field.get("/DR", {})))
-        if isinstance(dr, IndirectObject):  # pragma: no cover
-            dr = dr.get_object()
-        dr = dr.get("/Font", {}).get_object()
+        dr: Any = cast(
+            DictionaryObject,
+            cast(DictionaryObject, field.get("/DR", DictionaryObject())).get_object(),
+        )
+        dr = dr.get("/Font", DictionaryObject()).get_object()
         if font_name not in dr:
             # ...or AcroForm dictionary
             dr = cast(
@@ -861,7 +862,7 @@ class PdfWriter:
             )
             if isinstance(dr, IndirectObject):
                 dr = dr.get_object()
-            dr = dr.get("/Font", {}).get_object()
+            dr = dr.get("/Font", DictionaryObject()).get_object()
         font_res = dr.get(font_name)
         if font_res is not None:
             font_res = cast(DictionaryObject, font_res.get_object())
