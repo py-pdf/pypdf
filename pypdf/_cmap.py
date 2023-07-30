@@ -461,7 +461,7 @@ def type1_alternative(
                 continue
             try:
                 i = int(words[1])
-            except ValueError:
+            except ValueError:  # pragma: no cover
                 continue
             try:
                 v = adobe_glyphs[words[2].decode()]
@@ -469,7 +469,7 @@ def type1_alternative(
                 if words[2].startswith(b"/uni"):
                     try:
                         v = chr(int(words[2][4:], 16))
-                    except ValueError:
+                    except ValueError:  # pragma: no cover
                         continue
                 else:
                     continue
