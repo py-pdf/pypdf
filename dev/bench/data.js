@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690698368845,
+  "lastUpdate": 1690701224534,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -35022,6 +35022,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0003245249406256663",
             "extra": "mean: 80.15822958333274 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f617f6970b0392b099e36b745bad39410ed19703",
+          "message": "BUG: Fix indexed/CMYK images (#2039)\n\nCloses #2030\r\n\r\nOnce https://github.com/python-pillow/Pillow/issues/7309 we can update the TODO",
+          "timestamp": "2023-07-30T09:12:07+02:00",
+          "tree_id": "aa92290c730fd758fb79c36f0f8ea736f116dd08",
+          "url": "https://github.com/py-pdf/pypdf/commit/f617f6970b0392b099e36b745bad39410ed19703"
+        },
+        "date": 1690701222203,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5501816594975035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01655382484745449",
+            "extra": "mean: 1.8175814892000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.21085549907003,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019778903744035025",
+            "extra": "mean: 121.78998888888752 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.171949097678615,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03209232883091036",
+            "extra": "mean: 5.815674600800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.95302254281623,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002488854895650935",
+            "extra": "mean: 111.69412287500435 msec\nrounds: 8"
           }
         ]
       }
