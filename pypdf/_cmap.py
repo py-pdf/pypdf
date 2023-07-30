@@ -18,11 +18,11 @@ def build_char_map(
 
     Args:
         font_name: font name as a string
-        space_width: default space with if no data found.
+        space_width: default space width if no data is found.
         obj: XObject or Page where you can find a /Resource dictionary
 
     Returns:
-        Font sub-type, space_width criteria(50% of width), encoding, map character-map, font-dictionary.
+        Font sub-type, space_width criteria (50% of width), encoding, map character-map, font-dictionary.
         The font-dictionary itself is suitable for the curious.
     """
     ft: DictionaryObject = obj["/Resources"]["/Font"][font_name]  # type: ignore
