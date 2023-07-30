@@ -513,6 +513,21 @@ def test_index_lookup():
         diff.size[0] * diff.size[1]
     )
     assert d < 0.001
+    # indexed CMYK images
+    # currently with a  TODO as we convert to RBG the palette
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf"
+    name = "tika-972174.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://github.com/py-pdf/pypdf/assets/4083478/56c93021-33cd-4387-ae13-5cbe7e673f42"
+    name_png = "usa.png"
+    refimg = Image.open(BytesIO(get_pdf_from_url(url_png, name=name_png)))
+    data = reader.pages[0].images["/Im3"]
+    # assert data.image.mode == "PA" but currently "RGBA"
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(
+        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
+    ) / (diff.size[0] * diff.size[1])
+    assert d < 0.001
 
 
 @pytest.mark.enable_socket()
