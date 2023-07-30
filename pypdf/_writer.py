@@ -872,7 +872,7 @@ class PdfWriter:
             font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
                 200, font_res
             )
-            font_full_rev: dict[str, int]
+            font_full_rev: Dict[str, int]
             if isinstance(font_encoding, str):
                 if font_encoding not in ("charmap", "utf-16-be"):
                     logger_warning(
@@ -914,7 +914,7 @@ class PdfWriter:
             else:
                 # Td is a relative translation
                 ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
-            enc_line: list[Any] = [font_full_rev.get(c, ord(c)) for c in line]
+            enc_line: List[Any] = [font_full_rev.get(c, ord(c)) for c in line]
             if all(c > 255 for c in enc_line):
                 ap_stream += (
                     b"<"
