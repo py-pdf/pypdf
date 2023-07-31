@@ -831,7 +831,7 @@ class PdfWriter:
                 return qualified_parent + "." + cast(str, parent["/T"])
         return cast(str, parent["/T"])
 
-    def _update_text_field(self, field: DictionaryObject) -> None:
+    def _update_text_field(self, field: DictionaryObject, encoding: Optional[str] = None) -> None:
         # Calculate rectangle dimensions
         _rct = cast(RectangleObject, field[AA.Rect])
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
@@ -859,21 +859,22 @@ class PdfWriter:
             sel = []
 
         # Generate appearance stream
-        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
+        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n"
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
             if line in sel:
                 # may be improved but can not find how get fill working => replaced with lined box
                 ap_stream += (
                     f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{field[AA.DA]}\n"
-                ).encode()
+                )
             if line_number == 0:
-                ap_stream += f"2 {y_offset} Td\n".encode()
+                ap_stream += f"2 {y_offset} Td\n"
             else:
                 # Td is a relative translation
-                ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
-            ap_stream += b"(" + str(line).encode("UTF-8") + b") Tj\n"
-        ap_stream += b"ET\nQ\nEMC\nQ\n"
+                ap_stream += f"0 {- font_height * 1.4} Td\n"
+            ap_stream += "(" + str(line) + ") Tj\n"
+        ap_stream += "ET\nQ\nEMC\nQ\n"
+        ap_stream = ap_stream.encode(encoding) if encoding is not None else ap_stream.encode()
 
         # Create appearance dictionary
         dct = DecodedStreamObject.initialize_from_dictionary(
@@ -924,6 +925,7 @@ class PdfWriter:
         fields: Dict[str, Any],
         flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
         auto_regenerate: Optional[bool] = True,
+        encoding: Optional[str] = None
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -992,7 +994,7 @@ class PdfWriter:
                                 if AA.DA in f:
                                     da = f[AA.DA]
                             writer_annot[NameObject(AA.DA)] = da
-                        self._update_text_field(writer_annot)
+                        self._update_text_field(writer_annot, encoding)
                     elif writer_annot.get(FA.FT) == "/Sig":
                         # signature
                         logger_warning("Signature forms not implemented yet", __name__)
