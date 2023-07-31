@@ -557,13 +557,14 @@ class PageObject(DictionaryObject):
         Examples:
             reader.pages[0].images[0]        # return fist image
             reader.pages[0].images['/I0']    # return image '/I0'
-            reader.pages[0].images['/TP1','/Image1'] # return image '/Image1'
-                                                            within '/TP1' Xobject/Form
+            # return image '/Image1' within '/TP1' Xobject/Form:
+            reader.pages[0].images['/TP1','/Image1']
             for img in reader.pages[0].images: # loop within all objects
 
         images.keys() and images.items() can be used.
 
         The ImageFile has the following properties:
+
             `.name` : name of the object
             `.data` : bytes of the object
             `.image`  : PIL Image Object
