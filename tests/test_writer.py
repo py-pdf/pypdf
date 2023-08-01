@@ -1582,3 +1582,10 @@ def test_missing_fields(pdf_file_path):
             writer.pages[0], {"foo": "some filled in text"}, flags=1
         )
     assert exc.value.args[0] == "No /Fields dictionary in Pdf in PdfWriter Object"
+
+
+def test_missing_info():
+    reader = PdfReader(RESOURCE_ROOT / "missing_info.pdf")
+
+    writer = PdfWriter(clone_from=reader)
+    assert len(writer.pages) == len(reader.pages)
