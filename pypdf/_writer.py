@@ -832,7 +832,9 @@ class PdfWriter:
                 return qualified_parent + "." + cast(str, parent["/T"])
         return cast(str, parent["/T"])
 
-    def _update_text_field(self, field: DictionaryObject) -> None:
+    def _update_text_field(
+        self, field: DictionaryObject, fontname: str = "", fontsize: float = -1
+    ) -> None:
         # Calculate rectangle dimensions
         _rct = cast(RectangleObject, field[AA.Rect])
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
@@ -840,10 +842,19 @@ class PdfWriter:
         # Extract font information
         da = cast(str, field[AA.DA])
         font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
-        font_name = font_properties[font_properties.index("Tf") - 2]
-        font_height = float(font_properties[font_properties.index("Tf") - 1])
-        if font_height == 0:
-            font_height = rct.height - 2
+        font_name = (
+            fontname if fontname else font_properties[font_properties.index("Tf") - 2]
+        )
+        font_height = (
+            fontsize
+            if fontsize >= 0
+            else float(font_properties[font_properties.index("Tf") - 1])
+        )
+        if fontname or fontsize >= 0 or font_height == 0:
+            if fontname:
+                font_properties[font_properties.index("Tf") - 1] = fontname
+            if font_height == 0:
+                font_height = rct.height - 2
             font_properties[font_properties.index("Tf") - 1] = str(font_height)
             da = " ".join(font_properties)
         y_offset = rct.height - 1 - font_height
@@ -975,8 +986,14 @@ class PdfWriter:
         Args:
             page: Page reference from PDF writer where the
                 annotations and field data will be updated.
-            fields: a Python dictionary of field names (/T) and text
-                values (/V)
+            fields: a Python dictionary of :
+                a) field names (/T) as keys and  text values (/V) as value
+                b) field names (/T) as keys and  list of text values (/V)
+                       for multiple choice list
+                c) field names (/T) as keys and  tuple of :
+                       * text values (/V)
+                       * font name (must exist)
+                       * font size (0 for autosize)
             flags: An integer (0 to 7). The first bit sets ReadOnly, the
                 second bit sets Required, the third bit sets NoExport. See
                 PDF Reference Table 8.70 for details.
@@ -1012,6 +1029,10 @@ class PdfWriter:
                     if isinstance(value, list):
                         lst = ArrayObject(TextStringObject(v) for v in value)
                         writer_annot[NameObject(FA.V)] = lst
+                    elif isinstance(value, tuple):
+                        writer_annot[NameObject(FA.V)] = TextStringObject(
+                            value[0],
+                        )
                     else:
                         writer_annot[NameObject(FA.V)] = TextStringObject(value)
                     if writer_annot.get(FA.FT) in ("/Btn"):
@@ -1033,7 +1054,10 @@ class PdfWriter:
                                 if AA.DA in f:
                                     da = f[AA.DA]
                             writer_annot[NameObject(AA.DA)] = da
-                        self._update_text_field(writer_annot)
+                        if isinstance(value, tuple):
+                            self._update_text_field(writer_annot, value[1], value[2])
+                        else:
+                            self._update_text_field(writer_annot)
                     elif writer_annot.get(FA.FT) == "/Sig":
                         # signature
                         logger_warning("Signature forms not implemented yet", __name__)
