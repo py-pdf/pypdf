@@ -1126,7 +1126,8 @@ class PdfWriter:
                 document.
         """
         self.clone_reader_document_root(reader)
-        self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
+        if TK.INFO in reader.trailer:
+            self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
         try:
             self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))  # type: ignore
         except KeyError:
