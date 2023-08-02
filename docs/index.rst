@@ -24,6 +24,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    user/suppress-warnings
    user/metadata
    user/extract-text
+   user/post-processing-in-text-extraction
    user/extract-images
    user/extract-attachments
    user/encryption-decryption
