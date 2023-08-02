@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690956258194,
+  "lastUpdate": 1690959058167,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -35178,6 +35178,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00037395724485679013",
             "extra": "mean: 112.14062811110794 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e3707a17df246c4b045ceb152bfaba7d8aabc813",
+          "message": "ENH: Add `level` parameter to compress_content_streams (#2044)\n\nProvide more options / details on how to reduce the file size with compression.\r\n\r\nSee #1910\r\n\r\n## A small experiment\r\n\r\n```\r\nFile    File name\r\nsize    The suffix is the compression level\r\n-------------------\r\n5321132 GeoTopo.pdf\r\n9959402 out-0.pdf\r\n5976025 out-1.pdf\r\n5914204 out-2.pdf\r\n5885818 out-3.pdf\r\n5816263 out-4.pdf\r\n5762359 out-5.pdf\r\n5738259 out-6.pdf\r\n5731877 out-7.pdf\r\n5726121 out-8.pdf\r\n5725267 out-9.pdf\r\n```\r\n\r\nLevel 1 gives a very good improvement, but already level 2 might not be worth the CPU cycles.\r\n\r\nInterestingly, the original is smaller than the best compression",
+          "timestamp": "2023-08-02T08:49:27+02:00",
+          "tree_id": "bc1bd7d8c9fa020e4f9f7dcfb1ef829819ee0569",
+          "url": "https://github.com/py-pdf/pypdf/commit/e3707a17df246c4b045ceb152bfaba7d8aabc813"
+        },
+        "date": 1690959055916,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5840854723158092,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0384511332203782",
+            "extra": "mean: 1.7120781929999964 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.724467687182443,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013448824668155107",
+            "extra": "mean: 114.62017350000053 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18780046472888143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08727998930661653",
+            "extra": "mean: 5.324800454800004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.236223850909669,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015680853370269052",
+            "extra": "mean: 108.26935511112703 msec\nrounds: 9"
           }
         ]
       }
