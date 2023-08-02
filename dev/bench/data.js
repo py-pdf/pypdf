@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690731025138,
+  "lastUpdate": 1690956258194,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -35126,6 +35126,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0012247542044745887",
             "extra": "mean: 113.292804111113 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "131583283+mnmtz@users.noreply.github.com",
+            "name": "mnmtz",
+            "username": "mnmtz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "34b58c8ade4b47fa0abf6fa6795d3d5c151661bb",
+          "message": "BUG: Added check for field /Info when cloning reader document (#2055)\n\nAdded check for optional field /Info in document root when cloning reader document.\r\n\r\nFixes issue #2049",
+          "timestamp": "2023-08-02T08:02:48+02:00",
+          "tree_id": "ef35a40e14e342afc675ee7c09b628d2ffa8218a",
+          "url": "https://github.com/py-pdf/pypdf/commit/34b58c8ade4b47fa0abf6fa6795d3d5c151661bb"
+        },
+        "date": 1690956255749,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.603372929178597,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04300690835373775",
+            "extra": "mean: 1.6573497942000017 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.439132985581159,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01271157561928169",
+            "extra": "mean: 105.94193359999906 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18724739154945375,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01125007192858223",
+            "extra": "mean: 5.340528333799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.91737470035578,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00037395724485679013",
+            "extra": "mean: 112.14062811110794 msec\nrounds: 9"
           }
         ]
       }
