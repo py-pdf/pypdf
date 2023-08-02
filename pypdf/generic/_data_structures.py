@@ -880,7 +880,7 @@ class StreamObject(DictionaryObject):
         deprecation_with_replacement("flateEncode", "flate_encode", "3.0.0")
         return self.flate_encode()
 
-    def flate_encode(self) -> "EncodedStreamObject":
+    def flate_encode(self, level: int = -1) -> "EncodedStreamObject":
         from ..filters import FlateDecode
 
         if SA.FILTER in self:
@@ -909,7 +909,7 @@ class StreamObject(DictionaryObject):
         retval[NameObject(SA.FILTER)] = f
         if parms is not None:
             retval[NameObject(SA.DECODE_PARMS)] = parms
-        retval._data = FlateDecode.encode(self._data)
+        retval._data = FlateDecode.encode(self._data, level)
         return retval
 
 

@@ -225,17 +225,18 @@ class FlateDecode:
         return output.getvalue()
 
     @staticmethod
-    def encode(data: bytes) -> bytes:
+    def encode(data: bytes, level: int = -1) -> bytes:
         """
         Compress the input data using zlib.
 
         Args:
             data: The data to be compressed.
+            level: See https://docs.python.org/3/library/zlib.html#zlib.compress
 
         Returns:
             The compressed data.
         """
-        return zlib.compress(data)
+        return zlib.compress(data, level)
 
 
 class ASCIIHexDecode:
