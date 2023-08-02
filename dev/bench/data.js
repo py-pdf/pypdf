@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690959058167,
+  "lastUpdate": 1691003390936,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -35230,6 +35230,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0015680853370269052",
             "extra": "mean: 108.26935511112703 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "exiledkingcc@gmail.com",
+            "name": "exiledkingcc",
+            "username": "exiledkingcc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "edb38a38a24a33e12c76734f25cea51ff917bae9",
+          "message": "CHANGE: cryptography as primary dependency (#2053)\n\nComparison of the cryptography and PyCryptoDome libraries:\r\n\r\n|                | cryptography | pycryptodome    |\r\n| -------------- | ------------ | --------------- |\r\n| Maintainers    | pyca         | a single person |\r\n| PyPI downloads | 156,673,182  | 19,755,432      |\r\n| Github Stars   | 5.7k         | 2.4k            |\r\n| Github Forks   | 1.6k         | 0.4k            |\r\n\r\nHence we now primarily use cryptography and use `PyCryptodome` as a fallback\r\n\r\nSee #1998",
+          "timestamp": "2023-08-02T21:08:22+02:00",
+          "tree_id": "b5a7e126b342d7d09eb32c8e61b82b99e3064b8e",
+          "url": "https://github.com/py-pdf/pypdf/commit/edb38a38a24a33e12c76734f25cea51ff917bae9"
+        },
+        "date": 1691003388462,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.661537947222225,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017173925622354886",
+            "extra": "mean: 1.511629082199994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.960190098088026,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01247444051108576",
+            "extra": "mean: 100.39969018181307 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20162800335836256,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06025570800154393",
+            "extra": "mean: 4.95962854039999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.504560733528603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025123378823207307",
+            "extra": "mean: 105.21264770000016 msec\nrounds: 10"
           }
         ]
       }
