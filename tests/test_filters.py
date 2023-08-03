@@ -626,3 +626,12 @@ def test_singleton_device():
     name = "pypdf_with_arr_deviceRGB.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].images[0]
+
+
+@pytest.mark.enable_socket()
+def test_jpx_no_spacecode():
+    """From #2061"""
+    url = "https://github.com/py-pdf/pypdf/files/12253581/tt2.pdf"
+    name = "jpx_no_spacecode.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].images[0]
