@@ -28,7 +28,7 @@
 from pypdf._crypt_providers._base import CryptBase, CryptIdentity
 
 try:
-    from pypdf._crypt_providers._pycryptodome import (
+    from pypdf._crypt_providers._cryptography import (
         CryptAES,
         CryptRC4,
         aes_cbc_decrypt,
@@ -40,7 +40,7 @@ try:
     )
 except ImportError:
     try:
-        from pypdf._crypt_providers._cryptography import (  # type: ignore
+        from pypdf._crypt_providers._pycryptodome import (  # type: ignore
             CryptAES,
             CryptRC4,
             aes_cbc_decrypt,

@@ -557,13 +557,14 @@ class PageObject(DictionaryObject):
         Examples:
             reader.pages[0].images[0]        # return fist image
             reader.pages[0].images['/I0']    # return image '/I0'
-            reader.pages[0].images['/TP1','/Image1'] # return image '/Image1'
-                                                            within '/TP1' Xobject/Form
+            # return image '/Image1' within '/TP1' Xobject/Form:
+            reader.pages[0].images['/TP1','/Image1']
             for img in reader.pages[0].images: # loop within all objects
 
         images.keys() and images.items() can be used.
 
         The ImageFile has the following properties:
+
             `.name` : name of the object
             `.data` : bytes of the object
             `.image`  : PIL Image Object
@@ -1763,7 +1764,7 @@ class PageObject(DictionaryObject):
         deprecation_with_replacement("scaleTo", "scale_to", "3.0.0")
         self.scale_to(width, height)
 
-    def compress_content_streams(self) -> None:
+    def compress_content_streams(self, level: int = -1) -> None:
         """
         Compress the size of this page by joining all content streams and
         applying a FlateDecode filter.
@@ -1773,7 +1774,7 @@ class PageObject(DictionaryObject):
         """
         content = self.get_contents()
         if content is not None:
-            content_obj = content.flate_encode()
+            content_obj = content.flate_encode(level)
             try:
                 content.indirect_reference.pdf._objects[  # type: ignore
                     content.indirect_reference.idnum - 1  # type: ignore
