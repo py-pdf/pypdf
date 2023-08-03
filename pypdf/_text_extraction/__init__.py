@@ -105,7 +105,6 @@ def crlf_space_check(
     delta_y = m[5] - tm_prev[5]
     k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
     f = font_size * k
-    tm_prev = m
     if orientation not in orientations:
         raise OrientationNotFoundError
     try:
@@ -117,7 +116,7 @@ def crlf_space_check(
                         visitor_text(
                             text + "\n",
                             cm_matrix,
-                            tm_matrix,
+                            tm_prev,
                             cmap[3],
                             font_size,
                         )
@@ -136,7 +135,7 @@ def crlf_space_check(
                         visitor_text(
                             text + "\n",
                             cm_matrix,
-                            tm_matrix,
+                            tm_prev,
                             cmap[3],
                             font_size,
                         )
@@ -155,7 +154,7 @@ def crlf_space_check(
                         visitor_text(
                             text + "\n",
                             cm_matrix,
-                            tm_matrix,
+                            tm_prev,
                             cmap[3],
                             font_size,
                         )
@@ -174,7 +173,7 @@ def crlf_space_check(
                         visitor_text(
                             text + "\n",
                             cm_matrix,
-                            tm_matrix,
+                            tm_prev,
                             cmap[3],
                             font_size,
                         )
@@ -187,6 +186,7 @@ def crlf_space_check(
                 text += " "
     except Exception:
         pass
+    tm_prev = m
     return text, output, tm_prev
 
 
