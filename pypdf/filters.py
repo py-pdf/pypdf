@@ -934,7 +934,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
         mode, invert_color = _get_imagemode(color_space, colors, mode)
         if mode == "":
-            mode = img1.mode
+            mode = cast(mode_str_type, img1.mode)
             invert_color = mode in ("CMYK",)
         if img1.mode == "RGBA" and mode == "RGB":
             mode = "RGBA"
