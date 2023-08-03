@@ -634,4 +634,10 @@ def test_jpx_no_spacecode():
     url = "https://github.com/py-pdf/pypdf/files/12253581/tt2.pdf"
     name = "jpx_no_spacecode.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    reader.pages[0].images[0]
+    im = reader.pages[0].images[0]
+    # create an object without filter and without colorspace
+    # just for coverage
+    del im.indirect_reference.get_object()["/Filter"]
+    with pytest.raises(PdfReadError) as exc:
+        reader.pages[0].images[0]
+    assert exc.value.args[0].startswith("ColorSpace field not found")
