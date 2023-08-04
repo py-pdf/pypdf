@@ -860,7 +860,7 @@ class PdfWriter:
                 dict,
                 cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {}),
             )
-            if isinstance(dr, IndirectObject):
+            if isinstance(dr, IndirectObject):  # pragma: no cover
                 dr = dr.get_object()
             dr = dr.get("/Font", DictionaryObject()).get_object()
         font_res = dr.get(font_name)
