@@ -869,20 +869,20 @@ class PdfWriter:
             font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
                 200, font_res
             )
-            font_full_rev: Dict[str, int]
+            try:  # get rid of width stored in -1 key
+                del font_map[-1]
+            except KeyError:
+                pass
+            font_full_rev: Dict[str, bytes]
             if isinstance(font_encoding, str):
-                assert font_encoding in ("charmap", "utf-16-be")
-                if font_encoding not in ("charmap", "utf-16-be"):
-                    logger_warning(
-                        f"unexpected {font_encoding} : please share pdf with pypdf dev team",
-                        __name__,
-                    )
-                font_full_rev = {v: k for k, v in font_map.items()}
+                font_full_rev = {
+                    v: k.encode(font_encoding) for k, v in font_map.items()
+                }
             else:
-                font_full_rev = {v: k for k, v in font_encoding.items()}
-                font_encoding_rev = {v: k for k, v in font_encoding.items()}
-                for k, v in font_map.items():
-                    font_full_rev[v] = font_encoding_rev.get(k, ord(k))
+                font_full_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
+                font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
+                for kk, v in font_map.items():
+                    font_full_rev[v] = font_encoding_rev.get(kk, kk)
         else:
             raise AssertionError("can not find font dictionary")
             logger_warning(f"can not find font dictionary for {font_name}", __name__)
@@ -913,15 +913,13 @@ class PdfWriter:
             else:
                 # Td is a relative translation
                 ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
-            enc_line: List[Any] = [font_full_rev.get(c, ord(c)) for c in line]
-            if any(c > 255 for c in enc_line):
-                ap_stream += (
-                    b"<"
-                    + b"".join(b"%04X" % x for x in line.encode("UTF-16-BE"))
-                    + b"> Tj\n"
-                )
+            enc_line: List[bytes] = [
+                font_full_rev.get(c, c.encode("utf-16-be")) for c in line
+            ]
+            if any(len(c) >= 2 for c in enc_line):
+                ap_stream += b"<" + (b"".join(enc_line)).hex().encode() + b"> Tj\n"
             else:
-                ap_stream += b"(" + bytes(enc_line) + b") Tj\n"
+                ap_stream += b"(" + b"".join(enc_line) + b") Tj\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
 
         # Create appearance dictionary
