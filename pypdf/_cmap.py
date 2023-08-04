@@ -39,7 +39,8 @@ def build_char_map_from_dict(
     Determine information about a font.
 
     Args:
-        space_width: default space with if no data found (normally half width of char.
+        space_width: default space with if no data found
+             (normally half the width of a character).
         ft: Font Dictionary
 
     Returns:
