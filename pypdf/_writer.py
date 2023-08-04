@@ -852,7 +852,7 @@ class PdfWriter:
         )
         if fontname or fontsize >= 0 or font_height == 0:
             if fontname:
-                font_properties[font_properties.index("Tf") - 1] = fontname
+                font_properties[font_properties.index("Tf") - 2] = fontname
             if font_height == 0:
                 font_height = rct.height - 2
             font_properties[font_properties.index("Tf") - 1] = str(font_height)
@@ -930,7 +930,10 @@ class PdfWriter:
             if any(len(c) >= 2 for c in enc_line):
                 ap_stream += b"<" + (b"".join(enc_line)).hex().encode() + b"> Tj\n"
             else:
-                ap_stream += b"(" + b"".join(enc_line) + b") Tj\n"
+                enc = b"".join(enc_line)
+                # for x in range(32):
+                #    enc = enc.replace(bytes((x,)),b"\%03o"%x)
+                ap_stream += b"(" + enc + b") Tj\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
 
         # Create appearance dictionary
