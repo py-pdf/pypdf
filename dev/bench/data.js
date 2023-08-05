@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1691009016919,
+  "lastUpdate": 1691230544206,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -35334,6 +35334,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0005117633813141746",
             "extra": "mean: 98.34418840000012 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "156df859480366f7f61bbff8b7dd0848f501bf70",
+          "message": "DOC: Typo in file size docs (#2063)",
+          "timestamp": "2023-08-05T12:14:31+02:00",
+          "tree_id": "ec4bdae29d52af36be734538f548b3e3c378f072",
+          "url": "https://github.com/py-pdf/pypdf/commit/156df859480366f7f61bbff8b7dd0848f501bf70"
+        },
+        "date": 1691230542501,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7551644815729958,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003519987010912621",
+            "extra": "mean: 1.3242148225999926 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.363430153965238,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008389990065918979",
+            "extra": "mean: 88.00159691667157 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2365730186275153,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011195378445446349",
+            "extra": "mean: 4.227024729200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.234215341960596,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00034274646873879144",
+            "extra": "mean: 81.73797599999943 msec\nrounds: 12"
           }
         ]
       }
