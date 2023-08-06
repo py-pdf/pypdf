@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1691304821922,
+  "lastUpdate": 1691307125895,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -35438,6 +35438,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0007057846620320757",
             "extra": "mean: 80.35568366666486 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7e9292c30ed445ac7eb3132914e7e3b4c7df0645",
+          "message": "BUG: Fix AnnotationBuilder.link (#2066)\n\nThe object was not updating itself, but a temporary variable in it\r\n\r\nCloses #2058",
+          "timestamp": "2023-08-06T09:30:53+02:00",
+          "tree_id": "6d4dc03ea7104a8a24ab40386280d41cba1271f1",
+          "url": "https://github.com/py-pdf/pypdf/commit/7e9292c30ed445ac7eb3132914e7e3b4c7df0645"
+        },
+        "date": 1691307124353,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7243350973108943,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00501780475885049",
+            "extra": "mean: 1.3805764813999986 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.235275343060907,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009910014998696046",
+            "extra": "mean: 89.00538433333693 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21854572826771695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01616727817070223",
+            "extra": "mean: 4.575701423799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.611082331320903,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00035675942629771973",
+            "extra": "mean: 94.2410933000005 msec\nrounds: 10"
           }
         ]
       }
