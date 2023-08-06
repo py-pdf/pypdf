@@ -331,7 +331,7 @@ class Link(MarkupAnnotation):
         else:
             border_arr = [NumberObject(0)] * 3
 
-        link_obj = DictionaryObject(
+        self.update(
             {
                 NameObject("/Type"): NameObject("/Annot"),
                 NameObject("/Subtype"): NameObject("/Link"),
@@ -340,7 +340,7 @@ class Link(MarkupAnnotation):
             }
         )
         if is_external:
-            link_obj[NameObject("/A")] = DictionaryObject(
+            self[NameObject("/A")] = DictionaryObject(
                 {
                     NameObject("/S"): NameObject("/URI"),
                     NameObject("/Type"): NameObject("/Action"),
@@ -356,4 +356,4 @@ class Link(MarkupAnnotation):
                     "fit_args": fit.fit_args,
                 }
             )
-            link_obj[NameObject("/Dest")] = dest_deferred
+            self[NameObject("/Dest")] = dest_deferred
