@@ -721,6 +721,8 @@ def _get_imagemode(
         Image mode not taking into account mask(transparency)
         ColorInversion is required (like for some DeviceCMYK)
     """
+    if isinstance(color_space, NullObject):
+        return "", False
     if isinstance(color_space, str):
         pass
     elif not isinstance(color_space, list):
@@ -931,6 +933,9 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         extension = ".jp2"  # mime_type = "image/x-jp2"
         img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
         mode, invert_color = _get_imagemode(color_space, colors, mode)
+        if mode == "":
+            mode = cast(mode_str_type, img1.mode)
+            invert_color = mode in ("CMYK",)
         if img1.mode == "RGBA" and mode == "RGB":
             mode = "RGBA"
         # we need to convert to the good mode
@@ -1028,6 +1033,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             False,
         )
     else:
+        if mode == "":
+            raise PdfReadError(f"ColorSpace field not found in {x_object_obj}")
         img, image_format, extension, invert_color = (
             Image.frombytes(mode, size, data),
             "PNG",
