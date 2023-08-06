@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## Version 3.15.0, 2023-08-06
+
+### New Features (ENH)
+-  Add `level` parameter to compress_content_streams (#2044)
+-  Process /uniHHHH for text_extract (#2043)
+
+### Bug Fixes (BUG)
+-  Fix AnnotationBuilder.link (#2066)
+-  JPX image without ColorSpace  (#2062)
+-  Added check for field /Info when cloning reader document (#2055)
+-  Fix indexed/CMYK images (#2039)
+
+### Maintenance (MAINT)
+-  Cryptography as primary dependency (#2053)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.14.0...3.15.0)
+
 ## Version 3.14.0, 2023-07-29
 
 ### New Features (ENH)
