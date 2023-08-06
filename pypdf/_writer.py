@@ -884,7 +884,6 @@ class PdfWriter:
                 for kk, v in font_map.items():
                     font_full_rev[v] = font_encoding_rev.get(kk, kk)
         else:
-            raise AssertionError("can not find font dictionary")
             logger_warning(f"can not find font dictionary for {font_name}", __name__)
             font_full_rev = {}
 
