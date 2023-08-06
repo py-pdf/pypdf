@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1691307125895,
+  "lastUpdate": 1691307404796,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -35490,6 +35490,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00035675942629771973",
             "extra": "mean: 94.2410933000005 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "91391b18bb8ec9e6e561e2795d988e8634a01a50",
+          "message": "REL: 3.15.0\n\n### New Features (ENH)\n-  Add `level` parameter to compress_content_streams (#2044)\n-  Process /uniHHHH for text_extract (#2043)\n\n### Bug Fixes (BUG)\n-  Fix AnnotationBuilder.link (#2066)\n-  JPX image without ColorSpace  (#2062)\n-  Added check for field /Info when cloning reader document (#2055)\n-  Fix indexed/CMYK images (#2039)\n\n### Maintenance (MAINT)\n-  Cryptography as primary dependency (#2053)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.14.0...3.15.0)",
+          "timestamp": "2023-08-06T09:33:57+02:00",
+          "tree_id": "b4d926c61226607d6095e8eda4a5f8e42f0050a9",
+          "url": "https://github.com/py-pdf/pypdf/commit/91391b18bb8ec9e6e561e2795d988e8634a01a50"
+        },
+        "date": 1691307402225,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6070840641387014,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004139854927338269",
+            "extra": "mean: 1.6472183328 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.45045997671012,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013701684276848364",
+            "extra": "mean: 105.81495529999785 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18863724724289732,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01624673278179835",
+            "extra": "mean: 5.301179987599997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.93566819298488,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004076538387683525",
+            "extra": "mean: 111.91104888888661 msec\nrounds: 9"
           }
         ]
       }
