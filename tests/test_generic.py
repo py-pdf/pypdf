@@ -592,48 +592,51 @@ def test_remove_child_in_tree():
 
 
 @pytest.mark.enable_socket()
-def test_dict_read_from_stream(caplog):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
-    name = "tika-984877.pdf"
-
+@pytest.mark.parametrize(
+    ("url", "name", "caplog_content"),
+    [
+        (  # parse_content_stream_peek_percentage
+            "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf",
+            "tika-985770.pdf",
+            "",
+        ),
+        (  # read_inline_image_no_has_q
+            "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf",
+            "tika-998719.pdf",
+            "",
+        ),
+        (  # read_inline_image_loc_neg_1
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf",
+            "tika-935066.pdf",
+            "",
+        ),
+        (  # object_read_from_stream_unicode_error
+            "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf",
+            "tika-974966.pdf",
+            "",
+        ),
+        (  # dict_read_from_stream
+            "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf",
+            "tika-984877.pdf",
+            "Multiple definitions in dictionary at byte 0x1084 for key /Length",
+        ),
+    ],
+    ids=[
+        "parse_content_stream_peek_percentage",
+        "read_inline_image_no_has_q",
+        "read_inline_image_loc_neg_1",
+        "object_read_from_stream_unicode_error",
+        "dict_read_from_stream",
+    ],
+)
+def test_extract_text(caplog, url: str, name: str, caplog_content: str):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
-    assert (
-        "Multiple definitions in dictionary at byte 0x1084 for key /Length"
-        in caplog.text
-    )
-
-
-@pytest.mark.enable_socket()
-def test_parse_content_stream_peek_percentage():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
-    name = "tika-985770.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_read_inline_image_no_has_q():
-    # pdf/df7e1add3156af17a372bc165e47a244.pdf
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
-    name = "tika-998719.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_read_inline_image_loc_neg_1():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
-    name = "tika-935066.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
+    if caplog_content == "":
+        assert caplog_content == caplog.text
+    else:
+        assert caplog_content in caplog.text
 
 
 @pytest.mark.slow()
@@ -647,16 +650,6 @@ def test_text_string_write_to_stream():
     writer.clone_document_from_reader(reader)
     for page in writer.pages:
         page.compress_content_streams()
-
-
-@pytest.mark.enable_socket()
-def test_name_object_read_from_stream_unicode_error():  # L588
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
-    name = "tika-974966.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
 
 
 @pytest.mark.enable_socket()

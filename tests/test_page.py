@@ -345,22 +345,6 @@ def test_add_transformation_on_page_without_contents():
 
 
 @pytest.mark.enable_socket()
-def test_extract_text_single_quote_op():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_no_ressources_on_text_extract():
-    url = "https://github.com/py-pdf/pypdf/files/9428434/TelemetryTX_EM.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
     url = "https://github.com/py-pdf/pypdf/files/9150656/ST.2019.PDF"
@@ -403,9 +387,17 @@ def test_iss_1142():
             "https://github.com/py-pdf/pypdf/files/9432350/Work.Flow.From.Check.to.QA.pdf",
             "WFCA.pdf",
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf",
+            "tika-964029.pdf",
+        ),  # single_quote_op
+        (
+            "https://github.com/py-pdf/pypdf/files/9428434/TelemetryTX_EM.pdf",
+            "tika-964029.pdf",
+        ),  # no_ressources
     ],
 )
-def test_extract_text_page_pdf(url, name):
+def test_extract_text(url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
