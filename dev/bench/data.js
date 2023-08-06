@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1691230544206,
+  "lastUpdate": 1691304821922,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -35386,6 +35386,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00034274646873879144",
             "extra": "mean: 81.73797599999943 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0987346bb145e97b11b9ecebed8aff9f5206a75c",
+          "message": "BUG: JPX image without ColorSpace  (#2062)\n\nCloses #2061",
+          "timestamp": "2023-08-06T08:52:23+02:00",
+          "tree_id": "83d48af5f3d387e4d7bacc1106be67fa9e717f3c",
+          "url": "https://github.com/py-pdf/pypdf/commit/0987346bb145e97b11b9ecebed8aff9f5206a75c"
+        },
+        "date": 1691304819910,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7579936706100456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002285807166154156",
+            "extra": "mean: 1.319272229799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.329408364916988,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008542101798592425",
+            "extra": "mean: 88.26586241666708 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23716913257857664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007481344030015453",
+            "extra": "mean: 4.216400292600005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.4446704249104,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007057846620320757",
+            "extra": "mean: 80.35568366666486 msec\nrounds: 12"
           }
         ]
       }
