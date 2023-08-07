@@ -59,17 +59,17 @@ def test_multi_language(visitor_text):
 
 @pytest.mark.parametrize(("file_name", "constraints"),
                          [
-                             ["inkscape-abc.pdf",
-                              {'A': lambda x, y:
+                             ("inkscape-abc.pdf",
+                              {"A": lambda x, y:
                                0 < x < 94 and
                                189 < y < 283,  # In upper left
-                               'B': lambda x, y:
+                               "B": lambda x, y:
                                94 < x < 189 and
                                94 < y < 189,   # In the center
-                               'C': lambda x, y:
+                               "C": lambda x, y:
                                189 < x < 283 and
                                0 < y < 94}     # In lower right
-                              ]
+                              )
                              ])
 def test_visitor_text_matrices(file_name, constraints):
     """
@@ -82,18 +82,18 @@ def test_visitor_text_matrices(file_name, constraints):
 
     lines = []
 
-    def visitor_text(text, cm, tm, fontDict, fontSize):
+    def visitor_text(text, cm, tm, font_dict, font_size) -> None:
         x = tm[4] * cm[0] + tm[5] * cm[2] + cm[4]  # mult(tm, cm)[4]
         y = tm[4] * cm[1] + tm[5] * cm[3] + cm[5]  # mult(tm, cm)[5]
-        lines.append({'text': text, 'x': x, 'y': y})
+        lines.append({"text": text, "x": x, "y": y})
 
     reader.pages[0].extract_text(visitor_text=visitor_text)
 
     for text, constraint in constraints.items():
-        matches = [li for li in lines if li['text'].strip() == text]
+        matches = [li for li in lines if li["text"].strip() == text]
         assert len(matches) <= 1, f"Multiple lines match {text}"
         assert len(matches) >= 1, f"No lines match {text}"
 
-        x = matches[0]['x']
-        y = matches[0]['y']
-        assert constraint(x, y), f"Line \"{text}\" is wrong at x:{x}, y:{y}"
+        x = matches[0]["x"]
+        y = matches[0]["y"]
+        assert constraint(x, y), f'Line "{text}" is wrong at x:{x}, y:{y}'
