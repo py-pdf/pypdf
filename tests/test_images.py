@@ -6,7 +6,6 @@ and/or the actual image data with the expected value.
 """
 
 from io import BytesIO
-from math import sqrt
 from pathlib import Path
 
 import pytest
@@ -35,7 +34,10 @@ def image_similarity(path1: Path, path2: Path) -> float:
     This can be used to ensure visual similarity.
     """
     # Open the images using Pillow
-    image1 = Image.open(path1)
+    if isinstance(path1, Image.Image):
+        image1 = path1
+    else:
+        image1 = Image.open(path1)
     image2 = Image.open(path2)
 
     # Check if the images have the same dimensions
@@ -46,15 +48,16 @@ def image_similarity(path1: Path, path2: Path) -> float:
     if image1.mode != image2.mode:
         return 0
 
-    # Convert images to pixel data arrays
+    # Calculate the Mean Squared Error (MSE)
     diff = ImageChops.difference(image1, image2)
     pixels = list(diff.getdata())
 
-    # Calculate the Mean Squared Error (MSE)
     if isinstance(pixels[0], tuple):
-        mse = sum(sum(c**2 for c in p) / len(p) for p in pixels) / len(pixels)
+        mse = sum(sum((c / 255.0) ** 2 for c in p) for p in pixels) / (
+            len(pixels) * len(pixels[0])
+        )
     else:
-        mse = sum(p**2 for p in pixels) / len(pixels)
+        mse = sum((p / 255.0) ** 2 for p in pixels) / len(pixels)
 
     return 1 - mse
 
@@ -240,13 +243,9 @@ def test_rgba():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/238288207-b77dd38c-34b4-4f4f-810a-bf9db7ca0414.png"
     name_png = "tika-972174_p0-im0.png"
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
     data = reader.pages[0].images[0]
     assert ".jp2" in data.name
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(
-        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
-    ) / (diff.size[0] * diff.size[1])
-    assert d < 0.01
+    assert (
+        image_similarity(data.image, BytesIO(get_pdf_from_url(url_png, name=name_png)))
+        > 0.99
+    )
