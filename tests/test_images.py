@@ -111,6 +111,12 @@ def test_image_new_property():
             SAMPLE_ROOT / "019-grayscale-image/page-0-X0.png",
         ),
     ],
+    ids=[
+        "009-pdflatex-geotopo/page-23-Im2.png",
+        "003-pdflatex-image/page-0-Im1.jpg",
+        "018-base64-image/page-0-QuickPDFImd32aa1ab.png",
+        "019-grayscale-image/page-0-X0.png",
+    ],
 )
 @pytest.mark.samples()
 def test_image_extraction(src, page_index, image_key, expected):
