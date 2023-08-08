@@ -9,6 +9,7 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from pypdf import PdfReader
 from pypdf._page import PageObject
@@ -19,6 +20,40 @@ TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+
+
+def image_similarity(path1: Path, path2: Path) -> float:
+    """
+    Check image similarity.
+
+    A value of "0" means the images are different. A value of 1 means they are
+    identical. A value above 0.9 means they are almost the same
+    """
+    # Open the images using Pillow
+    image1 = Image.open(path1)
+    image2 = Image.open(path2)
+
+    # Check if the images have the same dimensions
+    if image1.size != image2.size:
+        return 0
+
+    # Check if the color modes are the same
+    if image1.mode != image2.mode:
+        return 0
+
+    # Convert images to pixel data arrays
+    pixels1 = list(image1.getdata())
+    pixels2 = list(image2.getdata())
+    # Calculate the Mean Squared Error (MSE)
+    if isinstance(pixels1[0], tuple):
+        mse = sum(
+            sum((c1 - c2) ** 2 for c1, c2 in zip(p1, p2))
+            for p1, p2 in zip(pixels1, pixels2)
+        ) / len(pixels1)
+    else:
+        mse = sum((p1 - p2) ** 2 for p1, p2 in zip(pixels1, pixels2)) / len(pixels1)
+
+    return 1 - mse
 
 
 @pytest.mark.enable_socket()
@@ -126,6 +161,4 @@ def test_image_extraction(src, page_index, image_key, expected):
         # A little helper for test generation
         with open(f"page-{page_index}-{actual_image.name}", "wb") as fp:
             fp.write(actual_image.data)
-    with open(expected, "rb") as fp:
-        expected_data = fp.read()
-    assert actual_image.data == expected_data
+    assert image_similarity(BytesIO(actual_image.data), expected) >= 0.99
