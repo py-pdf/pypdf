@@ -23,6 +23,18 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
+def open_image(path: Union[Path, Image.Image]) -> Image.Image:
+    if isinstance(path, Image.Image):
+        img = path
+    else:
+        assert path.exists()
+        with Image.open(path) as img:
+            img = (
+                img.copy()
+            )  # Opened image should be copied to avoid issues with file closing
+    return img
+
+
 def image_similarity(
     path1: Union[Path, Image.Image], path2: Union[Path, Image.Image]
 ) -> float:
@@ -35,14 +47,8 @@ def image_similarity(
     This can be used to ensure visual similarity.
     """
     # Open the images using Pillow
-    if isinstance(path1, Image.Image):
-        image1 = path1
-    else:
-        image1 = Image.open(path1)
-    if isinstance(path2, Image.Image):
-        image2 = path2
-    else:
-        image2 = Image.open(path2)
+    image1 = open_image(path1)
+    image2 = open_image(path2)
 
     # Check if the images have the same dimensions
     if image1.size != image2.size:
