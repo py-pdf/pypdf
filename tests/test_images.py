@@ -47,16 +47,14 @@ def image_similarity(path1: Path, path2: Path) -> float:
         return 0
 
     # Convert images to pixel data arrays
-    pixels1 = list(image1.getdata())
-    pixels2 = list(image2.getdata())
+    diff = ImageChops.difference(image1, image2)
+    pixels = list(diff.getdata())
+
     # Calculate the Mean Squared Error (MSE)
-    if isinstance(pixels1[0], tuple):
-        mse = sum(
-            sum((c1 - c2) ** 2 for c1, c2 in zip(p1, p2))
-            for p1, p2 in zip(pixels1, pixels2)
-        ) / len(pixels1)
+    if isinstance(pixels[0], tuple):
+        mse = sum(sum(c**2 for c in p) / len(p) for p in pixels) / len(pixels)
     else:
-        mse = sum((p1 - p2) ** 2 for p1, p2 in zip(pixels1, pixels2)) / len(pixels1)
+        mse = sum(p**2 for p in pixels) / len(pixels)
 
     return 1 - mse
 
