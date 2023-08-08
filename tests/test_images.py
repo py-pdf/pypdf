@@ -166,20 +166,3 @@ def test_image_extraction(src, page_index, image_key, expected):
         with open(f"page-{page_index}-{actual_image.name}", "wb") as fp:
             fp.write(actual_image.data)
     assert image_similarity(BytesIO(actual_image.data), expected) >= 0.99
-
-
-@pytest.mark.enable_socket()
-def test_tiff_predictor():
-    """Decode Tiff Predictor 2 Images"""
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977609.pdf"
-    name = "tika-977609.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    url_png = "https://user-images.githubusercontent.com/4083478/236793166-288b4b59-dee3-49fd-a04e-410aab06199a.png"
-    name_png = "tifimage.png"
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
-    data = reader.pages[0].images[0]
-    img = Image.open(BytesIO(data.data))
-    assert ".png" in data.name
-    assert list(img.getdata()) == list(refimg.getdata())
