@@ -7,9 +7,10 @@ and/or the actual image data with the expected value.
 
 from io import BytesIO
 from pathlib import Path
+from typing import Union
 
 import pytest
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageDraw
 
 from pypdf import PdfReader
 from pypdf._page import PageObject
@@ -22,7 +23,9 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
-def image_similarity(path1: Path, path2: Path) -> float:
+def image_similarity(
+    path1: Union[Path, Image.Image], path2: Union[Path, Image.Image]
+) -> float:
     """
     Check image similarity.
 
@@ -36,7 +39,10 @@ def image_similarity(path1: Path, path2: Path) -> float:
         image1 = path1
     else:
         image1 = Image.open(path1)
-    image2 = Image.open(path2)
+    if isinstance(path2, Image.Image):
+        image2 = path2
+    else:
+        image2 = Image.open(path2)
 
     # Check if the images have the same dimensions
     if image1.size != image2.size:
@@ -58,6 +64,36 @@ def image_similarity(path1: Path, path2: Path) -> float:
         mse = sum((p / 255.0) ** 2 for p in pixels) / len(pixels)
 
     return 1 - mse
+
+
+def test_image_similarity_one():
+    path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
+    path_b = path_a
+    assert image_similarity(path_a, path_b) == 1
+
+
+def test_image_similarity_zero():
+    path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
+    path_b = SAMPLE_ROOT / "009-pdflatex-geotopo/page-23-Im2.png"
+    assert image_similarity(path_a, path_b) == 0
+
+
+def test_image_similarity_mid():
+    path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
+    img_b = Image.open(path_a)
+    draw = ImageDraw.Draw(img_b)
+
+    # Fill the rectangle with black color
+    draw.rectangle([0, 0, 100, 100], fill=(0, 0, 0))
+    sim1 = image_similarity(path_a, img_b)
+    assert sim1 > 0.9
+    assert sim1 > 0
+    assert sim1 < 1
+
+    draw.rectangle([0, 0, 200, 200], fill=(0, 0, 0))
+    sim2 = image_similarity(path_a, img_b)
+    assert sim2 < sim1
+    assert sim2 > 0
 
 
 @pytest.mark.enable_socket()

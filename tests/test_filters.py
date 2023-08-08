@@ -389,10 +389,10 @@ def test_rgba():
     name_png = "tika-972174_p0-im0.png"
     data = reader.pages[0].images[0]
     assert ".jp2" in data.name
-    assert (
-        image_similarity(data.image, BytesIO(get_pdf_from_url(url_png, name=name_png)))
-        > 0.99
+    similarity = image_similarity(
+        data.image, BytesIO(get_pdf_from_url(url_png, name=name_png))
     )
+    assert similarity > 0.99
 
 
 @pytest.mark.enable_socket()
