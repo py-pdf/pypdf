@@ -45,7 +45,6 @@ from ._utils import (
     deprecate_with_replacement,
     logger_warning,
     ord_,
-    paeth_predictor,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
 from .constants import ColorSpaces
@@ -182,17 +181,15 @@ class FlateDecode:
         return str_data
 
     @staticmethod
-    def _decode_png_prediction(data: str, columns: int, rowlength: int) -> bytes:
-        output = BytesIO()
+    def _decode_png_prediction(data: bytes, columns: int, rowlength: int) -> bytes:
         # PNG prediction can vary from row to row
         if len(data) % rowlength != 0:
             raise PdfReadError("Image data is not rectangular")
+        output = []
         prev_rowdata = (0,) * rowlength
         bpp = (rowlength - 1) // columns  # recomputed locally to not change params
-        for row in range(len(data) // rowlength):
-            rowdata = [
-                ord_(x) for x in data[(row * rowlength) : ((row + 1) * rowlength)]
-            ]
+        for row in range(0, len(data), rowlength):
+            rowdata: List[int] = list(data[row : row + rowlength])
             filter_byte = rowdata[0]
 
             if filter_byte == 0:
@@ -204,16 +201,38 @@ class FlateDecode:
                 for i in range(1, rowlength):
                     rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
             elif filter_byte == 3:
-                for i in range(1, rowlength):
-                    left = rowdata[i - bpp] if i > bpp else 0
-                    floor = math.floor(left + prev_rowdata[i]) / 2
-                    rowdata[i] = (rowdata[i] + int(floor)) % 256
+                for i in range(1, bpp + 1):
+                    # left = 0
+                    floor = prev_rowdata[i] // 2
+                    rowdata[i] = (rowdata[i] + floor) % 256
+                for i in range(bpp + 1, rowlength):
+                    left = rowdata[i - bpp]
+                    floor = (left + prev_rowdata[i]) // 2
+                    rowdata[i] = (rowdata[i] + floor) % 256
             elif filter_byte == 4:
-                for i in range(1, rowlength):
-                    left = rowdata[i - bpp] if i > bpp else 0
+                for i in range(1, bpp + 1):
+                    # left = 0
                     up = prev_rowdata[i]
-                    up_left = prev_rowdata[i - bpp] if i > bpp else 0
-                    paeth = paeth_predictor(left, up, up_left)
+                    # up_left = 0
+                    paeth = up
+                    rowdata[i] = (rowdata[i] + paeth) % 256
+                for i in range(bpp + 1, rowlength):
+                    left = rowdata[i - bpp]
+                    up = prev_rowdata[i]
+                    up_left = prev_rowdata[i - bpp]
+
+                    p = left + up - up_left
+                    dist_left = abs(p - left)
+                    dist_up = abs(p - up)
+                    dist_up_left = abs(p - up_left)
+
+                    if dist_left <= dist_up and dist_left <= dist_up_left:
+                        paeth = left
+                    elif dist_up <= dist_up_left:
+                        paeth = up
+                    else:
+                        paeth = up_left
+
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
                 # unsupported PNG filter
@@ -221,8 +240,8 @@ class FlateDecode:
                     f"Unsupported PNG filter {filter_byte!r}"
                 )  # pragma: no cover
             prev_rowdata = tuple(rowdata)
-            output.write(bytearray(rowdata[1:]))
-        return output.getvalue()
+            output.extend(rowdata[1:])
+        return bytes(output)
 
     @staticmethod
     def encode(data: bytes, level: int = -1) -> bytes:
