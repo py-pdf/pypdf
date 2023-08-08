@@ -6,13 +6,16 @@ and/or the actual image data with the expected value.
 """
 
 from io import BytesIO
+from math import sqrt
 from pathlib import Path
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageChops
 
 from pypdf import PdfReader
 from pypdf._page import PageObject
+from pypdf.errors import PdfReadError
+from pypdf.generic import NameObject, NumberObject
 
 from . import get_pdf_from_url
 
@@ -27,7 +30,9 @@ def image_similarity(path1: Path, path2: Path) -> float:
     Check image similarity.
 
     A value of "0" means the images are different. A value of 1 means they are
-    identical. A value above 0.9 means they are almost the same
+    identical. A value above 0.9 means they are almost the same.
+
+    This can be used to ensure visual similarity.
     """
     # Open the images using Pillow
     image1 = Image.open(path1)
@@ -162,3 +167,88 @@ def test_image_extraction(src, page_index, image_key, expected):
         with open(f"page-{page_index}-{actual_image.name}", "wb") as fp:
             fp.write(actual_image.data)
     assert image_similarity(BytesIO(actual_image.data), expected) >= 0.99
+
+
+@pytest.mark.enable_socket()
+def test_pa_image_extraction():
+    """
+    PNG images with PA mode can be extracted.
+
+    This is a regression test for issue #1801
+    """
+    url = "https://github.com/py-pdf/pypdf/files/11250359/test_img.pdf"
+    name = "issue-1801.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+
+    page0 = reader.pages[0]
+    images = page0.images
+    assert len(images) == 1
+    assert images[0].name == "Im1.png"
+
+    # Ensure visual appearence
+    data = get_pdf_from_url(
+        "https://user-images.githubusercontent.com/"
+        "1658117/232842886-9d1b0726-3a5b-430d-8464-595d919c266c.png",
+        "issue-1801.png",
+    )
+    assert data == images[0].data
+
+
+@pytest.mark.enable_socket()
+def test_iss1787():
+    """Cf issue #1787"""
+    url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
+    name = "pdf_font_garbled.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/236793172-09340aef-3440-4c8a-af85-a91cdad27d46.png"
+    name_png = "watermark1.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    img = Image.open(BytesIO(data.data))
+    assert ".png" in data.name
+    assert list(img.getdata()) == list(refimg.getdata())
+    obj = data.indirect_reference.get_object()
+    obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
+    obj.decoded_self = None
+    with pytest.raises(PdfReadError) as exc:
+        reader.pages[0].images[0]
+    assert exc.value.args[0] == "Image data is not rectangular"
+
+
+@pytest.mark.enable_socket()
+def test_tiff_predictor():
+    """Decode Tiff Predictor 2 Images"""
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977609.pdf"
+    name = "tika-977609.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/236793166-288b4b59-dee3-49fd-a04e-410aab06199a.png"
+    name_png = "tifimage.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    img = Image.open(BytesIO(data.data))
+    assert ".png" in data.name
+    assert list(img.getdata()) == list(refimg.getdata())
+
+
+@pytest.mark.enable_socket()
+def test_rgba():
+    """Decode rgb with transparency"""
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf"
+    name = "tika-972174.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url_png = "https://user-images.githubusercontent.com/4083478/238288207-b77dd38c-34b4-4f4f-810a-bf9db7ca0414.png"
+    name_png = "tika-972174_p0-im0.png"
+    refimg = Image.open(
+        BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )  # not a pdf but it works
+    data = reader.pages[0].images[0]
+    assert ".jp2" in data.name
+    diff = ImageChops.difference(data.image, refimg)
+    d = sqrt(
+        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
+    ) / (diff.size[0] * diff.size[1])
+    assert d < 0.01
