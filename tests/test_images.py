@@ -92,8 +92,24 @@ def test_image_new_property():
             "/Im2",
             SAMPLE_ROOT / "009-pdflatex-geotopo/page-23-Im2.png",
         ),
-        # (SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf", 30, '/Fm22',
-        #  SAMPLE_ROOT / "009-pdflatex-geotopo/page-30-Fm22.png"),
+        (
+            SAMPLE_ROOT / "003-pdflatex-image/pdflatex-image.pdf",
+            0,
+            "/Im1",
+            SAMPLE_ROOT / "003-pdflatex-image/page-0-Im1.jpg",
+        ),
+        (
+            SAMPLE_ROOT / "018-base64-image/base64image.pdf",
+            0,
+            "/QuickPDFImd32aa1ab",
+            SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png",
+        ),
+        (
+            SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf",
+            0,
+            "/X0",
+            SAMPLE_ROOT / "019-grayscale-image/page-0-X0.png",
+        ),
     ],
 )
 @pytest.mark.samples()
