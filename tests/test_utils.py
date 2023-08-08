@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 import pypdf._utils
-from pypdf import PdfReader
 from pypdf._utils import (
     File,
     _get_max_pdf_version_header,
@@ -25,8 +24,6 @@ from pypdf._utils import (
     skip_over_whitespace,
 )
 from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
-
-from . import get_pdf_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -301,20 +298,6 @@ def test_rename_kwargs():
         match="old_param is deprecated as an argument. Use new_param instead",
     ):
         foo(old_param=12)
-
-
-@pytest.mark.enable_socket()
-def test_escapedcode_followed_by_int():
-    # iss #1294
-    url = (
-        "https://github.com/timedegree/playground_files/raw/main/"
-        "%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
-    )
-    name = "keppler.pdf"
-
-    reader = PdfReader(io.BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
 
 
 @pytest.mark.parametrize(
