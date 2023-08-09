@@ -21,7 +21,7 @@ from pypdf.generic import (
     NumberObject,
 )
 
-from . import get_pdf_from_url
+from . import get_data_from_url
 
 
 @pytest.mark.parametrize(
@@ -72,7 +72,7 @@ def test_number2uppercase_letter():
 def test_index2label(caplog):
     url = "https://github.com/py-pdf/pypdf/files/10773829/waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf"
     name = "waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf"
-    r = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    r = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert index2label(r, 1) == "ii"
     assert index2label(r, 9) == "6"
     # very silly data to get test cover
