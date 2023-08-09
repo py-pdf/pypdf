@@ -28,7 +28,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_pdf_from_url
+from . import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -806,7 +806,7 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -830,7 +830,7 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
 )
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_some_appends(pdf_file_path, url, name):
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     # PdfMerger
     merger = PdfMerger()
     merger.append(reader)
@@ -1013,7 +1013,7 @@ def test_startup_dest():
 def test_iss471():
     url = "https://github.com/py-pdf/pypdf/files/9139245/book.pdf"
     name = "book_471.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
     writer = PdfWriter()
     writer.append(reader, excluded_fields=[])
@@ -1026,7 +1026,7 @@ def test_iss471():
 def test_reset_translation():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader, (0, 10))
     nb = len(writer._objects)
@@ -1064,7 +1064,7 @@ def test_threads_empty():
 def test_append_without_annots_and_articles():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader, None, (0, 10), True, ["/B"])
     writer.reset_translation()
@@ -1083,7 +1083,7 @@ def test_append_without_annots_and_articles():
 def test_append_multiple():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(
         reader, [0, 0, 0]
@@ -1234,7 +1234,7 @@ def test_set_page_label(pdf_file_path):
 def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     page_1 = writer.add_blank_page(
         reader.pages[0].mediabox[2], reader.pages[0].mediabox[3]
@@ -1305,13 +1305,13 @@ def test_iss1614():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"
     name = "iss1614.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
     # test for 2nd error case reported in #1614
     url = "https://github.com/py-pdf/pypdf/files/10696390/broken.pdf"
     name = "iss1614.2.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer.append(reader)
 
 
@@ -1320,7 +1320,7 @@ def test_new_removes():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10807951/tt.pdf"
     name = "iss1650.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -1344,7 +1344,7 @@ def test_new_removes():
 
     url = "https://github.com/py-pdf/pypdf/files/10832029/tt2.pdf"
     name = "GeoBaseWithComments.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer.append(reader)
     writer.remove_objects_from_page(writer.pages[0], [ObjectDeletionFlag.LINKS])
     assert "/Links" not in [
@@ -1373,7 +1373,7 @@ def test_new_removes():
 def test_late_iss1654():
     url = "https://github.com/py-pdf/pypdf/files/10935632/bid1.pdf"
     name = "bid1.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     for p in writer.pages:
@@ -1387,7 +1387,7 @@ def test_iss1723():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/11015242/inputFile.pdf"
     name = "iss1723.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader, (3, 5))
 
@@ -1399,7 +1399,7 @@ def test_iss1767():
     # cloning
     url = "https://github.com/py-pdf/pypdf/files/11138472/test.pdf"
     name = "iss1723.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     PdfWriter(clone_from=reader)
 
 
@@ -1413,10 +1413,10 @@ def test_named_dest_page_number():
     name = "central.pdf"
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
-    writer.append(BytesIO(get_pdf_from_url(url, name=name)), pages=[0, 1, 2])
+    writer.append(BytesIO(get_data_from_url(url, name=name)), pages=[0, 1, 2])
     assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 2
     assert writer._root_object["/Names"]["/Dests"]["/Names"][-1][0] == (1 + 1)
-    writer.append(BytesIO(get_pdf_from_url(url, name=name)))
+    writer.append(BytesIO(get_data_from_url(url, name=name)))
     assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 6
     writer2 = PdfWriter()
     writer2.add_blank_page(100, 100)
@@ -1497,7 +1497,7 @@ def test_iss1862():
     url = "https://github.com/py-pdf/pypdf/files/11708801/intro.pdf"
     name = "iss1862.pdf"
     writer = PdfWriter()
-    writer.append(BytesIO(get_pdf_from_url(url, name=name)))
+    writer.append(BytesIO(get_data_from_url(url, name=name)))
     # check that "/B" is in the font
     writer.pages[0]["/Resources"]["/Font"]["/F1"]["/CharProcs"]["/B"].get_data()
 
@@ -1520,10 +1520,10 @@ def test_empty_objects_before_cloning():
 def test_watermark():
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
     name = "bgwatermark.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     url = "https://github.com/py-pdf/pypdf/files/11985888/source.pdf"
     name = "srcwatermark.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
     for p in writer.pages:
         p.merge_page(reader.pages[0], over=False)
 
@@ -1539,7 +1539,7 @@ def test_watermark():
 def test_da_missing_in_annot():
     url = "https://github.com/py-pdf/pypdf/files/12136285/Building.Division.Permit.Application.pdf"
     name = "BuildingDivisionPermitApplication.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter(clone_from=reader)
     writer.update_page_form_field_values(
         writer.pages[0], {"PCN-1": "0"}, auto_regenerate=False

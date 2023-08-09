@@ -7,9 +7,9 @@ from urllib.error import HTTPError
 from pypdf.generic import DictionaryObject, IndirectObject
 
 
-def get_pdf_from_url(url: str, name: str) -> bytes:
+def get_data_from_url(url: str, name: str) -> bytes:
     """
-    Download a PDF from a URL and return its contents.
+    Download a File from a URL and return its contents.
 
     This function makes sure the PDF is not downloaded too often.
     This function is a last resort for PDF files where we are uncertain if
@@ -20,7 +20,7 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
         name: unique name across all files
 
     Returns:
-        Read PDF as bytes
+        Read File as bytes
     """
     if url.startswith("file://"):
         with open(url[7:].replace("\\", "/"), "rb") as fp:
