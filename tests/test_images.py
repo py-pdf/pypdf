@@ -23,11 +23,12 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
-def open_image(path: Union[Path, Image.Image]) -> Image.Image:
+def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
     if isinstance(path, Image.Image):
         img = path
     else:
-        assert path.exists()
+        if isinstance(path, Path):
+            assert path.exists()
         with Image.open(path) as img:
             img = (
                 img.copy()
@@ -36,7 +37,7 @@ def open_image(path: Union[Path, Image.Image]) -> Image.Image:
 
 
 def image_similarity(
-    path1: Union[Path, Image.Image], path2: Union[Path, Image.Image]
+    path1: Union[Path, Image.Image, BytesIO], path2: Union[Path, Image.Image, BytesIO]
 ) -> float:
     """
     Check image similarity.
