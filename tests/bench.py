@@ -151,3 +151,9 @@ def test_read_string_from_stream_performance(benchmark):
     Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
     """
     benchmark(read_string_from_stream_performance)
+
+
+def test_image_new_property_performance(benchmark):
+    from .test_images import test_image_new_property
+
+    benchmark(test_image_new_property)
