@@ -15,7 +15,7 @@ from PIL import Image, ImageChops, ImageDraw
 from pypdf import PdfReader
 from pypdf._page import PageObject
 
-from . import get_pdf_from_url
+from . import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -107,7 +107,7 @@ def test_image_similarity_mid():
 def test_image_new_property():
     url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
     name = "pdf_font_garbled.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.pages[0].images.keys() == [
         "/I0",
         "/I1",
