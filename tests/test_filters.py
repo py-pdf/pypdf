@@ -22,6 +22,7 @@ from pypdf.filters import (
 from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject
 
 from . import get_pdf_from_url
+from .test_images import image_similarity
 
 filter_inputs = (
     # "", '', """""",
@@ -386,16 +387,12 @@ def test_rgba():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/238288207-b77dd38c-34b4-4f4f-810a-bf9db7ca0414.png"
     name_png = "tika-972174_p0-im0.png"
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
     data = reader.pages[0].images[0]
     assert ".jp2" in data.name
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(
-        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
-    ) / (diff.size[0] * diff.size[1])
-    assert d < 0.01
+    similarity = image_similarity(
+        data.image, BytesIO(get_pdf_from_url(url_png, name=name_png))
+    )
+    assert similarity > 0.99
 
 
 @pytest.mark.enable_socket()

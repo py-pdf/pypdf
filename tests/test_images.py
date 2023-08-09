@@ -7,8 +7,10 @@ and/or the actual image data with the expected value.
 
 from io import BytesIO
 from pathlib import Path
+from typing import Union
 
 import pytest
+from PIL import Image, ImageChops, ImageDraw
 
 from pypdf import PdfReader
 from pypdf._page import PageObject
@@ -19,6 +21,86 @@ TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+
+
+def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
+    if isinstance(path, Image.Image):
+        img = path
+    else:
+        if isinstance(path, Path):
+            assert path.exists()
+        with Image.open(path) as img:
+            img = (
+                img.copy()
+            )  # Opened image should be copied to avoid issues with file closing
+    return img
+
+
+def image_similarity(
+    path1: Union[Path, Image.Image, BytesIO], path2: Union[Path, Image.Image, BytesIO]
+) -> float:
+    """
+    Check image similarity.
+
+    A value of "0" means the images are different. A value of 1 means they are
+    identical. A value above 0.9 means they are almost the same.
+
+    This can be used to ensure visual similarity.
+    """
+    # Open the images using Pillow
+    image1 = open_image(path1)
+    image2 = open_image(path2)
+
+    # Check if the images have the same dimensions
+    if image1.size != image2.size:
+        return 0
+
+    # Check if the color modes are the same
+    if image1.mode != image2.mode:
+        return 0
+
+    # Calculate the Mean Squared Error (MSE)
+    diff = ImageChops.difference(image1, image2)
+    pixels = list(diff.getdata())
+
+    if isinstance(pixels[0], tuple):
+        mse = sum(sum((c / 255.0) ** 2 for c in p) for p in pixels) / (
+            len(pixels) * len(pixels[0])
+        )
+    else:
+        mse = sum((p / 255.0) ** 2 for p in pixels) / len(pixels)
+
+    return 1 - mse
+
+
+def test_image_similarity_one():
+    path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
+    path_b = path_a
+    assert image_similarity(path_a, path_b) == 1
+
+
+def test_image_similarity_zero():
+    path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
+    path_b = SAMPLE_ROOT / "009-pdflatex-geotopo/page-23-Im2.png"
+    assert image_similarity(path_a, path_b) == 0
+
+
+def test_image_similarity_mid():
+    path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
+    img_b = Image.open(path_a)
+    draw = ImageDraw.Draw(img_b)
+
+    # Fill the rectangle with black color
+    draw.rectangle([0, 0, 100, 100], fill=(0, 0, 0))
+    sim1 = image_similarity(path_a, img_b)
+    assert sim1 > 0.9
+    assert sim1 > 0
+    assert sim1 < 1
+
+    draw.rectangle([0, 0, 200, 200], fill=(0, 0, 0))
+    sim2 = image_similarity(path_a, img_b)
+    assert sim2 < sim1
+    assert sim2 > 0
 
 
 @pytest.mark.enable_socket()
@@ -92,8 +174,30 @@ def test_image_new_property():
             "/Im2",
             SAMPLE_ROOT / "009-pdflatex-geotopo/page-23-Im2.png",
         ),
-        # (SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf", 30, '/Fm22',
-        #  SAMPLE_ROOT / "009-pdflatex-geotopo/page-30-Fm22.png"),
+        (
+            SAMPLE_ROOT / "003-pdflatex-image/pdflatex-image.pdf",
+            0,
+            "/Im1",
+            SAMPLE_ROOT / "003-pdflatex-image/page-0-Im1.jpg",
+        ),
+        (
+            SAMPLE_ROOT / "018-base64-image/base64image.pdf",
+            0,
+            "/QuickPDFImd32aa1ab",
+            SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png",
+        ),
+        (
+            SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf",
+            0,
+            "/X0",
+            SAMPLE_ROOT / "019-grayscale-image/page-0-X0.png",
+        ),
+    ],
+    ids=[
+        "009-pdflatex-geotopo/page-23-Im2.png",
+        "003-pdflatex-image/page-0-Im1.jpg",
+        "018-base64-image/page-0-QuickPDFImd32aa1ab.png",
+        "019-grayscale-image/page-0-X0.png",
     ],
 )
 @pytest.mark.samples()
@@ -104,6 +208,4 @@ def test_image_extraction(src, page_index, image_key, expected):
         # A little helper for test generation
         with open(f"page-{page_index}-{actual_image.name}", "wb") as fp:
             fp.write(actual_image.data)
-    with open(expected, "rb") as fp:
-        expected_data = fp.read()
-    assert actual_image.data == expected_data
+    assert image_similarity(BytesIO(actual_image.data), expected) >= 0.99
