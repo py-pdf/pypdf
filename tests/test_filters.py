@@ -3,12 +3,11 @@ import string
 import sys
 from io import BytesIO
 from itertools import product as cartesian_product
-from math import sqrt
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from PIL import Image, ImageChops
+from PIL import Image
 
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError, PdfStreamError
@@ -408,34 +407,22 @@ def test_cmyk():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/251283945-38c5b92c-cf94-473c-bb57-a51b74fc39be.jpg"
     name_png = "VitocalImage.png"
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
+    refimg = BytesIO(get_pdf_from_url(url_png, name=name_png))
     data = reader.pages[1].images[0]
     assert data.image.mode == "CMYK"
     assert ".jpg" in data.name
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(
-        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
-    ) / (diff.size[0] * diff.size[1])
-    assert d < 0.01
+    assert image_similarity(data.image, refimg) > 0.99
     # deflate
     url = "https://github.com/py-pdf/pypdf/files/12078533/cmyk2.pdf"
     name = "cmyk_deflate.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     url_png = "https://github.com/py-pdf/pypdf/files/12078556/cmyk.tif.txt"
     name_png = "cmyk_deflate.tif"
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
+    refimg = BytesIO(get_pdf_from_url(url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert data.image.mode == "CMYK"
     assert ".tif" in data.name
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(
-        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
-    ) / (diff.size[0] * diff.size[1])
-    assert d < 0.001  # lossless compression expected
+    assert image_similarity(data.image, refimg) > 0.999  # lossless compression expected
 
 
 @pytest.mark.enable_socket()
@@ -487,29 +474,17 @@ def test_index_lookup():
     # TextStringObject Lookup
     url_png = "https://github.com/py-pdf/pypdf/files/12144094/im1.png.txt"
     name_png = "iss1982_im1.png"
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
+    refimg = BytesIO(get_pdf_from_url(url_png, name=name_png))
     data = reader.pages[0].images[-1]
     assert data.image.mode == "RGB"
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(sum([(a * a + b * b + c * c) for a, b, c in diff.getdata()])) / (
-        diff.size[0] * diff.size[1]
-    )
-    assert d < 0.001
+    assert image_similarity(data.image, refimg) > 0.999
     # ByteStringObject Lookup
     url_png = "https://github.com/py-pdf/pypdf/files/12144093/im2.png.txt"
     name_png = "iss1982_im2.png"
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
+    refimg = BytesIO(get_pdf_from_url(url_png, name=name_png))
     data = reader.pages[-1].images[-1]
     assert data.image.mode == "RGB"
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(sum([(a * a + b * b + c * c) for a, b, c in diff.getdata()])) / (
-        diff.size[0] * diff.size[1]
-    )
-    assert d < 0.001
+    assert image_similarity(data.image, refimg) > 0.999
     # indexed CMYK images
     # currently with a  TODO as we convert to RBG the palette
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf"
@@ -520,11 +495,7 @@ def test_index_lookup():
     refimg = Image.open(BytesIO(get_pdf_from_url(url_png, name=name_png)))
     data = reader.pages[0].images["/Im3"]
     # assert data.image.mode == "PA" but currently "RGBA"
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(
-        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
-    ) / (diff.size[0] * diff.size[1])
-    assert d < 0.001
+    assert image_similarity(data.image, refimg) > 0.999
 
 
 @pytest.mark.enable_socket()
@@ -535,15 +506,9 @@ def test_2bits_image():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/253568117-ca95cc85-9dea-4145-a5e0-032f1c1aa322.png"
     name_png = "Paid.png"
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
+    refimg = BytesIO(get_pdf_from_url(url_png, name=name_png))
     data = reader.pages[0].images[0]
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(
-        sum([(a * a + b * b + c * c + d * d) for a, b, c, d in diff.getdata()])
-    ) / (diff.size[0] * diff.size[1])
-    assert d < 0.01
+    assert image_similarity(data.image, refimg) > 0.99
 
 
 @pytest.mark.enable_socket()
@@ -557,14 +522,10 @@ def test_gray_devicen_cmyk():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/254545494-42df4949-1557-4f2d-acca-6be6e8de1122.png"
     name_png = "velo.png"
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
+    refimg = BytesIO(get_pdf_from_url(url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert data.image.mode == "L"
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(sum([(a * a) for a in diff.getdata()])) / (diff.size[0] * diff.size[1])
-    assert d < 0.001
+    assert image_similarity(data.image, refimg) > 0.999
 
 
 @pytest.mark.enable_socket()
@@ -575,13 +536,9 @@ def test_runlengthdecode():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/255940800-6d63972e-a3d6-4cf9-aa6f-0793af24cded.png"
     name_png = "RunLengthDecode.png"
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
+    refimg = BytesIO(get_pdf_from_url(url_png, name=name_png))
     data = reader.pages[0].images[0]
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(sum([(a * a) for a in diff.getdata()])) / (diff.size[0] * diff.size[1])
-    assert d < 0.001
+    assert image_similarity(data.image, refimg) > 0.999
     url = "https://github.com/py-pdf/pypdf/files/12162905/out.pdf"
     name = "FailedRLE1.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -606,14 +563,10 @@ def test_gray_separation_cmyk():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     url_png = "https://user-images.githubusercontent.com/4083478/254545494-42df4949-1557-4f2d-acca-6be6e8de1122.png"
     name_png = "velo.png"  # reused
-    refimg = Image.open(
-        BytesIO(get_pdf_from_url(url_png, name=name_png))
-    )  # not a pdf but it works
+    refimg = BytesIO(get_pdf_from_url(url_png, name=name_png))
     data = reader.pages[0].images[0]
     assert data.image.mode == "L"
-    diff = ImageChops.difference(data.image, refimg)
-    d = sqrt(sum([(a * a) for a in diff.getdata()])) / (diff.size[0] * diff.size[1])
-    assert d < 0.001
+    assert image_similarity(data.image, refimg) > 0.999
 
 
 @pytest.mark.enable_socket()
