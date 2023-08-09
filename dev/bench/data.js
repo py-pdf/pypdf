@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1691509270644,
+  "lastUpdate": 1691580126671,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -35698,6 +35698,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00048157262391520465",
             "extra": "mean: 80.45758691666667 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82e86813901ed1b32d2ec4f5bf38ddd6073f959d",
+          "message": "TST: Compare extracted images against ground truth (#2072)\n\nA function `image_similarity` was introduced which quantifies visual similarities of two images via Mean Squared Error (MSE). This way we can compare the extracted images with what we expect.\r\n\r\nWe cannot make a byte-wise comparison as updates to PIL can change the representation.\r\n\r\nThe new function helps us to ensure that updates to the pypdf code don't break image extraction.",
+          "timestamp": "2023-08-09T13:20:29+02:00",
+          "tree_id": "37a7a4f12c34a2b578b8278bfa48be9ea96b2d08",
+          "url": "https://github.com/py-pdf/pypdf/commit/82e86813901ed1b32d2ec4f5bf38ddd6073f959d"
+        },
+        "date": 1691580124120,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.554367343808903,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020864501696505243",
+            "extra": "mean: 1.8038580576000016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.04790161789574,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010955858901330117",
+            "extra": "mean: 110.52286399999218 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18037767686860084,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08832503243855731",
+            "extra": "mean: 5.543923269000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.16026735986856,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0034468472179713977",
+            "extra": "mean: 109.16711933333228 msec\nrounds: 9"
           }
         ]
       }
