@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1691650855258,
+  "lastUpdate": 1691651328302,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -35861,6 +35861,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08046971881246216",
             "extra": "mean: 38.433118654599994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "exiledkingcc@gmail.com",
+            "name": "exiledkingcc",
+            "username": "exiledkingcc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f0781db400eb46a5cc80d4c2b43763afd116f5a8",
+          "message": "PI: optimize _decode_png_prediction (#2068)\n\nthis commit makes tests/test_page.py::test_image_new_property cost from 8.98s to 5.69s on my machine, about x1.5 faster.\r\n\r\nOn another machine, a speedup of 1.47x to 1.78x was measured (OLD: 22s - 25s, NEW: 14s - 15s)",
+          "timestamp": "2023-08-10T09:03:36+02:00",
+          "tree_id": "a60b1dbb995003ff6e88906b45a688fdf0e6f20e",
+          "url": "https://github.com/py-pdf/pypdf/commit/f0781db400eb46a5cc80d4c2b43763afd116f5a8"
+        },
+        "date": 1691651325921,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6349342862093543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03617687380485232",
+            "extra": "mean: 1.5749661370000012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.643422811574215,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012162800689663132",
+            "extra": "mean: 103.69762059999914 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19552582216242073,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011138994410059024",
+            "extra": "mean: 5.114413988599997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.087632879923367,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014902754753134643",
+            "extra": "mean: 110.03965644444393 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03168382619844368,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1338985236729066",
+            "extra": "mean: 31.561844637599997 sec\nrounds: 5"
           }
         ]
       }
