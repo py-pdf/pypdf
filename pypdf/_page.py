@@ -484,10 +484,11 @@ class PageObject(DictionaryObject):
     ) -> List[Union[str, List[str]]]:
         if call_stack is None:
             call_stack = []
-        if obj in call_stack:
+        _i = getattr(obj, "indirect_reference", None)
+        if _i in call_stack:
             return []
         else:
-            call_stack.append(obj)
+            call_stack.append(_i)
         if self.inline_images_keys is None:
             nb_inlines = len(
                 re.findall(
