@@ -1589,3 +1589,13 @@ def test_missing_info():
 
     writer = PdfWriter(clone_from=reader)
     assert len(writer.pages) == len(reader.pages)
+
+
+@pytest.mark.enable_socket()
+def test_no_t_in_articles():
+    """Cf #2078"""
+    url = "https://github.com/py-pdf/pypdf/files/12311735/bad.pdf"
+    name = "iss2078.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)

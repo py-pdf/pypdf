@@ -3085,7 +3085,11 @@ class PdfWriter:
         for p in pages.values():
             pp = p.original_page
             for a in pp.get("/B", ()):
-                thr = a.get_object()["/T"]
+                thr = a.get_object().get("/T")
+                if thr is None:
+                    continue
+                else:
+                    thr = thr.get_object()
                 if thr.indirect_reference.idnum not in self._id_translated[
                     id(reader)
                 ] and fltr.search(thr["/I"]["/Title"]):
