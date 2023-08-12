@@ -1436,3 +1436,17 @@ def test_iss1825():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[0]
     page.extract_text()
+
+
+@pytest.mark.enable_socket()
+def test_iss2082():
+    url = "https://github.com/py-pdf/pypdf/files/12317939/test.pdf"
+    name = "iss2082.pdf"
+    b = get_data_from_url(url, name=name)
+    reader = PdfReader(BytesIO(b))
+    reader.pages[0].extract_text()
+
+    bb = bytearray(b)
+    bb[b.find(b"xref") + 2] = ord(b"E")
+    with pytest.raises(PdfReadError):
+        reader = PdfReader(BytesIO(bb))

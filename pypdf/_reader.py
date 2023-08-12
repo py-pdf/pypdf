@@ -1634,8 +1634,8 @@ class PdfReader:
 
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
-        ref = stream.read(4)
-        if ref[:3] != b"ref":
+        ref = stream.read(3)
+        if ref != b"ref":
             raise PdfReadError("xref table read error")
         read_non_whitespace(stream)
         stream.seek(-1, 1)
