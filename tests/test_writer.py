@@ -1596,7 +1596,7 @@ def test_germanfields():
     """Cf #2035"""
     url = "https://github.com/py-pdf/pypdf/files/12194195/test.pdf"
     name = "germanfields.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter(clone_from=reader)
     form_fields = {"Text Box 1": "test æ ø å"}
     writer.update_page_form_field_values(
