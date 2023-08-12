@@ -209,3 +209,13 @@ def test_image_extraction(src, page_index, image_key, expected):
         with open(f"page-{page_index}-{actual_image.name}", "wb") as fp:
             fp.write(actual_image.data)
     assert image_similarity(BytesIO(actual_image.data), expected) >= 0.99
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.timeout(30)
+def test_loop_in_image_keys():
+    """Cf #2077"""
+    url = "https://github.com/py-pdf/pypdf/files/12309492/example_134.pdf"
+    name = "iss2077.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].images.keys()
