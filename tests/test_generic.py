@@ -34,7 +34,7 @@ from pypdf.generic import (
     read_string_from_stream,
 )
 
-from . import ReaderDummy, get_pdf_from_url
+from . import ReaderDummy, get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -592,48 +592,51 @@ def test_remove_child_in_tree():
 
 
 @pytest.mark.enable_socket()
-def test_dict_read_from_stream(caplog):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
-    name = "tika-984877.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+@pytest.mark.parametrize(
+    ("url", "name", "caplog_content"),
+    [
+        (  # parse_content_stream_peek_percentage
+            "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf",
+            "tika-985770.pdf",
+            "",
+        ),
+        (  # read_inline_image_no_has_q
+            "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf",
+            "tika-998719.pdf",
+            "",
+        ),
+        (  # read_inline_image_loc_neg_1
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf",
+            "tika-935066.pdf",
+            "",
+        ),
+        (  # object_read_from_stream_unicode_error
+            "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf",
+            "tika-974966.pdf",
+            "",
+        ),
+        (  # dict_read_from_stream
+            "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf",
+            "tika-984877.pdf",
+            "Multiple definitions in dictionary at byte 0x1084 for key /Length",
+        ),
+    ],
+    ids=[
+        "parse_content_stream_peek_percentage",
+        "read_inline_image_no_has_q",
+        "read_inline_image_loc_neg_1",
+        "object_read_from_stream_unicode_error",
+        "dict_read_from_stream",
+    ],
+)
+def test_extract_text(caplog, url: str, name: str, caplog_content: str):
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
-    assert (
-        "Multiple definitions in dictionary at byte 0x1084 for key /Length"
-        in caplog.text
-    )
-
-
-@pytest.mark.enable_socket()
-def test_parse_content_stream_peek_percentage():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
-    name = "tika-985770.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_read_inline_image_no_has_q():
-    # pdf/df7e1add3156af17a372bc165e47a244.pdf
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
-    name = "tika-998719.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_read_inline_image_loc_neg_1():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
-    name = "tika-935066.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
+    if caplog_content == "":
+        assert caplog_content == caplog.text
+    else:
+        assert caplog_content in caplog.text
 
 
 @pytest.mark.slow()
@@ -642,7 +645,7 @@ def test_text_string_write_to_stream():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
     name = "tika-924562.pdf"
 
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     for page in writer.pages:
@@ -650,21 +653,11 @@ def test_text_string_write_to_stream():
 
 
 @pytest.mark.enable_socket()
-def test_name_object_read_from_stream_unicode_error():  # L588
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
-    name = "tika-974966.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
 def test_bool_repr(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
     name = "tika-932449.pdf"
 
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     write_path = tmp_path / "tmp-fields-report.txt"
     with open(write_path, "w") as fp:
         fields = reader.get_fields(fileobj=fp)
@@ -690,7 +683,7 @@ def test_issue_997(mock_logger_warning, pdf_file_path):
     name = "gh-issue-997.pdf"
 
     merger = PdfMerger()
-    merger.append(BytesIO(get_pdf_from_url(url, name=name)))  # here the error raises
+    merger.append(BytesIO(get_data_from_url(url, name=name)))  # here the error raises
     with open(pdf_file_path, "wb") as f:
         merger.write(f)
     merger.close()
@@ -701,7 +694,7 @@ def test_issue_997(mock_logger_warning, pdf_file_path):
     merger = PdfMerger(strict=True)
     with pytest.raises(PdfReadError) as exc:
         merger.append(
-            BytesIO(get_pdf_from_url(url, name=name))
+            BytesIO(get_data_from_url(url, name=name))
         )  # here the error raises
     assert exc.value.args[0] == "Could not find object."
     with open(pdf_file_path, "wb") as f:
@@ -1162,7 +1155,7 @@ def test_append_with_indirectobject_not_pointing(caplog):
     """
     url = "https://github.com/py-pdf/pypdf/files/10729142/document.pdf"
     name = "tst_iss1631.pdf"
-    data = BytesIO(get_pdf_from_url(url, name=name))
+    data = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(data, strict=False)
     writer = PdfWriter()
     writer.append(reader)
@@ -1178,7 +1171,7 @@ def test_iss1615_1673():
     # #1615
     url = "https://github.com/py-pdf/pypdf/files/10671366/graph_letter.pdf"
     name = "graph_letter.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
     assert (
@@ -1190,7 +1183,7 @@ def test_iss1615_1673():
     # #1673
     url = "https://github.com/py-pdf/pypdf/files/10848750/budgeting-loan-form-sf500.pdf"
     name = "budgeting-loan-form-sf500.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
@@ -1203,7 +1196,7 @@ def test_destination_withoutzoom():
         "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
     )
     name = "2021_book_security.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.outline
 
     out = BytesIO()

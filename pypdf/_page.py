@@ -477,8 +477,18 @@ class PageObject(DictionaryObject):
         return images_extracted
 
     def _get_ids_image(
-        self, obj: Optional[DictionaryObject] = None, ancest: Optional[List[str]] = None
+        self,
+        obj: Optional[DictionaryObject] = None,
+        ancest: Optional[List[str]] = None,
+        call_stack: Optional[List[Any]] = None,
     ) -> List[Union[str, List[str]]]:
+        if call_stack is None:
+            call_stack = []
+        _i = getattr(obj, "indirect_reference", None)
+        if _i in call_stack:
+            return []
+        else:
+            call_stack.append(_i)
         if self.inline_images_keys is None:
             nb_inlines = len(
                 re.findall(
@@ -502,7 +512,7 @@ class PageObject(DictionaryObject):
             if x_object[o][IA.SUBTYPE] == "/Image":
                 lst.append(o if len(ancest) == 0 else ancest + [o])
             else:  # is a form with possible images inside
-                lst.extend(self._get_ids_image(x_object[o], ancest + [o]))
+                lst.extend(self._get_ids_image(x_object[o], ancest + [o], call_stack))
         return lst + self.inline_images_keys
 
     def _get_image(

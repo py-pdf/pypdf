@@ -98,7 +98,7 @@ with open("out.pdf", "wb") as f:
 ```
 
 `page.compress_content_streams` uses [`zlib.compress`](https://docs.python.org/3/library/zlib.html#zlib.compress)
-and supports the `level` paramter: `level=0` means no compression,
+and supports the `level` parameter: `level=0` means no compression,
 `level=9` refers to the highest compression.
 
 Using this method, we have seen a reduction by 70% (from 11.8 MB to 3.5 MB)
