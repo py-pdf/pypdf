@@ -99,13 +99,13 @@ def crlf_space_check(
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
     spacewidth: float,
 ) -> Tuple[str, str, List[float]]:
+    m_prev = mult(tm_prev, cm_matrix)
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
-    delta_x = m[4] - tm_prev[4]
-    delta_y = m[5] - tm_prev[5]
+    delta_x = m[4] - m_prev[4]
+    delta_y = m[5] - m_prev[5]
     k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
     f = font_size * k
-    tm_prev = m
     if orientation not in orientations:
         raise OrientationNotFoundError
     try:
@@ -117,7 +117,7 @@ def crlf_space_check(
                         visitor_text(
                             text + "\n",
                             cm_matrix,
-                            tm_matrix,
+                            tm_prev,
                             cmap[3],
                             font_size,
                         )
@@ -136,7 +136,7 @@ def crlf_space_check(
                         visitor_text(
                             text + "\n",
                             cm_matrix,
-                            tm_matrix,
+                            tm_prev,
                             cmap[3],
                             font_size,
                         )
@@ -155,7 +155,7 @@ def crlf_space_check(
                         visitor_text(
                             text + "\n",
                             cm_matrix,
-                            tm_matrix,
+                            tm_prev,
                             cmap[3],
                             font_size,
                         )
@@ -174,7 +174,7 @@ def crlf_space_check(
                         visitor_text(
                             text + "\n",
                             cm_matrix,
-                            tm_matrix,
+                            tm_prev,
                             cmap[3],
                             font_size,
                         )
@@ -187,6 +187,7 @@ def crlf_space_check(
                 text += " "
     except Exception:
         pass
+    tm_prev = tm_matrix.copy()
     return text, output, tm_prev
 
 

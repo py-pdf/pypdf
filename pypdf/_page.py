@@ -1936,7 +1936,7 @@ class PageObject(DictionaryObject):
             1.0,
             0.0,
             0.0,
-        ]  # will store cm_matrix * tm_matrix
+        ]  # will store previous tm_matrix
         char_scale = 1.0
         space_scale = 1.0
         _space_width: float = 500.0  # will be set correctly at first Tf
