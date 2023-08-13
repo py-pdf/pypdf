@@ -1123,30 +1123,30 @@ class PageObject(DictionaryObject):
 
         page2content = page2.get_contents()
         if page2content is not None:
-            # rect = getattr(page2, MERGE_CROP_BOX)
-            # page2content.operations.insert(
-                # 0,
-                # (
-                    # map(
-                        # FloatObject,
-                        # [
-                            # rect.left,
-                            # rect.bottom,
-                            # rect.width,
-                            # rect.height,
-                        # ],
-                    # ),
-                    # "re",
-                # ),
-            # )
-            # page2content.operations.insert(1, ([], "W"))
-            # page2content.operations.insert(2, ([], "n"))
+            rect = getattr(page2, MERGE_CROP_BOX)
+            page2content.operations.insert(
+                0,
+                (
+                    map(
+                        FloatObject,
+                        [
+                            rect.left,
+                            rect.bottom,
+                            rect.width,
+                            rect.height,
+                        ],
+                    ),
+                    "re",
+                ),
+            )
+            page2content.operations.insert(1, ([], "W"))
+            page2content.operations.insert(2, ([], "n"))
             if page2transformation is not None:
                 page2content = page2transformation(page2content)
             page2content = PageObject._content_stream_rename(
                 page2content, rename, self.pdf
             )
-            # page2content = PageObject._push_pop_gs(page2content, self.pdf)
+            page2content = PageObject._push_pop_gs(page2content, self.pdf)
             if over:
                 new_content_array.append(page2content)
             else:
@@ -1156,7 +1156,7 @@ class PageObject(DictionaryObject):
         if expand:
             self._expand_mediabox(page2, ctm)
 
-        self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
+        self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
 

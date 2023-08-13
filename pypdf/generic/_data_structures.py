@@ -1007,7 +1007,6 @@ class ContentStream(DecodedStreamObject):
                 assert stream_data is not None
                 self._data = b_(stream_data)
             self.forced_encoding = forced_encoding
-        # self.__parse_content_stream(BytesIO(self._data))  # sets self._operations
 
     def clone(
         self,
@@ -1196,6 +1195,12 @@ class ContentStream(DecodedStreamObject):
                 new_data.write(b"\n")
             self._data = new_data.getvalue()
         return self._data
+
+    @property
+    def operations(self):
+        if not self._operations and self._data:
+            self.__parse_content_stream(BytesIO(self._data))
+        return self._operations
 
 
 def read_object(
