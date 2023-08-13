@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## Version 3.15.1, 2023-08-13
+
+### Performance Improvements (PI)
+-  optimize _decode_png_prediction (#2068)
+
+### Bug Fixes (BUG)
+-  Fix incorrect tm_matrix in call to visitor_text (#2060)
+-  Writing German characters into form fields (#2047)
+-  Prevent stall when accessing image in corrupted pdf (#2081)
+-  append() fails when articles do not have /T (#2080)
+
+### Robustness (ROB)
+-  Cope with xref not followed by separator (#2083)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.0...3.15.1)
+
 ## Version 3.15.0, 2023-08-06
 
 ### New Features (ENH)
