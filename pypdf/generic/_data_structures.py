@@ -818,6 +818,20 @@ class StreamObject(DictionaryObject):
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
 
+    def get_data(self) -> bytes:
+        return self._data
+
+    def set_data(self, data: bytes) -> None:
+        self._data = data
+
+    def getData(self) -> Any:  # deprecated
+        deprecation_with_replacement("getData", "get_data", "3.0.0")
+        return self._data
+
+    def setData(self, data: Any) -> None:  # deprecated
+        deprecation_with_replacement("setData", "set_data", "3.0.0")
+        self.set_data(data)
+
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
         data += b_(self._data)
@@ -906,19 +920,7 @@ class StreamObject(DictionaryObject):
 
 
 class DecodedStreamObject(StreamObject):
-    def get_data(self) -> bytes:
-        return self._data
-
-    def set_data(self, data: bytes) -> None:
-        self._data = data
-
-    def getData(self) -> Any:  # deprecated
-        deprecation_with_replacement("getData", "get_data", "3.0.0")
-        return self._data
-
-    def setData(self, data: Any) -> None:  # deprecated
-        deprecation_with_replacement("setData", "set_data", "3.0.0")
-        self.set_data(data)
+    pass
 
 
 class EncodedStreamObject(StreamObject):
@@ -935,6 +937,7 @@ class EncodedStreamObject(StreamObject):
         deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
         self.decoded_self = value
 
+    # This overrides the parent method:
     def get_data(self) -> Union[None, str, bytes]:
         from ..filters import decode_stream_data
 
@@ -945,17 +948,14 @@ class EncodedStreamObject(StreamObject):
             # create decoded object
             decoded = DecodedStreamObject()
 
-            decoded._data = decode_stream_data(self)
+            decoded.set_data(decode_stream_data(self))
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
             self.decoded_self = decoded
-            return decoded._data
+            return decoded.get_data()
 
-    def getData(self) -> Union[None, str, bytes]:  # deprecated
-        deprecation_with_replacement("getData", "get_data", "3.0.0")
-        return self.get_data()
-
+    # This overrides the parent method:
     def set_data(self, data: Any) -> None:  # deprecated
         from ..filters import FlateDecode
 
@@ -963,16 +963,12 @@ class EncodedStreamObject(StreamObject):
             if not isinstance(data, bytes):
                 raise TypeError("data must be bytes")
             assert self.decoded_self is not None
-            self.decoded_self._data = data
-            self._data = FlateDecode.encode(data)
+            self.decoded_self.set_data(data)
+            super().set_data(FlateDecode.encode(data))
         else:
             raise PdfReadError(
                 "Streams encoded with different filter from only FlateDecode is not supported"
             )
-
-    def setData(self, data: Any) -> None:  # deprecated
-        deprecation_with_replacement("setData", "set_data", "3.0.0")
-        return self.set_data(data)
 
 
 class ContentStream(DecodedStreamObject):
@@ -992,7 +988,7 @@ class ContentStream(DecodedStreamObject):
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
         if stream is None:
-            self._data = b""
+            super().set_data(b"")
         else:
             stream = stream.get_object()
             if isinstance(stream, ArrayObject):
@@ -1001,11 +997,11 @@ class ContentStream(DecodedStreamObject):
                     data += b_(s.get_object().get_data())
                     if len(data) == 0 or data[-1] != b"\n":
                         data += b"\n"
-                self._data = bytes(data)
+                super().set_data(bytes(data))
             else:
                 stream_data = stream.get_data()
                 assert stream_data is not None
-                self._data = b_(stream_data)
+                super().set_data(b_(stream_data))
             self.forced_encoding = forced_encoding
 
     def clone(
@@ -1059,8 +1055,8 @@ class ContentStream(DecodedStreamObject):
             ignore_fields:
         """
         src_cs = cast("ContentStream", src)
+        super().set_data(src_cs._data)
         self.pdf = pdf_dest
-        self._data = src_cs._data
         self._operations = list(src_cs._operations)
         self.forced_encoding = src_cs.forced_encoding
         # no need to call DictionaryObjection or anything
@@ -1175,6 +1171,7 @@ class ContentStream(DecodedStreamObject):
                         data.write(info)
         return {"settings": settings, "data": data.getvalue()}
 
+    # This overrides the parent method:
     def get_data(self) -> bytes:
         if not self._data:
             new_data = BytesIO()
@@ -1197,10 +1194,16 @@ class ContentStream(DecodedStreamObject):
         return self._data
 
     @property
-    def operations(self):
+    def operations(self) -> List[Tuple[Any, Any]]:
         if not self._operations and self._data:
             self.__parse_content_stream(BytesIO(self._data))
+            self._data = b""
         return self._operations
+
+    # This overrides the parent method:
+    def set_data(self, data: bytes) -> None:
+        super().set_data(data)
+        self._operations = []
 
 
 def read_object(
