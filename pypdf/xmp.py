@@ -24,6 +24,7 @@ from xml.parsers.expat import ExpatError
 
 from ._utils import (
     StreamType,
+    deprecate_no_replacement,
     deprecate_with_replacement,
     deprecation_with_replacement,
 )
@@ -234,7 +235,11 @@ class XmpInformation(PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
-        self.stream.write_to_stream(stream, encryption_key)
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
+        self.stream.write_to_stream(stream)
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -245,7 +250,7 @@ class XmpInformation(PdfObject):
         .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
         for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):

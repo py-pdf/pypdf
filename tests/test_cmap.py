@@ -7,7 +7,7 @@ from pypdf import PdfReader
 from pypdf._cmap import build_char_map
 from pypdf.errors import PdfReadWarning
 
-from . import get_pdf_from_url
+from . import get_data_from_url
 
 
 @pytest.mark.enable_socket()
@@ -41,7 +41,7 @@ from . import get_pdf_from_url
     ],
 )
 def test_text_extraction_slow(caplog, url: str, name: str, strict: bool):
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)), strict=strict)
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=strict)
     for page in reader.pages:
         page.extract_text()
     assert caplog.text == ""
@@ -81,7 +81,7 @@ def test_text_extraction_slow(caplog, url: str, name: str, strict: bool):
 )
 def test_text_extraction_fast(caplog, url: str, name: str, strict: bool):
     """Text extraction runs without exceptions or warnings"""
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)), strict=strict)
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=strict)
     for page in reader.pages:
         page.extract_text()
     assert caplog.text == ""
@@ -92,7 +92,7 @@ def test_parse_encoding_advanced_encoding_not_implemented():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957144.pdf"
     name = "tika-957144.pdf"
 
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     with pytest.warns(PdfReadWarning, match="Advanced encoding .* not implemented yet"):
         for page in reader.pages:
             page.extract_text()
@@ -103,7 +103,7 @@ def test_ascii_charset():
     # iss #1312
     url = "https://github.com/py-pdf/pypdf/files/9472500/main.pdf"
     name = "ascii charset.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert "/a" not in reader.pages[0].extract_text()
 
 
@@ -129,7 +129,7 @@ def test_ascii_charset():
 def test_text_extraction_of_specific_pages(
     url: str, name: str, page_nb: int, within_text
 ):
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert within_text in reader.pages[page_nb].extract_text()
 
 
@@ -137,7 +137,7 @@ def test_text_extraction_of_specific_pages(
 def test_iss1533():
     url = "https://github.com/py-pdf/pypdf/files/10376149/iss1533.pdf"
     name = "iss1533.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].extract_text()  # no error
     assert build_char_map("/F", 200, reader.pages[0])[3]["\x01"] == "Ü"
 
@@ -163,8 +163,29 @@ def test_iss1533():
     ],
 )
 def test_cmap_encodings(caplog, url, name, page_index, within_text, caplog_text):
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     extracted = reader.pages[page_index].extract_text()  # no error
     for contained in within_text:
         assert contained in extracted
     assert caplog_text in caplog.text
+
+
+@pytest.mark.enable_socket()
+def test_latex():
+    url = "https://github.com/py-pdf/pypdf/files/12163370/math-in-text-created-via-latex.pdf"
+    name = "math_latex.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    txt = reader.pages[0].extract_text()  # no error
+    for pat in ("α", "β", "γ", "ϕ", "φ", "ℏ", "∫", "∂", "·", "×"):
+        assert pat in txt
+    # actually the ϕ and φ seems to be crossed in latex
+
+
+@pytest.mark.enable_socket()
+def test_unixxx_glyphs():
+    url = "https://arxiv.org/pdf/2201.00021.pdf"
+    name = "unixxx_glyphs.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    txt = reader.pages[0].extract_text()  # no error
+    for pat in ("闫耀庭", "龚龑", "张江水", "1′′.2"):
+        assert pat in txt

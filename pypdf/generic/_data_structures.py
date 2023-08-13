@@ -32,16 +32,27 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import logging
 import re
 from io import BytesIO
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 from .._protocols import PdfReaderProtocol, PdfWriterProtocol
 from .._utils import (
     WHITESPACES,
     StreamType,
     b_,
+    deprecate_no_replacement,
     deprecate_with_replacement,
     deprecation_with_replacement,
-    hex_str,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -80,7 +91,7 @@ class ArrayObject(list, PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "ArrayObject":
         """Clone object into pdf_dest."""
         try:
@@ -113,17 +124,21 @@ class ArrayObject(list, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"[")
         for data in self:
             stream.write(b" ")
-            data.write_to_stream(stream, encryption_key)
+            data.write_to_stream(stream)
         stream.write(b" ]")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(
@@ -163,7 +178,7 @@ class DictionaryObject(dict, PdfObject):
         self,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "DictionaryObject":
         """Clone object into pdf_dest."""
         try:
@@ -187,7 +202,7 @@ class DictionaryObject(dict, PdfObject):
         src: "DictionaryObject",
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
@@ -198,6 +213,20 @@ class DictionaryObject(dict, PdfObject):
             force_duplicate:
             ignore_fields:
         """
+        # first we remove for the ignore_fields
+        # that are for a limited number of levels
+        x = 0
+        assert ignore_fields is not None
+        ignore_fields = list(ignore_fields)
+        while x < len(ignore_fields):
+            if isinstance(ignore_fields[x], int):
+                if cast(int, ignore_fields[x]) <= 0:
+                    del ignore_fields[x]
+                    del ignore_fields[x]
+                    continue
+                else:
+                    ignore_fields[x] -= 1  # type:ignore
+            x += 1
         #  First check if this is a chain list, we need to loop to prevent recur
         if any(
             field not in ignore_fields
@@ -230,10 +259,10 @@ class DictionaryObject(dict, PdfObject):
                             == cast(DictionaryObject, src[k]).get("/Type", None)
                         )
                     ):
-                        cur_obj: Optional["DictionaryObject"] = cast(
+                        cur_obj: Optional[DictionaryObject] = cast(
                             "DictionaryObject", src[k]
                         )
-                        prev_obj: Optional["DictionaryObject"] = self
+                        prev_obj: Optional[DictionaryObject] = self
                         while cur_obj is not None:
                             clon = cast(
                                 "DictionaryObject",
@@ -340,11 +369,17 @@ class DictionaryObject(dict, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"<<\n")
         for key, value in list(self.items()):
+            if len(key) > 2 and key[1] == "%" and key[-1] == "%":
+                continue
             key.write_to_stream(stream, encryption_key)
             stream.write(b" ")
-            value.write_to_stream(stream, encryption_key)
+            value.write_to_stream(stream)
             stream.write(b"\n")
         stream.write(b">>")
 
@@ -352,7 +387,7 @@ class DictionaryObject(dict, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream, encryption_key)
+        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(
@@ -390,7 +425,7 @@ class DictionaryObject(dict, PdfObject):
         tmp = stream.read(2)
         if tmp != b"<<":
             raise PdfReadError(
-                f"Dictionary read error at byte {hex_str(stream.tell())}: "
+                f"Dictionary read error at byte {hex(stream.tell())}: "
                 "stream must begin with '<<'"
             )
         data: Dict[Any, Any] = {}
@@ -428,7 +463,7 @@ class DictionaryObject(dict, PdfObject):
                 # multiple definitions of key not permitted
                 msg = (
                     f"Multiple definitions in dictionary at byte "
-                    f"{hex_str(stream.tell())} for key {key}"
+                    f"{hex(stream.tell())} for key {key}"
                 )
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
@@ -491,7 +526,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
                     raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at byte "
-                        f"{hex_str(stream.tell())} (nd='{ndstream!r}', end='{end!r}')."
+                        f"{hex(stream.tell())} (nd='{ndstream!r}', end='{end!r}')."
                     )
         else:
             stream.seek(pos, 0)
@@ -546,19 +581,43 @@ class TreeObject(DictionaryObject):
     def add_child(self, child: Any, pdf: PdfWriterProtocol) -> None:
         self.insert_child(child, None, pdf)
 
-    def insert_child(self, child: Any, before: Any, pdf: PdfWriterProtocol) -> None:
-        def inc_parent_counter(
-            parent: Union[None, IndirectObject, TreeObject], n: int
-        ) -> None:
-            if parent is None:
-                return
-            parent = cast("TreeObject", parent.get_object())
-            if "/Count" in parent:
-                parent[NameObject("/Count")] = NumberObject(
-                    cast(int, parent[NameObject("/Count")]) + n
-                )
-                inc_parent_counter(parent.get("/Parent", None), n)
+    def inc_parent_counter_default(
+        self, parent: Union[None, IndirectObject, "TreeObject"], n: int
+    ) -> None:
+        if parent is None:
+            return
+        parent = cast("TreeObject", parent.get_object())
+        if "/Count" in parent:
+            parent[NameObject("/Count")] = NumberObject(
+                max(0, cast(int, parent[NameObject("/Count")]) + n)
+            )
+            self.inc_parent_counter_default(parent.get("/Parent", None), n)
 
+    def inc_parent_counter_outline(
+        self, parent: Union[None, IndirectObject, "TreeObject"], n: int
+    ) -> None:
+        if parent is None:
+            return
+        parent = cast("TreeObject", parent.get_object())
+        #  BooleanObject requires comparison with == not is
+        opn = parent.get("/%is_open%", True) == True  # noqa
+        c = cast(int, parent.get("/Count", 0))
+        if c < 0:
+            c = abs(c)
+        parent[NameObject("/Count")] = NumberObject((c + n) * (1 if opn else -1))
+        if not opn:
+            return
+        self.inc_parent_counter_outline(parent.get("/Parent", None), n)
+
+    def insert_child(
+        self,
+        child: Any,
+        before: Any,
+        pdf: PdfWriterProtocol,
+        inc_parent_counter: Optional[Callable] = None,
+    ) -> IndirectObject:
+        if inc_parent_counter is None:
+            inc_parent_counter = self.inc_parent_counter_default
         child_obj = child.get_object()
         child = child.indirect_reference  # get_reference(child_obj)
 
@@ -573,7 +632,7 @@ class TreeObject(DictionaryObject):
                 del child_obj["/Next"]
             if "/Prev" in child_obj:
                 del child_obj["/Prev"]
-            return
+            return child
         else:
             prev = cast("DictionaryObject", self["/Last"])
 
@@ -588,7 +647,7 @@ class TreeObject(DictionaryObject):
                     del child_obj["/Next"]
                 self[NameObject("/Last")] = child
                 inc_parent_counter(self, child_obj.get("/Count", 1))
-                return
+                return child
         try:  # insert as first or in the middle
             assert isinstance(prev["/Prev"], DictionaryObject)
             prev["/Prev"][NameObject("/Next")] = child
@@ -599,6 +658,7 @@ class TreeObject(DictionaryObject):
         prev[NameObject("/Prev")] = child
         child_obj[NameObject("/Parent")] = self.indirect_reference
         inc_parent_counter(self, child_obj.get("/Count", 1))
+        return child
 
     def removeChild(self, child: Any) -> None:  # deprecated
         deprecation_with_replacement("removeChild", "remove_child", "3.0.0")
@@ -629,8 +689,7 @@ class TreeObject(DictionaryObject):
 
             else:
                 # Removing only tree node
-                assert self[NameObject("/Count")] == 1
-                del self[NameObject("/Count")]
+                self[NameObject("/Count")] = NumberObject(0)
                 del self[NameObject("/First")]
                 if NameObject("/Last") in self:
                     del self[NameObject("/Last")]
@@ -727,14 +786,14 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
         self.__data: Optional[str] = None
-        self.decoded_self: Optional["DecodedStreamObject"] = None
+        self.decoded_self: Optional[DecodedStreamObject] = None
 
     def _clone(
         self,
         src: DictionaryObject,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
@@ -785,16 +844,15 @@ class StreamObject(DictionaryObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
-        DictionaryObject.write_to_stream(self, stream, encryption_key)
+        DictionaryObject.write_to_stream(self, stream)
         del self[SA.LENGTH]
         stream.write(b"\nstream\n")
-        data = self._data
-        if encryption_key:
-            from .._security import RC4_encrypt
-
-            data = RC4_encrypt(encryption_key, data)
-        stream.write(data)
+        stream.write(self._data)
         stream.write(b"\nendstream")
 
     @staticmethod
@@ -807,7 +865,7 @@ class StreamObject(DictionaryObject):
     def initialize_from_dictionary(
         data: Dict[str, Any]
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
-        retval: Union["EncodedStreamObject", "DecodedStreamObject"]
+        retval: Union[EncodedStreamObject, DecodedStreamObject]
         if SA.FILTER in data:
             retval = EncodedStreamObject()
         else:
@@ -822,7 +880,7 @@ class StreamObject(DictionaryObject):
         deprecation_with_replacement("flateEncode", "flate_encode", "3.0.0")
         return self.flate_encode()
 
-    def flate_encode(self) -> "EncodedStreamObject":
+    def flate_encode(self, level: int = -1) -> "EncodedStreamObject":
         from ..filters import FlateDecode
 
         if SA.FILTER in self:
@@ -851,7 +909,7 @@ class StreamObject(DictionaryObject):
         retval[NameObject(SA.FILTER)] = f
         if parms is not None:
             retval[NameObject(SA.DECODE_PARMS)] = parms
-        retval._data = FlateDecode.encode(self._data)
+        retval._data = FlateDecode.encode(self._data, level)
         return retval
 
 
@@ -873,7 +931,7 @@ class DecodedStreamObject(StreamObject):
 
 class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
-        self.decoded_self: Optional["DecodedStreamObject"] = None
+        self.decoded_self: Optional[DecodedStreamObject] = None
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # deprecated
@@ -962,7 +1020,7 @@ class ContentStream(DecodedStreamObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
+        ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "ContentStream":
         """
         Clone object into pdf_dest.
@@ -997,7 +1055,7 @@ class ContentStream(DecodedStreamObject):
         src: DictionaryObject,
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str, ...], List[str]],
+        ignore_fields: Optional[Sequence[Union[str, int]]],
     ) -> None:
         """
         Update the object from src.
@@ -1369,7 +1427,9 @@ class Destination(TreeObject):
     node: Optional[
         DictionaryObject
     ] = None  # node provide access to the original Object
-    childs: List[Any] = []  # used in PdfWriter - TODO: should be children
+    childs: List[
+        Any
+    ] = []  # used in PdfWriter - TODO: should be children  # noqa: RUF012
 
     def __init__(
         self,
@@ -1439,18 +1499,22 @@ class Destination(TreeObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        if encryption_key is not None:  # deprecated
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         stream.write(b"<<\n")
         key = NameObject("/D")
-        key.write_to_stream(stream, encryption_key)
+        key.write_to_stream(stream)
         stream.write(b" ")
         value = self.dest_array
-        value.write_to_stream(stream, encryption_key)
+        value.write_to_stream(stream)
 
         key = NameObject("/S")
-        key.write_to_stream(stream, encryption_key)
+        key.write_to_stream(stream)
         stream.write(b" ")
         value_s = NameObject("/GoTo")
-        value_s.write_to_stream(stream, encryption_key)
+        value_s.write_to_stream(stream)
 
         stream.write(b"\n")
         stream.write(b">>")

@@ -27,7 +27,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_pdf_from_url, normalize_warnings
+from . import get_data_from_url, normalize_warnings
 
 try:
     from Crypto.Cipher import AES  # noqa: F401
@@ -50,6 +50,8 @@ def test_get_num_pages(src, num_pages):
     src = RESOURCE_ROOT / src
     reader = PdfReader(src)
     assert len(reader.pages) == num_pages
+    # from #1911
+    assert "/Size" in reader.trailer
 
 
 @pytest.mark.parametrize(
@@ -108,6 +110,23 @@ def test_read_metadata(pdf_path, expected):
         docinfo.modification_date_raw
         if "/Title" in metadict:
             assert metadict["/Title"] == docinfo.title
+
+
+def test_iss1943():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    docinfo = reader.metadata
+    docinfo.update(
+        {
+            NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
+            NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
+        }
+    )
+    docinfo.creation_date
+    docinfo.creation_date_raw
+    docinfo.modification_date
+    docinfo.modification_date_raw
+    docinfo.update({NameObject("/CreationDate"): NumberObject(1)})
+    assert docinfo.creation_date is None
 
 
 @pytest.mark.samples()
@@ -693,7 +712,7 @@ def test_issue604(caplog, strict):
 
         # oi can be destination or a list:preferred to just print them
         for oi in outline:
-            out.append(get_dest_pages(oi))
+            out.append(get_dest_pages(oi))  # noqa: PERF401
 
 
 def test_decode_permissions():
@@ -761,7 +780,7 @@ def test_converttoint_deprecated():
 @pytest.mark.enable_socket()
 def test_iss925():
     url = "https://github.com/py-pdf/pypdf/files/8796328/1.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="iss925.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name="iss925.pdf")))
 
     for page_sliced in reader.pages:
         page_object = page_sliced.get_object()
@@ -820,7 +839,7 @@ def test_read_form_416():
     url = (
         "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
     )
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="issue_416.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name="issue_416.pdf")))
     fields = reader.get_form_text_fields()
     assert len(fields) > 0
 
@@ -858,7 +877,7 @@ def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
     msg = "incorrect startxref pointer(2)"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-981961.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name="tika-981961.pdf")))
     for page in reader.pages:
         page.extract_text()
     assert normalize_warnings(caplog.text) == [msg]
@@ -870,7 +889,7 @@ def test_extract_text_xref_issue_3(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
     msg = "incorrect startxref pointer(3)"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-977774.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name="tika-977774.pdf")))
     for page in reader.pages:
         page.extract_text()
     assert normalize_warnings(caplog.text) == [msg]
@@ -880,7 +899,7 @@ def test_extract_text_xref_issue_3(caplog):
 def test_extract_text_pdf15():
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976030.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-976030.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name="tika-976030.pdf")))
     for page in reader.pages:
         page.extract_text()
 
@@ -889,7 +908,7 @@ def test_extract_text_pdf15():
 def test_extract_text_xref_table_21_bytes_clrf():
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/956/956939.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-956939.pdf")))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name="tika-956939.pdf")))
     for page in reader.pages:
         page.extract_text()
 
@@ -898,7 +917,7 @@ def test_extract_text_xref_table_21_bytes_clrf():
 def test_get_fields():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972486.pdf"
     name = "tika-972486.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     fields = reader.get_fields()
     assert fields is not None
     assert "c1-1" in fields
@@ -911,7 +930,7 @@ def test_get_fields():
 def test_get_full_qualified_fields():
     url = "https://github.com/py-pdf/pypdf/files/10142389/fields_with_dots.pdf"
     name = "fields_with_dots.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     fields = reader.get_form_text_fields(True)
     assert fields is not None
     assert "customer.name" in fields
@@ -933,14 +952,14 @@ def test_get_fields_read_else_block():
     # covers also issue 1089
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/934/934771.pdf"
     name = "tika-934771.pdf"
-    PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
 
 @pytest.mark.enable_socket()
 def test_get_fields_read_else_block2():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914902.pdf"
     name = "tika-914902.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     fields = reader.get_fields()
     assert fields is None
 
@@ -950,14 +969,14 @@ def test_get_fields_read_else_block2():
 def test_get_fields_read_else_block3():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
     name = "tika-957721.pdf"
-    PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
 
 @pytest.mark.enable_socket()
 def test_metadata_is_none():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/963/963692.pdf"
     name = "tika-963692.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.metadata is None
 
 
@@ -965,7 +984,7 @@ def test_metadata_is_none():
 def test_get_fields_read_write_report(txt_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/909/909655.pdf"
     name = "tika-909655.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     with open(txt_file_path, "w") as fp:
         fields = reader.get_fields(fileobj=fp)
     assert fields
@@ -987,7 +1006,7 @@ def test_xfa(src):
 def test_xfa_non_empty():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf"
     name = "tika-942050.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert list(reader.xfa.keys()) == [
         "preamble",
         "config",
@@ -1015,7 +1034,7 @@ def test_header(src, pdf_header):
 def test_outline_color():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.outline[0].color == [0, 0, 1]
 
 
@@ -1023,7 +1042,7 @@ def test_outline_color():
 def test_outline_font_format():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.outline[0].font_format == 2
 
 
@@ -1165,7 +1184,7 @@ def test_outline_missing_title(caplog):
     ids=["stored_directly", "dest_below_names_with_kids"],
 )
 def test_named_destination(url, name):
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert len(reader.named_destinations) > 0
 
 
@@ -1173,7 +1192,7 @@ def test_named_destination(url, name):
 def test_outline_with_missing_named_destination():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
     name = "tika-913678.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     # outline items in document reference a named destination that is not defined
     assert reader.outline[1][0].title.startswith("Report for 2002AZ3B: Microbial")
 
@@ -1182,7 +1201,7 @@ def test_outline_with_missing_named_destination():
 def test_outline_with_empty_action():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     # outline items (entitled Tables and Figures) utilize an empty action (/A)
     # that has no type or destination
     assert reader.outline[-4].title == "Tables"
@@ -1200,7 +1219,7 @@ def test_pdfreader_multiple_definitions(caplog):
     """iss325"""
     url = "https://github.com/py-pdf/pypdf/files/9176644/multipledefs.pdf"
     name = "multipledefs.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].extract_text()
     assert normalize_warnings(caplog.text) == [
         "Multiple definitions in dictionary at byte 0xb5 for key /Group"
@@ -1226,11 +1245,11 @@ def test_corrupted_xref_table():
     # issue #1292
     url = "https://github.com/py-pdf/pypdf/files/9444747/BreezeManual.orig.pdf"
     name = "BreezeMan1.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].extract_text()
     url = "https://github.com/py-pdf/pypdf/files/9444748/BreezeManual.failed.pdf"
     name = "BreezeMan2.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].extract_text()
 
 
@@ -1239,7 +1258,7 @@ def test_reader(caplog):
     # iss #1273
     url = "https://github.com/py-pdf/pypdf/files/9464742/shiv_resume.pdf"
     name = "shiv_resume.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert "Previous trailer can not be read" in caplog.text
     caplog.clear()
     # first call requires some reparations...
@@ -1260,7 +1279,7 @@ def test_zeroing_xref():
         "UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
     )
     name = "UTA_OSHA.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     len(reader.pages)
 
 
@@ -1271,11 +1290,11 @@ def test_thread():
         "UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
     )
     name = "UTA_OSHA.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.threads is None
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert isinstance(reader.threads, ArrayObject)
     assert len(reader.threads) >= 1
 
@@ -1284,7 +1303,7 @@ def test_thread():
 def test_build_outline_item(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9464742/shiv_resume.pdf"
     name = "shiv_resume.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     outline = reader._build_outline_item(
         DictionaryObject(
             {
@@ -1336,7 +1355,7 @@ def test_page_labels(src, page_labels):
 def test_iss1559():
     url = "https://github.com/py-pdf/pypdf/files/10441992/default.pdf"
     name = "iss1559.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     for p in reader.pages:
         p.extract_text()
 
@@ -1346,24 +1365,24 @@ def test_iss1652():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10818844/tt.pdf"
     name = "invalidNamesDest.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.named_destinations
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.named_destinations
 
 
 @pytest.mark.enable_socket()
 def test_iss1689():
     url = "https://github.com/py-pdf/pypdf/files/10948283/error_file_without_data.pdf"
     name = "iss1689.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.pages[0]
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0]
 
 
 @pytest.mark.enable_socket()
 def test_iss1710():
     url = "https://nlp.stanford.edu/IR-book/pdf/irbookonlinereading.pdf"
     name = "irbookonlinereading.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.outline
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.outline
 
 
 def test_broken_file_header():
@@ -1404,9 +1423,9 @@ def test_broken_file_header():
 def test_iss1756():
     url = "https://github.com/py-pdf/pypdf/files/11105591/641-Attachment-B-Pediatric-Cardiac-Arrest-8-1-2019.pdf"
     name = "iss1756.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    in_pdf.trailer["/ID"]
-    # removed to cope with missing cryptodome during commit check : len(in_pdf.pages)
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.trailer["/ID"]
+    # removed to cope with missing cryptodome during commit check : len(reader.pages)
 
 
 @pytest.mark.enable_socket()
@@ -1414,6 +1433,20 @@ def test_iss1756():
 def test_iss1825():
     url = "https://github.com/py-pdf/pypdf/files/11367871/MiFO_LFO_FEIS_NOA_Published.3.pdf"
     name = "iss1825.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[0]
     page.extract_text()
+
+
+@pytest.mark.enable_socket()
+def test_iss2082():
+    url = "https://github.com/py-pdf/pypdf/files/12317939/test.pdf"
+    name = "iss2082.pdf"
+    b = get_data_from_url(url, name=name)
+    reader = PdfReader(BytesIO(b))
+    reader.pages[0].extract_text()
+
+    bb = bytearray(b)
+    bb[b.find(b"xref") + 2] = ord(b"E")
+    with pytest.raises(PdfReadError):
+        reader = PdfReader(BytesIO(bb))

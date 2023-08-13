@@ -1,5 +1,132 @@
 # CHANGELOG
 
+## Version 3.15.0, 2023-08-06
+
+### New Features (ENH)
+-  Add `level` parameter to compress_content_streams (#2044)
+-  Process /uniHHHH for text_extract (#2043)
+
+### Bug Fixes (BUG)
+-  Fix AnnotationBuilder.link (#2066)
+-  JPX image without ColorSpace  (#2062)
+-  Added check for field /Info when cloning reader document (#2055)
+-  Fix indexed/CMYK images (#2039)
+
+### Maintenance (MAINT)
+-  Cryptography as primary dependency (#2053)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.14.0...3.15.0)
+
+## Version 3.14.0, 2023-07-29
+
+### New Features (ENH)
+-  Accelerate image list keys generation (#2014)
+-  Use `cryptography` for encryption/decryption as a fallback for PyCryptodome (#2000)
+-  Extract LaTeX characters (#2016)
+-  ASCIIHexDecode.decode now returns bytes instead of str (#1994)
+
+### Bug Fixes (BUG)
+-  Add RunLengthDecode filter (#2012)
+-  Process /Separation ColorSpace (#2007)
+-  Handle single element ColorSpace list (#2026)
+-  Process lookup decoded as TextStringObjects (#2008)
+
+### Robustness (ROB)
+-  Cope with garbage collector during cloning (#1841)
+
+### Maintenance (MAINT)
+-  Cleanup of annotations (#1745)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.13.0...3.14.0)
+
+## Version 3.13.0, 2023-07-23
+
+### New Features (ENH)
+-  Add is_open in outlines in PdfReader and PdfWriter (#1960)
+
+### Bug Fixes (BUG)
+-  Search /DA in hierarchy fields (#2002)
+-  Cope with different ISO date length (#1999)
+-  Decode Black only/CMYK deviceN images (#1984)
+-  Process CMYK in deflate images (#1977)
+
+### Developer Experience (DEV)
+-  Add mypy to pre-commit (#2001)
+-  Release automation (#1991, #1985)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.2...3.13.0)
+
+## Version 3.12.2, 2023-07-16
+
+### Bug Fixes (BUG)
+-  Accept calRGB and calGray color_spaces (#1968)
+-  Process 2bits and 4bits images (#1967)
+-  Check for AcroForm and ensure it is not None (#1965)
+
+### Developer Experience (DEV)
+-  Automate the release process (#1970)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.1...3.12.2)
+
+## Version 3.12.1, 2023-07-09
+
+### Bug Fixes (BUG)
+-  Prevent updating page contents after merging page (stamping/watermarking) (#1952)
+-  % to be hex encoded in names (#1958)
+-  Inverse color in CMYK images (#1947)
+-  Dates conversion not working with Z00\'00\' (#1946)
+-  Support UTF-16-LE Strings (#1884)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.0...3.12.1)
+
+## Version 3.12.0, 2023-07-02
+
+### New Features (ENH)
+-  Add AES support for encrypting PDF files (#1918, #1935, #1936, #1938)
+-  Add page deletion feature to PdfWriter (#1843)
+
+### Bug Fixes (BUG)
+-  PdfReader.get_fields() attempts to delete non-existing index "/Off" (#1933)
+-  Remove unused objects when cloning_from (#1926)
+-  Add the TK.SIZE into the trailer (#1911)
+-  add_named_destination() maintains named destination list sort order (#1930)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.11.1...3.12.0)
+
+## Version 3.11.1, 2023-06-25
+
+### Bug Fixes (BUG)
+- Cascaded filters in image objects (#1913)
+- Append pdf with named destination using numbers for pages (#1858)
+- Ignore "/B" fields only on pages in PdfWriter.append() (#1875)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.11.0...3.11.1)
+
+## Version 3.11.0, 2023-06-23
+
+### New Features (ENH)
+-  Add page_number property (#1856)
+
+### Bug Fixes (BUG)
+- File expansion when updating with Page Contents (#1906)
+- Missing Alternate in indexed/ICCbased colorspaces (#1896)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.10.0...3.11.0)
+
+## Version 3.10.0, 2023-06-18
+
+### New Features (ENH)
+-  Extraction of inline images (#1850)
+-  Add capability to replace image (#1849)
+-  Extend images interface by returning an ImageFile(File) class (#1848)
+-  Add set_data to EncodedStreamObject (#1854)
+
+### Bug Fixes (BUG)
+-  Fix RGB FlateEncode Images(PNG) and transparency (#1834)
+-  Generate static appearance for fields (#1864)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.9.1...3.10.0)
+
 ## Version 3.9.1, 2023-06-04
 
 ### Deprecations (DEP)

@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 import pypdf._utils
-from pypdf import PdfReader
 from pypdf._utils import (
     File,
     _get_max_pdf_version_header,
@@ -15,6 +14,7 @@ from pypdf._utils import (
     deprecation_no_replacement,
     mark_location,
     matrix_multiply,
+    parse_iso8824_date,
     read_block_backwards,
     read_previous_line,
     read_until_regex,
@@ -24,8 +24,6 @@ from pypdf._utils import (
     skip_over_whitespace,
 )
 from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
-
-from . import get_pdf_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -88,10 +86,6 @@ def test_mark_location():
     stream = io.BytesIO(b"abde" * 6000)
     mark_location(stream)
     Path("pypdf_pdfLocation.txt").unlink()  # cleanup
-
-
-def test_hex_str():
-    assert pypdf._utils.hex_str(10) == "0xa"
 
 
 @pytest.mark.parametrize(
@@ -306,20 +300,6 @@ def test_rename_kwargs():
         foo(old_param=12)
 
 
-@pytest.mark.enable_socket()
-def test_escapedcode_followed_by_int():
-    # iss #1294
-    url = (
-        "https://github.com/timedegree/playground_files/raw/main/"
-        "%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
-    )
-    name = "keppler.pdf"
-
-    reader = PdfReader(io.BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
 @pytest.mark.parametrize(
     ("input_int", "expected_output"),
     [
@@ -341,3 +321,33 @@ def test_file_class():
     f = File(name="image.png", data=b"")
     assert str(f) == "File(name=image.png, data: 0 Byte)"
     assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("D:20210318000756", "2021-03-18T00:07:56"),
+        ("20210318000756", "2021-03-18T00:07:56"),
+        ("D:2021", "2021-01-01T00:00:00"),
+        ("D:202103", "2021-03-01T00:00:00"),
+        ("D:20210304", "2021-03-04T00:00:00"),
+        ("D:2021030402", "2021-03-04T02:00:00"),
+        ("D:20210408054711", "2021-04-08T05:47:11"),
+        ("D:20210408054711Z", "2021-04-08T05:47:11+00:00"),
+        ("D:20210408054711Z00", "2021-04-08T05:47:11+00:00"),
+        ("D:20210408054711Z0000", "2021-04-08T05:47:11+00:00"),
+        ("D:20210408075331+02'00'", "2021-04-08T07:53:31+02:00"),
+        ("D:20210408075331-03'00'", "2021-04-08T07:53:31-03:00"),
+    ],
+)
+def test_parse_datetime(text, expected):
+    date = parse_iso8824_date(text)
+    date_str = (date.isoformat() + date.strftime("%z"))[: len(expected)]
+    assert date_str == expected
+
+
+def test_parse_datetime_err():
+    with pytest.raises(ValueError) as ex:
+        parse_iso8824_date("D:20210408T054711Z")
+    assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
+    assert parse_iso8824_date("D:20210408054711").tzinfo is None

@@ -32,6 +32,7 @@ def is_pdfa1b_compliant(src: BytesIO):
     return document_information_has_analoguos_xml(src)
 
 
+@pytest.mark.samples()
 @pytest.mark.parametrize(
     ("src", "diagnostic_write_name"),
     [

@@ -59,6 +59,7 @@ from ._utils import (
     deprecation_no_replacement,
     deprecation_with_replacement,
     logger_warning,
+    parse_iso8824_date,
     read_non_whitespace,
     read_previous_line,
     read_until_whitespace,
@@ -86,6 +87,7 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
+    BooleanObject,
     ContentStream,
     DecodedStreamObject,
     Destination,
@@ -239,17 +241,14 @@ class DocumentInformation(DictionaryObject):
     @property
     def creation_date(self) -> Optional[datetime]:
         """Read-only property accessing the document's creation date."""
-        text = self._get_text(DI.CREATION_DATE)
-        if text is None:
-            return None
-        return datetime.strptime(text.replace("'", ""), "D:%Y%m%d%H%M%S%z")
+        return parse_iso8824_date(self._get_text(DI.CREATION_DATE))
 
     @property
     def creation_date_raw(self) -> Optional[str]:
         """
         The "raw" version of creation date; can return a ``ByteStringObject``.
 
-        Typically in the format ``D:YYYYMMDDhhmmss[+-]hh'mm`` where the suffix
+        Typically in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
         return self.get(DI.CREATION_DATE)
@@ -261,10 +260,7 @@ class DocumentInformation(DictionaryObject):
 
         The date and time the document was most recently modified.
         """
-        text = self._get_text(DI.MOD_DATE)
-        if text is None:
-            return None
-        return datetime.strptime(text.replace("'", ""), "D:%Y%m%d%H%M%S%z")
+        return parse_iso8824_date(self._get_text(DI.MOD_DATE))
 
     @property
     def modification_date_raw(self) -> Optional[str]:
@@ -272,7 +268,7 @@ class DocumentInformation(DictionaryObject):
         The "raw" version of modification date; can return a
         ``ByteStringObject``.
 
-        Typically in the format ``D:YYYYMMDDhhmmss[+-]hh'mm`` where the suffix
+        Typically in the format ``D:YYYYMMDDhhmmss[+Z-]hh'mm`` where the suffix
         is the offset from UTC.
         """
         return self.get(DI.MOD_DATE)
@@ -644,7 +640,10 @@ class PdfReader:
                     if s not in states:
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
-            if obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0:
+            if (
+                obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0
+                and "/Off" in retval[key]["/_States_"]
+            ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
 
     def _check_kids(
@@ -1076,7 +1075,15 @@ class PdfReader:
                 # absolute value = num. visible children
                 # with positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
+            #  if count is 0 we will consider it as open ( in order to have always an is_open to simplify
+            outline_item[NameObject("/%is_open%")] = BooleanObject(
+                node.get("/Count", 0) >= 0
+            )
         outline_item.node = node
+        try:
+            outline_item.indirect_reference = node.indirect_reference
+        except AttributeError:
+            pass
         return outline_item
 
     @property
@@ -1627,8 +1634,8 @@ class PdfReader:
 
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
-        ref = stream.read(4)
-        if ref[:3] != b"ref":
+        ref = stream.read(3)
+        if ref != b"ref":
             raise PdfReadError("xref table read error")
         read_non_whitespace(stream)
         stream.seek(-1, 1)
@@ -1767,7 +1774,7 @@ class PdfReader:
                         break
                     else:
                         raise PdfReadError(f"trailer can not be read {e.args}")
-                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
+                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE
                 for key in trailer_keys:
                     if key in xrefstream and key not in self.trailer:
                         self.trailer[NameObject(key)] = xrefstream.raw_get(key)
@@ -2210,11 +2217,7 @@ class PdfReader:
             )
         except KeyError:
             return []
-        attachments_names = []
-        # Loop through attachments
-        for f in filenames:
-            if isinstance(f, str):
-                attachments_names.append(f)
+        attachments_names = [f for f in filenames if isinstance(f, str)]
         return attachments_names
 
     def _get_attachment_list(self, name: str) -> List[bytes]:
