@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1691917976282,
+  "lastUpdate": 1691924290655,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -36156,6 +36156,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05802065405767666",
             "extra": "mean: 27.000930106800002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "62070480+troethe@users.noreply.github.com",
+            "name": "troethe",
+            "username": "troethe"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4458dc60204c388185db119147d946c280b80a9b",
+          "message": "BUG: Fix incorrect tm_matrix in call to visitor_text (#2060)\n\nSupply the old tm_matrix when flushing out `text` to the `visitor_text`\r\nin `crlf_space_check`. The new one might already be changed and\r\nunrelated to the current text.\r\n\r\nAlso add a test for the tm_matrix and cm_matrix that are given to\r\n`visitor_text` when extracting text.\r\nThe test computes the coordinates of three letters in different\r\nparts of a test page based on the matrices and checks, if they are\r\nroughly where they should be.\r\n\r\nFixes #2059",
+          "timestamp": "2023-08-13T12:53:08+02:00",
+          "tree_id": "9f8c3b511e6c3bbc9a21ad982bb98783bdccf796",
+          "url": "https://github.com/py-pdf/pypdf/commit/4458dc60204c388185db119147d946c280b80a9b"
+        },
+        "date": 1691924288255,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.654151710706702,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02729280635897413",
+            "extra": "mean: 1.5286973704000046 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.99794678529202,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012266726448087344",
+            "extra": "mean: 100.02053636363618 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19314631506566124,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05784218065754733",
+            "extra": "mean: 5.177422099199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.57376566606704,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002114096483059575",
+            "extra": "mean: 104.45210744444783 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03223810507270345,
+            "unit": "iter/sec",
+            "range": "stddev: 0.2784512560310747",
+            "extra": "mean: 31.019192900600007 sec\nrounds: 5"
           }
         ]
       }
