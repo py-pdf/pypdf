@@ -589,7 +589,7 @@ class ImageFile(File):
         self.data = byte_stream
         self.image = img
 
-        
+
 def default_annotation_filter_function(page: Any, an: Any, obj: Any) -> bool:
     """Default annotation_filter_function used in _writer.remove_annots_from_page"""
     return True
