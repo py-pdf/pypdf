@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1691924290655,
+  "lastUpdate": 1691927081389,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -36215,6 +36215,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.2784512560310747",
             "extra": "mean: 31.019192900600007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "247a4b058d03687896321e83dfb17b1f459f7fa5",
+          "message": "REL: Version 3.15.1, 2023-08-13\n\n## What's new\n\n### Performance Improvements (PI)\n-  optimize _decode_png_prediction (#2068)\n\n### Bug Fixes (BUG)\n-  Fix incorrect tm_matrix in call to visitor_text (#2060)\n-  Writing German characters into form fields (#2047)\n-  Prevent stall when accessing image in corrupted pdf (#2081)\n-  append() fails when articles do not have /T (#2080)\n\n### Robustness (ROB)\n-  Cope with xref not followed by separator (#2083)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.0...3.15.1)",
+          "timestamp": "2023-08-13T13:39:23+02:00",
+          "tree_id": "1d939c0003d25d6fd1117d364fd34e307c2afb04",
+          "url": "https://github.com/py-pdf/pypdf/commit/247a4b058d03687896321e83dfb17b1f459f7fa5"
+        },
+        "date": 1691927079765,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7181024434424114,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01301776254542577",
+            "extra": "mean: 1.3925589714000126 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.156027363868757,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010496109454646001",
+            "extra": "mean: 89.63764316666338 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21481923893015806,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014220781916157908",
+            "extra": "mean: 4.655076542400002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.253547991633553,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008246967417765568",
+            "extra": "mean: 97.52721700000393 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03684759130833427,
+            "unit": "iter/sec",
+            "range": "stddev: 0.045713769421739124",
+            "extra": "mean: 27.13881598480001 sec\nrounds: 5"
           }
         ]
       }
