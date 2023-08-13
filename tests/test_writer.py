@@ -1374,7 +1374,7 @@ def test_remove_annots_from_page():
     # test remove_annots_from_page function
     url = "https://github.com/py-pdf/pypdf/files/10807951/tt.pdf"
     name = "iss1650.pdf"
-    data = get_pdf_from_url(url, name=name)
+    data = get_data_from_url(url, name=name)
     in_pdf = PdfReader(BytesIO(data))
 
     out_pdf = PdfWriter()
@@ -1382,7 +1382,7 @@ def test_remove_annots_from_page():
     out_pdf.remove_annotations()
     page = out_pdf.pages[0]
 
-    assert len(page['/Annots']) == 0
+    assert len(page["/Annots"]) == 0
     page["/Annots"].extend([
         DictionaryObject({
             NameObject("/Subtype"): TextStringObject("/3D"),
@@ -1390,14 +1390,14 @@ def test_remove_annots_from_page():
         })
         for property in 'abcd'
     ])
-    assert len(page['/Annots']) == 4
+    assert len(page["/Annots"]) == 4
 
-    def delete_fn(pg, an, obj):
+    def delete_fn(page, annotation, obj) -> bool:
         return obj['/SomeProperty'] < 'c'
 
     out_pdf._remove_annots_from_page(page, annotation_filter_function=delete_fn)
 
-    assert len(page['/Annots']) == 2
+    assert len(page["/Annots"]) == 2
 
 
 @pytest.mark.enable_socket()
