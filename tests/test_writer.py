@@ -1388,7 +1388,7 @@ def test_remove_annots_from_page():
             NameObject("/Subtype"): TextStringObject("/3D"),
             NameObject("/SomeProperty"): TextStringObject(property)
         })
-        for property in 'abcd'
+        for property in "abcd"
     ])
     assert len(page["/Annots"]) == 4
 
