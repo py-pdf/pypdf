@@ -1393,7 +1393,7 @@ def test_remove_annots_from_page():
     assert len(page["/Annots"]) == 4
 
     def delete_fn(page, annotation, obj) -> bool:
-        return obj['/SomeProperty'] < 'c'
+        return obj["/SomeProperty"] < "c"
 
     out_pdf._remove_annots_from_page(page, annotation_filter_function=delete_fn)
 
