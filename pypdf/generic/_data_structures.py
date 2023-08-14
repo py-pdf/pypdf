@@ -1062,7 +1062,7 @@ class ContentStream(DecodedStreamObject):
         # no need to call DictionaryObjection or anything
         # like super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields)
 
-    def __parse_content_stream(self, stream: StreamType) -> None:
+    def _parse_content_stream(self, stream: StreamType) -> None:
         # 7.8.2 Content Streams
         stream.seek(0, 0)
         operands: List[Union[int, str, PdfObject]] = []
@@ -1193,17 +1193,22 @@ class ContentStream(DecodedStreamObject):
             self._data = new_data.getvalue()
         return self._data
 
-    @property
-    def operations(self) -> List[Tuple[Any, Any]]:
-        if not self._operations and self._data:
-            self.__parse_content_stream(BytesIO(self._data))
-            self._data = b""
-        return self._operations
-
     # This overrides the parent method:
     def set_data(self, data: bytes) -> None:
         super().set_data(data)
         self._operations = []
+
+    @property
+    def operations(self) -> List[Tuple[Any, Any]]:
+        if not self._operations and self._data:
+            self._parse_content_stream(BytesIO(self._data))
+            self._data = b""
+        return self._operations
+
+    @operations.setter
+    def operations(self, operations: List[Tuple[Any, Any]]) -> None:
+        self._operations = operations
+        self._data = b""
 
 
 def read_object(
