@@ -1002,7 +1002,7 @@ class ContentStream(DecodedStreamObject):
         if stream is not None:
             stream = stream.get_object()
             if isinstance(stream, ArrayObject):
-                data = b""
+                data = bytearray()
                 for s in stream:
                     data += b_(s.get_object().get_data())
                     if len(data) == 0 or data[-1] != b"\n":
