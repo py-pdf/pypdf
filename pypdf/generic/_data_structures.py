@@ -854,7 +854,7 @@ class StreamObject(DictionaryObject):
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
-        self[NameObject(SA.LENGTH)] = NumberObject(len(self.get_data()))
+        self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.write_to_stream(self, stream)
         del self[SA.LENGTH]
         stream.write(b"\nstream\n")

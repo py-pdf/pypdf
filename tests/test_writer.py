@@ -312,6 +312,8 @@ def test_remove_images(pdf_file_path, input_path):
     page = reader.pages[0]
     writer.insert_page(page, 0)
     writer.remove_images()
+    page_contents_stream = writer.pages[0]["/Contents"]._data
+    assert len(page_contents_stream.strip())
 
     # finally, write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
@@ -1534,6 +1536,22 @@ def test_watermark():
     b = BytesIO()
     writer.write(b)
     assert len(b.getvalue()) < 2.1 * 1024 * 1024
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.timeout(45)  # this was a lot slower before PR #2086
+def test_watermarking_speed():
+    url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
+    name = "bgwatermark.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://arxiv.org/pdf/2201.00214.pdf"
+    name = "src_doc.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    for p in writer.pages:
+        p.merge_page(reader.pages[0], over=False)
+    out_pdf_bytesio = BytesIO()
+    writer.write(out_pdf_bytesio)
+    assert len(out_pdf_bytesio.getvalue()) < 1.5 * 1024 * 1024
 
 
 @pytest.mark.enable_socket()
