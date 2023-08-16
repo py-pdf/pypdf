@@ -854,7 +854,7 @@ class StreamObject(DictionaryObject):
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
-        self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
+        self[NameObject(SA.LENGTH)] = NumberObject(len(self.get_data()))
         DictionaryObject.write_to_stream(self, stream)
         del self[SA.LENGTH]
         stream.write(b"\nstream\n")
@@ -992,7 +992,7 @@ class ContentStream(DecodedStreamObject):
         else:
             stream = stream.get_object()
             if isinstance(stream, ArrayObject):
-                data = bytearray()
+                data = b""
                 for s in stream:
                     data += b_(s.get_object().get_data())
                     if len(data) == 0 or data[-1] != b"\n":
