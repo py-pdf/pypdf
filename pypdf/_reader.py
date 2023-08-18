@@ -1230,7 +1230,10 @@ class PdfReader:
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirect_reference"] = page
-                self._flatten(page.get_object(), inherit, **addt)
+                obj = page.get_object()
+                if obj:
+                    # damaged file may have invalid child in /Pages
+                    self._flatten(obj, inherit, **addt)
         elif t == "/Page":
             for attr_in, value in list(inherit.items()):
                 # if the page has it's own value, it does not inherit the
