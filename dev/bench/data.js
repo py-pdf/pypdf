@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692394131886,
+  "lastUpdate": 1692394251705,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -36510,6 +36510,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.16867106053603584",
             "extra": "mean: 27.512170006400005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mail@franek.fr",
+            "name": "François Freitag",
+            "username": "francoisfreitag"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "29acc0ca9ff1316b377379db8e03c521500fa920",
+          "message": "DEV: Add pytest-timeout to the dev dependencies in pyproject.toml (#2096)\n\nTrying to run the tests after `pip install -e '.[dev]'` results in:\r\n\r\nERROR tests/test_reader.py - pytest.PytestUnknownMarkWarning: Unknown pytest.mark.timeout",
+          "timestamp": "2023-08-18T23:25:37+02:00",
+          "tree_id": "bf3065832b3c657e5b9099ede340a74df52db801",
+          "url": "https://github.com/py-pdf/pypdf/commit/29acc0ca9ff1316b377379db8e03c521500fa920"
+        },
+        "date": 1692394249349,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5621072498818296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04117422459508649",
+            "extra": "mean: 1.779019929399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.366899542386115,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015548523572830568",
+            "extra": "mean: 119.51858570000411 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.17622491006125585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.14084202403751656",
+            "extra": "mean: 5.674566663999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.670981954091328,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019169327328110426",
+            "extra": "mean: 103.40211622222581 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03202678439538471,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5402715366905445",
+            "extra": "mean: 31.223865239 sec\nrounds: 5"
           }
         ]
       }
