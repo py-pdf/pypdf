@@ -36,7 +36,7 @@ class PdfStreamError(PdfReadError):
     """Raised when there is an issue reading the stream of data in a PDF file."""
 
 
-class ParseError(Exception):
+class ParseError(PyPdfError):
     """
     Raised when there is an issue parsing (analyzing and understanding the
     structure and meaning of) a PDF file.
