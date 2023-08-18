@@ -16,6 +16,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [DL6ER](https://github.com/DL6ER)
 * [ediamondscience](https://github.com/ediamondscience)
 * [Ermeson, Felipe](https://github.com/FelipeErmeson)
+* [Freitag, François](https://github.com/francoisfreitag)
 * [Górny, Michał](https://github.com/mgorny)
 * [Grillo, Miguel](https://github.com/Ineffable22)
 * [Hale, Joseph](https://github.com/thehale)
