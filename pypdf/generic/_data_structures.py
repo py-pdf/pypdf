@@ -1001,8 +1001,9 @@ class ContentStream(DecodedStreamObject):
                         data += b"\n"
                 stream_bytes = BytesIO(data)
             else:
-                stream_data_bytes = stream.get_data()
-                assert stream_data_bytes is not None
+                stream_data = stream.get_data()
+                assert stream_data is not None
+                stream_data_bytes = b_(stream_data)  # this is necessary
                 stream_bytes = BytesIO(stream_data_bytes)
             self.forced_encoding = forced_encoding
             self.__parse_content_stream(stream_bytes)
