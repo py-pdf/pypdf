@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692424978009,
+  "lastUpdate": 1692459827474,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -36687,6 +36687,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.3485427519148866",
             "extra": "mean: 33.570910153000014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b39ac96ca4ead420acdb8d5c4a5fd0a6458759eb",
+          "message": "MAINT: Remove unnecessary property + mypy fixes (#2099)\n\nWhile on it, pre-commit was also updated + several fixes for mypy.\r\n\r\nTaken from https://github.com/py-pdf/pypdf/pull/2086\r\n\r\nFull credit to Lucas for the property-simplification.\r\n\r\nCo-authored-by: Lucas Cimon <925560+Lucas-C@users.noreply.github.com>",
+          "timestamp": "2023-08-19T17:38:18+02:00",
+          "tree_id": "bead7d4b2073f6d0d1702263a400da455a395855",
+          "url": "https://github.com/py-pdf/pypdf/commit/b39ac96ca4ead420acdb8d5c4a5fd0a6458759eb"
+        },
+        "date": 1692459823864,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5475152073761435,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014451145553617782",
+            "extra": "mean: 1.826433287200001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.579649876294113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013357403772378063",
+            "extra": "mean: 116.55487280000045 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.17492063671068955,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11857825692027098",
+            "extra": "mean: 5.716878344399996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.359670351661729,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001596779746387657",
+            "extra": "mean: 106.8413696666634 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0310023655731469,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1874771579481536",
+            "extra": "mean: 32.2556031294 sec\nrounds: 5"
           }
         ]
       }
