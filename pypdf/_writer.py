@@ -705,7 +705,7 @@ class PdfWriter:
         # endobj
 
         file_entry = DecodedStreamObject()
-        file_entry.set_data(data)
+        file_entry.set_data(b_(data))
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
 
         # The Filespec entry

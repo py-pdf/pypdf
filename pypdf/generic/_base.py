@@ -648,7 +648,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
-        stream.write(self.renumber())  # b_(renumber(self)))
+        stream.write(self.renumber())
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
