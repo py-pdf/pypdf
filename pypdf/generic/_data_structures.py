@@ -785,7 +785,7 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
 
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
-        self._data: Optional[bytes] = None
+        self._data: bytes = b""
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     def _clone(
@@ -1170,6 +1170,7 @@ class ContentStream(DecodedStreamObject):
                     else:
                         data.write(info)
         return {"settings": settings, "data": data.getvalue()}
+
 
     # This overrides the parent method:
     def get_data(self) -> bytes:

@@ -703,7 +703,7 @@ class PageObject(DictionaryObject):
         return rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
 
     @rotation.setter
-    def rotation(self, r: Union[int, float]) -> None:
+    def rotation(self, r: float) -> None:
         self[NameObject(PG.ROTATE)] = NumberObject((((int(r) + 45) // 90) * 90) % 360)
 
     def transfer_rotation_to_content(self) -> None:

@@ -1450,3 +1450,12 @@ def test_iss2082():
     bb[b.find(b"xref") + 2] = ord(b"E")
     with pytest.raises(PdfReadError):
         reader = PdfReader(BytesIO(bb))
+
+
+@pytest.mark.enable_socket()
+def test_issue_140():
+    url = "https://github.com/py-pdf/pypdf/files/12168578/bad_pdf_example.pdf"
+    name = "issue-140.pdf"
+    b = get_data_from_url(url, name=name)
+    reader = PdfReader(BytesIO(b))
+    assert len(reader.pages) == 54
