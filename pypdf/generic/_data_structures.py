@@ -1173,8 +1173,8 @@ class ContentStream(DecodedStreamObject):
                         data.write(info)
         return {"settings": settings, "data": data.getvalue()}
 
-    @property
-    def _data(self) -> bytes:
+    @property  # type: ignore
+    def _data(self) -> bytes:  # type: ignore
         new_data = BytesIO()
         for operands, operator in self.operations:
             if operator == b"INLINE IMAGE":
