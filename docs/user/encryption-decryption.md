@@ -1,7 +1,7 @@
 # Encryption and Decryption of PDFs
 
-PDF encryption makes use of [`RC4`](https://en.wikipedia.org/wiki/RC4) and 
-[`AES`](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard) algorithms 
+PDF encryption makes use of [`RC4`](https://en.wikipedia.org/wiki/RC4) and
+[`AES`](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard) algorithms
 with different key length. `pypdf` supports all of them until `PDF-2.0`, which
 is the latest PDF standard.
 
