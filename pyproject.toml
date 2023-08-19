@@ -194,6 +194,9 @@ ignore = [
     "PD011",  # Use `.to_numpy()` instead of `.values`
     "FA102",  # Missing `from __future__ import annotations`, but uses PEP 604 union
     "PERF203",  # `try`-`except` within a loop incurs performance overhead
+    "PYI042",  # Type alias `mode_str_type` should be CamelCase
+    # Ruff bug
+    "PT014",  # Duplicate of test case at index 1 in `@pytest_mark.parametrize`
 ]
 
 [tool.ruff.per-file-ignores]

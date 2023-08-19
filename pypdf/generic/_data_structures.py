@@ -785,7 +785,7 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
 
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
-        self.__data: Optional[str] = None
+        self._data: bytes = b""
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     def _clone(
@@ -832,14 +832,6 @@ class StreamObject(DictionaryObject):
     def decodedSelf(self, value: "DecodedStreamObject") -> None:  # deprecated
         deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
         self.decoded_self = value
-
-    @property
-    def _data(self) -> Any:
-        return self.__data
-
-    @_data.setter
-    def _data(self, value: Any) -> None:
-        self.__data = value
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
