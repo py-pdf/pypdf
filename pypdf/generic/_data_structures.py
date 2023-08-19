@@ -1173,8 +1173,8 @@ class ContentStream(DecodedStreamObject):
                         data.write(info)
         return {"settings": settings, "data": data.getvalue()}
 
-    @property  # type: ignore
-    def _data(self) -> bytes:  # type: ignore
+    @property
+    def _data(self) -> bytes:
         new_data = BytesIO()
         for operands, operator in self.operations:
             if operator == b"INLINE IMAGE":
@@ -1194,8 +1194,8 @@ class ContentStream(DecodedStreamObject):
         return new_data.getvalue()
 
     @_data.setter
-    def _data(self, value: Union[str, bytes]) -> None:
-        self.__parse_content_stream(BytesIO(b_(value)))
+    def _data(self, value: bytes) -> None:
+        self.__parse_content_stream(BytesIO(value))
 
 
 def read_object(
