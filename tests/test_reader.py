@@ -1458,4 +1458,4 @@ def test_issue_140():
     name = "issue-140.pdf"
     b = get_data_from_url(url, name=name)
     reader = PdfReader(BytesIO(b))
-    assert (len(reader.pages) == 54)
+    assert len(reader.pages) == 54

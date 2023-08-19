@@ -656,7 +656,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
+def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
     """
     Decode the stream data based on the specified filters.
 
