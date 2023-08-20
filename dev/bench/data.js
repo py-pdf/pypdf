@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692459827474,
+  "lastUpdate": 1692516428562,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -36746,6 +36746,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.1874771579481536",
             "extra": "mean: 32.2556031294 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "30331227ec3ef087f15f4c3828e2b6d95aa4ce0f",
+          "message": "MAINT: Reduce usage of b_ (#2100)\n\nWhen we know the parameter is utf8-encodable and longer than two characters, pypdf doesn't need to use b_. It can use `.encode()` directly.",
+          "timestamp": "2023-08-20T09:22:08+02:00",
+          "tree_id": "a8d0608276dfe3c20fe9818186c5e1e0c0dbb599",
+          "url": "https://github.com/py-pdf/pypdf/commit/30331227ec3ef087f15f4c3828e2b6d95aa4ce0f"
+        },
+        "date": 1692516425601,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6306004950283262,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02262981273847355",
+            "extra": "mean: 1.5857900649999976 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.890643530490447,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013892461786249108",
+            "extra": "mean: 112.4777972000004 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18718599327812177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17699595613802413",
+            "extra": "mean: 5.342280063200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.057567363267687,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004012072121576656",
+            "extra": "mean: 99.42762140000241 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.033919234805776945,
+            "unit": "iter/sec",
+            "range": "stddev: 0.39387745123278295",
+            "extra": "mean: 29.4817971492 sec\nrounds: 5"
           }
         ]
       }
