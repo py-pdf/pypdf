@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Version 3.15.2, 2023-08-20
+
+### Security (SEC)
+-  Avoid endless recursion of reading damaged PDF file (#2093)
+
+### Performance Improvements (PI)
+-  Re-use content stream (#2101)
+
+### Maintenance (MAINT)
+-  Make ParseError inherit from PyPdfError (#2097)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.1...3.15.2)
+
 ## Version 3.15.1, 2023-08-13
 
 ### Performance Improvements (PI)
