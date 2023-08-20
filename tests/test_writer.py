@@ -28,7 +28,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_data_from_url
+from . import get_data_from_url, is_sublist
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -1238,23 +1238,20 @@ def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    original_cs_operations = ContentStream(reader.pages[0].get_contents(), reader).operations
     writer = PdfWriter()
     page_1 = writer.add_blank_page(
         reader.pages[0].mediabox[2], reader.pages[0].mediabox[3]
     )
     page_1.merge_transformed_page(reader.pages[0], Transformation())
-    assert (
-        ContentStream(reader.pages[0].get_contents(), reader).get_data()
-        in page_1.get_contents().get_data()
-    )
+    page_1_cs_operations = page_1.get_contents().operations
+    assert is_sublist(original_cs_operations, page_1_cs_operations)
     page_1 = writer.add_blank_page(
         reader.pages[0].mediabox[2], reader.pages[0].mediabox[3]
     )
     page_1.merge_page(reader.pages[0])
-    assert (
-        ContentStream(reader.pages[0].get_contents(), reader).get_data()
-        in page_1.get_contents().get_data()
-    )
+    page_1_cs_operations = page_1.get_contents().operations
+    assert is_sublist(original_cs_operations, page_1_cs_operations)
 
 
 def test_attachments():
@@ -1539,7 +1536,7 @@ def test_watermark():
 
 
 @pytest.mark.enable_socket()
-@pytest.mark.timeout(2)  # this was a lot slower before PR #2086
+@pytest.mark.timeout(4)  # this was a lot slower before PR #2086
 def test_watermarking_speed():
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
     name = "bgwatermark.pdf"

@@ -988,6 +988,7 @@ class ContentStream(DecodedStreamObject):
     * when .set_data() is called, ._operations is set to None
     * when .operations is set, ._data is set to None
     """
+
     def __init__(
         self,
         stream: Any,
@@ -1232,7 +1233,7 @@ class ContentStream(DecodedStreamObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if not self._data and self._operations:
-            self.get_data()  # this ensures ._data is rebuilt for ContentStream
+            self.get_data()  # this ensures ._data is rebuilt
         super().write_to_stream(stream, encryption_key)
 
 
