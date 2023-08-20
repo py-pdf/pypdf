@@ -882,12 +882,17 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def _push_pop_gs(
-        contents: Any, pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol]
+        contents: Any,
+        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
+        use_original: bool = True,
     ) -> ContentStream:
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
         # transformation matricies.
-        stream = ContentStream(contents, pdf)
+        if use_original:
+            stream = contents
+        else:
+            stream = ContentStream(contents, pdf)
         stream.operations.insert(0, ([], "q"))
         stream.operations.append(([], "Q"))
         return stream
@@ -1120,7 +1125,7 @@ class PageObject(DictionaryObject):
         original_content = self.get_contents()
         if original_content is not None:
             new_content_array.append(
-                PageObject._push_pop_gs(original_content, self.pdf)
+                PageObject._push_pop_gs(original_content, self.pdf, use_original=True)
             )
 
         page2content = page2.get_contents()
