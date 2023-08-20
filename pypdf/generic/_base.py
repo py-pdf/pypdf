@@ -331,7 +331,7 @@ class IndirectObject(PdfObject):
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
-        stream.write(b_(f"{self.idnum} {self.generation} R"))
+        stream.write(f"{self.idnum} {self.generation} R".encode())
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -602,10 +602,10 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         for c in bytearr:
             if not chr(c).isalnum() and c != b" ":
                 # This:
-                #   stream.write(b_(rf"\{c:0>3o}"))
+                #   stream.write(rf"\{c:0>3o}".encode())
                 # gives
                 #   https://github.com/davidhalter/parso/issues/207
-                stream.write(b_("\\%03o" % c))
+                stream.write(("\\%03o" % c).encode())
             else:
                 stream.write(b_(chr(c)))
         stream.write(b")")
@@ -648,7 +648,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
-        stream.write(self.renumber())  # b_(renumber(self)))
+        stream.write(self.renumber())
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]

@@ -41,7 +41,6 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import (
-    b_,
     deprecate_with_replacement,
     logger_warning,
     ord_,
@@ -1035,7 +1034,6 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         else:
             extension = ".png"  # mime_type = "image/png"
             image_format = "PNG"
-        data = b_(data)
         img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
