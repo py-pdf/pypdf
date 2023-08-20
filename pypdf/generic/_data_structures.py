@@ -972,6 +972,22 @@ class EncodedStreamObject(StreamObject):
 
 
 class ContentStream(DecodedStreamObject):
+    """
+    In order to be fast, this datastructure can contain either:
+    * raw data in ._data
+    * parsed stream operations in ._operations
+
+    At any time, ContentStream object can either have one or both of those fields defined,
+    and zero or one of those fields set to None.
+
+    Those fields are "rebuilt" lazily, when accessed:
+    * when .get_data() is called, if ._data is None, it is rebuilt from ._operations
+    * when .operations is called, if ._operations is None, it is rebuilt from ._data
+
+    On the other side, those fields can be invalidated:
+    * when .set_data() is called, ._operations is set to None
+    * when .operations is set, ._data is set to None
+    """
     def __init__(
         self,
         stream: Any,
@@ -1210,6 +1226,14 @@ class ContentStream(DecodedStreamObject):
     def operations(self, operations: List[Tuple[Any, Any]]) -> None:
         self._operations = operations
         self._data = b""
+
+    # This overrides the parent method:
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+    ) -> None:
+        if not self._data and self._operations:
+            self.get_data()  # this ensures ._data is rebuilt for ContentStream
+        super().write_to_stream(stream, encryption_key)
 
 
 def read_object(
