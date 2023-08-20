@@ -834,7 +834,7 @@ class StreamObject(DictionaryObject):
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
-        data += b_(self._data)
+        data += self._data
         return data
 
     @property
@@ -938,7 +938,7 @@ class EncodedStreamObject(StreamObject):
         self.decoded_self = value
 
     # This overrides the parent method:
-    def get_data(self) -> Union[None, str, bytes]:
+    def get_data(self) -> bytes:
         from ..filters import decode_stream_data
 
         if self.decoded_self is not None:
@@ -956,7 +956,7 @@ class EncodedStreamObject(StreamObject):
             return decoded.get_data()
 
     # This overrides the parent method:
-    def set_data(self, data: Any) -> None:  # deprecated
+    def set_data(self, data: bytes) -> None:  # deprecated
         from ..filters import FlateDecode
 
         if self.get(SA.FILTER, "") == FT.FLATE_DECODE:
@@ -994,7 +994,7 @@ class ContentStream(DecodedStreamObject):
             if isinstance(stream, ArrayObject):
                 data = b""
                 for s in stream:
-                    data += b_(s.get_object().get_data())
+                    data += s.get_object().get_data()
                     if len(data) == 0 or data[-1] != b"\n":
                         data += b"\n"
                 super().set_data(bytes(data))
@@ -1290,10 +1290,12 @@ class Field(TreeObject):
         if isinstance(self.get("/V"), EncodedStreamObject):
             d = cast(EncodedStreamObject, self[NameObject("/V")]).get_data()
             if isinstance(d, bytes):
-                d = d.decode()
+                d_str = d.decode()
             elif d is None:
-                d = ""
-            self[NameObject("/V")] = TextStringObject(d)
+                d_str = ""
+            else:
+                raise Exception("Should never happen")
+            self[NameObject("/V")] = TextStringObject(d_str)
 
     # TABLE 8.69 Entries common to all field dictionaries
     @property

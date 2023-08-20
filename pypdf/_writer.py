@@ -705,7 +705,7 @@ class PdfWriter:
         # endobj
 
         file_entry = DecodedStreamObject()
-        file_entry.set_data(data)
+        file_entry.set_data(b_(data))
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
 
         # The Filespec entry
@@ -1363,7 +1363,7 @@ class PdfWriter:
             if obj is not None:
                 idnum = i + 1
                 object_positions.append(stream.tell())
-                stream.write(b_(str(idnum)) + b" 0 obj\n")
+                stream.write(f"{idnum} 0 obj\n".encode())
                 if self._encryption and obj != self._encrypt_entry:
                     obj = self._encryption.encrypt_object(obj, idnum, 0)
                 obj.write_to_stream(stream)
@@ -1373,10 +1373,10 @@ class PdfWriter:
     def _write_xref_table(self, stream: StreamType, object_positions: List[int]) -> int:
         xref_location = stream.tell()
         stream.write(b"xref\n")
-        stream.write(b_(f"0 {len(self._objects) + 1}\n"))
-        stream.write(b_(f"{0:0>10} {65535:0>5} f \n"))
+        stream.write(f"0 {len(self._objects) + 1}\n".encode())
+        stream.write(f"{0:0>10} {65535:0>5} f \n".encode())
         for offset in object_positions:
-            stream.write(b_(f"{offset:0>10} {0:0>5} n \n"))
+            stream.write(f"{offset:0>10} {0:0>5} n \n".encode())
         return xref_location
 
     def _write_trailer(self, stream: StreamType, xref_location: int) -> None:
@@ -1401,7 +1401,7 @@ class PdfWriter:
         if self._encrypt_entry:
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt_entry.indirect_reference
         trailer.write_to_stream(stream)
-        stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
+        stream.write(f"\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
 
     def add_metadata(self, infos: Dict[str, Any]) -> None:
         """
