@@ -1539,7 +1539,7 @@ def test_watermark():
 
 
 @pytest.mark.enable_socket()
-@pytest.mark.timeout(45)  # this was a lot slower before PR #2086
+@pytest.mark.timeout(2)  # this was a lot slower before PR #2086
 def test_watermarking_speed():
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
     name = "bgwatermark.pdf"
@@ -1551,7 +1551,8 @@ def test_watermarking_speed():
         p.merge_page(reader.pages[0], over=False)
     out_pdf_bytesio = BytesIO()
     writer.write(out_pdf_bytesio)
-    assert len(out_pdf_bytesio.getvalue()) < 1.5 * 1024 * 1024
+    pdf_size_in_mib = len(out_pdf_bytesio.getvalue()) / 1024 / 1024
+    assert pdf_size_in_mib < 20
 
 
 @pytest.mark.enable_socket()

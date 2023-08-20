@@ -1257,9 +1257,8 @@ class PageObject(DictionaryObject):
 
         original_content = self.get_contents()
         if original_content is not None:
-            new_content_array.append(
-                PageObject._push_pop_gs(original_content, self.pdf)
-            )
+            # new_content_stream = PageObject._push_pop_gs(original_content, self.pdf)
+            new_content_array.append(original_content)
 
         page2content = page2.get_contents()
         if page2content is not None:
