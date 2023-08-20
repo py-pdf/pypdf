@@ -27,29 +27,29 @@ repos:
     -   id: black
         args: [--target-version, py36]
 -   repo: https://github.com/asottile/blacken-docs
-    rev: 1.15.0
+    rev: 1.16.0
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black==22.1.0]
         exclude: "docs/user/robustness.md"
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.0.280'
+    rev: 'v0.0.285'
     hooks:
     -   id: ruff
         args: ['--fix']
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.9.0
+    rev: v3.10.1
     hooks:
     -   id: pyupgrade
         args: [--py36-plus]
 -   repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
     -   id: flake8
         args: ["--ignore", "E,W,F"]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.4.1'
+    rev: 'v1.5.1'
     hooks:
       - id: mypy
         files: ^pypdf/.*

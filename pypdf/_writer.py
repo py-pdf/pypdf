@@ -54,6 +54,7 @@ from typing import (
     cast,
 )
 
+from ._cmap import build_char_map_from_dict
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import nums_clear_range, nums_insert, nums_next
@@ -312,9 +313,9 @@ class PdfWriter:
         excluded_keys = list(excluded_keys)
         excluded_keys += [PA.PARENT, "/StructParents"]
         # acrobat does not accept to have two indirect ref pointing on the same
-        # page; therefore in order to add easily multiple copies of the same "
-        # page, we need to create a new dictionary for the page, however the "
-        # objects below (including content) is not duplicated
+        # page; therefore in order to add easily multiple copies of the same
+        # page, we need to create a new dictionary for the page, however the
+        # objects below (including content) are not duplicated:
         try:  # delete an already existing page
             del self._id_translated[id(page_org.indirect_reference.pdf)][  # type: ignore
                 page_org.indirect_reference.idnum  # type: ignore
@@ -705,7 +706,7 @@ class PdfWriter:
         # endobj
 
         file_entry = DecodedStreamObject()
-        file_entry.set_data(data)
+        file_entry.set_data(b_(data))
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
 
         # The Filespec entry
@@ -848,6 +849,45 @@ class PdfWriter:
             da = " ".join(font_properties)
         y_offset = rct.height - 1 - font_height
 
+        # Retrieve font information from local DR ...
+        dr: Any = cast(
+            DictionaryObject,
+            cast(DictionaryObject, field.get("/DR", DictionaryObject())).get_object(),
+        )
+        dr = dr.get("/Font", DictionaryObject()).get_object()
+        if font_name not in dr:
+            # ...or AcroForm dictionary
+            dr = cast(
+                dict,
+                cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {}),
+            )
+            if isinstance(dr, IndirectObject):  # pragma: no cover
+                dr = dr.get_object()
+            dr = dr.get("/Font", DictionaryObject()).get_object()
+        font_res = dr.get(font_name)
+        if font_res is not None:
+            font_res = cast(DictionaryObject, font_res.get_object())
+            font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
+                200, font_res
+            )
+            try:  # get rid of width stored in -1 key
+                del font_map[-1]
+            except KeyError:
+                pass
+            font_full_rev: Dict[str, bytes]
+            if isinstance(font_encoding, str):
+                font_full_rev = {
+                    v: k.encode(font_encoding) for k, v in font_map.items()
+                }
+            else:
+                font_full_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
+                font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
+                for kk, v in font_map.items():
+                    font_full_rev[v] = font_encoding_rev.get(kk, kk)
+        else:
+            logger_warning(f"Font dictionary for {font_name} not found.", __name__)
+            font_full_rev = {}
+
         # Retrieve field text and selected values
         field_flags = field.get(FA.Ff, 0)
         if field.get(FA.FT, "/Tx") == "/Ch" and field_flags & FA.FfBits.Combo == 0:
@@ -873,7 +913,13 @@ class PdfWriter:
             else:
                 # Td is a relative translation
                 ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
-            ap_stream += b"(" + str(line).encode("UTF-8") + b") Tj\n"
+            enc_line: List[bytes] = [
+                font_full_rev.get(c, c.encode("utf-16-be")) for c in line
+            ]
+            if any(len(c) >= 2 for c in enc_line):
+                ap_stream += b"<" + (b"".join(enc_line)).hex().encode() + b"> Tj\n"
+            else:
+                ap_stream += b"(" + b"".join(enc_line) + b") Tj\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
 
         # Create appearance dictionary
@@ -887,22 +933,16 @@ class PdfWriter:
             }
         )
 
-        # Retrieve font information from AcroForm dictionary
-        dr: Any = cast(
-            dict, cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {})
-        )
-        if isinstance(dr, IndirectObject):
-            dr = dr.get_object()
-        dr = dr.get("/Font", {})
-        if isinstance(dr, IndirectObject):
-            dr = dr.get_object()
-
         # Update Resources with font information if necessary
-        if font_name in dr:
+        if font_res is not None:
             dct[NameObject("/Resources")] = DictionaryObject(
                 {
                     NameObject("/Font"): DictionaryObject(
-                        {NameObject(font_name): dr[font_name].indirect_reference}
+                        {
+                            NameObject(font_name): getattr(
+                                font_res, "indirect_reference", font_res
+                            )
+                        }
                     )
                 }
             )
@@ -1324,7 +1364,7 @@ class PdfWriter:
             if obj is not None:
                 idnum = i + 1
                 object_positions.append(stream.tell())
-                stream.write(b_(str(idnum)) + b" 0 obj\n")
+                stream.write(f"{idnum} 0 obj\n".encode())
                 if self._encryption and obj != self._encrypt_entry:
                     obj = self._encryption.encrypt_object(obj, idnum, 0)
                 obj.write_to_stream(stream)
@@ -1334,10 +1374,10 @@ class PdfWriter:
     def _write_xref_table(self, stream: StreamType, object_positions: List[int]) -> int:
         xref_location = stream.tell()
         stream.write(b"xref\n")
-        stream.write(b_(f"0 {len(self._objects) + 1}\n"))
-        stream.write(b_(f"{0:0>10} {65535:0>5} f \n"))
+        stream.write(f"0 {len(self._objects) + 1}\n".encode())
+        stream.write(f"{0:0>10} {65535:0>5} f \n".encode())
         for offset in object_positions:
-            stream.write(b_(f"{offset:0>10} {0:0>5} n \n"))
+            stream.write(f"{offset:0>10} {0:0>5} n \n".encode())
         return xref_location
 
     def _write_trailer(self, stream: StreamType, xref_location: int) -> None:
@@ -1362,7 +1402,7 @@ class PdfWriter:
         if self._encrypt_entry:
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt_entry.indirect_reference
         trailer.write_to_stream(stream)
-        stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
+        stream.write(f"\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
 
     def add_metadata(self, infos: Dict[str, Any]) -> None:
         """

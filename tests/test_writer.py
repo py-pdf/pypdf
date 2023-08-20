@@ -1623,6 +1623,29 @@ def test_missing_info():
 
 
 @pytest.mark.enable_socket()
+def test_germanfields():
+    """Cf #2035"""
+    url = "https://github.com/py-pdf/pypdf/files/12194195/test.pdf"
+    name = "germanfields.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=reader)
+    form_fields = {"Text Box 1": "test æ ø å"}
+    writer.update_page_form_field_values(
+        writer.pages[0], form_fields, auto_regenerate=False
+    )
+    bytes_stream = BytesIO()
+    writer.write(bytes_stream)
+    bytes_stream.seek(0)
+    reader2 = PdfReader(bytes_stream)
+    assert (
+        b"test \xe6 \xf8 \xe5"
+        in reader2.get_fields()["Text Box 1"]
+        .indirect_reference.get_object()["/AP"]["/N"]
+        .get_data()
+    )
+
+
+@pytest.mark.enable_socket()
 def test_no_t_in_articles():
     """Cf #2078"""
     url = "https://github.com/py-pdf/pypdf/files/12311735/bad.pdf"

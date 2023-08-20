@@ -54,7 +54,6 @@ from ._page_labels import index2label as page_index2page_label
 from ._utils import (
     StrByteType,
     StreamType,
-    b_,
     deprecate_no_replacement,
     deprecation_no_replacement,
     deprecation_with_replacement,
@@ -1230,7 +1229,10 @@ class PdfReader:
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirect_reference"] = page
-                self._flatten(page.get_object(), inherit, **addt)
+                obj = page.get_object()
+                if obj:
+                    # damaged file may have invalid child in /Pages
+                    self._flatten(obj, inherit, **addt)
         elif t == "/Page":
             for attr_in, value in list(inherit.items()):
                 # if the page has it's own value, it does not inherit the
@@ -1254,7 +1256,7 @@ class PdfReader:
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
-        stream_data = BytesIO(b_(obj_stm.get_data()))  # type: ignore
+        stream_data = BytesIO(obj_stm.get_data())
         for i in range(obj_stm["/N"]):  # type: ignore
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
@@ -1865,7 +1867,7 @@ class PdfReader:
         xrefstream = cast(ContentStream, read_object(stream, self))
         assert cast(str, xrefstream["/Type"]) == "/XRef"
         self.cache_indirect_object(generation, idnum, xrefstream)
-        stream_data = BytesIO(b_(xrefstream.get_data()))
+        stream_data = BytesIO(xrefstream.get_data())
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
         idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])

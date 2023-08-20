@@ -785,7 +785,7 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
 
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
-        self.__data: Optional[str] = None
+        self._data: bytes = b""
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     def _clone(
@@ -820,7 +820,7 @@ class StreamObject(DictionaryObject):
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
-        data += b_(self._data)
+        data += self._data
         return data
 
     @property
@@ -832,14 +832,6 @@ class StreamObject(DictionaryObject):
     def decodedSelf(self, value: "DecodedStreamObject") -> None:  # deprecated
         deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
         self.decoded_self = value
-
-    @property
-    def _data(self) -> Any:
-        return self.__data
-
-    @_data.setter
-    def _data(self, value: Any) -> None:
-        self.__data = value
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
@@ -914,10 +906,10 @@ class StreamObject(DictionaryObject):
 
 
 class DecodedStreamObject(StreamObject):
-    def get_data(self) -> Any:
+    def get_data(self) -> bytes:
         return self._data
 
-    def set_data(self, data: Any) -> Any:
+    def set_data(self, data: bytes) -> None:
         self._data = data
 
     def getData(self) -> Any:  # deprecated
@@ -943,7 +935,7 @@ class EncodedStreamObject(StreamObject):
         deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
         self.decoded_self = value
 
-    def get_data(self) -> Union[None, str, bytes]:
+    def get_data(self) -> bytes:
         from ..filters import decode_stream_data
 
         if self.decoded_self is not None:
@@ -964,7 +956,7 @@ class EncodedStreamObject(StreamObject):
         deprecation_with_replacement("getData", "get_data", "3.0.0")
         return self.get_data()
 
-    def set_data(self, data: Any) -> None:  # deprecated
+    def set_data(self, data: bytes) -> None:  # deprecated
         from ..filters import FlateDecode
 
         if self.get(SA.FILTER, "") == FT.FLATE_DECODE:
@@ -1004,14 +996,14 @@ class ContentStream(DecodedStreamObject):
             if isinstance(stream, ArrayObject):
                 data = b""
                 for s in stream:
-                    data += b_(s.get_object().get_data())
+                    data += s.get_object().get_data()
                     if len(data) == 0 or data[-1] != b"\n":
                         data += b"\n"
                 stream_bytes = BytesIO(data)
             else:
                 stream_data = stream.get_data()
                 assert stream_data is not None
-                stream_data_bytes = b_(stream_data)
+                stream_data_bytes = b_(stream_data)  # this is necessary
                 stream_bytes = BytesIO(stream_data_bytes)
             self.forced_encoding = forced_encoding
             self.__parse_content_stream(stream_bytes)
@@ -1181,8 +1173,8 @@ class ContentStream(DecodedStreamObject):
                         data.write(info)
         return {"settings": settings, "data": data.getvalue()}
 
-    @property
-    def _data(self) -> bytes:
+    @property  # type: ignore
+    def _data(self) -> bytes:  # type: ignore
         new_data = BytesIO()
         for operands, operator in self.operations:
             if operator == b"INLINE IMAGE":
@@ -1202,8 +1194,8 @@ class ContentStream(DecodedStreamObject):
         return new_data.getvalue()
 
     @_data.setter
-    def _data(self, value: Union[str, bytes]) -> None:
-        self.__parse_content_stream(BytesIO(b_(value)))
+    def _data(self, value: bytes) -> None:
+        self.__parse_content_stream(BytesIO(value))
 
 
 def read_object(
@@ -1284,10 +1276,12 @@ class Field(TreeObject):
         if isinstance(self.get("/V"), EncodedStreamObject):
             d = cast(EncodedStreamObject, self[NameObject("/V")]).get_data()
             if isinstance(d, bytes):
-                d = d.decode()
+                d_str = d.decode()
             elif d is None:
-                d = ""
-            self[NameObject("/V")] = TextStringObject(d)
+                d_str = ""
+            else:
+                raise Exception("Should never happen")
+            self[NameObject("/V")] = TextStringObject(d_str)
 
     # TABLE 8.69 Entries common to all field dictionaries
     @property

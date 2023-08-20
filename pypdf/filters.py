@@ -41,7 +41,6 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import (
-    b_,
     deprecate_with_replacement,
     logger_warning,
     ord_,
@@ -656,7 +655,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
+def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
     """
     Decode the stream data based on the specified filters.
 
@@ -1035,7 +1034,6 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         else:
             extension = ".png"  # mime_type = "image/png"
             image_format = "PNG"
-        data = b_(data)
         img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
