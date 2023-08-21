@@ -28,7 +28,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "typing_extensions >= 3.10.0.0; python_version < '3.10'",
+    "typing_extensions >= 3.7.4.2; python_version < '3.10'",
     "dataclasses; python_version < '3.7'",
 ]
 
