@@ -18,7 +18,6 @@ on:
 jobs:
   tests:
     name: pytest on ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: ["ubuntu-20.04"]
@@ -31,6 +30,7 @@ jobs:
             use-crypto-lib: ""
           - python-version: "3.12"
             os: "ubuntu-22.04"
+    runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
