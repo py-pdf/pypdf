@@ -243,17 +243,17 @@ def handle_tj(
                 if (
                     # cases where the current inserting order is kept
                     (xx <= 0x2F)                        # punctuations but...
-                    or (0x3A <= xx and xx <= 0x40)      # numbers (x30-39)
-                    or (0x2000 <= xx and xx <= 0x206F)  # upper punctuations..
-                    or (0x20A0 <= xx and xx <= 0x21FF)  # but (numbers) indices/exponents
+                    or (xx >= 0x3A and xx <= 0x40)      # numbers (x30-39)
+                    or (xx >= 0x2000 and xx <= 0x206F)  # upper punctuations..
+                    or (xx >= 0x20A0 and xx <= 0x21FF)  # but (numbers) indices/exponents
                     or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
                 ):
                     text = x + text if rtl_dir else text + x
                 elif (  # right-to-left characters set
-                    (0x0590 <= xx and xx <= 0x08FF)
-                    or (0xFB1D <= xx and xx <= 0xFDFF)
-                    or (0xFE70 <= xx and xx <= 0xFEFF)
-                    or (CUSTOM_RTL_MIN <= xx and xx <= CUSTOM_RTL_MAX)
+                    (xx >= 0x0590 and xx <= 0x08FF)
+                    or (xx >= 0xFB1D and xx <= 0xFDFF)
+                    or (xx >= 0xFE70 and xx <= 0xFEFF)
+                    or (xx >= CUSTOM_RTL_MIN and xx <= CUSTOM_RTL_MAX)
                 ):
                     if not rtl_dir:
                         rtl_dir = True
