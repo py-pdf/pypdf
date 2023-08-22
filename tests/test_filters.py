@@ -205,7 +205,7 @@ def test_ccitparameters():
 )
 def test_ccitt_get_parameters(parameters, expected_k):
     parmeters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
-    assert expected_k == parmeters.K
+    assert parmeters.K == expected_k  # noqa: SIM300
 
 
 def test_ccitt_fax_decode():
