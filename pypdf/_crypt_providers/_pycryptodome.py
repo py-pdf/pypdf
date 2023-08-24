@@ -27,7 +27,7 @@
 
 import secrets
 
-from Crypto import __version__
+from Crypto import __version__  # type: ignore[import]
 from Crypto.Cipher import AES, ARC4  # type: ignore[import]
 from Crypto.Util.Padding import pad  # type: ignore[import]
 
