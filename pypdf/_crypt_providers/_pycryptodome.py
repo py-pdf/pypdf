@@ -27,10 +27,13 @@
 
 import secrets
 
+from Crypto import __version__
 from Crypto.Cipher import AES, ARC4  # type: ignore[import]
 from Crypto.Util.Padding import pad  # type: ignore[import]
 
 from pypdf._crypt_providers._base import CryptBase
+
+crypt_provider = ("pycryptodome", __version__)
 
 
 class CryptRC4(CryptBase):
