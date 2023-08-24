@@ -27,7 +27,6 @@
 
 import secrets
 
-from cryptography import __version__  # type: ignore
 from cryptography.hazmat.primitives import padding  # type: ignore[import]
 from cryptography.hazmat.primitives.ciphers.algorithms import AES, ARC4  # type: ignore[import]
 from cryptography.hazmat.primitives.ciphers.base import Cipher  # type: ignore[import]
@@ -35,7 +34,7 @@ from cryptography.hazmat.primitives.ciphers.modes import CBC, ECB  # type: ignor
 
 from pypdf._crypt_providers._base import CryptBase
 
-crypt_provider = ("cryptography", __version__)
+crypt_provider = ("cryptography", "__version__")
 
 
 class CryptRC4(CryptBase):
