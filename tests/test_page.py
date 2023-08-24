@@ -395,6 +395,11 @@ def test_iss_1142():
             "https://github.com/py-pdf/pypdf/files/9428434/TelemetryTX_EM.pdf",
             "tika-964029.pdf",
         ),  # no_ressources
+        (
+            # https://www.itu.int/rec/T-REC-X.25-199610-I/en
+            "https://github.com/py-pdf/pypdf/files/12423313/T-REC-X.25-199610-I.PDF-E.pdf",
+            "T-REC-X.25-199610-I!!PDF-E.pdf",
+        ),
     ],
 )
 def test_extract_text(url, name):
