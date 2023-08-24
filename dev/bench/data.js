@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692902365751,
+  "lastUpdate": 1692905817218,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -37159,6 +37159,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.18074360169065576",
             "extra": "mean: 23.81003620900001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f16f434eca4c439162bb886241b717ff03769e59",
+          "message": "BUG: TypeError: can't concat str to bytes (#2114)\n\nThis was introduced when I removed seemingly unnecessary calls to b_,\r\na helper function that converts Union[bytes, str] to bytes.\r\n\r\nRoot-cause: Too little test coverage + wrong type annotations\r\nCaused-by: 30331227ec3ef087f15f4c3828e2b6d95aa4ce0f\r\n\r\nCloses #2111",
+          "timestamp": "2023-08-24T21:32:47+02:00",
+          "tree_id": "aec7552eb883374cc7f041ca511b1053ed769a38",
+          "url": "https://github.com/py-pdf/pypdf/commit/f16f434eca4c439162bb886241b717ff03769e59"
+        },
+        "date": 1692905815409,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1523898595446196,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001532556843246822",
+            "extra": "mean: 867.7618877999862 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.230824598878007,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009140722149537995",
+            "extra": "mean: 89.04065691667047 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2302080162867287,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009283049584824971",
+            "extra": "mean: 4.3438973852 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.065998307959353,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003171878313402771",
+            "extra": "mean: 82.87751866667747 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03931294507456645,
+            "unit": "iter/sec",
+            "range": "stddev: 0.2249846194211591",
+            "extra": "mean: 25.43691392500001 sec\nrounds: 5"
           }
         ]
       }
