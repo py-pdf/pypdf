@@ -41,6 +41,7 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import (
+    b_,
     deprecate_with_replacement,
     logger_warning,
     ord_,
@@ -655,7 +656,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
+def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
     """
     Decode the stream data based on the specified filters.
 
@@ -682,7 +683,7 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
     decodparms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
     if not isinstance(decodparms, (list, tuple)):
         decodparms = (decodparms,)
-    data: bytes = stream._data
+    data: bytes = b_(stream._data)
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filter_type, params in zip(filters, decodparms):
