@@ -35,6 +35,7 @@ try:
         aes_cbc_encrypt,
         aes_ecb_decrypt,
         aes_ecb_encrypt,
+        crypt_provider,
         rc4_decrypt,
         rc4_encrypt,
     )
@@ -47,6 +48,7 @@ except ImportError:
             aes_cbc_encrypt,
             aes_ecb_decrypt,
             aes_ecb_encrypt,
+            crypt_provider,
             rc4_decrypt,
             rc4_encrypt,
         )
@@ -58,11 +60,13 @@ except ImportError:
             aes_cbc_encrypt,
             aes_ecb_decrypt,
             aes_ecb_encrypt,
+            crypt_provider,
             rc4_decrypt,
             rc4_encrypt,
         )
 
 __all__ = [
+    "crypt_provider",
     "CryptBase",
     "CryptIdentity",
     "CryptRC4",
