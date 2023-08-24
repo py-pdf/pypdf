@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692901418783,
+  "lastUpdate": 1692901603506,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -37041,6 +37041,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0836871699272848",
             "extra": "mean: 32.029378061399996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cclauss@me.com",
+            "name": "Christian Clauss",
+            "username": "cclauss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7d9fa2bcf7c46e47fd2e0b95e268f0f85ac9d09d",
+          "message": "DEV: setup-python for Python 3.12 allow-prerelease: true in Github Actions (#2109)\n\nUse the current version of Python 3.12 whether it is a pre-release or a production release as discussed at:\r\nhttps://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#allow-pre-releases\r\n\r\nThis should run tests on [Python 3.12 rc1](https://www.python.org/download/pre-releases/) instead of hard coding beta 4.",
+          "timestamp": "2023-08-24T20:21:11+02:00",
+          "tree_id": "6b7bdc98cc058bb29ac381611f37a3238bbf91f0",
+          "url": "https://github.com/py-pdf/pypdf/commit/7d9fa2bcf7c46e47fd2e0b95e268f0f85ac9d09d"
+        },
+        "date": 1692901599872,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7659507052950075,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02214992972061846",
+            "extra": "mean: 1.3055670464000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.840754226768993,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029574177175410235",
+            "extra": "mean: 127.53875087500077 msec\nrounds: 8"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.16399624166624893,
+            "unit": "iter/sec",
+            "range": "stddev: 0.27964897884567863",
+            "extra": "mean: 6.0977007145999975 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.929096677367944,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004272414164867578",
+            "extra": "mean: 111.99341166667409 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.030377945947625527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.6512560339571133",
+            "extra": "mean: 32.9186180568 sec\nrounds: 5"
           }
         ]
       }
