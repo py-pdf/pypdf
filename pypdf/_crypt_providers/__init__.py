@@ -84,5 +84,4 @@ __all__ = [
     "aes_ecb_decrypt",
     "aes_cbc_encrypt",
     "aes_cbc_decrypt",
-    "crypt_provider",
 ]
