@@ -19,6 +19,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Freitag, François](https://github.com/francoisfreitag)
 * [Górny, Michał](https://github.com/mgorny)
 * [Grillo, Miguel](https://github.com/Ineffable22)
+* [Gutteridge, David H.](https://github.com/dhgutteridge)
 * [Hale, Joseph](https://github.com/thehale)
 * [harshhes](https://github.com/harshhes)
 * [JianzhengLuo](https://github.com/JianzhengLuo)
