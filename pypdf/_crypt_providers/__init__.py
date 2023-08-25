@@ -28,8 +28,6 @@
 from pypdf._crypt_providers._base import CryptBase, CryptIdentity
 
 try:
-    from packaging import version
-
     from pypdf._crypt_providers._cryptography import (
         CryptAES,
         CryptRC4,
@@ -41,8 +39,9 @@ try:
         rc4_decrypt,
         rc4_encrypt,
     )
+    from pypdf._utils import Version
 
-    if version.parse(crypt_provider[1]) <= version.parse("3.0"):
+    if Version(crypt_provider[1]) <= Version("3.0"):
         # This is due to the backend parameter being required back then:
         # https://cryptography.io/en/latest/changelog/#v3-1
         raise ImportError("cryptography<=3.0 is not supported")

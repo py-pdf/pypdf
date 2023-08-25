@@ -31,6 +31,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import functools
 import logging
+import re
 import warnings
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -41,6 +42,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    List,
     Optional,
     Pattern,
     Tuple,
@@ -588,3 +590,55 @@ class ImageFile(File):
         self.name = self.name[: self.name.rfind(".")] + extension
         self.data = byte_stream
         self.image = img
+
+
+@functools.total_ordering
+class Version:
+    COMPONENT_PATTERN = re.compile(r"^(\d+)?(.*)$")
+
+    def __init__(self, version_str: str) -> None:
+        self.version_str = version_str
+        self.components = self._parse_version(version_str)
+
+    def _parse_version(self, version_str: str) -> List[Tuple[int, str]]:
+        components = version_str.split(".")
+        parsed_components = []
+        for component in components:
+            match = Version.COMPONENT_PATTERN.match(component)
+            if not match:
+                parsed_components.append((0, component))
+                continue
+            integer_prefix = match.group(1)
+            suffix = match.group(2)
+            parsed_components.append((int(integer_prefix), suffix))
+        return parsed_components
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Version):
+            return False
+        return self.components == other.components
+
+    def __lt__(self, other: Any):
+        if not isinstance(other, Version):
+            raise ValueError(f"Version cannot be compared against {type(other)}")
+        min_len = min(len(self.components), len(other.components))
+        for i in range(min_len):
+            self_value, self_suffix = self.components[i]
+            other_value, other_suffix = other.components[i]
+
+            if self_value < other_value:
+                return True
+            elif self_value > other_value:
+                return False
+
+            if self_suffix is not None and other_suffix is None:
+                return True
+            elif self_suffix is None and other_suffix is not None:
+                return False
+            elif self_suffix is not None and other_suffix is not None:
+                if self_suffix < other_suffix:
+                    return True
+                elif self_suffix > other_suffix:
+                    return False
+
+        return len(self.components) < len(other.components)

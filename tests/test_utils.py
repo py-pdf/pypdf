@@ -7,6 +7,7 @@ import pytest
 import pypdf._utils
 from pypdf._utils import (
     File,
+    Version,
     _get_max_pdf_version_header,
     _human_readable_bytes,
     deprecate_with_replacement,
@@ -351,3 +352,17 @@ def test_parse_datetime_err():
         parse_iso8824_date("D:20210408T054711Z")
     assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
     assert parse_iso8824_date("D:20210408054711").tzinfo is None
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "is_less_than"),
+    [
+        ("1", "2", True),
+        ("2", "1", False),
+        ("1", "1", False),
+        ("1.0", "1.1", True),
+        ("1", "1.1", True),
+    ],
+)
+def test_version(left, right, is_less_than):
+    assert (Version(left) < Version(right)) is is_less_than
