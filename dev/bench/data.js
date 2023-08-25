@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692990083772,
+  "lastUpdate": 1692993749327,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -37336,6 +37336,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.1551612846640351",
             "extra": "mean: 27.207312375399987 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9cb22c4aa95b02d87205af4c2acbdb5aeed260a4",
+          "message": "DEV: Add easy way to see all relevant versions (#2116)\n\nWe often need a couple of package versions to investigate issues. This command gives us a one-liner to get that data.\r\n\r\nSee #2107",
+          "timestamp": "2023-08-25T21:58:19+02:00",
+          "tree_id": "e202fc6fdc4218a5dc7693e79ec26b9a8a2447d2",
+          "url": "https://github.com/py-pdf/pypdf/commit/9cb22c4aa95b02d87205af4c2acbdb5aeed260a4"
+        },
+        "date": 1692993747556,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1445409569806195,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001330698223720359",
+            "extra": "mean: 873.712726399998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.31710635948035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00879990050723915",
+            "extra": "mean: 88.36180983333246 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22585772687883357,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026449951367159295",
+            "extra": "mean: 4.427566033799996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.564185588134906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003687957025332763",
+            "extra": "mean: 86.47388027272935 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03957571914592962,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09212217334285931",
+            "extra": "mean: 25.26801841080001 sec\nrounds: 5"
           }
         ]
       }
