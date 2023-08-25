@@ -73,6 +73,7 @@ except ImportError:
         )
 
 __all__ = [
+    "crypt_provider",
     "CryptBase",
     "CryptIdentity",
     "CryptRC4",
