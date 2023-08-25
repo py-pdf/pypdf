@@ -13,6 +13,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 
 * [abyesilyurt](https://github.com/abyesilyurt)
 * [ArkieCoder](https://github.com/ArkieCoder)
+* [Clauss, Christian](https://github.com/cclauss)
 * [DL6ER](https://github.com/DL6ER)
 * [ediamondscience](https://github.com/ediamondscience)
 * [Ermeson, Felipe](https://github.com/FelipeErmeson)
