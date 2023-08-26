@@ -948,7 +948,7 @@ class EncodedStreamObject(StreamObject):
             # create decoded object
             decoded = DecodedStreamObject()
 
-            decoded.set_data(decode_stream_data(self))
+            decoded.set_data(b_(decode_stream_data(self)))
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
@@ -1072,7 +1072,7 @@ class ContentStream(DecodedStreamObject):
             ignore_fields:
         """
         src_cs = cast("ContentStream", src)
-        super().set_data(src_cs._data)
+        super().set_data(b_(src_cs._data))
         self.pdf = pdf_dest
         self._operations = list(src_cs._operations)
         self.forced_encoding = src_cs.forced_encoding
@@ -1188,7 +1188,6 @@ class ContentStream(DecodedStreamObject):
                         data.write(info)
         return {"settings": settings, "data": data.getvalue()}
 
-
     # This overrides the parent method:
     def get_data(self) -> bytes:
         if not self._data:
@@ -1209,7 +1208,7 @@ class ContentStream(DecodedStreamObject):
                     new_data.write(b_(operator))
                 new_data.write(b"\n")
             self._data = new_data.getvalue()
-        return self._data
+        return b_(self._data)
 
     # This overrides the parent method:
     def set_data(self, data: bytes) -> None:
@@ -1219,7 +1218,7 @@ class ContentStream(DecodedStreamObject):
     @property
     def operations(self) -> List[Tuple[Any, Any]]:
         if not self._operations and self._data:
-            self._parse_content_stream(BytesIO(self._data))
+            self._parse_content_stream(BytesIO(b_(self._data)))
             self._data = b""
         return self._operations
 
