@@ -26,6 +26,8 @@ from pypdf._utils import (
 )
 from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 
+from . import is_sublist
+
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
@@ -352,6 +354,24 @@ def test_parse_datetime_err():
         parse_iso8824_date("D:20210408T054711Z")
     assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
     assert parse_iso8824_date("D:20210408054711").tzinfo is None
+
+
+def test_is_sublist():
+    # Basic checks:
+    assert is_sublist([0, 1], [0, 1, 2]) is True
+    assert is_sublist([0, 2], [0, 1, 2]) is True
+    assert is_sublist([1, 2], [0, 1, 2]) is True
+    assert is_sublist([0, 3], [0, 1, 2]) is False
+    # Ensure order is checked:
+    assert is_sublist([1, 0], [0, 1, 2]) is False
+    # Ensure duplicates are handled:
+    assert is_sublist([0, 1, 1], [0, 1, 1, 2]) is True
+    assert is_sublist([0, 1, 1], [0, 1, 2]) is False
+    # Edge cases with empty lists:
+    assert is_sublist([], [0, 1, 2]) is True
+    assert is_sublist([0, 1], []) is False
+    # Self-sublist edge case:
+    assert is_sublist([0, 1, 2], [0, 1, 2]) is True
 
 
 @pytest.mark.parametrize(

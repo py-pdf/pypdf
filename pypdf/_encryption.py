@@ -75,7 +75,7 @@ class CryptFilter:
         elif isinstance(obj, StreamObject):
             obj2 = StreamObject()
             obj2.update(obj)
-            obj2._data = self.stmCrypt.encrypt(b_(obj._data))
+            obj2.set_data(self.stmCrypt.encrypt(b_(obj._data)))
             obj = obj2
         elif isinstance(obj, DictionaryObject):
             obj2 = DictionaryObject()  # type: ignore

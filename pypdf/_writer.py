@@ -2194,6 +2194,7 @@ class PdfWriter:
                     i += 1
                 else:
                     i += 1
+            content.get_data()  # this ensures ._data is rebuilt from the .operations
 
         try:
             d = cast(dict, cast(DictionaryObject, page["/Resources"])["/XObject"])

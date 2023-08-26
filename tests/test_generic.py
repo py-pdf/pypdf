@@ -426,7 +426,7 @@ def test_dictionaryobject_read_from_stream_stream_stream_valid(
         # TODO: What should happen with the stream?
         assert do == {"/S": "/GoTo"}
         if length in (6, 10):
-            assert b"BT /F1" in do._data
+            assert b"BT /F1" in do.get_data()
         raise PdfReadError("__ALLGOOD__")
     assert should_fail ^ (exc.value.args[0] == "__ALLGOOD__")
 
