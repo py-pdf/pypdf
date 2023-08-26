@@ -54,6 +54,7 @@ from ._page_labels import index2label as page_index2page_label
 from ._utils import (
     StrByteType,
     StreamType,
+    b_,
     deprecate_no_replacement,
     deprecation_no_replacement,
     deprecation_with_replacement,
@@ -1256,7 +1257,7 @@ class PdfReader:
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
-        stream_data = BytesIO(obj_stm.get_data())
+        stream_data = BytesIO(b_(obj_stm.get_data()))
         for i in range(obj_stm["/N"]):  # type: ignore
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
@@ -1867,7 +1868,7 @@ class PdfReader:
         xrefstream = cast(ContentStream, read_object(stream, self))
         assert cast(str, xrefstream["/Type"]) == "/XRef"
         self.cache_indirect_object(generation, idnum, xrefstream)
-        stream_data = BytesIO(xrefstream.get_data())
+        stream_data = BytesIO(b_(xrefstream.get_data()))
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
         idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
@@ -2118,7 +2119,7 @@ class PdfReader:
                 if isinstance(f, IndirectObject):
                     field = cast(Optional[EncodedStreamObject], f.get_object())
                     if field:
-                        es = zlib.decompress(field._data)
+                        es = zlib.decompress(b_(field._data))
                         retval[tag] = es
         return retval
 

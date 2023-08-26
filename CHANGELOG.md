@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## Version 3.15.3, 2023-08-26
+
+### Bug Fixes (BUG)
+-  Check version of crypt provider (#2115)
+-  TypeError: can't concat str to bytes (#2114)
+-  Require flit_core >= 3.9 (#2091)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.2...3.15.3)
+
+## Version 3.15.2, 2023-08-20
+
+### Security (SEC)
+-  Avoid endless recursion of reading damaged PDF file (#2093)
+
+### Performance Improvements (PI)
+-  Re-use content stream (#2101)
+
+### Maintenance (MAINT)
+-  Make ParseError inherit from PyPdfError (#2097)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.1...3.15.2)
+
 ## Version 3.15.1, 2023-08-13
 
 ### Performance Improvements (PI)

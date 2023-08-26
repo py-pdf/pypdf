@@ -785,7 +785,7 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
 
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
-        self._data: bytes = b""
+        self._data: Union[bytes, str] = b""
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     def _clone(
@@ -834,7 +834,7 @@ class StreamObject(DictionaryObject):
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
-        data += self._data
+        data += b_(self._data)
         return data
 
     @property
@@ -915,7 +915,7 @@ class StreamObject(DictionaryObject):
         retval[NameObject(SA.FILTER)] = f
         if parms is not None:
             retval[NameObject(SA.DECODE_PARMS)] = parms
-        retval._data = FlateDecode.encode(self._data, level)
+        retval._data = FlateDecode.encode(b_(self._data), level)
         return retval
 
 
@@ -938,7 +938,7 @@ class EncodedStreamObject(StreamObject):
         self.decoded_self = value
 
     # This overrides the parent method:
-    def get_data(self) -> bytes:
+    def get_data(self) -> Union[bytes, str]:
         from ..filters import decode_stream_data
 
         if self.decoded_self is not None:
@@ -1011,7 +1011,7 @@ class ContentStream(DecodedStreamObject):
             if isinstance(stream, ArrayObject):
                 data = b""
                 for s in stream:
-                    data += s.get_object().get_data()
+                    data += b_(s.get_object().get_data())
                     if len(data) == 0 or data[-1] != b"\n":
                         data += b"\n"
                 super().set_data(bytes(data))

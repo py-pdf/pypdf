@@ -43,7 +43,7 @@ from pypdf._crypt_providers import aes_ecb_encrypt as AES_ECB_encrypt  # noqa: N
 from pypdf._crypt_providers import rc4_decrypt as RC4_decrypt  # noqa: N812
 from pypdf._crypt_providers import rc4_encrypt as RC4_encrypt  # noqa: N812
 
-from ._utils import logger_warning
+from ._utils import b_, logger_warning
 from .generic import (
     ArrayObject,
     ByteStringObject,
@@ -75,7 +75,7 @@ class CryptFilter:
         elif isinstance(obj, StreamObject):
             obj2 = StreamObject()
             obj2.update(obj)
-            obj2.set_data(self.stmCrypt.encrypt(obj._data))
+            obj2.set_data(self.stmCrypt.encrypt(b_(obj._data)))
             obj = obj2
         elif isinstance(obj, DictionaryObject):
             obj2 = DictionaryObject()  # type: ignore
@@ -91,7 +91,7 @@ class CryptFilter:
             data = self.strCrypt.decrypt(obj.original_bytes)
             obj = create_string_object(data)
         elif isinstance(obj, StreamObject):
-            obj._data = self.stmCrypt.decrypt(obj._data)
+            obj._data = self.stmCrypt.decrypt(b_(obj._data))
         elif isinstance(obj, DictionaryObject):
             for key, value in obj.items():
                 obj[key] = self.decrypt_object(value)

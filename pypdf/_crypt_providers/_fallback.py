@@ -31,6 +31,9 @@ from pypdf.errors import DependencyError
 _DEPENDENCY_ERROR_STR = "PyCryptodome is required for AES algorithm"
 
 
+crypt_provider = ("local_crypt_fallback", "0.0.0")
+
+
 class CryptRC4(CryptBase):  # type: ignore
     def __init__(self, key: bytes) -> None:
         self.S = bytearray(range(256))
