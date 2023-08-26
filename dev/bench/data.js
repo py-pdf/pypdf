@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693034882338,
+  "lastUpdate": 1693041979299,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -37513,6 +37513,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.14707101192969557",
             "extra": "mean: 25.632022405000004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "925560+Lucas-C@users.noreply.github.com",
+            "name": "Lucas Cimon",
+            "username": "Lucas-C"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0dec208c139af432f32f5871f899812dc5ddf6c8",
+          "message": "PI: Making pypdf as fast as pdfrw (#2086)\n\nThis makes pypdf_watermarking is as fast as pdfrw_watermarking().\r\n\r\nWhat was done:\r\n\r\n* Remove unnecessary calls to `__parse_content_stream` and  `_push_pop_gs`.\r\n* API changes: `get_data` and `set_data` (as well as the deprecated parts) were moved from DecodedStreamObject to StreamObject. Besides that, no changes\r\n\r\n## How this PR improves pypdf\r\n\r\nThe performance improvements for watermarking are dastic\r\n\r\nPerformance impact of this PR:\r\n\r\n* Text extraction speed: 2.5s -> 2.2s\r\n* Image extraction speed: 3.0s -> 2.6s\r\n* Watermarking speed: 10.8s -> 0.4s :exclamation: :exploding_head: :boom: :rocket: \r\n\r\nIt also reduces the watermarking file size in some cases:\r\n\r\n* https://arxiv.org/pdf/2201.00214.pdf: 2.8 MB -> 2.5MB\r\n* https://github.com/py-pdf/sample-files/raw/main/009-pdflatex-geotopo/GeoTopo.pdf : 5.8 -> 5.7MB",
+          "timestamp": "2023-08-26T11:21:03+02:00",
+          "tree_id": "66b051aa9cece00520bab480a28d588791bff34f",
+          "url": "https://github.com/py-pdf/pypdf/commit/0dec208c139af432f32f5871f899812dc5ddf6c8"
+        },
+        "date": 1693041976525,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.183073083354945,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009558379544106993",
+            "extra": "mean: 458.0698684000083 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.667431510344132,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009735792814443176",
+            "extra": "mean: 103.44009150000204 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18340225093514692,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023625708018962934",
+            "extra": "mean: 5.452495784000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.951079281506145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005254038598148301",
+            "extra": "mean: 111.71837144444731 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.030753122207361556,
+            "unit": "iter/sec",
+            "range": "stddev: 0.20671821864882492",
+            "extra": "mean: 32.5170235808 sec\nrounds: 5"
           }
         ]
       }
