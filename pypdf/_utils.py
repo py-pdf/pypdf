@@ -594,7 +594,7 @@ class ImageFile(File):
 
 @functools.total_ordering
 class Version:
-    COMPONENT_PATTERN = re.compile(r"^(\d+)?(.*)$")
+    COMPONENT_PATTERN = re.compile(r"^(\d+)(.*)$")
 
     def __init__(self, version_str: str) -> None:
         self.version_str = version_str

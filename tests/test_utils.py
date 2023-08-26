@@ -396,3 +396,7 @@ def test_version_compare_lt_str():
     with pytest.raises(ValueError) as exc:
         a < "1.0"  # noqa
     assert exc.value.args[0] == "Version cannot be compared against <class 'str'>"
+
+
+def test_bad_version():
+    assert Version("a").components == [(0, "a")]
