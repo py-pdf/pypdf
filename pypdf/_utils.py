@@ -633,14 +633,9 @@ class Version:
             elif self_value > other_value:
                 return False
 
-            if self_suffix is not None and other_suffix is None:
+            if self_suffix < other_suffix:
                 return True
-            elif self_suffix is None and other_suffix is not None:
+            elif self_suffix > other_suffix:
                 return False
-            elif self_suffix is not None and other_suffix is not None:
-                if self_suffix < other_suffix:
-                    return True
-                elif self_suffix > other_suffix:
-                    return False
 
         return len(self.components) < len(other.components)
