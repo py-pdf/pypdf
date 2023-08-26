@@ -610,6 +610,8 @@ class Version:
                 continue
             integer_prefix = match.group(1)
             suffix = match.group(2)
+            if integer_prefix is None:
+                integer_prefix = 0
             parsed_components.append((int(integer_prefix), suffix))
         return parsed_components
 

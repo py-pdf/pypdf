@@ -376,7 +376,23 @@ def test_parse_datetime_err():
         ("1", "1a", True),
         ("1.0", "1.1a", True),
         ("1", "1.1a", True),
+        ("", "0.0.0", True),
+        # just suffix matters ... hm, I think this is actually wrong:
+        ("1.0a", "1.0", False),
+        ("1.0", "1.0a", True),
     ],
 )
-def test_version(left, right, is_less_than):
+def test_version_compare(left, right, is_less_than):
     assert (Version(left) < Version(right)) is is_less_than
+
+
+def test_version_compare_equal_str():
+    a = Version("1.0")
+    assert (a == "1.0") is False
+
+
+def test_version_compare_lt_str():
+    a = Version("1.0")
+    with pytest.raises(ValueError) as exc:
+        a < "1.0"  # noqa
+    assert exc.value.args[0] == "Version cannot be compared against <class 'str'>"
