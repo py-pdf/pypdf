@@ -39,6 +39,12 @@ try:
         rc4_decrypt,
         rc4_encrypt,
     )
+    from pypdf._utils import Version
+
+    if Version(crypt_provider[1]) <= Version("3.0"):
+        # This is due to the backend parameter being required back then:
+        # https://cryptography.io/en/latest/changelog/#v3-1
+        raise ImportError("cryptography<=3.0 is not supported")  # pragma: no cover
 except ImportError:
     try:
         from pypdf._crypt_providers._pycryptodome import (  # type: ignore

@@ -7,6 +7,7 @@ import pytest
 import pypdf._utils
 from pypdf._utils import (
     File,
+    Version,
     _get_max_pdf_version_header,
     _human_readable_bytes,
     deprecate_with_replacement,
@@ -351,3 +352,51 @@ def test_parse_datetime_err():
         parse_iso8824_date("D:20210408T054711Z")
     assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
     assert parse_iso8824_date("D:20210408054711").tzinfo is None
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "is_less_than"),
+    [
+        ("1", "2", True),
+        ("2", "1", False),
+        ("1", "1", False),
+        ("1.0", "1.1", True),
+        ("1", "1.1", True),
+        # suffix left
+        ("1a", "2", True),
+        ("2a", "1", False),
+        ("1a", "1", False),
+        ("1.0a", "1.1", True),
+        # I'm not sure about that, but seems special enoguht that it
+        # probably doesn't matter:
+        ("1a", "1.1", False),
+        # suffix right
+        ("1", "2a", True),
+        ("2", "1a", False),
+        ("1", "1a", True),
+        ("1.0", "1.1a", True),
+        ("1", "1.1a", True),
+        ("", "0.0.0", True),
+        # just suffix matters ... hm, I think this is actually wrong:
+        ("1.0a", "1.0", False),
+        ("1.0", "1.0a", True),
+    ],
+)
+def test_version_compare(left, right, is_less_than):
+    assert (Version(left) < Version(right)) is is_less_than
+
+
+def test_version_compare_equal_str():
+    a = Version("1.0")
+    assert (a == "1.0") is False
+
+
+def test_version_compare_lt_str():
+    a = Version("1.0")
+    with pytest.raises(ValueError) as exc:
+        a < "1.0"  # noqa
+    assert exc.value.args[0] == "Version cannot be compared against <class 'str'>"
+
+
+def test_bad_version():
+    assert Version("a").components == [(0, "a")]
