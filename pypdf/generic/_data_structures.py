@@ -818,7 +818,7 @@ class StreamObject(DictionaryObject):
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
 
-    def get_data(self) -> bytes:
+    def get_data(self) -> Union[bytes, str]:
         return self._data
 
     def set_data(self, data: bytes) -> None:
