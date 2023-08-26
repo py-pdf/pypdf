@@ -618,7 +618,7 @@ class Version:
             return False
         return self.components == other.components
 
-    def __lt__(self, other: Any):
+    def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Version):
             raise ValueError(f"Version cannot be compared against {type(other)}")
         min_len = min(len(self.components), len(other.components))
