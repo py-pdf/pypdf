@@ -71,6 +71,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    dev/deprecations
    dev/documentation
    dev/testing
+   dev/releasing
 
 .. toctree::
    :caption: About pypdf
