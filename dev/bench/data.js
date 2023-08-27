@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693041979299,
+  "lastUpdate": 1693117587850,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -37572,6 +37572,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.20671821864882492",
             "extra": "mean: 32.5170235808 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a6fad46518b7cea36d35be2ab2e2908b5a5f3a02",
+          "message": "MAINT: Relax typing_extensions version (#2104)\n\nTypeAlias was added in 3.7.4.3",
+          "timestamp": "2023-08-27T08:21:14+02:00",
+          "tree_id": "e779754575d6965eea3afd2d3cbafc9aa78c94ab",
+          "url": "https://github.com/py-pdf/pypdf/commit/a6fad46518b7cea36d35be2ab2e2908b5a5f3a02"
+        },
+        "date": 1693117585444,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.218975594650181,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010187265070032396",
+            "extra": "mean: 450.6584039999993 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.849594417981164,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008962109254760793",
+            "extra": "mean: 101.52702309999952 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19530601695409167,
+            "unit": "iter/sec",
+            "range": "stddev: 0.14400069148345615",
+            "extra": "mean: 5.120169954800002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.585058559205775,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005546834064099725",
+            "extra": "mean: 104.32904440000215 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03350285119830496,
+            "unit": "iter/sec",
+            "range": "stddev: 0.9192240912356836",
+            "extra": "mean: 29.848205876 sec\nrounds: 5"
           }
         ]
       }
