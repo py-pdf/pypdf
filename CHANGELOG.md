@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## Version 3.15.4, 2023-08-27
+
+### Performance Improvements (PI)
+-  Making pypdf as fast as pdfrw (#2086)
+
+### Maintenance (MAINT)
+-  Relax typing_extensions version (#2104)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.3...3.15.4)
+
 ## Version 3.15.3, 2023-08-26
 
 ### Bug Fixes (BUG)
