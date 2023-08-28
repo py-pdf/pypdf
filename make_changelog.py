@@ -28,7 +28,6 @@ def main(changelog_path: str) -> None:
     if changes == "":
         print("No changes")
         return
-    print(changes)
 
     new_version = version_bump(git_tag)
     today = datetime.now(tz=timezone.utc)
@@ -37,6 +36,7 @@ def main(changelog_path: str) -> None:
     trailer = f"\n[Full Changelog]({url})\n\n"
     new_entry = header + changes + trailer
     print(new_entry)
+    write_commit_msg_file(new_version, changes + trailer)
 
     # Make the script idempotent by checking if the new entry is already in the changelog
     if new_entry in changelog:
@@ -47,9 +47,23 @@ def main(changelog_path: str) -> None:
     write_changelog(new_changelog, changelog_path)
 
 
+def write_commit_msg_file(new_version: str, commit_changes: str) -> None:
+    """
+    Write a file that can be used as a commit message.
+
+    Like this:
+
+        git commit -eF RELEASE_COMMIT_MSG.md && git push
+    """
+    with open("RELEASE_COMMIT_MSG.md", "w") as fp:
+        fp.write(f"REL: {new_version}\n\n")
+        fp.write("## What's new\n")
+        fp.write(commit_changes)
+
+
 def strip_header(md: str) -> str:
     """Remove the 'CHANGELOG' header."""
-    return md.lstrip("# CHANGELOG").strip()  # noqa
+    return md.lstrip("# CHANGELOG").lstrip()  # noqa
 
 
 def version_bump(git_tag: str) -> str:
