@@ -40,3 +40,5 @@ tests/pdf_cache/
 docs/meta/CHANGELOG.md
 docs/meta/CONTRIBUTORS.md
 extracted-images/
+
+RELEASE_COMMIT_MSG.md
