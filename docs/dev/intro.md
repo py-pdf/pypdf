@@ -48,7 +48,8 @@ you `git commit`.
 
 Having a clean commit message helps people to quickly understand what the commit
 was about, without actually looking at the changes. The first line of the
-commit message is used to [auto-generate the CHANGELOG](https://github.com/py-pdf/pypdf/blob/main/make_changelog.py). For this reason, the format should be:
+commit message is used to [auto-generate the CHANGELOG](https://github.com/py-pdf/pypdf/blob/main/make_release.py).
+For this reason, the format should be:
 
 ```
 PREFIX: DESCRIPTION

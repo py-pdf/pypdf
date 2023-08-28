@@ -57,20 +57,19 @@ def test_multi_language(visitor_text):
     assert "حَبيبي" in reader.pages[3].extract_text(visitor_text=visitor_text)
 
 
-@pytest.mark.parametrize(("file_name", "constraints"),
-                         [
-                             ("inkscape-abc.pdf",
-                              {"A": lambda x, y:
-                               0 < x < 94 and
-                               189 < y < 283,  # In upper left
-                               "B": lambda x, y:
-                               94 < x < 189 and
-                               94 < y < 189,   # In the center
-                               "C": lambda x, y:
-                               189 < x < 283 and
-                               0 < y < 94}     # In lower right
-                              )
-                             ])
+@pytest.mark.parametrize(
+    ("file_name", "constraints"),
+    [
+        (
+            "inkscape-abc.pdf",
+            {
+                "A": lambda x, y: 0 < x < 94 and 189 < y < 283,  # In upper left
+                "B": lambda x, y: 94 < x < 189 and 94 < y < 189,  # In the center
+                "C": lambda x, y: 189 < x < 283 and 0 < y < 94,
+            },  # In lower right
+        )
+    ],
+)
 def test_visitor_text_matrices(file_name, constraints):
     """
     Checks if the matrices given to the visitor_text function when calling

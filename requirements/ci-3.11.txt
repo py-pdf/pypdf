@@ -6,9 +6,9 @@
 #
 attrs==23.1.0
     # via flake8-bugbear
-coverage==7.2.7
+coverage==7.3.0
     # via -r requirements/ci.in
-flake8==6.0.0
+flake8==6.1.0
     # via
     #   -r requirements/ci.in
     #   flake8-bugbear
@@ -25,7 +25,7 @@ iniconfig==2.0.0
     # via pytest
 mccabe==0.7.0
     # via flake8
-mypy==1.4.1
+mypy==1.5.1
     # via -r requirements/ci.in
 mypy-extensions==1.0.0
     # via mypy
@@ -39,13 +39,13 @@ pluggy==1.2.0
     # via pytest
 py-cpuinfo==9.0.0
     # via pytest-benchmark
-pycodestyle==2.10.0
+pycodestyle==2.11.0
     # via
     #   flake8
     #   flake8-print
 pycryptodome==3.18.0
     # via -r requirements/ci.in
-pyflakes==3.0.1
+pyflakes==3.1.0
     # via flake8
 pytest==7.4.0
     # via
@@ -59,9 +59,9 @@ pytest-socket==0.6.0
     # via -r requirements/ci.in
 pytest-timeout==2.1.0
     # via -r requirements/ci.in
-ruff==0.0.280
+ruff==0.0.285
     # via -r requirements/ci.in
-typeguard==4.0.1
+typeguard==4.1.2
     # via -r requirements/ci.in
 types-dataclasses==0.6.6
     # via -r requirements/ci.in

@@ -87,3 +87,20 @@ class ReaderDummy:
 
     def get_reference(self, obj):
         return IndirectObject(idnum=1, generation=1, pdf=self)
+
+
+def is_sublist(child_list, parent_list):
+    """
+    Check if child_list is a sublist of parent_list, with respect to
+    * elements order
+    * elements repetition
+
+    Elements are compared using `==`
+    """
+    if len(child_list) == 0:
+        return True
+    if len(parent_list) == 0:
+        return False
+    if parent_list[0] == child_list[0]:
+        return is_sublist(child_list[1:], parent_list[1:])
+    return is_sublist(child_list, parent_list[1:])

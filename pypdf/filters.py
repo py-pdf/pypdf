@@ -657,7 +657,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
+def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
     """
     Decode the stream data based on the specified filters.
 
@@ -684,7 +684,7 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     decodparms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
     if not isinstance(decodparms, (list, tuple)):
         decodparms = (decodparms,)
-    data: bytes = stream._data
+    data: bytes = b_(stream._data)
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filter_type, params in zip(filters, decodparms):
@@ -1036,7 +1036,6 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         else:
             extension = ".png"  # mime_type = "image/png"
             image_format = "PNG"
-        data = b_(data)
         img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"

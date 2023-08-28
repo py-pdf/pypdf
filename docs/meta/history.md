@@ -40,6 +40,8 @@ arisen.
 The Reddit [/r/python crowd chatted] obliquely and briefly about PyPDF2
 in March 2012.
 
+The core developer / maintainer was Matthew Stamy.
+
 ## PyPDF3 and PyPDF4 (2018 - 2022)
 
 Two approaches were made to get PyPDF2 active again: PyPDF3 and PyPDF4.
@@ -51,7 +53,8 @@ PyPDF4 only had one release in 2018.
 
 ## PyPDF2: Reborn (2022)
 
-Martin Thoma took over maintenance of PyPDF2 in April 2022.
+Martin Thoma took over maintenance of PyPDF2 in April 2022. It had over 100
+open PRs and 321 open issues.
 
 [pubpub-zz](https://github.com/pubpub-zz) was extremely active, especially
 for text extraction.
@@ -68,6 +71,14 @@ encryption schemes.
 In order to make things simpler for beginners, PyPDF2 was merged back into
 pypdf. Now all lowercase, without a number. We hope that the folks who
 develop PyPDF3 and PyPDF4 also join us.
+
+Compared to `PyPDF2 >= 3.0.0`, `pypdf >= 3.1.0` now offers:
+
+* AES reading and writing support. Not only with PyCryptoDome, but also with cryptography.
+* Text extraction improvements, e.g. for math content. [pypdf is now comparable with Tika, pypdfium2, and PyMuPDF](https://github.com/py-pdf/benchmarks)
+* Annotation support
+* Performance Improvements and Bugfixes
+* Page Label support
 
 
   [Mathieu Fenniak]: https://mathieu.fenniak.net/

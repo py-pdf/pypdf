@@ -12,7 +12,7 @@ from typing import Any, List, Tuple, Union
 from .errors import ParseError
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
-PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
+PAGE_RANGE_RE = f"^({_INT_RE}|({_INT_RE}?(:{_INT_RE}?(:{_INT_RE}?)?)))$"
 # groups:         12     34     5 6     7 8
 
 
@@ -127,7 +127,7 @@ class PageRange:
         """
         return self._slice.indices(n)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, PageRange):
             return False
         return self._slice == other._slice

@@ -703,7 +703,7 @@ class PageObject(DictionaryObject):
         return rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
 
     @rotation.setter
-    def rotation(self, r: Union[int, float]) -> None:
+    def rotation(self, r: float) -> None:
         self[NameObject(PG.ROTATE)] = NumberObject((((int(r) + 45) // 90) * 90) % 360)
 
     def transfer_rotation_to_content(self) -> None:
@@ -882,12 +882,17 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def _push_pop_gs(
-        contents: Any, pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol]
+        contents: Any,
+        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
+        use_original: bool = True,
     ) -> ContentStream:
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
         # transformation matricies.
-        stream = ContentStream(contents, pdf)
+        if use_original:
+            stream = contents
+        else:
+            stream = ContentStream(contents, pdf)
         stream.operations.insert(0, ([], "q"))
         stream.operations.append(([], "Q"))
         return stream
@@ -1116,12 +1121,9 @@ class PageObject(DictionaryObject):
         )
 
         new_content_array = ArrayObject()
-
         original_content = self.get_contents()
         if original_content is not None:
-            new_content_array.append(
-                PageObject._push_pop_gs(original_content, self.pdf)
-            )
+            new_content_array.append(original_content)
 
         page2content = page2.get_contents()
         if page2content is not None:
@@ -1254,9 +1256,7 @@ class PageObject(DictionaryObject):
 
         original_content = self.get_contents()
         if original_content is not None:
-            new_content_array.append(
-                PageObject._push_pop_gs(original_content, self.pdf)
-            )
+            new_content_array.append(original_content)
 
         page2content = page2.get_contents()
         if page2content is not None:
