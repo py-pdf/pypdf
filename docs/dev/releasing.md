@@ -20,27 +20,15 @@ release.
 
 The release contains the following steps:
 
-1. Create the changelog with `python make_changelog.py` and adjust the `_version.py`
-2. Create a release commit
-3. Tag that commit
-4. Push both
+1. Update the CHANGELOG.md and the _version.py via `python make_release.py`.
+   This also prepares the release commit message
+2. Create a release commit: `git commit -eF RELEASE_COMMIT_MSG.md`.
+3. Tag that commit: `git tag -s {{version}} -eF RELEASE_TAG_MSG.md`.
+4. Push both: `git push && git push --tags`
 5. CI now builds a source and a wheels package which it pushes to PyPI. It also
    creates a GitHub release.
 
 ![](../_static/releasing.drawio.png)
-
-### The Release Commit
-
-The release commit is used to create the GitHub release page. The structure of
-it should be:
-
-```
-REL: {{ version }}
-
-## What's new
-
-{{ CHANGELOG }}
-```
 
 ### The Release Tag
 

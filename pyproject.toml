@@ -61,7 +61,7 @@ tests_dir = "tests/"
 package = "./pypdf"
 
 [tool.flit.sdist]
-exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", "tests/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_changelog.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
+exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", "tests/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
 
 [tool.pytest.ini_options]
 addopts = "--disable-socket"
@@ -201,7 +201,7 @@ max-complexity = 54  # Recommended: 10
 "_writer.py" = ["S324"]
 "docs/conf.py" = ["PTH", "INP001"]
 "json_consistency.py" = ["T201"]
-"make_changelog.py" = ["T201", "S603", "S607"]
+"make_release.py" = ["T201", "S603", "S607"]
 "pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff:
 "sample-files/*" = ["D100", "INP001"]
 "tests/*" = ["S101", "ANN001", "ANN201","D104", "S105", "S106", "D103", "B018", "B017"]
