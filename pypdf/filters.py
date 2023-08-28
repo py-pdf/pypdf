@@ -58,6 +58,7 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    EncodedStreamObject,
     IndirectObject,
     NullObject,
 )
@@ -860,7 +861,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         if color_space == "/Indexed":
             from .generic import TextStringObject
 
-            if isinstance(lookup, DecodedStreamObject):
+            if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
                 lookup = lookup.get_data()
             if isinstance(lookup, TextStringObject):
                 lookup = lookup.original_bytes
