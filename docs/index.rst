@@ -80,6 +80,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    meta/CHANGELOG
    meta/changelog-v1
    meta/project-governance
+   meta/taking-ownership
    meta/history
    meta/CONTRIBUTORS
    meta/scope-of-pypdf
