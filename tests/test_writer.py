@@ -1238,7 +1238,9 @@ def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    original_cs_operations = ContentStream(reader.pages[0].get_contents(), reader).operations
+    original_cs_operations = ContentStream(
+        reader.pages[0].get_contents(), reader
+    ).operations
     writer = PdfWriter()
     page_1 = writer.add_blank_page(
         reader.pages[0].mediabox[2], reader.pages[0].mediabox[3]
@@ -1636,6 +1638,19 @@ def test_no_t_in_articles():
     """Cf #2078"""
     url = "https://github.com/py-pdf/pypdf/files/12311735/bad.pdf"
     name = "iss2078.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_damaged_pdf_length_returning_none():
+    """
+    Cf #140
+    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
+    """
+    url = "https://github.com/py-pdf/pypdf/files/12168578/bad_pdf_example.pdf"
+    name = "iss140_bad_pdf.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
