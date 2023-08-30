@@ -2211,7 +2211,7 @@ class PdfWriter:
                 try:
                     content: Any = None
                     if (
-                        to_delete & ObjectDeletionFlag.IMAGES
+                        cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.IMAGES
                         and o["/Subtype"] == "/Image"
                     ):
                         content = NullObject()
