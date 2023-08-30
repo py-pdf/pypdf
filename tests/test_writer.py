@@ -1,5 +1,7 @@
 """Test the pypdf._writer module."""
 import re
+import shutil
+import subprocess
 from io import BytesIO
 from pathlib import Path
 
@@ -1550,6 +1552,35 @@ def test_watermarking_speed():
     writer.write(out_pdf_bytesio)
     pdf_size_in_mib = len(out_pdf_bytesio.getvalue()) / 1024 / 1024
     assert pdf_size_in_mib < 20
+
+
+@pytest.mark.enable_socket()
+def test_watermark_rendering(tmp_path):
+    url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
+    name = "bgwatermark.pdf"
+    watermark = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    url = "https://github.com/py-pdf/pypdf/files/11985888/source.pdf"
+    name = "srcwatermark.pdf"
+    page = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    writer = PdfWriter()
+    page.merge_page(watermark, over=False)
+    writer.add_page(page)
+
+    target_png_path = tmp_path / "target.png"
+    url = "https://github.com/py-pdf/pypdf/assets/96178532/d5c72d0e-7047-4504-bbf6-bc591c80d7c0"
+    name = "dstwatermark.png"
+    target_png_path.write_bytes(get_data_from_url(url, name=name))
+
+    pdf_path = tmp_path / "out.pdf"
+    png_path = tmp_path / "out.png"
+    writer.write(pdf_path)
+
+    ghostscript_binary = shutil.which("gs")
+    assert ghostscript_binary is not None
+    # False positive: https://github.com/PyCQA/bandit/issues/333
+    subprocess.run([ghostscript_binary, "-sDEVICE=pngalpha", "-o", png_path, pdf_path])  # noqa: S603
+    assert png_path.is_file()
+    image_similarity(png_path, target_png_path)
 
 
 @pytest.mark.enable_socket()
