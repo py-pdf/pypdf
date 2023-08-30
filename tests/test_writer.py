@@ -37,6 +37,7 @@ TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
+GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
 def test_writer_exception_non_binary(tmp_path, caplog):
@@ -1556,6 +1557,7 @@ def test_watermarking_speed():
 
 
 @pytest.mark.enable_socket()
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
 def test_watermark_rendering(tmp_path):
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
     name = "bgwatermark.pdf"
@@ -1576,10 +1578,8 @@ def test_watermark_rendering(tmp_path):
     png_path = tmp_path / "out.png"
     writer.write(pdf_path)
 
-    ghostscript_binary = shutil.which("gs")
-    assert ghostscript_binary is not None
     # False positive: https://github.com/PyCQA/bandit/issues/333
-    subprocess.run([ghostscript_binary, "-sDEVICE=pngalpha", "-o", png_path, pdf_path])  # noqa: S603
+    subprocess.run([GHOSTSCRIPT_BINARY, "-sDEVICE=pngalpha", "-o", png_path, pdf_path])  # noqa: S603
     assert png_path.is_file()
     image_similarity(png_path, target_png_path)
 
