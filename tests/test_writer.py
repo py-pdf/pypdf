@@ -327,6 +327,27 @@ def test_remove_images(pdf_file_path, input_path):
             assert "Lorem ipsum dolor sit amet" in extracted_text
 
 
+@pytest.mark.enable_socket()
+def test_remove_images_sub_level():
+    """Cf #2035"""
+    url = "https://github.com/py-pdf/pypdf/files/12394781/2210.03142-1.pdf"
+    name = "iss2103.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer.remove_images()
+    assert (
+        len(
+            [
+                o.get_object()
+                for o in writer.pages[0]["/Resources"]["/XObject"]["/Fm1"][
+                    "/Resources"
+                ]["/XObject"]["/Im1"]["/Resources"]["/XObject"].values()
+                if not isinstance(o.get_object(), NullObject)
+            ]
+        )
+        == 0
+    )
+
+
 @pytest.mark.parametrize(
     "input_path",
     [
@@ -1238,7 +1259,9 @@ def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    original_cs_operations = ContentStream(reader.pages[0].get_contents(), reader).operations
+    original_cs_operations = ContentStream(
+        reader.pages[0].get_contents(), reader
+    ).operations
     writer = PdfWriter()
     page_1 = writer.add_blank_page(
         reader.pages[0].mediabox[2], reader.pages[0].mediabox[3]
