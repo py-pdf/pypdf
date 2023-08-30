@@ -31,6 +31,7 @@ from pypdf.generic import (
 )
 
 from . import get_data_from_url, is_sublist
+from .test_images import image_similarity
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
