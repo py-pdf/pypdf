@@ -2239,7 +2239,7 @@ class PdfWriter:
                 except (TypeError, KeyError):
                     pass
             if isinstance(elt, StreamObject):  # for /Form
-                if not isinstance(elt, ContentStream):
+                if not isinstance(elt, ContentStream):  # pragma: no cover
                     e = ContentStream(elt, self)
                     e.update(elt.items())
                     elt = e
