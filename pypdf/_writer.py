@@ -2173,11 +2173,8 @@ class PdfWriter:
         else:  # del text
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
 
-        images = []
-        forms = []
-
-        def clean(content: ContentStream) -> None:
-            nonlocal images, forms, to_delete
+        def clean(content: ContentStream, images: List[str], forms: List[str]) -> None:
+            nonlocal to_delete
             i = 0
             while i < len(content.operations):
                 operands, operator = content.operations[i]
@@ -2196,42 +2193,67 @@ class PdfWriter:
                     i += 1
             content.get_data()  # this ensures ._data is rebuilt from the .operations
 
-        try:
-            d = cast(dict, cast(DictionaryObject, page["/Resources"])["/XObject"])
-        except KeyError:
-            d = {}
-        for k, v in d.items():
-            o = v.get_object()
+        def clean_forms(
+            elt: DictionaryObject, stack: List[DictionaryObject]
+        ) -> Tuple[List[str], List[str]]:
+            nonlocal to_delete
+            if elt in stack:
+                # to prevent infinite looping
+                return [], []  # pragma: no cover
             try:
-                content: Any = None
-                if to_delete & ObjectDeletionFlag.IMAGES and o["/Subtype"] == "/Image":
-                    content = NullObject()
-                    images.append(k)
-                if o["/Subtype"] == "/Form":
-                    forms.append(k)
-                    if isinstance(o, ContentStream):
-                        content = o
-                    else:
-                        content = ContentStream(o, self)
-                        content.update(o.items())
-                        for k1 in ["/Length", "/Filter", "/DecodeParms"]:
-                            try:
-                                del content[k1]
-                            except KeyError:
-                                pass
-                    clean(content)
-                if content is not None:
-                    if isinstance(v, IndirectObject):
-                        self._objects[v.idnum - 1] = content
-                    else:
-                        d[k] = self._add_object(content)
-            except (TypeError, KeyError):
-                pass
+                d = cast(dict, cast(DictionaryObject, elt["/Resources"])["/XObject"])
+            except KeyError:
+                d = {}
+            images = []
+            forms = []
+            for k, v in d.items():
+                o = v.get_object()
+                try:
+                    content: Any = None
+                    if (
+                        cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.IMAGES
+                        and o["/Subtype"] == "/Image"
+                    ):
+                        content = NullObject()
+                        images.append(k)
+                    if o["/Subtype"] == "/Form":
+                        forms.append(k)
+                        if isinstance(o, ContentStream):
+                            content = o
+                        else:
+                            content = ContentStream(o, self)
+                            content.update(o.items())
+                            for k1 in ["/Length", "/Filter", "/DecodeParms"]:
+                                try:
+                                    del content[k1]
+                                except KeyError:
+                                    pass
+                        clean_forms(content, stack + [elt])  # clean sub forms
+                    if content is not None:
+                        if isinstance(v, IndirectObject):
+                            self._objects[v.idnum - 1] = content
+                        else:
+                            # should only occur with pdf not respecting pdf spec
+                            # where streams must be indirected.
+                            d[k] = self._add_object(content)  # pragma: no cover
+                except (TypeError, KeyError):
+                    pass
+            if isinstance(elt, StreamObject):  # for /Form
+                if not isinstance(elt, ContentStream):  # pragma: no cover
+                    e = ContentStream(elt, self)
+                    e.update(elt.items())
+                    elt = e
+                clean(elt, images, forms)  # clean the content
+            return images, forms
+
         if "/Contents" in page:
             content = page["/Contents"].get_object()
+
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page)
-            clean(cast(ContentStream, content))
+            images, forms = clean_forms(page, [])
+
+            clean(cast(ContentStream, content), images, forms)
             if isinstance(page["/Contents"], ArrayObject):
                 for o in cast(ArrayObject, page["/Contents"]):
                     self._objects[o.idnum - 1] = NullObject()
