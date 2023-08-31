@@ -1581,7 +1581,7 @@ def test_watermark_rendering(tmp_path):
     # False positive: https://github.com/PyCQA/bandit/issues/333
     subprocess.run([GHOSTSCRIPT_BINARY, "-sDEVICE=pngalpha", "-o", png_path, pdf_path])  # noqa: S603
     assert png_path.is_file()
-    image_similarity(png_path, target_png_path)
+    assert image_similarity(png_path, target_png_path) >= 0.95
 
 
 @pytest.mark.enable_socket()
