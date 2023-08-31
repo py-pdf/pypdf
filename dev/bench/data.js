@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693253272506,
+  "lastUpdate": 1693481519624,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -37985,6 +37985,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.19058177796322745",
             "extra": "mean: 30.483473752600013 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7c23cbb62f3268dfe203641e7da7fd27133f6b21",
+          "message": "BUG: remove_images not operating in sub level forms (#2133)\n\nSome images could not be removed using remove_images. There is only one page in the pdf and the output of 'len(page.images)' was 32, even after 'remove_images()'.\r\n\r\nThe reason was that images are in a XObject/Form within an XObject/Form.\r\nThis commit modifies the code to cope with such situations for all remove_xxx functions.\r\n\r\nCloses #2103",
+          "timestamp": "2023-08-31T13:27:36+02:00",
+          "tree_id": "bb51c4baf7391da748339b46fcdbab80a69e3d7b",
+          "url": "https://github.com/py-pdf/pypdf/commit/7c23cbb62f3268dfe203641e7da7fd27133f6b21"
+        },
+        "date": 1693481517930,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.504804016223672,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010875721470597077",
+            "extra": "mean: 399.23283159998846 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.691991603931465,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015428969185799224",
+            "extra": "mean: 93.52794475000319 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20910182074664674,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024254113910686374",
+            "extra": "mean: 4.782359122600019 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.407989179155239,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003805481353266729",
+            "extra": "mean: 96.0800383999981 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03697170968208754,
+            "unit": "iter/sec",
+            "range": "stddev: 0.15292959584002772",
+            "extra": "mean: 27.047707790599986 sec\nrounds: 5"
           }
         ]
       }
