@@ -3133,7 +3133,7 @@ class PdfWriter:
                     thr = thr.get_object()
                 if thr.indirect_reference.idnum not in self._id_translated[
                     id(reader)
-                ] and fltr.search(thr.get("/I", {}).get("/Title", "")):
+                ] and fltr.search((thr["/I"] if "/I" in thr else {}).get("/Title", "")):
                     self._add_articles_thread(thr, pages, reader)
 
     def _get_cloned_page(
