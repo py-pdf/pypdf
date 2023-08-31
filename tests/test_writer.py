@@ -1662,3 +1662,16 @@ def test_no_t_in_articles():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_damaged_pdf_length_returning_none():
+    """
+    Cf #140
+    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
+    """
+    url = "https://github.com/py-pdf/pypdf/files/12168578/bad_pdf_example.pdf"
+    name = "iss140_bad_pdf.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
