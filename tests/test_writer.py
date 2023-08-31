@@ -1671,9 +1671,9 @@ def test_no_i_in_articles():
     name = "iss2089.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
-    writer.append(reader)   
+    writer.append(reader)
 
-    
+
 @pytest.mark.enable_socket()
 def test_damaged_pdf_length_returning_none():
     """
