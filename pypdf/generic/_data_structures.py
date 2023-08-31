@@ -496,6 +496,8 @@ class DictionaryObject(dict, PdfObject):
                 assert pdf is not None  # hint for mypy
                 length = pdf.get_object(length)
                 stream.seek(t, 0)
+            if length is None:  # if the PDF is damaged
+                length = -1
             pstart = stream.tell()
             if length > 0:
                 data["__streamdata__"] = stream.read(length)

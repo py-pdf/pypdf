@@ -327,6 +327,27 @@ def test_remove_images(pdf_file_path, input_path):
             assert "Lorem ipsum dolor sit amet" in extracted_text
 
 
+@pytest.mark.enable_socket()
+def test_remove_images_sub_level():
+    """Cf #2035"""
+    url = "https://github.com/py-pdf/pypdf/files/12394781/2210.03142-1.pdf"
+    name = "iss2103.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer.remove_images()
+    assert (
+        len(
+            [
+                o.get_object()
+                for o in writer.pages[0]["/Resources"]["/XObject"]["/Fm1"][
+                    "/Resources"
+                ]["/XObject"]["/Im1"]["/Resources"]["/XObject"].values()
+                if not isinstance(o.get_object(), NullObject)
+            ]
+        )
+        == 0
+    )
+
+
 @pytest.mark.parametrize(
     "input_path",
     [
@@ -1648,6 +1669,19 @@ def test_no_i_in_articles():
     """Cf #2089"""
     url = "https://github.com/py-pdf/pypdf/files/12352793/kim2002.pdf"
     name = "iss2089.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)   
+
+    
+@pytest.mark.enable_socket()
+def test_damaged_pdf_length_returning_none():
+    """
+    Cf #140
+    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
+    """
+    url = "https://github.com/py-pdf/pypdf/files/12168578/bad_pdf_example.pdf"
+    name = "iss140_bad_pdf.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
