@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693773135979,
+  "lastUpdate": 1693774590320,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -38162,6 +38162,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09888409937481113",
             "extra": "mean: 25.278783514400004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "31ecda320c3598908b8f4ee90b189e66a75c4d57",
+          "message": "DEV: Download PDFs before executing the tests to not run into timeouts (#2143)\n\nTests which have `enable_socket` and a small timeout might fail because the download isn't finished fast enough. That is not what we want to test.\r\n\r\nAs a fix, CI now can download files before the actual tests are executed.",
+          "timestamp": "2023-09-03T22:52:21+02:00",
+          "tree_id": "1512179153cf8b0718748203ca53617d42babb9d",
+          "url": "https://github.com/py-pdf/pypdf/commit/31ecda320c3598908b8f4ee90b189e66a75c4d57"
+        },
+        "date": 1693774587652,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7066729324918257,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006570198763310919",
+            "extra": "mean: 369.4572727999969 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.203554471060885,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009576684275318003",
+            "extra": "mean: 89.25738725000443 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2305827654255987,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01555153340546408",
+            "extra": "mean: 4.336837569599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.813279409429828,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004119473839272933",
+            "extra": "mean: 78.04403291666755 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0389801637386332,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08173590274245215",
+            "extra": "mean: 25.654073869600012 sec\nrounds: 5"
           }
         ]
       }
