@@ -58,6 +58,7 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    EncodedStreamObject,
     IndirectObject,
     NullObject,
 )
@@ -860,7 +861,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         if color_space == "/Indexed":
             from .generic import TextStringObject
 
-            if isinstance(lookup, DecodedStreamObject):
+            if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
                 lookup = lookup.get_data()
             if isinstance(lookup, TextStringObject):
                 lookup = lookup.original_bytes
@@ -904,7 +905,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                             f"Invalid Lookup Table in {obj_as_text}", __name__
                         )
                         lookup = None
-                    if mode == "L":
+                    elif mode == "L":
                         # gray lookup does not work : it is converted to a similar RGB lookup
                         lookup = b"".join([bytes([b, b, b]) for b in lookup])
                         mode = "RGB"
