@@ -76,6 +76,9 @@ jobs:
     - name: Install pypdf
       run: |
         pip install .
+    - name: Prepare
+      run: |
+        python -c "from tests import download_test_pdfs; download_test_pdfs()"
     - name: Test with pytest
       run: |
         python -m coverage run --parallel-mode -m pytest tests -vv
