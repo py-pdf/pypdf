@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693481806661,
+  "lastUpdate": 1693773135979,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -38103,6 +38103,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.1353954273726985",
             "extra": "mean: 29.82146131160001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2cd129c483cbaf7e1791748670a74a80c5ea7764",
+          "message": "DEV: Add workflow_dispatch to CI (#2145)\n\nThis was originally added by stefan on #2130\r\n\r\nThis allows anyone to manually run the workflow on their fork if desired with any branch.\r\n\r\nSee https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch\r\n\r\nCo-authored-by: stefan6419846 <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2023-09-03T22:28:13+02:00",
+          "tree_id": "bdd428f1addecf7c6884684707dc290f66ac2f29",
+          "url": "https://github.com/py-pdf/pypdf/commit/2cd129c483cbaf7e1791748670a74a80c5ea7764"
+        },
+        "date": 1693773134062,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.667878163658077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006309710956476261",
+            "extra": "mean: 374.82971059999386 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.92948041120863,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011826304353053228",
+            "extra": "mean: 91.49565783332747 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2303424686543233,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013342812300493797",
+            "extra": "mean: 4.3413618245999945 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.388782044992606,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014577999424371419",
+            "extra": "mean: 80.71818491666723 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03955886561670787,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09888409937481113",
+            "extra": "mean: 25.278783514400004 sec\nrounds: 5"
           }
         ]
       }
