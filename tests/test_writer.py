@@ -1582,7 +1582,7 @@ def test_watermarking_speed():
 @pytest.mark.enable_socket()
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
 def test_watermark_rendering(tmp_path):
-    """Ensure the visual appearance of watermarking stays correct.""" 
+    """Ensure the visual appearance of watermarking stays correct."""
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
     name = "bgwatermark.pdf"
     watermark = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
