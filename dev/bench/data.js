@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693774590320,
+  "lastUpdate": 1693774702239,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -38221,6 +38221,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08173590274245215",
             "extra": "mean: 25.654073869600012 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "af41173c364277867afd0b50612df45d1073c353",
+          "message": "BUG: Fix image look-up table in EncodedStreamObject (#2128)\n\nCloses #2124\r\nCloses #2110",
+          "timestamp": "2023-09-03T22:54:16+02:00",
+          "tree_id": "55f5b08d881f1cf2da5ea27d83d65a5aee18d987",
+          "url": "https://github.com/py-pdf/pypdf/commit/af41173c364277867afd0b50612df45d1073c353"
+        },
+        "date": 1693774699924,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.705899242909527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006141033668004902",
+            "extra": "mean: 369.56291060000694 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.282158548378563,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009346935223573409",
+            "extra": "mean: 88.63552091667042 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23281156050597226,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008075858393630288",
+            "extra": "mean: 4.295319346799994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.690623113370423,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007272220885254959",
+            "extra": "mean: 78.7983372499994 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.039143401282384575,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13339402428351688",
+            "extra": "mean: 25.5470901158 sec\nrounds: 5"
           }
         ]
       }
