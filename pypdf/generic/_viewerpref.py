@@ -55,8 +55,8 @@ class ViewerPreferences(DictionaryObject):
             raise ValueError(f"{v} is not par of acceptable values")
         self[NameObject(key)] = NameObject(v)
 
-    def _get_arr(self, key: str) -> NumberObject:
-        return self.get(key, ArrayObject())
+    def _get_arr(self, key: str, deft: Optional[List[Any]]) -> NumberObject:
+        return self.get(key, None if deft is None else ArrayObject(deft))
 
     def _set_arr(self, key: str, v: Optional[ArrayObject]) -> None:
         if not isinstance(v, ArrayObject):
@@ -95,7 +95,7 @@ class ViewerPreferences(DictionaryObject):
 
         def _add_prop_arr(key: str, deft: Optional[ArrayObject]) -> property:
             return property(
-                lambda self: self._get_arr(key),
+                lambda self: self._get_arr(key, deft),
                 lambda self, v: self._set_arr(key, v),
                 None,
                 f"""

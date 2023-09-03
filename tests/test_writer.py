@@ -1725,6 +1725,11 @@ def test_viewerpreferences():
         writer._root_object["/ViewerPreferences"]["/CenterWindow"]
         == False  # noqa: E712
     )
+    v.num_copies = 1
+    assert v.num_copies == 1
+    assert v.print_pagerange is None
+    v.print_pagerange = ArrayObject()
+    assert len(v.print_pagerange) == 0
 
     writer.create_viewer_preference()
     assert len(writer._root_object["/ViewerPreferences"]) == 0
