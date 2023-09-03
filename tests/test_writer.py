@@ -1675,3 +1675,33 @@ def test_damaged_pdf_length_returning_none():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_viewerpreferences():
+    """
+    Add Tests for ViewerPreferences
+    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
+    """
+    url = "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf"
+    name = "2015._pb_decode_pg0.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    v = reader.viewer_preferences
+    assert bool(v.center_window) is True
+    writer = PdfWriter(clone_from=reader)
+    v = writer.viewer_preferences
+    assert bool(v.center_window) is True
+    v.center_window = False
+    assert bool(writer._root_object["/ViewerPreferences"]["/CenterWindow"]) is False
+    assert v.print_area == "/CropBox"
+    with pytest.raises(ValueError):
+        v.non_fullscreen_pagemode = "toto"
+    with pytest.raises(ValueError):
+        v.non_fullscreen_pagemode = "/toto"
+    v.non_fullscreen_pagemode = "/UseOutlines"
+    assert (
+        writer._root_object["/ViewerPreferences"]["/NonFullScreenPageMode"]
+        == "/UseOutlines"
+    )
+    writer.create_viewer_preference()
+    assert len(writer._root_object["/ViewerPreferences"]) == 0

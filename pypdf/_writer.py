@@ -386,7 +386,7 @@ class PdfWriter:
 
     def create_viewer_preference(self) -> ViewerPreferences:
         o = ViewerPreferences()
-        self._root_object[CD.VIEWER_PREFERENCES] = self._add_object(o)
+        self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = self._add_object(o)
         return o
 
     def add_page(

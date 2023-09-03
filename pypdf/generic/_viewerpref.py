@@ -51,7 +51,7 @@ class ViewerPreferences(DictionaryObject):
     def _set_name(self, key: str, lst: List[str], v: NameObject) -> None:
         if v[0] != "/":
             raise ValueError(f"{v} is not starting with '/'")
-        if lst != [] and key not in lst:
+        if lst != [] and v not in lst:
             raise ValueError(f"{v} is not par of acceptable values")
         self[NameObject(key)] = NameObject(v)
 
@@ -69,7 +69,7 @@ class ViewerPreferences(DictionaryObject):
     def _set_int(self, key: str, v: int) -> None:
         self[NameObject(key)] = NumberObject(v)
 
-    def __new__(cls: Any, value: Any = None):
+    def __new__(cls: Any, value: Any = None) -> "ViewerPreferences":
         def _add_prop_bool(key: str, deft: Optional[BooleanObject]) -> property:
             return property(
                 lambda self: self._get_bool(key, deft),
