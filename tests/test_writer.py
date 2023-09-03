@@ -1698,6 +1698,16 @@ def test_no_t_in_articles():
 
 
 @pytest.mark.enable_socket()
+def test_no_i_in_articles():
+    """Cf #2089"""
+    url = "https://github.com/py-pdf/pypdf/files/12352793/kim2002.pdf"
+    name = "iss2089.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+
+
+@pytest.mark.enable_socket()
 def test_damaged_pdf_length_returning_none():
     """
     Cf #140
