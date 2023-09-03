@@ -87,6 +87,7 @@ def orient(m: List[float]) -> int:
 
 def crlf_space_check(
     text: str,
+    cm_prev: List[float],
     tm_prev: List[float],
     cm_matrix: List[float],
     tm_matrix: List[float],
@@ -98,8 +99,8 @@ def crlf_space_check(
     font_size: float,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
     spacewidth: float,
-) -> Tuple[str, str, List[float]]:
-    m_prev = mult(tm_prev, cm_matrix)
+) -> Tuple[str, str, List[float], List[float]]:
+    m_prev = mult(tm_prev, cm_prev)
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
     delta_x = m[4] - m_prev[4]
@@ -116,7 +117,7 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
+                            cm_prev,
                             tm_prev,
                             cmap[3],
                             font_size,
@@ -135,7 +136,7 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
+                            cm_prev,
                             tm_prev,
                             cmap[3],
                             font_size,
@@ -154,7 +155,7 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
+                            cm_prev,
                             tm_prev,
                             cmap[3],
                             font_size,
@@ -173,7 +174,7 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
+                            cm_prev,
                             tm_prev,
                             cmap[3],
                             font_size,
@@ -188,7 +189,8 @@ def crlf_space_check(
     except Exception:
         pass
     tm_prev = tm_matrix.copy()
-    return text, output, tm_prev
+    cm_prev = cm_matrix.copy()
+    return text, output, cm_prev, tm_prev
 
 
 def handle_tj(
