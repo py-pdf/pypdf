@@ -30,6 +30,12 @@ jobs:
           - python-version: "3.10"
             use-crypto-lib: ""
     steps:
+    - name: Update APT packages
+      run:
+        sudo apt-get update
+    - name: Install APT dependencies
+      run:
+        sudo apt-get install ghostscript
     - name: Checkout Code
       uses: actions/checkout@v3
       with:

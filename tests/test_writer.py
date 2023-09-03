@@ -1,5 +1,7 @@
 """Test the pypdf._writer module."""
 import re
+import shutil
+import subprocess
 from io import BytesIO
 from pathlib import Path
 
@@ -29,11 +31,13 @@ from pypdf.generic import (
 )
 
 from . import get_data_from_url, is_sublist
+from .test_images import image_similarity
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
+GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
 def test_writer_exception_non_binary(tmp_path, caplog):
@@ -1573,6 +1577,35 @@ def test_watermarking_speed():
     writer.write(out_pdf_bytesio)
     pdf_size_in_mib = len(out_pdf_bytesio.getvalue()) / 1024 / 1024
     assert pdf_size_in_mib < 20
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+def test_watermark_rendering(tmp_path):
+    """Ensure the visual appearance of watermarking stays correct."""
+    url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
+    name = "bgwatermark.pdf"
+    watermark = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    url = "https://github.com/py-pdf/pypdf/files/11985888/source.pdf"
+    name = "srcwatermark.pdf"
+    page = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    writer = PdfWriter()
+    page.merge_page(watermark, over=False)
+    writer.add_page(page)
+
+    target_png_path = tmp_path / "target.png"
+    url = "https://github.com/py-pdf/pypdf/assets/96178532/d5c72d0e-7047-4504-bbf6-bc591c80d7c0"
+    name = "dstwatermark.png"
+    target_png_path.write_bytes(get_data_from_url(url, name=name))
+
+    pdf_path = tmp_path / "out.pdf"
+    png_path = tmp_path / "out.png"
+    writer.write(pdf_path)
+
+    # False positive: https://github.com/PyCQA/bandit/issues/333
+    subprocess.run([GHOSTSCRIPT_BINARY, "-sDEVICE=pngalpha", "-o", png_path, pdf_path])  # noqa: S603
+    assert png_path.is_file()
+    assert image_similarity(png_path, target_png_path) >= 0.95
 
 
 @pytest.mark.enable_socket()
