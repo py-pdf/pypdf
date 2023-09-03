@@ -148,3 +148,7 @@ class ViewerPreferences(DictionaryObject):
         super().__init__(self)
         if obj is not None:
             self.update(obj.items())
+        try:
+            self.indirect_reference = obj.indirect_reference  # type: ignore
+        except AttributeError:
+            pass

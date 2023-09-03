@@ -1687,12 +1687,15 @@ def test_viewerpreferences():
     name = "2015._pb_decode_pg0.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     v = reader.viewer_preferences
-    assert bool(v.center_window) is True
+    assert v.center_window == True  # noqa: E712
     writer = PdfWriter(clone_from=reader)
     v = writer.viewer_preferences
-    assert bool(v.center_window) is True
+    assert v.center_window == True  # noqa: E712
     v.center_window = False
-    assert bool(writer._root_object["/ViewerPreferences"]["/CenterWindow"]) is False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
     assert v.print_area == "/CropBox"
     with pytest.raises(ValueError):
         v.non_fullscreen_pagemode = "toto"
@@ -1703,5 +1706,28 @@ def test_viewerpreferences():
         writer._root_object["/ViewerPreferences"]["/NonFullScreenPageMode"]
         == "/UseOutlines"
     )
+    writer = PdfWriter(clone_from=reader)
+    v = writer.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+
+    writer = PdfWriter(clone_from=reader)
+    writer._root_object[NameObject("/ViewerPreferences")] = writer._add_object(
+        writer._root_object["/ViewerPreferences"]
+    )
+    v = writer.viewer_preferences
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+
     writer.create_viewer_preference()
     assert len(writer._root_object["/ViewerPreferences"]) == 0
+
+    del reader.trailer["/Root"]["/ViewerPreferences"]
+    assert reader.viewer_preferences is None
