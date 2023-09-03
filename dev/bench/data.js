@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693776020399,
+  "lastUpdate": 1693776352831,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -38398,6 +38398,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09818588219438575",
             "extra": "mean: 27.084695376600003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "455c773b6544757d31086cb4dc7279c86fd0720f",
+          "message": "REL: 3.15.5\n\n## What's new\n\n### Bug Fixes (BUG)\n-  Cope with missing /I in articles (#2134)\n-  Fix image look-up table in EncodedStreamObject (#2128)\n-  remove_images not operating in sub level forms (#2133)\n\n### Robustness (ROB)\n-  Cope with damaged PDF (#2129)\n\n### Documentation (DOC)\n-  How to take ownership (#2123)\n\n### Developer Experience (DEV)\n-  Download PDFs before executing the tests to not run into timeouts (#2143)\n-  Add workflow_dispatch to CI (#2145)\n-  Automatically create release message / tag message (#2127)\n-  Ensure the REL commit message is consistently created (#2126)\n\n### Testing (TST)\n-  Add test for correct rendering of watermarks (#2130)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.4...3.15.5)",
+          "timestamp": "2023-09-03T23:20:13+02:00",
+          "tree_id": "37331bc9efbef6ae95f1f3670a06314ba715a6ce",
+          "url": "https://github.com/py-pdf/pypdf/commit/455c773b6544757d31086cb4dc7279c86fd0720f"
+        },
+        "date": 1693776350803,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.139041357094886,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019966136149606767",
+            "extra": "mean: 467.4991424000041 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.437254971568933,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011623466750913771",
+            "extra": "mean: 118.52196044444617 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1824172582830422,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13163292900959897",
+            "extra": "mean: 5.481937451600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.473738330502528,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004338134402902734",
+            "extra": "mean: 105.55495255556163 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.032738565234126465,
+            "unit": "iter/sec",
+            "range": "stddev: 0.47245824692914423",
+            "extra": "mean: 30.5450160338 sec\nrounds: 5"
           }
         ]
       }
