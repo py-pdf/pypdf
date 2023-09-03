@@ -2,6 +2,7 @@
 import re
 from io import BytesIO
 from pathlib import Path
+from time import thread_time
 
 import pytest
 
@@ -1559,16 +1560,17 @@ def test_watermark():
 
 
 @pytest.mark.enable_socket()
-@pytest.mark.timeout(4)  # this was a lot slower before PR #2086
 def test_watermarking_speed():
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
     name = "bgwatermark.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     url = "https://arxiv.org/pdf/2201.00214.pdf"
     name = "src_doc.pdf"
+    t0 = thread_time()
     writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
     for p in writer.pages:
         p.merge_page(reader.pages[0], over=False)
+    assert (thread_time() - t0) < 4.0
     out_pdf_bytesio = BytesIO()
     writer.write(out_pdf_bytesio)
     pdf_size_in_mib = len(out_pdf_bytesio.getvalue()) / 1024 / 1024
