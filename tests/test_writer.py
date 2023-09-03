@@ -1728,6 +1728,8 @@ def test_viewerpreferences():
     v.num_copies = 1
     assert v.num_copies == 1
     assert v.print_pagerange is None
+    with pytest.raises(ValueError):
+        v.print_pagerange = "toto"
     v.print_pagerange = ArrayObject()
     assert len(v.print_pagerange) == 0
 
@@ -1736,3 +1738,5 @@ def test_viewerpreferences():
 
     del reader.trailer["/Root"]["/ViewerPreferences"]
     assert reader.viewer_preferences is None
+    writer = PdfWriter(clone_from=reader)
+    assert writer.viewer_preferences is None
