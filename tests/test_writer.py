@@ -4,14 +4,7 @@ import shutil
 import subprocess
 from io import BytesIO
 from pathlib import Path
-
-try:
-    from time import thread_time
-except ImportError:
-
-    def thread_time():
-        return 0  # disable test for python 3.6
-
+from time import thread_time
 
 import pytest
 
