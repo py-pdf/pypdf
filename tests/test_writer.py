@@ -1565,7 +1565,7 @@ def test_watermarking_speed():
     name = "bgwatermark.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     url = "https://arxiv.org/pdf/2201.00214.pdf"
-    name = "src_doc.pdf"
+    name = "2201.00214.pdf"
     writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
     for p in writer.pages:
         p.merge_page(reader.pages[0], over=False)
