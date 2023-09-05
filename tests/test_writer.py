@@ -1783,3 +1783,17 @@ def test_viewerpreferences():
     assert reader.viewer_preferences is None
     writer = PdfWriter(clone_from=reader)
     assert writer.viewer_preferences is None
+
+
+def test_extra_spaces_in_da_text(caplog):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "form.pdf")
+    t = writer.pages[0]["/Annots"][0].get_object()["/DA"]
+    t = t.replace("/Helv", "/Helv   ")
+    writer.pages[0]["/Annots"][0].get_object()[NameObject("/DA")] = TextStringObject(t)
+    writer.update_page_form_field_values(
+        writer.pages[0], {"foo": "abcd"}, auto_regenerate=False
+    )
+    t = writer.pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_data()
+    assert "Font dictionary for  not found." not in caplog.text
+    assert b"/Helv" in t
+    assert b"(abcd)" in t
