@@ -67,6 +67,7 @@ from ._utils import (
     read_hex_string_from_stream,
     read_string_from_stream,
 )
+from ._viewerpref import ViewerPreferences
 
 
 def readHexStringFromStream(
@@ -443,6 +444,7 @@ __all__ = [
     "RectangleObject",
     "Field",
     "Destination",
+    "ViewerPreferences",
     # --- More specific stuff
     # Outline
     "OutlineItem",

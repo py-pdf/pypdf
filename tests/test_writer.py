@@ -1718,3 +1718,68 @@ def test_damaged_pdf_length_returning_none():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_viewerpreferences():
+    """
+    Add Tests for ViewerPreferences
+    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
+    """
+    url = "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf"
+    name = "2015._pb_decode_pg0.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    v = reader.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    writer = PdfWriter(clone_from=reader)
+    v = writer.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+    assert v.print_area == "/CropBox"
+    with pytest.raises(ValueError):
+        v.non_fullscreen_pagemode = "toto"
+    with pytest.raises(ValueError):
+        v.non_fullscreen_pagemode = "/toto"
+    v.non_fullscreen_pagemode = "/UseOutlines"
+    assert (
+        writer._root_object["/ViewerPreferences"]["/NonFullScreenPageMode"]
+        == "/UseOutlines"
+    )
+    writer = PdfWriter(clone_from=reader)
+    v = writer.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+
+    writer = PdfWriter(clone_from=reader)
+    writer._root_object[NameObject("/ViewerPreferences")] = writer._add_object(
+        writer._root_object["/ViewerPreferences"]
+    )
+    v = writer.viewer_preferences
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+    v.num_copies = 1
+    assert v.num_copies == 1
+    assert v.print_pagerange is None
+    with pytest.raises(ValueError):
+        v.print_pagerange = "toto"
+    v.print_pagerange = ArrayObject()
+    assert len(v.print_pagerange) == 0
+
+    writer.create_viewer_preference()
+    assert len(writer._root_object["/ViewerPreferences"]) == 0
+
+    del reader.trailer["/Root"]["/ViewerPreferences"]
+    assert reader.viewer_preferences is None
+    writer = PdfWriter(clone_from=reader)
+    assert writer.viewer_preferences is None
