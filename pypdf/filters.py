@@ -847,7 +847,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         lookup: Any
         base: Any
         hival: Any
-        if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
+        if isinstance(color_space, ArrayObject) and len(color_space) == 4 and color_space[0] == "/Indexed":
             color_space, base, hival, lookup = (
                 value.get_object() for value in color_space
             )

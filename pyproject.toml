@@ -32,6 +32,9 @@ dependencies = [
     "dataclasses; python_version < '3.7'",
 ]
 
+[project.scripts]
+pypdf = "pypdf.__main__:main"
+
 [project.urls]
 Documentation = "https://pypdf.readthedocs.io/en/latest/"
 Source = "https://github.com/py-pdf/pypdf"
