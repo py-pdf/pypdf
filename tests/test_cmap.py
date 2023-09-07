@@ -189,3 +189,12 @@ def test_unixxx_glyphs():
     txt = reader.pages[0].extract_text()  # no error
     for pat in ("闫耀庭", "龚龑", "张江水", "1′′.2"):
         assert pat in txt
+
+
+@pytest.mark.enable_socket()
+def test_tabs_in_cmap():
+    """Issue #2173"""
+    url = "https://github.com/py-pdf/pypdf/files/12552700/tt.pdf"
+    name = "iss2173.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].extract_text()
