@@ -117,7 +117,7 @@ def page_ranges_to_page_numbers(
     into: {3, 5, 6, 7, 9}.
     Call parser.error() in case of invalid input.
     """
-    page_numbers = set()
+    page_numbers: Set[int] = set()
     for page_range in page_ranges:
         if "-" in page_range:
             try:
