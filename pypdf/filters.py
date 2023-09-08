@@ -53,7 +53,7 @@ from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
-from .errors import PdfReadError, PdfStreamError
+from .errors import DeprecationError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
     DecodedStreamObject,
@@ -102,7 +102,7 @@ class FlateDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -122,17 +122,15 @@ class FlateDecode:
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
+        if isinstance(decode_parms, ArrayObject):  # type: ignore
+            raise DeprecationError("decode_parms as ArrayObject is depreciated")
+
         str_data = decompress(data)
         predictor = 1
 
         if decode_parms:
             try:
-                if isinstance(decode_parms, ArrayObject):
-                    for decode_parm in decode_parms:
-                        if "/Predictor" in decode_parm:
-                            predictor = decode_parm["/Predictor"]
-                else:
-                    predictor = decode_parms.get("/Predictor", 1)
+                predictor = decode_parms.get("/Predictor", 1)
             except (AttributeError, TypeError):  # Type Error is NullObject
                 pass  # Usually an array with a null object was read
         # predictor 1 == no predictor
@@ -140,24 +138,21 @@ class FlateDecode:
             # The /Columns param. has 1 as the default value; see ISO 32000,
             # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
             DEFAULT_BITS_PER_COMPONENT = 8
-            if isinstance(decode_parms, ArrayObject):
+            try:
+                columns = cast(int, decode_parms[LZW.COLUMNS].get_object())  # type: ignore
+            except (TypeError, KeyError):
                 columns = 1
+            try:
+                colors = cast(int, decode_parms[LZW.COLORS].get_object())  # type: ignore
+            except (TypeError, KeyError):
+                colors = 1
+            try:
+                bits_per_component = cast(
+                    int,
+                    decode_parms[LZW.BITS_PER_COMPONENT].get_object(),  # type: ignore
+                )
+            except (TypeError, KeyError):
                 bits_per_component = DEFAULT_BITS_PER_COMPONENT
-                for decode_parm in decode_parms:
-                    if "/Columns" in decode_parm:
-                        columns = decode_parm["/Columns"]
-                    if LZW.BITS_PER_COMPONENT in decode_parm:
-                        bits_per_component = decode_parm[LZW.BITS_PER_COMPONENT]
-            else:
-                columns = (
-                    1 if decode_parms is None else decode_parms.get(LZW.COLUMNS, 1)
-                )
-                colors = 1 if decode_parms is None else decode_parms.get(LZW.COLORS, 1)
-                bits_per_component = (
-                    decode_parms.get(LZW.BITS_PER_COMPONENT, DEFAULT_BITS_PER_COMPONENT)
-                    if decode_parms
-                    else DEFAULT_BITS_PER_COMPONENT
-                )
 
             # PNG predictor can vary by row and so is the lead byte on each row
             rowlength = (
@@ -268,7 +263,7 @@ class ASCIIHexDecode:
     @staticmethod
     def decode(
         data: Union[str, bytes],
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -287,9 +282,8 @@ class ASCIIHexDecode:
         Raises:
           PdfStreamError:
         """
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        # decode_parms is unused here
+
         if isinstance(data, str):
             data = data.encode()
         retval = b""
@@ -330,7 +324,7 @@ class RunLengthDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -346,9 +340,8 @@ class RunLengthDecode:
         Raises:
           PdfStreamError:
         """
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        # decode_parms is unused here
+
         lst = []
         index = 0
         while True:
@@ -462,7 +455,7 @@ class LZWDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> str:
         """
@@ -475,9 +468,8 @@ class LZWDecode:
         Returns:
           decoded data.
         """
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        # decode_parms is unused here
+
         return LZWDecode.Decoder(data).decode()
 
 
@@ -487,12 +479,11 @@ class ASCII85Decode:
     @staticmethod
     def decode(
         data: Union[str, bytes],
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        # decode_parms is unused here
+
         if isinstance(data, str):
             data = data.encode("ascii")
         group_index = b = 0
@@ -520,12 +511,10 @@ class DCTDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        # decode_parms is unused here
         return data
 
 
@@ -533,12 +522,10 @@ class JPXDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        # decode_parms is unused here
         return data
 
 
@@ -600,13 +587,16 @@ class CCITTFaxDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
+        # decode_parms is unused here
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
+        if isinstance(decode_parms, ArrayObject):  # type: ignore
+            raise DeprecationError("Decode_params as ArrayObject is depreciated")
         parms = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
