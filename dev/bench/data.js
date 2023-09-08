@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693889910754,
+  "lastUpdate": 1694173411431,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -38516,6 +38516,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.15165661655896806",
             "extra": "mean: 31.869954060199994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ad4f13d17412f529f3f595c5c295c31788110931",
+          "message": "BUG: Accept tabs in cmaps (#2174)\n\nCloses #2173",
+          "timestamp": "2023-09-08T13:39:01+02:00",
+          "tree_id": "23eb2244bb20004c6aa64fa031b2138b2c7488ce",
+          "url": "https://github.com/py-pdf/pypdf/commit/ad4f13d17412f529f3f595c5c295c31788110931"
+        },
+        "date": 1694173409487,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.5283130162355296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010689174662949351",
+            "extra": "mean: 395.52064700000074 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.903233186709585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014589653294687316",
+            "extra": "mean: 91.71591424999903 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21086760071284646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019065063211827386",
+            "extra": "mean: 4.742312221599997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.94329013507404,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005413077944227899",
+            "extra": "mean: 100.57033299999887 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03595322708537906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09097286646320263",
+            "extra": "mean: 27.813914940800004 sec\nrounds: 5"
           }
         ]
       }
