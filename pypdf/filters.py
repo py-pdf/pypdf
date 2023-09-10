@@ -595,7 +595,7 @@ class CCITTFaxDecode:
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
-        if isinstance(decode_parms, ArrayObject):  # type: ignore
+        if isinstance(decode_parms, ArrayObject):  # deprecated
             raise DeprecationError("Decode_params as ArrayObject is depreciated")
         parms = CCITTFaxDecode._get_parameters(decode_parms, height)
 
