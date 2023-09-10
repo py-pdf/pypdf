@@ -596,7 +596,7 @@ class CCITTFaxDecode:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
         if isinstance(decode_parms, ArrayObject):  # deprecated
-            raise DeprecationError("Decode_params as ArrayObject is depreciated")
+            deprecation_no_replacement("decode_parms being an ArrayObject", removed_in="3.15.5")
         parms = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
