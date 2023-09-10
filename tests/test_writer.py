@@ -137,6 +137,9 @@ def writer_operate(writer: PdfWriter) -> None:
         "The XYZ fit", 0, oi, (255, 0, 15), True, True, Fit.xyz(left=10, top=20, zoom=3)
     )
     writer.add_outline_item(
+        "The XYZ fit no args", 0, oi, (255, 0, 15), True, True, Fit.xyz()
+    )
+    writer.add_outline_item(
         "The FitH fit", 0, oi, (255, 0, 15), True, True, Fit.fit_horizontally(top=10)
     )
     writer.add_outline_item(
