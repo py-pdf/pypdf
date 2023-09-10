@@ -296,7 +296,7 @@ class PdfReader:
 
     @property
     def viewer_preferences(self) -> Optional[ViewerPreferences]:
-        """Returns the existing ViewerPreferences as a overloaded dictionniary."""
+        """Returns the existing ViewerPreferences as an overloaded dictionary."""
         o = cast(DictionaryObject, self.trailer["/Root"]).get(
             CD.VIEWER_PREFERENCES, None
         )

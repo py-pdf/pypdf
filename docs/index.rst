@@ -12,6 +12,8 @@ merging, cropping, and transforming the pages of PDF files. It can also add
 custom data, viewing options, and passwords to PDF files.
 pypdf can retrieve text and metadata from PDFs as well.
 
+See `pdfly <https://github.com/py-pdf/pdfly>`_ for a CLI application that uses pypdf to interact with PDFs.
+
 You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
 
 .. toctree::

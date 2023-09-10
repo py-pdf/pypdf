@@ -74,3 +74,10 @@ a large community behind it.
 
 There are (Python) [tools to generate PDF documents](https://github.com/py-pdf/awesome-pdf#generators).
 pypdf is not one of them.
+
+
+## CLI applications
+
+pypdf is a pure Python PDF library. If you're looking for an application which
+you can use from the terminal, give [`pdfly`](https://pdfly.readthedocs.io/en/latest/)
+a shot.
