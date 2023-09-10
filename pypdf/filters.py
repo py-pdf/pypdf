@@ -60,8 +60,6 @@ from .generic import (
     IndirectObject,
     NullObject,
 )
-from .utils import deprecation_no_replacement
-
 
 def decompress(data: bytes) -> bytes:
     """
