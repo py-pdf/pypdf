@@ -1087,6 +1087,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                 alpha = alpha.convert("L")
             if img.mode == "P":
                 img = img.convert("RGB")
+            elif img.mode == "1":
+                img = img.convert("L")
             img.putalpha(alpha)
         if "JPEG" in image_format:
             extension = ".jp2"

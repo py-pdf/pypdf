@@ -593,3 +593,13 @@ def test_encodedstream_lookup():
     name = "iss2124.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[12].images[0]
+
+
+@pytest.mark.enable_socket()
+def test_convert_1_to_la():
+    """From #2165"""
+    url = "https://github.com/py-pdf/pypdf/files/12543290/whitepaper.WBT.token.blockchain.whitepaper.pdf"
+    name = "iss2165.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    for i in reader.pages[13].images:
+        _ = i
