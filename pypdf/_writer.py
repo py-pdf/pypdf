@@ -2954,7 +2954,7 @@ class PdfWriter:
             excluded_fields = ()
         # Find the range of pages to merge.
         if pages is None:
-            pages = list(range(len(reader.pages)))
+            pages = list(range(0, len(reader.pages)))
         elif isinstance(pages, PageRange):
             pages = list(range(*pages.indices(len(reader.pages))))
         elif isinstance(pages, list):

@@ -66,12 +66,12 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
-from ._xobj_to_image import _xobj_to_image
 from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
 from .errors import PageSizeNotDefinedError, PdfReadError
+from .filters import _xobj_to_image
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -1091,7 +1091,7 @@ class PageObject(DictionaryObject):
                 annots = page[PG.ANNOTS]
                 if isinstance(annots, ArrayObject):
                     for ref in annots:
-                        new_annots.append(ref)  # noqa
+                        new_annots.append(ref)  # noqa: PERF402
 
         for res in (
             RES.EXT_G_STATE,

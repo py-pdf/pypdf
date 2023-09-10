@@ -563,7 +563,7 @@ class ImageFile(File):
         from ._reader import PdfReader
 
         # to prevent circular import
-        from ._xobj_to_image import _xobj_to_image
+        from .filters import _xobj_to_image
         from .generic import DictionaryObject, PdfObject
 
         if self.indirect_reference is None:
