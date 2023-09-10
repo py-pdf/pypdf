@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1694331863425,
+  "lastUpdate": 1694332328144,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -38752,6 +38752,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.2549305670331056",
             "extra": "mean: 29.967146074 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a1cfb2157d31639738a09f8a60bf423b462d0b29",
+          "message": "DOC: Mention pdfly on frontpage of docs (#2183)\n\nBased on #2171, feels like pdfly has a bit of a discovery problem. Adding a link at the front of pypdf's docs should hopefully help there.\r\n\r\nSigned-off-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2023-09-10T09:47:48+02:00",
+          "tree_id": "248580e627f09faf76d60c14baea89234547c891",
+          "url": "https://github.com/py-pdf/pypdf/commit/a1cfb2157d31639738a09f8a60bf423b462d0b29"
+        },
+        "date": 1694332326379,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.5790103482609688,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010637620240324198",
+            "extra": "mean: 387.7456330000001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.977577209026187,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012213656096667736",
+            "extra": "mean: 91.09478174999867 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21618439719167237,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016069377194062498",
+            "extra": "mean: 4.625680728999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.585967280517863,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011241318363297572",
+            "extra": "mean: 94.46467889999752 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03630662725708489,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1749546049950509",
+            "extra": "mean: 27.543180833600005 sec\nrounds: 5"
           }
         ]
       }
