@@ -371,7 +371,7 @@ class PdfWriter:
 
     @property
     def viewer_preferences(self) -> Optional[ViewerPreferences]:
-        """Returns the existing ViewerPreferences as a overloaded dictionniary."""
+        """Returns the existing ViewerPreferences as an overloaded dictionary."""
         o = cast(DictionaryObject, self._root_object).get(CD.VIEWER_PREFERENCES, None)
         if o is None:
             return None

@@ -137,6 +137,9 @@ def writer_operate(writer: PdfWriter) -> None:
         "The XYZ fit", 0, oi, (255, 0, 15), True, True, Fit.xyz(left=10, top=20, zoom=3)
     )
     writer.add_outline_item(
+        "The XYZ fit no args", 0, oi, (255, 0, 15), True, True, Fit.xyz()
+    )
+    writer.add_outline_item(
         "The FitH fit", 0, oi, (255, 0, 15), True, True, Fit.fit_horizontally(top=10)
     )
     writer.add_outline_item(
@@ -1783,3 +1786,15 @@ def test_viewerpreferences():
     assert reader.viewer_preferences is None
     writer = PdfWriter(clone_from=reader)
     assert writer.viewer_preferences is None
+
+
+@pytest.mark.enable_socket()
+def test_object_contains_indirect_reference_to_self():
+    url = "https://github.com/py-pdf/pypdf/files/12389243/testbook.pdf"
+    name = "iss2102.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    width, height = 595, 841
+    outpage = writer.add_blank_page(width, height)
+    outpage.merge_page(reader.pages[6])
+    writer.append(reader)
