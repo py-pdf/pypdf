@@ -862,6 +862,7 @@ class PdfWriter:
         # Extract font information
         da = cast(str, field[AA.DA])
         font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
+        font_properties = [x for x in font_properties if x != ""]
         font_name = font_properties[font_properties.index("Tf") - 2]
         font_height = float(font_properties[font_properties.index("Tf") - 1])
         if font_height == 0:
