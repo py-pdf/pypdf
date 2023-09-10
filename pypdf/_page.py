@@ -952,7 +952,11 @@ class PageObject(DictionaryObject):
                 pdf = cast(IndirectObject, self.indirect_reference).pdf
             except AttributeError:
                 pdf = None
-            return ContentStream(self[PG.CONTENTS].get_object(), pdf)
+            obj = self[PG.CONTENTS].get_object()
+            if isinstance(obj, NullObject):
+                return None
+            else:
+                return ContentStream(obj, pdf)
         else:
             return None
 

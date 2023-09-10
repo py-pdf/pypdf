@@ -103,6 +103,7 @@ from .generic import (
     PdfObject,
     TextStringObject,
     TreeObject,
+    ViewerPreferences,
     read_object,
 )
 from .types import OutlineType, PagemodeType
@@ -292,6 +293,19 @@ class PdfReader:
             password is None, the file will not be decrypted.
             Defaults to ``None``
     """
+
+    @property
+    def viewer_preferences(self) -> Optional[ViewerPreferences]:
+        """Returns the existing ViewerPreferences as an overloaded dictionary."""
+        o = cast(DictionaryObject, self.trailer["/Root"]).get(
+            CD.VIEWER_PREFERENCES, None
+        )
+        if o is None:
+            return None
+        o = o.get_object()
+        if not isinstance(o, ViewerPreferences):
+            o = ViewerPreferences(o)
+        return o
 
     def __init__(
         self,

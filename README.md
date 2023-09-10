@@ -18,6 +18,7 @@ and
 [metadata](https://pypdf.readthedocs.io/en/stable/user/metadata.html)
 from PDFs as well.
 
+See [pdfly](https://github.com/py-pdf/pdfly) for a CLI application that uses pypdf to interact with PDFs.
 
 ## Installation
 

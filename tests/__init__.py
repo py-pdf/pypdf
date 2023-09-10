@@ -104,3 +104,14 @@ def is_sublist(child_list, parent_list):
     if parent_list[0] == child_list[0]:
         return is_sublist(child_list[1:], parent_list[1:])
     return is_sublist(child_list, parent_list[1:])
+
+
+def download_test_pdfs():
+    """
+    Run this before the tests are executed to ensure you have everything locally.
+
+    This is especially important to avoid pytest timeouts.
+    """
+    pdfs = [("https://arxiv.org/pdf/2201.00214.pdf", "2201.00214.pdf")]
+    for url, name in pdfs:
+        get_data_from_url(url, name=name)

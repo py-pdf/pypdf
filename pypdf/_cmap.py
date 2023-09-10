@@ -232,7 +232,7 @@ def parse_to_unicode(
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
-            line.strip(b" "),
+            line.strip(b" \t"),
             process_rg,
             process_char,
             multiline_rg,
@@ -295,8 +295,9 @@ def process_cm_line(
     map_dict: Dict[Any, Any],
     int_entry: List[int],
 ) -> Tuple[bool, bool, Union[None, Tuple[int, int]]]:
-    if line in (b"", b" ") or line[0] == 37:  # 37 = %
+    if line == b"" or line[0] == 37:  # 37 = %
         return process_rg, process_char, multiline_rg
+    line = line.replace(b"\t", b" ")
     if b"beginbfrange" in line:
         process_rg = True
     elif b"endbfrange" in line:

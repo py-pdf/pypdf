@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## Version 3.15.5, 2023-09-03
+
+### Bug Fixes (BUG)
+-  Cope with missing /I in articles (#2134)
+-  Fix image look-up table in EncodedStreamObject (#2128)
+-  remove_images not operating in sub level forms (#2133)
+
+### Robustness (ROB)
+-  Cope with damaged PDF (#2129)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.4...3.15.5)
+
 ## Version 3.15.4, 2023-08-27
 
 ### Performance Improvements (PI)

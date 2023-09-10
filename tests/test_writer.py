@@ -1,5 +1,7 @@
 """Test the pypdf._writer module."""
 import re
+import shutil
+import subprocess
 from io import BytesIO
 from pathlib import Path
 
@@ -37,11 +39,13 @@ from pypdf.generic import (
 )
 
 from . import get_data_from_url, is_sublist
+from .test_images import image_similarity
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
+GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
 def test_writer_exception_non_binary(tmp_path, caplog):
@@ -139,6 +143,9 @@ def writer_operate(writer: PdfWriter) -> None:
     )
     writer.add_outline_item(
         "The XYZ fit", 0, oi, (255, 0, 15), True, True, Fit.xyz(left=10, top=20, zoom=3)
+    )
+    writer.add_outline_item(
+        "The XYZ fit no args", 0, oi, (255, 0, 15), True, True, Fit.xyz()
     )
     writer.add_outline_item(
         "The FitH fit", 0, oi, (255, 0, 15), True, True, Fit.fit_horizontally(top=10)
@@ -1572,7 +1579,7 @@ def test_watermarking_speed():
     name = "bgwatermark.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     url = "https://arxiv.org/pdf/2201.00214.pdf"
-    name = "src_doc.pdf"
+    name = "2201.00214.pdf"
     t0 = thread_time()
     writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
     for p in writer.pages:
@@ -1582,6 +1589,35 @@ def test_watermarking_speed():
     writer.write(out_pdf_bytesio)
     pdf_size_in_mib = len(out_pdf_bytesio.getvalue()) / 1024 / 1024
     assert pdf_size_in_mib < 20
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+def test_watermark_rendering(tmp_path):
+    """Ensure the visual appearance of watermarking stays correct."""
+    url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
+    name = "bgwatermark.pdf"
+    watermark = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    url = "https://github.com/py-pdf/pypdf/files/11985888/source.pdf"
+    name = "srcwatermark.pdf"
+    page = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    writer = PdfWriter()
+    page.merge_page(watermark, over=False)
+    writer.add_page(page)
+
+    target_png_path = tmp_path / "target.png"
+    url = "https://github.com/py-pdf/pypdf/assets/96178532/d5c72d0e-7047-4504-bbf6-bc591c80d7c0"
+    name = "dstwatermark.png"
+    target_png_path.write_bytes(get_data_from_url(url, name=name))
+
+    pdf_path = tmp_path / "out.pdf"
+    png_path = tmp_path / "out.png"
+    writer.write(pdf_path)
+
+    # False positive: https://github.com/PyCQA/bandit/issues/333
+    subprocess.run([GHOSTSCRIPT_BINARY, "-sDEVICE=pngalpha", "-o", png_path, pdf_path])  # noqa: S603
+    assert png_path.is_file()
+    assert image_similarity(png_path, target_png_path) >= 0.95
 
 
 @pytest.mark.enable_socket()
@@ -1674,6 +1710,16 @@ def test_no_t_in_articles():
 
 
 @pytest.mark.enable_socket()
+def test_no_i_in_articles():
+    """Cf #2089"""
+    url = "https://github.com/py-pdf/pypdf/files/12352793/kim2002.pdf"
+    name = "iss2089.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+
+
+@pytest.mark.enable_socket()
 def test_damaged_pdf_length_returning_none():
     """
     Cf #140
@@ -1683,4 +1729,81 @@ def test_damaged_pdf_length_returning_none():
     name = "iss140_bad_pdf.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
+    writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_viewerpreferences():
+    """
+    Add Tests for ViewerPreferences
+    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
+    """
+    url = "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf"
+    name = "2015._pb_decode_pg0.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    v = reader.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    writer = PdfWriter(clone_from=reader)
+    v = writer.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+    assert v.print_area == "/CropBox"
+    with pytest.raises(ValueError):
+        v.non_fullscreen_pagemode = "toto"
+    with pytest.raises(ValueError):
+        v.non_fullscreen_pagemode = "/toto"
+    v.non_fullscreen_pagemode = "/UseOutlines"
+    assert (
+        writer._root_object["/ViewerPreferences"]["/NonFullScreenPageMode"]
+        == "/UseOutlines"
+    )
+    writer = PdfWriter(clone_from=reader)
+    v = writer.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+
+    writer = PdfWriter(clone_from=reader)
+    writer._root_object[NameObject("/ViewerPreferences")] = writer._add_object(
+        writer._root_object["/ViewerPreferences"]
+    )
+    v = writer.viewer_preferences
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+    v.num_copies = 1
+    assert v.num_copies == 1
+    assert v.print_pagerange is None
+    with pytest.raises(ValueError):
+        v.print_pagerange = "toto"
+    v.print_pagerange = ArrayObject()
+    assert len(v.print_pagerange) == 0
+
+    writer.create_viewer_preference()
+    assert len(writer._root_object["/ViewerPreferences"]) == 0
+
+    del reader.trailer["/Root"]["/ViewerPreferences"]
+    assert reader.viewer_preferences is None
+    writer = PdfWriter(clone_from=reader)
+    assert writer.viewer_preferences is None
+
+
+@pytest.mark.enable_socket()
+def test_object_contains_indirect_reference_to_self():
+    url = "https://github.com/py-pdf/pypdf/files/12389243/testbook.pdf"
+    name = "iss2102.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    width, height = 595, 841
+    outpage = writer.add_blank_page(width, height)
+    outpage.merge_page(reader.pages[6])
     writer.append(reader)

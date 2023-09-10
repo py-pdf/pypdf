@@ -82,6 +82,7 @@ from .constants import (
     TypFitArguments,
     UserAccessPermissions,
 )
+from .constants import CatalogDictionary as CD
 from .constants import Core as CO
 from .constants import (
     FieldDictionaryAttributes as FA,
@@ -110,6 +111,7 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
+    ViewerPreferences,
     create_string_object,
     hex_to_rgb,
 )
@@ -366,6 +368,26 @@ class PdfWriter:
             logger_warning(
                 f"set_need_appearances_writer({state}) catch : {exc}", __name__
             )
+
+    @property
+    def viewer_preferences(self) -> Optional[ViewerPreferences]:
+        """Returns the existing ViewerPreferences as an overloaded dictionary."""
+        o = cast(DictionaryObject, self._root_object).get(CD.VIEWER_PREFERENCES, None)
+        if o is None:
+            return None
+        o = o.get_object()
+        if not isinstance(o, ViewerPreferences):
+            o = ViewerPreferences(o)
+            if hasattr(o, "indirect_reference"):
+                self._replace_object(o.indirect_reference, o)
+            else:
+                self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
+        return o
+
+    def create_viewer_preference(self) -> ViewerPreferences:
+        o = ViewerPreferences()
+        self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = self._add_object(o)
+        return o
 
     def add_page(
         self,
@@ -3155,7 +3177,7 @@ class PdfWriter:
                     thr = thr.get_object()
                 if thr.indirect_reference.idnum not in self._id_translated[
                     id(reader)
-                ] and fltr.search(thr["/I"]["/Title"]):
+                ] and fltr.search((thr["/I"] if "/I" in thr else {}).get("/Title", "")):
                     self._add_articles_thread(thr, pages, reader)
 
     def _get_cloned_page(

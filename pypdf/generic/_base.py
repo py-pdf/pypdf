@@ -281,8 +281,13 @@ class IndirectObject(PdfObject):
         if id(self.pdf) not in pdf_dest._id_translated:
             pdf_dest._id_translated[id(self.pdf)] = {}
 
-        if not force_duplicate and self.idnum in pdf_dest._id_translated[id(self.pdf)]:
+        if self.idnum in pdf_dest._id_translated[id(self.pdf)]:
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
+            if force_duplicate:
+                assert dup is not None
+                assert dup.indirect_reference is not None
+                idref = dup.indirect_reference
+                return IndirectObject(idref.idnum, idref.generation, idref.pdf)
         else:
             obj = self.get_object()
             # case observed : a pointed object can not be found
