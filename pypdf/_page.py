@@ -952,7 +952,11 @@ class PageObject(DictionaryObject):
                 pdf = cast(IndirectObject, self.indirect_reference).pdf
             except AttributeError:
                 pdf = None
-            return ContentStream(self[PG.CONTENTS].get_object(), pdf)
+            obj = self[PG.CONTENTS].get_object()
+            if isinstance(obj, NullObject):
+                return None
+            else:
+                return ContentStream(obj, pdf)
         else:
             return None
 
@@ -1179,8 +1183,13 @@ class PageObject(DictionaryObject):
         pdf = self.indirect_reference.pdf
 
         rename = {}
+        if PG.RESOURCES not in self:
+            self[NameObject(PG.RESOURCES)] = DictionaryObject()
         original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
-        page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+        if PG.RESOURCES not in page2:
+            page2resources = DictionaryObject()
+        else:
+            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
 
         for res in (
             RES.EXT_G_STATE,

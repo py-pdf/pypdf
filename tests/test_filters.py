@@ -10,7 +10,7 @@ import pytest
 from PIL import Image
 
 from pypdf import PdfReader
-from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -69,16 +69,15 @@ def test_flatedecode_unsupported_predictor():
             codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
 
 
-@pytest.mark.parametrize(
-    "params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}]), "a"]
-)
+@pytest.mark.parametrize("params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}])])
 def test_flate_decode_decompress_with_array_params(params):
     """FlateDecode decode() method works correctly with array parameters."""
     codec = FlateDecode()
     s = ""
     s = s.encode()
     encoded = codec.encode(s)
-    assert codec.decode(encoded, params) == s
+    with pytest.raises(DeprecationError):
+        assert codec.decode(encoded, params) == s
 
 
 @pytest.mark.parametrize(
@@ -594,3 +593,13 @@ def test_encodedstream_lookup():
     name = "iss2124.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[12].images[0]
+
+
+@pytest.mark.enable_socket()
+def test_convert_1_to_la():
+    """From #2165"""
+    url = "https://github.com/py-pdf/pypdf/files/12543290/whitepaper.WBT.token.blockchain.whitepaper.pdf"
+    name = "iss2165.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    for i in reader.pages[13].images:
+        _ = i

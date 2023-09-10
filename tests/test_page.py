@@ -1225,3 +1225,21 @@ def test_compression():
     assert isinstance(
         writer._objects[contents.indirect_reference.idnum - 1], NullObject
     )
+
+
+def test_merge_with_no_resources():
+    """Test for issue #2147"""
+    writer = PdfWriter()
+    p0 = writer.add_blank_page(900, 1200)
+    del p0["/Resources"]
+    p1 = writer.add_blank_page(900, 1200)
+    del p1["/Resources"]
+    writer.pages[0].merge_page(p1)
+
+
+def test_get_contents_from_nullobject():
+    """Issue #2157"""
+    writer = PdfWriter()
+    p = writer.add_blank_page(100, 100)
+    p[NameObject("/Contents")] = writer._add_object(NullObject())
+    p.get_contents()

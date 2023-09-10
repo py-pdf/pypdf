@@ -197,7 +197,7 @@ max-complexity = 54  # Recommended: 10
 
 [tool.ruff.per-file-ignores]
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
-"_encryption.py" = ["S324", "S311"]
+"_encryption.py" = ["S324"]
 "_writer.py" = ["S324"]
 "docs/conf.py" = ["PTH", "INP001"]
 "json_consistency.py" = ["T201"]

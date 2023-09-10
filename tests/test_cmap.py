@@ -202,3 +202,11 @@ def test_cmap_compute_space_width():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].extract_text()  # no error
 
+
+@pytest.mark.enable_socket()
+def test_tabs_in_cmap():
+    """Issue #2173"""
+    url = "https://github.com/py-pdf/pypdf/files/12552700/tt.pdf"
+    name = "iss2173.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].extract_text()

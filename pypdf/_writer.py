@@ -371,7 +371,7 @@ class PdfWriter:
 
     @property
     def viewer_preferences(self) -> Optional[ViewerPreferences]:
-        """Returns the existing ViewerPreferences as a overloaded dictionniary."""
+        """Returns the existing ViewerPreferences as an overloaded dictionary."""
         o = cast(DictionaryObject, self._root_object).get(CD.VIEWER_PREFERENCES, None)
         if o is None:
             return None
@@ -862,6 +862,7 @@ class PdfWriter:
         # Extract font information
         da = cast(str, field[AA.DA])
         font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
+        font_properties = [x for x in font_properties if x != ""]
         font_name = font_properties[font_properties.index("Tf") - 2]
         font_height = float(font_properties[font_properties.index("Tf") - 1])
         if font_height == 0:

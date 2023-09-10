@@ -69,3 +69,20 @@ Out of scope for the moment, but might be added if there are enough contributors
 * **(Not) Extracting headers/footers/page numbers**: While you can apply
   heuristics, there is no way to always make it work. PDF documents simply
   don't contain the information what a header/footer/page number is.
+
+
+### Library vs Application
+
+It's also worth pointing out that `pypdf` is designed to be a library. It is not
+an application. That has several implications:
+
+* Execution: pypdf cannot be executed directly, but only be called from within
+  a program written by a pypdf user. In contrast, an application is executed
+  by it's own.
+* Dependencies: pypdf should have a minimal set of dependencies and only
+  restrict them where it is strictly necessary. In contrast, applications should
+  be installed in environments which are isolated from other applications. They
+  can pin their dependencies.
+
+If you're looking for a way to interact with PDF files via Shell, you should
+either write a script using pypdf or use [`pdfly`](https://pypi.org/project/pdfly/).
