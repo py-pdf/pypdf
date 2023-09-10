@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1694332976743,
+  "lastUpdate": 1694333241977,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -38929,6 +38929,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06340300848897688",
             "extra": "mean: 25.553975804800007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4e48e893c3eca97d54c3e7bafdee212cc4c5d4b0",
+          "message": "STY: Move functions within _xobj_to_image to a private module (#2182)\n\nThis PR aims to improve reading complexity of the code by moving inner functions of `_xobj_to_image` into their own module.\r\n\r\nIt would have been desirable to also move `_xobj_to_image` into that module. However, the fact that `PIL` is optional increases complexity again. For this reason `_xobj_to_image` stays where it is for the moment.",
+          "timestamp": "2023-09-10T10:03:13+02:00",
+          "tree_id": "477bb1ddba9a0e30382557d3893343f7b71368c8",
+          "url": "https://github.com/py-pdf/pypdf/commit/4e48e893c3eca97d54c3e7bafdee212cc4c5d4b0"
+        },
+        "date": 1694333239711,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.6678615655789573,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00852018998454922",
+            "extra": "mean: 374.83204260000207 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.892723216014728,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01180926725773582",
+            "extra": "mean: 91.80440741666669 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22631616869667975,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0259982181356873",
+            "extra": "mean: 4.4185972472 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.055940286285121,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0002608215021232045",
+            "extra": "mean: 82.94666166666431 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.038979003092701296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0683572818145986",
+            "extra": "mean: 25.65483775 sec\nrounds: 5"
           }
         ]
       }
