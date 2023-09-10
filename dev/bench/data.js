@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1694333241977,
+  "lastUpdate": 1694334357611,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -38988,6 +38988,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0683572818145986",
             "extra": "mean: 25.65483775 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "exiledkingcc@gmail.com",
+            "name": "exiledkingcc",
+            "username": "exiledkingcc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e0907171213616f39191fb3113b44a7b7a015db0",
+          "message": "SEC: Infinite recursion caused by IndirectObject clone (#2156)\n\nIf an object contains an indirect_reference which points to the object it self, cloning it will cause infinite recursion.\r\nFor example: A page containing a link to self.\r\n\r\nFixes #2102",
+          "timestamp": "2023-09-10T10:21:51+02:00",
+          "tree_id": "df8d641cd3e4cbe4198da47823cb4b734816b77b",
+          "url": "https://github.com/py-pdf/pypdf/commit/e0907171213616f39191fb3113b44a7b7a015db0"
+        },
+        "date": 1694334355603,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.729729531994048,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006240376825580169",
+            "extra": "mean: 366.3366601999968 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.116051403426859,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009536974748330405",
+            "extra": "mean: 89.9600014166649 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2278912023877783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011099479565363647",
+            "extra": "mean: 4.388058817199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.517878634080034,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005626080535374709",
+            "extra": "mean: 79.88574016666779 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.038714225490935394,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08654813637947893",
+            "extra": "mean: 25.830298483800004 sec\nrounds: 5"
           }
         ]
       }
