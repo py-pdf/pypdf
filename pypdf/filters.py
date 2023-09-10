@@ -53,13 +53,14 @@ from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
-from .errors import DeprecationError, PdfReadError, PdfStreamError
+from .errors import PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
     DictionaryObject,
     IndirectObject,
     NullObject,
 )
+from .utils import deprecation_no_replacement
 
 
 def decompress(data: bytes) -> bytes:
