@@ -7,9 +7,9 @@ from urllib.error import HTTPError
 from pypdf.generic import DictionaryObject, IndirectObject
 
 
-def get_pdf_from_url(url: str, name: str) -> bytes:
+def get_data_from_url(url: str, name: str) -> bytes:
     """
-    Download a PDF from a URL and return its contents.
+    Download a File from a URL and return its contents.
 
     This function makes sure the PDF is not downloaded too often.
     This function is a last resort for PDF files where we are uncertain if
@@ -20,7 +20,7 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
         name: unique name across all files
 
     Returns:
-        Read PDF as bytes
+        Read File as bytes
     """
     if url.startswith("file://"):
         with open(url[7:].replace("\\", "/"), "rb") as fp:
@@ -87,3 +87,31 @@ class ReaderDummy:
 
     def get_reference(self, obj):
         return IndirectObject(idnum=1, generation=1, pdf=self)
+
+
+def is_sublist(child_list, parent_list):
+    """
+    Check if child_list is a sublist of parent_list, with respect to
+    * elements order
+    * elements repetition
+
+    Elements are compared using `==`
+    """
+    if len(child_list) == 0:
+        return True
+    if len(parent_list) == 0:
+        return False
+    if parent_list[0] == child_list[0]:
+        return is_sublist(child_list[1:], parent_list[1:])
+    return is_sublist(child_list, parent_list[1:])
+
+
+def download_test_pdfs():
+    """
+    Run this before the tests are executed to ensure you have everything locally.
+
+    This is especially important to avoid pytest timeouts.
+    """
+    pdfs = [("https://arxiv.org/pdf/2201.00214.pdf", "2201.00214.pdf")]
+    for url, name in pdfs:
+        get_data_from_url(url, name=name)

@@ -4,7 +4,7 @@ from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
-from ._utils import logger_warning
+from ._utils import b_, logger_warning
 from .errors import PdfReadWarning
 from .generic import DecodedStreamObject, DictionaryObject, StreamObject
 
@@ -17,15 +17,36 @@ def build_char_map(
     Determine information about a font.
 
     Args:
-        font_name:
-        space_width:
-        obj:
+        font_name: font name as a string
+        space_width: default space width if no data is found.
+        obj: XObject or Page where you can find a /Resource dictionary
 
     Returns:
-        Font sub-type, space_width/2, encoding, map character-map, font-dictionary.
+        Font sub-type, space_width criteria (50% of width), encoding, map character-map, font-dictionary.
         The font-dictionary itself is suitable for the curious.
     """
     ft: DictionaryObject = obj["/Resources"]["/Font"][font_name]  # type: ignore
+    font_subtype, font_halfspace, font_encoding, font_map = build_char_map_from_dict(
+        space_width, ft
+    )
+    return font_subtype, font_halfspace, font_encoding, font_map, ft
+
+
+def build_char_map_from_dict(
+    space_width: float, ft: DictionaryObject
+) -> Tuple[str, float, Union[str, Dict[int, str]], Dict]:
+    """
+    Determine information about a font.
+
+    Args:
+        space_width: default space with if no data found
+             (normally half the width of a character).
+        ft: Font Dictionary
+
+    Returns:
+        Font sub-type, space_width criteria(50% of width), encoding, map character-map.
+        The font-dictionary itself is suitable for the curious.
+    """
     font_type: str = cast(str, ft["/Subtype"])
 
     space_code = 32
@@ -73,7 +94,6 @@ def build_char_map(
         encoding,
         # https://github.com/python/mypy/issues/4374
         map_dict,
-        ft,
     )
 
 
@@ -200,7 +220,10 @@ def parse_to_unicode(
     int_entry: List[int] = []
 
     if "/ToUnicode" not in ft:
-        return {}, space_code, []
+        if ft.get("/Subtype", "") == "/Type1":
+            return type1_alternative(ft, map_dict, space_code, int_entry)
+        else:
+            return {}, space_code, []
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
@@ -209,7 +232,7 @@ def parse_to_unicode(
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
-            line.strip(b" "),
+            line.strip(b" \t"),
             process_rg,
             process_char,
             multiline_rg,
@@ -227,7 +250,7 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
     tu = ft["/ToUnicode"]
     cm: bytes
     if isinstance(tu, StreamObject):
-        cm = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
+        cm = b_(cast(DecodedStreamObject, ft["/ToUnicode"]).get_data())
     elif isinstance(tu, str) and tu.startswith("/Identity"):
         # the full range 0000-FFFF will be processed
         cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"
@@ -272,8 +295,9 @@ def process_cm_line(
     map_dict: Dict[Any, Any],
     int_entry: List[int],
 ) -> Tuple[bool, bool, Union[None, Tuple[int, int]]]:
-    if line in (b"", b" ") or line[0] == 37:  # 37 = %
+    if line == b"" or line[0] == 37:  # 37 = %
         return process_rg, process_char, multiline_rg
+    line = line.replace(b"\t", b" ")
     if b"beginbfrange" in line:
         process_rg = True
     elif b"endbfrange" in line:
@@ -386,7 +410,7 @@ def compute_space_width(
         else:
             w = []
         while len(w) > 0:
-            st = w[0]
+            st = w[0] if isinstance(w[0], int) else w[0].get_object()
             second = w[1].get_object()
             if isinstance(second, int):
                 for x in range(st, second):
@@ -434,3 +458,44 @@ def compute_space_width(
                         cpt += 1
                 sp_width = m / max(1, cpt) / 2
     return sp_width
+
+
+def type1_alternative(
+    ft: DictionaryObject,
+    map_dict: Dict[Any, Any],
+    space_code: int,
+    int_entry: List[int],
+) -> Tuple[Dict[Any, Any], int, List[int]]:
+    if "/FontDescriptor" not in ft:
+        return map_dict, space_code, int_entry
+    ft_desc = cast(DictionaryObject, ft["/FontDescriptor"]).get("/FontFile")
+    if ft_desc is None:
+        return map_dict, space_code, int_entry
+    txt = ft_desc.get_object().get_data()
+    txt = txt.split(b"eexec\n")[0]  # only clear part
+    txt = txt.split(b"/Encoding")[1]  # to get the encoding part
+    lines = txt.replace(b"\r", b"\n").split(b"\n")
+    for li in lines:
+        if li.startswith(b"dup"):
+            words = [_w for _w in li.split(b" ") if _w != b""]
+            if words[3] != b"put":
+                continue
+            try:
+                i = int(words[1])
+            except ValueError:  # pragma: no cover
+                continue
+            try:
+                v = adobe_glyphs[words[2].decode()]
+            except KeyError:
+                if words[2].startswith(b"/uni"):
+                    try:
+                        v = chr(int(words[2][4:], 16))
+                    except ValueError:  # pragma: no cover
+                        continue
+                else:
+                    continue
+            if words[2].decode() == b" ":
+                space_code = i
+            map_dict[chr(i)] = v
+            int_entry.append(i)
+    return map_dict, space_code, int_entry

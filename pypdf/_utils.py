@@ -31,8 +31,10 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import functools
 import logging
+import re
 import warnings
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from io import DEFAULT_BUFFER_SIZE, BytesIO
 from os import SEEK_CUR
 from typing import (
@@ -40,6 +42,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    List,
     Optional,
     Pattern,
     Tuple,
@@ -74,6 +77,38 @@ DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in pypdf {}."
 DEPR_MSG_NO_REPLACEMENT_HAPPENED = "{} is deprecated and was removed in pypdf {}."
 DEPR_MSG = "{} is deprecated and will be removed in pypdf {}. Use {} instead."
 DEPR_MSG_HAPPENED = "{} is deprecated and was removed in pypdf {}. Use {} instead."
+
+
+def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
+    orgtext = text
+    if text is None:
+        return None
+    if text[0].isdigit():
+        text = "D:" + text
+    if text.endswith(("Z", "z")):
+        text += "0000"
+    text = text.replace("z", "+").replace("Z", "+").replace("'", "")
+    i = max(text.find("+"), text.find("-"))
+    if i > 0 and i != len(text) - 5:
+        text += "00"
+    for f in (
+        "D:%Y",
+        "D:%Y%m",
+        "D:%Y%m%d",
+        "D:%Y%m%d%H",
+        "D:%Y%m%d%H%M",
+        "D:%Y%m%d%H%M%S",
+        "D:%Y%m%d%H%M%S%z",
+    ):
+        try:
+            d = datetime.strptime(text, f)  # noqa: DTZ007
+        except ValueError:
+            continue
+        else:
+            if text[-5:] == "+0000":
+                d = d.replace(tzinfo=timezone.utc)
+            return d
+    raise ValueError(f"Can not convert date: {orgtext}")
 
 
 def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
@@ -349,6 +384,7 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
 
 
 WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
+WHITESPACES_AS_REGEXP = b"[ \n\r\t\x00]"
 
 
 def paeth_predictor(left: int, up: int, up_left: int) -> int:
@@ -554,3 +590,52 @@ class ImageFile(File):
         self.name = self.name[: self.name.rfind(".")] + extension
         self.data = byte_stream
         self.image = img
+
+
+@functools.total_ordering
+class Version:
+    COMPONENT_PATTERN = re.compile(r"^(\d+)(.*)$")
+
+    def __init__(self, version_str: str) -> None:
+        self.version_str = version_str
+        self.components = self._parse_version(version_str)
+
+    def _parse_version(self, version_str: str) -> List[Tuple[int, str]]:
+        components = version_str.split(".")
+        parsed_components = []
+        for component in components:
+            match = Version.COMPONENT_PATTERN.match(component)
+            if not match:
+                parsed_components.append((0, component))
+                continue
+            integer_prefix = match.group(1)
+            suffix = match.group(2)
+            if integer_prefix is None:
+                integer_prefix = 0
+            parsed_components.append((int(integer_prefix), suffix))
+        return parsed_components
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Version):
+            return False
+        return self.components == other.components
+
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, Version):
+            raise ValueError(f"Version cannot be compared against {type(other)}")
+        min_len = min(len(self.components), len(other.components))
+        for i in range(min_len):
+            self_value, self_suffix = self.components[i]
+            other_value, other_suffix = other.components[i]
+
+            if self_value < other_value:
+                return True
+            elif self_value > other_value:
+                return False
+
+            if self_suffix < other_suffix:
+                return True
+            elif self_suffix > other_suffix:
+                return False
+
+        return len(self.components) < len(other.components)

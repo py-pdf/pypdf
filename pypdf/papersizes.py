@@ -1,8 +1,11 @@
 """Helper to get paper sizes."""
 
-from collections import namedtuple
+from typing import NamedTuple
 
-Dimensions = namedtuple("Dimensions", ["width", "height"])
+
+class Dimensions(NamedTuple):
+    width: int
+    height: int
 
 
 class PaperSize:

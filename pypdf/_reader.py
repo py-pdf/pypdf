@@ -59,6 +59,7 @@ from ._utils import (
     deprecation_no_replacement,
     deprecation_with_replacement,
     logger_warning,
+    parse_iso8824_date,
     read_non_whitespace,
     read_previous_line,
     read_until_whitespace,
@@ -86,6 +87,7 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
+    BooleanObject,
     ContentStream,
     DecodedStreamObject,
     Destination,
@@ -101,6 +103,7 @@ from .generic import (
     PdfObject,
     TextStringObject,
     TreeObject,
+    ViewerPreferences,
     read_object,
 )
 from .types import OutlineType, PagemodeType
@@ -239,12 +242,7 @@ class DocumentInformation(DictionaryObject):
     @property
     def creation_date(self) -> Optional[datetime]:
         """Read-only property accessing the document's creation date."""
-        text = self._get_text(DI.CREATION_DATE)
-        if text is None:
-            return None
-        return datetime.strptime(
-            text.replace("Z", "+").replace("'", ""), "D:%Y%m%d%H%M%S%z"
-        )
+        return parse_iso8824_date(self._get_text(DI.CREATION_DATE))
 
     @property
     def creation_date_raw(self) -> Optional[str]:
@@ -263,12 +261,7 @@ class DocumentInformation(DictionaryObject):
 
         The date and time the document was most recently modified.
         """
-        text = self._get_text(DI.MOD_DATE)
-        if text is None:
-            return None
-        return datetime.strptime(
-            text.replace("Z", "+").replace("'", ""), "D:%Y%m%d%H%M%S%z"
-        )
+        return parse_iso8824_date(self._get_text(DI.MOD_DATE))
 
     @property
     def modification_date_raw(self) -> Optional[str]:
@@ -300,6 +293,19 @@ class PdfReader:
             password is None, the file will not be decrypted.
             Defaults to ``None``
     """
+
+    @property
+    def viewer_preferences(self) -> Optional[ViewerPreferences]:
+        """Returns the existing ViewerPreferences as an overloaded dictionary."""
+        o = cast(DictionaryObject, self.trailer["/Root"]).get(
+            CD.VIEWER_PREFERENCES, None
+        )
+        if o is None:
+            return None
+        o = o.get_object()
+        if not isinstance(o, ViewerPreferences):
+            o = ViewerPreferences(o)
+        return o
 
     def __init__(
         self,
@@ -1083,7 +1089,15 @@ class PdfReader:
                 # absolute value = num. visible children
                 # with positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
+            #  if count is 0 we will consider it as open ( in order to have always an is_open to simplify
+            outline_item[NameObject("/%is_open%")] = BooleanObject(
+                node.get("/Count", 0) >= 0
+            )
         outline_item.node = node
+        try:
+            outline_item.indirect_reference = node.indirect_reference
+        except AttributeError:
+            pass
         return outline_item
 
     @property
@@ -1230,7 +1244,10 @@ class PdfReader:
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirect_reference"] = page
-                self._flatten(page.get_object(), inherit, **addt)
+                obj = page.get_object()
+                if obj:
+                    # damaged file may have invalid child in /Pages
+                    self._flatten(obj, inherit, **addt)
         elif t == "/Page":
             for attr_in, value in list(inherit.items()):
                 # if the page has it's own value, it does not inherit the
@@ -1254,7 +1271,7 @@ class PdfReader:
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
-        stream_data = BytesIO(b_(obj_stm.get_data()))  # type: ignore
+        stream_data = BytesIO(b_(obj_stm.get_data()))
         for i in range(obj_stm["/N"]):  # type: ignore
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
@@ -1634,8 +1651,8 @@ class PdfReader:
 
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
-        ref = stream.read(4)
-        if ref[:3] != b"ref":
+        ref = stream.read(3)
+        if ref != b"ref":
             raise PdfReadError("xref table read error")
         read_non_whitespace(stream)
         stream.seek(-1, 1)
@@ -2116,7 +2133,7 @@ class PdfReader:
                 if isinstance(f, IndirectObject):
                     field = cast(Optional[EncodedStreamObject], f.get_object())
                     if field:
-                        es = zlib.decompress(field._data)
+                        es = zlib.decompress(b_(field._data))
                         retval[tag] = es
         return retval
 

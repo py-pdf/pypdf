@@ -4,11 +4,12 @@ Adding stamps or watermarks are two common ways to manipulate PDF files.
 A stamp is adding something on top of the document, a watermark is in the
 background of the document.
 
-## Stamp (Overlay) / Watermark(Undelay)
+## Stamp (Overlay) / Watermark (Underlay)
 
 The process of stamping and watermarking is the same, you just need to set `over` parameter to `True` for stamping and `False` for watermarking.
 
 You can use `merge_page()` if you don't need to transform the stamp:
+
 ```python
 from pypdf import PdfWriter, PdfReader
 
@@ -20,7 +21,7 @@ for page in writer.pages:
 writer.write("out.pdf")
 ```
 
-Else use `merge_transformed_page()` with Transformation() if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
+Else use `merge_transformed_page()` with `Transformation()` if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
 
 ```python
 from pathlib import Path
@@ -50,8 +51,10 @@ def stamp(
     writer.write(pdf_result)
 ```
 
-example of stamp:
+If you are experiencing wrongly rotated watermarks/stamps, try to use `transfer_rotation_to_content()` on the corresponding pages beforehand to fix the page boxes.
+
+Example of stamp:
 ![stamp.png](stamp.png)
 
-example of watermark:
+Example of watermark:
 ![watermark.png](watermark.png)

@@ -55,6 +55,7 @@ from typing import (
     cast,
 )
 
+from ._cmap import build_char_map_from_dict
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import nums_clear_range, nums_insert, nums_next
@@ -69,6 +70,7 @@ from ._utils import (
     deprecation_with_replacement,
     logger_warning,
 )
+from .annotations import Link
 from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
 from .constants import (
@@ -81,6 +83,7 @@ from .constants import (
     TypFitArguments,
     UserAccessPermissions,
 )
+from .constants import CatalogDictionary as CD
 from .constants import Core as CO
 from .constants import (
     FieldDictionaryAttributes as FA,
@@ -88,9 +91,9 @@ from .constants import (
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
+from .errors import PyPdfError
 from .generic import (
     PAGE_FIT,
-    AnnotationBuilder,
     ArrayObject,
     BooleanObject,
     ByteStringObject,
@@ -109,6 +112,7 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
+    ViewerPreferences,
     create_string_object,
     hex_to_rgb,
 )
@@ -305,9 +309,9 @@ class PdfWriter:
         excluded_keys = list(excluded_keys)
         excluded_keys += [PA.PARENT, "/StructParents"]
         # acrobat does not accept to have two indirect ref pointing on the same
-        # page; therefore in order to add easily multiple copies of the same "
-        # page, we need to create a new dictionary for the page, however the "
-        # objects below (including content) is not duplicated
+        # page; therefore in order to add easily multiple copies of the same
+        # page, we need to create a new dictionary for the page, however the
+        # objects below (including content) are not duplicated:
         try:  # delete an already existing page
             del self._id_translated[id(page_org.indirect_reference.pdf)][  # type: ignore
                 page_org.indirect_reference.idnum  # type: ignore
@@ -359,6 +363,26 @@ class PdfWriter:
             logger_warning(
                 f"set_need_appearances_writer({state}) catch : {exc}", __name__
             )
+
+    @property
+    def viewer_preferences(self) -> Optional[ViewerPreferences]:
+        """Returns the existing ViewerPreferences as an overloaded dictionary."""
+        o = cast(DictionaryObject, self._root_object).get(CD.VIEWER_PREFERENCES, None)
+        if o is None:
+            return None
+        o = o.get_object()
+        if not isinstance(o, ViewerPreferences):
+            o = ViewerPreferences(o)
+            if hasattr(o, "indirect_reference"):
+                self._replace_object(o.indirect_reference, o)
+            else:
+                self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
+        return o
+
+    def create_viewer_preference(self) -> ViewerPreferences:
+        o = ViewerPreferences()
+        self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = self._add_object(o)
+        return o
 
     def add_page(
         self,
@@ -698,7 +722,7 @@ class PdfWriter:
         # endobj
 
         file_entry = DecodedStreamObject()
-        file_entry.set_data(data)
+        file_entry.set_data(b_(data))
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
 
         # The Filespec entry
@@ -831,12 +855,55 @@ class PdfWriter:
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
 
         # Extract font information
-        font_properties: Any = (
-            cast(str, field[AA.DA]).replace("\n", " ").replace("\r", " ").split(" ")
-        )
+        da = cast(str, field[AA.DA])
+        font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
+        font_properties = [x for x in font_properties if x != ""]
         font_name = font_properties[font_properties.index("Tf") - 2]
         font_height = float(font_properties[font_properties.index("Tf") - 1])
+        if font_height == 0:
+            font_height = rct.height - 2
+            font_properties[font_properties.index("Tf") - 1] = str(font_height)
+            da = " ".join(font_properties)
         y_offset = rct.height - 1 - font_height
+
+        # Retrieve font information from local DR ...
+        dr: Any = cast(
+            DictionaryObject,
+            cast(DictionaryObject, field.get("/DR", DictionaryObject())).get_object(),
+        )
+        dr = dr.get("/Font", DictionaryObject()).get_object()
+        if font_name not in dr:
+            # ...or AcroForm dictionary
+            dr = cast(
+                dict,
+                cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {}),
+            )
+            if isinstance(dr, IndirectObject):  # pragma: no cover
+                dr = dr.get_object()
+            dr = dr.get("/Font", DictionaryObject()).get_object()
+        font_res = dr.get(font_name)
+        if font_res is not None:
+            font_res = cast(DictionaryObject, font_res.get_object())
+            font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
+                200, font_res
+            )
+            try:  # get rid of width stored in -1 key
+                del font_map[-1]
+            except KeyError:
+                pass
+            font_full_rev: Dict[str, bytes]
+            if isinstance(font_encoding, str):
+                font_full_rev = {
+                    v: k.encode(font_encoding) for k, v in font_map.items()
+                }
+            else:
+                font_full_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
+                font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
+                for kk, v in font_map.items():
+                    font_full_rev[v] = font_encoding_rev.get(kk, kk)
+        else:
+            logger_warning(f"Font dictionary for {font_name} not found.", __name__)
+            font_full_rev = {}
 
         # Retrieve field text and selected values
         field_flags = field.get(FA.Ff, 0)
@@ -850,7 +917,7 @@ class PdfWriter:
             sel = []
 
         # Generate appearance stream
-        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{field[AA.DA]}\n".encode()
+        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
             if line in sel:
                 # may be improved but can not find how get fill working => replaced with lined box
@@ -863,7 +930,13 @@ class PdfWriter:
             else:
                 # Td is a relative translation
                 ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
-            ap_stream += b"(" + str(line).encode("UTF-8") + b") Tj\n"
+            enc_line: List[bytes] = [
+                font_full_rev.get(c, c.encode("utf-16-be")) for c in line
+            ]
+            if any(len(c) >= 2 for c in enc_line):
+                ap_stream += b"<" + (b"".join(enc_line)).hex().encode() + b"> Tj\n"
+            else:
+                ap_stream += b"(" + b"".join(enc_line) + b") Tj\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
 
         # Create appearance dictionary
@@ -877,22 +950,16 @@ class PdfWriter:
             }
         )
 
-        # Retrieve font information from AcroForm dictionary
-        dr: Any = cast(
-            dict, cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {})
-        )
-        if isinstance(dr, IndirectObject):
-            dr = dr.get_object()
-        dr = dr.get("/Font", {})
-        if isinstance(dr, IndirectObject):
-            dr = dr.get_object()
-
         # Update Resources with font information if necessary
-        if font_name in dr:
+        if font_res is not None:
             dct[NameObject("/Resources")] = DictionaryObject(
                 {
                     NameObject("/Font"): DictionaryObject(
-                        {NameObject(font_name): dr[font_name].indirect_reference}
+                        {
+                            NameObject(font_name): getattr(
+                                font_res, "indirect_reference", font_res
+                            )
+                        }
                     )
                 }
             )
@@ -933,12 +1000,21 @@ class PdfWriter:
             auto_regenerate: set/unset the need_appearances flag ;
                 the flag is unchanged if auto_regenerate is None
         """
+        if CatalogDictionary.ACRO_FORM not in self._root_object:
+            raise PyPdfError("No /AcroForm dictionary in PdfWriter Object")
+        af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        if InteractiveFormDictEntries.Fields not in af:
+            raise PyPdfError("No /Fields dictionary in Pdf in PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
         # Iterate through pages, update field values
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
+        # /Helvetica is just in case of but this is normally insufficient as we miss the font ressource
+        default_da = af.get(
+            InteractiveFormDictEntries.DA, TextStringObject("/Helvetica 0 Tf 0 g")
+        )
         for writer_annot in page[PG.ANNOTS]:  # type: ignore
             writer_annot = cast(DictionaryObject, writer_annot.get_object())
             # retrieve parent field values, if present
@@ -963,6 +1039,17 @@ class PdfWriter:
                         or writer_annot.get(FA.FT) == "/Ch"
                     ):
                         # textbox
+                        if AA.DA not in writer_annot:
+                            f = writer_annot
+                            da = default_da
+                            while AA.DA not in f:
+                                f = f.get("/Parent")
+                                if f is None:
+                                    break
+                                f = f.get_object()
+                                if AA.DA in f:
+                                    da = f[AA.DA]
+                            writer_annot[NameObject(AA.DA)] = da
                         self._update_text_field(writer_annot)
                     elif writer_annot.get(FA.FT) == "/Sig":
                         # signature
@@ -1097,7 +1184,8 @@ class PdfWriter:
                 document.
         """
         self.clone_reader_document_root(reader)
-        self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
+        if TK.INFO in reader.trailer:
+            self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
         try:
             self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))  # type: ignore
         except KeyError:
@@ -1305,7 +1393,7 @@ class PdfWriter:
             if obj is not None:
                 idnum = i + 1
                 object_positions.append(stream.tell())
-                stream.write(b_(str(idnum)) + b" 0 obj\n")
+                stream.write(f"{idnum} 0 obj\n".encode())
                 if self._encryption and obj != self._encrypt_entry:
                     obj = self._encryption.encrypt_object(obj, idnum, 0)
                 obj.write_to_stream(stream)
@@ -1315,10 +1403,10 @@ class PdfWriter:
     def _write_xref_table(self, stream: StreamType, object_positions: List[int]) -> int:
         xref_location = stream.tell()
         stream.write(b"xref\n")
-        stream.write(b_(f"0 {len(self._objects) + 1}\n"))
-        stream.write(b_(f"{0:0>10} {65535:0>5} f \n"))
+        stream.write(f"0 {len(self._objects) + 1}\n".encode())
+        stream.write(f"{0:0>10} {65535:0>5} f \n".encode())
         for offset in object_positions:
-            stream.write(b_(f"{offset:0>10} {0:0>5} n \n"))
+            stream.write(f"{offset:0>10} {0:0>5} n \n".encode())
         return xref_location
 
     def _write_trailer(self, stream: StreamType, xref_location: int) -> None:
@@ -1343,7 +1431,7 @@ class PdfWriter:
         if self._encrypt_entry:
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt_entry.indirect_reference
         trailer.write_to_stream(stream)
-        stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
+        stream.write(f"\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
 
     def add_metadata(self, infos: Dict[str, Any]) -> None:
         """
@@ -1640,6 +1728,7 @@ class PdfWriter:
         page_destination: Union[None, PageObject, TreeObject] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
+        is_open: bool = True,
         dest: Union[None, PageObject, TreeObject] = None,  # deprecated
     ) -> IndirectObject:
         if page_destination is not None and dest is not None:  # deprecated
@@ -1662,14 +1751,33 @@ class PdfWriter:
             # argument is only Optional due to deprecated argument.
             raise ValueError("page_destination may not be None")
 
+        if isinstance(page_destination, PageObject):
+            return self.add_outline_item_destination(
+                Destination(
+                    f"page #{page_destination.page_number}",
+                    cast(IndirectObject, page_destination.indirect_reference),
+                    Fit.fit(),
+                )
+            )
+
         if parent is None:
             parent = self.get_outline_root()
 
+        page_destination[NameObject("/%is_open%")] = BooleanObject(is_open)
         parent = cast(TreeObject, parent.get_object())
         page_destination_ref = self._add_object(page_destination)
         if before is not None:
             before = before.indirect_reference
-        parent.insert_child(page_destination_ref, before, self)
+        parent.insert_child(
+            page_destination_ref,
+            before,
+            self,
+            page_destination.inc_parent_counter_outline
+            if is_open
+            else (lambda x, y: 0),
+        )
+        if "/Count" not in page_destination:
+            page_destination[NameObject("/Count")] = NumberObject(0)
 
         return page_destination_ref
 
@@ -1707,10 +1815,9 @@ class PdfWriter:
         outline_item: OutlineItemType,
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
+        is_open: bool = True,
     ) -> IndirectObject:
         outline_item_object = TreeObject()
-        for k, v in list(outline_item.items()):
-            outline_item_object[NameObject(str(k))] = v
         outline_item_object.update(outline_item)
 
         if "/A" in outline_item:
@@ -1721,7 +1828,9 @@ class PdfWriter:
             action_ref = self._add_object(action)
             outline_item_object[NameObject("/A")] = action_ref
 
-        return self.add_outline_item_destination(outline_item_object, parent, before)
+        return self.add_outline_item_destination(
+            outline_item_object, parent, before, is_open
+        )
 
     @deprecation_bookmark(bookmark="outline_item")
     def add_bookmark_dict(
@@ -1761,6 +1870,7 @@ class PdfWriter:
         bold: bool = False,
         italic: bool = False,
         fit: Fit = PAGE_FIT,
+        is_open: bool = True,
         pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
@@ -1786,7 +1896,7 @@ class PdfWriter:
             if fit is not None and page_number is None:
                 page_number = fit  # type: ignore
             return self.add_outline_item(
-                title, page_number, parent, None, before, color, bold, italic  # type: ignore
+                title, page_number, parent, None, before, color, bold, italic, is_open=is_open  # type: ignore
             )
         if page_number is not None and pagenum is not None:
             raise ValueError(
@@ -1829,7 +1939,7 @@ class PdfWriter:
 
         if parent is None:
             parent = self.get_outline_root()
-        return self.add_outline_item_destination(outline_item, parent, before)
+        return self.add_outline_item_destination(outline_item, parent, before, is_open)
 
     def add_bookmark(
         self,
@@ -2093,11 +2203,8 @@ class PdfWriter:
         else:  # del text
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
 
-        images = []
-        forms = []
-
-        def clean(content: ContentStream) -> None:
-            nonlocal images, forms, to_delete
+        def clean(content: ContentStream, images: List[str], forms: List[str]) -> None:
+            nonlocal to_delete
             i = 0
             while i < len(content.operations):
                 operands, operator = content.operations[i]
@@ -2114,43 +2221,69 @@ class PdfWriter:
                     i += 1
                 else:
                     i += 1
+            content.get_data()  # this ensures ._data is rebuilt from the .operations
 
-        try:
-            d = cast(dict, cast(DictionaryObject, page["/Resources"])["/XObject"])
-        except KeyError:
-            d = {}
-        for k, v in d.items():
-            o = v.get_object()
+        def clean_forms(
+            elt: DictionaryObject, stack: List[DictionaryObject]
+        ) -> Tuple[List[str], List[str]]:
+            nonlocal to_delete
+            if elt in stack:
+                # to prevent infinite looping
+                return [], []  # pragma: no cover
             try:
-                content: Any = None
-                if to_delete & ObjectDeletionFlag.IMAGES and o["/Subtype"] == "/Image":
-                    content = NullObject()
-                    images.append(k)
-                if o["/Subtype"] == "/Form":
-                    forms.append(k)
-                    if isinstance(o, ContentStream):
-                        content = o
-                    else:
-                        content = ContentStream(o, self)
-                        content.update(o.items())
-                        for k1 in ["/Length", "/Filter", "/DecodeParms"]:
-                            try:
-                                del content[k1]
-                            except KeyError:
-                                pass
-                    clean(content)
-                if content is not None:
-                    if isinstance(v, IndirectObject):
-                        self._objects[v.idnum - 1] = content
-                    else:
-                        d[k] = self._add_object(content)
-            except (TypeError, KeyError):
-                pass
+                d = cast(dict, cast(DictionaryObject, elt["/Resources"])["/XObject"])
+            except KeyError:
+                d = {}
+            images = []
+            forms = []
+            for k, v in d.items():
+                o = v.get_object()
+                try:
+                    content: Any = None
+                    if (
+                        cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.IMAGES
+                        and o["/Subtype"] == "/Image"
+                    ):
+                        content = NullObject()
+                        images.append(k)
+                    if o["/Subtype"] == "/Form":
+                        forms.append(k)
+                        if isinstance(o, ContentStream):
+                            content = o
+                        else:
+                            content = ContentStream(o, self)
+                            content.update(o.items())
+                            for k1 in ["/Length", "/Filter", "/DecodeParms"]:
+                                try:
+                                    del content[k1]
+                                except KeyError:
+                                    pass
+                        clean_forms(content, stack + [elt])  # clean sub forms
+                    if content is not None:
+                        if isinstance(v, IndirectObject):
+                            self._objects[v.idnum - 1] = content
+                        else:
+                            # should only occur with pdf not respecting pdf spec
+                            # where streams must be indirected.
+                            d[k] = self._add_object(content)  # pragma: no cover
+                except (TypeError, KeyError):
+                    pass
+            if isinstance(elt, StreamObject):  # for /Form
+                if not isinstance(elt, ContentStream):  # pragma: no cover
+                    e = ContentStream(elt, self)
+                    e.update(elt.items())
+                    elt = e
+                clean(elt, images, forms)  # clean the content
+            return images, forms
+
         if "/Contents" in page:
             content = page["/Contents"].get_object()
+
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page)
-            clean(cast(ContentStream, content))
+            images, forms = clean_forms(page, [])
+
+            clean(cast(ContentStream, content), images, forms)
             if isinstance(page["/Contents"], ArrayObject):
                 for o in cast(ArrayObject, page["/Contents"]):
                     self._objects[o.idnum - 1] = NullObject()
@@ -2313,7 +2446,7 @@ class PdfWriter:
         *args: ZoomArgType,
     ) -> DictionaryObject:
         deprecation_with_replacement(
-            "add_link", "add_annotation(AnnotationBuilder.link(...))"
+            "add_link", "add_annotation(pypdf.annotations.Link(...))"
         )
 
         if isinstance(rect, str):
@@ -2326,7 +2459,7 @@ class PdfWriter:
         else:
             rect = RectangleObject(rect)
 
-        annotation = AnnotationBuilder.link(
+        annotation = Link(
             rect=rect,
             border=border,
             target_page_index=page_destination,
@@ -2349,7 +2482,7 @@ class PdfWriter:
         .. deprecated:: 1.28.0
         """
         deprecate_with_replacement(
-            "addLink", "add_annotation(AnnotationBuilder.link(...))", "4.0.0"
+            "addLink", "add_annotation(pypdf.annotations.Link(...))", "4.0.0"
         )
         self.add_link(pagenum, page_destination, rect, border, fit, *args)
 
@@ -2866,7 +2999,7 @@ class PdfWriter:
         )  # need for the outline processing below
         for dest in reader._namedDests.values():
             arr = dest.dest_array
-            if "/Names" in self._root_object and dest["/Title"] in cast(  # noqa: SIM114
+            if "/Names" in self._root_object and dest["/Title"] in cast(
                 list,
                 cast(
                     DictionaryObject,
@@ -2901,7 +3034,7 @@ class PdfWriter:
                 "TreeObject",
                 self.add_outline_item(
                     TextStringObject(outline_item),
-                    list(srcpages.values())[0].indirect_reference,
+                    next(iter(srcpages.values())).indirect_reference,
                     fit=PAGE_FIT,
                 ).get_object(),
             )
@@ -3045,10 +3178,14 @@ class PdfWriter:
         for p in pages.values():
             pp = p.original_page
             for a in pp.get("/B", ()):
-                thr = a.get_object()["/T"]
+                thr = a.get_object().get("/T")
+                if thr is None:
+                    continue
+                else:
+                    thr = thr.get_object()
                 if thr.indirect_reference.idnum not in self._id_translated[
                     id(reader)
-                ] and fltr.search(thr["/I"]["/Title"]):
+                ] and fltr.search((thr["/I"] if "/I" in thr else {}).get("/Title", "")):
                     self._add_articles_thread(thr, pages, reader)
 
     def _get_cloned_page(

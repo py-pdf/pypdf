@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
+import re
 import warnings
 from decimal import Decimal
 from typing import (
@@ -55,6 +56,7 @@ from ._text_extraction import (
     mult,
 )
 from ._utils import (
+    WHITESPACES_AS_REGEXP,
     CompressedTransformationMatrix,
     File,
     ImageFile,
@@ -342,6 +344,8 @@ class PageObject(DictionaryObject):
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
         self.inline_images: Optional[Dict[str, ImageFile]] = None
+        # below Union for mypy but actually Optional[List[str]]
+        self.inline_images_keys: Optional[List[Union[str, List[str]]]] = None
         if indirect_ref is not None:  # deprecated
             warnings.warn(
                 (
@@ -473,10 +477,26 @@ class PageObject(DictionaryObject):
         return images_extracted
 
     def _get_ids_image(
-        self, obj: Optional[DictionaryObject] = None, ancest: Optional[List[str]] = None
+        self,
+        obj: Optional[DictionaryObject] = None,
+        ancest: Optional[List[str]] = None,
+        call_stack: Optional[List[Any]] = None,
     ) -> List[Union[str, List[str]]]:
-        if self.inline_images is None:
-            self.inline_images = self._get_inline_images()
+        if call_stack is None:
+            call_stack = []
+        _i = getattr(obj, "indirect_reference", None)
+        if _i in call_stack:
+            return []
+        else:
+            call_stack.append(_i)
+        if self.inline_images_keys is None:
+            nb_inlines = len(
+                re.findall(
+                    WHITESPACES_AS_REGEXP + b"BI" + WHITESPACES_AS_REGEXP,
+                    self._get_contents_as_bytes() or b"",
+                )
+            )
+            self.inline_images_keys = [f"~{x}~" for x in range(nb_inlines)]
         if obj is None:
             obj = self
         if ancest is None:
@@ -485,15 +505,15 @@ class PageObject(DictionaryObject):
         if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
             DictionaryObject, obj[PG.RESOURCES]
         ):
-            return list(self.inline_images.keys())
+            return self.inline_images_keys
 
         x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
             if x_object[o][IA.SUBTYPE] == "/Image":
                 lst.append(o if len(ancest) == 0 else ancest + [o])
             else:  # is a form with possible images inside
-                lst.extend(self._get_ids_image(x_object[o], ancest + [o]))
-        return lst + list(self.inline_images.keys())
+                lst.extend(self._get_ids_image(x_object[o], ancest + [o], call_stack))
+        return lst + self.inline_images_keys
 
     def _get_image(
         self,
@@ -515,6 +535,8 @@ class PageObject(DictionaryObject):
                 raise
         if isinstance(id, str):
             if id[0] == "~" and id[-1] == "~":
+                if self.inline_images is None:
+                    self.inline_images = self._get_inline_images()
                 if self.inline_images is None:  # pragma: no cover
                     raise KeyError("no inline image can be found")
                 return self.inline_images[id]
@@ -545,13 +567,14 @@ class PageObject(DictionaryObject):
         Examples:
             reader.pages[0].images[0]        # return fist image
             reader.pages[0].images['/I0']    # return image '/I0'
-            reader.pages[0].images['/TP1','/Image1'] # return image '/Image1'
-                                                            within '/TP1' Xobject/Form
+            # return image '/Image1' within '/TP1' Xobject/Form:
+            reader.pages[0].images['/TP1','/Image1']
             for img in reader.pages[0].images: # loop within all objects
 
         images.keys() and images.items() can be used.
 
         The ImageFile has the following properties:
+
             `.name` : name of the object
             `.data` : bytes of the object
             `.image`  : PIL Image Object
@@ -680,7 +703,7 @@ class PageObject(DictionaryObject):
         return rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
 
     @rotation.setter
-    def rotation(self, r: Union[int, float]) -> None:
+    def rotation(self, r: float) -> None:
         self[NameObject(PG.ROTATE)] = NumberObject((((int(r) + 45) // 90) * 90) % 360)
 
     def transfer_rotation_to_content(self) -> None:
@@ -859,12 +882,17 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def _push_pop_gs(
-        contents: Any, pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol]
+        contents: Any,
+        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
+        use_original: bool = True,
     ) -> ContentStream:
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
         # transformation matricies.
-        stream = ContentStream(contents, pdf)
+        if use_original:
+            stream = contents
+        else:
+            stream = ContentStream(contents, pdf)
         stream.operations.insert(0, ([], "q"))
         stream.operations.append(([], "Q"))
         return stream
@@ -894,6 +922,23 @@ class PageObject(DictionaryObject):
         )
         return contents
 
+    def _get_contents_as_bytes(self) -> Optional[bytes]:
+        """
+        Return the page contents as bytes.
+
+        Returns:
+            The ``/Contents`` object as bytes, or ``None`` if it doesn't exist.
+
+        """
+        if PG.CONTENTS in self:
+            obj = self[PG.CONTENTS].get_object()
+            if isinstance(obj, list):
+                return b"".join(x.get_object().get_data() for x in obj)
+            else:
+                return cast(bytes, cast(EncodedStreamObject, obj).get_data())
+        else:
+            return None
+
     def get_contents(self) -> Optional[ContentStream]:
         """
         Access the page contents.
@@ -907,7 +952,11 @@ class PageObject(DictionaryObject):
                 pdf = cast(IndirectObject, self.indirect_reference).pdf
             except AttributeError:
                 pdf = None
-            return ContentStream(self[PG.CONTENTS].get_object(), pdf)
+            obj = self[PG.CONTENTS].get_object()
+            if isinstance(obj, NullObject):
+                return None
+            else:
+                return ContentStream(obj, pdf)
         else:
             return None
 
@@ -1076,12 +1125,9 @@ class PageObject(DictionaryObject):
         )
 
         new_content_array = ArrayObject()
-
         original_content = self.get_contents()
         if original_content is not None:
-            new_content_array.append(
-                PageObject._push_pop_gs(original_content, self.pdf)
-            )
+            new_content_array.append(original_content)
 
         page2content = page2.get_contents()
         if page2content is not None:
@@ -1137,8 +1183,13 @@ class PageObject(DictionaryObject):
         pdf = self.indirect_reference.pdf
 
         rename = {}
+        if PG.RESOURCES not in self:
+            self[NameObject(PG.RESOURCES)] = DictionaryObject()
         original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
-        page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+        if PG.RESOURCES not in page2:
+            page2resources = DictionaryObject()
+        else:
+            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
 
         for res in (
             RES.EXT_G_STATE,
@@ -1214,9 +1265,7 @@ class PageObject(DictionaryObject):
 
         original_content = self.get_contents()
         if original_content is not None:
-            new_content_array.append(
-                PageObject._push_pop_gs(original_content, self.pdf)
-            )
+            new_content_array.append(original_content)
 
         page2content = page2.get_contents()
         if page2content is not None:
@@ -1734,7 +1783,7 @@ class PageObject(DictionaryObject):
         deprecation_with_replacement("scaleTo", "scale_to", "3.0.0")
         self.scale_to(width, height)
 
-    def compress_content_streams(self) -> None:
+    def compress_content_streams(self, level: int = -1) -> None:
         """
         Compress the size of this page by joining all content streams and
         applying a FlateDecode filter.
@@ -1744,7 +1793,7 @@ class PageObject(DictionaryObject):
         """
         content = self.get_contents()
         if content is not None:
-            content_obj = content.flate_encode()
+            content_obj = content.flate_encode(level)
             try:
                 content.indirect_reference.pdf._objects[  # type: ignore
                     content.indirect_reference.idnum - 1  # type: ignore
@@ -1896,7 +1945,7 @@ class PageObject(DictionaryObject):
             1.0,
             0.0,
             0.0,
-        ]  # will store cm_matrix * tm_matrix
+        ]  # will store previous tm_matrix
         char_scale = 1.0
         space_scale = 1.0
         _space_width: float = 500.0  # will be set correctly at first Tf

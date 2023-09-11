@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import List
 
+from rich.prompt import Prompt
+
 
 @dataclass(frozen=True)
 class Change:
@@ -28,15 +30,19 @@ def main(changelog_path: str) -> None:
     if changes == "":
         print("No changes")
         return
-    print(changes)
 
     new_version = version_bump(git_tag)
+    new_version = get_version_interactive(new_version, changes)
+    adjust_version_py(new_version)
+
     today = datetime.now(tz=timezone.utc)
     header = f"## Version {new_version}, {today:%Y-%m-%d}\n"
     url = f"https://github.com/py-pdf/pypdf/compare/{git_tag}...{new_version}"
     trailer = f"\n[Full Changelog]({url})\n\n"
     new_entry = header + changes + trailer
     print(new_entry)
+    write_commit_msg_file(new_version, changes + trailer)
+    write_release_msg_file(new_version, changes + trailer, today)
 
     # Make the script idempotent by checking if the new entry is already in the changelog
     if new_entry in changelog:
@@ -45,11 +51,87 @@ def main(changelog_path: str) -> None:
 
     new_changelog = "# CHANGELOG\n\n" + new_entry + strip_header(changelog)
     write_changelog(new_changelog, changelog_path)
+    print_instructions(new_version)
+
+
+def print_instructions(new_version: str) -> None:
+    """Print release instructions."""
+    print("=" * 80)
+    print(f"☑  _version.py was adjusted to '{new_version}'")
+    print("☑  CHANGELOG.md was adjusted")
+    print("")
+    print("Now run:")
+    print("  git commit -eF RELEASE_COMMIT_MSG.md")
+    print(f"  git tag -s {new_version} -eF RELEASE_TAG_MSG.md")
+    print("  git push")
+    print("  git push --tags")
+
+
+def adjust_version_py(version: str) -> None:
+    """Adjust the __version__ string."""
+    with open("pypdf/_version.py", "w") as fp:
+        fp.write(f'__version__ = "{version}"\n')
+
+
+def get_version_interactive(new_version: str, changes: str) -> str:
+    """Get the new __version__ interactively."""
+    print("The changes are:")
+    print(changes)
+    orig = new_version
+    new_version = Prompt.ask("New semantic version", default=orig)
+    while not is_semantic_version(new_version):
+        new_version = Prompt.ask(
+            "That was not a semantic version. Please enter a semantic version",
+            default=orig,
+        )
+    return new_version
+
+
+def is_semantic_version(version: str) -> bool:
+    """Check if the given version is a semantic version."""
+    # It's not so important to cover the edge-cases like pre-releases
+    # This is meant for pypdf only and we don't make pre-releases
+    if version.count(".") != 2:
+        return False
+    try:
+        return bool([int(part) for part in version.split(".")])
+    except Exception:
+        return False
+
+
+def write_commit_msg_file(new_version: str, commit_changes: str) -> None:
+    """
+    Write a file that can be used as a commit message.
+
+    Like this:
+
+        git commit -eF RELEASE_COMMIT_MSG.md && git push
+    """
+    with open("RELEASE_COMMIT_MSG.md", "w") as fp:
+        fp.write(f"REL: {new_version}\n\n")
+        fp.write("## What's new\n")
+        fp.write(commit_changes)
+
+
+def write_release_msg_file(
+    new_version: str, commit_changes: str, today: datetime
+) -> None:
+    """
+    Write a file that can be used as a git tag message.
+
+    Like this:
+
+        git tag -eF RELEASE_TAG_MSG.md && git push
+    """
+    with open("RELEASE_TAG_MSG.md", "w") as fp:
+        fp.write(f"Version {new_version}, {today:%Y-%m-%d}\n\n")
+        fp.write("## What's new\n")
+        fp.write(commit_changes)
 
 
 def strip_header(md: str) -> str:
     """Remove the 'CHANGELOG' header."""
-    return md.lstrip("# CHANGELOG").strip()  # noqa
+    return md.lstrip("# CHANGELOG").lstrip()  # noqa
 
 
 def version_bump(git_tag: str) -> str:

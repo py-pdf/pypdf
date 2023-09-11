@@ -43,9 +43,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from ._utils import (
     b_,
     deprecate_with_replacement,
+    deprecation_no_replacement,
     logger_warning,
     ord_,
-    paeth_predictor,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
 from .constants import ColorSpaces
@@ -54,20 +54,13 @@ from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
-from .errors import PdfReadError, PdfStreamError
+from .errors import DeprecationError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
     DictionaryObject,
     IndirectObject,
     NullObject,
 )
-
-try:
-    from typing import Literal, TypeAlias  # type: ignore[attr-defined]
-except ImportError:
-    # PEP 586 introduced typing.Literal with Python 3.8
-    # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import Literal, TypeAlias  # type: ignore[misc, assignment]
 
 
 def decompress(data: bytes) -> bytes:
@@ -101,7 +94,7 @@ class FlateDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         """
@@ -121,17 +114,15 @@ class FlateDecode:
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
+        if isinstance(decode_parms, ArrayObject):  # type: ignore
+            raise DeprecationError("decode_parms as ArrayObject is depreciated")
+
         str_data = decompress(data)
         predictor = 1
 
         if decode_parms:
             try:
-                if isinstance(decode_parms, ArrayObject):
-                    for decode_parm in decode_parms:
-                        if "/Predictor" in decode_parm:
-                            predictor = decode_parm["/Predictor"]
-                else:
-                    predictor = decode_parms.get("/Predictor", 1)
+                predictor = decode_parms.get("/Predictor", 1)
             except (AttributeError, TypeError):  # Type Error is NullObject
                 pass  # Usually an array with a null object was read
         # predictor 1 == no predictor
@@ -139,24 +130,21 @@ class FlateDecode:
             # The /Columns param. has 1 as the default value; see ISO 32000,
             # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
             DEFAULT_BITS_PER_COMPONENT = 8
-            if isinstance(decode_parms, ArrayObject):
+            try:
+                columns = cast(int, decode_parms[LZW.COLUMNS].get_object())  # type: ignore
+            except (TypeError, KeyError):
                 columns = 1
+            try:
+                colors = cast(int, decode_parms[LZW.COLORS].get_object())  # type: ignore
+            except (TypeError, KeyError):
+                colors = 1
+            try:
+                bits_per_component = cast(
+                    int,
+                    decode_parms[LZW.BITS_PER_COMPONENT].get_object(),  # type: ignore
+                )
+            except (TypeError, KeyError):
                 bits_per_component = DEFAULT_BITS_PER_COMPONENT
-                for decode_parm in decode_parms:
-                    if "/Columns" in decode_parm:
-                        columns = decode_parm["/Columns"]
-                    if LZW.BITS_PER_COMPONENT in decode_parm:
-                        bits_per_component = decode_parm[LZW.BITS_PER_COMPONENT]
-            else:
-                columns = (
-                    1 if decode_parms is None else decode_parms.get(LZW.COLUMNS, 1)
-                )
-                colors = 1 if decode_parms is None else decode_parms.get(LZW.COLORS, 1)
-                bits_per_component = (
-                    decode_parms.get(LZW.BITS_PER_COMPONENT, DEFAULT_BITS_PER_COMPONENT)
-                    if decode_parms
-                    else DEFAULT_BITS_PER_COMPONENT
-                )
 
             # PNG predictor can vary by row and so is the lead byte on each row
             rowlength = (
@@ -181,17 +169,15 @@ class FlateDecode:
         return str_data
 
     @staticmethod
-    def _decode_png_prediction(data: str, columns: int, rowlength: int) -> bytes:
-        output = BytesIO()
+    def _decode_png_prediction(data: bytes, columns: int, rowlength: int) -> bytes:
         # PNG prediction can vary from row to row
         if len(data) % rowlength != 0:
             raise PdfReadError("Image data is not rectangular")
+        output = []
         prev_rowdata = (0,) * rowlength
         bpp = (rowlength - 1) // columns  # recomputed locally to not change params
-        for row in range(len(data) // rowlength):
-            rowdata = [
-                ord_(x) for x in data[(row * rowlength) : ((row + 1) * rowlength)]
-            ]
+        for row in range(0, len(data), rowlength):
+            rowdata: List[int] = list(data[row : row + rowlength])
             filter_byte = rowdata[0]
 
             if filter_byte == 0:
@@ -203,16 +189,38 @@ class FlateDecode:
                 for i in range(1, rowlength):
                     rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
             elif filter_byte == 3:
-                for i in range(1, rowlength):
-                    left = rowdata[i - bpp] if i > bpp else 0
-                    floor = math.floor(left + prev_rowdata[i]) / 2
-                    rowdata[i] = (rowdata[i] + int(floor)) % 256
+                for i in range(1, bpp + 1):
+                    # left = 0
+                    floor = prev_rowdata[i] // 2
+                    rowdata[i] = (rowdata[i] + floor) % 256
+                for i in range(bpp + 1, rowlength):
+                    left = rowdata[i - bpp]
+                    floor = (left + prev_rowdata[i]) // 2
+                    rowdata[i] = (rowdata[i] + floor) % 256
             elif filter_byte == 4:
-                for i in range(1, rowlength):
-                    left = rowdata[i - bpp] if i > bpp else 0
+                for i in range(1, bpp + 1):
+                    # left = 0
                     up = prev_rowdata[i]
-                    up_left = prev_rowdata[i - bpp] if i > bpp else 0
-                    paeth = paeth_predictor(left, up, up_left)
+                    # up_left = 0
+                    paeth = up
+                    rowdata[i] = (rowdata[i] + paeth) % 256
+                for i in range(bpp + 1, rowlength):
+                    left = rowdata[i - bpp]
+                    up = prev_rowdata[i]
+                    up_left = prev_rowdata[i - bpp]
+
+                    p = left + up - up_left
+                    dist_left = abs(p - left)
+                    dist_up = abs(p - up)
+                    dist_up_left = abs(p - up_left)
+
+                    if dist_left <= dist_up and dist_left <= dist_up_left:
+                        paeth = left
+                    elif dist_up <= dist_up_left:
+                        paeth = up
+                    else:
+                        paeth = up_left
+
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
                 # unsupported PNG filter
@@ -220,21 +228,22 @@ class FlateDecode:
                     f"Unsupported PNG filter {filter_byte!r}"
                 )  # pragma: no cover
             prev_rowdata = tuple(rowdata)
-            output.write(bytearray(rowdata[1:]))
-        return output.getvalue()
+            output.extend(rowdata[1:])
+        return bytes(output)
 
     @staticmethod
-    def encode(data: bytes) -> bytes:
+    def encode(data: bytes, level: int = -1) -> bytes:
         """
         Compress the input data using zlib.
 
         Args:
             data: The data to be compressed.
+            level: See https://docs.python.org/3/library/zlib.html#zlib.compress
 
         Returns:
             The compressed data.
         """
-        return zlib.compress(data)
+        return zlib.compress(data, level)
 
 
 class ASCIIHexDecode:
@@ -245,10 +254,10 @@ class ASCIIHexDecode:
 
     @staticmethod
     def decode(
-        data: str,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        data: Union[str, bytes],
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
-    ) -> str:
+    ) -> bytes:
         """
         Decode an ASCII-Hex encoded data stream.
 
@@ -265,28 +274,87 @@ class ASCIIHexDecode:
         Raises:
           PdfStreamError:
         """
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
-        retval = ""
-        hex_pair = ""
+        # decode_parms is unused here
+
+        if isinstance(data, str):
+            data = data.encode()
+        retval = b""
+        hex_pair = b""
         index = 0
         while True:
             if index >= len(data):
                 raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
-            char = data[index]
-            if char == ">":
+            char = data[index : index + 1]
+            if char == b">":
                 break
             elif char.isspace():
                 index += 1
                 continue
             hex_pair += char
             if len(hex_pair) == 2:
-                retval += chr(int(hex_pair, base=16))
-                hex_pair = ""
+                retval += bytes((int(hex_pair, base=16),))
+                hex_pair = b""
             index += 1
-        assert hex_pair == ""
+        assert hex_pair == b""
         return retval
+
+
+class RunLengthDecode:
+    """
+    The RunLengthDecode filter decodes data that has been encoded in a
+    simple byte-oriented format based on run length.
+    The encoded data is a sequence of runs, where each run consists of
+    a length byte followed by 1 to 128 bytes of data. If the length byte is
+    in the range 0 to 127,
+    the following length + 1 (1 to 128) bytes are copied literally during
+    decompression.
+    If length is in the range 129 to 255, the following single byte is to be
+    copied 257 − length (2 to 128) times during decompression. A length value
+    of 128 denotes EOD.
+    """
+
+    @staticmethod
+    def decode(
+        data: bytes,
+        decode_parms: Optional[DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> bytes:
+        """
+        Decode an ASCII-Hex encoded data stream.
+
+        Args:
+          data: a bytes sequence of length/data
+          decode_parms: ignored.
+
+        Returns:
+          A bytes decompressed sequence.
+
+        Raises:
+          PdfStreamError:
+        """
+        # decode_parms is unused here
+
+        lst = []
+        index = 0
+        while True:
+            if index >= len(data):
+                raise PdfStreamError("Unexpected EOD in RunLengthDecode")
+            length = data[index]
+            index += 1
+            if length == 128:
+                if index < len(data):
+                    raise PdfStreamError("early EOD in RunLengthDecode")
+                else:
+                    break
+            elif length < 128:
+                length += 1
+                lst.append(data[index : (index + length)])
+                index += length
+            else:  # >128
+                length = 257 - length
+                lst.append(bytes((data[index],)) * length)
+                index += 1
+        return b"".join(lst)
 
 
 class LZWDecode:
@@ -379,7 +447,7 @@ class LZWDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> str:
         """
@@ -392,9 +460,8 @@ class LZWDecode:
         Returns:
           decoded data.
         """
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        # decode_parms is unused here
+
         return LZWDecode.Decoder(data).decode()
 
 
@@ -404,12 +471,11 @@ class ASCII85Decode:
     @staticmethod
     def decode(
         data: Union[str, bytes],
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        # decode_parms is unused here
+
         if isinstance(data, str):
             data = data.encode("ascii")
         group_index = b = 0
@@ -437,12 +503,10 @@ class DCTDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        # decode_parms is unused here
         return data
 
 
@@ -450,12 +514,10 @@ class JPXDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+        # decode_parms is unused here
         return data
 
 
@@ -517,13 +579,18 @@ class CCITTFaxDecode:
     @staticmethod
     def decode(
         data: bytes,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Optional[DictionaryObject] = None,
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
+        # decode_parms is unused here
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
+        if isinstance(decode_parms, ArrayObject):  # deprecated
+            deprecation_no_replacement(
+                "decode_parms being an ArrayObject", removed_in="3.15.5"
+            )
         parms = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
@@ -574,13 +641,13 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
+def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
     """
     Decode the stream data based on the specified filters.
 
     This function decodes the stream data using the filters provided in the
     stream. It supports various filter types, including FlateDecode,
-    ASCIIHexDecode, LZWDecode, ASCII85Decode, DCTDecode, JPXDecode, and
+    ASCIIHexDecode, RunLengthDecode, LZWDecode, ASCII85Decode, DCTDecode, JPXDecode, and
     CCITTFaxDecode.
 
     Args:
@@ -601,7 +668,7 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     decodparms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
     if not isinstance(decodparms, (list, tuple)):
         decodparms = (decodparms,)
-    data: bytes = stream._data
+    data: bytes = b_(stream._data)
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filter_type, params in zip(filters, decodparms):
@@ -611,6 +678,8 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
                 data = FlateDecode.decode(data, params)
             elif filter_type in (FT.ASCII_HEX_DECODE, FTA.AHx):
                 data = ASCIIHexDecode.decode(data)  # type: ignore
+            elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
+                data = RunLengthDecode.decode(data)
             elif filter_type in (FT.LZW_DECODE, FTA.LZW):
                 data = LZWDecode.decode(data, params)  # type: ignore
             elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
@@ -641,62 +710,6 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # deprecated
     return decode_stream_data(stream)
 
 
-mode_str_type: TypeAlias = Literal[
-    "", "1", "RGB", "2bits", "4bits", "P", "L", "RGBA", "CMYK"
-]
-
-
-def _get_imagemode(
-    color_space: Union[str, List[Any], Any],
-    color_components: int,
-    prev_mode: mode_str_type,
-) -> mode_str_type:
-    """Returns the image mode not taking into account mask(transparency)"""
-    if isinstance(color_space, str):
-        pass
-    elif not isinstance(color_space, list):
-        raise PdfReadError(
-            "can not interprete colorspace", color_space
-        )  # pragma: no cover
-    elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
-        color_space = "/Device" + color_space[0][4:]
-    elif color_space[0] == "/ICCBased":
-        icc_profile = color_space[1].get_object()
-        color_components = cast(int, icc_profile["/N"])
-        color_space = icc_profile.get("/Alternate", "")
-    elif color_space[0] == "/Indexed":
-        color_space = color_space[1]
-        if isinstance(color_space, IndirectObject):
-            color_space = color_space.get_object()
-        mode2 = _get_imagemode(color_space, color_components, prev_mode)
-        if mode2 in ("RGB", "CMYK"):
-            mode2 = "P"
-        return mode2
-    elif color_space[0] == "/Separation":
-        color_space = color_space[2]
-    elif color_space[0] == "/DeviceN":
-        color_components = len(color_space[1])
-        color_space = color_space[2]
-        if isinstance(color_space, IndirectObject):  # pragma: no cover
-            color_space = color_space.get_object()
-
-    mode_map = {
-        "1bit": "1",  # pos [0] will be used for 1 bit
-        "/DeviceGray": "L",  # must be in pos [1]
-        "palette": "P",  # must be in pos [2] for color_components align.
-        "/DeviceRGB": "RGB",  # must be in pos [3]
-        "/DeviceCMYK": "CMYK",  # must be in pos [4]
-        "2bit": "2bits",  # 2 bits images
-        "4bit": "4bits",  # 4 bits
-    }
-    mode: mode_str_type = (
-        mode_map.get(color_space)  # type: ignore
-        or list(mode_map.values())[color_components]
-        or prev_mode
-    )  # type: ignore
-    return mode
-
-
 def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
@@ -710,137 +723,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     Returns:
         Tuple[file extension, bytes, PIL.Image.Image]
     """
-    try:
-        from PIL import Image
-    except ImportError:
-        raise ImportError(
-            "pillow is required to do image extraction. "
-            "It can be installed via 'pip install pypdf[image]'"
-        )
-
-    def _handle_flate(
-        size: Tuple[int, int],
-        data: bytes,
-        mode: mode_str_type,
-        color_space: str,
-        colors: int,
-    ) -> Tuple[Image.Image, str, str]:
-        """
-        Process image encoded in flateEncode
-        Returns img, image_format, extension
-        """
-
-        def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
-            mask = (2 << bits) - 1
-            nbuff = bytearray(size[0] * size[1])
-            by = 0
-            bit = 8 - bits
-            for y in range(size[1]):
-                if (bit != 0) and (bit != 8 - bits):
-                    by += 1
-                    bit = 8 - bits
-                for x in range(size[0]):
-                    nbuff[y * size[0] + x] = (data[by] >> bit) & mask
-                    bit -= bits
-                    if bit < 0:
-                        by += 1
-                        bit = 8 - bits
-            return bytes(nbuff)
-
-        extension = ".png"  # mime_type = "image/png"
-        image_format = "PNG"
-        lookup: Any
-        base: Any
-        hival: Any
-        if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
-            color_space, base, hival, lookup = (
-                value.get_object() for value in color_space
-            )
-        if mode == "2bits":
-            mode = "P"
-            data = bits2byte(data, size, 2)
-        elif mode == "4bits":
-            mode = "P"
-            data = bits2byte(data, size, 4)
-        img = Image.frombytes(mode, size, data)
-        if color_space == "/Indexed":
-            from .generic import ByteStringObject
-
-            if isinstance(lookup, ByteStringObject):
-                try:
-                    nb, conv, mode = {  # type: ignore
-                        "1": (0, "", ""),
-                        "L": (1, "P", "L"),
-                        "P": (0, "", ""),
-                        "RGB": (3, "P", "RGB"),
-                        "CMYK": (4, "P", "CMYK"),
-                    }[_get_imagemode(base, 0, "")]
-                except KeyError:  # pragma: no cover
-                    logger_warning(
-                        f"Base {base} not coded please share the pdf file with pypdf dev team",
-                        __name__,
-                    )
-                    lookup = None
-                else:
-                    img = img.convert(conv)
-                    if len(lookup) != (hival + 1) * nb:
-                        logger_warning(
-                            f"Invalid Lookup Table in {obj_as_text}", __name__
-                        )
-                        lookup = None
-                    if mode == "L":
-                        # gray lookup does not work : it is converted to a similar RGB lookup
-                        lookup = b"".join([bytes([b, b, b]) for b in lookup])
-                        mode = "RGB"
-                    if lookup is not None:
-                        img.putpalette(lookup, rawmode=mode)
-            else:
-                img.putpalette(lookup.get_data())
-            img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
-        elif not isinstance(color_space, NullObject) and color_space[0] == "/ICCBased":
-            # see Table 66 - Additional Entries Specific to an ICC Profile
-            # Stream Dictionary
-            mode2 = _get_imagemode(color_space, colors, mode)
-            if mode != mode2:
-                img = Image.frombytes(
-                    mode2, size, data
-                )  # reloaded as mode may have change
-        if mode == "CMYK":
-            extension = ".tif"
-            image_format = "TIFF"
-        return img, image_format, extension
-
-    def _handle_jpx(
-        size: Tuple[int, int],
-        data: bytes,
-        mode: mode_str_type,
-        color_space: str,
-        colors: int,
-    ) -> Tuple[Image.Image, str, str]:
-        """
-        Process image encoded in flateEncode
-        Returns img, image_format, extension
-        """
-        extension = ".jp2"  # mime_type = "image/x-jp2"
-        img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
-        mode = _get_imagemode(color_space, colors, mode)
-        if img1.mode == "RGBA" and mode == "RGB":
-            mode = "RGBA"
-        # we need to convert to the good mode
-        try:
-            if img1.mode != mode:
-                img = Image.frombytes(mode, img1.size, img1.tobytes())
-            else:
-                img = img1
-        except OSError:
-            img = Image.frombytes(mode, img1.size, img1.tobytes())
-        # for CMYK conversion :
-        # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
-        # not implemented for the moment as I need to get properly the ICC
-        if img.mode == "CMYK":
-            img = img.convert("RGB")
-        image_format = "JPEG2000"
-        return img, image_format, extension
+    from ._xobj_image_helpers import (
+        Image,
+        _get_imagemode,
+        _handle_flate,
+        _handle_jpx,
+        mode_str_type,
+    )
 
     # for error reporting
     if (
@@ -852,8 +741,12 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.get_data()  # type: ignore
+    if isinstance(data, str):  # pragma: no cover
+        data = data.encode()
     colors = x_object_obj.get("/Colors", 1)
     color_space: Any = x_object_obj.get("/ColorSpace", NullObject()).get_object()
+    if isinstance(color_space, list) and len(color_space) == 1:
+        color_space = color_space[0].get_object()
     if (
         IA.COLOR_SPACE in x_object_obj
         and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
@@ -861,9 +754,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: mode_str_type = "RGB"
     if x_object_obj.get("/BitsPerComponent", 8) < 8:
-        mode = _get_imagemode(f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, "")
+        mode, invert_color = _get_imagemode(
+            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
+        )
     else:
-        mode = _get_imagemode(
+        mode, invert_color = _get_imagemode(
             color_space,
             2
             if (
@@ -881,12 +776,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     filters = x_object_obj.get(SA.FILTER, [None])
     lfilters = filters[-1] if isinstance(filters, list) else filters
     if lfilters == FT.FLATE_DECODE:
-        img, image_format, extension = _handle_flate(
+        img, image_format, extension, invert_color = _handle_flate(
             size,
             data,
             mode,
             color_space,
             colors,
+            obj_as_text,
         )
     elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE, FT.CCITT_FAX_DECODE):
         # I'm not sure if the following logic is correct.
@@ -898,29 +794,38 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         else:
             extension = ".png"  # mime_type = "image/png"
             image_format = "PNG"
-        data = b_(data)
         img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
+        # invert_color kept unchanged
     elif lfilters == FT.JPX_DECODE:
-        img, image_format, extension = _handle_jpx(
+        img, image_format, extension, invert_color = _handle_jpx(
             size, data, mode, color_space, colors
         )
     elif lfilters == FT.CCITT_FAX_DECODE:
-        img, image_format, extension = (
+        img, image_format, extension, invert_color = (
             Image.open(BytesIO(data), formats=("TIFF",)),
             "TIFF",
             ".tiff",
+            False,
         )
-    elif lfilters is None:
-        img, image_format, extension = Image.frombytes(mode, size, data), "PNG", ".png"
+    else:
+        if mode == "":
+            raise PdfReadError(f"ColorSpace field not found in {x_object_obj}")
+        img, image_format, extension, invert_color = (
+            Image.frombytes(mode, size, data),
+            "PNG",
+            ".png",
+            False,
+        )
 
-    # CMYK image without decode requires reverting scale (cf p243,2§ last sentence)
+    # CMYK image and other colorspaces without decode
+    # requires reverting scale (cf p243,2§ last sentence)
     decode = x_object_obj.get(
         IA.DECODE,
         ([1.0, 0.0] * len(img.getbands()))
         if (
-            (img.mode == "CMYK" or (mode == "CMYK" and img.mode == "L"))
+            (img.mode == "CMYK" or (invert_color and img.mode == "L"))
             and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE)
         )
         else None,
@@ -950,6 +855,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                 alpha = alpha.convert("L")
             if img.mode == "P":
                 img = img.convert("RGB")
+            elif img.mode == "1":
+                img = img.convert("L")
             img.putalpha(alpha)
         if "JPEG" in image_format:
             extension = ".jp2"

@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 
 import pypdf._utils
-from pypdf import PdfReader
 from pypdf._utils import (
     File,
+    Version,
     _get_max_pdf_version_header,
     _human_readable_bytes,
     deprecate_with_replacement,
@@ -15,6 +15,7 @@ from pypdf._utils import (
     deprecation_no_replacement,
     mark_location,
     matrix_multiply,
+    parse_iso8824_date,
     read_block_backwards,
     read_previous_line,
     read_until_regex,
@@ -25,7 +26,7 @@ from pypdf._utils import (
 )
 from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 
-from . import get_pdf_from_url
+from . import is_sublist
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -302,20 +303,6 @@ def test_rename_kwargs():
         foo(old_param=12)
 
 
-@pytest.mark.enable_socket()
-def test_escapedcode_followed_by_int():
-    # iss #1294
-    url = (
-        "https://github.com/timedegree/playground_files/raw/main/"
-        "%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
-    )
-    name = "keppler.pdf"
-
-    reader = PdfReader(io.BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
 @pytest.mark.parametrize(
     ("input_int", "expected_output"),
     [
@@ -337,3 +324,99 @@ def test_file_class():
     f = File(name="image.png", data=b"")
     assert str(f) == "File(name=image.png, data: 0 Byte)"
     assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("D:20210318000756", "2021-03-18T00:07:56"),
+        ("20210318000756", "2021-03-18T00:07:56"),
+        ("D:2021", "2021-01-01T00:00:00"),
+        ("D:202103", "2021-03-01T00:00:00"),
+        ("D:20210304", "2021-03-04T00:00:00"),
+        ("D:2021030402", "2021-03-04T02:00:00"),
+        ("D:20210408054711", "2021-04-08T05:47:11"),
+        ("D:20210408054711Z", "2021-04-08T05:47:11+00:00"),
+        ("D:20210408054711Z00", "2021-04-08T05:47:11+00:00"),
+        ("D:20210408054711Z0000", "2021-04-08T05:47:11+00:00"),
+        ("D:20210408075331+02'00'", "2021-04-08T07:53:31+02:00"),
+        ("D:20210408075331-03'00'", "2021-04-08T07:53:31-03:00"),
+    ],
+)
+def test_parse_datetime(text, expected):
+    date = parse_iso8824_date(text)
+    date_str = (date.isoformat() + date.strftime("%z"))[: len(expected)]
+    assert date_str == expected
+
+
+def test_parse_datetime_err():
+    with pytest.raises(ValueError) as ex:
+        parse_iso8824_date("D:20210408T054711Z")
+    assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
+    assert parse_iso8824_date("D:20210408054711").tzinfo is None
+
+
+def test_is_sublist():
+    # Basic checks:
+    assert is_sublist([0, 1], [0, 1, 2]) is True
+    assert is_sublist([0, 2], [0, 1, 2]) is True
+    assert is_sublist([1, 2], [0, 1, 2]) is True
+    assert is_sublist([0, 3], [0, 1, 2]) is False
+    # Ensure order is checked:
+    assert is_sublist([1, 0], [0, 1, 2]) is False
+    # Ensure duplicates are handled:
+    assert is_sublist([0, 1, 1], [0, 1, 1, 2]) is True
+    assert is_sublist([0, 1, 1], [0, 1, 2]) is False
+    # Edge cases with empty lists:
+    assert is_sublist([], [0, 1, 2]) is True
+    assert is_sublist([0, 1], []) is False
+    # Self-sublist edge case:
+    assert is_sublist([0, 1, 2], [0, 1, 2]) is True
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "is_less_than"),
+    [
+        ("1", "2", True),
+        ("2", "1", False),
+        ("1", "1", False),
+        ("1.0", "1.1", True),
+        ("1", "1.1", True),
+        # suffix left
+        ("1a", "2", True),
+        ("2a", "1", False),
+        ("1a", "1", False),
+        ("1.0a", "1.1", True),
+        # I'm not sure about that, but seems special enoguht that it
+        # probably doesn't matter:
+        ("1a", "1.1", False),
+        # suffix right
+        ("1", "2a", True),
+        ("2", "1a", False),
+        ("1", "1a", True),
+        ("1.0", "1.1a", True),
+        ("1", "1.1a", True),
+        ("", "0.0.0", True),
+        # just suffix matters ... hm, I think this is actually wrong:
+        ("1.0a", "1.0", False),
+        ("1.0", "1.0a", True),
+    ],
+)
+def test_version_compare(left, right, is_less_than):
+    assert (Version(left) < Version(right)) is is_less_than
+
+
+def test_version_compare_equal_str():
+    a = Version("1.0")
+    assert (a == "1.0") is False
+
+
+def test_version_compare_lt_str():
+    a = Version("1.0")
+    with pytest.raises(ValueError) as exc:
+        a < "1.0"  # noqa
+    assert exc.value.args[0] == "Version cannot be compared against <class 'str'>"
+
+
+def test_bad_version():
+    assert Version("a").components == [(0, "a")]

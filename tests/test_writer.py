@@ -1,5 +1,7 @@
 """Test the pypdf._writer module."""
 import re
+import shutil
+import subprocess
 from io import BytesIO
 from pathlib import Path
 
@@ -13,7 +15,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
-from pypdf.errors import DeprecationError, PageSizeNotDefinedError
+from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -28,12 +30,14 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_pdf_from_url
+from . import get_data_from_url, is_sublist
+from .test_images import image_similarity
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
+GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
 def test_writer_exception_non_binary(tmp_path, caplog):
@@ -131,6 +135,9 @@ def writer_operate(writer: PdfWriter) -> None:
     )
     writer.add_outline_item(
         "The XYZ fit", 0, oi, (255, 0, 15), True, True, Fit.xyz(left=10, top=20, zoom=3)
+    )
+    writer.add_outline_item(
+        "The XYZ fit no args", 0, oi, (255, 0, 15), True, True, Fit.xyz()
     )
     writer.add_outline_item(
         "The FitH fit", 0, oi, (255, 0, 15), True, True, Fit.fit_horizontally(top=10)
@@ -312,6 +319,8 @@ def test_remove_images(pdf_file_path, input_path):
     page = reader.pages[0]
     writer.insert_page(page, 0)
     writer.remove_images()
+    page_contents_stream = writer.pages[0]["/Contents"]._data
+    assert len(page_contents_stream.strip())
 
     # finally, write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
@@ -321,7 +330,29 @@ def test_remove_images(pdf_file_path, input_path):
         reader = PdfReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
             extracted_text = reader.pages[0].extract_text()
+            assert extracted_text
             assert "Lorem ipsum dolor sit amet" in extracted_text
+
+
+@pytest.mark.enable_socket()
+def test_remove_images_sub_level():
+    """Cf #2035"""
+    url = "https://github.com/py-pdf/pypdf/files/12394781/2210.03142-1.pdf"
+    name = "iss2103.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer.remove_images()
+    assert (
+        len(
+            [
+                o.get_object()
+                for o in writer.pages[0]["/Resources"]["/XObject"]["/Fm1"][
+                    "/Resources"
+                ]["/XObject"]["/Im1"]["/Resources"]["/XObject"].values()
+                if not isinstance(o.get_object(), NullObject)
+            ]
+        )
+        == 0
+    )
 
 
 @pytest.mark.parametrize(
@@ -437,10 +468,8 @@ def test_fill_form(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
-    page = reader.pages[0]
-
-    writer.add_page(page)
-    writer.add_page(PdfReader(RESOURCE_ROOT / "crazyones.pdf").pages[0])
+    writer.append(reader, [0])
+    writer.append(RESOURCE_ROOT / "crazyones.pdf", [0])
 
     writer.update_page_form_field_values(
         writer.pages[0], {"foo": "some filled in text"}, flags=1
@@ -553,13 +582,49 @@ def test_add_outline_item(pdf_file_path):
         writer.add_page(page)
 
     outline_item = writer.add_outline_item(
-        "An outline item", 1, None, (255, 0, 15), True, True, Fit.fit()
+        "An outline item",
+        1,
+        None,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit(),
+        is_open=False,
     )
-    writer.add_outline_item("Another", 2, outline_item, None, False, False, Fit.fit())
+    _o2a = writer.add_outline_item(
+        "Another", 2, outline_item, None, False, False, Fit.fit()
+    )
+    _o2b = writer.add_outline_item(
+        "Another bis", 2, outline_item, None, False, False, Fit.fit()
+    )
+    outline_item2 = writer.add_outline_item(
+        "An outline item 2",
+        1,
+        None,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit(),
+        is_open=True,
+    )
+    _o3a = writer.add_outline_item(
+        "Another 2", 2, outline_item2, None, False, False, Fit.fit()
+    )
+    _o3b = writer.add_outline_item(
+        "Another 2bis", 2, outline_item2, None, False, False, Fit.fit()
+    )
 
     # write "output" to pypdf-output.pdf
-    with open(pdf_file_path, "wb") as output_stream:
+    with open(pdf_file_path, "w+b") as output_stream:
         writer.write(output_stream)
+        output_stream.seek(0)
+        reader = PdfReader(output_stream)
+        assert reader.trailer["/Root"]["/Outlines"]["/Count"] == 3
+        assert reader.outline[0]["/Count"] == -2
+        assert reader.outline[0]["/%is_open%"] == False  # noqa
+        assert reader.outline[2]["/Count"] == 2
+        assert reader.outline[2]["/%is_open%"] == True  # noqa
+        assert reader.outline[1][0]["/Count"] == 0
 
 
 def test_add_named_destination(pdf_file_path):
@@ -683,7 +748,7 @@ def test_add_link(pdf_file_path):
         match=(
             re.escape(
                 "add_link is deprecated and was removed in pypdf 3.0.0. "
-                "Use add_annotation(AnnotationBuilder.link(...)) instead."
+                "Use add_annotation(pypdf.annotations.Link(...)) instead."
             )
         ),
     ):
@@ -772,7 +837,7 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -796,7 +861,7 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
 )
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_some_appends(pdf_file_path, url, name):
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     # PdfMerger
     merger = PdfMerger()
     merger.append(reader)
@@ -979,7 +1044,7 @@ def test_startup_dest():
 def test_iss471():
     url = "https://github.com/py-pdf/pypdf/files/9139245/book.pdf"
     name = "book_471.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
     writer = PdfWriter()
     writer.append(reader, excluded_fields=[])
@@ -992,7 +1057,7 @@ def test_iss471():
 def test_reset_translation():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader, (0, 10))
     nb = len(writer._objects)
@@ -1030,7 +1095,7 @@ def test_threads_empty():
 def test_append_without_annots_and_articles():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader, None, (0, 10), True, ["/B"])
     writer.reset_translation()
@@ -1049,7 +1114,7 @@ def test_append_without_annots_and_articles():
 def test_append_multiple():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(
         reader, [0, 0, 0]
@@ -1200,24 +1265,23 @@ def test_set_page_label(pdf_file_path):
 def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    original_cs_operations = ContentStream(
+        reader.pages[0].get_contents(), reader
+    ).operations
     writer = PdfWriter()
     page_1 = writer.add_blank_page(
         reader.pages[0].mediabox[2], reader.pages[0].mediabox[3]
     )
     page_1.merge_transformed_page(reader.pages[0], Transformation())
-    assert (
-        ContentStream(reader.pages[0].get_contents(), reader).get_data()
-        in page_1.get_contents().get_data()
-    )
+    page_1_cs_operations = page_1.get_contents().operations
+    assert is_sublist(original_cs_operations, page_1_cs_operations)
     page_1 = writer.add_blank_page(
         reader.pages[0].mediabox[2], reader.pages[0].mediabox[3]
     )
     page_1.merge_page(reader.pages[0])
-    assert (
-        ContentStream(reader.pages[0].get_contents(), reader).get_data()
-        in page_1.get_contents().get_data()
-    )
+    page_1_cs_operations = page_1.get_contents().operations
+    assert is_sublist(original_cs_operations, page_1_cs_operations)
 
 
 def test_attachments():
@@ -1271,13 +1335,13 @@ def test_iss1614():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"
     name = "iss1614.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
     # test for 2nd error case reported in #1614
     url = "https://github.com/py-pdf/pypdf/files/10696390/broken.pdf"
     name = "iss1614.2.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer.append(reader)
 
 
@@ -1286,7 +1350,7 @@ def test_new_removes():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10807951/tt.pdf"
     name = "iss1650.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -1310,7 +1374,7 @@ def test_new_removes():
 
     url = "https://github.com/py-pdf/pypdf/files/10832029/tt2.pdf"
     name = "GeoBaseWithComments.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer.append(reader)
     writer.remove_objects_from_page(writer.pages[0], [ObjectDeletionFlag.LINKS])
     assert "/Links" not in [
@@ -1339,7 +1403,7 @@ def test_new_removes():
 def test_late_iss1654():
     url = "https://github.com/py-pdf/pypdf/files/10935632/bid1.pdf"
     name = "bid1.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     for p in writer.pages:
@@ -1353,7 +1417,7 @@ def test_iss1723():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/11015242/inputFile.pdf"
     name = "iss1723.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader, (3, 5))
 
@@ -1365,7 +1429,7 @@ def test_iss1767():
     # cloning
     url = "https://github.com/py-pdf/pypdf/files/11138472/test.pdf"
     name = "iss1723.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     PdfWriter(clone_from=reader)
 
 
@@ -1379,10 +1443,10 @@ def test_named_dest_page_number():
     name = "central.pdf"
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
-    writer.append(BytesIO(get_pdf_from_url(url, name=name)), pages=[0, 1, 2])
+    writer.append(BytesIO(get_data_from_url(url, name=name)), pages=[0, 1, 2])
     assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 2
     assert writer._root_object["/Names"]["/Dests"]["/Names"][-1][0] == (1 + 1)
-    writer.append(BytesIO(get_pdf_from_url(url, name=name)))
+    writer.append(BytesIO(get_data_from_url(url, name=name)))
     assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 6
     writer2 = PdfWriter()
     writer2.add_blank_page(100, 100)
@@ -1463,7 +1527,7 @@ def test_iss1862():
     url = "https://github.com/py-pdf/pypdf/files/11708801/intro.pdf"
     name = "iss1862.pdf"
     writer = PdfWriter()
-    writer.append(BytesIO(get_pdf_from_url(url, name=name)))
+    writer.append(BytesIO(get_data_from_url(url, name=name)))
     # check that "/B" is in the font
     writer.pages[0]["/Resources"]["/Font"]["/F1"]["/CharProcs"]["/B"].get_data()
 
@@ -1486,10 +1550,10 @@ def test_empty_objects_before_cloning():
 def test_watermark():
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
     name = "bgwatermark.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     url = "https://github.com/py-pdf/pypdf/files/11985888/source.pdf"
     name = "srcwatermark.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
     for p in writer.pages:
         p.merge_page(reader.pages[0], over=False)
 
@@ -1499,3 +1563,252 @@ def test_watermark():
     b = BytesIO()
     writer.write(b)
     assert len(b.getvalue()) < 2.1 * 1024 * 1024
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.timeout(4)  # this was a lot slower before PR #2086
+def test_watermarking_speed():
+    url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
+    name = "bgwatermark.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://arxiv.org/pdf/2201.00214.pdf"
+    name = "2201.00214.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    for p in writer.pages:
+        p.merge_page(reader.pages[0], over=False)
+    out_pdf_bytesio = BytesIO()
+    writer.write(out_pdf_bytesio)
+    pdf_size_in_mib = len(out_pdf_bytesio.getvalue()) / 1024 / 1024
+    assert pdf_size_in_mib < 20
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+def test_watermark_rendering(tmp_path):
+    """Ensure the visual appearance of watermarking stays correct."""
+    url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
+    name = "bgwatermark.pdf"
+    watermark = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    url = "https://github.com/py-pdf/pypdf/files/11985888/source.pdf"
+    name = "srcwatermark.pdf"
+    page = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    writer = PdfWriter()
+    page.merge_page(watermark, over=False)
+    writer.add_page(page)
+
+    target_png_path = tmp_path / "target.png"
+    url = "https://github.com/py-pdf/pypdf/assets/96178532/d5c72d0e-7047-4504-bbf6-bc591c80d7c0"
+    name = "dstwatermark.png"
+    target_png_path.write_bytes(get_data_from_url(url, name=name))
+
+    pdf_path = tmp_path / "out.pdf"
+    png_path = tmp_path / "out.png"
+    writer.write(pdf_path)
+
+    # False positive: https://github.com/PyCQA/bandit/issues/333
+    subprocess.run([GHOSTSCRIPT_BINARY, "-sDEVICE=pngalpha", "-o", png_path, pdf_path])  # noqa: S603
+    assert png_path.is_file()
+    assert image_similarity(png_path, target_png_path) >= 0.95
+
+
+@pytest.mark.enable_socket()
+def test_da_missing_in_annot():
+    url = "https://github.com/py-pdf/pypdf/files/12136285/Building.Division.Permit.Application.pdf"
+    name = "BuildingDivisionPermitApplication.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=reader)
+    writer.update_page_form_field_values(
+        writer.pages[0], {"PCN-1": "0"}, auto_regenerate=False
+    )
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(BytesIO(b.getvalue()))
+    ff = reader.get_fields()
+    # check for autosize processing
+    assert (
+        b"0 Tf"
+        not in ff["PCN-1"].indirect_reference.get_object()["/AP"]["/N"].get_data()
+    )
+    f2 = writer.get_object(ff["PCN-2"].indirect_reference.idnum)
+    f2[NameObject("/Parent")] = writer.get_object(
+        ff["PCN-1"].indirect_reference.idnum
+    ).indirect_reference
+    writer.update_page_form_field_values(
+        writer.pages[0], {"PCN-2": "1"}, auto_regenerate=False
+    )
+
+
+def test_missing_fields(pdf_file_path):
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+
+    with pytest.raises(PyPdfError) as exc:
+        writer.update_page_form_field_values(
+            writer.pages[0], {"foo": "some filled in text"}, flags=1
+        )
+    assert exc.value.args[0] == "No /AcroForm dictionary in PdfWriter Object"
+
+    writer = PdfWriter()
+    writer.append(reader, [0])
+    del writer._root_object["/AcroForm"]["/Fields"]
+    with pytest.raises(PyPdfError) as exc:
+        writer.update_page_form_field_values(
+            writer.pages[0], {"foo": "some filled in text"}, flags=1
+        )
+    assert exc.value.args[0] == "No /Fields dictionary in Pdf in PdfWriter Object"
+
+
+def test_missing_info():
+    reader = PdfReader(RESOURCE_ROOT / "missing_info.pdf")
+
+    writer = PdfWriter(clone_from=reader)
+    assert len(writer.pages) == len(reader.pages)
+
+
+@pytest.mark.enable_socket()
+def test_germanfields():
+    """Cf #2035"""
+    url = "https://github.com/py-pdf/pypdf/files/12194195/test.pdf"
+    name = "germanfields.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=reader)
+    form_fields = {"Text Box 1": "test æ ø å"}
+    writer.update_page_form_field_values(
+        writer.pages[0], form_fields, auto_regenerate=False
+    )
+    bytes_stream = BytesIO()
+    writer.write(bytes_stream)
+    bytes_stream.seek(0)
+    reader2 = PdfReader(bytes_stream)
+    assert (
+        b"test \xe6 \xf8 \xe5"
+        in reader2.get_fields()["Text Box 1"]
+        .indirect_reference.get_object()["/AP"]["/N"]
+        .get_data()
+    )
+
+
+@pytest.mark.enable_socket()
+def test_no_t_in_articles():
+    """Cf #2078"""
+    url = "https://github.com/py-pdf/pypdf/files/12311735/bad.pdf"
+    name = "iss2078.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_no_i_in_articles():
+    """Cf #2089"""
+    url = "https://github.com/py-pdf/pypdf/files/12352793/kim2002.pdf"
+    name = "iss2089.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_damaged_pdf_length_returning_none():
+    """
+    Cf #140
+    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
+    """
+    url = "https://github.com/py-pdf/pypdf/files/12168578/bad_pdf_example.pdf"
+    name = "iss140_bad_pdf.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_viewerpreferences():
+    """
+    Add Tests for ViewerPreferences
+    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
+    """
+    url = "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf"
+    name = "2015._pb_decode_pg0.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    v = reader.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    writer = PdfWriter(clone_from=reader)
+    v = writer.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+    assert v.print_area == "/CropBox"
+    with pytest.raises(ValueError):
+        v.non_fullscreen_pagemode = "toto"
+    with pytest.raises(ValueError):
+        v.non_fullscreen_pagemode = "/toto"
+    v.non_fullscreen_pagemode = "/UseOutlines"
+    assert (
+        writer._root_object["/ViewerPreferences"]["/NonFullScreenPageMode"]
+        == "/UseOutlines"
+    )
+    writer = PdfWriter(clone_from=reader)
+    v = writer.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+
+    writer = PdfWriter(clone_from=reader)
+    writer._root_object[NameObject("/ViewerPreferences")] = writer._add_object(
+        writer._root_object["/ViewerPreferences"]
+    )
+    v = writer.viewer_preferences
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+    v.num_copies = 1
+    assert v.num_copies == 1
+    assert v.print_pagerange is None
+    with pytest.raises(ValueError):
+        v.print_pagerange = "toto"
+    v.print_pagerange = ArrayObject()
+    assert len(v.print_pagerange) == 0
+
+    writer.create_viewer_preference()
+    assert len(writer._root_object["/ViewerPreferences"]) == 0
+
+    del reader.trailer["/Root"]["/ViewerPreferences"]
+    assert reader.viewer_preferences is None
+    writer = PdfWriter(clone_from=reader)
+    assert writer.viewer_preferences is None
+
+
+def test_extra_spaces_in_da_text(caplog):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "form.pdf")
+    t = writer.pages[0]["/Annots"][0].get_object()["/DA"]
+    t = t.replace("/Helv", "/Helv   ")
+    writer.pages[0]["/Annots"][0].get_object()[NameObject("/DA")] = TextStringObject(t)
+    writer.update_page_form_field_values(
+        writer.pages[0], {"foo": "abcd"}, auto_regenerate=False
+    )
+    t = writer.pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_data()
+    assert "Font dictionary for  not found." not in caplog.text
+    assert b"/Helv" in t
+    assert b"(abcd)" in t
+
+
+@pytest.mark.enable_socket()
+def test_object_contains_indirect_reference_to_self():
+    url = "https://github.com/py-pdf/pypdf/files/12389243/testbook.pdf"
+    name = "iss2102.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    width, height = 595, 841
+    outpage = writer.add_blank_page(width, height)
+    outpage.merge_page(reader.pages[6])
+    writer.append(reader)

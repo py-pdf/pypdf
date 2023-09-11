@@ -544,7 +544,7 @@ class PageLabelStyle:
 
 
 class AnnotationFlag(IntFlag):
-    """See 12.5.3 "Anntation Flags"."""
+    """See 12.5.3 "Annotation Flags"."""
 
     INVISIBLE = 1
     HIDDEN = 2

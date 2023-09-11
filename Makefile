@@ -7,8 +7,9 @@ maint:
 	pyenv local 3.7.9
 	pip-compile -U requirements/docs.in
 
-changelog:
-	python make_changelog.py
+release:
+	python make_release.py
+	git commit -eF RELEASE_COMMIT_MSG.md
 
 upload:
 	make clean
