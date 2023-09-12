@@ -22,11 +22,13 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
-        use-crypto-lib: ["pycryptodome"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        use-crypto-lib: ["cryptography"]
         include:
+          - python-version: "3.6"
+            use-crypto-lib: "pycryptodome"
           - python-version: "3.9"
-            use-crypto-lib: "cryptography"
+            use-crypto-lib: "pycryptodome"
           - python-version: "3.10"
             use-crypto-lib: ""
     steps:
@@ -72,14 +74,17 @@ jobs:
       run: |
         pip install -r requirements/ci-3.11.txt
       if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
-    - name: Remove pycryptodome
+    - name: Remove pycryptodome and cryptography
       run: |
-        pip uninstall pycryptodome -y
-      if: matrix.use-crypto-lib != 'pycryptodome'
+        pip uninstall pycryptodome cryptography -y
     - name: Install cryptography
       run: |
         pip install cryptography
       if: matrix.use-crypto-lib == 'cryptography'
+    - name: Install pycryptodome
+      run: |
+        pip install pycryptodome
+      if: matrix.use-crypto-lib == 'pycryptodome'
     - name: Install pypdf
       run: |
         pip install .
