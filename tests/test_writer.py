@@ -1309,7 +1309,10 @@ def test_attachments():
     reader = PdfReader(b)
     b = None
     assert sorted(reader.attachments.keys()) == sorted({name for name, _ in to_add})
-    assert str(reader.attachments) == "LazyDict(keys=['foobar.txt', 'foobar2.txt'])"
+    assert reader.attachments == {
+        "foobar.txt": [b"foobarcontent"],
+        "foobar2.txt": [b"foobarcontent2", b"2nd_foobarcontent"],
+    }
     assert reader._list_attachments() == [name for name, _ in to_add]
 
     # We've added the same key twice - hence only 2 and not 3:

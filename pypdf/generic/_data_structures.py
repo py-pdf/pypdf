@@ -1442,6 +1442,226 @@ class Field(TreeObject):
         return self.additional_actions
 
 
+class NameTree(DictionaryObject):
+    """
+    Name Tree Structure
+    Allow to list, get and set objects In a Name Tree
+    """
+
+    def __init__(self, obj: Optional[PdfObject] = None) -> None:
+        if not isinstance(obj, DictionaryObject) or all(
+            x not in obj for x in ("/Names", "/Kids")
+        ):
+            raise ValueError("source object is not a valid source object")
+        DictionaryObject.__init__(self)
+        obj = cast(DictionaryObject, obj)
+        if obj is not None:
+            self.update(obj)
+        else:  # building a new Name Tree
+            self[NameObject("/Names")] = ArrayObject()
+        if hasattr(obj, "indirect_reference"):
+            self.indirect_reference = obj.indirect_reference
+
+    def list_keys(self) -> List[str]:
+        """
+        Provides the list of keys of the items in the Name Tree
+
+        Returns:
+            List of str keys
+        """
+
+        def _list(o: Optional[PdfObject]) -> List[str]:
+            if o is None:
+                return []
+            o = cast(DictionaryObject, o)
+            _l = o.get("/Names", None)
+            a = o.get("/Kids", None)
+            _l = _l.get_object() if _l else []
+            a = a.get_object() if a else []
+            ll = [v for v in _l if isinstance(v, str)]  # and v not in ll:
+            for x in a:
+                ll.extend(_list(x.get_object()))
+                # for v in _list(x.get_object()):
+                # if v not in ll:
+                #    ll.append(v)
+            return ll
+
+        _l = _list(self)
+        _l.sort()
+        return _l
+
+    def list_items(self) -> dict[str, PdfObject]:
+        """
+        Provides the Name Tree Entries as a dictionary
+
+        Returns:
+            dictionary of objects
+        """
+
+        def _list(
+            o: Optional[PdfObject], lout: List[Tuple[str, PdfObject]]
+        ) -> List[Tuple[str, PdfObject]]:
+            def _append_with_dup(
+                ll: List[Tuple[str, Any]], _l: List[Tuple[str, Any]]
+            ) -> None:
+                for k, v in _l:
+                    try:
+                        i = tuple(x[0] for x in ll).index(k)
+                        ll[i][1].append(v)
+                    except ValueError:
+                        ll.append((k, [v]))
+
+            if o is None:
+                return lout
+            o = cast(DictionaryObject, o)
+            _l = o.get("/Names", None)
+            a = o.get("/Kids", None)
+            _l = _l.get_object() if _l else []
+            a = a.get_object() if a else []
+            _l = [
+                (v, None if isinstance(_l[i + 1], str) else _l[i + 1])
+                for i, v in enumerate(_l)
+                if isinstance(v, str)
+            ]
+            # to handle duplicates
+            _append_with_dup(lout, _l)
+            for x in a:
+                # _append_with_dup(lout, _list(x.get_object(),lout))
+                _list(x.get_object(), lout)
+            return lout
+
+        _l: List[Tuple[str, PdfObject]] = []
+        _list(self, _l)
+        return dict(_l)
+
+    def list_get(self, key: str) -> List[PdfObject]:
+        """
+        Get the entry from the Name Tree
+
+        Args:
+            key: searched entry
+
+        Returns:
+            matching PdfObject; None i
+        attributeEntries as a dictionary
+        """
+
+        def _get(key: str, o: Optional[PdfObject]) -> List[PdfObject]:
+            if o is None:
+                return []
+            rst = []
+            o = cast(DictionaryObject, o)
+            _l = o.get("/Names", None)
+            a = o.get("/Kids", None)
+            _l = _l.get_object() if _l else []
+            a = a.get_object() if a else []
+            for i, x in enumerate(_l):
+                if x == key:
+                    rst.append(_l[i + 1])
+            for x in a:
+                rst.extend(_get(key, x))
+            return rst
+
+        return _get(key, self)
+
+    def list_set(
+        self, key: str, data: PdfObject, overwrite: bool = False
+    ) -> Optional[IndirectObject]:
+        """
+        Add the data entry from the Name Tree
+
+        Args:
+            key: entry
+            data: PdfObject (it will be added to the list of objects
+            overwrite: allow to overwrite existing key
+
+        Returns:
+            matching PdfObject; None i
+        attributeEntries as a dictionary
+        """
+        try:
+            if self.indirect_reference is None:
+                raise TypeError
+            writer = self.indirect_reference.pdf
+            if not hasattr(writer, "_add_object"):
+                raise TypeError
+        except (TypeError, AttributeError):
+            raise TypeError("Object does not belong to a PdfWriter")
+
+        def _update_limits(
+            obj: DictionaryObject, lo: Optional[str], hi: Optional[str]
+        ) -> bool:
+            if "/Limits" not in obj:
+                return False
+            a = cast("ArrayObject", obj["/Limits"])
+            if lo is not None and lo < a[0]:
+                a[0] = TextStringObject(lo)
+                return True
+            if hi is not None and hi > a[0]:
+                a[1] = TextStringObject(lo)
+                return True
+            return False
+
+        def _set_in(o: Optional[PdfObject], app: bool = True) -> Optional[PdfObject]:
+            nonlocal overwrite, writer, key, data
+            if o is None:
+                return None
+            o = cast(DictionaryObject, o)
+            if "/Names" in o:
+                _l = cast(ArrayObject, o["/Names"])
+                li = o.get("/Limits", [_l[0], _l[-2]])
+                if key < li[0]:
+                    return None
+                if not app and _l > li[1]:
+                    return None
+                i = 0
+                while i < len(_l):
+                    if _l[i] == key:
+                        if not overwrite:
+                            continue
+                        d = _l[i + 1]
+                        if isinstance(d, IndirectObject):
+                            d.replace_object(data)
+                        else:  # pragma: no cover
+                            # should not occur iaw pdf spec
+                            _l[i + 1] = data
+                        return _l[i + 1]
+                    elif key < _l[i]:
+                        _l.insert(i, key)
+                        _l.insert(i + 1, writer._add_object(data))
+                        _update_limits(o, key, None)
+                        return _l[i + 1]
+                    i += 1
+                if app:
+                    _l.append(key)
+                    _l.append(writer._add_object(data))
+                    _update_limits(o, key, None)
+                    return _l[-1]
+                return None
+            else:  # kids
+                ar = cast(ArrayObject, o["/Kids"])
+                for x in ar:
+                    r = _set_in(x, x == ar[-1])
+                    if r:
+                        _update_limits(o, key, key)
+                        return r
+                return None
+
+        o = _set_in(self, True)
+        return o.indirect_reference if o is not None else None
+
+
+def get_name_from_file_specification(_a: DictionaryObject) -> str:
+    return cast(
+        str,
+        _a.get("/UF")
+        or _a.get("/F")
+        or _a.get("/DOS")
+        or _a.get("/Unix")
+        or _a.get("/Mac"),
+    )
+
+
 class Destination(TreeObject):
     """
     A class representing a destination within a PDF file.

@@ -297,10 +297,12 @@ class PdfWriter:
         if isinstance(indirect_reference, IndirectObject):
             assert indirect_reference.pdf == self
             indirect_reference = indirect_reference.idnum
+        gen = self._objects[indirect_reference - 1].indirect_reference.generation  # type: ignore
         self._objects[indirect_reference - 1] = obj
         return self._objects[indirect_reference - 1]
         if indirect_reference.pdf != self:
             raise ValueError("pdf must be self")
+        obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
         return self._objects[indirect_reference.idnum - 1]  # type: ignore
 
     def _add_page(

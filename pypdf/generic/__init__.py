@@ -53,8 +53,10 @@ from ._data_structures import (
     DictionaryObject,
     EncodedStreamObject,
     Field,
+    NameTree,
     StreamObject,
     TreeObject,
+    get_name_from_file_specification,
     read_object,
 )
 from ._fit import Fit
@@ -444,6 +446,8 @@ __all__ = [
     "RectangleObject",
     "Field",
     "Destination",
+    "NameTree",
+    "get_name_from_file_specification",
     "ViewerPreferences",
     # --- More specific stuff
     # Outline
