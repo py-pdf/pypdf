@@ -48,7 +48,6 @@
 #   (2) Unicode scalar value--four uppercase hexadecimal digits
 #
 adobe_glyphs = {
-    "/.notdef": "\u0000",
     "/A": "\u0041",
     "/AA": "\uA732",
     "/AE": "\u00C6",
