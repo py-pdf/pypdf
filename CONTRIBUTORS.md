@@ -54,6 +54,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
 * [Wilson, Huon](https://github.com/huonw)
 * ztravis
+* [Stober, Marc](https://github.com/marcstober)
 
 ## Adding a new contributor
 
