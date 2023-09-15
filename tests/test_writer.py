@@ -1774,10 +1774,7 @@ def test_damaged_pdf_length_returning_none():
 
 @pytest.mark.enable_socket()
 def test_viewerpreferences():
-    """
-    Add Tests for ViewerPreferences
-    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
-    """
+    """Add Tests for ViewerPreferences"""
     url = "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf"
     name = "2015._pb_decode_pg0.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
@@ -1828,8 +1825,10 @@ def test_viewerpreferences():
     v.print_pagerange = ArrayObject()
     assert len(v.print_pagerange) == 0
 
-    writer.create_viewer_preference()
+    writer.create_viewer_preferences()
     assert len(writer._root_object["/ViewerPreferences"]) == 0
+    writer.viewer_preferences.direction = "/R2L"
+    assert len(writer._root_object["/ViewerPreferences"]) == 1
 
     del reader.trailer["/Root"]["/ViewerPreferences"]
     assert reader.viewer_preferences is None
