@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1694804606224,
+  "lastUpdate": 1694804822852,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -39578,6 +39578,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.3947055026212495",
             "extra": "mean: 33.261664743199994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "marcstober@gmail.com",
+            "name": "marcstober",
+            "username": "marcstober"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b899d3d61084fdec7fd2a40d747f83ccdf104145",
+          "message": "MAINT: Rename PdfWriter.create_viewer_preferences to PdfWriter.create_viewer_preferences (#2190)\n\nAdd documentation and fix a method name as discussed in #2105",
+          "timestamp": "2023-09-15T21:02:39+02:00",
+          "tree_id": "e2fdf4ee9cbb5d67254706d724dc6357ee574fd6",
+          "url": "https://github.com/py-pdf/pypdf/commit/b899d3d61084fdec7fd2a40d747f83ccdf104145"
+        },
+        "date": 1694804820937,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.56009324801724,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009116404963376068",
+            "extra": "mean: 390.61077199999943 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.845694805875384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014783467739668371",
+            "extra": "mean: 92.20248383333403 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21223236554271044,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022084685540178953",
+            "extra": "mean: 4.711816679999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.31674120457156,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0001921209083474622",
+            "extra": "mean: 96.92983280000078 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.036337723357784665,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08989450084496171",
+            "extra": "mean: 27.5196106854 sec\nrounds: 5"
           }
         ]
       }
