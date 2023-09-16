@@ -2230,18 +2230,10 @@ class PdfReader:
         return NameTree(efo)
 
     @property
-    def detailed_embedded_files(self) -> Optional[Mapping[str, PdfObject]]:
+    def embedded_files(self) -> Optional[Mapping[str, List[PdfObject]]]:
         ef = self._get_embedded_files_root()
         if ef:
             return ef.list_items()
-        else:
-            return None
-
-    @property
-    def embedded_files(self) -> Optional[Mapping[str, List[bytes]]]:
-        ef = self._get_embedded_files_root()
-        if ef:
-            return {k: v["/EF"]["/F"].get_data() for k, v in ef.list_items().items()}  # type: ignore
         else:
             return None
 
@@ -2252,7 +2244,7 @@ class PdfReader:
             d = {}
             for k, v in ef.list_items().items():
                 if isinstance(v, list):
-                    d[k] = [e["/EF"]["/F"].get_data() for e in v]
+                    d[k] = [e["/EF"]["/F"].get_data() for e in v]  # type: ignore
             return d
         else:
             return {}

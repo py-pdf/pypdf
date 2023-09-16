@@ -46,6 +46,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Mapping,
     Optional,
     Pattern,
     Tuple,
@@ -104,6 +105,7 @@ from .generic import (
     FloatObject,
     IndirectObject,
     NameObject,
+    NameTree,
     NullObject,
     NumberObject,
     PdfObject,
@@ -698,6 +700,49 @@ class PdfWriter:
         """
         deprecation_with_replacement("addJS", "add_js", "3.0.0")
         return self.add_js(javascript)
+
+    def _get_embedded_files_root(self) -> Optional[NameTree]:
+        """
+        Returns the EmbeddedFiles root as a NameTree Object
+        if the root does not exists, return None
+        """
+        catalog = self._root_object
+        if "/Names" not in catalog:
+            return None
+        ef = cast(DictionaryObject, catalog["/Names"]).get("/EmbeddedFiles", None)
+        if ef is None:
+            return None
+        efo = ef.get_object()
+        # not for reader
+        """
+            if not isinstance(efo,NameTree):
+            if isinstance(ef,IndirectObject):
+                ef.replace_object(efo)
+            else:
+                cast(DictionaryObject,catalog["/Names"])[
+                    NameObject("/EmbeddedFiles")] = NameTree(efo)
+        """
+        return NameTree(efo)
+
+    @property
+    def embedded_files(self) -> Optional[Mapping[str, List[PdfObject]]]:
+        ef = self._get_embedded_files_root()
+        if ef:
+            return ef.list_items()
+        else:
+            return None
+
+    @property
+    def attachments(self) -> Mapping[str, List[bytes]]:
+        ef = self._get_embedded_files_root()
+        if ef:
+            d = {}
+            for k, v in ef.list_items().items():
+                if isinstance(v, list):
+                    d[k] = [e["/EF"]["/F"].get_data() for e in v]  # type: ignore
+            return d
+        else:
+            return {}
 
     def add_attachment(self, filename: str, data: Union[str, bytes]) -> None:
         """

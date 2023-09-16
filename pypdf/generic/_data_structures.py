@@ -38,6 +38,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -1490,7 +1491,7 @@ class NameTree(DictionaryObject):
         _l.sort()
         return _l
 
-    def list_items(self) -> dict[str, PdfObject]:
+    def list_items(self) -> Mapping[str, List[PdfObject]]:
         """
         Provides the Name Tree Entries as a dictionary
 
@@ -1499,8 +1500,8 @@ class NameTree(DictionaryObject):
         """
 
         def _list(
-            o: Optional[PdfObject], lout: List[Tuple[str, PdfObject]]
-        ) -> List[Tuple[str, PdfObject]]:
+            o: Optional[PdfObject], lout: List[Tuple[str, List[PdfObject]]]
+        ) -> List[Tuple[str, List[PdfObject]]]:
             def _append_with_dup(
                 ll: List[Tuple[str, Any]], _l: List[Tuple[str, Any]]
             ) -> None:
@@ -1530,7 +1531,7 @@ class NameTree(DictionaryObject):
                 _list(x.get_object(), lout)
             return lout
 
-        _l: List[Tuple[str, PdfObject]] = []
+        _l: List[Tuple[str, List[PdfObject]]] = []
         _list(self, _l)
         return dict(_l)
 
@@ -1564,7 +1565,7 @@ class NameTree(DictionaryObject):
 
         return _get(key, self)
 
-    def list_set(
+    def list_add(
         self, key: str, data: PdfObject, overwrite: bool = False
     ) -> Optional[IndirectObject]:
         """
@@ -1602,7 +1603,7 @@ class NameTree(DictionaryObject):
                 return True
             return False
 
-        def _set_in(o: Optional[PdfObject], app: bool = True) -> Optional[PdfObject]:
+        def _add_in(o: Optional[PdfObject], app: bool = True) -> Optional[PdfObject]:
             nonlocal overwrite, writer, key, data
             if o is None:
                 return None
@@ -1641,13 +1642,13 @@ class NameTree(DictionaryObject):
             else:  # kids
                 ar = cast(ArrayObject, o["/Kids"])
                 for x in ar:
-                    r = _set_in(x, x == ar[-1])
+                    r = _add_in(x, x == ar[-1])
                     if r:
                         _update_limits(o, key, key)
                         return r
                 return None
 
-        o = _set_in(self, True)
+        o = _add_in(self, True)
         return o.indirect_reference if o is not None else None
 
 
