@@ -140,8 +140,6 @@ class ViewerPreferences(DictionaryObject):
         cls.print_pagerange = _add_prop_arr("/PrintPageRange", None)
         cls.num_copies = _add_prop_int("/NumCopies", None)
 
-        # still to be done /PrintPageRange and /NumCopies
-
         return DictionaryObject.__new__(cls)
 
     def __init__(self, obj: Optional[DictionaryObject] = None) -> None:

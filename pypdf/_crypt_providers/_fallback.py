@@ -28,7 +28,7 @@
 from pypdf._crypt_providers._base import CryptBase
 from pypdf.errors import DependencyError
 
-_DEPENDENCY_ERROR_STR = "PyCryptodome is required for AES algorithm"
+_DEPENDENCY_ERROR_STR = "cryptography>=3.1 is required for AES algorithm"
 
 
 crypt_provider = ("local_crypt_fallback", "0.0.0")

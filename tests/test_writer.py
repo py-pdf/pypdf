@@ -1608,9 +1608,58 @@ def test_watermark_rendering(tmp_path):
     writer.write(pdf_path)
 
     # False positive: https://github.com/PyCQA/bandit/issues/333
-    subprocess.run([GHOSTSCRIPT_BINARY, "-sDEVICE=pngalpha", "-o", png_path, pdf_path])  # noqa: S603
+    subprocess.run(
+        [  # noqa: S603
+            GHOSTSCRIPT_BINARY,
+            "-sDEVICE=pngalpha",
+            "-o",
+            png_path,
+            pdf_path,
+        ]
+    )
     assert png_path.is_file()
     assert image_similarity(png_path, target_png_path) >= 0.95
+
+
+@pytest.mark.xfail(reason="issue introduced with pypdf==3.15.4")
+def test_watermarking_reportlab_rendering(tmp_path):
+    """
+    This test shows that the merged page is rotated+mirrored.
+
+    Replacing the generate_base with e.g. the crazyones did not show the issue.
+    """
+    base_path = SAMPLE_ROOT / "022-pdfkit/pdfkit.pdf"
+    watermark_path = SAMPLE_ROOT / "013-reportlab-overlay/reportlab-overlay.pdf"
+
+    reader = PdfReader(base_path)
+    base_page = reader.pages[0]
+    watermark = PdfReader(watermark_path).pages[0]
+
+    writer = PdfWriter()
+    base_page.merge_page(watermark)
+    writer.add_page(base_page)
+
+    for page in writer.pages:
+        page.compress_content_streams()
+
+    target_png_path = RESOURCE_ROOT / "test_watermarking_reportlab_rendering.png"
+    pdf_path = tmp_path / "out.pdf"
+    png_path = tmp_path / "test_watermarking_reportlab_rendering.png"
+
+    writer.write(pdf_path)
+    # False positive: https://github.com/PyCQA/bandit/issues/333
+    subprocess.run(
+        [  # noqa: S603
+            GHOSTSCRIPT_BINARY,
+            "-r120",
+            "-sDEVICE=pngalpha",
+            "-o",
+            png_path,
+            pdf_path,
+        ]
+    )
+    assert png_path.is_file()
+    assert image_similarity(png_path, target_png_path) >= 0.999
 
 
 @pytest.mark.enable_socket()
@@ -1727,10 +1776,7 @@ def test_damaged_pdf_length_returning_none():
 
 @pytest.mark.enable_socket()
 def test_viewerpreferences():
-    """
-    Add Tests for ViewerPreferences
-    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
-    """
+    """Add Tests for ViewerPreferences"""
     url = "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf"
     name = "2015._pb_decode_pg0.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
@@ -1781,13 +1827,29 @@ def test_viewerpreferences():
     v.print_pagerange = ArrayObject()
     assert len(v.print_pagerange) == 0
 
-    writer.create_viewer_preference()
+    writer.create_viewer_preferences()
     assert len(writer._root_object["/ViewerPreferences"]) == 0
+    writer.viewer_preferences.direction = "/R2L"
+    assert len(writer._root_object["/ViewerPreferences"]) == 1
 
     del reader.trailer["/Root"]["/ViewerPreferences"]
     assert reader.viewer_preferences is None
     writer = PdfWriter(clone_from=reader)
     assert writer.viewer_preferences is None
+
+
+def test_extra_spaces_in_da_text(caplog):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "form.pdf")
+    t = writer.pages[0]["/Annots"][0].get_object()["/DA"]
+    t = t.replace("/Helv", "/Helv   ")
+    writer.pages[0]["/Annots"][0].get_object()[NameObject("/DA")] = TextStringObject(t)
+    writer.update_page_form_field_values(
+        writer.pages[0], {"foo": "abcd"}, auto_regenerate=False
+    )
+    t = writer.pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_data()
+    assert "Font dictionary for  not found." not in caplog.text
+    assert b"/Helv" in t
+    assert b"(abcd)" in t
 
 
 @pytest.mark.enable_socket()

@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## Version 3.16.0, 2023-09-10
+
+### Security (SEC)
+-  Infinite recursion caused by IndirectObject clone (#2156)
+
+### New Features (ENH)
+-  Ease access to ViewerPreferences (#2144)
+
+### Bug Fixes (BUG)
+-  Catch the case where w[0] is an IndirectObject instead of an int (#2154)
+-  Cope with indirect objects in filters and remove deprecated code (#2177)
+-  Accept tabs in cmaps (#2174) / cope with extra space (#2151)
+-  Merge pages without resources (#2150)
+-  getcontents() shall return None if contents is NullObject (#2161)
+-  Fix conversion from 1 to LA (#2175)
+
+### Robustness (ROB)
+-  Accept XYZ with no arguments (#2178)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.5...3.16.0)
+
 ## Version 3.15.5, 2023-09-03
 
 ### Bug Fixes (BUG)

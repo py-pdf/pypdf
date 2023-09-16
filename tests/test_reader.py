@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader
+from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int, convertToInt
 from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
@@ -29,13 +30,7 @@ from pypdf.generic import (
 
 from . import get_data_from_url, normalize_warnings
 
-try:
-    from Crypto.Cipher import AES  # noqa: F401
-
-    HAS_PYCRYPTODOME = True
-except ImportError:
-    HAS_PYCRYPTODOME = False
-
+HAS_AES = crypt_provider[0] in ["pycryptodome", "cryptography"]
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
@@ -834,7 +829,7 @@ def test_read_not_binary_mode(caplog):
 
 
 @pytest.mark.enable_socket()
-@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
+@pytest.mark.skipif(not HAS_AES, reason="No AES algorithm available")
 def test_read_form_416():
     url = (
         "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"

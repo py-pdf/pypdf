@@ -384,7 +384,7 @@ class PdfWriter:
                 self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
         return o
 
-    def create_viewer_preference(self) -> ViewerPreferences:
+    def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
         self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = self._add_object(o)
         return o
@@ -862,6 +862,7 @@ class PdfWriter:
         # Extract font information
         da = cast(str, field[AA.DA])
         font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
+        font_properties = [x for x in font_properties if x != ""]
         font_name = font_properties[font_properties.index("Tf") - 2]
         font_height = float(font_properties[font_properties.index("Tf") - 1])
         if font_height == 0:

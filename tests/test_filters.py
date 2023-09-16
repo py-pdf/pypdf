@@ -10,7 +10,7 @@ import pytest
 from PIL import Image
 
 from pypdf import PdfReader
-from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -69,16 +69,15 @@ def test_flatedecode_unsupported_predictor():
             codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
 
 
-@pytest.mark.parametrize(
-    "params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}]), "a"]
-)
+@pytest.mark.parametrize("params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}])])
 def test_flate_decode_decompress_with_array_params(params):
     """FlateDecode decode() method works correctly with array parameters."""
     codec = FlateDecode()
     s = ""
     s = s.encode()
     encoded = codec.encode(s)
-    assert codec.decode(encoded, params) == s
+    with pytest.raises(DeprecationError):
+        assert codec.decode(encoded, params) == s
 
 
 @pytest.mark.parametrize(

@@ -192,6 +192,18 @@ def test_unixxx_glyphs():
 
 
 @pytest.mark.enable_socket()
+def test_cmap_compute_space_width():
+    # issue 2137
+    # original file URL:
+    url = "https://arxiv.org/pdf/2005.05909.pdf"
+    # URL from github issue is too long to pass code stype check, use original arxiv URL instead
+    # url = "https://github.com/py-pdf/pypdf/files/12489914/Morris.et.al.-.2020.-.TextAttack.A.Framework.for.Adversarial.Attacks.Data.Augmentation.and.Adversarial.Training.in.NLP.pdf"
+    name = "TextAttack_paper.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].extract_text()  # no error
+
+
+@pytest.mark.enable_socket()
 def test_tabs_in_cmap():
     """Issue #2173"""
     url = "https://github.com/py-pdf/pypdf/files/12552700/tt.pdf"
