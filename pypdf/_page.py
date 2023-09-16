@@ -2583,11 +2583,6 @@ def _get_fonts_walk(
 
     We create and add to two sets, fnt = fonts used and emb = fonts embedded.
     """
-    if fnt is None:
-        fnt = set()
-    if emb is None:
-        emb = set()
-
     fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
 
     def process_font(f: DictionaryObject) -> None:
