@@ -750,6 +750,13 @@ def test_extract_text_visitor_callbacks():
             set(),
             {"/Helvetica"},
         ),
+        # fonts in annotations
+        (
+            RESOURCE_ROOT / "FormTestFromOo.pdf",
+            None,
+            {"/CAAAAA+LiberationSans", "/EAAAAA+SegoeUI", "/BAAAAA+LiberationSerif"},
+            {"/LiberationSans", "/ZapfDingbats"},
+        ),
     ],
 )
 def test_get_fonts(pdf_path, password, embedded, unembedded):
@@ -761,6 +768,44 @@ def test_get_fonts(pdf_path, password, embedded, unembedded):
         a = a.union(a_tmp)
         b = b.union(b_tmp)
     assert (a, b) == (embedded, unembedded)
+
+
+@pytest.mark.enable_socket()
+def test_get_fonts2():
+    url = "https://github.com/py-pdf/pypdf/files/12618104/WS_T.483.8-2016.pdf"
+    name = "WS_T.483.8-2016.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert reader.pages[1]._get_fonts() == (
+        {
+            "/E-HZ9-PK7483a5-Identity-H",
+            "/SSJ-PK748200005d9-Identity-H",
+            "/QGNGZS+FzBookMaker1DlFont10536872415",
+            "/E-BZ9-PK748344-Identity-H",
+            "/E-FZ9-PK74836f-Identity-H",
+            "/O9-PK748464-Identity-H",
+            "/QGNGZR+FzBookMaker0DlFont00536872414",
+            "/SSJ-PK748200005db-Identity-H",
+            "/F-BZ9-PK7483cb-Identity-H",
+            "/SSJ-PK748200005da-Identity-H",
+            "/H-SS9-PK748200005e0-Identity-H",
+            "/H-HT9-PK748200005e1-Identity-H",
+        },
+        set(),
+    )
+    assert reader.pages[2]._get_fonts() == (
+        {
+            "/E-HZ9-PK7483a5-Identity-H",
+            "/E-FZ9-PK74836f-Identity-H",
+            "/E-BZ9-PK748344-Identity-H",
+            "/QGNGZT+FzBookMaker0DlFont00536872418",
+            "/O9-PK748464-Identity-H",
+            "/F-BZ9-PK7483cb-Identity-H",
+            "/H-SS9-PK748200005e0-Identity-H",
+            "/QGNGZU+FzBookMaker1DlFont10536872420",
+            "/H-HT9-PK748200005e1-Identity-H",
+        },
+        set(),
+    )
 
 
 def test_annotation_getter():
