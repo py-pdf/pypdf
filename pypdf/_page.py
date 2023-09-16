@@ -2332,7 +2332,9 @@ class PageObject(DictionaryObject):
         """
         obj = self.get_object()
         assert isinstance(obj, DictionaryObject)
-        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj))
+        fonts: Set[str] = set()
+        embedded: Set[str] = set()
+        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj), fonts, embedded)
         unembedded = fonts - embedded
         return embedded, unembedded
 
@@ -2560,8 +2562,8 @@ class _VirtualList(Sequence):
 
 def _get_fonts_walk(
     obj: DictionaryObject,
-    fnt: Optional[Set[str]] = None,
-    emb: Optional[Set[str]] = None,
+    fnt: Set[str],
+    emb: Set[str],
 ) -> Tuple[Set[str], Set[str]]:
     """
     Get the set of all fonts and all embedded fonts.
