@@ -2238,13 +2238,28 @@ class PdfReader:
             return None
 
     @property
-    def attachments(self) -> Mapping[str, List[bytes]]:
+    def attachments(self) -> Mapping[str, Union[List[bytes], List[Dict[str, bytes]]]]:
         ef = self._get_embedded_files_root()
         if ef:
-            d = {}
+            d: Dict[str, Union[List[bytes], List[Dict[str, bytes]]]] = {}
             for k, v in ef.list_items().items():
                 if isinstance(v, list):
-                    d[k] = [e["/EF"]["/F"].get_data() for e in v]  # type: ignore
+                    if k not in d:
+                        d[k] = []  # type: ignore
+                    for e in v:
+                        e = cast(DictionaryObject, e.get_object())
+                        if "/EF" in e:
+                            d[k].append(e["/EF"]["/F"].get_data())  # type: ignore
+                        elif "/RF" in e:
+                            r = cast(
+                                ArrayObject, cast(DictionaryObject, e["/RF"])["/F"]
+                            )
+                            di: Dict[str, bytes] = {}
+                            i = 0
+                            while i < len(r):
+                                di[cast(str, r[i])] = r[i + 1].get_object().get_data()
+                                i += 2
+                            d[k].append(di)
             return d
         else:
             return {}
@@ -2279,7 +2294,7 @@ class PdfReader:
 
     def _get_attachments(
         self, filename: Optional[str] = None
-    ) -> Dict[str, Union[bytes, List[bytes]]]:
+    ) -> Dict[str, Union[bytes, List[bytes], Dict[str, bytes]]]:
         """
         Retrieves all or selected file attachments of the PDF as a dictionary of file names
         and the file data as a bytestring.
@@ -2298,7 +2313,7 @@ class PdfReader:
         if ef is None:
             return {}
         if filename is None:
-            return {k: v if len(v) > 1 else v[0] for k, v in self.attachments.items()}
+            return {k: v if len(v) > 1 else v[0] for k, v in self.attachments.items()}  # type: ignore
         else:
             lst = ef.list_get(filename)
             return {

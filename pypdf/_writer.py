@@ -713,16 +713,28 @@ class PdfWriter:
         if ef is None:
             return None
         efo = ef.get_object()
-        # not for reader
-        """
-            if not isinstance(efo,NameTree):
-            if isinstance(ef,IndirectObject):
+        if not isinstance(efo, NameTree):
+            efo = NameTree(efo)
+            if isinstance(ef, IndirectObject):
                 ef.replace_object(efo)
             else:
-                cast(DictionaryObject,catalog["/Names"])[
-                    NameObject("/EmbeddedFiles")] = NameTree(efo)
-        """
-        return NameTree(efo)
+                cast(DictionaryObject, catalog["/Names"])[
+                    NameObject("/EmbeddedFiles")
+                ] = efo
+        return efo
+
+    def _create_attachment_root(self) -> NameTree:
+        if "/Names" not in self._root_object:
+            self._root_object[NameObject("/Names")] = self._add_object(
+                DictionaryObject()
+            )
+        node = cast(DictionaryObject, self._root_object["/Names"])
+        if "/EmbeddedFiles" not in node:
+            node[NameObject("/EmbeddedFiles")] = self._add_object(NameTree())
+        node = cast(NameTree, node["/EmbeddedFiles"])
+        if "/Kids" not in node and "/Names" not in node:
+            node[NameObject("/Names")] = ArrayObject()
+        return node
 
     @property
     def embedded_files(self) -> Optional[Mapping[str, List[PdfObject]]]:
@@ -733,18 +745,37 @@ class PdfWriter:
             return None
 
     @property
-    def attachments(self) -> Mapping[str, List[bytes]]:
+    def attachments(self) -> Mapping[str, Union[List[bytes], List[Dict[str, bytes]]]]:
         ef = self._get_embedded_files_root()
         if ef:
             d = {}
             for k, v in ef.list_items().items():
                 if isinstance(v, list):
-                    d[k] = [e["/EF"]["/F"].get_data() for e in v]  # type: ignore
+                    if k not in d:
+                        d[k] = []
+                    for e in v:
+                        e = e.get_object()
+                        if "/EF" in e:
+                            d[k].append(e["/EF"]["/F"].get_data())  # type: ignore
+                        elif "/RF" in e:
+                            r = cast(ArrayObject, e["/RF"]["/F"])
+                            di = {}
+                            i = 0
+                            while i < len(r):
+                                di[r[i]] = r[i + 1].get_object().get_data()
+                                i += 2
+                            d[k].append(di)
             return d
         else:
             return {}
 
-    def add_attachment(self, filename: str, data: Union[str, bytes]) -> None:
+    def add_attachment(
+        self,
+        filename: str,
+        data: Union[str, bytes, List[Tuple[str, bytes]]],
+        fname: Optional[str] = None,
+        desc: str = "",
+    ) -> DictionaryObject:
         """
         Embed a file inside the PDF.
 
@@ -753,9 +784,20 @@ class PdfWriter:
         Section 7.11.3
 
         Args:
-            filename: The filename to display.
+            filename: The filename to display (in UTF-16).
             data: The data in the file.
+                if data is an array, it will feed
+            fname: an old style name for "/F" entry (should be ansi). if None will be automatically proposed
+            desc: a description string
+
+        Returns:
+            The filespec DictionaryObject
         """
+        if fname is None:
+            st = filename.replace("/", "\\/").replace("\\\\/", "\\/")
+            fname = st.encode().decode("ansi", errors="xmlcharreplace")
+            fname = f"{fname}"  # to escape string
+
         # We need three entries:
         # * The file's data
         # * The /Filespec entry
@@ -773,9 +815,22 @@ class PdfWriter:
         # endstream
         # endobj
 
-        file_entry = DecodedStreamObject()
-        file_entry.set_data(b_(data))
-        file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
+        if isinstance(data, list):
+            ef_entry = DictionaryObject()
+            a = ArrayObject()
+            ef_entry.update({NameObject("/F"): self._add_object(a)})
+            for fn, da in data:
+                a.append(TextStringObject(fn))
+                file_entry = DecodedStreamObject()
+                file_entry.set_data(b_(da))
+                file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
+                a.append(self._add_object(file_entry))
+        else:
+            file_entry = DecodedStreamObject()
+            file_entry.set_data(b_(data))
+            file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
+            ef_entry = DictionaryObject()
+            ef_entry.update({NameObject("/F"): self._add_object(file_entry)})
 
         # The Filespec entry
         # Sample:
@@ -786,51 +841,29 @@ class PdfWriter:
         #  /EF << /F 8 0 R >>
         # >>
 
-        ef_entry = DictionaryObject()
-        ef_entry.update({NameObject("/F"): self._add_object(file_entry)})
-
         filespec = DictionaryObject()
         filespec.update(
             {
                 NameObject(PA.TYPE): NameObject("/Filespec"),
-                NameObject(FileSpecificationDictionaryEntries.F): create_string_object(
+                NameObject(FileSpecificationDictionaryEntries.UF): TextStringObject(
                     filename
-                ),  # Perhaps also try TextStringObject
-                NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
+                ),
+                NameObject(FileSpecificationDictionaryEntries.F): TextStringObject(
+                    fname
+                ),
+                NameObject(FileSpecificationDictionaryEntries.DESC): TextStringObject(
+                    desc
+                ),
             }
         )
-
-        # Then create the entry for the root, as it needs
-        # a reference to the Filespec
-        # Sample:
-        # 1 0 obj
-        # <<
-        #  /Type /Catalog
-        #  /Outlines 2 0 R
-        #  /Pages 3 0 R
-        #  /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
-        # >>
-        # endobj
-
-        if CA.NAMES not in self._root_object:
-            self._root_object[NameObject(CA.NAMES)] = self._add_object(
-                DictionaryObject()
-            )
-        if "/EmbeddedFiles" not in cast(DictionaryObject, self._root_object[CA.NAMES]):
-            embedded_files_names_dictionary = DictionaryObject(
-                {NameObject(CA.NAMES): ArrayObject()}
-            )
-            cast(DictionaryObject, self._root_object[CA.NAMES])[
-                NameObject("/EmbeddedFiles")
-            ] = self._add_object(embedded_files_names_dictionary)
+        if isinstance(data, list):
+            filespec[NameObject(FileSpecificationDictionaryEntries.RF)] = ef_entry
         else:
-            embedded_files_names_dictionary = cast(
-                DictionaryObject,
-                cast(DictionaryObject, self._root_object[CA.NAMES])["/EmbeddedFiles"],
-            )
-        cast(ArrayObject, embedded_files_names_dictionary[CA.NAMES]).extend(
-            [create_string_object(filename), filespec]
-        )
+            filespec[NameObject(FileSpecificationDictionaryEntries.EF)] = ef_entry
+
+        nm = self._get_embedded_files_root() or self._create_attachment_root()
+        nm.list_add(filename, self._add_object(filespec))
+        return filespec
 
     def addAttachment(self, fname: str, fdata: Union[str, bytes]) -> None:  # deprecated
         """

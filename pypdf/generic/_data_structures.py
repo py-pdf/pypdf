@@ -1566,7 +1566,10 @@ class NameTree(DictionaryObject):
         return _get(key, self)
 
     def list_add(
-        self, key: str, data: PdfObject, overwrite: bool = False
+        self,
+        key: Union[str, TextStringObject],
+        data: PdfObject,
+        overwrite: bool = False,
     ) -> Optional[IndirectObject]:
         """
         Add the data entry from the Name Tree
@@ -1588,22 +1591,28 @@ class NameTree(DictionaryObject):
                 raise TypeError
         except (TypeError, AttributeError):
             raise TypeError("Object does not belong to a PdfWriter")
+        if not isinstance(key, TextStringObject):
+            key = TextStringObject(key)
 
         def _update_limits(
-            obj: DictionaryObject, lo: Optional[str], hi: Optional[str]
+            obj: DictionaryObject,
+            lo: Optional[TextStringObject],
+            hi: Optional[TextStringObject],
         ) -> bool:
             if "/Limits" not in obj:
                 return False
             a = cast("ArrayObject", obj["/Limits"])
             if lo is not None and lo < a[0]:
-                a[0] = TextStringObject(lo)
+                a[0] = lo
                 return True
             if hi is not None and hi > a[0]:
-                a[1] = TextStringObject(lo)
+                a[1] = hi
                 return True
             return False
 
-        def _add_in(o: Optional[PdfObject], app: bool = True) -> Optional[PdfObject]:
+        def _add_in(
+            o: Optional[PdfObject], appb: bool = True, app: bool = True
+        ) -> Optional[PdfObject]:
             nonlocal overwrite, writer, key, data
             if o is None:
                 return None
@@ -1611,9 +1620,9 @@ class NameTree(DictionaryObject):
             if "/Names" in o:
                 _l = cast(ArrayObject, o["/Names"])
                 li = o.get("/Limits", [_l[0], _l[-2]])
-                if key < li[0]:
+                if not appb and key < li[0]:
                     return None
-                if not app and _l > li[1]:
+                if not app and key > li[1]:
                     return None
                 i = 0
                 while i < len(_l):
@@ -1632,7 +1641,7 @@ class NameTree(DictionaryObject):
                         _l.insert(i + 1, writer._add_object(data))
                         _update_limits(o, key, None)
                         return _l[i + 1]
-                    i += 1
+                    i += 2
                 if app:
                     _l.append(key)
                     _l.append(writer._add_object(data))
@@ -1642,13 +1651,13 @@ class NameTree(DictionaryObject):
             else:  # kids
                 ar = cast(ArrayObject, o["/Kids"])
                 for x in ar:
-                    r = _add_in(x, x == ar[-1])
+                    r = _add_in(x, x == ar[0], x == ar[-1])
                     if r:
                         _update_limits(o, key, key)
                         return r
                 return None
 
-        o = _add_in(self, True)
+        o = _add_in(self, True, True)
         return o.indirect_reference if o is not None else None
 
 
