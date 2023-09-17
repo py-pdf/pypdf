@@ -1935,6 +1935,7 @@ class PageObject(DictionaryObject):
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
+        cm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         cm_stack = []
         tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
@@ -1956,7 +1957,7 @@ class PageObject(DictionaryObject):
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text
+            nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, output, text
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
             nonlocal orientations, rtl_dir, visitor_text
             global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
@@ -2099,8 +2100,9 @@ class PageObject(DictionaryObject):
                 return None
             if check_crlf_space:
                 try:
-                    text, output, tm_prev = crlf_space_check(
+                    text, output, cm_prev, tm_prev = crlf_space_check(
                         text,
+                        cm_prev,
                         tm_prev,
                         cm_matrix,
                         tm_matrix,

@@ -1566,7 +1566,7 @@ def test_watermark():
 
 
 @pytest.mark.enable_socket()
-@pytest.mark.timeout(4)  # this was a lot slower before PR #2086
+@pytest.mark.timeout(4)
 def test_watermarking_speed():
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
     name = "bgwatermark.pdf"
