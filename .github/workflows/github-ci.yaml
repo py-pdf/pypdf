@@ -39,7 +39,7 @@ jobs:
       run:
         sudo apt-get install ghostscript
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: 'recursive'
     - name: Cache Downloaded Files
@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: 'recursive'
     - name: Cache Downloaded Files
@@ -143,8 +143,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{env.PYTHON_LATEST}}
 
@@ -166,8 +166,8 @@ jobs:
     needs: tests
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           # Use latest Python, so it understands all syntax.
           python-version: ${{env.PYTHON_LATEST}}
