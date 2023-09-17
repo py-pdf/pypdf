@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1694957923408,
+  "lastUpdate": 1694958114716,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -39932,6 +39932,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.11767959511485813",
             "extra": "mean: 32.7988465122 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "34c6875c68b0e2c1e0b4d439e10c326e15a69851",
+          "message": "REL: 3.16.1\n\n## What's new\n\n### Bug Fixes (BUG)\n-  Missing new line in extract_text with cm operations (#2142) by @pubpub-zz\n-  _get_fonts not processing properly CIDFonts and annotations (#2194) by @pubpub-zz\n\n### Documentation (DOC)\n-  Sort list of contributors by @MartinThoma\n\n### Developer Experience (DEV)\n-  Give attribution in release notes (#2196) by @MartinThoma\n\n### Maintenance (MAINT)\n-  Update packages (#2195) by @MartinThoma\n-  Rename PdfWriter.create_viewer_preferences to PdfWriter.create_viewer_preferences (#2190) by @marcstober\n-  Mark `cryptography` as default (#2186) by @exiledkingcc\n\n### Testing (TST)\n-  Issue with merging pdfkit (#2191) by @MartinThoma\n\n### Code Style (STY)\n-   clean-up overriden variable (#2189) by @pubpub-zz\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.0...3.16.1)",
+          "timestamp": "2023-09-17T15:37:20+02:00",
+          "tree_id": "0d9a031a7ae15bed0ea1f8184ca16f7000047b34",
+          "url": "https://github.com/py-pdf/pypdf/commit/34c6875c68b0e2c1e0b4d439e10c326e15a69851"
+        },
+        "date": 1694958112345,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7084364216147123,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007111151577043268",
+            "extra": "mean: 369.21671559999965 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.169245212267933,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009563635608417848",
+            "extra": "mean: 89.53156466666456 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22710282673436802,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008165082783332916",
+            "extra": "mean: 4.403291735199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.420601498989383,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00033835087497233077",
+            "extra": "mean: 80.51139875000146 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03878235130566471,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07960150976043712",
+            "extra": "mean: 25.784924491 sec\nrounds: 5"
           }
         ]
       }
