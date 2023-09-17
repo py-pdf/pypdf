@@ -2332,7 +2332,9 @@ class PageObject(DictionaryObject):
         """
         obj = self.get_object()
         assert isinstance(obj, DictionaryObject)
-        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj[PG.RESOURCES]))
+        fonts: Set[str] = set()
+        embedded: Set[str] = set()
+        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj), fonts, embedded)
         unembedded = fonts - embedded
         return embedded, unembedded
 
@@ -2560,8 +2562,8 @@ class _VirtualList(Sequence):
 
 def _get_fonts_walk(
     obj: DictionaryObject,
-    fnt: Optional[Set[str]] = None,
-    emb: Optional[Set[str]] = None,
+    fnt: Set[str],
+    emb: Set[str],
 ) -> Tuple[Set[str], Set[str]]:
     """
     Get the set of all fonts and all embedded fonts.
@@ -2581,22 +2583,77 @@ def _get_fonts_walk(
 
     We create and add to two sets, fnt = fonts used and emb = fonts embedded.
     """
-    if fnt is None:
-        fnt = set()
-    if emb is None:
-        emb = set()
-    if not hasattr(obj, "keys"):
-        return set(), set()
     fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
-    if "/BaseFont" in obj:
-        fnt.add(cast(str, obj["/BaseFont"]))
-    if "/FontName" in obj and [x for x in fontkeys if x in obj]:
-        # the list comprehension ensures there is FontFile
-        emb.add(cast(str, obj["/FontName"]))
 
-    for key in obj:
-        _get_fonts_walk(cast(DictionaryObject, obj[key]), fnt, emb)
+    def process_font(f: DictionaryObject) -> None:
+        nonlocal fnt, emb
+        f = cast(DictionaryObject, f.get_object())  # to be sure
+        if "/BaseFont" in f:
+            fnt.add(cast(str, f["/BaseFont"]))
 
+        if (
+            ("/CharProcs" in f)
+            or (
+                "/FontDescriptor" in f
+                and any(
+                    x in cast(DictionaryObject, f["/FontDescriptor"]) for x in fontkeys
+                )
+            )
+            or (
+                "/DescendantFonts" in f
+                and "/FontDescriptor"
+                in cast(
+                    DictionaryObject,
+                    cast(ArrayObject, f["/DescendantFonts"])[0].get_object(),
+                )
+                and any(
+                    x
+                    in cast(
+                        DictionaryObject,
+                        cast(
+                            DictionaryObject,
+                            cast(ArrayObject, f["/DescendantFonts"])[0].get_object(),
+                        )["/FontDescriptor"],
+                    )
+                    for x in fontkeys
+                )
+            )
+        ):
+            # the list comprehension ensures there is FontFile
+            emb.add(cast(str, f["/BaseFont"]))
+
+    if "/DR" in obj and "/Font" in cast(DictionaryObject, obj["/DR"]):
+        for f in cast(DictionaryObject, cast(DictionaryObject, obj["/DR"])["/Font"]):
+            process_font(f)
+    if "/Resources" in obj:
+        if "/Font" in cast(DictionaryObject, obj["/Resources"]):
+            for f in cast(
+                DictionaryObject, cast(DictionaryObject, obj["/Resources"])["/Font"]
+            ).values():
+                process_font(f)
+        if "/XObject" in cast(DictionaryObject, obj["/Resources"]):
+            for x in cast(
+                DictionaryObject, cast(DictionaryObject, obj["/Resources"])["/XObject"]
+            ).values():
+                _get_fonts_walk(cast(DictionaryObject, x.get_object()), fnt, emb)
+    if "/Annots" in obj:
+        for a in cast(ArrayObject, obj["/Annots"]):
+            _get_fonts_walk(cast(DictionaryObject, a.get_object()), fnt, emb)
+    if "/AP" in obj:
+        if (
+            cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]).get(
+                "/Type"
+            )
+            == "/XObject"
+        ):
+            _get_fonts_walk(
+                cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]),
+                fnt,
+                emb,
+            )
+        else:
+            for a in cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]):
+                _get_fonts_walk(cast(DictionaryObject, a), fnt, emb)
     return fnt, emb  # return the sets for each page
 
 
