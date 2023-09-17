@@ -1095,7 +1095,7 @@ class PageObject(DictionaryObject):
                 annots = page[PG.ANNOTS]
                 if isinstance(annots, ArrayObject):
                     for ref in annots:
-                        new_annots.append(ref)  # noqa: PERF402
+                        new_annots.append(ref)
 
         for res in (
             RES.EXT_G_STATE,
