@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## Version 3.16.1, 2023-09-17
+
+⚠️ The 'rename PdfWriter.create_viewer_preference to
+PdfWriter.create_viewer_preferences (#2190)' could be a breaking change for you,
+if you use it. As it was only introduced last week I'm confident enough that
+nobody will be affected though. Hence only the patch update.
+
+### Bug Fixes (BUG)
+-  Missing new line in extract_text with cm operations (#2142)
+-  _get_fonts not processing properly CIDFonts and annotations (#2194)
+
+### Maintenance (MAINT)
+-  Rename PdfWriter.create_viewer_preference to PdfWriter.create_viewer_preferences (#2190)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.0...3.16.1)
+
 ## Version 3.16.0, 2023-09-10
 
 ### Security (SEC)
