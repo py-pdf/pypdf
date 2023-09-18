@@ -3,7 +3,7 @@
 It is possible to set viewer preferences of the PDF file.
 These properties are described in Section 12.2 of the [PDF 1.7 specification](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf).
 
-Note that the `\ViewerPreferences` dictionary does not exist by default.
+Note that the `/ViewerPreferences` dictionary does not exist by default.
 If it's not already present, it must be created by calling the `create_viewer_preferences` method
 of the `PdfWriter` object.
 
@@ -41,7 +41,7 @@ writer.viewer_preferences.non_fullscreen_pagemode = "/UseThumbs"
 writer.viewer_preferences.non_fullscreen_pagemode = "/UseOC"
 
 # /Direction
-writer.viewer_preferences.direction = "/L2R"  # default,
+writer.viewer_preferences.direction = "/L2R"  # default
 writer.viewer_preferences.direction = "/R2L"
 
 # /ViewArea
@@ -77,3 +77,7 @@ for i in range(40):
 with open("output.pdf", "wb") as output_stream:
     writer.write(output_stream)
 ```
+
+(The names beginning with a slash character are part of the PDF file format. They are
+included here to aid to anyone searching PyPDF documentation
+for these names from the PDF specification.)
