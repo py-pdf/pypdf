@@ -79,5 +79,5 @@ with open("output.pdf", "wb") as output_stream:
 ```
 
 (The names beginning with a slash character are part of the PDF file format. They are
-included here to aid to anyone searching PyPDF documentation
+included here to aid to anyone searching pypdf documentation
 for these names from the PDF specification.)
