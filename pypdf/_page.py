@@ -1947,6 +1947,9 @@ class PageObject(DictionaryObject):
             0.0,
             0.0,
         ]  # will store cm_matrix * tm_matrix
+        # memo_cm/tm will be used to store the position at the beginning of building the text
+        memo_cm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        memo_tm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         char_scale = 1.0
         space_scale = 1.0
         _space_width: float = 500.0  # will be set correctly at first Tf
@@ -1957,9 +1960,9 @@ class PageObject(DictionaryObject):
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, output, text
+            nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, memo_cm, memo_tm
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
-            nonlocal orientations, rtl_dir, visitor_text
+            nonlocal orientations, rtl_dir, visitor_text, output, text
             global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
             check_crlf_space: bool = False
@@ -1968,14 +1971,18 @@ class PageObject(DictionaryObject):
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
+                memo_cm = cm_matrix.copy()
+                memo_tm = tm_matrix.copy()
                 return None
             elif operator == b"ET":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
+                memo_cm = cm_matrix.copy()
+                memo_tm = tm_matrix.copy()
             # table 4.7 "Graphics state operators", page 219
             # cm_matrix calculation is a reserved for the moment
             elif operator == b"q":
@@ -2006,8 +2013,10 @@ class PageObject(DictionaryObject):
             elif operator == b"cm":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
+                memo_cm = cm_matrix.copy()
+                memo_tm = tm_matrix.copy()
                 cm_matrix = mult(
                     [
                         float(operands[0]),
@@ -2030,8 +2039,10 @@ class PageObject(DictionaryObject):
                 if text != "":
                     output += text  # .translate(cmap)
                     if visitor_text is not None:
-                        visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                        visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
+                memo_cm = cm_matrix.copy()
+                memo_tm = tm_matrix.copy()
                 try:
                     # charMapTuple: font_type, float(sp_width / 2), encoding,
                     #               map_dict, font-dictionary
@@ -2106,6 +2117,8 @@ class PageObject(DictionaryObject):
                         tm_prev,
                         cm_matrix,
                         tm_matrix,
+                        memo_cm,
+                        memo_tm,
                         cmap,
                         orientations,
                         output,
@@ -2113,6 +2126,9 @@ class PageObject(DictionaryObject):
                         visitor_text,
                         current_spacewidth(),
                     )
+                    if text == "":
+                        memo_cm = cm_matrix.copy()
+                        memo_tm = tm_matrix.copy()
                 except OrientationNotFoundError:
                     return None
 
@@ -2144,12 +2160,12 @@ class PageObject(DictionaryObject):
             elif operator == b"Do":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 try:
                     if output[-1] != "\n":
                         output += "\n"
                         if visitor_text is not None:
-                            visitor_text("\n", cm_matrix, tm_matrix, cmap[3], font_size)
+                            visitor_text("\n", memo_cm, memo_tm, cmap[3], font_size)
                 except IndexError:
                     pass
                 try:
@@ -2165,7 +2181,7 @@ class PageObject(DictionaryObject):
                         )
                         output += text
                         if visitor_text is not None:
-                            visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                            visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 except Exception:
                     logger_warning(
                         f" impossible to decode XFormObject {operands[0]}",
@@ -2173,13 +2189,16 @@ class PageObject(DictionaryObject):
                     )
                 finally:
                     text = ""
+                    memo_cm = cm_matrix.copy()
+                    memo_tm = tm_matrix.copy()
+
             else:
                 process_operation(operator, operands)
             if visitor_operand_after is not None:
                 visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
         output += text  # just in case of
         if text != "" and visitor_text is not None:
-            visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+            visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
         return output
 
     def extract_text(

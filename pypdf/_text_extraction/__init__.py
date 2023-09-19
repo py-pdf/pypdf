@@ -85,12 +85,14 @@ def orient(m: List[float]) -> int:
         return 270
 
 
-def crlf_space_check(
+def crlf_space_check(  # noqa: PLR0913
     text: str,
     cm_prev: List[float],
     tm_prev: List[float],
     cm_matrix: List[float],
     tm_matrix: List[float],
+    memo_cm: List[float],
+    memo_tm: List[float],
     cmap: Tuple[
         Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
     ],
@@ -103,11 +105,11 @@ def crlf_space_check(
     m_prev = mult(tm_prev, cm_prev)
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
-    delta_x = m[4] - tm_prev[4]
-    delta_y = m[5] - tm_prev[5]
+    delta_x = m[4] - m_prev[4]
+    delta_y = m[5] - m_prev[5]
     k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
     f = font_size * k
-    tm_prev = m
+    cm_prev = m
     if orientation not in orientations:
         raise OrientationNotFoundError
     try:
@@ -118,8 +120,8 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
-                            tm_matrix,
+                            memo_cm,
+                            memo_tm,
                             cmap[3],
                             font_size,
                         )
@@ -137,8 +139,8 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
-                            tm_matrix,
+                            memo_cm,
+                            memo_tm,
                             cmap[3],
                             font_size,
                         )
@@ -156,8 +158,8 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
-                            tm_matrix,
+                            memo_cm,
+                            memo_tm,
                             cmap[3],
                             font_size,
                         )
@@ -175,8 +177,8 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
-                            tm_matrix,
+                            memo_cm,
+                            memo_tm,
                             cmap[3],
                             font_size,
                         )
