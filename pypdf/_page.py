@@ -881,22 +881,6 @@ class PageObject(DictionaryObject):
         return stream
 
     @staticmethod
-    def _push_pop_gs(
-        contents: Any,
-        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
-        use_original: bool = True,
-    ) -> ContentStream:
-        # adds a graphics state "push" and "pop" to the beginning and end
-        # of a content stream.  This isolates it from changes such as
-        # transformation matricies.
-        if use_original:
-            stream = contents
-        else:
-            stream = ContentStream(contents, pdf)
-        stream.isolate_graphics_state()
-        return stream
-
-    @staticmethod
     def _add_transformation_matrix(
         contents: Any,
         pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
@@ -1126,7 +1110,8 @@ class PageObject(DictionaryObject):
         new_content_array = ArrayObject()
         original_content = self.get_contents()
         if original_content is not None:
-            new_content_array.append(PageObject._push_pop_gs(original_content, self.pdf, use_original=True))
+            original_content.isolate_graphics_state()
+            new_content_array.append(original_content)
 
         page2content = page2.get_contents()
         if page2content is not None:
@@ -1153,7 +1138,7 @@ class PageObject(DictionaryObject):
             page2content = PageObject._content_stream_rename(
                 page2content, rename, self.pdf
             )
-            page2content = PageObject._push_pop_gs(page2content, self.pdf)
+            page2content.isolate_graphics_state()
             if over:
                 new_content_array.append(page2content)
             else:
@@ -1263,7 +1248,8 @@ class PageObject(DictionaryObject):
         new_content_array = ArrayObject()
         original_content = self.get_contents()
         if original_content is not None:
-            new_content_array.append(PageObject._push_pop_gs(original_content, self.pdf))
+            original_content.isolate_graphics_state()
+            new_content_array.append(original_content)
 
         page2content = page2.get_contents()
         if page2content is not None:
@@ -1290,7 +1276,7 @@ class PageObject(DictionaryObject):
             page2content = PageObject._content_stream_rename(
                 page2content, rename, self.pdf
             )
-            page2content = PageObject._push_pop_gs(page2content, self.pdf)
+            page2content.isolate_graphics_state()
             if over:
                 new_content_array.append(page2content)
             else:
@@ -1640,7 +1626,7 @@ class PageObject(DictionaryObject):
         content = self.get_contents()
         if content is not None:
             content = PageObject._add_transformation_matrix(content, self.pdf, ctm)
-            content = PageObject._push_pop_gs(content, self.pdf)
+            content.isolate_graphics_state()
             self.replace_contents(content)
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
