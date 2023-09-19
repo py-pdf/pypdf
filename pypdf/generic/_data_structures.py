@@ -1229,6 +1229,13 @@ class ContentStream(DecodedStreamObject):
         self._operations = operations
         self._data = b""
 
+    def isolate_graphics_state(self) -> None:
+        if self._operations:
+            self._operations.insert(0, ([], "q"))
+            self._operations.append(([], "Q"))
+        elif self._data:
+            self._data = b"q\n" + b_(self._data) + b"Q\n"
+
     # This overrides the parent method:
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None

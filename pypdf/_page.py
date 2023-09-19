@@ -893,8 +893,7 @@ class PageObject(DictionaryObject):
             stream = contents
         else:
             stream = ContentStream(contents, pdf)
-        stream.operations.insert(0, ([], "q"))
-        stream.operations.append(([], "Q"))
+        stream.isolate_graphics_state()
         return stream
 
     @staticmethod
@@ -1127,7 +1126,7 @@ class PageObject(DictionaryObject):
         new_content_array = ArrayObject()
         original_content = self.get_contents()
         if original_content is not None:
-            new_content_array.append(original_content)
+            new_content_array.append(PageObject._push_pop_gs(original_content, self.pdf, use_original=True))
 
         page2content = page2.get_contents()
         if page2content is not None:
@@ -1262,10 +1261,9 @@ class PageObject(DictionaryObject):
                     pass
 
         new_content_array = ArrayObject()
-
         original_content = self.get_contents()
         if original_content is not None:
-            new_content_array.append(original_content)
+            new_content_array.append(PageObject._push_pop_gs(original_content, self.pdf))
 
         page2content = page2.get_contents()
         if page2content is not None:
