@@ -1288,3 +1288,22 @@ def test_get_contents_from_nullobject():
     p = writer.add_blank_page(100, 100)
     p[NameObject("/Contents")] = writer._add_object(NullObject())
     p.get_contents()
+
+
+@pytest.mark.enable_socket()
+def test_pos_text_in_textvisitor():
+    url = "https://github.com/py-pdf/pypdf/files/12675974/page_178.pdf"
+    name = "test_text_pos.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    p = ()
+
+    def visitor_body2(text, cm, tm, fontdict, fontsize) -> None:
+        nonlocal p
+        if text.startswith("5425."):
+            p = (tm[4], tm[5])
+
+    reader.pages[0].extract_text(visitor_text=visitor_body2)
+    assert p[0] > 323.5 - 0.1
+    assert p[0] < 323.5 + 0.1
+    assert p[1] > 457.4 - 0.1
+    assert p[1] < 457.4 + 0.1
