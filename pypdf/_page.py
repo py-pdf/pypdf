@@ -2113,12 +2113,9 @@ class PageObject(DictionaryObject):
                 try:
                     text, output, cm_prev, tm_prev = crlf_space_check(
                         text,
-                        cm_prev,
-                        tm_prev,
-                        cm_matrix,
-                        tm_matrix,
-                        memo_cm,
-                        memo_tm,
+                        (cm_prev, tm_prev),
+                        (cm_matrix, tm_matrix),
+                        (memo_cm, memo_tm),
                         cmap,
                         orientations,
                         output,

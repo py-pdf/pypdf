@@ -1292,6 +1292,7 @@ def test_get_contents_from_nullobject():
 
 @pytest.mark.enable_socket()
 def test_pos_text_in_textvisitor():
+    """See #2200"""
     url = "https://github.com/py-pdf/pypdf/files/12675974/page_178.pdf"
     name = "test_text_pos.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
@@ -1303,7 +1304,65 @@ def test_pos_text_in_textvisitor():
             p = (tm[4], tm[5])
 
     reader.pages[0].extract_text(visitor_text=visitor_body2)
-    assert p[0] > 323.5 - 0.1
-    assert p[0] < 323.5 + 0.1
-    assert p[1] > 457.4 - 0.1
-    assert p[1] < 457.4 + 0.1
+    assert abs(p[0] - 323.5) < 0.1
+    assert abs(p[1] - 457.4) < 0.1
+
+
+@pytest.mark.enable_socket()
+def test_pos_text_in_textvisitor2():
+    """See #2075"""
+    url = "https://github.com/py-pdf/pypdf/files/12318042/LegIndex-page6.pdf"
+    name = "LegIndex-page6.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    x_lvl = 26
+    lst = []
+
+    def visitor_lvl(text, cm, tm, fontdict, fontsize) -> None:
+        nonlocal x_lvl, lst
+        if abs(tm[4] - x_lvl) < 2 and tm[5] < 740 and tm[5] > 210:
+            lst.append(text.strip(" \n"))
+
+    reader.pages[0].extract_text(visitor_text=visitor_lvl)
+    assert lst == [
+        "ACUPUNCTURE BOARD",
+        "ACUPUNCTURISTS AND ACUPUNCTURE",
+        "ADMINISTRATIVE LAW AND PROCEDURE",
+        "ADMINISTRATIVE LAW, OFFICE OF",
+        "ADOPTION",
+        "ADULT EDUCATION",
+        "ADVERTISING. See also MARKETING; and particular subject matter (e.g.,",
+    ]
+    x_lvl = 35
+    lst = []
+    reader.pages[0].extract_text(visitor_text=visitor_lvl)
+    assert lst == [
+        "members,  AB 1264",
+        "assistants, acupuncture,  AB 1264",
+        "complaints, investigations, etc.,  AB 1264",
+        "day, california acupuncture,  HR 48",
+        "massage services, asian,  AB 1264",
+        "supervising acupuncturists,  AB 1264",
+        "supportive acupuncture services, basic,  AB 1264",
+        "rules and regulations—",
+        "professional assistants and employees: employment and compensation,  AB 916",
+        "adults, adoption of,  AB 1756",
+        "agencies, organizations, etc.: requirements, prohibitions, etc.,  SB 807",
+        "assistance programs, adoption: nonminor dependents,  SB 9",
+        "birth certificates,  AB 1302",
+        "contact agreements, postadoption—",
+        "facilitators, adoption,  AB 120",
+        "failed adoptions: reproductive loss leave,  SB 848",
+        "hearings, adoption finalization: remote proceedings, technology, etc.,  SB 21",
+        "native american tribes,  AB 120",
+        "parental rights, reinstatement of,  AB 20",
+        "parents, prospective adoptive: criminal background checks,  SB 824",
+        "services, adult educational,  SB 877",
+        "week, adult education,  ACR 31",
+        "alcoholic beverages: tied-house restrictions,  AB 546",
+        "campaign re social equity, civil rights, etc.,  SB 447",
+        "cannabis,  AB 794",
+        "elections. See ELECTIONS.",
+        "false, misleading, etc., advertising—",
+        "hotels, short-term rentals, etc., advertised rates: mandatory fee disclosures,  SB 683",
+        "housing rental properties advertised rates: disclosures,  SB 611",
+    ]
