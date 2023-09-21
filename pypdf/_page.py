@@ -2135,7 +2135,9 @@ class PageObject(DictionaryObject):
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
-                visitor_operand_before(operator, operands, cm_matrix, tm_matrix)
+                visitor_operand_before(
+                    operator, operands, mult(cm_matrix, tm_matrix), tm_matrix
+                )
             # multiple operators are defined in here ####
             if operator == b"'":
                 process_operation(b"T*", [])
@@ -2210,7 +2212,9 @@ class PageObject(DictionaryObject):
             else:
                 process_operation(operator, operands)
             if visitor_operand_after is not None:
-                visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
+                visitor_operand_after(
+                    operator, operands, mult(cm_matrix, tm_matrix), tm_matrix
+                )
         output += text  # just in case of
         if text != "" and visitor_text is not None:
             visitor_text(text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size)

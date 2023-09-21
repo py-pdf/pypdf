@@ -27,9 +27,17 @@ Refer to [extract\_text](../modules/PageObject.html#pypdf._page.PageObject.extra
 You can use visitor-functions to control which part of a page you want to process and extract. The visitor-functions you provide will get called for each operator or for each text fragment.
 
 The function provided in argument visitor_text of function extract_text has five arguments:
-text, current transformation matrix, text matrix, font-dictionary and font-size.
-In most cases the x and y coordinates of the current position
-are in index 4 and 5 of the current transformation matrix.
+* text : the current text (as long as possible, can be up to a full line)
+* user_matrix: current matrix in user coordinate space
+* tm_matrix: current matrix in text coordinate space
+* font-dictionary: full font dictionary
+* font-size: the size (in text coordinate space)
+
+the matrix stores 6 parameters. the 4 first provides the rotation/scaling matrix and the last two provides the translation (horizontal/vertical)
+it is recommended to use the user_matrix as it takes into all transformations.
+(note: the cm matrix which is provided is already the product of the matrices cm_matrix and tm_matrix described in the pdf specification)
+the font-size is the raw text size, that is affected by the user_matrix
+
 
 The font-dictionary may be None in case of unknown fonts.
 If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
@@ -53,7 +61,7 @@ parts = []
 
 
 def visitor_body(text, cm, tm, font_dict, font_size):
-    y = tm[5]
+    y = cm[5]
     if y > 50 and y < 720:
         parts.append(text)
 
@@ -88,7 +96,7 @@ def visitor_svg_rect(op, args, cm, tm):
 
 
 def visitor_svg_text(text, cm, tm, fontDict, fontSize):
-    (x, y) = (tm[4], tm[5])
+    (x, y) = (cm[4], cm[5])
     dwg.add(dwg.text(text, insert=(x, y), fill="blue"))
 
 
