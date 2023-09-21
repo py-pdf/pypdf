@@ -1935,18 +1935,14 @@ class PageObject(DictionaryObject):
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
-        cm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         cm_stack = []
         tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        tm_prev: List[float] = [
-            1.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-        ]  # will store cm_matrix * tm_matrix
+
+        # cm/tm_prev stores the last modified matrices can be an intermediate position
+        cm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        tm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+
         # memo_cm/tm will be used to store the position at the beginning of building the text
         memo_cm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         memo_tm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
@@ -1971,7 +1967,9 @@ class PageObject(DictionaryObject):
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                    visitor_text(
+                        text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size
+                    )
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
@@ -1979,7 +1977,9 @@ class PageObject(DictionaryObject):
             elif operator == b"ET":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                    visitor_text(
+                        text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size
+                    )
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
@@ -2013,7 +2013,9 @@ class PageObject(DictionaryObject):
             elif operator == b"cm":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                    visitor_text(
+                        text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size
+                    )
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
@@ -2039,7 +2041,9 @@ class PageObject(DictionaryObject):
                 if text != "":
                     output += text  # .translate(cmap)
                     if visitor_text is not None:
-                        visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                        visitor_text(
+                            text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size
+                        )
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
@@ -2157,12 +2161,20 @@ class PageObject(DictionaryObject):
             elif operator == b"Do":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                    visitor_text(
+                        text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size
+                    )
                 try:
                     if output[-1] != "\n":
                         output += "\n"
                         if visitor_text is not None:
-                            visitor_text("\n", memo_cm, memo_tm, cmap[3], font_size)
+                            visitor_text(
+                                "\n",
+                                mult(memo_cm, memo_tm),
+                                memo_tm,
+                                cmap[3],
+                                font_size,
+                            )
                 except IndexError:
                     pass
                 try:
@@ -2178,7 +2190,13 @@ class PageObject(DictionaryObject):
                         )
                         output += text
                         if visitor_text is not None:
-                            visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                            visitor_text(
+                                text,
+                                mult(memo_cm, memo_tm),
+                                memo_tm,
+                                cmap[3],
+                                font_size,
+                            )
                 except Exception:
                     logger_warning(
                         f" impossible to decode XFormObject {operands[0]}",
@@ -2195,7 +2213,7 @@ class PageObject(DictionaryObject):
                 visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
         output += text  # just in case of
         if text != "" and visitor_text is not None:
-            visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+            visitor_text(text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size)
         return output
 
     def extract_text(

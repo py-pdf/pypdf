@@ -124,7 +124,7 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            memo_cm,
+                            mult(memo_cm, memo_tm),
                             memo_tm,
                             cmap[3],
                             font_size,
@@ -143,7 +143,7 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            memo_cm,
+                            mult(memo_cm, memo_tm),
                             memo_tm,
                             cmap[3],
                             font_size,
@@ -162,7 +162,7 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            memo_cm,
+                            mult(memo_cm, memo_tm),
                             memo_tm,
                             cmap[3],
                             font_size,
@@ -181,7 +181,7 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            memo_cm,
+                            mult(memo_cm, memo_tm),
                             memo_tm,
                             cmap[3],
                             font_size,
