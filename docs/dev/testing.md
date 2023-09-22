@@ -66,7 +66,7 @@ The easiest way is to use pip and install a version from git:
 
 a) Go the PR and identify the repository and branch.
 
-Example from below : repo: __pubpub-zz__ / branch: __iss2200__ :
+Example from below : repository: __pubpub-zz__ / branch: __iss2200__ :
 ![PR Header example](PR_Header_example.png)
 
 b) you can then install the version using pip from git:
