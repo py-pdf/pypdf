@@ -64,7 +64,7 @@ a comment for that parameter.
 You may want to test a version from a PR which has not been released yet.
 The easiest way is to use pip and install a version from git:
 
-a) go the PR and identify the repo and branch.
+a) Go the PR and identify the repository and branch.
 
 Example from below : repo: __pubpub-zz__ / branch: __iss2200__ :
 ![PR Header example](PR_Header_example.png)
