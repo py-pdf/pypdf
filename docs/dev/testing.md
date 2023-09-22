@@ -71,7 +71,7 @@ Example from below : repository: __pubpub-zz__ / branch: __iss2200__ :
 
 b) you can then install the version using pip from git:
 
-example:
+Example:
 ```
 pip install pip install git+https://github.com/pubpub-zz/pypdf.git@iss2200
 ```
