@@ -62,7 +62,7 @@ a comment for that parameter.
 ## Evaluate a PR in-progress version
 
 You may want to test a version from a PR which has not been released yet.
-the easiest way is to use pip and install a version from git:
+The easiest way is to use pip and install a version from git:
 
 a) go the PR and identify the repo and branch.
 
