@@ -1621,7 +1621,7 @@ def test_watermark_rendering(tmp_path):
 
 def test_watermarking_reportlab_rendering(tmp_path):
     """
-    This test shows that the merged page is rotated+mirrored.
+    This test is showing a rotated+mirrored watermark in pypdf==3.15.4.
 
     Replacing the generate_base with e.g. the crazyones did not show the issue.
     """
