@@ -17,10 +17,6 @@ repos:
         exclude: "docs/make.bat"
     -   id: check-added-large-files
         args: ['--maxkb=1000']
-# -   repo: https://github.com/pre-commit/mirrors-mypy
-#     rev: v0.942
-#     hooks:
-#     -   id: mypy
 -   repo: https://github.com/psf/black
     rev: 23.9.1
     hooks:
@@ -38,7 +34,7 @@ repos:
     -   id: ruff
         args: ['--fix']
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.11.0
+    rev: v3.12.0
     hooks:
     -   id: pyupgrade
         args: [--py36-plus]

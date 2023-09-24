@@ -328,11 +328,11 @@ B_CACHE: Dict[Union[str, bytes], bytes] = {}
 
 
 def b_(s: Union[str, bytes]) -> bytes:
+    if isinstance(s, bytes):
+        return s
     bc = B_CACHE
     if s in bc:
         return bc[s]
-    if isinstance(s, bytes):
-        return s
     try:
         r = s.encode("latin-1")
         if len(s) < 2:
