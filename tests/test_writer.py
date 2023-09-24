@@ -985,7 +985,9 @@ def test_colors_in_outline_item(pdf_file_path):
     reader2 = PdfReader(pdf_file_path)
     for outline_item in reader2.outline:
         # convert float to string because of mutability
-        assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
+        assert ["%.5f" % c for c in outline_item.color] == [
+            "%.5f" % p for p in purple_rgb
+        ]
 
 
 @pytest.mark.samples()
@@ -1619,6 +1621,7 @@ def test_watermark_rendering(tmp_path):
     assert image_similarity(png_path, target_png_path) >= 0.95
 
 
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
 def test_watermarking_reportlab_rendering(tmp_path):
     """
     This test is showing a rotated+mirrored watermark in pypdf==3.15.4.
