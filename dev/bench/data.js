@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1695575762618,
+  "lastUpdate": 1695584084357,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -40404,6 +40404,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03200281319359187",
             "extra": "mean: 27.42729103100001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "06cc8772d64fd7dfc4107cad4a257cbcc2ab6959",
+          "message": "REL: 3.16.2\n\n## What's new\n\n### Bug Fixes (BUG)\n-  PDF size increases because of too high float writing precision (#2213) by @pubpub-zz\n-  Fix test_watermarking_reportlab_rendering() (#2203) by @LucasCimon\n\n### Documentation (DOC)\n-  Fix typos and add a paragraph to ViewerPreferences docs (#2199) by @marcstober\n-  How to install pypi from any branch (#2209) by @pubpub-zz\n-  Update copyright footer in docs (#2207) by @marcstober\n\n### Developer Experience (DEV)\n-  Let dependabot update Github Actions by @MartinThoma\n\n### Maintenance (MAINT)\n-  Update .pre-commit-config.yaml by @MartinThoma\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.1...3.16.2)",
+          "timestamp": "2023-09-24T21:30:15+02:00",
+          "tree_id": "1d2a772f3f1adbcdd503ab4399cdbd52dcd7d921",
+          "url": "https://github.com/py-pdf/pypdf/commit/06cc8772d64fd7dfc4107cad4a257cbcc2ab6959"
+        },
+        "date": 1695584082314,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.6837348712041695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007338150354370735",
+            "extra": "mean: 372.61504879999876 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.101707974735845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010040140015214426",
+            "extra": "mean: 90.07622991666686 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22525790050717434,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012308184735513369",
+            "extra": "mean: 4.4393559459999965 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.138186283518841,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003763943244203065",
+            "extra": "mean: 82.38463116666732 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03861471823112969,
+            "unit": "iter/sec",
+            "range": "stddev: 0.3173420051604741",
+            "extra": "mean: 25.896861243800004 sec\nrounds: 5"
           }
         ]
       }
