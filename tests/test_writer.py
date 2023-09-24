@@ -1619,10 +1619,9 @@ def test_watermark_rendering(tmp_path):
     assert image_similarity(png_path, target_png_path) >= 0.95
 
 
-@pytest.mark.xfail(reason="issue introduced with pypdf==3.15.4")
 def test_watermarking_reportlab_rendering(tmp_path):
     """
-    This test shows that the merged page is rotated+mirrored.
+    This test is showing a rotated+mirrored watermark in pypdf==3.15.4.
 
     Replacing the generate_base with e.g. the crazyones did not show the issue.
     """
@@ -1636,9 +1635,6 @@ def test_watermarking_reportlab_rendering(tmp_path):
     writer = PdfWriter()
     base_page.merge_page(watermark)
     writer.add_page(base_page)
-
-    for page in writer.pages:
-        page.compress_content_streams()
 
     target_png_path = RESOURCE_ROOT / "test_watermarking_reportlab_rendering.png"
     pdf_path = tmp_path / "out.pdf"
