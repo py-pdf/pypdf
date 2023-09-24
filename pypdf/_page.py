@@ -1952,7 +1952,7 @@ class PageObject(DictionaryObject):
                 output += text
                 if visitor_text is not None:
                     visitor_text(
-                        text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size
+                        text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size
                     )
                 text = ""
                 memo_cm = cm_matrix.copy()
@@ -1962,7 +1962,7 @@ class PageObject(DictionaryObject):
                 output += text
                 if visitor_text is not None:
                     visitor_text(
-                        text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size
+                        text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size
                     )
                 text = ""
                 memo_cm = cm_matrix.copy()
@@ -1998,11 +1998,9 @@ class PageObject(DictionaryObject):
                 output += text
                 if visitor_text is not None:
                     visitor_text(
-                        text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size
+                        text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size
                     )
                 text = ""
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
                 cm_matrix = mult(
                     [
                         float(operands[0]),
@@ -2014,6 +2012,8 @@ class PageObject(DictionaryObject):
                     ],
                     cm_matrix,
                 )
+                memo_cm = cm_matrix.copy()
+                memo_tm = tm_matrix.copy()
             # Table 5.2 page 398
             elif operator == b"Tz":
                 char_scale = float(operands[0]) / 100.0
@@ -2026,7 +2026,7 @@ class PageObject(DictionaryObject):
                     output += text  # .translate(cmap)
                     if visitor_text is not None:
                         visitor_text(
-                            text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size
+                            text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size
                         )
                 text = ""
                 memo_cm = cm_matrix.copy()
@@ -2148,7 +2148,7 @@ class PageObject(DictionaryObject):
                 output += text
                 if visitor_text is not None:
                     visitor_text(
-                        text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size
+                        text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size
                     )
                 try:
                     if output[-1] != "\n":
@@ -2156,7 +2156,7 @@ class PageObject(DictionaryObject):
                         if visitor_text is not None:
                             visitor_text(
                                 "\n",
-                                mult(memo_cm, memo_tm),
+                                mult(memo_tm, memo_cm),
                                 memo_tm,
                                 cmap[3],
                                 font_size,
@@ -2178,7 +2178,7 @@ class PageObject(DictionaryObject):
                         if visitor_text is not None:
                             visitor_text(
                                 text,
-                                mult(memo_cm, memo_tm),
+                                mult(memo_tm, memo_cm),
                                 memo_tm,
                                 cmap[3],
                                 font_size,
@@ -2201,7 +2201,7 @@ class PageObject(DictionaryObject):
                 )
         output += text  # just in case of
         if text != "" and visitor_text is not None:
-            visitor_text(text, mult(memo_cm, memo_tm), memo_tm, cmap[3], font_size)
+            visitor_text(text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size)
         return output
 
     def extract_text(

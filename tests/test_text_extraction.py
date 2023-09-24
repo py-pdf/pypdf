@@ -82,8 +82,8 @@ def test_visitor_text_matrices(file_name, constraints):
     lines = []
 
     def visitor_text(text, cm, tm, font_dict, font_size) -> None:
-        x = tm[4] * cm[0] + tm[5] * cm[2] + cm[4]  # mult(tm, cm)[4]
-        y = tm[4] * cm[1] + tm[5] * cm[3] + cm[5]  # mult(tm, cm)[5]
+        x = cm[4]  # used to be tm[4] * cm[0] + tm[5] * cm[2] + cm[4]  # mult(tm, cm)[4]
+        y = cm[5]  # used to be tm[4] * cm[1] + tm[5] * cm[3] + cm[5]  # mult(tm, cm)[5]
         lines.append({"text": text, "x": x, "y": y})
 
     reader.pages[0].extract_text(visitor_text=visitor_text)
