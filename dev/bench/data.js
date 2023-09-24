@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1695548005268,
+  "lastUpdate": 1695548640451,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -40227,6 +40227,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.11203525024592183",
             "extra": "mean: 25.64508656159999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "925560+Lucas-C@users.noreply.github.com",
+            "name": "Lucas Cimon",
+            "username": "Lucas-C"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "91b6dcd7c19e226f3bc78ba0661f4811a4239655",
+          "message": "BUG: Fix test_watermarking_reportlab_rendering() (#2203)\n\nThis fixes the issue spotted in #2191\r\n\r\nThe solution was to re-introduce calls to `PageObject._push_pop_gs()`,\r\nin `PageObject._merge_page` & `PageObject._merge_page_writer()`,\r\nbut to optimize `PageObject._push_pop_gs()` by introducing a `ContentsStream.isolate_graphics_state()` method.",
+          "timestamp": "2023-09-24T11:39:38+02:00",
+          "tree_id": "476870388e13ed10f0de7ce21acb8724b9c705c6",
+          "url": "https://github.com/py-pdf/pypdf/commit/91b6dcd7c19e226f3bc78ba0661f4811a4239655"
+        },
+        "date": 1695548638465,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.518430819892338,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010250549042005664",
+            "extra": "mean: 397.07265019999625 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.016785758671618,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012099368796457708",
+            "extra": "mean: 90.7705769999995 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21231275849931897,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021796914353706853",
+            "extra": "mean: 4.710032534399988 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.320790063992735,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004572132279058645",
+            "extra": "mean: 96.89180710000187 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.036684778953117225,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04298276169098985",
+            "extra": "mean: 27.259261975600015 sec\nrounds: 5"
           }
         ]
       }
