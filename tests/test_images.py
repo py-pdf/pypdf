@@ -12,8 +12,8 @@ from typing import Union
 import pytest
 from PIL import Image, ImageChops, ImageDraw
 
-from pypdf import PdfReader
-from pypdf._page import PageObject
+from pypdf import PageObject, PdfReader
+from pypdf.generic import NameObject, NullObject
 
 from . import get_data_from_url
 
@@ -218,4 +218,5 @@ def test_loop_in_image_keys():
     url = "https://github.com/py-pdf/pypdf/files/12309492/example_134.pdf"
     name = "iss2077.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0]["/Resources"]["/XObject"][NameObject("/toto")] = NullObject()
     reader.pages[0].images.keys()
