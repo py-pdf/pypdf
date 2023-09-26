@@ -2288,12 +2288,10 @@ class PdfWriter:
             return images, forms
 
         if not isinstance(page, PageObject):
-            page = PageObject(self, page.indirect_reference)
+            page = PageObject(self, page.indirect_reference)  # pragma: no cover
         if "/Contents" in page:
             content = cast(ContentStream, page.get_contents())
 
-            if not isinstance(content, ContentStream):
-                content = ContentStream(content, page)
             images, forms = clean_forms(page, [])
 
             clean(cast(ContentStream, content), images, forms)
