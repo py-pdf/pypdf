@@ -49,4 +49,3 @@ repos:
     hooks:
       - id: mypy
         files: ^pypdf/.*
-        args: [--ignore-missing-imports]
