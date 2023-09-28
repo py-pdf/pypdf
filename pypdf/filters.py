@@ -866,16 +866,6 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             image_format = "PNG"
 
     img_byte_arr = BytesIO()
-    try:
-        img.save(img_byte_arr, format=image_format)
-    except OSError:  # pragma: no cover
-        # odd error
-        img_byte_arr = BytesIO()
-        img.save(img_byte_arr, format=image_format)
+    img.save(img_byte_arr, format=image_format)
     data = img_byte_arr.getvalue()
-
-    try:  # temporary try/except until other fixes of images
-        img = Image.open(BytesIO(data))
-    except Exception:
-        img = None  # type: ignore
     return extension, data, img

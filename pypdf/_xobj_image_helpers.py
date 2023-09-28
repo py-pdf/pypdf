@@ -23,7 +23,10 @@ except ImportError:
 
 
 try:
-    from PIL import Image
+    from PIL import Image, ImageFile
+
+    # see https://github.com/python-pillow/Pillow/issues/1510 for details
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
 except ImportError:
     raise ImportError(
         "pillow is required to do image extraction. "
