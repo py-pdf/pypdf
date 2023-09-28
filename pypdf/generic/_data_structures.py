@@ -1023,6 +1023,8 @@ class ContentStream(DecodedStreamObject):
                 super().set_data(b_(stream_data))
             self.forced_encoding = forced_encoding
 
+        self._has_isolated_graphics_state: Optional[bool] = None
+
     def clone(
         self,
         pdf_dest: Any,
@@ -1229,12 +1231,31 @@ class ContentStream(DecodedStreamObject):
         self._operations = operations
         self._data = b""
 
+    @property
+    def has_isolated_graphics_state(self) -> bool:
+        if self._has_isolated_graphics_state is None:
+            if self._operations:
+                self._has_isolated_graphics_state = self._operations[0] == "q" and self._operations[-1] == "Q"
+            elif self._data:
+                # Check for the character with the linebreak as inserted by `isolate_graphics_state`.
+                self._has_isolated_graphics_state = self._data[:2] == b"q\n" and self._data[-2:] == b"Q\n"
+            else:
+                # Empty stream.
+                self._has_isolated_graphics_state = True
+
+        return self._has_isolated_graphics_state
+
     def isolate_graphics_state(self) -> None:
+        if self.has_isolated_graphics_state:
+            # No need to isolate again.
+            return
+
         if self._operations:
             self._operations.insert(0, ([], "q"))
             self._operations.append(([], "Q"))
         elif self._data:
             self._data = b"q\n" + b_(self._data) + b"Q\n"
+        self._has_isolated_graphics_state = True
 
     # This overrides the parent method:
     def write_to_stream(

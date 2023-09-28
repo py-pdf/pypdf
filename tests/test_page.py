@@ -1288,3 +1288,54 @@ def test_get_contents_from_nullobject():
     p = writer.add_blank_page(100, 100)
     p[NameObject("/Contents")] = writer._add_object(NullObject())
     p.get_contents()
+
+
+@pytest.mark.enable_socket()
+def test_has_isolated_graphics_state():
+    # Real example.
+    url = "https://github.com/py-pdf/pypdf/files/12428859/out1.pdf"
+    name = "isolate-graphics-state.pdf"
+    page = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    content_stream = page.get_contents()
+    assert content_stream is not None
+
+    assert content_stream.has_isolated_graphics_state is False
+    content_stream.isolate_graphics_state()
+    assert content_stream.has_isolated_graphics_state is True
+
+    # Empty stream handling.
+    content_stream = ContentStream(stream=None, pdf="dummy.pdf")
+    assert content_stream.has_isolated_graphics_state is True
+
+    # Handling of string-based checks.
+    content_stream = ContentStream(stream=None, pdf="dummy.pdf")
+    content_stream.set_data(b"q\n 841.680 0 0 595.200 0.000 0.000 cm\n/Im0 Do\nQ\n\n \n")
+    assert content_stream.has_isolated_graphics_state is False
+
+    content_stream = ContentStream(stream=None, pdf="dummy.pdf")
+    content_stream.set_data(b"q\n 841.680 0 0 595.200 0.000 0.000 cm\n/Im0 Do\nQ\n")
+    assert content_stream.has_isolated_graphics_state is True
+
+    # Dummy example to test caching.
+    content_stream = ContentStream(stream=None, pdf="dummy.pdf")
+    assert content_stream._has_isolated_graphics_state is None
+    content_stream._has_isolated_graphics_state = True
+    assert content_stream.has_isolated_graphics_state is True
+    content_stream._has_isolated_graphics_state = False
+    assert content_stream.has_isolated_graphics_state is False
+
+
+@pytest.mark.enable_socket()
+def test_isolate_graphics_state():
+    url = "https://github.com/py-pdf/pypdf/files/12428859/out1.pdf"
+    name = "isolate-graphics-state.pdf"
+    page = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    content_stream = page.get_contents()
+    assert content_stream is not None
+
+    # This page is not considered isolated at the beginning due to the final characters.
+    assert content_stream._data == b"q\n 841.680 0 0 595.200 0.000 0.000 cm\n/Im0 Do\nQ\n\n \n"
+    content_stream.isolate_graphics_state()
+    assert content_stream._data == b"q\nq\n 841.680 0 0 595.200 0.000 0.000 cm\n/Im0 Do\nQ\n\n \nQ\n"
+    content_stream.isolate_graphics_state()
+    assert content_stream._data == b"q\nq\n 841.680 0 0 595.200 0.000 0.000 cm\n/Im0 Do\nQ\n\n \nQ\n"
