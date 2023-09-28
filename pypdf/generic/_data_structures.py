@@ -115,7 +115,7 @@ class ArrayObject(list, PdfObject):
                 arr.append(data.clone(pdf_dest, force_duplicate, ignore_fields))
             else:
                 arr.append(data)
-        return cast("ArrayObject", arr)
+        return arr
 
     def items(self) -> Iterable[Any]:
         """Emulate DictionaryObject.items for a list (index, object)."""

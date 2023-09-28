@@ -320,7 +320,7 @@ class PdfReader:
         self._page_id2num: Optional[
             Dict[Any, Any]
         ] = None  # map page indirect_reference number to Page Number
-        if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
+        if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
                 "PdfReader stream/file object is not in binary mode. "
                 "It may not be read correctly.",
@@ -1035,7 +1035,7 @@ class PdfReader:
         except KeyError:
             if self.strict:
                 raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")
-            title = ""  # type: ignore
+            title = ""
 
         if "/A" in node:
             # Action, PDFv1.7 Section 12.6 (only type GoTo supported)
@@ -1074,7 +1074,7 @@ class PdfReader:
                     f"Removed unexpected destination {dest!r} from destination",
                     __name__,
                 )
-            outline_item = self._build_destination(title, None)  # type: ignore
+            outline_item = self._build_destination(title, None)
 
         # if outline item created, add color, format, and child count if present
         if outline_item:
@@ -1229,7 +1229,7 @@ class PdfReader:
             self.flattened_pages = []
 
         if PA.TYPE in pages:
-            t = pages[PA.TYPE]  # type: ignore
+            t = pages[PA.TYPE]
         # if pdf has no type, considered as a page if /Kids is missing
         elif PA.KIDS not in pages:
             t = "/Page"
@@ -1358,7 +1358,7 @@ class PdfReader:
                 idnum, generation = self.read_object_header(self.stream)
             except Exception:
                 if hasattr(self.stream, "getbuffer"):
-                    buf = bytes(self.stream.getbuffer())  # type: ignore
+                    buf = bytes(self.stream.getbuffer())
                 else:
                     p = self.stream.tell()
                     self.stream.seek(0, 0)
@@ -1412,7 +1412,7 @@ class PdfReader:
                 )
         else:
             if hasattr(self.stream, "getbuffer"):
-                buf = bytes(self.stream.getbuffer())  # type: ignore
+                buf = bytes(self.stream.getbuffer())
             else:
                 p = self.stream.tell()
                 self.stream.seek(0, 0)
@@ -1705,7 +1705,7 @@ class PdfReader:
                 except Exception:
                     # if something wrong occurred
                     if hasattr(stream, "getbuffer"):
-                        buf = bytes(stream.getbuffer())  # type: ignore
+                        buf = bytes(stream.getbuffer())
                     else:
                         p = stream.tell()
                         stream.seek(0, 0)
