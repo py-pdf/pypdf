@@ -345,11 +345,11 @@ def test_aes_decrypt_corrupted_data():
 
 def test_encrypt_stream_dictionary(pdf_file_path):
     user_password = secrets.token_urlsafe(10)
-    
+
     reader = PdfReader(RESOURCE_ROOT / "cmyk_image.pdf")
     page = reader.pages[0]
     original_image_obj = reader.get_object(page.images["/I"].indirect_reference)
-    
+
     writer = PdfWriter()
     writer.add_page(reader.pages[0])
     writer.encrypt(
