@@ -341,3 +341,30 @@ def test_aes_decrypt_corrupted_data():
     aes = CryptAES(secrets.token_bytes(16))
     for num in [0, 17, 32]:
         aes.decrypt(secrets.token_bytes(num))
+
+
+def test_encrypt_stream_dictionary(pdf_file_path):
+    user_password = secrets.token_urlsafe(10)
+    
+    reader = PdfReader(RESOURCE_ROOT / "cmyk_image.pdf")
+    page = reader.pages[0]
+    original_image_obj = reader.get_object(page.images["/I"].indirect_reference)
+    
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+    writer.encrypt(
+       user_password=user_password,
+       owner_password=None,
+       algorithm="RC4-128",
+    )
+    with open(pdf_file_path, "wb") as output_stream:
+        writer.write(output_stream)
+
+    reader = PdfReader(pdf_file_path)
+    assert reader.is_encrypted
+    assert reader.decrypt(user_password) == PasswordType.OWNER_PASSWORD
+    page = reader.pages[0]
+    decrypted_image_obj = reader.get_object(page.images["/I"].indirect_reference)
+
+    assert decrypted_image_obj["/ColorSpace"][3] == original_image_obj["/ColorSpace"][3]
+
