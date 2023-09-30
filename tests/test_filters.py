@@ -285,8 +285,8 @@ for page in reader.pages:
         "It can be installed via 'pip install pypdf[image]'"
     ), exc.value.args[0]
 """)
-    result = subprocess.run(  # noqa: S603, UP022
-        [shutil.which("python"), source_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    result = subprocess.run(  # noqa: UP022
+        [shutil.which("python"), source_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE  # noqa: S603
     )
     assert result.returncode == 0
     assert result.stdout == b""
