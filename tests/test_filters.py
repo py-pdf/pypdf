@@ -269,7 +269,6 @@ def test_image_without_pillow(tmp_path):
     source_file = tmp_path / "script.py"
     source_file.write_text(f"""
 import sys
-from io import BytesIO
 from pypdf import PdfReader
 
 import pytest
