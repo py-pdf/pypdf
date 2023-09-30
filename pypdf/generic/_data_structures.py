@@ -1235,7 +1235,9 @@ class ContentStream(DecodedStreamObject):
     def has_isolated_graphics_state(self) -> bool:
         if self._has_isolated_graphics_state is None:
             if self._operations:
-                self._has_isolated_graphics_state = self._operations[0] == ([], b"q") and self._operations[-1] == ([], b"Q")
+                self._has_isolated_graphics_state = (
+                    self._operations[0] == ([], b"q") and self._operations[-1] == ([], b"Q")
+                )
             elif self._data:
                 # Check for the character with the linebreak as inserted by `isolate_graphics_state`.
                 self._has_isolated_graphics_state = self._data[:2] == b"q\n" and self._data[-2:] == b"Q\n"
