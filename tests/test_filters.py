@@ -1,6 +1,7 @@
 """Test the pypdf.filters module."""
+import shutil
 import string
-import sys
+import subprocess
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
@@ -259,22 +260,36 @@ def test_issue_399():
 
 
 @pytest.mark.enable_socket()
-def test_image_without_imagemagic():
-    with patch.dict(sys.modules):
-        sys.modules["PIL"] = None
-        url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
-        name = "tika-914102.pdf"
-        data = BytesIO(get_data_from_url(url, name=name))
-        reader = PdfReader(data, strict=True)
+def test_image_without_pillow(tmp_path):
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
+    name = "tika-914102.pdf"
+    _ = get_data_from_url(url, name=name)
+    pdf_path = Path(__file__).parent / "pdf_cache" / name
 
-        for page in reader.pages:
-            with pytest.raises(ImportError) as exc:
-                page.images[0]
-            assert exc.value.args[0] == (
-                "pillow is required to do image extraction. "
-                "It can be installed via 'pip install pypdf[image]'"
-            )
+    source_file = tmp_path / "script.py"
+    source_file.write_text(f"""
+import sys
+from io import BytesIO
+from pypdf import PdfReader
 
+import pytest
+
+
+sys.modules["PIL"] = None
+reader = PdfReader("{pdf_path.resolve()}", strict=True)
+
+for page in reader.pages:
+    with pytest.raises(ImportError) as exc:
+        page.images[0]
+    assert exc.value.args[0] == (
+        "pillow is required to do image extraction. "
+        "It can be installed via 'pip install pypdf[image]'"
+    ), exc.value.args[0]
+""")
+    result = subprocess.run([shutil.which("python"), source_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode == 0
+    assert result.stdout == b""
+    assert result.stderr == b"Superfluous whitespace found in object header b'4' b'0'\n"
 
 @pytest.mark.enable_socket()
 def test_issue_1737():
