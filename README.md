@@ -63,6 +63,7 @@ For questions and answers, visit
 
 Maintaining pypdf is a collaborative effort. You can support the project by
 writing documentation, helping to narrow down issues, and submitting code.
+See the [CONTRIBUTING.md](https://github.com/py-pdf/pypdf/blob/main/CONTRIBUTING.md) file for more information.
 
 ### Q&A
 
@@ -71,8 +72,22 @@ want to make their live easier to experts who developed software before PDF
 existed. You can contribute to the pypdf community by answering questions
 on [StackOverflow](https://stackoverflow.com/questions/tagged/pypdf),
 helping in [discussions](https://github.com/py-pdf/pypdf/discussions),
-and asking users who report issues for [MCVE](https://stackoverflow.com/help/minimal-reproducible-example)'s (Code + example PDF!).
+and asking users who report issues for [MCVE](https://stackoverflow.com/help/minimal-reproducible-example)'s (Code + example PDF!).  
+The following is some of the most commonly asked questions:
 
+**I get the following error message when I use the pypdf module: <code>ImportError: No module named 'pyPDF'</code>**
+
+To fix this issue, be sure that you are using the correct name when importing the module. The name of the module is <code>pypdf</code>.
+Also, be sure you are using the correct version of pypdf. pypdf 3.1.0 and above are recommended. Use <code>pypdf>=3.1.0</code> if the issue persists.
+
+**How can I use pypdf to merge pdf files?**
+
+Use the <code>PdfMerger</code> class. The <code>append</code> method is great for simply concatenating files, but <code>merge</code> can be used
+for more precise control.
+
+**How can I extract text from a pdf?**
+
+There are several ways of extracting text from a pdf file using pypdf. The <code>extractText</code> method is likely the simplest way of doing this.
 
 ### Issues
 
