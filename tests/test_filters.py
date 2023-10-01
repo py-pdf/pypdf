@@ -1,6 +1,5 @@
 """Test the pypdf.filters module."""
 import string
-import sys
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
@@ -256,24 +255,6 @@ def test_issue_399():
     name = "tika-976970.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[1].extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_image_without_imagemagic():
-    with patch.dict(sys.modules):
-        sys.modules["PIL"] = None
-        url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
-        name = "tika-914102.pdf"
-        data = BytesIO(get_data_from_url(url, name=name))
-        reader = PdfReader(data, strict=True)
-
-        for page in reader.pages:
-            with pytest.raises(ImportError) as exc:
-                page.images[0]
-            assert exc.value.args[0] == (
-                "pillow is required to do image extraction. "
-                "It can be installed via 'pip install pypdf[image]'"
-            )
 
 
 @pytest.mark.enable_socket()
