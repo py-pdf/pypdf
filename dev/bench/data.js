@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1695840228772,
+  "lastUpdate": 1696147118417,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -40581,6 +40581,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.26304020936677924",
             "extra": "mean: 33.2408189256 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "30db3efce36430bdbfd3412f904693c03b03daa0",
+          "message": "DEV: Stabilize Pillow test with Pillow missing (#2229)\n\nThere have been two issues with the existing test:\r\n\r\n* The name was incorrect, as it never really checked ImageMagick stuff.\r\n* Running `from pypdf import _xobj_image_helpers` beforehand, for example because of other tests, would lead to \"strange\" failures due to Python not re-importing modules which already have been imported.",
+          "timestamp": "2023-10-01T09:54:15+02:00",
+          "tree_id": "eff4b59c00d14e4bb25761f6d9d290bfc8d5b7e0",
+          "url": "https://github.com/py-pdf/pypdf/commit/30db3efce36430bdbfd3412f904693c03b03daa0"
+        },
+        "date": 1696147115919,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.6952744374817716,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007253360336696459",
+            "extra": "mean: 371.01973220000275 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.143867870977315,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00941020412668128",
+            "extra": "mean: 89.73545016666644 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.225552874689924,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007359101683833095",
+            "extra": "mean: 4.433550232399997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.324228603706391,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00027447906528454714",
+            "extra": "mean: 81.14098108333205 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03821838785268408,
+            "unit": "iter/sec",
+            "range": "stddev: 0.216852132147132",
+            "extra": "mean: 26.165415554800013 sec\nrounds: 5"
           }
         ]
       }
