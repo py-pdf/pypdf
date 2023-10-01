@@ -28,21 +28,25 @@ You can use visitor-functions to control which part of a page you want to proces
 
 The function provided in argument visitor_text of function extract_text has five arguments:
 * text : the current text (as long as possible, can be up to a full line)
-* user_matrix: current matrix in user coordinate space
-* tm_matrix: current matrix in text coordinate space
+* user_matrix: current matrix to move from user coordinate space(aka. CTM)
+* tm_matrix: current matrix from text coordinate space
 * font-dictionary: full font dictionary
 * font-size: the size (in text coordinate space)
 
 the matrix stores 6 parameters. the 4 first provides the rotation/scaling matrix and the last two provides the translation (horizontal/vertical)
 it is recommended to use the user_matrix as it takes into all transformations.
-(note: the cm matrix which is provided is already the product of the matrices cm_matrix and tm_matrix described in the pdf specification)
+
+notes :
+ - as indicated in pdf 1.7 refeence, page 204 the user matrix applies to text space/image space/form space/pattern space.
+ - if you want to get the full transformation from text to user space, you can use the mult function (availalbe in global import) as follow :
+`txt2user = mult(tm, cm))`
 the font-size is the raw text size, that is affected by the user_matrix
 
 
 The font-dictionary may be None in case of unknown fonts.
 If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
 
-**Caveat**: In complicated documents the calculated positions might be wrong.
+**Caveat**: In complicated documents the calculated positions may be difficult to (if you move from multiple forms to page user space for example).
 
 The function provided in argument visitor_operand_before has four arguments:
 operator, operand-arguments, current transformation matrix and text matrix.

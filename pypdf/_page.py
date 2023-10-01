@@ -1951,9 +1951,7 @@ class PageObject(DictionaryObject):
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
                 output += text
                 if visitor_text is not None:
-                    visitor_text(
-                        text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size
-                    )
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
@@ -1961,9 +1959,7 @@ class PageObject(DictionaryObject):
             elif operator == b"ET":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(
-                        text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size
-                    )
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
@@ -1997,9 +1993,7 @@ class PageObject(DictionaryObject):
             elif operator == b"cm":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(
-                        text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size
-                    )
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
                 cm_matrix = mult(
                     [
@@ -2025,9 +2019,7 @@ class PageObject(DictionaryObject):
                 if text != "":
                     output += text  # .translate(cmap)
                     if visitor_text is not None:
-                        visitor_text(
-                            text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size
-                        )
+                        visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
@@ -2119,9 +2111,7 @@ class PageObject(DictionaryObject):
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
-                visitor_operand_before(
-                    operator, operands, mult(cm_matrix, tm_matrix), tm_matrix
-                )
+                visitor_operand_before(operator, operands, cm_matrix, tm_matrix)
             # multiple operators are defined in here ####
             if operator == b"'":
                 process_operation(b"T*", [])
@@ -2147,16 +2137,14 @@ class PageObject(DictionaryObject):
             elif operator == b"Do":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(
-                        text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size
-                    )
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 try:
                     if output[-1] != "\n":
                         output += "\n"
                         if visitor_text is not None:
                             visitor_text(
                                 "\n",
-                                mult(memo_tm, memo_cm),
+                                memo_cm,
                                 memo_tm,
                                 cmap[3],
                                 font_size,
@@ -2178,7 +2166,7 @@ class PageObject(DictionaryObject):
                         if visitor_text is not None:
                             visitor_text(
                                 text,
-                                mult(memo_tm, memo_cm),
+                                memo_cm,
                                 memo_tm,
                                 cmap[3],
                                 font_size,
@@ -2196,12 +2184,10 @@ class PageObject(DictionaryObject):
             else:
                 process_operation(operator, operands)
             if visitor_operand_after is not None:
-                visitor_operand_after(
-                    operator, operands, mult(cm_matrix, tm_matrix), tm_matrix
-                )
+                visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
         output += text  # just in case of
         if text != "" and visitor_text is not None:
-            visitor_text(text, mult(memo_tm, memo_cm), memo_tm, cmap[3], font_size)
+            visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
         return output
 
     def extract_text(
