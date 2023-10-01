@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## Version 3.16.2, 2023-09-24
+
+### Bug Fixes (BUG)
+-  PDF size increases because of too high float writing precision (#2213)
+-  Fix test_watermarking_reportlab_rendering() (#2203)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.1...3.16.2)
+
 ## Version 3.16.1, 2023-09-17
 
 ⚠️ The 'rename PdfWriter.create_viewer_preference to
