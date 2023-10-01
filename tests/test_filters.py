@@ -1,4 +1,5 @@
 """Test the pypdf.filters module."""
+import shutil
 import string
 from io import BytesIO
 from itertools import product as cartesian_product
