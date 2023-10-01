@@ -83,6 +83,7 @@ from .generic import (
     NullObject,
     NumberObject,
     RectangleObject,
+    StreamObject,
 )
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
@@ -509,6 +510,8 @@ class PageObject(DictionaryObject):
 
         x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
+            if not isinstance(x_object[o], StreamObject):
+                continue
             if x_object[o][IA.SUBTYPE] == "/Image":
                 lst.append(o if len(ancest) == 0 else ancest + [o])
             else:  # is a form with possible images inside
