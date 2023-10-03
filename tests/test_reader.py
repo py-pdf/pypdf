@@ -1454,3 +1454,12 @@ def test_issue_140():
     b = get_data_from_url(url, name=name)
     reader = PdfReader(BytesIO(b))
     assert len(reader.pages) == 54
+
+
+@pytest.mark.enable_socket()
+def test_xyz_with_missing_param():
+    """Cf #2236"""
+    url = "https://github.com/py-pdf/pypdf/files/12795356/tt1.pdf"
+    name = "issue2236.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.outline

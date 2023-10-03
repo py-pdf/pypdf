@@ -1490,6 +1490,10 @@ class Destination(TreeObject):
         if len(args) == 0:
             pass
         elif typ == "/XYZ":
+            if len(args) < 1:  # left is missing : should never occur
+                args.append(NumberObject(0.0))
+            if len(args) < 2:  # top is missing
+                args.append(NumberObject(0.0))
             if len(args) < 3:  # zoom is missing
                 args.append(NumberObject(0.0))
             (
