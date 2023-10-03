@@ -1,5 +1,51 @@
 # CHANGELOG
 
+## Version 3.16.2, 2023-09-24
+
+### Bug Fixes (BUG)
+-  PDF size increases because of too high float writing precision (#2213)
+-  Fix test_watermarking_reportlab_rendering() (#2203)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.1...3.16.2)
+
+## Version 3.16.1, 2023-09-17
+
+⚠️ The 'rename PdfWriter.create_viewer_preference to
+PdfWriter.create_viewer_preferences (#2190)' could be a breaking change for you,
+if you use it. As it was only introduced last week I'm confident enough that
+nobody will be affected though. Hence only the patch update.
+
+### Bug Fixes (BUG)
+-  Missing new line in extract_text with cm operations (#2142)
+-  _get_fonts not processing properly CIDFonts and annotations (#2194)
+
+### Maintenance (MAINT)
+-  Rename PdfWriter.create_viewer_preference to PdfWriter.create_viewer_preferences (#2190)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.0...3.16.1)
+
+## Version 3.16.0, 2023-09-10
+
+### Security (SEC)
+-  Infinite recursion caused by IndirectObject clone (#2156)
+
+### New Features (ENH)
+-  Ease access to ViewerPreferences (#2144)
+
+### Bug Fixes (BUG)
+-  Catch the case where w[0] is an IndirectObject instead of an int (#2154)
+-  Cope with indirect objects in filters and remove deprecated code (#2177)
+-  Accept tabs in cmaps (#2174) / cope with extra space (#2151)
+-  Merge pages without resources (#2150)
+-  getcontents() shall return None if contents is NullObject (#2161)
+-  Fix conversion from 1 to LA (#2175)
+
+### Robustness (ROB)
+-  Accept XYZ with no arguments (#2178)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.5...3.16.0)
+
 ## Version 3.15.5, 2023-09-03
 
 ### Bug Fixes (BUG)

@@ -985,7 +985,9 @@ def test_colors_in_outline_item(pdf_file_path):
     reader2 = PdfReader(pdf_file_path)
     for outline_item in reader2.outline:
         # convert float to string because of mutability
-        assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
+        assert ["%.5f" % c for c in outline_item.color] == [
+            "%.5f" % p for p in purple_rgb
+        ]
 
 
 @pytest.mark.samples()
@@ -1569,7 +1571,7 @@ def test_watermark():
 
 
 @pytest.mark.enable_socket()
-@pytest.mark.timeout(4)  # this was a lot slower before PR #2086
+@pytest.mark.timeout(4)
 def test_watermarking_speed():
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
     name = "bgwatermark.pdf"
@@ -1609,9 +1611,55 @@ def test_watermark_rendering(tmp_path):
     writer.write(pdf_path)
 
     # False positive: https://github.com/PyCQA/bandit/issues/333
-    subprocess.run([GHOSTSCRIPT_BINARY, "-sDEVICE=pngalpha", "-o", png_path, pdf_path])  # noqa: S603
+    subprocess.run(
+        [  # noqa: S603
+            GHOSTSCRIPT_BINARY,
+            "-sDEVICE=pngalpha",
+            "-o",
+            png_path,
+            pdf_path,
+        ]
+    )
     assert png_path.is_file()
     assert image_similarity(png_path, target_png_path) >= 0.95
+
+
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+def test_watermarking_reportlab_rendering(tmp_path):
+    """
+    This test is showing a rotated+mirrored watermark in pypdf==3.15.4.
+
+    Replacing the generate_base with e.g. the crazyones did not show the issue.
+    """
+    base_path = SAMPLE_ROOT / "022-pdfkit/pdfkit.pdf"
+    watermark_path = SAMPLE_ROOT / "013-reportlab-overlay/reportlab-overlay.pdf"
+
+    reader = PdfReader(base_path)
+    base_page = reader.pages[0]
+    watermark = PdfReader(watermark_path).pages[0]
+
+    writer = PdfWriter()
+    base_page.merge_page(watermark)
+    writer.add_page(base_page)
+
+    target_png_path = RESOURCE_ROOT / "test_watermarking_reportlab_rendering.png"
+    pdf_path = tmp_path / "out.pdf"
+    png_path = tmp_path / "test_watermarking_reportlab_rendering.png"
+
+    writer.write(pdf_path)
+    # False positive: https://github.com/PyCQA/bandit/issues/333
+    subprocess.run(
+        [  # noqa: S603
+            GHOSTSCRIPT_BINARY,
+            "-r120",
+            "-sDEVICE=pngalpha",
+            "-o",
+            png_path,
+            pdf_path,
+        ]
+    )
+    assert png_path.is_file()
+    assert image_similarity(png_path, target_png_path) >= 0.999
 
 
 @pytest.mark.enable_socket()
@@ -1728,10 +1776,7 @@ def test_damaged_pdf_length_returning_none():
 
 @pytest.mark.enable_socket()
 def test_viewerpreferences():
-    """
-    Add Tests for ViewerPreferences
-    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
-    """
+    """Add Tests for ViewerPreferences"""
     url = "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf"
     name = "2015._pb_decode_pg0.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
@@ -1782,8 +1827,10 @@ def test_viewerpreferences():
     v.print_pagerange = ArrayObject()
     assert len(v.print_pagerange) == 0
 
-    writer.create_viewer_preference()
+    writer.create_viewer_preferences()
     assert len(writer._root_object["/ViewerPreferences"]) == 0
+    writer.viewer_preferences.direction = "/R2L"
+    assert len(writer._root_object["/ViewerPreferences"]) == 1
 
     del reader.trailer["/Root"]["/ViewerPreferences"]
     assert reader.viewer_preferences is None

@@ -410,7 +410,7 @@ def compute_space_width(
         else:
             w = []
         while len(w) > 0:
-            st = w[0]
+            st = w[0] if isinstance(w[0], int) else w[0].get_object()
             second = w[1].get_object()
             if isinstance(second, int):
                 for x in range(st, second):

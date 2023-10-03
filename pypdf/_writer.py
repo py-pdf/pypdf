@@ -388,7 +388,7 @@ class PdfWriter:
                 self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
         return o
 
-    def create_viewer_preference(self) -> ViewerPreferences:
+    def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
         self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = self._add_object(o)
         return o
@@ -3035,7 +3035,7 @@ class PdfWriter:
             excluded_fields = ()
         # Find the range of pages to merge.
         if pages is None:
-            pages = list(range(0, len(reader.pages)))
+            pages = list(range(len(reader.pages)))
         elif isinstance(pages, PageRange):
             pages = list(range(*pages.indices(len(reader.pages))))
         elif isinstance(pages, list):

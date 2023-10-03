@@ -55,11 +55,11 @@ pycodestyle==2.9.1
     # via
     #   flake8
     #   flake8-print
-pycryptodome==3.18.0
+pycryptodome==3.19.0
     # via -r requirements/ci.in
 pyflakes==2.5.0
     # via flake8
-pyparsing==3.1.0
+pyparsing==3.1.1
     # via packaging
 pytest==7.0.1
     # via
@@ -85,7 +85,7 @@ typeguard==2.13.3
     # via -r requirements/ci.in
 types-dataclasses==0.6.6
     # via -r requirements/ci.in
-types-pillow==10.0.0.2
+types-pillow==10.0.0.3
     # via -r requirements/ci.in
 typing-extensions==4.1.1
     # via

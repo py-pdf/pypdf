@@ -83,6 +83,7 @@ from .generic import (
     NullObject,
     NumberObject,
     RectangleObject,
+    StreamObject,
 )
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
@@ -509,6 +510,8 @@ class PageObject(DictionaryObject):
 
         x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
+            if not isinstance(x_object[o], StreamObject):
+                continue
             if x_object[o][IA.SUBTYPE] == "/Image":
                 lst.append(o if len(ancest) == 0 else ancest + [o])
             else:  # is a form with possible images inside
@@ -881,23 +884,6 @@ class PageObject(DictionaryObject):
         return stream
 
     @staticmethod
-    def _push_pop_gs(
-        contents: Any,
-        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
-        use_original: bool = True,
-    ) -> ContentStream:
-        # adds a graphics state "push" and "pop" to the beginning and end
-        # of a content stream.  This isolates it from changes such as
-        # transformation matricies.
-        if use_original:
-            stream = contents
-        else:
-            stream = ContentStream(contents, pdf)
-        stream.operations.insert(0, ([], "q"))
-        stream.operations.append(([], "Q"))
-        return stream
-
-    @staticmethod
     def _add_transformation_matrix(
         contents: Any,
         pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
@@ -1095,7 +1081,7 @@ class PageObject(DictionaryObject):
                 annots = page[PG.ANNOTS]
                 if isinstance(annots, ArrayObject):
                     for ref in annots:
-                        new_annots.append(ref)  # noqa: PERF402
+                        new_annots.append(ref)
 
         for res in (
             RES.EXT_G_STATE,
@@ -1127,6 +1113,7 @@ class PageObject(DictionaryObject):
         new_content_array = ArrayObject()
         original_content = self.get_contents()
         if original_content is not None:
+            original_content.isolate_graphics_state()
             new_content_array.append(original_content)
 
         page2content = page2.get_contents()
@@ -1154,7 +1141,7 @@ class PageObject(DictionaryObject):
             page2content = PageObject._content_stream_rename(
                 page2content, rename, self.pdf
             )
-            page2content = PageObject._push_pop_gs(page2content, self.pdf)
+            page2content.isolate_graphics_state()
             if over:
                 new_content_array.append(page2content)
             else:
@@ -1262,9 +1249,9 @@ class PageObject(DictionaryObject):
                     pass
 
         new_content_array = ArrayObject()
-
         original_content = self.get_contents()
         if original_content is not None:
+            original_content.isolate_graphics_state()
             new_content_array.append(original_content)
 
         page2content = page2.get_contents()
@@ -1292,7 +1279,7 @@ class PageObject(DictionaryObject):
             page2content = PageObject._content_stream_rename(
                 page2content, rename, self.pdf
             )
-            page2content = PageObject._push_pop_gs(page2content, self.pdf)
+            page2content.isolate_graphics_state()
             if over:
                 new_content_array.append(page2content)
             else:
@@ -1642,7 +1629,7 @@ class PageObject(DictionaryObject):
         content = self.get_contents()
         if content is not None:
             content = PageObject._add_transformation_matrix(content, self.pdf, ctm)
-            content = PageObject._push_pop_gs(content, self.pdf)
+            content.isolate_graphics_state()
             self.replace_contents(content)
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
@@ -1935,6 +1922,7 @@ class PageObject(DictionaryObject):
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
+        cm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         cm_stack = []
         tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
@@ -1956,7 +1944,7 @@ class PageObject(DictionaryObject):
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text
+            nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, output, text
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
             nonlocal orientations, rtl_dir, visitor_text
             global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
@@ -2099,8 +2087,9 @@ class PageObject(DictionaryObject):
                 return None
             if check_crlf_space:
                 try:
-                    text, output, tm_prev = crlf_space_check(
+                    text, output, cm_prev, tm_prev = crlf_space_check(
                         text,
+                        cm_prev,
                         tm_prev,
                         cm_matrix,
                         tm_matrix,
@@ -2332,7 +2321,9 @@ class PageObject(DictionaryObject):
         """
         obj = self.get_object()
         assert isinstance(obj, DictionaryObject)
-        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj[PG.RESOURCES]))
+        fonts: Set[str] = set()
+        embedded: Set[str] = set()
+        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj), fonts, embedded)
         unembedded = fonts - embedded
         return embedded, unembedded
 
@@ -2560,8 +2551,8 @@ class _VirtualList(Sequence):
 
 def _get_fonts_walk(
     obj: DictionaryObject,
-    fnt: Optional[Set[str]] = None,
-    emb: Optional[Set[str]] = None,
+    fnt: Set[str],
+    emb: Set[str],
 ) -> Tuple[Set[str], Set[str]]:
     """
     Get the set of all fonts and all embedded fonts.
@@ -2581,22 +2572,77 @@ def _get_fonts_walk(
 
     We create and add to two sets, fnt = fonts used and emb = fonts embedded.
     """
-    if fnt is None:
-        fnt = set()
-    if emb is None:
-        emb = set()
-    if not hasattr(obj, "keys"):
-        return set(), set()
     fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
-    if "/BaseFont" in obj:
-        fnt.add(cast(str, obj["/BaseFont"]))
-    if "/FontName" in obj and [x for x in fontkeys if x in obj]:
-        # the list comprehension ensures there is FontFile
-        emb.add(cast(str, obj["/FontName"]))
 
-    for key in obj:
-        _get_fonts_walk(cast(DictionaryObject, obj[key]), fnt, emb)
+    def process_font(f: DictionaryObject) -> None:
+        nonlocal fnt, emb
+        f = cast(DictionaryObject, f.get_object())  # to be sure
+        if "/BaseFont" in f:
+            fnt.add(cast(str, f["/BaseFont"]))
 
+        if (
+            ("/CharProcs" in f)
+            or (
+                "/FontDescriptor" in f
+                and any(
+                    x in cast(DictionaryObject, f["/FontDescriptor"]) for x in fontkeys
+                )
+            )
+            or (
+                "/DescendantFonts" in f
+                and "/FontDescriptor"
+                in cast(
+                    DictionaryObject,
+                    cast(ArrayObject, f["/DescendantFonts"])[0].get_object(),
+                )
+                and any(
+                    x
+                    in cast(
+                        DictionaryObject,
+                        cast(
+                            DictionaryObject,
+                            cast(ArrayObject, f["/DescendantFonts"])[0].get_object(),
+                        )["/FontDescriptor"],
+                    )
+                    for x in fontkeys
+                )
+            )
+        ):
+            # the list comprehension ensures there is FontFile
+            emb.add(cast(str, f["/BaseFont"]))
+
+    if "/DR" in obj and "/Font" in cast(DictionaryObject, obj["/DR"]):
+        for f in cast(DictionaryObject, cast(DictionaryObject, obj["/DR"])["/Font"]):
+            process_font(f)
+    if "/Resources" in obj:
+        if "/Font" in cast(DictionaryObject, obj["/Resources"]):
+            for f in cast(
+                DictionaryObject, cast(DictionaryObject, obj["/Resources"])["/Font"]
+            ).values():
+                process_font(f)
+        if "/XObject" in cast(DictionaryObject, obj["/Resources"]):
+            for x in cast(
+                DictionaryObject, cast(DictionaryObject, obj["/Resources"])["/XObject"]
+            ).values():
+                _get_fonts_walk(cast(DictionaryObject, x.get_object()), fnt, emb)
+    if "/Annots" in obj:
+        for a in cast(ArrayObject, obj["/Annots"]):
+            _get_fonts_walk(cast(DictionaryObject, a.get_object()), fnt, emb)
+    if "/AP" in obj:
+        if (
+            cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]).get(
+                "/Type"
+            )
+            == "/XObject"
+        ):
+            _get_fonts_walk(
+                cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]),
+                fnt,
+                emb,
+            )
+        else:
+            for a in cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]):
+                _get_fonts_walk(cast(DictionaryObject, a), fnt, emb)
     return fnt, emb  # return the sets for each page
 
 

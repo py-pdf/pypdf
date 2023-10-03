@@ -17,12 +17,8 @@ repos:
         exclude: "docs/make.bat"
     -   id: check-added-large-files
         args: ['--maxkb=1000']
-# -   repo: https://github.com/pre-commit/mirrors-mypy
-#     rev: v0.942
-#     hooks:
-#     -   id: mypy
 -   repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 23.9.1
     hooks:
     -   id: black
         args: [--target-version, py36]
@@ -33,12 +29,12 @@ repos:
         additional_dependencies: [black==22.1.0]
         exclude: "docs/user/robustness.md"
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.285
+    rev: v0.0.290
     hooks:
     -   id: ruff
         args: ['--fix']
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.10.1
+    rev: v3.12.0
     hooks:
     -   id: pyupgrade
         args: [--py36-plus]

@@ -3,7 +3,7 @@
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Tuple
 
 from rich.prompt import Prompt
 
@@ -15,6 +15,7 @@ class Change:
     commit_hash: str
     prefix: str
     message: str
+    author: str
 
 
 def main(changelog_path: str) -> None:
@@ -26,7 +27,7 @@ def main(changelog_path: str) -> None:
     """
     changelog = get_changelog(changelog_path)
     git_tag = get_most_recent_git_tag()
-    changes = get_formatted_changes(git_tag)
+    changes, changes_with_author = get_formatted_changes(git_tag)
     if changes == "":
         print("No changes")
         return
@@ -41,8 +42,8 @@ def main(changelog_path: str) -> None:
     trailer = f"\n[Full Changelog]({url})\n\n"
     new_entry = header + changes + trailer
     print(new_entry)
-    write_commit_msg_file(new_version, changes + trailer)
-    write_release_msg_file(new_version, changes + trailer, today)
+    write_commit_msg_file(new_version, changes_with_author + trailer)
+    write_release_msg_file(new_version, changes_with_author + trailer, today)
 
     # Make the script idempotent by checking if the new entry is already in the changelog
     if new_entry in changelog:
@@ -176,7 +177,7 @@ def write_changelog(new_changelog: str, changelog_path: str) -> None:
         fh.write(new_changelog)
 
 
-def get_formatted_changes(git_tag: str) -> str:
+def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
     """
     Format the changes done since the last tag.
 
@@ -193,7 +194,7 @@ def get_formatted_changes(git_tag: str) -> str:
     for commit in commits:
         if commit.prefix not in grouped:
             grouped[commit.prefix] = []
-        grouped[commit.prefix].append({"msg": commit.message})
+        grouped[commit.prefix].append({"msg": commit.message, "author": commit.author})
 
     # Order prefixes
     order = [
@@ -227,12 +228,18 @@ def get_formatted_changes(git_tag: str) -> str:
 
     # Create output
     output = ""
+    output_with_user = ""
     for prefix in order:
         if prefix not in grouped:
             continue
-        output += f"\n### {abbrev2long[prefix]} ({prefix})\n"  # header
+        tmp = f"\n### {abbrev2long[prefix]} ({prefix})\n"  # header
+        output += tmp
+        output_with_user += tmp
         for commit in grouped[prefix]:
             output += f"- {commit['msg']}\n"
+            output_with_user += (
+                f"- {commit['msg']} by @{author2github(commit['author'])}\n"
+            )
         del grouped[prefix]
 
     if grouped:
@@ -240,7 +247,7 @@ def get_formatted_changes(git_tag: str) -> str:
         for prefix in grouped:
             output += f"- {prefix}: {grouped[prefix]}\n"
 
-    return output
+    return output, output_with_user
 
 
 def get_most_recent_git_tag() -> str:
@@ -276,7 +283,7 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
                 "--no-pager",
                 "log",
                 f"{git_tag}..HEAD",
-                '--pretty=format:"%h%x09%s"',
+                '--pretty=format:"%h:::%s:::%aN"',
             ],
             stderr=subprocess.STDOUT,
         )
@@ -297,9 +304,10 @@ def parse_commit_line(line: str) -> Change:
     Raises:
         ValueError: The commit line is not well-structured
     """
-    if "\\t" not in line:
+    parts = line.split(":::")
+    if len(parts) != 3:
         raise ValueError(f"Invalid commit line: '{line}'")
-    commit_hash, rest = line.split("\\t", 1)
+    commit_hash, rest, author = parts
     if ":" in rest:
         prefix, message = rest.split(":", 1)
     else:
@@ -309,14 +317,23 @@ def parse_commit_line(line: str) -> Change:
     # Standardize
     message.strip()
 
-    if message.endswith('"'):
-        message = message[:-1]
+    if author.endswith('"'):
+        author = author[:-1]
 
     prefix = prefix.strip()
     if prefix == "DOCS":
         prefix = "DOC"
 
-    return Change(commit_hash=commit_hash, prefix=prefix, message=message)
+    return Change(
+        commit_hash=commit_hash, prefix=prefix, message=message, author=author
+    )
+
+
+def author2github(author: str) -> str:
+    """Convert the author name to the github name"""
+    # I'm very uncertain if that always works, but for the current release it
+    # seems to be the case
+    return author.replace(" ", "")
 
 
 if __name__ == "__main__":
