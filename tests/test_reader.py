@@ -1462,4 +1462,7 @@ def test_xyz_with_missing_param():
     url = "https://github.com/py-pdf/pypdf/files/12795356/tt1.pdf"
     name = "issue2236.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    reader.outline
+    assert reader.outline[0]["/Left"] == 820
+    assert reader.outline[0]["/Top"] == 0
+    assert reader.outline[1]["/Left"] == 0
+    assert reader.outline[0]["/Top"] == 0
