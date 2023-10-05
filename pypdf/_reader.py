@@ -2238,10 +2238,10 @@ class PdfReader:
             return None
 
     @property
-    def attachments(self) -> Mapping[str, Union[List[bytes], List[Dict[str, bytes]]]]:
+    def attachments(self) -> Mapping[str, List[Union[bytes, Dict[str, bytes]]]]:
         ef = self._get_embedded_files_root()
         if ef:
-            d: Dict[str, Union[List[bytes], List[Dict[str, bytes]]]] = {}
+            d: Dict[str, List[Union[bytes, Dict[str, bytes]]]] = {}
             for k, v in ef.list_items().items():
                 if isinstance(v, list):
                     if k not in d:
@@ -2286,7 +2286,7 @@ class PdfReader:
         """
         return lst
 
-    def _get_attachment_list(self, name: str) -> List[bytes]:
+    def _get_attachment_list(self, name: str) -> List[Union[bytes, Dict[str, bytes]]]:
         out = self._get_attachments(name)[name]
         if isinstance(out, list):
             return out
@@ -2294,7 +2294,7 @@ class PdfReader:
 
     def _get_attachments(
         self, filename: Optional[str] = None
-    ) -> Dict[str, Union[bytes, List[bytes], Dict[str, bytes]]]:
+    ) -> Dict[str, List[Union[bytes, Dict[str, bytes]]]]:
         """
         Retrieves all or selected file attachments of the PDF as a dictionary of file names
         and the file data as a bytestring.
@@ -2317,9 +2317,10 @@ class PdfReader:
         else:
             lst = ef.list_get(filename)
             return {
-                filename: [x["/EF"]["/F"].get_data() for x in lst]  # type: ignore
+                filename: [(x.get_object())["/EF"].get_object(  # type: ignore
+                    )["/F"].get_object().get_data() for x in lst]  # type: ignore
                 if isinstance(lst, list)
-                else lst["/EF"]["/F"].get_data()  # type: ignore
+                else (lst.get_object())["/EF"].get_object()["/F"].get_object().get_data()  # type: ignore
             }
 
 

@@ -1457,11 +1457,14 @@ class NameTree(DictionaryObject):
     """
 
     def __init__(self, obj: Optional[PdfObject] = None) -> None:
+        DictionaryObject.__init__(self)
+        if obj is None:
+            self[NameObject("/Names")] = ArrayObject()
+            return
         if not isinstance(obj, DictionaryObject) or all(
             x not in obj for x in ("/Names", "/Kids")
         ):
             raise ValueError("source object is not a valid source object")
-        DictionaryObject.__init__(self)
         obj = cast(DictionaryObject, obj)
         if obj is not None:
             self.update(obj)
@@ -1603,16 +1606,20 @@ class NameTree(DictionaryObject):
 
         def _update_limits(
             obj: DictionaryObject,
-            lo: Optional[TextStringObject],
-            hi: Optional[TextStringObject],
+            lo: Optional[Union[str, TextStringObject]],
+            hi: Optional[Union[str, TextStringObject]],
         ) -> bool:
             if "/Limits" not in obj:
                 return False
             a = cast("ArrayObject", obj["/Limits"])
             if lo is not None and lo < a[0]:
+                if not isinstance(lo, TextStringObject):
+                    lo = TextStringObject(lo)
                 a[0] = lo
                 return True
             if hi is not None and hi > a[0]:
+                if not isinstance(hi, TextStringObject):
+                    lo = TextStringObject(hi)
                 a[1] = hi
                 return True
             return False
@@ -1626,17 +1633,18 @@ class NameTree(DictionaryObject):
             o = cast(DictionaryObject, o)
             if "/Names" in o:
                 _l = cast(ArrayObject, o["/Names"])
-                li = o.get("/Limits", [_l[0], _l[-2]])
-                if not appb and key < li[0]:
-                    return None
-                if not app and key > li[1]:
-                    return None
+                if len(_l) > 0:
+                    li = o.get("/Limits", [_l[0], _l[-2]])
+                    if not appb and key < li[0]:
+                        return None
+                    if not app and key > li[1]:
+                        return None
                 i = 0
                 while i < len(_l):
                     if _l[i] == key:
-                        if not overwrite:
-                            continue
                         d = _l[i + 1]
+                        if not overwrite:
+                            return d
                         if isinstance(d, IndirectObject):
                             d.replace_object(data)
                         else:  # pragma: no cover

@@ -297,15 +297,13 @@ class PdfWriter:
         obj: PdfObject,
     ) -> PdfObject:
         if isinstance(indirect_reference, IndirectObject):
-            assert indirect_reference.pdf == self
+            if indirect_reference.pdf != self:
+                raise ValueError("pdf must be self")
             indirect_reference = indirect_reference.idnum
         gen = self._objects[indirect_reference - 1].indirect_reference.generation  # type: ignore
         self._objects[indirect_reference - 1] = obj
-        return self._objects[indirect_reference - 1]
-        if indirect_reference.pdf != self:
-            raise ValueError("pdf must be self")
         obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
-        return self._objects[indirect_reference.idnum - 1]  # type: ignore
+        return self._objects[indirect_reference - 1]  # type: ignore
 
     def _add_page(
         self,
@@ -744,25 +742,36 @@ class PdfWriter:
         else:
             return None
 
-    @property
-    def attachments(self) -> Mapping[str, Union[List[bytes], List[Dict[str, bytes]]]]:
+    def _list_attachments(self) -> List[str]:
         ef = self._get_embedded_files_root()
         if ef:
-            d = {}
+            return ef.list_keys()
+        else:
+            return []
+
+    @property
+    def attachments(self) -> Mapping[str, List[Union[bytes, Dict[str, bytes]]]]:
+        ef = self._get_embedded_files_root()
+        if ef:
+            d: Dict[str, List[Union[bytes, Dict[str, bytes]]]] = {}
             for k, v in ef.list_items().items():
                 if isinstance(v, list):
                     if k not in d:
-                        d[k] = []
+                        d[k] = []  # type: ignore
                     for e in v:
-                        e = e.get_object()
+                        e = cast(DictionaryObject, e.get_object())
                         if "/EF" in e:
                             d[k].append(e["/EF"]["/F"].get_data())  # type: ignore
                         elif "/RF" in e:
-                            r = cast(ArrayObject, e["/RF"]["/F"])
+                            r = cast(
+                                ArrayObject, cast(DictionaryObject, e["/RF"])["/F"]
+                            )
                             di = {}
                             i = 0
                             while i < len(r):
-                                di[r[i]] = r[i + 1].get_object().get_data()
+                                di[cast(str, r[i])] = cast(
+                                    bytes, r[i + 1].get_object().get_data()
+                                )
                                 i += 2
                             d[k].append(di)
             return d
@@ -773,9 +782,10 @@ class PdfWriter:
         self,
         filename: str,
         data: Union[str, bytes, List[Tuple[str, bytes]]],
+        overwrite: bool = True,
         fname: Optional[str] = None,
         desc: str = "",
-    ) -> DictionaryObject:
+    ) -> Optional[DictionaryObject]:
         """
         Embed a file inside the PDF.
 
@@ -793,6 +803,8 @@ class PdfWriter:
         Returns:
             The filespec DictionaryObject
         """
+        if not overwrite and filename in self._list_attachments():
+            return None
         if fname is None:
             st = filename.replace("/", "\\/").replace("\\\\/", "\\/")
             fname = st.encode().decode("ansi", errors="xmlcharreplace")
@@ -862,7 +874,7 @@ class PdfWriter:
             filespec[NameObject(FileSpecificationDictionaryEntries.EF)] = ef_entry
 
         nm = self._get_embedded_files_root() or self._create_attachment_root()
-        nm.list_add(filename, self._add_object(filespec))
+        nm.list_add(filename, filespec, overwrite=True)
         return filespec
 
     def addAttachment(self, fname: str, fdata: Union[str, bytes]) -> None:  # deprecated
@@ -872,7 +884,7 @@ class PdfWriter:
         .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("addAttachment", "add_attachment", "3.0.0")
-        return self.add_attachment(fname, fdata)
+        self.add_attachment(fname, fdata)
 
     def append_pages_from_reader(
         self,

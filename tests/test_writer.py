@@ -1313,9 +1313,16 @@ def test_attachments():
     assert sorted(reader.attachments.keys()) == sorted({name for name, _ in to_add})
     assert reader.attachments == {
         "foobar.txt": [b"foobarcontent"],
-        "foobar2.txt": [b"foobarcontent2", b"2nd_foobarcontent"],
+        "foobar2.txt": [b"2nd_foobarcontent"],
     }
-    assert reader._list_attachments() == [name for name, _ in to_add]
+    writer.add_attachment("foobar2.txt", b"overwrite_ignored", overwrite=False)
+    assert reader.attachments == {
+        "foobar.txt": [b"foobarcontent"],
+        "foobar2.txt": [b"2nd_foobarcontent"],
+    }
+    _l = list({name for name, _ in to_add})
+    _l.sort()
+    assert reader._list_attachments() == _l
 
     # We've added the same key twice - hence only 2 and not 3:
     att = reader._get_attachments()
@@ -1327,12 +1334,12 @@ def test_attachments():
     # The content for foobar2.txt is a list!
     att = reader._get_attachments("foobar2.txt")
     assert len(att) == 1
-    assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
+    assert att["foobar2.txt"] == [b"2nd_foobarcontent"]
 
     # Let's do both cases with the public interface:
     assert reader.attachments["foobar.txt"][0] == b"foobarcontent"
-    assert reader.attachments["foobar2.txt"][0] == b"foobarcontent2"
-    assert reader.attachments["foobar2.txt"][1] == b"2nd_foobarcontent"
+    assert reader.attachments["foobar2.txt"][0] == b"2nd_foobarcontent"
+    assert len(reader.attachments["foobar2.txt"]) == 1
 
 
 @pytest.mark.enable_socket()
