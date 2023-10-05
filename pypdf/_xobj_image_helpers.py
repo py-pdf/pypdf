@@ -78,6 +78,8 @@ def _get_imagemode(
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):  # pragma: no cover
             color_space = color_space.get_object()
+        mode2, invert_color = _get_imagemode(color_space, color_components, prev_mode)
+        return mode2, invert_color
 
     mode_map = {
         "1bit": "1",  # pos [0] will be used for 1 bit
