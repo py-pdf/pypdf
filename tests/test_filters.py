@@ -619,3 +619,12 @@ def test_convert_1_to_la():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     for i in reader.pages[13].images:
         _ = i
+
+
+@pytest.mark.enable_socket()
+def test_nested_device_n_color_space():
+    """From #2240"""
+    url = "https://github.com/py-pdf/pypdf/files/12814018/out1.pdf"
+    name = "issue2240.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].images[0]
