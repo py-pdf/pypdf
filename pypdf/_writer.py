@@ -807,7 +807,7 @@ class PdfWriter:
             return None
         if fname is None:
             st = filename.replace("/", "\\/").replace("\\\\/", "\\/")
-            fname = st.encode().decode("ansi", errors="xmlcharreplace")
+            fname = st.encode().decode("ascii", errors="xmlcharreplace")
             fname = f"{fname}"  # to escape string
 
         # We need three entries:
