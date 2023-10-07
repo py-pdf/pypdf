@@ -79,6 +79,8 @@ class CryptFilter:
             obj2 = StreamObject()
             obj2.update(obj)
             obj2.set_data(self.stm_crypt.encrypt(b_(obj._data)))
+            for key, value in obj.items():  # Dont forget the Stream dict.
+                obj2[key] = self.encrypt_object(value)
             obj = obj2
         elif isinstance(obj, DictionaryObject):
             obj2 = DictionaryObject()  # type: ignore
@@ -95,6 +97,8 @@ class CryptFilter:
             obj = create_string_object(data)
         elif isinstance(obj, StreamObject):
             obj._data = self.stm_crypt.decrypt(b_(obj._data))
+            for key, value in obj.items():  # Dont forget the Stream dict.
+                obj[key] = self.decrypt_object(value)
         elif isinstance(obj, DictionaryObject):
             for key, value in obj.items():
                 obj[key] = self.decrypt_object(value)
