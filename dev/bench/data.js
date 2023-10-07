@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1696664749944,
+  "lastUpdate": 1696664909301,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -40699,6 +40699,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0820639864558045",
             "extra": "mean: 27.277461443599996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e628555035677507bd36d27449fe098f17743e4b",
+          "message": "BUG: Support nested color spaces for the /DeviceN color space (#2241)\n\nFixes #2240",
+          "timestamp": "2023-10-07T09:43:55+02:00",
+          "tree_id": "0574f45b252db11fcffeca93289e64f1f58048b1",
+          "url": "https://github.com/py-pdf/pypdf/commit/e628555035677507bd36d27449fe098f17743e4b"
+        },
+        "date": 1696664906635,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.295783037027738,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0068512575237395165",
+            "extra": "mean: 435.58123040000396 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.988286654517381,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007248611932716219",
+            "extra": "mean: 100.11727081818704 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.200186667268889,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07355465273823443",
+            "extra": "mean: 4.9953376698 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.330030156405737,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004187321358695406",
+            "extra": "mean: 96.8051384999967 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03566952328198783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.2808279024490399",
+            "extra": "mean: 28.035137786800014 sec\nrounds: 5"
           }
         ]
       }
