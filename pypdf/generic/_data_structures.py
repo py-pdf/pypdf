@@ -1487,9 +1487,11 @@ class Destination(TreeObject):
         self[NameObject("/Type")] = typ
 
         # from table 8.2 of the PDF 1.7 reference.
-        if len(args) == 0:
-            pass
-        elif typ == "/XYZ":
+        if typ == "/XYZ":
+            if len(args) < 1:  # left is missing : should never occur
+                args.append(NumberObject(0.0))
+            if len(args) < 2:  # top is missing
+                args.append(NumberObject(0.0))
             if len(args) < 3:  # zoom is missing
                 args.append(NumberObject(0.0))
             (
@@ -1497,6 +1499,8 @@ class Destination(TreeObject):
                 self[NameObject(TA.TOP)],
                 self[NameObject("/Zoom")],
             ) = args
+        elif len(args) == 0:
+            pass
         elif typ == TF.FIT_R:
             (
                 self[NameObject(TA.LEFT)],
