@@ -37,6 +37,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [nalin-udhaar](https://github.com/nalin-udhaar)
 * [Paternault, Louis](https://framagit.org/spalax)
 * [Perrensen, Olsen](https://github.com/olsonperrensen)
+* [pilotandy](https://github.com/pilotandy)
 * [Pinheiro, Arthur](https://github.com/xilopaint)
 * [Poddar, Arka](https://github.com/postmeback)
 * [programmarchy](https://github.com/programmarchy)
