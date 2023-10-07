@@ -230,3 +230,4 @@ disallow_incomplete_defs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_unused_configs = true
+exclude = ['venv', '.venv', 'tests', 'make_release.py']
