@@ -278,7 +278,7 @@ class PdfWriter:
             return self._objects[indirect_reference - 1]
         if indirect_reference.pdf != self:
             raise ValueError("pdf must be self")
-        return self._objects[indirect_reference.idnum - 1]  # type: ignore
+        return self._objects[indirect_reference.idnum - 1]
 
     def getObject(self, ido: Union[int, IndirectObject]) -> PdfObject:  # deprecated
         """
@@ -301,7 +301,7 @@ class PdfWriter:
         return self._objects[indirect_reference - 1]
         if indirect_reference.pdf != self:
             raise ValueError("pdf must be self")
-        return self._objects[indirect_reference.idnum - 1]  # type: ignore
+        return self._objects[indirect_reference.idnum - 1]
 
     def _add_page(
         self,
@@ -327,8 +327,8 @@ class PdfWriter:
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             if isinstance(other, str):
-                other = other.encode()  # type: ignore
-            self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)  # type: ignore
+                other = other.encode()
+            self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
         page[NameObject(PA.PARENT)] = self._pages
         pages = cast(DictionaryObject, self.get_object(self._pages))
         assert page.indirect_reference is not None
@@ -372,7 +372,7 @@ class PdfWriter:
     @property
     def viewer_preferences(self) -> Optional[ViewerPreferences]:
         """Returns the existing ViewerPreferences as an overloaded dictionary."""
-        o = cast(DictionaryObject, self._root_object).get(CD.VIEWER_PREFERENCES, None)
+        o = self._root_object.get(CD.VIEWER_PREFERENCES, None)
         if o is None:
             return None
         o = o.get_object()
@@ -624,7 +624,7 @@ class PdfWriter:
             return create_string_object(str(oa))
         elif isinstance(oa, ArrayObject):
             try:
-                page, typ = oa[0:2]  # type: ignore
+                page, typ = oa[0:2]
                 array = oa[2:]
                 fit = Fit(typ, tuple(array))
                 return Destination("OpenAction", page, fit)
@@ -1153,7 +1153,7 @@ class PdfWriter:
             for attr in inheritable_page_attributes:
                 if attr in pages:
                     inherit[attr] = pages[attr]
-            for page in cast(ArrayObject, cast(DictionaryObject, pages)[PA.KIDS]):
+            for page in cast(ArrayObject, pages[PA.KIDS]):
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirect_reference"] = page
@@ -1192,7 +1192,7 @@ class PdfWriter:
         if TK.INFO in reader.trailer:
             self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
         try:
-            self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))  # type: ignore
+            self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))
         except KeyError:
             pass
         if callable(after_page_append):
@@ -1333,7 +1333,7 @@ class PdfWriter:
     def write_stream(self, stream: StreamType) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
-                f"File <{stream.name}> to write to is not in binary mode. "  # type: ignore
+                f"File <{stream.name}> to write to is not in binary mode. "
                 "It may not be written to correctly.",
                 __name__,
             )
@@ -2205,9 +2205,9 @@ class PdfWriter:
                     del content.operations[i]
                 elif operator == b"Do":
                     if (
-                        cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.IMAGES
+                        to_delete & ObjectDeletionFlag.IMAGES
                         and operands[0] in images
-                        or cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.TEXT
+                        or to_delete & ObjectDeletionFlag.TEXT
                         and operands[0] in forms
                     ):
                         del content.operations[i]
@@ -2234,7 +2234,7 @@ class PdfWriter:
                 try:
                     content: Any = None
                     if (
-                        cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.IMAGES
+                        to_delete & ObjectDeletionFlag.IMAGES
                         and o["/Subtype"] == "/Image"
                     ):
                         content = NullObject()
@@ -2276,9 +2276,9 @@ class PdfWriter:
                 content = ContentStream(content, page)
             images, forms = clean_forms(page, [])
 
-            clean(cast(ContentStream, content), images, forms)
+            clean(content, images, forms)
             if isinstance(page["/Contents"], ArrayObject):
-                for o in cast(ArrayObject, page["/Contents"]):
+                for o in page["/Contents"]:
                     self._objects[o.idnum - 1] = NullObject()
             try:
                 self._objects[
@@ -3244,7 +3244,6 @@ class PdfWriter:
                     p = self._get_cloned_page(d[0], pages, reader)
                     if p is not None:
                         anc = ano.clone(self, ignore_fields=("/D",))
-                        anc = cast("DictionaryObject", anc)
                         cast("DictionaryObject", anc["/A"])[
                             NameObject("/D")
                         ] = ArrayObject([p] + d[1:])
