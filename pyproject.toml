@@ -220,3 +220,13 @@ max-statements = 176  # Recommended: 50
 pre-summary-newline = true
 wrap-summaries = 0
 wrap-descriptions = 0
+
+[tool.mypy]
+show_error_codes = true
+ignore_missing_imports = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true

@@ -53,8 +53,8 @@ def test_text_extraction_slow(caplog, url: str, name: str, strict: bool):
     [
         # bfchar_on_2_chars: issue #1293
         (
-            "https://github.com/xyegithub/myBlog/raw/main/posts/c94b2364/paper_pdfs/ImageClassification/"
-            "2007%2CASurveyofImageClassificationBasedTechniques.pdf",
+            "https://raw.githubusercontent.com/xyegithub/myBlog/12127c712ac2008782616c743224b187a4069477/posts/"
+            "c94b2364/paper_pdfs/ImageClassification/2007%2CASurveyofImageClassificationBasedTechniques.pdf",
             "ASurveyofImageClassificationBasedTechniques.pdf",
             False,
         ),

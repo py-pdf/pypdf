@@ -15,11 +15,11 @@ from .generic import (
 )
 
 try:
-    from typing import Literal, TypeAlias  # type: ignore[attr-defined]
+    from typing import Literal, TypeAlias
 except ImportError:
     # PEP 586 introduced typing.Literal with Python 3.8
     # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import Literal, TypeAlias  # type: ignore[misc, assignment]
+    from typing_extensions import Literal, TypeAlias  # type: ignore[assignment]
 
 
 try:
@@ -78,6 +78,8 @@ def _get_imagemode(
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):  # pragma: no cover
             color_space = color_space.get_object()
+        mode2, invert_color = _get_imagemode(color_space, color_components, prev_mode)
+        return mode2, invert_color
 
     mode_map = {
         "1bit": "1",  # pos [0] will be used for 1 bit
@@ -92,7 +94,7 @@ def _get_imagemode(
         mode_map.get(color_space)  # type: ignore
         or list(mode_map.values())[color_components]
         or prev_mode
-    )  # type: ignore
+    )
     return mode, mode == "CMYK"
 
 
