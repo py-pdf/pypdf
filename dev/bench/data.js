@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1696147118417,
+  "lastUpdate": 1696664749944,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -40640,6 +40640,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.216852132147132",
             "extra": "mean: 26.165415554800013 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d20a55d947b58546bf1f9137787365fd07db2e05",
+          "message": "Bump pillow from 10.0.0 to 10.0.1 in /requirements (#2238)\n\nBumps [pillow](https://github.com/python-pillow/Pillow) from 10.0.0 to 10.0.1.\r\n- [Release notes](https://github.com/python-pillow/Pillow/releases)\r\n- [Changelog](https://github.com/python-pillow/Pillow/blob/main/CHANGES.rst)\r\n- [Commits](https://github.com/python-pillow/Pillow/compare/10.0.0...10.0.1)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: pillow\r\n  dependency-type: direct:production\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2023-10-07T09:41:23+02:00",
+          "tree_id": "78e4c4a682ebf837f2ba88d272ca62499f3aa33a",
+          "url": "https://github.com/py-pdf/pypdf/commit/d20a55d947b58546bf1f9137787365fd07db2e05"
+        },
+        "date": 1696664748000,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.562837167850897,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008367935354160888",
+            "extra": "mean: 390.1925618000007 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.889341356146243,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013863783871973066",
+            "extra": "mean: 91.83291875000066 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21229318892549529,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015133423582361308",
+            "extra": "mean: 4.710466713799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.31212232754311,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00012737053536030613",
+            "extra": "mean: 96.97324839999766 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03666030294159305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0820639864558045",
+            "extra": "mean: 27.277461443599996 sec\nrounds: 5"
           }
         ]
       }
