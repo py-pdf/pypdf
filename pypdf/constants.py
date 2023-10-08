@@ -593,4 +593,4 @@ class ImageType(IntFlag):
     INLINE_IMAGES = auto()
     DRAWING_IMAGES = auto()
     ALL = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
-    IMAGES = ALL  # for consistancy with ObjectDeletionFlag
+    IMAGES = ALL  # for consistency with ObjectDeletionFlag
