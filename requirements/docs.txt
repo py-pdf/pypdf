@@ -8,11 +8,11 @@ alabaster==0.7.13
     # via sphinx
 attrs==23.1.0
     # via -r requirements/docs.in
-babel==2.12.1
+babel==2.13.0
     # via sphinx
 certifi==2023.7.22
     # via requests
-charset-normalizer==3.2.0
+charset-normalizer==3.3.0
     # via requests
 docutils==0.17.1
     # via
@@ -43,7 +43,7 @@ mdurl==0.1.2
     # via markdown-it-py
 myst-parser==0.16.1
     # via -r requirements/docs.in
-packaging==23.1
+packaging==23.2
     # via sphinx
 pygments==2.16.1
     # via sphinx
@@ -81,7 +81,7 @@ typing-extensions==4.7.1
     # via
     #   importlib-metadata
     #   markdown-it-py
-urllib3==2.0.4
+urllib3==2.0.6
     # via requests
 zipp==3.15.0
     # via importlib-metadata

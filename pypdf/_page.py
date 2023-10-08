@@ -1080,8 +1080,7 @@ class PageObject(DictionaryObject):
             if PG.ANNOTS in page:
                 annots = page[PG.ANNOTS]
                 if isinstance(annots, ArrayObject):
-                    for ref in annots:
-                        new_annots.append(ref)
+                    new_annots.extend(annots)
 
         for res in (
             RES.EXT_G_STATE,
@@ -2323,7 +2322,7 @@ class PageObject(DictionaryObject):
         assert isinstance(obj, DictionaryObject)
         fonts: Set[str] = set()
         embedded: Set[str] = set()
-        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj), fonts, embedded)
+        fonts, embedded = _get_fonts_walk(obj, fonts, embedded)
         unembedded = fonts - embedded
         return embedded, unembedded
 
