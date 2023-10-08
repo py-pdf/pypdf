@@ -27,14 +27,27 @@ Refer to [extract\_text](../modules/PageObject.html#pypdf._page.PageObject.extra
 You can use visitor-functions to control which part of a page you want to process and extract. The visitor-functions you provide will get called for each operator or for each text fragment.
 
 The function provided in argument visitor_text of function extract_text has five arguments:
-text, current transformation matrix, text matrix, font-dictionary and font-size.
-In most cases the x and y coordinates of the current position
-are in index 4 and 5 of the current transformation matrix.
+* text: the current text (as long as possible, can be up to a full line)
+* user_matrix: current matrix to move from user coordinate space (also known as CTM)
+* tm_matrix: current matrix from text coordinate space
+* font-dictionary: full font dictionary
+* font-size: the size (in text coordinate space)
+
+The matrix stores 6 parameters. The first 4 provide the rotation/scaling matrix and the last two provide the translation (horizontal/vertical)
+It is recommended to use the user_matrix as it takes into all transformations.
+
+Notes :
+
+ - as indicated in the PDF 1.7 reference, page 204 the user matrix applies to text space/image space/form space/pattern space.
+ - if you want to get the full transformation from text to user space, you can use the `mult` function (availalbe in global import) as follows:
+`txt2user = mult(tm, cm))`
+The font-size is the raw text size, that is affected by the `user_matrix`
+
 
 The font-dictionary may be None in case of unknown fonts.
 If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
 
-**Caveat**: In complicated documents the calculated positions might be wrong.
+**Caveat**: In complicated documents the calculated positions may be difficult to (if you move from multiple forms to page user space for example).
 
 The function provided in argument visitor_operand_before has four arguments:
 operator, operand-arguments, current transformation matrix and text matrix.
@@ -53,7 +66,7 @@ parts = []
 
 
 def visitor_body(text, cm, tm, font_dict, font_size):
-    y = tm[5]
+    y = cm[5]
     if y > 50 and y < 720:
         parts.append(text)
 
@@ -88,7 +101,7 @@ def visitor_svg_rect(op, args, cm, tm):
 
 
 def visitor_svg_text(text, cm, tm, fontDict, fontSize):
-    (x, y) = (tm[4], tm[5])
+    (x, y) = (cm[4], cm[5])
     dwg.add(dwg.text(text, insert=(x, y), fill="blue"))
 
 
