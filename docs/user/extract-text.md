@@ -33,14 +33,15 @@ The function provided in argument visitor_text of function extract_text has five
 * font-dictionary: full font dictionary
 * font-size: the size (in text coordinate space)
 
-the matrix stores 6 parameters. the 4 first provides the rotation/scaling matrix and the last two provides the translation (horizontal/vertical)
-it is recommended to use the user_matrix as it takes into all transformations.
+The matrix stores 6 parameters. The first 4 provide the rotation/scaling matrix and the last two provide the translation (horizontal/vertical)
+It is recommended to use the user_matrix as it takes into all transformations.
 
-notes :
- - as indicated in pdf 1.7 refeence, page 204 the user matrix applies to text space/image space/form space/pattern space.
- - if you want to get the full transformation from text to user space, you can use the mult function (availalbe in global import) as follow :
+Notes :
+
+ - as indicated in the PDF 1.7 reference, page 204 the user matrix applies to text space/image space/form space/pattern space.
+ - if you want to get the full transformation from text to user space, you can use the `mult` function (availalbe in global import) as follows:
 `txt2user = mult(tm, cm))`
-the font-size is the raw text size, that is affected by the user_matrix
+The font-size is the raw text size, that is affected by the `user_matrix`
 
 
 The font-dictionary may be None in case of unknown fonts.
