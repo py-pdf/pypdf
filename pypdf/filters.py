@@ -114,7 +114,7 @@ class FlateDecode:
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
-        if isinstance(decode_parms, ArrayObject):  # type: ignore
+        if isinstance(decode_parms, ArrayObject):
             raise DeprecationError("decode_parms as ArrayObject is depreciated")
 
         str_data = decompress(data)
@@ -162,7 +162,9 @@ class FlateDecode:
                 str_data = bytes(str_data)
             # PNG prediction:
             elif 10 <= predictor <= 15:
-                str_data = FlateDecode._decode_png_prediction(str_data, columns, rowlength)  # type: ignore
+                str_data = FlateDecode._decode_png_prediction(
+                    str_data, columns, rowlength
+                )
             else:
                 # unsupported predictor
                 raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
@@ -677,7 +679,7 @@ def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
             if filter_type in (FT.FLATE_DECODE, FTA.FL):
                 data = FlateDecode.decode(data, params)
             elif filter_type in (FT.ASCII_HEX_DECODE, FTA.AHx):
-                data = ASCIIHexDecode.decode(data)  # type: ignore
+                data = ASCIIHexDecode.decode(data)
             elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
                 data = RunLengthDecode.decode(data)
             elif filter_type in (FT.LZW_DECODE, FTA.LZW):

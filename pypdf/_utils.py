@@ -53,7 +53,7 @@ from typing import (
 
 try:
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
-    from typing import TypeAlias  # type: ignore[attr-defined]
+    from typing import TypeAlias
 except ImportError:
     from typing_extensions import TypeAlias
 
@@ -461,9 +461,9 @@ def deprecation_bookmark(**aliases: str) -> Callable:
         outline = a collection of outline items.
     """
 
-    def decoration(func: Callable) -> Any:  # type: ignore
+    def decoration(func: Callable) -> Any:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             rename_kwargs(func.__name__, kwargs, aliases, fail=True)
             return func(*args, **kwargs)
 
@@ -472,7 +472,7 @@ def deprecation_bookmark(**aliases: str) -> Callable:
     return decoration
 
 
-def rename_kwargs(  # type: ignore
+def rename_kwargs(
     func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str], fail: bool = False
 ) -> None:
     """
