@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1696759435724,
+  "lastUpdate": 1696760073271,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -41407,6 +41407,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.058152234869045805",
             "extra": "mean: 32.5481934228 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "c3613da880f74b36e26505a10de0f1fc7060f031",
+          "message": "REL: 3.16.3\n\n## What's new\n\n### Bug Fixes (BUG)\n-  invalid cm/tm in visitor functions (#2206) by @pubpub-zz\n-  Encrypt / decrypt Stream object dictionaries (#2228) by @pilotandy\n-  Support nested color spaces for the /DeviceN color space (#2241) by @Stefan\n-  images property fails if NullObject in list (#2215) by @pubpub-zz\n\n### Robustness (ROB)\n-  XYZ destination to cope with missing left and top param (#2237) by @pubpub-zz\n\n### Documentation (DOC)\n-  Add pilotandy for #2228 as a contributor by @MartinThoma\n-  Link to CONTRIBUTING.md in README.md (#2232) by @MarkPfeifle\n-  Changelog by @MartinThoma\n\n### Developer Experience (DEV)\n-  Exclude tests from mypy checks by @MartinThoma\n-  Unify mypy options and warn redundant workarounds (#2223) by @exiledkingcc\n-  Stabilize Pillow test with Pillow missing (#2229) by @Stefan\n\n### Maintenance (MAINT)\n-  Update pinned packages (#2243) by @MartinThoma\n\n### Testing (TST)\n-  Regression test against non-deterministic accidental object reuse (#2244) by @MartinThoma\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.2...3.16.3)",
+          "timestamp": "2023-10-08T12:07:32+02:00",
+          "tree_id": "ea9d6c2e8fac026bed4d272ba2e570894289e9f1",
+          "url": "https://github.com/py-pdf/pypdf/commit/c3613da880f74b36e26505a10de0f1fc7060f031"
+        },
+        "date": 1696760071198,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.5206684312780823,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011093811697654943",
+            "extra": "mean: 396.7201665999994 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.85453661984066,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014665384735365716",
+            "extra": "mean: 92.12737816666738 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2079457704613305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007327494038606018",
+            "extra": "mean: 4.808946091000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.954514785816697,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004332977238830676",
+            "extra": "mean: 100.45693049999898 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.036228069463825244,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019759634535421466",
+            "extra": "mean: 27.602906111200006 sec\nrounds: 5"
           }
         ]
       }
