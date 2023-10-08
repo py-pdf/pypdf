@@ -34,7 +34,7 @@ _DEPENDENCY_ERROR_STR = "cryptography>=3.1 is required for AES algorithm"
 crypt_provider = ("local_crypt_fallback", "0.0.0")
 
 
-class CryptRC4(CryptBase):  # type: ignore
+class CryptRC4(CryptBase):
     def __init__(self, key: bytes) -> None:
         self.s = bytearray(range(256))
         j = 0
@@ -58,7 +58,7 @@ class CryptRC4(CryptBase):  # type: ignore
         return self.encrypt(data)
 
 
-class CryptAES(CryptBase):  # type: ignore
+class CryptAES(CryptBase):
     def __init__(self, key: bytes) -> None:
         pass
 
