@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Version 3.16.3, 2023-10-08
+
+### Bug Fixes (BUG)
+-  Invalid cm/tm in visitor functions (#2206)
+-  Encrypt / decrypt Stream object dictionaries (#2228)
+-  Support nested color spaces for the /DeviceN color space (#2241)
+-  Images property fails if NullObject in list (#2215)
+
+### Developer Experience (DEV)
+-  Unify mypy options and warn redundant workarounds (#2223)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.2...3.16.3)
+
 ## Version 3.16.2, 2023-09-24
 
 ### Bug Fixes (BUG)
