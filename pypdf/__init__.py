@@ -10,7 +10,7 @@ You can read the full docs at https://pypdf.readthedocs.io/.
 from ._crypt_providers import crypt_provider
 from ._encryption import PasswordType
 from ._merger import PdfFileMerger, PdfMerger
-from ._page import PageObject, Transformation
+from ._page import PageObject, Transformation, mult
 from ._reader import DocumentInformation, PdfFileReader, PdfReader
 from ._version import __version__
 from ._writer import ObjectDeletionFlag, PdfFileWriter, PdfWriter
@@ -33,6 +33,7 @@ __all__ = [
     "__version__",
     "_debug_versions",
     "ImageType",
+    "mult",
     "PageRange",
     "PaperSize",
     "DocumentInformation",
