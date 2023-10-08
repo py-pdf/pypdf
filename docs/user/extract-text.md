@@ -28,7 +28,7 @@ You can use visitor-functions to control which part of a page you want to proces
 
 The function provided in argument visitor_text of function extract_text has five arguments:
 * text : the current text (as long as possible, can be up to a full line)
-* user_matrix: current matrix to move from user coordinate space(aka. CTM)
+* user_matrix: current matrix to move from user coordinate space (also known as CTM)
 * tm_matrix: current matrix from text coordinate space
 * font-dictionary: full font dictionary
 * font-size: the size (in text coordinate space)
