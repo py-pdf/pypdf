@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1696758392721,
+  "lastUpdate": 1696759013065,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -41289,6 +41289,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.038963609370157117",
             "extra": "mean: 25.52615133380001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "126f6becb197fd2845c67da7e8333daff08f3b50",
+          "message": "TST: Regression test against non-deterministic accidental object reuse (#2244)\n\nFull credit to sjoerdjob for this contribution via #1995\r\n\r\nSee #1788\r\n\r\nCo-authored-by: Sjoerd Job Postmus <sjoerdjob@sjec.nl>",
+          "timestamp": "2023-10-08T11:52:28+02:00",
+          "tree_id": "35a84d7f136057a7f260278bca5a9cc51c3f8e05",
+          "url": "https://github.com/py-pdf/pypdf/commit/126f6becb197fd2845c67da7e8333daff08f3b50"
+        },
+        "date": 1696759010526,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.4721126961619353,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004724383016386156",
+            "extra": "mean: 404.5123029999985 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.853949412281775,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01369519876724454",
+            "extra": "mean: 92.13236233333195 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2106599642539669,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014261798191226619",
+            "extra": "mean: 4.746986469599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.003550960484052,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00037913547661032966",
+            "extra": "mean: 99.9645030000039 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03658234341446755,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1654680374297182",
+            "extra": "mean: 27.3355916178 sec\nrounds: 5"
           }
         ]
       }
