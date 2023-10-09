@@ -628,3 +628,13 @@ def test_nested_device_n_color_space():
     name = "issue2240.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].images[0]
+
+
+@pytest.mark.enable_socket()
+def test_flate_decode_with_image_mode_1():
+    """From #2248"""
+    url = "https://github.com/py-pdf/pypdf/files/12847339/Prototype-Declaration-VDE4110-HYD-5000-20000-ZSS-DE.pdf"
+    name = "issue2248.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    for image in reader.pages[7].images:
+        _ = image
