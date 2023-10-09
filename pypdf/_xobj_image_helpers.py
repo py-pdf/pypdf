@@ -167,7 +167,9 @@ def _handle_flate(
             lookup = None
         else:
             if img.mode == "1":
-                colors_arr = [lookup[x - nb : x] for x in range(nb, len(lookup), nb)]
+                # Two values ("high" and "low").
+                assert len(lookup) == 2 * nb, len(lookup)
+                colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
                     [
                         b"".join(
