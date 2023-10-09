@@ -1926,7 +1926,7 @@ REFERENCES 50
 2.6 Applicability of Transfer Theory and the Geometrical Optics Limit 72
 PROBLEMS 74
 REFERENCES 76"""
-    url = "https://github.com/py-pdf/pypdf/files/12389243/testbook.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/12797067/test-12.pdf"
     name = "iss2233.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter(clone_from=reader)
