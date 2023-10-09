@@ -1,8 +1,8 @@
 """Internal tool to update the changelog."""
 
 import json
-import urllib.request
 import subprocess
+import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple
