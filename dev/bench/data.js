@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1696963845899,
+  "lastUpdate": 1696964080077,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -41584,6 +41584,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.057486353489270545",
             "extra": "mean: 25.902481131999995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "bf009aed0d4483e4133cee354ff6a7f07636d918",
+          "message": "REL: 3.16.4\n\n## What's new\n\n### Bug Fixes (BUG)\n-  Avoid exceeding recursion depth when retrieving image mode (#2251) by @stefan6419846\n\n### Maintenance (MAINT)\n-  Bump sample-files by @MartinThoma\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.3...3.16.4)",
+          "timestamp": "2023-10-10T20:48:54+02:00",
+          "tree_id": "46f53095222b478ddeea0b2783a03791c6d2676c",
+          "url": "https://github.com/py-pdf/pypdf/commit/bf009aed0d4483e4133cee354ff6a7f07636d918"
+        },
+        "date": 1696964077370,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.076243049828313,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003852171574811593",
+            "extra": "mean: 481.63917999999626 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.256534349818459,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008403810885272527",
+            "extra": "mean: 108.03179269999816 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1740029623445441,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07855860398088692",
+            "extra": "mean: 5.747028593800001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.41105156222864,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0029815969848821984",
+            "extra": "mean: 106.25805133333996 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03224070551914437,
+            "unit": "iter/sec",
+            "range": "stddev: 0.6647007219244679",
+            "extra": "mean: 31.016690978000003 sec\nrounds: 5"
           }
         ]
       }
