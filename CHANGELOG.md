@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 3.16.4, 2023-10-10
+
+### Bug Fixes (BUG)
+-  Avoid exceeding recursion depth when retrieving image mode (#2251)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.3...3.16.4)
+
 ## Version 3.16.3, 2023-10-08
 
 ### Bug Fixes (BUG)
