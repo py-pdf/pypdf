@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1696964080077,
+  "lastUpdate": 1696965128764,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -41643,6 +41643,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.6647007219244679",
             "extra": "mean: 31.016690978000003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8a4adac677e6991b542a72ab143960c1ee408b1d",
+          "message": "DOC: Improve merging docs (#2247)\n\nThis reworks the docs on merging PDF files to quite some extent:\r\n\r\n* Formatting: Make it consistent\r\n* Language: Improve typos and formulations\r\n* Duplication: Avoid reproducing the complete parameter set of methods in the tutorial. Point to the API reference instead.\r\n* Content: Add an example for `page.transfer_rotation_to_content()`.\r\n\r\nFixes #1655",
+          "timestamp": "2023-10-10T21:07:54+02:00",
+          "tree_id": "e45c43d91b55eb8bde33744bd40eee418931418e",
+          "url": "https://github.com/py-pdf/pypdf/commit/8a4adac677e6991b542a72ab143960c1ee408b1d"
+        },
+        "date": 1696965125986,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.681841507110283,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006332747133862813",
+            "extra": "mean: 372.8781128000037 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.107212356161055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010042191266344569",
+            "extra": "mean: 90.03159099999654 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22274399956601854,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004063014482647036",
+            "extra": "mean: 4.489458759599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.211535073425328,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00021703052109568424",
+            "extra": "mean: 81.88978649999494 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03876720372600989,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0381308673840944",
+            "extra": "mean: 25.794999481200005 sec\nrounds: 5"
           }
         ]
       }
