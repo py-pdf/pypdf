@@ -2306,6 +2306,8 @@ class PdfWriter:
         Remove images from this output.
 
         Args:
+            to_delete : The type of images to be deleted 
+                (default = all images types)
             ignore_byte_string_object: deprecated
         """
         if isinstance(to_delete, bool):
