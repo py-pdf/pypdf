@@ -101,9 +101,11 @@ from .generic import (
     NullObject,
     NumberObject,
     PdfObject,
+    StreamObject,
     TextStringObject,
     TreeObject,
     ViewerPreferences,
+    get_from_file_specification,
     read_object,
 )
 from .types import OutlineType, PagemodeType
@@ -2316,12 +2318,32 @@ class PdfReader:
             return {k: v if len(v) > 1 else v[0] for k, v in self.attachments.items()}  # type: ignore
         else:
             lst = ef.list_get(filename)
-            return {
-                filename: [(x.get_object())["/EF"].get_object(  # type: ignore
-                    )["/F"].get_object().get_data() for x in lst]  # type: ignore
-                if isinstance(lst, list)
-                else (lst.get_object())["/EF"].get_object()["/F"].get_object().get_data()  # type: ignore
-            }
+            if lst is None:
+                return {}
+            lst = cast(DictionaryObject, lst.get_object())
+            efo = cast(DictionaryObject, lst["/EF"].get_object())
+            rst = cast(
+                StreamObject,
+                get_from_file_specification(efo).get_object(),
+            ).get_data()
+            if isinstance(rst, str):
+                rst = rst.encode()
+            if "/RF" not in lst:
+                return {filename: [rst]}
+            else:
+                rst2 = {"": rst}  # /EF will be returned by empty key
+                lst = cast(
+                    ArrayObject,
+                    get_from_file_specification(
+                        cast(DictionaryObject, lst["/RF"].get_object())
+                    ),
+                )
+                for i in range(0, len(lst), 2):
+                    t = cast(StreamObject, lst[i + 1].get_object()).get_data()
+                    if isinstance(t, str):
+                        t = t.encode()
+                    rst2[lst[i]] = t
+                return {filename: [rst2]}
 
 
 class PdfFileReader(PdfReader):  # deprecated

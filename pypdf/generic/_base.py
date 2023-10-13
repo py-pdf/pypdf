@@ -319,6 +319,7 @@ class IndirectObject(PdfObject):
         Replace the pointed object with obj
         Only applies to IndirectObjects within a PdfWriter
         """
+        obj = cast("PdfObject", obj.get_object())
         pdf = self.pdf
         if not hasattr(pdf, "_replace_object"):
             raise TypeError("Trying to replace Object in a non PdfWriter")

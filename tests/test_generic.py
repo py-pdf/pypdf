@@ -1235,3 +1235,11 @@ def test_encodedstream_set_data():
     assert cc["/Filter"] == ["/FlateDecode", "/FlateDecode", "/FlateDecode"]
     assert str(cc["/DecodeParms"]) == "[NullObject, NullObject, NullObject]"
     assert cc[NameObject("/Test")] == "/MyTest"
+
+
+def test_replace_object():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    i = writer.pages[0]["/Contents"][0].idnum
+    writer.pages[0]["/Contents"][0].replace_object(NullObject())
+    assert writer.pages[0]["/Contents"][0].idnum == i
+    assert isinstance(writer.pages[0]["/Contents"][0].get_object(), NullObject)

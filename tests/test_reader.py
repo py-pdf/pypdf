@@ -1454,3 +1454,8 @@ def test_issue_140():
     b = get_data_from_url(url, name=name)
     reader = PdfReader(BytesIO(b))
     assert len(reader.pages) == 54
+
+
+def test_embedded_files_no_ef():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    assert reader.embedded_files is None

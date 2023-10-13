@@ -1545,7 +1545,7 @@ class NameTree(DictionaryObject):
         _list(self, _l)
         return dict(_l)
 
-    def list_get(self, key: str) -> List[PdfObject]:
+    def list_get(self, key: str) -> Optional[PdfObject]:
         """
         Get the entry from the Name Tree
 
@@ -1557,10 +1557,9 @@ class NameTree(DictionaryObject):
         attributeEntries as a dictionary
         """
 
-        def _get(key: str, o: Optional[PdfObject]) -> List[PdfObject]:
+        def _get(key: str, o: Optional[PdfObject]) -> Optional[PdfObject]:
             if o is None:
-                return []
-            rst = []
+                return None
             o = cast(DictionaryObject, o)
             _l = o.get("/Names", None)
             a = o.get("/Kids", None)
@@ -1568,10 +1567,12 @@ class NameTree(DictionaryObject):
             a = a.get_object() if a else []
             for i, x in enumerate(_l):
                 if x == key:
-                    rst.append(_l[i + 1])
+                    return _l[i + 1]
             for x in a:
-                rst.extend(_get(key, x))
-            return rst
+                v = _get(key, x)
+                if v is not None:
+                    return v
+            return None  # if we arrive here, it means nothing matched
 
         return _get(key, self)
 
@@ -1676,14 +1677,14 @@ class NameTree(DictionaryObject):
         return o.indirect_reference if o is not None else None
 
 
-def get_name_from_file_specification(_a: DictionaryObject) -> str:
-    return cast(
-        str,
+def get_from_file_specification(_a: DictionaryObject) -> PdfObject:
+    return (
         _a.get("/UF")
         or _a.get("/F")
         or _a.get("/DOS")
         or _a.get("/Unix")
-        or _a.get("/Mac"),
+        or _a.get("/Mac")
+        or DictionaryObject()
     )
 
 
