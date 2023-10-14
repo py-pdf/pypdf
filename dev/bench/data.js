@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1696965128764,
+  "lastUpdate": 1697265929245,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -41702,6 +41702,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0381308673840944",
             "extra": "mean: 25.794999481200005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4be07d08a70b00de554cd4bfe4b28d7166826464",
+          "message": "DEV: Attribute correct authors in the release notes (#2246)\n\nRetrieve the user logins for all commits from the GitHub API to correctly attribute each user, while trying to keep the number of API requests low to not hit the rate limits\r\n\r\nFixes #2245",
+          "timestamp": "2023-10-14T08:41:03+02:00",
+          "tree_id": "feb4792d8c4ca45af9f8cda636d0c28790730c63",
+          "url": "https://github.com/py-pdf/pypdf/commit/4be07d08a70b00de554cd4bfe4b28d7166826464"
+        },
+        "date": 1697265927251,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.597777771842137,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00869604920514179",
+            "extra": "mean: 384.94439780000107 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.226563226635125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011240505452846649",
+            "extra": "mean: 89.07445491666503 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21274380954882444,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03995576442365753",
+            "extra": "mean: 4.700489298000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.752747506607008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009588932098882517",
+            "extra": "mean: 92.99948681818778 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.036661597534959525,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02105122165454881",
+            "extra": "mean: 27.276498222599997 sec\nrounds: 5"
           }
         ]
       }
