@@ -9,8 +9,10 @@ attrs==20.3.0
     #   flake8-bugbear
     #   flake8-implicit-str-concat
     #   pytest
-coverage==6.2
-    # via -r requirements/ci.in
+coverage[toml]==6.2
+    # via
+    #   -r requirements/ci.in
+    #   pytest-cov
 execnet==1.9.0
     # via pytest-xdist
 flake8==5.0.4
@@ -67,10 +69,13 @@ pytest==7.0.1
     # via
     #   -r requirements/ci.in
     #   pytest-benchmark
+    #   pytest-cov
     #   pytest-socket
     #   pytest-timeout
     #   pytest-xdist
 pytest-benchmark==3.4.1
+    # via -r requirements/ci.in
+pytest-cov==4.0.0
     # via -r requirements/ci.in
 pytest-socket==0.4.1
     # via -r requirements/ci.in
@@ -82,6 +87,7 @@ six==1.16.0
     # via flake8-print
 tomli==1.2.3
     # via
+    #   coverage
     #   mypy
     #   pytest
 typed-ast==1.5.5
