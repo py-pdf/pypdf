@@ -12,7 +12,7 @@ pytest-benchmark
 pytest-socket
 pytest-timeout
 pytest-xdist
-# ruff  # only take this for 3.11
+ruff  # only take this for 3.11
 typeguard
 types-dataclasses
 types-Pillow
