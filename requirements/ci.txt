@@ -11,6 +11,8 @@ attrs==20.3.0
     #   pytest
 coverage==6.2
     # via -r requirements/ci.in
+execnet==1.9.0
+    # via pytest-xdist
 flake8==5.0.4
     # via
     #   -r requirements/ci.in
@@ -67,11 +69,14 @@ pytest==7.0.1
     #   pytest-benchmark
     #   pytest-socket
     #   pytest-timeout
+    #   pytest-xdist
 pytest-benchmark==3.4.1
     # via -r requirements/ci.in
 pytest-socket==0.4.1
     # via -r requirements/ci.in
 pytest-timeout==2.1.0
+    # via -r requirements/ci.in
+pytest-xdist==3.0.2
     # via -r requirements/ci.in
 six==1.16.0
     # via flake8-print

@@ -51,7 +51,7 @@ crypto = [
     "PyCryptodome; python_version == '3.6'",
 ]
 image = ["Pillow>=8.0.0"]
-dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "flit", "wheel"]
+dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "flit", "wheel", "pytest-xdist"]
 docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
 
 [tool.mutmut]
