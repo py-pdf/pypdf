@@ -174,7 +174,7 @@ jobs:
 
       - name: Check Number of Downloaded Files
         run: |
-          downloaded_files_count=$(find coverage-data -type f | wc -l)
+          downloaded_files_count=$(find \.coverage* -type f | wc -l)
           if [ $downloaded_files_count -eq 7 ]; then
             echo "The expected number of files (7) were downloaded."
           else
