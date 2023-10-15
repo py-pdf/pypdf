@@ -171,9 +171,8 @@ jobs:
           name: coverage-data
 
       - name: Combine coverage & create xml report
-        run: |
-          python -m coverage combine
-          python -m coverage xml
+        # python -m coverage combine
+        run: python -m coverage xml
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
