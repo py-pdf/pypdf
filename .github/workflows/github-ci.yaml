@@ -96,7 +96,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: coverage-data
-        path: .coverage.*
+        path: .coverage
         if-no-files-found: ignore
 
   codestyle:
