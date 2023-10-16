@@ -1455,7 +1455,7 @@ def test_issue_140():
     reader = PdfReader(BytesIO(b))
     assert len(reader.pages) == 54
 
-    
+
 @pytest.mark.enable_socket()
 def test_xyz_with_missing_param():
     """Cf #2236"""
@@ -1470,4 +1470,5 @@ def test_xyz_with_missing_param():
 
 def test_embedded_files_no_ef():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader[NameObject("/Names")] = DictionaryObject()
     assert reader.embedded_files is None
