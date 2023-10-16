@@ -1470,5 +1470,5 @@ def test_xyz_with_missing_param():
 
 def test_embedded_files_no_ef():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    reader[NameObject("/Names")] = DictionaryObject()
+    reader.trailer["/Root"][NameObject("/Names")] = DictionaryObject()
     assert reader.embedded_files is None
