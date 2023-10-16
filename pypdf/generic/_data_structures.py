@@ -549,8 +549,10 @@ class DictionaryObject(dict, PdfObject):
 
 
 class TreeObject(DictionaryObject):
-    def __init__(self) -> None:
+    def __init__(self, dct: Optional[DictionaryObject] = None) -> None:
         DictionaryObject.__init__(self)
+        if dct:
+            self.update(dct)
 
     def hasChildren(self) -> bool:  # deprecated
         deprecate_with_replacement("hasChildren", "has_children", "4.0.0")
@@ -1465,7 +1467,6 @@ class NameTree(DictionaryObject):
             x not in obj for x in ("/Names", "/Kids")
         ):
             raise ValueError("source object is not a valid source object")
-        obj = cast(DictionaryObject, obj)
         if obj is not None:
             self.update(obj)
         else:  # building a new Name Tree

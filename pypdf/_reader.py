@@ -2247,7 +2247,7 @@ class PdfReader:
             for k, v in ef.list_items().items():
                 if isinstance(v, list):
                     if k not in d:
-                        d[k] = []  # type: ignore
+                        d[k] = []
                     for e in v:
                         e = cast(DictionaryObject, e.get_object())
                         if "/EF" in e:
