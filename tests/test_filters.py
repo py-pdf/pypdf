@@ -260,10 +260,6 @@ def test_issue_399():
     reader.pages[1].extract_text()
 
 
-@pytest.mark.skipif(
-    sys.platform.startswith("win"),
-    reason="Supbrocess running python seems to linux-specific",
-)
 @pytest.mark.enable_socket()
 def test_image_without_pillow(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
