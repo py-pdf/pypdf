@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1697266310378,
+  "lastUpdate": 1697568799466,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -41820,6 +41820,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02413215728675117",
             "extra": "mean: 27.288764495400006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8aef1de91b2b479f25f7c0261f32943870f2ff42",
+          "message": "DEV: Use pytest-xdist (#2254)\n\nThis was added so that CI goes down from about 14min 23s to about 9min 20s\r\n\r\nPlease note that individual runs depend heavily on factors outside of our control (likely Github CI test runner hardware)",
+          "timestamp": "2023-10-17T20:48:53+02:00",
+          "tree_id": "fe75b383953303e82afb0036fd631754fc8f7017",
+          "url": "https://github.com/py-pdf/pypdf/commit/8aef1de91b2b479f25f7c0261f32943870f2ff42"
+        },
+        "date": 1697568797419,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.527392072417385,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011642750389175168",
+            "extra": "mean: 395.6647688000089 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.546635279306418,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01722207149100715",
+            "extra": "mean: 94.81696991666173 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20968803222283713,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02613064283417581",
+            "extra": "mean: 4.7689893858000065 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.405635284168907,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00038375461793629825",
+            "extra": "mean: 96.10177300000089 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03664651967132911,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1121818320601556",
+            "extra": "mean: 27.28772087960001 sec\nrounds: 5"
           }
         ]
       }
