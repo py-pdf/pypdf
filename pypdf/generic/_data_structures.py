@@ -1467,10 +1467,7 @@ class NameTree(DictionaryObject):
             x not in obj for x in ("/Names", "/Kids")
         ):
             raise ValueError("source object is not a valid source object")
-        if obj is not None:
-            self.update(obj)
-        else:  # building a new Name Tree
-            self[NameObject("/Names")] = ArrayObject()
+        self.update(obj)
         if hasattr(obj, "indirect_reference"):
             self.indirect_reference = obj.indirect_reference
 
