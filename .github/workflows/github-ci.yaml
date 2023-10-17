@@ -124,7 +124,9 @@ jobs:
         python -c "from tests import download_test_pdfs; download_test_pdfs()"
     - name: Test with pytest
       run: |
-        python -m coverage run --parallel-mode -m pytest tests -vv
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv
+    - name: Rename coverage data file
+      run: mv .coverage ".coverage.$RANDOM"
     - name: Upload coverage data
       uses: actions/upload-artifact@v3
       with:
@@ -202,6 +204,16 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: coverage-data
+
+      - name: Check Number of Downloaded Files
+        run: |
+          downloaded_files_count=$(find \.coverage* -type f | wc -l)
+          if [ $downloaded_files_count -eq 7 ]; then
+            echo "The expected number of files (7) were downloaded."
+          else
+            echo "ERROR: Expected 7 files, but found $downloaded_files_count files."
+            exit 1
+          fi
 
       - name: Combine coverage & create xml report
         run: |
