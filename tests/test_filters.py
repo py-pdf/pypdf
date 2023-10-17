@@ -265,9 +265,11 @@ def test_image_without_pillow(tmp_path):
     name = "tika-914102.pdf"
     _ = get_data_from_url(url, name=name)
     pdf_path = Path(__file__).parent / "pdf_cache" / name
+    pdf_path_str = str(pdf_path.resolve()).replace("\\", "/")
 
     source_file = tmp_path / "script.py"
-    source_file.write_text(f"""
+    source_file.write_text(
+        f"""
 import sys
 from pypdf import PdfReader
 
@@ -275,7 +277,7 @@ import pytest
 
 
 sys.modules["PIL"] = None
-reader = PdfReader("{pdf_path.resolve()}", strict=True)
+reader = PdfReader("{pdf_path_str}", strict=True)
 
 for page in reader.pages:
     with pytest.raises(ImportError) as exc:
@@ -284,13 +286,20 @@ for page in reader.pages:
         "pillow is required to do image extraction. "
         "It can be installed via 'pip install pypdf[image]'"
     ), exc.value.args[0]
-""")
+"""
+    )
     result = subprocess.run(  # noqa: UP022
-        [shutil.which("python"), source_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE  # noqa: S603
+        [shutil.which("python"), source_file],  # noqa: S603
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
     assert result.returncode == 0
     assert result.stdout == b""
-    assert result.stderr == b"Superfluous whitespace found in object header b'4' b'0'\n"
+    assert (
+        result.stderr.replace(b"\r", b"")
+        == b"Superfluous whitespace found in object header b'4' b'0'\n"
+    )
+
 
 @pytest.mark.enable_socket()
 def test_issue_1737():
