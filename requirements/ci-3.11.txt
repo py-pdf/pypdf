@@ -6,8 +6,12 @@
 #
 attrs==23.1.0
     # via flake8-bugbear
-coverage==7.3.0
-    # via -r requirements/ci.in
+coverage[toml]==7.3.0
+    # via
+    #   -r requirements/ci.in
+    #   pytest-cov
+execnet==2.0.2
+    # via pytest-xdist
 flake8==6.1.0
     # via
     #   -r requirements/ci.in
@@ -51,13 +55,19 @@ pytest==7.4.0
     # via
     #   -r requirements/ci.in
     #   pytest-benchmark
+    #   pytest-cov
     #   pytest-socket
     #   pytest-timeout
+    #   pytest-xdist
 pytest-benchmark==4.0.0
+    # via -r requirements/ci.in
+pytest-cov==4.1.0
     # via -r requirements/ci.in
 pytest-socket==0.6.0
     # via -r requirements/ci.in
 pytest-timeout==2.1.0
+    # via -r requirements/ci.in
+pytest-xdist==3.3.1
     # via -r requirements/ci.in
 ruff==0.0.290
     # via -r requirements/ci.in
