@@ -103,6 +103,7 @@ def test_pdfreader_file_load():
         for expected_line, actual_line in zip(text.splitlines(), pdftext.splitlines()):
             assert expected_line == actual_line
 
+        pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows
         assert text == pdftext, (
             "PDF extracted text differs from expected value.\n\n"
             "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
