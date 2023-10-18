@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1697572149892,
+  "lastUpdate": 1697659185361,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -41938,6 +41938,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027211794779042252",
             "extra": "mean: 27.5562997142 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f27b72d76ddfb937d22e28a30e995b58ab9c91b4",
+          "message": "TST: Fix test_image_without_pillow in windows environment (#2257)",
+          "timestamp": "2023-10-18T21:54:31+02:00",
+          "tree_id": "933bdad37507dfa79d9790967faf0808d77adae1",
+          "url": "https://github.com/py-pdf/pypdf/commit/f27b72d76ddfb937d22e28a30e995b58ab9c91b4"
+        },
+        "date": 1697659182324,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.2065310075104225,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01074927926989893",
+            "extra": "mean: 453.20006680000233 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.795541847509114,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0073878196990742485",
+            "extra": "mean: 102.08725719999734 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18249315386386405,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13747568312261785",
+            "extra": "mean: 5.479657613600006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.624231866355299,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003146153797408263",
+            "extra": "mean: 103.9043960999976 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.030903970478072987,
+            "unit": "iter/sec",
+            "range": "stddev: 0.34085841039426407",
+            "extra": "mean: 32.3583016852 sec\nrounds: 5"
           }
         ]
       }
