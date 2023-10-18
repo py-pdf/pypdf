@@ -260,16 +260,13 @@ def test_issue_399():
     reader.pages[1].extract_text()
 
 
-@pytest.mark.skipif(
-    sys.platform.startswith("win"),
-    reason="Supbrocess running python seems to linux-specific",
-)
 @pytest.mark.enable_socket()
 def test_image_without_pillow(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
     name = "tika-914102.pdf"
     _ = get_data_from_url(url, name=name)
     pdf_path = Path(__file__).parent / "pdf_cache" / name
+    pdf_path_str = str(pdf_path.resolve()).replace("\\", "/")
 
     source_file = tmp_path / "script.py"
     source_file.write_text(
@@ -281,7 +278,7 @@ import pytest
 
 
 sys.modules["PIL"] = None
-reader = PdfReader("{pdf_path.resolve()}", strict=True)
+reader = PdfReader("{pdf_path_str}", strict=True)
 
 for page in reader.pages:
     with pytest.raises(ImportError) as exc:
@@ -299,7 +296,11 @@ for page in reader.pages:
     )
     assert result.returncode == 0
     assert result.stdout == b""
-    assert result.stderr == b"Superfluous whitespace found in object header b'4' b'0'\n"
+    assert (
+        result.stderr.replace(b"\r", b"")
+        == b"Superfluous whitespace found in object header b'4' b'0'\n"
+    )
+
 
 
 @pytest.mark.enable_socket()
