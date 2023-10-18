@@ -2,7 +2,6 @@
 import shutil
 import string
 import subprocess
-import sys
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
@@ -300,7 +299,6 @@ for page in reader.pages:
         result.stderr.replace(b"\r", b"")
         == b"Superfluous whitespace found in object header b'4' b'0'\n"
     )
-
 
 
 @pytest.mark.enable_socket()
