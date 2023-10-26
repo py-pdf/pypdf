@@ -920,8 +920,8 @@ class PdfWriter:
         else:  # /Tx
             txt = field.get("/V", "")
             sel = []
-        # Escape parentheses (Ref. 7.3.4.2 Literal Strings)
-        txt = txt.replace('(', r'\(').replace(')', r'\)')
+        # Escape parentheses (pdf 1.7 reference, table 3.2  Literal Strings)
+        txt = txt.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
         # Generate appearance stream
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
