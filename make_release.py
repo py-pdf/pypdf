@@ -197,7 +197,9 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
     for commit in commits:
         if commit.prefix not in grouped:
             grouped[commit.prefix] = []
-        grouped[commit.prefix].append({"msg": commit.message, "author": commit.author_login})
+        grouped[commit.prefix].append(
+            {"msg": commit.message, "author": commit.author_login}
+        )
 
     # Order prefixes
     order = [
@@ -240,9 +242,7 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
         output_with_user += tmp
         for commit in grouped[prefix]:
             output += f"- {commit['msg']}\n"
-            output_with_user += (
-                f"- {commit['msg']} by @{commit['author']}\n"
-            )
+            output_with_user += f"- {commit['msg']} by @{commit['author']}\n"
         del grouped[prefix]
 
     if grouped:
@@ -357,7 +357,11 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
         prefix = "DOC"
 
     return Change(
-        commit_hash=commit_hash, prefix=prefix, message=message, author=author, author_login=author_login
+        commit_hash=commit_hash,
+        prefix=prefix,
+        message=message,
+        author=author,
+        author_login=author_login,
     )
 
 

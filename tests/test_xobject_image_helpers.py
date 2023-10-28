@@ -21,7 +21,7 @@ def test_get_imagemode_recursion_depth():
     target = b"\n10 0 obj\n[ /DeviceN [ /HKS#2044#20K /Magenta /Yellow /Black ] 10 0 R 11 0 R 12 0 R ]\nendobj\n"
     reader = PdfReader(BytesIO(content.replace(source, target)))
     with pytest.raises(
-            PdfReadError,
-            match="Color spaces nested too deep. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH."
+        PdfReadError,
+        match="Color spaces nested too deep. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH.",
     ):
         reader.pages[0].images[0]

@@ -131,7 +131,7 @@ It means that you may copy lots of objects which will be saved in the output PDF
 In order to prevent this, you can provide the list of fields in the dictionaries to be ignored:
 
 ```python
-new_page  = writer.add_page(reader.pages[0], excluded_fields=["/B"])
+new_page = writer.add_page(reader.pages[0], excluded_fields=["/B"])
 ```
 
 ### Merging rotated pages
