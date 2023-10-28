@@ -32,6 +32,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import functools
 import logging
 import re
+import sys
 import warnings
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -51,10 +52,10 @@ from typing import (
     overload,
 )
 
-try:
+if sys.version_info[:2] >= (3, 10):
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
     from typing import TypeAlias
-except ImportError:
+else:
     from typing_extensions import TypeAlias
 
 from .errors import (
