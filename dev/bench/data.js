@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1698483436537,
+  "lastUpdate": 1698489999529,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -42233,6 +42233,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07358863364133458",
             "extra": "mean: 27.37748162740001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e9241ac795cea9b93f82741c57b1036de456d330",
+          "message": "BUG: Correctly handle image mode 1 with FlateDecode (#2249)\n\nFixes #2248",
+          "timestamp": "2023-10-28T12:42:16+02:00",
+          "tree_id": "a7c56692afb86d1d7a1bc31f1fdb95b88c893d45",
+          "url": "https://github.com/py-pdf/pypdf/commit/e9241ac795cea9b93f82741c57b1036de456d330"
+        },
+        "date": 1698489997576,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.4689118203503706,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008948669002248128",
+            "extra": "mean: 405.03674199999864 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.791144455571782,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011328566773352807",
+            "extra": "mean: 92.6685769166653 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2054449573905296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029579139321173037",
+            "extra": "mean: 4.867483790800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.269830090919656,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009870741801331752",
+            "extra": "mean: 97.37259439999661 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03644036229646048,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12691836839541226",
+            "extra": "mean: 27.442098183999995 sec\nrounds: 5"
           }
         ]
       }
