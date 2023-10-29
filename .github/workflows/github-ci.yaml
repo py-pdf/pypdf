@@ -51,17 +51,17 @@ jobs:
 
 
   tests:
-    name: pytest on ${{ matrix.python-version }}
+    name: "pytest on ${{ matrix.python-version }} (crypto-lib: ${{ matrix.use-crypto-lib }})"
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
         use-crypto-lib: ["cryptography"]
         include:
           - python-version: "3.6"
             use-crypto-lib: "pycryptodome"
           - python-version: "3.7"
-            use-crypto-lib: ""
+            use-crypto-lib: "none"
     steps:
     - name: Update APT packages
       run:
@@ -208,10 +208,10 @@ jobs:
       - name: Check Number of Downloaded Files
         run: |
           downloaded_files_count=$(find \.coverage* -type f | wc -l)
-          if [ $downloaded_files_count -eq 7 ]; then
-            echo "The expected number of files (7) were downloaded."
+          if [ $downloaded_files_count -eq 8 ]; then
+            echo "The expected number of files (8) were downloaded."
           else
-            echo "ERROR: Expected 7 files, but found $downloaded_files_count files."
+            echo "ERROR: Expected 8 files, but found $downloaded_files_count files."
             exit 1
           fi
 
