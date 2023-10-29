@@ -293,7 +293,9 @@ class DictionaryObject(dict, PdfObject):
                             except Exception:
                                 cur_obj = None
                         for s, c in objs:
-                            c._clone(s, pdf_dest, force_duplicate, ignore_fields, visited)
+                            c._clone(
+                                s, pdf_dest, force_duplicate, ignore_fields, visited
+                            )
 
         for k, v in src.items():
             if k not in ignore_fields:
