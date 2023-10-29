@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1698552178298,
+  "lastUpdate": 1698553136633,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -42351,6 +42351,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.044048181456928355",
             "extra": "mean: 27.558096954799986 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ahuszagh@gmail.com",
+            "name": "Alexander Huszagh",
+            "username": "Alexhuszagh"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9b23ac3c9619492570011d551d521690de9a3e2d",
+          "message": "SEC: Infinite recursion when using PdfWriter(clone_from=reader) (#2264)\n\nUse a visited memo to check if the current object in the clone operation has already been visited, and if so, do not add it to the list of objects.\r\n\r\nThis avoids infinite recursion in case there are links to the same object inside a PDF.",
+          "timestamp": "2023-10-29T05:14:40+01:00",
+          "tree_id": "0a113611bce026c90531bc5f48652d5fd1f6f68b",
+          "url": "https://github.com/py-pdf/pypdf/commit/9b23ac3c9619492570011d551d521690de9a3e2d"
+        },
+        "date": 1698553134072,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.6324669352715526,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010292726519022102",
+            "extra": "mean: 379.87181780000014 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.040791370361498,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010749361835374506",
+            "extra": "mean: 90.57321766666604 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22034090539827053,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014083149632692854",
+            "extra": "mean: 4.538421943000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.071129856949604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00023964150536135605",
+            "extra": "mean: 82.84228666666849 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03895834170140005,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09173511686846204",
+            "extra": "mean: 25.668443684400017 sec\nrounds: 5"
           }
         ]
       }
