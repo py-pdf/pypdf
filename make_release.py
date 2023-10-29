@@ -1,9 +1,11 @@
 """Internal tool to update the changelog."""
 
+import json
 import subprocess
+import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from rich.prompt import Prompt
 
@@ -16,6 +18,7 @@ class Change:
     prefix: str
     message: str
     author: str
+    author_login: str
 
 
 def main(changelog_path: str) -> None:
@@ -194,7 +197,9 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
     for commit in commits:
         if commit.prefix not in grouped:
             grouped[commit.prefix] = []
-        grouped[commit.prefix].append({"msg": commit.message, "author": commit.author})
+        grouped[commit.prefix].append(
+            {"msg": commit.message, "author": commit.author_login}
+        )
 
     # Order prefixes
     order = [
@@ -237,9 +242,7 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
         output_with_user += tmp
         for commit in grouped[prefix]:
             output += f"- {commit['msg']}\n"
-            output_with_user += (
-                f"- {commit['msg']} by @{author2github(commit['author'])}\n"
-            )
+            output_with_user += f"- {commit['msg']} by @{commit['author']}\n"
         del grouped[prefix]
 
     if grouped:
@@ -265,6 +268,31 @@ def get_most_recent_git_tag() -> str:
     return git_tag
 
 
+def get_author_mapping(line_count: int) -> Dict[str, str]:
+    """
+    Get the authors for each commit.
+
+    Args:
+        line_count: Number of lines from Git log output. Used for determining how
+            many commits to fetch.
+
+    Returns:
+        A mapping of long commit hashes to author login handles.
+    """
+    per_page = min(line_count, 100)
+    page = 1
+    mapping: Dict[str, str] = {}
+    for _ in range(0, line_count, per_page):
+        with urllib.request.urlopen(  # noqa: S310
+            f"https://api.github.com/repos/py-pdf/pypdf/commits?per_page={per_page}&page={page}"
+        ) as response:
+            commits = json.loads(response.read())
+        page += 1
+        for commit in commits:
+            mapping[commit["sha"]] = commit["author"]["login"]
+    return mapping
+
+
 def get_git_commits_since_tag(git_tag: str) -> List[Change]:
     """
     Get all commits since the last tag.
@@ -283,15 +311,17 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
                 "--no-pager",
                 "log",
                 f"{git_tag}..HEAD",
-                '--pretty=format:"%h:::%s:::%aN"',
+                '--pretty=format:"%H:::%s:::%aN"',
             ],
             stderr=subprocess.STDOUT,
         )
     ).strip("'b\\n")
-    return [parse_commit_line(line) for line in commits.split("\\n") if line != ""]
+    lines = commits.split("\\n")
+    authors = get_author_mapping(len(lines))
+    return [parse_commit_line(line, authors) for line in lines if line != ""]
 
 
-def parse_commit_line(line: str) -> Change:
+def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
     """
     Parse the first line of a git commit message.
 
@@ -316,24 +346,23 @@ def parse_commit_line(line: str) -> Change:
 
     # Standardize
     message.strip()
+    commit_hash = commit_hash.strip('"')
 
     if author.endswith('"'):
         author = author[:-1]
+    author_login = authors[commit_hash]
 
     prefix = prefix.strip()
     if prefix == "DOCS":
         prefix = "DOC"
 
     return Change(
-        commit_hash=commit_hash, prefix=prefix, message=message, author=author
+        commit_hash=commit_hash,
+        prefix=prefix,
+        message=message,
+        author=author,
+        author_login=author_login,
     )
-
-
-def author2github(author: str) -> str:
-    """Convert the author name to the github name"""
-    # I'm very uncertain if that always works, but for the current release it
-    # seems to be the case
-    return author.replace(" ", "")
 
 
 if __name__ == "__main__":

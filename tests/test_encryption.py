@@ -343,6 +343,7 @@ def test_aes_decrypt_corrupted_data():
     for num in [0, 17, 32]:
         aes.decrypt(secrets.token_bytes(num))
 
+
 def test_encrypt_stream_dictionary(pdf_file_path):
     user_password = secrets.token_urlsafe(10)
 
@@ -353,9 +354,9 @@ def test_encrypt_stream_dictionary(pdf_file_path):
     writer = PdfWriter()
     writer.add_page(reader.pages[0])
     writer.encrypt(
-       user_password=user_password,
-       owner_password=None,
-       algorithm="RC4-128",
+        user_password=user_password,
+        owner_password=None,
+        algorithm="RC4-128",
     )
     with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)

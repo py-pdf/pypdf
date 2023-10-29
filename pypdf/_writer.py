@@ -300,13 +300,13 @@ class PdfWriter:
         obj: PdfObject,
     ) -> PdfObject:
         if isinstance(indirect_reference, IndirectObject):
-            assert indirect_reference.pdf == self
+            if indirect_reference.pdf != self:
+                raise ValueError("pdf must be self")
             indirect_reference = indirect_reference.idnum
+        gen = self._objects[indirect_reference - 1].indirect_reference.generation  # type: ignore
         self._objects[indirect_reference - 1] = obj
+        obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
         return self._objects[indirect_reference - 1]
-        if indirect_reference.pdf != self:
-            raise ValueError("pdf must be self")
-        return self._objects[indirect_reference.idnum - 1]
 
     def _add_page(
         self,
@@ -925,7 +925,8 @@ class PdfWriter:
         else:  # /Tx
             txt = field.get("/V", "")
             sel = []
-
+        # Escape parentheses (pdf 1.7 reference, table 3.2  Literal Strings)
+        txt = txt.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
         # Generate appearance stream
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
@@ -1628,6 +1629,10 @@ class PdfWriter:
         if CO.OUTLINES in self._root_object:
             # TABLE 3.25 Entries in the catalog dictionary
             outline = cast(TreeObject, self._root_object[CO.OUTLINES])
+            if not isinstance(outline, TreeObject):
+                t = TreeObject(outline)
+                self._replace_object(outline.indirect_reference.idnum, t)
+                outline = t
             idnum = self._objects.index(outline) + 1
             outline_ref = IndirectObject(idnum, 0, self)
             assert outline_ref.get_object() == outline
@@ -1723,7 +1728,7 @@ class PdfWriter:
 
     def add_outline_item_destination(
         self,
-        page_destination: Union[None, PageObject, TreeObject] = None,
+        page_destination: Union[None, IndirectObject, PageObject, TreeObject] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
         is_open: bool = True,
@@ -1749,6 +1754,7 @@ class PdfWriter:
             # argument is only Optional due to deprecated argument.
             raise ValueError("page_destination may not be None")
 
+        page_destination = cast(PageObject, page_destination.get_object())
         if isinstance(page_destination, PageObject):
             return self.add_outline_item_destination(
                 Destination(
@@ -1933,7 +1939,9 @@ class PdfWriter:
                     }
                 )
             )
-        outline_item = _create_outline_item(action_ref, title, color, italic, bold)
+        outline_item = self._add_object(
+            _create_outline_item(action_ref, title, color, italic, bold)
+        )
 
         if parent is None:
             parent = self.get_outline_root()
