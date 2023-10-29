@@ -2218,18 +2218,12 @@ class PdfWriter:
                 if (
                     (
                         operator == b"INLINE IMAGE"
-                        and (
-                            cast(ObjectDeletionFlag, to_delete)
-                            & ObjectDeletionFlag.INLINE_IMAGES
-                        )
+                        and (to_delete & ObjectDeletionFlag.INLINE_IMAGES)
                     )
                     or (operator in jump_operators)
                     or (
                         operator == b"Do"
-                        and (
-                            cast(ObjectDeletionFlag, to_delete)
-                            & ObjectDeletionFlag.XOBJECT_IMAGES
-                        )
+                        and (to_delete & ObjectDeletionFlag.XOBJECT_IMAGES)
                         and (operands[0] in images)
                     )
                 ):
@@ -2256,8 +2250,7 @@ class PdfWriter:
                 try:
                     content: Any = None
                     if (
-                        to_delete
-                        & ObjectDeletionFlag.XOBJECT_IMAGES
+                        to_delete & ObjectDeletionFlag.XOBJECT_IMAGES
                         and o["/Subtype"] == "/Image"
                     ):
                         content = NullObject()  # to delete the image keeping the entry
@@ -2314,7 +2307,7 @@ class PdfWriter:
         Remove images from this output.
 
         Args:
-            to_delete : The type of images to be deleted 
+            to_delete : The type of images to be deleted
                 (default = all images types)
             ignore_byte_string_object: deprecated
         """
