@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1698554948819,
+  "lastUpdate": 1698555360140,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -42528,6 +42528,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.2669654260339616",
             "extra": "mean: 32.6511990538 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "5a2dd757e14229899e3f48e9891e6d9a63c7963b",
+          "message": "REL: 3.17.0\n\n## What's new\n\n### Security (SEC)\n-  Infinite recursion when using PdfWriter(clone_from=reader) (#2264) by @Alexhuszagh\n\n### New Features (ENH)\n-  Add parameter to select images to be removed (#2214) by @pubpub-zz\n\n### Bug Fixes (BUG)\n-  Correctly handle image mode 1 with FlateDecode (#2249) by @stefan6419846\n-  Error when filling a value with parentheses #2268 (#2269) by @KanorUbu\n-  Handle empty root outline (#2239) by @pubpub-zz\n\n### Documentation (DOC)\n-  Improve merging docs (#2247) by @stefan6419846\n\n### Developer Experience (DEV)\n-  Test Python 3.7 with cryptopgraphy provider as well (#2276) by @stefan6419846\n-  Run CI with windows-latest (#2258) by @MartinThoma\n-  Use pytest-xdist (#2254) by @MartinThoma\n-  Attribute correct authors in the release notes (#2246) by @stefan6419846\n\n### Maintenance (MAINT)\n-  Apply pre-commit hooks (#2277) by @MartinThoma\n-  Update requirements + mypy fixes (#2275) by @MartinThoma\n-  Explicitly provide Any for IO generic argument (#2272) by @nilehmann\n\n### Testing (TST)\n-  Fix test_image_without_pillow in windows environment (#2257) by @pubpub-zz\n\n### Code Style (STY)\n-  Remove unused import by @MartinThoma\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.4...3.17.0)",
+          "timestamp": "2023-10-29T05:50:18+01:00",
+          "tree_id": "1e2aed6fadc58a4e7230701a3e0f721edf098359",
+          "url": "https://github.com/py-pdf/pypdf/commit/5a2dd757e14229899e3f48e9891e6d9a63c7963b"
+        },
+        "date": 1698555357342,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.265024419891937,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010488400181890508",
+            "extra": "mean: 441.49634379999725 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.760487200503524,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014525734559161934",
+            "extra": "mean: 102.45390209091325 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18603017314637235,
+            "unit": "iter/sec",
+            "range": "stddev: 0.049794628463396114",
+            "extra": "mean: 5.375472070399996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.347601313948143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001986273975193508",
+            "extra": "mean: 106.9793165555571 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03205939991695012,
+            "unit": "iter/sec",
+            "range": "stddev: 0.22023294599376125",
+            "extra": "mean: 31.192099745799986 sec\nrounds: 5"
           }
         ]
       }
