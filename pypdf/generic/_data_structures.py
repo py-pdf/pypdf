@@ -188,7 +188,7 @@ class DictionaryObject(dict, PdfObject):
         except Exception:
             pass
 
-        visited: Set[Tuple[int, int]] = set()
+        visited: Set[Tuple[int, int]] = set()  # (idnum, generation)
         d__ = cast(
             "DictionaryObject",
             self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
@@ -205,7 +205,7 @@ class DictionaryObject(dict, PdfObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
         ignore_fields: Optional[Sequence[Union[str, int]]],
-        visited: Set[Tuple[int, int]],
+        visited: Set[Tuple[int, int]],  # (idnum, generation)
     ) -> None:
         """
         Update the object from src.
