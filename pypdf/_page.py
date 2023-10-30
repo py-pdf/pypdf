@@ -296,6 +296,16 @@ class Transformation:
     def __repr__(self) -> str:
         return f"Transformation(ctm={self.ctm})"
 
+    @overload
+    def apply_on(self, pt: List[float], as_object: bool = False) -> List[float]:
+        ...
+
+    @overload
+    def apply_on(
+        self, pt: Tuple[float, float], as_object: bool = False
+    ) -> Tuple[float, float]:
+        ...
+
     def apply_on(
         self,
         pt: Union[Tuple[float, float], List[float]],
@@ -1232,10 +1242,10 @@ class PageObject(DictionaryObject):
                 if "/QuadPoints" in a:
                     q = cast(ArrayObject, a["/QuadPoints"])
                     aa[NameObject("/QuadPoints")] = ArrayObject(
-                        cast(Tuple[Any,...], trsf.apply_on((q[0], q[1]), True))
-                        + cast(Tuple[Any, ...], trsf.apply_on((q[2], q[3]), True))
-                        + cast(Tuple[Any, ...], trsf.apply_on((q[4], q[5]), True))
-                        + cast(Tuple[Any, ...], trsf.apply_on((q[6], q[7]), True))
+                        trsf.apply_on((q[0], q[1]), True)
+                        + trsf.apply_on((q[2], q[3]), True)
+                        + trsf.apply_on((q[4], q[5]), True)
+                        + trsf.apply_on((q[6], q[7]), True)
                     )
                 try:
                     aa["/Popup"][NameObject("/Parent")] = aa.indirect_reference
@@ -2484,7 +2494,7 @@ class PageObject(DictionaryObject):
             self[NameObject("/Annots")] = value
 
 
-class _VirtualList(Sequence[Any]):
+class _VirtualList(Sequence[PageObject]):
     def __init__(
         self,
         length_function: Callable[[], int],
@@ -2669,7 +2679,7 @@ def _get_fonts_walk(
     return fnt, emb  # return the sets for each page
 
 
-class _VirtualListImages(Sequence[Any]):
+class _VirtualListImages(Sequence[ImageFile]):
     def __init__(
         self,
         ids_function: Callable[[], List[Union[str, List[str]]]],
