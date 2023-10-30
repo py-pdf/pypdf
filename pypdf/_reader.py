@@ -648,6 +648,7 @@ class PdfReader:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
         elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
             states = []
+            retval[key][NameObject("/_States_")] = ArrayObject(states)
             for k in obj.get(FA.Kids, {}):
                 k = k.get_object()
                 for s in list(k["/AP"]["/N"].keys()):
