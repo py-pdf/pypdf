@@ -225,6 +225,7 @@ wrap-descriptions = 0
 show_error_codes = true
 ignore_missing_imports = true
 check_untyped_defs = true
+disallow_any_generics = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 warn_redundant_casts = true

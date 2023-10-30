@@ -87,7 +87,7 @@ NumberSigns = b"+-"
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
-class ArrayObject(list, PdfObject):
+class ArrayObject(List[Any], PdfObject):
     def clone(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -174,7 +174,7 @@ class ArrayObject(list, PdfObject):
         return ArrayObject.read_from_stream(stream, pdf)
 
 
-class DictionaryObject(dict, PdfObject):
+class DictionaryObject(Dict[Any, Any], PdfObject):
     def clone(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -631,7 +631,7 @@ class TreeObject(DictionaryObject):
         child: Any,
         before: Any,
         pdf: PdfWriterProtocol,
-        inc_parent_counter: Optional[Callable] = None,
+        inc_parent_counter: Optional[Callable[..., Any]] = None,
     ) -> IndirectObject:
         if inc_parent_counter is None:
             inc_parent_counter = self.inc_parent_counter_default

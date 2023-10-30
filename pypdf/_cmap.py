@@ -12,7 +12,7 @@ from .generic import DecodedStreamObject, DictionaryObject, StreamObject
 # code freely inspired from @twiggy ; see #711
 def build_char_map(
     font_name: str, space_width: float, obj: DictionaryObject
-) -> Tuple[str, float, Union[str, Dict[int, str]], Dict, DictionaryObject]:
+) -> Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any], DictionaryObject]:
     """
     Determine information about a font.
 
@@ -34,7 +34,7 @@ def build_char_map(
 
 def build_char_map_from_dict(
     space_width: float, ft: DictionaryObject
-) -> Tuple[str, float, Union[str, Dict[int, str]], Dict]:
+) -> Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]]:
     """
     Determine information about a font.
 

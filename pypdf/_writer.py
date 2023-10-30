@@ -885,7 +885,7 @@ class PdfWriter:
         if font_name not in dr:
             # ...or AcroForm dictionary
             dr = cast(
-                dict,
+                Dict[Any, Any],
                 cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {}),
             )
             if isinstance(dr, IndirectObject):  # pragma: no cover
@@ -1353,7 +1353,7 @@ class PdfWriter:
         xref_location = self._write_xref_table(stream, object_positions)
         self._write_trailer(stream, xref_location)
 
-    def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
+    def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:
         """
         Write the collection of pages added to this object out as a PDF file.
 
@@ -2240,7 +2240,7 @@ class PdfWriter:
                 # to prevent infinite looping
                 return [], []  # pragma: no cover
             try:
-                d = cast(dict, cast(DictionaryObject, elt["/Resources"])["/XObject"])
+                d = cast(Dict[Any, Any], cast(DictionaryObject, elt["/Resources"])["/XObject"])
             except KeyError:
                 d = {}
             images = []
@@ -2793,7 +2793,7 @@ class PdfWriter:
         # Internal link annotations need the correct object type for the
         # destination
         if to_add.get("/Subtype") == "/Link" and "/Dest" in to_add:
-            tmp = cast(dict, to_add[NameObject("/Dest")])
+            tmp = cast(Dict[Any, Any], to_add[NameObject("/Dest")])
             dest = Destination(
                 NameObject("/LinkName"),
                 tmp["target_page_index"],
@@ -3029,7 +3029,7 @@ class PdfWriter:
         for dest in reader._namedDests.values():
             arr = dest.dest_array
             if "/Names" in self._root_object and dest["/Title"] in cast(
-                list,
+                List[Any],
                 cast(
                     DictionaryObject,
                     cast(DictionaryObject, self._root_object["/Names"])["/Dests"],
@@ -3188,7 +3188,7 @@ class PdfWriter:
 
     def add_filtered_articles(
         self,
-        fltr: Union[Pattern, str],  # thread entry from the reader's array of threads
+        fltr: Union[Pattern[Any], str],  # thread entry from the reader's array of threads
         pages: Dict[int, PageObject],
         reader: PdfReader,
     ) -> None:
@@ -3245,7 +3245,7 @@ class PdfWriter:
     ) -> List[Destination]:
         outlist = ArrayObject()
         if isinstance(annots, IndirectObject):
-            annots = cast("List", annots.get_object())
+            annots = cast("List[Any]", annots.get_object())
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (
