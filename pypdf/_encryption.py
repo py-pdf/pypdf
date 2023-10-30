@@ -759,7 +759,7 @@ class PasswordType(IntEnum):
     OWNER_PASSWORD = 2
 
 
-class EncryptAlgorithm(Tuple[Any, ...], Enum):  # noqa: SLOT001
+class EncryptAlgorithm(tuple, Enum):  # type: ignore # noqa: SLOT001
     # V, R, Length
     RC4_40 = (1, 2, 40)
     RC4_128 = (2, 3, 128)
