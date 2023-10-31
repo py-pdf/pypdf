@@ -122,6 +122,28 @@ def test_page_operations(pdf_path, password):
     page.extract_text()
 
 
+def test_mediabox_expansion_after_rotation():
+    """TODO"""
+
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
+
+    transformation = Transformation().rotate(175)
+    for page_box in reader.pages:
+        page_box.add_transformation(transformation, expand=True)
+        writer.add_page(page_box)
+
+    rotated_pdf_bytes = BytesIO()
+    writer.write_stream(rotated_pdf_bytes)
+
+    expected_pdf_path = RESOURCE_ROOT / "crazyones_rotated_175.pdf"
+    with open(expected_pdf_path, "rb") as f:
+        expected_pdf_bytes = BytesIO(f.read())
+
+    assert rotated_pdf_bytes.getvalue() == expected_pdf_bytes.getvalue()
+
+
 def test_transformation_equivalence():
     pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
     reader_base = PdfReader(pdf_path)
