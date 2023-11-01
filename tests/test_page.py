@@ -1,5 +1,6 @@
 """Test the pypdf._page module."""
 import json
+import math
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -122,26 +123,31 @@ def test_page_operations(pdf_path, password):
     page.extract_text()
 
 
-def test_mediabox_expansion_after_rotation():
-    """TODO"""
-
+@pytest.mark.parametrize(
+    ("angle", "expected_width", "expected_height"),
+    [
+        (175, 680, 844),
+        (45, 994, 994),
+        (-80, 888, 742),
+    ]
+)
+def test_mediabox_expansion_after_rotation(angle: float, expected_width: int, expected_height: int):
+    """
+    This test validates the dimensions of a pdf's mediabox after applying rotation with
+    expansion (at a non-right angle).
+    """
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
-    writer = PdfWriter()
 
-    transformation = Transformation().rotate(175)
+    transformation = Transformation().rotate(angle)
     for page_box in reader.pages:
         page_box.add_transformation(transformation, expand=True)
-        writer.add_page(page_box)
 
-    rotated_pdf_bytes = BytesIO()
-    writer.write_stream(rotated_pdf_bytes)
+    mediabox = reader.pages[0].mediabox
 
-    expected_pdf_path = RESOURCE_ROOT / "crazyones_rotated_175.pdf"
-    with open(expected_pdf_path, "rb") as f:
-        expected_pdf_bytes = BytesIO(f.read())
-
-    assert rotated_pdf_bytes.getvalue() == expected_pdf_bytes.getvalue()
+    # Deviation of upto 2 pixels is acceptable
+    assert math.isclose(mediabox.width, expected_width, abs_tol=2)
+    assert math.isclose(mediabox.height, expected_height, abs_tol=2)
 
 
 def test_transformation_equivalence():
