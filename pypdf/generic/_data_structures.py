@@ -36,12 +36,12 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Generator,
     Iterable,
     List,
     Mapping,
     Optional,
     Sequence,
-    Set,
     Tuple,
     Union,
     cast,
@@ -189,7 +189,6 @@ class DictionaryObject(dict, PdfObject):
         except Exception:
             pass
 
-        visited: Set[Tuple[int, int]] = set()  # (idnum, generation)
         d__ = cast(
             "DictionaryObject",
             self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
@@ -197,7 +196,7 @@ class DictionaryObject(dict, PdfObject):
         if ignore_fields is None:
             ignore_fields = []
         if len(d__.keys()) == 0:
-            d__._clone(self, pdf_dest, force_duplicate, ignore_fields, visited)
+            d__._clone(self, pdf_dest, force_duplicate, ignore_fields)
         return d__
 
     def _clone(
@@ -206,7 +205,6 @@ class DictionaryObject(dict, PdfObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
         ignore_fields: Optional[Sequence[Union[str, int]]],
-        visited: Set[Tuple[int, int]],  # (idnum, generation)
     ) -> None:
         """
         Update the object from src.
@@ -274,14 +272,6 @@ class DictionaryObject(dict, PdfObject):
                                     cur_obj.__class__(), pdf_dest, force_duplicate
                                 ),
                             )
-                            # check to see if we've previously processed our item
-                            if clon.indirect_reference is not None:
-                                idnum = clon.indirect_reference.idnum
-                                generation = clon.indirect_reference.generation
-                                if (idnum, generation) in visited:
-                                    cur_obj = None
-                                    break
-                                visited.add((idnum, generation))
                             objs.append((cur_obj, clon))
                             assert prev_obj is not None
                             prev_obj[NameObject(k)] = clon.indirect_reference
@@ -294,9 +284,7 @@ class DictionaryObject(dict, PdfObject):
                             except Exception:
                                 cur_obj = None
                         for s, c in objs:
-                            c._clone(
-                                s, pdf_dest, force_duplicate, ignore_fields, visited
-                            )
+                            c._clone(s, pdf_dest, force_duplicate, ignore_fields)
 
         for k, v in src.items():
             if k not in ignore_fields:
@@ -812,7 +800,6 @@ class StreamObject(DictionaryObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
         ignore_fields: Optional[Sequence[Union[str, int]]],
-        visited: Set[Tuple[int, int]],
     ) -> None:
         """
         Update the object from src.
@@ -835,7 +822,7 @@ class StreamObject(DictionaryObject):
                 )
         except Exception:
             pass
-        super()._clone(src, pdf_dest, force_duplicate, ignore_fields, visited)
+        super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
 
     def get_data(self) -> Union[bytes, str]:
         return self._data
@@ -1063,7 +1050,6 @@ class ContentStream(DecodedStreamObject):
         except Exception:
             pass
 
-        visited: Set[Tuple[int, int]] = set()
         d__ = cast(
             "ContentStream",
             self._reference_clone(
@@ -1072,7 +1058,7 @@ class ContentStream(DecodedStreamObject):
         )
         if ignore_fields is None:
             ignore_fields = []
-        d__._clone(self, pdf_dest, force_duplicate, ignore_fields, visited)
+        d__._clone(self, pdf_dest, force_duplicate, ignore_fields)
         return d__
 
     def _clone(
@@ -1081,7 +1067,6 @@ class ContentStream(DecodedStreamObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
         ignore_fields: Optional[Sequence[Union[str, int]]],
-        visited: Set[Tuple[int, int]],
     ) -> None:
         """
         Update the object from src.
@@ -1098,7 +1083,7 @@ class ContentStream(DecodedStreamObject):
         self._operations = list(src_cs._operations)
         self.forced_encoding = src_cs.forced_encoding
         # no need to call DictionaryObjection or anything
-        # like super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields, visited)
+        # like super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields)
 
     def _parse_content_stream(self, stream: StreamType) -> None:
         # 7.8.2 Content Streams
@@ -1861,6 +1846,57 @@ def get_from_file_specification(_a: DictionaryObject) -> PdfObject:
         or _a.get("/Mac")
         or DictionaryObject()
     )
+
+
+class AttachmentBytesDictionary(dict):
+    """
+    Dict[str, AttachmentBytes]
+    Ease access  to Dictionary of Object
+    """
+
+    root: Optional[NameTree]
+    names: List[str]
+
+    def __init__(
+        self, root: Optional[Union[NameTree, DictionaryObject, IndirectObject]]
+    ):
+        dict.__init__(self)
+        if isinstance(root, IndirectObject):
+            root = cast(DictionaryObject, root.get_object())
+        if root is not None:
+            self.root = (
+                root if isinstance(root, NameTree) else NameTree(root)
+            )
+            self.names = list(self.root.list_keys())
+        else:
+            self.root = None
+            self.names = []
+
+    def keys(self) -> List[str]:
+        return self.names
+
+    def items(self) -> Generator[str, AttachmentBytes]:
+        if self.root is None:
+            return []
+        else:
+            for k, v in self.root.list_items().items():
+                if len(v) > 1:
+                    logger_warning(
+                        "Unexpected amout of entries in attachments,"
+                        "please report"
+                        "and share the file for analysis with pypdf dev team",
+                        __name__,
+                    )
+                yield (k, AttachmentBytes(cast(DictionaryObject, v[0].get_object())))
+
+    def __getitem__(self, k: str) -> AttachmentBytes:
+        if k not in self.names:
+            raise KeyError("KeyError: k")
+        v = self.root.list_get(k)
+        return AttachmentBytes(cast(DictionaryObject, v.get_object()))
+
+    def __repr__(self) -> str:
+        return "{ " + ", ".join(["'" + x + "': ..." for x in self.names]) + "}"
 
 
 class Destination(TreeObject):

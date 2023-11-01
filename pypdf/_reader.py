@@ -40,7 +40,6 @@ from typing import (
     Dict,
     Iterable,
     List,
-    Mapping,
     Optional,
     Tuple,
     Union,
@@ -86,7 +85,7 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
-    AttachmentBytes,
+    AttachmentBytesDictionary,
     BooleanObject,
     ContentStream,
     DecodedStreamObject,
@@ -102,11 +101,9 @@ from .generic import (
     NullObject,
     NumberObject,
     PdfObject,
-    StreamObject,
     TextStringObject,
     TreeObject,
     ViewerPreferences,
-    get_from_file_specification,
     read_object,
 )
 from .types import OutlineType, PagemodeType
@@ -2238,13 +2235,10 @@ class PdfReader:
         Returns:
             List of names
         """
-        ef = self._get_embedded_files_root()
-        if ef is None:
-            return []
-        return ef.list_keys()
+        return self.attachments.keys()
 
     @property
-    def attachments(self) -> Mapping[str, AttachmentBytes]:
+    def attachments(self) -> AttachmentBytesDictionary:
         """
         extracts the /EF entries as bytes from the embedded files
         Returns:
@@ -2255,98 +2249,7 @@ class PdfReader:
         Note:
             If you want to access /RF
         """
-        ef = self._get_embedded_files_root()
-        if ef is None:
-            return {}
-        d: Dict[str, AttachmentBytes] = {}
-        for k, v in ef.list_items().items():
-            if len(v) > 1:
-                logger_warning(
-                    "Unexpected amout of entries in attachments, please report"
-                    "and share the file for analysis with pypdf dev team",
-                    __name__,
-                )
-            d[k] = AttachmentBytes(cast(DictionaryObject, v[0].get_object()))
-        return d
-
-    def _list_attachments(self) -> List[str]:
-        """
-        Retrieves the list of filenames of file attachments.
-
-        Returns:
-            list of filenames
-        """
-        ef = self._get_embedded_files_root()
-        if ef:
-            lst = ef.list_keys()
-        else:
-            lst = []
-        """
-        for ip, p in enumerate(self.pages):
-            for a in [_a.get_object()
-                      for _a in p.get("/Annots",[])]:
-                if _a.get_object().get("/Subtype","") != "/FileAttachements":
-                    continue
-                lst.append(f"$page_{ip}.{get_name_from_file_specification(_a)}")
-        """
-        return lst
-
-    def _get_attachment_list(self, name: str) -> List[Union[bytes, Dict[str, bytes]]]:
-        out = self._get_attachments(name)[name]
-        if isinstance(out, list):
-            return out
-        return [out]
-
-    def _get_attachments(
-        self, filename: Optional[str] = None
-    ) -> Dict[str, List[Union[bytes, Dict[str, bytes]]]]:
-        """
-        Retrieves all or selected file attachments of the PDF as a dictionary of file names
-        and the file data as a bytestring.
-
-        Args:
-            filename: If filename is None, then a dictionary of all attachments
-                will be returned, where the key is the filename and the value
-                is the content. Otherwise, a dictionary with just a single key
-                - the filename - and its content will be returned.
-
-        Returns:
-            dictionary of filename -> Union[bytestring or List[ByteString]]
-            if the filename exists multiple times a List of the different version will be provided
-        """
-        ef = self._get_embedded_files_root()
-        if ef is None:
-            return {}
-        if filename is None:
-            return {k: v if len(v) > 1 else v[0] for k, v in self.attachments.items()}  # type: ignore
-        else:
-            lst = ef.list_get(filename)
-            if lst is None:
-                return {}
-            lst = cast(DictionaryObject, lst.get_object())
-            efo = cast(DictionaryObject, lst["/EF"].get_object())
-            rst = cast(
-                StreamObject,
-                get_from_file_specification(efo).get_object(),
-            ).get_data()
-            if isinstance(rst, str):
-                rst = rst.encode()
-            if "/RF" not in lst:
-                return {filename: [rst]}
-            else:
-                rst2 = {"": rst}  # /EF will be returned by empty key
-                lst = cast(
-                    ArrayObject,
-                    get_from_file_specification(
-                        cast(DictionaryObject, lst["/RF"].get_object())
-                    ),
-                )
-                for i in range(0, len(lst), 2):
-                    t = cast(StreamObject, lst[i + 1].get_object()).get_data()
-                    if isinstance(t, str):
-                        t = t.encode()
-                    rst2[lst[i]] = t
-                return {filename: [rst2]}
+        return AttachmentBytesDictionary(self._get_embedded_files_root())
 
 
 class PdfFileReader(PdfReader):  # deprecated

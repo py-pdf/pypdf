@@ -49,6 +49,7 @@ from ._data_structures import (
     PREFERED_ATTACHMENT,
     ArrayObject,
     AttachmentBytes,
+    AttachmentBytesDictionary,
     ContentStream,
     DecodedStreamObject,
     Destination,
@@ -440,6 +441,7 @@ __all__ = [
     # Data structures
     "ArrayObject",
     "AttachmentBytes",
+    "AttachmentBytesDictionary",
     "DictionaryObject",
     "TreeObject",
     "StreamObject",
