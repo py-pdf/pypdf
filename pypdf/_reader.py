@@ -86,6 +86,7 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
+    AttachmentBytes,
     BooleanObject,
     ContentStream,
     DecodedStreamObject,
@@ -2232,39 +2233,41 @@ class PdfReader:
         return NameTree(efo)
 
     @property
-    def embedded_files(self) -> Optional[Mapping[str, List[PdfObject]]]:
+    def attachments_names(self) -> List[str]:
+        """
+        Returns:
+            List of names
+        """
         ef = self._get_embedded_files_root()
-        if ef:
-            return ef.list_items()
-        else:
-            return None
+        if ef is None:
+            return []
+        return ef.list_keys()
 
     @property
-    def attachments(self) -> Mapping[str, List[Union[bytes, Dict[str, bytes]]]]:
+    def attachments(self) -> Mapping[str, AttachmentBytes]:
+        """
+        extracts the /EF entries as bytes from the embedded files
+        Returns:
+            Dictionary with the filenames as keys and the file content as bytes,
+            extra data cah be accessed with Attachmentbytes extra properties(.name,
+            .list_rf_names(), .get_embeddedfile(), .all_files)
+
+        Note:
+            If you want to access /RF
+        """
         ef = self._get_embedded_files_root()
-        if ef:
-            d: Dict[str, List[Union[bytes, Dict[str, bytes]]]] = {}
-            for k, v in ef.list_items().items():
-                if isinstance(v, list):
-                    if k not in d:
-                        d[k] = []
-                    for e in v:
-                        e = cast(DictionaryObject, e.get_object())
-                        if "/EF" in e:
-                            d[k].append(e["/EF"]["/F"].get_data())  # type: ignore
-                        elif "/RF" in e:
-                            r = cast(
-                                ArrayObject, cast(DictionaryObject, e["/RF"])["/F"]
-                            )
-                            di: Dict[str, bytes] = {}
-                            i = 0
-                            while i < len(r):
-                                di[cast(str, r[i])] = r[i + 1].get_object().get_data()
-                                i += 2
-                            d[k].append(di)
-            return d
-        else:
+        if ef is None:
             return {}
+        d: Dict[str, AttachmentBytes] = {}
+        for k, v in ef.list_items().items():
+            if len(v) > 1:
+                logger_warning(
+                    "Unexpected amout of entries in attachments, please report"
+                    "and share the file for analysis with pypdf dev team",
+                    __name__,
+                )
+            d[k] = AttachmentBytes(cast(DictionaryObject, v[0].get_object()))
+        return d
 
     def _list_attachments(self) -> List[str]:
         """

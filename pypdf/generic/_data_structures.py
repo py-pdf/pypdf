@@ -1452,6 +1452,163 @@ class Field(TreeObject):
         return self.additional_actions
 
 
+class AttachmentBytes(bytes):
+    """Extension of bytes class, adding File Spefication dedicated properties"""
+
+    source_object: Optional[IndirectObject] = None
+    """
+    Pointer to the File Specification entry associated ;
+        None, if created from a bytes or StreamObject
+    """
+    within_page: Optional[IndirectObject] = None
+    """
+    Page where the File Spefication is referenced, else None
+    This is relevant only for file attachement annotations
+    note : this property should be initialized manually out of the constructor
+    """
+
+    def __new__(
+        cls,
+        src: Optional[
+            Union[bytes, IndirectObject, StreamObject, DictionaryObject]
+        ] = None,
+    ) -> "AttachmentBytes":
+        """
+        Object Constructor.
+
+        Args:
+            src [DictionaryObject] : FileSpecification Object to populate the new object
+            src [bytes/StreamObject] : bytes/StreamObject(EmbeddedFile) to extract the stream
+                to initialize (partially the object)
+            src [IndirectObject] : Pointer to the DictionaryObject/StreamObject for init
+            src [None] : similar to src = b""
+        """
+        inp: Optional[IndirectObject] = None
+        obj: Any = src
+        v: Union[str, bytes]
+        if isinstance(obj, IndirectObject):
+            obj = obj.get_object()
+        if isinstance(obj, bytes):
+            v = obj
+        elif isinstance(obj, StreamObject):
+            v = obj.get_data()
+        elif isinstance(obj, DictionaryObject) and "/EF" in obj:
+            inp = obj.indirect_reference
+            o = cast(DictionaryObject, obj["/EF"])
+            o = cast(StreamObject, get_from_file_specification(o).get_object())
+            v = o.get_data()
+        else:
+            v = b""
+        if isinstance(v, str):
+            v = v.encode()
+        out = bytes.__new__(cls, v)
+        if inp is None:
+            out.source_object = None
+        else:
+            out.source_object = inp.indirect_reference
+        out.within_page = None  # has to be set by program
+        return out
+
+    @property
+    def name(self) -> Optional[str]:
+        """Returns the (best) name from the File Specification Object else None"""
+        o: Any = self.source_object
+        if o is None:
+            return None
+        o = cast(DictionaryObject, o.get_object())
+        return cast(str, get_from_file_specification(o))
+
+    def list_rf_names(self) -> List[str]:
+        """
+        Returns:
+            List of filenames store in /RF fields;
+            Empty list if no /RF field exists
+
+        Note:
+            does not contains "" entry (for EF)
+        """
+        o: Any = self.source_object
+        if o is None:
+            return []
+        o = cast(DictionaryObject, o.get_object())
+        if "/RF" in o:
+            o = cast(DictionaryObject, o["/RF"])
+            o = cast(DictionaryObject, get_from_file_specification(o))
+            try:
+                lst = [o[i] for i in range(0, len(o), 2)]
+                return lst
+            except ValueError:
+                return []
+        else:
+            return []
+
+    def get_embeddedfile(self, subfile: str = "") -> Optional[StreamObject]:
+        """
+        Returns the EmbeddedFile(Stream Object) containing the data bytes
+        Args:
+            subfile: filename of the EmbeddedFile to be returned;
+                     "" returns the EmbeddedFile from the /EF field
+        Returns:
+            StreamObject
+
+        Note:
+            o == o.get_embeddedfile("").get_data()
+        """
+        o: Any = self.source_object
+        if o is None:
+            return None
+        o = cast(DictionaryObject, o.get_object())
+        if subfile == "":
+            o = cast(DictionaryObject, o["/EF"])
+            return cast(StreamObject, get_from_file_specification(o).get_object())
+        elif "/RF" in o:
+            o = cast(DictionaryObject, o["/RF"])
+            o = cast(DictionaryObject, get_from_file_specification(o))
+            try:
+                i = o.index(subfile)
+                return cast(StreamObject, o[i + 1].get_object())
+            except ValueError:
+                return None
+        else:
+            return None
+
+    @property
+    def all_files(self) -> Dict[str, bytes]:
+        """
+        Returns:
+            a dictionary filename/data bytes;
+            {} if the object is not assocatied with a File Spefication.
+
+        Note:
+            the results contains also the /EF stored behin "" key
+        """
+        o: Any = self.source_object
+        if o is None:
+            return {}
+        o = cast(DictionaryObject, o.get_object())
+        out: Dict[str, bytes] = {}
+        o = cast(DictionaryObject, o["/EF"])
+        v = cast(StreamObject, get_from_file_specification(o)).get_data()
+        if isinstance(v, str):
+            v = v.encode()
+        out[""] = v
+        if "/RF" in o:
+            o = cast(DictionaryObject, o["/RF"])
+            a = cast(ArrayObject, get_from_file_specification(o))
+            try:
+                for i in range(0, len(a), 2):
+                    v = cast(StreamObject, a[i + 1].get_object()).get_data()
+                    if isinstance(v, str):
+                        v = v.encode()
+                    out[a[i]] = v
+                return out
+            except ValueError as exc:
+                logger_warning(exc.__repr__(), __name__)
+                return out
+        else:
+            return out
+
+
 class NameTree(DictionaryObject):
     """
     Name Tree Structure
@@ -1675,10 +1832,14 @@ class NameTree(DictionaryObject):
         return o.indirect_reference if o is not None else None
 
 
+PREFERED_ATTACHMENT = "/DOS"
+
+
 def get_from_file_specification(_a: DictionaryObject) -> PdfObject:
     return (
         _a.get("/UF")
         or _a.get("/F")
+        or _a.get(PREFERED_ATTACHMENT)
         or _a.get("/DOS")
         or _a.get("/Unix")
         or _a.get("/Mac")

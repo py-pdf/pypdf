@@ -46,7 +46,9 @@ from ._base import (
     encode_pdfdocencoding,
 )
 from ._data_structures import (
+    PREFERED_ATTACHMENT,
     ArrayObject,
+    AttachmentBytes,
     ContentStream,
     DecodedStreamObject,
     Destination,
@@ -437,6 +439,7 @@ __all__ = [
     "PAGE_FIT",
     # Data structures
     "ArrayObject",
+    "AttachmentBytes",
     "DictionaryObject",
     "TreeObject",
     "StreamObject",
@@ -447,6 +450,7 @@ __all__ = [
     "Field",
     "Destination",
     "NameTree",
+    "PREFERED_ATTACHMENT",
     "get_from_file_specification",
     "ViewerPreferences",
     # --- More specific stuff
