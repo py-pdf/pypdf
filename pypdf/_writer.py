@@ -78,6 +78,7 @@ from .constants import (
     FieldFlag,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
+    ImageType,
     InteractiveFormDictEntries,
     PageLabelStyle,
     TypFitArguments,
@@ -134,12 +135,16 @@ ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
 
 
 class ObjectDeletionFlag(enum.IntFlag):
+    NONE = 0
     TEXT = enum.auto()
-    IMAGES = enum.auto()
     LINKS = enum.auto()
     ATTACHMENTS = enum.auto()
     OBJECTS_3D = enum.auto()
     ALL_ANNOTATIONS = enum.auto()
+    XOBJECT_IMAGES = enum.auto()
+    INLINE_IMAGES = enum.auto()
+    DRAWING_IMAGES = enum.auto()
+    IMAGES = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
 
 
 def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
@@ -1012,7 +1017,8 @@ class PdfWriter:
         else:  # /Tx
             txt = field.get("/V", "")
             sel = []
-
+        # Escape parentheses (pdf 1.7 reference, table 3.2  Literal Strings)
+        txt = txt.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
         # Generate appearance stream
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
@@ -2284,7 +2290,8 @@ class PdfWriter:
         if to_delete & ObjectDeletionFlag.ALL_ANNOTATIONS:
             return self._remove_annots_from_page(page, None)
 
-        if to_delete & ObjectDeletionFlag.IMAGES:
+        jump_operators = []
+        if to_delete & ObjectDeletionFlag.DRAWING_IMAGES:
             jump_operators = (
                 [b"w", b"J", b"j", b"M", b"d", b"i"]
                 + [b"W", b"W*"]
@@ -2292,25 +2299,27 @@ class PdfWriter:
                 + [b"m", b"l", b"c", b"v", b"y", b"h", b"re"]
                 + [b"sh"]
             )
-        else:  # del text
+        if to_delete & ObjectDeletionFlag.TEXT:
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
 
         def clean(content: ContentStream, images: List[str], forms: List[str]) -> None:
-            nonlocal to_delete
+            nonlocal jump_operators, to_delete
             i = 0
             while i < len(content.operations):
                 operands, operator = content.operations[i]
-                if operator in jump_operators:
+                if (
+                    (
+                        operator == b"INLINE IMAGE"
+                        and (to_delete & ObjectDeletionFlag.INLINE_IMAGES)
+                    )
+                    or (operator in jump_operators)
+                    or (
+                        operator == b"Do"
+                        and (to_delete & ObjectDeletionFlag.XOBJECT_IMAGES)
+                        and (operands[0] in images)
+                    )
+                ):
                     del content.operations[i]
-                elif operator == b"Do":
-                    if (
-                        to_delete & ObjectDeletionFlag.IMAGES
-                        and operands[0] in images
-                        or to_delete & ObjectDeletionFlag.TEXT
-                        and operands[0] in forms
-                    ):
-                        del content.operations[i]
-                    i += 1
                 else:
                     i += 1
             content.get_data()  # this ensures ._data is rebuilt from the .operations
@@ -2333,10 +2342,10 @@ class PdfWriter:
                 try:
                     content: Any = None
                     if (
-                        to_delete & ObjectDeletionFlag.IMAGES
+                        to_delete & ObjectDeletionFlag.XOBJECT_IMAGES
                         and o["/Subtype"] == "/Image"
                     ):
-                        content = NullObject()
+                        content = NullObject()  # to delete the image keeping the entry
                         images.append(k)
                     if o["/Subtype"] == "/Form":
                         forms.append(k)
@@ -2344,12 +2353,13 @@ class PdfWriter:
                             content = o
                         else:
                             content = ContentStream(o, self)
-                            content.update(o.items())
-                            for k1 in ["/Length", "/Filter", "/DecodeParms"]:
-                                try:
-                                    del content[k1]
-                                except KeyError:
-                                    pass
+                            content.update(
+                                {
+                                    k1: v1
+                                    for k1, v1 in o.items()
+                                    if k1 not in ["/Length", "/Filter", "/DecodeParms"]
+                                }
+                            )
                         clean_forms(content, stack + [elt])  # clean sub forms
                     if content is not None:
                         if isinstance(v, IndirectObject):
@@ -2360,6 +2370,8 @@ class PdfWriter:
                             d[k] = self._add_object(content)  # pragma: no cover
                 except (TypeError, KeyError):
                     pass
+            for im in images:
+                del d[im]  # for clean-up
             if isinstance(elt, StreamObject):  # for /Form
                 if not isinstance(elt, ContentStream):  # pragma: no cover
                     e = ContentStream(elt, self)
@@ -2368,40 +2380,57 @@ class PdfWriter:
                 clean(elt, images, forms)  # clean the content
             return images, forms
 
+        if not isinstance(page, PageObject):
+            page = PageObject(self, page.indirect_reference)  # pragma: no cover
         if "/Contents" in page:
-            content = page["/Contents"].get_object()
+            content = cast(ContentStream, page.get_contents())
 
-            if not isinstance(content, ContentStream):
-                content = ContentStream(content, page)
             images, forms = clean_forms(page, [])
 
             clean(content, images, forms)
-            if isinstance(page["/Contents"], ArrayObject):
-                for o in page["/Contents"]:
-                    self._objects[o.idnum - 1] = NullObject()
-            try:
-                self._objects[
-                    cast(IndirectObject, page["/Contents"].indirect_reference).idnum - 1
-                ] = NullObject()
-            except AttributeError:
-                pass
-            page[NameObject("/Contents")] = self._add_object(content)
+            page.replace_contents(content)
 
-    def remove_images(self, ignore_byte_string_object: Optional[bool] = None) -> None:
+    def remove_images(
+        self,
+        to_delete: ImageType = ImageType.ALL,
+        ignore_byte_string_object: Optional[bool] = None,
+    ) -> None:
         """
         Remove images from this output.
 
         Args:
+            to_delete : The type of images to be deleted
+                (default = all images types)
             ignore_byte_string_object: deprecated
         """
+        if isinstance(to_delete, bool):
+            ignore_byte_string_object = to_delete
+            to_delete = ImageType.ALL
         if ignore_byte_string_object is not None:
             warnings.warn(
                 "The 'ignore_byte_string_object' argument of remove_images is "
                 "deprecated and will be removed in pypdf 4.0.0.",
                 category=DeprecationWarning,
             )
+        i = (
+            (
+                ObjectDeletionFlag.XOBJECT_IMAGES
+                if to_delete & ImageType.XOBJECT_IMAGES
+                else ObjectDeletionFlag.NONE
+            )
+            | (
+                ObjectDeletionFlag.INLINE_IMAGES
+                if to_delete & ImageType.INLINE_IMAGES
+                else ObjectDeletionFlag.NONE
+            )
+            | (
+                ObjectDeletionFlag.DRAWING_IMAGES
+                if to_delete & ImageType.DRAWING_IMAGES
+                else ObjectDeletionFlag.NONE
+            )
+        )
         for page in self.pages:
-            self.remove_objects_from_page(page, ObjectDeletionFlag.IMAGES)
+            self.remove_objects_from_page(page, i)
 
     def removeImages(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
@@ -2410,7 +2439,7 @@ class PdfWriter:
         .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("removeImages", "remove_images", "3.0.0")
-        return self.remove_images(ignoreByteStringObject)
+        return self.remove_images()
 
     def remove_text(self, ignore_byte_string_object: Optional[bool] = None) -> None:
         """

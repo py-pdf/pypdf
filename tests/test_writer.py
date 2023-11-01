@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 from pypdf import (
+    ImageType,
     ObjectDeletionFlag,
     PageObject,
     PdfMerger,
@@ -1889,6 +1890,36 @@ def test_object_contains_indirect_reference_to_self():
     outpage = writer.add_blank_page(width, height)
     outpage.merge_page(reader.pages[6])
     writer.append(reader)
+
+
+def test_remove_image_per_type():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "reportlab-inline-image.pdf")
+    writer.remove_images(ImageType.INLINE_IMAGES)
+
+    assert all(
+        x not in writer.pages[0].get_contents().get_data()
+        for x in (b"BI", b"ID", b"EI")
+    )
+
+    with pytest.raises(DeprecationWarning):
+        writer.remove_images(True)
+
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+    writer.remove_images(ImageType.DRAWING_IMAGES)
+    assert all(
+        x not in writer.pages[1].get_contents().get_data()
+        for x in (b" re\n", b"W*", b"f*")
+    )
+    assert all(
+        x in writer.pages[1].get_contents().get_data() for x in (b" TJ\n", b"rg", b"Tm")
+    )
+    assert all(
+        x not in writer.pages[9]["/Resources"]["/XObject"]["/Meta84"].get_data()
+        for x in (b" re\n", b"W*", b"f*")
+    )
+    writer.remove_images(ImageType.XOBJECT_IMAGES)
+    assert b"Do\n" not in writer.pages[0].get_contents().get_data()
+    assert len(writer.pages[0]["/Resources"]["/XObject"]) == 0
 
 
 @pytest.mark.enable_socket()

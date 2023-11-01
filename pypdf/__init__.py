@@ -14,6 +14,7 @@ from ._page import PageObject, Transformation, mult
 from ._reader import DocumentInformation, PdfFileReader, PdfReader
 from ._version import __version__
 from ._writer import ObjectDeletionFlag, PdfFileWriter, PdfWriter
+from .constants import ImageType
 from .pagerange import PageRange, parse_filename_page_ranges
 from .papersizes import PaperSize
 
@@ -31,6 +32,7 @@ _debug_versions = (
 __all__ = [
     "__version__",
     "_debug_versions",
+    "ImageType",
     "mult",
     "PageRange",
     "PaperSize",

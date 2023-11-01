@@ -1,5 +1,6 @@
 """Code in here is only used by pypdf.filters._xobj_to_image"""
 
+import sys
 from io import BytesIO
 from typing import Any, List, Tuple, Union, cast
 
@@ -14,12 +15,17 @@ from .generic import (
     NullObject,
 )
 
-try:
-    from typing import Literal, TypeAlias
-except ImportError:
+if sys.version_info[:2] >= (3, 8):
+    from typing import Literal
+else:
     # PEP 586 introduced typing.Literal with Python 3.8
     # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import Literal, TypeAlias  # type: ignore[assignment]
+    from typing_extensions import Literal  # type: ignore[assignment]
+
+if sys.version_info[:2] >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 
 
 try:
@@ -70,7 +76,9 @@ def _get_imagemode(
         color_space = color_space[1]
         if isinstance(color_space, IndirectObject):
             color_space = color_space.get_object()
-        mode2, invert_color = _get_imagemode(color_space, color_components, prev_mode, depth + 1)
+        mode2, invert_color = _get_imagemode(
+            color_space, color_components, prev_mode, depth + 1
+        )
         if mode2 in ("RGB", "CMYK"):
             mode2 = "P"
         return mode2, invert_color
@@ -78,14 +86,18 @@ def _get_imagemode(
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):
             color_space = color_space.get_object()
-        mode2, invert_color = _get_imagemode(color_space, color_components, prev_mode, depth + 1)
+        mode2, invert_color = _get_imagemode(
+            color_space, color_components, prev_mode, depth + 1
+        )
         return mode2, True
     elif color_space[0] == "/DeviceN":
         color_components = len(color_space[1])
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):  # pragma: no cover
             color_space = color_space.get_object()
-        mode2, invert_color = _get_imagemode(color_space, color_components, prev_mode, depth + 1)
+        mode2, invert_color = _get_imagemode(
+            color_space, color_components, prev_mode, depth + 1
+        )
         return mode2, invert_color
 
     mode_map = {
@@ -174,7 +186,9 @@ def _handle_flate(
             lookup = None
         else:
             if img.mode == "1":
-                colors_arr = [lookup[x - nb : x] for x in range(nb, len(lookup), nb)]
+                # Two values ("high" and "low").
+                assert len(lookup) == 2 * nb, len(lookup)
+                colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
                     [
                         b"".join(
