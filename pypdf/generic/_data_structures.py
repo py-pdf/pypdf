@@ -36,8 +36,8 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Generator,
     Iterable,
+    Iterator,
     List,
     Mapping,
     Optional,
@@ -1848,7 +1848,7 @@ def get_from_file_specification(_a: DictionaryObject) -> PdfObject:
     )
 
 
-class AttachmentBytesDictionary(dict):
+class AttachmentBytesDictionary(Mapping[str, AttachmentBytes]):
     """
     Dict[str, AttachmentBytes]
     Ease access  to Dictionary of Object
@@ -1858,24 +1858,28 @@ class AttachmentBytesDictionary(dict):
     names: List[str]
 
     def __init__(
-        self, root: Optional[Union[NameTree, DictionaryObject, IndirectObject]]
-    ):
-        dict.__init__(self)
+        self, root: Optional[Union[NameTree, DictionaryObject]] = None
+    ) -> None:
+        # super().__init__(self)
         if isinstance(root, IndirectObject):
             root = cast(DictionaryObject, root.get_object())
         if root is not None:
-            self.root = (
-                root if isinstance(root, NameTree) else NameTree(root)
-            )
+            self.root = root if isinstance(root, NameTree) else NameTree(root)
             self.names = list(self.root.list_keys())
         else:
             self.root = None
             self.names = []
 
-    def keys(self) -> List[str]:
+    def keys(self) -> List[str]:  # type: ignore[override]
         return self.names
 
-    def items(self) -> Generator[str, AttachmentBytes]:
+    def __len__(self) -> int:
+        return len(self.names)
+
+    def __iter__(self) -> Iterator[str]:  # type: ignore
+        yield from self.names
+
+    def items(self) -> Iterable[Tuple[str, AttachmentBytes]]:  # type: ignore[override]
         if self.root is None:
             return []
         else:
@@ -1891,8 +1895,12 @@ class AttachmentBytesDictionary(dict):
 
     def __getitem__(self, k: str) -> AttachmentBytes:
         if k not in self.names:
-            raise KeyError("KeyError: k")
+            raise KeyError(f"KeyError: {k}")
+        if self.root is None:
+            raise ValueError("Empty Object")
         v = self.root.list_get(k)
+        if v is None:
+            raise KeyError(f"KeyError: {k}")
         return AttachmentBytes(cast(DictionaryObject, v.get_object()))
 
     def __repr__(self) -> str:
