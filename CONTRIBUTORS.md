@@ -35,6 +35,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [McNeil, Karen](https://github.com/karenlmcneil): Arabic Language Support
 * [Mérino, Antoine](https://github.com/Merinorus)
 * [nalin-udhaar](https://github.com/nalin-udhaar)
+* [Paramonov, Alexey](https://github.com/alexey-v-paramonov)
 * [Paternault, Louis](https://framagit.org/spalax)
 * [Perrensen, Olsen](https://github.com/olsonperrensen)
 * [pilotandy](https://github.com/pilotandy)
