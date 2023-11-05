@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1698555360140,
+  "lastUpdate": 1699180806160,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -42587,6 +42587,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.22023294599376125",
             "extra": "mean: 31.192099745799986 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "me@paramonov.ru",
+            "name": "Alexey Paramonov",
+            "username": "alexey-v-paramonov"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e11c2b60bd4eb4bac89954404fabfe4fef17b7f5",
+          "message": "ROB: Initialize states array with an empty value (#2280)\n\nThis is done to prevent dictionary key error below when states are not initialized",
+          "timestamp": "2023-11-05T11:35:42+01:00",
+          "tree_id": "22891fa9d3f67ae399889a1e0a10b9136b959af8",
+          "url": "https://github.com/py-pdf/pypdf/commit/e11c2b60bd4eb4bac89954404fabfe4fef17b7f5"
+        },
+        "date": 1699180804133,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.5913470716041838,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010571123758900293",
+            "extra": "mean: 385.89967779998915 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.08247936149474,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01140133139968829",
+            "extra": "mean: 90.23251633334202 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21145811088763866,
+            "unit": "iter/sec",
+            "range": "stddev: 0.037799276311947266",
+            "extra": "mean: 4.729069014200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.436500224307217,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00038796089111443026",
+            "extra": "mean: 95.81756129999803 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.03645172486920934,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04916873413126478",
+            "extra": "mean: 27.433544052800006 sec\nrounds: 5"
           }
         ]
       }
