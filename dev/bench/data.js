@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1699949597667,
+  "lastUpdate": 1699950269471,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -42941,6 +42941,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.053252987445911594",
             "extra": "mean: 17.754333119399995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "c411a1efc01d0f62fa36832bf009640601466652",
+          "message": "REL: 3.17.1\n\n## What's new\n\n### Bug Fixes (BUG)\n-  Mediabox expansion size when applying non-right angle rotation (#2282) by @MrinalJain17\n\n### Robustness (ROB)\n-  MissingWidth is IndirectObject (#2288) by @MartinThoma\n-  Initialize states array with an empty value (#2280) by @alexey-v-paramonov\n\n### Documentation (DOC)\n-  Typo in example in extract-attachments.md (#2285) by @ageitgey\n-  Add Alexey Paramonov as a contributor for #2280 by @MartinThoma\n\n### Maintenance (MAINT)\n-  Update sample-files by @MartinThoma\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.0...3.17.1)",
+          "timestamp": "2023-11-14T09:20:53+01:00",
+          "tree_id": "ab4a351009506a16735228c26394b19dbe130fa7",
+          "url": "https://github.com/py-pdf/pypdf/commit/c411a1efc01d0f62fa36832bf009640601466652"
+        },
+        "date": 1699950267092,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.201741427674793,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009257075704276306",
+            "extra": "mean: 312.3300311999998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.927050110000037,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014606000685224487",
+            "extra": "mean: 83.84302830769249 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25581602662264175,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020038227939568984",
+            "extra": "mean: 3.909059229799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.810945803500992,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003787754298839827",
+            "extra": "mean: 59.485052874999056 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05658785046931664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17193145665630344",
+            "extra": "mean: 17.6716378464 sec\nrounds: 5"
           }
         ]
       }
