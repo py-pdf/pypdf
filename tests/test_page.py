@@ -137,7 +137,6 @@ def test_mediabox_expansion_after_rotation(angle: float, expected_width: int, ex
 
     The test was validated against pillow (see PR #2282)
     """
-    """
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
 
