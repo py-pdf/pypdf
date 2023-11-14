@@ -464,7 +464,7 @@ def compute_space_width(
         # the MissingWidth should be a number, but according to #2286 it can
         # be an indirect object
         obj = sp_width.get_object()
-        if obj is None:
+        if obj is None or isinstance(obj, NullObject):
             return 0.0
         return obj  # type: ignore
 
