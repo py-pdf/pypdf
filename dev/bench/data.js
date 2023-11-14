@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1699200092790,
+  "lastUpdate": 1699944079332,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -42705,6 +42705,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10814159937650432",
             "extra": "mean: 32.72777588460001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrinaljain007@gmail.com",
+            "name": "Mrinal Jain",
+            "username": "MrinalJain17"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "03bce9493615bfcacfaa992d9e4a4e72c3d9156b",
+          "message": "BUG: Mediabox expansion size when applying non-right angle rotation (#2282)\n\nFixes #2281",
+          "timestamp": "2023-11-14T07:38:11+01:00",
+          "tree_id": "65b8ea3cf50c7c89306fa5486c1c3cc4fae8ce79",
+          "url": "https://github.com/py-pdf/pypdf/commit/03bce9493615bfcacfaa992d9e4a4e72c3d9156b"
+        },
+        "date": 1699944077476,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4548416957884434,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004166021606220909",
+            "extra": "mean: 289.4488628000033 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.70593437575099,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006922138380934779",
+            "extra": "mean: 78.70338146153809 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27447516277724127,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012600690264311142",
+            "extra": "mean: 3.6433169030000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.37547069907328,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0002845434331676079",
+            "extra": "mean: 57.552397705884026 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0559987688771908,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09124172575370891",
+            "extra": "mean: 17.857535443200003 sec\nrounds: 5"
           }
         ]
       }
