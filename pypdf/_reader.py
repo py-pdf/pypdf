@@ -721,7 +721,7 @@ class PdfReader:
             second and following will get the suffix .2, .3, ...
         """
 
-        def indexed_key(k: str, fields: dict) -> str:
+        def indexed_key(k: str, fields: Dict[Any, Any]) -> str:
             if k not in fields:
                 return k
             else:
@@ -2292,7 +2292,7 @@ class PdfReader:
         return attachments
 
 
-class LazyDict(Mapping):
+class LazyDict(Mapping[Any, Any]):
     def __init__(self, *args: Any, **kw: Any) -> None:
         self._raw_dict = dict(*args, **kw)
 

@@ -70,7 +70,7 @@ class PdfWriterProtocol(Protocol):  # deprecated
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
         ...
 
-    def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
+    def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:
         ...
 
     def _add_object(self, obj: Any) -> Any:

@@ -453,7 +453,7 @@ def logger_warning(msg: str, src: str) -> None:
     logging.getLogger(src).warning(msg)
 
 
-def deprecation_bookmark(**aliases: str) -> Callable:
+def deprecation_bookmark(**aliases: str) -> Callable[..., Any]:
     """
     Decorator for deprecated term "bookmark".
 
@@ -462,7 +462,7 @@ def deprecation_bookmark(**aliases: str) -> Callable:
         outline = a collection of outline items.
     """
 
-    def decoration(func: Callable) -> Any:
+    def decoration(func: Callable[..., Any]) -> Any:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             rename_kwargs(func.__name__, kwargs, aliases, fail=True)
