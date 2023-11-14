@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1699944079332,
+  "lastUpdate": 1699947205730,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -42764,6 +42764,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09124172575370891",
             "extra": "mean: 17.857535443200003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9a2d983760f016c340c6813fd53685875bb2ccf9",
+          "message": "ROB: MissingWidth is IndirectObject (#2288)\n\nFixes #2286\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2023-11-14T08:28:59+01:00",
+          "tree_id": "1e0f53bffaf504678b92e662698aa1319de72014",
+          "url": "https://github.com/py-pdf/pypdf/commit/9a2d983760f016c340c6813fd53685875bb2ccf9"
+        },
+        "date": 1699947203737,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.4288294355581526,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011951568601171796",
+            "extra": "mean: 411.72096540002485 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.675214942293776,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011936661315152551",
+            "extra": "mean: 93.67492883334212 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20260714737852853,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016022113720485866",
+            "extra": "mean: 4.93566003440003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.119282673721866,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007055797250364098",
+            "extra": "mean: 98.82123389999151 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.036426779572304176,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1254513241579808",
+            "extra": "mean: 27.4523307232 sec\nrounds: 5"
           }
         ]
       }
