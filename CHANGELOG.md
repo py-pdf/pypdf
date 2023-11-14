@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## Version 3.17.1, 2023-11-14
+
+### Bug Fixes (BUG)
+-  Mediabox expansion size when applying non-right angle rotation (#2282)
+
+### Robustness (ROB)
+-  MissingWidth is IndirectObject (#2288)
+-  Initialize states array with an empty value (#2280)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.0...3.17.1)
+
 ## Version 3.17.0, 2023-10-29
 
 ### Security (SEC)

@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import b_, logger_warning
 from .errors import PdfReadWarning
-from .generic import DecodedStreamObject, DictionaryObject, StreamObject
+from .generic import DecodedStreamObject, DictionaryObject, IndirectObject, NullObject, StreamObject
 
 
 # code freely inspired from @twiggy ; see #711
@@ -457,6 +457,17 @@ def compute_space_width(
                         m += x
                         cpt += 1
                 sp_width = m / max(1, cpt) / 2
+
+    if isinstance(sp_width, IndirectObject):
+        # According to
+        # 'Table 122 - Entries common to all font descriptors (continued)'
+        # the MissingWidth should be a number, but according to #2286 it can
+        # be an indirect object
+        obj = sp_width.get_object()
+        if obj is None or isinstance(obj, NullObject):
+            return 0.0
+        return obj  # type: ignore
+
     return sp_width
 
 
