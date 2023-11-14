@@ -133,8 +133,10 @@ def test_page_operations(pdf_path, password):
 )
 def test_mediabox_expansion_after_rotation(angle: float, expected_width: int, expected_height: int):
     """
-    This test validates the dimensions of a pdf's mediabox after applying rotation with
-    expansion (at a non-right angle).
+    Mediabox dimensions after rotation at a non-right angle with expension are correct.
+
+    The test was validated against pillow (see PR #2282)
+    """
     """
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
