@@ -1655,11 +1655,6 @@ class PageObject(DictionaryObject):
 
             lowerleft = (min(new_x), min(new_y))
             upperright = (max(new_x), max(new_y))
-            lowerleft = (min(corners[0], lowerleft[0]), min(corners[1], lowerleft[1]))
-            upperright = (
-                max(corners[2], upperright[0]),
-                max(corners[3], upperright[1]),
-            )
 
             self.mediabox.lower_left = lowerleft
             self.mediabox.upper_right = upperright
