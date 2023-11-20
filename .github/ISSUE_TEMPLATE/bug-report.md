@@ -34,8 +34,8 @@ better. Let us know if we may add them to our tests!
 
 ## Traceback
 
-This is the complete Traceback I see:
+This is the complete traceback I see:
 
 ```
-# TODO: Your Traceback goes here (if applicable)
+# TODO: Your traceback goes here (if applicable)
 ```
