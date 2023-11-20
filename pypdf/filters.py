@@ -322,7 +322,7 @@ class RunLengthDecode:
         **kwargs: Any,
     ) -> bytes:
         """
-        Decode an ASCII-Hex encoded data stream.
+        Decode a run length encoded data stream.
 
         Args:
           data: a bytes sequence of length/data
