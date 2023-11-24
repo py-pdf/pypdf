@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1699951829165,
+  "lastUpdate": 1700859291453,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -43059,6 +43059,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13899891615890533",
             "extra": "mean: 17.705837257399992 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e1dfee6a4329d242f028189a17809f64f9b2c96a",
+          "message": "STY: Make Traceback in bug report template uppercase (#2304)",
+          "timestamp": "2023-11-24T21:51:46+01:00",
+          "tree_id": "72c222a1aef9207d10e819fd94fec6a8a979eb9f",
+          "url": "https://github.com/py-pdf/pypdf/commit/e1dfee6a4329d242f028189a17809f64f9b2c96a"
+        },
+        "date": 1700859289929,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.345799402717308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006153469956502796",
+            "extra": "mean: 298.8822339999956 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.540216812940466,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00840441487645888",
+            "extra": "mean: 79.74343784615293 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27292385683873793,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01936415159260259",
+            "extra": "mean: 3.664025606200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.856457527012395,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010953065513727754",
+            "extra": "mean: 56.00214927777517 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.056294013716618234,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04165459482717604",
+            "extra": "mean: 17.7638781458 sec\nrounds: 5"
           }
         ]
       }
