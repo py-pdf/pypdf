@@ -564,6 +564,8 @@ class CCITTFaxDecode:
         k = 0
         columns = 1728
         if parameters:
+            if isinstance(parameters, IndirectObject):
+                parameters = parameters.get_object()
             if isinstance(parameters, ArrayObject):
                 for decode_parm in parameters:
                     if CCITT.COLUMNS in decode_parm:
