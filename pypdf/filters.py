@@ -564,18 +564,18 @@ class CCITTFaxDecode:
         k = 0
         columns = 1728
         if parameters:
-            parameters = parameters.get_object()
-            if isinstance(parameters, ArrayObject):
-                for decode_parm in parameters:
+            parameters_unwrapped = cast(Union[ArrayObject, DictionaryObject], parameters.get_object())
+            if isinstance(parameters_unwrapped, ArrayObject):
+                for decode_parm in parameters_unwrapped:
                     if CCITT.COLUMNS in decode_parm:
                         columns = decode_parm[CCITT.COLUMNS]
                     if CCITT.K in decode_parm:
                         k = decode_parm[CCITT.K]
             else:
-                if CCITT.COLUMNS in parameters:
-                    columns = parameters[CCITT.COLUMNS]  # type: ignore
-                if CCITT.K in parameters:
-                    k = parameters[CCITT.K]  # type: ignore
+                if CCITT.COLUMNS in parameters_unwrapped:
+                    columns = parameters_unwrapped[CCITT.COLUMNS]  # type: ignore
+                if CCITT.K in parameters_unwrapped:
+                    k = parameters_unwrapped[CCITT.K]  # type: ignore
 
         return CCITParameters(k, columns, rows)
 
