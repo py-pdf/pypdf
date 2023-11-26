@@ -489,7 +489,7 @@ def type1_alternative(
     for li in lines:
         if li.startswith(b"dup"):
             words = [_w for _w in li.split(b" ") if _w != b""]
-            if words[3] != b"put":
+            if len(words) > 3 and words[3] != b"put":
                 continue
             try:
                 i = int(words[1])
