@@ -1,5 +1,39 @@
 # CHANGELOG
 
+## Version 3.17.1, 2023-11-14
+
+### Bug Fixes (BUG)
+-  Mediabox expansion size when applying non-right angle rotation (#2282)
+
+### Robustness (ROB)
+-  MissingWidth is IndirectObject (#2288)
+-  Initialize states array with an empty value (#2280)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.0...3.17.1)
+
+## Version 3.17.0, 2023-10-29
+
+### Security (SEC)
+-  Infinite recursion when using PdfWriter(clone_from=reader) (#2264)
+
+### New Features (ENH)
+-  Add parameter to select images to be removed (#2214)
+
+### Bug Fixes (BUG)
+-  Correctly handle image mode 1 with FlateDecode (#2249)
+-  Error when filling a value with parentheses #2268 (#2269)
+-  Handle empty root outline (#2239)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.4...3.17.0)
+
+## Version 3.16.4, 2023-10-10
+
+### Bug Fixes (BUG)
+-  Avoid exceeding recursion depth when retrieving image mode (#2251)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.3...3.16.4)
+
 ## Version 3.16.3, 2023-10-08
 
 ### Bug Fixes (BUG)

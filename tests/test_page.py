@@ -1,5 +1,6 @@
 """Test the pypdf._page module."""
 import json
+import math
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -120,6 +121,34 @@ def test_page_operations(pdf_path, password):
     page.scale_by(0.5)
     page.scale_to(100, 100)
     page.extract_text()
+
+
+@pytest.mark.parametrize(
+    ("angle", "expected_width", "expected_height"),
+    [
+        (175, 680, 844),
+        (45, 994, 994),
+        (-80, 888, 742),
+    ]
+)
+def test_mediabox_expansion_after_rotation(angle: float, expected_width: int, expected_height: int):
+    """
+    Mediabox dimensions after rotation at a non-right angle with expension are correct.
+
+    The test was validated against pillow (see PR #2282)
+    """
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+
+    transformation = Transformation().rotate(angle)
+    for page_box in reader.pages:
+        page_box.add_transformation(transformation, expand=True)
+
+    mediabox = reader.pages[0].mediabox
+
+    # Deviation of upto 2 pixels is acceptable
+    assert math.isclose(mediabox.width, expected_width, abs_tol=2)
+    assert math.isclose(mediabox.height, expected_height, abs_tol=2)
 
 
 def test_transformation_equivalence():

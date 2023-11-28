@@ -210,3 +210,12 @@ def test_tabs_in_cmap():
     name = "iss2173.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].extract_text()
+
+
+@pytest.mark.enable_socket()
+def test_ignoring_non_put_entries():
+    """Issue #2290"""
+    url = "https://github.com/py-pdf/pypdf/files/13452885/example.pdf"
+    name = "iss2290.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].extract_text()

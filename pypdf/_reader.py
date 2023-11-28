@@ -647,7 +647,8 @@ class PdfReader:
             if "/Off" not in retval[key]["/_States_"]:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
         elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
-            states = []
+            states: List[str] = []
+            retval[key][NameObject("/_States_")] = ArrayObject(states)
             for k in obj.get(FA.Kids, {}):
                 k = k.get_object()
                 for s in list(k["/AP"]["/N"].keys()):
@@ -720,7 +721,7 @@ class PdfReader:
             second and following will get the suffix .2, .3, ...
         """
 
-        def indexed_key(k: str, fields: dict) -> str:
+        def indexed_key(k: str, fields: Dict[Any, Any]) -> str:
             if k not in fields:
                 return k
             else:
@@ -2291,7 +2292,7 @@ class PdfReader:
         return attachments
 
 
-class LazyDict(Mapping):
+class LazyDict(Mapping[Any, Any]):
     def __init__(self, *args: Any, **kw: Any) -> None:
         self._raw_dict = dict(*args, **kw)
 

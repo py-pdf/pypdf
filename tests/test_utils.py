@@ -241,7 +241,6 @@ def test_deprecation_bookmark():
 def test_deprecate_with_replacement():
     def foo() -> None:
         deprecate_with_replacement("foo", "bar", removed_in="4.3.2")
-        pass
 
     with pytest.warns(
         DeprecationWarning,
@@ -253,7 +252,6 @@ def test_deprecate_with_replacement():
 def test_deprecation_no_replacement():
     def foo() -> None:
         deprecation_no_replacement("foo", removed_in="4.3.2")
-        pass
 
     with pytest.raises(
         DeprecationError,

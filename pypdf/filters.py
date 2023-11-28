@@ -322,7 +322,7 @@ class RunLengthDecode:
         **kwargs: Any,
     ) -> bytes:
         """
-        Decode an ASCII-Hex encoded data stream.
+        Decode a run length encoded data stream.
 
         Args:
           data: a bytes sequence of length/data
@@ -558,23 +558,24 @@ class CCITTFaxDecode:
 
     @staticmethod
     def _get_parameters(
-        parameters: Union[None, ArrayObject, DictionaryObject], rows: int
+        parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject], rows: int
     ) -> CCITParameters:
         # TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
         k = 0
         columns = 1728
         if parameters:
-            if isinstance(parameters, ArrayObject):
-                for decode_parm in parameters:
+            parameters_unwrapped = cast(Union[ArrayObject, DictionaryObject], parameters.get_object())
+            if isinstance(parameters_unwrapped, ArrayObject):
+                for decode_parm in parameters_unwrapped:
                     if CCITT.COLUMNS in decode_parm:
                         columns = decode_parm[CCITT.COLUMNS]
                     if CCITT.K in decode_parm:
                         k = decode_parm[CCITT.K]
             else:
-                if CCITT.COLUMNS in parameters:
-                    columns = parameters[CCITT.COLUMNS]  # type: ignore
-                if CCITT.K in parameters:
-                    k = parameters[CCITT.K]  # type: ignore
+                if CCITT.COLUMNS in parameters_unwrapped:
+                    columns = parameters_unwrapped[CCITT.COLUMNS]  # type: ignore
+                if CCITT.K in parameters_unwrapped:
+                    k = parameters_unwrapped[CCITT.K]  # type: ignore
 
         return CCITParameters(k, columns, rows)
 
