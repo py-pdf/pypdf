@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1701021982957,
+  "lastUpdate": 1701207432687,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -43236,6 +43236,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05256991220549035",
             "extra": "mean: 17.843159712600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "441bb59eeb95daa933ac4b0362d49533561dadec",
+          "message": "BUG: Handle indirect objects as parameters for CCITTFaxDecode (#2307)\n\nThe following error is resolved:\r\n\r\n```\r\n[...]\r\n    if CCITT.COLUMNS in parameters:\r\nTypeError: argument of type 'IndirectObject' is not iterable\r\n```",
+          "timestamp": "2023-11-28T22:34:06+01:00",
+          "tree_id": "3bdd633ac2cc8eb691de4972cca045e7478c40ea",
+          "url": "https://github.com/py-pdf/pypdf/commit/441bb59eeb95daa933ac4b0362d49533561dadec"
+        },
+        "date": 1701207430551,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.303553802165049,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006221893988136278",
+            "extra": "mean: 302.7043178000099 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.315841004459188,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009686095832296987",
+            "extra": "mean: 81.19624146153971 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27048703735384766,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021359623751159233",
+            "extra": "mean: 3.6970348368000088 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.713366346512547,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00027255544246496317",
+            "extra": "mean: 56.45454288235181 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05703800090301572,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05350595014006088",
+            "extra": "mean: 17.5321712572 sec\nrounds: 5"
           }
         ]
       }
