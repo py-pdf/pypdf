@@ -132,3 +132,12 @@ def download_test_pdfs():
     pdfs = read_csv_to_list_of_dicts(Path(__file__).parent / "example_files.csv")
     for pdf in pdfs:
         get_data_from_url(pdf["url"], name=pdf["local_filename"])
+
+
+def test_csv_consistency():
+    pdfs = read_csv_to_list_of_dicts(Path(__file__).parent / "example_files.csv")
+    # Ensure the names are unique
+    assert len(pdfs) == len({pdf["name"] for pdf in pdfs})
+
+    # Ensure the urls are unique
+    assert len(pdfs) == len({pdf["url"] for pdf in pdfs})
