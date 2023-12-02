@@ -105,9 +105,8 @@ def test_image_similarity_mid():
 
 @pytest.mark.enable_socket()
 def test_image_new_property():
-    url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
     name = "pdf_font_garbled.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name=name)))
     assert reader.pages[0].images.keys() == [
         "/I0",
         "/I1",
@@ -215,8 +214,6 @@ def test_image_extraction(src, page_index, image_key, expected):
 @pytest.mark.timeout(30)
 def test_loop_in_image_keys():
     """Cf #2077"""
-    url = "https://github.com/py-pdf/pypdf/files/12309492/example_134.pdf"
-    name = "iss2077.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2077.pdf")))
     reader.pages[0]["/Resources"]["/XObject"][NameObject("/toto")] = NullObject()
     reader.pages[0].images.keys()
