@@ -781,8 +781,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     alpha = None
     filters = x_object_obj.get(SA.FILTER, [None])
     lfilters = filters[-1] if isinstance(filters, list) else filters
-    if lfilters == FT.FLATE_DECODE:
-        img, image_format, extension, invert_color = _handle_flate(
+    if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
+        img, image_format, extension, _ = _handle_flate(
             size,
             data,
             mode,
@@ -824,15 +824,14 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             ".png",
             False,
         )
-
     # CMYK image and other colorspaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
     decode = x_object_obj.get(
         IA.DECODE,
         ([1.0, 0.0] * len(img.getbands()))
         if (
-            (img.mode == "CMYK" or (invert_color and img.mode == "L"))
-            and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE)
+            (img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE))
+            or (invert_color and img.mode == "L")
         )
         else None,
     )

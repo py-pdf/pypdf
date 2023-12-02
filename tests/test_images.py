@@ -217,3 +217,19 @@ def test_loop_in_image_keys():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2077.pdf")))
     reader.pages[0]["/Resources"]["/XObject"][NameObject("/toto")] = NullObject()
     reader.pages[0].images.keys()
+
+
+@pytest.mark.enable_socket()
+def test_devicen_cmyk_black_only():
+    """Cf #2321"""
+    url = "https://github.com/py-pdf/pypdf/files/13501846/Addressing_Adversarial_Attacks.pdf"
+    name = "iss2321.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/cc2dabc1-86e6-4179-a8a4-2b0efea124be"
+    name = "iss2321_img0.pdf"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(reader.pages[5].images[0].image, img) >= 0.99
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/6b64a949-42be-40d5-9eea-95707f350d89"
+    name = "iss2321_img1.pdf"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(reader.pages[10].images[0].image, img) >= 0.99
