@@ -2240,7 +2240,10 @@ class PdfWriter:
                 # to prevent infinite looping
                 return [], []  # pragma: no cover
             try:
-                d = cast(Dict[Any, Any], cast(DictionaryObject, elt["/Resources"])["/XObject"])
+                d = cast(
+                    Dict[Any, Any],
+                    cast(DictionaryObject, elt["/Resources"])["/XObject"],
+                )
             except KeyError:
                 d = {}
             images = []
@@ -3188,7 +3191,9 @@ class PdfWriter:
 
     def add_filtered_articles(
         self,
-        fltr: Union[Pattern[Any], str],  # thread entry from the reader's array of threads
+        fltr: Union[
+            Pattern[Any], str
+        ],  # thread entry from the reader's array of threads
         pages: Dict[int, PageObject],
         reader: PdfReader,
     ) -> None:

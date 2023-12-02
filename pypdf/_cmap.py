@@ -6,7 +6,13 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import b_, logger_warning
 from .errors import PdfReadWarning
-from .generic import DecodedStreamObject, DictionaryObject, IndirectObject, NullObject, StreamObject
+from .generic import (
+    DecodedStreamObject,
+    DictionaryObject,
+    IndirectObject,
+    NullObject,
+    StreamObject,
+)
 
 
 # code freely inspired from @twiggy ; see #711
