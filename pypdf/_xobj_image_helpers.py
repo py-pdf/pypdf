@@ -91,10 +91,18 @@ def _get_imagemode(
         )
         return mode2, True
     elif color_space[0] == "/DeviceN":
+        original_color_space = color_space
         color_components = len(color_space[1])
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):  # pragma: no cover
             color_space = color_space.get_object()
+        if color_space == "/DeviceCMYK" and color_components == 1:
+            if original_color_space[1][0] != "/Black":
+                logger_warning(
+                    f"Color {original_color_space[1][0]} converted to Gray. Please share PDF with pypdf dev team",
+                    __name__,
+                )
+            return "L", True
         mode2, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )

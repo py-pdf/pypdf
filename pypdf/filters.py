@@ -558,13 +558,16 @@ class CCITTFaxDecode:
 
     @staticmethod
     def _get_parameters(
-        parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject], rows: int
+        parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
+        rows: int,
     ) -> CCITParameters:
         # TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
         k = 0
         columns = 1728
         if parameters:
-            parameters_unwrapped = cast(Union[ArrayObject, DictionaryObject], parameters.get_object())
+            parameters_unwrapped = cast(
+                Union[ArrayObject, DictionaryObject], parameters.get_object()
+            )
             if isinstance(parameters_unwrapped, ArrayObject):
                 for decode_parm in parameters_unwrapped:
                     if CCITT.COLUMNS in decode_parm:
@@ -778,8 +781,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     alpha = None
     filters = x_object_obj.get(SA.FILTER, [None])
     lfilters = filters[-1] if isinstance(filters, list) else filters
-    if lfilters == FT.FLATE_DECODE:
-        img, image_format, extension, invert_color = _handle_flate(
+    if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
+        img, image_format, extension, _ = _handle_flate(
             size,
             data,
             mode,
@@ -821,15 +824,14 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             ".png",
             False,
         )
-
     # CMYK image and other colorspaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
     decode = x_object_obj.get(
         IA.DECODE,
         ([1.0, 0.0] * len(img.getbands()))
         if (
-            (img.mode == "CMYK" or (invert_color and img.mode == "L"))
-            and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE)
+            (img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE))
+            or (invert_color and img.mode == "L")
         )
         else None,
     )
