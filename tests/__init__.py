@@ -1,3 +1,4 @@
+import concurrent.futures
 import csv
 import ssl
 import urllib.request
@@ -130,8 +131,13 @@ def download_test_pdfs():
     This is especially important to avoid pytest timeouts.
     """
     pdfs = read_csv_to_list_of_dicts(Path(__file__).parent / "example_files.csv")
-    for pdf in pdfs:
-        get_data_from_url(pdf["url"], name=pdf["local_filename"])
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        futures = [
+            executor.submit(get_data_from_url, pdf["url"], name=pdf["local_filename"])
+            for pdf in pdfs
+        ]
+        concurrent.futures.wait(futures)
 
 
 def test_csv_consistency():
