@@ -69,6 +69,8 @@ pytest-timeout==2.1.0
     # via -r requirements/ci.in
 pytest-xdist==3.3.1
     # via -r requirements/ci.in
+pyyaml==6.0.1
+    # via -r requirements/ci.in
 ruff==0.0.290
     # via -r requirements/ci.in
 typeguard==4.1.2

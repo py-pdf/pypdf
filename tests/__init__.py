@@ -1,10 +1,11 @@
 import concurrent.futures
-import csv
 import ssl
 import urllib.request
 from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.error import HTTPError
+
+import yaml
 
 from pypdf.generic import DictionaryObject, IndirectObject
 
@@ -113,15 +114,10 @@ def is_sublist(child_list, parent_list):
     return is_sublist(child_list, parent_list[1:])
 
 
-def read_csv_to_list_of_dicts(file_path: Path) -> List[Dict[str, str]]:
-    data_list = []
-
-    with open(file_path, newline="", encoding="utf-8") as file:
-        reader = csv.DictReader(file)
-
-        data_list = list(reader)
-
-    return data_list
+def read_yaml_to_list_of_dicts(yaml_file: Path) -> List[Dict[str, str]]:
+    with open(yaml_file) as yaml_input:
+        data = yaml.safe_load(yaml_input)
+    return data
 
 
 def download_test_pdfs():
@@ -130,7 +126,7 @@ def download_test_pdfs():
 
     This is especially important to avoid pytest timeouts.
     """
-    pdfs = read_csv_to_list_of_dicts(Path(__file__).parent / "example_files.csv")
+    pdfs = read_yaml_to_list_of_dicts(Path(__file__).parent / "example_files.yaml")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         futures = [
@@ -141,7 +137,7 @@ def download_test_pdfs():
 
 
 def test_csv_consistency():
-    pdfs = read_csv_to_list_of_dicts(Path(__file__).parent / "example_files.csv")
+    pdfs = read_yaml_to_list_of_dicts(Path(__file__).parent / "example_files.csv")
     # Ensure the names are unique
     assert len(pdfs) == len({pdf["name"] for pdf in pdfs})
 
