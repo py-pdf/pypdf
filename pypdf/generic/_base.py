@@ -727,7 +727,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
-    retval = b""
+    retval = bytearray()
     for c in unicode_string:
         try:
             retval += b_(chr(_pdfdoc_encoding_rev[c]))
