@@ -15,6 +15,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [ArkieCoder](https://github.com/ArkieCoder)
 * [Clauss, Christian](https://github.com/cclauss)
 * [DL6ER](https://github.com/DL6ER)
+* [Duy, Phan Thanh](https://github.com/zuypt)
 * [ediamondscience](https://github.com/ediamondscience)
 * [Ermeson, Felipe](https://github.com/FelipeErmeson)
 * [Freitag, François](https://github.com/francoisfreitag)
