@@ -195,7 +195,14 @@ def _handle_flate(
         else:
             if img.mode == "1":
                 # Two values ("high" and "low").
-                assert len(lookup) == 2 * nb, len(lookup)
+                if len(lookup) != 2 * nb:
+                    if len(lookup) < 2 * nb:
+                        raise PdfReadError(f"Not enough lookup values: Expected {2 * nb}, got {len(lookup)}.")
+                    logger_warning(
+                        f"Expected {2 * nb} lookup values, got {len(lookup)}. Ignoring trailing ones.",
+                        __name__,
+                    )
+                    lookup = lookup[:2 * nb]
                 colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
                     [
