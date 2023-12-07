@@ -26,7 +26,7 @@ jobs:
       with:
         submodules: 'recursive'
     - name: Setup Python (3.11+)
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.12  # latest stable python
         allow-prereleases: true
@@ -80,14 +80,14 @@ jobs:
         path: '**/tests/pdf_cache/*'
         key: cache-downloaded-files
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       if: matrix.python-version == '3.6' || matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci.txt'
     - name: Setup Python (3.11+)
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
       with:
         python-version: ${{ matrix.python-version }}
@@ -143,7 +143,7 @@ jobs:
       with:
         submodules: 'recursive'
     - name: Setup Python 3.11
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.11"
         cache: 'pip'
@@ -171,7 +171,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{env.PYTHON_LATEST}}
 
@@ -194,7 +194,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           # Use latest Python, so it understands all syntax.
           python-version: ${{env.PYTHON_LATEST}}
