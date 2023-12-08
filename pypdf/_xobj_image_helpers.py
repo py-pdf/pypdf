@@ -4,7 +4,7 @@ import sys
 from io import BytesIO
 from typing import Any, List, Tuple, Union, cast
 
-from ._utils import logger_warning, WHITESPACES
+from ._utils import WHITESPACES, logger_warning
 from .constants import ColorSpaces
 from .errors import PdfReadError
 from .generic import (
