@@ -928,9 +928,13 @@ class PdfWriter:
                     writer_parent_annot[NameObject(FA.V)] = TextStringObject(value)
                     for k in writer_parent_annot[NameObject(FA.Kids)]:
                         k = k.get_object()
-                        k[NameObject(AA.AS)] = NameObject(
-                            value if value in k[AA.AP]["/N"] else "/Off"
-                        )
+                        # Probably a better way to do this
+                        try:
+                            k[NameObject(AA.AS)] = NameObject(
+                                value if value in k[AA.AP]["/N"] else "/Off"
+                            )
+                        except KeyError:
+                            pass
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
