@@ -4,7 +4,7 @@ import sys
 from io import BytesIO
 from typing import Any, List, Tuple, Union, cast
 
-from ._utils import logger_warning
+from ._utils import logger_warning, WHITESPACES
 from .constants import ColorSpaces
 from .errors import PdfReadError
 from .generic import (
@@ -195,14 +195,13 @@ def _handle_flate(
         else:
             if img.mode == "1":
                 # Two values ("high" and "low").
-                if len(lookup) != 2 * nb:
-                    if len(lookup) < 2 * nb:
-                        raise PdfReadError(f"Not enough lookup values: Expected {2 * nb}, got {len(lookup)}.")
-                    logger_warning(
-                        f"Expected {2 * nb} lookup values, got {len(lookup)}. Ignoring trailing ones.",
-                        __name__,
-                    )
-                    lookup = lookup[:2 * nb]
+                expected_count = 2 * nb
+                if len(lookup) != expected_count:
+                    if len(lookup) < expected_count:
+                        raise PdfReadError(f"Not enough lookup values: Expected {expected_count}, got {len(lookup)}.")
+                    lookup = lookup[:expected_count]
+                    if not all(_value in WHITESPACES for _value in lookup[expected_count:]):
+                        raise PdfReadError(f"Too many lookup values: Expected {expected_count}, got {len(lookup)}.")
                 colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
                     [
