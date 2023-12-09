@@ -561,7 +561,7 @@ def test_runlengthdecode():
     url = "https://github.com/py-pdf/pypdf/files/12162905/out.pdf"
     name = "FailedRLE1.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    reader.pages[0].images[0]
+    reader.pages[0].images[0]  # now works
     url = "https://github.com/py-pdf/pypdf/files/12162926/out.pdf"
     name = "FailedRLE2.pdf"
     reader.pages[0].images[0]
