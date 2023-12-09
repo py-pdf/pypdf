@@ -17,24 +17,24 @@ from . import get_data_from_url
     [
         # compute_space_width:
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/923/923406.pdf",
+            None,
             "tika-923406.pdf",
             False,
         ),
         # _parse_to_unicode_process_rg:
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/959/959173.pdf",
+            None,
             "tika-959173.pdf",
             False,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/959/959173.pdf",
+            None,
             "tika-959173.pdf",
             True,
         ),
         # issue #1718:
         (
-            "https://github.com/py-pdf/pypdf/files/10983477/Ballinasloe_WS.pdf",
+            None,
             "iss1718.pdf",
             False,
         ),
@@ -53,27 +53,24 @@ def test_text_extraction_slow(caplog, url: str, name: str, strict: bool):
     [
         # bfchar_on_2_chars: issue #1293
         (
-            "https://raw.githubusercontent.com/xyegithub/myBlog/12127c712ac2008782616c743224b187a4069477/posts/"
-            "c94b2364/paper_pdfs/ImageClassification/2007%2CASurveyofImageClassificationBasedTechniques.pdf",
+            None,
             "ASurveyofImageClassificationBasedTechniques.pdf",
             False,
         ),
         # L40, get_font_width_from_default
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/908/908104.pdf",
+            None,
             "tika-908104.pdf",
             False,
         ),
         # multiline_bfrange / regression test for issue #1285:
         (
-            "https://github.com/alexanderquispe/1REI05/raw/main/reports/report_1/"
-            "The%20lean%20times%20in%20the%20Peruvian%20economy.pdf",
+            None,
             "The%20lean%20times%20in%20the%20Peruvian%20economy.pdf",
             False,
         ),
         (
-            "https://github.com/yxj-HGNwmb5kdp8ewr/yxj-HGNwmb5kdp8ewr.github.io/raw/master/files/"
-            "Giacalone%20Llobell%20Jaeger%20(2022)%20Food%20Qual%20Prefer.pdf",
+            None,
             "Giacalone.pdf",
             False,
         ),
@@ -89,10 +86,7 @@ def test_text_extraction_fast(caplog, url: str, name: str, strict: bool):
 
 @pytest.mark.enable_socket()
 def test_parse_encoding_advanced_encoding_not_implemented():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957144.pdf"
-    name = "tika-957144.pdf"
-
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-957144.pdf")))
     with pytest.warns(PdfReadWarning, match="Advanced encoding .* not implemented yet"):
         for page in reader.pages:
             page.extract_text()
@@ -100,10 +94,8 @@ def test_parse_encoding_advanced_encoding_not_implemented():
 
 @pytest.mark.enable_socket()
 def test_ascii_charset():
-    # iss #1312
-    url = "https://github.com/py-pdf/pypdf/files/9472500/main.pdf"
-    name = "ascii charset.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    # Issue #1312
+    reader = PdfReader(BytesIO(get_data_from_url(name="ascii charset.pdf")))
     assert "/a" not in reader.pages[0].extract_text()
 
 
@@ -112,13 +104,13 @@ def test_ascii_charset():
     ("url", "name", "page_nb", "within_text"),
     [
         (
-            "https://github.com/py-pdf/pypdf/files/9667138/cmap1370.pdf",
+            None,
             "cmap1370.pdf",
             0,
             "",
         ),
         (
-            "https://github.com/py-pdf/pypdf/files/9712729/02voc.pdf",
+            None,
             "02voc.pdf",
             2,
             "Document delineation and character sequence decoding",
@@ -135,9 +127,7 @@ def test_text_extraction_of_specific_pages(
 
 @pytest.mark.enable_socket()
 def test_iss1533():
-    url = "https://github.com/py-pdf/pypdf/files/10376149/iss1533.pdf"
-    name = "iss1533.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss1533.pdf")))
     reader.pages[0].extract_text()  # no error
     assert build_char_map("/F", 200, reader.pages[0])[3]["\x01"] == "Ü"
 
@@ -147,14 +137,14 @@ def test_iss1533():
     ("url", "name", "page_index", "within_text", "caplog_text"),
     [
         (
-            "https://github.com/py-pdf/pypdf/files/11190189/pdf_font_garbled.pdf",
+            None,
             "tstUCS2.pdf",
             1,
             ["2 / 12", "S0490520090001", "于博"],
             "",
         ),
         (
-            "https://github.com/py-pdf/pypdf/files/11315397/3.pdf",
+            None,
             "tst-GBK_EUC.pdf",
             0,
             ["NJA", "中华男科学杂志"],
@@ -172,9 +162,7 @@ def test_cmap_encodings(caplog, url, name, page_index, within_text, caplog_text)
 
 @pytest.mark.enable_socket()
 def test_latex():
-    url = "https://github.com/py-pdf/pypdf/files/12163370/math-in-text-created-via-latex.pdf"
-    name = "math_latex.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="math_latex.pdf")))
     txt = reader.pages[0].extract_text()  # no error
     for pat in ("α", "β", "γ", "ϕ", "φ", "ℏ", "∫", "∂", "·", "×"):
         assert pat in txt
@@ -183,9 +171,7 @@ def test_latex():
 
 @pytest.mark.enable_socket()
 def test_unixxx_glyphs():
-    url = "https://arxiv.org/pdf/2201.00021.pdf"
-    name = "unixxx_glyphs.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="unixxx_glyphs.pdf")))
     txt = reader.pages[0].extract_text()  # no error
     for pat in ("闫耀庭", "龚龑", "张江水", "1′′.2"):
         assert pat in txt
@@ -195,27 +181,22 @@ def test_unixxx_glyphs():
 def test_cmap_compute_space_width():
     # issue 2137
     # original file URL:
-    url = "https://arxiv.org/pdf/2005.05909.pdf"
+    # url = "https://arxiv.org/pdf/2005.05909.pdf"
     # URL from github issue is too long to pass code stype check, use original arxiv URL instead
     # url = "https://github.com/py-pdf/pypdf/files/12489914/Morris.et.al.-.2020.-.TextAttack.A.Framework.for.Adversarial.Attacks.Data.Augmentation.and.Adversarial.Training.in.NLP.pdf"
-    name = "TextAttack_paper.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="TextAttack_paper.pdf")))
     reader.pages[0].extract_text()  # no error
 
 
 @pytest.mark.enable_socket()
 def test_tabs_in_cmap():
     """Issue #2173"""
-    url = "https://github.com/py-pdf/pypdf/files/12552700/tt.pdf"
-    name = "iss2173.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2173.pdf")))
     reader.pages[0].extract_text()
 
 
 @pytest.mark.enable_socket()
 def test_ignoring_non_put_entries():
     """Issue #2290"""
-    url = "https://github.com/py-pdf/pypdf/files/13452885/example.pdf"
-    name = "iss2290.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
     reader.pages[0].extract_text()
