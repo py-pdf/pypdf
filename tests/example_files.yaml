@@ -64,3 +64,37 @@
   url: https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf
 - local_filename: tika-924546.pdf
   url: https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf
+- local_filename: issue-1801.png
+  url: https://user-images.githubusercontent.com/1658117/232842886-9d1b0726-3a5b-430d-8464-595d919c266c.png
+- local_filename: grimm10
+  url: https://github.com/py-pdf/pypdf/files/11336817/grimm10.pdf
+- local_filename: labeled-edges-center-image.png
+  url: https://user-images.githubusercontent.com/4083478/236685544-a1940b06-fb42-4bb1-b589-1e4ad429d68e.png
+- local_filename: pdf_font_garbled.pdf
+  url: https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf
+- local_filename: watermark1.png
+  url: https://user-images.githubusercontent.com/4083478/236793172-09340aef-3440-4c8a-af85-a91cdad27d46.png
+- local_filename: tika-977609.pdf
+  url: https://corpora.tika.apache.org/base/docs/govdocs1/977/977609.pdf
+- local_filename: tifimage.png
+  url: https://user-images.githubusercontent.com/4083478/236793166-288b4b59-dee3-49fd-a04e-410aab06199a.png
+- local_filename: tika-972174.pdf
+  url: https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf
+- local_filename: tika-972174_p0-im0.png
+  url: https://user-images.githubusercontent.com/4083478/238288207-b77dd38c-34b4-4f4f-810a-bf9db7ca0414.png
+- local_filename: Vitocal.pdf
+  url: https://github.com/py-pdf/pypdf/files/11962229/DB-5368770_Vitocal_200-G.pdf
+- local_filename: VitocalImage.png
+  url: https://user-images.githubusercontent.com/4083478/251283945-38c5b92c-cf94-473c-bb57-a51b74fc39be.jpg
+- local_filename: cmyk_deflate.pdf
+  url: https://github.com/py-pdf/pypdf/files/12078533/cmyk2.pdf
+- local_filename: cmyk_deflate.tif
+  url: https://github.com/py-pdf/pypdf/files/12078556/cmyk.tif.txt
+- local_filename: o1whh9b3.pdf
+  url: https://github.com/py-pdf/pypdf/files/11578953/USC.EMBA.-.Pre-Season.and.Theme.I.pdf
+- local_filename: selbst.72916.pdf
+  url: https://www.selbst.de/paidcontent/dl/64733/72916
+- local_filename: iss1912.pdf
+  url: https://github.com/py-pdf/pypdf/files/11845099/GeoTopo-komprimiert.pdf
+- local_filename: calRGB.pdf
+  url: https://github.com/py-pdf/pypdf/files/12061061/tt.pdf
