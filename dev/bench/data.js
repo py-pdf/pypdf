@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702117722736,
+  "lastUpdate": 1702123045819,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -43649,6 +43649,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03155399792646293",
             "extra": "mean: 17.570136115399997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4aae5471c32d884f75a4c41e981ce172fa972c42",
+          "message": "TST: Centralize file downloads (#2324)\n\nThis PR introduces a new `tests/example_files.yaml` in which we have the local filename as well as the URL from which we download the document.\r\n\r\nThe idea is that we move all download URLs to that CSV document. Then we just reference the local file names. The advantage of this approach are:\r\n\r\n* **Detection of name clashes**: If we use the same `name` for different URLs we could have flaky tests as well. That is currently super hard to detect and would be rather easy to prevent in future\r\n* **No tests needs network**: The network is a source for flaky tests. That's hard to notice. If the download fails, it's easier to see.\r\n* **Efficiency**: We can heavily parallelize downloads. That might lead to speed-ups.\r\n* **De-duplication**: We might have the same file with different file-names in the code base. Having all URLs in one place makes it easier to ensure we download everything just once\r\n* **Shorter Python code**: That's a tiny stylistic argument. I prefer if we don't have super long lines / need to make weird line breaks as the URL is just so long.\r\n* **Cross-project use**: Other projects might be interested in that CSV and use it for their tests.\r\n* **Internal re-use**: It's easier to loop over the existing files we have like this. That way, we can potentially use one PDF for multiple types of tests.",
+          "timestamp": "2023-12-09T12:54:25+01:00",
+          "tree_id": "1eeb6fbc2722b59cdb60cc468f5e9ab5a2c93c55",
+          "url": "https://github.com/py-pdf/pypdf/commit/4aae5471c32d884f75a4c41e981ce172fa972c42"
+        },
+        "date": 1702123044366,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4114891161591565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004373262848235733",
+            "extra": "mean: 293.127125999996 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.788194021124005,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007344457150799341",
+            "extra": "mean: 78.19712450000083 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2758228010206445,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025287024556245118",
+            "extra": "mean: 3.6255160788000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.535076005631918,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003139066364825551",
+            "extra": "mean: 57.02855235294217 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.056361727508276775,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0556668919826683",
+            "extra": "mean: 17.742536366599996 sec\nrounds: 5"
           }
         ]
       }
