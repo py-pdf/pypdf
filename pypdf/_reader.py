@@ -804,8 +804,11 @@ class PdfReader:
                 except IndexError:
                     break
                 i += 1
-                if isinstance(value, DictionaryObject) and "/D" in value:
+                if isinstance(value, DictionaryObject):
+                  if "/D" in value:
                     value = value["/D"]
+                  else:
+                    continue
                 dest = self._build_destination(key, value)  # type: ignore
                 if dest is not None:
                     retval[key] = dest
@@ -813,8 +816,11 @@ class PdfReader:
             for k__, v__ in tree.items():
                 val = v__.get_object()
                 if isinstance(val, DictionaryObject):
-                    val = val["/D"].get_object()
-                dest = self._build_destination(k__, val)
+                    if "/D" in val:
+                      val = val["/D"].get_object()
+                    else:
+                      continue
+                dest = self._build_destination(k__, val) # type: ignore
                 if dest is not None:
                     retval[k__] = dest
         return retval
