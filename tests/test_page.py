@@ -129,9 +129,11 @@ def test_page_operations(pdf_path, password):
         (175, 680, 844),
         (45, 994, 994),
         (-80, 888, 742),
-    ]
+    ],
 )
-def test_mediabox_expansion_after_rotation(angle: float, expected_width: int, expected_height: int):
+def test_mediabox_expansion_after_rotation(
+    angle: float, expected_width: int, expected_height: int
+):
     """
     Mediabox dimensions after rotation at a non-right angle with expension are correct.
 

@@ -420,7 +420,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             else:
                 return get_next_obj_pos(p, p1, rem_gens[1:], pdf)
 
-        def read_unsized_from_steam(
+        def read_unsized_from_stream(
             stream: StreamType, pdf: PdfReaderProtocol
         ) -> bytes:
             # we are just pointing at beginning of the stream
@@ -535,7 +535,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 elif pdf is not None and not pdf.strict:
                     stream.seek(pstart, 0)
-                    data["__streamdata__"] = read_unsized_from_steam(stream, pdf)
+                    data["__streamdata__"] = read_unsized_from_stream(stream, pdf)
                     pos = stream.tell()
                 else:
                     stream.seek(pos, 0)
