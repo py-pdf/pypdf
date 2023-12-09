@@ -60,3 +60,7 @@
   url: https://github.com/py-pdf/pypdf/files/11068604/tt1.pdf
 - local_filename: issue-1801.pdf
   url: https://github.com/py-pdf/pypdf/files/11250359/test_img.pdf
+- local_filename: tika-924546.pdf
+  url: https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf
+- local_filename: tika-924546.pdf
+  url: https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf
