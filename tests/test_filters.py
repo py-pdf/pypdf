@@ -439,31 +439,21 @@ def test_calrgb():
 @pytest.mark.enable_socket()
 def test_index_lookup():
     """The lookup is provided as an str and bytes"""
-    url = "https://github.com/py-pdf/pypdf/files/12090523/2023.USDC_Circle.Examination.Report.May.2023.pdf"
-    name = "2023USDC.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="2023USDC.pdf")))
     # TextStringObject Lookup
-    url_png = "https://github.com/py-pdf/pypdf/files/12144094/im1.png.txt"
-    name_png = "iss1982_im1.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(name="iss1982_im1.png"))
     data = reader.pages[0].images[-1]
     assert data.image.mode == "RGB"
     assert image_similarity(data.image, refimg) > 0.999
     # ByteStringObject Lookup
-    url_png = "https://github.com/py-pdf/pypdf/files/12144093/im2.png.txt"
-    name_png = "iss1982_im2.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(name="iss1982_im2.png"))
     data = reader.pages[-1].images[-1]
     assert data.image.mode == "RGB"
     assert image_similarity(data.image, refimg) > 0.999
     # indexed CMYK images
     # currently with a  TODO as we convert to RBG the palette
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf"
-    name = "tika-972174.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    url_png = "https://github.com/py-pdf/pypdf/assets/4083478/56c93021-33cd-4387-ae13-5cbe7e673f42"
-    name_png = "usa.png"
-    refimg = Image.open(BytesIO(get_data_from_url(url_png, name=name_png)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-972174.pdf")))
+    refimg = Image.open(BytesIO(get_data_from_url(name="usa.png")))
     data = reader.pages[0].images["/Im3"]
     # assert data.image.mode == "PA" but currently "RGBA"
     assert image_similarity(data.image, refimg) > 0.999
@@ -472,9 +462,7 @@ def test_index_lookup():
 @pytest.mark.enable_socket()
 def test_2bits_image():
     """From #1954, test with 2bits image. TODO: 4bits also"""
-    url = "https://github.com/py-pdf/pypdf/files/12050253/tt.pdf"
-    name = "paid.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="paid.pdf")))
     url_png = "https://user-images.githubusercontent.com/4083478/253568117-ca95cc85-9dea-4145-a5e0-032f1c1aa322.png"
     name_png = "Paid.png"
     refimg = BytesIO(get_data_from_url(url_png, name=name_png))

@@ -98,3 +98,15 @@
   url: https://github.com/py-pdf/pypdf/files/11845099/GeoTopo-komprimiert.pdf
 - local_filename: calRGB.pdf
   url: https://github.com/py-pdf/pypdf/files/12061061/tt.pdf
+- local_filename: 2023USDC.pdf
+  url: https://github.com/py-pdf/pypdf/files/12090523/2023.USDC_Circle.Examination.Report.May.2023.pdf
+- local_filename: iss1982_im1.png
+  url: https://github.com/py-pdf/pypdf/files/12144094/im1.png.txt
+- local_filename: iss1982_im2.png
+  url: https://github.com/py-pdf/pypdf/files/12144093/im2.png.txt
+- local_filename: tika-972174.pdf
+  url: https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf
+- local_filename: usa.png
+  url: https://github.com/py-pdf/pypdf/assets/4083478/56c93021-33cd-4387-ae13-5cbe7e673f42
+- local_filename: paid.pdf
+  url: https://github.com/py-pdf/pypdf/files/12050253/tt.pdf
