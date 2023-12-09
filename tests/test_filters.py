@@ -142,9 +142,7 @@ def test_decode_ahx():
     See #1979
     Gray Image in CMYK : requiring reverse
     """
-    url = "https://github.com/py-pdf/pypdf/files/12090692/New.Jersey.Coinbase.staking.securities.charges.2023-0606_Coinbase-Penalty-and-C-D.pdf"
-    name = "NewJersey.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="NewJersey.pdf")))
     for p in reader.pages:
         _ = list(p.images.keys())
 
@@ -231,9 +229,7 @@ def test_ccitt_fax_decode():
 @pytest.mark.enable_socket()
 @patch("pypdf._reader.logger_warning")
 def test_decompress_zlib_error(mock_logger_warning):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/952/952445.pdf"
-    name = "tika-952445.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-952445.pdf")))
     for page in reader.pages:
         page.extract_text()
     mock_logger_warning.assert_called_with(
@@ -243,9 +239,7 @@ def test_decompress_zlib_error(mock_logger_warning):
 
 @pytest.mark.enable_socket()
 def test_lzw_decode_neg1():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/921/921632.pdf"
-    name = "tika-921632.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-921632.pdf")))
     page = reader.pages[47]
     with pytest.raises(PdfReadError) as exc:
         page.extract_text()
@@ -254,17 +248,13 @@ def test_lzw_decode_neg1():
 
 @pytest.mark.enable_socket()
 def test_issue_399():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976970.pdf"
-    name = "tika-976970.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-976970.pdf")))
     reader.pages[1].extract_text()
 
 
 @pytest.mark.enable_socket()
 def test_image_without_pillow(tmp_path):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
     name = "tika-914102.pdf"
-    _ = get_data_from_url(url, name=name)
     pdf_path = Path(__file__).parent / "pdf_cache" / name
     pdf_path_str = str(pdf_path.resolve()).replace("\\", "/")
 
@@ -304,9 +294,7 @@ for page in reader.pages:
 
 @pytest.mark.enable_socket()
 def test_issue_1737():
-    url = "https://github.com/py-pdf/pypdf/files/11068604/tt1.pdf"
-    name = "iss1737.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss1737.pdf")))
     reader.pages[0]["/Resources"]["/XObject"]["/Im0"].get_data()
     reader.pages[0]["/Resources"]["/XObject"]["/Im1"].get_data()
     reader.pages[0]["/Resources"]["/XObject"]["/Im2"].get_data()
@@ -319,9 +307,7 @@ def test_pa_image_extraction():
 
     This is a regression test for issue #1801
     """
-    url = "https://github.com/py-pdf/pypdf/files/11250359/test_img.pdf"
-    name = "issue-1801.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="issue-1801.pdf")))
 
     page0 = reader.pages[0]
     images = page0.images

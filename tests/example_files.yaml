@@ -22,3 +22,41 @@
   url: https://corpora.tika.apache.org/base/docs/govdocs1/959/959173.pdf
 - local_filename: waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf
   url: https://github.com/py-pdf/pypdf/files/10773829/waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf
+- local_filename: tika-957144.pdf
+  url: https://corpora.tika.apache.org/base/docs/govdocs1/957/957144.pdf
+- local_filename: ascii charset.pdf
+  url: https://github.com/py-pdf/pypdf/files/9472500/main.pdf
+- local_filename: cmap1370.pdf
+  url: https://github.com/py-pdf/pypdf/files/9667138/cmap1370.pdf
+- local_filename: 02voc.pdf
+  url: https://github.com/py-pdf/pypdf/files/9712729/02voc.pdf
+- local_filename: iss1533.pdf
+  url: https://github.com/py-pdf/pypdf/files/10376149/iss1533.pdf
+- local_filename: tstUCS2.pdf
+  url: https://github.com/py-pdf/pypdf/files/11190189/pdf_font_garbled.pdf
+- local_filename: tst-GBK_EUC.pdf
+  url: https://github.com/py-pdf/pypdf/files/11315397/3.pdf
+- local_filename: math_latex.pdf
+  url: https://github.com/py-pdf/pypdf/files/12163370/math-in-text-created-via-latex.pdf
+- local_filename: unixxx_glyphs.pdf
+  url: https://arxiv.org/pdf/2201.00021.pdf
+- local_filename: TextAttack_paper.pdf
+  url: https://arxiv.org/pdf/2005.05909.pdf
+- local_filename: iss2173.pdf
+  url: https://github.com/py-pdf/pypdf/files/12552700/tt.pdf
+- local_filename: iss2290.pdf
+  url: https://github.com/py-pdf/pypdf/files/13452885/example.pdf
+- local_filename: NewJersey.pdf
+  url: https://github.com/py-pdf/pypdf/files/12090692/New.Jersey.Coinbase.staking.securities.charges.2023-0606_Coinbase-Penalty-and-C-D.pdf
+- local_filename: tika-952445.pdf
+  url: https://corpora.tika.apache.org/base/docs/govdocs1/952/952445.pdf
+- local_filename: tika-921632.pdf
+  url: https://corpora.tika.apache.org/base/docs/govdocs1/921/921632.pdf
+- local_filename: tika-976970.pdf
+  url: https://corpora.tika.apache.org/base/docs/govdocs1/976/976970.pdf
+- local_filename: tika-914102.pdf
+  url: https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf
+- local_filename: iss1737.pdf
+  url: https://github.com/py-pdf/pypdf/files/11068604/tt1.pdf
+- local_filename: issue-1801.pdf
+  url: https://github.com/py-pdf/pypdf/files/11250359/test_img.pdf
