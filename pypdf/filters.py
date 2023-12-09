@@ -285,7 +285,8 @@ class ASCIIHexDecode:
         index = 0
         while True:
             if index >= len(data):
-                raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
+                break  # reach End Of String even if no EOD
+                # raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
             char = data[index : index + 1]
             if char == b">":
                 break
@@ -340,7 +341,8 @@ class RunLengthDecode:
         index = 0
         while True:
             if index >= len(data):
-                raise PdfStreamError("Unexpected EOD in RunLengthDecode")
+                break  # reach End Of String even if no EOD
+                # raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
             length = data[index]
             index += 1
             if length == 128:
