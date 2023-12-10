@@ -589,3 +589,12 @@ def test_flate_decode_with_image_mode_1():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     for image in reader.pages[7].images:
         _ = image
+
+
+@pytest.mark.enable_socket()
+def test_flate_decode_with_image_mode_1__whitespace_at_end_of_lookup():
+    """From #2331"""
+    url = "https://github.com/py-pdf/pypdf/files/13611048/out1.pdf"
+    name = "issue2331.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].images[0]
