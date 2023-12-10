@@ -59,10 +59,13 @@ BODY
 
 The `PREFIX` can be:
 
+* `SEC`: Security improvements. Typically an infinite loop that was possible.
 * `BUG`: A bug was fixed. Likely there is one or multiple issues. Then write in
    the `BODY`: `Closes #123` where 123 is the issue number on GitHub.
    It would be absolutely amazing if you could write a regression test in those
    cases. That is a test that would fail without the fix.
+   A bug is always an issue for pypdf users - test code or CI that was fixed is
+   not considered a bug here.
 * `ENH`: A new feature! Describe in the body what it can be used for.
 * `DEP`: A deprecation - either marking something as "this is going to be removed"
    or actually removing it.
@@ -75,7 +78,21 @@ The `PREFIX` can be:
 * `MAINT`: Quite a lot of different stuff. Performance improvements are for sure
            the most interesting changes in here. Refactorings as well.
 * `STY`: A style change. Something that makes pypdf code more consistent.
-         Typically a small change.
+         Typically a small change. It could also be better error messages for
+         end users.
+
+The prefix is used to generate the CHANGELOG. Every PR must have exactly one -
+if you feel like several match, take the top one from this list that matches for
+your PR.
+
+## Pull Request Size
+
+Smaller Pull Requests (PRs) are preferred as it's typically easier to merge
+them. For example, if you have some typos, a few code-style changes, a new
+feature, and a bug-fix, that could be 3 or 4 PRs.
+
+A PR must be complete. That means if you introduce a new feature it must be
+finished within the PR and have a test for that feature.
 
 ## Benchmarks
 
