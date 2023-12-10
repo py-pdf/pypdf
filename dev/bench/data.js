@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702207853671,
+  "lastUpdate": 1702209266576,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -43944,6 +43944,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.12703219176078392",
             "extra": "mean: 17.778852273200005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "38795f5cb23f1950c65a2928763747230db84374",
+          "message": "REL: 3.17.2\n\n## What's new\n\n### Bug Fixes (BUG)\n-  Cope with deflated images with CMYK Black Only (#2322) by @pubpub-zz\n-  Handle indirect objects as parameters for CCITTFaxDecode (#2307) by @stefan6419846\n-  check words length in _cmap type1_alternative function (#2310) by @Takher\n\n### Robustness (ROB)\n-  Relax flate decoding for too many lookup values (#2331) by @stefan6419846\n-  Let _build_destination skip in case of missing /D key (#2018) by @nickryand\n\n### Documentation (DOC)\n-  Note in reading form data (#2338) by @MartinThoma\n-  Pull Request prefixes and size by @MartinThoma\n-  Add https://github.com/zuypt for #2325 as a contributor by @MartinThoma\n-  Fix docstring for RunLengthDecode.decode (#2302) by @stefan6419846\n\n### Maintenance (MAINT)\n-  Enable `disallow_any_generics` and add missing generics (#2278) by @nilehmann\n\n### Testing (TST)\n-  Centralize file downloads (#2324) by @MartinThoma\n\n### Code Style (STY)\n-  Fix typo \"steam\" \\xe2\\x86\\x92 \"stream\" (#2327) by @stefan6419846\n-  Run black by @MartinThoma\n-  Make Traceback in bug report template uppercase (#2304) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.1...3.17.2)",
+          "timestamp": "2023-12-10T12:51:10+01:00",
+          "tree_id": "63696325b921b5aadfdeb3a421abe3aca1186ba0",
+          "url": "https://github.com/py-pdf/pypdf/commit/38795f5cb23f1950c65a2928763747230db84374"
+        },
+        "date": 1702209265056,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3937471480773036,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006101170192244885",
+            "extra": "mean: 294.6595478000006 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.672985051772145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007832564342349926",
+            "extra": "mean: 78.90800753845785 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27058396188457073,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02107281717608036",
+            "extra": "mean: 3.6957105404000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.4332810490777,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015546592288300967",
+            "extra": "mean: 57.361548705881994 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05651535392043365,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07293940183729791",
+            "extra": "mean: 17.694306602200022 sec\nrounds: 5"
           }
         ]
       }
