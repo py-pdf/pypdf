@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Version 3.17.2, 2023-12-10
+
+### Bug Fixes (BUG)
+-  Cope with deflated images with CMYK Black Only (#2322)
+-  Handle indirect objects as parameters for CCITTFaxDecode (#2307)
+-  check words length in _cmap type1_alternative function (#2310)
+
+### Robustness (ROB)
+-  Relax flate decoding for too many lookup values (#2331)
+-  Let _build_destination skip in case of missing /D key (#2018)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.1...3.17.2)
+
 ## Version 3.17.1, 2023-11-14
 
 ### Bug Fixes (BUG)
