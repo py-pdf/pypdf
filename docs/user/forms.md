@@ -8,6 +8,9 @@ from pypdf import PdfReader
 reader = PdfReader("form.pdf")
 fields = reader.get_form_text_fields()
 fields == {"key": "value", "key2": "value2"}
+
+# You can also get all fields:
+fields = reader.get_fields()
 ```
 
 ## Filling out forms
