@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702147646766,
+  "lastUpdate": 1702207417612,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -43826,6 +43826,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09097719827852727",
             "extra": "mean: 17.78447258540001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6dad92a647c0465e8f1b8fbe4701e70d700479aa",
+          "message": "ROB: Relax flate decoding for too many lookup values (#2331)\n\nWhen handling flate objects with a lookup table and the image mode `1`, we would previously raise a generic `AssertionError` if the number of lookup values did not match.\r\n\r\nCases where too many values are specified are now considered a warning only.\r\nAdditionally, this PR adds a more meaningful error message.",
+          "timestamp": "2023-12-10T12:20:30+01:00",
+          "tree_id": "b9bf6fbca80c5ecf7e8de50da9e9fe80a65293de",
+          "url": "https://github.com/py-pdf/pypdf/commit/6dad92a647c0465e8f1b8fbe4701e70d700479aa"
+        },
+        "date": 1702207414854,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3447610483909602,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006069994776412536",
+            "extra": "mean: 298.97501959999886 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.535169974609738,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009822724607706973",
+            "extra": "mean: 79.77554369230907 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26879337919295776,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035173347102020534",
+            "extra": "mean: 3.7203297305999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.59265876149571,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006634463803627729",
+            "extra": "mean: 56.8418914705864 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.055374778126433565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0896615287841618",
+            "extra": "mean: 18.058763101799997 sec\nrounds: 5"
           }
         ]
       }
