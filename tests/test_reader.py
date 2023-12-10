@@ -1030,17 +1030,13 @@ def test_header(src, pdf_header):
 
 @pytest.mark.enable_socket()
 def test_outline_color():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
-    name = "tika-924546.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-924546.pdf")))
     assert reader.outline[0].color == [0, 0, 1]
 
 
 @pytest.mark.enable_socket()
 def test_outline_font_format():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
-    name = "tika-924546.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-924546.pdf")))
     assert reader.outline[0].font_format == 2
 
 
