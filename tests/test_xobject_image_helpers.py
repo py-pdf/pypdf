@@ -5,6 +5,8 @@ import pytest
 
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
+from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject
+from pypdf._xobj_image_helpers import _handle_flate
 
 from . import get_data_from_url
 
@@ -25,3 +27,62 @@ def test_get_imagemode_recursion_depth():
         match="Color spaces nested too deep. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH.",
     ):
         reader.pages[0].images[0]
+
+
+def test_handle_flate__image_mode_1():
+    data = b"\x00\xe0\x00"
+    lookup = DecodedStreamObject()
+
+    # No trailing data.
+    lookup.set_data(b"\x42\x42\x42\x00\x13\x37")
+    result = _handle_flate(
+        size=(3, 3),
+        data=data,
+        mode="1",
+        color_space=ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup]),
+        colors=2,
+        obj_as_text="dummy"
+    )
+    assert (
+        [(66, 66, 66), (66, 66, 66), (66, 66, 66), (0, 19, 55), (0, 19, 55), (0, 19, 55), (66, 66, 66), (66, 66, 66), (66, 66, 66)] ==
+        list(result[0].getdata())
+    )
+
+    # Trailing whitespace.
+    lookup.set_data(b"\x42\x42\x42\x00\x13\x37  \x0a")
+    result = _handle_flate(
+        size=(3, 3),
+        data=data,
+        mode="1",
+        color_space=ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup]),
+        colors=2,
+        obj_as_text="dummy"
+    )
+    assert (
+        [(66, 66, 66), (66, 66, 66), (66, 66, 66), (0, 19, 55), (0, 19, 55), (0, 19, 55), (66, 66, 66), (66, 66, 66), (66, 66, 66)] ==
+        list(result[0].getdata())
+    )
+
+    # Trailing non-whitespace character.
+    lookup.set_data(b"\x42\x42\x42\x00\x13\x37\x12")
+    with pytest.raises(PdfReadError, match=r"^Too many lookup values: Expected 6, got 7\.$"):
+        _handle_flate(
+            size=(3, 3),
+            data=data,
+            mode="1",
+            color_space=ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup]),
+            colors=2,
+            obj_as_text="dummy"
+        )
+
+    # Not enough lookup data.
+    lookup.set_data(b"\x42\x42\x42\x00\x13")
+    with pytest.raises(PdfReadError, match=r"^Not enough lookup values: Expected 6, got 5\.$"):
+        _handle_flate(
+            size=(3, 3),
+            data=data,
+            mode="1",
+            color_space=ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup]),
+            colors=2,
+            obj_as_text="dummy"
+        )
