@@ -4,9 +4,9 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader
+from pypdf._xobj_image_helpers import _handle_flate
 from pypdf.errors import PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject
-from pypdf._xobj_image_helpers import _handle_flate
 
 from . import get_data_from_url
 
@@ -32,6 +32,9 @@ def test_get_imagemode_recursion_depth():
 def test_handle_flate__image_mode_1():
     data = b"\x00\xe0\x00"
     lookup = DecodedStreamObject()
+    expected_data = [
+        (66, 66, 66), (66, 66, 66), (66, 66, 66), (0, 19, 55), (0, 19, 55), (0, 19, 55), (66, 66, 66), (66, 66, 66), (66, 66, 66)
+    ]
 
     # No trailing data.
     lookup.set_data(b"\x42\x42\x42\x00\x13\x37")
@@ -43,10 +46,7 @@ def test_handle_flate__image_mode_1():
         colors=2,
         obj_as_text="dummy"
     )
-    assert (
-        [(66, 66, 66), (66, 66, 66), (66, 66, 66), (0, 19, 55), (0, 19, 55), (0, 19, 55), (66, 66, 66), (66, 66, 66), (66, 66, 66)] ==
-        list(result[0].getdata())
-    )
+    assert expected_data == list(result[0].getdata())
 
     # Trailing whitespace.
     lookup.set_data(b"\x42\x42\x42\x00\x13\x37  \x0a")
@@ -58,10 +58,7 @@ def test_handle_flate__image_mode_1():
         colors=2,
         obj_as_text="dummy"
     )
-    assert (
-        [(66, 66, 66), (66, 66, 66), (66, 66, 66), (0, 19, 55), (0, 19, 55), (0, 19, 55), (66, 66, 66), (66, 66, 66), (66, 66, 66)] ==
-        list(result[0].getdata())
-    )
+    assert expected_data == list(result[0].getdata())
 
     # Trailing non-whitespace character.
     lookup.set_data(b"\x42\x42\x42\x00\x13\x37\x12")
