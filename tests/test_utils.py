@@ -10,6 +10,7 @@ from pypdf._utils import (
     Version,
     _get_max_pdf_version_header,
     _human_readable_bytes,
+    check_if_whitespace_only,
     deprecate_with_replacement,
     deprecation_bookmark,
     deprecation_no_replacement,
@@ -46,6 +47,23 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 )
 def test_skip_over_whitespace(stream, expected):
     assert skip_over_whitespace(stream) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (b"foo", False),
+        (b" a", False),
+        (b" a\n b", False),
+        (b"", True),
+        (b" ", True),
+        (b"  ", True),
+        (b"  \n", True),
+        (b"    \n", True),
+    ],
+)
+def test_check_if_whitespace_only(value, expected):
+    assert check_if_whitespace_only(value) is expected
 
 
 def test_read_until_whitespace():
