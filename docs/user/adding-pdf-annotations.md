@@ -331,9 +331,8 @@ quad_points = [rect[0], rect[1], rect[2], rect[1], rect[0], rect[3], rect[2], re
 
 # Add the highlight
 annotation = Highlight(
-    rect=rect
+    rect=rect,
     quad_points=ArrayObject([FloatObject(quad_point) for quad_point in quad_points]),
-
 )
 writer.add_annotation(page_number=0, annotation=annotation)
 
