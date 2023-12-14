@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702209266576,
+  "lastUpdate": 1702589827998,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -44003,6 +44003,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07293940183729791",
             "extra": "mean: 17.694306602200022 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "110415542+rgwood-rely@users.noreply.github.com",
+            "name": "Garth Wood",
+            "username": "rgwood-rely"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "40bc577b6714d95064ab8350c8d73296fa5b855e",
+          "message": "ROB: Out-of-bounds issue in handle_tj (text extraction) (#2342)\n\nCloses #2320",
+          "timestamp": "2023-12-14T22:34:02+01:00",
+          "tree_id": "0378c8abbd897dd0343187c9306fd52ba7892ed5",
+          "url": "https://github.com/py-pdf/pypdf/commit/40bc577b6714d95064ab8350c8d73296fa5b855e"
+        },
+        "date": 1702589825430,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.351463086304516,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005944626627002072",
+            "extra": "mean: 298.37714880000306 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.638544281425828,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007935265259814873",
+            "extra": "mean: 79.12303646153654 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26993992890388463,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033109319887201845",
+            "extra": "mean: 3.7045279075999984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.297480055487036,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010903745355321346",
+            "extra": "mean: 57.81188917646903 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05605256356717405,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023883323693858413",
+            "extra": "mean: 17.840397233599997 sec\nrounds: 5"
           }
         ]
       }
