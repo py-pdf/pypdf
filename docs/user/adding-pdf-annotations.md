@@ -317,8 +317,7 @@ you can use the {py:class}`Highlight <pypdf.annotations.Highlight>`:
 ```python
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Highlight
-from pypdf.generic import ArrayObject
-from pypdf.generic._base import FloatObject
+from pypdf.generic import ArrayObject, FloatObject
 
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
