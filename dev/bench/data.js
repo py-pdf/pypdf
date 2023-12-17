@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702807323425,
+  "lastUpdate": 1702847324654,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -44180,6 +44180,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09710198997885638",
             "extra": "mean: 17.616093978800016 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "ec543e67132ad2e31fb44a6c9591981ce895de77",
+          "message": "REL: 3.17.3\n\n## What's new\n\n### Robustness (ROB)\n-  Out-of-bounds issue in handle_tj (text extraction) (#2342) by @rgwood-rely\n\n### Developer Experience (DEV)\n-  Make make_release.py easier to configure (#2348) by @MartinThoma\n\n### Maintenance (MAINT)\n-  Bump actions/download-artifact from 3 to 4 (#2344) by @dependabot[bot]\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.2...3.17.3)",
+          "timestamp": "2023-12-17T22:05:10+01:00",
+          "tree_id": "a861f55e6e4e711b11fdef3ee7965dbcb21c0af5",
+          "url": "https://github.com/py-pdf/pypdf/commit/ec543e67132ad2e31fb44a6c9591981ce895de77"
+        },
+        "date": 1702847322154,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.350580086935602,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007977412777145214",
+            "extra": "mean: 298.45578200000205 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.632460212341813,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00787494341936616",
+            "extra": "mean: 79.16114384615341 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2719557069290777,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01591049221291511",
+            "extra": "mean: 3.6770693702000017 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.07620289695056,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010362176410687069",
+            "extra": "mean: 58.56102823529805 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05597901284613476,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11953412817645297",
+            "extra": "mean: 17.863837698399998 sec\nrounds: 5"
           }
         ]
       }
