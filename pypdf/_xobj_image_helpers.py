@@ -4,7 +4,7 @@ import sys
 from io import BytesIO
 from typing import Any, List, Tuple, Union, cast
 
-from ._utils import WHITESPACES, logger_warning
+from ._utils import check_if_whitespace_only, logger_warning
 from .constants import ColorSpaces
 from .errors import PdfReadError
 from .generic import (
@@ -199,9 +199,9 @@ def _handle_flate(
                 if len(lookup) != expected_count:
                     if len(lookup) < expected_count:
                         raise PdfReadError(f"Not enough lookup values: Expected {expected_count}, got {len(lookup)}.")
-                    lookup = lookup[:expected_count]
-                    if not all(_value in WHITESPACES for _value in lookup[expected_count:]):
+                    if not check_if_whitespace_only(lookup[expected_count:]):
                         raise PdfReadError(f"Too many lookup values: Expected {expected_count}, got {len(lookup)}.")
+                    lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
                     [
