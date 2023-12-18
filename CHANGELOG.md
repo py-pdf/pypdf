@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Version 3.17.3, 2023-12-17
+
+### Robustness (ROB)
+-  Out-of-bounds issue in handle_tj (text extraction) (#2342)
+
+### Developer Experience (DEV)
+-  Make make_release.py easier to configure (#2348)
+
+### Maintenance (MAINT)
+-  Bump actions/download-artifact from 3 to 4 (#2344)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.2...3.17.3)
+
 ## Version 3.17.2, 2023-12-10
 
 ### Bug Fixes (BUG)
