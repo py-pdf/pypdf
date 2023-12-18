@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702899849247,
+  "lastUpdate": 1702900142627,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -44298,6 +44298,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06360585034559502",
             "extra": "mean: 18.333571709199987 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "908797f8ff13f6c45a5faeff67db02d924a447dd",
+          "message": "TST: Increase test coverage for flate handling of image mode 1 (#2339)\n\nAs mentioned in #2331, this will improve the test coverage for the edge cases.\r\n\r\nFurther refactoring was necessary as iterating over bytes will yield integers instead of single bytes and thus the whitespace check has been broken.\r\n\r\nAdditionally, the whitespace check has previously always been performed on the shortened bytes data.",
+          "timestamp": "2023-12-18T12:45:57+01:00",
+          "tree_id": "9f07a01ff49d2c0c5d538b06aacea9ce0d2c738b",
+          "url": "https://github.com/py-pdf/pypdf/commit/908797f8ff13f6c45a5faeff67db02d924a447dd"
+        },
+        "date": 1702900140167,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.393461452411721,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005450372812229367",
+            "extra": "mean: 294.684355199999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.660709828013813,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00799281138164764",
+            "extra": "mean: 78.98451300000121 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2769395090240338,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010178864766985282",
+            "extra": "mean: 3.6108968472000016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.112410518045564,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006415347791707324",
+            "extra": "mean: 62.06395988235409 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0558286013994115,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10670628422548176",
+            "extra": "mean: 17.9119658192 sec\nrounds: 5"
           }
         ]
       }
