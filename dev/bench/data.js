@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1702900142627,
+  "lastUpdate": 1703095762035,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -44357,6 +44357,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10670628422548176",
             "extra": "mean: 17.9119658192 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fd0a482a24f0019c722ff7dfa040f367470d8e38",
+          "message": "MAINT: Update upload-artifact and download-artifact actions from v3 to v4 (#2352)\n\nThis is a general fix which covers #2344, #2345 and #2350, including some incompatible changes as detailed in #2344.\r\n\r\nThe key point is that both actions have to be updated at the same time to avoid conflicts. Additionally, artifacts of the same name are not supported anymore, thus I decided to go the recommended route from https://github.com/actions/upload-artifact?tab=readme-ov-file#not-uploading-to-the-same-artifact to include the matrix parameters inside the artifact names.",
+          "timestamp": "2023-12-20T19:06:16+01:00",
+          "tree_id": "fbaa92c1657cc4142ca9b175b7c6f9974c1c60b3",
+          "url": "https://github.com/py-pdf/pypdf/commit/fd0a482a24f0019c722ff7dfa040f367470d8e38"
+        },
+        "date": 1703095759460,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2616400603216644,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0066821513193252155",
+            "extra": "mean: 306.5942230000019 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.379250198681293,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00960958538805086",
+            "extra": "mean: 80.7803367692274 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2641636063368783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022063816569114512",
+            "extra": "mean: 3.785532813800006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.78704309655745,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009828553396232687",
+            "extra": "mean: 59.569752352936526 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05636625427994813,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08244174046572389",
+            "extra": "mean: 17.741111464199996 sec\nrounds: 5"
           }
         ]
       }
