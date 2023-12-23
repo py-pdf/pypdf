@@ -1,5 +1,263 @@
 # CHANGELOG
 
+## Version 3.17.3, 2023-12-17
+
+### Robustness (ROB)
+-  Out-of-bounds issue in handle_tj (text extraction) (#2342)
+
+### Developer Experience (DEV)
+-  Make make_release.py easier to configure (#2348)
+
+### Maintenance (MAINT)
+-  Bump actions/download-artifact from 3 to 4 (#2344)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.2...3.17.3)
+
+## Version 3.17.2, 2023-12-10
+
+### Bug Fixes (BUG)
+-  Cope with deflated images with CMYK Black Only (#2322)
+-  Handle indirect objects as parameters for CCITTFaxDecode (#2307)
+-  check words length in _cmap type1_alternative function (#2310)
+
+### Robustness (ROB)
+-  Relax flate decoding for too many lookup values (#2331)
+-  Let _build_destination skip in case of missing /D key (#2018)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.1...3.17.2)
+
+## Version 3.17.1, 2023-11-14
+
+### Bug Fixes (BUG)
+-  Mediabox expansion size when applying non-right angle rotation (#2282)
+
+### Robustness (ROB)
+-  MissingWidth is IndirectObject (#2288)
+-  Initialize states array with an empty value (#2280)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.0...3.17.1)
+
+## Version 3.17.0, 2023-10-29
+
+### Security (SEC)
+-  Infinite recursion when using PdfWriter(clone_from=reader) (#2264)
+
+### New Features (ENH)
+-  Add parameter to select images to be removed (#2214)
+
+### Bug Fixes (BUG)
+-  Correctly handle image mode 1 with FlateDecode (#2249)
+-  Error when filling a value with parentheses #2268 (#2269)
+-  Handle empty root outline (#2239)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.4...3.17.0)
+
+## Version 3.16.4, 2023-10-10
+
+### Bug Fixes (BUG)
+-  Avoid exceeding recursion depth when retrieving image mode (#2251)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.3...3.16.4)
+
+## Version 3.16.3, 2023-10-08
+
+### Bug Fixes (BUG)
+-  Invalid cm/tm in visitor functions (#2206)
+-  Encrypt / decrypt Stream object dictionaries (#2228)
+-  Support nested color spaces for the /DeviceN color space (#2241)
+-  Images property fails if NullObject in list (#2215)
+
+### Developer Experience (DEV)
+-  Unify mypy options and warn redundant workarounds (#2223)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.2...3.16.3)
+
+## Version 3.16.2, 2023-09-24
+
+### Bug Fixes (BUG)
+-  PDF size increases because of too high float writing precision (#2213)
+-  Fix test_watermarking_reportlab_rendering() (#2203)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.1...3.16.2)
+
+## Version 3.16.1, 2023-09-17
+
+⚠️ The 'rename PdfWriter.create_viewer_preference to
+PdfWriter.create_viewer_preferences (#2190)' could be a breaking change for you,
+if you use it. As it was only introduced last week I'm confident enough that
+nobody will be affected though. Hence only the patch update.
+
+### Bug Fixes (BUG)
+-  Missing new line in extract_text with cm operations (#2142)
+-  _get_fonts not processing properly CIDFonts and annotations (#2194)
+
+### Maintenance (MAINT)
+-  Rename PdfWriter.create_viewer_preference to PdfWriter.create_viewer_preferences (#2190)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.0...3.16.1)
+
+## Version 3.16.0, 2023-09-10
+
+### Security (SEC)
+-  Infinite recursion caused by IndirectObject clone (#2156)
+
+### New Features (ENH)
+-  Ease access to ViewerPreferences (#2144)
+
+### Bug Fixes (BUG)
+-  Catch the case where w[0] is an IndirectObject instead of an int (#2154)
+-  Cope with indirect objects in filters and remove deprecated code (#2177)
+-  Accept tabs in cmaps (#2174) / cope with extra space (#2151)
+-  Merge pages without resources (#2150)
+-  getcontents() shall return None if contents is NullObject (#2161)
+-  Fix conversion from 1 to LA (#2175)
+
+### Robustness (ROB)
+-  Accept XYZ with no arguments (#2178)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.5...3.16.0)
+
+## Version 3.15.5, 2023-09-03
+
+### Bug Fixes (BUG)
+-  Cope with missing /I in articles (#2134)
+-  Fix image look-up table in EncodedStreamObject (#2128)
+-  remove_images not operating in sub level forms (#2133)
+
+### Robustness (ROB)
+-  Cope with damaged PDF (#2129)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.4...3.15.5)
+
+## Version 3.15.4, 2023-08-27
+
+### Performance Improvements (PI)
+-  Making pypdf as fast as pdfrw (#2086)
+
+### Maintenance (MAINT)
+-  Relax typing_extensions version (#2104)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.3...3.15.4)
+
+## Version 3.15.3, 2023-08-26
+
+### Bug Fixes (BUG)
+-  Check version of crypt provider (#2115)
+-  TypeError: can't concat str to bytes (#2114)
+-  Require flit_core >= 3.9 (#2091)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.2...3.15.3)
+
+## Version 3.15.2, 2023-08-20
+
+### Security (SEC)
+-  Avoid endless recursion of reading damaged PDF file (#2093)
+
+### Performance Improvements (PI)
+-  Re-use content stream (#2101)
+
+### Maintenance (MAINT)
+-  Make ParseError inherit from PyPdfError (#2097)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.1...3.15.2)
+
+## Version 3.15.1, 2023-08-13
+
+### Performance Improvements (PI)
+-  optimize _decode_png_prediction (#2068)
+
+### Bug Fixes (BUG)
+-  Fix incorrect tm_matrix in call to visitor_text (#2060)
+-  Writing German characters into form fields (#2047)
+-  Prevent stall when accessing image in corrupted pdf (#2081)
+-  append() fails when articles do not have /T (#2080)
+
+### Robustness (ROB)
+-  Cope with xref not followed by separator (#2083)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.15.0...3.15.1)
+
+## Version 3.15.0, 2023-08-06
+
+### New Features (ENH)
+-  Add `level` parameter to compress_content_streams (#2044)
+-  Process /uniHHHH for text_extract (#2043)
+
+### Bug Fixes (BUG)
+-  Fix AnnotationBuilder.link (#2066)
+-  JPX image without ColorSpace  (#2062)
+-  Added check for field /Info when cloning reader document (#2055)
+-  Fix indexed/CMYK images (#2039)
+
+### Maintenance (MAINT)
+-  Cryptography as primary dependency (#2053)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.14.0...3.15.0)
+
+## Version 3.14.0, 2023-07-29
+
+### New Features (ENH)
+-  Accelerate image list keys generation (#2014)
+-  Use `cryptography` for encryption/decryption as a fallback for PyCryptodome (#2000)
+-  Extract LaTeX characters (#2016)
+-  ASCIIHexDecode.decode now returns bytes instead of str (#1994)
+
+### Bug Fixes (BUG)
+-  Add RunLengthDecode filter (#2012)
+-  Process /Separation ColorSpace (#2007)
+-  Handle single element ColorSpace list (#2026)
+-  Process lookup decoded as TextStringObjects (#2008)
+
+### Robustness (ROB)
+-  Cope with garbage collector during cloning (#1841)
+
+### Maintenance (MAINT)
+-  Cleanup of annotations (#1745)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.13.0...3.14.0)
+
+## Version 3.13.0, 2023-07-23
+
+### New Features (ENH)
+-  Add is_open in outlines in PdfReader and PdfWriter (#1960)
+
+### Bug Fixes (BUG)
+-  Search /DA in hierarchy fields (#2002)
+-  Cope with different ISO date length (#1999)
+-  Decode Black only/CMYK deviceN images (#1984)
+-  Process CMYK in deflate images (#1977)
+
+### Developer Experience (DEV)
+-  Add mypy to pre-commit (#2001)
+-  Release automation (#1991, #1985)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.2...3.13.0)
+
+## Version 3.12.2, 2023-07-16
+
+### Bug Fixes (BUG)
+-  Accept calRGB and calGray color_spaces (#1968)
+-  Process 2bits and 4bits images (#1967)
+-  Check for AcroForm and ensure it is not None (#1965)
+
+### Developer Experience (DEV)
+-  Automate the release process (#1970)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.1...3.12.2)
+
+## Version 3.12.1, 2023-07-09
+
+### Bug Fixes (BUG)
+-  Prevent updating page contents after merging page (stamping/watermarking) (#1952)
+-  % to be hex encoded in names (#1958)
+-  Inverse color in CMYK images (#1947)
+-  Dates conversion not working with Z00\'00\' (#1946)
+-  Support UTF-16-LE Strings (#1884)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.12.0...3.12.1)
+
 ## Version 3.12.0, 2023-07-02
 
 ### New Features (ENH)

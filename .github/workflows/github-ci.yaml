@@ -14,21 +14,63 @@ on:
     paths-ignore:
       - '**/*.md'
       - '**/*.rst'
+  workflow_dispatch:
 
 jobs:
+  test_windows:
+    name: pytest on windows
+    runs-on: windows-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+    - name: Setup Python (3.11+)
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12  # latest stable python
+        allow-prereleases: true
+    - name: Upgrade pip
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install requirements (Python 3.11+)
+      run: |
+        pip install -r requirements/ci-3.11.txt
+    - name: Install cryptography
+      run: |
+        pip install cryptography
+    - name: Install pypdf
+      run: |
+        pip install .
+    - name: Prepare
+      run: |
+        python -c "from tests import download_test_pdfs; download_test_pdfs()"
+    - name: Test with pytest
+      run: |
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv
+
+
   tests:
-    name: pytest on ${{ matrix.python-version }}
+    name: "pytest on ${{ matrix.python-version }} (crypto-lib: ${{ matrix.use-crypto-lib }})"
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
-        use-cryptodome: [""]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        use-crypto-lib: ["cryptography"]
         include:
-          - python-version: "3.10"
-            use-cryptodome: "false"
+          - python-version: "3.6"
+            use-crypto-lib: "pycryptodome"
+          - python-version: "3.7"
+            use-crypto-lib: "none"
     steps:
+    - name: Update APT packages
+      run:
+        sudo apt-get update
+    - name: Install APT dependencies
+      run:
+        sudo apt-get install ghostscript
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: 'recursive'
     - name: Cache Downloaded Files
@@ -38,17 +80,18 @@ jobs:
         path: '**/tests/pdf_cache/*'
         key: cache-downloaded-files
     - name: Setup Python
-      uses: actions/setup-python@v4
-      if: matrix.python-version != '3.11'
+      uses: actions/setup-python@v5
+      if: matrix.python-version == '3.6' || matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci.txt'
-    - name: Setup Python (3.11)
-      uses: actions/setup-python@v4
-      if: matrix.python-version == '3.11'
+    - name: Setup Python (3.11+)
+      uses: actions/setup-python@v5
+      if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci-3.11.txt'
     - name: Upgrade pip
@@ -57,28 +100,37 @@ jobs:
     - name: Install requirements (Python 3)
       run: |
         pip install -r requirements/ci.txt
-      if: matrix.python-version != '3.11'
-    - name: Install requirements (Python 3.11)
+      if: matrix.python-version == '3.6' || matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
+    - name: Install requirements (Python 3.11+)
       run: |
         pip install -r requirements/ci-3.11.txt
-      if: matrix.python-version == '3.11'
-    - name: Remove cryptodome
+      if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
+    - name: Remove pycryptodome and cryptography
       run: |
-        pip uninstall pycryptodome -y
-      if: matrix.use-cryptodome == 'false'
+        pip uninstall pycryptodome cryptography -y
+    - name: Install cryptography
+      run: |
+        pip install cryptography
+      if: matrix.use-crypto-lib == 'cryptography'
+    - name: Install pycryptodome
+      run: |
+        pip install pycryptodome
+      if: matrix.use-crypto-lib == 'pycryptodome'
     - name: Install pypdf
       run: |
         pip install .
+    - name: Prepare
+      run: |
+        python -c "from tests import download_test_pdfs; download_test_pdfs()"
     - name: Test with pytest
       run: |
-        python -m coverage run --parallel-mode -m pytest tests -vv
-    - name: Test with mypy
-      run : |
-        mypy pypdf --show-error-codes --disallow-untyped-defs --disallow-incomplete-defs
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv
+    - name: Rename coverage data file
+      run: mv .coverage ".coverage.$RANDOM"
     - name: Upload coverage data
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: coverage-data
+        name: coverage-data.${{ matrix.python-version }}-${{ matrix.use-crypto-lib }}
         path: .coverage.*
         if-no-files-found: ignore
 
@@ -87,17 +139,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: 'recursive'
-    - name: Cache Downloaded Files
-      id: cache-downloaded-files
-      uses: actions/cache@v3
-      with:
-        path: '**/tests/pdf_cache/*'
-        key: cache-downloaded-files
     - name: Setup Python 3.11
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.11"
         cache: 'pip'
@@ -115,14 +161,17 @@ jobs:
       run: |
         echo `ruff --version`
         ruff .
+    - name: Test with mypy
+      run : |
+        mypy pypdf
 
   package:
     name: Build & verify package
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{env.PYTHON_LATEST}}
 
@@ -138,33 +187,34 @@ jobs:
         working-directory: /tmp
         run: python -c "import pypdf;print(pypdf.__version__)"
 
-      # - name: Release to pypi if tagged.
-      #   if: startsWith(github.ref, 'refs/tags')
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     user: __token__
-      #     password: ${{ secrets.PYPI_API_TOKEN }}
-      - name: Create GitHub release if tagged.
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-
   coverage:
     name: Combine & check coverage.
     runs-on: ubuntu-latest
     needs: tests
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           # Use latest Python, so it understands all syntax.
           python-version: ${{env.PYTHON_LATEST}}
 
       - run: python -m pip install --upgrade coverage[toml]
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: coverage-data
+          pattern: coverage-data*
+          merge-multiple: true
+
+      - name: Check Number of Downloaded Files
+        run: |
+          downloaded_files_count=$(find \.coverage* -type f | wc -l)
+          if [ $downloaded_files_count -eq 8 ]; then
+            echo "The expected number of files (8) were downloaded."
+          else
+            echo "ERROR: Expected 8 files, but found $downloaded_files_count files."
+            exit 1
+          fi
 
       - name: Combine coverage & create xml report
         run: |

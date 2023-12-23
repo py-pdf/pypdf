@@ -34,7 +34,7 @@ from pypdf.generic import (
     read_string_from_stream,
 )
 
-from . import ReaderDummy, get_pdf_from_url
+from . import ReaderDummy, get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -229,8 +229,8 @@ def test_name_object(caplog):
     assert caplog.text == ""
 
     b = BytesIO()
-    NameObject("/你好世界").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C"
+    NameObject("/你好世界 (%)").write_to_stream(b)
+    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
     assert caplog.text == ""
 
 
@@ -426,7 +426,7 @@ def test_dictionaryobject_read_from_stream_stream_stream_valid(
         # TODO: What should happen with the stream?
         assert do == {"/S": "/GoTo"}
         if length in (6, 10):
-            assert b"BT /F1" in do._StreamObject__data
+            assert b"BT /F1" in do.get_data()
         raise PdfReadError("__ALLGOOD__")
     assert should_fail ^ (exc.value.args[0] == "__ALLGOOD__")
 
@@ -592,48 +592,51 @@ def test_remove_child_in_tree():
 
 
 @pytest.mark.enable_socket()
-def test_dict_read_from_stream(caplog):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
-    name = "tika-984877.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+@pytest.mark.parametrize(
+    ("url", "name", "caplog_content"),
+    [
+        (  # parse_content_stream_peek_percentage
+            "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf",
+            "tika-985770.pdf",
+            "",
+        ),
+        (  # read_inline_image_no_has_q
+            "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf",
+            "tika-998719.pdf",
+            "",
+        ),
+        (  # read_inline_image_loc_neg_1
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf",
+            "tika-935066.pdf",
+            "",
+        ),
+        (  # object_read_from_stream_unicode_error
+            "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf",
+            "tika-974966.pdf",
+            "",
+        ),
+        (  # dict_read_from_stream
+            "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf",
+            "tika-984877.pdf",
+            "Multiple definitions in dictionary at byte 0x1084 for key /Length",
+        ),
+    ],
+    ids=[
+        "parse_content_stream_peek_percentage",
+        "read_inline_image_no_has_q",
+        "read_inline_image_loc_neg_1",
+        "object_read_from_stream_unicode_error",
+        "dict_read_from_stream",
+    ],
+)
+def test_extract_text(caplog, url: str, name: str, caplog_content: str):
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
-    assert (
-        "Multiple definitions in dictionary at byte 0x1084 for key /Length"
-        in caplog.text
-    )
-
-
-@pytest.mark.enable_socket()
-def test_parse_content_stream_peek_percentage():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
-    name = "tika-985770.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_read_inline_image_no_has_q():
-    # pdf/df7e1add3156af17a372bc165e47a244.pdf
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
-    name = "tika-998719.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_read_inline_image_loc_neg_1():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
-    name = "tika-935066.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
+    if caplog_content == "":
+        assert caplog_content == caplog.text
+    else:
+        assert caplog_content in caplog.text
 
 
 @pytest.mark.slow()
@@ -642,7 +645,7 @@ def test_text_string_write_to_stream():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
     name = "tika-924562.pdf"
 
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     for page in writer.pages:
@@ -650,21 +653,11 @@ def test_text_string_write_to_stream():
 
 
 @pytest.mark.enable_socket()
-def test_name_object_read_from_stream_unicode_error():  # L588
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
-    name = "tika-974966.pdf"
-
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
 def test_bool_repr(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
     name = "tika-932449.pdf"
 
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     write_path = tmp_path / "tmp-fields-report.txt"
     with open(write_path, "w") as fp:
         fields = reader.get_fields(fileobj=fp)
@@ -690,7 +683,7 @@ def test_issue_997(mock_logger_warning, pdf_file_path):
     name = "gh-issue-997.pdf"
 
     merger = PdfMerger()
-    merger.append(BytesIO(get_pdf_from_url(url, name=name)))  # here the error raises
+    merger.append(BytesIO(get_data_from_url(url, name=name)))  # here the error raises
     with open(pdf_file_path, "wb") as f:
         merger.write(f)
     merger.close()
@@ -701,7 +694,7 @@ def test_issue_997(mock_logger_warning, pdf_file_path):
     merger = PdfMerger(strict=True)
     with pytest.raises(PdfReadError) as exc:
         merger.append(
-            BytesIO(get_pdf_from_url(url, name=name))
+            BytesIO(get_data_from_url(url, name=name))
         )  # here the error raises
     assert exc.value.args[0] == "Could not find object."
     with open(pdf_file_path, "wb") as f:
@@ -718,30 +711,32 @@ def test_annotation_builder_free_text(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    free_text_annotation = AnnotationBuilder.free_text(
-        "Hello World - bold and italic\nThis is the second line!",
-        rect=(50, 550, 200, 650),
-        font="Arial",
-        bold=True,
-        italic=True,
-        font_size="20pt",
-        font_color="00ff00",
-        border_color=None,
-        background_color=None,
-    )
+    with pytest.warns(DeprecationWarning):
+        free_text_annotation = AnnotationBuilder.free_text(
+            "Hello World - bold and italic\nThis is the second line!",
+            rect=(50, 550, 200, 650),
+            font="Arial",
+            bold=True,
+            italic=True,
+            font_size="20pt",
+            font_color="00ff00",
+            border_color=None,
+            background_color=None,
+        )
     writer.add_annotation(0, free_text_annotation)
 
-    free_text_annotation = AnnotationBuilder.free_text(
-        "Another free text annotation (not bold, not italic)",
-        rect=(500, 550, 200, 650),
-        font="Arial",
-        bold=False,
-        italic=False,
-        font_size="20pt",
-        font_color="00ff00",
-        border_color="0000ff",
-        background_color="cdcdcd",
-    )
+    with pytest.warns(DeprecationWarning):
+        free_text_annotation = AnnotationBuilder.free_text(
+            "Another free text annotation (not bold, not italic)",
+            rect=(500, 550, 200, 650),
+            font="Arial",
+            bold=False,
+            italic=False,
+            font_size="20pt",
+            font_color="00ff00",
+            border_color="0000ff",
+            background_color="cdcdcd",
+        )
     writer.add_annotation(0, free_text_annotation)
 
     # Assert: You need to inspect the file manually
@@ -758,15 +753,16 @@ def test_annotation_builder_polygon(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.raises(ValueError) as exc:
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
         AnnotationBuilder.polygon(
             vertices=[],
         )
     assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
 
-    annotation = AnnotationBuilder.polygon(
-        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
-    )
+    with pytest.warns(DeprecationWarning):
+        annotation = AnnotationBuilder.polygon(
+            vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+        )
     writer.add_annotation(0, annotation)
 
     # Assert: You need to inspect the file manually
@@ -780,15 +776,16 @@ def test_annotation_builder_polyline(pdf_file_path, pdf_reader_page):
     writer.add_page(pdf_reader_page)
 
     # Act
-    with pytest.raises(ValueError) as exc:
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
         AnnotationBuilder.polyline(
             vertices=[],
         )
     assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
 
-    annotation = AnnotationBuilder.polyline(
-        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
-    )
+    with pytest.warns(DeprecationWarning):
+        annotation = AnnotationBuilder.polyline(
+            vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+        )
     writer.add_annotation(0, annotation)
 
     # Assert: You need to inspect the file manually
@@ -805,12 +802,13 @@ def test_annotation_builder_line(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    line_annotation = AnnotationBuilder.line(
-        text="Hello World\nLine2",
-        rect=(50, 550, 200, 650),
-        p1=(50, 550),
-        p2=(200, 650),
-    )
+    with pytest.warns(DeprecationWarning):
+        line_annotation = AnnotationBuilder.line(
+            text="Hello World\nLine2",
+            rect=(50, 550, 200, 650),
+            p1=(50, 550),
+            p2=(200, 650),
+        )
     writer.add_annotation(0, line_annotation)
 
     # Assert: You need to inspect the file manually
@@ -827,14 +825,16 @@ def test_annotation_builder_square(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    square_annotation = AnnotationBuilder.rectangle(
-        rect=(50, 550, 200, 650), interiour_color="ff0000"
-    )
+    with pytest.warns(DeprecationWarning):
+        square_annotation = AnnotationBuilder.rectangle(
+            rect=(50, 550, 200, 650), interiour_color="ff0000"
+        )
     writer.add_annotation(0, square_annotation)
 
-    square_annotation = AnnotationBuilder.rectangle(
-        rect=(40, 400, 150, 450),
-    )
+    with pytest.warns(DeprecationWarning):
+        square_annotation = AnnotationBuilder.rectangle(
+            rect=(40, 400, 150, 450),
+        )
     writer.add_annotation(0, square_annotation)
 
     # Assert: You need to inspect the file manually
@@ -851,22 +851,23 @@ def test_annotation_builder_highlight(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    highlight_annotation = AnnotationBuilder.highlight(
-        rect=(95.79332, 704.31777, 138.55779, 724.6855),
-        highlight_color="ff0000",
-        quad_points=ArrayObject(
-            [
-                FloatObject(100.060779),
-                FloatObject(723.55398),
-                FloatObject(134.29033),
-                FloatObject(723.55398),
-                FloatObject(100.060779),
-                FloatObject(705.4493),
-                FloatObject(134.29033),
-                FloatObject(705.4493),
-            ]
-        ),
-    )
+    with pytest.warns(DeprecationWarning):
+        highlight_annotation = AnnotationBuilder.highlight(
+            rect=(95.79332, 704.31777, 138.55779, 724.6855),
+            highlight_color="ff0000",
+            quad_points=ArrayObject(
+                [
+                    FloatObject(100.060779),
+                    FloatObject(723.55398),
+                    FloatObject(134.29033),
+                    FloatObject(723.55398),
+                    FloatObject(100.060779),
+                    FloatObject(705.4493),
+                    FloatObject(134.29033),
+                    FloatObject(705.4493),
+                ]
+            ),
+        )
     writer.add_annotation(0, highlight_annotation)
 
     # Assert: You need to inspect the file manually
@@ -883,15 +884,17 @@ def test_annotation_builder_circle(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    circle_annotation = AnnotationBuilder.ellipse(
-        rect=(50, 550, 200, 650), interiour_color="ff0000"
-    )
+    with pytest.warns(DeprecationWarning):
+        circle_annotation = AnnotationBuilder.ellipse(
+            rect=(50, 550, 200, 650), interiour_color="ff0000"
+        )
     writer.add_annotation(0, circle_annotation)
 
     diameter = 100
-    circle_annotation = AnnotationBuilder.ellipse(
-        rect=(110, 500, 110 + diameter, 500 + diameter),
-    )
+    with pytest.warns(DeprecationWarning):
+        circle_annotation = AnnotationBuilder.ellipse(
+            rect=(110, 500, 110 + diameter, 500 + diameter),
+        )
     writer.add_annotation(0, circle_annotation)
 
     # Assert: You need to inspect the file manually
@@ -909,7 +912,7 @@ def test_annotation_builder_link(pdf_file_path):
 
     # Act
     # Part 1: Too many args
-    with pytest.raises(ValueError) as exc:
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
         AnnotationBuilder.link(
             rect=(50, 550, 200, 650),
             url="https://martin-thoma.com/",
@@ -921,7 +924,7 @@ def test_annotation_builder_link(pdf_file_path):
     )
 
     # Part 2: Too few args
-    with pytest.raises(ValueError) as exc:
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
         AnnotationBuilder.link(
             rect=(50, 550, 200, 650),
         )
@@ -931,18 +934,21 @@ def test_annotation_builder_link(pdf_file_path):
     )
 
     # Part 3: External Link
-    link_annotation = AnnotationBuilder.link(
-        rect=(50, 50, 100, 100),
-        url="https://martin-thoma.com/",
-    )
+    with pytest.warns(DeprecationWarning):
+        link_annotation = AnnotationBuilder.link(
+            rect=(50, 50, 100, 100),
+            url="https://martin-thoma.com/",
+            border=[1, 0, 6, [3, 2]],
+        )
     writer.add_annotation(0, link_annotation)
 
     # Part 4: Internal Link
-    link_annotation = AnnotationBuilder.link(
-        rect=(100, 100, 300, 200),
-        target_page_index=1,
-        border=[50, 10, 4],
-    )
+    with pytest.warns(DeprecationWarning):
+        link_annotation = AnnotationBuilder.link(
+            rect=(100, 100, 300, 200),
+            target_page_index=1,
+            border=[50, 10, 4],
+        )
     writer.add_annotation(0, link_annotation)
 
     for page in reader.pages[1:]:
@@ -962,11 +968,12 @@ def test_annotation_builder_text(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    text_annotation = AnnotationBuilder.text(
-        text="Hello World\nThis is the second line!",
-        rect=(50, 550, 500, 650),
-        open=True,
-    )
+    with pytest.warns(DeprecationWarning):
+        text_annotation = AnnotationBuilder.text(
+            text="Hello World\nThis is the second line!",
+            rect=(50, 550, 500, 650),
+            open=True,
+        )
     writer.add_annotation(0, text_annotation)
 
     # Assert: You need to inspect the file manually
@@ -983,25 +990,28 @@ def test_annotation_builder_popup(caplog):
     writer.add_page(page)
 
     # Act
-    text_annotation = AnnotationBuilder.text(
-        text="Hello World\nThis is the second line!",
-        rect=(50, 550, 200, 650),
-        open=True,
-    )
+    with pytest.warns(DeprecationWarning):
+        text_annotation = AnnotationBuilder.text(
+            text="Hello World\nThis is the second line!",
+            rect=(50, 550, 200, 650),
+            open=True,
+        )
     ta = writer.add_annotation(0, text_annotation)
 
-    popup_annotation = AnnotationBuilder.popup(
-        rect=(50, 550, 200, 650),
-        open=True,
-        parent=ta,  # prefer to use for evolutivity
-    )
+    with pytest.warns(DeprecationWarning):
+        popup_annotation = AnnotationBuilder.popup(
+            rect=(50, 550, 200, 650),
+            open=True,
+            parent=ta,  # prefer to use for evolutivity
+        )
 
     assert caplog.text == ""
-    AnnotationBuilder.popup(
-        rect=(50, 550, 200, 650),
-        open=True,
-        parent=True,  # broken parameter  # type: ignore
-    )
+    with pytest.warns(DeprecationWarning):
+        AnnotationBuilder.popup(
+            rect=(50, 550, 200, 650),
+            open=True,
+            parent=True,  # broken parameter  # type: ignore
+        )
     assert "Unregistered Parent object : No Parent field set" in caplog.text
 
     writer.add_annotation(writer.pages[0], popup_annotation)
@@ -1077,7 +1087,9 @@ def test_create_string_object_force():
         ("99900000000000000123", "99900000000000000000"),
         ("99900000000000000123.456000", "99900000000000000000"),
         ("0.00000000000000000000123", "0.00000000000000000000123"),
+        ("0.00000123", "0.00000123"),
         ("0.00000000000000000000123000", "0.00000000000000000000123"),
+        ("-4.6", "-4.6"),  # from #1910
         # (
         #    "50032481330523882508234.00000000000000000000123000",
         #    "50032481330523882508234.00000000000000000000123",
@@ -1145,7 +1157,7 @@ def test_append_with_indirectobject_not_pointing(caplog):
     """
     url = "https://github.com/py-pdf/pypdf/files/10729142/document.pdf"
     name = "tst_iss1631.pdf"
-    data = BytesIO(get_pdf_from_url(url, name=name))
+    data = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(data, strict=False)
     writer = PdfWriter()
     writer.append(reader)
@@ -1161,7 +1173,7 @@ def test_iss1615_1673():
     # #1615
     url = "https://github.com/py-pdf/pypdf/files/10671366/graph_letter.pdf"
     name = "graph_letter.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
     assert (
@@ -1173,7 +1185,7 @@ def test_iss1615_1673():
     # #1673
     url = "https://github.com/py-pdf/pypdf/files/10848750/budgeting-loan-form-sf500.pdf"
     name = "budgeting-loan-form-sf500.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
@@ -1186,7 +1198,7 @@ def test_destination_withoutzoom():
         "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
     )
     name = "2021_book_security.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.outline
 
     out = BytesIO()

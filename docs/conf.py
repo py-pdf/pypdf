@@ -25,7 +25,7 @@ shutil.copyfile("../CONTRIBUTORS.md", "meta/CONTRIBUTORS.md")
 # -- Project information -----------------------------------------------------
 
 project = py_pkg.__name__
-copyright = "2006 - 2008, Mathieu Fenniak"
+copyright = "2006 - 2023, Mathieu Fenniak and pypdf contributors"
 author = "Mathieu Fenniak"
 
 # The version info for the project you're documenting, acts as replacement for

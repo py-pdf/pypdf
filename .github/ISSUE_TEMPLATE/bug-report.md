@@ -17,7 +17,7 @@ Which environment were you using when you encountered the problem?
 $ python -m platform
 # TODO: Your output goes here
 
-$ python -c "import pypdf;print(pypdf.__version__)"
+$ python -c "import pypdf;print(pypdf._debug_versions)"
 # TODO: Your output goes here
 ```
 
@@ -34,6 +34,8 @@ better. Let us know if we may add them to our tests!
 
 ## Traceback
 
-This is the complete Traceback I see:
+This is the complete traceback I see:
 
-TODO
+```
+# TODO: Your traceback goes here (if applicable)
+```

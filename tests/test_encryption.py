@@ -1,4 +1,4 @@
-"""Test the pypdf.encryption module."""
+"""Test the pypdf._encryption module."""
 import secrets
 from pathlib import Path
 
@@ -6,23 +6,22 @@ import pytest
 
 import pypdf
 from pypdf import PasswordType, PdfReader, PdfWriter
-from pypdf._encryption import AlgV5, CryptRC4
+from pypdf._crypt_providers import crypt_provider
+from pypdf._crypt_providers._fallback import _DEPENDENCY_ERROR_STR
+from pypdf._encryption import AlgV5, CryptAES, CryptRC4
 from pypdf.errors import DependencyError, PdfReadError
 
-try:
-    from Crypto.Cipher import AES  # noqa: F401
-
-    HAS_PYCRYPTODOME = True
-except ImportError:
-    HAS_PYCRYPTODOME = False
-
+USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
+USE_PYCRYPTODOME = crypt_provider[0] == "pycryptodome"
+HAS_AES = USE_CRYPTOGRAPHY or USE_PYCRYPTODOME
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 @pytest.mark.parametrize(
-    ("name", "requires_pycryptodome"),
+    ("name", "requires_aes"),
     [
         # unencrypted pdf
         ("unencrypted.pdf", False),
@@ -70,23 +69,23 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
         ("r6-owner-password.pdf", True),
     ],
 )
-def test_encryption(name, requires_pycryptodome):
+def test_encryption(name, requires_aes):
     """
     Encrypted PDFs are handled correctly.
 
     This test function ensures that:
-    - If PyCryptodome is not available and required, a DependencyError is raised
+    - If PyCryptodome or cryptography is not available and required, a DependencyError is raised
     - Encrypted PDFs are identified correctly
     - Decryption works for encrypted PDFs
     - Metadata is properly extracted from the decrypted PDF
     """
     inputfile = RESOURCE_ROOT / "encryption" / name
-    if requires_pycryptodome and not HAS_PYCRYPTODOME:
+    if requires_aes and not HAS_AES:
         with pytest.raises(DependencyError) as exc:
             ipdf = pypdf.PdfReader(inputfile)
             ipdf.decrypt("asdfzxcv")
             dd = dict(ipdf.metadata)
-        assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
+        assert exc.value.args[0] == _DEPENDENCY_ERROR_STR
         return
     else:
         ipdf = pypdf.PdfReader(inputfile)
@@ -117,7 +116,7 @@ def test_encryption(name, requires_pycryptodome):
         ("r6-both-passwords.pdf", "foo", "bar"),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
     """
     PDFs with both user and owner passwords are handled correctly.
@@ -143,7 +142,7 @@ def test_pdf_with_both_passwords(name, user_passwd, owner_passwd):
         ("crazyones-encrypted-256.pdf", b"password"),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 def test_read_page_from_encrypted_file_aes_256(pdffile, password):
     """
     A page can be read from an encrypted.
@@ -168,7 +167,7 @@ def test_read_page_from_encrypted_file_aes_256(pdffile, password):
         ),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_encrypted_pdfs(names):
     """Encrypted PDFs can be merged after decryption."""
@@ -183,6 +182,10 @@ def test_merge_encrypted_pdfs(names):
     merger.close()
 
 
+@pytest.mark.skipif(
+    USE_CRYPTOGRAPHY,
+    reason="Limitations of cryptography. see https://github.com/pyca/cryptography/issues/2494",
+)
 @pytest.mark.parametrize(
     "cryptcls",
     [
@@ -205,6 +208,7 @@ def test_attempt_decrypt_unencrypted_pdf():
     assert exc.value.args[0] == "Not encrypted file"
 
 
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 def test_alg_v5_generate_values():
     """
     Algorithm V5 values are generated without raising exceptions.
@@ -212,8 +216,6 @@ def test_alg_v5_generate_values():
     This test function checks if there is an exception during the value generation.
     It does not verify that the content is correct.
     """
-    if not HAS_PYCRYPTODOME:
-        return
     key = b"0123456789123451"
     values = AlgV5.generate_values(
         R=5,
@@ -233,7 +235,7 @@ def test_alg_v5_generate_values():
 
 
 @pytest.mark.parametrize(
-    ("alg", "requires_pycryptodome"),
+    ("alg", "requires_aes"),
     [
         ("RC4-40", False),
         ("RC4-128", False),
@@ -243,7 +245,7 @@ def test_alg_v5_generate_values():
         ("ABCD", False),
     ],
 )
-def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
+def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
     user_password = secrets.token_urlsafe(10)
     owner_password = secrets.token_urlsafe(10)
 
@@ -265,7 +267,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
         assert exc.value.args[0] == "algorithm 'ABCD' NOT supported"
         return
 
-    if requires_pycryptodome and not HAS_PYCRYPTODOME:
+    if requires_aes and not HAS_AES:
         with pytest.raises(DependencyError) as exc:
             writer.encrypt(
                 user_password=user_password,
@@ -274,7 +276,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_pycryptodome):
             )
             with open(pdf_file_path, "wb") as output_stream:
                 writer.write(output_stream)
-        assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
+        assert exc.value.args[0] == _DEPENDENCY_ERROR_STR
         return
 
     writer.encrypt(
@@ -332,3 +334,37 @@ def test_pdf_encrypt_multiple(pdf_file_path, count):
     page = reader.pages[0]
     text1 = page.extract_text()
     assert text0 == text1
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_aes_decrypt_corrupted_data():
+    """Just for robustness"""
+    aes = CryptAES(secrets.token_bytes(16))
+    for num in [0, 17, 32]:
+        aes.decrypt(secrets.token_bytes(num))
+
+
+def test_encrypt_stream_dictionary(pdf_file_path):
+    user_password = secrets.token_urlsafe(10)
+
+    reader = PdfReader(SAMPLE_ROOT / "023-cmyk-image/cmyk-image.pdf")
+    page = reader.pages[0]
+    original_image_obj = reader.get_object(page.images["/I"].indirect_reference)
+
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+    writer.encrypt(
+        user_password=user_password,
+        owner_password=None,
+        algorithm="RC4-128",
+    )
+    with open(pdf_file_path, "wb") as output_stream:
+        writer.write(output_stream)
+
+    reader = PdfReader(pdf_file_path)
+    assert reader.is_encrypted
+    assert reader.decrypt(user_password) == PasswordType.OWNER_PASSWORD
+    page = reader.pages[0]
+    decrypted_image_obj = reader.get_object(page.images["/I"].indirect_reference)
+
+    assert decrypted_image_obj["/ColorSpace"][3] == original_image_obj["/ColorSpace"][3]

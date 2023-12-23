@@ -18,6 +18,7 @@ and
 [metadata](https://pypdf.readthedocs.io/en/stable/user/metadata.html)
 from PDFs as well.
 
+See [pdfly](https://github.com/py-pdf/pdfly) for a CLI application that uses pypdf to interact with PDFs.
 
 ## Installation
 
@@ -62,6 +63,7 @@ For questions and answers, visit
 
 Maintaining pypdf is a collaborative effort. You can support the project by
 writing documentation, helping to narrow down issues, and submitting code.
+See the [CONTRIBUTING.md](https://github.com/py-pdf/pypdf/blob/main/CONTRIBUTING.md) file for more information.
 
 ### Q&A
 

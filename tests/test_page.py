@@ -1,5 +1,6 @@
 """Test the pypdf._page module."""
 import json
+import math
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -24,7 +25,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_pdf_from_url, normalize_warnings
+from . import get_data_from_url, normalize_warnings
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -87,7 +88,7 @@ def test_page_operations(pdf_path, password):
     is as expected.
     """
     if pdf_path.startswith("http"):
-        pdf_path = BytesIO(get_pdf_from_url(pdf_path, pdf_path.split("/")[-1]))
+        pdf_path = BytesIO(get_data_from_url(pdf_path, pdf_path.split("/")[-1]))
     else:
         pdf_path = RESOURCE_ROOT / pdf_path
     reader = PdfReader(pdf_path)
@@ -120,6 +121,36 @@ def test_page_operations(pdf_path, password):
     page.scale_by(0.5)
     page.scale_to(100, 100)
     page.extract_text()
+
+
+@pytest.mark.parametrize(
+    ("angle", "expected_width", "expected_height"),
+    [
+        (175, 680, 844),
+        (45, 994, 994),
+        (-80, 888, 742),
+    ],
+)
+def test_mediabox_expansion_after_rotation(
+    angle: float, expected_width: int, expected_height: int
+):
+    """
+    Mediabox dimensions after rotation at a non-right angle with expension are correct.
+
+    The test was validated against pillow (see PR #2282)
+    """
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+
+    transformation = Transformation().rotate(angle)
+    for page_box in reader.pages:
+        page_box.add_transformation(transformation, expand=True)
+
+    mediabox = reader.pages[0].mediabox
+
+    # Deviation of upto 2 pixels is acceptable
+    assert math.isclose(mediabox.width, expected_width, abs_tol=2)
+    assert math.isclose(mediabox.height, expected_height, abs_tol=2)
 
 
 def test_transformation_equivalence():
@@ -345,27 +376,11 @@ def test_add_transformation_on_page_without_contents():
 
 
 @pytest.mark.enable_socket()
-def test_extract_text_single_quote_op():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
-def test_no_ressources_on_text_extract():
-    url = "https://github.com/py-pdf/pypdf/files/9428434/TelemetryTX_EM.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
-    for page in reader.pages:
-        page.extract_text()
-
-
-@pytest.mark.enable_socket()
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
     url = "https://github.com/py-pdf/pypdf/files/9150656/ST.2019.PDF"
     name = "st2019.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     txt = reader.pages[3].extract_text()
     # The following text is contained in two different cells:
     assert txt.find("有限公司") > 0
@@ -403,10 +418,23 @@ def test_iss_1142():
             "https://github.com/py-pdf/pypdf/files/9432350/Work.Flow.From.Check.to.QA.pdf",
             "WFCA.pdf",
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf",
+            "tika-964029.pdf",
+        ),  # single_quote_op
+        (
+            "https://github.com/py-pdf/pypdf/files/9428434/TelemetryTX_EM.pdf",
+            "tika-964029.pdf",
+        ),  # no_ressources
+        (
+            # https://www.itu.int/rec/T-REC-X.25-199610-I/en
+            "https://github.com/py-pdf/pypdf/files/12423313/T-REC-X.25-199610-I.PDF-E.pdf",
+            "T-REC-X.25-199610-I!!PDF-E.pdf",
+        ),
     ],
 )
-def test_extract_text_page_pdf(url, name):
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+def test_extract_text(url, name):
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
 
@@ -416,7 +444,7 @@ def test_extract_text_page_pdf(url, name):
 def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
     warn_msgs = normalize_warnings(caplog.text)
@@ -428,7 +456,7 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
 def test_extract_text_operator_t_star():  # L1266, L1267
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/967/967943.pdf"
     name = "tika-967943.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
 
@@ -753,6 +781,13 @@ def test_extract_text_visitor_callbacks():
             set(),
             {"/Helvetica"},
         ),
+        # fonts in annotations
+        (
+            RESOURCE_ROOT / "FormTestFromOo.pdf",
+            None,
+            {"/CAAAAA+LiberationSans", "/EAAAAA+SegoeUI", "/BAAAAA+LiberationSerif"},
+            {"/LiberationSans", "/ZapfDingbats"},
+        ),
     ],
 )
 def test_get_fonts(pdf_path, password, embedded, unembedded):
@@ -764,6 +799,44 @@ def test_get_fonts(pdf_path, password, embedded, unembedded):
         a = a.union(a_tmp)
         b = b.union(b_tmp)
     assert (a, b) == (embedded, unembedded)
+
+
+@pytest.mark.enable_socket()
+def test_get_fonts2():
+    url = "https://github.com/py-pdf/pypdf/files/12618104/WS_T.483.8-2016.pdf"
+    name = "WS_T.483.8-2016.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert reader.pages[1]._get_fonts() == (
+        {
+            "/E-HZ9-PK7483a5-Identity-H",
+            "/SSJ-PK748200005d9-Identity-H",
+            "/QGNGZS+FzBookMaker1DlFont10536872415",
+            "/E-BZ9-PK748344-Identity-H",
+            "/E-FZ9-PK74836f-Identity-H",
+            "/O9-PK748464-Identity-H",
+            "/QGNGZR+FzBookMaker0DlFont00536872414",
+            "/SSJ-PK748200005db-Identity-H",
+            "/F-BZ9-PK7483cb-Identity-H",
+            "/SSJ-PK748200005da-Identity-H",
+            "/H-SS9-PK748200005e0-Identity-H",
+            "/H-HT9-PK748200005e1-Identity-H",
+        },
+        set(),
+    )
+    assert reader.pages[2]._get_fonts() == (
+        {
+            "/E-HZ9-PK7483a5-Identity-H",
+            "/E-FZ9-PK74836f-Identity-H",
+            "/E-BZ9-PK748344-Identity-H",
+            "/QGNGZT+FzBookMaker0DlFont00536872418",
+            "/O9-PK748464-Identity-H",
+            "/F-BZ9-PK7483cb-Identity-H",
+            "/H-SS9-PK748200005e0-Identity-H",
+            "/QGNGZU+FzBookMaker1DlFont10536872420",
+            "/H-HT9-PK748200005e1-Identity-H",
+        },
+        set(),
+    )
 
 
 def test_annotation_getter():
@@ -870,7 +943,7 @@ def test_annotation_setter(pdf_file_path):
 def test_text_extraction_issue_1091():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
     name = "tika-966635.pdf"
-    stream = BytesIO(get_pdf_from_url(url, name=name))
+    stream = BytesIO(get_data_from_url(url, name=name))
     with pytest.warns(PdfReadWarning):
         reader = PdfReader(stream)
     for page in reader.pages:
@@ -881,7 +954,7 @@ def test_text_extraction_issue_1091():
 def test_empyt_password_1088():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
-    stream = BytesIO(get_pdf_from_url(url, name=name))
+    stream = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(stream)
     len(reader.pages)
 
@@ -930,7 +1003,7 @@ def test_read_link_annotation():
 def test_no_resources():
     url = "https://github.com/py-pdf/pypdf/files/9572045/108.pdf"
     name = "108.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page_one = reader.pages[0]
     page_two = reader.pages[0]
     page_one.merge_page(page_two)
@@ -1103,10 +1176,10 @@ def test_merge_page_resources_smoke_test():
 def test_merge_transformed_page_into_blank():
     url = "https://github.com/py-pdf/pypdf/files/10768334/badges_3vjrh_7LXDZ_1-1.pdf"
     name = "badges_3vjrh_7LXDZ_1.pdf"
-    r1 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    r1 = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     url = "https://github.com/py-pdf/pypdf/files/10768335/badges_3vjrh_7LXDZ_2-1.pdf"
     name = "badges_3vjrh_7LXDZ_2.pdf"
-    r2 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    r2 = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
     writer.pages[0].merge_translated_page(r1.pages[0], 0, 0, True, True)
@@ -1147,7 +1220,7 @@ def test_pages_printing():
 def test_del_pages():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
-    writer = PdfWriter(clone_from=BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
     ll = len(writer.pages)
     pp = writer.pages[1].indirect_reference
     del writer.pages[1]
@@ -1168,7 +1241,7 @@ def test_del_pages():
     for p in pp:
         assert p not in pages["/Kids"]
     # del whole arborescence
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     # error case
     pp = reader.pages[2]
     i = pp["/Parent"].get_object()["/Kids"].index(pp.indirect_reference)
@@ -1176,7 +1249,7 @@ def test_del_pages():
     with pytest.raises(PdfReadError):
         del reader.pages[2]
     # reader is corrupted we have to reload it
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     del reader.pages[:]
     assert len(reader.pages) == 0
     assert len(reader.trailer["/Root"]["/Pages"]["/Kids"]) == 0
@@ -1190,31 +1263,6 @@ def test_pdf_pages_missing_type():
     reader.pages[0]
     writer = PdfWriter(clone_from=reader)
     writer.pages[0]
-
-
-@pytest.mark.enable_socket()
-def test_image_new_property():
-    url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
-    name = "pdf_font_garbled.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    reader.pages[0].images.keys()
-    reader.pages[0].images.items()
-    reader.pages[0].images[0].name
-    reader.pages[0].images[-1].data
-    reader.pages[0].images["/TPL1", "/Image5"].image
-    assert (
-        reader.pages[0].images["/I0"].indirect_reference.get_object()
-        == reader.pages[0]["/Resources"]["/XObject"]["/I0"]
-    )
-    list(reader.pages[0].images[0:2])
-    with pytest.raises(TypeError):
-        reader.pages[0].images[b"0"]
-    with pytest.raises(IndexError):
-        reader.pages[0].images[9999]
-    # just for test coverage:
-    with pytest.raises(KeyError):
-        reader.pages[0]._get_image(["test"], reader.pages[0])
-    assert list(PageObject(None, None).images) == []
 
 
 @pytest.mark.samples()
@@ -1237,12 +1285,15 @@ def test_compression():
     writer.append(SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf", [1])
     nb1 = len(writer._objects)
 
+    # 1 page only is modified
     for page in writer.pages:
         page.merge_page(template_page)
-    assert len(writer._objects) == nb1 + 1  # font is added that's all
+    # font is added; +1 streamobjects + 1 ArrayObject
+    assert len(writer._objects) == nb1 + 1 + 2
     for page in writer.pages:
         page.compress_content_streams()
-    assert len(writer._objects) == nb1 + 1
+    # objects are recycled
+    assert len(writer._objects) == nb1 + 1 + 2
 
     contents = writer.pages[0]["/Contents"]
     writer.pages[0].replace_contents(None)
@@ -1250,3 +1301,99 @@ def test_compression():
     assert isinstance(
         writer._objects[contents.indirect_reference.idnum - 1], NullObject
     )
+
+
+def test_merge_with_no_resources():
+    """Test for issue #2147"""
+    writer = PdfWriter()
+    p0 = writer.add_blank_page(900, 1200)
+    del p0["/Resources"]
+    p1 = writer.add_blank_page(900, 1200)
+    del p1["/Resources"]
+    writer.pages[0].merge_page(p1)
+
+
+def test_get_contents_from_nullobject():
+    """Issue #2157"""
+    writer = PdfWriter()
+    p = writer.add_blank_page(100, 100)
+    p[NameObject("/Contents")] = writer._add_object(NullObject())
+    p.get_contents()
+
+
+@pytest.mark.enable_socket()
+def test_pos_text_in_textvisitor():
+    """See #2200"""
+    url = "https://github.com/py-pdf/pypdf/files/12675974/page_178.pdf"
+    name = "test_text_pos.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    p = ()
+
+    def visitor_body2(text, cm, tm, fontdict, fontsize) -> None:
+        nonlocal p
+        if text.startswith("5425."):
+            p = (tm[4], tm[5])
+
+    reader.pages[0].extract_text(visitor_text=visitor_body2)
+    assert abs(p[0] - 323.5) < 0.1
+    assert abs(p[1] - 457.4) < 0.1
+
+
+@pytest.mark.enable_socket()
+def test_pos_text_in_textvisitor2():
+    """See #2075"""
+    url = "https://github.com/py-pdf/pypdf/files/12318042/LegIndex-page6.pdf"
+    name = "LegIndex-page6.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    x_lvl = 26
+    lst = []
+
+    def visitor_lvl(text, cm, tm, fontdict, fontsize) -> None:
+        nonlocal x_lvl, lst
+        if abs(tm[4] - x_lvl) < 2 and tm[5] < 740 and tm[5] > 210:
+            lst.append(text.strip(" \n"))
+
+    reader.pages[0].extract_text(visitor_text=visitor_lvl)
+    assert lst == [
+        "ACUPUNCTURE BOARD",
+        "ACUPUNCTURISTS AND ACUPUNCTURE",
+        "ADMINISTRATIVE LAW AND PROCEDURE",
+        "ADMINISTRATIVE LAW, OFFICE OF",
+        "ADOPTION",
+        "ADULT EDUCATION",
+        "ADVERTISING. See also MARKETING; and particular subject matter (e.g.,",
+    ]
+    x_lvl = 35
+    lst = []
+    reader.pages[0].extract_text(visitor_text=visitor_lvl)
+    assert lst == [
+        "members,  AB 1264",
+        "assistants, acupuncture,  AB 1264",
+        "complaints, investigations, etc.,  AB 1264",
+        "day, california acupuncture,  HR 48",
+        "massage services, asian,  AB 1264",
+        "supervising acupuncturists,  AB 1264",
+        "supportive acupuncture services, basic,  AB 1264",
+        "rules and regulations—",
+        "professional assistants and employees: employment and compensation,  AB 916",
+        "adults, adoption of,  AB 1756",
+        "agencies, organizations, etc.: requirements, prohibitions, etc.,  SB 807",
+        "assistance programs, adoption: nonminor dependents,  SB 9",
+        "birth certificates,  AB 1302",
+        "contact agreements, postadoption—",
+        "facilitators, adoption,  AB 120",
+        "failed adoptions: reproductive loss leave,  SB 848",
+        "hearings, adoption finalization: remote proceedings, technology, etc.,  SB 21",
+        "native american tribes,  AB 120",
+        "parental rights, reinstatement of,  AB 20",
+        "parents, prospective adoptive: criminal background checks,  SB 824",
+        "services, adult educational,  SB 877",
+        "week, adult education,  ACR 31",
+        "alcoholic beverages: tied-house restrictions,  AB 546",
+        "campaign re social equity, civil rights, etc.,  SB 447",
+        "cannabis,  AB 794",
+        "elections. See ELECTIONS.",
+        "false, misleading, etc., advertising—",
+        "hotels, short-term rentals, etc., advertised rates: mandatory fee disclosures,  SB 683",
+        "housing rental properties advertised rates: disclosures,  SB 611",
+    ]
