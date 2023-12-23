@@ -9,7 +9,7 @@ reader = PdfReader("form.pdf")
 fields = reader.get_form_text_fields()
 fields == {"key": "value", "key2": "value2"}
 
-# Or get Field objects instead of just text values:
+# You can also get all fields:
 fields = reader.get_fields()
 ```
 
