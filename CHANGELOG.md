@@ -1,5 +1,103 @@
 # CHANGELOG
 
+## Version 3.17.3, 2023-12-17
+
+### Robustness (ROB)
+-  Out-of-bounds issue in handle_tj (text extraction) (#2342)
+
+### Developer Experience (DEV)
+-  Make make_release.py easier to configure (#2348)
+
+### Maintenance (MAINT)
+-  Bump actions/download-artifact from 3 to 4 (#2344)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.2...3.17.3)
+
+## Version 3.17.2, 2023-12-10
+
+### Bug Fixes (BUG)
+-  Cope with deflated images with CMYK Black Only (#2322)
+-  Handle indirect objects as parameters for CCITTFaxDecode (#2307)
+-  check words length in _cmap type1_alternative function (#2310)
+
+### Robustness (ROB)
+-  Relax flate decoding for too many lookup values (#2331)
+-  Let _build_destination skip in case of missing /D key (#2018)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.1...3.17.2)
+
+## Version 3.17.1, 2023-11-14
+
+### Bug Fixes (BUG)
+-  Mediabox expansion size when applying non-right angle rotation (#2282)
+
+### Robustness (ROB)
+-  MissingWidth is IndirectObject (#2288)
+-  Initialize states array with an empty value (#2280)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.0...3.17.1)
+
+## Version 3.17.0, 2023-10-29
+
+### Security (SEC)
+-  Infinite recursion when using PdfWriter(clone_from=reader) (#2264)
+
+### New Features (ENH)
+-  Add parameter to select images to be removed (#2214)
+
+### Bug Fixes (BUG)
+-  Correctly handle image mode 1 with FlateDecode (#2249)
+-  Error when filling a value with parentheses #2268 (#2269)
+-  Handle empty root outline (#2239)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.4...3.17.0)
+
+## Version 3.16.4, 2023-10-10
+
+### Bug Fixes (BUG)
+-  Avoid exceeding recursion depth when retrieving image mode (#2251)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.3...3.16.4)
+
+## Version 3.16.3, 2023-10-08
+
+### Bug Fixes (BUG)
+-  Invalid cm/tm in visitor functions (#2206)
+-  Encrypt / decrypt Stream object dictionaries (#2228)
+-  Support nested color spaces for the /DeviceN color space (#2241)
+-  Images property fails if NullObject in list (#2215)
+
+### Developer Experience (DEV)
+-  Unify mypy options and warn redundant workarounds (#2223)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.2...3.16.3)
+
+## Version 3.16.2, 2023-09-24
+
+### Bug Fixes (BUG)
+-  PDF size increases because of too high float writing precision (#2213)
+-  Fix test_watermarking_reportlab_rendering() (#2203)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.1...3.16.2)
+
+## Version 3.16.1, 2023-09-17
+
+⚠️ The 'rename PdfWriter.create_viewer_preference to
+PdfWriter.create_viewer_preferences (#2190)' could be a breaking change for you,
+if you use it. As it was only introduced last week I'm confident enough that
+nobody will be affected though. Hence only the patch update.
+
+### Bug Fixes (BUG)
+-  Missing new line in extract_text with cm operations (#2142)
+-  _get_fonts not processing properly CIDFonts and annotations (#2194)
+
+### Maintenance (MAINT)
+-  Rename PdfWriter.create_viewer_preference to PdfWriter.create_viewer_preferences (#2190)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.16.0...3.16.1)
+
 ## Version 3.16.0, 2023-09-10
 
 ### Security (SEC)

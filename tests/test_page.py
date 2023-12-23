@@ -1,5 +1,6 @@
 """Test the pypdf._page module."""
 import json
+import math
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -120,6 +121,36 @@ def test_page_operations(pdf_path, password):
     page.scale_by(0.5)
     page.scale_to(100, 100)
     page.extract_text()
+
+
+@pytest.mark.parametrize(
+    ("angle", "expected_width", "expected_height"),
+    [
+        (175, 680, 844),
+        (45, 994, 994),
+        (-80, 888, 742),
+    ],
+)
+def test_mediabox_expansion_after_rotation(
+    angle: float, expected_width: int, expected_height: int
+):
+    """
+    Mediabox dimensions after rotation at a non-right angle with expension are correct.
+
+    The test was validated against pillow (see PR #2282)
+    """
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+
+    transformation = Transformation().rotate(angle)
+    for page_box in reader.pages:
+        page_box.add_transformation(transformation, expand=True)
+
+    mediabox = reader.pages[0].mediabox
+
+    # Deviation of upto 2 pixels is acceptable
+    assert math.isclose(mediabox.width, expected_width, abs_tol=2)
+    assert math.isclose(mediabox.height, expected_height, abs_tol=2)
 
 
 def test_transformation_equivalence():
@@ -750,6 +781,13 @@ def test_extract_text_visitor_callbacks():
             set(),
             {"/Helvetica"},
         ),
+        # fonts in annotations
+        (
+            RESOURCE_ROOT / "FormTestFromOo.pdf",
+            None,
+            {"/CAAAAA+LiberationSans", "/EAAAAA+SegoeUI", "/BAAAAA+LiberationSerif"},
+            {"/LiberationSans", "/ZapfDingbats"},
+        ),
     ],
 )
 def test_get_fonts(pdf_path, password, embedded, unembedded):
@@ -761,6 +799,44 @@ def test_get_fonts(pdf_path, password, embedded, unembedded):
         a = a.union(a_tmp)
         b = b.union(b_tmp)
     assert (a, b) == (embedded, unembedded)
+
+
+@pytest.mark.enable_socket()
+def test_get_fonts2():
+    url = "https://github.com/py-pdf/pypdf/files/12618104/WS_T.483.8-2016.pdf"
+    name = "WS_T.483.8-2016.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert reader.pages[1]._get_fonts() == (
+        {
+            "/E-HZ9-PK7483a5-Identity-H",
+            "/SSJ-PK748200005d9-Identity-H",
+            "/QGNGZS+FzBookMaker1DlFont10536872415",
+            "/E-BZ9-PK748344-Identity-H",
+            "/E-FZ9-PK74836f-Identity-H",
+            "/O9-PK748464-Identity-H",
+            "/QGNGZR+FzBookMaker0DlFont00536872414",
+            "/SSJ-PK748200005db-Identity-H",
+            "/F-BZ9-PK7483cb-Identity-H",
+            "/SSJ-PK748200005da-Identity-H",
+            "/H-SS9-PK748200005e0-Identity-H",
+            "/H-HT9-PK748200005e1-Identity-H",
+        },
+        set(),
+    )
+    assert reader.pages[2]._get_fonts() == (
+        {
+            "/E-HZ9-PK7483a5-Identity-H",
+            "/E-FZ9-PK74836f-Identity-H",
+            "/E-BZ9-PK748344-Identity-H",
+            "/QGNGZT+FzBookMaker0DlFont00536872418",
+            "/O9-PK748464-Identity-H",
+            "/F-BZ9-PK7483cb-Identity-H",
+            "/H-SS9-PK748200005e0-Identity-H",
+            "/QGNGZU+FzBookMaker1DlFont10536872420",
+            "/H-HT9-PK748200005e1-Identity-H",
+        },
+        set(),
+    )
 
 
 def test_annotation_getter():
@@ -1243,3 +1319,81 @@ def test_get_contents_from_nullobject():
     p = writer.add_blank_page(100, 100)
     p[NameObject("/Contents")] = writer._add_object(NullObject())
     p.get_contents()
+
+
+@pytest.mark.enable_socket()
+def test_pos_text_in_textvisitor():
+    """See #2200"""
+    url = "https://github.com/py-pdf/pypdf/files/12675974/page_178.pdf"
+    name = "test_text_pos.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    p = ()
+
+    def visitor_body2(text, cm, tm, fontdict, fontsize) -> None:
+        nonlocal p
+        if text.startswith("5425."):
+            p = (tm[4], tm[5])
+
+    reader.pages[0].extract_text(visitor_text=visitor_body2)
+    assert abs(p[0] - 323.5) < 0.1
+    assert abs(p[1] - 457.4) < 0.1
+
+
+@pytest.mark.enable_socket()
+def test_pos_text_in_textvisitor2():
+    """See #2075"""
+    url = "https://github.com/py-pdf/pypdf/files/12318042/LegIndex-page6.pdf"
+    name = "LegIndex-page6.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    x_lvl = 26
+    lst = []
+
+    def visitor_lvl(text, cm, tm, fontdict, fontsize) -> None:
+        nonlocal x_lvl, lst
+        if abs(tm[4] - x_lvl) < 2 and tm[5] < 740 and tm[5] > 210:
+            lst.append(text.strip(" \n"))
+
+    reader.pages[0].extract_text(visitor_text=visitor_lvl)
+    assert lst == [
+        "ACUPUNCTURE BOARD",
+        "ACUPUNCTURISTS AND ACUPUNCTURE",
+        "ADMINISTRATIVE LAW AND PROCEDURE",
+        "ADMINISTRATIVE LAW, OFFICE OF",
+        "ADOPTION",
+        "ADULT EDUCATION",
+        "ADVERTISING. See also MARKETING; and particular subject matter (e.g.,",
+    ]
+    x_lvl = 35
+    lst = []
+    reader.pages[0].extract_text(visitor_text=visitor_lvl)
+    assert lst == [
+        "members,  AB 1264",
+        "assistants, acupuncture,  AB 1264",
+        "complaints, investigations, etc.,  AB 1264",
+        "day, california acupuncture,  HR 48",
+        "massage services, asian,  AB 1264",
+        "supervising acupuncturists,  AB 1264",
+        "supportive acupuncture services, basic,  AB 1264",
+        "rules and regulations—",
+        "professional assistants and employees: employment and compensation,  AB 916",
+        "adults, adoption of,  AB 1756",
+        "agencies, organizations, etc.: requirements, prohibitions, etc.,  SB 807",
+        "assistance programs, adoption: nonminor dependents,  SB 9",
+        "birth certificates,  AB 1302",
+        "contact agreements, postadoption—",
+        "facilitators, adoption,  AB 120",
+        "failed adoptions: reproductive loss leave,  SB 848",
+        "hearings, adoption finalization: remote proceedings, technology, etc.,  SB 21",
+        "native american tribes,  AB 120",
+        "parental rights, reinstatement of,  AB 20",
+        "parents, prospective adoptive: criminal background checks,  SB 824",
+        "services, adult educational,  SB 877",
+        "week, adult education,  ACR 31",
+        "alcoholic beverages: tied-house restrictions,  AB 546",
+        "campaign re social equity, civil rights, etc.,  SB 447",
+        "cannabis,  AB 794",
+        "elections. See ELECTIONS.",
+        "false, misleading, etc., advertising—",
+        "hotels, short-term rentals, etc., advertised rates: mandatory fee disclosures,  SB 683",
+        "housing rental properties advertised rates: disclosures,  SB 611",
+    ]

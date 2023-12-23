@@ -114,7 +114,7 @@ class FlateDecode:
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
-        if isinstance(decode_parms, ArrayObject):  # type: ignore
+        if isinstance(decode_parms, ArrayObject):
             raise DeprecationError("decode_parms as ArrayObject is depreciated")
 
         str_data = decompress(data)
@@ -162,7 +162,9 @@ class FlateDecode:
                 str_data = bytes(str_data)
             # PNG prediction:
             elif 10 <= predictor <= 15:
-                str_data = FlateDecode._decode_png_prediction(str_data, columns, rowlength)  # type: ignore
+                str_data = FlateDecode._decode_png_prediction(
+                    str_data, columns, rowlength
+                )
             else:
                 # unsupported predictor
                 raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
@@ -320,7 +322,7 @@ class RunLengthDecode:
         **kwargs: Any,
     ) -> bytes:
         """
-        Decode an ASCII-Hex encoded data stream.
+        Decode a run length encoded data stream.
 
         Args:
           data: a bytes sequence of length/data
@@ -556,23 +558,27 @@ class CCITTFaxDecode:
 
     @staticmethod
     def _get_parameters(
-        parameters: Union[None, ArrayObject, DictionaryObject], rows: int
+        parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
+        rows: int,
     ) -> CCITParameters:
         # TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
         k = 0
         columns = 1728
         if parameters:
-            if isinstance(parameters, ArrayObject):
-                for decode_parm in parameters:
+            parameters_unwrapped = cast(
+                Union[ArrayObject, DictionaryObject], parameters.get_object()
+            )
+            if isinstance(parameters_unwrapped, ArrayObject):
+                for decode_parm in parameters_unwrapped:
                     if CCITT.COLUMNS in decode_parm:
                         columns = decode_parm[CCITT.COLUMNS]
                     if CCITT.K in decode_parm:
                         k = decode_parm[CCITT.K]
             else:
-                if CCITT.COLUMNS in parameters:
-                    columns = parameters[CCITT.COLUMNS]  # type: ignore
-                if CCITT.K in parameters:
-                    k = parameters[CCITT.K]  # type: ignore
+                if CCITT.COLUMNS in parameters_unwrapped:
+                    columns = parameters_unwrapped[CCITT.COLUMNS]  # type: ignore
+                if CCITT.K in parameters_unwrapped:
+                    k = parameters_unwrapped[CCITT.K]  # type: ignore
 
         return CCITParameters(k, columns, rows)
 
@@ -677,7 +683,7 @@ def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
             if filter_type in (FT.FLATE_DECODE, FTA.FL):
                 data = FlateDecode.decode(data, params)
             elif filter_type in (FT.ASCII_HEX_DECODE, FTA.AHx):
-                data = ASCIIHexDecode.decode(data)  # type: ignore
+                data = ASCIIHexDecode.decode(data)
             elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
                 data = RunLengthDecode.decode(data)
             elif filter_type in (FT.LZW_DECODE, FTA.LZW):
@@ -773,10 +779,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         )
     extension = None
     alpha = None
-    filters = x_object_obj.get(SA.FILTER, [None])
+    filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
-    if lfilters == FT.FLATE_DECODE:
-        img, image_format, extension, invert_color = _handle_flate(
+    if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
+        img, image_format, extension, _ = _handle_flate(
             size,
             data,
             mode,
@@ -818,15 +824,14 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             ".png",
             False,
         )
-
     # CMYK image and other colorspaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
     decode = x_object_obj.get(
         IA.DECODE,
         ([1.0, 0.0] * len(img.getbands()))
         if (
-            (img.mode == "CMYK" or (invert_color and img.mode == "L"))
-            and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE)
+            (img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE))
+            or (invert_color and img.mode == "L")
         )
         else None,
     )

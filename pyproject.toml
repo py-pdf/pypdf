@@ -16,6 +16,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
@@ -27,6 +28,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
+
 dependencies = [
     "typing_extensions >= 3.7.4.3; python_version < '3.10'",
     "dataclasses; python_version < '3.7'",
@@ -49,7 +51,7 @@ crypto = [
     "PyCryptodome; python_version == '3.6'",
 ]
 image = ["Pillow>=8.0.0"]
-dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "flit", "wheel"]
+dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "flit", "wheel", "pytest-xdist"]
 docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
 
 [tool.mutmut]
@@ -218,3 +220,15 @@ max-statements = 176  # Recommended: 50
 pre-summary-newline = true
 wrap-summaries = 0
 wrap-descriptions = 0
+
+[tool.mypy]
+show_error_codes = true
+ignore_missing_imports = true
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+exclude = ['venv', '.venv', 'tests', 'make_release.py']

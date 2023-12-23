@@ -87,9 +87,9 @@ def orient(m: List[float]) -> int:
 
 def crlf_space_check(
     text: str,
-    tm_prev: List[float],
-    cm_matrix: List[float],
-    tm_matrix: List[float],
+    cmtm_prev: Tuple[List[float], List[float]],
+    cmtm_matrix: Tuple[List[float], List[float]],
+    memo_cmtm: Tuple[List[float], List[float]],
     cmap: Tuple[
         Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
     ],
@@ -98,14 +98,22 @@ def crlf_space_check(
     font_size: float,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
     spacewidth: float,
-) -> Tuple[str, str, List[float]]:
-    m_prev = mult(tm_prev, cm_matrix)
+) -> Tuple[str, str, List[float], List[float]]:
+    cm_prev = cmtm_prev[0]
+    tm_prev = cmtm_prev[1]
+    cm_matrix = cmtm_matrix[0]
+    tm_matrix = cmtm_matrix[1]
+    memo_cm = memo_cmtm[0]
+    memo_tm = memo_cmtm[1]
+
+    m_prev = mult(tm_prev, cm_prev)
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
     delta_x = m[4] - m_prev[4]
     delta_y = m[5] - m_prev[5]
     k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
     f = font_size * k
+    cm_prev = m
     if orientation not in orientations:
         raise OrientationNotFoundError
     try:
@@ -116,8 +124,8 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
-                            tm_prev,
+                            memo_cm,
+                            memo_tm,
                             cmap[3],
                             font_size,
                         )
@@ -135,8 +143,8 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
-                            tm_prev,
+                            memo_cm,
+                            memo_tm,
                             cmap[3],
                             font_size,
                         )
@@ -154,8 +162,8 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
-                            tm_prev,
+                            memo_cm,
+                            memo_tm,
                             cmap[3],
                             font_size,
                         )
@@ -173,8 +181,8 @@ def crlf_space_check(
                     if visitor_text is not None:
                         visitor_text(
                             text + "\n",
-                            cm_matrix,
-                            tm_prev,
+                            memo_cm,
+                            memo_tm,
                             cmap[3],
                             font_size,
                         )
@@ -188,7 +196,8 @@ def crlf_space_check(
     except Exception:
         pass
     tm_prev = tm_matrix.copy()
-    return text, output, tm_prev
+    cm_prev = cm_matrix.copy()
+    return text, output, cm_prev, tm_prev
 
 
 def handle_tj(
@@ -205,9 +214,10 @@ def handle_tj(
     rtl_dir: bool,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
 ) -> Tuple[str, bool]:
+
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
-    if orientation in orientations:
+    if orientation in orientations and len(operands) > 0:
         if isinstance(operands[0], str):
             text += operands[0]
         else:

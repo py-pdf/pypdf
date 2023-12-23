@@ -8,7 +8,7 @@ PDF Reference, third edition, Version 1.4, 2001. ISBN 0-201-75839-3.
 PDF Reference, sixth edition, Version 1.7, 2006.
 """
 
-from enum import IntFlag
+from enum import IntFlag, auto
 from typing import Dict, Tuple
 
 
@@ -585,3 +585,12 @@ PDF_KEYS = (
     TypArguments,
     TypFitArguments,
 )
+
+
+class ImageType(IntFlag):
+    NONE = 0
+    XOBJECT_IMAGES = auto()
+    INLINE_IMAGES = auto()
+    DRAWING_IMAGES = auto()
+    ALL = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
+    IMAGES = ALL  # for consistency with ObjectDeletionFlag

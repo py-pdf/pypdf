@@ -9,8 +9,12 @@ attrs==20.3.0
     #   flake8-bugbear
     #   flake8-implicit-str-concat
     #   pytest
-coverage==6.2
-    # via -r requirements/ci.in
+coverage[toml]==6.2
+    # via
+    #   -r requirements/ci.in
+    #   pytest-cov
+execnet==1.9.0
+    # via pytest-xdist
 flake8==5.0.4
     # via
     #   -r requirements/ci.in
@@ -55,28 +59,37 @@ pycodestyle==2.9.1
     # via
     #   flake8
     #   flake8-print
-pycryptodome==3.18.0
+pycryptodome==3.19.0
     # via -r requirements/ci.in
 pyflakes==2.5.0
     # via flake8
-pyparsing==3.1.0
+pyparsing==3.1.1
     # via packaging
 pytest==7.0.1
     # via
     #   -r requirements/ci.in
     #   pytest-benchmark
+    #   pytest-cov
     #   pytest-socket
     #   pytest-timeout
+    #   pytest-xdist
 pytest-benchmark==3.4.1
+    # via -r requirements/ci.in
+pytest-cov==4.0.0
     # via -r requirements/ci.in
 pytest-socket==0.4.1
     # via -r requirements/ci.in
 pytest-timeout==2.1.0
     # via -r requirements/ci.in
+pytest-xdist==3.0.2
+    # via -r requirements/ci.in
+pyyaml==6.0.1
+    # via -r requirements/ci.in
 six==1.16.0
     # via flake8-print
 tomli==1.2.3
     # via
+    #   coverage
     #   mypy
     #   pytest
 typed-ast==1.5.5
@@ -85,7 +98,7 @@ typeguard==2.13.3
     # via -r requirements/ci.in
 types-dataclasses==0.6.6
     # via -r requirements/ci.in
-types-pillow==10.0.0.2
+types-pillow==10.0.0.3
     # via -r requirements/ci.in
 typing-extensions==4.1.1
     # via

@@ -6,28 +6,18 @@ import pytest
 
 import pypdf
 from pypdf import PasswordType, PdfReader, PdfWriter
+from pypdf._crypt_providers import crypt_provider
+from pypdf._crypt_providers._fallback import _DEPENDENCY_ERROR_STR
 from pypdf._encryption import AlgV5, CryptAES, CryptRC4
 from pypdf.errors import DependencyError, PdfReadError
 
-try:
-    from Crypto.Cipher import AES  # noqa: F401
-
-    HAS_PYCRYPTODOME = True
-except ImportError:
-    HAS_PYCRYPTODOME = False
-
-try:
-    from cryptography.hazmat.primitives import padding  # noqa: F401
-
-    HAS_CRYPTOGRAPHY = True
-except ImportError:
-    HAS_CRYPTOGRAPHY = False
-
-
-HAS_AES = HAS_CRYPTOGRAPHY or HAS_PYCRYPTODOME
+USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
+USE_PYCRYPTODOME = crypt_provider[0] == "pycryptodome"
+HAS_AES = USE_CRYPTOGRAPHY or USE_PYCRYPTODOME
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 @pytest.mark.parametrize(
@@ -95,7 +85,7 @@ def test_encryption(name, requires_aes):
             ipdf = pypdf.PdfReader(inputfile)
             ipdf.decrypt("asdfzxcv")
             dd = dict(ipdf.metadata)
-        assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
+        assert exc.value.args[0] == _DEPENDENCY_ERROR_STR
         return
     else:
         ipdf = pypdf.PdfReader(inputfile)
@@ -193,7 +183,7 @@ def test_merge_encrypted_pdfs(names):
 
 
 @pytest.mark.skipif(
-    HAS_CRYPTOGRAPHY,
+    USE_CRYPTOGRAPHY,
     reason="Limitations of cryptography. see https://github.com/pyca/cryptography/issues/2494",
 )
 @pytest.mark.parametrize(
@@ -286,7 +276,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
             )
             with open(pdf_file_path, "wb") as output_stream:
                 writer.write(output_stream)
-        assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
+        assert exc.value.args[0] == _DEPENDENCY_ERROR_STR
         return
 
     writer.encrypt(
@@ -352,3 +342,29 @@ def test_aes_decrypt_corrupted_data():
     aes = CryptAES(secrets.token_bytes(16))
     for num in [0, 17, 32]:
         aes.decrypt(secrets.token_bytes(num))
+
+
+def test_encrypt_stream_dictionary(pdf_file_path):
+    user_password = secrets.token_urlsafe(10)
+
+    reader = PdfReader(SAMPLE_ROOT / "023-cmyk-image/cmyk-image.pdf")
+    page = reader.pages[0]
+    original_image_obj = reader.get_object(page.images["/I"].indirect_reference)
+
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+    writer.encrypt(
+        user_password=user_password,
+        owner_password=None,
+        algorithm="RC4-128",
+    )
+    with open(pdf_file_path, "wb") as output_stream:
+        writer.write(output_stream)
+
+    reader = PdfReader(pdf_file_path)
+    assert reader.is_encrypted
+    assert reader.decrypt(user_password) == PasswordType.OWNER_PASSWORD
+    page = reader.pages[0]
+    decrypted_image_obj = reader.get_object(page.images["/I"].indirect_reference)
+
+    assert decrypted_image_obj["/ColorSpace"][3] == original_image_obj["/ColorSpace"][3]

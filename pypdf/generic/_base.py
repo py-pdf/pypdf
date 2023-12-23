@@ -379,6 +379,9 @@ class IndirectObject(PdfObject):
         return IndirectObject.read_from_stream(stream, pdf)
 
 
+FLOAT_WRITE_PRECISION = 8  # shall be min 5 digits max, allow user adj
+
+
 class FloatObject(float, PdfObject):
     def __new__(
         cls, value: Union[str, Any] = "0.0", context: Optional[Any] = None
@@ -409,8 +412,8 @@ class FloatObject(float, PdfObject):
     def myrepr(self) -> str:
         if self == 0:
             return "0.0"
-        nb = int(log10(abs(self)))
-        s = f"{self:.{max(1,16-nb)}f}".rstrip("0").rstrip(".")
+        nb = FLOAT_WRITE_PRECISION - int(log10(abs(self)))
+        s = f"{self:.{max(1,nb)}f}".rstrip("0").rstrip(".")
         return s
 
     def __repr__(self) -> str:
@@ -724,7 +727,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
-    retval = b""
+    retval = bytearray()
     for c in unicode_string:
         try:
             retval += b_(chr(_pdfdoc_encoding_rev[c]))

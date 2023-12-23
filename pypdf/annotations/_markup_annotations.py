@@ -1,3 +1,4 @@
+import sys
 from abc import ABC
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
@@ -14,12 +15,12 @@ from ..generic._rectangle import RectangleObject
 from ..generic._utils import hex_to_rgb
 from ._base import NO_FLAGS, AnnotationDictionary
 
-try:
-    from typing import TypeAlias  # type: ignore[attr-defined]
-except ImportError:
+if sys.version_info[:2] >= (3, 10):
+    from typing import TypeAlias
+else:
     # PEP 613 introduced typing.TypeAlias with Python 3.10
     # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import TypeAlias  # type: ignore[misc]
+    from typing_extensions import TypeAlias
 
 
 Vertex: TypeAlias = Tuple[float, float]

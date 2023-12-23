@@ -188,7 +188,7 @@ class RectangleObject(ArrayObject):
 
     def setLowerLeft(self, value: Tuple[float, float]) -> None:  # deprecated
         deprecation_with_replacement("setLowerLeft", "lower_left", "3.0.0")
-        self.lower_left = value  # type: ignore
+        self.lower_left = value
 
     def setLowerRight(self, value: Tuple[float, float]) -> None:  # deprecated
         deprecation_with_replacement("setLowerRight", "lower_right", "3.0.0")

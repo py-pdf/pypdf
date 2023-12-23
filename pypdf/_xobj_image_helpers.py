@@ -1,9 +1,10 @@
 """Code in here is only used by pypdf.filters._xobj_to_image"""
 
+import sys
 from io import BytesIO
 from typing import Any, List, Tuple, Union, cast
 
-from ._utils import logger_warning
+from ._utils import check_if_whitespace_only, logger_warning
 from .constants import ColorSpaces
 from .errors import PdfReadError
 from .generic import (
@@ -14,12 +15,17 @@ from .generic import (
     NullObject,
 )
 
-try:
-    from typing import Literal, TypeAlias  # type: ignore[attr-defined]
-except ImportError:
+if sys.version_info[:2] >= (3, 8):
+    from typing import Literal
+else:
     # PEP 586 introduced typing.Literal with Python 3.8
     # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import Literal, TypeAlias  # type: ignore[misc, assignment]
+    from typing_extensions import Literal  # type: ignore[assignment]
+
+if sys.version_info[:2] >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 
 
 try:
@@ -34,17 +40,24 @@ mode_str_type: TypeAlias = Literal[
     "", "1", "RGB", "2bits", "4bits", "P", "L", "RGBA", "CMYK"
 ]
 
+MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
+
 
 def _get_imagemode(
     color_space: Union[str, List[Any], Any],
     color_components: int,
     prev_mode: mode_str_type,
+    depth: int = 0,
 ) -> Tuple[mode_str_type, bool]:
     """
     Returns
         Image mode not taking into account mask(transparency)
         ColorInversion is required (like for some DeviceCMYK)
     """
+    if depth > MAX_IMAGE_MODE_NESTING_DEPTH:
+        raise PdfReadError(
+            "Color spaces nested too deep. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH."
+        )
     if isinstance(color_space, NullObject):
         return "", False
     if isinstance(color_space, str):
@@ -63,7 +76,9 @@ def _get_imagemode(
         color_space = color_space[1]
         if isinstance(color_space, IndirectObject):
             color_space = color_space.get_object()
-        mode2, invert_color = _get_imagemode(color_space, color_components, prev_mode)
+        mode2, invert_color = _get_imagemode(
+            color_space, color_components, prev_mode, depth + 1
+        )
         if mode2 in ("RGB", "CMYK"):
             mode2 = "P"
         return mode2, invert_color
@@ -71,13 +86,27 @@ def _get_imagemode(
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):
             color_space = color_space.get_object()
-        mode2, invert_color = _get_imagemode(color_space, color_components, prev_mode)
+        mode2, invert_color = _get_imagemode(
+            color_space, color_components, prev_mode, depth + 1
+        )
         return mode2, True
     elif color_space[0] == "/DeviceN":
+        original_color_space = color_space
         color_components = len(color_space[1])
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):  # pragma: no cover
             color_space = color_space.get_object()
+        if color_space == "/DeviceCMYK" and color_components == 1:
+            if original_color_space[1][0] != "/Black":
+                logger_warning(
+                    f"Color {original_color_space[1][0]} converted to Gray. Please share PDF with pypdf dev team",
+                    __name__,
+                )
+            return "L", True
+        mode2, invert_color = _get_imagemode(
+            color_space, color_components, prev_mode, depth + 1
+        )
+        return mode2, invert_color
 
     mode_map = {
         "1bit": "1",  # pos [0] will be used for 1 bit
@@ -92,7 +121,7 @@ def _get_imagemode(
         mode_map.get(color_space)  # type: ignore
         or list(mode_map.values())[color_components]
         or prev_mode
-    )  # type: ignore
+    )
     return mode, mode == "CMYK"
 
 
@@ -165,7 +194,15 @@ def _handle_flate(
             lookup = None
         else:
             if img.mode == "1":
-                colors_arr = [lookup[x - nb : x] for x in range(nb, len(lookup), nb)]
+                # Two values ("high" and "low").
+                expected_count = 2 * nb
+                if len(lookup) != expected_count:
+                    if len(lookup) < expected_count:
+                        raise PdfReadError(f"Not enough lookup values: Expected {expected_count}, got {len(lookup)}.")
+                    if not check_if_whitespace_only(lookup[expected_count:]):
+                        raise PdfReadError(f"Too many lookup values: Expected {expected_count}, got {len(lookup)}.")
+                    lookup = lookup[:expected_count]
+                colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
                     [
                         b"".join(

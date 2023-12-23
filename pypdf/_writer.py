@@ -78,6 +78,7 @@ from .constants import (
     FieldFlag,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
+    ImageType,
     InteractiveFormDictEntries,
     PageLabelStyle,
     TypFitArguments,
@@ -133,12 +134,16 @@ ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
 
 
 class ObjectDeletionFlag(enum.IntFlag):
+    NONE = 0
     TEXT = enum.auto()
-    IMAGES = enum.auto()
     LINKS = enum.auto()
     ATTACHMENTS = enum.auto()
     OBJECTS_3D = enum.auto()
     ALL_ANNOTATIONS = enum.auto()
+    XOBJECT_IMAGES = enum.auto()
+    INLINE_IMAGES = enum.auto()
+    DRAWING_IMAGES = enum.auto()
+    IMAGES = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
 
 
 class PdfWriter:
@@ -273,7 +278,7 @@ class PdfWriter:
             return self._objects[indirect_reference - 1]
         if indirect_reference.pdf != self:
             raise ValueError("pdf must be self")
-        return self._objects[indirect_reference.idnum - 1]  # type: ignore
+        return self._objects[indirect_reference.idnum - 1]
 
     def getObject(self, ido: Union[int, IndirectObject]) -> PdfObject:  # deprecated
         """
@@ -290,13 +295,13 @@ class PdfWriter:
         obj: PdfObject,
     ) -> PdfObject:
         if isinstance(indirect_reference, IndirectObject):
-            assert indirect_reference.pdf == self
+            if indirect_reference.pdf != self:
+                raise ValueError("pdf must be self")
             indirect_reference = indirect_reference.idnum
+        gen = self._objects[indirect_reference - 1].indirect_reference.generation  # type: ignore
         self._objects[indirect_reference - 1] = obj
+        obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
         return self._objects[indirect_reference - 1]
-        if indirect_reference.pdf != self:
-            raise ValueError("pdf must be self")
-        return self._objects[indirect_reference.idnum - 1]  # type: ignore
 
     def _add_page(
         self,
@@ -322,8 +327,8 @@ class PdfWriter:
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             if isinstance(other, str):
-                other = other.encode()  # type: ignore
-            self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)  # type: ignore
+                other = other.encode()
+            self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
         page[NameObject(PA.PARENT)] = self._pages
         pages = cast(DictionaryObject, self.get_object(self._pages))
         assert page.indirect_reference is not None
@@ -367,7 +372,7 @@ class PdfWriter:
     @property
     def viewer_preferences(self) -> Optional[ViewerPreferences]:
         """Returns the existing ViewerPreferences as an overloaded dictionary."""
-        o = cast(DictionaryObject, self._root_object).get(CD.VIEWER_PREFERENCES, None)
+        o = self._root_object.get(CD.VIEWER_PREFERENCES, None)
         if o is None:
             return None
         o = o.get_object()
@@ -379,7 +384,7 @@ class PdfWriter:
                 self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
         return o
 
-    def create_viewer_preference(self) -> ViewerPreferences:
+    def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
         self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = self._add_object(o)
         return o
@@ -619,7 +624,7 @@ class PdfWriter:
             return create_string_object(str(oa))
         elif isinstance(oa, ArrayObject):
             try:
-                page, typ = oa[0:2]  # type: ignore
+                page, typ = oa[0:2]
                 array = oa[2:]
                 fit = Fit(typ, tuple(array))
                 return Destination("OpenAction", page, fit)
@@ -875,7 +880,7 @@ class PdfWriter:
         if font_name not in dr:
             # ...or AcroForm dictionary
             dr = cast(
-                dict,
+                Dict[Any, Any],
                 cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {}),
             )
             if isinstance(dr, IndirectObject):  # pragma: no cover
@@ -915,7 +920,8 @@ class PdfWriter:
         else:  # /Tx
             txt = field.get("/V", "")
             sel = []
-
+        # Escape parentheses (pdf 1.7 reference, table 3.2  Literal Strings)
+        txt = txt.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
         # Generate appearance stream
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
@@ -1148,7 +1154,7 @@ class PdfWriter:
             for attr in inheritable_page_attributes:
                 if attr in pages:
                     inherit[attr] = pages[attr]
-            for page in cast(ArrayObject, cast(DictionaryObject, pages)[PA.KIDS]):
+            for page in cast(ArrayObject, pages[PA.KIDS]):
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirect_reference"] = page
@@ -1187,7 +1193,7 @@ class PdfWriter:
         if TK.INFO in reader.trailer:
             self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
         try:
-            self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))  # type: ignore
+            self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))
         except KeyError:
             pass
         if callable(after_page_append):
@@ -1340,7 +1346,7 @@ class PdfWriter:
     def write_stream(self, stream: StreamType) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
-                f"File <{stream.name}> to write to is not in binary mode. "  # type: ignore
+                f"File <{stream.name}> to write to is not in binary mode. "
                 "It may not be written to correctly.",
                 __name__,
             )
@@ -1354,7 +1360,7 @@ class PdfWriter:
         xref_location = self._write_xref_table(stream, object_positions)
         self._write_trailer(stream, xref_location)
 
-    def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
+    def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:
         """
         Write the collection of pages added to this object out as a PDF file.
 
@@ -1630,6 +1636,10 @@ class PdfWriter:
         if CO.OUTLINES in self._root_object:
             # TABLE 3.25 Entries in the catalog dictionary
             outline = cast(TreeObject, self._root_object[CO.OUTLINES])
+            if not isinstance(outline, TreeObject):
+                t = TreeObject(outline)
+                self._replace_object(outline.indirect_reference.idnum, t)
+                outline = t
             idnum = self._objects.index(outline) + 1
             outline_ref = IndirectObject(idnum, 0, self)
             assert outline_ref.get_object() == outline
@@ -1725,7 +1735,7 @@ class PdfWriter:
 
     def add_outline_item_destination(
         self,
-        page_destination: Union[None, PageObject, TreeObject] = None,
+        page_destination: Union[None, IndirectObject, PageObject, TreeObject] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
         is_open: bool = True,
@@ -1751,6 +1761,7 @@ class PdfWriter:
             # argument is only Optional due to deprecated argument.
             raise ValueError("page_destination may not be None")
 
+        page_destination = cast(PageObject, page_destination.get_object())
         if isinstance(page_destination, PageObject):
             return self.add_outline_item_destination(
                 Destination(
@@ -1935,7 +1946,9 @@ class PdfWriter:
                     }
                 )
             )
-        outline_item = _create_outline_item(action_ref, title, color, italic, bold)
+        outline_item = self._add_object(
+            _create_outline_item(action_ref, title, color, italic, bold)
+        )
 
         if parent is None:
             parent = self.get_outline_root()
@@ -2192,7 +2205,8 @@ class PdfWriter:
         if to_delete & ObjectDeletionFlag.ALL_ANNOTATIONS:
             return self._remove_annots_from_page(page, None)
 
-        if to_delete & ObjectDeletionFlag.IMAGES:
+        jump_operators = []
+        if to_delete & ObjectDeletionFlag.DRAWING_IMAGES:
             jump_operators = (
                 [b"w", b"J", b"j", b"M", b"d", b"i"]
                 + [b"W", b"W*"]
@@ -2200,25 +2214,27 @@ class PdfWriter:
                 + [b"m", b"l", b"c", b"v", b"y", b"h", b"re"]
                 + [b"sh"]
             )
-        else:  # del text
+        if to_delete & ObjectDeletionFlag.TEXT:
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
 
         def clean(content: ContentStream, images: List[str], forms: List[str]) -> None:
-            nonlocal to_delete
+            nonlocal jump_operators, to_delete
             i = 0
             while i < len(content.operations):
                 operands, operator = content.operations[i]
-                if operator in jump_operators:
+                if (
+                    (
+                        operator == b"INLINE IMAGE"
+                        and (to_delete & ObjectDeletionFlag.INLINE_IMAGES)
+                    )
+                    or (operator in jump_operators)
+                    or (
+                        operator == b"Do"
+                        and (to_delete & ObjectDeletionFlag.XOBJECT_IMAGES)
+                        and (operands[0] in images)
+                    )
+                ):
                     del content.operations[i]
-                elif operator == b"Do":
-                    if (
-                        cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.IMAGES
-                        and operands[0] in images
-                        or cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.TEXT
-                        and operands[0] in forms
-                    ):
-                        del content.operations[i]
-                    i += 1
                 else:
                     i += 1
             content.get_data()  # this ensures ._data is rebuilt from the .operations
@@ -2231,7 +2247,10 @@ class PdfWriter:
                 # to prevent infinite looping
                 return [], []  # pragma: no cover
             try:
-                d = cast(dict, cast(DictionaryObject, elt["/Resources"])["/XObject"])
+                d = cast(
+                    Dict[Any, Any],
+                    cast(DictionaryObject, elt["/Resources"])["/XObject"],
+                )
             except KeyError:
                 d = {}
             images = []
@@ -2241,10 +2260,10 @@ class PdfWriter:
                 try:
                     content: Any = None
                     if (
-                        cast(ObjectDeletionFlag, to_delete) & ObjectDeletionFlag.IMAGES
+                        to_delete & ObjectDeletionFlag.XOBJECT_IMAGES
                         and o["/Subtype"] == "/Image"
                     ):
-                        content = NullObject()
+                        content = NullObject()  # to delete the image keeping the entry
                         images.append(k)
                     if o["/Subtype"] == "/Form":
                         forms.append(k)
@@ -2252,12 +2271,13 @@ class PdfWriter:
                             content = o
                         else:
                             content = ContentStream(o, self)
-                            content.update(o.items())
-                            for k1 in ["/Length", "/Filter", "/DecodeParms"]:
-                                try:
-                                    del content[k1]
-                                except KeyError:
-                                    pass
+                            content.update(
+                                {
+                                    k1: v1
+                                    for k1, v1 in o.items()
+                                    if k1 not in ["/Length", "/Filter", "/DecodeParms"]
+                                }
+                            )
                         clean_forms(content, stack + [elt])  # clean sub forms
                     if content is not None:
                         if isinstance(v, IndirectObject):
@@ -2268,6 +2288,8 @@ class PdfWriter:
                             d[k] = self._add_object(content)  # pragma: no cover
                 except (TypeError, KeyError):
                     pass
+            for im in images:
+                del d[im]  # for clean-up
             if isinstance(elt, StreamObject):  # for /Form
                 if not isinstance(elt, ContentStream):  # pragma: no cover
                     e = ContentStream(elt, self)
@@ -2276,40 +2298,57 @@ class PdfWriter:
                 clean(elt, images, forms)  # clean the content
             return images, forms
 
+        if not isinstance(page, PageObject):
+            page = PageObject(self, page.indirect_reference)  # pragma: no cover
         if "/Contents" in page:
-            content = page["/Contents"].get_object()
+            content = cast(ContentStream, page.get_contents())
 
-            if not isinstance(content, ContentStream):
-                content = ContentStream(content, page)
             images, forms = clean_forms(page, [])
 
-            clean(cast(ContentStream, content), images, forms)
-            if isinstance(page["/Contents"], ArrayObject):
-                for o in cast(ArrayObject, page["/Contents"]):
-                    self._objects[o.idnum - 1] = NullObject()
-            try:
-                self._objects[
-                    cast(IndirectObject, page["/Contents"].indirect_reference).idnum - 1
-                ] = NullObject()
-            except AttributeError:
-                pass
-            page[NameObject("/Contents")] = self._add_object(content)
+            clean(content, images, forms)
+            page.replace_contents(content)
 
-    def remove_images(self, ignore_byte_string_object: Optional[bool] = None) -> None:
+    def remove_images(
+        self,
+        to_delete: ImageType = ImageType.ALL,
+        ignore_byte_string_object: Optional[bool] = None,
+    ) -> None:
         """
         Remove images from this output.
 
         Args:
+            to_delete : The type of images to be deleted
+                (default = all images types)
             ignore_byte_string_object: deprecated
         """
+        if isinstance(to_delete, bool):
+            ignore_byte_string_object = to_delete
+            to_delete = ImageType.ALL
         if ignore_byte_string_object is not None:
             warnings.warn(
                 "The 'ignore_byte_string_object' argument of remove_images is "
                 "deprecated and will be removed in pypdf 4.0.0.",
                 category=DeprecationWarning,
             )
+        i = (
+            (
+                ObjectDeletionFlag.XOBJECT_IMAGES
+                if to_delete & ImageType.XOBJECT_IMAGES
+                else ObjectDeletionFlag.NONE
+            )
+            | (
+                ObjectDeletionFlag.INLINE_IMAGES
+                if to_delete & ImageType.INLINE_IMAGES
+                else ObjectDeletionFlag.NONE
+            )
+            | (
+                ObjectDeletionFlag.DRAWING_IMAGES
+                if to_delete & ImageType.DRAWING_IMAGES
+                else ObjectDeletionFlag.NONE
+            )
+        )
         for page in self.pages:
-            self.remove_objects_from_page(page, ObjectDeletionFlag.IMAGES)
+            self.remove_objects_from_page(page, i)
 
     def removeImages(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
@@ -2318,7 +2357,7 @@ class PdfWriter:
         .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("removeImages", "remove_images", "3.0.0")
-        return self.remove_images(ignoreByteStringObject)
+        return self.remove_images()
 
     def remove_text(self, ignore_byte_string_object: Optional[bool] = None) -> None:
         """
@@ -2764,7 +2803,7 @@ class PdfWriter:
         # Internal link annotations need the correct object type for the
         # destination
         if to_add.get("/Subtype") == "/Link" and "/Dest" in to_add:
-            tmp = cast(dict, to_add[NameObject("/Dest")])
+            tmp = cast(Dict[Any, Any], to_add[NameObject("/Dest")])
             dest = Destination(
                 NameObject("/LinkName"),
                 tmp["target_page_index"],
@@ -2962,7 +3001,7 @@ class PdfWriter:
             excluded_fields = ()
         # Find the range of pages to merge.
         if pages is None:
-            pages = list(range(0, len(reader.pages)))
+            pages = list(range(len(reader.pages)))
         elif isinstance(pages, PageRange):
             pages = list(range(*pages.indices(len(reader.pages))))
         elif isinstance(pages, list):
@@ -3000,7 +3039,7 @@ class PdfWriter:
         for dest in reader._namedDests.values():
             arr = dest.dest_array
             if "/Names" in self._root_object and dest["/Title"] in cast(
-                list,
+                List[Any],
                 cast(
                     DictionaryObject,
                     cast(DictionaryObject, self._root_object["/Names"])["/Dests"],
@@ -3159,7 +3198,9 @@ class PdfWriter:
 
     def add_filtered_articles(
         self,
-        fltr: Union[Pattern, str],  # thread entry from the reader's array of threads
+        fltr: Union[
+            Pattern[Any], str
+        ],  # thread entry from the reader's array of threads
         pages: Dict[int, PageObject],
         reader: PdfReader,
     ) -> None:
@@ -3216,7 +3257,7 @@ class PdfWriter:
     ) -> List[Destination]:
         outlist = ArrayObject()
         if isinstance(annots, IndirectObject):
-            annots = cast("List", annots.get_object())
+            annots = cast("List[Any]", annots.get_object())
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (
@@ -3251,7 +3292,6 @@ class PdfWriter:
                     p = self._get_cloned_page(d[0], pages, reader)
                     if p is not None:
                         anc = ano.clone(self, ignore_fields=("/D",))
-                        anc = cast("DictionaryObject", anc)
                         cast("DictionaryObject", anc["/A"])[
                             NameObject("/D")
                         ] = ArrayObject([p] + d[1:])

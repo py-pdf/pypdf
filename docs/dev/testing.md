@@ -58,3 +58,20 @@ If the test is a regression test, write
 
 If the regression test is just one parameter of other tests, then add it as
 a comment for that parameter.
+
+## Evaluate a PR in-progress version
+
+You may want to test a version from a PR which has not been released yet.
+The easiest way is to use pip and install a version from git:
+
+a) Go the PR and identify the repository and branch.
+
+Example from below : repository: __pubpub-zz__ / branch: __iss2200__ :
+![PR Header example](PR_Header_example.png)
+
+b) you can then install the version using pip from git:
+
+Example:
+```
+pip install git+https://github.com/pubpub-zz/pypdf.git@iss2200
+```

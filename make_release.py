@@ -1,11 +1,18 @@
-"""Internal tool to update the changelog."""
+"""Internal tool to update the CHANGELOG."""
 
+import json
 import subprocess
+import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List
+from typing import Dict, List, Tuple
 
 from rich.prompt import Prompt
+
+GH_ORG = "py-pdf"
+GH_PROJECT = "pypdf"
+VERSION_FILE_PATH = "pypdf/_version.py"
+CHANGELOG_FILE_PATH = "CHANGELOG.md"
 
 
 @dataclass(frozen=True)
@@ -15,6 +22,8 @@ class Change:
     commit_hash: str
     prefix: str
     message: str
+    author: str
+    author_login: str
 
 
 def main(changelog_path: str) -> None:
@@ -26,7 +35,7 @@ def main(changelog_path: str) -> None:
     """
     changelog = get_changelog(changelog_path)
     git_tag = get_most_recent_git_tag()
-    changes = get_formatted_changes(git_tag)
+    changes, changes_with_author = get_formatted_changes(git_tag)
     if changes == "":
         print("No changes")
         return
@@ -37,12 +46,12 @@ def main(changelog_path: str) -> None:
 
     today = datetime.now(tz=timezone.utc)
     header = f"## Version {new_version}, {today:%Y-%m-%d}\n"
-    url = f"https://github.com/py-pdf/pypdf/compare/{git_tag}...{new_version}"
+    url = f"https://github.com/{GH_ORG}/{GH_PROJECT}/compare/{git_tag}...{new_version}"
     trailer = f"\n[Full Changelog]({url})\n\n"
     new_entry = header + changes + trailer
     print(new_entry)
-    write_commit_msg_file(new_version, changes + trailer)
-    write_release_msg_file(new_version, changes + trailer, today)
+    write_commit_msg_file(new_version, changes_with_author + trailer)
+    write_release_msg_file(new_version, changes_with_author + trailer, today)
 
     # Make the script idempotent by checking if the new entry is already in the changelog
     if new_entry in changelog:
@@ -57,8 +66,8 @@ def main(changelog_path: str) -> None:
 def print_instructions(new_version: str) -> None:
     """Print release instructions."""
     print("=" * 80)
-    print(f"☑  _version.py was adjusted to '{new_version}'")
-    print("☑  CHANGELOG.md was adjusted")
+    print(f"☑  {VERSION_FILE_PATH} was adjusted to '{new_version}'")
+    print(f"☑  {CHANGELOG_FILE_PATH} was adjusted")
     print("")
     print("Now run:")
     print("  git commit -eF RELEASE_COMMIT_MSG.md")
@@ -69,7 +78,7 @@ def print_instructions(new_version: str) -> None:
 
 def adjust_version_py(version: str) -> None:
     """Adjust the __version__ string."""
-    with open("pypdf/_version.py", "w") as fp:
+    with open(VERSION_FILE_PATH, "w") as fp:
         fp.write(f'__version__ = "{version}"\n')
 
 
@@ -89,8 +98,7 @@ def get_version_interactive(new_version: str, changes: str) -> str:
 
 def is_semantic_version(version: str) -> bool:
     """Check if the given version is a semantic version."""
-    # It's not so important to cover the edge-cases like pre-releases
-    # This is meant for pypdf only and we don't make pre-releases
+    # This doesn't cover the edge-cases like pre-releases
     if version.count(".") != 2:
         return False
     try:
@@ -176,7 +184,7 @@ def write_changelog(new_changelog: str, changelog_path: str) -> None:
         fh.write(new_changelog)
 
 
-def get_formatted_changes(git_tag: str) -> str:
+def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
     """
     Format the changes done since the last tag.
 
@@ -193,7 +201,9 @@ def get_formatted_changes(git_tag: str) -> str:
     for commit in commits:
         if commit.prefix not in grouped:
             grouped[commit.prefix] = []
-        grouped[commit.prefix].append({"msg": commit.message})
+        grouped[commit.prefix].append(
+            {"msg": commit.message, "author": commit.author_login}
+        )
 
     # Order prefixes
     order = [
@@ -227,12 +237,16 @@ def get_formatted_changes(git_tag: str) -> str:
 
     # Create output
     output = ""
+    output_with_user = ""
     for prefix in order:
         if prefix not in grouped:
             continue
-        output += f"\n### {abbrev2long[prefix]} ({prefix})\n"  # header
+        tmp = f"\n### {abbrev2long[prefix]} ({prefix})\n"  # header
+        output += tmp
+        output_with_user += tmp
         for commit in grouped[prefix]:
             output += f"- {commit['msg']}\n"
+            output_with_user += f"- {commit['msg']} by @{commit['author']}\n"
         del grouped[prefix]
 
     if grouped:
@@ -240,7 +254,7 @@ def get_formatted_changes(git_tag: str) -> str:
         for prefix in grouped:
             output += f"- {prefix}: {grouped[prefix]}\n"
 
-    return output
+    return output, output_with_user
 
 
 def get_most_recent_git_tag() -> str:
@@ -256,6 +270,31 @@ def get_most_recent_git_tag() -> str:
         )
     ).strip("'b\\n")
     return git_tag
+
+
+def get_author_mapping(line_count: int) -> Dict[str, str]:
+    """
+    Get the authors for each commit.
+
+    Args:
+        line_count: Number of lines from Git log output. Used for determining how
+            many commits to fetch.
+
+    Returns:
+        A mapping of long commit hashes to author login handles.
+    """
+    per_page = min(line_count, 100)
+    page = 1
+    mapping: Dict[str, str] = {}
+    for _ in range(0, line_count, per_page):
+        with urllib.request.urlopen(  # noqa: S310
+            f"https://api.github.com/repos/{GH_ORG}/{GH_PROJECT}/commits?per_page={per_page}&page={page}"
+        ) as response:
+            commits = json.loads(response.read())
+        page += 1
+        for commit in commits:
+            mapping[commit["sha"]] = commit["author"]["login"]
+    return mapping
 
 
 def get_git_commits_since_tag(git_tag: str) -> List[Change]:
@@ -276,15 +315,17 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
                 "--no-pager",
                 "log",
                 f"{git_tag}..HEAD",
-                '--pretty=format:"%h%x09%s"',
+                '--pretty=format:"%H:::%s:::%aN"',
             ],
             stderr=subprocess.STDOUT,
         )
     ).strip("'b\\n")
-    return [parse_commit_line(line) for line in commits.split("\\n") if line != ""]
+    lines = commits.split("\\n")
+    authors = get_author_mapping(len(lines))
+    return [parse_commit_line(line, authors) for line in lines if line != ""]
 
 
-def parse_commit_line(line: str) -> Change:
+def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
     """
     Parse the first line of a git commit message.
 
@@ -297,9 +338,10 @@ def parse_commit_line(line: str) -> Change:
     Raises:
         ValueError: The commit line is not well-structured
     """
-    if "\\t" not in line:
+    parts = line.split(":::")
+    if len(parts) != 3:
         raise ValueError(f"Invalid commit line: '{line}'")
-    commit_hash, rest = line.split("\\t", 1)
+    commit_hash, rest, author = parts
     if ":" in rest:
         prefix, message = rest.split(":", 1)
     else:
@@ -308,16 +350,24 @@ def parse_commit_line(line: str) -> Change:
 
     # Standardize
     message.strip()
+    commit_hash = commit_hash.strip('"')
 
-    if message.endswith('"'):
-        message = message[:-1]
+    if author.endswith('"'):
+        author = author[:-1]
+    author_login = authors[commit_hash]
 
     prefix = prefix.strip()
     if prefix == "DOCS":
         prefix = "DOC"
 
-    return Change(commit_hash=commit_hash, prefix=prefix, message=message)
+    return Change(
+        commit_hash=commit_hash,
+        prefix=prefix,
+        message=message,
+        author=author,
+        author_login=author_login,
+    )
 
 
 if __name__ == "__main__":
-    main("CHANGELOG.md")
+    main(CHANGELOG_FILE_PATH)

@@ -32,6 +32,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import functools
 import logging
 import re
+import sys
 import warnings
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -51,10 +52,10 @@ from typing import (
     overload,
 )
 
-try:
+if sys.version_info[:2] >= (3, 10):
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
-    from typing import TypeAlias  # type: ignore[attr-defined]
-except ImportError:
+    from typing import TypeAlias
+else:
     from typing_extensions import TypeAlias
 
 from .errors import (
@@ -70,7 +71,7 @@ CompressedTransformationMatrix: TypeAlias = Tuple[
     float, float, float, float, float, float
 ]
 
-StreamType = IO
+StreamType = IO[Any]
 StrByteType = Union[str, StreamType]
 
 DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in pypdf {}."
@@ -187,6 +188,23 @@ def skip_over_whitespace(stream: StreamType) -> bool:
         tok = stream.read(1)
         cnt += 1
     return cnt > 1
+
+
+def check_if_whitespace_only(value: bytes) -> bool:
+    """
+    Check if the given value consists of whitespace characters only.
+
+    Args:
+        value: The bytes to check.
+
+    Returns:
+        True if the value only has whitespace characters, otherwise return False.
+    """
+    for index in range(len(value)):
+        current = value[index:index + 1]
+        if current not in WHITESPACES:
+            return False
+    return True
 
 
 def skip_over_comment(stream: StreamType) -> None:
@@ -328,11 +346,11 @@ B_CACHE: Dict[Union[str, bytes], bytes] = {}
 
 
 def b_(s: Union[str, bytes]) -> bytes:
+    if isinstance(s, bytes):
+        return s
     bc = B_CACHE
     if s in bc:
         return bc[s]
-    if isinstance(s, bytes):
-        return s
     try:
         r = s.encode("latin-1")
         if len(s) < 2:
@@ -452,7 +470,7 @@ def logger_warning(msg: str, src: str) -> None:
     logging.getLogger(src).warning(msg)
 
 
-def deprecation_bookmark(**aliases: str) -> Callable:
+def deprecation_bookmark(**aliases: str) -> Callable[..., Any]:
     """
     Decorator for deprecated term "bookmark".
 
@@ -461,9 +479,9 @@ def deprecation_bookmark(**aliases: str) -> Callable:
         outline = a collection of outline items.
     """
 
-    def decoration(func: Callable) -> Any:  # type: ignore
+    def decoration(func: Callable[..., Any]) -> Any:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             rename_kwargs(func.__name__, kwargs, aliases, fail=True)
             return func(*args, **kwargs)
 
@@ -472,7 +490,7 @@ def deprecation_bookmark(**aliases: str) -> Callable:
     return decoration
 
 
-def rename_kwargs(  # type: ignore
+def rename_kwargs(
     func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str], fail: bool = False
 ) -> None:
     """

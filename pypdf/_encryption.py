@@ -79,6 +79,8 @@ class CryptFilter:
             obj2 = StreamObject()
             obj2.update(obj)
             obj2.set_data(self.stm_crypt.encrypt(b_(obj._data)))
+            for key, value in obj.items():  # Dont forget the Stream dict.
+                obj2[key] = self.encrypt_object(value)
             obj = obj2
         elif isinstance(obj, DictionaryObject):
             obj2 = DictionaryObject()  # type: ignore
@@ -86,7 +88,7 @@ class CryptFilter:
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
         elif isinstance(obj, ArrayObject):
-            obj = ArrayObject(self.encrypt_object(x) for x in obj)  # type: ignore
+            obj = ArrayObject(self.encrypt_object(x) for x in obj)
         return obj
 
     def decrypt_object(self, obj: PdfObject) -> PdfObject:
@@ -95,6 +97,8 @@ class CryptFilter:
             obj = create_string_object(data)
         elif isinstance(obj, StreamObject):
             obj._data = self.stm_crypt.decrypt(b_(obj._data))
+            for key, value in obj.items():  # Dont forget the Stream dict.
+                obj[key] = self.decrypt_object(value)
         elif isinstance(obj, DictionaryObject):
             for key, value in obj.items():
                 obj[key] = self.decrypt_object(value)
@@ -755,7 +759,7 @@ class PasswordType(IntEnum):
     OWNER_PASSWORD = 2
 
 
-class EncryptAlgorithm(tuple, Enum):  # noqa: SLOT001
+class EncryptAlgorithm(tuple, Enum):  # type: ignore # noqa: SLOT001
     # V, R, Length
     RC4_40 = (1, 2, 40)
     RC4_128 = (2, 3, 128)
@@ -1140,7 +1144,7 @@ class Encryption:
     def make(
         alg: EncryptAlgorithm, permissions: int, first_id_entry: bytes
     ) -> "Encryption":
-        alg_ver, alg_rev, key_bits = cast(tuple, alg)
+        alg_ver, alg_rev, key_bits = alg
 
         stm_filter, str_filter, ef_filter = "/V2", "/V2", "/V2"
 

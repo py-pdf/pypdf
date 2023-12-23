@@ -118,7 +118,7 @@ def test_identity_function(x):
     ("url", "name", "xmpmm_instance_id"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/955/955562.pdf",
+            None,
             "tika-955562.pdf",
             "uuid:ca96e032-c2af-49bd-a71c-95889bafbf1d",
         )
