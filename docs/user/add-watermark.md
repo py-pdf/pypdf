@@ -43,8 +43,6 @@ def stamp(
     reader = PdfReader(content_pdf)
     writer.append(reader, pages=page_indices)
 
-    reader = PdfReader(content_pdf)
-    writer.append(reader, pages=page_indices)
     for content_page in writer.pages:
         content_page.merge_transformed_page(
             stamp_page,
