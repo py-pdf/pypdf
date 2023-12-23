@@ -805,10 +805,10 @@ class PdfReader:
                     break
                 i += 1
                 if isinstance(value, DictionaryObject):
-                  if "/D" in value:
-                    value = value["/D"]
-                  else:
-                    continue
+                    if "/D" in value:
+                        value = value["/D"]
+                    else:
+                        continue
                 dest = self._build_destination(key, value)  # type: ignore
                 if dest is not None:
                     retval[key] = dest
@@ -817,10 +817,10 @@ class PdfReader:
                 val = v__.get_object()
                 if isinstance(val, DictionaryObject):
                     if "/D" in val:
-                      val = val["/D"].get_object()
+                        val = val["/D"].get_object()
                     else:
-                      continue
-                dest = self._build_destination(k__, val) # type: ignore
+                        continue
+                dest = self._build_destination(k__, val)
                 if dest is not None:
                     retval[k__] = dest
         return retval

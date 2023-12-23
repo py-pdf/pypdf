@@ -1236,11 +1236,11 @@ class PdfWriter:
         required; see 14.4 "File Identifiers".
         """
         if hasattr(self, "_ID") and self._ID and len(self._ID) == 2:
-            ID_1 = self._ID[0]
+            id1 = self._ID[0]
         else:
-            ID_1 = self._compute_document_identifier_from_content()
-        ID_2 = self._compute_document_identifier_from_content()
-        self._ID = ArrayObject((ID_1, ID_2))
+            id1 = self._compute_document_identifier_from_content()
+        id2 = self._compute_document_identifier_from_content()
+        self._ID = ArrayObject((id1, id2))
 
     def encrypt(
         self,

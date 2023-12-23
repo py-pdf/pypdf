@@ -128,9 +128,9 @@ jobs:
     - name: Rename coverage data file
       run: mv .coverage ".coverage.$RANDOM"
     - name: Upload coverage data
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: coverage-data
+        name: coverage-data.${{ matrix.python-version }}-${{ matrix.use-crypto-lib }}
         path: .coverage.*
         if-no-files-found: ignore
 
@@ -201,9 +201,10 @@ jobs:
 
       - run: python -m pip install --upgrade coverage[toml]
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: coverage-data
+          pattern: coverage-data*
+          merge-multiple: true
 
       - name: Check Number of Downloaded Files
         run: |

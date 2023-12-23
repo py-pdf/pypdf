@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## Version 3.17.3, 2023-12-17
+
+### Robustness (ROB)
+-  Out-of-bounds issue in handle_tj (text extraction) (#2342)
+
+### Developer Experience (DEV)
+-  Make make_release.py easier to configure (#2348)
+
+### Maintenance (MAINT)
+-  Bump actions/download-artifact from 3 to 4 (#2344)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.2...3.17.3)
+
+## Version 3.17.2, 2023-12-10
+
+### Bug Fixes (BUG)
+-  Cope with deflated images with CMYK Black Only (#2322)
+-  Handle indirect objects as parameters for CCITTFaxDecode (#2307)
+-  check words length in _cmap type1_alternative function (#2310)
+
+### Robustness (ROB)
+-  Relax flate decoding for too many lookup values (#2331)
+-  Let _build_destination skip in case of missing /D key (#2018)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.1...3.17.2)
+
 ## Version 3.17.1, 2023-11-14
 
 ### Bug Fixes (BUG)

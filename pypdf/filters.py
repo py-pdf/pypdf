@@ -781,7 +781,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         )
     extension = None
     alpha = None
-    filters = x_object_obj.get(SA.FILTER, [None])
+    filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
     if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
         img, image_format, extension, _ = _handle_flate(
