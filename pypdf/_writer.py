@@ -1234,7 +1234,12 @@ class PdfWriter:
         Generate an identifier for the PDF that will be written.
 
         The only point of this is ensuring uniqueness. Reproducibility is not
-        required; see 14.4 "File Identifiers".
+        required;
+        When a file is first written, both identifiers shall be set to the same value.
+        If both identifiers match when a file reference is resolved, it is very
+        likely that the correct and unchanged file has been found. If only the first
+         identifier matches, a different version of the correct file has been found.
+        see 14.4 "File Identifiers".
         """
         if self._ID:
             id1 = self._ID[0]
