@@ -215,6 +215,7 @@ class PdfWriter:
 
         self._encryption: Optional[Encryption] = None
         self._encrypt_entry: Optional[DictionaryObject] = None
+        self._ID: Union[ArrayObject, None] = None
 
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""
@@ -1235,7 +1236,7 @@ class PdfWriter:
         The only point of this is ensuring uniqueness. Reproducibility is not
         required; see 14.4 "File Identifiers".
         """
-        if hasattr(self, "_ID") and self._ID and len(self._ID) == 2:
+        if self._ID:
             id1 = self._ID[0]
         else:
             id1 = self._compute_document_identifier_from_content()
@@ -1324,6 +1325,7 @@ class PdfWriter:
             if not use_128bit:
                 alg = EncryptAlgorithm.RC4_40
         self.generate_file_identifiers()
+        assert self._ID
         self._encryption = Encryption.make(alg, permissions_flag, self._ID[0])
         # in case call `encrypt` again
         entry = self._encryption.write_entry(user_password, owner_password)
@@ -1425,7 +1427,7 @@ class PdfWriter:
                 NameObject(TK.INFO): self._info,
             }
         )
-        if hasattr(self, "_ID"):
+        if self._ID:
             trailer[NameObject(TK.ID)] = self._ID
         if self._encrypt_entry:
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt_entry.indirect_reference
