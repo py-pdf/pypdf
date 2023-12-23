@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703328698905,
+  "lastUpdate": 1703329991893,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -44534,6 +44534,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07126951597604915",
             "extra": "mean: 17.5664828462 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c43ca15e91b46a5c7b477fa8584a96c698349902",
+          "message": "DOC: Stamp images directly on a PDF (#2357)\n\nSee https://github.com/py-pdf/pypdf/pull/1945\r\n\r\nCo-authored-by: dmjohnsson23 <dmjohn235@gmail.com>",
+          "timestamp": "2023-12-23T12:10:03+01:00",
+          "tree_id": "7eccd26799ea3aa04248833852b17a7f914d9a21",
+          "url": "https://github.com/py-pdf/pypdf/commit/c43ca15e91b46a5c7b477fa8584a96c698349902"
+        },
+        "date": 1703329988691,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.41514038476189,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006107503351250746",
+            "extra": "mean: 292.8137316000033 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.723675299382187,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00846504984078237",
+            "extra": "mean: 78.59364346153633 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2745163471059009,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01359414651241123",
+            "extra": "mean: 3.6427703142000043 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.072740592335983,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007118113910840794",
+            "extra": "mean: 58.572904250000946 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05666852813098815,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06562717885700572",
+            "extra": "mean: 17.6464791478 sec\nrounds: 5"
           }
         ]
       }
