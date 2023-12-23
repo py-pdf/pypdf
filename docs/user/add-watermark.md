@@ -25,22 +25,23 @@ Else use `merge_transformed_page()` with `Transformation()` if you need to trans
 
 ```python
 from pathlib import Path
-from typing import Union, Literal, List
+from typing import List, Union
 
-from pypdf import PdfWriter, PdfReader
+from pypdf import PdfReader, PdfWriter, Transformation
 
 
 def stamp(
-    content_pdf: Path,
-    stamp_pdf: Path,
-    pdf_result: Path,
-    page_indices: Union[Literal["ALL"], List[int]] = "ALL",
+    content_pdf: Union[Path, str],
+    stamp_pdf: Union[Path, str],
+    pdf_result: Union[Path, str],
+    page_indices: Union[None, List[int]] = None,
 ):
     stamp_page = PdfReader(stamp_pdf).pages[0]
 
     writer = PdfWriter()
     # page_indices can be a List(array) of page, tuples are for range definition
-    writer.append(content, pages=None if page_indices == "ALL" else page_indices)
+    reader = PdfReader(content_pdf)
+    writer.append(reader, pages=page_indices)
 
     for content_page in writer.pages:
         content_page.merge_transformed_page(
@@ -49,9 +50,14 @@ def stamp(
         )
 
     writer.write(pdf_result)
+
+
+stamp("example.pdf", "stamp.pdf", "out.pdf")
 ```
 
-If you are experiencing wrongly rotated watermarks/stamps, try to use `transfer_rotation_to_content()` on the corresponding pages beforehand to fix the page boxes.
+If you are experiencing wrongly rotated watermarks/stamps, try to use
+`transfer_rotation_to_content()` on the corresponding pages beforehand
+to fix the page boxes.
 
 Example of stamp:
 ![stamp.png](stamp.png)
