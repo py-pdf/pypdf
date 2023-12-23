@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703327827016,
+  "lastUpdate": 1703328698905,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -44475,6 +44475,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05264565681654557",
             "extra": "mean: 17.606535452600006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "133ccb1c915460e8bebce98c093ef3d7e38590d6",
+          "message": "BUG: Handle IndirectObject as image filter (#2355)\n\nPreviously, we might pass \"4bits\" as image mode to Pillow, leading to \"ValueError: unrecognized image mode\".\r\n\r\nExample: `lfilters = IndirectObject(26, 0, 139771595681120)`, whose `get_object()` would yield `['/FlateDecode']` (going into the else branch of the filter handling until now).",
+          "timestamp": "2023-12-23T11:48:33+01:00",
+          "tree_id": "28ab15e6b07fdeb40910489c718710478db19004",
+          "url": "https://github.com/py-pdf/pypdf/commit/133ccb1c915460e8bebce98c093ef3d7e38590d6"
+        },
+        "date": 1703328696801,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.33759575907674,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008588783598984523",
+            "extra": "mean: 299.61687159999997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.744330967929521,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007053679957639932",
+            "extra": "mean: 78.46626100000468 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2724844140325286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011778163278732632",
+            "extra": "mean: 3.669934676999992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.26487269050732,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005033751135010748",
+            "extra": "mean: 57.921075812497946 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05692659189408089,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07126951597604915",
+            "extra": "mean: 17.5664828462 sec\nrounds: 5"
           }
         ]
       }
