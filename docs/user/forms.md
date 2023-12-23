@@ -32,11 +32,6 @@ writer.update_page_form_field_values(
     auto_regenerate=False,
 )
 
-# If you want to fill out *all* pages, it is also safe to do this:
-data = {"fieldname": "some filled in text", "othername": "more text for an input on a different page"}
-for page in writer.pages:
-    writer.update_page_form_field_values(page, data, auto_regenerate=False)
-
 # write "output" to pypdf-output.pdf
 with open("filled-out.pdf", "wb") as output_stream:
     writer.write(output_stream)
