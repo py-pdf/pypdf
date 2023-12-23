@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703095762035,
+  "lastUpdate": 1703327827016,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -44416,6 +44416,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08244174046572389",
             "extra": "mean: 17.741111464199996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "tobeabellwether@gmail.com",
+            "name": "Jialun",
+            "username": "Tobeabellwether"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "27409bad32dd064997fb6f504b650bfa931dcc5c",
+          "message": "DOC: Correct the example of adding highlight annotation (#2341)\n\nFix example for Add the Highlight:\r\nthe `pypdf.annotations.Highlight` requires `rect` and `quad_points` as input parameters not `vertices`",
+          "timestamp": "2023-12-23T11:34:06+01:00",
+          "tree_id": "39662056c3b678085e1c63dc29752f4b616ea3a0",
+          "url": "https://github.com/py-pdf/pypdf/commit/27409bad32dd064997fb6f504b650bfa931dcc5c"
+        },
+        "date": 1703327825510,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3445330999751555,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006712414391121312",
+            "extra": "mean: 298.9953964000023 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.526731261591669,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009190922932083805",
+            "extra": "mean: 79.82928499999915 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2714084916272514,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02045176744258645",
+            "extra": "mean: 3.6844830977999976 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.11270320230278,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006533012302783265",
+            "extra": "mean: 58.43612129411761 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05679709121037365,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05264565681654557",
+            "extra": "mean: 17.606535452600006 sec\nrounds: 5"
           }
         ]
       }
