@@ -1223,7 +1223,7 @@ class PdfWriter:
         )
         self.clone_document_from_reader(reader, after_page_append)
 
-    def _compute_document_identifier_from_content(self) -> ByteStringObject:
+    def _compute_document_identifier(self) -> ByteStringObject:
         stream = BytesIO()
         self._write_pdf_structure(stream)
         stream.seek(0)
@@ -1238,9 +1238,10 @@ class PdfWriter:
         """
         if self._ID:
             id1 = self._ID[0]
+            id2 = self._compute_document_identifier()
         else:
-            id1 = self._compute_document_identifier_from_content()
-        id2 = self._compute_document_identifier_from_content()
+            id1 = self._compute_document_identifier()
+            id2 = id1
         self._ID = ArrayObject((id1, id2))
 
     def encrypt(
