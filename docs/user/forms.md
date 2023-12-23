@@ -27,9 +27,9 @@ fields = reader.get_fields()
 writer.append(reader)
 
 writer.update_page_form_field_values(
-    writer.pages[0], 
+    writer.pages[0],
     {"fieldname": "some filled in text"},
-    auto_regenerate=False
+    auto_regenerate=False,
 )
 
 # If you want to fill out *all* pages, it is also safe to do this:
@@ -42,7 +42,10 @@ with open("filled-out.pdf", "wb") as output_stream:
     writer.write(output_stream)
 ```
 
-Generally speaking, you will always want to use `auto_regenerate=False`. The parameter is `True` by default for legacy compatibility, but this flags the PDF Viewer to recompute the field's rendering, and may trigger a "save changes" dialog for users who open the generated PDF.
+Generally speaking, you will always want to use `auto_regenerate=False`. The
+parameter is `True` by default for legacy compatibility, but this flags the PDF
+Viewer to recompute the field's rendering, and may trigger a "save changes"
+dialog for users who open the generated PDF.
 
 ## A note about form fields and annotations
 
