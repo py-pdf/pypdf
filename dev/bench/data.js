@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703329991893,
+  "lastUpdate": 1703330537928,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -44593,6 +44593,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06562717885700572",
             "extra": "mean: 17.6464791478 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0a79b3cc89cc44e874e93d422f2a09a1658080a0",
+          "message": "DOC: Fix stamping example (#2358)\n\nSee https://patch-diff.githubusercontent.com/raw/py-pdf/pypdf/pull/1945\r\n\r\nCo-authored-by: dmjohnsson23 <dmjohn235@gmail.com>",
+          "timestamp": "2023-12-23T12:19:17+01:00",
+          "tree_id": "10b9c0661d4aa7b4463446c51df9152f99603eb1",
+          "url": "https://github.com/py-pdf/pypdf/commit/0a79b3cc89cc44e874e93d422f2a09a1658080a0"
+        },
+        "date": 1703330536337,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3856913619139477,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006506008638270228",
+            "extra": "mean: 295.36064959999635 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.73159604430915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007359317962873378",
+            "extra": "mean: 78.5447477692309 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2742822471223845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01630725947403301",
+            "extra": "mean: 3.645879419800002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.29321191983156,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011661116655895707",
+            "extra": "mean: 57.826157722222625 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.056621125507858604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09361640956763732",
+            "extra": "mean: 17.661252598399994 sec\nrounds: 5"
           }
         ]
       }
