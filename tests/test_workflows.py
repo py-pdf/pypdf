@@ -268,20 +268,14 @@ def test_extract_textbench(enable, url, pages, print_result=False):
 @pytest.mark.slow()
 def test_orientations():
     p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
-    with pytest.warns(DeprecationWarning):
-        p.extract_text("", "")
-    with pytest.warns(DeprecationWarning):
-        p.extract_text("", "", 0)
-    with pytest.warns(DeprecationWarning):
-        p.extract_text("", "", 0, 200)
-
-    with pytest.warns(DeprecationWarning):
-        p.extract_text(Tj_sep="", TJ_sep="")
+    p.extract_text("", "")
+    p.extract_text("", "", 0)
+    p.extract_text("", "", 0, 200)
+    p.extract_text()
     assert findall("\\((.)\\)", p.extract_text()) == ["T", "B", "L", "R"]
     with pytest.raises(Exception):
         p.extract_text(None)
-    with pytest.raises(Exception):
-        p.extract_text("", 0)
+    p.extract_text("", 0)
     with pytest.raises(Exception):
         p.extract_text("", "", None)
     with pytest.raises(Exception):

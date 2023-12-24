@@ -377,6 +377,38 @@ class PdfMerger:
            * - /UseAttachments
              - Show attachments panel
         """
+        self.page_mode = mode
+
+    @property
+    def page_mode(self) -> Optional[PagemodeType]:
+        """
+        Set the page mode.
+
+        Args:
+            mode: The page mode to use.
+
+        .. list-table:: Valid ``mode`` arguments
+           :widths: 50 200
+
+           * - /UseNone
+             - Do not show outline or thumbnails panels
+           * - /UseOutlines
+             - Show outline (aka bookmarks) panel
+           * - /UseThumbs
+             - Show page thumbnails panel
+           * - /FullScreen
+             - Fullscreen view
+           * - /UseOC
+             - Show Optional Content Group (OCG) panel
+           * - /UseAttachments
+             - Show attachments panel
+        """
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
+        return self.output.page_mode
+
+    @page_mode.setter
+    def page_mode(self, mode: PagemodeType) -> None:
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.page_mode = mode

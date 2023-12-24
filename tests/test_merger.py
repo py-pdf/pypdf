@@ -130,7 +130,7 @@ def merger_operate(merger):
     merger.add_metadata({"/Author": "Martin Thoma"})
     merger.add_named_destination("/Title", 0)
     merger.set_page_layout("/SinglePage")
-    merger.set_page_mode("/UseThumbs")
+    merger.page_mode = "/UseThumbs"
 
 
 def check_outline(tmp_path):
@@ -288,7 +288,7 @@ def test_merge_write_closed_fh():
     assert exc.value.args[0] == err_closed
 
     with pytest.raises(RuntimeError) as exc:
-        merger.set_page_mode("/UseNone")
+        merger.page_mode = "/UseNone"
     assert exc.value.args[0] == err_closed
 
     with pytest.raises(RuntimeError) as exc:
@@ -313,7 +313,7 @@ def test_merge_write_closed_fh_with_writer(pdf_file_path):
     merger.write(pdf_file_path)
     merger.add_metadata({"author": "Martin Thoma"})
     merger.set_page_layout("/SinglePage")
-    merger.set_page_mode("/UseNone")
+    merger.page_mode = "/UseNone"
     merger.add_outline_item("An outline item", 0)
 
 
