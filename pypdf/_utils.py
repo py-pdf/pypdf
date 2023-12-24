@@ -201,7 +201,7 @@ def check_if_whitespace_only(value: bytes) -> bool:
         True if the value only has whitespace characters, otherwise return False.
     """
     for index in range(len(value)):
-        current = value[index:index + 1]
+        current = value[index : index + 1]
         if current not in WHITESPACES:
             return False
     return True
@@ -427,26 +427,22 @@ def deprecation(msg: str) -> None:
     raise DeprecationError(msg)
 
 
-def deprecate_with_replacement(
-    old_name: str, new_name: str, removed_in: str = "3.0.0"
-) -> None:
+def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed, but has a replacement."""
     deprecate(DEPR_MSG.format(old_name, removed_in, new_name), 4)
 
 
-def deprecation_with_replacement(
-    old_name: str, new_name: str, removed_in: str = "3.0.0"
-) -> None:
+def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed, but has a replacement."""
     deprecation(DEPR_MSG_HAPPENED.format(old_name, removed_in, new_name))
 
 
-def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+def deprecate_no_replacement(name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed without replacement."""
     deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
 
 
-def deprecation_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+def deprecation_no_replacement(name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed without replacement."""
     deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
 

@@ -53,7 +53,6 @@ from .._utils import (
     b_,
     deprecate_no_replacement,
     deprecate_with_replacement,
-    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -135,12 +134,6 @@ class ArrayObject(List[Any], PdfObject):
             data.write_to_stream(stream)
         stream.write(b" ]")
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
-
     @staticmethod
     def read_from_stream(
         stream: StreamType,
@@ -165,13 +158,6 @@ class ArrayObject(List[Any], PdfObject):
             # read and append obj
             arr.append(read_object(stream, pdf, forced_encoding))
         return arr
-
-    @staticmethod
-    def readFromStream(
-        stream: StreamType, pdf: PdfReaderProtocol
-    ) -> "ArrayObject":  # deprecated
-        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
-        return ArrayObject.read_from_stream(stream, pdf)
 
 
 class DictionaryObject(Dict[Any, Any], PdfObject):
@@ -358,27 +344,6 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             self[NameObject("/Metadata")] = metadata
         return metadata
 
-    def getXmpMetadata(
-        self,
-    ) -> Optional[PdfObject]:  # deprecated
-        """
-        Use :meth:`xmp_metadata` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("getXmpMetadata", "xmp_metadata", "3.0.0")
-        return self.xmp_metadata
-
-    @property
-    def xmpMetadata(self) -> Optional[PdfObject]:  # deprecated
-        """
-        Use :meth:`xmp_metadata` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("xmpMetadata", "xmp_metadata", "3.0.0")
-        return self.xmp_metadata
-
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
@@ -395,12 +360,6 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             value.write_to_stream(stream)
             stream.write(b"\n")
         stream.write(b">>")
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(
@@ -552,13 +511,6 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             retval.update(data)
             return retval
 
-    @staticmethod
-    def readFromStream(
-        stream: StreamType, pdf: PdfReaderProtocol
-    ) -> "DictionaryObject":  # deprecated
-        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
-        return DictionaryObject.read_from_stream(stream, pdf)
-
 
 class TreeObject(DictionaryObject):
     def __init__(self, dct: Optional[DictionaryObject] = None) -> None:
@@ -590,10 +542,6 @@ class TreeObject(DictionaryObject):
             if child_ref is None:
                 return
             child = child_ref.get_object()
-
-    def addChild(self, child: Any, pdf: Any) -> None:  # deprecated
-        deprecation_with_replacement("addChild", "add_child", "3.0.0")
-        self.add_child(child, pdf)
 
     def add_child(self, child: Any, pdf: PdfWriterProtocol) -> None:
         self.insert_child(child, None, pdf)
@@ -676,10 +624,6 @@ class TreeObject(DictionaryObject):
         child_obj[NameObject("/Parent")] = self.indirect_reference
         inc_parent_counter(self, child_obj.get("/Count", 1))
         return child
-
-    def removeChild(self, child: Any) -> None:  # deprecated
-        deprecation_with_replacement("removeChild", "remove_child", "3.0.0")
-        self.remove_child(child)
 
     def _remove_node_from_tree(
         self, prev: Any, prev_ref: Any, cur: Any, last: Any
@@ -842,28 +786,10 @@ class StreamObject(DictionaryObject):
     def set_data(self, data: bytes) -> None:
         self._data = data
 
-    def getData(self) -> Any:  # deprecated
-        deprecation_with_replacement("getData", "get_data", "3.0.0")
-        return self._data
-
-    def setData(self, data: Any) -> None:  # deprecated
-        deprecation_with_replacement("setData", "set_data", "3.0.0")
-        self.set_data(data)
-
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
         data += b_(self._data)
         return data
-
-    @property
-    def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # deprecated
-        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
-        return self.decoded_self
-
-    @decodedSelf.setter
-    def decodedSelf(self, value: "DecodedStreamObject") -> None:  # deprecated
-        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
-        self.decoded_self = value
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
@@ -899,10 +825,6 @@ class StreamObject(DictionaryObject):
         del data[SA.LENGTH]
         retval.update(data)
         return retval
-
-    def flateEncode(self) -> "EncodedStreamObject":  # deprecated
-        deprecation_with_replacement("flateEncode", "flate_encode", "3.0.0")
-        return self.flate_encode()
 
     def flate_encode(self, level: int = -1) -> "EncodedStreamObject":
         from ..filters import FlateDecode
@@ -944,16 +866,6 @@ class DecodedStreamObject(StreamObject):
 class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
         self.decoded_self: Optional[DecodedStreamObject] = None
-
-    @property
-    def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # deprecated
-        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
-        return self.decoded_self
-
-    @decodedSelf.setter
-    def decodedSelf(self, value: DecodedStreamObject) -> None:  # deprecated
-        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
-        self.decoded_self = value
 
     # This overrides the parent method:
     def get_data(self) -> Union[bytes, str]:
@@ -1355,16 +1267,6 @@ class Field(TreeObject):
         return self.get(FieldDictionaryAttributes.FT)
 
     @property
-    def fieldType(self) -> Optional[NameObject]:  # deprecated
-        """
-        Use :py:attr:`field_type` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("fieldType", "field_type", "3.0.0")
-        return self.field_type
-
-    @property
     def parent(self) -> Optional[DictionaryObject]:
         """Read-only property accessing the parent of this field."""
         return self.get(FieldDictionaryAttributes.Parent)
@@ -1385,16 +1287,6 @@ class Field(TreeObject):
         return self.get(FieldDictionaryAttributes.TU)
 
     @property
-    def altName(self) -> Optional[str]:  # deprecated
-        """
-        Use :py:attr:`alternate_name` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("altName", "alternate_name", "3.0.0")
-        return self.alternate_name
-
-    @property
     def mapping_name(self) -> Optional[str]:
         """
         Read-only property accessing the mapping name of this field.
@@ -1403,16 +1295,6 @@ class Field(TreeObject):
         :meth:`get_fields()<pypdf.PdfReader.get_fields>`
         """
         return self.get(FieldDictionaryAttributes.TM)
-
-    @property
-    def mappingName(self) -> Optional[str]:  # deprecated
-        """
-        Use :py:attr:`mapping_name` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("mappingName", "mapping_name", "3.0.0")
-        return self.mapping_name
 
     @property
     def flags(self) -> Optional[int]:
@@ -1437,16 +1319,6 @@ class Field(TreeObject):
         return self.get(FieldDictionaryAttributes.DV)
 
     @property
-    def defaultValue(self) -> Optional[Any]:  # deprecated
-        """
-        Use :py:attr:`default_value` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("defaultValue", "default_value", "3.0.0")
-        return self.default_value
-
-    @property
     def additional_actions(self) -> Optional[DictionaryObject]:
         """
         Read-only property accessing the additional actions dictionary.
@@ -1455,16 +1327,6 @@ class Field(TreeObject):
         events. See Section 8.5.2 of the PDF 1.7 reference.
         """
         return self.get(FieldDictionaryAttributes.AA)
-
-    @property
-    def additionalActions(self) -> Optional[DictionaryObject]:  # deprecated
-        """
-        Use :py:attr:`additional_actions` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("additionalActions", "additional_actions", "3.0.0")
-        return self.additional_actions
 
 
 class Destination(TreeObject):
@@ -1551,15 +1413,6 @@ class Destination(TreeObject):
                 if x in self
             ]
         )
-
-    def getDestArray(self) -> "ArrayObject":  # deprecated
-        """
-        Use :py:attr:`dest_array` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("getDestArray", "dest_array", "3.0.0")
-        return self.dest_array
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None

@@ -58,7 +58,7 @@ from ._data_structures import (
     read_object,
 )
 from ._fit import Fit
-from ._outline import Bookmark, OutlineItem
+from ._outline import OutlineItem
 from ._rectangle import RectangleObject
 from ._utils import (
     create_string_object,
@@ -449,7 +449,6 @@ __all__ = [
     # Outline
     "OutlineItem",
     "OutlineFontFlag",
-    "Bookmark",
     # Data structures core functions
     "read_object",
     # Utility functions

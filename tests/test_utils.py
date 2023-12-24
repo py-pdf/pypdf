@@ -127,7 +127,7 @@ def test_b(input_str: str, expected: str):
 
 def test_deprecate_no_replacement():
     with pytest.warns(DeprecationWarning) as warn:
-        pypdf._utils.deprecate_no_replacement("foo")
+        pypdf._utils.deprecate_no_replacement("foo", removed_in="3.0.0")
     error_msg = "foo is deprecated and will be removed in pypdf 3.0.0."
     assert warn[0].message.args[0] == error_msg
 

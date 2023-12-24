@@ -48,7 +48,6 @@ from ._utils import (
     StrByteType,
     deprecate_with_replacement,
     deprecation_bookmark,
-    deprecation_with_replacement,
     str_,
 )
 from ._writer import PdfWriter
@@ -70,7 +69,7 @@ from .generic import (
     TreeObject,
 )
 from .pagerange import PageRange, PageRangeSpec
-from .types import FitType, LayoutType, OutlineType, PagemodeType, ZoomArgType
+from .types import LayoutType, OutlineType, PagemodeType
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 
@@ -360,24 +359,6 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.add_metadata(infos)
 
-    def addMetadata(self, infos: Dict[str, Any]) -> None:  # deprecated
-        """
-        Use :meth:`add_metadata` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("addMetadata", "add_metadata")
-        self.add_metadata(infos)
-
-    def setPageLayout(self, layout: LayoutType) -> None:  # deprecated
-        """
-        Use :meth:`set_page_layout` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("setPageLayout", "set_page_layout")
-        self.set_page_layout(layout)
-
     def set_page_layout(self, layout: LayoutType) -> None:
         """
         Set the page layout.
@@ -406,15 +387,6 @@ class PdfMerger:
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output._set_page_layout(layout)
-
-    def setPageMode(self, mode: PagemodeType) -> None:  # deprecated
-        """
-        Use :meth:`set_page_mode` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("setPageMode", "set_page_mode", "3.0.0")
-        self.set_page_mode(mode)
 
     def set_page_mode(self, mode: PagemodeType) -> None:
         """
@@ -723,68 +695,6 @@ class PdfMerger:
             fit,
         )
 
-    def addBookmark(
-        self,
-        title: str,
-        pagenum: int,  # deprecated, but the whole method is deprecated
-        parent: Union[None, TreeObject, IndirectObject] = None,
-        color: Optional[Tuple[float, float, float]] = None,
-        bold: bool = False,
-        italic: bool = False,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
-    ) -> IndirectObject:  # deprecated
-        """
-        .. deprecated:: 1.28.0
-            Use :meth:`add_outline_item` instead.
-        """
-        deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
-        return self.add_outline_item(
-            title,
-            pagenum,
-            parent,
-            color,
-            bold,
-            italic,
-            Fit(fit_type=fit, fit_args=args),
-        )
-
-    def add_bookmark(
-        self,
-        title: str,
-        pagenum: int,  # deprecated, but the whole method is deprecated already
-        parent: Union[None, TreeObject, IndirectObject] = None,
-        color: Optional[Tuple[float, float, float]] = None,
-        bold: bool = False,
-        italic: bool = False,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
-    ) -> IndirectObject:  # deprecated
-        """
-        .. deprecated:: 2.9.0
-            Use :meth:`add_outline_item` instead.
-        """
-        deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
-        return self.add_outline_item(
-            title,
-            pagenum,
-            parent,
-            color,
-            bold,
-            italic,
-            Fit(fit_type=fit, fit_args=args),
-        )
-
-    def addNamedDestination(self, title: str, pagenum: int) -> None:  # deprecated
-        """
-        .. deprecated:: 1.28.0
-            Use :meth:`add_named_destination` instead.
-        """
-        deprecation_with_replacement(
-            "addNamedDestination", "add_named_destination", "3.0.0"
-        )
-        return self.add_named_destination(title, pagenum)
-
     def add_named_destination(
         self,
         title: str,
@@ -822,12 +732,3 @@ class PdfMerger:
             Fit.fit_horizontally(top=826),
         )
         self.named_dests.append(dest)
-
-
-class PdfFileMerger(PdfMerger):  # deprecated
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecation_with_replacement("PdfFileMerger", "PdfMerger", "3.0.0")
-
-        if "strict" not in kwargs and len(args) < 1:
-            kwargs["strict"] = True  # maintain the default
-        super().__init__(*args, **kwargs)

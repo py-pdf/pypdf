@@ -12,7 +12,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
 from pypdf.constants import PageAttributes as PG
-from pypdf.errors import DeprecationError, PdfReadError, PdfReadWarning
+from pypdf.errors import PdfReadError, PdfReadWarning
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -173,8 +173,7 @@ def test_transformation_equivalence():
     # Option 2: The old way
     page_box2 = deepcopy(page_box)
     page_base2 = deepcopy(page_base)
-    with pytest.raises(DeprecationError):
-        page_base2.mergeTransformedPage(page_box2, op, expand=False)
+    page_base2.merge_transformed_page(page_box2, op, expand=False)
     page_box2.add_transformation(op)
     page_base2.merge_page(page_box2)
 
@@ -260,22 +259,23 @@ def test_page_transformations():
     reader = PdfReader(pdf_path)
 
     page: PageObject = reader.pages[0]
-    with pytest.raises(DeprecationError):
-        page.mergeRotatedPage(page, 90, expand=True)
-    with pytest.raises(DeprecationError):
-        page.mergeRotatedScaledPage(page, 90, 1, expand=True)
-    with pytest.raises(DeprecationError):
-        page.mergeRotatedScaledTranslatedPage(
-            page, 90, scale=1, tx=1, ty=1, expand=True
-        )
-    with pytest.raises(DeprecationError):
-        page.mergeRotatedTranslatedPage(page, 90, 100, 100, expand=False)
-    with pytest.raises(DeprecationError):
-        page.mergeScaledPage(page, 2, expand=False)
-    with pytest.raises(DeprecationError):
-        page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    with pytest.raises(DeprecationError):
-        page.mergeTranslatedPage(page, 100, 100, expand=False)
+    page.merge_rotated_page(page, 90, expand=True)
+
+    op = Transformation().rotate(90).scale(1, 1)
+    page.merge_transformed_page(page, op, expand=True)
+
+    op = Transformation().rotate(90).scale(1, 1).translate(1, 1)
+    page.merge_transformed_page(page, op, expand=True)
+
+    op = Transformation().translate(-100, -100).rotate(90).translate(100, 100)
+    page.merge_transformed_page(page, op, expand=False)
+
+    page.merge_scaled_page(page, 2, expand=False)
+
+    op = Transformation().scale(1, 1).translate(1, 1)
+    page.merge_transformed_page(page, op)
+
+    page.merge_translated_page(page, 100, 100, expand=False)
     page.add_transformation((1, 0, 0, 0, 0, 0))
 
 

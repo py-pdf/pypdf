@@ -286,15 +286,6 @@ class PdfWriter:
             raise ValueError("pdf must be self")
         return self._objects[indirect_reference.idnum - 1]
 
-    def getObject(self, ido: Union[int, IndirectObject]) -> PdfObject:  # deprecated
-        """
-        Use :meth:`get_object` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getObject", "get_object", "3.0.0")
-        return self.get_object(ido)
-
     def _replace_object(
         self,
         indirect_reference: Union[int, IndirectObject],
@@ -418,19 +409,6 @@ class PdfWriter:
         """
         return self._add_page(page, list.append, excluded_keys)
 
-    def addPage(
-        self,
-        page: PageObject,
-        excluded_keys: Iterable[str] = (),
-    ) -> PageObject:  # deprecated
-        """
-        Use :meth:`add_page` instead.
-
-        .. deprecated:: 1.28.0.
-        """
-        deprecation_with_replacement("addPage", "add_page", "3.0.0")
-        return self.add_page(page, excluded_keys)
-
     def insert_page(
         self,
         page: PageObject,
@@ -450,20 +428,6 @@ class PdfWriter:
             The added PageObject.
         """
         return self._add_page(page, lambda kids, p: kids.insert(index, p))
-
-    def insertPage(
-        self,
-        page: PageObject,
-        index: int = 0,
-        excluded_keys: Iterable[str] = (),
-    ) -> PageObject:  # deprecated
-        """
-        Use :meth:`insert_page` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("insertPage", "insert_page", "3.0.0")
-        return self.insert_page(page, index, excluded_keys)
 
     def get_page(
         self, page_number: Optional[int] = None, pageNumber: Optional[int] = None
@@ -491,27 +455,9 @@ class PdfWriter:
         # TODO: crude hack
         return cast(PageObject, pages[PA.KIDS][page_number].get_object())
 
-    def getPage(self, pageNumber: int) -> PageObject:  # deprecated
-        """
-        Use :code:`writer.pages[page_number]` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getPage", "writer.pages[page_number]", "3.0.0")
-        return self.get_page(pageNumber)
-
     def _get_num_pages(self) -> int:
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         return int(pages[NameObject("/Count")])
-
-    def getNumPages(self) -> int:  # deprecated
-        """
-        Use :code:`len(writer.pages)` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getNumPages", "len(writer.pages)", "3.0.0")
-        return self._get_num_pages()
 
     @property
     def pages(self) -> List[PageObject]:
@@ -553,17 +499,6 @@ class PdfWriter:
         page = PageObject.create_blank_page(self, width, height)
         return self.add_page(page)
 
-    def addBlankPage(
-        self, width: Optional[float] = None, height: Optional[float] = None
-    ) -> PageObject:  # deprecated
-        """
-        Use :meth:`add_blank_page` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("addBlankPage", "add_blank_page", "3.0.0")
-        return self.add_blank_page(width, height)
-
     def insert_blank_page(
         self,
         width: Optional[Union[float, decimal.Decimal]] = None,
@@ -596,20 +531,6 @@ class PdfWriter:
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
         return page
-
-    def insertBlankPage(
-        self,
-        width: Optional[Union[float, decimal.Decimal]] = None,
-        height: Optional[Union[float, decimal.Decimal]] = None,
-        index: int = 0,
-    ) -> PageObject:  # deprecated
-        """
-        Use :meth:`insertBlankPage` instead.
-
-        .. deprecated:: 1.28.0.
-        """
-        deprecation_with_replacement("insertBlankPage", "insert_blank_page", "3.0.0")
-        return self.insert_blank_page(width, height, index)
 
     @property
     def open_destination(
@@ -693,15 +614,6 @@ class PdfWriter:
         # but it can be anything.
         js_list.append(create_string_object(str(uuid.uuid4())))
         js_list.append(self._add_object(js))
-
-    def addJS(self, javascript: str) -> None:  # deprecated
-        """
-        Use :meth:`add_js` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("addJS", "add_js", "3.0.0")
-        return self.add_js(javascript)
 
     def add_attachment(self, filename: str, data: Union[str, bytes]) -> None:
         """
@@ -791,15 +703,6 @@ class PdfWriter:
             [create_string_object(filename), filespec]
         )
 
-    def addAttachment(self, fname: str, fdata: Union[str, bytes]) -> None:  # deprecated
-        """
-        Use :meth:`add_attachment` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("addAttachment", "add_attachment", "3.0.0")
-        return self.add_attachment(fname, fdata)
-
     def append_pages_from_reader(
         self,
         reader: PdfReader,
@@ -831,21 +734,6 @@ class PdfWriter:
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append):
                 after_page_append(writer_page)
-
-    def appendPagesFromReader(
-        self,
-        reader: PdfReader,
-        after_page_append: Optional[Callable[[PageObject], None]] = None,
-    ) -> None:  # deprecated
-        """
-        Use :meth:`append_pages_from_reader` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "appendPagesFromReader", "append_pages_from_reader", "3.0.0"
-        )
-        self.append_pages_from_reader(reader, after_page_append)
 
     def _get_qualified_field_name(self, parent: DictionaryObject) -> Optional[str]:
         if "/TM" in parent:
@@ -1079,22 +967,6 @@ class PdfWriter:
                             value if value in k[AA.AP]["/N"] else "/Off"
                         )
 
-    def updatePageFormFieldValues(
-        self,
-        page: PageObject,
-        fields: Dict[str, Any],
-        flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
-    ) -> None:  # deprecated
-        """
-        Use :meth:`update_page_form_field_values` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "updatePageFormFieldValues", "update_page_form_field_values", "3.0.0"
-        )
-        return self.update_page_form_field_values(page, fields, flags)
-
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
         Copy the reader document root to the writer and all sub elements,
@@ -1117,17 +989,6 @@ class PdfWriter:
             NameObject("/Kids")
         ] = self.flattened_pages
         del self.flattened_pages
-
-    def cloneReaderDocumentRoot(self, reader: PdfReader) -> None:  # deprecated
-        """
-        Use :meth:`clone_reader_document_root` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "cloneReaderDocumentRoot", "clone_reader_document_root", "3.0.0"
-        )
-        self.clone_reader_document_root(reader)
 
     def _flatten(
         self,
@@ -1207,21 +1068,6 @@ class PdfWriter:
                 ArrayObject, cast(DictionaryObject, self._pages.get_object())["/Kids"]
             ):
                 after_page_append(page.get_object())
-
-    def cloneDocumentFromReader(
-        self,
-        reader: PdfReader,
-        after_page_append: Optional[Callable[[PageObject], None]] = None,
-    ) -> None:  # deprecated
-        """
-        Use :meth:`clone_document_from_reader` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "cloneDocumentFromReader", "clone_document_from_reader", "3.0.0"
-        )
-        self.clone_document_from_reader(reader, after_page_append)
 
     def _compute_document_identifier(self) -> ByteStringObject:
         stream = BytesIO()
@@ -1457,15 +1303,6 @@ class PdfWriter:
             args[NameObject(key)] = create_string_object(str(value))
         cast(DictionaryObject, self._info.get_object()).update(args)
 
-    def addMetadata(self, infos: Dict[str, Any]) -> None:  # deprecated
-        """
-        Use :meth:`add_metadata` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("addMetadata", "add_metadata", "3.0.0")
-        self.add_metadata(infos)
-
     def _sweep_indirect_references(
         self,
         root: Union[
@@ -1624,15 +1461,6 @@ class PdfWriter:
         assert ref.get_object() == obj
         return ref
 
-    def getReference(self, obj: PdfObject) -> IndirectObject:  # deprecated
-        """
-        Use :meth:`get_reference` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getReference", "get_reference", "3.0.0")
-        return self.get_reference(obj)
-
     def get_outline_root(self) -> TreeObject:
         if CO.OUTLINES in self._root_object:
             # TABLE 3.25 Entries in the catalog dictionary
@@ -1681,15 +1509,6 @@ class PdfWriter:
         """
         return self.get_threads_root()
 
-    def getOutlineRoot(self) -> TreeObject:  # deprecated
-        """
-        Use :meth:`get_outline_root` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getOutlineRoot", "get_outline_root", "3.0.0")
-        return self.get_outline_root()
-
     def get_named_dest_root(self) -> ArrayObject:
         if CA.NAMES in self._root_object and isinstance(
             self._root_object[CA.NAMES], DictionaryObject
@@ -1724,15 +1543,6 @@ class PdfWriter:
             dests[NameObject(CA.NAMES)] = nd
 
         return nd
-
-    def getNamedDestRoot(self) -> ArrayObject:  # deprecated
-        """
-        Use :meth:`get_named_dest_root` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getNamedDestRoot", "get_named_dest_root", "3.0.0")
-        return self.get_named_dest_root()
 
     def add_outline_item_destination(
         self,
@@ -1793,34 +1603,6 @@ class PdfWriter:
 
         return page_destination_ref
 
-    def add_bookmark_destination(
-        self,
-        dest: Union[PageObject, TreeObject],
-        parent: Union[None, TreeObject, IndirectObject] = None,
-    ) -> IndirectObject:  # deprecated
-        """
-        Use :meth:`add_outline_item_destination` instead.
-
-        .. deprecated:: 2.9.0
-        """
-        deprecation_with_replacement(
-            "add_bookmark_destination", "add_outline_item_destination", "3.0.0"
-        )
-        return self.add_outline_item_destination(dest, parent)
-
-    def addBookmarkDestination(
-        self, dest: PageObject, parent: Optional[TreeObject] = None
-    ) -> IndirectObject:  # deprecated
-        """
-        Use :meth:`add_outline_item_destination` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "addBookmarkDestination", "add_outline_item_destination", "3.0.0"
-        )
-        return self.add_outline_item_destination(dest, parent)
-
     @deprecation_bookmark(bookmark="outline_item")
     def add_outline_item_dict(
         self,
@@ -1843,34 +1625,6 @@ class PdfWriter:
         return self.add_outline_item_destination(
             outline_item_object, parent, before, is_open
         )
-
-    @deprecation_bookmark(bookmark="outline_item")
-    def add_bookmark_dict(
-        self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
-    ) -> IndirectObject:  # deprecated
-        """
-        Use :meth:`add_outline_item_dict` instead.
-
-        .. deprecated:: 2.9.0
-        """
-        deprecation_with_replacement(
-            "add_bookmark_dict", "add_outline_item_dict", "3.0.0"
-        )
-        return self.add_outline_item_dict(outline_item, parent)
-
-    @deprecation_bookmark(bookmark="outline_item")
-    def addBookmarkDict(
-        self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
-    ) -> IndirectObject:  # deprecated
-        """
-        Use :meth:`add_outline_item_dict` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "addBookmarkDict", "add_outline_item_dict", "3.0.0"
-        )
-        return self.add_outline_item_dict(outline_item, parent)
 
     def add_outline_item(
         self,
@@ -1955,61 +1709,6 @@ class PdfWriter:
             parent = self.get_outline_root()
         return self.add_outline_item_destination(outline_item, parent, before, is_open)
 
-    def add_bookmark(
-        self,
-        title: str,
-        pagenum: int,  # deprecated, but the whole method is deprecated
-        parent: Union[None, TreeObject, IndirectObject] = None,
-        color: Optional[Tuple[float, float, float]] = None,
-        bold: bool = False,
-        italic: bool = False,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
-    ) -> IndirectObject:  # deprecated
-        """
-        Use :meth:`add_outline_item` instead.
-
-        .. deprecated:: 2.9.0
-        """
-        deprecation_with_replacement("add_bookmark", "add_outline_item", "3.0.0")
-        return self.add_outline_item(
-            title,
-            pagenum,
-            parent,
-            color,  # type: ignore
-            bold,  # type: ignore
-            italic,
-            Fit(fit_type=fit, fit_args=args),  # type: ignore
-        )
-
-    def addBookmark(
-        self,
-        title: str,
-        pagenum: int,
-        parent: Union[None, TreeObject, IndirectObject] = None,
-        color: Optional[Tuple[float, float, float]] = None,
-        bold: bool = False,
-        italic: bool = False,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
-    ) -> IndirectObject:  # deprecated
-        """
-        Use :meth:`add_outline_item` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
-        return self.add_outline_item(
-            title,
-            pagenum,
-            parent,
-            None,
-            color,
-            bold,
-            italic,
-            Fit(fit_type=fit, fit_args=args),
-        )
-
     def add_outline(self) -> None:
         raise NotImplementedError(
             "This method is not yet implemented. Use :meth:`add_outline_item` instead."
@@ -2061,19 +1760,6 @@ class PdfWriter:
 
         return page_destination_ref
 
-    def addNamedDestinationObject(
-        self, dest: Destination
-    ) -> IndirectObject:  # deprecated
-        """
-        Use :meth:`add_named_destination_object` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "addNamedDestinationObject", "add_named_destination_object", "3.0.0"
-        )
-        return self.add_named_destination_object(dest)
-
     def add_named_destination(
         self,
         title: str,
@@ -2116,32 +1802,10 @@ class PdfWriter:
         self.add_named_destination_array(title, dest_ref)
         return dest_ref
 
-    def addNamedDestination(
-        self, title: str, pagenum: int
-    ) -> IndirectObject:  # deprecated
-        """
-        Use :meth:`add_named_destination` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "addNamedDestination", "add_named_destination", "3.0.0"
-        )
-        return self.add_named_destination(title, pagenum)
-
     def remove_links(self) -> None:
         """Remove links and annotations from this output."""
         for page in self.pages:
             self.remove_objects_from_page(page, ObjectDeletionFlag.ALL_ANNOTATIONS)
-
-    def removeLinks(self) -> None:  # deprecated
-        """
-        Use :meth:`remove_links` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("removeLinks", "remove_links", "3.0.0")
-        return self.remove_links()
 
     def remove_annotations(
         self, subtypes: Optional[Union[AnnotationSubtype, Iterable[AnnotationSubtype]]]
@@ -2351,15 +2015,6 @@ class PdfWriter:
         for page in self.pages:
             self.remove_objects_from_page(page, i)
 
-    def removeImages(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
-        """
-        Use :meth:`remove_images` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("removeImages", "remove_images", "3.0.0")
-        return self.remove_images()
-
     def remove_text(self, ignore_byte_string_object: Optional[bool] = None) -> None:
         """
         Remove text from this output.
@@ -2375,15 +2030,6 @@ class PdfWriter:
             )
         for page in self.pages:
             self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT)
-
-    def removeText(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
-        """
-        Use :meth:`remove_text` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("removeText", "remove_text", "3.0.0")
-        return self.remove_text(ignoreByteStringObject)
 
     def add_uri(
         self,
@@ -2461,21 +2107,6 @@ class PdfWriter:
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
-    def addURI(
-        self,
-        pagenum: int,  # deprecated, but method is deprecated already
-        uri: str,
-        rect: RectangleObject,
-        border: Optional[ArrayObject] = None,
-    ) -> None:  # deprecated
-        """
-        Use :meth:`add_uri` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("addURI", "add_uri", "3.0.0")
-        return self.add_uri(pagenum, uri, rect, border)
-
     def add_link(
         self,
         pagenum: int,  # deprecated, but method is deprecated already
@@ -2486,7 +2117,7 @@ class PdfWriter:
         *args: ZoomArgType,
     ) -> DictionaryObject:
         deprecation_with_replacement(
-            "add_link", "add_annotation(pypdf.annotations.Link(...))"
+            "add_link", "add_annotation(pypdf.annotations.Link(...))", "3.0.0"
         )
 
         if isinstance(rect, str):
@@ -2541,15 +2172,6 @@ class PdfWriter:
             return cast(LayoutType, self._root_object["/PageLayout"])
         except KeyError:
             return None
-
-    def getPageLayout(self) -> Optional[LayoutType]:  # deprecated
-        """
-        Use :py:attr:`page_layout` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getPageLayout", "page_layout", "3.0.0")
-        return self._get_page_layout()
 
     def _set_page_layout(self, layout: Union[NameObject, LayoutType]) -> None:
         """
@@ -2612,17 +2234,6 @@ class PdfWriter:
         """
         self._set_page_layout(layout)
 
-    def setPageLayout(self, layout: LayoutType) -> None:  # deprecated
-        """
-        Use :py:attr:`page_layout` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "writer.setPageLayout(val)", "writer.page_layout = val", "3.0.0"
-        )
-        return self._set_page_layout(layout)
-
     @property
     def page_layout(self) -> Optional[LayoutType]:
         """
@@ -2652,26 +2263,6 @@ class PdfWriter:
     def page_layout(self, layout: LayoutType) -> None:
         self._set_page_layout(layout)
 
-    @property
-    def pageLayout(self) -> Optional[LayoutType]:  # deprecated
-        """
-        Use :py:attr:`page_layout` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("pageLayout", "page_layout", "3.0.0")
-        return self.page_layout
-
-    @pageLayout.setter
-    def pageLayout(self, layout: LayoutType) -> None:  # deprecated
-        """
-        Use :py:attr:`page_layout` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("pageLayout", "page_layout", "3.0.0")
-        self.page_layout = layout
-
     _valid_modes = (
         "/UseNone",
         "/UseOutlines",
@@ -2686,15 +2277,6 @@ class PdfWriter:
             return cast(PagemodeType, self._root_object["/PageMode"])
         except KeyError:
             return None
-
-    def getPageMode(self) -> Optional[PagemodeType]:  # deprecated
-        """
-        Use :py:attr:`page_mode` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getPageMode", "page_mode", "3.0.0")
-        return self._get_page_mode()
 
     def set_page_mode(self, mode: PagemodeType) -> None:
         """
@@ -2711,17 +2293,6 @@ class PdfWriter:
                 )
             mode_name = NameObject(mode)
         self._root_object.update({NameObject("/PageMode"): mode_name})
-
-    def setPageMode(self, mode: PagemodeType) -> None:  # deprecated
-        """
-        Use :py:attr:`page_mode` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "writer.setPageMode(val)", "writer.page_mode = val", "3.0.0"
-        )
-        self.set_page_mode(mode)
 
     @property
     def page_mode(self) -> Optional[PagemodeType]:
@@ -2749,26 +2320,6 @@ class PdfWriter:
     @page_mode.setter
     def page_mode(self, mode: PagemodeType) -> None:
         self.set_page_mode(mode)
-
-    @property
-    def pageMode(self) -> Optional[PagemodeType]:  # deprecated
-        """
-        Use :py:attr:`page_mode` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("pageMode", "page_mode", "3.0.0")
-        return self.page_mode
-
-    @pageMode.setter
-    def pageMode(self, mode: PagemodeType) -> None:  # deprecated
-        """
-        Use :py:attr:`page_mode` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("pageMode", "page_mode", "3.0.0")
-        self.page_mode = mode
 
     def add_annotation(
         self,
@@ -3621,9 +3172,3 @@ def _create_outline_item(
             format_flag += 2
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
-
-
-class PdfFileWriter(PdfWriter):  # deprecated
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecation_with_replacement("PdfFileWriter", "PdfWriter", "3.0.0")
-        super().__init__(*args, **kwargs)
