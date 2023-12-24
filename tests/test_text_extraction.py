@@ -3,12 +3,15 @@ Testing the text-extraction submodule and ensuring the quality of text extractio
 
 The tested code might be in _page.py.
 """
+from io import BytesIO
 from pathlib import Path
 
 import pytest
 
 from pypdf import PdfReader, mult
 from pypdf._text_extraction import set_custom_rtl
+
+from . import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -99,3 +102,13 @@ def test_visitor_text_matrices(file_name, constraints):
         x = matches[0]["x"]
         y = matches[0]["y"]
         assert constraint(x, y), f'Line "{text}" is wrong at x:{x}, y:{y}'
+
+
+@pytest.mark.xfail(reason="known whitespace issue #2336")
+@pytest.mark.enable_socket()
+def test_issue_2336():
+    name = "Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(name=name)))
+    page = reader.pages[0]
+    actual_text = page.extract_text()
+    assert "Beira Rio" in actual_text
