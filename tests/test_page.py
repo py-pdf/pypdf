@@ -1,6 +1,7 @@
 """Test the pypdf._page module."""
 import json
 import math
+import re
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -545,7 +546,7 @@ def test_extract_text_visitor_callbacks():
                     rectangles.append(r)
 
         def print_visi(text, cm_matrix, tm_matrix, font_dict, font_size) -> None:
-            if text.strip() != "":
+            if text != "":
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug(f"at {cm_matrix}, {tm_matrix}, font size={font_size}")
                 texts.append(
@@ -571,7 +572,7 @@ def test_extract_text_visitor_callbacks():
 
         It is expected that each cell is marked by a rectangle-object.
         It is expected that the page contains one table only.
-        It is expected that the table contains at least 3 columns and 2 rows.
+        It is expected that the table contains at least 2 columns and 2 rows.
 
         A list of rows is returned.
         Each row contains a list of cells.
@@ -623,8 +624,8 @@ def test_extract_text_visitor_callbacks():
         curr_y = None
         curr_row = None
         for r in rectangles_filtered:
-            if col2count[r.x] < 3 or row2count[r.y] < 2:
-                # We expect at least 3 columns and 2 rows.
+            if col2count[r.x] < 2 or row2count[r.y] < 2:
+                # We expect at least 2 columns and 2 rows.
                 continue
             if curr_y is None or r.y != curr_y:
                 # next row
@@ -646,7 +647,8 @@ def test_extract_text_visitor_callbacks():
 
     def extract_cell_text(cell_texts: List[PositionedText]) -> str:
         """Joins the text-objects of a cell."""
-        return ("".join(t.text for t in cell_texts)).strip()
+        text_raw = "".join(t.text for t in cell_texts)
+        return re.sub(r" +\n", "\n", text_raw.strip())
 
     # Test 1: We test the analysis of page 7 "2.1 LRS model".
     reader = PdfReader(RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
@@ -667,12 +669,16 @@ def test_extract_text_visitor_callbacks():
     for t in texts:
         for r in rectangles:
             if r.contains(t.x, t.y):
-                texts = rectangle2texts.setdefault(r, [])
-                texts.append(t.text.strip())
+                rtexts = rectangle2texts.setdefault(r, [])
+                if t.text != "":
+                    rtexts.append(t.text)
                 break
     # Five boxes and the figure-description below.
-    assert len(rectangle2texts) == 6
-    box_texts = [" ".join(texts) for texts in rectangle2texts.values()]
+    assert len(rectangle2texts) == 11
+    box_texts = [
+        re.sub(" *\n", " ", "".join(texts).strip())
+        for texts in rectangle2texts.values()
+    ]
     assert "Hydro Network" in box_texts
     assert "Hydro Events" in box_texts
     assert "Metadata" in box_texts
@@ -697,10 +703,10 @@ def test_extract_text_visitor_callbacks():
     assert extract_cell_text(rows[0][2]) == "Description"
     assert extract_cell_text(rows[1][0]) == "September 2002"
     # The line break between "English review;"
-    # and "Remove" is not detected.
+    # and "Remove" is detected.
     assert (
         extract_cell_text(rows[6][2])
-        == "English review;Remove the UML model for the Segmented view."
+        == "English review;\nRemove the UML model for the Segmented view."
     )
     assert extract_cell_text(rows[7][2]) == "Update from the March Workshop comments."
 
@@ -737,6 +743,16 @@ def test_extract_text_visitor_callbacks():
     assert list_td[1] == (410.0, 110.0)
     assert list_td[2] == (210.0, 210.0)
     assert list_td[3] == (410.0, 210.0)
+
+    # Test 3b: check extract_visitor in Sample_Td-matrix.pdf
+    #
+    (texts, rectangles) = extract_text_and_rectangles(page_td_model)
+    rows = extract_table(texts, rectangles)
+    assert len(rows) == 2
+    assert extract_cell_text(rows[0][0]) == "Hello PDF!"
+    assert extract_cell_text(rows[0][1]) == "Hello PDF 200 0 Td!"
+    assert extract_cell_text(rows[1][0]) == "Hello PDF 2 1!"
+    assert extract_cell_text(rows[1][1]) == "Hello PDF 10 7!"
 
 
 @pytest.mark.parametrize(

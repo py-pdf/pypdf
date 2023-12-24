@@ -1873,6 +1873,7 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        group_TJ: bool = True,
     ) -> str:
         """
         See extract_text for most arguments.
@@ -1957,16 +1958,12 @@ class PageObject(DictionaryObject):
             if operator == b"BT":
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
                 output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
                 return None
             elif operator == b"ET":
                 output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
@@ -1999,8 +1996,6 @@ class PageObject(DictionaryObject):
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
             elif operator == b"cm":
                 output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
                 cm_matrix = mult(
                     [
@@ -2025,8 +2020,6 @@ class PageObject(DictionaryObject):
             elif operator == b"Tf":
                 if text != "":
                     output += text  # .translate(cmap)
-                    if visitor_text is not None:
-                        visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
@@ -2132,6 +2125,34 @@ class PageObject(DictionaryObject):
                 process_operation(b"TL", [-operands[1]])
                 process_operation(b"Td", operands)
             elif operator == b"TJ":
+                if visitor_text is not None and group_TJ:
+                    # To prevent sending letters instead of words we
+                    # override the visitor temporarily.
+                    visitor_text_before = visitor_text
+                    tm_matrix_before = [
+                        tm_matrix[0],
+                        tm_matrix[1],
+                        tm_matrix[2],
+                        tm_matrix[3],
+                        tm_matrix[4],
+                        tm_matrix[5],
+                    ]
+                    text_TJ: List[str] = []
+
+                    def visitor_text(
+                        text: str,
+                        cm_matrix: Any,
+                        tm_matrix: Any,
+                        font_dict: Any,
+                        font_size: Any,
+                    ) -> None:
+                        # TODO cases where the current inserting order is kept
+                        if rtl_dir:
+                            # right-to-left
+                            text_TJ.insert(0, text)  # noqa
+                        else:
+                            text_TJ.append(text)  # noqa
+
                 for op in operands[0]:
                     if isinstance(op, (str, bytes)):
                         process_operation(b"Tj", [op])
@@ -2141,10 +2162,17 @@ class PageObject(DictionaryObject):
                         and (text[-1] != " ")
                     ):
                         process_operation(b"Tj", [" "])
+                if visitor_text is not None and group_TJ:
+                    visitor_text = visitor_text_before
+                    visitor_text(
+                        "".join(text_TJ),
+                        cm_matrix,
+                        tm_matrix_before,
+                        cmap[3],
+                        font_size,
+                    )
             elif operator == b"Do":
                 output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 try:
                     if output[-1] != "\n":
                         output += "\n"
@@ -2168,16 +2196,9 @@ class PageObject(DictionaryObject):
                             visitor_operand_before,
                             visitor_operand_after,
                             visitor_text,
+                            group_TJ,
                         )
                         output += text
-                        if visitor_text is not None:
-                            visitor_text(
-                                text,
-                                memo_cm,
-                                memo_tm,
-                                cmap[3],
-                                font_size,
-                            )
                 except Exception:
                     logger_warning(
                         f" impossible to decode XFormObject {operands[0]}",
@@ -2193,8 +2214,6 @@ class PageObject(DictionaryObject):
             if visitor_operand_after is not None:
                 visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
         output += text  # just in case of
-        if text != "" and visitor_text is not None:
-            visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
         return output
 
     def extract_text(
@@ -2207,6 +2226,7 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        group_TJ: bool = True,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
@@ -2246,6 +2266,8 @@ class PageObject(DictionaryObject):
                 text matrix, font-dictionary and font-size.
                 The font-dictionary may be None in case of unknown fonts.
                 If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
+            group_TJ: True for one call of visitor_text at each TJ,
+                False for calls of visitor_text at each text-fragment of TJ.
 
         Returns:
             The extracted text
@@ -2295,6 +2317,7 @@ class PageObject(DictionaryObject):
             visitor_operand_before,
             visitor_operand_after,
             visitor_text,
+            group_TJ,
         )
 
     def extract_xform_text(
@@ -2305,6 +2328,7 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        group_TJ: bool = True,
     ) -> str:
         """
         Extract text from an XObject.
@@ -2316,6 +2340,8 @@ class PageObject(DictionaryObject):
             visitor_operand_before:
             visitor_operand_after:
             visitor_text:
+            group_TJ: True for one call of visitor_text at each TJ,
+               False for calls of visitor_text at each text-fragment of TJ.
 
         Returns:
             The extracted text
