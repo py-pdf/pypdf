@@ -63,12 +63,9 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
-    deprecate_with_replacement,
     deprecation_bookmark,
-    deprecation_with_replacement,
     logger_warning,
 )
-from .annotations import Link
 from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
 from .constants import (
@@ -119,12 +116,10 @@ from .pagerange import PageRange, PageRangeSpec
 from .types import (
     AnnotationSubtype,
     BorderArrayType,
-    FitType,
     LayoutType,
     OutlineItemType,
     OutlineType,
     PagemodeType,
-    ZoomArgType,
 )
 
 OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
@@ -1895,8 +1890,6 @@ class PdfWriter:
         """
         Add an URI from a rectangular area to the specified page.
 
-        This uses the basic structure of :meth:`add_link`
-
         Args:
             page_number: index of the page on which to place the URI action.
             uri: URI of resource to link to.
@@ -1952,56 +1945,6 @@ class PdfWriter:
             page_ref[PG.ANNOTS].append(lnk_ref)
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
-
-    def add_link(
-        self,
-        pagenum: int,  # deprecated, but method is deprecated already
-        page_destination: int,
-        rect: RectangleObject,
-        border: Optional[ArrayObject] = None,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
-    ) -> DictionaryObject:
-        deprecation_with_replacement(
-            "add_link", "add_annotation(pypdf.annotations.Link(...))", "3.0.0"
-        )
-
-        if isinstance(rect, str):
-            rect = rect.strip()[1:-1]
-            rect = RectangleObject(
-                [float(num) for num in rect.split(" ") if len(num) > 0]
-            )
-        elif isinstance(rect, RectangleObject):
-            pass
-        else:
-            rect = RectangleObject(rect)
-
-        annotation = Link(
-            rect=rect,
-            border=border,
-            target_page_index=page_destination,
-            fit=Fit(fit_type=fit, fit_args=args),
-        )
-        return self.add_annotation(page_number=pagenum, annotation=annotation)
-
-    def addLink(
-        self,
-        pagenum: int,  # deprecated, but method is deprecated already
-        page_destination: int,
-        rect: RectangleObject,
-        border: Optional[ArrayObject] = None,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
-    ) -> None:  # deprecated
-        """
-        Use :meth:`add_link` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecate_with_replacement(
-            "addLink", "add_annotation(pypdf.annotations.Link(...))", "4.0.0"
-        )
-        self.add_link(pagenum, page_destination, rect, border, fit, *args)
 
     _valid_layouts = (
         "/NoLayout",

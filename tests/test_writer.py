@@ -17,6 +17,7 @@ from pypdf import (
     PdfWriter,
     Transformation,
 )
+from pypdf.annotations import Link
 from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
@@ -180,8 +181,10 @@ def writer_operate(writer: PdfWriter) -> None:
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
-    with pytest.raises(DeprecationError):
-        writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
+    writer.add_annotation(
+        page_number=2,
+        annotation=Link(target_page_index=1, rect=RectangleObject([0, 0, 100, 100])),
+    )
     assert writer._get_page_layout() is None
     writer.page_layout = "broken"
     assert writer.page_layout == "broken"
@@ -718,48 +721,54 @@ def test_add_uri(pdf_file_path):
         writer.write(output_stream)
 
 
-def test_add_link(pdf_file_path):
+def test_link_annotation(pdf_file_path):
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
         writer.add_page(page)
 
-    with pytest.raises(
-        DeprecationError,
-        match=(
-            re.escape(
-                "add_link is deprecated and was removed in pypdf 3.0.0. "
-                "Use add_annotation(pypdf.annotations.Link(...)) instead."
-            )
-        ),
-    ):
-        writer.add_link(
-            1,
-            2,
-            RectangleObject([0, 0, 100, 100]),
+    writer.add_annotation(
+        page_number=1,
+        annotation=Link(
+            target_page_index=2,
+            rect=RectangleObject(
+                [0, 0, 100, 100],
+            ),
             border=[1, 2, 3, [4]],
-            fit="/Fit",
-        )
-        writer.add_link(
-            2, 3, RectangleObject([20, 30, 50, 80]), [1, 2, 3], "/FitH", None
-        )
-        writer.add_link(
-            3,
-            0,
-            "[ 200 300 250 350 ]",
-            [0, 0, 0],
-            "/XYZ",
-            0,
-            0,
-            2,
-        )
-        writer.add_link(
-            3,
-            0,
-            [100, 200, 150, 250],
+            fit=Fit.fit(),
+        ),
+    )
+    writer.add_annotation(
+        page_number=2,
+        annotation=Link(
+            target_page_index=3,
+            rect=RectangleObject(
+                [0, 0, 100, 100],
+            ),
+            border=[1, 2, 3],
+            fit=Fit.fit_horizontally(),
+        ),
+    )
+    writer.add_annotation(
+        page_number=3,
+        annotation=Link(
+            target_page_index=0,
+            rect=RectangleObject(
+                [200, 300, 250, 350],
+            ),
             border=[0, 0, 0],
-        )
+            fit=Fit.xyz(left=0, top=0, zoom=2),
+        ),
+    )
+    writer.add_annotation(
+        page_number=3,
+        annotation=Link(
+            target_page_index=0,
+            rect=RectangleObject([100, 200, 150, 250]),
+            border=[0, 0, 0],
+        ),
+    )
 
     # write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
