@@ -136,7 +136,6 @@ class PdfMerger:
             fileobj: A File Object or an object that supports the standard
                 read and seek methods similar to a File Object. Could also be a
                 string representing a path to a PDF file.
-                None as an argument is deprecated.
             outline_item: Optionally, you may specify an outline item
                 (previously referred to as a 'bookmark') to be applied at the
                 beginning of the included file by supplying the text of the outline item.
@@ -380,7 +379,7 @@ class PdfMerger:
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
-        self.output.set_page_mode(mode)
+        self.output.page_mode = mode
 
     def _trim_dests(
         self,
@@ -588,17 +587,6 @@ class PdfMerger:
                 return [i]
 
         return None
-
-    def find_bookmark(
-        self,
-        outline_item: Dict[str, Any],
-        root: Optional[OutlineType] = None,
-    ) -> Optional[List[int]]:  # deprecated
-        """
-        .. deprecated:: 2.9.0
-            Use :meth:`find_outline_item` instead.
-        """
-        return self.find_outline_item(outline_item, root)
 
     def add_outline_item(
         self,

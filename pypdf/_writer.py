@@ -1844,7 +1844,6 @@ class PdfWriter:
         Args:
             to_delete : The type of images to be deleted
                 (default = all images types)
-            ignore_byte_string_object: deprecated
         """
         if isinstance(to_delete, bool):
             to_delete = ImageType.ALL
@@ -1869,12 +1868,7 @@ class PdfWriter:
             self.remove_objects_from_page(page, i)
 
     def remove_text(self) -> None:
-        """
-        Remove text from this output.
-
-        Args:
-            ignore_byte_string_object: deprecated
-        """
+        """Remove text from this output."""
         for page in self.pages:
             self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT)
 
@@ -2065,22 +2059,6 @@ class PdfWriter:
         except KeyError:
             return None
 
-    def set_page_mode(self, mode: PagemodeType) -> None:
-        """
-        Use :py:attr:`page_mode` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        if isinstance(mode, NameObject):
-            mode_name: NameObject = mode
-        else:
-            if mode not in self._valid_modes:
-                logger_warning(
-                    f"Mode should be one of: {', '.join(self._valid_modes)}", __name__
-                )
-            mode_name = NameObject(mode)
-        self._root_object.update({NameObject("/PageMode"): mode_name})
-
     @property
     def page_mode(self) -> Optional[PagemodeType]:
         """
@@ -2106,7 +2084,15 @@ class PdfWriter:
 
     @page_mode.setter
     def page_mode(self, mode: PagemodeType) -> None:
-        self.set_page_mode(mode)
+        if isinstance(mode, NameObject):
+            mode_name: NameObject = mode
+        else:
+            if mode not in self._valid_modes:
+                logger_warning(
+                    f"Mode should be one of: {', '.join(self._valid_modes)}", __name__
+                )
+            mode_name = NameObject(mode)
+        self._root_object.update({NameObject("/PageMode"): mode_name})
 
     def add_annotation(
         self,

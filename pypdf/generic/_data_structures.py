@@ -806,7 +806,7 @@ class StreamObject(DictionaryObject):
         stream.write(b"\nendstream")
 
     @staticmethod
-    def initializeFromDictionary(
+    def initializeFromDictionary(  # TODO: mention when to deprecate
         data: Dict[str, Any]
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:  # deprecated
         return StreamObject.initialize_from_dictionary(data)

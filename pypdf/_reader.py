@@ -55,7 +55,6 @@ from ._utils import (
     StrByteType,
     StreamType,
     b_,
-    deprecate_no_replacement,
     logger_warning,
     parse_iso8824_date,
     read_non_whitespace,
@@ -1754,39 +1753,6 @@ class PdfReader:
             i += 2
             if (i + 1) >= len(array):
                 break
-
-    def read_next_end_line(
-        self, stream: StreamType, limit_offset: int = 0
-    ) -> bytes:  # deprecated
-        """.. deprecated:: 2.1.0"""
-        deprecate_no_replacement("read_next_end_line", removed_in="4.0.0")
-        line_parts = []
-        while True:
-            # Prevent infinite loops in malformed PDFs
-            if stream.tell() == 0 or stream.tell() == limit_offset:
-                raise PdfReadError("Could not read malformed PDF file")
-            x = stream.read(1)
-            if stream.tell() < 2:
-                raise PdfReadError("EOL marker not found")
-            stream.seek(-2, 1)
-            if x in (b"\n", b"\r"):  # \n = LF; \r = CR
-                crlf = False
-                while x in (b"\n", b"\r"):
-                    x = stream.read(1)
-                    if x in (b"\n", b"\r"):  # account for CR+LF
-                        stream.seek(-1, 1)
-                        crlf = True
-                    if stream.tell() < 2:
-                        raise PdfReadError("EOL marker not found")
-                    stream.seek(-2, 1)
-                stream.seek(
-                    2 if crlf else 1, 1
-                )  # if using CR+LF, go back 2 bytes, else 1
-                break
-            else:
-                line_parts.append(x)
-        line_parts.reverse()
-        return b"".join(line_parts)
 
     def decrypt(self, password: Union[str, bytes]) -> PasswordType:
         """

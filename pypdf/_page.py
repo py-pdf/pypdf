@@ -29,7 +29,6 @@
 
 import math
 import re
-import warnings
 from decimal import Decimal
 from typing import (
     Any,
@@ -1872,8 +1871,6 @@ class PageObject(DictionaryObject):
     def extract_text(
         self,
         *args: Any,
-        Tj_sep: Optional[str] = None,
-        TJ_sep: Optional[str] = None,
         orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
         space_width: float = 200.0,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
@@ -1899,8 +1896,6 @@ class PageObject(DictionaryObject):
         For example in some PDF files this can be useful to parse tables.
 
         Args:
-            Tj_sep: Deprecated. Kept for compatibility until pypdf 4.0.0
-            TJ_sep: Deprecated. Kept for compatibility until pypdf 4.0.0
             orientations: list of orientations text_extraction will look for
                 default = (0, 90, 180, 270)
                 note: currently only 0(Up),90(turned Left), 180(upside Down),
@@ -1924,12 +1919,6 @@ class PageObject(DictionaryObject):
         """
         if len(args) >= 1:
             if isinstance(args[0], str):
-                Tj_sep = args[0]
-                if len(args) >= 2:
-                    if isinstance(args[1], str):
-                        TJ_sep = args[1]
-                    else:
-                        raise TypeError(f"Invalid positional parameter {args[1]}")
                 if len(args) >= 3:
                     if isinstance(args[2], (tuple, int)):
                         orientations = args[2]
@@ -1949,11 +1938,6 @@ class PageObject(DictionaryObject):
                         raise TypeError(f"Invalid positional parameter {args[1]}")
             else:
                 raise TypeError(f"Invalid positional parameter {args[0]}")
-        if Tj_sep is not None or TJ_sep is not None:
-            warnings.warn(
-                "parameters Tj_Sep, TJ_sep depreciated, and will be removed in pypdf 4.0.0.",
-                DeprecationWarning,
-            )
 
         if isinstance(orientations, int):
             orientations = (orientations,)
