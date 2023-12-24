@@ -18,7 +18,7 @@ from pypdf import (
     Transformation,
 )
 from pypdf.annotations import Link
-from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
+from pypdf.errors import PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -945,19 +945,6 @@ def test_add_single_annotation(pdf_file_path):
     # Inspect manually by adding 'assert False' and viewing the PDF
     with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
-
-
-def test_deprecation_bookmark_decorator():
-    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
-    page = reader.pages[0]
-    outline_item = reader.outline[0]
-    writer = PdfWriter()
-    writer.add_page(page)
-    with pytest.raises(
-        DeprecationError,
-        match="bookmark is deprecated as an argument. Use outline_item instead",
-    ):
-        writer.add_outline_item_dict(bookmark=outline_item)
 
 
 @pytest.mark.samples()

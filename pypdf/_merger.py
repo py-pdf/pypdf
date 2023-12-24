@@ -46,7 +46,6 @@ from ._reader import PdfReader
 from ._utils import (
     StrByteType,
     deprecate_with_replacement,
-    deprecation_bookmark,
     str_,
 )
 from ._writer import PdfWriter
@@ -90,7 +89,6 @@ class PdfMerger:
     .. deprecated:: 5.0.0
     """
 
-    @deprecation_bookmark(bookmarks="outline")
     def __init__(
         self, strict: bool = False, fileobj: Union[Path, StrByteType] = ""
     ) -> None:
@@ -120,7 +118,6 @@ class PdfMerger:
             self.write(self.fileobj)
         self.close()
 
-    @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
         page_number: int,
@@ -244,7 +241,6 @@ class PdfMerger:
             )
         return stream, encryption_obj
 
-    @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def append(
         self,
         fileobj: Union[StrByteType, PdfReader, Path],
@@ -466,7 +462,6 @@ class PdfMerger:
             if page_index is not None:  # deprecated
                 self.output.add_named_destination_object(named_dest)
 
-    @deprecation_bookmark(bookmarks="outline")
     def _write_outline(
         self,
         outline: Optional[Iterable[OutlineItem]] = None,
@@ -494,7 +489,6 @@ class PdfMerger:
                 del outline_item["/Page"], outline_item["/Type"]
                 last_added = self.output.add_outline_item_dict(outline_item, parent)
 
-    @deprecation_bookmark(bookmark="outline_item")
     def _write_outline_item_on_page(
         self, outline_item: Union[OutlineItem, Destination], page: _MergedPage
     ) -> None:
@@ -547,7 +541,6 @@ class PdfMerger:
                 )
             named_dest[NameObject("/Page")] = NumberObject(page_index)
 
-    @deprecation_bookmark(bookmarks="outline")
     def _associate_outline_items_to_pages(
         self, pages: List[_MergedPage], outline: Optional[Iterable[OutlineItem]] = None
     ) -> None:
@@ -572,7 +565,6 @@ class PdfMerger:
             if page_index is not None:
                 outline_item[NameObject("/Page")] = NumberObject(page_index)
 
-    @deprecation_bookmark(bookmark="outline_item")
     def find_outline_item(
         self,
         outline_item: Dict[str, Any],
@@ -585,7 +577,7 @@ class PdfMerger:
             if isinstance(oi_enum, list):
                 # oi_enum is still an inner node
                 # (OutlineType, if recursive types were supported by mypy)
-                res = self.find_outline_item(outline_item, oi_enum)
+                res = self.find_outline_item(outline_item, oi_enum)  # type: ignore
                 if res:  # deprecated
                     return [i] + res
             elif (
@@ -597,7 +589,6 @@ class PdfMerger:
 
         return None
 
-    @deprecation_bookmark(bookmark="outline_item")
     def find_bookmark(
         self,
         outline_item: Dict[str, Any],

@@ -12,7 +12,6 @@ from pypdf._utils import (
     _human_readable_bytes,
     check_if_whitespace_only,
     deprecate_with_replacement,
-    deprecation_bookmark,
     deprecation_no_replacement,
     mark_location,
     matrix_multiply,
@@ -243,17 +242,6 @@ def test_read_block_backwards_exception():
     with pytest.raises(PdfReadError) as exc:
         read_block_backwards(stream, 7)
     assert exc.value.args[0] == "Could not read malformed PDF file"
-
-
-def test_deprecation_bookmark():
-    @deprecation_bookmark(old_param="new_param")
-    def foo(old_param: int = 1, baz: int = 2) -> None:
-        pass
-
-    with pytest.raises(DeprecationError) as exc:
-        foo(old_param=12, new_param=13)
-    expected_msg = "old_param is deprecated as an argument. Use new_param instead"
-    assert exc.value.args[0] == expected_msg
 
 
 def test_deprecate_with_replacement():

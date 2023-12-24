@@ -63,7 +63,6 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
-    deprecation_bookmark,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
@@ -1511,7 +1510,6 @@ class PdfWriter:
 
         return page_destination_ref
 
-    @deprecation_bookmark(bookmark="outline_item")
     def add_outline_item_dict(
         self,
         outline_item: OutlineItemType,
@@ -2292,7 +2290,6 @@ class PdfWriter:
                 excluded_fields,
             )
 
-    @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
         position: Optional[int],
@@ -2724,7 +2721,6 @@ class PdfWriter:
         """To match the functions from Merger."""
         return
 
-    # @deprecation_bookmark(bookmark="outline_item")
     def find_outline_item(
         self,
         outline_item: Dict[str, Any],
@@ -2754,7 +2750,6 @@ class PdfWriter:
             else:
                 return None
 
-    @deprecation_bookmark(bookmark="outline_item")
     def find_bookmark(
         self,
         outline_item: Dict[str, Any],

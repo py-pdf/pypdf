@@ -41,7 +41,6 @@ from os import SEEK_CUR
 from typing import (
     IO,
     Any,
-    Callable,
     Dict,
     List,
     Optional,
@@ -464,26 +463,6 @@ def logger_warning(msg: str, src: str) -> None:
       to strict=False mode.
     """
     logging.getLogger(src).warning(msg)
-
-
-def deprecation_bookmark(**aliases: str) -> Callable[..., Any]:
-    """
-    Decorator for deprecated term "bookmark".
-
-    To be used for methods and function arguments
-        outline_item = a bookmark
-        outline = a collection of outline items.
-    """
-
-    def decoration(func: Callable[..., Any]) -> Any:
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            rename_kwargs(func.__name__, kwargs, aliases, fail=True)
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decoration
 
 
 def rename_kwargs(

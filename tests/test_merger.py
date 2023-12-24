@@ -7,7 +7,6 @@ import pytest
 
 import pypdf
 from pypdf import PdfMerger, PdfReader, PdfWriter
-from pypdf.errors import DeprecationError
 from pypdf.generic import Destination, Fit
 
 from . import get_data_from_url
@@ -599,48 +598,6 @@ def test_iss1145_with_writer():
     merger = PdfWriter()
     merger.append(PdfReader(BytesIO(get_data_from_url(url, name=name))))
     merger.close()
-
-
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_deprecation_bookmark_decorator_deprecationexcp():
-    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
-    merger = PdfMerger()
-    with pytest.raises(
-        DeprecationError,
-        match=(
-            "import_bookmarks is deprecated as an argument. "
-            "Use import_outline instead"
-        ),
-    ):
-        merger.merge(0, reader, import_bookmarks=True)
-
-
-def test_deprecation_bookmark_decorator_deprecationexcp_with_writer():
-    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
-    merger = PdfWriter()
-    with pytest.raises(
-        DeprecationError,
-        match=(
-            "import_bookmarks is deprecated as an argument. "
-            "Use import_outline instead"
-        ),
-    ):
-        merger.merge(0, reader, import_bookmarks=True)
-
-
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_deprecation_bookmark_decorator_output():
-    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
-    merger = PdfMerger()
-    with pytest.raises(DeprecationError):
-        merger.merge(0, reader, import_bookmarks=True)
-
-
-def test_deprecation_bookmark_decorator_output_with_writer():
-    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
-    merger = PdfWriter()
-    with pytest.raises(DeprecationError):
-        merger.merge(0, reader, import_bookmarks=True)
 
 
 @pytest.mark.enable_socket()
