@@ -1,13 +1,16 @@
+import concurrent.futures
 import ssl
 import urllib.request
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Optional
 from urllib.error import HTTPError
+
+import yaml
 
 from pypdf.generic import DictionaryObject, IndirectObject
 
 
-def get_data_from_url(url: str, name: str) -> bytes:
+def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> bytes:
     """
     Download a File from a URL and return its contents.
 
@@ -22,28 +25,33 @@ def get_data_from_url(url: str, name: str) -> bytes:
     Returns:
         Read File as bytes
     """
-    if url.startswith("file://"):
-        with open(url[7:].replace("\\", "/"), "rb") as fp:
-            return fp.read()
+    if name is None:
+        raise ValueError("A name must always be specified")
+
     cache_dir = Path(__file__).parent / "pdf_cache"
     if not cache_dir.exists():
         cache_dir.mkdir()
     cache_path = cache_dir / name
-    if not cache_path.exists():
-        ssl._create_default_https_context = ssl._create_unverified_context
-        cpt = 3
-        while cpt > 0:
-            try:
-                with urllib.request.urlopen(  # noqa: S310
-                    url
-                ) as response, cache_path.open("wb") as out_file:
-                    out_file.write(response.read())
-                cpt = 0
-            except HTTPError as e:
-                if cpt > 0:
-                    cpt -= 1
-                else:
-                    raise e
+
+    if url is not None:
+        if url.startswith("file://"):
+            with open(url[7:].replace("\\", "/"), "rb") as fp:
+                return fp.read()
+        if not cache_path.exists():
+            ssl._create_default_https_context = ssl._create_unverified_context
+            cpt = 3
+            while cpt > 0:
+                try:
+                    with urllib.request.urlopen(  # noqa: S310
+                        url
+                    ) as response, cache_path.open("wb") as out_file:
+                        out_file.write(response.read())
+                    cpt = 0
+                except HTTPError as e:
+                    if cpt > 0:
+                        cpt -= 1
+                    else:
+                        raise e
     with open(cache_path, "rb") as fp:
         data = fp.read()
     return data
@@ -87,3 +95,51 @@ class ReaderDummy:
 
     def get_reference(self, obj):
         return IndirectObject(idnum=1, generation=1, pdf=self)
+
+
+def is_sublist(child_list, parent_list):
+    """
+    Check if child_list is a sublist of parent_list, with respect to
+    * elements order
+    * elements repetition
+
+    Elements are compared using `==`
+    """
+    if len(child_list) == 0:
+        return True
+    if len(parent_list) == 0:
+        return False
+    if parent_list[0] == child_list[0]:
+        return is_sublist(child_list[1:], parent_list[1:])
+    return is_sublist(child_list, parent_list[1:])
+
+
+def read_yaml_to_list_of_dicts(yaml_file: Path) -> List[Dict[str, str]]:
+    with open(yaml_file) as yaml_input:
+        data = yaml.safe_load(yaml_input)
+    return data
+
+
+def download_test_pdfs():
+    """
+    Run this before the tests are executed to ensure you have everything locally.
+
+    This is especially important to avoid pytest timeouts.
+    """
+    pdfs = read_yaml_to_list_of_dicts(Path(__file__).parent / "example_files.yaml")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        futures = [
+            executor.submit(get_data_from_url, pdf["url"], name=pdf["local_filename"])
+            for pdf in pdfs
+        ]
+        concurrent.futures.wait(futures)
+
+
+def test_csv_consistency():
+    pdfs = read_yaml_to_list_of_dicts(Path(__file__).parent / "example_files.csv")
+    # Ensure the names are unique
+    assert len(pdfs) == len({pdf["name"] for pdf in pdfs})
+
+    # Ensure the urls are unique
+    assert len(pdfs) == len({pdf["url"] for pdf in pdfs})

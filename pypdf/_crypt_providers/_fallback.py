@@ -28,26 +28,29 @@
 from pypdf._crypt_providers._base import CryptBase
 from pypdf.errors import DependencyError
 
-_DEPENDENCY_ERROR_STR = "PyCryptodome is required for AES algorithm"
+_DEPENDENCY_ERROR_STR = "cryptography>=3.1 is required for AES algorithm"
 
 
-class CryptRC4(CryptBase):  # type: ignore
+crypt_provider = ("local_crypt_fallback", "0.0.0")
+
+
+class CryptRC4(CryptBase):
     def __init__(self, key: bytes) -> None:
-        self.S = bytearray(range(256))
+        self.s = bytearray(range(256))
         j = 0
         for i in range(256):
-            j = (j + self.S[i] + key[i % len(key)]) % 256
-            self.S[i], self.S[j] = self.S[j], self.S[i]
+            j = (j + self.s[i] + key[i % len(key)]) % 256
+            self.s[i], self.s[j] = self.s[j], self.s[i]
 
     def encrypt(self, data: bytes) -> bytes:
-        S = bytearray(self.S)
+        s = bytearray(self.s)
         out = [0 for _ in range(len(data))]
         i, j = 0, 0
         for k in range(len(data)):
             i = (i + 1) % 256
-            j = (j + S[i]) % 256
-            S[i], S[j] = S[j], S[i]
-            x = S[(S[i] + S[j]) % 256]
+            j = (j + s[i]) % 256
+            s[i], s[j] = s[j], s[i]
+            x = s[(s[i] + s[j]) % 256]
             out[k] = data[k] ^ x
         return bytes(bytearray(out))
 
@@ -55,7 +58,7 @@ class CryptRC4(CryptBase):  # type: ignore
         return self.encrypt(data)
 
 
-class CryptAES(CryptBase):  # type: ignore
+class CryptAES(CryptBase):
     def __init__(self, key: bytes) -> None:
         pass
 

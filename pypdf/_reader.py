@@ -54,6 +54,7 @@ from ._page_labels import index2label as page_index2page_label
 from ._utils import (
     StrByteType,
     StreamType,
+    b_,
     deprecate_no_replacement,
     deprecation_no_replacement,
     deprecation_with_replacement,
@@ -102,6 +103,7 @@ from .generic import (
     PdfObject,
     TextStringObject,
     TreeObject,
+    ViewerPreferences,
     read_object,
 )
 from .types import OutlineType, PagemodeType
@@ -292,6 +294,19 @@ class PdfReader:
             Defaults to ``None``
     """
 
+    @property
+    def viewer_preferences(self) -> Optional[ViewerPreferences]:
+        """Returns the existing ViewerPreferences as an overloaded dictionary."""
+        o = cast(DictionaryObject, self.trailer["/Root"]).get(
+            CD.VIEWER_PREFERENCES, None
+        )
+        if o is None:
+            return None
+        o = o.get_object()
+        if not isinstance(o, ViewerPreferences):
+            o = ViewerPreferences(o)
+        return o
+
     def __init__(
         self,
         stream: Union[StrByteType, Path],
@@ -305,7 +320,7 @@ class PdfReader:
         self._page_id2num: Optional[
             Dict[Any, Any]
         ] = None  # map page indirect_reference number to Page Number
-        if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
+        if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
                 "PdfReader stream/file object is not in binary mode. "
                 "It may not be read correctly.",
@@ -632,7 +647,8 @@ class PdfReader:
             if "/Off" not in retval[key]["/_States_"]:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
         elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
-            states = []
+            states: List[str] = []
+            retval[key][NameObject("/_States_")] = ArrayObject(states)
             for k in obj.get(FA.Kids, {}):
                 k = k.get_object()
                 for s in list(k["/AP"]["/N"].keys()):
@@ -705,7 +721,7 @@ class PdfReader:
             second and following will get the suffix .2, .3, ...
         """
 
-        def indexed_key(k: str, fields: dict) -> str:
+        def indexed_key(k: str, fields: Dict[Any, Any]) -> str:
             if k not in fields:
                 return k
             else:
@@ -788,8 +804,11 @@ class PdfReader:
                 except IndexError:
                     break
                 i += 1
-                if isinstance(value, DictionaryObject) and "/D" in value:
-                    value = value["/D"]
+                if isinstance(value, DictionaryObject):
+                    if "/D" in value:
+                        value = value["/D"]
+                    else:
+                        continue
                 dest = self._build_destination(key, value)  # type: ignore
                 if dest is not None:
                     retval[key] = dest
@@ -797,7 +816,10 @@ class PdfReader:
             for k__, v__ in tree.items():
                 val = v__.get_object()
                 if isinstance(val, DictionaryObject):
-                    val = val["/D"].get_object()
+                    if "/D" in val:
+                        val = val["/D"].get_object()
+                    else:
+                        continue
                 dest = self._build_destination(k__, val)
                 if dest is not None:
                     retval[k__] = dest
@@ -1020,7 +1042,7 @@ class PdfReader:
         except KeyError:
             if self.strict:
                 raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")
-            title = ""  # type: ignore
+            title = ""
 
         if "/A" in node:
             # Action, PDFv1.7 Section 12.6 (only type GoTo supported)
@@ -1059,7 +1081,7 @@ class PdfReader:
                     f"Removed unexpected destination {dest!r} from destination",
                     __name__,
                 )
-            outline_item = self._build_destination(title, None)  # type: ignore
+            outline_item = self._build_destination(title, None)
 
         # if outline item created, add color, format, and child count if present
         if outline_item:
@@ -1214,7 +1236,7 @@ class PdfReader:
             self.flattened_pages = []
 
         if PA.TYPE in pages:
-            t = pages[PA.TYPE]  # type: ignore
+            t = pages[PA.TYPE]
         # if pdf has no type, considered as a page if /Kids is missing
         elif PA.KIDS not in pages:
             t = "/Page"
@@ -1256,7 +1278,7 @@ class PdfReader:
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
-        stream_data = BytesIO(obj_stm.get_data())
+        stream_data = BytesIO(b_(obj_stm.get_data()))
         for i in range(obj_stm["/N"]):  # type: ignore
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
@@ -1343,7 +1365,7 @@ class PdfReader:
                 idnum, generation = self.read_object_header(self.stream)
             except Exception:
                 if hasattr(self.stream, "getbuffer"):
-                    buf = bytes(self.stream.getbuffer())  # type: ignore
+                    buf = bytes(self.stream.getbuffer())
                 else:
                     p = self.stream.tell()
                     self.stream.seek(0, 0)
@@ -1397,7 +1419,7 @@ class PdfReader:
                 )
         else:
             if hasattr(self.stream, "getbuffer"):
-                buf = bytes(self.stream.getbuffer())  # type: ignore
+                buf = bytes(self.stream.getbuffer())
             else:
                 p = self.stream.tell()
                 self.stream.seek(0, 0)
@@ -1690,7 +1712,7 @@ class PdfReader:
                 except Exception:
                     # if something wrong occurred
                     if hasattr(stream, "getbuffer"):
-                        buf = bytes(stream.getbuffer())  # type: ignore
+                        buf = bytes(stream.getbuffer())
                     else:
                         p = stream.tell()
                         stream.seek(0, 0)
@@ -1867,7 +1889,7 @@ class PdfReader:
         xrefstream = cast(ContentStream, read_object(stream, self))
         assert cast(str, xrefstream["/Type"]) == "/XRef"
         self.cache_indirect_object(generation, idnum, xrefstream)
-        stream_data = BytesIO(xrefstream.get_data())
+        stream_data = BytesIO(b_(xrefstream.get_data()))
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
         idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
@@ -2118,7 +2140,7 @@ class PdfReader:
                 if isinstance(f, IndirectObject):
                     field = cast(Optional[EncodedStreamObject], f.get_object())
                     if field:
-                        es = zlib.decompress(field._data)
+                        es = zlib.decompress(b_(field._data))
                         retval[tag] = es
         return retval
 
@@ -2276,7 +2298,7 @@ class PdfReader:
         return attachments
 
 
-class LazyDict(Mapping):
+class LazyDict(Mapping[Any, Any]):
     def __init__(self, *args: Any, **kw: Any) -> None:
         self._raw_dict = dict(*args, **kw)
 

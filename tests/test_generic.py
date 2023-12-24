@@ -426,7 +426,7 @@ def test_dictionaryobject_read_from_stream_stream_stream_valid(
         # TODO: What should happen with the stream?
         assert do == {"/S": "/GoTo"}
         if length in (6, 10):
-            assert b"BT /F1" in do._data
+            assert b"BT /F1" in do.get_data()
         raise PdfReadError("__ALLGOOD__")
     assert should_fail ^ (exc.value.args[0] == "__ALLGOOD__")
 
@@ -1087,7 +1087,9 @@ def test_create_string_object_force():
         ("99900000000000000123", "99900000000000000000"),
         ("99900000000000000123.456000", "99900000000000000000"),
         ("0.00000000000000000000123", "0.00000000000000000000123"),
+        ("0.00000123", "0.00000123"),
         ("0.00000000000000000000123000", "0.00000000000000000000123"),
+        ("-4.6", "-4.6"),  # from #1910
         # (
         #    "50032481330523882508234.00000000000000000000123000",
         #    "50032481330523882508234.00000000000000000000123",

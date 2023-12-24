@@ -100,9 +100,10 @@ def test_pdfreader_file_load():
         text = page.extract_text().encode("utf-8")
 
         # Compare the text of the PDF to a known source
-        for expected_line, actual_line in zip(text.split(b"\n"), pdftext.split(b"\n")):
+        for expected_line, actual_line in zip(text.splitlines(), pdftext.splitlines()):
             assert expected_line == actual_line
 
+        pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows
         assert text == pdftext, (
             "PDF extracted text differs from expected value.\n\n"
             "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
@@ -1026,3 +1027,21 @@ def test_iss():
     for i, page in enumerate(reader.pages):
         print(i)
         page.extract_text()
+
+
+@pytest.mark.enable_socket()
+def test_cr_with_cm_operation():
+    """Issue #2138"""
+    url = "https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf"
+    name = "iss2138.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert (
+        """STATUS: FNL
+STYLE: 1172 1172 KNIT SHORTIE SUMMER-B 2023
+Company: AMERICAN EAGLE OUTFITTERS
+Division / Dept: 50 / 170
+Season: SUMMER-B 2023"""
+        in reader.pages[0].extract_text()
+    )
+    # currently threre is still a white space on last line missing
+    # so we can not do a full comparison.

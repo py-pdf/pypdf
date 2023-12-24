@@ -7,8 +7,10 @@ import pytest
 import pypdf._utils
 from pypdf._utils import (
     File,
+    Version,
     _get_max_pdf_version_header,
     _human_readable_bytes,
+    check_if_whitespace_only,
     deprecate_with_replacement,
     deprecation_bookmark,
     deprecation_no_replacement,
@@ -24,6 +26,8 @@ from pypdf._utils import (
     skip_over_whitespace,
 )
 from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
+
+from . import is_sublist
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -43,6 +47,23 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 )
 def test_skip_over_whitespace(stream, expected):
     assert skip_over_whitespace(stream) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (b"foo", False),
+        (b" a", False),
+        (b" a\n b", False),
+        (b"", True),
+        (b" ", True),
+        (b"  ", True),
+        (b"  \n", True),
+        (b"    \n", True),
+    ],
+)
+def test_check_if_whitespace_only(value, expected):
+    assert check_if_whitespace_only(value) is expected
 
 
 def test_read_until_whitespace():
@@ -238,7 +259,6 @@ def test_deprecation_bookmark():
 def test_deprecate_with_replacement():
     def foo() -> None:
         deprecate_with_replacement("foo", "bar", removed_in="4.3.2")
-        pass
 
     with pytest.warns(
         DeprecationWarning,
@@ -250,7 +270,6 @@ def test_deprecate_with_replacement():
 def test_deprecation_no_replacement():
     def foo() -> None:
         deprecation_no_replacement("foo", removed_in="4.3.2")
-        pass
 
     with pytest.raises(
         DeprecationError,
@@ -351,3 +370,69 @@ def test_parse_datetime_err():
         parse_iso8824_date("D:20210408T054711Z")
     assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
     assert parse_iso8824_date("D:20210408054711").tzinfo is None
+
+
+def test_is_sublist():
+    # Basic checks:
+    assert is_sublist([0, 1], [0, 1, 2]) is True
+    assert is_sublist([0, 2], [0, 1, 2]) is True
+    assert is_sublist([1, 2], [0, 1, 2]) is True
+    assert is_sublist([0, 3], [0, 1, 2]) is False
+    # Ensure order is checked:
+    assert is_sublist([1, 0], [0, 1, 2]) is False
+    # Ensure duplicates are handled:
+    assert is_sublist([0, 1, 1], [0, 1, 1, 2]) is True
+    assert is_sublist([0, 1, 1], [0, 1, 2]) is False
+    # Edge cases with empty lists:
+    assert is_sublist([], [0, 1, 2]) is True
+    assert is_sublist([0, 1], []) is False
+    # Self-sublist edge case:
+    assert is_sublist([0, 1, 2], [0, 1, 2]) is True
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "is_less_than"),
+    [
+        ("1", "2", True),
+        ("2", "1", False),
+        ("1", "1", False),
+        ("1.0", "1.1", True),
+        ("1", "1.1", True),
+        # suffix left
+        ("1a", "2", True),
+        ("2a", "1", False),
+        ("1a", "1", False),
+        ("1.0a", "1.1", True),
+        # I'm not sure about that, but seems special enoguht that it
+        # probably doesn't matter:
+        ("1a", "1.1", False),
+        # suffix right
+        ("1", "2a", True),
+        ("2", "1a", False),
+        ("1", "1a", True),
+        ("1.0", "1.1a", True),
+        ("1", "1.1a", True),
+        ("", "0.0.0", True),
+        # just suffix matters ... hm, I think this is actually wrong:
+        ("1.0a", "1.0", False),
+        ("1.0", "1.0a", True),
+    ],
+)
+def test_version_compare(left, right, is_less_than):
+    assert (Version(left) < Version(right)) is is_less_than
+
+
+def test_version_compare_equal_str():
+    a = Version("1.0")
+    assert (a == "1.0") is False
+
+
+def test_version_compare_lt_str():
+    a = Version("1.0")
+    with pytest.raises(ValueError) as exc:
+        a < "1.0"  # noqa
+    assert exc.value.args[0] == "Version cannot be compared against <class 'str'>"
+
+
+def test_bad_version():
+    assert Version("a").components == [(0, "a")]

@@ -281,8 +281,13 @@ class IndirectObject(PdfObject):
         if id(self.pdf) not in pdf_dest._id_translated:
             pdf_dest._id_translated[id(self.pdf)] = {}
 
-        if not force_duplicate and self.idnum in pdf_dest._id_translated[id(self.pdf)]:
+        if self.idnum in pdf_dest._id_translated[id(self.pdf)]:
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
+            if force_duplicate:
+                assert dup is not None
+                assert dup.indirect_reference is not None
+                idref = dup.indirect_reference
+                return IndirectObject(idref.idnum, idref.generation, idref.pdf)
         else:
             obj = self.get_object()
             # case observed : a pointed object can not be found
@@ -374,6 +379,9 @@ class IndirectObject(PdfObject):
         return IndirectObject.read_from_stream(stream, pdf)
 
 
+FLOAT_WRITE_PRECISION = 8  # shall be min 5 digits max, allow user adj
+
+
 class FloatObject(float, PdfObject):
     def __new__(
         cls, value: Union[str, Any] = "0.0", context: Optional[Any] = None
@@ -404,8 +412,8 @@ class FloatObject(float, PdfObject):
     def myrepr(self) -> str:
         if self == 0:
             return "0.0"
-        nb = int(log10(abs(self)))
-        s = f"{self:.{max(1,16-nb)}f}".rstrip("0").rstrip(".")
+        nb = FLOAT_WRITE_PRECISION - int(log10(abs(self)))
+        s = f"{self:.{max(1,nb)}f}".rstrip("0").rstrip(".")
         return s
 
     def __repr__(self) -> str:
@@ -719,7 +727,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
-    retval = b""
+    retval = bytearray()
     for c in unicode_string:
         try:
             retval += b_(chr(_pdfdoc_encoding_rev[c]))

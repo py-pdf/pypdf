@@ -1,6 +1,7 @@
 """Test the pypdf.filters module."""
+import shutil
 import string
-import sys
+import subprocess
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
@@ -10,7 +11,7 @@ import pytest
 from PIL import Image
 
 from pypdf import PdfReader
-from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -21,6 +22,7 @@ from pypdf.filters import (
 from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject
 
 from . import get_data_from_url
+from .test_encryption import HAS_AES
 from .test_images import image_similarity
 
 filter_inputs = (
@@ -69,16 +71,15 @@ def test_flatedecode_unsupported_predictor():
             codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
 
 
-@pytest.mark.parametrize(
-    "params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}]), "a"]
-)
+@pytest.mark.parametrize("params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}])])
 def test_flate_decode_decompress_with_array_params(params):
     """FlateDecode decode() method works correctly with array parameters."""
     codec = FlateDecode()
     s = ""
     s = s.encode()
     encoded = codec.encode(s)
-    assert codec.decode(encoded, params) == s
+    with pytest.raises(DeprecationError):
+        assert codec.decode(encoded, params) == s
 
 
 @pytest.mark.parametrize(
@@ -141,9 +142,7 @@ def test_decode_ahx():
     See #1979
     Gray Image in CMYK : requiring reverse
     """
-    url = "https://github.com/py-pdf/pypdf/files/12090692/New.Jersey.Coinbase.staking.securities.charges.2023-0606_Coinbase-Penalty-and-C-D.pdf"
-    name = "NewJersey.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="NewJersey.pdf")))
     for p in reader.pages:
         _ = list(p.images.keys())
 
@@ -205,7 +204,7 @@ def test_ccitparameters():
 )
 def test_ccitt_get_parameters(parameters, expected_k):
     parmeters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
-    assert parmeters.K == expected_k
+    assert parmeters.K == expected_k  # noqa: SIM300
 
 
 def test_ccitt_fax_decode():
@@ -230,9 +229,7 @@ def test_ccitt_fax_decode():
 @pytest.mark.enable_socket()
 @patch("pypdf._reader.logger_warning")
 def test_decompress_zlib_error(mock_logger_warning):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/952/952445.pdf"
-    name = "tika-952445.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-952445.pdf")))
     for page in reader.pages:
         page.extract_text()
     mock_logger_warning.assert_called_with(
@@ -242,9 +239,7 @@ def test_decompress_zlib_error(mock_logger_warning):
 
 @pytest.mark.enable_socket()
 def test_lzw_decode_neg1():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/921/921632.pdf"
-    name = "tika-921632.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-921632.pdf")))
     page = reader.pages[47]
     with pytest.raises(PdfReadError) as exc:
         page.extract_text()
@@ -253,35 +248,53 @@ def test_lzw_decode_neg1():
 
 @pytest.mark.enable_socket()
 def test_issue_399():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976970.pdf"
-    name = "tika-976970.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-976970.pdf")))
     reader.pages[1].extract_text()
 
 
 @pytest.mark.enable_socket()
-def test_image_without_imagemagic():
-    with patch.dict(sys.modules):
-        sys.modules["PIL"] = None
-        url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
-        name = "tika-914102.pdf"
-        data = BytesIO(get_data_from_url(url, name=name))
-        reader = PdfReader(data, strict=True)
+def test_image_without_pillow(tmp_path):
+    name = "tika-914102.pdf"
+    pdf_path = Path(__file__).parent / "pdf_cache" / name
+    pdf_path_str = str(pdf_path.resolve()).replace("\\", "/")
 
-        for page in reader.pages:
-            with pytest.raises(ImportError) as exc:
-                page.images[0]
-            assert exc.value.args[0] == (
-                "pillow is required to do image extraction. "
-                "It can be installed via 'pip install pypdf[image]'"
-            )
+    source_file = tmp_path / "script.py"
+    source_file.write_text(
+        f"""
+import sys
+from pypdf import PdfReader
+
+import pytest
+
+
+sys.modules["PIL"] = None
+reader = PdfReader("{pdf_path_str}", strict=True)
+
+for page in reader.pages:
+    with pytest.raises(ImportError) as exc:
+        page.images[0]
+    assert exc.value.args[0] == (
+        "pillow is required to do image extraction. "
+        "It can be installed via 'pip install pypdf[image]'"
+    ), exc.value.args[0]
+"""
+    )
+    result = subprocess.run(  # noqa: UP022
+        [shutil.which("python"), source_file],  # noqa: S603
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    assert result.returncode == 0
+    assert result.stdout == b""
+    assert (
+        result.stderr.replace(b"\r", b"")
+        == b"Superfluous whitespace found in object header b'4' b'0'\n"
+    )
 
 
 @pytest.mark.enable_socket()
 def test_issue_1737():
-    url = "https://github.com/py-pdf/pypdf/files/11068604/tt1.pdf"
-    name = "iss1737.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss1737.pdf")))
     reader.pages[0]["/Resources"]["/XObject"]["/Im0"].get_data()
     reader.pages[0]["/Resources"]["/XObject"]["/Im1"].get_data()
     reader.pages[0]["/Resources"]["/XObject"]["/Im2"].get_data()
@@ -294,9 +307,7 @@ def test_pa_image_extraction():
 
     This is a regression test for issue #1801
     """
-    url = "https://github.com/py-pdf/pypdf/files/11250359/test_img.pdf"
-    name = "issue-1801.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="issue-1801.pdf")))
 
     page0 = reader.pages[0]
     images = page0.images
@@ -304,20 +315,14 @@ def test_pa_image_extraction():
     assert images[0].name == "Im1.png"
 
     # Ensure visual appearence
-    data = get_data_from_url(
-        "https://user-images.githubusercontent.com/"
-        "1658117/232842886-9d1b0726-3a5b-430d-8464-595d919c266c.png",
-        "issue-1801.png",
-    )
+    data = get_data_from_url(name="issue-1801.png")
     assert data == images[0].data
 
 
 @pytest.mark.enable_socket()
 def test_1bit_image_extraction():
     """Cf issue #1814"""
-    url = "https://github.com/py-pdf/pypdf/files/11336817/grimm10.pdf"
-    name = "grimm10"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="grimm10")))
     for p in reader.pages:
         p.images
 
@@ -327,9 +332,9 @@ def test_png_transparency_reverse():
     """Cf issue #1599"""
     pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
     reader = PdfReader(pdf_path)
-    url_png = "https://user-images.githubusercontent.com/4083478/236685544-a1940b06-fb42-4bb1-b589-1e4ad429d68e.png"
-    name_png = "labeled-edges-center-image.png"
-    _refimg = Image.open(BytesIO(get_data_from_url(url_png, name=name_png)))
+    _refimg = Image.open(
+        BytesIO(get_data_from_url(name="labeled-edges-center-image.png"))
+    )
     data = reader.pages[0].images[0]
     _img = Image.open(BytesIO(data.data))
     assert ".jp2" in data.name
@@ -339,12 +344,8 @@ def test_png_transparency_reverse():
 @pytest.mark.enable_socket()
 def test_iss1787():
     """Cf issue #1787"""
-    url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
-    name = "pdf_font_garbled.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    url_png = "https://user-images.githubusercontent.com/4083478/236793172-09340aef-3440-4c8a-af85-a91cdad27d46.png"
-    name_png = "watermark1.png"
-    refimg = Image.open(BytesIO(get_data_from_url(url_png, name=name_png)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="pdf_font_garbled.pdf")))
+    refimg = Image.open(BytesIO(get_data_from_url(name="watermark1.png")))
     data = reader.pages[0].images[0]
     img = Image.open(BytesIO(data.data))
     assert ".png" in data.name
@@ -360,12 +361,8 @@ def test_iss1787():
 @pytest.mark.enable_socket()
 def test_tiff_predictor():
     """Decode Tiff Predictor 2 Images"""
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977609.pdf"
-    name = "tika-977609.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    url_png = "https://user-images.githubusercontent.com/4083478/236793166-288b4b59-dee3-49fd-a04e-410aab06199a.png"
-    name_png = "tifimage.png"
-    refimg = Image.open(BytesIO(get_data_from_url(url_png, name=name_png)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-977609.pdf")))
+    refimg = Image.open(BytesIO(get_data_from_url(name="tifimage.png")))
     data = reader.pages[0].images[0]
     img = Image.open(BytesIO(data.data))
     assert ".png" in data.name
@@ -375,15 +372,11 @@ def test_tiff_predictor():
 @pytest.mark.enable_socket()
 def test_rgba():
     """Decode rgb with transparency"""
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf"
-    name = "tika-972174.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    url_png = "https://user-images.githubusercontent.com/4083478/238288207-b77dd38c-34b4-4f4f-810a-bf9db7ca0414.png"
-    name_png = "tika-972174_p0-im0.png"
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-972174.pdf")))
     data = reader.pages[0].images[0]
     assert ".jp2" in data.name
     similarity = image_similarity(
-        data.image, BytesIO(get_data_from_url(url_png, name=name_png))
+        data.image, BytesIO(get_data_from_url(name="tika-972174_p0-im0.png"))
     )
     assert similarity > 0.99
 
@@ -396,23 +389,15 @@ def test_cmyk():
         from Crypto.Cipher import AES  # noqa: F401
     except ImportError:
         return  # the file is encrypted
-    url = "https://github.com/py-pdf/pypdf/files/11962229/DB-5368770_Vitocal_200-G.pdf"
-    name = "Vitocal.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    url_png = "https://user-images.githubusercontent.com/4083478/251283945-38c5b92c-cf94-473c-bb57-a51b74fc39be.jpg"
-    name_png = "VitocalImage.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    reader = PdfReader(BytesIO(get_data_from_url(name="Vitocal.pdf")))
+    refimg = BytesIO(get_data_from_url(name="VitocalImage.png"))
     data = reader.pages[1].images[0]
     assert data.image.mode == "CMYK"
     assert ".jpg" in data.name
     assert image_similarity(data.image, refimg) > 0.99
     # deflate
-    url = "https://github.com/py-pdf/pypdf/files/12078533/cmyk2.pdf"
-    name = "cmyk_deflate.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    url_png = "https://github.com/py-pdf/pypdf/files/12078556/cmyk.tif.txt"
-    name_png = "cmyk_deflate.tif"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    reader = PdfReader(BytesIO(get_data_from_url(name="cmyk_deflate.pdf")))
+    refimg = BytesIO(get_data_from_url(name="cmyk_deflate.tif"))
     data = reader.pages[0].images[0]
     assert data.image.mode == "CMYK"
     assert ".tif" in data.name
@@ -422,9 +407,7 @@ def test_cmyk():
 @pytest.mark.enable_socket()
 def test_iss1863():
     """Test doc from iss1863"""
-    url = "https://github.com/py-pdf/pypdf/files/11578953/USC.EMBA.-.Pre-Season.and.Theme.I.pdf"
-    name = "o1whh9b3.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="o1whh9b3.pdf")))
     for p in reader.pages:
         for i in p.images:
             i.name
@@ -432,9 +415,7 @@ def test_iss1863():
 
 @pytest.mark.enable_socket()
 def test_read_images():
-    url = "https://www.selbst.de/paidcontent/dl/64733/72916"
-    name = "selbst.72916.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="selbst.72916.pdf")))
     page = reader.pages[0]
     for _ in page.images:
         pass
@@ -442,9 +423,7 @@ def test_read_images():
 
 @pytest.mark.enable_socket()
 def test_cascaded_filters_images():
-    url = "https://github.com/py-pdf/pypdf/files/11845099/GeoTopo-komprimiert.pdf"
-    name = "iss1912.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss1912.pdf")))
     # for focus, analyse the page 23
     for p in reader.pages:
         for i in p.images:
@@ -453,40 +432,28 @@ def test_cascaded_filters_images():
 
 @pytest.mark.enable_socket()
 def test_calrgb():
-    url = "https://github.com/py-pdf/pypdf/files/12061061/tt.pdf"
-    name = "calRGB.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="calRGB.pdf")))
     reader.pages[0].images[0]
 
 
 @pytest.mark.enable_socket()
 def test_index_lookup():
     """The lookup is provided as an str and bytes"""
-    url = "https://github.com/py-pdf/pypdf/files/12090523/2023.USDC_Circle.Examination.Report.May.2023.pdf"
-    name = "2023USDC.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="2023USDC.pdf")))
     # TextStringObject Lookup
-    url_png = "https://github.com/py-pdf/pypdf/files/12144094/im1.png.txt"
-    name_png = "iss1982_im1.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(name="iss1982_im1.png"))
     data = reader.pages[0].images[-1]
     assert data.image.mode == "RGB"
     assert image_similarity(data.image, refimg) > 0.999
     # ByteStringObject Lookup
-    url_png = "https://github.com/py-pdf/pypdf/files/12144093/im2.png.txt"
-    name_png = "iss1982_im2.png"
-    refimg = BytesIO(get_data_from_url(url_png, name=name_png))
+    refimg = BytesIO(get_data_from_url(name="iss1982_im2.png"))
     data = reader.pages[-1].images[-1]
     assert data.image.mode == "RGB"
     assert image_similarity(data.image, refimg) > 0.999
     # indexed CMYK images
     # currently with a  TODO as we convert to RBG the palette
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf"
-    name = "tika-972174.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    url_png = "https://github.com/py-pdf/pypdf/assets/4083478/56c93021-33cd-4387-ae13-5cbe7e673f42"
-    name_png = "usa.png"
-    refimg = Image.open(BytesIO(get_data_from_url(url_png, name=name_png)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-972174.pdf")))
+    refimg = Image.open(BytesIO(get_data_from_url(name="usa.png")))
     data = reader.pages[0].images["/Im3"]
     # assert data.image.mode == "PA" but currently "RGBA"
     assert image_similarity(data.image, refimg) > 0.999
@@ -495,9 +462,7 @@ def test_index_lookup():
 @pytest.mark.enable_socket()
 def test_2bits_image():
     """From #1954, test with 2bits image. TODO: 4bits also"""
-    url = "https://github.com/py-pdf/pypdf/files/12050253/tt.pdf"
-    name = "paid.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="paid.pdf")))
     url_png = "https://user-images.githubusercontent.com/4083478/253568117-ca95cc85-9dea-4145-a5e0-032f1c1aa322.png"
     name_png = "Paid.png"
     refimg = BytesIO(get_data_from_url(url_png, name=name_png))
@@ -585,3 +550,51 @@ def test_jpx_no_spacecode():
     with pytest.raises(PdfReadError) as exc:
         reader.pages[0].images[0]
     assert exc.value.args[0].startswith("ColorSpace field not found")
+
+
+@pytest.mark.enable_socket()
+def test_encodedstream_lookup():
+    """From #2124"""
+    url = "https://github.com/py-pdf/pypdf/files/12455580/10.pdf"
+    name = "iss2124.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[12].images[0]
+
+
+@pytest.mark.enable_socket()
+def test_convert_1_to_la():
+    """From #2165"""
+    url = "https://github.com/py-pdf/pypdf/files/12543290/whitepaper.WBT.token.blockchain.whitepaper.pdf"
+    name = "iss2165.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    for i in reader.pages[13].images:
+        _ = i
+
+
+@pytest.mark.enable_socket()
+def test_nested_device_n_color_space():
+    """From #2240"""
+    url = "https://github.com/py-pdf/pypdf/files/12814018/out1.pdf"
+    name = "issue2240.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].images[0]
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_flate_decode_with_image_mode_1():
+    """From #2248"""
+    url = "https://github.com/py-pdf/pypdf/files/12847339/Prototype-Declaration-VDE4110-HYD-5000-20000-ZSS-DE.pdf"
+    name = "issue2248.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    for image in reader.pages[7].images:
+        _ = image
+
+
+@pytest.mark.enable_socket()
+def test_flate_decode_with_image_mode_1__whitespace_at_end_of_lookup():
+    """From #2331"""
+    url = "https://github.com/py-pdf/pypdf/files/13611048/out1.pdf"
+    name = "issue2331.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].images[0]

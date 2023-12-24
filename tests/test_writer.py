@@ -1,11 +1,15 @@
 """Test the pypdf._writer module."""
 import re
+import shutil
+import subprocess
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from pypdf import (
+    ImageType,
     ObjectDeletionFlag,
     PageObject,
     PdfMerger,
@@ -28,12 +32,14 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from . import get_data_from_url
+from . import get_data_from_url, is_sublist
+from .test_images import image_similarity
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
+GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
 def test_writer_exception_non_binary(tmp_path, caplog):
@@ -131,6 +137,9 @@ def writer_operate(writer: PdfWriter) -> None:
     )
     writer.add_outline_item(
         "The XYZ fit", 0, oi, (255, 0, 15), True, True, Fit.xyz(left=10, top=20, zoom=3)
+    )
+    writer.add_outline_item(
+        "The XYZ fit no args", 0, oi, (255, 0, 15), True, True, Fit.xyz()
     )
     writer.add_outline_item(
         "The FitH fit", 0, oi, (255, 0, 15), True, True, Fit.fit_horizontally(top=10)
@@ -312,6 +321,8 @@ def test_remove_images(pdf_file_path, input_path):
     page = reader.pages[0]
     writer.insert_page(page, 0)
     writer.remove_images()
+    page_contents_stream = writer.pages[0]["/Contents"]._data
+    assert len(page_contents_stream.strip())
 
     # finally, write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
@@ -321,7 +332,29 @@ def test_remove_images(pdf_file_path, input_path):
         reader = PdfReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
             extracted_text = reader.pages[0].extract_text()
+            assert extracted_text
             assert "Lorem ipsum dolor sit amet" in extracted_text
+
+
+@pytest.mark.enable_socket()
+def test_remove_images_sub_level():
+    """Cf #2035"""
+    url = "https://github.com/py-pdf/pypdf/files/12394781/2210.03142-1.pdf"
+    name = "iss2103.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    writer.remove_images()
+    assert (
+        len(
+            [
+                o.get_object()
+                for o in writer.pages[0]["/Resources"]["/XObject"]["/Fm1"][
+                    "/Resources"
+                ]["/XObject"]["/Im1"]["/Resources"]["/XObject"].values()
+                if not isinstance(o.get_object(), NullObject)
+            ]
+        )
+        == 0
+    )
 
 
 @pytest.mark.parametrize(
@@ -954,7 +987,9 @@ def test_colors_in_outline_item(pdf_file_path):
     reader2 = PdfReader(pdf_file_path)
     for outline_item in reader2.outline:
         # convert float to string because of mutability
-        assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
+        assert ["%.5f" % c for c in outline_item.color] == [
+            "%.5f" % p for p in purple_rgb
+        ]
 
 
 @pytest.mark.samples()
@@ -1235,23 +1270,22 @@ def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    original_cs_operations = ContentStream(
+        reader.pages[0].get_contents(), reader
+    ).operations
     writer = PdfWriter()
     page_1 = writer.add_blank_page(
         reader.pages[0].mediabox[2], reader.pages[0].mediabox[3]
     )
     page_1.merge_transformed_page(reader.pages[0], Transformation())
-    assert (
-        ContentStream(reader.pages[0].get_contents(), reader).get_data()
-        in page_1.get_contents().get_data()
-    )
+    page_1_cs_operations = page_1.get_contents().operations
+    assert is_sublist(original_cs_operations, page_1_cs_operations)
     page_1 = writer.add_blank_page(
         reader.pages[0].mediabox[2], reader.pages[0].mediabox[3]
     )
     page_1.merge_page(reader.pages[0])
-    assert (
-        ContentStream(reader.pages[0].get_contents(), reader).get_data()
-        in page_1.get_contents().get_data()
-    )
+    page_1_cs_operations = page_1.get_contents().operations
+    assert is_sublist(original_cs_operations, page_1_cs_operations)
 
 
 def test_attachments():
@@ -1567,6 +1601,98 @@ def test_watermark():
 
 
 @pytest.mark.enable_socket()
+@pytest.mark.timeout(4)
+def test_watermarking_speed():
+    url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
+    name = "bgwatermark.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://arxiv.org/pdf/2201.00214.pdf"
+    name = "2201.00214.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    for p in writer.pages:
+        p.merge_page(reader.pages[0], over=False)
+    out_pdf_bytesio = BytesIO()
+    writer.write(out_pdf_bytesio)
+    pdf_size_in_mib = len(out_pdf_bytesio.getvalue()) / 1024 / 1024
+    assert pdf_size_in_mib < 20
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+def test_watermark_rendering(tmp_path):
+    """Ensure the visual appearance of watermarking stays correct."""
+    url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
+    name = "bgwatermark.pdf"
+    watermark = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    url = "https://github.com/py-pdf/pypdf/files/11985888/source.pdf"
+    name = "srcwatermark.pdf"
+    page = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
+    writer = PdfWriter()
+    page.merge_page(watermark, over=False)
+    writer.add_page(page)
+
+    target_png_path = tmp_path / "target.png"
+    url = "https://github.com/py-pdf/pypdf/assets/96178532/d5c72d0e-7047-4504-bbf6-bc591c80d7c0"
+    name = "dstwatermark.png"
+    target_png_path.write_bytes(get_data_from_url(url, name=name))
+
+    pdf_path = tmp_path / "out.pdf"
+    png_path = tmp_path / "out.png"
+    writer.write(pdf_path)
+
+    # False positive: https://github.com/PyCQA/bandit/issues/333
+    subprocess.run(
+        [  # noqa: S603
+            GHOSTSCRIPT_BINARY,
+            "-sDEVICE=pngalpha",
+            "-o",
+            png_path,
+            pdf_path,
+        ]
+    )
+    assert png_path.is_file()
+    assert image_similarity(png_path, target_png_path) >= 0.95
+
+
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+def test_watermarking_reportlab_rendering(tmp_path):
+    """
+    This test is showing a rotated+mirrored watermark in pypdf==3.15.4.
+
+    Replacing the generate_base with e.g. the crazyones did not show the issue.
+    """
+    base_path = SAMPLE_ROOT / "022-pdfkit/pdfkit.pdf"
+    watermark_path = SAMPLE_ROOT / "013-reportlab-overlay/reportlab-overlay.pdf"
+
+    reader = PdfReader(base_path)
+    base_page = reader.pages[0]
+    watermark = PdfReader(watermark_path).pages[0]
+
+    writer = PdfWriter()
+    base_page.merge_page(watermark)
+    writer.add_page(base_page)
+
+    target_png_path = RESOURCE_ROOT / "test_watermarking_reportlab_rendering.png"
+    pdf_path = tmp_path / "out.pdf"
+    png_path = tmp_path / "test_watermarking_reportlab_rendering.png"
+
+    writer.write(pdf_path)
+    # False positive: https://github.com/PyCQA/bandit/issues/333
+    subprocess.run(
+        [  # noqa: S603
+            GHOSTSCRIPT_BINARY,
+            "-r120",
+            "-sDEVICE=pngalpha",
+            "-o",
+            png_path,
+            pdf_path,
+        ]
+    )
+    assert png_path.is_file()
+    assert image_similarity(png_path, target_png_path) >= 0.999
+
+
+@pytest.mark.enable_socket()
 def test_da_missing_in_annot():
     url = "https://github.com/py-pdf/pypdf/files/12136285/Building.Division.Permit.Application.pdf"
     name = "BuildingDivisionPermitApplication.pdf"
@@ -1653,3 +1779,254 @@ def test_no_t_in_articles():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_no_i_in_articles():
+    """Cf #2089"""
+    url = "https://github.com/py-pdf/pypdf/files/12352793/kim2002.pdf"
+    name = "iss2089.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_damaged_pdf_length_returning_none():
+    """
+    Cf #140
+    https://github.com/py-pdf/pypdf/issues/140#issuecomment-1685380549
+    """
+    url = "https://github.com/py-pdf/pypdf/files/12168578/bad_pdf_example.pdf"
+    name = "iss140_bad_pdf.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+
+
+@pytest.mark.enable_socket()
+def test_viewerpreferences():
+    """Add Tests for ViewerPreferences"""
+    url = "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf"
+    name = "2015._pb_decode_pg0.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    v = reader.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    writer = PdfWriter(clone_from=reader)
+    v = writer.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+    assert v.print_area == "/CropBox"
+    with pytest.raises(ValueError):
+        v.non_fullscreen_pagemode = "toto"
+    with pytest.raises(ValueError):
+        v.non_fullscreen_pagemode = "/toto"
+    v.non_fullscreen_pagemode = "/UseOutlines"
+    assert (
+        writer._root_object["/ViewerPreferences"]["/NonFullScreenPageMode"]
+        == "/UseOutlines"
+    )
+    writer = PdfWriter(clone_from=reader)
+    v = writer.viewer_preferences
+    assert v.center_window == True  # noqa: E712
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+
+    writer = PdfWriter(clone_from=reader)
+    writer._root_object[NameObject("/ViewerPreferences")] = writer._add_object(
+        writer._root_object["/ViewerPreferences"]
+    )
+    v = writer.viewer_preferences
+    v.center_window = False
+    assert (
+        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
+        == False  # noqa: E712
+    )
+    v.num_copies = 1
+    assert v.num_copies == 1
+    assert v.print_pagerange is None
+    with pytest.raises(ValueError):
+        v.print_pagerange = "toto"
+    v.print_pagerange = ArrayObject()
+    assert len(v.print_pagerange) == 0
+
+    writer.create_viewer_preferences()
+    assert len(writer._root_object["/ViewerPreferences"]) == 0
+    writer.viewer_preferences.direction = "/R2L"
+    assert len(writer._root_object["/ViewerPreferences"]) == 1
+
+    del reader.trailer["/Root"]["/ViewerPreferences"]
+    assert reader.viewer_preferences is None
+    writer = PdfWriter(clone_from=reader)
+    assert writer.viewer_preferences is None
+
+
+def test_extra_spaces_in_da_text(caplog):
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "form.pdf")
+    t = writer.pages[0]["/Annots"][0].get_object()["/DA"]
+    t = t.replace("/Helv", "/Helv   ")
+    writer.pages[0]["/Annots"][0].get_object()[NameObject("/DA")] = TextStringObject(t)
+    writer.update_page_form_field_values(
+        writer.pages[0], {"foo": "abcd"}, auto_regenerate=False
+    )
+    t = writer.pages[0]["/Annots"][0].get_object()["/AP"]["/N"].get_data()
+    assert "Font dictionary for  not found." not in caplog.text
+    assert b"/Helv" in t
+    assert b"(abcd)" in t
+
+
+@pytest.mark.enable_socket()
+def test_object_contains_indirect_reference_to_self():
+    url = "https://github.com/py-pdf/pypdf/files/12389243/testbook.pdf"
+    name = "iss2102.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    width, height = 595, 841
+    outpage = writer.add_blank_page(width, height)
+    outpage.merge_page(reader.pages[6])
+    writer.append(reader)
+
+
+def test_remove_image_per_type():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "reportlab-inline-image.pdf")
+    writer.remove_images(ImageType.INLINE_IMAGES)
+
+    assert all(
+        x not in writer.pages[0].get_contents().get_data()
+        for x in (b"BI", b"ID", b"EI")
+    )
+
+    with pytest.raises(DeprecationWarning):
+        writer.remove_images(True)
+
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+    writer.remove_images(ImageType.DRAWING_IMAGES)
+    assert all(
+        x not in writer.pages[1].get_contents().get_data()
+        for x in (b" re\n", b"W*", b"f*")
+    )
+    assert all(
+        x in writer.pages[1].get_contents().get_data() for x in (b" TJ\n", b"rg", b"Tm")
+    )
+    assert all(
+        x not in writer.pages[9]["/Resources"]["/XObject"]["/Meta84"].get_data()
+        for x in (b" re\n", b"W*", b"f*")
+    )
+    writer.remove_images(ImageType.XOBJECT_IMAGES)
+    assert b"Do\n" not in writer.pages[0].get_contents().get_data()
+    assert len(writer.pages[0]["/Resources"]["/XObject"]) == 0
+
+
+@pytest.mark.enable_socket()
+def test_add_outlines_on_empty_dict():
+    """Cf #2233"""
+
+    def _get_parent_bookmark(current_indent, history_indent, bookmarks) -> Any:
+        """The parent of A is the nearest bookmark whose indent is smaller than A's"""
+        assert len(history_indent) == len(bookmarks)
+        if current_indent == 0:
+            return None
+        for i in range(len(history_indent) - 1, -1, -1):
+            # len(history_indent) - 1   ===>   0
+            if history_indent[i] < current_indent:
+                return bookmarks[i]
+        return None
+
+    bookmark_lines = """1 FUNDAMENTALS OF RADIATIVE TRANSFER 1
+1.1 The Electromagnetic Spectrum; Elementary Properties of Radiation 1
+1.2 Radiative Flux 2
+    Macroscopic Description of the Propagation of Radiation 2
+    Flux from an Isotropic Source-The Inverse Square Law 2
+1.3 The Specific Intensity and Its Moments 3
+    Definition of Specific Intensity or Brightness 3
+    Net Flux and Momentum Flux 4
+    Radiative Energy Density 5
+    Radiation Pressure in an Enclosure Containing an Isotropic Radiation Field 6
+    Constancy of Specific Zntensiw Along Rays in Free Space 7
+    Proof of the Inverse Square Law for a Uniformly Bright Sphere 7
+1.4 Radiative Transfer 8
+    Emission 9
+    Absorption 9
+    The Radiative Transfer Equation 11
+    Optical Depth and Source Function 12
+    Mean Free Path 14
+    Radiation Force 15
+1.5 Thermal Radiation 15
+    Blackbody Radiation 15
+    Kirchhof's Law for Thermal Emission 16
+    Thermodynamics of Blackbody Radiation 17
+    The Planck Spectrum 20
+    Properties of the Planck Law 23
+    Characteristic Temperatures Related to Planck Spectrum 25
+1.6 The Einstein Coefficients 27
+    Definition of Coefficients 27
+    Relations between Einstein Coefficients 29
+    Absorption and Emission Coefficients in Terms of Einstein Coefficients 30
+1.7 Scattering Effects; Random Walks 33
+    Pure Scattering 33
+    Combined Scattering and Absorption 36
+1.8 Radiative Diffusion 39
+    The Rosseland Approximation 39
+    The Eddington Approximation; Two-Stream Approximation 42
+PROBLEMS 45
+REFERENCES 50
+2 BASIC THEORY OF RADIATION FIELDS 51
+2.1 Review of Maxwell’s Equations 51
+2.2 Plane Electromagnetic Waves 55
+2.3 The Radiation Spectrum 58
+2.4 Polarization and Stokes Parameters 62
+    Monochromatic Waves 62
+    Quasi-monochromatic Waves 65
+2.5 Electromagnetic Potentials 69
+2.6 Applicability of Transfer Theory and the Geometrical Optics Limit 72
+PROBLEMS 74
+REFERENCES 76"""
+    url = "https://github.com/py-pdf/pypdf/files/12797067/test-12.pdf"
+    name = "iss2233.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=reader)
+
+    bookmarks, history_indent = [], []
+    for line in bookmark_lines.split("\n"):
+        line2 = re.split(r"\s+", line.strip())
+        indent_size = len(line) - len(line.lstrip())
+        parent = _get_parent_bookmark(indent_size, history_indent, bookmarks)
+        history_indent.append(indent_size)
+        title, page = " ".join(line2[:-1]), int(line2[-1]) - 1
+        new_bookmark = writer.add_outline_item(title, page, parent=parent)
+        bookmarks.append(new_bookmark)
+
+
+def test_merging_many_temporary_files():
+    def create_number_pdf(n) -> BytesIO:
+        from fpdf import FPDF
+
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("helvetica", "B", 16)
+        pdf.cell(40, 10, str(n))
+        byte_string = pdf.output()
+        return BytesIO(byte_string)
+
+    writer = PdfWriter()
+    for n in range(100):
+        reader = PdfReader(create_number_pdf(n))
+        for page in reader.pages:
+            # Should only be one page.
+            writer.add_page(page)
+
+    out = BytesIO()
+    writer.write(out)
+
+    out.seek(0)
+    reader = PdfReader(out)
+    for n, page in enumerate(reader.pages):
+        text = page.extract_text()
+        assert text == str(n)

@@ -40,6 +40,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Set,
     Tuple,
     Union,
     cast,
@@ -86,7 +87,7 @@ NumberSigns = b"+-"
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
-class ArrayObject(list, PdfObject):
+class ArrayObject(List[Any], PdfObject):
     def clone(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -115,7 +116,7 @@ class ArrayObject(list, PdfObject):
                 arr.append(data.clone(pdf_dest, force_duplicate, ignore_fields))
             else:
                 arr.append(data)
-        return cast("ArrayObject", arr)
+        return arr
 
     def items(self) -> Iterable[Any]:
         """Emulate DictionaryObject.items for a list (index, object)."""
@@ -173,7 +174,7 @@ class ArrayObject(list, PdfObject):
         return ArrayObject.read_from_stream(stream, pdf)
 
 
-class DictionaryObject(dict, PdfObject):
+class DictionaryObject(Dict[Any, Any], PdfObject):
     def clone(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -187,6 +188,7 @@ class DictionaryObject(dict, PdfObject):
         except Exception:
             pass
 
+        visited: Set[Tuple[int, int]] = set()  # (idnum, generation)
         d__ = cast(
             "DictionaryObject",
             self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
@@ -194,7 +196,7 @@ class DictionaryObject(dict, PdfObject):
         if ignore_fields is None:
             ignore_fields = []
         if len(d__.keys()) == 0:
-            d__._clone(self, pdf_dest, force_duplicate, ignore_fields)
+            d__._clone(self, pdf_dest, force_duplicate, ignore_fields, visited)
         return d__
 
     def _clone(
@@ -203,6 +205,7 @@ class DictionaryObject(dict, PdfObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
         ignore_fields: Optional[Sequence[Union[str, int]]],
+        visited: Set[Tuple[int, int]],  # (idnum, generation)
     ) -> None:
         """
         Update the object from src.
@@ -270,6 +273,14 @@ class DictionaryObject(dict, PdfObject):
                                     cur_obj.__class__(), pdf_dest, force_duplicate
                                 ),
                             )
+                            # check to see if we've previously processed our item
+                            if clon.indirect_reference is not None:
+                                idnum = clon.indirect_reference.idnum
+                                generation = clon.indirect_reference.generation
+                                if (idnum, generation) in visited:
+                                    cur_obj = None
+                                    break
+                                visited.add((idnum, generation))
                             objs.append((cur_obj, clon))
                             assert prev_obj is not None
                             prev_obj[NameObject(k)] = clon.indirect_reference
@@ -282,7 +293,9 @@ class DictionaryObject(dict, PdfObject):
                             except Exception:
                                 cur_obj = None
                         for s, c in objs:
-                            c._clone(s, pdf_dest, force_duplicate, ignore_fields)
+                            c._clone(
+                                s, pdf_dest, force_duplicate, ignore_fields, visited
+                            )
 
         for k, v in src.items():
             if k not in ignore_fields:
@@ -407,7 +420,7 @@ class DictionaryObject(dict, PdfObject):
             else:
                 return get_next_obj_pos(p, p1, rem_gens[1:], pdf)
 
-        def read_unsized_from_steam(
+        def read_unsized_from_stream(
             stream: StreamType, pdf: PdfReaderProtocol
         ) -> bytes:
             # we are just pointing at beginning of the stream
@@ -496,6 +509,8 @@ class DictionaryObject(dict, PdfObject):
                 assert pdf is not None  # hint for mypy
                 length = pdf.get_object(length)
                 stream.seek(t, 0)
+            if length is None:  # if the PDF is damaged
+                length = -1
             pstart = stream.tell()
             if length > 0:
                 data["__streamdata__"] = stream.read(length)
@@ -520,7 +535,7 @@ class DictionaryObject(dict, PdfObject):
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 elif pdf is not None and not pdf.strict:
                     stream.seek(pstart, 0)
-                    data["__streamdata__"] = read_unsized_from_steam(stream, pdf)
+                    data["__streamdata__"] = read_unsized_from_stream(stream, pdf)
                     pos = stream.tell()
                 else:
                     stream.seek(pos, 0)
@@ -546,8 +561,10 @@ class DictionaryObject(dict, PdfObject):
 
 
 class TreeObject(DictionaryObject):
-    def __init__(self) -> None:
+    def __init__(self, dct: Optional[DictionaryObject] = None) -> None:
         DictionaryObject.__init__(self)
+        if dct:
+            self.update(dct)
 
     def hasChildren(self) -> bool:  # deprecated
         deprecate_with_replacement("hasChildren", "has_children", "4.0.0")
@@ -614,7 +631,7 @@ class TreeObject(DictionaryObject):
         child: Any,
         before: Any,
         pdf: PdfWriterProtocol,
-        inc_parent_counter: Optional[Callable] = None,
+        inc_parent_counter: Optional[Callable[..., Any]] = None,
     ) -> IndirectObject:
         if inc_parent_counter is None:
             inc_parent_counter = self.inc_parent_counter_default
@@ -785,7 +802,7 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
 
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
-        self._data: bytes = b""
+        self._data: Union[bytes, str] = b""
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     def _clone(
@@ -794,6 +811,7 @@ class StreamObject(DictionaryObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
         ignore_fields: Optional[Sequence[Union[str, int]]],
+        visited: Set[Tuple[int, int]],
     ) -> None:
         """
         Update the object from src.
@@ -816,11 +834,25 @@ class StreamObject(DictionaryObject):
                 )
         except Exception:
             pass
-        super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
+        super()._clone(src, pdf_dest, force_duplicate, ignore_fields, visited)
+
+    def get_data(self) -> Union[bytes, str]:
+        return self._data
+
+    def set_data(self, data: bytes) -> None:
+        self._data = data
+
+    def getData(self) -> Any:  # deprecated
+        deprecation_with_replacement("getData", "get_data", "3.0.0")
+        return self._data
+
+    def setData(self, data: Any) -> None:  # deprecated
+        deprecation_with_replacement("setData", "set_data", "3.0.0")
+        self.set_data(data)
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
-        data += self._data
+        data += b_(self._data)
         return data
 
     @property
@@ -901,24 +933,12 @@ class StreamObject(DictionaryObject):
         retval[NameObject(SA.FILTER)] = f
         if parms is not None:
             retval[NameObject(SA.DECODE_PARMS)] = parms
-        retval._data = FlateDecode.encode(self._data, level)
+        retval._data = FlateDecode.encode(b_(self._data), level)
         return retval
 
 
 class DecodedStreamObject(StreamObject):
-    def get_data(self) -> bytes:
-        return self._data
-
-    def set_data(self, data: bytes) -> None:
-        self._data = data
-
-    def getData(self) -> Any:  # deprecated
-        deprecation_with_replacement("getData", "get_data", "3.0.0")
-        return self._data
-
-    def setData(self, data: Any) -> None:  # deprecated
-        deprecation_with_replacement("setData", "set_data", "3.0.0")
-        self.set_data(data)
+    pass
 
 
 class EncodedStreamObject(StreamObject):
@@ -935,7 +955,8 @@ class EncodedStreamObject(StreamObject):
         deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
         self.decoded_self = value
 
-    def get_data(self) -> bytes:
+    # This overrides the parent method:
+    def get_data(self) -> Union[bytes, str]:
         from ..filters import decode_stream_data
 
         if self.decoded_self is not None:
@@ -945,17 +966,14 @@ class EncodedStreamObject(StreamObject):
             # create decoded object
             decoded = DecodedStreamObject()
 
-            decoded._data = decode_stream_data(self)
+            decoded.set_data(b_(decode_stream_data(self)))
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
             self.decoded_self = decoded
-            return decoded._data
+            return decoded.get_data()
 
-    def getData(self) -> Union[None, str, bytes]:  # deprecated
-        deprecation_with_replacement("getData", "get_data", "3.0.0")
-        return self.get_data()
-
+    # This overrides the parent method:
     def set_data(self, data: bytes) -> None:  # deprecated
         from ..filters import FlateDecode
 
@@ -963,19 +981,32 @@ class EncodedStreamObject(StreamObject):
             if not isinstance(data, bytes):
                 raise TypeError("data must be bytes")
             assert self.decoded_self is not None
-            self.decoded_self._data = data
-            self._data = FlateDecode.encode(data)
+            self.decoded_self.set_data(data)
+            super().set_data(FlateDecode.encode(data))
         else:
             raise PdfReadError(
                 "Streams encoded with different filter from only FlateDecode is not supported"
             )
 
-    def setData(self, data: Any) -> None:  # deprecated
-        deprecation_with_replacement("setData", "set_data", "3.0.0")
-        return self.set_data(data)
-
 
 class ContentStream(DecodedStreamObject):
+    """
+    In order to be fast, this datastructure can contain either:
+    * raw data in ._data
+    * parsed stream operations in ._operations
+
+    At any time, ContentStream object can either have one or both of those fields defined,
+    and zero or one of those fields set to None.
+
+    Those fields are "rebuilt" lazily, when accessed:
+    * when .get_data() is called, if ._data is None, it is rebuilt from ._operations
+    * when .operations is called, if ._operations is None, it is rebuilt from ._data
+
+    On the other side, those fields can be invalidated:
+    * when .set_data() is called, ._operations is set to None
+    * when .operations is set, ._data is set to None
+    """
+
     def __init__(
         self,
         stream: Any,
@@ -987,26 +1018,26 @@ class ContentStream(DecodedStreamObject):
         # The inner list has two elements:
         #  Element 0: List
         #  Element 1: str
-        self.operations: List[Tuple[Any, Any]] = []
+        self._operations: List[Tuple[Any, Any]] = []
 
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
-        if stream is not None:
+        if stream is None:
+            super().set_data(b"")
+        else:
             stream = stream.get_object()
             if isinstance(stream, ArrayObject):
                 data = b""
                 for s in stream:
-                    data += s.get_object().get_data()
+                    data += b_(s.get_object().get_data())
                     if len(data) == 0 or data[-1] != b"\n":
                         data += b"\n"
-                stream_bytes = BytesIO(data)
+                super().set_data(bytes(data))
             else:
                 stream_data = stream.get_data()
                 assert stream_data is not None
-                stream_data_bytes = b_(stream_data)  # this is necessary
-                stream_bytes = BytesIO(stream_data_bytes)
+                super().set_data(b_(stream_data))
             self.forced_encoding = forced_encoding
-            self.__parse_content_stream(stream_bytes)
 
     def clone(
         self,
@@ -1031,6 +1062,7 @@ class ContentStream(DecodedStreamObject):
         except Exception:
             pass
 
+        visited: Set[Tuple[int, int]] = set()
         d__ = cast(
             "ContentStream",
             self._reference_clone(
@@ -1039,7 +1071,7 @@ class ContentStream(DecodedStreamObject):
         )
         if ignore_fields is None:
             ignore_fields = []
-        d__._clone(self, pdf_dest, force_duplicate, ignore_fields)
+        d__._clone(self, pdf_dest, force_duplicate, ignore_fields, visited)
         return d__
 
     def _clone(
@@ -1048,6 +1080,7 @@ class ContentStream(DecodedStreamObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
         ignore_fields: Optional[Sequence[Union[str, int]]],
+        visited: Set[Tuple[int, int]],
     ) -> None:
         """
         Update the object from src.
@@ -1058,13 +1091,15 @@ class ContentStream(DecodedStreamObject):
             force_duplicate:
             ignore_fields:
         """
+        src_cs = cast("ContentStream", src)
+        super().set_data(b_(src_cs._data))
         self.pdf = pdf_dest
-        self.operations = list(cast("ContentStream", src).operations)
-        self.forced_encoding = cast("ContentStream", src).forced_encoding
+        self._operations = list(src_cs._operations)
+        self.forced_encoding = src_cs.forced_encoding
         # no need to call DictionaryObjection or anything
-        # like super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields)
+        # like super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields, visited)
 
-    def __parse_content_stream(self, stream: StreamType) -> None:
+    def _parse_content_stream(self, stream: StreamType) -> None:
         # 7.8.2 Content Streams
         stream.seek(0, 0)
         operands: List[Union[int, str, PdfObject]] = []
@@ -1080,9 +1115,9 @@ class ContentStream(DecodedStreamObject):
                     # mechanism is required, of course... thanks buddy...
                     assert operands == []
                     ii = self._read_inline_image(stream)
-                    self.operations.append((ii, b"INLINE IMAGE"))
+                    self._operations.append((ii, b"INLINE IMAGE"))
                 else:
-                    self.operations.append((operands, operator))
+                    self._operations.append((operands, operator))
                     operands = []
             elif peek == b"%":
                 # If we encounter a comment in the content stream, we have to
@@ -1173,29 +1208,59 @@ class ContentStream(DecodedStreamObject):
                         data.write(info)
         return {"settings": settings, "data": data.getvalue()}
 
-    @property  # type: ignore
-    def _data(self) -> bytes:  # type: ignore
-        new_data = BytesIO()
-        for operands, operator in self.operations:
-            if operator == b"INLINE IMAGE":
-                new_data.write(b"BI")
-                dict_text = BytesIO()
-                operands["settings"].write_to_stream(dict_text)
-                new_data.write(dict_text.getvalue()[2:-2])
-                new_data.write(b"ID ")
-                new_data.write(operands["data"])
-                new_data.write(b"EI")
-            else:
-                for op in operands:
-                    op.write_to_stream(new_data)
-                    new_data.write(b" ")
-                new_data.write(b_(operator))
-            new_data.write(b"\n")
-        return new_data.getvalue()
+    # This overrides the parent method:
+    def get_data(self) -> bytes:
+        if not self._data:
+            new_data = BytesIO()
+            for operands, operator in self._operations:
+                if operator == b"INLINE IMAGE":
+                    new_data.write(b"BI")
+                    dict_text = BytesIO()
+                    operands["settings"].write_to_stream(dict_text)
+                    new_data.write(dict_text.getvalue()[2:-2])
+                    new_data.write(b"ID ")
+                    new_data.write(operands["data"])
+                    new_data.write(b"EI")
+                else:
+                    for op in operands:
+                        op.write_to_stream(new_data)
+                        new_data.write(b" ")
+                    new_data.write(b_(operator))
+                new_data.write(b"\n")
+            self._data = new_data.getvalue()
+        return b_(self._data)
 
-    @_data.setter
-    def _data(self, value: bytes) -> None:
-        self.__parse_content_stream(BytesIO(value))
+    # This overrides the parent method:
+    def set_data(self, data: bytes) -> None:
+        super().set_data(data)
+        self._operations = []
+
+    @property
+    def operations(self) -> List[Tuple[Any, Any]]:
+        if not self._operations and self._data:
+            self._parse_content_stream(BytesIO(b_(self._data)))
+            self._data = b""
+        return self._operations
+
+    @operations.setter
+    def operations(self, operations: List[Tuple[Any, Any]]) -> None:
+        self._operations = operations
+        self._data = b""
+
+    def isolate_graphics_state(self) -> None:
+        if self._operations:
+            self._operations.insert(0, ([], "q"))
+            self._operations.append(([], "Q"))
+        elif self._data:
+            self._data = b"q\n" + b_(self._data) + b"Q\n"
+
+    # This overrides the parent method:
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+    ) -> None:
+        if not self._data and self._operations:
+            self.get_data()  # this ensures ._data is rebuilt
+        super().write_to_stream(stream, encryption_key)
 
 
 def read_object(
@@ -1441,6 +1506,10 @@ class Destination(TreeObject):
 
         # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":
+            if len(args) < 1:  # left is missing : should never occur
+                args.append(NumberObject(0.0))
+            if len(args) < 2:  # top is missing
+                args.append(NumberObject(0.0))
             if len(args) < 3:  # zoom is missing
                 args.append(NumberObject(0.0))
             (
@@ -1448,6 +1517,8 @@ class Destination(TreeObject):
                 self[NameObject(TA.TOP)],
                 self[NameObject("/Zoom")],
             ) = args
+        elif len(args) == 0:
+            pass
         elif typ == TF.FIT_R:
             (
                 self[NameObject(TA.LEFT)],

@@ -642,7 +642,7 @@ class PdfMerger:
             if isinstance(oi_enum, list):
                 # oi_enum is still an inner node
                 # (OutlineType, if recursive types were supported by mypy)
-                res = self.find_outline_item(outline_item, oi_enum)  # type: ignore
+                res = self.find_outline_item(outline_item, oi_enum)
                 if res:  # deprecated
                     return [i] + res
             elif (

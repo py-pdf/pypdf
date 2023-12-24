@@ -5,9 +5,9 @@ from typing import IO, Any, Dict, List, Optional, Tuple, Union
 
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
-    from typing import Protocol  # type: ignore[attr-defined]
+    from typing import Protocol
 except ImportError:
-    from typing_extensions import Protocol  # type: ignore[assignment,misc]
+    from typing_extensions import Protocol  # type: ignore[assignment]
 
 from ._utils import StrByteType, StreamType
 
@@ -70,7 +70,7 @@ class PdfWriterProtocol(Protocol):  # deprecated
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
         ...
 
-    def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
+    def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:
         ...
 
     def _add_object(self, obj: Any) -> Any:

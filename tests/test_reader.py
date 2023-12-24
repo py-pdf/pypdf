@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader
+from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int, convertToInt
 from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
@@ -29,13 +30,7 @@ from pypdf.generic import (
 
 from . import get_data_from_url, normalize_warnings
 
-try:
-    from Crypto.Cipher import AES  # noqa: F401
-
-    HAS_PYCRYPTODOME = True
-except ImportError:
-    HAS_PYCRYPTODOME = False
-
+HAS_AES = crypt_provider[0] in ["pycryptodome", "cryptography"]
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
@@ -834,7 +829,7 @@ def test_read_not_binary_mode(caplog):
 
 
 @pytest.mark.enable_socket()
-@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
+@pytest.mark.skipif(not HAS_AES, reason="No AES algorithm available")
 def test_read_form_416():
     url = (
         "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
@@ -1032,17 +1027,13 @@ def test_header(src, pdf_header):
 
 @pytest.mark.enable_socket()
 def test_outline_color():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
-    name = "tika-924546.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-924546.pdf")))
     assert reader.outline[0].color == [0, 0, 1]
 
 
 @pytest.mark.enable_socket()
 def test_outline_font_format():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
-    name = "tika-924546.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="tika-924546.pdf")))
     assert reader.outline[0].font_format == 2
 
 
@@ -1459,3 +1450,15 @@ def test_issue_140():
     b = get_data_from_url(url, name=name)
     reader = PdfReader(BytesIO(b))
     assert len(reader.pages) == 54
+
+
+@pytest.mark.enable_socket()
+def test_xyz_with_missing_param():
+    """Cf #2236"""
+    url = "https://github.com/py-pdf/pypdf/files/12795356/tt1.pdf"
+    name = "issue2236.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert reader.outline[0]["/Left"] == 820
+    assert reader.outline[0]["/Top"] == 0
+    assert reader.outline[1]["/Left"] == 0
+    assert reader.outline[0]["/Top"] == 0

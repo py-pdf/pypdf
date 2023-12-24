@@ -4,15 +4,21 @@ from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
-from ._utils import logger_warning
+from ._utils import b_, logger_warning
 from .errors import PdfReadWarning
-from .generic import DecodedStreamObject, DictionaryObject, StreamObject
+from .generic import (
+    DecodedStreamObject,
+    DictionaryObject,
+    IndirectObject,
+    NullObject,
+    StreamObject,
+)
 
 
 # code freely inspired from @twiggy ; see #711
 def build_char_map(
     font_name: str, space_width: float, obj: DictionaryObject
-) -> Tuple[str, float, Union[str, Dict[int, str]], Dict, DictionaryObject]:
+) -> Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any], DictionaryObject]:
     """
     Determine information about a font.
 
@@ -34,7 +40,7 @@ def build_char_map(
 
 def build_char_map_from_dict(
     space_width: float, ft: DictionaryObject
-) -> Tuple[str, float, Union[str, Dict[int, str]], Dict]:
+) -> Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]]:
     """
     Determine information about a font.
 
@@ -232,7 +238,7 @@ def parse_to_unicode(
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
-            line.strip(b" "),
+            line.strip(b" \t"),
             process_rg,
             process_char,
             multiline_rg,
@@ -250,7 +256,7 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
     tu = ft["/ToUnicode"]
     cm: bytes
     if isinstance(tu, StreamObject):
-        cm = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
+        cm = b_(cast(DecodedStreamObject, ft["/ToUnicode"]).get_data())
     elif isinstance(tu, str) and tu.startswith("/Identity"):
         # the full range 0000-FFFF will be processed
         cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"
@@ -295,8 +301,9 @@ def process_cm_line(
     map_dict: Dict[Any, Any],
     int_entry: List[int],
 ) -> Tuple[bool, bool, Union[None, Tuple[int, int]]]:
-    if line in (b"", b" ") or line[0] == 37:  # 37 = %
+    if line == b"" or line[0] == 37:  # 37 = %
         return process_rg, process_char, multiline_rg
+    line = line.replace(b"\t", b" ")
     if b"beginbfrange" in line:
         process_rg = True
     elif b"endbfrange" in line:
@@ -409,7 +416,7 @@ def compute_space_width(
         else:
             w = []
         while len(w) > 0:
-            st = w[0]
+            st = w[0] if isinstance(w[0], int) else w[0].get_object()
             second = w[1].get_object()
             if isinstance(second, int):
                 for x in range(st, second):
@@ -456,6 +463,17 @@ def compute_space_width(
                         m += x
                         cpt += 1
                 sp_width = m / max(1, cpt) / 2
+
+    if isinstance(sp_width, IndirectObject):
+        # According to
+        # 'Table 122 - Entries common to all font descriptors (continued)'
+        # the MissingWidth should be a number, but according to #2286 it can
+        # be an indirect object
+        obj = sp_width.get_object()
+        if obj is None or isinstance(obj, NullObject):
+            return 0.0
+        return obj  # type: ignore
+
     return sp_width
 
 
@@ -477,7 +495,7 @@ def type1_alternative(
     for li in lines:
         if li.startswith(b"dup"):
             words = [_w for _w in li.split(b" ") if _w != b""]
-            if words[3] != b"put":
+            if len(words) > 3 and words[3] != b"put":
                 continue
             try:
                 i = int(words[1])

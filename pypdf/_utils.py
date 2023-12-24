@@ -31,6 +31,8 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import functools
 import logging
+import re
+import sys
 import warnings
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -41,6 +43,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    List,
     Optional,
     Pattern,
     Tuple,
@@ -49,10 +52,10 @@ from typing import (
     overload,
 )
 
-try:
+if sys.version_info[:2] >= (3, 10):
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
-    from typing import TypeAlias  # type: ignore[attr-defined]
-except ImportError:
+    from typing import TypeAlias
+else:
     from typing_extensions import TypeAlias
 
 from .errors import (
@@ -68,7 +71,7 @@ CompressedTransformationMatrix: TypeAlias = Tuple[
     float, float, float, float, float, float
 ]
 
-StreamType = IO
+StreamType = IO[Any]
 StrByteType = Union[str, StreamType]
 
 DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in pypdf {}."
@@ -185,6 +188,23 @@ def skip_over_whitespace(stream: StreamType) -> bool:
         tok = stream.read(1)
         cnt += 1
     return cnt > 1
+
+
+def check_if_whitespace_only(value: bytes) -> bool:
+    """
+    Check if the given value consists of whitespace characters only.
+
+    Args:
+        value: The bytes to check.
+
+    Returns:
+        True if the value only has whitespace characters, otherwise return False.
+    """
+    for index in range(len(value)):
+        current = value[index:index + 1]
+        if current not in WHITESPACES:
+            return False
+    return True
 
 
 def skip_over_comment(stream: StreamType) -> None:
@@ -326,11 +346,11 @@ B_CACHE: Dict[Union[str, bytes], bytes] = {}
 
 
 def b_(s: Union[str, bytes]) -> bytes:
+    if isinstance(s, bytes):
+        return s
     bc = B_CACHE
     if s in bc:
         return bc[s]
-    if isinstance(s, bytes):
-        return s
     try:
         r = s.encode("latin-1")
         if len(s) < 2:
@@ -450,7 +470,7 @@ def logger_warning(msg: str, src: str) -> None:
     logging.getLogger(src).warning(msg)
 
 
-def deprecation_bookmark(**aliases: str) -> Callable:
+def deprecation_bookmark(**aliases: str) -> Callable[..., Any]:
     """
     Decorator for deprecated term "bookmark".
 
@@ -459,9 +479,9 @@ def deprecation_bookmark(**aliases: str) -> Callable:
         outline = a collection of outline items.
     """
 
-    def decoration(func: Callable) -> Any:  # type: ignore
+    def decoration(func: Callable[..., Any]) -> Any:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             rename_kwargs(func.__name__, kwargs, aliases, fail=True)
             return func(*args, **kwargs)
 
@@ -470,7 +490,7 @@ def deprecation_bookmark(**aliases: str) -> Callable:
     return decoration
 
 
-def rename_kwargs(  # type: ignore
+def rename_kwargs(
     func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str], fail: bool = False
 ) -> None:
     """
@@ -593,3 +613,52 @@ class ImageFile(File):
 def default_annotation_filter_function(page: Any, an: Any, obj: Any) -> bool:
     """Default annotation_filter_function used in _writer.remove_annots_from_page"""
     return True
+
+  
+@functools.total_ordering
+class Version:
+    COMPONENT_PATTERN = re.compile(r"^(\d+)(.*)$")
+
+    def __init__(self, version_str: str) -> None:
+        self.version_str = version_str
+        self.components = self._parse_version(version_str)
+
+    def _parse_version(self, version_str: str) -> List[Tuple[int, str]]:
+        components = version_str.split(".")
+        parsed_components = []
+        for component in components:
+            match = Version.COMPONENT_PATTERN.match(component)
+            if not match:
+                parsed_components.append((0, component))
+                continue
+            integer_prefix = match.group(1)
+            suffix = match.group(2)
+            if integer_prefix is None:
+                integer_prefix = 0
+            parsed_components.append((int(integer_prefix), suffix))
+        return parsed_components
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Version):
+            return False
+        return self.components == other.components
+
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, Version):
+            raise ValueError(f"Version cannot be compared against {type(other)}")
+        min_len = min(len(self.components), len(other.components))
+        for i in range(min_len):
+            self_value, self_suffix = self.components[i]
+            other_value, other_suffix = other.components[i]
+
+            if self_value < other_value:
+                return True
+            elif self_value > other_value:
+                return False
+
+            if self_suffix < other_suffix:
+                return True
+            elif self_suffix > other_suffix:
+                return False
+
+        return len(self.components) < len(other.components)
