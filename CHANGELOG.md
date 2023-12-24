@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 3.17.4, 2023-12-24
+
+### Bug Fixes (BUG)
+-  Handle IndirectObject as image filter (#2355)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.3...3.17.4)
+
 ## Version 3.17.3, 2023-12-17
 
 ### Robustness (ROB)
