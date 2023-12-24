@@ -179,12 +179,7 @@ def writer_operate(writer: PdfWriter) -> None:
     )
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
-    with pytest.warns(
-        DeprecationWarning, match="'pagenum' argument of add_uri is deprecated"
-    ):
-        writer.add_uri(
-            2, "https://example.com", RectangleObject([0, 0, 100, 100]), pagenum=2
-        )
+    writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
     with pytest.raises(DeprecationError):
         writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
     assert writer._get_page_layout() is None
@@ -522,20 +517,11 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
 
     writer.add_page(page)
 
-    with pytest.raises(ValueError, match="owner_pwd of encrypt is deprecated."):
-        writer.encrypt(
-            owner_pwd=user_password,
-            owner_password=owner_password,
-            user_password=user_password,
-            use_128bit=use_128bit,
-        )
-    with pytest.raises(ValueError, match="'user_pwd' argument is deprecated"):
-        writer.encrypt(
-            owner_password=owner_password,
-            user_password=user_password,
-            user_pwd=user_password,
-            use_128bit=use_128bit,
-        )
+    writer.encrypt(
+        owner_password=owner_password,
+        user_password=user_password,
+        use_128bit=use_128bit,
+    )
     writer.encrypt(
         user_password=user_password,
         owner_password=owner_password,
@@ -641,14 +627,8 @@ def test_add_named_destination(pdf_file_path):
 
     writer.add_named_destination(TextStringObject("A named dest"), 2)
     writer.add_named_destination(TextStringObject("A named dest2"), 2)
-
-    with pytest.warns(DeprecationWarning, match="pagenum is deprecated as an argument"):
-        writer.add_named_destination(TextStringObject("A named dest3"), pagenum=2)
-
-    with pytest.raises(ValueError):
-        writer.add_named_destination(
-            TextStringObject("A named dest3"), pagenum=2, page_number=2
-        )
+    writer.add_named_destination(TextStringObject("A named dest3"), page_number=2)
+    writer.add_named_destination(TextStringObject("A named dest3"), page_number=2)
 
     root = writer.get_named_dest_root()
     assert root[0] == "A named dest"
@@ -1872,8 +1852,7 @@ def test_remove_image_per_type():
         for x in (b"BI", b"ID", b"EI")
     )
 
-    with pytest.raises(DeprecationWarning):
-        writer.remove_images(True)
+    writer.remove_images()
 
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
     writer.remove_images(ImageType.DRAWING_IMAGES)

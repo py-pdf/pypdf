@@ -34,7 +34,6 @@ import enum
 import hashlib
 import re
 import uuid
-import warnings
 from io import BytesIO, FileIO, IOBase
 from pathlib import Path
 from types import TracebackType
@@ -261,25 +260,8 @@ class PdfWriter:
 
     def get_object(
         self,
-        indirect_reference: Union[None, int, IndirectObject] = None,
-        ido: Optional[IndirectObject] = None,
+        indirect_reference: Union[int, IndirectObject],
     ) -> PdfObject:
-        if ido is not None:  # deprecated
-            if indirect_reference is not None:
-                raise ValueError(
-                    "Please only set 'indirect_reference'. The 'ido' argument "
-                    "is deprecated."
-                )
-            else:
-                indirect_reference = ido
-                warnings.warn(
-                    "The parameter 'ido' is depreciated and will be removed in "
-                    "pypdf 4.0.0.",
-                    DeprecationWarning,
-                )
-        assert (
-            indirect_reference is not None
-        )  # the None value is only there to keep the deprecated name
         if isinstance(indirect_reference, int):
             return self._objects[indirect_reference - 1]
         if indirect_reference.pdf != self:
@@ -429,9 +411,7 @@ class PdfWriter:
         """
         return self._add_page(page, lambda kids, p: kids.insert(index, p))
 
-    def get_page(
-        self, page_number: Optional[int] = None, pageNumber: Optional[int] = None
-    ) -> PageObject:
+    def get_page(self, page_number: int) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
 
@@ -442,15 +422,6 @@ class PdfWriter:
         Returns:
             The page at the index given by *page_number*
         """
-        if pageNumber is not None:  # deprecated
-            if page_number is not None:
-                raise ValueError("Please only use the page_number parameter")
-            deprecate_with_replacement(
-                "get_page(pageNumber)", "get_page(page_number)", "4.0.0"
-            )
-            page_number = pageNumber
-        if page_number is None and pageNumber is None:  # deprecated
-            raise ValueError("Please specify the page_number")
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         # TODO: crude hack
         return cast(PageObject, pages[PA.KIDS][page_number].get_object())
@@ -1097,12 +1068,10 @@ class PdfWriter:
 
     def encrypt(
         self,
-        user_password: Optional[str] = None,
+        user_password: str,
         owner_password: Optional[str] = None,
         use_128bit: bool = True,
         permissions_flag: UserAccessPermissions = ALL_DOCUMENT_PERMISSIONS,
-        user_pwd: Optional[str] = None,  # deprecated
-        owner_pwd: Optional[str] = None,  # deprecated
         *,
         algorithm: Optional[str] = None,
     ) -> None:
@@ -1129,41 +1098,6 @@ class PdfWriter:
                 "AES-128", "AES-256-R5", "AES-256". If it's valid,
                 `use_128bit` will be ignored.
         """
-        if user_pwd is not None:
-            if user_password is not None:
-                raise ValueError(
-                    "Please only set 'user_password'. "
-                    "The 'user_pwd' argument is deprecated."
-                )
-            else:
-                warnings.warn(
-                    "Please use 'user_password' instead of 'user_pwd'. "
-                    "The 'user_pwd' argument is deprecated and "
-                    "will be removed in pypdf 4.0.0."
-                )
-                user_password = user_pwd
-        if user_password is None:  # deprecated
-            # user_password is only Optional for due to the deprecated user_pwd
-            raise ValueError("user_password may not be None")
-
-        if owner_pwd is not None:  # deprecated
-            if owner_password is not None:
-                raise ValueError(
-                    "The argument owner_pwd of encrypt is deprecated. "
-                    "Use owner_password only."
-                )
-            else:
-                old_term = "owner_pwd"
-                new_term = "owner_password"
-                warnings.warn(
-                    message=(
-                        f"{old_term} is deprecated as an argument and will be "
-                        f"removed in pypdf 4.0.0. Use {new_term} instead"
-                    ),
-                    category=DeprecationWarning,
-                )
-                owner_password = owner_pwd
-
         if owner_password is None:
             owner_password = user_password
 
@@ -1546,32 +1480,11 @@ class PdfWriter:
 
     def add_outline_item_destination(
         self,
-        page_destination: Union[None, IndirectObject, PageObject, TreeObject] = None,
+        page_destination: Union[IndirectObject, PageObject, TreeObject],
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
         is_open: bool = True,
-        dest: Union[None, PageObject, TreeObject] = None,  # deprecated
     ) -> IndirectObject:
-        if page_destination is not None and dest is not None:  # deprecated
-            raise ValueError(
-                "The argument dest of add_outline_item_destination is "
-                "deprecated. Use page_destination only."
-            )
-        if dest is not None:  # deprecated
-            old_term = "dest"
-            new_term = "page_destination"
-            warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument and will be "
-                    f"removed in pypdf 4.0.0. Use {new_term} instead"
-                ),
-                category=DeprecationWarning,
-            )
-            page_destination = dest
-        if page_destination is None:  # deprecated
-            # argument is only Optional due to deprecated argument.
-            raise ValueError("page_destination may not be None")
-
         page_destination = cast(PageObject, page_destination.get_object())
         if isinstance(page_destination, PageObject):
             return self.add_outline_item_destination(
@@ -1637,7 +1550,6 @@ class PdfWriter:
         italic: bool = False,
         fit: Fit = PAGE_FIT,
         is_open: bool = True,
-        pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
         Add an outline item (commonly referred to as a "Bookmark") to the PDF file.
@@ -1663,11 +1575,6 @@ class PdfWriter:
                 page_number = fit  # type: ignore
             return self.add_outline_item(
                 title, page_number, parent, None, before, color, bold, italic, is_open=is_open  # type: ignore
-            )
-        if page_number is not None and pagenum is not None:
-            raise ValueError(
-                "The argument pagenum of add_outline_item is deprecated. "
-                "Use page_number only."
             )
         if page_number is None:
             action_ref = None
@@ -1731,28 +1638,8 @@ class PdfWriter:
 
     def add_named_destination_object(
         self,
-        page_destination: Optional[PdfObject] = None,
-        dest: Optional[PdfObject] = None,
+        page_destination: PdfObject,
     ) -> IndirectObject:
-        if page_destination is not None and dest is not None:
-            raise ValueError(
-                "The argument dest of add_named_destination_object is "
-                "deprecated. Use page_destination only."
-            )
-        if dest is not None:  # deprecated
-            old_term = "dest"
-            new_term = "page_destination"
-            warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument and will be "
-                    f"removed in pypdf 4.0.0. Use {new_term} instead"
-                ),
-                category=DeprecationWarning,
-            )
-            page_destination = dest
-        if page_destination is None:  # deprecated
-            raise ValueError("page_destination may not be None")
-
         page_destination_ref = self._add_object(page_destination.dest_array)  # type: ignore
         self.add_named_destination_array(
             cast("TextStringObject", page_destination["/Title"]), page_destination_ref  # type: ignore
@@ -1763,27 +1650,8 @@ class PdfWriter:
     def add_named_destination(
         self,
         title: str,
-        page_number: Optional[int] = None,
-        pagenum: Optional[int] = None,  # deprecated
+        page_number: int,
     ) -> IndirectObject:
-        if page_number is not None and pagenum is not None:
-            raise ValueError(
-                "The argument pagenum of add_outline_item is deprecated. "
-                "Use page_number only."
-            )
-        if pagenum is not None:
-            old_term = "pagenum"
-            new_term = "page_number"
-            warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument and will be "
-                    f"removed in pypdf 4.0.0. Use {new_term} instead"
-                ),
-                category=DeprecationWarning,
-            )
-            page_number = pagenum
-        if page_number is None:
-            raise ValueError("page_number may not be None")
         page_ref = self.get_object(self._pages)[PA.KIDS][page_number]  # type: ignore
         dest = DictionaryObject()
         dest.update(
@@ -1976,7 +1844,6 @@ class PdfWriter:
     def remove_images(
         self,
         to_delete: ImageType = ImageType.ALL,
-        ignore_byte_string_object: Optional[bool] = None,
     ) -> None:
         """
         Remove images from this output.
@@ -1987,14 +1854,7 @@ class PdfWriter:
             ignore_byte_string_object: deprecated
         """
         if isinstance(to_delete, bool):
-            ignore_byte_string_object = to_delete
             to_delete = ImageType.ALL
-        if ignore_byte_string_object is not None:
-            warnings.warn(
-                "The 'ignore_byte_string_object' argument of remove_images is "
-                "deprecated and will be removed in pypdf 4.0.0.",
-                category=DeprecationWarning,
-            )
         i = (
             (
                 ObjectDeletionFlag.XOBJECT_IMAGES
@@ -2015,19 +1875,13 @@ class PdfWriter:
         for page in self.pages:
             self.remove_objects_from_page(page, i)
 
-    def remove_text(self, ignore_byte_string_object: Optional[bool] = None) -> None:
+    def remove_text(self) -> None:
         """
         Remove text from this output.
 
         Args:
             ignore_byte_string_object: deprecated
         """
-        if ignore_byte_string_object is not None:
-            warnings.warn(
-                "The 'ignore_byte_string_object' argument of remove_images is "
-                "deprecated and will be removed in pypdf 4.0.0.",
-                category=DeprecationWarning,
-            )
         for page in self.pages:
             self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT)
 
@@ -2037,7 +1891,6 @@ class PdfWriter:
         uri: str,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
-        pagenum: Optional[int] = None,
     ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
@@ -2055,13 +1908,6 @@ class PdfWriter:
                 properties. See the PDF spec for details. No border will be
                 drawn if this argument is omitted.
         """
-        if pagenum is not None:
-            warnings.warn(
-                "The 'pagenum' argument of add_uri is deprecated and will be "
-                "removed in pypdf 4.0.0. Use 'page_number' instead.",
-                category=DeprecationWarning,
-            )
-            page_number = pagenum
         page_link = self.get_object(self._pages)[PA.KIDS][page_number]  # type: ignore
         page_ref = cast(Dict[str, Any], self.get_object(page_link))
 

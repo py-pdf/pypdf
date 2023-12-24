@@ -25,7 +25,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
 from io import BytesIO, FileIO, IOBase
 from pathlib import Path
 from types import TracebackType
@@ -124,12 +123,11 @@ class PdfMerger:
     @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
-        page_number: Optional[int] = None,
-        fileobj: Union[None, Path, StrByteType, PdfReader] = None,
+        page_number: int,
+        fileobj: Union[Path, StrByteType, PdfReader],
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
-        position: Optional[int] = None,  # deprecated
     ) -> None:
         """
         Merge the pages from the given file into the output file at the
@@ -154,33 +152,6 @@ class PdfMerger:
                 outline (collection of outline items, previously referred to as
                 'bookmarks') from being imported by specifying this as ``False``.
         """
-        if position is not None:  # deprecated
-            if page_number is None:
-                page_number = position
-                old_term = "position"
-                new_term = "page_number"
-                warnings.warn(
-                    (
-                        f"{old_term} is deprecated as an argument and will be "
-                        f"removed in pypdf=4.0.0. Use {new_term} instead"
-                    ),
-                    DeprecationWarning,
-                )
-            else:
-                raise ValueError(
-                    "The argument position of merge is deprecated. "
-                    "Use page_number only."
-                )
-
-        if page_number is None:  # deprecated
-            # The parameter is only marked as Optional as long as
-            # position is not fully deprecated
-            raise ValueError("page_number may not be None")
-        if fileobj is None:  # deprecated
-            # The argument is only Optional due to the deprecated position
-            # argument
-            raise ValueError("fileobj may not be None")
-
         stream, encryption_obj = self._create_stream(fileobj)
 
         # Create a new PdfReader instance using the stream
@@ -641,13 +612,12 @@ class PdfMerger:
     def add_outline_item(
         self,
         title: str,
-        page_number: Optional[int] = None,
+        page_number: int,
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
         fit: Fit = PAGE_FIT,
-        pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
         Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
@@ -663,24 +633,6 @@ class PdfMerger:
             italic: Outline item font is italic
             fit: The fit of the destination page.
         """
-        if page_number is not None and pagenum is not None:
-            raise ValueError(
-                "The argument pagenum of add_outline_item is deprecated. "
-                "Use page_number only."
-            )
-        if pagenum is not None:  # deprecated
-            old_term = "pagenum"
-            new_term = "page_number"
-            warnings.warn(
-                (
-                    f"{old_term} is deprecated as an argument and will be "
-                    f"removed in pypdf==4.0.0. Use {new_term} instead"
-                ),
-                DeprecationWarning,
-            )
-            page_number = pagenum
-        if page_number is None:  # deprecated
-            raise ValueError("page_number may not be None")
         writer = self.output
         if writer is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
@@ -698,8 +650,7 @@ class PdfMerger:
     def add_named_destination(
         self,
         title: str,
-        page_number: Optional[int] = None,
-        pagenum: Optional[int] = None,
+        page_number: int,
     ) -> None:
         """
         Add a destination to the output.
@@ -708,24 +659,6 @@ class PdfMerger:
             title: Title to use
             page_number: Page number this destination points at.
         """
-        if page_number is not None and pagenum is not None:
-            raise ValueError(
-                "The argument pagenum of add_named_destination is deprecated. "
-                "Use page_number only."
-            )
-        if pagenum is not None:  # deprecated
-            old_term = "pagenum"
-            new_term = "page_number"
-            warnings.warn(
-                (
-                    f"{old_term} is deprecated as an argument and will be "
-                    f"removed in pypdf==4.0.0. Use {new_term} instead"
-                ),
-                DeprecationWarning,
-            )
-            page_number = pagenum
-        if page_number is None:  # deprecated
-            raise ValueError("page_number may not be None")
         dest = Destination(
             TextStringObject(title),
             NumberObject(page_number),

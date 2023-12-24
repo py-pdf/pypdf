@@ -322,40 +322,13 @@ class PageObject(DictionaryObject):
         self,
         pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = None,
         indirect_reference: Optional[IndirectObject] = None,
-        indirect_ref: Optional[IndirectObject] = None,  # deprecated
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
         self.inline_images: Optional[Dict[str, ImageFile]] = None
         # below Union for mypy but actually Optional[List[str]]
         self.inline_images_keys: Optional[List[Union[str, List[str]]]] = None
-        if indirect_ref is not None:  # deprecated
-            warnings.warn(
-                (
-                    "indirect_ref is deprecated and will be removed in "
-                    "pypdf 4.0.0. Use indirect_reference instead of indirect_ref."
-                ),
-                DeprecationWarning,
-            )
-            if indirect_reference is not None:
-                raise ValueError("Use indirect_reference instead of indirect_ref.")
-            indirect_reference = indirect_ref
         self.indirect_reference = indirect_reference
-
-    @property
-    def indirect_ref(self) -> Optional[IndirectObject]:  # deprecated
-        warnings.warn(
-            (
-                "indirect_ref is deprecated and will be removed in pypdf 4.0.0"
-                "Use indirect_reference instead of indirect_ref."
-            ),
-            DeprecationWarning,
-        )
-        return self.indirect_reference
-
-    @indirect_ref.setter
-    def indirect_ref(self, value: Optional[IndirectObject]) -> None:  # deprecated
-        self.indirect_reference = value
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
