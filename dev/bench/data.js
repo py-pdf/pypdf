@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703413785927,
+  "lastUpdate": 1703414630892,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -45124,6 +45124,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.062495581548813954",
             "extra": "mean: 17.706988654200007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "54a30cb298469533abf56f83aefc6fac31322dae",
+          "message": "REL: 3.17.4\n\n## What's new\n\n### Bug Fixes (BUG)\n-  Handle IndirectObject as image filter (#2355) by @stefan6419846\n\n### Documentation (DOC)\n-  Quote specs in generate_file_identifiers (#2363) by @exiledkingcc\n-  Notes about form fields and annotations (#1945) by @dmjohnsson23\n-  Notes about update_page_form_field_values(auto_regenerate) (#2359) by @dmjohnsson23\n-  Fix stamping example (#2358) by @dmjohnsson23\n-  Stamp images directly on a PDF (#2357) by @dmjohnsson23\n-  Correct the example of adding highlight annotation (#2341) by @Tobeabellwether\n\n### Maintenance (MAINT)\n-  Update upload-artifact and download-artifact actions from v3 to v4 (#2352) by @stefan6419846\n\n### Testing (TST)\n-  Add xfail test for #2336 (#2365) by @MartinThoma\n-  Increase test coverage for flate handling of image mode 1 (#2339) by @stefan6419846\n\n### Code Style (STY)\n-  File identifier generation restructuring (#2362) by @exiledkingcc\n-  Add PdfWriter._ID attribute (#2361) by @exiledkingcc\n-  Variable naming convention (#2360) by @MartinThoma\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.3...3.17.4)",
+          "timestamp": "2023-12-24T11:36:33+01:00",
+          "tree_id": "19bc547ebaedeefa449b49dc8dd3d093a52ab0b8",
+          "url": "https://github.com/py-pdf/pypdf/commit/54a30cb298469533abf56f83aefc6fac31322dae"
+        },
+        "date": 1703414629381,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3453726380808244,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00546711692203356",
+            "extra": "mean: 298.9203619999955 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.576863885433733,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008269928056377723",
+            "extra": "mean: 79.51107757142698 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2713277399386372,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012684435399917286",
+            "extra": "mean: 3.685579661799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.335378200949187,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018871159062917617",
+            "extra": "mean: 57.68550235294236 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.054299969258206,
+            "unit": "iter/sec",
+            "range": "stddev: 0.2963017235979674",
+            "extra": "mean: 18.416216687799995 sec\nrounds: 5"
           }
         ]
       }
