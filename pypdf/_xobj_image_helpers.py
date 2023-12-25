@@ -198,9 +198,13 @@ def _handle_flate(
                 expected_count = 2 * nb
                 if len(lookup) != expected_count:
                     if len(lookup) < expected_count:
-                        raise PdfReadError(f"Not enough lookup values: Expected {expected_count}, got {len(lookup)}.")
+                        raise PdfReadError(
+                            f"Not enough lookup values: Expected {expected_count}, got {len(lookup)}."
+                        )
                     if not check_if_whitespace_only(lookup[expected_count:]):
-                        raise PdfReadError(f"Too many lookup values: Expected {expected_count}, got {len(lookup)}.")
+                        raise PdfReadError(
+                            f"Too many lookup values: Expected {expected_count}, got {len(lookup)}."
+                        )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
