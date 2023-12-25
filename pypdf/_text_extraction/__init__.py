@@ -214,7 +214,6 @@ def handle_tj(
     rtl_dir: bool,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
 ) -> Tuple[str, bool]:
-
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
     if orientation in orientations and len(operands) > 0:

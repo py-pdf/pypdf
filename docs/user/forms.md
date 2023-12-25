@@ -48,6 +48,7 @@ The PDF form stores form fields as annotations with the subtype "\Widget". This 
 
 ```python
 from pypdf import PdfReader
+
 reader = PdfReader("form.pdf")
 fields = reader.get_fields()
 ```
@@ -55,6 +56,7 @@ fields = reader.get_fields()
 ```python
 from pypdf import PdfReader
 from pypdf.constants import AnnotationDictionaryAttributes
+
 reader = PdfReader("form.pdf")
 fields = []
 for page in reader.pages:
