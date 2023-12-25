@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703497566760,
+  "lastUpdate": 1703498871737,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -45242,6 +45242,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.15435092851044074",
             "extra": "mean: 17.800920771600023 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eb3e22d104ebb103b609d8342a48cf4404c6195b",
+          "message": "DEP: Remove deprecated code (#2367)\n\nAlso don't use a default for the deprecation functions: If the version is mentioned explicitly with every call, we can\r\nmore easily search for it.\r\n\r\nBookmarks: `MAINT: Consistent terminology for outline items` (#1156, pypdf==2.9.0) introduced it. Meaning in pypdf==4.0.0 we can remove them",
+          "timestamp": "2023-12-25T11:04:42+01:00",
+          "tree_id": "5178bdadd582d47234c3fa93fd3cfbb758d7578f",
+          "url": "https://github.com/py-pdf/pypdf/commit/eb3e22d104ebb103b609d8342a48cf4404c6195b"
+        },
+        "date": 1703498868379,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4170755024372754,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005222476667614883",
+            "extra": "mean: 292.64790880000646 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.762947334774635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007064043308795998",
+            "extra": "mean: 78.35180807142754 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2743224041793002,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013939899844704564",
+            "extra": "mean: 3.6453457127999966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.560056762781187,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00028673613683083334",
+            "extra": "mean: 56.94742411764383 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05663817639464082,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05697293234846141",
+            "extra": "mean: 17.655935689600017 sec\nrounds: 5"
           }
         ]
       }
