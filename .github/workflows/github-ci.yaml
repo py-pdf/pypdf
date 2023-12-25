@@ -58,7 +58,7 @@ jobs:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
         use-crypto-lib: ["cryptography"]
         include:
-          - python-version: "3.6"
+          - python-version: "3.7"
             use-crypto-lib: "pycryptodome"
           - python-version: "3.7"
             use-crypto-lib: "none"
@@ -81,7 +81,7 @@ jobs:
         key: cache-downloaded-files
     - name: Setup Python
       uses: actions/setup-python@v5
-      if: matrix.python-version == '3.6' || matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      if: matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -100,7 +100,7 @@ jobs:
     - name: Install requirements (Python 3)
       run: |
         pip install -r requirements/ci.txt
-      if: matrix.python-version == '3.6' || matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      if: matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
     - name: Install requirements (Python 3.11+)
       run: |
         pip install -r requirements/ci-3.11.txt
