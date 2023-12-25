@@ -7,7 +7,7 @@ if sys.version_info[:2] >= (3, 8):
     # Python 3.8+: https://peps.python.org/pep-0586
     from typing import Literal
 else:
-    from typing_extensions import Literal  # type: ignore[assignment]
+    from typing_extensions import Literal
 
 if sys.version_info[:2] >= (3, 10):
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
