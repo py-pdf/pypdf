@@ -55,9 +55,6 @@ from ._utils import (
     StrByteType,
     StreamType,
     b_,
-    deprecate_no_replacement,
-    deprecation_no_replacement,
-    deprecation_with_replacement,
     logger_warning,
     parse_iso8824_date,
     read_non_whitespace,
@@ -118,11 +115,6 @@ def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     return struct.unpack(">q", d)[0]
 
 
-def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:  # deprecated
-    deprecation_with_replacement("convertToInt", "convert_to_int")
-    return convert_to_int(d, size)
-
-
 class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
@@ -146,15 +138,6 @@ class DocumentInformation(DictionaryObject):
         if isinstance(retval, TextStringObject):
             return retval
         return None
-
-    def getText(self, key: str) -> Optional[str]:  # deprecated
-        """
-        Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_no_replacement("getText", "3.0.0")
-        return self._get_text(key)
 
     @property
     def title(self) -> Optional[str]:
@@ -394,25 +377,6 @@ class PdfReader:
         retval.update(obj)  # type: ignore
         return retval
 
-    def getDocumentInfo(self) -> Optional[DocumentInformation]:  # deprecated
-        """
-        Use the attribute :py:attr:`metadata` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getDocumentInfo", "metadata", "3.0.0")
-        return self.metadata
-
-    @property
-    def documentInfo(self) -> Optional[DocumentInformation]:  # deprecated
-        """
-        Use the attribute :py:attr:`metadata` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("documentInfo", "metadata", "3.0.0")
-        return self.metadata
-
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
         """XMP (Extensible Metadata Platform) data."""
@@ -421,25 +385,6 @@ class PdfReader:
             return self.trailer[TK.ROOT].xmp_metadata  # type: ignore
         finally:
             self._override_encryption = False
-
-    def getXmpMetadata(self) -> Optional[XmpInformation]:  # deprecated
-        """
-        Use the attribute :py:attr:`metadata` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getXmpMetadata", "xmp_metadata", "3.0.0")
-        return self.xmp_metadata
-
-    @property
-    def xmpMetadata(self) -> Optional[XmpInformation]:  # deprecated
-        """
-        Use the attribute :py:attr:`xmp_metadata` instead.
-
-        .. deprecated:: 1.28.0.
-        """
-        deprecation_with_replacement("xmpMetadata", "xmp_metadata", "3.0.0")
-        return self.xmp_metadata
 
     def _get_num_pages(self) -> int:
         """
@@ -462,36 +407,6 @@ class PdfReader:
                 self._flatten()
             return len(self.flattened_pages)  # type: ignore
 
-    def getNumPages(self) -> int:  # deprecated
-        """
-        Use :code:`len(reader.pages)` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("reader.getNumPages", "len(reader.pages)", "3.0.0")
-        return self._get_num_pages()
-
-    @property
-    def numPages(self) -> int:  # deprecated
-        """
-        Use :code:`len(reader.pages)` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("reader.numPages", "len(reader.pages)", "3.0.0")
-        return self._get_num_pages()
-
-    def getPage(self, pageNumber: int) -> PageObject:  # deprecated
-        """
-        Use :code:`reader.pages[page_number]` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "reader.getPage(pageNumber)", "reader.pages[page_number]", "3.0.0"
-        )
-        return self._get_page(pageNumber)
-
     def _get_page(self, page_number: int) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
@@ -507,16 +422,6 @@ class PdfReader:
             self._flatten()
         assert self.flattened_pages is not None, "hint for mypy"
         return self.flattened_pages[page_number]
-
-    @property
-    def namedDestinations(self) -> Dict[str, Any]:  # deprecated
-        """
-        Use :py:attr:`named_destinations` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("namedDestinations", "named_destinations", "3.0.0")
-        return self.named_destinations
 
     @property
     def named_destinations(self) -> Dict[str, Any]:
@@ -578,20 +483,6 @@ class PdfReader:
                 self._build_field(field, retval, fileobj, field_attributes)
 
         return retval
-
-    def getFields(
-        self,
-        tree: Optional[TreeObject] = None,
-        retval: Optional[Dict[Any, Any]] = None,
-        fileobj: Optional[Any] = None,
-    ) -> Optional[Dict[str, Any]]:  # deprecated
-        """
-        Use :meth:`get_fields` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getFields", "get_fields", "3.0.0")
-        return self.get_fields(tree, retval, fileobj)
 
     def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
         if "/TM" in parent:
@@ -744,17 +635,6 @@ class PdfReader:
                     ff[indexed_key(cast(str, value["/T"]), ff)] = value.get("/V")
         return ff
 
-    def getFormTextFields(self) -> Dict[str, Any]:  # deprecated
-        """
-        Use :meth:`get_form_text_fields` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "getFormTextFields", "get_form_text_fields", "3.0.0"
-        )
-        return self.get_form_text_fields()
-
     def _get_named_destinations(
         self,
         tree: Union[TreeObject, None] = None,
@@ -825,21 +705,6 @@ class PdfReader:
                     retval[k__] = dest
         return retval
 
-    def getNamedDestinations(
-        self,
-        tree: Union[TreeObject, None] = None,
-        retval: Optional[Any] = None,
-    ) -> Dict[str, Any]:  # deprecated
-        """
-        Use :py:attr:`named_destinations` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "getNamedDestinations", "named_destinations", "3.0.0"
-        )
-        return self._get_named_destinations(tree, retval)
-
     @property
     def outline(self) -> OutlineType:
         """
@@ -849,16 +714,6 @@ class PdfReader:
         'bookmarks')
         """
         return self._get_outline()
-
-    @property
-    def outlines(self) -> OutlineType:  # deprecated
-        """
-        Use :py:attr:`outline` instead.
-
-        .. deprecated:: 2.9.0
-        """
-        deprecation_with_replacement("outlines", "outline", "3.0.0")
-        return self.outline
 
     def _get_outline(
         self, node: Optional[DictionaryObject] = None, outline: Optional[Any] = None
@@ -900,17 +755,6 @@ class PdfReader:
             node = cast(DictionaryObject, node["/Next"])
 
         return outline
-
-    def getOutlines(
-        self, node: Optional[DictionaryObject] = None, outline: Optional[Any] = None
-    ) -> OutlineType:  # deprecated
-        """
-        Use :py:attr:`outline` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getOutlines", "outline", "3.0.0")
-        return self._get_outline(node, outline)
 
     @property
     def threads(self) -> Optional[ArrayObject]:
@@ -968,15 +812,6 @@ class PdfReader:
         """
         return self._get_page_number_by_indirect(page.indirect_reference)
 
-    def getPageNumber(self, page: PageObject) -> int:  # deprecated
-        """
-        Use :meth:`get_page_number` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getPageNumber", "get_page_number", "3.0.0")
-        return self.get_page_number(page)
-
     def get_destination_page_number(self, destination: Destination) -> int:
         """
         Retrieve page number of a given Destination object.
@@ -988,17 +823,6 @@ class PdfReader:
             The page number or -1 if page is not found
         """
         return self._get_page_number_by_indirect(destination.page)
-
-    def getDestinationPageNumber(self, destination: Destination) -> int:  # deprecated
-        """
-        Use :meth:`get_destination_page_number` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "getDestinationPageNumber", "get_destination_page_number", "3.0.0"
-        )
-        return self.get_destination_page_number(destination)
 
     def _build_destination(
         self,
@@ -1150,25 +974,6 @@ class PdfReader:
             return cast(NameObject, trailer[CD.PAGE_LAYOUT])
         return None
 
-    def getPageLayout(self) -> Optional[str]:  # deprecated
-        """
-        Use :py:attr:`page_layout` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getPageLayout", "page_layout", "3.0.0")
-        return self.page_layout
-
-    @property
-    def pageLayout(self) -> Optional[str]:  # deprecated
-        """
-        Use :py:attr:`page_layout` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("pageLayout", "page_layout", "3.0.0")
-        return self.page_layout
-
     @property
     def page_mode(self) -> Optional[PagemodeType]:
         """
@@ -1194,25 +999,6 @@ class PdfReader:
             return self.trailer[TK.ROOT]["/PageMode"]  # type: ignore
         except KeyError:
             return None
-
-    def getPageMode(self) -> Optional[PagemodeType]:  # deprecated
-        """
-        Use :py:attr:`page_mode` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getPageMode", "page_mode", "3.0.0")
-        return self.page_mode
-
-    @property
-    def pageMode(self) -> Optional[PagemodeType]:  # deprecated
-        """
-        Use :py:attr:`page_mode` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("pageMode", "page_mode", "3.0.0")
-        return self.page_mode
 
     def _flatten(
         self,
@@ -1466,17 +1252,6 @@ class PdfReader:
         )
         return retval
 
-    def getObject(
-        self, indirectReference: IndirectObject
-    ) -> Optional[PdfObject]:  # deprecated
-        """
-        Use :meth:`get_object` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getObject", "get_object", "3.0.0")
-        return self.get_object(indirectReference)
-
     def read_object_header(self, stream: StreamType) -> Tuple[int, int]:
         # Should never be necessary to read out whitespace, since the
         # cross-reference table should put us in the right spot to read the
@@ -1505,32 +1280,10 @@ class PdfReader:
             )
         return int(idnum), int(generation)
 
-    def readObjectHeader(self, stream: StreamType) -> Tuple[int, int]:  # deprecated
-        """
-        Use :meth:`read_object_header` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("readObjectHeader", "read_object_header", "3.0.0")
-        return self.read_object_header(stream)
-
     def cache_get_indirect_object(
         self, generation: int, idnum: int
     ) -> Optional[PdfObject]:
         return self.resolved_objects.get((generation, idnum))
-
-    def cacheGetIndirectObject(
-        self, generation: int, idnum: int
-    ) -> Optional[PdfObject]:  # deprecated
-        """
-        Use :meth:`cache_get_indirect_object` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "cacheGetIndirectObject", "cache_get_indirect_object", "3.0.0"
-        )
-        return self.cache_get_indirect_object(generation, idnum)
 
     def cache_indirect_object(
         self, generation: int, idnum: int, obj: Optional[PdfObject]
@@ -1544,17 +1297,6 @@ class PdfReader:
         if obj is not None:
             obj.indirect_reference = IndirectObject(idnum, generation, self)
         return obj
-
-    def cacheIndirectObject(
-        self, generation: int, idnum: int, obj: Optional[PdfObject]
-    ) -> Optional[PdfObject]:  # deprecated
-        """
-        Use :meth:`cache_indirect_object` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("cacheIndirectObject", "cache_indirect_object")
-        return self.cache_indirect_object(generation, idnum, obj)
 
     def read(self, stream: StreamType) -> None:
         self._basic_validation(stream)
@@ -2012,46 +1754,6 @@ class PdfReader:
             if (i + 1) >= len(array):
                 break
 
-    def read_next_end_line(
-        self, stream: StreamType, limit_offset: int = 0
-    ) -> bytes:  # deprecated
-        """.. deprecated:: 2.1.0"""
-        deprecate_no_replacement("read_next_end_line", removed_in="4.0.0")
-        line_parts = []
-        while True:
-            # Prevent infinite loops in malformed PDFs
-            if stream.tell() == 0 or stream.tell() == limit_offset:
-                raise PdfReadError("Could not read malformed PDF file")
-            x = stream.read(1)
-            if stream.tell() < 2:
-                raise PdfReadError("EOL marker not found")
-            stream.seek(-2, 1)
-            if x in (b"\n", b"\r"):  # \n = LF; \r = CR
-                crlf = False
-                while x in (b"\n", b"\r"):
-                    x = stream.read(1)
-                    if x in (b"\n", b"\r"):  # account for CR+LF
-                        stream.seek(-1, 1)
-                        crlf = True
-                    if stream.tell() < 2:
-                        raise PdfReadError("EOL marker not found")
-                    stream.seek(-2, 1)
-                stream.seek(
-                    2 if crlf else 1, 1
-                )  # if using CR+LF, go back 2 bytes, else 1
-                break
-            else:
-                line_parts.append(x)
-        line_parts.reverse()
-        return b"".join(line_parts)
-
-    def readNextEndLine(
-        self, stream: StreamType, limit_offset: int = 0
-    ) -> bytes:  # deprecated
-        """.. deprecated:: 1.28.0"""
-        deprecation_no_replacement("readNextEndLine", "3.0.0")
-        return self.read_next_end_line(stream, limit_offset)
-
     def decrypt(self, password: Union[str, bytes]) -> PasswordType:
         """
         When using an encrypted / secured PDF file with the PDF Standard
@@ -2100,25 +1802,6 @@ class PdfReader:
         :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
         """
         return TK.ENCRYPT in self.trailer
-
-    def getIsEncrypted(self) -> bool:  # deprecated
-        """
-        Use :py:attr:`is_encrypted` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getIsEncrypted", "is_encrypted", "3.0.0")
-        return self.is_encrypted
-
-    @property
-    def isEncrypted(self) -> bool:  # deprecated
-        """
-        Use :py:attr:`is_encrypted` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("isEncrypted", "is_encrypted", "3.0.0")
-        return self.is_encrypted
 
     @property
     def xfa(self) -> Optional[Dict[str, Any]]:
@@ -2314,11 +1997,3 @@ class LazyDict(Mapping[Any, Any]):
 
     def __str__(self) -> str:
         return f"LazyDict(keys={list(self.keys())})"
-
-
-class PdfFileReader(PdfReader):  # deprecated
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecation_with_replacement("PdfFileReader", "PdfReader", "3.0.0")
-        if "strict" not in kwargs and len(args) < 2:
-            kwargs["strict"] = True  # maintain the default
-        super().__init__(*args, **kwargs)

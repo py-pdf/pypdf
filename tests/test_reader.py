@@ -8,11 +8,10 @@ import pytest
 
 from pypdf import PdfReader
 from pypdf._crypt_providers import crypt_provider
-from pypdf._reader import convert_to_int, convertToInt
+from pypdf._reader import convert_to_int
 from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import (
-    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
@@ -758,18 +757,6 @@ def test_convert_to_int_error():
     with pytest.raises(PdfReadError) as exc:
         convert_to_int(b"256", 16)
     assert exc.value.args[0] == "invalid size in convert_to_int"
-
-
-def test_converttoint_deprecated():
-    msg = (
-        "convertToInt is deprecated and was removed in pypdf 3.0.0. "
-        "Use convert_to_int instead."
-    )
-    with pytest.raises(
-        DeprecationError,
-        match=msg,
-    ):
-        assert convertToInt(b"\x01", 8) == 1
 
 
 @pytest.mark.enable_socket()

@@ -38,7 +38,6 @@ from .._utils import (
     StreamType,
     b_,
     deprecate_no_replacement,
-    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -147,10 +146,6 @@ class PdfObject(PdfObjectProtocol):
         """Resolve indirect references."""
         return self
 
-    def getObject(self) -> Optional["PdfObject"]:  # deprecated
-        deprecation_with_replacement("getObject", "get_object", "3.0.0")
-        return self.get_object()
-
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
@@ -185,19 +180,8 @@ class NullObject(PdfObject):
             raise PdfReadError("Could not read Null object")
         return NullObject()
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
-
     def __repr__(self) -> str:
         return "NullObject"
-
-    @staticmethod
-    def readFromStream(stream: StreamType) -> "NullObject":  # deprecated
-        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
-        return NullObject.read_from_stream(stream)
 
 
 class BooleanObject(PdfObject):
@@ -239,12 +223,6 @@ class BooleanObject(PdfObject):
         else:
             stream.write(b"false")
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
-
     @staticmethod
     def read_from_stream(stream: StreamType) -> "BooleanObject":
         word = stream.read(4)
@@ -255,11 +233,6 @@ class BooleanObject(PdfObject):
             return BooleanObject(False)
         else:
             raise PdfReadError("Could not read Boolean object")
-
-    @staticmethod
-    def readFromStream(stream: StreamType) -> "BooleanObject":  # deprecated
-        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
-        return BooleanObject.read_from_stream(stream)
 
 
 class IndirectObject(PdfObject):
@@ -338,12 +311,6 @@ class IndirectObject(PdfObject):
             )
         stream.write(f"{self.idnum} {self.generation} R".encode())
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
-
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
         idnum = b""
@@ -370,13 +337,6 @@ class IndirectObject(PdfObject):
                 f"Error reading indirect object reference at byte {hex(stream.tell())}"
             )
         return IndirectObject(int(idnum), int(generation), pdf)
-
-    @staticmethod
-    def readFromStream(
-        stream: StreamType, pdf: Any  # PdfReader
-    ) -> "IndirectObject":  # deprecated
-        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
-        return IndirectObject.read_from_stream(stream, pdf)
 
 
 FLOAT_WRITE_PRECISION = 8  # shall be min 5 digits max, allow user adj
@@ -431,12 +391,6 @@ class FloatObject(float, PdfObject):
             )
         stream.write(self.myrepr().encode("utf8"))
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
-
 
 class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b"[^+-.0-9]")
@@ -472,25 +426,12 @@ class NumberObject(int, PdfObject):
             )
         stream.write(repr(self).encode("utf8"))
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
-
     @staticmethod
     def read_from_stream(stream: StreamType) -> Union["NumberObject", "FloatObject"]:
         num = read_until_regex(stream, NumberObject.NumberPattern)
         if num.find(b".") != -1:
             return FloatObject(num)
         return NumberObject(num)
-
-    @staticmethod
-    def readFromStream(
-        stream: StreamType,
-    ) -> Union["NumberObject", "FloatObject"]:  # deprecated
-        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
-        return NumberObject.read_from_stream(stream)
 
 
 class ByteStringObject(bytes, PdfObject):
@@ -531,12 +472,6 @@ class ByteStringObject(bytes, PdfObject):
         stream.write(b"<")
         stream.write(binascii.hexlify(self))
         stream.write(b">")
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
 
 
 class TextStringObject(str, PdfObject):  # noqa: SLOT000
@@ -618,12 +553,6 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
                 stream.write(b_(chr(c)))
         stream.write(b")")
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
-
 
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
@@ -657,12 +586,6 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(self.renumber())
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
 
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")
@@ -717,13 +640,6 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 raise PdfReadError(
                     f"Illegal character in Name Object ({name!r})"
                 ) from e
-
-    @staticmethod
-    def readFromStream(
-        stream: StreamType, pdf: Any  # PdfReader
-    ) -> "NameObject":  # deprecated
-        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
-        return NameObject.read_from_stream(stream, pdf)
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:

@@ -96,7 +96,7 @@ def merge():
     writer.add_metadata({"author": "Martin Thoma"})
     writer.add_named_destination("title", 0)
     writer.set_page_layout("/SinglePage")
-    writer.set_page_mode("/UseThumbs")
+    writer.page_mode = "/UseThumbs"
 
     write_path = "dont_commit_merged.pdf"
     writer.write(write_path)
