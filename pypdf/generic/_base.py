@@ -42,6 +42,7 @@ from .._utils import (
     read_non_whitespace,
     read_until_regex,
     str_,
+    WHITESPACES,
 )
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
 
@@ -557,6 +558,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     surfix = b"/"
+    NUMBER = b"#"
     renumber_table: ClassVar[Dict[str, bytes]] = {
         "#": b"#23",
         "(": b"#28",
@@ -589,20 +591,23 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
     def renumber(self) -> bytes:
         out = self.surfix
-        val = self[:]
-        if val[0].encode("utf-8") != self.surfix:
+        try:
+            val = self[:].encode("latin1")
+            # a sequence of any characters (8-bit values)
+        except UnicodeEncodeError as e:
+            logger_warning(repr(e), __name__)
+            val = self[:].encode("utf8")
+        if val[:1] != self.surfix:
             logger_warning(f"Incorrect first char in NameObject:({self})", __name__)
         else:
             val = val[1:]
+        escaped = b"".join(WHITESPACES) + self.NUMBER
         for c in val:
-            if c > "~":
-                for x in c.encode("utf-8"):
-                    out += f"#{x:02X}".encode()
+            assert c  # null char is not allowed
+            if 0x21 <= c <= 0x7E and c not in escaped:
+                out += bytes([c])
             else:
-                try:
-                    out += self.renumber_table[c]
-                except KeyError:
-                    out += c.encode("utf-8")
+                out += self.NUMBER + f"{c:02X}".encode()
         return out
 
     @staticmethod

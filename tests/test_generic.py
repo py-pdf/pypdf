@@ -229,9 +229,13 @@ def test_name_object(caplog):
     assert caplog.text == ""
 
     b = BytesIO()
+    NameObject("#42").write_to_stream(b)
+    assert bytes(b.getbuffer()) == b"/#2342"
+
+    b = BytesIO()
     NameObject("/你好世界 (%)").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
-    assert caplog.text == ""
+    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20(%)"
+    assert "UnicodeEncodeError" in caplog.text
 
 
 def test_destination_fit_r():
