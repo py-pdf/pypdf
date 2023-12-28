@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703501983081,
+  "lastUpdate": 1703749013052,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -45360,6 +45360,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13712094590322832",
             "extra": "mean: 17.496314521399995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "195d82ea504fc309ca60ced6200fc162a7755506",
+          "message": "DEP: Drop Python 3.6 support (#2369)\n\nThis does not mean that pypdf doesn't run with Python 3.6 anymore.\r\nIt means that we don't run CI with Python 3.6 and don't give any\r\nguarantees.\r\n\r\nSee https://github.com/py-pdf/pypdf/discussions/2005",
+          "timestamp": "2023-12-28T08:33:51+01:00",
+          "tree_id": "5819cb5a382deb2a66c7c5de48957136bf9e00a7",
+          "url": "https://github.com/py-pdf/pypdf/commit/195d82ea504fc309ca60ced6200fc162a7755506"
+        },
+        "date": 1703749010880,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2967256521259767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007179168126308663",
+            "extra": "mean: 303.33127640000157 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.726270545036568,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00829460130390021",
+            "extra": "mean: 78.57761600000046 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26604799840994714,
+            "unit": "iter/sec",
+            "range": "stddev: 0.052589781539271664",
+            "extra": "mean: 3.7587202534000026 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.69080979212317,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015711878450473903",
+            "extra": "mean: 59.913210470586414 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.060284596592806494,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07840369462560777",
+            "extra": "mean: 16.587985265199997 sec\nrounds: 5"
           }
         ]
       }
