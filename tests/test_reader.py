@@ -3,6 +3,7 @@ import io
 import time
 from io import BytesIO
 from pathlib import Path
+from typing import Union
 
 import pytest
 
@@ -695,12 +696,15 @@ def test_issue604(caplog, strict):
             ]
             assert normalize_warnings(caplog.text) == msg
 
-        def get_dest_pages(x) -> int:
+        def get_dest_pages(x) -> Union[int, None]:
             if isinstance(x, list):
                 r = [get_dest_pages(y) for y in x]
                 return r
             else:
-                return pdf.get_destination_page_number(x) + 1
+                des_page_number = pdf.get_destination_page_number(x)
+                if des_page_number is None:
+                    return des_page_number
+                return des_page_number + 1
 
         out = []
 
