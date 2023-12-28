@@ -341,6 +341,26 @@ class PdfReader:
         elif password is not None:
             raise PdfReadError("Not encrypted file")
 
+    def _repr_mimebundle_(
+        self, include: None = None, exclude: None = None
+    ) -> Dict[str, Any]:
+        """
+        Integration into Jupyter Notebooks.
+
+        This method returns a dictionary that maps a mime-type to it's
+        representation.
+
+        The include and exclude parameters are ignored.
+
+        See https://ipython.readthedocs.io/en/stable/config/integrating.html
+        """
+        self.stream.seek(0)
+        pdf_data = self.stream.read()
+        data = {
+            "application/pdf": pdf_data,
+        }
+        return data
+
     @property
     def pdf_header(self) -> str:
         """
