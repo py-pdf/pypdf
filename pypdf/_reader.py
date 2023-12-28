@@ -342,15 +342,15 @@ class PdfReader:
             raise PdfReadError("Not encrypted file")
 
     def _repr_mimebundle_(
-        self, include: None = None, exclude: None = None
+        self,
+        include: Union[None, Iterable[str]] = None,
+        exclude: Union[None, Iterable[str]] = None,
     ) -> Dict[str, Any]:
         """
         Integration into Jupyter Notebooks.
 
         This method returns a dictionary that maps a mime-type to it's
         representation.
-
-        The include and exclude parameters are ignored.
 
         See https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
@@ -359,6 +359,15 @@ class PdfReader:
         data = {
             "application/pdf": pdf_data,
         }
+
+        if include is not None:
+            # Filter representations based on include list
+            data = {k: v for k, v in data.items() if k in include}
+
+        if exclude is not None:
+            # Remove representations based on exclude list
+            data = {k: v for k, v in data.items() if k not in exclude}
+
         return data
 
     @property
