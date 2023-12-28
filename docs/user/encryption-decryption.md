@@ -6,8 +6,8 @@ with different key length. `pypdf` supports all of them until `PDF-2.0`, which
 is the latest PDF standard.
 
 `pypdf` use an extra dependency to do encryption or decryption for `AES` algorithms.
-We recommend [`pyca/cryptography`](https://cryptography.io/en/latest/). For Python 3.6
-users, you can use [`pycryptodome`](https://pypi.org/project/pycryptodome/) as a fallback.
+We recommend [`pyca/cryptography`](https://cryptography.io/en/latest/). Alternatively,
+you can use [`pycryptodome`](https://pypi.org/project/pycryptodome/).
 
 > Please see the note in the [installation guide](installation.md)
 > for installing the extra dependencies if interacting with PDFs that use AES.

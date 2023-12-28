@@ -28,8 +28,7 @@ so that you can install the different Python versions:
 
 ```
 pyenv install pypy3.8-7.3.7
-pyenv install 3.6.15
-pyenv install 3.7.12
+pyenv install 3.7.15
 pyenv install 3.8.12
 pyenv install 3.9.10
 pyenv install 3.10.2

@@ -20,7 +20,7 @@ if sys.version_info[:2] >= (3, 8):
 else:
     # PEP 586 introduced typing.Literal with Python 3.8
     # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import Literal  # type: ignore[assignment]
+    from typing_extensions import Literal
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeAlias

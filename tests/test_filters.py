@@ -279,10 +279,9 @@ for page in reader.pages:
     ), exc.value.args[0]
 """
     )
-    result = subprocess.run(  # noqa: UP022
+    result = subprocess.run(
         [shutil.which("python"), source_file],  # noqa: S603
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
     )
     assert result.returncode == 0
     assert result.stdout == b""
