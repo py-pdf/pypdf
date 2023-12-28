@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703749013052,
+  "lastUpdate": 1703786305477,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -45419,6 +45419,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07840369462560777",
             "extra": "mean: 16.587985265199997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a91e9f658f57cd2a5c7e90bf74a1bd9845755e83",
+          "message": "ENH: Add Jupyter Notebook integration for PdfReader (#2375)\n\nSee\r\n\r\n* https://ipython.readthedocs.io/en/stable/config/integrating.html#MyObject._repr_mimebundle_\r\n* https://discourse.jupyter.org/t/what-are-include-exclude-parameter-in-repr-mimebundle-for/23125",
+          "timestamp": "2023-12-28T18:55:31+01:00",
+          "tree_id": "02d10e34047fd7db2e5fe710d06c1b5f2644849d",
+          "url": "https://github.com/py-pdf/pypdf/commit/a91e9f658f57cd2a5c7e90bf74a1bd9845755e83"
+        },
+        "date": 1703786302962,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.298914824673507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005633133282292378",
+            "extra": "mean: 303.12998460000244 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.774577541474558,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007404662002565073",
+            "extra": "mean: 78.28047516666221 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2718327487618176,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03225432044626485",
+            "extra": "mean: 3.678732619800013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.85385140618527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005810388735562029",
+            "extra": "mean: 59.333619117646045 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06173727203160628,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13228107247500406",
+            "extra": "mean: 16.197670663000007 sec\nrounds: 5"
           }
         ]
       }
