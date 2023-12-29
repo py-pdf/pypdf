@@ -20,7 +20,7 @@ PR_TITLE = os.getenv("PR_TITLE", "")
 
 if not PR_TITLE.startswith(KNOWN_PREFIXES) or not PR_TITLE.split(": ", maxsplit=1)[1]:
     sys.stderr.write(
-        "Please set an appropriate PR title: "
+        f"The PR title '{PR_TITLE}' does not follow the projects naming scheme: "
         "https://pypdf.readthedocs.io/en/latest/dev/intro.html#commit-messages\n",
     )
     sys.stderr.write(
