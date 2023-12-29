@@ -29,4 +29,4 @@ if not PR_TITLE.startswith(KNOWN_PREFIXES) or not PR_TITLE.split(": ", maxsplit=
     )
     sys.exit(1)
 else:
-    sys.stdout.write("PR title appears to be valid.\n")
+    sys.stdout.write(f"PR title '{PR_TITLE}' appears to be valid.\n")
