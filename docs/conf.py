@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
 
-import pypdf as py_pkg
+import pypdf as py_pkg  # noqa: E402
 
 shutil.copyfile("../CHANGELOG.md", "meta/CHANGELOG.md")
 shutil.copyfile("../CONTRIBUTORS.md", "meta/CONTRIBUTORS.md")
