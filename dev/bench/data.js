@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703786305477,
+  "lastUpdate": 1703884323532,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -45478,6 +45478,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13228107247500406",
             "extra": "mean: 16.197670663000007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c4819a9bdf599ff753aafd4dde6e797946d6d1e1",
+          "message": "DOC: Improve formatting of contributors page (#2383)",
+          "timestamp": "2023-12-29T22:08:58+01:00",
+          "tree_id": "ec2fc7b1a6fbd5144e3e5dbc0c6c91b56dd972ae",
+          "url": "https://github.com/py-pdf/pypdf/commit/c4819a9bdf599ff753aafd4dde6e797946d6d1e1"
+        },
+        "date": 1703884321908,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2423974058673464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0153366053243407",
+            "extra": "mean: 308.4137675999955 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.406792980826541,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011209705026212177",
+            "extra": "mean: 80.60100636364288 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26373582602057927,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03861290643948333",
+            "extra": "mean: 3.7916729595999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.86730387464576,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005538495669752864",
+            "extra": "mean: 59.28629776470436 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06139143355687941,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0468719430449495",
+            "extra": "mean: 16.288917558399998 sec\nrounds: 5"
           }
         ]
       }
