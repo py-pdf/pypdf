@@ -215,14 +215,19 @@ def writer_operate(writer: PdfWriter) -> None:
 
 
 @pytest.mark.parametrize(
-    ("write_data_here", "needs_cleanup"),
+    ("convert", "needs_cleanup"),
     [
-        (NamedTemporaryFile(suffix=".pdf", delete=False).name, True),
-        (Path(NamedTemporaryFile(suffix=".pdf", delete=False).name), True),
+        (str, True),
+        (Path, True),
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
+def test_writer_operations_by_traditional_usage(convert, needs_cleanup):
+    if callable(convert):
+        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+    else:
+        write_data_here = convert
+
     writer = PdfWriter()
 
     writer_operate(writer)
@@ -240,14 +245,19 @@ def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
 
 
 @pytest.mark.parametrize(
-    ("write_data_here", "needs_cleanup"),
+    ("convert", "needs_cleanup"),
     [
-        (NamedTemporaryFile(suffix=".pdf", delete=False).name, True),
-        (Path(NamedTemporaryFile(suffix=".pdf", delete=False).name), True),
+        (str, True),
+        (Path, True),
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_cleanup):
+def test_writer_operations_by_semi_traditional_usage(convert, needs_cleanup):
+    if callable(convert):
+        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+    else:
+        write_data_here = convert
+
     with PdfWriter() as writer:
         writer_operate(writer)
 
@@ -264,16 +274,21 @@ def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_clea
 
 
 @pytest.mark.parametrize(
-    ("write_data_here", "needs_cleanup"),
+    ("convert", "needs_cleanup"),
     [
-        (NamedTemporaryFile(suffix=".pdf", delete=False).name, True),
-        (Path(NamedTemporaryFile(suffix=".pdf", delete=False).name), True),
+        (str, True),
+        (Path, True),
         (BytesIO(), False),
     ],
 )
 def test_writer_operations_by_semi_new_traditional_usage(
-    write_data_here, needs_cleanup
+    convert, needs_cleanup
 ):
+    if callable(convert):
+        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+    else:
+        write_data_here = convert
+
     with PdfWriter() as writer:
         writer_operate(writer)
 
@@ -285,14 +300,19 @@ def test_writer_operations_by_semi_new_traditional_usage(
 
 
 @pytest.mark.parametrize(
-    ("write_data_here", "needs_cleanup"),
+    ("convert", "needs_cleanup"),
     [
-        (NamedTemporaryFile(suffix=".pdf", delete=False).name, True),
-        (Path(NamedTemporaryFile(suffix=".pdf", delete=False).name), True),
+        (str, True),
+        (Path, True),
         (BytesIO(), False),
     ],
 )
-def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
+def test_writer_operation_by_new_usage(convert, needs_cleanup):
+    if callable(convert):
+        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+    else:
+        write_data_here = convert
+
     # This includes write "output" to pypdf-output.pdf
     with PdfWriter(write_data_here) as writer:
         writer_operate(writer)
