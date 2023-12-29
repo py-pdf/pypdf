@@ -14,10 +14,10 @@ import os
 import shutil
 import sys
 
-import pypdf as py_pkg
-
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
+
+import pypdf as py_pkg
 
 shutil.copyfile("../CHANGELOG.md", "meta/CHANGELOG.md")
 shutil.copyfile("../CONTRIBUTORS.md", "meta/CONTRIBUTORS.md")
@@ -57,8 +57,10 @@ extensions = [
     "myst_parser",
 ]
 
+python_version = ".".join(map(str, sys.version_info[:2]))
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.8", None),
+    "python": (f"https://docs.python.org/{python_version}", None),
+    "Pillow": ("https://pillow.readthedocs.io/en/latest/", None),
 }
 
 nitpick_ignore_regex = [

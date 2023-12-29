@@ -73,22 +73,21 @@ class PdfObject(PdfObjectProtocol):
         ignore_fields: Optional[Sequence[Union[str, int]]] = (),
     ) -> "PdfObject":
         """
-        clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
-        force_duplicate: in standard if the object has been already cloned and reference,
-            the copy is returned; when force_duplicate == True,
-            a new copy is always performed
-        ignore_fields : list/tuple of Fields names (for dictionaries that will
-            be ignored during cloning (apply also to childs duplication)
-            if fields are to be considered for a limited number of levels
-            you have to add it as integer:
-            eg  [1,"/B","/TOTO"] means "/B" will be ignored at first level only
-            but "/TOTO" on all levels
-        in standard, clone function call _reference_clone (see _reference)
+        Clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter).
+
+        By default, this method will call ``_reference_clone`` (see ``_reference``).
+
 
         Args:
-          pdf_dest:
-          force_duplicate:  (Default value = False)
-          ignore_fields:
+          pdf_dest: Target to clone to.
+          force_duplicate: By default, if the object has already been cloned and referenced,
+            the copy will be returned; when ``True``, a new copy will be created.
+            (Default value = ``False``)
+          ignore_fields: List/tuple of field names (for dictionaries) that will be ignored
+            during cloning (applies to children duplication as well). If fields are to be
+            considered for a limited number of levels, you have to add it as integer, for
+            example ``[1,"/B","/TOTO"]`` means that ``"/B"`` will be ignored at the first
+            level only but ``"/TOTO"`` on all levels.
 
         Returns:
           The cloned PdfObject

@@ -61,6 +61,9 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    modules/annotations
    modules/Fit
    modules/PaperSize
+   modules/constants
+   modules/errors
+   modules/generic
 
 .. toctree::
    :caption: Developer Guide

@@ -298,6 +298,7 @@ class PdfReader:
     ) -> None:
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
+        #: Storage of parsed PDF objects.
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
         self.xref_index = 0
         self._page_id2num: Optional[
@@ -962,7 +963,7 @@ class PdfReader:
 
     @property
     def pages(self) -> List[PageObject]:
-        """Read-only property that emulates a list of :py:class:`Page<pypdf._page.Page>` objects."""
+        """Read-only property that emulates a list of :py:class:`PageObject<pypdf._page.PageObject>` objects."""
         return _VirtualList(self._get_num_pages, self._get_page)  # type: ignore
 
     @property

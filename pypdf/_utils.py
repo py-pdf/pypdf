@@ -537,7 +537,7 @@ class ImageFile(File):
         Replace the Image with a new PIL image.
 
         Args:
-            new_image (Image.Image): The new PIL image to replace the existing image.
+            new_image (PIL.Image.Image): The new PIL image to replace the existing image.
             **kwargs: Additional keyword arguments to pass to `Image.Image.save()`.
 
         Raises:

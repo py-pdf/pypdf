@@ -5,3 +5,8 @@ The PdfWriter Class
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. autoclass:: pypdf.ObjectDeletionFlag
+    :members:
+    :undoc-members:
+    :show-inheritance:
