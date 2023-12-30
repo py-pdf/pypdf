@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703884570378,
+  "lastUpdate": 1703940653732,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -45655,6 +45655,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4714385334931785",
             "extra": "mean: 16.4168614966 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2cdc0d5f5eb09541a2c109a8091bb75cb814554f",
+          "message": "DOC: Resolve build warnings (#2380)\n\nThis fixes #1941 by cleaning up wrong references and adding new docs. Some notes about this:\r\n\r\n* Building the docs now works without prior package installation.\r\n* The intersphinx mapping will now always use the objects of the Python version used for the docs build.\r\n* The intersphinx mapping for *Pillow* has been added.\r\n* Links to private methods in the developer docs have been replaced by inline code as they are not part of the Sphinx docs.\r\n* Some broken/outdated/strange docstrings have been fixed.\r\n* New classes have been added to the docs. Module-specific classes have been added to the modules where they are being used directly, some generic classes/modules have been put into new files/pages.\r\n* We have to exclude some members to avoid duplicate definitions.",
+          "timestamp": "2023-12-30T13:47:55+01:00",
+          "tree_id": "6d10701d63df160d28f1bf207db021c188701a98",
+          "url": "https://github.com/py-pdf/pypdf/commit/2cdc0d5f5eb09541a2c109a8091bb75cb814554f"
+        },
+        "date": 1703940650237,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.319333204644958,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005282527003072118",
+            "extra": "mean: 301.2653260000036 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.632582107361923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008178499641751625",
+            "extra": "mean: 79.16038000000232 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.270252612081463,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03194606163572875",
+            "extra": "mean: 3.7002417563999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.91801193058244,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006492367229087595",
+            "extra": "mean: 59.108599999998496 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06195719871925715,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13363625594732353",
+            "extra": "mean: 16.14017451840001 sec\nrounds: 5"
           }
         ]
       }
