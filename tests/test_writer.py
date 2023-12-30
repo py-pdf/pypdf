@@ -4,6 +4,7 @@ import shutil
 import subprocess
 from io import BytesIO
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Any
 
 import pytest
@@ -213,18 +214,20 @@ def writer_operate(writer: PdfWriter) -> None:
         assert k in objects_hash, f"Missing {v}"
 
 
-tmp_path = "dont_commit_writer.pdf"
-
-
 @pytest.mark.parametrize(
-    ("write_data_here", "needs_cleanup"),
+    ("convert", "needs_cleanup"),
     [
-        ("dont_commit_writer.pdf", True),
-        (Path("dont_commit_writer.pdf"), True),
+        (str, True),
+        (Path, True),
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
+def test_writer_operations_by_traditional_usage(convert, needs_cleanup):
+    if callable(convert):
+        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+    else:
+        write_data_here = convert
+
     writer = PdfWriter()
 
     writer_operate(writer)
@@ -242,14 +245,19 @@ def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
 
 
 @pytest.mark.parametrize(
-    ("write_data_here", "needs_cleanup"),
+    ("convert", "needs_cleanup"),
     [
-        ("dont_commit_writer.pdf", True),
-        (Path("dont_commit_writer.pdf"), True),
+        (str, True),
+        (Path, True),
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_cleanup):
+def test_writer_operations_by_semi_traditional_usage(convert, needs_cleanup):
+    if callable(convert):
+        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+    else:
+        write_data_here = convert
+
     with PdfWriter() as writer:
         writer_operate(writer)
 
@@ -266,16 +274,21 @@ def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_clea
 
 
 @pytest.mark.parametrize(
-    ("write_data_here", "needs_cleanup"),
+    ("convert", "needs_cleanup"),
     [
-        ("dont_commit_writer.pdf", True),
-        (Path("dont_commit_writer.pdf"), True),
+        (str, True),
+        (Path, True),
         (BytesIO(), False),
     ],
 )
 def test_writer_operations_by_semi_new_traditional_usage(
-    write_data_here, needs_cleanup
+    convert, needs_cleanup
 ):
+    if callable(convert):
+        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+    else:
+        write_data_here = convert
+
     with PdfWriter() as writer:
         writer_operate(writer)
 
@@ -287,14 +300,19 @@ def test_writer_operations_by_semi_new_traditional_usage(
 
 
 @pytest.mark.parametrize(
-    ("write_data_here", "needs_cleanup"),
+    ("convert", "needs_cleanup"),
     [
-        ("dont_commit_writer.pdf", True),
-        (Path("dont_commit_writer.pdf"), True),
+        (str, True),
+        (Path, True),
         (BytesIO(), False),
     ],
 )
-def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
+def test_writer_operation_by_new_usage(convert, needs_cleanup):
+    if callable(convert):
+        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+    else:
+        write_data_here = convert
+
     # This includes write "output" to pypdf-output.pdf
     with PdfWriter(write_data_here) as writer:
         writer_operate(writer)
@@ -1439,16 +1457,8 @@ def test_named_dest_page_number():
     assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 6
 
 
-@pytest.mark.parametrize(
-    ("write_data_here", "needs_cleanup"),
-    [
-        (
-            "dont_commit_writer.pdf",
-            True,
-        )
-    ],
-)
-def test_update_form_fields(write_data_here, needs_cleanup):
+def test_update_form_fields(tmp_path):
+    write_data_here = tmp_path / "out.pdf"
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
     writer.update_page_form_field_values(
         writer.pages[0],
@@ -1472,8 +1482,8 @@ def test_update_form_fields(write_data_here, needs_cleanup):
         auto_regenerate=False,
     )
 
-    writer.write("dont_commit_writer.pdf")
-    reader = PdfReader("dont_commit_writer.pdf")
+    writer.write(write_data_here)
+    reader = PdfReader(write_data_here)
     flds = reader.get_fields()
     assert flds["CheckBox1"]["/V"] == "/Yes"
     assert flds["CheckBox1"].indirect_reference.get_object()["/AS"] == "/Yes"
@@ -1495,8 +1505,7 @@ def test_update_form_fields(write_data_here, needs_cleanup):
     assert all(x in flds["RadioGroup1"]["/_States_"] for x in ["/1", "/2", "/3"])
     assert all(x in flds["Liste1"]["/_States_"] for x in ["Liste1", "Liste2", "Liste3"])
 
-    if needs_cleanup:
-        Path(write_data_here).unlink()
+    Path(write_data_here).unlink()
 
 
 @pytest.mark.enable_socket()
