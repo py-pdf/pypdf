@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703940653732,
+  "lastUpdate": 1703966595435,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -45714,6 +45714,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13363625594732353",
             "extra": "mean: 16.14017451840001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5eefbaf593e05000667d4001f60c0f9cba5b8874",
+          "message": "DEV: Write to temporary files instead of the working directory (#2379)\n\nThe tests tended to be unstable due to parallel access to the same file inside the working directory. This PR attempts to fix this by using temporary files instead.",
+          "timestamp": "2023-12-30T21:00:16+01:00",
+          "tree_id": "3edc87b096d11a07b3397caed6af5b483fb915bc",
+          "url": "https://github.com/py-pdf/pypdf/commit/5eefbaf593e05000667d4001f60c0f9cba5b8874"
+        },
+        "date": 1703966593565,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.202289191012915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012465299077428783",
+            "extra": "mean: 312.27660600000036 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.268424016541815,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009836775120377237",
+            "extra": "mean: 81.51006181818263 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26170190090846374,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02883256271471109",
+            "extra": "mean: 3.821141522199997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.139136199659248,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010104885877056174",
+            "extra": "mean: 58.345997625007584 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.060789235412080714,
+            "unit": "iter/sec",
+            "range": "stddev: 0.28963792245208975",
+            "extra": "mean: 16.450280929199987 sec\nrounds: 5"
           }
         ]
       }
