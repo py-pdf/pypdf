@@ -303,8 +303,8 @@ class PageObject(DictionaryObject):
     """
     PageObject represents a single page within a PDF file.
 
-    Typically this object will be created by accessing the
-    :meth:`get_page()<pypdf.PdfReader.get_page>` method of the
+    Typically these objects will be created by accessing the
+    :attr:`pages<pypdf.PdfReader.pages>` property of the
     :class:`PdfReader<pypdf.PdfReader>` class, but it is
     also possible to create an empty page with the
     :meth:`create_blank_page()<pypdf._page.PageObject.create_blank_page>` static method.

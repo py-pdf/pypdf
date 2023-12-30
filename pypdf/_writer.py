@@ -1049,7 +1049,7 @@ class PdfWriter:
         When a file is first written, both identifiers shall be set to the same value.
         If both identifiers match when a file reference is resolved, it is very
         likely that the correct and unchanged file has been found. If only the first
-         identifier matches, a different version of the correct file has been found.
+        identifier matches, a different version of the correct file has been found.
         see 14.4 "File Identifiers".
         """
         if self._ID:
@@ -2792,14 +2792,16 @@ class PdfWriter:
         Args:
             page_index_from: page index of the beginning of the range starting from 0
             page_index_to: page index of the beginning of the range starting from 0
-            style:  The numbering style to be used for the numeric portion of each page label:
-                        '/D' Decimal arabic numerals
-                        '/R' Uppercase roman numerals
-                        '/r' Lowercase roman numerals
-                        '/A' Uppercase letters (A to Z for the first 26 pages,
-                             AA to ZZ for the next 26, and so on)
-                        '/a' Lowercase letters (a to z for the first 26 pages,
-                             aa to zz for the next 26, and so on)
+            style: The numbering style to be used for the numeric portion of each page label:
+
+                       * ``/D`` Decimal arabic numerals
+                       * ``/R`` Uppercase roman numerals
+                       * ``/r`` Lowercase roman numerals
+                       * ``/A`` Uppercase letters (A to Z for the first 26 pages,
+                         AA to ZZ for the next 26, and so on)
+                       * ``/a`` Lowercase letters (a to z for the first 26 pages,
+                         aa to zz for the next 26, and so on)
+
             prefix: The label prefix for page labels in this range.
             start:  The value of the numeric portion for the first page label
                     in the range.

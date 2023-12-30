@@ -20,9 +20,7 @@ structure of parsing:
    decodes these content streams by applying filters (e.g., `FlateDecode`,
    `LZWDecode`) specified in the stream's dictionary. This is only done when the
    object is requested via {py:meth}`PdfReader.get_object
-   <pypdf.PdfReader.get_object>` in the
-   {py:meth}`PdfReader._get_object_from_stream
-   <pypdf.PdfReader._get_object_from_stream>` method.
+   <pypdf.PdfReader.get_object>` in the `PdfReader._get_object_from_stream` method.
 
 ## References
 
