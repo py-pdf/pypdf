@@ -164,19 +164,6 @@ jobs:
     - name: Test with mypy
       run : |
         mypy pypdf
-  
-  title-check:
-    name: Title check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Check PR title
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          python .github/scripts/check_pr_title.py
-        if: github.event_name == 'pull_request'
 
   package:
     name: Build & verify package
