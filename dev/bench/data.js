@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703966595435,
+  "lastUpdate": 1704035261420,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -45773,6 +45773,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.28963792245208975",
             "extra": "mean: 16.450280929199987 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b8a877cc328af14c37286e48744be29213e5b4c8",
+          "message": "DEV: Move title check to own workflow (#2384)\n\nMove the title check script introduced in #2378 into its own workflow where it's triggered by `[opened, reopened, edited, synchronize]`, where the difference is in the addition of `edited` type. This allows the workflow to be triggered on editing any part of the PR, most importantly the title attribute to fix it not following conventions. Otherwise, it would require the user to either push a new commit or open/close the PR which is not as intuitive to fix.",
+          "timestamp": "2023-12-31T16:04:44+01:00",
+          "tree_id": "d4785fe15696053a55fa41f9416bd2f966f14c0b",
+          "url": "https://github.com/py-pdf/pypdf/commit/b8a877cc328af14c37286e48744be29213e5b4c8"
+        },
+        "date": 1704035258824,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4269554933360378,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003263258693770144",
+            "extra": "mean: 291.8041981999977 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.963033871558501,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005950722206167292",
+            "extra": "mean: 77.14243516666623 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27656386690567697,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03179371704544187",
+            "extra": "mean: 3.615801337999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.639093204349503,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002366416263506187",
+            "extra": "mean: 56.692256705884226 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.061863653937232733,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12512642414831054",
+            "extra": "mean: 16.1645802722 sec\nrounds: 5"
           }
         ]
       }
