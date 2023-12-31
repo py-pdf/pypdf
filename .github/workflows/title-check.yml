@@ -1,0 +1,20 @@
+name: 'PR Title Check'
+on:
+  pull_request:
+    # check when PR
+    # * is created,
+    # * title is edited, and
+    # * new commits are added (to ensure failing title blocks merging)
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  title-check:
+    name: Title check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Check PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: python .github/scripts/check_pr_title.py
