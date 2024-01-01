@@ -21,11 +21,7 @@ from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
 
-from ._utils import (
-    StreamType,
-    deprecate_no_replacement,
-    deprecate_with_replacement,
-)
+from ._utils import StreamType, deprecate_no_replacement
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
 
@@ -225,11 +221,6 @@ class XmpInformation(PdfObject):
         )[0]
         self.cache: Dict[Any, Any] = {}
 
-    @property
-    def rdfRoot(self) -> XmlElement:  # deprecated
-        deprecate_with_replacement("rdfRoot", "rdf_root", "4.0.0")
-        return self.rdf_root
-
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
@@ -342,16 +333,6 @@ class XmpInformation(PdfObject):
     The date and time are returned as a UTC datetime.datetime object.
     """
 
-    @property
-    def xmp_createDate(self) -> datetime.datetime:  # deprecated
-        deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
-        return self.xmp_create_date
-
-    @xmp_createDate.setter
-    def xmp_createDate(self, value: datetime.datetime) -> None:  # deprecated
-        deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
-        self.xmp_create_date = value
-
     xmp_modify_date = property(
         _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
     )
@@ -361,16 +342,6 @@ class XmpInformation(PdfObject):
     The date and time are returned as a UTC datetime.datetime object.
     """
 
-    @property
-    def xmp_modifyDate(self) -> datetime.datetime:  # deprecated
-        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
-        return self.xmp_modify_date
-
-    @xmp_modifyDate.setter
-    def xmp_modifyDate(self, value: datetime.datetime) -> None:  # deprecated
-        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
-        self.xmp_modify_date = value
-
     xmp_metadata_date = property(
         _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)
     )
@@ -379,16 +350,6 @@ class XmpInformation(PdfObject):
 
     The date and time are returned as a UTC datetime.datetime object.
     """
-
-    @property
-    def xmp_metadataDate(self) -> datetime.datetime:  # deprecated
-        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
-        return self.xmp_metadata_date
-
-    @xmp_metadataDate.setter
-    def xmp_metadataDate(self, value: datetime.datetime) -> None:  # deprecated
-        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
-        self.xmp_metadata_date = value
 
     xmp_creator_tool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))
     """The name of the first known tool used to create the resource."""
