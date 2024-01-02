@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704187332953,
+  "lastUpdate": 1704190169725,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -45891,6 +45891,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.4367836343171356",
             "extra": "mean: 16.635147771600014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b085798c329770e1ce23c89366f751030a1c5211",
+          "message": "BUG: Add support for GBK2K cmaps (#2385)",
+          "timestamp": "2024-01-02T11:06:11+01:00",
+          "tree_id": "f245d5e6df68ebccb7d7898ff76f2cb2d331e78c",
+          "url": "https://github.com/py-pdf/pypdf/commit/b085798c329770e1ce23c89366f751030a1c5211"
+        },
+        "date": 1704190167064,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.409314179652555,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005289533030127341",
+            "extra": "mean: 293.3141234000061 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.800839803362509,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007223441452861785",
+            "extra": "mean: 78.11987458333174 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27255160595744987,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006095105615107342",
+            "extra": "mean: 3.6690299309999945 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.542109891548588,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006774958866903804",
+            "extra": "mean: 57.00568552941163 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.060829790554697095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4136431110002561",
+            "extra": "mean: 16.439313548199994 sec\nrounds: 5"
           }
         ]
       }
