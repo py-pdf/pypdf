@@ -3,7 +3,7 @@ import io
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 
 import pytest
 
@@ -35,6 +35,9 @@ TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+
+
+NestedList = Union[int, None, List["NestedList"]]
 
 
 @pytest.mark.parametrize(
@@ -696,15 +699,14 @@ def test_issue604(caplog, strict):
             ]
             assert normalize_warnings(caplog.text) == msg
 
-        def get_dest_pages(x) -> Union[int, None]:
+        def get_dest_pages(x) -> NestedList:
             if isinstance(x, list):
-                r = [get_dest_pages(y) for y in x]
-                return r
+                return [get_dest_pages(y) for y in x]
             else:
-                des_page_number = pdf.get_destination_page_number(x)
-                if des_page_number is None:
-                    return des_page_number
-                return des_page_number + 1
+                destination_page_number = pdf.get_destination_page_number(x)
+                if destination_page_number is None:
+                    return destination_page_number
+                return destination_page_number + 1
 
         out = []
 
