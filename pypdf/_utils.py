@@ -446,6 +446,18 @@ def deprecation_no_replacement(name: str, removed_in: str) -> None:
     deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
 
 
+def logger_error(msg: str, src: str) -> None:
+    """
+    Use this instead of logger.error directly.
+
+    That allows people to overwrite it more easily.
+
+    See the docs on when to use which:
+    https://pypdf.readthedocs.io/en/latest/user/suppress-warnings.html
+    """
+    logging.getLogger(src).error(msg)
+
+
 def logger_warning(msg: str, src: str) -> None:
     """
     Use this instead of logger.warning directly.
