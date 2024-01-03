@@ -33,6 +33,7 @@ import re
 from decimal import Decimal
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -42,7 +43,6 @@ from typing import (
     Optional,
     Sequence,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Union,
     cast,
