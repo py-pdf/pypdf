@@ -24,6 +24,7 @@ from . import get_data_from_url, normalize_warnings
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 sys.path.append(str(PROJECT_ROOT))
 
@@ -1039,3 +1040,14 @@ Season: SUMMER-B 2023"""
     )
     # currently threre is still a white space on last line missing
     # so we can not do a full comparison.
+
+
+@pytest.mark.samples()
+@pytest.mark.xfail(reason="#2388 implements this")
+def test_text_extraction_layout_mode():
+    pdf_path = SAMPLE_ROOT / "026-latex-multicolumn/multicolumn.pdf"
+    reader = PdfReader(pdf_path)
+    actual = reader.pages[0].extract_text(extraction_mode="layout")
+    with open(RESOURCE_ROOT / "multicolumn-lorem-ipsum.txt") as fp:
+        expected = fp.read()
+    assert actual.strip() == expected.strip()
