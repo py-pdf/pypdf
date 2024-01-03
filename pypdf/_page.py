@@ -47,6 +47,7 @@ from typing import (
     cast,
     overload,
 )
+
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
     from typing import Literal
@@ -56,8 +57,8 @@ except ImportError:
 from ._cmap import build_char_map, unknown_char_map
 from ._protocols import PdfReaderProtocol, PdfWriterProtocol
 from ._text_extraction import (
-    _layout_mode,
     OrientationNotFoundError,
+    _layout_mode,
     crlf_space_check,
     handle_tj,
     mult,
@@ -1877,7 +1878,8 @@ class PageObject(DictionaryObject):
         return output
 
     def _layout_mode_fonts(self) -> Dict[str, _layout_mode.Font]:
-        """get fonts for "layout" mode text extraction
+        """
+        Get fonts formatted for "layout" mode text extraction
 
         Returns:
             Dict[str, Font]: dictionary of _layout_mode.Font instances keyed by font name
@@ -1911,7 +1913,8 @@ class PageObject(DictionaryObject):
             scale_weight: float = 1.25,
             debug_path: Union[Path, None] = None,
         ) -> str:
-        """Get text from pypdf page preserving fidelity to rendered position
+        """
+        Get text preserving fidelity to source PDF text layout
 
         Args:
             space_vertically: include blank lines inferred from y distance + font
@@ -1938,14 +1941,10 @@ class PageObject(DictionaryObject):
                 json.dumps(fonts, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)),
                 "utf-8",
             )
-        ops = iter(ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations)
-        if debug:
-            _, op_list = zip(
-                *ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations
-            )
-            print(f"DEBUG: PDF operations={sorted(set(_b.decode() for _b in op_list))!r}")
 
+        ops = iter(ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations)
         bt_groups = _layout_mode.text_show_operations(ops, fonts, debug_path)
+
         if not bt_groups:
             return ""
 
@@ -1963,7 +1962,7 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the

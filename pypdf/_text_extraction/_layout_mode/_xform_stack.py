@@ -1,17 +1,19 @@
-"""provides a class for managing the PDF transform stack during "layout" mode
-text extraction.
-"""
+"""manage the PDF transform stack during "layout" mode text extraction"""
+
 from collections import ChainMap, Counter
-from typing import Counter as CounterType, ChainMap as ChainMapType, List, Union
+from typing import ChainMap as ChainMapType
+from typing import Counter as CounterType
+from typing import Any, Dict, List, Union
 
 from .. import mult
-
-
 from ._fonts import Font, TextStateParams
 
+XformStackChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
+XformStackDictType = ChainMapType[Union[int, str], Union[float, bool]]
 
 class XformStack:
-    """cm/tm transformation matrix manager
+    """
+    A cm/tm transformation matrix manager
 
     Attributes:
         xfrm_stack (ChainMap): ChainMap of cm/tm transformation matrices
@@ -42,7 +44,7 @@ class XformStack:
     """
 
     def __init__(self) -> None:
-        self.xfrm_stack = ChainMap(self.new_xform())
+        self.xfrm_stack: XformStackChainMapType = ChainMap(self.new_xform())
         self.q_queue: CounterType[int] = Counter()
         self.q_depth = [0]
         self.Tc: float = 0.0
@@ -54,7 +56,8 @@ class XformStack:
         self.font_size: Union[int, float, None] = None
 
     def text_state_params(self, txt: str = "") -> TextStateParams:
-        """current text state parameters
+        """
+        Current text state parameters
 
         Returns:
             TextStateParams: current text state parameters
@@ -74,52 +77,66 @@ class XformStack:
         )
 
     @staticmethod
-    def raw_xform(_a=1.0, _b=0.0, _c=0.0, _d=1.0, _e=0.0, _f=0.0):
-        """only a/b/c/d/e/f matrix params"""
+    def raw_xform(
+        _a: float = 1.0,
+        _b: float = 0.0,
+        _c: float = 0.0,
+        _d: float = 1.0,
+        _e: float = 0.0,
+        _f: float = 0.0,
+    ) -> Dict[int, float]:
+        """Only a/b/c/d/e/f matrix params"""
         return dict(zip(range(6), map(float, (_a, _b, _c, _d, _e, _f))))
 
     @staticmethod
     def new_xform(
-        _a=1.0, _b=0.0, _c=0.0, _d=1.0, _e=0.0, _f=0.0, is_text=False, is_render=False
-    ):
-        """a/b/c/d/e/f matrix params + 'is_text' key"""
+        _a: float = 1.0,
+        _b: float = 0.0,
+        _c: float = 0.0,
+        _d: float = 1.0,
+        _e: float = 0.0,
+        _f: float = 0.0,
+        is_text: bool = False,
+        is_render: bool = False,
+    ) -> XformStackDictType:
+        """Standard a/b/c/d/e/f matrix params + 'is_text' and 'is_render' keys"""
         return dict(
             XformStack.raw_xform(_a, _b, _c, _d, _e, _f),
             is_text=is_text,
             is_render=is_render,
         )
 
-    def reset_tm(self) -> ChainMapType[Union[int, str], Union[float, bool]]:
-        """clear all xforms from chainmap having is_text==True"""
+    def reset_tm(self) -> XformStackChainMapType:
+        """Clear all xforms from chainmap having is_text==True or is_render==True"""
         while self.xfrm_stack.maps[0]["is_text"] or self.xfrm_stack.maps[0]["is_render"]:
             self.xfrm_stack = self.xfrm_stack.parents
         return self.xfrm_stack
 
-    def reset_trm(self) -> ChainMapType[Union[int, str], Union[float, bool]]:
-        """clear all xforms from chainmap having is_render==True"""
+    def reset_trm(self) -> XformStackChainMapType:
+        """Clear all xforms from chainmap having is_render==True"""
         while self.xfrm_stack.maps[0]["is_render"]:
             self.xfrm_stack = self.xfrm_stack.parents
         return self.xfrm_stack
 
-    def remove_q(self) -> ChainMapType[Union[int, str], Union[float, bool]]:
-        """rewind to stack prior state after closing a 'q' with internal 'cm' ops"""
+    def remove_q(self) -> XformStackChainMapType:
+        """Rewind to stack prior state after closing a 'q' with internal 'cm' ops"""
         self.xfrm_stack = self.reset_tm()
         self.xfrm_stack.maps = self.xfrm_stack.maps[self.q_queue.pop(self.q_depth.pop(), 0) :]
         return self.xfrm_stack
 
-    def add_q(self):
-        """add another level to q_queue"""
+    def add_q(self) -> None:
+        """Add another level to q_queue"""
         self.q_depth.append(len(self.q_depth))
 
-    def add_cm(self, *args):
-        """concatenate an additional transform matrix"""
+    def add_cm(self, *args: Any) -> None:
+        """Concatenate an additional transform matrix"""
         self.xfrm_stack = self.reset_tm()
         self.q_queue.update(self.q_depth[-1:])
         self.xfrm_stack = self.xfrm_stack.new_child(self.new_xform(*args))
         return self.xfrm_stack
 
-    def add_tm(self, operands: List[Union[float, int]]):
-        """append a text transform matrix"""
+    def add_tm(self, operands: List[Union[float, int]]) -> XformStackChainMapType:
+        """Append a text transform matrix"""
         if len(operands) == 2:  # this is a Td operator
             operands = [1.0, 0.0, 0.0, 1.0, *operands]
         self.xfrm_stack = self.xfrm_stack.new_child(
@@ -127,8 +144,8 @@ class XformStack:
         )
         return self.xfrm_stack
 
-    def add_trm(self, operands: List[Union[float, int]]):
-        """append a text rendering transform matrix"""
+    def add_trm(self, operands: List[Union[float, int]]) -> XformStackChainMapType:
+        """Append a text rendering transform matrix"""
         if len(operands) == 2:  # this is a Td operator
             operands = [1.0, 0.0, 0.0, 1.0, *operands]
         self.xfrm_stack = self.xfrm_stack.new_child(
@@ -138,7 +155,7 @@ class XformStack:
 
     @property
     def effective_xform(self) -> List[float]:
-        """the current effective transform accounting for cm, tm, and trm xforms"""
+        """Current effective transform accounting for cm, tm, and trm xforms"""
         eff_xform = [*self.xfrm_stack.maps[0].values()]
         for xform in self.xfrm_stack.maps[1:]:
             eff_xform = mult(eff_xform, xform)  # type: ignore
@@ -150,6 +167,6 @@ class XformStack:
         return self.effective_xform[3] < -1e-6  # copy behavior of orient() func
 
     @property
-    def xmaps(self):
-        """internal ChainMap 'maps' property"""
+    def xmaps(self) -> List[XformStackDictType]:
+        """Internal ChainMap 'maps' property"""
         return self.xfrm_stack.maps

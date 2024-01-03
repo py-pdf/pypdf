@@ -1,10 +1,10 @@
-"""Extract pdf text preserving the structural layout of the source PDF
-"""
+"""Extract pdf text preserving the structural layout of the source PDF"""
 
 import json
 from itertools import groupby
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Tuple, Union
+
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
     from typing import Literal, TypedDict
@@ -16,7 +16,8 @@ from ._xform_stack import XformStack
 
 
 class BTGroup(TypedDict):
-    """dict describing a line of text rendered within a BT/ET operator pair.
+    """
+    Dict describing a line of text rendered within a BT/ET operator pair.
     If multiple text show operations render text on the same line, the text
     will be combined into a single BTGroup dict.
 
@@ -38,7 +39,8 @@ class BTGroup(TypedDict):
 
 
 def bt_group(tj_op: TextStateParams, rendered_text: str, dispaced_tx: float) -> BTGroup:
-    """BTGroup constructed from a TextStateParams instance, rendered text, and
+    """
+    BTGroup constructed from a TextStateParams instance, rendered text, and
     displaced tx value.
 
     Args:
@@ -57,7 +59,8 @@ def bt_group(tj_op: TextStateParams, rendered_text: str, dispaced_tx: float) -> 
 
 
 def decode_tj(_b: bytes, xform_stack: XformStack) -> TextStateParams:
-    """decode a Tj/TJ operator
+    """
+    Decode a Tj/TJ operator
 
     Args:
         _b: text bytes
@@ -94,9 +97,10 @@ def recurs_to_target_op(
     xform_stack: XformStack,
     end_target: Literal[b"Q", b"ET"],
     fonts: Dict[str, Font],
-    debug=False,
+    debug: bool = False,
 ) -> Tuple[List[BTGroup], List[TextStateParams]]:
-    """recurse operators between BT/ET and/or q/Q operators managing the xform
+    """
+    Recurse operators between BT/ET and/or q/Q operators managing the xform
     stack and capturing text positioning and rendering data.
 
     Args:
@@ -223,7 +227,8 @@ def recurs_to_target_op(
 def y_coordinate_groups(
     bt_groups: List[BTGroup], debug_path: Union[Path, None] = None
 ) -> Dict[int, List[BTGroup]]:
-    """group text operations by rendered y coordinate, i.e. the line number
+    """
+    Group text operations by rendered y coordinate, i.e. the line number
 
     Args:
         bt_groups: list of dicts as returned by text_show_operations()
@@ -231,7 +236,8 @@ def y_coordinate_groups(
 
     Returns:
         Dict[int, List[BTGroup]]: dict of lists of text rendered by each BT operator
-         keyed by y coordinate"""
+            keyed by y coordinate
+    """
     ty_groups = {
         ty: sorted(grp, key=lambda x: x["tx"])
         for ty, grp in groupby(
@@ -240,11 +246,11 @@ def y_coordinate_groups(
     }
     # combine groups whose y coordinates differ by less than the effective font height
     # (accounts for mixed fonts and other minor oddities)
-    last_ty = list(ty_groups)[0]
-    last_txs = set(int(_t["tx"]) for _t in ty_groups[last_ty] if _t["text"].strip())
+    last_ty = next(iter(ty_groups))
+    last_txs = {int(_t["tx"]) for _t in ty_groups[last_ty] if _t["text"].strip()}
     for ty in list(ty_groups)[1:]:
         fsz = min(ty_groups[_y][0]["font_height"] for _y in (ty, last_ty))
-        txs = set(int(_t["tx"]) for _t in ty_groups[ty] if _t["text"].strip())
+        txs = {int(_t["tx"]) for _t in ty_groups[ty] if _t["text"].strip()}
         # prevent merge if both groups are rendering in the same x position.
         no_text_overlap = not (txs & last_txs)
         offset_less_than_font_height = abs(ty - last_ty) < fsz
@@ -263,8 +269,9 @@ def y_coordinate_groups(
     return ty_groups
 
 
-def _set_state_param(op: bytes, opands: List, xform_stack: XformStack):
-    """set text state parameter
+def _set_state_param(op: bytes, opands: List, xform_stack: XformStack) -> None:
+    """
+    Set a text state parameter
 
     Args:
         op: operator defined in PDF standard 1.7 as bytes
@@ -286,7 +293,8 @@ def _set_state_param(op: bytes, opands: List, xform_stack: XformStack):
 def text_show_operations(
     ops: Iterator[Tuple[List, bytes]], fonts: Dict[str, Font], debug_path=Union[Path, None]
 ) -> List[BTGroup]:
-    """extract text from BT/ET operator pairs
+    """
+    Extract text from BT/ET operator pairs
 
     Args:
         ops (Iterator[Tuple[List, bytes]]): iterator of operators in content stream
@@ -336,12 +344,13 @@ def text_show_operations(
     return bt_groups
 
 
-def fixed_char_width(bt_groups: List[Dict[str, Any]], scale_weight: float = 1.25) -> float:
-    """calculate average character width weighted by the length of the rendered
+def fixed_char_width(bt_groups: List[BTGroup], scale_weight: float = 1.25) -> float:
+    """
+    Calculate average character width weighted by the length of the rendered
     text in each sample for conversion to fixed-width layout.
 
     Args:
-        bt_groups (List[Dict[str, Any]]): List of dicts of text rendered by each
+        bt_groups (List[BTGroup]): List of dicts of text rendered by each
             BT operator
 
     Returns:
@@ -357,7 +366,8 @@ def fixed_char_width(bt_groups: List[Dict[str, Any]], scale_weight: float = 1.25
 def fixed_width_page(
     ty_groups: Dict[int, List[BTGroup]], char_width: float, space_vertically: bool
 ) -> str:
-    """generate page text from text operations grouped by y coordinate
+    """
+    Generate page text by grouping text operations by y coordinate
 
     Args:
         ty_groups: dict of text show ops as returned by y_coordinate_groups()

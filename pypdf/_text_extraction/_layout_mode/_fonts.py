@@ -1,4 +1,4 @@
-"""font constants and classes for "layout" mode text operations"""
+"""Font constants and classes for "layout" mode text operations"""
 
 import math
 from dataclasses import dataclass, field
@@ -9,7 +9,8 @@ from .. import mult
 
 @dataclass
 class Font:
-    """A font object extracted from a pdf page
+    """
+    A font object formatted for use during "layout" mode text extraction
 
     Attributes:
         subtype (str): font subtype
@@ -89,14 +90,12 @@ class Font:
                     break
 
     def word_width(self, word: str) -> float:
-        """sum of character widths specified in PDF font for the supplied word"""
+        """Sum of character widths specified in PDF font for the supplied word"""
         return sum((self.width_map.get(char, self.space_width * 2) for char in word), start=0.0)
 
     @staticmethod
     def to_dict(font_instance: "Font") -> dict:
-        """converts this dataclass to dict for serialization and adds non-field
-        attribute `width_map`
-        """
+        """Dataclass to dict for json.dumps serialization. Appends width_map."""
         return {k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__} | {
             "width_map": font_instance.width_map
         }
@@ -104,7 +103,8 @@ class Font:
 
 @dataclass
 class TextStateParams:
-    """Text state parameters and operator values for a single text value in a
+    """
+    Text state parameters and operator values for a single text value in a
     TJ or Tj PDF operation.
 
     Attributes:
@@ -158,20 +158,22 @@ class TextStateParams:
         self.flip_vertical = self.xform[3] < -1e-6
 
     def font_size_matrix(self) -> List[float]:
-        """font size matrix"""
+        """Font size matrix"""
         return [self.font_size * (self.Tz / 100.0), 0.0, 0.0, self.font_size, 0.0, self.Ts]
 
-    def displacement_matrix(self, word: Union[str, None] = None, TD_offset=0.0) -> List[float]:
-        """text displacement matrix
+    def displacement_matrix(self, word: Union[str, None] = None, TD_offset: float = 0.0) -> List[float]:
+        """Text displacement matrix
 
         Args:
+            word (str, optional): Defaults to None in which case self.txt displacement is
+                returned.
             TD_offset (float, optional): translation applied by TD operator. Defaults to 0.0.
         """
         word = word or self.txt
         return [1.0, 0.0, 0.0, 1.0, self.word_tx(word, TD_offset), 0.0]
 
-    def word_tx(self, word: str, TD_offset=0.0) -> float:
-        """text displacement for any word according this text state"""
+    def word_tx(self, word: str, TD_offset: float = 0.0) -> float:
+        """Horizontal text displacement for any word according this text state"""
         return (
             (self.font_size * ((self.font.word_width(word) - TD_offset) / 1000.0))
             + self.Tc
@@ -180,7 +182,7 @@ class TextStateParams:
 
     @staticmethod
     def to_dict(inst: "TextStateParams") -> Dict[str, Any]:
-        """dataclass to dict"""
+        """Dataclass to dict for json.dumps serialization"""
         return {k: getattr(inst, k) for k in inst.__dataclass_fields__ if k != "font"}
 
 
