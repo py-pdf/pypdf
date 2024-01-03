@@ -27,10 +27,10 @@ class Font:
     subtype: str
     space_width: Union[int, float]
     encoding: Union[str, Dict[int, str]]
-    char_map: Dict
-    font_dictionary: Dict
+    char_map: Dict[Any, Any]
+    font_dictionary: Dict[Any, Any]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.width_map = {}
         # TrueType fonts have a /Widths array mapping character codes to widths
         if isinstance(self.encoding, dict) and "/Widths" in self.font_dictionary:
@@ -42,7 +42,7 @@ class Font:
 
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
         if "/DescendantFonts" in self.font_dictionary:
-            d_font: dict
+            d_font: Dict[Any, Any]
             for d_font in self.font_dictionary["/DescendantFonts"]:
                 ord_map = {
                     ord(_targ): _surg
@@ -62,13 +62,15 @@ class Font:
                         _w[idx + 1], Sequence
                     ):
                         start_idx, width_list = _w[idx : idx + 2]
-                        self.width_map |= {
-                            ord_map[_cidx]: _width
-                            for _cidx, _width in zip(
-                                range(start_idx, start_idx + len(width_list), 1), width_list
-                            )
-                            if _cidx in ord_map
-                        }
+                        self.width_map.update(
+                            {
+                                ord_map[_cidx]: _width
+                                for _cidx, _width in zip(
+                                    range(start_idx, start_idx + len(width_list), 1), width_list
+                                )
+                                if _cidx in ord_map
+                            }
+                        )
                         skip_count = 1
                     if (
                         not isinstance(w_entry, Sequence)
@@ -76,12 +78,13 @@ class Font:
                         and not isinstance(_w[idx + 2], Sequence)
                     ):
                         start_idx, stop_idx, const_width = _w[idx:idx + 3]
-
-                        self.width_map |= {
-                            ord_map[_cidx]: const_width
-                            for _cidx in range(start_idx, stop_idx + 1, 1)
-                            if _cidx in ord_map
-                        }
+                        self.width_map.update(
+                            {
+                                ord_map[_cidx]: const_width
+                                for _cidx in range(start_idx, stop_idx + 1, 1)
+                                if _cidx in ord_map
+                            }
+                        )
                         skip_count = 2
         if not self.width_map and "/BaseFont" in self.font_dictionary:
             for key in STANDARD_WIDTHS:
@@ -91,14 +94,14 @@ class Font:
 
     def word_width(self, word: str) -> float:
         """Sum of character widths specified in PDF font for the supplied word"""
-        return sum((self.width_map.get(char, self.space_width * 2) for char in word), start=0.0)
+        return sum([self.width_map.get(char, self.space_width * 2) for char in word], 0.0)
 
     @staticmethod
-    def to_dict(font_instance: "Font") -> dict:
+    def to_dict(font_instance: "Font") -> Dict[str, Any]:
         """Dataclass to dict for json.dumps serialization. Appends width_map."""
-        return {k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__} | {
-            "width_map": font_instance.width_map
-        }
+        result = {k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__}
+        result.update({"width_map": font_instance.width_map})
+        return result
 
 
 @dataclass
@@ -147,7 +150,7 @@ class TextStateParams:
     font_height: float = field(default=0.0, init=False)
     flip_vertical: bool = field(default=False, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.displaced_xform = mult(self.displacement_matrix(), self.xform)
         self.render_xform = mult(self.font_size_matrix(), self.xform)
         self.displaced_tx = self.displaced_xform[4]

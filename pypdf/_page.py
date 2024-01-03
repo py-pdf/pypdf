@@ -90,9 +90,9 @@ from .generic import (
 if TYPE_CHECKING:
     try:
         # Python 3.8+: https://peps.python.org/pep-0586
-        from typing import Literal
+        from typing import Literal  # type: ignore[attr-defined,unused-ignore]
     except ImportError:
-        from typing_extensions import Literal
+        from typing_extensions import Literal  # type: ignore[assignment,unused-ignore]
 
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
@@ -1888,10 +1888,10 @@ class PageObject(DictionaryObject):
             Dict[str, Font]: dictionary of _layout_mode.Font instances keyed by font name
         """
         # Font retrieval logic adapted from pypdf.PageObject._extract_text()
-        objr = self
+        objr: Any = self
         while NameObject(PG.RESOURCES) not in objr:
             objr = objr["/Parent"].get_object()
-        resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
+        resources_dict: Any = objr[PG.RESOURCES]
         fonts: Dict[str, _layout_mode.Font] = {}
         if "/Font" in resources_dict and self.pdf is not None:
             for font_name in resources_dict["/Font"]:
@@ -1907,7 +1907,8 @@ class PageObject(DictionaryObject):
                     else v
                     for k, v in font_dict_obj.items()
                 }
-                fonts[font_name] = _layout_mode.Font(*cmap, font_dict)
+                # mypy really sucks at unpacking
+                fonts[font_name] = _layout_mode.Font(*cmap, font_dict)  # type: ignore
         return fonts
 
     def _layout_mode_text(
@@ -1937,9 +1938,8 @@ class PageObject(DictionaryObject):
             str: multiline string containing page text structured as it appeared in the
             source pdf.
         """
-        debug = bool(debug_path)
         fonts = self._layout_mode_fonts()
-        if debug:
+        if debug_path:
             debug_path.with_name("fonts.json").write_text(
                 json.dumps(fonts, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)),
                 "utf-8",

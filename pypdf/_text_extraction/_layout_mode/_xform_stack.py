@@ -1,7 +1,7 @@
 """manage the PDF transform stack during "layout" mode text extraction"""
 
 from collections import ChainMap, Counter
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, MutableMapping, Union
 from typing import ChainMap as ChainMapType
 from typing import Counter as CounterType
 
@@ -9,7 +9,7 @@ from .. import mult
 from ._fonts import Font, TextStateParams
 
 XformStackChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
-XformStackDictType = ChainMapType[Union[int, str], Union[float, bool]]
+XformStackDictType = MutableMapping[Union[int, str], Union[float, bool]]
 
 class XformStack:
     """
@@ -100,11 +100,9 @@ class XformStack:
         is_render: bool = False,
     ) -> XformStackDictType:
         """Standard a/b/c/d/e/f matrix params + 'is_text' and 'is_render' keys"""
-        return dict(
-            XformStack.raw_xform(_a, _b, _c, _d, _e, _f),
-            is_text=is_text,
-            is_render=is_render,
-        )
+        result: Any = XformStack.raw_xform(_a, _b, _c, _d, _e, _f)
+        result.update({"is_text": is_text, "is_render": is_render})
+        return result
 
     def reset_tm(self) -> XformStackChainMapType:
         """Clear all xforms from chainmap having is_text==True or is_render==True"""
@@ -128,28 +126,28 @@ class XformStack:
         """Add another level to q_queue"""
         self.q_depth.append(len(self.q_depth))
 
-    def add_cm(self, *args: Any) -> None:
+    def add_cm(self, *args: Any) -> XformStackChainMapType:
         """Concatenate an additional transform matrix"""
         self.xfrm_stack = self.reset_tm()
         self.q_queue.update(self.q_depth[-1:])
         self.xfrm_stack = self.xfrm_stack.new_child(self.new_xform(*args))
         return self.xfrm_stack
 
-    def add_tm(self, operands: List[Union[float, int]]) -> XformStackChainMapType:
+    def add_tm(self, operands: List[float]) -> XformStackChainMapType:
         """Append a text transform matrix"""
         if len(operands) == 2:  # this is a Td operator
             operands = [1.0, 0.0, 0.0, 1.0, *operands]
         self.xfrm_stack = self.xfrm_stack.new_child(
-            self.new_xform(*operands, is_text=True)  # type: ignore  # mypy issue
+            self.new_xform(*operands, is_text=True)  # type: ignore[misc,arg-type]
         )
         return self.xfrm_stack
 
-    def add_trm(self, operands: List[Union[float, int]]) -> XformStackChainMapType:
+    def add_trm(self, operands: List[float]) -> XformStackChainMapType:
         """Append a text rendering transform matrix"""
         if len(operands) == 2:  # this is a Td operator
             operands = [1.0, 0.0, 0.0, 1.0, *operands]
         self.xfrm_stack = self.xfrm_stack.new_child(
-            self.new_xform(*operands, is_text=True, is_render=True)  # type: ignore  # mypy issue
+            self.new_xform(*operands, is_text=True, is_render=True)  # type: ignore[misc,arg-type]
         )
         return self.xfrm_stack
 
@@ -158,7 +156,7 @@ class XformStack:
         """Current effective transform accounting for cm, tm, and trm xforms"""
         eff_xform = [*self.xfrm_stack.maps[0].values()]
         for xform in self.xfrm_stack.maps[1:]:
-            eff_xform = mult(eff_xform, xform)  # type: ignore
+            eff_xform = mult(eff_xform, xform)  # type: ignore[arg-type]  # dict has int keys 0-5
         return eff_xform
 
     @property

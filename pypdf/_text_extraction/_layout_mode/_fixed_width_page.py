@@ -3,13 +3,13 @@
 import json
 from itertools import groupby
 from pathlib import Path
-from typing import Dict, Iterator, List, Tuple, Union
+from typing import Any, Dict, Iterator, List, Tuple, Union
 
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
-    from typing import Literal, TypedDict
+    from typing import Literal, TypedDict  # type: ignore[attr-defined,unused-ignore]
 except ImportError:
-    from typing_extensions import Literal, TypedDict
+    from typing_extensions import Literal, TypedDict  # type: ignore[assignment,unused-ignore]
 
 from ._fonts import Font, TextStateParams
 from ._xform_stack import XformStack
@@ -93,7 +93,7 @@ def decode_tj(_b: bytes, xform_stack: XformStack) -> TextStateParams:
 
 
 def recurs_to_target_op(
-    ops: Iterator[Tuple[List, bytes]],
+    ops: Iterator[Tuple[List[Any], bytes]],
     xform_stack: XformStack,
     end_target: Literal[b"Q", b"ET"],
     fonts: Dict[str, Font],
@@ -269,7 +269,7 @@ def y_coordinate_groups(
     return ty_groups
 
 
-def _set_state_param(op: bytes, opands: List, xform_stack: XformStack) -> None:
+def _set_state_param(op: bytes, opands: List[Any], xform_stack: XformStack) -> None:
     """
     Set a text state parameter
 
@@ -291,7 +291,7 @@ def _set_state_param(op: bytes, opands: List, xform_stack: XformStack) -> None:
 
 
 def text_show_operations(
-    ops: Iterator[Tuple[List, bytes]], fonts: Dict[str, Font], debug_path: Union[Path, None] = None
+    ops: Iterator[Tuple[List[Any], bytes]], fonts: Dict[str, Font], debug_path: Union[Path, None] = None
 ) -> List[BTGroup]:
     """
     Extract text from BT/ET operator pairs
@@ -327,7 +327,7 @@ def text_show_operations(
     # left align the data, i.e. decrement all tx values by min(tx)
     min_x = min((x["tx"] for x in bt_groups), default=0.0)
     bt_groups = [
-        dict(ogrp, tx=ogrp["tx"] - min_x, displaced_tx=ogrp["displaced_tx"] - min_x)
+        dict(ogrp, tx=ogrp["tx"] - min_x, displaced_tx=ogrp["displaced_tx"] - min_x)  # type: ignore[misc]
         for ogrp in sorted(
             bt_groups, key=lambda x: (x["ty"] * x["flip_sort"], -x["tx"]), reverse=True
         )
