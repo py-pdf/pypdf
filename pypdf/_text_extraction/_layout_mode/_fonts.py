@@ -162,7 +162,8 @@ class TextStateParams:
         return [self.font_size * (self.Tz / 100.0), 0.0, 0.0, self.font_size, 0.0, self.Ts]
 
     def displacement_matrix(self, word: Union[str, None] = None, TD_offset: float = 0.0) -> List[float]:
-        """Text displacement matrix
+        """
+        Text displacement matrix
 
         Args:
             word (str, optional): Defaults to None in which case self.txt displacement is

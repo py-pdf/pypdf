@@ -42,17 +42,12 @@ from typing import (
     Optional,
     Sequence,
     Set,
+    TYPE_CHECKING,
     Tuple,
     Union,
     cast,
     overload,
 )
-
-try:
-    # Python 3.8+: https://peps.python.org/pep-0586
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal
 
 from ._cmap import build_char_map, unknown_char_map
 from ._protocols import PdfReaderProtocol, PdfWriterProtocol
@@ -91,6 +86,14 @@ from .generic import (
     RectangleObject,
     StreamObject,
 )
+
+if TYPE_CHECKING:
+    try:
+        # Python 3.8+: https://peps.python.org/pep-0586
+        from typing import Literal
+    except ImportError:
+        from typing_extensions import Literal
+
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
@@ -2023,7 +2026,7 @@ class PageObject(DictionaryObject):
         """
         extraction_mode: Literal["plain", "layout"] = kwargs.get("extraction_mode", "plain")
         if extraction_mode not in ["plain", "layout"]:
-            raise ValueError(f"Invalid text extraction mode {repr(extraction_mode)}")
+            raise ValueError(f"Invalid text extraction mode '{extraction_mode}'")
         if extraction_mode == "layout":
             return self._layout_mode_text(
                 space_vertically=kwargs.get("layout_mode_space_vertically", True),

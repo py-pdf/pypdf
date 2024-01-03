@@ -3,7 +3,7 @@
 import json
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Tuple, Union
+from typing import Dict, Iterator, List, Tuple, Union
 
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
@@ -291,7 +291,7 @@ def _set_state_param(op: bytes, opands: List, xform_stack: XformStack) -> None:
 
 
 def text_show_operations(
-    ops: Iterator[Tuple[List, bytes]], fonts: Dict[str, Font], debug_path=Union[Path, None]
+    ops: Iterator[Tuple[List, bytes]], fonts: Dict[str, Font], debug_path: Union[Path, None] = None
 ) -> List[BTGroup]:
     """
     Extract text from BT/ET operator pairs

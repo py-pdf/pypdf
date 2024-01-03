@@ -1,9 +1,7 @@
 """manage the PDF transform stack during "layout" mode text extraction"""
 
 from collections import ChainMap, Counter
-from typing import ChainMap as ChainMapType
-from typing import Counter as CounterType
-from typing import Any, Dict, List, Union
+from typing import ChainMap as ChainMapType, Counter as CounterType, Any, Dict, List, Union
 
 from .. import mult
 from ._fonts import Font, TextStateParams
