@@ -84,7 +84,7 @@ class Font:
                         skip_count = 2
         if not self.width_map and "/BaseFont" in self.font_dictionary:
             for key in STANDARD_WIDTHS:
-                if any(self.font_dictionary["/BaseFont"].startswith(f"/{key}")):
+                if self.font_dictionary["/BaseFont"].startswith(f"/{key}"):
                     self.width_map = STANDARD_WIDTHS[key]
                     break
 
