@@ -27,9 +27,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import json
 import math
 import re
 from decimal import Decimal
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -45,10 +47,16 @@ from typing import (
     cast,
     overload,
 )
+try:
+    # Python 3.8+: https://peps.python.org/pep-0586
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 from ._cmap import build_char_map, unknown_char_map
 from ._protocols import PdfReaderProtocol, PdfWriterProtocol
 from ._text_extraction import (
+    _layout_mode,
     OrientationNotFoundError,
     crlf_space_check,
     handle_tj,
@@ -1868,6 +1876,85 @@ class PageObject(DictionaryObject):
             visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
         return output
 
+    def _layout_mode_fonts(self) -> Dict[str, _layout_mode.Font]:
+        """get fonts for "layout" mode text extraction
+
+        Returns:
+            Dict[str, Font]: dictionary of _layout_mode.Font instances keyed by font name
+        """
+        # Font retrieval logic adapted from pypdf.PageObject._extract_text()
+        objr = self
+        while NameObject(PG.RESOURCES) not in objr:
+            objr = objr["/Parent"].get_object()
+        resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
+        fonts: Dict[str, _layout_mode.Font] = {}
+        if "/Font" in resources_dict and self.pdf is not None:
+            for font_name in resources_dict["/Font"]:
+                *cmap, font_dict_obj = build_char_map(font_name, 200.0, self)
+                font_dict = {
+                    k: self.pdf.get_object(v)
+                    if isinstance(v, IndirectObject)
+                    else [
+                        self.pdf.get_object(_v) if isinstance(_v, IndirectObject) else _v
+                        for _v in v
+                    ]
+                    if isinstance(v, ArrayObject)
+                    else v
+                    for k, v in font_dict_obj.items()
+                }
+                fonts[font_name] = _layout_mode.Font(*cmap, font_dict)
+        return fonts
+
+    def _layout_mode_text(
+            self,
+            space_vertically: bool = True,
+            scale_weight: float = 1.25,
+            debug_path: Union[Path, None] = None,
+        ) -> str:
+        """Get text from pypdf page preserving fidelity to rendered position
+
+        Args:
+            space_vertically: include blank lines inferred from y distance + font
+                height. Defaults to True.
+            scale_weight: multiplier for string length when calculating weighted
+                average character width. Defaults to 1.25.
+            debug_path (Path | None): if supplied, must target a directory.
+                creates the following files with debug information for layout mode
+                functions if supplied:
+                  - fonts.json: output of self._layout_mode_fonts
+                  - tjs.json: individual text render ops with corresponding xform matrices
+                  - bts.json: text render ops left justified and grouped by BT/ET operators
+                  - bt_groups.json: BT/ET operations grouped by rendered y-coord (aka lines)
+                Defaults to None.
+
+        Returns:
+            str: multiline string containing page text structured as it appeared in the
+            source pdf.
+        """
+        debug = bool(debug_path)
+        fonts = self._layout_mode_fonts()
+        if debug:
+            debug_path.with_name("fonts.json").write_text(
+                json.dumps(fonts, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)),
+                "utf-8",
+            )
+        ops = iter(ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations)
+        if debug:
+            _, op_list = zip(
+                *ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations
+            )
+            print(f"DEBUG: PDF operations={sorted(set(_b.decode() for _b in op_list))!r}")
+
+        bt_groups = _layout_mode.text_show_operations(ops, fonts, debug_path)
+        if not bt_groups:
+            return ""
+
+        ty_groups = _layout_mode.y_coordinate_groups(bt_groups, debug_path)
+
+        char_width = _layout_mode.fixed_char_width(bt_groups, scale_weight)
+
+        return _layout_mode.fixed_width_page(ty_groups, char_width, space_vertically)
+
     def extract_text(
         self,
         *args: Any,
@@ -1876,6 +1963,7 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        **kwargs,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
@@ -1914,9 +2002,35 @@ class PageObject(DictionaryObject):
                 The font-dictionary may be None in case of unknown fonts.
                 If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
 
+        KwArgs:
+            extraction_mode (Literal["plain", "layout"]): "plain" for legacy functionality
+                "layout" for experimental layout mode functionality.
+                NOTE: orientations, space_width, and visitor_* parameters are NOT respected
+                in "layout" mode.
+            layout_mode_space_vertically: include blank lines inferred from y distance + font
+                height. Defaults to True.
+            layout_mode_scale_weight: multiplier for string length when calculating weighted
+                average character width. Defaults to 1.25.
+            layout_mode_debug_path (Path | None): if supplied, must target a directory.
+                creates the following files with debug information for layout mode
+                functions if supplied:
+                  - fonts.json: output of self._layout_mode_fonts
+                  - tjs.json: individual text render ops with corresponding xform matrices
+                  - bts.json: text render ops left justified and grouped by BT/ET operators
+                  - bt_groups.json: BT/ET operations grouped by rendered y-coord (aka lines)
+
         Returns:
             The extracted text
         """
+        extraction_mode: Literal["plain", "layout"] = kwargs.get("extraction_mode", "plain")
+        if extraction_mode not in ["plain", "layout"]:
+            raise ValueError(f"Invalid text extraction mode {repr(extraction_mode)}")
+        if extraction_mode == "layout":
+            return self._layout_mode_text(
+                space_vertically=kwargs.get("layout_mode_space_vertically", True),
+                scale_weight=kwargs.get("layout_mode_scale_weight", 1.25),
+                debug_path=kwargs.get("layout_mode_debug_path", None)
+            )
         if len(args) >= 1:
             if isinstance(args[0], str):
                 if len(args) >= 3:
