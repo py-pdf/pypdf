@@ -1,18 +1,19 @@
-"""Extract pdf text preserving the structural layout of the source PDF"""
+"""Extract pdf text preserving the layout of the source PDF"""
 
 import json
+import sys
 from itertools import groupby
+from math import ceil
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Tuple, Union
 
-try:
-    # Python 3.8+: https://peps.python.org/pep-0586
-    from typing import Literal, TypedDict  # type: ignore[attr-defined,unused-ignore]
-except ImportError:
-    from typing_extensions import Literal, TypedDict  # type: ignore[assignment,unused-ignore]
-
 from ._fonts import Font, TextStateParams
 from ._xform_stack import XformStack
+
+if sys.version_info >= (3, 8):
+    from typing import Literal, TypedDict
+else:
+    from typing_extensions import Literal, TypedDict
 
 
 class BTGroup(TypedDict):
@@ -367,7 +368,7 @@ def fixed_width_page(
     ty_groups: Dict[int, List[BTGroup]], char_width: float, space_vertically: bool
 ) -> str:
     """
-    Generate page text by grouping text operations by y coordinate
+    Generate page text from text operations grouped by rendered y coordinate
 
     Args:
         ty_groups: dict of text show ops as returned by y_coordinate_groups()
@@ -375,7 +376,8 @@ def fixed_width_page(
         space_vertically: include blank lines inferred from y distance + font height.
 
     Returns:
-        str: page text structured as it was rendered in the source PDF.
+        str: page text in a fixed width format that closely adheres to the rendered
+            layout in the source pdf.
     """
     lines: List[str] = []
     last_y_coord = 0
@@ -387,9 +389,7 @@ def fixed_width_page(
         last_disp = 0.0
         for bt_op in line_data:
             offset = int(bt_op["tx"] // char_width)
-            spaces = (offset - len(line)) * (
-                round(last_disp + (char_width / 2.0)) < round(bt_op["tx"])
-            )
+            spaces = (offset - len(line)) * (ceil(last_disp) < int(bt_op["tx"]))
             line = f"{line}{' ' * spaces}{bt_op['text']}"
             last_disp = bt_op["displaced_tx"]
         if line.strip() or lines:

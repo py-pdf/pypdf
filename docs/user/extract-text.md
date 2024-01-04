@@ -20,6 +20,21 @@ print(page.extract_text(0))
 print(page.extract_text((0, 90)))
 ```
 
+you can also extract text in "layout" mode:
+
+```python
+# extract text in a fixed width format that closely adheres to the rendered
+# layout in the source pdf
+print(page.extract_text(extraction_mode="layout"))
+
+# extract text preserving horizontal positioning without excess vertical
+# whitespace (removes blank and "whitespace only" lines)
+print(page.extract_text(extraction_mode="layout", layout_mode_space_vertically=False))
+
+# adjust horizontal spacing
+print(page.extract_text(extraction_mode="layout", layout_mode_scale_weight=1.0))
+```
+
 Refer to [extract\_text](../modules/PageObject.html#pypdf._page.PageObject.extract_text) for more details.
 
 ## Using a visitor

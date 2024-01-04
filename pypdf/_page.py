@@ -30,10 +30,10 @@
 import json
 import math
 import re
+import sys
 from decimal import Decimal
 from pathlib import Path
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -87,12 +87,10 @@ from .generic import (
     StreamObject,
 )
 
-if TYPE_CHECKING:
-    try:
-        # Python 3.8+: https://peps.python.org/pep-0586
-        from typing import Literal  # type: ignore[attr-defined,unused-ignore]
-    except ImportError:
-        from typing_extensions import Literal  # type: ignore[assignment,unused-ignore]
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
@@ -1935,8 +1933,8 @@ class PageObject(DictionaryObject):
                 Defaults to None.
 
         Returns:
-            str: multiline string containing page text structured as it appeared in the
-            source pdf.
+            str: multiline string containing page text in a fixed width format that
+                closely adheres to the rendered layout in the source pdf.
         """
         fonts = self._layout_mode_fonts()
         if debug_path:
@@ -1965,6 +1963,7 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        extraction_mode: Literal["plain", "layout"] = "plain",
         **kwargs: Any,
     ) -> str:
         """
@@ -2003,12 +2002,12 @@ class PageObject(DictionaryObject):
                 text matrix, font-dictionary and font-size.
                 The font-dictionary may be None in case of unknown fonts.
                 If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
-
-        KwArgs:
             extraction_mode (Literal["plain", "layout"]): "plain" for legacy functionality
                 "layout" for experimental layout mode functionality.
                 NOTE: orientations, space_width, and visitor_* parameters are NOT respected
                 in "layout" mode.
+
+        KwArgs:
             layout_mode_space_vertically: include blank lines inferred from y distance + font
                 height. Defaults to True.
             layout_mode_scale_weight: multiplier for string length when calculating weighted
@@ -2024,7 +2023,6 @@ class PageObject(DictionaryObject):
         Returns:
             The extracted text
         """
-        extraction_mode: Literal["plain", "layout"] = kwargs.get("extraction_mode", "plain")
         if extraction_mode not in ["plain", "layout"]:
             raise ValueError(f"Invalid text extraction mode '{extraction_mode}'")
         if extraction_mode == "layout":

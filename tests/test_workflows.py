@@ -1043,7 +1043,6 @@ Season: SUMMER-B 2023"""
 
 
 @pytest.mark.samples()
-@pytest.mark.xfail(reason="#2388 implements this")
 def test_text_extraction_layout_mode():
     pdf_path = SAMPLE_ROOT / "026-latex-multicolumn/multicolumn.pdf"
     reader = PdfReader(pdf_path)
