@@ -26,21 +26,6 @@ class XformStack:
         Ts (float): text rise
         font (Font): font object
         font_size (int | float): font size
-
-    Methods:
-        raw_xform: only a/b/c/d/e/f matrix params
-        new_xform: a/b/c/d/e/f matrix params + 'is_text' and 'is_render' keys
-        reset_tm: clear all xforms from chainmap having is_text==True
-        reset_trm: clear all xforms from chainmap having is_render==True
-        remove_q: rewind to stack prior state after closing a 'q' with internal 'cm' ops
-        add_q: add another level to q_queue
-        add_cm: concatenate an additional transform matrix
-        add_tm: append a text transform matrix
-        add_trm: append a text rendering transform matrix
-        text_state_params: current text state parameters
-        effective_xform: the current effective transform account for both cm and text xforms
-        flip_vertical: True if page is upside down
-        xmaps: internal ChainMap 'maps' property
     """
 
     def __init__(self) -> None:
