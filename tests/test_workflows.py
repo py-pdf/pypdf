@@ -1047,6 +1047,6 @@ def test_text_extraction_layout_mode():
     pdf_path = SAMPLE_ROOT / "026-latex-multicolumn/multicolumn.pdf"
     reader = PdfReader(pdf_path)
     actual = reader.pages[0].extract_text(extraction_mode="layout")
-    with open(RESOURCE_ROOT / "multicolumn-lorem-ipsum.txt") as fp:
+    with open(RESOURCE_ROOT / "multicolumn-lorem-ipsum.txt", encoding="utf-8") as fp:
         expected = fp.read()
     assert actual.strip() == expected.strip()
