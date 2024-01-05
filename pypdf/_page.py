@@ -27,7 +27,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import json
 import math
 import re
 import sys
@@ -1880,7 +1879,7 @@ class PageObject(DictionaryObject):
 
     def _layout_mode_fonts(self) -> Dict[str, _layout_mode.Font]:
         """
-        Get fonts formatted for "layout" mode text extraction
+        Get fonts formatted for "layout" mode text extraction.
 
         Returns:
             Dict[str, Font]: dictionary of _layout_mode.Font instances keyed by font name
@@ -1906,7 +1905,7 @@ class PageObject(DictionaryObject):
                     for k, v in font_dict_obj.items()
                 }
                 # mypy really sucks at unpacking
-                fonts[font_name] = _layout_mode.Font(*cmap, font_dict)  # type: ignore
+                fonts[font_name] = _layout_mode.Font(*cmap, font_dict)  # type: ignore[call-arg,arg-type]
         return fonts
 
     def _layout_mode_text(
@@ -1916,7 +1915,7 @@ class PageObject(DictionaryObject):
             debug_path: Union[Path, None] = None,
         ) -> str:
         """
-        Get text preserving fidelity to source PDF text layout
+        Get text preserving fidelity to source PDF text layout.
 
         Args:
             space_vertically: include blank lines inferred from y distance + font
@@ -1938,6 +1937,7 @@ class PageObject(DictionaryObject):
         """
         fonts = self._layout_mode_fonts()
         if debug_path:
+            import json
             debug_path.with_name("fonts.json").write_text(
                 json.dumps(fonts, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)),
                 "utf-8",
@@ -2002,7 +2002,7 @@ class PageObject(DictionaryObject):
                 text matrix, font-dictionary and font-size.
                 The font-dictionary may be None in case of unknown fonts.
                 If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
-            extraction_mode (Literal["plain", "layout"]): "plain" for legacy functionality
+            extraction_mode (Literal["plain", "layout"]): "plain" for legacy functionality,
                 "layout" for experimental layout mode functionality.
                 NOTE: orientations, space_width, and visitor_* parameters are NOT respected
                 in "layout" mode.

@@ -7,6 +7,7 @@ from typing import Counter as CounterType
 
 from .. import mult
 from ._fonts import Font, TextStateParams
+from ...errors import PdfReadError
 
 XformStackChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
 XformStackDictType = MutableMapping[Union[int, str], Union[float, bool]]
@@ -48,7 +49,7 @@ class XformStack:
             TextStateParams: current text state parameters
         """
         if self.font is None or self.font_size is None:
-            raise ValueError("font and font_size not set: is PDF missing a Tf operator?")
+            raise PdfReadError("Font and font_size not set: is PDF missing a Tf operator?")
         return TextStateParams(
             txt,
             self.font,

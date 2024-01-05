@@ -10,7 +10,7 @@ page = reader.pages[0]
 print(page.extract_text())
 ```
 
-you can also choose to limit the text orientation you want to extract, e.g:
+You can also choose to limit the text orientation you want to extract, e.g:
 
 ```python
 # extract only text oriented up
@@ -20,7 +20,7 @@ print(page.extract_text(0))
 print(page.extract_text((0, 90)))
 ```
 
-you can also extract text in "layout" mode:
+You can also extract text in "layout" mode:
 
 ```python
 # extract text in a fixed width format that closely adheres to the rendered

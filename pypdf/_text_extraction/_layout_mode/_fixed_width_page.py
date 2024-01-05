@@ -1,6 +1,5 @@
-"""Extract pdf text preserving the layout of the source PDF"""
+"""Extract PDF text preserving the layout of the source PDF"""
 
-import json
 import sys
 from itertools import groupby
 from math import ceil
@@ -61,7 +60,7 @@ def bt_group(tj_op: TextStateParams, rendered_text: str, dispaced_tx: float) -> 
 
 def decode_tj(_b: bytes, xform_stack: XformStack) -> TextStateParams:
     """
-    Decode a Tj/TJ operator
+    Decode a Tj/TJ operator.
 
     Args:
         _b: text bytes
@@ -221,15 +220,36 @@ def recurs_to_target_op(
         elif op == b"Tf":
             xform_stack.font_size = opands[1]
             xform_stack.font = fonts[opands[0]]
-        else:
+        else:  # handle Tc, Tw, Tz, TL, and Ts operators
             _set_state_param(op, opands, xform_stack)
+
+
+def _set_state_param(op: bytes, opands: List[Any], xform_stack: XformStack) -> None:
+    """
+    Set a text state parameter.
+
+    Args:
+        op: operator defined in PDF standard 1.7 as bytes
+        opands: List of operands for the op as bytes, int or float
+        xform_stack: stack of cm/tm transformations currently applied
+    """
+    if op == b"Tc":
+        xform_stack.Tc = opands[0]
+    if op == b"Tw":
+        xform_stack.Tw = opands[0]
+    if op == b"Tz":
+        xform_stack.Tz = opands[0]
+    if op == b"TL":
+        xform_stack.TL = opands[0]
+    if op == b"Ts":
+        xform_stack.Ts = opands[0]
 
 
 def y_coordinate_groups(
     bt_groups: List[BTGroup], debug_path: Union[Path, None] = None
 ) -> Dict[int, List[BTGroup]]:
     """
-    Group text operations by rendered y coordinate, i.e. the line number
+    Group text operations by rendered y coordinate, i.e. the line number.
 
     Args:
         bt_groups: list of dicts as returned by text_show_operations()
@@ -264,38 +284,18 @@ def y_coordinate_groups(
             last_ty = ty
             last_txs = txs
     if debug_path:
+        import json
         debug_path.with_name("bt_groups.json").write_text(
             json.dumps(ty_groups, indent=2, default=str), "utf-8"
         )
     return ty_groups
 
 
-def _set_state_param(op: bytes, opands: List[Any], xform_stack: XformStack) -> None:
-    """
-    Set a text state parameter
-
-    Args:
-        op: operator defined in PDF standard 1.7 as bytes
-        opands: List of operands for the op as bytes, int or float
-        xform_stack: stack of cm/tm transformations currently applied
-    """
-    if op == b"Tc":
-        xform_stack.Tc = opands[0]
-    if op == b"Tw":
-        xform_stack.Tw = opands[0]
-    if op == b"Tz":
-        xform_stack.Tz = opands[0]
-    if op == b"TL":
-        xform_stack.TL = opands[0]
-    if op == b"Ts":
-        xform_stack.Ts = opands[0]
-
-
 def text_show_operations(
     ops: Iterator[Tuple[List[Any], bytes]], fonts: Dict[str, Font], debug_path: Union[Path, None] = None
 ) -> List[BTGroup]:
     """
-    Extract text from BT/ET operator pairs
+    Extract text from BT/ET operator pairs.
 
     Args:
         ops (Iterator[Tuple[List, bytes]]): iterator of operators in content stream
@@ -335,6 +335,7 @@ def text_show_operations(
     ]
 
     if debug_path:
+        import json
         debug_path.with_name("bts.json").write_text(
             json.dumps(bt_groups, indent=2, default=str), "utf-8"
         )
@@ -368,7 +369,7 @@ def fixed_width_page(
     ty_groups: Dict[int, List[BTGroup]], char_width: float, space_vertically: bool
 ) -> str:
     """
-    Generate page text from text operations grouped by rendered y coordinate
+    Generate page text from text operations grouped by rendered y coordinate.
 
     Args:
         ty_groups: dict of text show ops as returned by y_coordinate_groups()
