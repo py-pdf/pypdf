@@ -5,9 +5,9 @@ from typing import Any, Dict, List, MutableMapping, Union
 from typing import ChainMap as ChainMapType
 from typing import Counter as CounterType
 
+from ...errors import PdfReadError
 from .. import mult
 from ._fonts import Font, TextStateParams
-from ...errors import PdfReadError
 
 XformStackChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
 XformStackDictType = MutableMapping[Union[int, str], Union[float, bool]]
