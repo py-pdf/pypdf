@@ -1050,3 +1050,15 @@ def test_text_extraction_layout_mode():
     with open(RESOURCE_ROOT / "multicolumn-lorem-ipsum.txt", encoding="utf-8") as fp:
         expected = fp.read()
     assert actual.strip() == expected.strip()
+
+
+@pytest.mark.enable_socket()
+def test_layout_mode_space_vertically():
+    url = "https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf"
+    name = "iss2138.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    with open(RESOURCE_ROOT / "AEO.1172.layout.txt", encoding="utf-8") as fp:
+        expected = fp.read()
+    assert expected == reader.pages[0].extract_text(
+        extraction_mode="layout", layout_mode_space_vertically=False
+    )

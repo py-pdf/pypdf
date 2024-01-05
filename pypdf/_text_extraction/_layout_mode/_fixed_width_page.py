@@ -6,6 +6,7 @@ from math import ceil
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Tuple, Union
 
+from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
 from ._fonts import Font, TextStateParams
 from ._xform_stack import XformStack
 
@@ -149,7 +150,10 @@ def recurs_to_target_op(
                     # if the x position of the text is less than the last x position by
                     # more than 5 spaces widths, assume the text order should be flipped
                     # and start a new group
-                    if abs(_tj.render_xform[4] - displaced_tx) > _tj.space_tx * 5:
+                    if (
+                        abs(_tj.render_xform[4] - displaced_tx)
+                        > _tj.space_tx * LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
+                    ):
                         if _text.strip():
                             bt_groups.append(bt_group(tj_ops[0], _text, displaced_tx))
                         tj_ops[0] = _tj
