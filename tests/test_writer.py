@@ -224,7 +224,9 @@ def writer_operate(writer: PdfWriter) -> None:
 )
 def test_writer_operations_by_traditional_usage(convert, needs_cleanup):
     if callable(convert):
-        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+        fo = NamedTemporaryFile(suffix=".pdf", delete=False)
+        write_data_here = convert(fo.name)
+        fo.close()
     else:
         write_data_here = convert
 
@@ -254,7 +256,9 @@ def test_writer_operations_by_traditional_usage(convert, needs_cleanup):
 )
 def test_writer_operations_by_semi_traditional_usage(convert, needs_cleanup):
     if callable(convert):
-        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+        fo = NamedTemporaryFile(suffix=".pdf", delete=False)
+        write_data_here = convert(fo.name)
+        fo.close()
     else:
         write_data_here = convert
 
@@ -281,11 +285,11 @@ def test_writer_operations_by_semi_traditional_usage(convert, needs_cleanup):
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_semi_new_traditional_usage(
-    convert, needs_cleanup
-):
+def test_writer_operations_by_semi_new_traditional_usage(convert, needs_cleanup):
     if callable(convert):
-        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+        fo = NamedTemporaryFile(suffix=".pdf", delete=False)
+        write_data_here = convert(fo.name)
+        fo.close()
     else:
         write_data_here = convert
 
@@ -309,7 +313,9 @@ def test_writer_operations_by_semi_new_traditional_usage(
 )
 def test_writer_operation_by_new_usage(convert, needs_cleanup):
     if callable(convert):
-        write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
+        fo = NamedTemporaryFile(suffix=".pdf", delete=False)
+        write_data_here = convert(fo.name)
+        fo.close()
     else:
         write_data_here = convert
 
