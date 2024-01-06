@@ -1808,7 +1808,9 @@ class PdfReader:
         # TODO: raise Exception for wrong password
         return self._encryption.verify(password)
 
-    def decode_permissions(self, permissions_code: Optional[int]) -> Dict[str, bool]:
+    def decode_permissions(
+        self, permissions_code: Optional[int] = None
+    ) -> Dict[str, bool]:
         """
         Decodes the permissions as a dictionary
 

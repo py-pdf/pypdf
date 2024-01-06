@@ -1985,3 +1985,19 @@ def test_merging_many_temporary_files():
     for n, page in enumerate(reader.pages):
         text = page.extract_text()
         assert text == str(n)
+
+
+def test_write_permissions():
+    r = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    p = r.decode_permissions()
+    for k in p:
+        assert p[k]
+        np = dict(p)
+        np[k] = False
+        w = PdfWriter(r)
+        w.encrypt("", permissions_flag=np)
+        b = BytesIO()
+        w.write(b)
+        rr = PdfReader(b)
+        # print(rr.trailer["/Encrypt"]["/P"],rr.decode_permissions())
+        assert not rr.decode_permissions()[k]

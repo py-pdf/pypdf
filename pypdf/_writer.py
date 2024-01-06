@@ -1103,21 +1103,21 @@ class PdfWriter:
             permissions = permissions_flag
             _flag = cast(int, ALL_DOCUMENT_PERMISSIONS)
             if not permissions.get("print", False):
-                _flag -= 1 << 3
+                _flag -= 1 << 2
             if not permissions.get("modify", False):
-                _flag -= 1 << 4
+                _flag -= 1 << 3
             if not permissions.get("copy", False):
-                _flag -= 1 << 5
+                _flag -= 1 << 4
             if not permissions.get("annotations", False):
-                _flag -= 1 << 6
+                _flag -= 1 << 5
             if not permissions.get("forms", False):
-                _flag -= 1 << 9
+                _flag -= 1 << 8
             if not permissions.get("accessability", False):
-                _flag -= 1 << 10
+                _flag -= 1 << 9
             if not permissions.get("assemble", False):
-                _flag -= 1 << 11
+                _flag -= 1 << 10
             if not permissions.get("print_high_quality", False):
-                _flag -= 1 << 12
+                _flag -= 1 << 11
             permissions_flag = cast(UserAccessPermissions, _flag)
         if algorithm is not None:
             try:
