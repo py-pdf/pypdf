@@ -1811,24 +1811,21 @@ class PdfReader:
 
     def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
         """Take the permissions as an integer, return the allowed access."""
-        permissions = {}
-        permissions["print"] = permissions_code & UserAccessPermissions.PRINT != 0
-        permissions["modify"] = permissions_code & UserAccessPermissions.MODIFY != 0
-        permissions["copy"] = permissions_code & UserAccessPermissions.EXTRACT != 0
-        permissions["annotations"] = (
-            permissions_code & UserAccessPermissions.ADD_OR_MODIFY != 0
-        )
-        permissions["forms"] = permissions_code & UserAccessPermissions.R7 != 0
-        permissions["accessability"] = (
-            permissions_code & UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS != 0
-        )
-        permissions["assemble"] = (
-            permissions_code & UserAccessPermissions.ASSEMBLE_DOC != 0
-        )
-        permissions["print_high_quality"] = (
-            permissions_code & UserAccessPermissions.PRINT_TO_REPRESENTATION != 0
-        )
-        return permissions
+        permissions_mapping = {
+            "print": UserAccessPermissions.PRINT,
+            "modify": UserAccessPermissions.MODIFY,
+            "copy": UserAccessPermissions.EXTRACT,
+            "annotations": UserAccessPermissions.ADD_OR_MODIFY,
+            "forms": UserAccessPermissions.R7,
+            "accessability": UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS,
+            "assemble": UserAccessPermissions.ASSEMBLE_DOC,
+            "print_high_quality": UserAccessPermissions.PRINT_TO_REPRESENTATION,
+        }
+
+        return {
+            key: permissions_code & flag != 0
+            for key, flag in permissions_mapping.items()
+        }
 
     @property
     def is_encrypted(self) -> bool:
