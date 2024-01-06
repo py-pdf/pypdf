@@ -287,7 +287,7 @@ def y_coordinate_groups(
         else:
             last_ty = ty
             last_txs = txs
-    if debug_path:
+    if debug_path:  # pragma: no cover
         import json
         debug_path.with_name("bt_groups.json").write_text(
             json.dumps(ty_groups, indent=2, default=str), "utf-8"
@@ -338,7 +338,7 @@ def text_show_operations(
         )
     ]
 
-    if debug_path:
+    if debug_path:  # pragma: no cover
         import json
         debug_path.with_name("bts.json").write_text(
             json.dumps(bt_groups, indent=2, default=str), "utf-8"

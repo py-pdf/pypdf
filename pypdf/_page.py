@@ -1936,7 +1936,7 @@ class PageObject(DictionaryObject):
                 closely adheres to the rendered layout in the source pdf.
         """
         fonts = self._layout_mode_fonts()
-        if debug_path:
+        if debug_path:  # pragma: no cover
             import json
             debug_path.with_name("fonts.json").write_text(
                 json.dumps(fonts, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)),

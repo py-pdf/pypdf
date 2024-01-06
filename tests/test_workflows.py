@@ -1062,3 +1062,10 @@ def test_layout_mode_space_vertically():
     assert expected == reader.pages[0].extract_text(
         extraction_mode="layout", layout_mode_space_vertically=False
     )
+
+
+def test_text_extraction_invalid_mode():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    with pytest.raises(ValueError, match="Invalid text extraction mode"):
+        reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore
