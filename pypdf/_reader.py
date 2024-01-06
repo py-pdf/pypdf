@@ -1808,8 +1808,26 @@ class PdfReader:
         # TODO: raise Exception for wrong password
         return self._encryption.verify(password)
 
-    def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
-        # Takes the permissions as an integer, returns the allowed access
+    def decode_permissions(self, permissions_code: Optional[int]) -> Dict[str, bool]:
+        """
+        Decodes the permissions as a dictionary
+
+        Args:
+            permissions_code: integer providing bits from an integer
+                if None is provided, the value is retrieved from the default pdf fields
+                Individual permissions using PKCS#7 shall be extracted manually
+
+        Returns:
+            permissions as human readable structure in a dict
+            Can be used to feed permissions_flag within PdfWriter.encrypt
+        """
+        if permissions_code is None:
+            permissions_code = cast(
+                int,
+                cast(DictionaryObject, self.trailer[TK.ENCRYPT]).get("/P", -1)
+                if TK.ENCRYPT in self.trailer
+                else -1,
+            )
         permissions = {}
         permissions["print"] = permissions_code & (1 << 3 - 1) != 0  # bit 3
         permissions["modify"] = permissions_code & (1 << 4 - 1) != 0  # bit 4

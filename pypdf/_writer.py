@@ -122,7 +122,7 @@ from .types import (
 )
 
 OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
-ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
+ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**32 - 1) - 3)
 
 
 class ObjectDeletionFlag(enum.IntFlag):
@@ -1065,7 +1065,9 @@ class PdfWriter:
         user_password: str,
         owner_password: Optional[str] = None,
         use_128bit: bool = True,
-        permissions_flag: UserAccessPermissions = ALL_DOCUMENT_PERMISSIONS,
+        permissions_flag: Union[
+            UserAccessPermissions, Dict[str, bool]
+        ] = ALL_DOCUMENT_PERMISSIONS,
         *,
         algorithm: Optional[str] = None,
     ) -> None:
@@ -1088,6 +1090,8 @@ class PdfWriter:
                 Bit position 3 is for printing, 4 is for modifying content,
                 5 and 6 control annotations, 9 for form fields,
                 10 for extraction of text and graphics.
+                permissions can be provided as an integer or as a dictionary
+                as provided by `PdfReader.decode_permissions()`
             algorithm: encrypt algorithm. Values maybe one of "RC4-40", "RC4-128",
                 "AES-128", "AES-256-R5", "AES-256". If it's valid,
                 `use_128bit` will be ignored.
@@ -1095,6 +1099,26 @@ class PdfWriter:
         if owner_password is None:
             owner_password = user_password
 
+        if isinstance(permissions_flag, dict):
+            permissions = permissions_flag
+            _flag = cast(int, ALL_DOCUMENT_PERMISSIONS)
+            if not permissions.get("print", False):
+                _flag -= 1 << 3
+            if not permissions.get("modify", False):
+                _flag -= 1 << 4
+            if not permissions.get("copy", False):
+                _flag -= 1 << 5
+            if not permissions.get("annotations", False):
+                _flag -= 1 << 6
+            if not permissions.get("forms", False):
+                _flag -= 1 << 9
+            if not permissions.get("accessability", False):
+                _flag -= 1 << 10
+            if not permissions.get("assemble", False):
+                _flag -= 1 << 11
+            if not permissions.get("print_high_quality", False):
+                _flag -= 1 << 12
+            permissions_flag = cast(UserAccessPermissions, _flag)
         if algorithm is not None:
             try:
                 alg = getattr(EncryptAlgorithm, algorithm.replace("-", "_"))
