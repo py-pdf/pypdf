@@ -68,6 +68,7 @@ from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
     GoToActionArguments,
+    UserAccessPermissions,
 )
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
@@ -1809,18 +1810,24 @@ class PdfReader:
         return self._encryption.verify(password)
 
     def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
-        # Takes the permissions as an integer, returns the allowed access
+        """Take the permissions as an integer, return the allowed access."""
         permissions = {}
-        permissions["print"] = permissions_code & (1 << 3 - 1) != 0  # bit 3
-        permissions["modify"] = permissions_code & (1 << 4 - 1) != 0  # bit 4
-        permissions["copy"] = permissions_code & (1 << 5 - 1) != 0  # bit 5
-        permissions["annotations"] = permissions_code & (1 << 6 - 1) != 0  # bit 6
-        permissions["forms"] = permissions_code & (1 << 9 - 1) != 0  # bit 9
-        permissions["accessability"] = permissions_code & (1 << 10 - 1) != 0  # bit 10
-        permissions["assemble"] = permissions_code & (1 << 11 - 1) != 0  # bit 11
+        permissions["print"] = permissions_code & UserAccessPermissions.PRINT != 0
+        permissions["modify"] = permissions_code & UserAccessPermissions.MODIFY != 0
+        permissions["copy"] = permissions_code & UserAccessPermissions.EXTRACT != 0
+        permissions["annotations"] = (
+            permissions_code & UserAccessPermissions.ADD_OR_MODIFY != 0
+        )
+        permissions["forms"] = permissions_code & UserAccessPermissions.R7 != 0
+        permissions["accessability"] = (
+            permissions_code & UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS != 0
+        )
+        permissions["assemble"] = (
+            permissions_code & UserAccessPermissions.ASSEMBLE_DOC != 0
+        )
         permissions["print_high_quality"] = (
-            permissions_code & (1 << 12 - 1) != 0
-        )  # bit 12
+            UserAccessPermissions.PRINT_TO_REPRESENTATION != 0
+        )
         return permissions
 
     @property
