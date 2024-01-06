@@ -44,6 +44,14 @@ SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
+def _get_write_target(convert) -> Any:
+    target = convert
+    if callable(convert):
+        with NamedTemporaryFile(suffix=".pdf", delete=False) as temporary:
+            target = temporary.name
+    return target
+
+
 def test_writer_exception_non_binary(tmp_path, caplog):
     src = RESOURCE_ROOT / "pdflatex-outline.pdf"
 
@@ -223,14 +231,8 @@ def writer_operate(writer: PdfWriter) -> None:
     ],
 )
 def test_writer_operations_by_traditional_usage(convert, needs_cleanup):
-    if callable(convert):
-        with NamedTemporaryFile(suffix=".pdf", delete=False) as fo:
-            write_data_here = convert(fo.name)
-    else:
-        write_data_here = convert
-
+    write_data_here = _get_write_target(convert)
     writer = PdfWriter()
-
     writer_operate(writer)
 
     # finally, write "output" to pypdf-output.pdf
@@ -254,11 +256,7 @@ def test_writer_operations_by_traditional_usage(convert, needs_cleanup):
     ],
 )
 def test_writer_operations_by_semi_traditional_usage(convert, needs_cleanup):
-    if callable(convert):
-        with NamedTemporaryFile(suffix=".pdf", delete=False) as fo:
-            write_data_here = convert(fo.name)
-    else:
-        write_data_here = convert
+    write_data_here = _get_write_target(convert)
 
     with PdfWriter() as writer:
         writer_operate(writer)
@@ -283,12 +281,10 @@ def test_writer_operations_by_semi_traditional_usage(convert, needs_cleanup):
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_semi_new_traditional_usage(convert, needs_cleanup):
-    if callable(convert):
-        with NamedTemporaryFile(suffix=".pdf", delete=False) as fo:
-            write_data_here = convert(fo.name)
-    else:
-        write_data_here = convert
+def test_writer_operations_by_semi_new_traditional_usage(
+    convert, needs_cleanup
+):
+    write_data_here = _get_write_target(convert)
 
     with PdfWriter() as writer:
         writer_operate(writer)
@@ -309,11 +305,7 @@ def test_writer_operations_by_semi_new_traditional_usage(convert, needs_cleanup)
     ],
 )
 def test_writer_operation_by_new_usage(convert, needs_cleanup):
-    if callable(convert):
-        with NamedTemporaryFile(suffix=".pdf", delete=False) as fo:
-            write_data_here = convert(fo.name)
-    else:
-        write_data_here = convert
+    write_data_here = _get_write_target(convert)
 
     # This includes write "output" to pypdf-output.pdf
     with PdfWriter(write_data_here) as writer:
