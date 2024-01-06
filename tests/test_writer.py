@@ -44,7 +44,7 @@ SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
-def _get_write_target(convert):
+def _get_write_target(convert) -> Any:
     target = convert
     if callable(convert):
         with NamedTemporaryFile(suffix=".pdf", delete=False) as temporary:
