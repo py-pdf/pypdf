@@ -805,7 +805,7 @@ class PdfReader:
 
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
-    ) -> int:
+    ) -> Optional[int]:
         """
         Generate _page_id2num.
 
@@ -813,7 +813,7 @@ class PdfReader:
             indirect_reference:
 
         Returns:
-            The page number.
+            The page number or None
         """
         if self._page_id2num is None:
             self._page_id2num = {
@@ -821,16 +821,16 @@ class PdfReader:
             }
 
         if indirect_reference is None or isinstance(indirect_reference, NullObject):
-            return -1
+            return None
         if isinstance(indirect_reference, int):
             idnum = indirect_reference
         else:
             idnum = indirect_reference.idnum
         assert self._page_id2num is not None, "hint for mypy"
-        ret = self._page_id2num.get(idnum, -1)
+        ret = self._page_id2num.get(idnum, None)
         return ret
 
-    def get_page_number(self, page: PageObject) -> int:
+    def get_page_number(self, page: PageObject) -> Optional[int]:
         """
         Retrieve page number of a given PageObject.
 
@@ -839,11 +839,11 @@ class PdfReader:
                 an instance of :class:`PageObject<pypdf._page.PageObject>`
 
         Returns:
-            The page number or -1 if page is not found
+            The page number or None if page is not found
         """
         return self._get_page_number_by_indirect(page.indirect_reference)
 
-    def get_destination_page_number(self, destination: Destination) -> int:
+    def get_destination_page_number(self, destination: Destination) -> Optional[int]:
         """
         Retrieve page number of a given Destination object.
 
@@ -851,7 +851,7 @@ class PdfReader:
             destination: The destination to get page number.
 
         Returns:
-            The page number or -1 if page is not found
+            The page number or None if page is not found
         """
         return self._get_page_number_by_indirect(destination.page)
 
