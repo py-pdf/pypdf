@@ -1042,14 +1042,32 @@ Season: SUMMER-B 2023"""
     # so we can not do a full comparison.
 
 
+def remove_trailing_whitespace(text: str) -> str:
+    text = text.strip()
+    return "\n".join(line.rstrip() for line in text.split("\n"))
+
+
 @pytest.mark.samples()
-def test_text_extraction_layout_mode():
-    pdf_path = SAMPLE_ROOT / "026-latex-multicolumn/multicolumn.pdf"
+@pytest.mark.parametrize(
+    ("pdf_path", "expected_path"),
+    [
+        (
+            SAMPLE_ROOT / "026-latex-multicolumn/multicolumn.pdf",
+            RESOURCE_ROOT / "multicolumn-lorem-ipsum.txt",
+        ),
+        (
+            SAMPLE_ROOT / "010-pdflatex-forms/pdflatex-forms.pdf",
+            RESOURCE_ROOT / "010-pdflatex-forms.txt",
+        ),
+    ],
+)
+def test_text_extraction_layout_mode(pdf_path, expected_path):
     reader = PdfReader(pdf_path)
     actual = reader.pages[0].extract_text(extraction_mode="layout")
-    with open(RESOURCE_ROOT / "multicolumn-lorem-ipsum.txt", encoding="utf-8") as fp:
+    with open(expected_path, encoding="utf-8") as fp:
         expected = fp.read()
-    assert actual.strip() == expected.strip()
+    # We don't care about trailing whitespace
+    assert remove_trailing_whitespace(actual) == remove_trailing_whitespace(expected)
 
 
 @pytest.mark.enable_socket()
