@@ -68,6 +68,7 @@ from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
     GoToActionArguments,
+    UserAccessPermissions,
 )
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
@@ -1809,19 +1810,22 @@ class PdfReader:
         return self._encryption.verify(password)
 
     def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
-        # Takes the permissions as an integer, returns the allowed access
-        permissions = {}
-        permissions["print"] = permissions_code & (1 << 3 - 1) != 0  # bit 3
-        permissions["modify"] = permissions_code & (1 << 4 - 1) != 0  # bit 4
-        permissions["copy"] = permissions_code & (1 << 5 - 1) != 0  # bit 5
-        permissions["annotations"] = permissions_code & (1 << 6 - 1) != 0  # bit 6
-        permissions["forms"] = permissions_code & (1 << 9 - 1) != 0  # bit 9
-        permissions["accessability"] = permissions_code & (1 << 10 - 1) != 0  # bit 10
-        permissions["assemble"] = permissions_code & (1 << 11 - 1) != 0  # bit 11
-        permissions["print_high_quality"] = (
-            permissions_code & (1 << 12 - 1) != 0
-        )  # bit 12
-        return permissions
+        """Take the permissions as an integer, return the allowed access."""
+        permissions_mapping = {
+            "print": UserAccessPermissions.PRINT,
+            "modify": UserAccessPermissions.MODIFY,
+            "copy": UserAccessPermissions.EXTRACT,
+            "annotations": UserAccessPermissions.ADD_OR_MODIFY,
+            "forms": UserAccessPermissions.R7,
+            "accessability": UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS,
+            "assemble": UserAccessPermissions.ASSEMBLE_DOC,
+            "print_high_quality": UserAccessPermissions.PRINT_TO_REPRESENTATION,
+        }
+
+        return {
+            key: permissions_code & flag != 0
+            for key, flag in permissions_mapping.items()
+        }
 
     @property
     def is_encrypted(self) -> bool:
