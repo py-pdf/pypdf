@@ -123,7 +123,7 @@ def crlf_space_check(
                     output += text + "\n"
                     if visitor_text is not None:
                         visitor_text(
-                            text + "\n",
+                            "\n",
                             memo_cm,
                             memo_tm,
                             cmap[3],
@@ -136,13 +136,21 @@ def crlf_space_check(
                 and (output + text)[-1] != " "
             ):
                 text += " "
+                if visitor_text is not None:
+                    visitor_text(
+                        " ",
+                        cm_matrix,
+                        tm_matrix,
+                        cmap[3],
+                        font_size,
+                    )
         elif orientation == 180:
             if delta_y > 0.8 * f:
                 if (output + text)[-1] != "\n":
                     output += text + "\n"
                     if visitor_text is not None:
                         visitor_text(
-                            text + "\n",
+                            "\n",
                             memo_cm,
                             memo_tm,
                             cmap[3],
@@ -155,13 +163,21 @@ def crlf_space_check(
                 and (output + text)[-1] != " "
             ):
                 text += " "
+                if visitor_text is not None:
+                    visitor_text(
+                        " ",
+                        cm_matrix,
+                        tm_matrix,
+                        cmap[3],
+                        font_size,
+                    )
         elif orientation == 90:
             if delta_x > 0.8 * f:
                 if (output + text)[-1] != "\n":
                     output += text + "\n"
                     if visitor_text is not None:
                         visitor_text(
-                            text + "\n",
+                            "\n",
                             memo_cm,
                             memo_tm,
                             cmap[3],
@@ -180,7 +196,7 @@ def crlf_space_check(
                     output += text + "\n"
                     if visitor_text is not None:
                         visitor_text(
-                            text + "\n",
+                            "\n",
                             memo_cm,
                             memo_tm,
                             cmap[3],
@@ -193,6 +209,14 @@ def crlf_space_check(
                 and (output + text)[-1] != " "
             ):
                 text += " "
+                if visitor_text is not None:
+                    visitor_text(
+                        " ",
+                        cm_matrix,
+                        tm_matrix,
+                        cmap[3],
+                        font_size,
+                    )
     except Exception:
         pass
     tm_prev = tm_matrix.copy()
@@ -219,6 +243,8 @@ def handle_tj(
     if orientation in orientations and len(operands) > 0:
         if isinstance(operands[0], str):
             text += operands[0]
+            if visitor_text is not None:
+                visitor_text(operands[0], cm_matrix, tm_matrix, cmap[3], font_size)
         else:
             t: str = ""
             tt: bytes = (
@@ -242,6 +268,7 @@ def handle_tj(
                     [cmap[0][x] if x in cmap[0] else bytes((x,)).decode() for x in tt]
                 )
             # "\u0590 - \u08FF \uFB50 - \uFDFF"
+            tj_text = ""
             for x in [cmap[1][x] if x in cmap[1] else x for x in t]:
                 # x can be a sequence of bytes ; ex: habibi.pdf
                 if len(x) == 1:
@@ -257,7 +284,7 @@ def handle_tj(
                     or 0x20A0 <= xx <= 0x21FF           # but (numbers) indices/exponents
                     or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
                 ):
-                    text = x + text if rtl_dir else text + x
+                    tj_text = x + tj_text if rtl_dir else tj_text + x
                 elif (  # right-to-left characters set
                     0x0590 <= xx <= 0x08FF
                     or 0xFB1D <= xx <= 0xFDFF
@@ -279,6 +306,9 @@ def handle_tj(
                         if visitor_text is not None:
                             visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                         text = ""
-                    text = text + x
+                    tj_text = tj_text + x
                 # fmt: on
+            text = tj_text + text if rtl_dir else text + tj_text
+            if visitor_text is not None:
+                visitor_text(tj_text, cm_matrix, tm_matrix, cmap[3], font_size)
     return text, rtl_dir
