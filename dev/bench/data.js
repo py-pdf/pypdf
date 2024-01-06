@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704571240808,
+  "lastUpdate": 1704571605966,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -46422,6 +46422,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09518694790133936",
             "extra": "mean: 16.0958576712 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cfd87127d1816e16bb48e083d70c21e59289f166",
+          "message": "TST: Correctly close temporary files (#2396)\n\nImprovement for #2379 to use a common method and appropriately close the temporary files.\r\n\r\nFixes #2394",
+          "timestamp": "2024-01-06T21:03:48+01:00",
+          "tree_id": "4e2e78661ab107d250094fd39d9033c669bc6b54",
+          "url": "https://github.com/py-pdf/pypdf/commit/cfd87127d1816e16bb48e083d70c21e59289f166"
+        },
+        "date": 1704571603573,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3895876692218474,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005094221928508394",
+            "extra": "mean: 295.0211346000003 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.757432461596,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008052628680301198",
+            "extra": "mean: 78.3856785454537 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.267022413350723,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03064609722411972",
+            "extra": "mean: 3.7450039771999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.77597620150009,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00044436686130411106",
+            "extra": "mean: 59.60904974999792 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06159057654542147,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17900087425327596",
+            "extra": "mean: 16.2362500254 sec\nrounds: 5"
           }
         ]
       }
