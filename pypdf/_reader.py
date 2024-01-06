@@ -1826,7 +1826,7 @@ class PdfReader:
             permissions_code & UserAccessPermissions.ASSEMBLE_DOC != 0
         )
         permissions["print_high_quality"] = (
-            UserAccessPermissions.PRINT_TO_REPRESENTATION != 0
+            permissions_code & UserAccessPermissions.PRINT_TO_REPRESENTATION != 0
         )
         return permissions
 
