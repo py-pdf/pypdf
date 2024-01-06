@@ -281,9 +281,7 @@ def test_writer_operations_by_semi_traditional_usage(convert, needs_cleanup):
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_semi_new_traditional_usage(
-    convert, needs_cleanup
-):
+def test_writer_operations_by_semi_new_traditional_usage(convert, needs_cleanup):
     if callable(convert):
         write_data_here = convert(NamedTemporaryFile(suffix=".pdf", delete=False).name)
     else:

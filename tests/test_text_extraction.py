@@ -112,3 +112,17 @@ def test_issue_2336():
     page = reader.pages[0]
     actual_text = page.extract_text()
     assert "Beira Rio" in actual_text
+
+
+def test_layout_mode_font_class_to_dict():
+    from pypdf._text_extraction._layout_mode._fonts import Font
+
+    font = Font("foo", space_width=8, encoding="utf8", char_map={}, font_dictionary={})
+    assert Font.to_dict(font) == {
+        "char_map": {},
+        "encoding": "utf8",
+        "font_dictionary": {},
+        "space_width": 8,
+        "subtype": "foo",
+        "width_map": {},
+    }
