@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704570932963,
+  "lastUpdate": 1704571240808,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -46363,6 +46363,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.1271075951312275",
             "extra": "mean: 16.412677351200006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e411b76815d466fbf22da40dc3919b9958302fba",
+          "message": "MAINT: Return None instead of -1 when page is not attached (#2376)\n\nIf a page is not attached to a document, it does not have a page number. So we cannot return a \"normal\" number.\r\nBefore this PR, we returned -1.\r\n\r\nReturning None compared to using `-1` has two advantages:\r\n\r\n* It makes intuitive sense what it means\r\n* It is part of the type annotation and mypy will complain about it if you don't handle that. If the callers (users) of pypdf are not careful, mypy might catch their error.\r\n\r\nFor this reason, we now return `None`.\r\n\r\nSee https://github.com/py-pdf/pypdf/discussions/2010\r\n\r\nCloses #2371",
+          "timestamp": "2024-01-06T20:57:51+01:00",
+          "tree_id": "7778e6b11615ab4bd449088341d5d114724916d8",
+          "url": "https://github.com/py-pdf/pypdf/commit/e411b76815d466fbf22da40dc3919b9958302fba"
+        },
+        "date": 1704571239199,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3534008868207166,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005468187471441136",
+            "extra": "mean: 298.2047281999968 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.66506739864977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007827356272443225",
+            "extra": "mean: 78.95733741666551 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.270880151616527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022003338133877448",
+            "extra": "mean: 3.6916695226000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.894197578872948,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002492103104095594",
+            "extra": "mean: 59.19192050000355 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06212778594515532,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09518694790133936",
+            "extra": "mean: 16.0958576712 sec\nrounds: 5"
           }
         ]
       }
