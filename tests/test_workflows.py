@@ -1058,7 +1058,7 @@ def test_layout_mode_space_vertically():
     name = "iss2138.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     with open(RESOURCE_ROOT / "AEO.1172.layout.txt", encoding="utf-8") as fp:
-        expected = fp.read()
+        expected = fp.read().rstrip()  # remove automatically added final newline
     assert expected == reader.pages[0].extract_text(
         extraction_mode="layout", layout_mode_space_vertically=False
     )
