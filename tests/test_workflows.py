@@ -1082,6 +1082,25 @@ def test_layout_mode_space_vertically():
     )
 
 
+@pytest.mark.enable_socket()
+@pytest.mark.parametrize(("rotation", "strip_rotated"), [(90, True), (180, False), (270, True)])
+def test_layout_mode_rotations(rotation, strip_rotated):
+    url = "https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf"
+    name = "iss2138.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    rotated_page = reader.pages[0].rotate(rotation)
+    rotated_page.transfer_rotation_to_content()
+    expected = ""
+    if not strip_rotated:
+        with open(RESOURCE_ROOT / "AEO.1172.layout.rot180.txt", encoding="utf-8") as fp:
+            expected = fp.read().rstrip()  # remove automatically added final newline
+    assert expected == rotated_page.extract_text(
+        extraction_mode="layout",
+        layout_mode_space_vertically=False,
+        layout_mode_strip_rotated=strip_rotated,
+    )
+
+
 def test_text_extraction_invalid_mode():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)

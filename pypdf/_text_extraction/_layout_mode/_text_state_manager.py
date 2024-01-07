@@ -1,23 +1,26 @@
 """manage the PDF transform stack during "layout" mode text extraction"""
 
 from collections import ChainMap, Counter
-from typing import Any, Dict, List, MutableMapping, Union
+from typing import TYPE_CHECKING, Any, Dict, List, MutableMapping, Union
 from typing import ChainMap as ChainMapType
 from typing import Counter as CounterType
 
 from ...errors import PdfReadError
 from .. import mult
-from ._fonts import Font, TextStateParams
+from ._text_state_params import TextStateParams
 
-XformStackChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
-XformStackDictType = MutableMapping[Union[int, str], Union[float, bool]]
+if TYPE_CHECKING:
+    from ._font import Font
 
-class XformStack:
+TextStateManagerChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
+TextStateManagerDictType = MutableMapping[Union[int, str], Union[float, bool]]
+
+class TextStateManager:
     """
-    A cm/tm transformation matrix manager
+    Tracks the current text state including cm/tm/trm transformation matrices.
 
     Attributes:
-        xfrm_stack (ChainMap): ChainMap of cm/tm transformation matrices
+        transform_stack (ChainMap): ChainMap of cm/tm transformation matrices
         q_queue (Counter[int]): Counter of q operators
         q_depth (List[int]): list of q operator nesting levels
         Tc (float): character spacing
@@ -30,7 +33,7 @@ class XformStack:
     """
 
     def __init__(self) -> None:
-        self.xfrm_stack: XformStackChainMapType = ChainMap(self.new_xform())
+        self.transform_stack: TextStateManagerChainMapType = ChainMap(self.new_transform())
         self.q_queue: CounterType[int] = Counter()
         self.q_depth = [0]
         self.Tc: float = 0.0
@@ -59,11 +62,11 @@ class XformStack:
             self.Tz,
             self.TL,
             self.Ts,
-            self.effective_xform,
+            self.effective_transform,
         )
 
     @staticmethod
-    def raw_xform(
+    def raw_transform(
         _a: float = 1.0,
         _b: float = 0.0,
         _c: float = 0.0,
@@ -75,7 +78,7 @@ class XformStack:
         return dict(zip(range(6), map(float, (_a, _b, _c, _d, _e, _f))))
 
     @staticmethod
-    def new_xform(
+    def new_transform(
         _a: float = 1.0,
         _b: float = 0.0,
         _c: float = 0.0,
@@ -84,73 +87,73 @@ class XformStack:
         _f: float = 0.0,
         is_text: bool = False,
         is_render: bool = False,
-    ) -> XformStackDictType:
+    ) -> TextStateManagerDictType:
         """Standard a/b/c/d/e/f matrix params + 'is_text' and 'is_render' keys"""
-        result: Any = XformStack.raw_xform(_a, _b, _c, _d, _e, _f)
+        result: Any = TextStateManager.raw_transform(_a, _b, _c, _d, _e, _f)
         result.update({"is_text": is_text, "is_render": is_render})
         return result
 
-    def reset_tm(self) -> XformStackChainMapType:
-        """Clear all xforms from chainmap having is_text==True or is_render==True"""
-        while self.xfrm_stack.maps[0]["is_text"] or self.xfrm_stack.maps[0]["is_render"]:
-            self.xfrm_stack = self.xfrm_stack.parents
-        return self.xfrm_stack
+    def reset_tm(self) -> TextStateManagerChainMapType:
+        """Clear all transforms from chainmap having is_text==True or is_render==True"""
+        while self.transform_stack.maps[0]["is_text"] or self.transform_stack.maps[0]["is_render"]:
+            self.transform_stack = self.transform_stack.parents
+        return self.transform_stack
 
-    def reset_trm(self) -> XformStackChainMapType:
-        """Clear all xforms from chainmap having is_render==True"""
-        while self.xfrm_stack.maps[0]["is_render"]:
-            self.xfrm_stack = self.xfrm_stack.parents
-        return self.xfrm_stack
+    def reset_trm(self) -> TextStateManagerChainMapType:
+        """Clear all transforms from chainmap having is_render==True"""
+        while self.transform_stack.maps[0]["is_render"]:
+            self.transform_stack = self.transform_stack.parents
+        return self.transform_stack
 
-    def remove_q(self) -> XformStackChainMapType:
+    def remove_q(self) -> TextStateManagerChainMapType:
         """Rewind to stack prior state after closing a 'q' with internal 'cm' ops"""
-        self.xfrm_stack = self.reset_tm()
-        self.xfrm_stack.maps = self.xfrm_stack.maps[self.q_queue.pop(self.q_depth.pop(), 0) :]
-        return self.xfrm_stack
+        self.transform_stack = self.reset_tm()
+        self.transform_stack.maps = self.transform_stack.maps[self.q_queue.pop(self.q_depth.pop(), 0) :]
+        return self.transform_stack
 
     def add_q(self) -> None:
         """Add another level to q_queue"""
         self.q_depth.append(len(self.q_depth))
 
-    def add_cm(self, *args: Any) -> XformStackChainMapType:
+    def add_cm(self, *args: Any) -> TextStateManagerChainMapType:
         """Concatenate an additional transform matrix"""
-        self.xfrm_stack = self.reset_tm()
+        self.transform_stack = self.reset_tm()
         self.q_queue.update(self.q_depth[-1:])
-        self.xfrm_stack = self.xfrm_stack.new_child(self.new_xform(*args))
-        return self.xfrm_stack
+        self.transform_stack = self.transform_stack.new_child(self.new_transform(*args))
+        return self.transform_stack
 
-    def add_tm(self, operands: List[float]) -> XformStackChainMapType:
+    def add_tm(self, operands: List[float]) -> TextStateManagerChainMapType:
         """Append a text transform matrix"""
         if len(operands) == 2:  # this is a Td operator
             operands = [1.0, 0.0, 0.0, 1.0, *operands]
-        self.xfrm_stack = self.xfrm_stack.new_child(
-            self.new_xform(*operands, is_text=True)  # type: ignore[misc,arg-type]
+        self.transform_stack = self.transform_stack.new_child(
+            self.new_transform(*operands, is_text=True)  # type: ignore[misc,arg-type]
         )
-        return self.xfrm_stack
+        return self.transform_stack
 
-    def add_trm(self, operands: List[float]) -> XformStackChainMapType:
+    def add_trm(self, operands: List[float]) -> TextStateManagerChainMapType:
         """Append a text rendering transform matrix"""
         if len(operands) == 2:  # this is a Td operator
             operands = [1.0, 0.0, 0.0, 1.0, *operands]
-        self.xfrm_stack = self.xfrm_stack.new_child(
-            self.new_xform(*operands, is_text=True, is_render=True)  # type: ignore[misc,arg-type]
+        self.transform_stack = self.transform_stack.new_child(
+            self.new_transform(*operands, is_text=True, is_render=True)  # type: ignore[misc,arg-type]
         )
-        return self.xfrm_stack
+        return self.transform_stack
 
     @property
-    def effective_xform(self) -> List[float]:
-        """Current effective transform accounting for cm, tm, and trm xforms"""
-        eff_xform = [*self.xfrm_stack.maps[0].values()]
-        for xform in self.xfrm_stack.maps[1:]:
-            eff_xform = mult(eff_xform, xform)  # type: ignore[arg-type]  # dict has int keys 0-5
-        return eff_xform
+    def effective_transform(self) -> List[float]:
+        """Current effective transform accounting for cm, tm, and trm transforms"""
+        eff_transform = [*self.transform_stack.maps[0].values()]
+        for transform in self.transform_stack.maps[1:]:
+            eff_transform = mult(eff_transform, transform)  # type: ignore[arg-type]  # dict has int keys 0-5
+        return eff_transform
 
     @property
     def flip_vertical(self) -> bool:
         """True if page is upside down"""
-        return self.effective_xform[3] < -1e-6  # copy behavior of orient() func
+        return self.effective_transform[3] < -1e-6  # copy behavior of orient() func
 
     @property
-    def xmaps(self) -> List[XformStackDictType]:
+    def xmaps(self) -> List[TextStateManagerDictType]:
         """Internal ChainMap 'maps' property"""
-        return self.xfrm_stack.maps
+        return self.transform_stack.maps

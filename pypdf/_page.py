@@ -1912,6 +1912,7 @@ class PageObject(DictionaryObject):
             self,
             space_vertically: bool = True,
             scale_weight: float = 1.25,
+            strip_rotated: bool = True,
             debug_path: Union[Path, None] = None,
         ) -> str:
         """
@@ -1926,7 +1927,7 @@ class PageObject(DictionaryObject):
                 creates the following files with debug information for layout mode
                 functions if supplied:
                   - fonts.json: output of self._layout_mode_fonts
-                  - tjs.json: individual text render ops with corresponding xform matrices
+                  - tjs.json: individual text render ops with corresponding transform matrices
                   - bts.json: text render ops left justified and grouped by BT/ET operators
                   - bt_groups.json: BT/ET operations grouped by rendered y-coord (aka lines)
                 Defaults to None.
@@ -1938,13 +1939,13 @@ class PageObject(DictionaryObject):
         fonts = self._layout_mode_fonts()
         if debug_path:  # pragma: no cover
             import json
-            debug_path.with_name("fonts.json").write_text(
+            debug_path.joinpath("fonts.json").write_text(
                 json.dumps(fonts, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)),
                 "utf-8",
             )
 
         ops = iter(ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations)
-        bt_groups = _layout_mode.text_show_operations(ops, fonts, debug_path)
+        bt_groups = _layout_mode.text_show_operations(ops, fonts, strip_rotated, debug_path)
 
         if not bt_groups:
             return ""
@@ -2008,15 +2009,18 @@ class PageObject(DictionaryObject):
                 in "layout" mode.
 
         KwArgs:
-            layout_mode_space_vertically: include blank lines inferred from y distance + font
-                height. Defaults to True.
-            layout_mode_scale_weight: multiplier for string length when calculating weighted
-                average character width. Defaults to 1.25.
+            layout_mode_space_vertically (bool): include blank lines inferred from
+                y distance + font height. Defaults to True.
+            layout_mode_scale_weight (float): multiplier for string length when calculating
+                weighted average character width. Defaults to 1.25.
+            layout_mode_strip_rotated (bool): layout mode does not support rotated text.
+                Set to False to include rotated text anyway. If rotated text is discovered,
+                layout will be degraded and a warning will result. Defaults to True.
             layout_mode_debug_path (Path | None): if supplied, must target a directory.
                 creates the following files with debug information for layout mode
                 functions if supplied:
                   - fonts.json: output of self._layout_mode_fonts
-                  - tjs.json: individual text render ops with corresponding xform matrices
+                  - tjs.json: individual text render ops with corresponding transform matrices
                   - bts.json: text render ops left justified and grouped by BT/ET operators
                   - bt_groups.json: BT/ET operations grouped by rendered y-coord (aka lines)
 
@@ -2029,6 +2033,7 @@ class PageObject(DictionaryObject):
             return self._layout_mode_text(
                 space_vertically=kwargs.get("layout_mode_space_vertically", True),
                 scale_weight=kwargs.get("layout_mode_scale_weight", 1.25),
+                strip_rotated=kwargs.get("layout_mode_strip_rotated", True),
                 debug_path=kwargs.get("layout_mode_debug_path", None)
             )
         if len(args) >= 1:

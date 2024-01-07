@@ -1,10 +1,7 @@
 """Font constants and classes for "layout" mode text operations"""
 
-import math
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Sequence, Union
-
-from .. import mult
+from dataclasses import dataclass
+from typing import Any, Dict, Sequence, Union
 
 
 @dataclass
@@ -102,92 +99,6 @@ class Font:
         result = {k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__}
         result.update({"width_map": font_instance.width_map})
         return result
-
-
-@dataclass
-class TextStateParams:
-    """
-    Text state parameters and operator values for a single text value in a
-    TJ or Tj PDF operation.
-
-    Attributes:
-        font (Font): font object
-        font_size (int | float): font size
-        Tc (float): character spacing. Defaults to 0.0.
-        Tw (float): word spacing. Defaults to 0.0.
-        Tz (float): horizontal scaling. Defaults to 100.0.
-        TL (float): leading, vertical displacement between text lines. Defaults to 0.0.
-        Ts (float): text rise. Defaults to 0.0.
-        xform (List[float]): text transform matrix. Defaults to [1.0, 0.0, 0.0, 1.0, 0.0, 0.0].
-        displaced_xform (List[float]): text transform matrix after text has been rendered.
-        render_xform (List[float]): text transform matrix accounting for font size, Tz, and Ts.
-        displaced_tx (float): tx from displaced_xform
-        space_tx (float): tx for a space character
-        font_height (float): font height
-
-    Methods:
-        font_size_matrix: matrix accounting for font size, horizontal scale, and text rise.
-        displacement_matrix: matrix accounting for horizontal translation during rendering.
-    """
-
-    txt: str
-    font: Font
-    font_size: Union[int, float]
-    Tc: float = 0.0
-    Tw: float = 0.0
-    Tz: float = 100.0
-    TL: float = 0.0
-    Ts: float = 0.0
-    xform: List[float] = field(default_factory=lambda: [1.0, 0.0, 0.0, 1.0, 0.0, 0.0])
-    displaced_xform: List[float] = field(
-        default_factory=lambda: [1.0, 0.0, 0.0, 1.0, 0.0, 0.0], init=False
-    )
-    render_xform: List[float] = field(
-        default_factory=lambda: [1.0, 0.0, 0.0, 1.0, 0.0, 0.0], init=False
-    )
-    displaced_tx: float = field(default=0.0, init=False)
-    space_tx: float = field(default=0.0, init=False)
-    font_height: float = field(default=0.0, init=False)
-    flip_vertical: bool = field(default=False, init=False)
-
-    def __post_init__(self) -> None:
-        self.displaced_xform = mult(self.displacement_matrix(), self.xform)
-        self.render_xform = mult(self.font_size_matrix(), self.xform)
-        self.displaced_tx = self.displaced_xform[4]
-        self.space_tx = round(
-            mult(self.displacement_matrix(" "), self.xform)[4] - self.xform[4], 3
-        )
-        self.font_height = self.font_size * math.sqrt(self.xform[1] ** 2 + self.xform[3] ** 2)
-        self.flip_vertical = self.xform[3] < -1e-6
-
-    def font_size_matrix(self) -> List[float]:
-        """Font size matrix"""
-        return [self.font_size * (self.Tz / 100.0), 0.0, 0.0, self.font_size, 0.0, self.Ts]
-
-    def displacement_matrix(self, word: Union[str, None] = None, TD_offset: float = 0.0) -> List[float]:
-        """
-        Text displacement matrix
-
-        Args:
-            word (str, optional): Defaults to None in which case self.txt displacement is
-                returned.
-            TD_offset (float, optional): translation applied by TD operator. Defaults to 0.0.
-        """
-        word = word or self.txt
-        return [1.0, 0.0, 0.0, 1.0, self.word_tx(word, TD_offset), 0.0]
-
-    def word_tx(self, word: str, TD_offset: float = 0.0) -> float:
-        """Horizontal text displacement for any word according this text state"""
-        return (
-            (self.font_size * ((self.font.word_width(word) - TD_offset) / 1000.0))
-            + self.Tc
-            + self.txt.count(" ") * self.Tw
-        ) * (self.Tz / 100.0)
-
-    @staticmethod
-    def to_dict(inst: "TextStateParams") -> Dict[str, Any]:
-        """Dataclass to dict for json.dumps serialization"""
-        return {k: getattr(inst, k) for k in inst.__dataclass_fields__ if k != "font"}
 
 
 # Widths for the standard 14 fonts as described on page 416 of the PDF 1.7 standard
