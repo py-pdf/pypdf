@@ -167,8 +167,10 @@ def recurs_to_target_op(
                         last_displaced_tx = _tj.displaced_tx
                         _text = ""
 
-                    # calculate excess x translation based on ending tx of previous Tj
-                    excess_tx = round(_tj.tx - last_displaced_tx, 3)
+                    # calculate excess x translation based on ending tx of previous Tj.
+                    # multiply by bool (_idx != bt_idx) to ensure spaces aren't double
+                    # applied to the first tj of a BTGroup in fixed_width_page().
+                    excess_tx = round(_tj.tx - last_displaced_tx, 3) * (_idx != bt_idx)
 
                     # pdfs sometimes have "placeholder" spaces for variable length date, time,
                     # and page number fields. Continue below prevents these spaces from being

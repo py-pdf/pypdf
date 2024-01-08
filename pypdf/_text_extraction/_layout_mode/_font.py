@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, Sequence, Union
 
+from ...generic import IndirectObject
 
 @dataclass
 class Font:
@@ -36,11 +37,14 @@ class Font:
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
         if "/DescendantFonts" in self.font_dictionary:
             d_font: Dict[Any, Any]
-            for d_font in self.font_dictionary["/DescendantFonts"]:
+            for d_font_idx, d_font in enumerate(self.font_dictionary["/DescendantFonts"]):
+                while isinstance(d_font, IndirectObject):
+                    d_font = d_font.get_object()
+                self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font
                 ord_map = {
-                    ord(_targ): _surg
-                    for _targ, _surg in self.char_map.items()
-                    if isinstance(_targ, str)
+                    ord(_target): _surrogate
+                    for _target, _surrogate in self.char_map.items()
+                    if isinstance(_target, str)
                 }
                 # /W can be a list of character codes and widths or a range of character codes
                 # followed by a width. e.g. `45 65 500` applies width 500 to characters 45-65,
