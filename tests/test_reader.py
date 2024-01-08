@@ -733,7 +733,7 @@ def test_decode_permissions():
     print_["print"] = True
     with pytest.raises(
         DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",
+        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
     ):
         assert reader.decode_permissions(4) == print_
 
@@ -741,7 +741,7 @@ def test_decode_permissions():
     modify["modify"] = True
     with pytest.raises(
         DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",
+        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
     ):
         assert reader.decode_permissions(8) == modify
 

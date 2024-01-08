@@ -96,7 +96,7 @@ def test_user_access_permissions__dict_handling():
     }
     with pytest.raises(
         ValueError,
-        match=f'Unknown dictionary keys: {unknown!r}'
+        match=f"Unknown dictionary keys: {unknown!r}"
     ):
         UserAccessPermissions.from_dict(data)
 
