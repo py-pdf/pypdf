@@ -1,6 +1,6 @@
 """Font constants and classes for "layout" mode text operations"""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, Sequence, Union
 
 
@@ -15,10 +15,6 @@ class Font:
         encoding (str | Dict[int, str]): font encoding
         char_map (dict): character map
         font_dictionary (dict): font dictionary
-
-    Methods:
-        word_width: character width
-        to_dict: dataclass to dict
     """
 
     subtype: str
@@ -26,9 +22,9 @@ class Font:
     encoding: Union[str, Dict[int, str]]
     char_map: Dict[Any, Any]
     font_dictionary: Dict[Any, Any]
+    width_map: Dict[str, int] = field(default_factory=dict, init=False)
 
     def __post_init__(self) -> None:
-        self.width_map = {}
         # TrueType fonts have a /Widths array mapping character codes to widths
         if isinstance(self.encoding, dict) and "/Widths" in self.font_dictionary:
             first_char = self.font_dictionary.get("/FirstChar", 0)
@@ -95,10 +91,8 @@ class Font:
 
     @staticmethod
     def to_dict(font_instance: "Font") -> Dict[str, Any]:
-        """Dataclass to dict for json.dumps serialization. Appends width_map."""
-        result = {k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__}
-        result.update({"width_map": font_instance.width_map})
-        return result
+        """Dataclass to dict for json.dumps serialization."""
+        return {k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__}
 
 
 # Widths for the standard 14 fonts as described on page 416 of the PDF 1.7 standard

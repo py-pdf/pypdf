@@ -1923,6 +1923,8 @@ class PageObject(DictionaryObject):
                 height. Defaults to True.
             scale_weight: multiplier for string length when calculating weighted
                 average character width. Defaults to 1.25.
+            strip_rotated: Removes text that is rotated w.r.t. to the page from
+                layout mode output. Defaults to True.
             debug_path (Path | None): if supplied, must target a directory.
                 creates the following files with debug information for layout mode
                 functions if supplied:
@@ -2016,6 +2018,8 @@ class PageObject(DictionaryObject):
             layout_mode_strip_rotated (bool): layout mode does not support rotated text.
                 Set to False to include rotated text anyway. If rotated text is discovered,
                 layout will be degraded and a warning will result. Defaults to True.
+            layout_mode_strip_rotated: Removes text that is rotated w.r.t. to the page from
+                layout mode output. Defaults to True.
             layout_mode_debug_path (Path | None): if supplied, must target a directory.
                 creates the following files with debug information for layout mode
                 functions if supplied:

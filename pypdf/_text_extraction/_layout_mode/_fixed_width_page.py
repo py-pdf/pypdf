@@ -264,7 +264,7 @@ def y_coordinate_groups(
 
     Args:
         bt_groups: list of dicts as returned by text_show_operations()
-        debug_file: full path + filename prefix for debug output. Defaults to None.
+        debug_path (Path, optional): Path to a directory for saving debug output.
 
     Returns:
         Dict[int, List[BTGroup]]: dict of lists of text rendered by each BT operator
@@ -314,8 +314,8 @@ def text_show_operations(
     Args:
         ops (Iterator[Tuple[List, bytes]]): iterator of operators in content stream
         fonts (Dict[str, Font]): font dictionary
-        debug_file (str, optional): full path + filename prefix for debug output.
-            Defaults to None.
+        strip_rotated: Removes text if rotated w.r.t. to the page. Defaults to True.
+        debug_path (Path, optional): Path to a directory for saving debug output.
 
     Returns:
         List[BTGroup]: list of dicts of text rendered by each BT operator
