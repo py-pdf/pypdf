@@ -1489,21 +1489,21 @@ class PageObject(DictionaryObject):
                     raise ValueError("Page must be part of a PdfWriter")
 
     @property
-    def page_number(self) -> int:
+    def page_number(self) -> Optional[int]:
         """
         Read-only property which return the page number with the pdf file.
 
         Returns:
-            int : page number ; -1 if the page is not attached to a pdf
+            int : page number ; None if the page is not attached to a pdf
         """
         if self.indirect_reference is None:
-            return -1
+            return None
         else:
             try:
                 lst = self.indirect_reference.pdf.pages
                 return lst.index(self)
             except ValueError:
-                return -1
+                return None
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""

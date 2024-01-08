@@ -68,6 +68,7 @@ from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
     GoToActionArguments,
+    UserAccessPermissions,
 )
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
@@ -804,7 +805,7 @@ class PdfReader:
 
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
-    ) -> int:
+    ) -> Optional[int]:
         """
         Generate _page_id2num.
 
@@ -812,7 +813,7 @@ class PdfReader:
             indirect_reference:
 
         Returns:
-            The page number.
+            The page number or None
         """
         if self._page_id2num is None:
             self._page_id2num = {
@@ -820,16 +821,16 @@ class PdfReader:
             }
 
         if indirect_reference is None or isinstance(indirect_reference, NullObject):
-            return -1
+            return None
         if isinstance(indirect_reference, int):
             idnum = indirect_reference
         else:
             idnum = indirect_reference.idnum
         assert self._page_id2num is not None, "hint for mypy"
-        ret = self._page_id2num.get(idnum, -1)
+        ret = self._page_id2num.get(idnum, None)
         return ret
 
-    def get_page_number(self, page: PageObject) -> int:
+    def get_page_number(self, page: PageObject) -> Optional[int]:
         """
         Retrieve page number of a given PageObject.
 
@@ -838,11 +839,11 @@ class PdfReader:
                 an instance of :class:`PageObject<pypdf._page.PageObject>`
 
         Returns:
-            The page number or -1 if page is not found
+            The page number or None if page is not found
         """
         return self._get_page_number_by_indirect(page.indirect_reference)
 
-    def get_destination_page_number(self, destination: Destination) -> int:
+    def get_destination_page_number(self, destination: Destination) -> Optional[int]:
         """
         Retrieve page number of a given Destination object.
 
@@ -850,7 +851,7 @@ class PdfReader:
             destination: The destination to get page number.
 
         Returns:
-            The page number or -1 if page is not found
+            The page number or None if page is not found
         """
         return self._get_page_number_by_indirect(destination.page)
 
@@ -1809,19 +1810,22 @@ class PdfReader:
         return self._encryption.verify(password)
 
     def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
-        # Takes the permissions as an integer, returns the allowed access
-        permissions = {}
-        permissions["print"] = permissions_code & (1 << 3 - 1) != 0  # bit 3
-        permissions["modify"] = permissions_code & (1 << 4 - 1) != 0  # bit 4
-        permissions["copy"] = permissions_code & (1 << 5 - 1) != 0  # bit 5
-        permissions["annotations"] = permissions_code & (1 << 6 - 1) != 0  # bit 6
-        permissions["forms"] = permissions_code & (1 << 9 - 1) != 0  # bit 9
-        permissions["accessability"] = permissions_code & (1 << 10 - 1) != 0  # bit 10
-        permissions["assemble"] = permissions_code & (1 << 11 - 1) != 0  # bit 11
-        permissions["print_high_quality"] = (
-            permissions_code & (1 << 12 - 1) != 0
-        )  # bit 12
-        return permissions
+        """Take the permissions as an integer, return the allowed access."""
+        permissions_mapping = {
+            "print": UserAccessPermissions.PRINT,
+            "modify": UserAccessPermissions.MODIFY,
+            "copy": UserAccessPermissions.EXTRACT,
+            "annotations": UserAccessPermissions.ADD_OR_MODIFY,
+            "forms": UserAccessPermissions.R7,
+            "accessability": UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS,
+            "assemble": UserAccessPermissions.ASSEMBLE_DOC,
+            "print_high_quality": UserAccessPermissions.PRINT_TO_REPRESENTATION,
+        }
+
+        return {
+            key: permissions_code & flag != 0
+            for key, flag in permissions_mapping.items()
+        }
 
     @property
     def is_encrypted(self) -> bool:
