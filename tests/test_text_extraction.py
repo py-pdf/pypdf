@@ -126,3 +126,14 @@ def test_layout_mode_font_class_to_dict():
         "subtype": "foo",
         "width_map": {},
     }
+
+
+@pytest.mark.enable_socket()
+def test_layout_mode_epic_page_fonts():
+    url = "https://github.com/py-pdf/pypdf/files/13836944/Epic.Page.PDF"
+    name = "Epic Page.PDF"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    with open(RESOURCE_ROOT / "Epic.Page.layout.txt", encoding="utf-8") as fp:
+        expected = fp.read()
+    assert expected == reader.pages[0].extract_text(extraction_mode="layout")
+

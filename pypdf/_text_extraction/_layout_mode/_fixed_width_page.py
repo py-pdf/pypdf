@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Tuple, Union
 
 from ..._utils import logger_warning
+from ...errors import PdfReadError
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
 from ._font import Font
 from ._text_state_manager import TextStateManager
@@ -79,7 +80,7 @@ def decode_tj(_b: bytes, text_state_mgr: TextStateManager) -> TextStateParams:
         TextStateParams: dataclass containing rendered text and state parameters
     """
     if not text_state_mgr.font:
-        raise ValueError("font not set: is PDF missing a Tf operator?")
+        raise PdfReadError("font not set: is PDF missing a Tf operator?")
     try:
         if isinstance(text_state_mgr.font.encoding, str):
             _text = _b.decode(text_state_mgr.font.encoding, "surrogatepass")
@@ -172,17 +173,7 @@ def recurs_to_target_op(
                     # applied to the first tj of a BTGroup in fixed_width_page().
                     excess_tx = round(_tj.tx - last_displaced_tx, 3) * (_idx != bt_idx)
 
-                    # pdfs sometimes have "placeholder" spaces for variable length date, time,
-                    # and page number fields. Continue below prevents these spaces from being
-                    # rendered in the output text avoiding extra spaces in datetime and
-                    # header/footer page number strings. Might be knockout (Tk) related??
-                    if _tj.txt == " " and _text.endswith(" ") and excess_tx <= _tj.space_tx:
-                        continue
-
-                    if _tj.space_tx > 0.0:
-                        new_text = f'{" " * int(excess_tx // _tj.space_tx)}{_tj.txt}'
-                    else:
-                        new_text = _tj.txt
+                    new_text = f'{" " * int(excess_tx // _tj.space_tx)}{_tj.txt}'
 
                     last_ty = _tj.ty
                     _text = f"{_text}{new_text}"
