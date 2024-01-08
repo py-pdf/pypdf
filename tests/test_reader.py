@@ -7,11 +7,12 @@ from typing import List, Union
 
 import pytest
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf._reader import convert_to_int
 from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
+from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
     EmptyFileError,
     FileNotDecryptedError,
@@ -730,11 +731,54 @@ def test_decode_permissions():
 
     print_ = base.copy()
     print_["print"] = True
-    assert reader.decode_permissions(4) == print_
+    with pytest.raises(
+        DeprecationWarning,
+        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",
+    ):
+        assert reader.decode_permissions(4) == print_
 
     modify = base.copy()
     modify["modify"] = True
-    assert reader.decode_permissions(8) == modify
+    with pytest.raises(
+        DeprecationWarning,
+        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",
+    ):
+        assert reader.decode_permissions(8) == modify
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_user_access_permissions():
+    # Not encrypted.
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    assert reader.user_access_permissions is None
+
+    # Encrypted.
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-owner-password.pdf")
+    assert reader.user_access_permissions == UAP.all()
+
+    # Custom writer permissions.
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer.encrypt(
+        user_password="",
+        owner_password="abc",
+        permissions_flag=UAP.PRINT | UAP.FILL_FORM_FIELDS,
+    )
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    assert reader.user_access_permissions == (UAP.PRINT | UAP.FILL_FORM_FIELDS)
+
+    # All writer permissions.
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer.encrypt(
+        user_password="",
+        owner_password="abc",
+        permissions_flag=UAP.all(),
+    )
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    assert reader.user_access_permissions == UAP.all()
 
 
 def test_pages_attribute():
