@@ -1042,12 +1042,67 @@ Season: SUMMER-B 2023"""
     # so we can not do a full comparison.
 
 
+def remove_trailing_whitespace(text: str) -> str:
+    text = text.strip()
+    return "\n".join(line.rstrip() for line in text.split("\n"))
+
+
 @pytest.mark.samples()
-@pytest.mark.xfail(reason="#2388 implements this")
-def test_text_extraction_layout_mode():
-    pdf_path = SAMPLE_ROOT / "026-latex-multicolumn/multicolumn.pdf"
+@pytest.mark.parametrize(
+    ("pdf_path", "expected_path"),
+    [
+        (
+            SAMPLE_ROOT / "026-latex-multicolumn/multicolumn.pdf",
+            RESOURCE_ROOT / "multicolumn-lorem-ipsum.txt",
+        ),
+        (
+            SAMPLE_ROOT / "010-pdflatex-forms/pdflatex-forms.pdf",
+            RESOURCE_ROOT / "010-pdflatex-forms.txt",
+        ),
+    ],
+)
+def test_text_extraction_layout_mode(pdf_path, expected_path):
     reader = PdfReader(pdf_path)
     actual = reader.pages[0].extract_text(extraction_mode="layout")
-    with open(RESOURCE_ROOT / "multicolumn-lorem-ipsum.txt") as fp:
+    with open(expected_path, encoding="utf-8") as fp:
         expected = fp.read()
-    assert actual.strip() == expected.strip()
+    # We don't care about trailing whitespace
+    assert remove_trailing_whitespace(actual) == remove_trailing_whitespace(expected)
+
+
+@pytest.mark.enable_socket()
+def test_layout_mode_space_vertically():
+    url = "https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf"
+    name = "iss2138.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    with open(RESOURCE_ROOT / "AEO.1172.layout.txt", encoding="utf-8") as fp:
+        expected = fp.read().rstrip()  # remove automatically added final newline
+    assert expected == reader.pages[0].extract_text(
+        extraction_mode="layout", layout_mode_space_vertically=False
+    )
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.parametrize(("rotation", "strip_rotated"), [(90, True), (180, False), (270, True)])
+def test_layout_mode_rotations(rotation, strip_rotated):
+    url = "https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf"
+    name = "iss2138.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    rotated_page = reader.pages[0].rotate(rotation)
+    rotated_page.transfer_rotation_to_content()
+    expected = ""
+    if not strip_rotated:
+        with open(RESOURCE_ROOT / "AEO.1172.layout.rot180.txt", encoding="utf-8") as fp:
+            expected = fp.read().rstrip()  # remove automatically added final newline
+    assert expected == rotated_page.extract_text(
+        extraction_mode="layout",
+        layout_mode_space_vertically=False,
+        layout_mode_strip_rotated=strip_rotated,
+    )
+
+
+def test_text_extraction_invalid_mode():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    with pytest.raises(ValueError, match="Invalid text extraction mode"):
+        reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore
