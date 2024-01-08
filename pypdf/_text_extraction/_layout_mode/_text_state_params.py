@@ -15,6 +15,7 @@ class TextStateParams:
     TJ or Tj PDF operation.
 
     Attributes:
+        txt (str): the text to be rendered.
         font (Font): font object
         font_size (int | float): font size
         Tc (float): character spacing. Defaults to 0.0.
