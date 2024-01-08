@@ -118,7 +118,7 @@ If you add the expand parameter:
 ```python
 transformation = Transformation().rotate(45)
 page_box.add_transformation(transformation)
-page_base.merge_page(page_box)
+page_base.merge_page(page_box, expand=True)
 ```
 
 you get:
