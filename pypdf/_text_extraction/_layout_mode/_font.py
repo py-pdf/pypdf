@@ -5,6 +5,7 @@ from typing import Any, Dict, Sequence, Union
 
 from ...generic import IndirectObject
 
+
 @dataclass
 class Font:
     """
@@ -39,7 +40,7 @@ class Font:
             d_font: Dict[Any, Any]
             for d_font_idx, d_font in enumerate(self.font_dictionary["/DescendantFonts"]):
                 while isinstance(d_font, IndirectObject):
-                    d_font = d_font.get_object()
+                    d_font = d_font.get_object()  # type: ignore[assignment]
                 self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font
                 ord_map = {
                     ord(_target): _surrogate
