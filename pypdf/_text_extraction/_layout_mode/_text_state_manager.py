@@ -177,7 +177,7 @@ class TextStateManager:
         return self.transform_stack
 
     def _complete_matrix(self, operands: List[float]) -> List[float]:
-        """adds a, b, c, and d to an "e/f only" operand set a la b'Td'"""
+        """Adds a, b, c, and d to an "e/f only" operand set (e.g Td)"""
         if len(operands) == 2:  # this is a Td operator or equivalent
             operands = [1.0, 0.0, 0.0, 1.0, *operands]
         return operands
@@ -185,8 +185,8 @@ class TextStateManager:
     def add_tm(self, operands: List[float]) -> TextStateManagerChainMapType:
         """Append a text transform matrix"""
         self.transform_stack = self.transform_stack.new_child(
-            self.new_transform(  # type: ignore[misc,arg-type]
-                *self._complete_matrix(operands), is_text=True
+            self.new_transform(  # type: ignore[misc]
+                *self._complete_matrix(operands), is_text=True  # type: ignore[arg-type]
             )
         )
         return self.transform_stack
@@ -194,8 +194,8 @@ class TextStateManager:
     def add_trm(self, operands: List[float]) -> TextStateManagerChainMapType:
         """Append a text rendering transform matrix"""
         self.transform_stack = self.transform_stack.new_child(
-            self.new_transform(  # type: ignore[misc,arg-type]
-                *self._complete_matrix(operands), is_text=True, is_render=True
+            self.new_transform(  # type: ignore[misc]
+                *self._complete_matrix(operands), is_text=True, is_render=True  # type: ignore[arg-type]
             )
         )
         return self.transform_stack
