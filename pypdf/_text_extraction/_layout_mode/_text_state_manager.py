@@ -44,15 +44,37 @@ class TextStateManager:
         self.font: Union[Font, None] = None
         self.font_size: Union[int, float, None] = None
 
-    def text_state_params(self, txt: str = "") -> TextStateParams:
+    def set_state_param(self, op: bytes, value: Union[float, List[Any]]) -> None:
         """
-        Current text state parameters
+        Set a text state parameter. Supports Tc, Tz, Tw, TL, and Ts operators.
+
+        Args:
+            op: operator read from PDF stream as bytes. No action is taken
+                for unsupported operators (see supported operators above).
+            value (float | List[Any]): new paramater value. If a list,
+                value[0] is used.
+        """
+        if op not in [b"Tc", b"Tz", b"Tw", b"TL", b"Ts"]:
+            return
+        self.__setattr__(op.decode(), value[0] if isinstance(value, list) else value)
+
+    def text_state_params(self, value: Union[bytes, str] = "") -> TextStateParams:
+        """
+        Create a TextStateParams instance to display a text string. Type[bytes] values
+        will be decoded implicitly.
+
+        Args:
+            value (str | bytes): text to associate with the captured state.
+
+        Raises:
+            PdfReadError: if font not set (no Tf operator in incoming pdf content stream)
 
         Returns:
             TextStateParams: current text state parameters
         """
         if self.font is None or self.font_size is None:
             raise PdfReadError("Font and font_size not set: is PDF missing a Tf operator?")
+        txt = value if isinstance(value, str) else self.decode(value)
         return TextStateParams(
             txt,
             self.font,
@@ -64,6 +86,35 @@ class TextStateManager:
             self.Ts,
             self.effective_transform,
         )
+
+    def decode(self, _b: bytes) -> str:
+        """
+        Decode bytes from a text render operator.
+
+        Args:
+            _b: text bytes
+
+        Returns:
+            str: decoded string
+        """
+        if not self.font:
+            raise PdfReadError("font not set: is PDF missing a Tf operator?")
+        try:
+            if isinstance(self.font.encoding, str):
+                _text = _b.decode(self.font.encoding, "surrogatepass")
+            else:
+                _text = "".join(
+                    self.font.encoding[x]
+                    if x in self.font.encoding
+                    else bytes((x,)).decode()
+                    for x in _b
+                )
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            _text = _b.decode("utf-8", "replace")
+        _text = "".join(
+            self.font.char_map[x] if x in self.font.char_map else x for x in _text
+        )
+        return _text
 
     @staticmethod
     def raw_transform(
@@ -95,7 +146,10 @@ class TextStateManager:
 
     def reset_tm(self) -> TextStateManagerChainMapType:
         """Clear all transforms from chainmap having is_text==True or is_render==True"""
-        while self.transform_stack.maps[0]["is_text"] or self.transform_stack.maps[0]["is_render"]:
+        while (
+            self.transform_stack.maps[0]["is_text"]
+            or self.transform_stack.maps[0]["is_render"]
+        ):
             self.transform_stack = self.transform_stack.parents
         return self.transform_stack
 
@@ -122,21 +176,27 @@ class TextStateManager:
         self.transform_stack = self.transform_stack.new_child(self.new_transform(*args))
         return self.transform_stack
 
+    def _complete_matrix(self, operands: List[float]) -> List[float]:
+        """adds a, b, c, and d to an "e/f only" operand set a la b'Td'"""
+        if len(operands) == 2:  # this is a Td operator or equivalent
+            operands = [1.0, 0.0, 0.0, 1.0, *operands]
+        return operands
+
     def add_tm(self, operands: List[float]) -> TextStateManagerChainMapType:
         """Append a text transform matrix"""
-        if len(operands) == 2:  # this is a Td operator
-            operands = [1.0, 0.0, 0.0, 1.0, *operands]
         self.transform_stack = self.transform_stack.new_child(
-            self.new_transform(*operands, is_text=True)  # type: ignore[misc,arg-type]
+            self.new_transform(  # type: ignore[misc,arg-type]
+                *self._complete_matrix(operands), is_text=True
+            )
         )
         return self.transform_stack
 
     def add_trm(self, operands: List[float]) -> TextStateManagerChainMapType:
         """Append a text rendering transform matrix"""
-        if len(operands) == 2:  # this is a Td operator
-            operands = [1.0, 0.0, 0.0, 1.0, *operands]
         self.transform_stack = self.transform_stack.new_child(
-            self.new_transform(*operands, is_text=True, is_render=True)  # type: ignore[misc,arg-type]
+            self.new_transform(  # type: ignore[misc,arg-type]
+                *self._complete_matrix(operands), is_text=True, is_render=True
+            )
         )
         return self.transform_stack
 

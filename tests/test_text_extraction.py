@@ -137,3 +137,10 @@ def test_layout_mode_epic_page_fonts():
         expected = fp.read()
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
 
+
+def test_layout_mode_uncommon_operators():
+    # coverage for layout mode Tc, Tz, Ts, ', ", TD, TL, and Tw
+    reader = PdfReader(RESOURCE_ROOT / "toy.pdf")
+    with open(RESOURCE_ROOT / "toy.layout.txt", encoding="utf-8") as fp:
+        expected = fp.read()
+    assert expected == reader.pages[0].extract_text(extraction_mode="layout")

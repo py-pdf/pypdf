@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Tuple, Union
 
 from ..._utils import logger_warning
-from ...errors import PdfReadError
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
 from ._font import Font
 from ._text_state_manager import TextStateManager
@@ -63,40 +62,6 @@ def bt_group(tj_op: TextStateParams, rendered_text: str, dispaced_tx: float) -> 
         displaced_tx=dispaced_tx,
         flip_sort=-1 if tj_op.flip_vertical else 1,
     )
-
-
-def decode_tj(_b: bytes, text_state_mgr: TextStateManager) -> TextStateParams:
-    """
-    Decode a Tj/TJ operator.
-
-    Args:
-        _b: text bytes
-        text_state_mgr: stack of cm/tm transformations to be applied
-
-    Raises:
-        ValueError: if font not set (no Tf operator in incoming pdf content stream)
-
-    Returns:
-        TextStateParams: dataclass containing rendered text and state parameters
-    """
-    if not text_state_mgr.font:
-        raise PdfReadError("font not set: is PDF missing a Tf operator?")
-    try:
-        if isinstance(text_state_mgr.font.encoding, str):
-            _text = _b.decode(text_state_mgr.font.encoding, "surrogatepass")
-        else:
-            _text = "".join(
-                text_state_mgr.font.encoding[x]
-                if x in text_state_mgr.font.encoding
-                else bytes((x,)).decode()
-                for x in _b
-            )
-    except (UnicodeEncodeError, UnicodeDecodeError):
-        _text = _b.decode("utf-8", "replace")
-    _text = "".join(
-        text_state_mgr.font.char_map[x] if x in text_state_mgr.font.char_map else x for x in _text
-    )
-    return text_state_mgr.text_state_params(_text)
 
 
 def recurs_to_target_op(
@@ -193,31 +158,31 @@ def recurs_to_target_op(
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
         elif op == b"Tj":
-            tj_ops.append(decode_tj(operands[0], text_state_mgr))
+            tj_ops.append(text_state_mgr.text_state_params(operands[0]))
         elif op == b"TJ":
             _tj = text_state_mgr.text_state_params()
             for tj_op in operands[0]:
                 if isinstance(tj_op, bytes):
-                    _tj = decode_tj(tj_op, text_state_mgr)
+                    _tj = text_state_mgr.text_state_params(tj_op)
                     tj_ops.append(_tj)
                 else:
                     text_state_mgr.add_trm(_tj.displacement_matrix(TD_offset=tj_op))
         elif op == b"'":
             text_state_mgr.reset_trm()
-            text_state_mgr.add_tm([0, text_state_mgr.TL])
-            tj_ops.append(decode_tj(operands[0], text_state_mgr))
+            text_state_mgr.add_tm([0, -text_state_mgr.TL])
+            tj_ops.append(text_state_mgr.text_state_params(operands[0]))
         elif op == b'"':
             text_state_mgr.reset_trm()
-            _set_state_param(b"Tw", [operands[0]], text_state_mgr)
-            _set_state_param(b"Tc", [operands[1]], text_state_mgr)
-            text_state_mgr.add_tm([0, text_state_mgr.TL])
-            tj_ops.append(decode_tj(operands[2], text_state_mgr))
+            text_state_mgr.set_state_param(b"Tw", operands[0])
+            text_state_mgr.set_state_param(b"Tc", operands[1])
+            text_state_mgr.add_tm([0, -text_state_mgr.TL])
+            tj_ops.append(text_state_mgr.text_state_params(operands[2]))
         elif op in (b"Td", b"Tm", b"TD", b"T*"):
             text_state_mgr.reset_trm()
             if op == b"Tm":
                 text_state_mgr.reset_tm()
             elif op == b"TD":
-                _set_state_param(b"TL", [-operands[1]], text_state_mgr)
+                text_state_mgr.set_state_param(b"TL", -operands[1])
             elif op == b"T*":
                 operands = [0, -text_state_mgr.TL]
             text_state_mgr.add_tm(operands)
@@ -225,28 +190,7 @@ def recurs_to_target_op(
             text_state_mgr.font_size = operands[1]
             text_state_mgr.font = fonts[operands[0]]
         else:  # handle Tc, Tw, Tz, TL, and Ts operators
-            _set_state_param(op, operands, text_state_mgr)
-
-
-def _set_state_param(op: bytes, operands: List[Any], text_state_mgr: TextStateManager) -> None:
-    """
-    Set a text state parameter.
-
-    Args:
-        op: operator defined in PDF standard 1.7 as bytes
-        operands: List of operands for the op as bytes, int or float
-        text_state_mgr: stack of cm/tm transformations currently applied
-    """
-    if op == b"Tc":
-        text_state_mgr.Tc = operands[0]
-    if op == b"Tw":
-        text_state_mgr.Tw = operands[0]
-    if op == b"Tz":
-        text_state_mgr.Tz = operands[0]
-    if op == b"TL":
-        text_state_mgr.TL = operands[0]
-    if op == b"Ts":
-        text_state_mgr.Ts = operands[0]
+            text_state_mgr.set_state_param(op, operands)
 
 
 def y_coordinate_groups(
@@ -338,8 +282,8 @@ def text_show_operations(
                 bt_groups.extend(bts)
                 if debug:
                     tj_debug.extend(tjs)
-            else:  # handle Tc, Tw, Tz, TL, and Ts operators
-                _set_state_param(op, operands, state_mgr)
+            else:  # set Tc, Tw, Tz, TL, and Ts if required. ignores all other ops
+                state_mgr.set_state_param(op, operands)
     except StopIteration:
         pass
 
