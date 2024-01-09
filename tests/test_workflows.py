@@ -1083,7 +1083,9 @@ def test_layout_mode_space_vertically():
 
 
 @pytest.mark.enable_socket()
-@pytest.mark.parametrize(("rotation", "strip_rotated"), [(90, True), (180, False), (270, True)])
+@pytest.mark.parametrize(
+    ("rotation", "strip_rotated"), [(90, True), (180, False), (270, True)]
+)
 def test_layout_mode_rotations(rotation, strip_rotated):
     url = "https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf"
     name = "iss2138.pdf"

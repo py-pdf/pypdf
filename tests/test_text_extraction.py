@@ -153,6 +153,8 @@ def test_layout_mode_type0_font_widths():
     url = "https://github.com/py-pdf/pypdf/files/13533204/Claim.Maker.Alerts.Guide_pg2.PDF"
     name = "Claim Maker Alerts Guide_pg2.PDF"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    with open(RESOURCE_ROOT / "Claim Maker Alerts Guide_pg2.layout.txt", encoding="utf-8") as fp:
+    with open(
+        RESOURCE_ROOT / "Claim Maker Alerts Guide_pg2.layout.txt", encoding="utf-8"
+    ) as fp:
         expected = fp.read()
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
