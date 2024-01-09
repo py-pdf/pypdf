@@ -1064,19 +1064,18 @@ def remove_trailing_whitespace(text: str) -> str:
 def test_text_extraction_layout_mode(pdf_path, expected_path):
     reader = PdfReader(pdf_path)
     actual = reader.pages[0].extract_text(extraction_mode="layout")
-    with open(expected_path, encoding="utf-8") as fp:
-        expected = fp.read()
+    expected = expected_path.read_text(encoding="utf-8")
     # We don't care about trailing whitespace
     assert remove_trailing_whitespace(actual) == remove_trailing_whitespace(expected)
 
 
 @pytest.mark.enable_socket()
 def test_layout_mode_space_vertically():
-    url = "https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf"
-    name = "iss2138.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    with open(RESOURCE_ROOT / "AEO.1172.layout.txt", encoding="utf-8") as fp:
-        expected = fp.read().rstrip()  # remove automatically added final newline
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2138.pdf")))
+    # remove automatically added final newline
+    expected = (
+        (RESOURCE_ROOT / "AEO.1172.layout.txt").read_text(encoding="utf-8").rstrip()
+    )
     assert expected == reader.pages[0].extract_text(
         extraction_mode="layout", layout_mode_space_vertically=False
     )
@@ -1087,15 +1086,16 @@ def test_layout_mode_space_vertically():
     ("rotation", "strip_rotated"), [(90, True), (180, False), (270, True)]
 )
 def test_layout_mode_rotations(rotation, strip_rotated):
-    url = "https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf"
-    name = "iss2138.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2138.pdf")))
     rotated_page = reader.pages[0].rotate(rotation)
     rotated_page.transfer_rotation_to_content()
     expected = ""
     if not strip_rotated:
-        with open(RESOURCE_ROOT / "AEO.1172.layout.rot180.txt", encoding="utf-8") as fp:
-            expected = fp.read().rstrip()  # remove automatically added final newline
+        expected = (
+            (RESOURCE_ROOT / "AEO.1172.layout.rot180.txt")
+            .read_text(encoding="utf-8")
+            .rstrip()
+        )  # remove automatically added final newline
     assert expected == rotated_page.extract_text(
         extraction_mode="layout",
         layout_mode_space_vertically=False,

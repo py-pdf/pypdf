@@ -133,16 +133,14 @@ def test_layout_mode_epic_page_fonts():
     url = "https://github.com/py-pdf/pypdf/files/13836944/Epic.Page.PDF"
     name = "Epic Page.PDF"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    with open(RESOURCE_ROOT / "Epic.Page.layout.txt", encoding="utf-8") as fp:
-        expected = fp.read()
+    expected = (RESOURCE_ROOT / "Epic.Page.layout.txt").read_text(encoding="utf-8")
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
 
 
 def test_layout_mode_uncommon_operators():
     # coverage for layout mode Tc, Tz, Ts, ', ", TD, TL, and Tw
     reader = PdfReader(RESOURCE_ROOT / "toy.pdf")
-    with open(RESOURCE_ROOT / "toy.layout.txt", encoding="utf-8") as fp:
-        expected = fp.read()
+    expected = (RESOURCE_ROOT / "toy.layout.txt").read_text(encoding="utf-8")
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
 
 
@@ -153,8 +151,7 @@ def test_layout_mode_type0_font_widths():
     url = "https://github.com/py-pdf/pypdf/files/13533204/Claim.Maker.Alerts.Guide_pg2.PDF"
     name = "Claim Maker Alerts Guide_pg2.PDF"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    with open(
-        RESOURCE_ROOT / "Claim Maker Alerts Guide_pg2.layout.txt", encoding="utf-8"
-    ) as fp:
-        expected = fp.read()
+    expected = (RESOURCE_ROOT / "Claim Maker Alerts Guide_pg2.layout.txt").read_text(
+        encoding="utf-8"
+    )
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
