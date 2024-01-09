@@ -4,7 +4,7 @@ import sys
 from itertools import groupby
 from math import ceil
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from ..._utils import logger_warning
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
@@ -203,7 +203,7 @@ def recurs_to_target_op(
 
 
 def y_coordinate_groups(
-    bt_groups: List[BTGroup], debug_path: Union[Path, None] = None
+    bt_groups: List[BTGroup], debug_path: Optional[Path] = None
 ) -> Dict[int, List[BTGroup]]:
     """
     Group text operations by rendered y coordinate, i.e. the line number.
@@ -253,7 +253,7 @@ def text_show_operations(
     ops: Iterator[Tuple[List[Any], bytes]],
     fonts: Dict[str, Font],
     strip_rotated: bool = True,
-    debug_path: Union[Path, None] = None,
+    debug_path: Optional[Path] = None,
 ) -> List[BTGroup]:
     """
     Extract text from BT/ET operator pairs.

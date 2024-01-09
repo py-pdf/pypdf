@@ -1915,7 +1915,7 @@ class PageObject(DictionaryObject):
         space_vertically: bool = True,
         scale_weight: float = 1.25,
         strip_rotated: bool = True,
-        debug_path: Union[Path, None] = None,
+        debug_path: Optional[Path] = None,
     ) -> str:
         """
         Get text preserving fidelity to source PDF text layout.
