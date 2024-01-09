@@ -91,7 +91,7 @@ class UserAccessPermissions(IntFlag):
         return name.startswith("R") and name[1:].isdigit()
 
     @classmethod
-    def _defaults_to_one(cls, name: str) -> bool:
+    def _is_active(cls, name: str) -> bool:
         """Check if the given reserved name defaults to 1 = active."""
         return name not in {"R1", "R2"}
 
@@ -112,7 +112,7 @@ class UserAccessPermissions(IntFlag):
         for name, flag in cls.__members__.items():
             if cls._is_reserved(name):
                 # Reserved names have a required value. Use it.
-                if cls._defaults_to_one(name):
+                if cls._is_active(name):
                     result |= flag
                 continue
             is_active = value_copy.pop(name.lower(), False)
