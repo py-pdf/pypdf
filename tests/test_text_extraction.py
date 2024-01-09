@@ -120,7 +120,7 @@ def test_layout_mode_font_class_to_dict():
     font = Font("foo", space_width=8, encoding="utf-8", char_map={}, font_dictionary={})
     assert Font.to_dict(font) == {
         "char_map": {},
-        "encoding": "utf8",
+        "encoding": "utf-8",
         "font_dictionary": {},
         "space_width": 8,
         "subtype": "foo",
