@@ -38,7 +38,9 @@ class Font:
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
         if "/DescendantFonts" in self.font_dictionary:
             d_font: Dict[Any, Any]
-            for d_font_idx, d_font in enumerate(self.font_dictionary["/DescendantFonts"]):
+            for d_font_idx, d_font in enumerate(
+                self.font_dictionary["/DescendantFonts"]
+            ):
                 while isinstance(d_font, IndirectObject):
                     d_font = d_font.get_object()  # type: ignore[assignment]
                 self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font
@@ -69,18 +71,18 @@ class Font:
                             {
                                 ord_map[_cidx]: _width
                                 for _cidx, _width in zip(
-                                    range(start_idx, start_idx + len(width_list), 1), width_list
+                                    range(start_idx, start_idx + len(width_list), 1),
+                                    width_list,
                                 )
                                 if _cidx in ord_map
                             }
                         )
                         skip_count = 1
                     # check for format (2): `int int int`
-                    if (
-                        not isinstance(_w[idx + 1], Sequence)
-                        and not isinstance(_w[idx + 2], Sequence)
+                    if not isinstance(_w[idx + 1], Sequence) and not isinstance(
+                        _w[idx + 2], Sequence
                     ):
-                        start_idx, stop_idx, const_width = _w[idx:idx + 3]
+                        start_idx, stop_idx, const_width = _w[idx : idx + 3]
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: const_width
@@ -97,12 +99,16 @@ class Font:
 
     def word_width(self, word: str) -> float:
         """Sum of character widths specified in PDF font for the supplied word"""
-        return sum([self.width_map.get(char, self.space_width * 2) for char in word], 0.0)
+        return sum(
+            [self.width_map.get(char, self.space_width * 2) for char in word], 0.0
+        )
 
     @staticmethod
     def to_dict(font_instance: "Font") -> Dict[str, Any]:
         """Dataclass to dict for json.dumps serialization."""
-        return {k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__}
+        return {
+            k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__
+        }
 
 
 # Widths for the standard 14 fonts as described on page 416 of the PDF 1.7 standard
@@ -302,7 +308,9 @@ STANDARD_WIDTHS = {
         "~": 469,
     },
 }
-STANDARD_WIDTHS["Courier"] = {  # 4 fonts, includes bold, oblique and boldoblique variants
+STANDARD_WIDTHS[
+    "Courier"
+] = {  # 4 fonts, includes bold, oblique and boldoblique variants
     c: 600 for c in STANDARD_WIDTHS["Times"]  # fixed width
 }
 STANDARD_WIDTHS["ZapfDingbats"] = {c: 1000 for c in STANDARD_WIDTHS["Times"]}  # 1 font

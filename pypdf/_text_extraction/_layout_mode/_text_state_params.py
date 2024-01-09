@@ -41,7 +41,9 @@ class TextStateParams:
     Tz: float = 100.0
     TL: float = 0.0
     Ts: float = 0.0
-    transform: List[float] = field(default_factory=lambda: [1.0, 0.0, 0.0, 1.0, 0.0, 0.0])
+    transform: List[float] = field(
+        default_factory=lambda: [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+    )
     tx: float = field(default=0.0, init=False)
     ty: float = field(default=0.0, init=False)
     displaced_tx: float = field(default=0.0, init=False)
@@ -53,7 +55,8 @@ class TextStateParams:
     def __post_init__(self) -> None:
         if orient(self.transform) in (90, 270):
             self.transform = mult(
-                [1.0, -self.transform[1], -self.transform[2], 1.0, 0.0, 0.0], self.transform
+                [1.0, -self.transform[1], -self.transform[2], 1.0, 0.0, 0.0],
+                self.transform,
             )
             self.rotated = True
         # self.transform[0] AND self.transform[3] < 0 indicates true rotation.
@@ -79,7 +82,14 @@ class TextStateParams:
 
     def font_size_matrix(self) -> List[float]:
         """Font size matrix"""
-        return [self.font_size * (self.Tz / 100.0), 0.0, 0.0, self.font_size, 0.0, self.Ts]
+        return [
+            self.font_size * (self.Tz / 100.0),
+            0.0,
+            0.0,
+            self.font_size,
+            0.0,
+            self.Ts,
+        ]
 
     def displaced_transform(self) -> List[float]:
         """Effective transform matrix after text has been rendered."""
@@ -89,7 +99,9 @@ class TextStateParams:
         """Effective transform matrix accounting for font size, Tz, and Ts."""
         return mult(self.font_size_matrix(), self.transform)
 
-    def displacement_matrix(self, word: Union[str, None] = None, TD_offset: float = 0.0) -> List[float]:
+    def displacement_matrix(
+        self, word: Union[str, None] = None, TD_offset: float = 0.0
+    ) -> List[float]:
         """
         Text displacement matrix
 

@@ -109,14 +109,18 @@ def recurs_to_target_op(
                 bt_idx = 0  # idx of first tj in this bt group
                 last_displaced_tx = tj_ops[bt_idx].displaced_tx
                 last_ty = tj_ops[bt_idx].ty
-                for _idx, _tj in enumerate(tj_ops):  # ... build text from new Tj operators
+                for _idx, _tj in enumerate(
+                    tj_ops
+                ):  # ... build text from new Tj operators
                     if strip_rotated and _tj.rotated:
                         continue
                     # if the y position of the text is greater than the font height, assume
                     # the text is on a new line and start a new group
                     if abs(_tj.ty - last_ty) > _tj.font_height:
                         if _text.strip():
-                            bt_groups.append(bt_group(tj_ops[bt_idx], _text, last_displaced_tx))
+                            bt_groups.append(
+                                bt_group(tj_ops[bt_idx], _text, last_displaced_tx)
+                            )
                         bt_idx = _idx
                         _text = ""
 
@@ -128,7 +132,9 @@ def recurs_to_target_op(
                         > _tj.space_tx * LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
                     ):
                         if _text.strip():
-                            bt_groups.append(bt_group(tj_ops[bt_idx], _text, last_displaced_tx))
+                            bt_groups.append(
+                                bt_group(tj_ops[bt_idx], _text, last_displaced_tx)
+                            )
                         bt_idx = _idx
                         last_displaced_tx = _tj.displaced_tx
                         _text = ""
@@ -148,13 +154,17 @@ def recurs_to_target_op(
                 text_state_mgr.reset_tm()
             return bt_groups, tj_ops
         if op == b"q":
-            bts, tjs = recurs_to_target_op(ops, text_state_mgr, b"Q", fonts, strip_rotated)
+            bts, tjs = recurs_to_target_op(
+                ops, text_state_mgr, b"Q", fonts, strip_rotated
+            )
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
         elif op == b"cm":
             text_state_mgr.add_cm(*operands)
         elif op == b"BT":
-            bts, tjs = recurs_to_target_op(ops, text_state_mgr, b"ET", fonts, strip_rotated)
+            bts, tjs = recurs_to_target_op(
+                ops, text_state_mgr, b"ET", fonts, strip_rotated
+            )
             bt_groups.extend(bts)
             tj_ops.extend(tjs)
         elif op == b"Tj":
@@ -232,6 +242,7 @@ def y_coordinate_groups(
             last_txs = txs
     if debug_path:  # pragma: no cover
         import json
+
         debug_path.joinpath("bt_groups.json").write_text(
             json.dumps(ty_groups, indent=2, default=str), "utf-8"
         )
@@ -272,11 +283,13 @@ def text_show_operations(
                     warned_rotation = True
                     if strip_rotated:
                         logger_warning(
-                            "Rotated text discovered. Output will be incomplete.", __name__
+                            "Rotated text discovered. Output will be incomplete.",
+                            __name__,
                         )
                     else:
                         logger_warning(
-                            "Rotated text discovered. Layout will be degraded.", __name__
+                            "Rotated text discovered. Layout will be degraded.",
+                            __name__,
                         )
                 bt_groups.extend(bts)
                 if debug:  # pragma: no cover
@@ -297,11 +310,14 @@ def text_show_operations(
 
     if debug_path:  # pragma: no cover
         import json
+
         debug_path.joinpath("bts.json").write_text(
             json.dumps(bt_groups, indent=2, default=str), "utf-8"
         )
         debug_path.joinpath("tjs.json").write_text(
-            json.dumps(tj_debug, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)),
+            json.dumps(
+                tj_debug, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)
+            ),
             "utf-8",
         )
     return bt_groups
@@ -345,7 +361,9 @@ def fixed_width_page(
     last_y_coord = 0
     for y_coord, line_data in ty_groups.items():
         if space_vertically and lines:
-            blank_lines = int(abs(y_coord - last_y_coord) / line_data[0]["font_height"]) - 1
+            blank_lines = (
+                int(abs(y_coord - last_y_coord) / line_data[0]["font_height"]) - 1
+            )
             lines.extend([""] * blank_lines)
         line = ""
         last_disp = 0.0
@@ -355,6 +373,8 @@ def fixed_width_page(
             line = f"{line}{' ' * spaces}{bt_op['text']}"
             last_disp = bt_op["displaced_tx"]
         if line.strip() or lines:
-            lines.append("".join(c if ord(c) < 14 or ord(c) > 31 else " " for c in line))
+            lines.append(
+                "".join(c if ord(c) < 14 or ord(c) > 31 else " " for c in line)
+            )
         last_y_coord = y_coord
     return "\n".join(ln.rstrip() for ln in lines if space_vertically or ln.strip())

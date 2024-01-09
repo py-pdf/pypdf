@@ -13,6 +13,7 @@ from ._text_state_params import TextStateParams
 TextStateManagerChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
 TextStateManagerDictType = MutableMapping[Union[int, str], Union[float, bool]]
 
+
 class TextStateManager:
     """
     Tracks the current text state including cm/tm/trm transformation matrices.
@@ -31,7 +32,9 @@ class TextStateManager:
     """
 
     def __init__(self) -> None:
-        self.transform_stack: TextStateManagerChainMapType = ChainMap(self.new_transform())
+        self.transform_stack: TextStateManagerChainMapType = ChainMap(
+            self.new_transform()
+        )
         self.q_queue: CounterType[int] = Counter()
         self.q_depth = [0]
         self.Tc: float = 0.0
@@ -82,7 +85,9 @@ class TextStateManager:
             TextStateParams: current text state parameters
         """
         if not isinstance(self.font, Font):
-            raise PdfReadError("font not set: is PDF missing a Tf operator?")  # pragma: no cover
+            raise PdfReadError(
+                "font not set: is PDF missing a Tf operator?"
+            )  # pragma: no cover
         if isinstance(value, bytes):
             try:
                 if isinstance(self.font.encoding, str):
@@ -159,7 +164,9 @@ class TextStateManager:
     def remove_q(self) -> TextStateManagerChainMapType:
         """Rewind to stack prior state after closing a 'q' with internal 'cm' ops"""
         self.transform_stack = self.reset_tm()
-        self.transform_stack.maps = self.transform_stack.maps[self.q_queue.pop(self.q_depth.pop(), 0) :]
+        self.transform_stack.maps = self.transform_stack.maps[
+            self.q_queue.pop(self.q_depth.pop(), 0) :
+        ]
         return self.transform_stack
 
     def add_q(self) -> None:
