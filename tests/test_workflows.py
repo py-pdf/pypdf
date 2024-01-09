@@ -1044,7 +1044,7 @@ Season: SUMMER-B 2023"""
 
 def remove_trailing_whitespace(text: str) -> str:
     text = text.strip()
-    return "\n".join(line.rstrip() for line in text.split("\n"))
+    return "\n".join(line.rstrip() for line in text.splitlines())
 
 
 @pytest.mark.samples()
