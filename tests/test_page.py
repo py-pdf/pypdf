@@ -1199,12 +1199,12 @@ def test_merge_transformed_page_into_blank():
                 True,
             )
     blank = PageObject.create_blank_page(width=100, height=100)
-    assert blank.page_number == -1
+    assert blank.page_number is None
     inserted_blank = writer.add_page(blank)
-    assert blank.page_number == -1  # the inserted page is a clone
+    assert blank.page_number is None  # the inserted page is a clone
     assert inserted_blank.page_number == len(writer.pages) - 1
     del writer._pages.get_object()["/Kids"][-1]
-    assert inserted_blank.page_number == -1
+    assert inserted_blank.page_number is None
 
 
 def test_pages_printing():
