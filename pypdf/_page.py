@@ -1897,7 +1897,9 @@ class PageObject(DictionaryObject):
                     k: self.pdf.get_object(v)
                     if isinstance(v, IndirectObject)
                     else [
-                        self.pdf.get_object(_v) if isinstance(_v, IndirectObject) else _v
+                        self.pdf.get_object(_v)
+                        if isinstance(_v, IndirectObject)
+                        else _v
                         for _v in v
                     ]
                     if isinstance(v, ArrayObject)
@@ -1909,12 +1911,12 @@ class PageObject(DictionaryObject):
         return fonts
 
     def _layout_mode_text(
-            self,
-            space_vertically: bool = True,
-            scale_weight: float = 1.25,
-            strip_rotated: bool = True,
-            debug_path: Union[Path, None] = None,
-        ) -> str:
+        self,
+        space_vertically: bool = True,
+        scale_weight: float = 1.25,
+        strip_rotated: bool = True,
+        debug_path: Union[Path, None] = None,
+    ) -> str:
         """
         Get text preserving fidelity to source PDF text layout.
 
@@ -1941,13 +1943,20 @@ class PageObject(DictionaryObject):
         fonts = self._layout_mode_fonts()
         if debug_path:  # pragma: no cover
             import json
+
             debug_path.joinpath("fonts.json").write_text(
-                json.dumps(fonts, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)),
+                json.dumps(
+                    fonts, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)
+                ),
                 "utf-8",
             )
 
-        ops = iter(ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations)
-        bt_groups = _layout_mode.text_show_operations(ops, fonts, strip_rotated, debug_path)
+        ops = iter(
+            ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations
+        )
+        bt_groups = _layout_mode.text_show_operations(
+            ops, fonts, strip_rotated, debug_path
+        )
 
         if not bt_groups:
             return ""
@@ -2023,6 +2032,7 @@ class PageObject(DictionaryObject):
             layout_mode_debug_path (Path | None): if supplied, must target a directory.
                 creates the following files with debug information for layout mode
                 functions if supplied:
+
                   - fonts.json: output of self._layout_mode_fonts
                   - tjs.json: individual text render ops with corresponding transform matrices
                   - bts.json: text render ops left justified and grouped by BT/ET operators
@@ -2038,7 +2048,7 @@ class PageObject(DictionaryObject):
                 space_vertically=kwargs.get("layout_mode_space_vertically", True),
                 scale_weight=kwargs.get("layout_mode_scale_weight", 1.25),
                 strip_rotated=kwargs.get("layout_mode_strip_rotated", True),
-                debug_path=kwargs.get("layout_mode_debug_path", None)
+                debug_path=kwargs.get("layout_mode_debug_path", None),
             )
         if len(args) >= 1:
             if isinstance(args[0], str):
