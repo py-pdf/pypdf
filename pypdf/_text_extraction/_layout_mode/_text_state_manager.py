@@ -1,16 +1,14 @@
 """manage the PDF transform stack during "layout" mode text extraction"""
 
 from collections import ChainMap, Counter
-from typing import TYPE_CHECKING, Any, Dict, List, MutableMapping, Union
+from typing import Any, Dict, List, MutableMapping, Union
 from typing import ChainMap as ChainMapType
 from typing import Counter as CounterType
 
 from ...errors import PdfReadError
 from .. import mult
+from ._font import Font
 from ._text_state_params import TextStateParams
-
-if TYPE_CHECKING:
-    from ._font import Font
 
 TextStateManagerChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
 TextStateManagerDictType = MutableMapping[Union[int, str], Union[float, bool]]
@@ -42,7 +40,7 @@ class TextStateManager:
         self.TL: float = 0.0
         self.Ts: float = 0.0
         self.font: Union[Font, None] = None
-        self.font_size: Union[int, float, None] = None
+        self.font_size: Union[int, float] = 0
 
     def set_state_param(self, op: bytes, value: Union[float, List[Any]]) -> None:
         """
@@ -58,6 +56,17 @@ class TextStateManager:
             return
         self.__setattr__(op.decode(), value[0] if isinstance(value, list) else value)
 
+    def set_font(self, font: Font, size: float) -> None:
+        """
+        Set the current font and font_size.
+
+        Args:
+            font (Font): a layout mode Font
+            size (float): font size
+        """
+        self.font = font
+        self.font_size = size
+
     def text_state_params(self, value: Union[bytes, str] = "") -> TextStateParams:
         """
         Create a TextStateParams instance to display a text string. Type[bytes] values
@@ -72,9 +81,26 @@ class TextStateManager:
         Returns:
             TextStateParams: current text state parameters
         """
-        if self.font is None or self.font_size is None:
-            raise PdfReadError("Font and font_size not set: is PDF missing a Tf operator?")
-        txt = value if isinstance(value, str) else self.decode(value)
+        if not isinstance(self.font, Font):
+            raise PdfReadError("font not set: is PDF missing a Tf operator?")  # pragma: no cover
+        if isinstance(value, bytes):
+            try:
+                if isinstance(self.font.encoding, str):
+                    txt = value.decode(self.font.encoding, "surrogatepass")
+                else:
+                    txt = "".join(
+                        self.font.encoding[x]
+                        if x in self.font.encoding
+                        else bytes((x,)).decode()
+                        for x in value
+                    )
+            except (UnicodeEncodeError, UnicodeDecodeError):
+                txt = value.decode("utf-8", "replace")
+            txt = "".join(
+                self.font.char_map[x] if x in self.font.char_map else x for x in txt
+            )
+        else:
+            txt = value
         return TextStateParams(
             txt,
             self.font,
@@ -86,35 +112,6 @@ class TextStateManager:
             self.Ts,
             self.effective_transform,
         )
-
-    def decode(self, _b: bytes) -> str:
-        """
-        Decode bytes from a text render operator.
-
-        Args:
-            _b: text bytes
-
-        Returns:
-            str: decoded string
-        """
-        if not self.font:
-            raise PdfReadError("font not set: is PDF missing a Tf operator?")
-        try:
-            if isinstance(self.font.encoding, str):
-                _text = _b.decode(self.font.encoding, "surrogatepass")
-            else:
-                _text = "".join(
-                    self.font.encoding[x]
-                    if x in self.font.encoding
-                    else bytes((x,)).decode()
-                    for x in _b
-                )
-        except (UnicodeEncodeError, UnicodeDecodeError):
-            _text = _b.decode("utf-8", "replace")
-        _text = "".join(
-            self.font.char_map[x] if x in self.font.char_map else x for x in _text
-        )
-        return _text
 
     @staticmethod
     def raw_transform(
@@ -207,13 +204,3 @@ class TextStateManager:
         for transform in self.transform_stack.maps[1:]:
             eff_transform = mult(eff_transform, transform)  # type: ignore[arg-type]  # dict has int keys 0-5
         return eff_transform
-
-    @property
-    def flip_vertical(self) -> bool:
-        """True if page is upside down"""
-        return self.effective_transform[3] < -1e-6  # copy behavior of orient() func
-
-    @property
-    def xmaps(self) -> List[TextStateManagerDictType]:
-        """Internal ChainMap 'maps' property"""
-        return self.transform_stack.maps

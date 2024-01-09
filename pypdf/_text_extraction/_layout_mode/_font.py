@@ -47,18 +47,23 @@ class Font:
                     for _target, _surrogate in self.char_map.items()
                     if isinstance(_target, str)
                 }
-                # /W can be a list of character codes and widths or a range of character codes
-                # followed by a width. e.g. `45 65 500` applies width 500 to characters 45-65,
-                # whereas `45 [500 600 700]` applies widths 500, 600, 700 to characters 45-47.
+                # /W width definitions have two valid formats which can be mixed and matched:
+                #   (1) A character start index followed by a list of widths, e.g.
+                #       `45 [500 600 700]` applies widths 500, 600, 700 to characters 45-47.
+                #   (2) A character start index, a character stop index, and a width, e.g.
+                #       `45 65 500` applies width 500 to characters 45-65.
                 skip_count = 0
                 _w = d_font.get("/W", [])
                 for idx, w_entry in enumerate(_w):
                     if skip_count:
                         skip_count -= 1
                         continue
-                    if not isinstance(w_entry, Sequence) and isinstance(
-                        _w[idx + 1], Sequence
-                    ):
+                    if not isinstance(w_entry, (int, float)):  # pragma: no cover
+                        # We should never get here due to skip_count above. Add a
+                        # warning and or use reader's "strict" to force an ex???
+                        continue
+                    # check for format (1): `int [int int int int ...]`
+                    if isinstance(_w[idx + 1], Sequence):
                         start_idx, width_list = _w[idx : idx + 2]
                         self.width_map.update(
                             {
@@ -70,9 +75,9 @@ class Font:
                             }
                         )
                         skip_count = 1
+                    # check for format (2): `int int int`
                     if (
-                        not isinstance(w_entry, Sequence)
-                        and not isinstance(_w[idx + 1], Sequence)
+                        not isinstance(_w[idx + 1], Sequence)
                         and not isinstance(_w[idx + 2], Sequence)
                     ):
                         start_idx, stop_idx, const_width = _w[idx:idx + 3]

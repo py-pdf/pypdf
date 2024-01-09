@@ -187,8 +187,7 @@ def recurs_to_target_op(
                 operands = [0, -text_state_mgr.TL]
             text_state_mgr.add_tm(operands)
         elif op == b"Tf":
-            text_state_mgr.font_size = operands[1]
-            text_state_mgr.font = fonts[operands[0]]
+            text_state_mgr.set_font(fonts[operands[0]], operands[1])
         else:  # handle Tc, Tw, Tz, TL, and Ts operators
             text_state_mgr.set_state_param(op, operands)
 
@@ -280,7 +279,7 @@ def text_show_operations(
                             "Rotated text discovered. Layout will be degraded.", __name__
                         )
                 bt_groups.extend(bts)
-                if debug:
+                if debug:  # pragma: no cover
                     tj_debug.extend(tjs)
             else:  # set Tc, Tw, Tz, TL, and Ts if required. ignores all other ops
                 state_mgr.set_state_param(op, operands)
