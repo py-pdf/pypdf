@@ -166,7 +166,7 @@ class PdfWriter:
         """Maps hash values of indirect objects to their IndirectObject instances."""
 
         self._id_translated: Dict[int, Dict[int, int]] = {}
-        strict: bool = True,
+        strict: bool = True
         # The root of our page tree node.
         pages = DictionaryObject()
         pages.update(
