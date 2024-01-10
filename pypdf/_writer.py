@@ -166,7 +166,7 @@ class PdfWriter:
         """Maps hash values of indirect objects to their IndirectObject instances."""
 
         self._id_translated: Dict[int, Dict[int, int]] = {}
-
+        strict: bool = True,
         # The root of our page tree node.
         pages = DictionaryObject()
         pages.update(
@@ -209,6 +209,7 @@ class PdfWriter:
         self._encryption: Optional[Encryption] = None
         self._encrypt_entry: Optional[DictionaryObject] = None
         self._ID: Union[ArrayObject, None] = None
+        self.strict = strict
 
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""
@@ -2584,8 +2585,11 @@ class PdfWriter:
             annots = cast("List[Any]", annots.get_object())
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
+            subtype = ano.get("/Subtype")
+            if self.strict and not subtype:
+                raise PdfReader("Annotation missing Subtype")
             if (
-                ano["/Subtype"] != "/Link"
+                (subtype and subtype != "/Link")
                 or "/A" not in ano
                 or cast("DictionaryObject", ano["/A"])["/S"] != "/GoTo"
                 or "/Dest" in ano
