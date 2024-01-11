@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1704571605966,
+  "lastUpdate": 1705008836524,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -46481,6 +46481,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.17900087425327596",
             "extra": "mean: 16.2362500254 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47760929+shartzog@users.noreply.github.com",
+            "name": "shartzog",
+            "username": "shartzog"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fc893d5d751db77a65370555f32232be4b68e451",
+          "message": "ENH: Add \"layout\" mode for text extraction (#2388)\n\nThe `PageObject.extract_text` got a new `extraction_mode` parameter. The old type of extraction is called \"plain\" which aims more at extracting text in a way that would be useful for NLP or a Text-to-Speech (TTS) system.\r\n\r\nThe new `extraction_mode=\"layout\"` aims at visually representing the PDF. This is useful for detecting/extracting tables.",
+          "timestamp": "2024-01-11T22:31:02+01:00",
+          "tree_id": "2efae2e44c64564cc00c3e8b434beadc541c9220",
+          "url": "https://github.com/py-pdf/pypdf/commit/fc893d5d751db77a65370555f32232be4b68e451"
+        },
+        "date": 1705008834862,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.268097202314367,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006131897097025508",
+            "extra": "mean: 305.9884508000039 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.430626495743132,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00992867191506262",
+            "extra": "mean: 80.44646827273348 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26084824156318986,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035111465846779426",
+            "extra": "mean: 3.833646698200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.450618325374123,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013050607637527852",
+            "extra": "mean: 60.78798864706247 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0615319408688079,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1347508846523412",
+            "extra": "mean: 16.251722046800012 sec\nrounds: 5"
           }
         ]
       }
