@@ -2587,7 +2587,7 @@ class PdfWriter:
             ano = cast("DictionaryObject", an.get_object())
             subtype = ano.get("/Subtype")
             if self.strict and not subtype:
-                raise PdfReader("Annotation missing Subtype")
+                raise PyPdfError("Annotation missing Subtype")
             if (
                 (subtype and subtype != "/Link")
                 or "/A" not in ano
