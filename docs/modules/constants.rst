@@ -15,3 +15,8 @@ Constants
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. autoclass:: pypdf.constants.UserAccessPermissions
+    :members:
+    :undoc-members:
+    :show-inheritance:
