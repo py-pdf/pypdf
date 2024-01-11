@@ -112,3 +112,46 @@ def test_issue_2336():
     page = reader.pages[0]
     actual_text = page.extract_text()
     assert "Beira Rio" in actual_text
+
+
+def test_layout_mode_font_class_to_dict():
+    from pypdf._text_extraction._layout_mode._font import Font
+
+    font = Font("foo", space_width=8, encoding="utf-8", char_map={}, font_dictionary={})
+    assert Font.to_dict(font) == {
+        "char_map": {},
+        "encoding": "utf-8",
+        "font_dictionary": {},
+        "space_width": 8,
+        "subtype": "foo",
+        "width_map": {},
+    }
+
+
+@pytest.mark.enable_socket()
+def test_layout_mode_epic_page_fonts():
+    url = "https://github.com/py-pdf/pypdf/files/13836944/Epic.Page.PDF"
+    name = "Epic Page.PDF"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    expected = (RESOURCE_ROOT / "Epic.Page.layout.txt").read_text(encoding="utf-8")
+    assert expected == reader.pages[0].extract_text(extraction_mode="layout")
+
+
+def test_layout_mode_uncommon_operators():
+    # coverage for layout mode Tc, Tz, Ts, ', ", TD, TL, and Tw
+    reader = PdfReader(RESOURCE_ROOT / "toy.pdf")
+    expected = (RESOURCE_ROOT / "toy.layout.txt").read_text(encoding="utf-8")
+    assert expected == reader.pages[0].extract_text(extraction_mode="layout")
+
+
+@pytest.mark.enable_socket()
+def test_layout_mode_type0_font_widths():
+    # Cover both the 'int int int' and 'int [int int ...]' formats for Type0
+    # /DescendantFonts /W array entries.
+    url = "https://github.com/py-pdf/pypdf/files/13533204/Claim.Maker.Alerts.Guide_pg2.PDF"
+    name = "Claim Maker Alerts Guide_pg2.PDF"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    expected = (RESOURCE_ROOT / "Claim Maker Alerts Guide_pg2.layout.txt").read_text(
+        encoding="utf-8"
+    )
+    assert expected == reader.pages[0].extract_text(extraction_mode="layout")

@@ -29,7 +29,9 @@
 
 import math
 import re
+import sys
 from decimal import Decimal
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -50,6 +52,7 @@ from ._cmap import build_char_map, unknown_char_map
 from ._protocols import PdfReaderProtocol, PdfWriterProtocol
 from ._text_extraction import (
     OrientationNotFoundError,
+    _layout_mode,
     crlf_space_check,
     handle_tj,
     mult,
@@ -82,6 +85,12 @@ from .generic import (
     RectangleObject,
     StreamObject,
 )
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
@@ -1868,6 +1877,96 @@ class PageObject(DictionaryObject):
             visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
         return output
 
+    def _layout_mode_fonts(self) -> Dict[str, _layout_mode.Font]:
+        """
+        Get fonts formatted for "layout" mode text extraction.
+
+        Returns:
+            Dict[str, Font]: dictionary of _layout_mode.Font instances keyed by font name
+        """
+        # Font retrieval logic adapted from pypdf.PageObject._extract_text()
+        objr: Any = self
+        while NameObject(PG.RESOURCES) not in objr:
+            objr = objr["/Parent"].get_object()
+        resources_dict: Any = objr[PG.RESOURCES]
+        fonts: Dict[str, _layout_mode.Font] = {}
+        if "/Font" in resources_dict and self.pdf is not None:
+            for font_name in resources_dict["/Font"]:
+                *cmap, font_dict_obj = build_char_map(font_name, 200.0, self)
+                font_dict = {
+                    k: self.pdf.get_object(v)
+                    if isinstance(v, IndirectObject)
+                    else [
+                        self.pdf.get_object(_v)
+                        if isinstance(_v, IndirectObject)
+                        else _v
+                        for _v in v
+                    ]
+                    if isinstance(v, ArrayObject)
+                    else v
+                    for k, v in font_dict_obj.items()
+                }
+                # mypy really sucks at unpacking
+                fonts[font_name] = _layout_mode.Font(*cmap, font_dict)  # type: ignore[call-arg,arg-type]
+        return fonts
+
+    def _layout_mode_text(
+        self,
+        space_vertically: bool = True,
+        scale_weight: float = 1.25,
+        strip_rotated: bool = True,
+        debug_path: Optional[Path] = None,
+    ) -> str:
+        """
+        Get text preserving fidelity to source PDF text layout.
+
+        Args:
+            space_vertically: include blank lines inferred from y distance + font
+                height. Defaults to True.
+            scale_weight: multiplier for string length when calculating weighted
+                average character width. Defaults to 1.25.
+            strip_rotated: Removes text that is rotated w.r.t. to the page from
+                layout mode output. Defaults to True.
+            debug_path (Path | None): if supplied, must target a directory.
+                creates the following files with debug information for layout mode
+                functions if supplied:
+                  - fonts.json: output of self._layout_mode_fonts
+                  - tjs.json: individual text render ops with corresponding transform matrices
+                  - bts.json: text render ops left justified and grouped by BT/ET operators
+                  - bt_groups.json: BT/ET operations grouped by rendered y-coord (aka lines)
+                Defaults to None.
+
+        Returns:
+            str: multiline string containing page text in a fixed width format that
+                closely adheres to the rendered layout in the source pdf.
+        """
+        fonts = self._layout_mode_fonts()
+        if debug_path:  # pragma: no cover
+            import json
+
+            debug_path.joinpath("fonts.json").write_text(
+                json.dumps(
+                    fonts, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)
+                ),
+                "utf-8",
+            )
+
+        ops = iter(
+            ContentStream(self["/Contents"].get_object(), self.pdf, "bytes").operations
+        )
+        bt_groups = _layout_mode.text_show_operations(
+            ops, fonts, strip_rotated, debug_path
+        )
+
+        if not bt_groups:
+            return ""
+
+        ty_groups = _layout_mode.y_coordinate_groups(bt_groups, debug_path)
+
+        char_width = _layout_mode.fixed_char_width(bt_groups, scale_weight)
+
+        return _layout_mode.fixed_width_page(ty_groups, char_width, space_vertically)
+
     def extract_text(
         self,
         *args: Any,
@@ -1876,6 +1975,8 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        extraction_mode: Literal["plain", "layout"] = "plain",
+        **kwargs: Any,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
@@ -1913,10 +2014,42 @@ class PageObject(DictionaryObject):
                 text matrix, font-dictionary and font-size.
                 The font-dictionary may be None in case of unknown fonts.
                 If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
+            extraction_mode (Literal["plain", "layout"]): "plain" for legacy functionality,
+                "layout" for experimental layout mode functionality.
+                NOTE: orientations, space_width, and visitor_* parameters are NOT respected
+                in "layout" mode.
+
+        KwArgs:
+            layout_mode_space_vertically (bool): include blank lines inferred from
+                y distance + font height. Defaults to True.
+            layout_mode_scale_weight (float): multiplier for string length when calculating
+                weighted average character width. Defaults to 1.25.
+            layout_mode_strip_rotated (bool): layout mode does not support rotated text.
+                Set to False to include rotated text anyway. If rotated text is discovered,
+                layout will be degraded and a warning will result. Defaults to True.
+            layout_mode_strip_rotated: Removes text that is rotated w.r.t. to the page from
+                layout mode output. Defaults to True.
+            layout_mode_debug_path (Path | None): if supplied, must target a directory.
+                creates the following files with debug information for layout mode
+                functions if supplied:
+
+                  - fonts.json: output of self._layout_mode_fonts
+                  - tjs.json: individual text render ops with corresponding transform matrices
+                  - bts.json: text render ops left justified and grouped by BT/ET operators
+                  - bt_groups.json: BT/ET operations grouped by rendered y-coord (aka lines)
 
         Returns:
             The extracted text
         """
+        if extraction_mode not in ["plain", "layout"]:
+            raise ValueError(f"Invalid text extraction mode '{extraction_mode}'")
+        if extraction_mode == "layout":
+            return self._layout_mode_text(
+                space_vertically=kwargs.get("layout_mode_space_vertically", True),
+                scale_weight=kwargs.get("layout_mode_scale_weight", 1.25),
+                strip_rotated=kwargs.get("layout_mode_strip_rotated", True),
+                debug_path=kwargs.get("layout_mode_debug_path", None),
+            )
         if len(args) >= 1:
             if isinstance(args[0], str):
                 if len(args) >= 3:

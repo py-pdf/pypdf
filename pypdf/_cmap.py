@@ -127,7 +127,7 @@ _predefined_cmap: Dict[str, str] = {
 
 # manually extracted from http://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz
 _default_fonts_space_width: Dict[str, int] = {
-    "/Courrier": 600,
+    "/Courier": 600,
     "/Courier-Bold": 600,
     "/Courier-BoldOblique": 600,
     "/Courier-Oblique": 600,
