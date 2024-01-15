@@ -1949,6 +1949,7 @@ REFERENCES 76"""
         bookmarks.append(new_bookmark)
 
 
+pytest.importorskip("fpdf")
 def test_merging_many_temporary_files():
     def create_number_pdf(n) -> BytesIO:
         from fpdf import FPDF
