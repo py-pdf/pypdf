@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705529142877,
+  "lastUpdate": 1705529360924,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -46658,6 +46658,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.2474449269709649",
             "extra": "mean: 16.18517278459999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "23a5a490f2b7c651856f56efc31e6ec785bf13c7",
+          "message": "DEV: Fail on Sphinx issues (#2405)\n\nThis adds a code style check to avoid unexpectedly shipping docs/docstrings which cause issues.\r\n\r\nOptions (the long names are only part of the upcoming 7.3 release), based upon https://www.sphinx-doc.org/en/master/man/sphinx-build.html:\r\n\r\n  * `-n`: Report warnings for missing references.\r\n  * `-W`: Turn warnings into errors and stop at first violation.\r\n  * `--keep-going`: Improve `-W` by collecting all violations and only failing at the end.\r\n  * `-T`: Display the full traceback on actual errors.\r\n  * `-b html`: Build HTML pages.\r\n  * `docs`: Source directory.\r\n  * `build/sphinx/html`: Target directory.\r\n \r\nFixes #2402",
+          "timestamp": "2024-01-17T23:05:32+01:00",
+          "tree_id": "f138650dfd96fbce7d0b5ed3e98994b2ab9d6312",
+          "url": "https://github.com/py-pdf/pypdf/commit/23a5a490f2b7c651856f56efc31e6ec785bf13c7"
+        },
+        "date": 1705529357585,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.257982683759436,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007349552673806755",
+            "extra": "mean: 306.9384024000044 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.563595750992278,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008235889574500273",
+            "extra": "mean: 79.59504745454896 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26791630886327583,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01690963074923714",
+            "extra": "mean: 3.732508872799991 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.04471143135565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006275800627358462",
+            "extra": "mean: 58.669224411766116 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06044618777646007,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13829286200404817",
+            "extra": "mean: 16.543640497199995 sec\nrounds: 5"
           }
         ]
       }
