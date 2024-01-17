@@ -344,6 +344,7 @@ def test_aes_decrypt_corrupted_data():
         aes.decrypt(secrets.token_bytes(num))
 
 
+@pytest.mark.samples()
 def test_encrypt_stream_dictionary(pdf_file_path):
     user_password = secrets.token_urlsafe(10)
 

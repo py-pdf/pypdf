@@ -73,18 +73,21 @@ def image_similarity(
     return 1 - mse
 
 
+@pytest.mark.samples()
 def test_image_similarity_one():
     path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
     path_b = path_a
     assert image_similarity(path_a, path_b) == 1
 
 
+@pytest.mark.samples()
 def test_image_similarity_zero():
     path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
     path_b = SAMPLE_ROOT / "009-pdflatex-geotopo/page-23-Im2.png"
     assert image_similarity(path_a, path_b) == 0
 
 
+@pytest.mark.samples()
 def test_image_similarity_mid():
     path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
     img_b = Image.open(path_a)
