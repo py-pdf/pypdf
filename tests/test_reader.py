@@ -248,7 +248,6 @@ def test_get_images(src, expected_images):
                 pass
 
 
-@pytest.mark.samples()
 @pytest.mark.parametrize(
     ("strict", "with_prev_0", "startx_correction", "should_fail", "warning_msgs"),
     [
@@ -676,7 +675,6 @@ def test_reader_properties():
     assert reader.is_encrypted is False
 
 
-@pytest.mark.samples()
 @pytest.mark.parametrize(
     "strict",
     [True, False],
