@@ -122,7 +122,7 @@ from .types import (
 )
 
 OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
-ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
+ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions.all()
 
 
 class ObjectDeletionFlag(enum.IntFlag):
