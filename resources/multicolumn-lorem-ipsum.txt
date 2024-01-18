@@ -10,7 +10,7 @@ with Lorem Ipsum text.                                                          
     Lorem ipsum dolor sit amet,  consectetuer adip-                                                  nec, suscipit a, ipsum.  Morbi blandit ligula feugiat
 iscing elit.   Ut purus elit, vestibulum ut, placerat                                                magna.  Nunc eleifend consequat lorem.  Sed lacinia
 ac, adipiscing vitae, felis. Curabitur dictum gravida                                                nulla vitae enim.   Pellentesque tincidunt purus vel
-mauris.       Nam  arcu  libero,  nonummy  eget,  con-                                               magna.  Integer non enim.  Praesent euismod nunc
+mauris.     Nam  arcu  libero,  nonummy  eget,  con-                                                 magna.  Integer non enim.  Praesent euismod nunc
 sectetuer id, vulputate a, magna.   Donec vehicula                                                   eu purus.  Donec bibendum quam in tellus.  Nullam
 augue eu neque.   Pellentesque habitant morbi tris-                                                  cursus pulvinar lectus.  Donec et mi.  Nam vulpu-
 tique senectus et netus et malesuada fames ac turpis                                                 tate metus eu enim. Vestibulum pellentesque felis eu

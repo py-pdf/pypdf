@@ -12,6 +12,7 @@ from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
 CUSTOM_RTL_MIN: int = -1
 CUSTOM_RTL_MAX: int = -1
 CUSTOM_RTL_SPECIAL_CHARS: List[int] = []
+LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS: int = 5
 
 
 class OrientationNotFoundError(Exception):
