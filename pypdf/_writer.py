@@ -1923,7 +1923,7 @@ class PdfWriter:
         lnk = DictionaryObject()
         lnk.update(
             {
-                NameObject(AA.Type): NameObject(PG.ANNOTS),
+                NameObject(AA.Type): NameObject("/Annot"),
                 NameObject(AA.Subtype): NameObject("/Link"),
                 NameObject(AA.P): page_link,
                 NameObject(AA.Rect): rect,
