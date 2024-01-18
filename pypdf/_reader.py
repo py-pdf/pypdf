@@ -55,6 +55,7 @@ from ._utils import (
     StrByteType,
     StreamType,
     b_,
+    deprecate_with_replacement,
     logger_warning,
     parse_iso8824_date,
     read_non_whitespace,
@@ -1811,12 +1812,16 @@ class PdfReader:
 
     def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
         """Take the permissions as an integer, return the allowed access."""
+        deprecate_with_replacement(
+            old_name="decode_permissions", new_name="user_access_permissions", removed_in="5.0.0"
+        )
+
         permissions_mapping = {
             "print": UserAccessPermissions.PRINT,
             "modify": UserAccessPermissions.MODIFY,
             "copy": UserAccessPermissions.EXTRACT,
             "annotations": UserAccessPermissions.ADD_OR_MODIFY,
-            "forms": UserAccessPermissions.R7,
+            "forms": UserAccessPermissions.FILL_FORM_FIELDS,
             "accessability": UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS,
             "assemble": UserAccessPermissions.ASSEMBLE_DOC,
             "print_high_quality": UserAccessPermissions.PRINT_TO_REPRESENTATION,
@@ -1826,6 +1831,13 @@ class PdfReader:
             key: permissions_code & flag != 0
             for key, flag in permissions_mapping.items()
         }
+
+    @property
+    def user_access_permissions(self) -> Optional[UserAccessPermissions]:
+        """Get the user access permissions for encrypted documents. Returns None if not encrypted."""
+        if self._encryption is None:
+            return None
+        return UserAccessPermissions(self._encryption.P)
 
     @property
     def is_encrypted(self) -> bool:

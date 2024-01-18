@@ -41,6 +41,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Perrensen, Olsen](https://github.com/olsonperrensen)
 * [pilotandy](https://github.com/pilotandy)
 * [Pinheiro, Arthur](https://github.com/xilopaint)
+* [pmiller66](https://github.com/pmiller66)
 * [Poddar, Arka](https://github.com/postmeback)
 * [programmarchy](https://github.com/programmarchy)
 * [pubpub-zz](https://github.com/pubpub-zz): involved in community development
