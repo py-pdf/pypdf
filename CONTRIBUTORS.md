@@ -51,6 +51,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Roder, Thomas](https://github.com/MrTomRod)
 * [Rogmann, Sascha](https://github.com/srogmann)
 * [Röthenbacher, Thomas](https://github.com/troethe)
+* [shartzog](https://github.com/shartzog)
 * [stefan6419846](https://github.com/stefan6419846)
 * [sietzeberends](https://github.com/sietzeberends)
 * [Stober, Marc](https://github.com/marcstober)
