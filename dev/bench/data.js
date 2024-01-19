@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705608462708,
+  "lastUpdate": 1705671072366,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -47012,6 +47012,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10553717838064858",
             "extra": "mean: 16.1647046854 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "26b9a97d662d17ccf7d77104225a7190fa532195",
+          "message": "REL: 4.0.0\n\n## What's new\n\npypdf==4.0.0 is a big milestone forward:\n\n* We finally have a layout-mode text extraction.\n  This enables users who want to detect / extract tables\n  with heuristics to give it a try.\n* We deprecated a lot of the old PyPDF2 API that was either\n  not following PEP8 naming styles or was not using a\n  property. Users comming from PyPDF2 might want to switch\n  first to pypdf<4.0.0 to get helpful error messages\n  that show the new API in their speicific cases.\n\nA big 'Thank you!' the the whole pypdf community for your\nwork. Thanks to you, pypdf is better than ever.\n\nKudos to @shartzog who added the layout-mode with his first\ncontribution!\n\n### Deprecations (DEP)\n-  Drop Python 3.6 support (#2369) by @MartinThoma\n-  Remove deprecated code (#2367) by @MartinThoma\n-  Remove deprecated XMP properties (#2386) by @stefan6419846\n\n### New Features (ENH)\n-  Add \"layout\" mode for text extraction (#2388) by @shartzog\n-  Add Jupyter Notebook integration for PdfReader (#2375) by @MartinThoma\n-  Improve/rewrite PDF permission retrieval (#2400) by @stefan6419846\n\n### Bug Fixes (BUG)\n-  PdfWriter.add_uri was setting the wrong type (#2406) by @pmiller66\n-  Add support for GBK2K cmaps (#2385) by @stefan6419846\n\n### Documentation (DOC)\n-  Add pmiller66 for #2406 as a contributor by @MartinThoma\n-  Add missing expand parameter (#2393) by @Atomnp\n-  Resolve build warnings (#2380) by @stefan6419846\n-  Fix testing prerequisites (#2381) by @stefan6419846\n-  Improve formatting of contributors page (#2383) by @stefan6419846\n-  Add Tobeabellwether as a contributor for #2341 by @MartinThoma\n\n### Developer Experience (DEV)\n-  Make dependabot aware of our PR prefixes (#2415) by @stefan6419846\n-  Fail on Sphinx issues (#2405) by @stefan6419846\n-  Move title check to own workflow (#2384) by @MasterOdin\n-  Write to temporary files instead of the working directory (#2379) by @stefan6419846\n-  Ensure that the PR titles have the correct format (#2378) by @stefan6419846\n\n### Maintenance (MAINT)\n-  Complete FileSpecificationDictionaryEntries constants (#2416) by @MartinThoma\n-  Return None instead of -1 when page is not attached (#2376) by @MartinThoma\n-  Replace warning with logging.error (#2377) by @MartinThoma\n\n### Testing (TST)\n-  Add missing pytest.mark.samples annotations (#2412) by @kitterma\n-  Correctly close temporary files (#2396) by @stefan6419846\n-  Fix  side effect #2379 (#2395) by @pubpub-zz\n-  Add test for layout extraction mode (#2390) by @MartinThoma\n\n### Code Style (STY)\n-  Use the UserAccessPermissions enum (#2398) by @MartinThoma\n-  Run black (#2370) by @MartinThoma\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.4...4.0.0)",
+          "timestamp": "2024-01-19T14:18:55+01:00",
+          "tree_id": "72a24f909264b9b43c24b88d295e64103e710651",
+          "url": "https://github.com/py-pdf/pypdf/commit/26b9a97d662d17ccf7d77104225a7190fa532195"
+        },
+        "date": 1705671070685,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3903843501691933,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004354534782069045",
+            "extra": "mean: 294.95180979999986 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.714817867708872,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0076734697306444465",
+            "extra": "mean: 78.64839358333597 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27357478812141445,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021769896789776998",
+            "extra": "mean: 3.655307592000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.13241599780475,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00044992634693848983",
+            "extra": "mean: 58.36888388235112 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06178913464078836,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06901855133488598",
+            "extra": "mean: 16.184075174600004 sec\nrounds: 5"
           }
         ]
       }
