@@ -85,6 +85,47 @@ class UserAccessPermissions(IntFlag):
     R31 = 2**30
     R32 = 2**31
 
+    @classmethod
+    def _is_reserved(cls, name: str) -> bool:
+        """Check if the given name corresponds to a reserved flag entry."""
+        return name.startswith("R") and name[1:].isdigit()
+
+    @classmethod
+    def _is_active(cls, name: str) -> bool:
+        """Check if the given reserved name defaults to 1 = active."""
+        return name not in {"R1", "R2"}
+
+    def to_dict(self) -> Dict[str, bool]:
+        """Convert the given flag value to a corresponding verbose name mapping."""
+        result: Dict[str, bool] = {}
+        for name, flag in UserAccessPermissions.__members__.items():
+            if UserAccessPermissions._is_reserved(name):
+                continue
+            result[name.lower()] = (self & flag) == flag
+        return result
+
+    @classmethod
+    def from_dict(cls, value: Dict[str, bool]) -> "UserAccessPermissions":
+        """Convert the verbose name mapping to the corresponding flag value."""
+        value_copy = value.copy()
+        result = cls(0)
+        for name, flag in cls.__members__.items():
+            if cls._is_reserved(name):
+                # Reserved names have a required value. Use it.
+                if cls._is_active(name):
+                    result |= flag
+                continue
+            is_active = value_copy.pop(name.lower(), False)
+            if is_active:
+                result |= flag
+        if value_copy:
+            raise ValueError(f"Unknown dictionary keys: {value_copy!r}")
+        return result
+
+    @classmethod
+    def all(cls) -> "UserAccessPermissions":
+        return cls((2**32 - 1) - cls.R1 - cls.R2)
+
 
 class Ressources:
     """TABLE 3.30 Entries in a resource dictionary."""
@@ -150,7 +191,16 @@ class FileSpecificationDictionaryEntries:
     Type = "/Type"
     FS = "/FS"  # The name of the file system to be used to interpret this file specification
     F = "/F"  # A file specification string of the form described in Section 3.10.1
+    UF = "/UF"  # A unicode string of the file as described in Section 3.10.1
+    DOS = "/DOS"
+    Mac = "/Mac"
+    Unix = "/Unix"
+    ID = "/ID"
+    V = "/V"
     EF = "/EF"  # dictionary, containing a subset of the keys F , UF , DOS , Mac , and Unix
+    RF = "/RF"  # dictionary, containing arrays of /EmbeddedFile
+    DESC = "/Desc"  # description of the file
+    Cl = "/Cl"
 
 
 class StreamAttributes:
