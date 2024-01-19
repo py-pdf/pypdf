@@ -565,10 +565,10 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
 
-    def __init__(self, value="", encoding=None, errors="strict"):
+    def __init__(self, value: str = "", encoding: str = None, errors: str = "strict"):
         if value[0] != "/":
             value = "/" + value
-        super.__init__(value, encoding, errors)
+        super().__init__(value, encoding, errors)
 
     def clone(
         self,
