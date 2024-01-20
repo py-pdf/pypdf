@@ -565,13 +565,6 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
 
-    def __init__(
-        self, value: str = "", encoding: str | None = None, errors: str = "strict"
-    ):
-        if value[0] != "/":
-            value = "/" + value
-        super().__init__(value, encoding, errors)
-
     def clone(
         self,
         pdf_dest: Any,
@@ -596,7 +589,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")
         if out != b"/":
-            logger_warning(f"Incorrect first char in NameObject:({self})", __name__)
+            raise Exception(f"Incorrect first char in NameObject:({self})", __name__)
         for c in self[1:]:
             if c > "~":
                 for x in c.encode("utf-8"):
