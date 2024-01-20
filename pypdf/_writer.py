@@ -1898,15 +1898,15 @@ class PdfWriter:
 
         border_arr: BorderArrayType
         if border is not None:
-            border_arr = [NameObject(n) for n in border[:3]]
+            border_arr = [NumberObject(n) for n in border[:3]]
             if len(border) == 4:
-                dash_pattern = ArrayObject([NameObject(n) for n in border[3]])
+                dash_pattern = ArrayObject([NumberObject(n) for n in border[3]])
                 border_arr.append(dash_pattern)
         else:
             border_arr = [NumberObject(2), NumberObject(2), NumberObject(2)]
 
         if isinstance(rect, str):
-            rect = NameObject(rect)
+            rect = NumberObject(rect)
         elif isinstance(rect, RectangleObject):
             pass
         else:
