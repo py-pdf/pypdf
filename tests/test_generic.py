@@ -7,7 +7,7 @@ import pytest
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import CheckboxRadioButtonAttributes
-from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.errors import PdfReadError, PdfStreamError, PyPdfError
 from pypdf.generic import (
     AnnotationBuilder,
     ArrayObject,
@@ -220,8 +220,8 @@ def test_name_object(caplog):
     b = BytesIO()
     try:
         NameObject("hello").write_to_stream(b)
-        assert False
-    except Exception:
+        pytest.fail()
+    except PyPdfError:
         pass
 
     caplog.clear()
