@@ -220,7 +220,7 @@ def test_name_object(caplog):
     b = BytesIO()
     try:
         NameObject("hello").write_to_stream(b)
-        pytest.fail()
+        pytest.fail("Corrupted name object")
     except PyPdfError:
         pass
 
