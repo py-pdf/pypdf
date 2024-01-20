@@ -165,8 +165,8 @@ class Line(MarkupAnnotation):
                 ),
                 NameObject("/LE"): ArrayObject(
                     [
-                        NameObject(None),
-                        NameObject(None),
+                        NameObject("/None"),
+                        NameObject("/None"),
                     ]
                 ),
                 NameObject("/IC"): ArrayObject(
