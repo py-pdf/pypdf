@@ -218,7 +218,7 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-     with pytest.raises(PyPdfError) as exc::
+    with pytest.raises(PyPdfError) as exc:
         NameObject("hello").write_to_stream(b)
 
     caplog.clear()
