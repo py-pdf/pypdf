@@ -218,11 +218,8 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-    try:
+     with pytest.raises(PyPdfError) as exc::
         NameObject("hello").write_to_stream(b)
-        pytest.fail("Corrupted name object")
-    except PyPdfError:
-        pass
 
     caplog.clear()
     b = BytesIO()
