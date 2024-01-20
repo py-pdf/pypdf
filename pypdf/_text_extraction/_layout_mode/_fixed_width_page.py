@@ -144,7 +144,7 @@ def recurs_to_target_op(
                     # applied to the first tj of a BTGroup in fixed_width_page().
                     excess_tx = round(_tj.tx - last_displaced_tx, 3) * (_idx != bt_idx)
                     # space_tx could be 0 if either Tz or font_size was 0 for this _tj.
-                    spaces = int(excess_tx // _tj.space_tx) if int(_tj.space_tx) else 0
+                    spaces = int(excess_tx // _tj.space_tx) if _tj.space_tx else 0
                     new_text = f'{" " * spaces}{_tj.txt}'
 
                     last_ty = _tj.ty
