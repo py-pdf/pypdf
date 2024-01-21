@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705678318408,
+  "lastUpdate": 1705834739552,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -47130,6 +47130,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10772044156577049",
             "extra": "mean: 16.21393907619999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47760929+shartzog@users.noreply.github.com",
+            "name": "shartzog",
+            "username": "shartzog"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9e494c6a6ce03749d9287b1096743e40ba7eeb0b",
+          "message": "BUG: layout mode text extraction ZeroDivisionError (#2417)\n\nFor fonts without an explicitly defined width for the \" \" character, it's still possible to generate a ZeroDivisionError when compiling TextStateParams objects in _fixed_width_page.recurs_to_target_op() if the font size or the Tz parameter has been set to 0. \r\n\r\nDiscovered during processing of a \"pre-OCR'd\" image PDF having `{\"/BaseFont\": \"/GlyphLessFont\"}`.\r\n\r\nDOC: Remove duplicate docstring for layout_mode_strip_rotated",
+          "timestamp": "2024-01-21T11:56:07+01:00",
+          "tree_id": "6090707049bc045f87f761188eaa444d6afb72f6",
+          "url": "https://github.com/py-pdf/pypdf/commit/9e494c6a6ce03749d9287b1096743e40ba7eeb0b"
+        },
+        "date": 1705834736833,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4244573489137426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0039517056171217485",
+            "extra": "mean: 292.01706960000706 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.941757230674744,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006656674308045699",
+            "extra": "mean: 77.26925966666916 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27494236959797724,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01386337656687379",
+            "extra": "mean: 3.6371258510000017 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.850460927824436,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007505355729377899",
+            "extra": "mean: 59.345557624999046 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.062327764863961535,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1029060515235669",
+            "extra": "mean: 16.044214038199993 sec\nrounds: 5"
           }
         ]
       }
