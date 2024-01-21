@@ -1951,6 +1951,7 @@ REFERENCES 76"""
 
 def test_merging_many_temporary_files():
     def create_number_pdf(n) -> BytesIO:
+        pytest.importorskip("fpdf")
         from fpdf import FPDF
 
         pdf = FPDF()
