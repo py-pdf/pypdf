@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705834739552,
+  "lastUpdate": 1705864284314,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -47189,6 +47189,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.1029060515235669",
             "extra": "mean: 16.044214038199993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "54ae0a64c64f8dd7c1efd7ddb50bf7639480670e",
+          "message": "TST: Skip tests using fpdf2 if it's not installed (#2419)\n\nThe Debian ecosystem installs only packages which are also present\r\nin the Debian ecosystem for testing. This includes pytest, but it\r\ndoes not include fpdf2.\r\n\r\nAdding the line 'pytest.importorskip(\"fpdf\")' within the test\r\nand before the import ensures that pytest skips the test in\r\ncase fpdf is not installed.\r\n\r\nCloses #2408",
+          "timestamp": "2024-01-21T20:08:30+01:00",
+          "tree_id": "dbb9a8339ebc5d0b73ef02b253846c215c92ae14",
+          "url": "https://github.com/py-pdf/pypdf/commit/54ae0a64c64f8dd7c1efd7ddb50bf7639480670e"
+        },
+        "date": 1705864281544,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.405896739921818,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007901667228814049",
+            "extra": "mean: 293.6084316000006 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.819340987570277,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007376382627410374",
+            "extra": "mean: 78.00713008333322 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2731553545478873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02077197299409378",
+            "extra": "mean: 3.6609203639999977 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.762556574715262,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011048718034985386",
+            "extra": "mean: 59.65677106250045 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06188541972356492,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08729772536237425",
+            "extra": "mean: 16.1588950106 sec\nrounds: 5"
           }
         ]
       }
