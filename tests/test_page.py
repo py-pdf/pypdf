@@ -1270,6 +1270,7 @@ def test_compression():
     """Test for issue #1897"""
 
     def create_stamp_pdf() -> BytesIO:
+        pytest.importorskip("fpdf")
         from fpdf import FPDF
 
         pdf = FPDF()
