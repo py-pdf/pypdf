@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## Version 4.0.0, 2024-01-19
+
+### Deprecations (DEP)
+-  Drop Python 3.6 support (#2369)
+-  Remove deprecated code (#2367)
+-  Remove deprecated XMP properties (#2386)
+
+### New Features (ENH)
+-  Add "layout" mode for text extraction (#2388)
+-  Add Jupyter Notebook integration for PdfReader (#2375)
+-  Improve/rewrite PDF permission retrieval (#2400)
+
+### Bug Fixes (BUG)
+-  PdfWriter.add_uri was setting the wrong type (#2406)
+-  Add support for GBK2K cmaps (#2385)
+
+### Maintenance (MAINT)
+-  Return None instead of -1 when page is not attached (#2376)
+-  Complete FileSpecificationDictionaryEntries constants (#2416)
+-  Replace warning with logging.error (#2377)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.4...4.0.0)
+
 ## Version 3.17.4, 2023-12-24
 
 ### Bug Fixes (BUG)
