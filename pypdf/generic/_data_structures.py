@@ -1068,10 +1068,12 @@ class ContentStream(DecodedStreamObject):
             # We have reached the end of the stream, but haven't found the EI operator.
             if not buf:
                 raise PdfReadError("Unexpected end of stream")
+            if len(buf) == 2 and buf == b'EI':
+                break
             loc = buf.find(
                 b"E"
             )  # we can not look straight for "EI" because it may not have been loaded in the buffer
-
+            
             if loc == -1:
                 data.write(buf)
             else:
