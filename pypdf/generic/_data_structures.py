@@ -1073,7 +1073,7 @@ class ContentStream(DecodedStreamObject):
             loc = buf.find(
                 b"E"
             )  # we can not look straight for "EI" because it may not have been loaded in the buffer
-            
+
             if loc == -1:
                 data.write(buf)
             else:
