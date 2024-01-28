@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705864284314,
+  "lastUpdate": 1706454684358,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -47248,6 +47248,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08729772536237425",
             "extra": "mean: 16.1588950106 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "757932944f54ba661b89e0629ed3fc9d8345dbab",
+          "message": "REL: 4.0.1\n\n## What's new\n\n### Bug Fixes (BUG)\n-  layout mode text extraction ZeroDivisionError (#2417) by @shartzog\n\n### Testing (TST)\n-  Skip tests using fpdf2 if it\\'s not installed (#2419) by @MartinThoma\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.0.0...4.0.1)",
+          "timestamp": "2024-01-28T16:07:43+01:00",
+          "tree_id": "68e1dcf775950cbf07b5041f48c697e0a536c50d",
+          "url": "https://github.com/py-pdf/pypdf/commit/757932944f54ba661b89e0629ed3fc9d8345dbab"
+        },
+        "date": 1706454682132,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.224875906388111,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004884568715727194",
+            "extra": "mean: 310.0894512000025 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.418134843087705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010387310113335421",
+            "extra": "mean: 80.52739099999619 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2643786699801745,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025114270873232338",
+            "extra": "mean: 3.7824534031999972 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.55089806548708,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008244910955664669",
+            "extra": "mean: 60.419682124999596 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06198117521635074,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06019600445529915",
+            "extra": "mean: 16.13393093159999 sec\nrounds: 5"
           }
         ]
       }
