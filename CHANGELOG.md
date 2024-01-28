@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## Version 4.0.1, 2024-01-28
+
+### Bug Fixes (BUG)
+-  layout mode text extraction ZeroDivisionError (#2417)
+
+### Testing (TST)
+-  Skip tests using fpdf2 if it's not installed (#2419)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.0.0...4.0.1)
+
 ## Version 4.0.0, 2024-01-19
 
 ### Deprecations (DEP)
