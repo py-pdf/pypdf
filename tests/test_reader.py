@@ -17,7 +17,6 @@ from pypdf.errors import (
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
-    PdfReadWarning,
     WrongPasswordError,
 )
 from pypdf.generic import (
