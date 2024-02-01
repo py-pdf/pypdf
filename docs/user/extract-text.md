@@ -118,7 +118,7 @@ def visitor_svg_rect(op, args, cm, tm):
         dwg.add(dwg.rect((x, y), (w, h), stroke="red", fill_opacity=0.05))
 
 
-def visitor_svg_text(text, cm, tm, fontDict, fontSize):
+def visitor_svg_text(text, cm, tm, font_dict, font_size):
     (x, y) = (tm[4], tm[5])
     dwg.add(dwg.text(text, insert=(x, y), fill="blue"))
 
