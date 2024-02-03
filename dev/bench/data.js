@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706947446211,
+  "lastUpdate": 1706947528553,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -47366,6 +47366,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03805932387419323",
             "extra": "mean: 24.085858433000002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cwksc.person@gmail.com",
+            "name": "CWKSC",
+            "username": "CWKSC"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "61b73d49778e8f0fb172d5323e67677c9974e420",
+          "message": "DOC: Typo `Polyline` → `PolyLine` in adding-pdf-annotations.md (#2426)",
+          "timestamp": "2024-02-03T09:02:35+01:00",
+          "tree_id": "9fb79466999d9d73c6ba15afdc76ce4d6f59c470",
+          "url": "https://github.com/py-pdf/pypdf/commit/61b73d49778e8f0fb172d5323e67677c9974e420"
+        },
+        "date": 1706947525555,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.380517873878771,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001106909772427133",
+            "extra": "mean: 295.81266459999824 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.91623466301682,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006045410989029751",
+            "extra": "mean: 77.42194424999956 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2767286237108995,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02353616199307015",
+            "extra": "mean: 3.6136485867999966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.09451370296139,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033982934485486806",
+            "extra": "mean: 58.49830052941276 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06051394534763793,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06948748529484547",
+            "extra": "mean: 16.525116553799997 sec\nrounds: 5"
           }
         ]
       }
