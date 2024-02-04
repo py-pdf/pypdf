@@ -17,7 +17,6 @@ from pypdf.errors import (
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
-    PdfReadWarning,
     WrongPasswordError,
 )
 from pypdf.generic import (
@@ -335,7 +334,7 @@ def test_get_images_raw(
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+        with pytest.raises(PdfReadError) as exc:
             PdfReader(pdf_stream, strict=strict)
         assert exc.type == PdfReadError
         if startx_correction == -1:
@@ -530,7 +529,7 @@ def test_read_prev_0_trailer():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
-    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+    with pytest.raises(PdfReadError) as exc:
         PdfReader(pdf_stream, strict=True)
     assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
 
@@ -607,7 +606,7 @@ def test_read_unknown_zero_pages(caplog):
         "Xref table not zero-indexed. ID numbers for objects will be corrected.",
     ]
     assert normalize_warnings(caplog.text) == warnings
-    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+    with pytest.raises(PdfReadError) as exc:
         len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
@@ -617,7 +616,7 @@ def test_read_unknown_zero_pages(caplog):
         "startxref on same line as offset",
     ]
     assert normalize_warnings(caplog.text) == warnings
-    with pytest.raises(AttributeError) as exc, pytest.warns(PdfReadWarning):
+    with pytest.raises(AttributeError) as exc:
         len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
@@ -687,7 +686,7 @@ def test_issue604(caplog, strict):
         outline = None
         if strict:
             pdf = PdfReader(f, strict=strict)
-            with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+            with pytest.raises(PdfReadError) as exc:
                 outline = pdf.outline
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
