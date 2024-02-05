@@ -1,4 +1,5 @@
 """Test the pypdf.generic module."""
+
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -271,6 +272,16 @@ def test_encode_pdfdocencoding_keyerror():
     with pytest.raises(UnicodeEncodeError) as exc:
         encode_pdfdocencoding("😀")
     assert exc.value.args[0] == "pdfdocencoding"
+
+
+@pytest.mark.parametrize("test_input", ["", "data"])
+def test_encode_pdfdocencoding_returns_bytes(test_input):
+    """
+    Test that encode_pdfdocencoding() always returns bytes because bytearray
+    is duck type compatible with bytes in mypy
+    """
+    out = encode_pdfdocencoding(test_input)
+    assert isinstance(out, bytes)
 
 
 def test_read_object_comment_exception():
