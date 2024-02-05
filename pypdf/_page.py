@@ -2216,13 +2216,13 @@ class _VirtualList(Sequence[PageObject]):
             cls = type(self)
             return cls(indices.__len__, lambda idx: self[indices[idx]])
         if not isinstance(index, int):
-            raise TypeError("sequence indices must be integers")
+            raise TypeError("sequence indices must be integers") from TypeError(f"index = {index}")
         len_self = len(self)
         if index < 0:
             # support negative indexes
             index = len_self + index
         if index < 0 or index >= len_self:
-            raise IndexError("sequence index out of range")
+            raise IndexError("sequence index out of range") from IndexError(f"size = {len_self}, index: {index}")
         return self.get_function(index)
 
     def __delitem__(self, index: Union[int, slice]) -> None:
