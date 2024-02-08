@@ -2129,7 +2129,7 @@ class PdfWriter:
         # destination
         if to_add.get("/Subtype") == "/Link" and "/Dest" in to_add:
             tmp = cast(Dict[Any, Any], to_add[NameObject("/Dest")])
-            # Changes target_page_index a integer to target_page an IndirectObject
+            # Changes target_page_index an integer to target_page an IndirectObject
             page.annotations.append(self._add_object(to_add))
             target_page = pages_obj[PA.KIDS][tmp["target_page_index"]]
             pages_obj = cast(Dict[str, Any], self.get_object(self._pages))
