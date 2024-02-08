@@ -2129,17 +2129,18 @@ class PdfWriter:
         # destination
         if to_add.get("/Subtype") == "/Link" and "/Dest" in to_add:
             tmp = cast(Dict[Any, Any], to_add[NameObject("/Dest")])
+            # Changes target_page_index a integer to target_page an IndirectObject
+            page.annotations.append(self._add_object(to_add))
+            target_page = pages_obj[PA.KIDS][tmp["target_page_index"]]
+            pages_obj = cast(Dict[str, Any], self.get_object(self._pages))
             dest = Destination(
                 NameObject("/LinkName"),
-                tmp["target_page_index"],
+                target_page,
                 Fit(
                     fit_type=tmp["fit"], fit_args=dict(tmp)["fit_args"]
                 ),  # I have no clue why this dict-hack is necessary
             )
             to_add[NameObject("/Dest")] = dest.dest_array
-
-        page.annotations.append(self._add_object(to_add))
-
         if to_add.get("/Subtype") == "/Popup" and NameObject("/Parent") in to_add:
             cast(DictionaryObject, to_add["/Parent"].get_object())[
                 NameObject("/Popup")
