@@ -2141,6 +2141,9 @@ class PdfWriter:
                 ),  # I have no clue why this dict-hack is necessary
             )
             to_add[NameObject("/Dest")] = dest.dest_array
+            
+        page.annotations.append(self._add_object(to_add))
+        
         if to_add.get("/Subtype") == "/Popup" and NameObject("/Parent") in to_add:
             cast(DictionaryObject, to_add["/Parent"].get_object())[
                 NameObject("/Popup")
