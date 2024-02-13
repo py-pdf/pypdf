@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707860194728,
+  "lastUpdate": 1707860748291,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -47543,6 +47543,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.1916391956726804",
             "extra": "mean: 16.395658929400007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "159086296+rsinger417@users.noreply.github.com",
+            "name": "rsinger417",
+            "username": "rsinger417"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b7bfd0d7eddfd0865a94cc9e7027df6596242cf7",
+          "message": "BUG: Use NumberObject for /Border elements of annotations (#2451)\n\nAs defined in Table 164 – Entries common to all annotation dictionaries, the /Border Array consists of NumberObjects. Previously, pypdf used NameObject which is wrong.\r\n\r\nThe previous version caused a warning in the class NameObject: \"Incorrect first char in NameObject:({self})\".\r\n\r\nFixes #2444",
+          "timestamp": "2024-02-13T22:42:56+01:00",
+          "tree_id": "e75b96ca1bb3e60a696bd57c5bb5aac9e7c5651b",
+          "url": "https://github.com/py-pdf/pypdf/commit/b7bfd0d7eddfd0865a94cc9e7027df6596242cf7"
+        },
+        "date": 1707860746613,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.323389366834624,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019394224782557181",
+            "extra": "mean: 300.8976347999976 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.376892841541524,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010925248672274845",
+            "extra": "mean: 80.79572254545363 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26358571478676984,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04218337133736552",
+            "extra": "mean: 3.793832305400008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.100542210412573,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009410141819544799",
+            "extra": "mean: 58.477677941176445 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06133577336945113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13235248242848918",
+            "extra": "mean: 16.303699212800005 sec\nrounds: 5"
           }
         ]
       }
