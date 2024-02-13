@@ -59,3 +59,24 @@ writer.add_metadata(
 with open("meta-pdf.pdf", "wb") as f:
     writer.write(f)
 ```
+
+## Updating metadata
+
+```python
+from pypdf import PdfReader, PdfWriter
+
+writer = PdfWriter(clone_from="example.pdf")
+
+# Change some values.
+writer.add_metadata(
+    {
+        "/Author": "Martin",
+        "/Producer": "Libre Writer",
+        "/Title": "Title",
+    }
+)
+
+# Save the new PDF to a file
+with open("meta-pdf.pdf", "wb") as f:
+    writer.write(f)
+```
