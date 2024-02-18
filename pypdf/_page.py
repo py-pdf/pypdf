@@ -440,12 +440,17 @@ class PageObject(DictionaryObject):
         else:
             call_stack.append(_i)
         if self.inline_images_keys is None:
-            nb_inlines = len(
-                re.findall(
-                    WHITESPACES_AS_REGEXP + b"BI" + WHITESPACES_AS_REGEXP,
-                    self._get_contents_as_bytes() or b"",
-                )
-            )
+            st = self._get_contents_as_bytes() or b""
+            nb_inlines = 0
+            for ma in re.finditer(
+                WHITESPACES_AS_REGEXP + b"BI" + WHITESPACES_AS_REGEXP,
+                st,
+            ):
+                st1 = st[: ma.start()]
+                if len(re.findall(b"[^\\\\]\\(", st1)) == len(
+                    re.findall(b"[^\\\\]\\)", st1)
+                ):
+                    nb_inlines += 1
             self.inline_images_keys = [f"~{x}~" for x in range(nb_inlines)]
         if obj is None:
             obj = self
