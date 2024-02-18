@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707860748291,
+  "lastUpdate": 1708271267315,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -47602,6 +47602,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13235248242848918",
             "extra": "mean: 16.303699212800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "cc306ad6abfb232f6922a7f0e939831d6611d0b7",
+          "message": "REL: 4.0.2\n\n## What's new\n\n### Bug Fixes (BUG)\n-  Use NumberObject for /Border elements of annotations (#2451) by @rsinger417\n\n### Documentation (DOC)\n-  Document easier way to update metadata (#2454) by @stefan6419846\n-  Typo `Polyline` \\xe2\\x86\\x92 `PolyLine` in adding-pdf-annotations.md (#2426) by @CWKSC\n\n### Developer Experience (DEV)\n-  Bump codecov/codecov-action from 3 to 4 (#2430) by @dependabot[bot]\n\n### Testing (TST)\n-  Avoid catching not emitted warnings (#2429) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.0.1...4.0.2)",
+          "timestamp": "2024-02-18T16:43:38+01:00",
+          "tree_id": "8fdc7eaf16cecf34e5448151c6ce88c5538c9f93",
+          "url": "https://github.com/py-pdf/pypdf/commit/cc306ad6abfb232f6922a7f0e939831d6611d0b7"
+        },
+        "date": 1708271264372,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3231885337850997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013804583689652624",
+            "extra": "mean: 300.91581920000294 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.809738307760364,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00839193144376271",
+            "extra": "mean: 78.06560727272488 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27459556685384123,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022864281718984438",
+            "extra": "mean: 3.6417193892000057 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.070733728946017,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009343314889627784",
+            "extra": "mean: 58.57979017646725 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.062314124284495426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11516461456722948",
+            "extra": "mean: 16.047726121199993 sec\nrounds: 5"
           }
         ]
       }
