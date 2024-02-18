@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Version 4.0.2, 2024-02-18
+
+### Bug Fixes (BUG)
+-  Use NumberObject for /Border elements of annotations (#2451)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.0.1...4.0.2)
+
 ## Version 4.0.1, 2024-01-28
 
 ### Bug Fixes (BUG)
