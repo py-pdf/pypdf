@@ -1,6 +1,6 @@
 from typing import Any, Tuple, Union
 
-from ._base import FloatObject, NumberObject
+from ._base import FloatObject, NumberObject, IndirectObject
 from ._data_structures import ArrayObject
 
 
@@ -26,6 +26,7 @@ class RectangleObject(ArrayObject):
         ArrayObject.__init__(self, [self._ensure_is_number(x) for x in arr])  # type: ignore
 
     def _ensure_is_number(self, value: Any) -> Union[FloatObject, NumberObject]:
+        value = IndirectObject.fully_unwrap(value)
         if not isinstance(value, (NumberObject, FloatObject)):
             value = FloatObject(value)
         return value

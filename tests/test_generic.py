@@ -1048,6 +1048,16 @@ def test_name_object_invalid_decode():
     NameObject.read_from_stream(stream, ReaderDummy(strict=False))
 
 
+@pytest.mark.enable_socket()
+def test_indirect_object_page_dimensions():
+    url = "https://github.com/py-pdf/pypdf/files/13302338/Zymeworks_Corporate.Presentation_FINAL1101.pdf.pdf"
+    name = "issue2287.pdf"
+    data = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
+    mediabox = reader.pages[0].mediabox
+    assert mediabox == RectangleObject((0, 0, 792, 612))
+
+
 def test_indirect_object_invalid_read():
     stream = BytesIO(b"0 1 s")
     with pytest.raises(PdfReadError) as exc:

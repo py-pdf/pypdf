@@ -286,6 +286,16 @@ class IndirectObject(PdfObject):
             return None
         return obj.get_object()
 
+    @staticmethod
+    def fully_unwrap(obj: Optional["PdfObject"]) -> Optional["PdfObject"]:
+        """
+        Given a PdfObject that may be an IndirectObject, recursively unwrap that IndirectObject until a None or
+        PdfObject that is not an IndirectObject is returned.
+        """
+        if isinstance(obj, IndirectObject):
+            return IndirectObject.fully_unwrap(obj.get_object())
+        return obj
+
     def __repr__(self) -> str:
         return f"IndirectObject({self.idnum!r}, {self.generation!r}, {id(self.pdf)})"
 
