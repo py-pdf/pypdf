@@ -308,19 +308,17 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
     Returns:
         List of all changes since git_tag.
     """
-    commits = str(
-        subprocess.check_output(
-            [
-                "git",
-                "--no-pager",
-                "log",
-                f"{git_tag}..HEAD",
-                '--pretty=format:"%H:::%s:::%aN"',
-            ],
-            stderr=subprocess.STDOUT,
-        )
-    ).strip("'b\\n")
-    lines = commits.split("\\n")
+    commits = subprocess.check_output(
+        [
+            "git",
+            "--no-pager",
+            "log",
+            f"{git_tag}..HEAD",
+            '--pretty=format:"%H:::%s:::%aN"',
+        ],
+        stderr=subprocess.STDOUT,
+    ).decode("UTF-8").strip()
+    lines = commits.splitlines()
     authors = get_author_mapping(len(lines))
     return [parse_commit_line(line, authors) for line in lines if line != ""]
 
