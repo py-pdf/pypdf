@@ -1,6 +1,6 @@
 from typing import Any, Tuple, Union
 
-from ._base import FloatObject, NumberObject, IndirectObject
+from ._base import FloatObject, IndirectObject, NumberObject
 from ._data_structures import ArrayObject
 
 
