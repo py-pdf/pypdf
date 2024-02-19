@@ -47,6 +47,7 @@ from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
 
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
+MAX_INDIRECT_OBJECT_NESTING_DEPTH = 10
 
 
 class PdfObject(PdfObjectProtocol):
@@ -292,8 +293,15 @@ class IndirectObject(PdfObject):
         Given a PdfObject that may be an IndirectObject, recursively unwrap that IndirectObject until a None or
         PdfObject that is not an IndirectObject is returned.
         """
-        if isinstance(obj, IndirectObject):
-            return IndirectObject.fully_unwrap(obj.get_object())
+        depth = 0
+        while isinstance(obj, IndirectObject):
+            if depth > MAX_INDIRECT_OBJECT_NESTING_DEPTH:
+                raise PdfReadError(
+                    "IndirectObject nested too deep. "
+                    "If required, consider increasing MAX_INDIRECT_OBJECT_NESTING_DEPTH."
+                )
+            depth += 1
+            obj = obj.get_object()
         return obj
 
     def __repr__(self) -> str:

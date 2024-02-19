@@ -1,6 +1,7 @@
 """Test the pypdf.generic module."""
 from io import BytesIO
 from pathlib import Path
+from typing import Optional
 from unittest.mock import patch
 
 import pytest
@@ -1056,6 +1057,72 @@ def test_indirect_object_page_dimensions():
     reader = PdfReader(data, strict=False)
     mediabox = reader.pages[0].mediabox
     assert mediabox == RectangleObject((0, 0, 792, 612))
+
+
+def test_indirect_object_fully_unwrap():
+    unwrapping = {}
+    expected_result = NumberObject(123)
+
+    class FakeGetObjectReturn:
+        """Fake class to allow the IndirectObject to resolve its underlying object"""
+
+        def __init__(self, result):
+            self.result = result
+
+        def get_object(self) -> Optional[PdfObject]:
+            return self.result
+
+    class FakePdf:
+        """Fake class to allow the IndirectObject to resolve its underlying object"""
+
+        def get_object(self, indirect_reference: IndirectObject) -> Optional[PdfObject]:
+            return FakeGetObjectReturn(unwrapping[indirect_reference.idnum])
+
+    fake_pdf = FakePdf()
+    # Now we set up two layers of indirection: indirect_object0 contains the object indirect_object1 contains
+    # the object expected_result
+    indirect_object0 = IndirectObject(0, 0, fake_pdf)
+    indirect_object1 = IndirectObject(1, 0, fake_pdf)
+    unwrapping[0] = indirect_object1
+    unwrapping[1] = expected_result
+
+    # Confirm our setup is correct
+    assert indirect_object0.get_object() == indirect_object1
+    assert indirect_object1.get_object() == expected_result
+
+    # And test
+    assert IndirectObject.fully_unwrap(indirect_object0) == expected_result
+
+
+def test_indirect_object_fully_unwrap_depth_limit():
+
+    class FakeGetObjectReturn:
+        """Fake class to allow the IndirectObject to resolve its underlying object"""
+
+        def __init__(self, result):
+            self.result = result
+
+        def get_object(self) -> Optional[PdfObject]:
+            return self.result
+
+    class FakePdf:
+        """
+        Fake class to allow the IndirectObject to resolve its underlying object. This version returns the IndirectObject
+        that is passed in, triggering our guard against indefinite recursion.
+        """
+
+        def get_object(self, indirect_reference: IndirectObject) -> Optional[PdfObject]:
+            return FakeGetObjectReturn(indirect_reference)
+
+    fake_pdf = FakePdf()
+
+    indirect_object = IndirectObject(0, 0, fake_pdf)
+
+    # And test
+    with pytest.raises(PdfReadError) as exc:
+        IndirectObject.fully_unwrap(indirect_object)
+    assert exc.value.args[0] == \
+           "IndirectObject nested too deep. If required, consider increasing MAX_INDIRECT_OBJECT_NESTING_DEPTH."
 
 
 def test_indirect_object_invalid_read():
