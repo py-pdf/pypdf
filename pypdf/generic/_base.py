@@ -348,7 +348,7 @@ class FloatObject(float, PdfObject):
         try:
             value = float(str_(value))
             return float.__new__(cls, value)
-        except Exception as e:
+        except ValueError as e:
             # If this isn't a valid decimal (happens in malformed PDFs)
             # fallback to 0
             logger_warning(

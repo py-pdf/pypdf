@@ -47,14 +47,24 @@ class ChildDummy(DictionaryObject):
         return self
 
 
-def test_float_object_exception(caplog):
+def test_float_object_invalid_format_warning(caplog):
     assert FloatObject("abc") == 0
     assert caplog.text != ""
 
 
-def test_number_object_exception(caplog):
+def test_number_object_invalid_format_warning(caplog):
     assert NumberObject("0,0") == 0
     assert caplog.text != ""
+
+
+def test_float_object_indirect_object_exception(caplog):
+    with pytest.raises(TypeError):
+        FloatObject(IndirectObject(0, 0, None))
+
+
+def test_number_object_indirect_object_exception(caplog):
+    with pytest.raises(TypeError):
+        NumberObject(IndirectObject(0, 0, None))
 
 
 def test_number_object_no_exception():
