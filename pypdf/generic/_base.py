@@ -289,8 +289,6 @@ class IndirectObject(PdfObject):
 
     def __getattr__(self, name: str) -> Any:
         # Attribute not found in object: look in pointed object
-        if name not in dir(self.get_object()):
-            raise AttributeError
         try:
             return getattr(self.get_object(), name)
         except AttributeError:
