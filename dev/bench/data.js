@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708457442697,
+  "lastUpdate": 1708457611846,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -47779,6 +47779,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.14452902106137547",
             "extra": "mean: 16.349836348000007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "s.bourlon@gmail.com",
+            "name": "Stefan Bourlon",
+            "username": "sbourlon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "efe779008594eb5c8e8ce8870b732602d54ccc75",
+          "message": "BUG: encode_pdfdocencoding() always returns bytes (#2440)\n\nIn the function encode_pdfdocencoding, cast its return value\r\nfrom bytearray to bytes to match its function signature.\r\n\r\nThis casting is necessary because bytearray is duck type\r\ncompatible with bytes in mypy, however this library expects only\r\nbytes in its Encryption class.\r\n\r\nFixes #2434.",
+          "timestamp": "2024-02-20T20:30:29+01:00",
+          "tree_id": "b597cb70913c3744caebcfe8e97d83dedf40ab86",
+          "url": "https://github.com/py-pdf/pypdf/commit/efe779008594eb5c8e8ce8870b732602d54ccc75"
+        },
+        "date": 1708457609402,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1618930791134305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004052821341039393",
+            "extra": "mean: 316.2662287999922 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.15916182325648,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013819027434664151",
+            "extra": "mean: 82.24251100000401 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2592281938191234,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02636549846409312",
+            "extra": "mean: 3.8576050901999905 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.41353197887038,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008084569646813781",
+            "extra": "mean: 60.92533899999886 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05978616589798538,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06762477013499954",
+            "extra": "mean: 16.72627747539999 sec\nrounds: 5"
           }
         ]
       }
