@@ -1,4 +1,5 @@
 """Test the pypdf._writer module."""
+
 import re
 import shutil
 import subprocess
@@ -1418,7 +1419,7 @@ def test_iss1767():
     # twice to define catalog and one as an XObject inducing a loop when
     # cloning
     url = "https://github.com/py-pdf/pypdf/files/11138472/test.pdf"
-    name = "iss1723.pdf"
+    name = "iss1767.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     PdfWriter(clone_from=reader)
 
