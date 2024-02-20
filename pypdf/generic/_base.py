@@ -282,17 +282,15 @@ class IndirectObject(PdfObject):
 
     def get_object(self) -> Optional["PdfObject"]:
         obj = self.pdf.get_object(self)
-        if obj is None:
-            return None
-        return obj.get_object()
+        return obj
 
     def __deepcopy__(self, memo: Any) -> "IndirectObject":
         return IndirectObject(self.idnum, self.generation, self.pdf)
 
     def __getattr__(self, name: str) -> Any:
         # Attribute not found in object: look in pointed object
-        if name == "pdf" or name not in dir(self.get_object()):
-            raise AttributeError  # xreturn lambda:None
+        if name not in dir(self.get_object()):
+            raise AttributeError
         try:
             return getattr(self.get_object(), name)
         except AttributeError:

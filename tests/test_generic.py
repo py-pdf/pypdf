@@ -1247,6 +1247,11 @@ def test_calling_indirect_objects():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.trailer.get("/Info")["/Creator"]
     reader.pages[0]["/Contents"][0].get_data()
+    writer = PdfWriter(clone_from=reader)
+    ind = writer._add_object(writer)
+    assert ind.fileobj == writer.fileobj
+    with pytest.raises(AttributeError):
+        ind.not_existing_attribute
 
 
 @pytest.mark.enable_socket()
