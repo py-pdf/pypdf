@@ -650,4 +650,4 @@ def encode_pdfdocencoding(unicode_string: str) -> bytes:
             raise UnicodeEncodeError(
                 "pdfdocencoding", c, -1, -1, "does not exist in translation table"
             )
-    return retval
+    return bytes(retval)
