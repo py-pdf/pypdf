@@ -914,8 +914,9 @@ def test_write_dict_stream_object(pdf_file_path):
 
     for k, v in page_object.items():
         if k == "/Test":
-            assert str(v) != str(stream_object)
+            assert repr(v) != repr(stream_object)
             assert isinstance(v, IndirectObject)
+            assert str(v) == str(stream_object)  # expansion of IndirectObjects
             assert str(v.get_object()) == str(stream_object)
             break
     else:

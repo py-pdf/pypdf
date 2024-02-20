@@ -286,6 +286,28 @@ class IndirectObject(PdfObject):
             return None
         return obj.get_object()
 
+    def __deepcopy__(self, memo: Any) -> "IndirectObject":
+        return IndirectObject(self.idnum, self.generation, self.pdf)
+
+    def __getattr__(self, name: str) -> Any:
+        # Attribute not found in object: look in pointed object
+        if name == "pdf" or name not in dir(self.get_object()):
+            raise AttributeError  # xreturn lambda:None
+        try:
+            return getattr(self.get_object(), name)
+        except AttributeError:
+            raise AttributeError(
+                f"No attribute {name} found in IndirectObject or pointed object"
+            )
+
+    def __getitem__(self, key: Any) -> Any:
+        # items should be extracted from pointed Object
+        return self.get_object()[key]  # type: ignore
+
+    def __str__(self) -> str:
+        # in this case we are looking for the pointed data
+        return self.get_object().__str__()
+
     def __repr__(self) -> str:
         return f"IndirectObject({self.idnum!r}, {self.generation!r}, {id(self.pdf)})"
 
