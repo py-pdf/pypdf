@@ -366,7 +366,7 @@ def str_(b: Any) -> str:
     if isinstance(b, bytes):
         return b.decode("latin-1")
     else:
-        return b.__str__()
+        return str(b)  # will return b.__str__() if defined
 
 
 @overload

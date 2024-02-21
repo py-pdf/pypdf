@@ -281,8 +281,7 @@ class IndirectObject(PdfObject):
         return self
 
     def get_object(self) -> Optional["PdfObject"]:
-        obj = self.pdf.get_object(self)
-        return obj
+        return self.pdf.get_object(self)
 
     def __deepcopy__(self, memo: Any) -> "IndirectObject":
         return IndirectObject(self.idnum, self.generation, self.pdf)
