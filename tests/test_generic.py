@@ -1252,6 +1252,11 @@ def test_calling_indirect_objects():
     assert ind.fileobj == writer.fileobj
     with pytest.raises(AttributeError):
         ind.not_existing_attribute
+    # create an IndirectObject referencing an IndirectObject.
+    writer._objects.append(writer.pages[0].indirect_reference)
+    ind = IndirectObject(len(writer._objects), 0, writer)
+    with pytest.raises(PdfStreamError):
+        ind.get_object()
 
 
 @pytest.mark.enable_socket()

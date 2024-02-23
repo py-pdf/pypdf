@@ -289,7 +289,13 @@ class IndirectObject(PdfObject):
     def __getattr__(self, name: str) -> Any:
         # Attribute not found in object: look in pointed object
         try:
-            return getattr(self.get_object(), name)
+            o = self.pdf.get_object(self)
+            # the check is done here to not slow down get_object()
+            if isinstance(o, IndirectObject):
+                raise PdfStreamError(
+                    f"{self.__repr__()} references an IndirectObject {o.__repr__()}"
+                )
+            return getattr(o, name)
         except AttributeError:
             raise AttributeError(
                 f"No attribute {name} found in IndirectObject or pointed object"
@@ -297,7 +303,13 @@ class IndirectObject(PdfObject):
 
     def __getitem__(self, key: Any) -> Any:
         # items should be extracted from pointed Object
-        return self.get_object()[key]  # type: ignore
+        o = self.pdf.get_object(self)
+        # the check is done here to not slow down get_object()
+        if isinstance(o, IndirectObject):
+            raise PdfStreamError(
+                f"{self.__repr__()} references an IndirectObject {o.__repr__()}"
+            )
+        return o[key]
 
     def __str__(self) -> str:
         # in this case we are looking for the pointed data
