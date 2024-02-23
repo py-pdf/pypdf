@@ -1256,7 +1256,7 @@ def test_calling_indirect_objects():
     writer._objects.append(writer.pages[0].indirect_reference)
     ind = IndirectObject(len(writer._objects), 0, writer)
     with pytest.raises(PdfStreamError):
-        ind.get_object()
+        ind["/Type"]
 
 
 @pytest.mark.enable_socket()
