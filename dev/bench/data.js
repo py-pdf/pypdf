@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708858984555,
+  "lastUpdate": 1708860204499,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -47897,6 +47897,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.14237527702209543",
             "extra": "mean: 16.555042166200003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "03af2c2b61df45a3ab11fd5e6895a98badbe9346",
+          "message": "ENH: Automatic access to pointed object for IndirectObject (#2464)\n\nalternative solution to #2460\r\nfixes #2287",
+          "timestamp": "2024-02-25T12:20:29+01:00",
+          "tree_id": "a4cc1bdcea5221f673ff0d7709790aafb61a19f8",
+          "url": "https://github.com/py-pdf/pypdf/commit/03af2c2b61df45a3ab11fd5e6895a98badbe9346"
+        },
+        "date": 1708860202638,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2381102762494005,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0029818598982819956",
+            "extra": "mean: 308.8220952000029 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.275099943026799,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009599347083393743",
+            "extra": "mean: 81.46573181818181 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2640029300857296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026998346070191324",
+            "extra": "mean: 3.7878367474000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.352190970893716,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000421143006170048",
+            "extra": "mean: 61.15388462499993 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06208312223004405,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06330952928317732",
+            "extra": "mean: 16.107437320800006 sec\nrounds: 5"
           }
         ]
       }
