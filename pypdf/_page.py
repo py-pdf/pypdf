@@ -2340,7 +2340,10 @@ def _get_fonts_walk(
             )
         ):
             # the list comprehension ensures there is FontFile
-            emb.add(cast(str, f["/BaseFont"]))
+            try:
+                emb.add(cast(str, f["/BaseFont"]))
+            except KeyError:
+                emb.add("(" + cast(str, f["/Subtype"]) + ")")
 
     if "/DR" in obj and "/Font" in cast(DictionaryObject, obj["/DR"]):
         for f in cast(DictionaryObject, cast(DictionaryObject, obj["/DR"])["/Font"]):
