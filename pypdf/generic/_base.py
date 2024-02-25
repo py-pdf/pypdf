@@ -281,10 +281,36 @@ class IndirectObject(PdfObject):
         return self
 
     def get_object(self) -> Optional["PdfObject"]:
-        obj = self.pdf.get_object(self)
-        if obj is None:
-            return None
-        return obj.get_object()
+        return self.pdf.get_object(self)
+
+    def __deepcopy__(self, memo: Any) -> "IndirectObject":
+        return IndirectObject(self.idnum, self.generation, self.pdf)
+
+    def _get_object_with_check(self) -> Optional["PdfObject"]:
+        o = self.get_object()
+        # the check is done here to not slow down get_object()
+        if isinstance(o, IndirectObject):
+            raise PdfStreamError(
+                f"{self.__repr__()} references an IndirectObject {o.__repr__()}"
+            )
+        return o
+
+    def __getattr__(self, name: str) -> Any:
+        # Attribute not found in object: look in pointed object
+        try:
+            return getattr(self._get_object_with_check(), name)
+        except AttributeError:
+            raise AttributeError(
+                f"No attribute {name} found in IndirectObject or pointed object"
+            )
+
+    def __getitem__(self, key: Any) -> Any:
+        # items should be extracted from pointed Object
+        return self._get_object_with_check()[key]  # type: ignore
+
+    def __str__(self) -> str:
+        # in this case we are looking for the pointed data
+        return self.get_object().__str__()
 
     def __repr__(self) -> str:
         return f"IndirectObject({self.idnum!r}, {self.generation!r}, {id(self.pdf)})"

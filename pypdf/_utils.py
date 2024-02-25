@@ -362,21 +362,11 @@ def b_(s: Union[str, bytes]) -> bytes:
         return r
 
 
-@overload
-def str_(b: str) -> str:
-    ...
-
-
-@overload
-def str_(b: bytes) -> str:
-    ...
-
-
-def str_(b: Union[str, bytes]) -> str:
+def str_(b: Any) -> str:
     if isinstance(b, bytes):
         return b.decode("latin-1")
     else:
-        return b
+        return str(b)  # will return b.__str__() if defined
 
 
 @overload
