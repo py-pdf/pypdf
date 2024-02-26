@@ -41,13 +41,12 @@ from .._utils import (
     logger_warning,
     read_non_whitespace,
     read_until_regex,
-    str_,
+    str_, deprecate,
 )
 from ..errors import (
     STREAM_TRUNCATED_PREMATURELY,
     PdfReadError,
     PdfStreamError,
-    PyPdfError,
 )
 
 __author__ = "Mathieu Fenniak"
@@ -620,7 +619,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")
         if out != b"/":
-            raise PyPdfError(f"Incorrect first char in NameObject:({self})", __name__)
+            deprecate(f"Incorrect first char in NameObject, should start with '/':({self})")
         for c in self[1:]:
             if c > "~":
                 for x in c.encode("utf-8"):
