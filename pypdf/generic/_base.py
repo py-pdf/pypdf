@@ -37,11 +37,12 @@ from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
     b_,
+    deprecate,
     deprecate_no_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
-    str_, deprecate,
+    str_,
 )
 from ..errors import (
     STREAM_TRUNCATED_PREMATURELY,
