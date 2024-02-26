@@ -1398,3 +1398,12 @@ def test_pos_text_in_textvisitor2():
         "hotels, short-term rentals, etc., advertised rates: mandatory fee disclosures,  SB 683",
         "housing rental properties advertised rates: disclosures,  SB 611",
     ]
+
+
+@pytest.mark.enable_socket()
+def test_missing_basefont_in_type3():
+    """Cf #2289"""
+    url = "https://github.com/py-pdf/pypdf/files/13307713/missing-base-font.pdf"
+    name = "missing-base-font.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0]._get_fonts()
