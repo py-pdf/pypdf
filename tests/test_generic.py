@@ -1,4 +1,5 @@
 """Test the pypdf.generic module."""
+
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -271,6 +272,16 @@ def test_encode_pdfdocencoding_keyerror():
     with pytest.raises(UnicodeEncodeError) as exc:
         encode_pdfdocencoding("😀")
     assert exc.value.args[0] == "pdfdocencoding"
+
+
+@pytest.mark.parametrize("test_input", ["", "data"])
+def test_encode_pdfdocencoding_returns_bytes(test_input):
+    """
+    Test that encode_pdfdocencoding() always returns bytes because bytearray
+    is duck type compatible with bytes in mypy
+    """
+    out = encode_pdfdocencoding(test_input)
+    assert isinstance(out, bytes)
 
 
 def test_read_object_comment_exception():
@@ -1235,3 +1246,35 @@ def test_encodedstream_set_data():
     assert cc["/Filter"] == ["/FlateDecode", "/FlateDecode", "/FlateDecode"]
     assert str(cc["/DecodeParms"]) == "[NullObject, NullObject, NullObject]"
     assert cc[NameObject("/Test")] == "/MyTest"
+
+
+def test_calling_indirect_objects():
+    """Cope with cases where attributes/items are called from indirectObject"""
+    url = (
+        "https://raw.githubusercontent.com/xrkk/tmpppppp/main/"
+        "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
+    )
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.trailer.get("/Info")["/Creator"]
+    reader.pages[0]["/Contents"][0].get_data()
+    writer = PdfWriter(clone_from=reader)
+    ind = writer._add_object(writer)
+    assert ind.fileobj == writer.fileobj
+    with pytest.raises(AttributeError):
+        ind.not_existing_attribute
+    # create an IndirectObject referencing an IndirectObject.
+    writer._objects.append(writer.pages[0].indirect_reference)
+    ind = IndirectObject(len(writer._objects), 0, writer)
+    with pytest.raises(PdfStreamError):
+        ind["/Type"]
+
+
+@pytest.mark.enable_socket()
+def test_indirect_object_page_dimensions():
+    url = "https://github.com/py-pdf/pypdf/files/13302338/Zymeworks_Corporate.Presentation_FINAL1101.pdf.pdf"
+    name = "issue2287.pdf"
+    data = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
+    mediabox = reader.pages[0].mediabox
+    assert mediabox == RectangleObject((0, 0, 792, 612))
