@@ -18,11 +18,9 @@ COMMITS__VERSION_4_0_1 = DATA_PATH.joinpath("commits__version_4_0_1.json")
 
 
 def test_get_git_commits_since_tag():
-    with (
-        open(COMMITS__VERSION_4_0_1, mode="rb") as commits,
-        mock.patch("urllib.request.urlopen", side_effect=lambda n: commits),
-        mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1),
-    ):
+    with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, \
+            mock.patch("urllib.request.urlopen", side_effect=lambda n: commits), \
+            mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1):
         commits = make_release.get_git_commits_since_tag("4.0.1")
     assert commits == [
         make_release.Change(
@@ -64,11 +62,9 @@ def test_get_git_commits_since_tag():
 
 
 def test_get_formatted_changes():
-    with (
-        open(COMMITS__VERSION_4_0_1, mode="rb") as commits,
-        mock.patch("urllib.request.urlopen", side_effect=lambda n: commits),
-        mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1),
-    ):
+    with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, \
+            mock.patch("urllib.request.urlopen", side_effect=lambda n: commits), \
+            mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1):
         output, output_with_user = make_release.get_formatted_changes("4.0.1")
 
     assert output == """
