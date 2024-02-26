@@ -7,8 +7,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple
 
-from rich.prompt import Prompt
-
 GH_ORG = "py-pdf"
 GH_PROJECT = "pypdf"
 VERSION_FILE_PATH = "pypdf/_version.py"
@@ -84,6 +82,8 @@ def adjust_version_py(version: str) -> None:
 
 def get_version_interactive(new_version: str, changes: str) -> str:
     """Get the new __version__ interactively."""
+    from rich.prompt import Prompt
+
     print("The changes are:")
     print(changes)
     orig = new_version
