@@ -37,7 +37,6 @@ from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
     b_,
-    deprecate,
     deprecate_no_replacement,
     logger_warning,
     read_non_whitespace,
@@ -620,7 +619,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")
         if out != b"/":
-            deprecate(f"Incorrect first char in NameObject, should start with '/':({self})")
+            deprecate_no_replacement(f"Incorrect first char in NameObject, should start with '/':({self})","5.0.0")
         for c in self[1:]:
             if c > "~":
                 for x in c.encode("utf-8"):
