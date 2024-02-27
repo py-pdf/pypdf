@@ -219,9 +219,8 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-    NameObject("hello").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"hello"
-    assert "Incorrect first char" in caplog.text
+    with pytest.raises(DeprecationWarning):
+        NameObject("hello").write_to_stream(b)
 
     caplog.clear()
     b = BytesIO()
