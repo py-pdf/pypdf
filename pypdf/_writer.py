@@ -1767,7 +1767,7 @@ class PdfWriter:
             content.get_data()  # this ensures ._data is rebuilt from the .operations
 
         def clean_forms(
-            elt: DictionaryObject, stack: List[DictionaryObject], visited_objects: Set[Dict[Any, Any]] = set()
+            elt: DictionaryObject, stack: List[DictionaryObject], visited_resources: List[Dict]
         ) -> Tuple[List[str], List[str]]:
             nonlocal to_delete
             if elt in stack:
@@ -1775,14 +1775,15 @@ class PdfWriter:
                 return [], []  # pragma: no cover
     
             try:
+                if elt["/Resources"] in visited_resources:
+                    # to prevent infinite looping
+                    return [], []
+                visited_resources.append(elt["/Resources"])
+                
                 d = cast(
                     Dict[Any, Any],
                     cast(DictionaryObject, elt["/Resources"])["/XObject"],
                 )
-                if d in visited_objects:
-                    # to prevent infinite looping
-                    return [], []
-                visited_objects.add(d)
             except KeyError:
                 d = {}
             images = []
@@ -1810,7 +1811,7 @@ class PdfWriter:
                                     if k1 not in ["/Length", "/Filter", "/DecodeParms"]
                                 }
                             )
-                        clean_forms(content, stack + [elt])  # clean sub forms
+                        clean_forms(content, stack + [elt], visited_resources)  # clean sub forms
                     if content is not None:
                         if isinstance(v, IndirectObject):
                             self._objects[v.idnum - 1] = content
@@ -1835,7 +1836,7 @@ class PdfWriter:
         if "/Contents" in page:
             content = cast(ContentStream, page.get_contents())
 
-            images, forms = clean_forms(page, [])
+            images, forms = clean_forms(page, [], [])
 
             clean(content, images, forms)
             page.replace_contents(content)
