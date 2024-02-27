@@ -42,7 +42,6 @@ from typing import (
     Any,
     Callable,
     Deque,
-    Set,
     Dict,
     Iterable,
     List,
@@ -1773,13 +1772,11 @@ class PdfWriter:
             if elt in stack:
                 # to prevent infinite looping
                 return [], []  # pragma: no cover
-    
             try:
                 if elt["/Resources"] in visited_resources:
                     # to prevent infinite looping
                     return [], []
                 visited_resources.append(elt["/Resources"])
-                
                 d = cast(
                     Dict[Any, Any],
                     cast(DictionaryObject, elt["/Resources"])["/XObject"],
