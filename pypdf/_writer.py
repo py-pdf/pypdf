@@ -1767,7 +1767,7 @@ class PdfWriter:
             content.get_data()  # this ensures ._data is rebuilt from the .operations
 
         def clean_forms(
-            elt: DictionaryObject, stack: List[DictionaryObject], visited_objects: Set[Dict] = set()
+            elt: DictionaryObject, stack: List[DictionaryObject], visited_objects: Set[Dict[Any, Any]] = set()
         ) -> Tuple[List[str], List[str]]:
             nonlocal to_delete
             if elt in stack:
@@ -1775,16 +1775,15 @@ class PdfWriter:
                 return [], []  # pragma: no cover
     
             try:
-                xobject = cast(DictionaryObject, elt["/Resources"])["/XObject"]
-                if xobject in visited_objects:
-                    # to prevent infinite looping
-                    return [], []
                 d = cast(
                     Dict[Any, Any],
                     cast(DictionaryObject, elt["/Resources"])["/XObject"],
                 )
+                if d in visited_objects:
+                    # to prevent infinite looping
+                    return [], []
+                visited_objects.add(d)
             except KeyError:
-                xobject = None
                 d = {}
             images = []
             forms = []
@@ -1811,8 +1810,6 @@ class PdfWriter:
                                     if k1 not in ["/Length", "/Filter", "/DecodeParms"]
                                 }
                             )
-                        if xobject:
-                            visited_objects.add(xobject)
                         clean_forms(content, stack + [elt])  # clean sub forms
                     if content is not None:
                         if isinstance(v, IndirectObject):
