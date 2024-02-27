@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1708963752491,
+  "lastUpdate": 1709050968944,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -48074,6 +48074,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06622186798414989",
             "extra": "mean: 16.127237801400014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "abfff1bffd85fca0ae9e1e24165b511266bedcd3",
+          "message": "DOC: Amend robustness documentation (#2479)\n\n1. Remove mention of the deprecated PdfMerger.\r\n2. Remove reference to the non-existent PdfWriter strict parameter.",
+          "timestamp": "2024-02-27T17:19:57+01:00",
+          "tree_id": "da069df3396e47e8f914959f187706a23cfb4e84",
+          "url": "https://github.com/py-pdf/pypdf/commit/abfff1bffd85fca0ae9e1e24165b511266bedcd3"
+        },
+        "date": 1709050967056,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.251654264637267,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030898056700725757",
+            "extra": "mean: 307.53577060000055 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.336581551891378,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009047054355982635",
+            "extra": "mean: 81.05973245454575 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2688658872257033,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02486088321755658",
+            "extra": "mean: 3.719326428200003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.16795864819055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003726392611089207",
+            "extra": "mean: 58.24804337499945 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06165341129844716,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08530750604036273",
+            "extra": "mean: 16.219702672400004 sec\nrounds: 5"
           }
         ]
       }
