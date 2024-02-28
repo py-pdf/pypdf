@@ -1999,3 +1999,15 @@ def test_reattach_fields():
     assert len(writer.reattach_fields()) == 7
     writer.reattach_fields()
     assert len(writer._root_object["/AcroForm"]["/Fields"]) == 15
+
+    writer = PdfWriter()
+    for p in reader.pages:
+        writer.add_page(p)
+    ano = writer.pages[0]["/Annots"][0].get_object()
+    del ano.indirect_reference
+    writer.pages[0]["/Annots"][0] = ano
+    assert isinstance(writer.pages[0]["/Annots"][0], DictionaryObject)
+    assert len(writer.reattach_fields(writer.pages[0])) == 6
+    assert isinstance(writer.pages[0]["/Annots"][0], IndirectObject)
+    del writer.pages[1]["/Annots"]
+    assert len(writer.reattach_fields(writer.pages[1])) == 0

@@ -970,7 +970,10 @@ class PdfWriter:
             indirect = isinstance(ano, IndirectObject)
             ano = cast(DictionaryObject, ano.get_object())
             if ano.get("/Subtype", "") == "/Widget" and "/FT" in ano:
-                if ano.indirect_reference in fields:
+                if (
+                    "indirect_reference" in ano.__dict__
+                    and ano.indirect_reference in fields
+                ):
                     continue
                 if not indirect:
                     annots[idx] = self._add_object(ano)
