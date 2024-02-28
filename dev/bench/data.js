@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709148594791,
+  "lastUpdate": 1709149311016,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -48310,6 +48310,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08525532061992966",
             "extra": "mean: 16.061284529399995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "afbee382f8fd2b39588db6470b9b2b2c82905318",
+          "message": "ENH: Add reattach_fields function (#2480)\n\nParse page/document annotations for orphan fields and reattach them to AcroForm/Fields\r\nCloses #2453",
+          "timestamp": "2024-02-28T20:38:57+01:00",
+          "tree_id": "c1ceaeeec4b416584a7e6336b2db00e85bb9ebd3",
+          "url": "https://github.com/py-pdf/pypdf/commit/afbee382f8fd2b39588db6470b9b2b2c82905318"
+        },
+        "date": 1709149309325,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3757867891413453,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021732721407488093",
+            "extra": "mean: 296.2272389999953 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.197058984816612,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00959096341784536",
+            "extra": "mean: 81.98697745455195 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27561734132557153,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02450443691613187",
+            "extra": "mean: 3.628218729600019 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.75037937691531,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007277039806932894",
+            "extra": "mean: 56.336824062505286 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06168302357914856,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09145785268192423",
+            "extra": "mean: 16.2119160504 sec\nrounds: 5"
           }
         ]
       }
