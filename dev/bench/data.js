@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709149311016,
+  "lastUpdate": 1709204498628,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -48369,6 +48369,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09145785268192423",
             "extra": "mean: 16.2119160504 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f20c36eabd59ea661f30c5da35af7c9e435c7de9",
+          "message": "Improve lossless compression example (#2488)\n\nSimplify the previous version and remove the side effect of changing the PDF in ways not just related to lossless compression (e.g. links on content page did not work in the created PDF).",
+          "timestamp": "2024-02-29T11:58:39+01:00",
+          "tree_id": "40ffadcf963e6f5886dcf5b8f14fdd3cccfd2bcd",
+          "url": "https://github.com/py-pdf/pypdf/commit/f20c36eabd59ea661f30c5da35af7c9e435c7de9"
+        },
+        "date": 1709204495620,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2343439239081238,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019010943737486155",
+            "extra": "mean: 309.18171459999826 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.234646558819161,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011068093154456407",
+            "extra": "mean: 81.7350951000023 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2663233376049527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04820969079478041",
+            "extra": "mean: 3.7548342890000015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.732294280445977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00049729144843637",
+            "extra": "mean: 59.76466725000407 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06218485531502576,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10628785221346931",
+            "extra": "mean: 16.081085899999987 sec\nrounds: 5"
           }
         ]
       }
