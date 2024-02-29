@@ -1801,7 +1801,7 @@ class PdfWriter:
                                 {
                                     k1: v1
                                     for k1, v1 in o.items()
-                                    if k1 not in ["/Length", "/Filter", "/DecodeParms"]
+                                    if k1 not in ["/Length", "/Filter", "/DecodeParms", "/Resources"]
                                 }
                             )
                         clean_forms(content, stack + [elt])  # clean sub forms
