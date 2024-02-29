@@ -94,7 +94,7 @@ def merge():
 
     outline_item = writer.add_outline_item("An outline item", 0)
     writer.add_outline_item("deeper", 0, parent=outline_item)
-    writer.add_metadata({"author": "Martin Thoma"})
+    writer.add_metadata({"/Author": "Martin Thoma"})
     writer.add_named_destination("title", 0)
     writer.set_page_layout("/SinglePage")
     writer.page_mode = "/UseThumbs"
@@ -133,10 +133,11 @@ def test_merge(benchmark):
 
 
 def text_extraction(pdf_path):
-    reader = PdfReader(pdf_path)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text()
+    with open(pdf_path, mode="rb") as fd:
+        reader = PdfReader(fd)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
     return text
 
 

@@ -1978,3 +1978,36 @@ def test_merging_many_temporary_files():
     for n, page in enumerate(reader.pages):
         text = page.extract_text()
         assert text == str(n)
+
+
+@pytest.mark.enable_socket()
+def test_reattach_fields():
+    """
+    Test Reattach function
+    addressed in #2453
+    """
+    url = "https://github.com/py-pdf/pypdf/files/14241368/ExampleForm.pdf"
+    name = "iss2453.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    for p in reader.pages:
+        writer.add_page(p)
+    assert len(writer.reattach_fields()) == 15
+    assert len(writer.reattach_fields()) == 0  # nothing to append anymore
+    assert len(writer._root_object["/AcroForm"]["/Fields"]) == 15
+    writer = PdfWriter(clone_from=reader)
+    assert len(writer.reattach_fields()) == 7
+    writer.reattach_fields()
+    assert len(writer._root_object["/AcroForm"]["/Fields"]) == 15
+
+    writer = PdfWriter()
+    for p in reader.pages:
+        writer.add_page(p)
+    ano = writer.pages[0]["/Annots"][0].get_object()
+    del ano.indirect_reference
+    writer.pages[0]["/Annots"][0] = ano
+    assert isinstance(writer.pages[0]["/Annots"][0], DictionaryObject)
+    assert len(writer.reattach_fields(writer.pages[0])) == 6
+    assert isinstance(writer.pages[0]["/Annots"][0], IndirectObject)
+    del writer.pages[1]["/Annots"]
+    assert len(writer.reattach_fields(writer.pages[1])) == 0

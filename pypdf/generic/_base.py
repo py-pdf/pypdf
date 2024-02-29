@@ -615,7 +615,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")
         if out != b"/":
-            logger_warning(f"Incorrect first char in NameObject:({self})", __name__)
+            deprecate_no_replacement(f"Incorrect first char in NameObject, should start with '/': ({self})", "6.0.0")
         for c in self[1:]:
             if c > "~":
                 for x in c.encode("utf-8"):

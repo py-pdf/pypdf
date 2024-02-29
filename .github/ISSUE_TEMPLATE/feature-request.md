@@ -3,7 +3,7 @@ name: Request a Feature
 about: What do you think is missing in pypdf?
 title: ''
 labels: Feature Request
-assignees: MartinThoma
+assignees: ''
 
 ---
 

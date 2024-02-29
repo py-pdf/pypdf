@@ -932,6 +932,55 @@ class PdfWriter:
                             value if value in k[AA.AP]["/N"] else "/Off"
                         )
 
+    def reattach_fields(
+        self, page: Optional[PageObject] = None
+    ) -> List[DictionaryObject]:
+        """
+        Parse annotations within the page looking for orphan fields and
+        reattach then into the Fields Structure
+
+        Args:
+            page: page to analyze.
+                  If none is provided, all pages will be analyzed
+        Returns:
+            list of reattached fields
+        """
+        lst = []
+        if page is None:
+            for p in self.pages:
+                lst += self.reattach_fields(p)
+            return lst
+
+        try:
+            af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        except KeyError:
+            af = DictionaryObject()
+            self._root_object[NameObject(CatalogDictionary.ACRO_FORM)] = af
+        try:
+            fields = cast(ArrayObject, af[InteractiveFormDictEntries.Fields])
+        except KeyError:
+            fields = ArrayObject()
+            af[NameObject(InteractiveFormDictEntries.Fields)] = fields
+
+        if "/Annots" not in page:
+            return lst
+        annots = cast(ArrayObject, page["/Annots"])
+        for idx in range(len(annots)):
+            ano = annots[idx]
+            indirect = isinstance(ano, IndirectObject)
+            ano = cast(DictionaryObject, ano.get_object())
+            if ano.get("/Subtype", "") == "/Widget" and "/FT" in ano:
+                if (
+                    "indirect_reference" in ano.__dict__
+                    and ano.indirect_reference in fields
+                ):
+                    continue
+                if not indirect:
+                    annots[idx] = self._add_object(ano)
+                fields.append(ano.indirect_reference)
+                lst.append(ano)
+        return lst
+
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
         Copy the reader document root to the writer and all sub elements,
@@ -1898,15 +1947,15 @@ class PdfWriter:
 
         border_arr: BorderArrayType
         if border is not None:
-            border_arr = [NameObject(n) for n in border[:3]]
+            border_arr = [NumberObject(n) for n in border[:3]]
             if len(border) == 4:
-                dash_pattern = ArrayObject([NameObject(n) for n in border[3]])
+                dash_pattern = ArrayObject([NumberObject(n) for n in border[3]])
                 border_arr.append(dash_pattern)
         else:
             border_arr = [NumberObject(2), NumberObject(2), NumberObject(2)]
 
         if isinstance(rect, str):
-            rect = NameObject(rect)
+            rect = NumberObject(rect)
         elif isinstance(rect, RectangleObject):
             pass
         else:

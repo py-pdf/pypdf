@@ -27,11 +27,13 @@ that they should fix their stuff.
 
 pypdf gives you the option to be strict or not.
 
-pypdf has three core objects and all of them have a `strict` parameter:
+pypdf has two core objects:
 
 * [`PdfReader`](../modules/PdfReader.md)
 * [`PdfWriter`](../modules/PdfWriter.md)
-* [`PdfMerger`](../modules/PdfMerger.md)
+
+Only the PdfReader has a `strict` parameter, since presumably you do not want
+to write a non-conforming PDF.
 
 Choosing `strict=True` means that pypdf will raise an exception if a PDF does
 not follow the specification.

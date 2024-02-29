@@ -165,8 +165,8 @@ class Line(MarkupAnnotation):
                 ),
                 NameObject("/LE"): ArrayObject(
                     [
-                        NameObject(None),
-                        NameObject(None),
+                        NameObject("/None"),
+                        NameObject("/None"),
                     ]
                 ),
                 NameObject("/IC"): ArrayObject(
@@ -290,7 +290,7 @@ class Polygon(MarkupAnnotation):
                 NameObject("/Type"): NameObject("/Annot"),
                 NameObject("/Subtype"): NameObject("/Polygon"),
                 NameObject("/Vertices"): ArrayObject(coord_list),
-                NameObject("/IT"): NameObject("PolygonCloud"),
+                NameObject("/IT"): NameObject("/PolygonCloud"),
                 NameObject("/Rect"): RectangleObject(_get_bounding_rectangle(vertices)),
             }
         )
