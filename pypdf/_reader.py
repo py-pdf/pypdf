@@ -678,7 +678,7 @@ class PdfReader:
 
         Returns:
             list of pages:
-                - empty list :
+                - empty list:
                     the field has no widgets attached
                     (either hidden field or ancestor field)
                 - single page list :
