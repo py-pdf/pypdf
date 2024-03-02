@@ -1120,8 +1120,7 @@ def test_text_extraction_invalid_mode():
 @pytest.mark.enable_socket()
 def test_get_page_showing_field():
     """
-    Test new function to get pages
-    Uses testfile from #2452 in order to get fiels on multiple pages,
+    Uses testfile from #2452 in order to get fields on multiple pages,
         choices boxes,...
     """
     url = "https://github.com/py-pdf/pypdf/files/14031491/Form_Structure_v50.pdf"
@@ -1129,7 +1128,7 @@ def test_get_page_showing_field():
     reader = PdfReader(BytesIO(get_data_from_url(url, name)))
     writer = PdfWriter(clone_from=reader)
 
-    # validate with Field:  only works on Reader (no get_field on writer yet)
+    # validate with Field:  only works on Reader (no get_fields on writer yet)
     fld = reader.get_fields()
     assert [
         p.page_number for p in reader.get_pages_showing_field(fld["FormVersion"])
@@ -1150,7 +1149,7 @@ def test_get_page_showing_field():
         )
     ] == [0, 0, 0, 0, 0]
 
-    # validate with indirectObject
+    # validate with IndirectObject
     # SiteID field is a textbox on multiple pages
     assert [
         p.page_number
