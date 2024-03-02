@@ -671,21 +671,29 @@ class PdfReader:
         self, field: Union[Field, PdfObject, IndirectObject]
     ) -> List[PageObject]:
         """
-        provides list of pages where the field is called
+        Provides list of pages where the field is called.
 
         Args:
             field: Field Object, PdfObject or IndirectObject referencing a Field
 
-        Returns: List:
-            Empty list : the field has no widgets attached
-                         (either hidden field or ancestor field)
-            Single page list : page where the widget is present (most common)
-            Multiple page list: field multiple times with multiple kids widgets
-                         (ex:radio buttons, field repeated on multiple pages)
+        Returns:
+            list of pages:
+                - empty list :
+                    the field has no widgets attached
+                    (either hidden field or ancestor field)            
+                - single page list :
+                    page where the widget is present
+                    (most common)
+                - multiple page list:
+                    field with multiple kids widgets
+                    (ex:radio buttons, field repeated on multiple pages)
 
         Note:
-            To get page indexes, use:
+            to get page indexes, use:
+            
+            ```python
             [ p.page_number for p in pdfdoc.get_pages_showing_field(field) ]
+            ```
         """
 
         def _get_inherited(obj: DictionaryObject, key: str) -> Any:
@@ -1882,7 +1890,9 @@ class PdfReader:
     def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
         """Take the permissions as an integer, return the allowed access."""
         deprecate_with_replacement(
-            old_name="decode_permissions", new_name="user_access_permissions", removed_in="5.0.0"
+            old_name="decode_permissions",
+            new_name="user_access_permissions",
+            removed_in="5.0.0",
         )
 
         permissions_mapping = {

@@ -1009,21 +1009,29 @@ class PdfWriter:
         self, field: Union[Field, PdfObject, IndirectObject]
     ) -> List[PageObject]:
         """
-        provides list of pages where the field is called
+        Provides list of pages where the field is called.
 
         Args:
             field: Field Object, PdfObject or IndirectObject referencing a Field
 
-        Returns: List:
-            Empty list : the field has no widgets attached
-                         (either hidden field or ancestor field)
-            Single page list : page where the widget is present (most common)
-            Multiple page list: field multiple times with multiple kids widgets
-                         (ex:radio buttons, field repeated on multiple pages)
+        Returns:
+            list of pages:
+                - empty list :
+                    the field has no widgets attached
+                    (either hidden field or ancestor field)            
+                - single page list :
+                    page where the widget is present
+                    (most common)
+                - multiple page list:
+                    field with multiple kids widgets
+                    (ex:radio buttons, field repeated on multiple pages)
 
         Note:
-            To get page indexes, use:
+            to get page indexes, use:
+            
+            ```python
             [ p.page_number for p in pdfdoc.get_pages_showing_field(field) ]
+            ```
         """
 
         def _get_inherited(obj: DictionaryObject, key: str) -> Any:
