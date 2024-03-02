@@ -1064,7 +1064,7 @@ class PdfWriter:
             kids = field.get("/Kids", ())
             for k in kids:
                 k = k.get_object()
-                if k.get("/Subtype", "") == "/Widget":
+                if (k.get("/Subtype", "") == "/Widget") and ("/T" not in k):
                     # kids that is just a widget not an field:
                     if "/P" in k:
                         ret += [k["/P"].get_object()]
