@@ -96,6 +96,7 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    Field,
     Fit,
     FloatObject,
     IndirectObject,
@@ -1003,6 +1004,75 @@ class PdfWriter:
                 fields.append(ano.indirect_reference)
                 lst.append(ano)
         return lst
+
+    def get_pages_showing_field(
+        self, field: Union[Field, PdfObject, IndirectObject]
+    ) -> List[PageObject]:
+        """
+        provides list of pages where the field is called
+
+        Args:
+            field: Field Object, PdfObject or IndirectObject referencing a Field
+
+        Returns: List:
+            Empty list : the field has no widgets attached
+                         (either hidden field or ancestor field)
+            single page list : page where the widget is present (most common)
+            multiple page list: field multiple times with multiple kids widgets
+                         (ex:radio buttons, field repeated on multiple pages)
+
+        Note:
+            to get page indexes, use:
+            [ p.page_number for p in pdfdoc.get_pages_showing_field(field) ]
+        """
+
+        def _get_inherit(obj: DictionaryObject, key: str) -> Any:
+            if key in obj:
+                return obj[key]
+            elif "/Parent" in obj:
+                return _get_inherit(
+                    cast(DictionaryObject, obj["/Parent"].get_object()), key
+                )
+            else:
+                return None
+
+        try:
+            # to cope with all types
+            field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
+        except Exception as exc:
+            raise ValueError("field type is invalid") from exc
+        if _get_inherit(field, "/FT") is None:
+            raise ValueError("field is not valid")
+        ret = []
+        if field.get("/Subtype", "") == "/Widget":
+            if "/P" in field:
+                ret = [field["/P"].get_object()]
+            else:
+                ret = [
+                    p
+                    for p in self.pages
+                    if field.indirect_reference in p.get("/Annots", "")
+                ]
+        else:
+            kids = field.get("/Kids", ())
+            for k in kids:
+                k = k.get_object()
+                if (k.get("/Subtype", "") == "/Widget") and ("/V" not in k):
+                    # kids that is just a widget not an field:
+                    if "/P" in field:
+                        ret += [field["/P"].get_object()]
+                    else:
+                        ret += [
+                            p
+                            for p in self.pages
+                            if k.indirect_reference in p.get("/Annots", "")
+                        ]
+        return [
+            x
+            if isinstance(x, PageObject)
+            else (self.pages[self._get_page_number_by_indirect(x.indirect_reference)])  # type: ignore
+            for x in ret
+        ]
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
