@@ -677,23 +677,16 @@ class PdfReader:
             field: Field Object, PdfObject or IndirectObject referencing a Field
 
         Returns:
-            list of pages:
-                - empty list:
-                    the field has no widgets attached
-                    (either hidden field or ancestor field)
-                - single page list:
-                    page where the widget is present
-                    (most common)
-                - multiple page list:
-                    field with multiple kids widgets
-                    (example: radio buttons, field repeated on multiple pages)
-
-        Note:
-            to get page indexes, use:
-
-            ```python
-            [p.page_number for p in pdfdoc.get_pages_showing_field(field)]
-            ```
+            List of pages:
+                - Empty list:
+                    The field has no widgets attached
+                    (either hidden field or ancestor field).
+                - Single page list:
+                    Page where the widget is present
+                    (most common).
+                - Multi-page list:
+                    Field with multiple kids widgets
+                    (example: radio buttons, field repeated on multiple pages).
         """
 
         def _get_inherited(obj: DictionaryObject, key: str) -> Any:
@@ -728,7 +721,7 @@ class PdfReader:
             for k in kids:
                 k = k.get_object()
                 if (k.get("/Subtype", "") == "/Widget") and ("/T" not in k):
-                    # kids that is just a widget not an field:
+                    # Kid that is just a widget, not a field:
                     if "/P" in k:
                         ret += [k["/P"].get_object()]
                     else:
