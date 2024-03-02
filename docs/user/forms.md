@@ -100,11 +100,8 @@ __Caution: Remember that fields are not stored in pages: If you use  `add_page()
 
 In case of missing _field_ objects in `/Fields`, `writer.reattach_fields()` will parse page(s) annotations and will reattach them. This fix can not guess intermediate fields and will not report fields using the same _name_.
 
-## identify pages where fields are used
-in order to ease localisation of page_fields you can use .get_pages_using_field.
-this function accepts field object, PdfObject that are fields (as they are extracted from _\_root\_object["/AcroForm"]["/Fields"]_
-they return list of pages as said earlier, a field can have multiple widgets (eg. radio buttons or text displayed on multiple pages)
+## Identify pages where fields are used
 
-In order to get page number just use:
-[ p.page_number for p in pdfdoc.get_pages_using_field(field)]
+On order to ease locating page fields you can use `page.get_pages_using_field`. This methods accepts a field object, id est a *PdfObject* that represents a field (as are extracted from `_root_object["/AcroForm"]["/Fields"]`. The method returns a list of pages, because a field can have multiple widgets as mentioned previously (e.g. radio buttons or text displayed on multiple pages).
 
+The page numbers can then be retrieved as usual by using `page.page_number`.
