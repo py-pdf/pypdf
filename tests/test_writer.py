@@ -2026,4 +2026,4 @@ def test_get_pagenumber_from_indirectobject():
     ind = writer.pages[0].indirect_reference
     assert writer._get_page_number_by_indirect(ind) == 0
     assert writer._get_page_number_by_indirect(ind.idnum) == 0
-    assert writer._get_page_number_by_indirect(ind.idnum + 1) == 0
+    assert writer._get_page_number_by_indirect(ind.idnum + 1) is None
