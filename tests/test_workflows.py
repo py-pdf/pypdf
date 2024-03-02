@@ -1173,38 +1173,54 @@ def test_get_page_showing_field():
 
     # Exceptions:
     # Invalid Object
-    with pytest.raises(ValueError) as exc:  
-        reader.get_pages_showing_field(
-            None)
     with pytest.raises(ValueError) as exc:
-        writer.get_pages_showing_field(
-            None)
+        reader.get_pages_showing_field(None)
+    with pytest.raises(ValueError) as exc:
+        writer.get_pages_showing_field(None)
     assert "field type is invalid" in exc.value.args[0]
 
-    # Damage Field 
+    # Damage Field
     del reader.trailer["/Root"]["/AcroForm"]["/Fields"][1].get_object()["/FT"]
     del writer._root_object["/AcroForm"]["/Fields"][1].get_object()["/FT"]
     with pytest.raises(ValueError) as exc:
         reader.get_pages_showing_field(
-            reader.trailer["/Root"]["/AcroForm"]["/Fields"][1])
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][1]
+        )
     with pytest.raises(ValueError) as exc:
-        writer.get_pages_showing_field(
-            writer._root_object["/AcroForm"]["/Fields"][1])
+        writer.get_pages_showing_field(writer._root_object["/AcroForm"]["/Fields"][1])
     assert "field is not valid" in exc.value.args[0]
 
     # missing Parent in field
-    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()["/Parent"]
-    del writer._root_object["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()["/Parent"]
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()[
+        "/Parent"
+    ]
+    del writer._root_object["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()[
+        "/Parent"
+    ]
     with pytest.raises(ValueError) as exc:
         reader.get_pages_showing_field(
-            reader.trailer["/Root"]["/AcroForm"]["/Fields"][1])
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][1]
+        )
     with pytest.raises(ValueError) as exc:
-        writer.get_pages_showing_field(
-            writer._root_object["/AcroForm"]["/Fields"][1])
+        writer.get_pages_showing_field(writer._root_object["/AcroForm"]["/Fields"][1])
 
     # remove "/P" (optional)
-    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][8]["/Kids"][1].get_object()["/P"]
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][8]["/Kids"][1].get_object()[
+        "/P"
+    ]
     del writer._root_object["/AcroForm"]["/Fields"][8]["/Kids"][1].get_object()["/P"]
+    assert [
+        p.page_number
+        for p in reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][8]["/Kids"][1]
+        )
+    ] == [0]
+    assert [
+        p.page_number
+        for p in writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][8]["/Kids"][1]
+        )
+    ] == [0]
     assert [
         p.page_number
         for p in reader.get_pages_showing_field(
