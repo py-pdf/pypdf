@@ -681,7 +681,7 @@ class PdfReader:
                 - empty list:
                     the field has no widgets attached
                     (either hidden field or ancestor field)
-                - single page list :
+                - single page list:
                     page where the widget is present
                     (most common)
                 - multiple page list:
