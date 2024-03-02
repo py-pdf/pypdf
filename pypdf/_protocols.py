@@ -38,11 +38,24 @@ class PdfObjectProtocol(Protocol):
         ...
 
 
-class PdfReaderProtocol(Protocol):  # deprecated
+class PdfCommonDocProtocol(Protocol):  # deprecated
     @property
     def pdf_header(self) -> str:
         ...
 
+    @property
+    def pages(self) -> List[Any]:
+        ...
+
+    @property
+    def root_object(self) -> PdfObjectProtocol:
+        ...
+
+    def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
+        ...
+
+
+class PdfReaderProtocol(PdfCommonDocProtocol, Protocol):  # deprecated
     @property
     def strict(self) -> bool:
         ...
@@ -52,42 +65,16 @@ class PdfReaderProtocol(Protocol):  # deprecated
         ...
 
     @property
-    def pages(self) -> List[Any]:
-        ...
-
-    @property
     def trailer(self) -> Dict[str, Any]:
         ...
 
-    @property
-    def root_object(self) -> PdfObjectProtocol:
-        ...
 
-    def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
-        ...
-
-
-class PdfWriterProtocol(Protocol):  # deprecated
+class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):  # deprecated
     _objects: List[Any]
     _id_translated: Dict[int, Dict[int, int]]
-
-    @property
-    def root_object(self) -> PdfObjectProtocol:
-        ...
-
-    def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
-        ...
 
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:
         ...
 
     def _add_object(self, obj: Any) -> Any:
-        ...
-
-    @property
-    def pages(self) -> List[Any]:
-        ...
-
-    @property
-    def pdf_header(self) -> bytes:
         ...

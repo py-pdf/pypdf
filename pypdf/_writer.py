@@ -237,7 +237,7 @@ class PdfWriter:
             self.write(self.fileobj)
 
     @property
-    def pdf_header(self) -> bytes:
+    def pdf_header(self) -> str:
         """
         Header of the PDF document that is written.
 
@@ -245,11 +245,11 @@ class PdfWriter:
         the lowest version that supports all features which are used within the
         PDF file.
         """
-        return self._header
+        return self._header.decode()
 
     @pdf_header.setter
-    def pdf_header(self, new_header: bytes) -> None:
-        self._header = new_header
+    def pdf_header(self, new_header: str) -> None:
+        self._header = new_header.encode()
 
     def _add_object(self, obj: PdfObject) -> IndirectObject:
         if hasattr(obj, "indirect_reference") and obj.indirect_reference.pdf == self:  # type: ignore
@@ -310,8 +310,6 @@ class PdfWriter:
         page = cast("PageObject", page_org.clone(self, False, excluded_keys))
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
-            if isinstance(other, str):
-                other = other.encode()
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
         page[NameObject(PA.PARENT)] = self._pages
         pages = cast(DictionaryObject, self.get_object(self._pages))
@@ -1319,7 +1317,7 @@ class PdfWriter:
 
     def _write_pdf_structure(self, stream: StreamType) -> List[int]:
         object_positions = []
-        stream.write(self.pdf_header + b"\n")
+        stream.write(self.pdf_header.encode() + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
 
         for i, obj in enumerate(self._objects):

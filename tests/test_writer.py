@@ -876,14 +876,14 @@ def test_some_appends(pdf_file_path, url, name):
 
 def test_pdf_header():
     writer = PdfWriter()
-    assert writer.pdf_header == b"%PDF-1.3"
+    assert writer.pdf_header == "%PDF-1.3"
 
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     writer.add_page(reader.pages[0])
-    assert writer.pdf_header == b"%PDF-1.5"
+    assert writer.pdf_header == "%PDF-1.5"
 
-    writer.pdf_header = b"%PDF-1.6"
-    assert writer.pdf_header == b"%PDF-1.6"
+    writer.pdf_header = "%PDF-1.6"
+    assert writer.pdf_header == "%PDF-1.6"
 
 
 def test_write_dict_stream_object(pdf_file_path):
