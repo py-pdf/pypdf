@@ -96,6 +96,7 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    Field,
     Fit,
     FloatObject,
     IndirectObject,
@@ -423,6 +424,28 @@ class PdfWriter:
     def _get_num_pages(self) -> int:
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         return int(pages[NameObject("/Count")])
+
+    def _get_page_number_by_indirect(
+        self, indirect_reference: Union[None, int, NullObject, IndirectObject]
+    ) -> Optional[int]:
+        """
+        Generate _page_id2num.
+
+        Args:
+            indirect_reference:
+
+        Returns:
+            The page number or None
+        """
+        # to provide same function as in PdfReader
+        if indirect_reference is None or isinstance(indirect_reference, NullObject):
+            return None
+        if isinstance(indirect_reference, int):
+            indirect_reference = IndirectObject(indirect_reference, 0, self)
+        obj = indirect_reference.get_object()
+        if isinstance(obj, PageObject):
+            return obj.page_number
+        return None
 
     @property
     def pages(self) -> List[PageObject]:
@@ -980,6 +1003,76 @@ class PdfWriter:
                 fields.append(ano.indirect_reference)
                 lst.append(ano)
         return lst
+
+    def get_pages_showing_field(
+        self, field: Union[Field, PdfObject, IndirectObject]
+    ) -> List[PageObject]:
+        """
+        Provides list of pages where the field is called.
+
+        Args:
+            field: Field Object, PdfObject or IndirectObject referencing a Field
+
+        Returns:
+            List of pages:
+                - Empty list:
+                    The field has no widgets attached
+                    (either hidden field or ancestor field).
+                - Single page list:
+                    Page where the widget is present
+                    (most common).
+                - Multi-page list:
+                    Field with multiple kids widgets
+                    (example: radio buttons, field repeated on multiple pages).
+        """
+
+        def _get_inherited(obj: DictionaryObject, key: str) -> Any:
+            if key in obj:
+                return obj[key]
+            elif "/Parent" in obj:
+                return _get_inherited(
+                    cast(DictionaryObject, obj["/Parent"].get_object()), key
+                )
+            else:
+                return None
+
+        try:
+            # to cope with all types
+            field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
+        except Exception as exc:
+            raise ValueError("field type is invalid") from exc
+        if _get_inherited(field, "/FT") is None:
+            raise ValueError("field is not valid")
+        ret = []
+        if field.get("/Subtype", "") == "/Widget":
+            if "/P" in field:
+                ret = [field["/P"].get_object()]
+            else:
+                ret = [
+                    p
+                    for p in self.pages
+                    if field.indirect_reference in p.get("/Annots", "")
+                ]
+        else:
+            kids = field.get("/Kids", ())
+            for k in kids:
+                k = k.get_object()
+                if (k.get("/Subtype", "") == "/Widget") and ("/T" not in k):
+                    # Kid that is just a widget, not a field:
+                    if "/P" in k:
+                        ret += [k["/P"].get_object()]
+                    else:
+                        ret += [
+                            p
+                            for p in self.pages
+                            if k.indirect_reference in p.get("/Annots", "")
+                        ]
+        return [
+            x
+            if isinstance(x, PageObject)
+            else (self.pages[self._get_page_number_by_indirect(x.indirect_reference)])  # type: ignore
+            for x in ret
+        ]
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
