@@ -2014,10 +2014,7 @@ def test_reattach_fields():
 
 
 def test_get_pagenumber_from_indirectobject():
-    """
-    Test Reattach function
-    addressed in #2453
-    """
+    """Test test_get_pagenumber_from_indirectobject"""
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     writer = PdfWriter(clone_from=pdf_path)
     assert writer._get_page_number_by_indirect(None) is None
