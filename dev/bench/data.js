@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709387887056,
+  "lastUpdate": 1709396371260,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -48487,6 +48487,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06450148110928944",
             "extra": "mean: 16.2271288752 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cb146e81eabec75e01380f881cd7de5c337df091",
+          "message": "ENH: add get_pages_from_field  (#2494)\n\n* DEV: add _get_page_number_from_indirect in writer\r\n\r\ncreate similar function to have same API as in reader\r\nused in future dev\r\n\r\n\r\n---------\r\n\r\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2024-03-02T17:16:41+01:00",
+          "tree_id": "34519e15e738fb19125df4d2a102bf9d1b45a64d",
+          "url": "https://github.com/py-pdf/pypdf/commit/cb146e81eabec75e01380f881cd7de5c337df091"
+        },
+        "date": 1709396369676,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.284584273669827,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015632173420518376",
+            "extra": "mean: 304.452532400002 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.48313252181432,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0069298343726727635",
+            "extra": "mean: 80.10809772727288 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27032275905957753,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01622263325656661",
+            "extra": "mean: 3.699281567999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.043488631091925,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0002011790994911857",
+            "extra": "mean: 58.67343368749811 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.060937624989829096,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17343708090269985",
+            "extra": "mean: 16.410222751000006 sec\nrounds: 5"
           }
         ]
       }
