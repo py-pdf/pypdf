@@ -1017,20 +1017,20 @@ class PdfWriter:
         Returns: List:
             Empty list : the field has no widgets attached
                          (either hidden field or ancestor field)
-            single page list : page where the widget is present (most common)
-            multiple page list: field multiple times with multiple kids widgets
+            Single page list : page where the widget is present (most common)
+            Multiple page list: field multiple times with multiple kids widgets
                          (ex:radio buttons, field repeated on multiple pages)
 
         Note:
-            to get page indexes, use:
+            To get page indexes, use:
             [ p.page_number for p in pdfdoc.get_pages_showing_field(field) ]
         """
 
-        def _get_inherit(obj: DictionaryObject, key: str) -> Any:
+        def _get_inherited(obj: DictionaryObject, key: str) -> Any:
             if key in obj:
                 return obj[key]
             elif "/Parent" in obj:
-                return _get_inherit(
+                return _get_inherited(
                     cast(DictionaryObject, obj["/Parent"].get_object()), key
                 )
             else:
@@ -1041,7 +1041,7 @@ class PdfWriter:
             field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
         except Exception as exc:
             raise ValueError("field type is invalid") from exc
-        if _get_inherit(field, "/FT") is None:
+        if _get_inherited(field, "/FT") is None:
             raise ValueError("field is not valid")
         ret = []
         if field.get("/Subtype", "") == "/Widget":

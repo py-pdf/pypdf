@@ -1148,12 +1148,72 @@ def test_get_page_showing_field():
     assert [
         p.page_number
         for p in reader.get_pages_showing_field(
-            reader.trailer["/Root"]["/AcroForm"]["/Fields"][99].get_object()
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][99]
         )
     ] == [0, 1]
     assert [
         p.page_number
         for p in writer.get_pages_showing_field(
-            writer._root_object["/AcroForm"]["/Fields"][99].get_object()
+            writer._root_object["/AcroForm"]["/Fields"][99]
         )
     ] == [0, 1]
+    # test directly on the widget:
+    assert [
+        p.page_number
+        for p in reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][99]["/Kids"][1]
+        )
+    ] == [1]
+    assert [
+        p.page_number
+        for p in writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][99]["/Kids"][1]
+        )
+    ] == [1]
+
+    # Exceptions:
+    # Invalid Object
+    with pytest.raises(ValueError) as exc:  
+        reader.get_pages_showing_field(
+            None)
+    with pytest.raises(ValueError) as exc:
+        writer.get_pages_showing_field(
+            None)
+    assert "field type is invalid" in exc.value.args[0]
+
+    # Damage Field 
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][1].get_object()["/FT"]
+    del writer._root_object["/AcroForm"]["/Fields"][1].get_object()["/FT"]
+    with pytest.raises(ValueError) as exc:
+        reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][1])
+    with pytest.raises(ValueError) as exc:
+        writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][1])
+    assert "field is not valid" in exc.value.args[0]
+
+    # missing Parent in field
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()["/Parent"]
+    del writer._root_object["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()["/Parent"]
+    with pytest.raises(ValueError) as exc:
+        reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][1])
+    with pytest.raises(ValueError) as exc:
+        writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][1])
+
+    # remove "/P" (optional)
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][8]["/Kids"][1].get_object()["/P"]
+    del writer._root_object["/AcroForm"]["/Fields"][8]["/Kids"][1].get_object()["/P"]
+    assert [
+        p.page_number
+        for p in reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][8].get_object()
+        )
+    ] == [0, 0, 0, 0, 0]
+    assert [
+        p.page_number
+        for p in writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][8].get_object()
+        )
+    ] == [0, 0, 0, 0, 0]

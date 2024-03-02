@@ -50,7 +50,7 @@ PDF forms have a dual-nature approach about the fields:
   Inside it you could find (optional):
 
   - some global elements (Fonts, Resources,...)
-  - some global flags (like `/NeedAppearances` (set/cleared with `auto_regenerate` parameter in `update_form_field_values()`) that indicates if the reading program should re-render the visual fields upon document launch)
+  - some global flags (like `/NeedAppearances` (set/cleared with `auto_regenerate` parameter in `update_page_form_field_values()`) that indicates if the reading program should re-render the visual fields upon document launch)
   - `/XFA` that houses a form in XDP format (very specific XML that describes the form rendered by some viewers); the `/XFA` form overrides the page content
   - `/Fields` that houses an array of indirect references that reference the upper _Field_ Objects (roots)
 
@@ -99,3 +99,12 @@ However, it's also important to note that the two lists do not *always* refer to
 __Caution: Remember that fields are not stored in pages: If you use  `add_page()` the field structure is not copied. It is recommended to use `.append()` with the proper parameters instead.__
 
 In case of missing _field_ objects in `/Fields`, `writer.reattach_fields()` will parse page(s) annotations and will reattach them. This fix can not guess intermediate fields and will not report fields using the same _name_.
+
+## identify pages where fields are used
+in order to ease localisation of page_fields you can use .get_pages_using_field.
+this function accepts field object, PdfObject that are fields (as they are extracted from _\_root\_object["/AcroForm"]["/Fields"]_
+they return list of pages as said earlier, a field can have multiple widgets (eg. radio buttons or text displayed on multiple pages)
+
+In order to get page number just use:
+[ p.page_number for p in pdfdoc.get_pages_using_field(field)]
+
