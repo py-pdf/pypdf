@@ -1018,7 +1018,7 @@ class PdfWriter:
             list of pages:
                 - empty list :
                     the field has no widgets attached
-                    (either hidden field or ancestor field)            
+                    (either hidden field or ancestor field)
                 - single page list :
                     page where the widget is present
                     (most common)
@@ -1028,9 +1028,9 @@ class PdfWriter:
 
         Note:
             to get page indexes, use:
-            
+
             ```python
-            [ p.page_number for p in pdfdoc.get_pages_showing_field(field) ]
+            [p.page_number for p in pdfdoc.get_pages_showing_field(field)]
             ```
         """
 
