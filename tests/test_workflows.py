@@ -17,7 +17,14 @@ from PIL import __version__ as pil_version
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning
-from pypdf.generic import ContentStream, NameObject, read_object
+from pypdf.generic import (
+    ArrayObject,
+    ContentStream,
+    DictionaryObject,
+    NameObject,
+    TextStringObject,
+    read_object,
+)
 
 from . import get_data_from_url, normalize_warnings
 
@@ -1233,3 +1240,36 @@ def test_get_page_showing_field():
             writer._root_object["/AcroForm"]["/Fields"][8].get_object()
         )
     ] == [0, 0, 0, 0, 0]
+
+    # Grouping fields
+    reader.trailer["/Root"]["/AcroForm"]["/Fields"][-1].get_object()[
+        NameObject("/Kids")
+    ] = ArrayObject([reader.trailer["/Root"]["/AcroForm"]["/Fields"][0]])
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][-1].get_object()["/T"]
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][-1].get_object()["/P"]
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][-1].get_object()["/Subtype"]
+    writer._root_object["/AcroForm"]["/Fields"].append(
+        writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/T"): TextStringObject("grouping"),
+                    NameObject("/FT"): NameObject("/Tx"),
+                    NameObject("/Kids"): ArrayObject(
+                        [reader.trailer["/Root"]["/AcroForm"]["/Fields"][0]]
+                    ),
+                }
+            )
+        )
+    )
+    assert [
+        p.page_number
+        for p in reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][-1]
+        )
+    ] == []
+    assert [
+        p.page_number
+        for p in writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][-1]
+        )
+    ] == []

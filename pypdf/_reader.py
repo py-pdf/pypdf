@@ -727,7 +727,7 @@ class PdfReader:
             kids = field.get("/Kids", ())
             for k in kids:
                 k = k.get_object()
-                if (k.get("/Subtype", "") == "/Widget") and ("/V" not in k):
+                if k.get("/Subtype", "") == "/Widget":
                     # kids that is just a widget not an field:
                     if "/P" in k:
                         ret += [k["/P"].get_object()]
