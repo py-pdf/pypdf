@@ -2011,3 +2011,19 @@ def test_reattach_fields():
     assert isinstance(writer.pages[0]["/Annots"][0], IndirectObject)
     del writer.pages[1]["/Annots"]
     assert len(writer.reattach_fields(writer.pages[1])) == 0
+
+
+def test_get_pagenumber_from_indirectobject():
+    """
+    Test Reattach function
+    addressed in #2453
+    """
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    writer = PdfWriter(clone_from=pdf_path)
+    assert writer._get_page_number_by_indirect(None) is None
+    assert writer._get_page_number_by_indirect(NullObject()) is None
+
+    ind = writer.pages[0].indirect_reference
+    assert writer._get_page_number_by_indirect(ind) == 0
+    assert writer._get_page_number_by_indirect(ind.idnum) == 0
+    assert writer._get_page_number_by_indirect(ind.idnum + 1) == 0
