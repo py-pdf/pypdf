@@ -211,6 +211,16 @@ class PdfWriter:
         self._encrypt_entry: Optional[DictionaryObject] = None
         self._ID: Union[ArrayObject, None] = None
 
+    @property
+    def root_object(self) -> DictionaryObject:
+        """
+        Provide direct access to Pdf Structure
+
+        Note:
+            Recommended be used only for read access
+        """
+        return self._root_object
+
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""
         self.with_as_usage = True
@@ -1084,7 +1094,7 @@ class PdfWriter:
             reader: PdfReader from the document root should be copied.
         """
         self._objects.clear()
-        self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT].clone(self))
+        self._root_object = reader.root_object.clone(self)
         self._root = self._root_object.indirect_reference  # type: ignore[assignment]
         self._pages = self._root_object.raw_get("/Pages")
         self._flatten()
@@ -1165,10 +1175,10 @@ class PdfWriter:
         """
         self.clone_reader_document_root(reader)
         if TK.INFO in reader.trailer:
-            self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
+            self._info = reader._info.clone(self).indirect_reference  # type: ignore
         try:
-            self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))
-        except KeyError:
+            self._ID = cast(ArrayObject, reader._ID).clone(self)
+        except AttributeError:
             pass
         if callable(after_page_append):
             for page in cast(
@@ -2546,7 +2556,7 @@ class PdfWriter:
         else:
             outline_item_typ = self.get_outline_root()
 
-        _ro = cast("DictionaryObject", reader.trailer[TK.ROOT])
+        _ro = reader.root_object
         if import_outline and CO.OUTLINES in _ro:
             outline = self._get_filtered_outline(
                 _ro.get(CO.OUTLINES, None), srcpages, reader
@@ -2569,7 +2579,7 @@ class PdfWriter:
                 self._root_object[NameObject("/AcroForm")] = self._add_object(
                     cast(
                         DictionaryObject,
-                        cast(DictionaryObject, reader.trailer["/Root"])["/AcroForm"],
+                        reader.root_object["/AcroForm"],
                     ).clone(self, False, ("/Fields",))
                 )
                 arr = ArrayObject()
@@ -2580,7 +2590,7 @@ class PdfWriter:
                 )
             trslat = self._id_translated[id(reader)]
             try:
-                for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
+                for f in reader.root_object["/AcroForm"]["/Fields"]:  # type: ignore
                     try:
                         ind = IndirectObject(trslat[f.idnum], 0, self)
                         if ind not in arr:

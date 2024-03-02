@@ -59,6 +59,10 @@ class PdfReaderProtocol(Protocol):  # deprecated
     def trailer(self) -> Dict[str, Any]:
         ...
 
+    @property
+    def root_object(self) -> PdfObjectProtocol:
+        ...
+
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
         ...
 
@@ -66,6 +70,10 @@ class PdfReaderProtocol(Protocol):  # deprecated
 class PdfWriterProtocol(Protocol):  # deprecated
     _objects: List[Any]
     _id_translated: Dict[int, Dict[int, int]]
+
+    @property
+    def root_object(self) -> PdfObjectProtocol:
+        ...
 
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
         ...
