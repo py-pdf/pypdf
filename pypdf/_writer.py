@@ -445,8 +445,7 @@ class PdfWriter:
         obj = indirect_reference.get_object()
         if isinstance(obj, PageObject):
             return obj.page_number
-        else:
-            return None
+        return None
 
     @property
     def pages(self) -> List[PageObject]:
