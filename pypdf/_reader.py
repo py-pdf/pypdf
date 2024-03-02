@@ -686,7 +686,7 @@ class PdfReader:
                     (most common)
                 - multiple page list:
                     field with multiple kids widgets
-                    (ex:radio buttons, field repeated on multiple pages)
+                    (example: radio buttons, field repeated on multiple pages)
 
         Note:
             to get page indexes, use:
