@@ -1175,7 +1175,9 @@ class PdfWriter:
         """
         self.clone_reader_document_root(reader)
         if TK.INFO in reader.trailer:
-            self._info = reader._info.clone(self).indirect_reference  # type: ignore
+            self._info = self._add_object(
+                cast(DictionaryObject, reader._info).clone(self)
+            )
         try:
             self._ID = cast(ArrayObject, reader._ID).clone(self)
         except AttributeError:
