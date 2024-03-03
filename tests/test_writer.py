@@ -998,7 +998,7 @@ def test_startup_dest():
     assert pdf_file_writer.open_destination is None
     pdf_file_writer.open_destination = pdf_file_writer.pages[9]
     # checked also using Acrobrat to verify the good page is opened
-    op = pdf_file_writer._root_object["/OpenAction"]
+    op = pdf_file_writer.root_object["/OpenAction"]
     assert op[0] == pdf_file_writer.pages[9].indirect_reference
     assert op[1] == "/Fit"
     op = pdf_file_writer.open_destination
@@ -1008,16 +1008,16 @@ def test_startup_dest():
     assert pdf_file_writer.open_destination == op
 
     # irrelevant, just for coverage
-    pdf_file_writer._root_object[NameObject("/OpenAction")][0] = NumberObject(0)
+    pdf_file_writer.root_object[NameObject("/OpenAction")][0] = NumberObject(0)
     pdf_file_writer.open_destination
     with pytest.raises(Exception) as exc:
-        del pdf_file_writer._root_object[NameObject("/OpenAction")][0]
+        del pdf_file_writer.root_object[NameObject("/OpenAction")][0]
         pdf_file_writer.open_destination
     assert "Invalid Destination" in str(exc.value)
 
     pdf_file_writer.open_destination = "Test"
     # checked also using Acrobrat to verify open_destination
-    op = pdf_file_writer._root_object["/OpenAction"]
+    op = pdf_file_writer.root_object["/OpenAction"]
     assert isinstance(op, TextStringObject)
     assert op == "Test"
     op = pdf_file_writer.open_destination
@@ -1025,10 +1025,10 @@ def test_startup_dest():
     assert op == "Test"
 
     # irrelevant, this is just for coverage
-    pdf_file_writer._root_object[NameObject("/OpenAction")] = NumberObject(0)
+    pdf_file_writer.root_object[NameObject("/OpenAction")] = NumberObject(0)
     assert pdf_file_writer.open_destination is None
     pdf_file_writer.open_destination = None
-    assert "/OpenAction" not in pdf_file_writer._root_object
+    assert "/OpenAction" not in pdf_file_writer.root_object
     pdf_file_writer.open_destination = None
 
 
@@ -1112,7 +1112,7 @@ def test_append_multiple():
         reader, [0, 0, 0]
     )  # to demonstre multiple insertion of same page at once
     writer.append(reader, [0, 0, 0])  # second pack
-    pages = writer._root_object["/Pages"]["/Kids"]
+    pages = writer.root_object["/Pages"]["/Kids"]
     assert pages[0] not in pages[1:]  # page not repeated
     assert pages[-1] not in pages[0:-1]  # page not repeated
 
@@ -1436,10 +1436,10 @@ def test_named_dest_page_number():
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
     writer.append(BytesIO(get_data_from_url(url, name=name)), pages=[0, 1, 2])
-    assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 2
-    assert writer._root_object["/Names"]["/Dests"]["/Names"][-1][0] == (1 + 1)
+    assert len(writer.root_object["/Names"]["/Dests"]["/Names"]) == 2
+    assert writer.root_object["/Names"]["/Dests"]["/Names"][-1][0] == (1 + 1)
     writer.append(BytesIO(get_data_from_url(url, name=name)))
-    assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 6
+    assert len(writer.root_object["/Names"]["/Dests"]["/Names"]) == 6
     writer2 = PdfWriter()
     writer2.add_blank_page(100, 100)
     dest = writer2.add_named_destination("toto", 0)
@@ -1448,7 +1448,7 @@ def test_named_dest_page_number():
     writer2.write(b)
     b.seek(0)
     writer.append(b)
-    assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 6
+    assert len(writer.root_object["/Names"]["/Dests"]["/Names"]) == 6
 
 
 def test_update_form_fields(tmp_path):
@@ -1681,7 +1681,7 @@ def test_missing_fields(pdf_file_path):
 
     writer = PdfWriter()
     writer.append(reader, [0])
-    del writer._root_object["/AcroForm"]["/Fields"]
+    del writer.root_object["/AcroForm"]["/Fields"]
     with pytest.raises(PyPdfError) as exc:
         writer.update_page_form_field_values(
             writer.pages[0], {"foo": "some filled in text"}, flags=1
@@ -1765,8 +1765,7 @@ def test_viewerpreferences():
     assert v.center_window == True  # noqa: E712
     v.center_window = False
     assert (
-        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
-        == False  # noqa: E712
+        writer.root_object["/ViewerPreferences"]["/CenterWindow"] == False  # noqa: E712
     )
     assert v.print_area == "/CropBox"
     with pytest.raises(ValueError):
@@ -1775,7 +1774,7 @@ def test_viewerpreferences():
         v.non_fullscreen_pagemode = "/toto"
     v.non_fullscreen_pagemode = "/UseOutlines"
     assert (
-        writer._root_object["/ViewerPreferences"]["/NonFullScreenPageMode"]
+        writer.root_object["/ViewerPreferences"]["/NonFullScreenPageMode"]
         == "/UseOutlines"
     )
     writer = PdfWriter(clone_from=reader)
@@ -1783,19 +1782,17 @@ def test_viewerpreferences():
     assert v.center_window == True  # noqa: E712
     v.center_window = False
     assert (
-        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
-        == False  # noqa: E712
+        writer.root_object["/ViewerPreferences"]["/CenterWindow"] == False  # noqa: E712
     )
 
     writer = PdfWriter(clone_from=reader)
-    writer._root_object[NameObject("/ViewerPreferences")] = writer._add_object(
-        writer._root_object["/ViewerPreferences"]
+    writer.root_object[NameObject("/ViewerPreferences")] = writer._add_object(
+        writer.root_object["/ViewerPreferences"]
     )
     v = writer.viewer_preferences
     v.center_window = False
     assert (
-        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
-        == False  # noqa: E712
+        writer.root_object["/ViewerPreferences"]["/CenterWindow"] == False  # noqa: E712
     )
     v.num_copies = 1
     assert v.num_copies == 1
@@ -1806,9 +1803,9 @@ def test_viewerpreferences():
     assert len(v.print_pagerange) == 0
 
     writer.create_viewer_preferences()
-    assert len(writer._root_object["/ViewerPreferences"]) == 0
+    assert len(writer.root_object["/ViewerPreferences"]) == 0
     writer.viewer_preferences.direction = "/R2L"
-    assert len(writer._root_object["/ViewerPreferences"]) == 1
+    assert len(writer.root_object["/ViewerPreferences"]) == 1
 
     del reader.trailer["/Root"]["/ViewerPreferences"]
     assert reader.viewer_preferences is None
@@ -1994,11 +1991,11 @@ def test_reattach_fields():
         writer.add_page(p)
     assert len(writer.reattach_fields()) == 15
     assert len(writer.reattach_fields()) == 0  # nothing to append anymore
-    assert len(writer._root_object["/AcroForm"]["/Fields"]) == 15
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 15
     writer = PdfWriter(clone_from=reader)
     assert len(writer.reattach_fields()) == 7
     writer.reattach_fields()
-    assert len(writer._root_object["/AcroForm"]["/Fields"]) == 15
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 15
 
     writer = PdfWriter()
     for p in reader.pages:
