@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## Version 4.1.0, 2024-03-03
+
+Generating name objects (`NameObject`) without a leading slash
+is considered deprecated now. Previously, just a plain warning
+would be logged, leading to possibly invalid PDF files. According
+to our deprecation policy, this will log a *DeprecationWarning*
+for now.
+
+### New Features (ENH)
+- Add get_pages_from_field  (#2494)
+- Add reattach_fields function (#2480)
+- Automatic access to pointed object for IndirectObject (#2464)
+
+### Bug Fixes (BUG)
+- Missing error on name without leading / (#2387)
+- encode_pdfdocencoding() always returns bytes (#2440)
+- BI in text content identified as image tag (#2459)
+
+### Robustness (ROB)
+- Missing basefont entry in type 3 font (#2469)
+
+### Documentation (DOC)
+- Improve lossless compression example (#2488)
+- Amend robustness documentation (#2479)
+
+### Developer Experience (DEV)
+- Fix changelog for UTF-8 characters (#2462)
+
+### Maintenance (MAINT)
+- Add _get_page_number_from_indirect in writer (#2493)
+- Remove user assignment for feature requests (#2483)
+- Remove reference to old 2.0.0 branch (#2482)
+
+### Testing (TST)
+- Fix benchmark failures (#2481)
+- Broken test due to expired test file URL (#2468)
+- Resolve file naming conflict in test_iss1767 (#2445)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.0.2...4.1.0)
+
 ## Version 4.0.2, 2024-02-18
 
 ### Bug Fixes (BUG)
