@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1709396371260,
+  "lastUpdate": 1709464933891,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -48546,6 +48546,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.17343708090269985",
             "extra": "mean: 16.410222751000006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6cf47c5f644a674dde93f405929c04d5cae9a253",
+          "message": "REL: 4.1.0\n\n## What's new\r\n\r\nGenerating name objects (`NameObject`) without a leading slash\r\nis considered deprecated now. Previously, just a plain warning\r\nwould be logged, leading to possibly invalid PDF files. According\r\nto our deprecation policy, this will log a *DeprecationWarning*\r\nfor now.\r\n\r\n### New Features (ENH)\r\n- Add get_pages_from_field  (#2494) by @pubpub-zz\r\n- Add reattach_fields function (#2480) by @pubpub-zz\r\n- Automatic access to pointed object for IndirectObject (#2464) by @pubpub-zz\r\n\r\n### Bug Fixes (BUG)\r\n- Missing error on name without leading / (#2387) by @Rak424\r\n- encode_pdfdocencoding() always returns bytes (#2440) by @sbourlon\r\n- BI in text content identified as image tag (#2459) by @pubpub-zz\r\n\r\n### Robustness (ROB)\r\n- Missing basefont entry in type 3 font (#2469) by @pubpub-zz\r\n\r\n### Documentation (DOC)\r\n- Improve lossless compression example (#2488) by @j-t-1\r\n- Amend robustness documentation (#2479) by @j-t-1\r\n\r\n### Developer Experience (DEV)\r\n- Fix changelog for UTF-8 characters (#2462) by @stefan6419846\r\n\r\n### Maintenance (MAINT)\r\n- Add _get_page_number_from_indirect in writer (#2493) by @pubpub-zz\r\n- Remove user assignment for feature requests (#2483) by @stefan6419846\r\n- Remove reference to old 2.0.0 branch (#2482) by @stefan6419846\r\n\r\n### Testing (TST)\r\n- Fix benchmark failures (#2481) by @stefan6419846\r\n- Broken test due to expired test file URL (#2468) by @pubpub-zz\r\n- Resolve file naming conflict in test_iss1767 (#2445) by @sbourlon\r\n\r\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.0.2...4.1.0)",
+          "timestamp": "2024-03-03T12:19:20+01:00",
+          "tree_id": "2e897debde965926180a3ac820b028fd5a49a72c",
+          "url": "https://github.com/py-pdf/pypdf/commit/6cf47c5f644a674dde93f405929c04d5cae9a253"
+        },
+        "date": 1709464932234,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3069438705399286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012547991895114677",
+            "extra": "mean: 302.3940046000021 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.505647166564177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008330752746373248",
+            "extra": "mean: 79.96387445454705 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27238683817946435,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02742649700068948",
+            "extra": "mean: 3.6712493404 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.294549279752054,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007923768887891786",
+            "extra": "mean: 57.82168611764693 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.061245998638689375,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12808383427421383",
+            "extra": "mean: 16.32759726720001 sec\nrounds: 5"
           }
         ]
       }
