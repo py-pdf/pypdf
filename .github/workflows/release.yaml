@@ -6,18 +6,34 @@
 name: Publish Python Package to PyPI
 on:
   push:
-    tags:
-      - '*.*.*'
+    branches:
+      - main
 
 jobs:
   build_and_publish:
     name: Publish a new version of pypdf
     runs-on: ubuntu-latest
+    if: "startsWith(${{ github.event.head_commit.message}}, 'REL: ')"
 
     steps:
       # Ensure it's on PyPI
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+      - name: Extract version from commit message
+        id: extract_version
+        run: |
+          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP '(?<=REL: )\d+\.\d+\.\d+')
+          echo "::set-output name=version::$VERSION"
+
+      - name: Create Git Tag
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag "$VERSION" -m "${{ github.event.head_commit.message }}"
+          git push origin $VERSION
 
       - name: Set up Python
         uses: actions/setup-python@v5
