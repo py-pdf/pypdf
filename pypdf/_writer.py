@@ -248,8 +248,10 @@ class PdfWriter:
         return self._header.decode()
 
     @pdf_header.setter
-    def pdf_header(self, new_header: str) -> None:
-        self._header = new_header.encode()
+    def pdf_header(self, new_header: Union[str, bytes]) -> None:
+        if isinstance(new_header, str):
+            new_header = new_header.encode()
+        self._header = new_header
 
     def _add_object(self, obj: PdfObject) -> IndirectObject:
         if hasattr(obj, "indirect_reference") and obj.indirect_reference.pdf == self:  # type: ignore
