@@ -54,8 +54,9 @@ from typing import (
 )
 
 from ._cmap import build_char_map_from_dict
+from ._doc_common import PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
-from ._page import PageObject, _VirtualList
+from ._page import PageObject
 from ._page_labels import nums_clear_range, nums_insert, nums_next
 from ._reader import PdfReader
 from ._utils import (
@@ -96,7 +97,6 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
-    Field,
     Fit,
     FloatObject,
     IndirectObject,
@@ -146,12 +146,22 @@ def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
     return hash.hexdigest()
 
 
-class PdfWriter:
+class PdfWriter(PdfDocCommon):
     """
     Write a PDF file out, given pages produced by another class.
 
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
     """
+
+    # for commonality
+    def is_encrypted(self) -> bool:
+        """
+        Read-only boolean property showing whether this PDF file is encrypted.
+
+        Note that this property, if true, will remain true even after the
+        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
+        """
+        return False
 
     def __init__(
         self,
@@ -159,7 +169,6 @@ class PdfWriter:
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
     ) -> None:
         self._header = b"%PDF-1.3"
-
         self._objects: List[PdfObject] = []
         """The indirect objects in the PDF."""
 
@@ -178,6 +187,7 @@ class PdfWriter:
             }
         )
         self._pages = self._add_object(pages)
+        self.flattened_pages = []
 
         # info object
         info = DictionaryObject()
@@ -317,9 +327,53 @@ class PdfWriter:
         pages = cast(DictionaryObject, self.get_object(self._pages))
         assert page.indirect_reference is not None
         action(pages[PA.KIDS], page.indirect_reference)
+        action(self.flattened_pages, page)
         page_count = cast(int, pages[PA.COUNT])
         pages[NameObject(PA.COUNT)] = NumberObject(page_count + 1)
         return page
+
+    def remove_page(
+        self,
+        page: Union[int, PageObject, IndirectObject],
+        clean: bool = False,
+    ) -> None:
+        """
+        Remove page from pages list.
+
+        Args:
+            page: int / PageObject / IndirectObject
+                PageObject : page to be removed. If the page appears many times
+                only the first one will be removed
+
+                IndirectObject: Reference to page to be removed
+
+                int : page number to be removed
+
+            clean: replace PageObject with NullObject to prevent destination,
+            annotation to reference a detached page
+        """
+        if isinstance(page, IndirectObject):
+            page = page.get_object()
+            if not isinstance(page, PageObject):
+                logger_warning("IndirectObject is not referencing to a page", __name__)
+                return
+        if not isinstance(page, int):
+            try:
+                page = self.flattened_pages.index(page)
+            except ValueError:
+                logger_warning("Can't find page in pages", __name__)
+                return
+        if not (0 <= page < len(self.flattened_pages)):
+            logger_warning("page number is out of range", __name__)
+            return
+        if clean:
+            self._replace_object(
+                self.flatten_pages[page].indirect_reference, NullObject()
+            )
+        del self.flattened_pages[page]
+        pages = cast(DictionaryObject, self.root_object["/Pages"])
+        del pages["/Kids"][page]
+        pages[NameObject(PA.COUNT)] = NumberObject(cast(int, pages[PA.COUNT]) - 1)
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
         """
@@ -416,25 +470,6 @@ class PdfWriter:
         """
         return self._add_page(page, lambda kids, p: kids.insert(index, p))
 
-    def get_page(self, page_number: int) -> PageObject:
-        """
-        Retrieve a page by number from this PDF file.
-
-        Args:
-            page_number: The page number to retrieve
-                (pages begin at zero)
-
-        Returns:
-            The page at the index given by *page_number*
-        """
-        pages = cast(Dict[str, Any], self.get_object(self._pages))
-        # TODO: crude hack
-        return cast(PageObject, pages[PA.KIDS][page_number].get_object())
-
-    def _get_num_pages(self) -> int:
-        pages = cast(Dict[str, Any], self.get_object(self._pages))
-        return int(pages[NameObject("/Count")])
-
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
     ) -> Optional[int]:
@@ -456,22 +491,6 @@ class PdfWriter:
         if isinstance(obj, PageObject):
             return obj.page_number
         return None
-
-    @property
-    def pages(self) -> List[PageObject]:
-        """
-        Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`.
-        this property allows to get a page or  a range of pages.
-
-        It provides also capability to remove a page/range of page from the list
-        (through del operator)
-        Note: only the page entry is removed. As the objects beneath can be used
-        somewhere else.
-        a solution to completely remove them - if they are not used somewhere -
-        is to write to a buffer/temporary and to then load it into a new PdfWriter
-        object.
-        """
-        return _VirtualList(self._get_num_pages, self.get_page)  # type: ignore
 
     def add_blank_page(
         self, width: Optional[float] = None, height: Optional[float] = None
@@ -1014,76 +1033,6 @@ class PdfWriter:
                 lst.append(ano)
         return lst
 
-    def get_pages_showing_field(
-        self, field: Union[Field, PdfObject, IndirectObject]
-    ) -> List[PageObject]:
-        """
-        Provides list of pages where the field is called.
-
-        Args:
-            field: Field Object, PdfObject or IndirectObject referencing a Field
-
-        Returns:
-            List of pages:
-                - Empty list:
-                    The field has no widgets attached
-                    (either hidden field or ancestor field).
-                - Single page list:
-                    Page where the widget is present
-                    (most common).
-                - Multi-page list:
-                    Field with multiple kids widgets
-                    (example: radio buttons, field repeated on multiple pages).
-        """
-
-        def _get_inherited(obj: DictionaryObject, key: str) -> Any:
-            if key in obj:
-                return obj[key]
-            elif "/Parent" in obj:
-                return _get_inherited(
-                    cast(DictionaryObject, obj["/Parent"].get_object()), key
-                )
-            else:
-                return None
-
-        try:
-            # to cope with all types
-            field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
-        except Exception as exc:
-            raise ValueError("field type is invalid") from exc
-        if _get_inherited(field, "/FT") is None:
-            raise ValueError("field is not valid")
-        ret = []
-        if field.get("/Subtype", "") == "/Widget":
-            if "/P" in field:
-                ret = [field["/P"].get_object()]
-            else:
-                ret = [
-                    p
-                    for p in self.pages
-                    if field.indirect_reference in p.get("/Annots", "")
-                ]
-        else:
-            kids = field.get("/Kids", ())
-            for k in kids:
-                k = k.get_object()
-                if (k.get("/Subtype", "") == "/Widget") and ("/T" not in k):
-                    # Kid that is just a widget, not a field:
-                    if "/P" in k:
-                        ret += [k["/P"].get_object()]
-                    else:
-                        ret += [
-                            p
-                            for p in self.pages
-                            if k.indirect_reference in p.get("/Annots", "")
-                        ]
-        return [
-            x
-            if isinstance(x, PageObject)
-            else (self.pages[self._get_page_number_by_indirect(x.indirect_reference)])  # type: ignore
-            for x in ret
-        ]
-
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
         Copy the reader document root to the writer and all sub elements,
@@ -1099,13 +1048,10 @@ class PdfWriter:
         self._pages = self._root_object.raw_get("/Pages")
         self._flatten()
         for p in self.flattened_pages:
-            o = p.get_object()
-            self._objects[p.idnum - 1] = PageObject(self, p)
-            self._objects[p.idnum - 1].update(o.items())
+            self._objects[p.indirect_reference.idnum - 1] = p
         self._root_object[NameObject("/Pages")][  # type: ignore[index]
             NameObject("/Kids")
-        ] = self.flattened_pages
-        del self.flattened_pages
+        ] = ArrayObject([p.indirect_reference for p in self.flattened_pages])
 
     def _flatten(
         self,
@@ -1122,8 +1068,8 @@ class PdfWriter:
         if inherit is None:
             inherit = {}
         if pages is None:
-            pages = cast(DictionaryObject, self._root_object["/Pages"])
-            self.flattened_pages = ArrayObject()
+            pages = cast(DictionaryObject, self.root_object["/Pages"])
+            self.flattened_pages = []
         assert pages is not None  # hint for mypy
 
         if PA.TYPE in pages:
@@ -1152,7 +1098,13 @@ class PdfWriter:
             pages[NameObject("/Parent")] = cast(
                 IndirectObject, self._root_object.raw_get("/Pages")
             )
-            self.flattened_pages.append(indirect_reference)
+            if isinstance(pages, PageObject):
+                newpage = pages
+            else:
+                newpage = PageObject(self, pages.indirect_reference)
+                newpage.update(pages.items())
+
+            self.flattened_pages.append(newpage)
 
     def clone_document_from_reader(
         self,
