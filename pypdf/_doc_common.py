@@ -244,7 +244,9 @@ class DocumentInformation(DictionaryObject):
 
 class PdfDocCommon:
     """
-    Common parts between PdfWriter and PdfReader objects.
+    Common functions from PdfWriter and PdfReader objects.
+
+    This root class is strongly abstracted
     """
 
     is_encrypted: bool
@@ -254,7 +256,9 @@ class PdfDocCommon:
         ...
 
     @abstractmethod
-    def get_object(self, indirect_reference: Any) -> Optional[PdfObject]:
+    def get_object(
+        self, indirect_reference: Union[int, IndirectObject]
+    ) -> Optional[PdfObject]:
         ...
 
     # ????#@property
@@ -1148,12 +1152,6 @@ class PdfDocCommon:
             A PdfObject
         """
         return IndirectObject(num, gen, self).get_object()
-
-    @abstractmethod
-    def get_object(
-        self, indirect_reference: Union[int, IndirectObject]
-    ) -> Optional[PdfObject]:
-        ...
 
     def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
         """Take the permissions as an integer, return the allowed access."""
