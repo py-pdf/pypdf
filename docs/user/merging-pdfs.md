@@ -63,7 +63,7 @@ writer.append(reader, "page 1 and 10", [0, 9])
 
 During merging, the relevant named destination will also imported.
 
-If you want to insert pages in the middle of the destination, use `merge` (which provides (insertion) position).
+If you want to insert pages in the middle of the destination, use `merge` (which provides an insertion position).
 You can insert the same page multiple times, if necessary even using a list-based syntax:
 
 ```python
@@ -126,7 +126,7 @@ Please note that if you clone an object, you will clone all the objects below as
 including the objects pointed by *IndirectObject*. Due to this, if you clone a page that
 includes some articles (`"/B"`), not only the first article, but also all the chained articles
 and the pages where those articles can be read will be copied.
-It means that you may copy lots of objects which will be saved in the output PDF as well.
+This means that you may copy lots of objects which will be saved in the output PDF as well.
 
 In order to prevent this, you can provide the list of fields in the dictionaries to be ignored:
 

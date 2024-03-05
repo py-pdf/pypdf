@@ -5,11 +5,11 @@ pypdf uses [`pytest`](https://docs.pytest.org/en/7.1.x/) for testing.
 To run the tests you need to install the CI (Continuous Integration) requirements by running `pip install -r requirements/ci.txt` or
 `pip install -r requirements/ci-3.11.txt` if running Python ≥ 3.11.
 
-## De-selecting groups of tests
+## Deselecting groups of tests
 
 pypdf makes use of the following pytest markers:
 
-* `slow`: Tests that require more than 5 seconds
+* `slow`: Tests that require more than 5 seconds.
 * `samples`: Tests that require the [the `sample-files` git submodule](https://github.com/py-pdf/sample-files) to be initialized. As of October 2022, this is about 25 MB.
 * `enable_socket`: Tests that download PDF documents. They are stored locally and thus only need to be downloaded once. As of October 2022, this is about 200 MB.
   * To successfully run the tests, please download most of the documents beforehand: `python -c "from tests import download_test_pdfs; download_test_pdfs()"`
@@ -73,5 +73,5 @@ b) you can then install the version using pip from git:
 
 Example:
 ```
-pip install git+https://github.com/pubpub-zz/pypdf.git@iss2200
+pip3 install git+https://github.com/pubpub-zz/pypdf.git@iss2200
 ```
