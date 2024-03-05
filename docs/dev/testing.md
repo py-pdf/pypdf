@@ -73,5 +73,5 @@ b) you can then install the version using pip from git:
 
 Example:
 ```
-pip3 install git+https://github.com/pubpub-zz/pypdf.git@iss2200
+pip install git+https://github.com/pubpub-zz/pypdf.git@iss2200
 ```

@@ -304,7 +304,7 @@ with open("annotated-pdf.pdf", "wb") as fp:
 Text markup annotations refer to a specific piece of text within the document.
 
 Those are a bit more complicated as you need to know exactly where the text
-is, the so-called the "Quad points".
+is, the so-called "Quad points".
 
 ### Highlighting
 

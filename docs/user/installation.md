@@ -6,18 +6,18 @@ There are several ways to install pypdf. The most common option is to use pip.
 
 pypdf requires Python 3.7+ to run.
 
-Typically Python comes with `pip3`, a package installer. Using it you can
+Typically Python comes with `pip`, a package installer. Using it you can
 install pypdf:
 
 ```bash
-pip3 install pypdf
+pip install pypdf
 ```
 
 If you are not a super-user (a system administrator / root), you can also just
 install pypdf for your current user:
 
 ```bash
-pip3 install --user pypdf
+pip install --user pypdf
 ```
 
 ### Optional dependencies
@@ -29,7 +29,7 @@ case for cryptography and image formats.
 If you simply want to install all optional dependencies, run:
 
 ```
-pip3 install pypdf[full]
+pip install pypdf[full]
 ```
 
 Alternatively, you can install just some:
@@ -39,13 +39,13 @@ will need to install some extra dependencies. Encryption using RC4 is supported
 using the regular installation.
 
 ```
-pip3 install pypdf[crypto]
+pip install pypdf[crypto]
 ```
 
 If you plan to use image extraction, you need Pillow:
 
 ```
-pip3 install pypdf[image]
+pip install pypdf[image]
 ```
 
 ## Python Version Support
@@ -69,5 +69,5 @@ Anaconda users can [install pypdf via conda-forge](https://anaconda.org/conda-fo
 In case you want to use the current version under development:
 
 ```bash
-pip3 install git+https://github.com/py-pdf/pypdf.git
+pip install git+https://github.com/py-pdf/pypdf.git
 ```
