@@ -96,6 +96,7 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    Field,
     Fit,
     FloatObject,
     IndirectObject,
@@ -209,6 +210,16 @@ class PdfWriter:
         self._encryption: Optional[Encryption] = None
         self._encrypt_entry: Optional[DictionaryObject] = None
         self._ID: Union[ArrayObject, None] = None
+
+    @property
+    def root_object(self) -> DictionaryObject:
+        """
+        Provide direct access to Pdf Structure
+
+        Note:
+            Recommended be used only for read access
+        """
+        return self._root_object
 
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""
@@ -423,6 +434,28 @@ class PdfWriter:
     def _get_num_pages(self) -> int:
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         return int(pages[NameObject("/Count")])
+
+    def _get_page_number_by_indirect(
+        self, indirect_reference: Union[None, int, NullObject, IndirectObject]
+    ) -> Optional[int]:
+        """
+        Generate _page_id2num.
+
+        Args:
+            indirect_reference:
+
+        Returns:
+            The page number or None
+        """
+        # to provide same function as in PdfReader
+        if indirect_reference is None or isinstance(indirect_reference, NullObject):
+            return None
+        if isinstance(indirect_reference, int):
+            indirect_reference = IndirectObject(indirect_reference, 0, self)
+        obj = indirect_reference.get_object()
+        if isinstance(obj, PageObject):
+            return obj.page_number
+        return None
 
     @property
     def pages(self) -> List[PageObject]:
@@ -981,6 +1014,76 @@ class PdfWriter:
                 lst.append(ano)
         return lst
 
+    def get_pages_showing_field(
+        self, field: Union[Field, PdfObject, IndirectObject]
+    ) -> List[PageObject]:
+        """
+        Provides list of pages where the field is called.
+
+        Args:
+            field: Field Object, PdfObject or IndirectObject referencing a Field
+
+        Returns:
+            List of pages:
+                - Empty list:
+                    The field has no widgets attached
+                    (either hidden field or ancestor field).
+                - Single page list:
+                    Page where the widget is present
+                    (most common).
+                - Multi-page list:
+                    Field with multiple kids widgets
+                    (example: radio buttons, field repeated on multiple pages).
+        """
+
+        def _get_inherited(obj: DictionaryObject, key: str) -> Any:
+            if key in obj:
+                return obj[key]
+            elif "/Parent" in obj:
+                return _get_inherited(
+                    cast(DictionaryObject, obj["/Parent"].get_object()), key
+                )
+            else:
+                return None
+
+        try:
+            # to cope with all types
+            field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
+        except Exception as exc:
+            raise ValueError("field type is invalid") from exc
+        if _get_inherited(field, "/FT") is None:
+            raise ValueError("field is not valid")
+        ret = []
+        if field.get("/Subtype", "") == "/Widget":
+            if "/P" in field:
+                ret = [field["/P"].get_object()]
+            else:
+                ret = [
+                    p
+                    for p in self.pages
+                    if field.indirect_reference in p.get("/Annots", "")
+                ]
+        else:
+            kids = field.get("/Kids", ())
+            for k in kids:
+                k = k.get_object()
+                if (k.get("/Subtype", "") == "/Widget") and ("/T" not in k):
+                    # Kid that is just a widget, not a field:
+                    if "/P" in k:
+                        ret += [k["/P"].get_object()]
+                    else:
+                        ret += [
+                            p
+                            for p in self.pages
+                            if k.indirect_reference in p.get("/Annots", "")
+                        ]
+        return [
+            x
+            if isinstance(x, PageObject)
+            else (self.pages[self._get_page_number_by_indirect(x.indirect_reference)])  # type: ignore
+            for x in ret
+        ]
+
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
         Copy the reader document root to the writer and all sub elements,
@@ -991,7 +1094,7 @@ class PdfWriter:
             reader: PdfReader from the document root should be copied.
         """
         self._objects.clear()
-        self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT].clone(self))
+        self._root_object = reader.root_object.clone(self)
         self._root = self._root_object.indirect_reference  # type: ignore[assignment]
         self._pages = self._root_object.raw_get("/Pages")
         self._flatten()
@@ -1072,10 +1175,10 @@ class PdfWriter:
         """
         self.clone_reader_document_root(reader)
         if TK.INFO in reader.trailer:
-            self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
+            self._info = reader._info.clone(self).indirect_reference  # type: ignore
         try:
-            self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))
-        except KeyError:
+            self._ID = cast(ArrayObject, reader._ID).clone(self)
+        except AttributeError:
             pass
         if callable(after_page_append):
             for page in cast(
@@ -2453,7 +2556,7 @@ class PdfWriter:
         else:
             outline_item_typ = self.get_outline_root()
 
-        _ro = cast("DictionaryObject", reader.trailer[TK.ROOT])
+        _ro = reader.root_object
         if import_outline and CO.OUTLINES in _ro:
             outline = self._get_filtered_outline(
                 _ro.get(CO.OUTLINES, None), srcpages, reader
@@ -2476,7 +2579,7 @@ class PdfWriter:
                 self._root_object[NameObject("/AcroForm")] = self._add_object(
                     cast(
                         DictionaryObject,
-                        cast(DictionaryObject, reader.trailer["/Root"])["/AcroForm"],
+                        reader.root_object["/AcroForm"],
                     ).clone(self, False, ("/Fields",))
                 )
                 arr = ArrayObject()
@@ -2487,7 +2590,7 @@ class PdfWriter:
                 )
             trslat = self._id_translated[id(reader)]
             try:
-                for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
+                for f in reader.root_object["/AcroForm"]["/Fields"]:  # type: ignore
                     try:
                         ind = IndirectObject(trslat[f.idnum], 0, self)
                         if ind not in arr:

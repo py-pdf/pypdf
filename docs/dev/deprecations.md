@@ -4,7 +4,7 @@ pypdf strives to be an excellent library for its current users and for new
 ones. We are careful with introducing potentially breaking changes, but we
 will do them if they provide value for the community on the long run.
 
-We hope and think that deprecations will not happen soon again. If they do,
+We hope and think that deprecations will not happen frequently. If they do,
 users can rely on the following procedure.
 
 ## Semantic Versioning
