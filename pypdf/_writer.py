@@ -1921,7 +1921,14 @@ class PdfWriter:
             elt: DictionaryObject, stack: List[DictionaryObject]
         ) -> Tuple[List[str], List[str]]:
             nonlocal to_delete
-            if elt in stack:
+            # elt in recursive is a new contentstream object so we have to check the indirect_reference
+            if (elt in stack) or (
+                hasattr(elt, "indirect_reference")
+                and any(
+                    elt.indirect_reference == getattr(x, "indirect_reference", -1)
+                    for x in stack
+                )
+            ):
                 # to prevent infinite looping
                 return [], []  # pragma: no cover
             try:
@@ -1956,7 +1963,12 @@ class PdfWriter:
                                     if k1 not in ["/Length", "/Filter", "/DecodeParms"]
                                 }
                             )
-                        clean_forms(content, stack + [elt])  # clean sub forms
+                            try:
+                                content.indirect_reference = o.indirect_reference
+                            except AttributeError:
+                                pass
+                        stack.append(elt)
+                        clean_forms(content, stack)  # clean sub forms
                     if content is not None:
                         if isinstance(v, IndirectObject):
                             self._objects[v.idnum - 1] = content
