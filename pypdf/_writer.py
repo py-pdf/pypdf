@@ -1966,7 +1966,7 @@ class PdfWriter:
                             try:
                                 content.indirect_reference = o.indirect_reference
                             except AttributeError:
-                                pass
+                                pass  # pragma: no cover
                         stack.append(elt)
                         clean_forms(content, stack)  # clean sub forms
                     if content is not None:
