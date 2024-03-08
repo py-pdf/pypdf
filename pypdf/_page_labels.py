@@ -59,7 +59,7 @@ a       Lowercase letters (a to z for the first 26 pages,
 
 from typing import Iterator, Optional, Tuple, cast
 
-from ._protocols import PdfReaderProtocol
+from ._protocols import PdfCommonDocProtocol
 from ._utils import logger_warning
 from .generic import ArrayObject, DictionaryObject, NumberObject
 
@@ -116,7 +116,7 @@ def number2lowercase_letter(number: int) -> str:
     return number2uppercase_letter(number).lower()
 
 
-def index2label(reader: PdfReaderProtocol, index: int) -> str:
+def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
     """
     See 7.9.7 "Number Trees".
 

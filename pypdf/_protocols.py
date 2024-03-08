@@ -1,7 +1,8 @@
 """Helpers for working with PDF types."""
 
+from abc import abstractmethod
 from pathlib import Path
-from typing import IO, Any, Dict, List, Optional, Tuple, Union
+from typing import IO, Any, Dict, List, Optional, Tuple, Union, runtime_checkable
 
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
@@ -38,7 +39,8 @@ class PdfObjectProtocol(Protocol):
         ...
 
 
-class PdfCommonDocProtocol(Protocol):  # deprecated
+@runtime_checkable
+class PdfCommonDocProtocol(Protocol):
     @property
     def pdf_header(self) -> str:
         ...
@@ -54,27 +56,33 @@ class PdfCommonDocProtocol(Protocol):  # deprecated
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
         ...
 
-
-class PdfReaderProtocol(PdfCommonDocProtocol, Protocol):  # deprecated
     @property
     def strict(self) -> bool:
         ...
 
+
+@runtime_checkable
+class PdfReaderProtocol(PdfCommonDocProtocol, Protocol):
     @property
+    @abstractmethod
     def xref(self) -> Dict[int, Dict[int, Any]]:
         ...
 
     @property
+    @abstractmethod
     def trailer(self) -> Dict[str, Any]:
         ...
 
 
-class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):  # deprecated
+@runtime_checkable
+class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
     _objects: List[Any]
     _id_translated: Dict[int, Dict[int, int]]
 
+    @abstractmethod
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:
         ...
 
+    @abstractmethod
     def _add_object(self, obj: Any) -> Any:
         ...

@@ -32,7 +32,6 @@ import struct
 import zlib
 from abc import abstractmethod
 from datetime import datetime
-from io import BytesIO
 from typing import (
     Any,
     Dict,
@@ -45,6 +44,7 @@ from typing import (
     cast,
 )
 
+from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
 from ._utils import (
@@ -52,7 +52,6 @@ from ._utils import (
     deprecate_with_replacement,
     logger_warning,
     parse_iso8824_date,
-    read_non_whitespace,
 )
 from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
@@ -68,7 +67,6 @@ from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .errors import (
     PdfReadError,
-    PdfStreamError,
 )
 from .generic import (
     ArrayObject,
@@ -86,7 +84,6 @@ from .generic import (
     PdfObject,
     TextStringObject,
     TreeObject,
-    read_object,
 )
 from .types import OutlineType, PagemodeType
 
@@ -249,10 +246,18 @@ class PdfDocCommon:
     This root class is strongly abstracted
     """
 
-    is_encrypted: bool
+    strict: bool = False  # default
 
+    _encryption: Optional[Encryption] = None
+
+    @property
     @abstractmethod
     def root_object(self) -> DictionaryObject:
+        ...
+
+    @property
+    @abstractmethod
+    def pdf_header(self) -> str:
         ...
 
     @abstractmethod
@@ -278,6 +283,8 @@ class PdfDocCommon:
     # ????#@property
     # ????#def xmp_metadata(self) -> Optional[XmpInformation]:
 
+    flattened_pages: Optional[List[PageObject]] = None
+
     ### common
     def get_num_pages(self) -> int:
         """
@@ -298,7 +305,8 @@ class PdfDocCommon:
         else:
             if self.flattened_pages is None:
                 self._flatten()
-            return len(self.flattened_pages)  # type: ignore
+            assert self.flattened_pages is not None
+            return len(self.flattened_pages)
 
     ### common
     def get_page(self, page_number: int) -> PageObject:
@@ -348,7 +356,7 @@ class PdfDocCommon:
         """
         if retval is None:
             retval = {}
-            catalog = cast(DictionaryObject, self.root_object)
+            catalog = self.root_object
 
             # get the name tree
             if CA.DESTS in catalog:
@@ -674,76 +682,6 @@ class PdfDocCommon:
             for x in ret
         ]
 
-    def _get_named_destinations(
-        self,
-        tree: Union[TreeObject, None] = None,
-        retval: Optional[Any] = None,
-    ) -> Dict[str, Any]:
-        """
-        Retrieve the named destinations present in the document.
-
-        Args:
-            tree:
-            retval:
-
-        Returns:
-            A dictionary which maps names to
-            :class:`Destinations<pypdf.generic.Destination>`.
-        """
-        if retval is None:
-            retval = {}
-            catalog = self.root_object
-
-            # get the name tree
-            if CA.DESTS in catalog:
-                tree = cast(TreeObject, catalog[CA.DESTS])
-            elif CA.NAMES in catalog:
-                names = cast(DictionaryObject, catalog[CA.NAMES])
-                if CA.DESTS in names:
-                    tree = cast(TreeObject, names[CA.DESTS])
-
-        if tree is None:
-            return retval
-
-        if PA.KIDS in tree:
-            # recurse down the tree
-            for kid in cast(ArrayObject, tree[PA.KIDS]):
-                self._get_named_destinations(kid.get_object(), retval)
-        # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
-        elif CA.NAMES in tree:  # KIDS and NAMES are exclusives (PDF 1.7 specs p 162)
-            names = cast(DictionaryObject, tree[CA.NAMES])
-            i = 0
-            while i < len(names):
-                key = cast(str, names[i].get_object())
-                i += 1
-                if not isinstance(key, str):
-                    continue
-                try:
-                    value = names[i].get_object()
-                except IndexError:
-                    break
-                i += 1
-                if isinstance(value, DictionaryObject):
-                    if "/D" in value:
-                        value = value["/D"]
-                    else:
-                        continue
-                dest = self._build_destination(key, value)  # type: ignore
-                if dest is not None:
-                    retval[key] = dest
-        else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF1.1
-            for k__, v__ in tree.items():
-                val = v__.get_object()
-                if isinstance(val, DictionaryObject):
-                    if "/D" in val:
-                        val = val["/D"].get_object()
-                    else:
-                        continue
-                dest = self._build_destination(k__, val)
-                if dest is not None:
-                    retval[k__] = dest
-        return retval
-
     @property
     def outline(self) -> OutlineType:
         """
@@ -1050,10 +988,11 @@ class PdfDocCommon:
             # decrypted file
             catalog = self.root_object
             pages = catalog["/Pages"].get_object()  # type: ignore
+            assert isinstance(pages, DictionaryObject)
             self.flattened_pages = []
 
         if PA.TYPE in pages:
-            t = pages[PA.TYPE]
+            t = cast(str, pages[PA.TYPE])
         # if pdf has no type, considered as a page if /Kids is missing
         elif PA.KIDS not in pages:
             t = "/Page"
@@ -1083,60 +1022,6 @@ class PdfDocCommon:
 
             # TODO: Could flattened_pages be None at this point?
             self.flattened_pages.append(page_obj)  # type: ignore
-
-    def _get_object_from_stream(
-        self, indirect_reference: IndirectObject
-    ) -> Union[int, PdfObject, str]:
-        # indirect reference to object in object stream
-        # read the entire object stream into memory
-        stmnum, idx = self.xref_objStm[indirect_reference.idnum]
-        obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
-        # This is an xref to a stream, so its type better be a stream
-        assert cast(str, obj_stm["/Type"]) == "/ObjStm"
-        # /N is the number of indirect objects in the stream
-        assert idx < obj_stm["/N"]
-        stream_data = BytesIO(b_(obj_stm.get_data()))
-        for i in range(obj_stm["/N"]):  # type: ignore
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-            objnum = NumberObject.read_from_stream(stream_data)
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-            offset = NumberObject.read_from_stream(stream_data)
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-            if objnum != indirect_reference.idnum:
-                # We're only interested in one object
-                continue
-            if self.strict and idx != i:
-                raise PdfReadError("Object is in wrong index.")
-            stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
-
-            # to cope with some case where the 'pointer' is on a white space
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-
-            try:
-                obj = read_object(stream_data, self)
-            except PdfStreamError as exc:
-                # Stream object cannot be read. Normally, a critical error, but
-                # Adobe Reader doesn't complain, so continue (in strict mode?)
-                logger_warning(
-                    f"Invalid stream (index {i}) within object "
-                    f"{indirect_reference.idnum} {indirect_reference.generation}: "
-                    f"{exc}",
-                    __name__,
-                )
-
-                if self.strict:
-                    raise PdfReadError(f"Can't read object stream: {exc}")
-                # Replace with null. Hopefully it's nothing important.
-                obj = NullObject()
-            return obj
-
-        if self.strict:
-            raise PdfReadError("This is a fatal error in strict mode.")
-        return NullObject()
 
     def _get_indirect_object(self, num: int, gen: int) -> Optional[PdfObject]:
         """
@@ -1220,75 +1105,6 @@ class PdfDocCommon:
                         retval[tag] = es
         return retval
 
-    def add_form_topname(self, name: str) -> Optional[DictionaryObject]:
-        """
-        Add a top level form that groups all form fields below it.
-
-        Args:
-            name: text string of the "/T" Attribute of the created object
-
-        Returns:
-            The created object. ``None`` means no object was created.
-        """
-        catalog = self.root_object
-
-        if "/AcroForm" not in catalog or not isinstance(
-            catalog["/AcroForm"], DictionaryObject
-        ):
-            return None
-        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
-        if "/Fields" not in acroform:
-            # TODO: :No error returns but may be extended for XFA Forms
-            return None
-
-        interim = DictionaryObject()
-        interim[NameObject("/T")] = TextStringObject(name)
-        interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
-        self.cache_indirect_object(
-            0,
-            max([i for (g, i) in self.resolved_objects if g == 0]) + 1,
-            interim,
-        )
-        arr = ArrayObject()
-        arr.append(interim.indirect_reference)
-        acroform[NameObject("/Fields")] = arr
-        for o in cast(ArrayObject, interim["/Kids"]):
-            obj = o.get_object()
-            if "/Parent" in obj:
-                logger_warning(
-                    f"Top Level Form Field {obj.indirect_reference} have a non-expected parent",
-                    __name__,
-                )
-            obj[NameObject("/Parent")] = interim.indirect_reference
-        return interim
-
-    def rename_form_topname(self, name: str) -> Optional[DictionaryObject]:
-        """
-        Rename top level form field that all form fields below it.
-
-        Args:
-            name: text string of the "/T" field of the created object
-
-        Returns:
-            The modified object. ``None`` means no object was modified.
-        """
-        catalog = self.root_object
-
-        if "/AcroForm" not in catalog or not isinstance(
-            catalog["/AcroForm"], DictionaryObject
-        ):
-            return None
-        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
-        if "/Fields" not in acroform:
-            return None
-
-        interim = cast(
-            DictionaryObject,
-            cast(ArrayObject, acroform[NameObject("/Fields")])[0].get_object(),
-        )
-        interim[NameObject("/T")] = TextStringObject(name)
-        return interim
-
     @property
     def attachments(self) -> Mapping[str, List[bytes]]:
         return LazyDict(
@@ -1305,7 +1121,7 @@ class PdfDocCommon:
         Returns:
             list of filenames
         """
-        catalog = cast(DictionaryObject, self.trailer["/Root"])
+        catalog = self.root_object
         # From the catalog get the embedded file names
         try:
             filenames = cast(
@@ -1343,7 +1159,7 @@ class PdfDocCommon:
             dictionary of filename -> Union[bytestring or List[ByteString]]
             if the filename exists multiple times a List of the different version will be provided
         """
-        catalog = cast(DictionaryObject, self.trailer["/Root"])
+        catalog = self.root_object
         # From the catalog get the embedded file names
         try:
             filenames = cast(

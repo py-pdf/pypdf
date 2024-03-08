@@ -47,7 +47,7 @@ from typing import (
     cast,
 )
 
-from ._doc_common import DocumentInformation
+from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import Encryption, PasswordType
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
@@ -115,7 +115,7 @@ def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     return struct.unpack(">q", d)[0]
 
 
-class PdfReader:
+class PdfReader(PdfDocCommon):
     """
     Initialize a PdfReader object.
 

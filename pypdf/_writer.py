@@ -154,6 +154,7 @@ class PdfWriter(PdfDocCommon):
     """
 
     # for commonality
+    @property
     def is_encrypted(self) -> bool:
         """
         Read-only boolean property showing whether this PDF file is encrypted.
@@ -368,7 +369,7 @@ class PdfWriter(PdfDocCommon):
             return
         if clean:
             self._replace_object(
-                self.flatten_pages[page].indirect_reference, NullObject()
+                self.flattened_pages[page].indirect_reference, NullObject()
             )
         del self.flattened_pages[page]
         pages = cast(DictionaryObject, self.root_object["/Pages"])
