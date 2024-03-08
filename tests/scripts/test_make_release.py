@@ -1,11 +1,12 @@
 """Test the `make_release.py` script."""
 from pathlib import Path
 from unittest import mock
+
 import pytest
 
 try:
     import make_release
-except:
+except ImportError:
     pass
 
 DATA_PATH = Path(__file__).parent.resolve() / "data"
