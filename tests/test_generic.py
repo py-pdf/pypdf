@@ -1247,6 +1247,7 @@ def test_encodedstream_set_data():
     assert cc[NameObject("/Test")] == "/MyTest"
 
 
+@pytest.mark.enable_socket()
 def test_calling_indirect_objects():
     """Cope with cases where attributes/items are called from indirectObject"""
     url = (
