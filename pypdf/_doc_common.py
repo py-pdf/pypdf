@@ -461,6 +461,7 @@ class PdfDocCommon:
 
         return retval
 
+    #### ??? : a mettre en PR indep
     def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
         if "/TM" in parent:
             return cast(str, parent["/TM"])
@@ -470,10 +471,10 @@ class PdfDocCommon:
                     cast(DictionaryObject, parent["/Parent"])
                 )
                 + "."
-                + cast(str, parent["/T"])
+                + cast(str, parent.get("/T", ""))
             )
         else:
-            return cast(str, parent["/T"])
+            return cast(str, parent.get("/T", ""))
 
     def _build_field(
         self,
@@ -748,6 +749,12 @@ class PdfDocCommon:
             return cast("ArrayObject", catalog[CO.THREADS])
         else:
             return None
+
+    def _get_num_pages(self) -> int:
+        try:
+            return len(self.flattened_pages)  # type: ignore
+        except TypeError:
+            return 0
 
     # ????# to be merged ?
     @abstractmethod

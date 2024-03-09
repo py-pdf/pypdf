@@ -303,7 +303,7 @@ class PdfWriter(PdfDocCommon):
     def _add_page(
         self,
         page: PageObject,
-        action: Callable[[Any, IndirectObject], None],
+        action: Callable[[Any, Union[PageObject, IndirectObject]], None],
         excluded_keys: Iterable[str] = (),
     ) -> PageObject:
         assert cast(str, page[PA.TYPE]) == CO.PAGE
@@ -353,11 +353,14 @@ class PdfWriter(PdfDocCommon):
             clean: replace PageObject with NullObject to prevent destination,
             annotation to reference a detached page
         """
+        if self.flattened_pages is None:
+            return
         if isinstance(page, IndirectObject):
-            page = page.get_object()
-            if not isinstance(page, PageObject):
+            p = page.get_object()
+            if not isinstance(p, PageObject):
                 logger_warning("IndirectObject is not referencing to a page", __name__)
                 return
+            page = p
         if not isinstance(page, int):
             try:
                 page = self.flattened_pages.index(page)
@@ -369,11 +372,12 @@ class PdfWriter(PdfDocCommon):
             return
         if clean:
             self._replace_object(
-                self.flattened_pages[page].indirect_reference, NullObject()
+                cast(IndirectObject, self.flattened_pages[page].indirect_reference),
+                NullObject(),
             )
         del self.flattened_pages[page]
         pages = cast(DictionaryObject, self.root_object["/Pages"])
-        del pages["/Kids"][page]
+        del cast(ArrayObject, pages["/Kids"])[page]
         pages[NameObject(PA.COUNT)] = NumberObject(cast(int, pages[PA.COUNT]) - 1)
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
@@ -753,19 +757,6 @@ class PdfWriter(PdfDocCommon):
             if callable(after_page_append):
                 after_page_append(writer_page)
 
-    def _get_qualified_field_name(self, parent: DictionaryObject) -> Optional[str]:
-        if "/TM" in parent:
-            return cast(str, parent["/TM"])
-        elif "/T" not in parent:
-            return None
-        elif "/Parent" in parent:
-            qualified_parent = self._get_qualified_field_name(
-                cast(DictionaryObject, parent["/Parent"])
-            )
-            if qualified_parent is not None:
-                return qualified_parent + "." + cast(str, parent["/T"])
-        return cast(str, parent["/T"])
-
     def _update_text_field(self, field: DictionaryObject) -> None:
         # Calculate rectangle dimensions
         _rct = cast(RectangleObject, field[AA.Rect])
@@ -1048,8 +1039,9 @@ class PdfWriter(PdfDocCommon):
         self._root = self._root_object.indirect_reference  # type: ignore[assignment]
         self._pages = self._root_object.raw_get("/Pages")
         self._flatten()
+        assert self.flattened_pages is not None
         for p in self.flattened_pages:
-            self._objects[p.indirect_reference.idnum - 1] = p
+            self._objects[cast(IndirectObject, p.indirect_reference).idnum - 1] = p
         self._root_object[NameObject("/Pages")][  # type: ignore[index]
             NameObject("/Kids")
         ] = ArrayObject([p.indirect_reference for p in self.flattened_pages])
@@ -1105,7 +1097,7 @@ class PdfWriter(PdfDocCommon):
                 newpage = PageObject(self, pages.indirect_reference)
                 newpage.update(pages.items())
 
-            self.flattened_pages.append(newpage)
+            cast(List[Any], self.flattened_pages).append(newpage)
 
     def clone_document_from_reader(
         self,

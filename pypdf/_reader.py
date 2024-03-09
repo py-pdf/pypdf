@@ -395,20 +395,6 @@ class PdfReader(PdfDocCommon):
 
         return retval
 
-    def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
-        if "/TM" in parent:
-            return cast(str, parent["/TM"])
-        elif "/Parent" in parent:
-            return (
-                self._get_qualified_field_name(
-                    cast(DictionaryObject, parent["/Parent"])
-                )
-                + "."
-                + cast(str, parent["/T"])
-            )
-        else:
-            return cast(str, parent["/T"])
-
     def _build_field(
         self,
         field: Union[TreeObject, DictionaryObject],
