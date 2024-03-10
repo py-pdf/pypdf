@@ -29,7 +29,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "typing_extensions >= 3.7.4.3; python_version < '3.10'",
+    "typing_extensions >= 4.0; python_version < '3.11'",
     "dataclasses; python_version < '3.7'",
 ]
 
