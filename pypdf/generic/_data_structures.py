@@ -128,7 +128,7 @@ class ArrayObject(List[Any], PdfObject):
         """Emulate DictionaryObject.items for a list (index, object)."""
         return enumerate(self)
 
-    def __to_lst(self, lst: Any) -> List[Any]:
+    def _to_lst(self, lst: Any) -> List[Any]:
         # Convert to list, internal
         if isinstance(lst, (list, tuple, set)):
             pass
@@ -146,18 +146,40 @@ class ArrayObject(List[Any], PdfObject):
         return lst
 
     def __add__(self, lst: Any) -> "ArrayObject":
-        """Allow extend with any list format or append"""
-        return ArrayObject(self) + ArrayObject(self.__to_lst(lst))
+        """
+        Allow extension by adding list or add one element only
+
+        Args:
+            lst: any list, tuples are extended the list.
+            other types(numbers,...) will be appended.
+            if str is passed it will be converted into TextStringObject
+            or NameObject (if starting with "/")
+            if bytes is passed it will be converted into ByteStringObject
+
+        Returns:
+            ArrayObject with all elements
+        """
+        temp = ArrayObject(self)
+        temp.extend(self._to_lst(lst))
+        return temp
 
     def __iadd__(self, lst: Any) -> Self:
-        """Allow extend with any list format or append"""
-        for x in self.__to_lst(lst):
-            self.append(x)
+        """
+         Allow extension by adding list or add one element only
+
+        Args:
+            lst: any list, tuples are extended the list.
+            other types(numbers,...) will be appended.
+            if str is passed it will be converted into TextStringObject
+            or NameObject (if starting with "/")
+            if bytes is passed it will be converted into ByteStringObject
+        """
+        self.extend(self._to_lst(lst))
         return self
 
     def __isub__(self, lst: Any) -> Self:
         """Allow to remove items"""
-        for x in self.__to_lst(lst):
+        for x in self._to_lst(lst):
             try:
                 x = self.index(x)
                 del self[x]

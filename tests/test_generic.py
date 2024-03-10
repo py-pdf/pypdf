@@ -1289,6 +1289,9 @@ def test_array_operators():
             NumberObject(4),
         ]
     )
+    b = a + 5
+    assert isinstance(b, ArrayObject)
+    assert b == [1, 2, 3, 4, 5]
     assert a == [1, 2, 3, 4]
     a -= 2
     a += "abc"
