@@ -49,18 +49,18 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
 
    modules/PdfReader
    modules/PdfWriter
-   modules/PdfMerger
-   modules/PageObject
-   modules/Transformation
-   modules/DocumentInformation
-   modules/XmpInformation
    modules/Destination
-   modules/RectangleObject
+   modules/DocumentInformation
    modules/Field
-   modules/PageRange
-   modules/annotations
    modules/Fit
+   modules/PageObject
+   modules/PageRange
    modules/PaperSize
+   modules/PdfMerger
+   modules/RectangleObject
+   modules/Transformation
+   modules/XmpInformation
+   modules/annotations
    modules/constants
    modules/errors
    modules/generic

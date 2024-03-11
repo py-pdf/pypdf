@@ -17,27 +17,32 @@ repos:
         exclude: "docs/make.bat"
     -   id: check-added-large-files
         args: ['--maxkb=1000']
+
 -   repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
     -   id: black
         args: [--target-version, py37]
+
 -   repo: https://github.com/asottile/blacken-docs
     rev: 1.14.0
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black==22.1.0]
         exclude: "docs/user/robustness.md"
+
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.1.9
     hooks:
     -   id: ruff
         args: ['--fix']
+
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.3.2
     hooks:
     -   id: pyupgrade
         args: [--py37-plus]
+
 -   repo: https://github.com/pycqa/flake8
     rev: 5.0.4
     hooks:
