@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710146215987,
+  "lastUpdate": 1710156374006,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -49018,6 +49018,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.12045539906180248",
             "extra": "mean: 16.073169331999996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c943f5f75ea001e9abeed551e004c1fd25a7f038",
+          "message": "DOC: Minor readability increases (#2515)\n\n1. Sort the API reference, de-emphasizing the deprecated PdfMerger.\r\n2. Add new lines to .pre-commit-config.yaml.",
+          "timestamp": "2024-03-11T12:23:24+01:00",
+          "tree_id": "24ec6126788fd24b7fef2f1f7c6aa7dc177658ab",
+          "url": "https://github.com/py-pdf/pypdf/commit/c943f5f75ea001e9abeed551e004c1fd25a7f038"
+        },
+        "date": 1710156372265,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.459755342224587,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006153005894057036",
+            "extra": "mean: 289.0377790000059 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.070760589508172,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005711019644825491",
+            "extra": "mean: 76.50664191666816 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2836729187375162,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04136422452822877",
+            "extra": "mean: 3.525186699 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.511025446350228,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012786725374784342",
+            "extra": "mean: 57.106878352942324 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0636584340917376,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07914475178839073",
+            "extra": "mean: 15.708837552600006 sec\nrounds: 5"
           }
         ]
       }
