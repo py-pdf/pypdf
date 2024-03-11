@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710073371306,
+  "lastUpdate": 1710142100614,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -48900,6 +48900,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0489693434830294",
             "extra": "mean: 15.968771313000001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6c19fcd7efed3b7b7954ffc425be70070e1fef91",
+          "message": "ENH: Add Enforce from PDF2.0 in viewer_preferences (#2511)\n\nCloses #2509\r\n\r\nIn order to use it:\r\n\r\n```\r\n# to set it:\r\nwriter.viewer_preferences.enforce += writer.viewer_preferences.PRINT_SCALING\r\n# to clear it:\r\nwriter.viewer_preferences.enforce = None\r\n```",
+          "timestamp": "2024-03-11T08:25:24+01:00",
+          "tree_id": "b33464f8151ab4180efdacffde0d316e9105ccc7",
+          "url": "https://github.com/py-pdf/pypdf/commit/6c19fcd7efed3b7b7954ffc425be70070e1fef91"
+        },
+        "date": 1710142096388,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.342921827095463,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005382780940462771",
+            "extra": "mean: 299.1395108000063 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.54324787742143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008169559285338041",
+            "extra": "mean: 79.72416791667314 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27247830531656775,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04002458098257765",
+            "extra": "mean: 3.6700169535999976 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.81089073046521,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0027174629625275263",
+            "extra": "mean: 59.485247750005854 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06202643040886786,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13330677276698846",
+            "extra": "mean: 16.12215943120001 sec\nrounds: 5"
           }
         ]
       }
