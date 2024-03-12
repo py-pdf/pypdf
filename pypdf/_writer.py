@@ -375,10 +375,20 @@ class PdfWriter(PdfDocCommon):
                 cast(IndirectObject, self.flattened_pages[page].indirect_reference),
                 NullObject(),
             )
+        page_parent = cast(DictionaryObject, self.flattened_pages[page]["/Parent"])
+        try:
+            parent_idx = cast(ArrayObject, page_parent["/Kids"]).index(
+                self.flattened_pages[page].indirect_reference
+            )
+            del cast(ArrayObject, page_parent["/Kids"])[parent_idx]
+            while page_parent:  # decrement /Count in all parents
+                page_parent[NameObject("/Count")] = NumberObject(
+                    cast(NumberObject, page_parent[NameObject("/Count")]) - 1
+                )
+                page_parent = page_parent.get("/Parent", None)
+        except ValueError:
+            logger_warning(f"Page Index Error in {page_parent}", __name__)
         del self.flattened_pages[page]
-        pages = cast(DictionaryObject, self.root_object["/Pages"])
-        del cast(ArrayObject, pages["/Kids"])[page]
-        pages[NameObject(PA.COUNT)] = NumberObject(cast(int, pages[PA.COUNT]) - 1)
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
         """
@@ -411,21 +421,6 @@ class PdfWriter(PdfDocCommon):
             logger_warning(
                 f"set_need_appearances_writer({state}) catch : {exc}", __name__
             )
-
-    @property
-    def viewer_preferences(self) -> Optional[ViewerPreferences]:
-        """Returns the existing ViewerPreferences as an overloaded dictionary."""
-        o = self._root_object.get(CD.VIEWER_PREFERENCES, None)
-        if o is None:
-            return None
-        o = o.get_object()
-        if not isinstance(o, ViewerPreferences):
-            o = ViewerPreferences(o)
-            if hasattr(o, "indirect_reference"):
-                self._replace_object(o.indirect_reference, o)
-            else:
-                self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
-        return o
 
     def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
@@ -558,29 +553,7 @@ class PdfWriter(PdfDocCommon):
     def open_destination(
         self,
     ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
-        """
-        Property to access the opening destination (``/OpenAction`` entry in
-        the PDF catalog). It returns ``None`` if the entry does not exist is not
-        set.
-
-        Raises:
-            Exception: If a destination is invalid.
-        """
-        if "/OpenAction" not in self._root_object:
-            return None
-        oa = self._root_object["/OpenAction"]
-        if isinstance(oa, (str, bytes)):
-            return create_string_object(str(oa))
-        elif isinstance(oa, ArrayObject):
-            try:
-                page, typ = oa[0:2]
-                array = oa[2:]
-                fit = Fit(typ, tuple(array))
-                return Destination("OpenAction", page, fit)
-            except Exception as exc:
-                raise Exception(f"Invalid Destination {oa}: {exc}")
-        else:
-            return None
+        return super().open_destination
 
     @open_destination.setter
     def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
@@ -1041,63 +1014,11 @@ class PdfWriter(PdfDocCommon):
         self._flatten()
         assert self.flattened_pages is not None
         for p in self.flattened_pages:
+            p[NameObject("/Parent")] = self._pages
             self._objects[cast(IndirectObject, p.indirect_reference).idnum - 1] = p
-        self._root_object[NameObject("/Pages")][  # type: ignore[index]
+        cast(DictionaryObject, self._pages.get_object())[
             NameObject("/Kids")
         ] = ArrayObject([p.indirect_reference for p in self.flattened_pages])
-
-    def _flatten(
-        self,
-        pages: Union[None, DictionaryObject, PageObject] = None,
-        inherit: Optional[Dict[str, Any]] = None,
-        indirect_reference: Optional[IndirectObject] = None,
-    ) -> None:
-        inheritable_page_attributes = (
-            NameObject(PG.RESOURCES),
-            NameObject(PG.MEDIABOX),
-            NameObject(PG.CROPBOX),
-            NameObject(PG.ROTATE),
-        )
-        if inherit is None:
-            inherit = {}
-        if pages is None:
-            pages = cast(DictionaryObject, self.root_object["/Pages"])
-            self.flattened_pages = []
-        assert pages is not None  # hint for mypy
-
-        if PA.TYPE in pages:
-            t = str(pages[PA.TYPE])
-        # if pdf has no type, considered as a page if /Kids is missing
-        elif PA.KIDS not in pages:
-            t = "/Page"
-        else:
-            t = "/Pages"
-
-        if t == "/Pages":
-            for attr in inheritable_page_attributes:
-                if attr in pages:
-                    inherit[attr] = pages[attr]
-            for page in cast(ArrayObject, pages[PA.KIDS]):
-                addt = {}
-                if isinstance(page, IndirectObject):
-                    addt["indirect_reference"] = page
-                self._flatten(page.get_object(), inherit, **addt)
-        elif t == "/Page":
-            for attr_in, value in list(inherit.items()):
-                # if the page has it's own value, it does not inherit the
-                # parent's value:
-                if attr_in not in pages:
-                    pages[attr_in] = value
-            pages[NameObject("/Parent")] = cast(
-                IndirectObject, self._root_object.raw_get("/Pages")
-            )
-            if isinstance(pages, PageObject):
-                newpage = pages
-            else:
-                newpage = PageObject(self, pages.indirect_reference)
-                newpage.update(pages.items())
-
-            cast(List[Any], self.flattened_pages).append(newpage)
 
     def clone_document_from_reader(
         self,

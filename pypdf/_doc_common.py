@@ -71,6 +71,7 @@ from .errors import (
 from .generic import (
     ArrayObject,
     BooleanObject,
+    ByteStringObject,
     Destination,
     DictionaryObject,
     EncodedStreamObject,
@@ -84,6 +85,8 @@ from .generic import (
     PdfObject,
     TextStringObject,
     TreeObject,
+    ViewerPreferences,
+    create_string_object,
 )
 from .types import OutlineType, PagemodeType
 
@@ -266,8 +269,24 @@ class PdfDocCommon:
     ) -> Optional[PdfObject]:
         ...
 
-    # ????#@property
-    # ????#def viewer_preferences(self) -> Optional[ViewerPreferences]:
+    @abstractmethod
+    def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
+        ...
+
+    @property
+    def viewer_preferences(self) -> Optional[ViewerPreferences]:
+        """Returns the existing ViewerPreferences as an overloaded dictionary."""
+        o = self.root_object.get(CD.VIEWER_PREFERENCES, None)
+        if o is None:
+            return None
+        o = o.get_object()
+        if not isinstance(o, ViewerPreferences):
+            o = ViewerPreferences(o)
+            if hasattr(o, "indirect_reference"):
+                self._replace_object(o.indirect_reference, o)
+            else:
+                self.root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
+        return o
 
     # ????#
     """def _repr_mimebundle_(
@@ -684,6 +703,40 @@ class PdfDocCommon:
         ]
 
     @property
+    def open_destination(
+        self,
+    ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
+        """
+        Property to access the opening destination (``/OpenAction`` entry in
+        the PDF catalog). It returns ``None`` if the entry does not exist is not
+        set.
+
+        Raises:
+            Exception: If a destination is invalid.
+        """
+        if "/OpenAction" not in self.root_object:
+            return None
+        oa: Any = self.root_object["/OpenAction"]
+        if isinstance(oa, bytes):  # pragma: no cover
+            oa = oa.decode()
+        if isinstance(oa, str):
+            return create_string_object(oa)
+        elif isinstance(oa, ArrayObject):
+            try:
+                page, typ = oa[0:2]
+                array = oa[2:]
+                fit = Fit(typ, tuple(array))
+                return Destination("OpenAction", page, fit)
+            except Exception as exc:
+                raise Exception(f"Invalid Destination {oa}: {exc}")
+        else:
+            return None
+
+    @open_destination.setter
+    def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
+        raise NotImplementedError("no setter for open_destination")
+
+    @property
     def outline(self) -> OutlineType:
         """
         Read-only property for the outline present in the document.
@@ -1010,7 +1063,7 @@ class PdfDocCommon:
             for attr in inheritable_page_attributes:
                 if attr in pages:
                     inherit[attr] = pages[attr]
-            for page in pages[PA.KIDS]:  # type: ignore
+            for page in cast(ArrayObject, pages[PA.KIDS]):
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirect_reference"] = page

@@ -72,7 +72,6 @@ from .constants import (
 )
 from .constants import Core as CO
 from .constants import FieldDictionaryAttributes as FA
-from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
 from .errors import (
@@ -100,7 +99,6 @@ from .generic import (
     PdfObject,
     TextStringObject,
     TreeObject,
-    ViewerPreferences,
     read_object,
 )
 from .types import OutlineType, PagemodeType
@@ -133,17 +131,6 @@ class PdfReader(PdfDocCommon):
             password is None, the file will not be decrypted.
             Defaults to ``None``
     """
-
-    @property
-    def viewer_preferences(self) -> Optional[ViewerPreferences]:
-        """Returns the existing ViewerPreferences as an overloaded dictionary."""
-        o = self.root_object.get(CD.VIEWER_PREFERENCES, None)
-        if o is None:
-            return None
-        o = o.get_object()
-        if not isinstance(o, ViewerPreferences):
-            o = ViewerPreferences(o)
-        return o
 
     def __init__(
         self,
@@ -973,59 +960,6 @@ class PdfReader(PdfDocCommon):
         except KeyError:
             return None
 
-    def _flatten(
-        self,
-        pages: Union[None, DictionaryObject, PageObject] = None,
-        inherit: Optional[Dict[str, Any]] = None,
-        indirect_reference: Optional[IndirectObject] = None,
-    ) -> None:
-        inheritable_page_attributes = (
-            NameObject(PG.RESOURCES),
-            NameObject(PG.MEDIABOX),
-            NameObject(PG.CROPBOX),
-            NameObject(PG.ROTATE),
-        )
-        if inherit is None:
-            inherit = {}
-        if pages is None:
-            # Fix issue 327: set flattened_pages attribute only for
-            # decrypted file
-            catalog = self.root_object
-            pages = cast(DictionaryObject, catalog["/Pages"].get_object())
-            self.flattened_pages = []
-
-        if PA.TYPE in pages:
-            t = cast(str, pages[PA.TYPE])
-        # if pdf has no type, considered as a page if /Kids is missing
-        elif PA.KIDS not in pages:
-            t = "/Page"
-        else:
-            t = "/Pages"
-
-        if t == "/Pages":
-            for attr in inheritable_page_attributes:
-                if attr in pages:
-                    inherit[attr] = pages[attr]
-            for page in pages[PA.KIDS]:  # type: ignore
-                addt = {}
-                if isinstance(page, IndirectObject):
-                    addt["indirect_reference"] = page
-                obj = page.get_object()
-                if obj:
-                    # damaged file may have invalid child in /Pages
-                    self._flatten(obj, inherit, **addt)
-        elif t == "/Page":
-            for attr_in, value in list(inherit.items()):
-                # if the page has it's own value, it does not inherit the
-                # parent's value:
-                if attr_in not in pages:
-                    pages[attr_in] = value
-            page_obj = PageObject(self, indirect_reference)
-            page_obj.update(pages)
-
-            # TODO: Could flattened_pages be None at this point?
-            self.flattened_pages.append(page_obj)  # type: ignore
-
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
     ) -> Union[int, PdfObject, str]:
@@ -1269,6 +1203,15 @@ class PdfReader(PdfDocCommon):
         self.resolved_objects[(generation, idnum)] = obj
         if obj is not None:
             obj.indirect_reference = IndirectObject(idnum, generation, self)
+        return obj
+
+    def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
+        if indirect.pdf != self:
+            raise ValueError("Can not update pdfreader with external object")
+        if (indirect.generation, indirect.idnum) in self.resolved_objects:
+            raise ValueError("Can not find referenced object")
+        self.resolved_objects[(indirect.generation, indirect.idnum)] = obj
+        obj.indirect_reference = indirect
         return obj
 
     def read(self, stream: StreamType) -> None:

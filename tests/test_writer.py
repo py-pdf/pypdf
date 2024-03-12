@@ -882,7 +882,7 @@ def test_pdf_header():
     writer.add_page(reader.pages[0])
     assert writer.pdf_header == "%PDF-1.5"
 
-    writer.pdf_header = "%PDF-1.6"
+    writer.pdf_header = b"%PDF-1.6"
     assert writer.pdf_header == "%PDF-1.6"
 
 
