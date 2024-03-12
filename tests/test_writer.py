@@ -1807,6 +1807,14 @@ def test_viewerpreferences():
     writer.viewer_preferences.direction = "/R2L"
     assert len(writer.root_object["/ViewerPreferences"]) == 1
 
+    assert writer.viewer_preferences.enforce == []
+    assert "/Enforce" not in writer.viewer_preferences
+    writer.viewer_preferences.enforce += writer.viewer_preferences.PRINT_SCALING
+    assert writer.viewer_preferences["/Enforce"] == ["/PrintScaling"]
+    writer.viewer_preferences.enforce = None
+    assert "/Enforce" not in writer.viewer_preferences
+    writer.viewer_preferences.enforce = None
+
     del reader.trailer["/Root"]["/ViewerPreferences"]
     assert reader.viewer_preferences is None
     writer = PdfWriter(clone_from=reader)

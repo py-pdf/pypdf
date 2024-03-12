@@ -1247,6 +1247,7 @@ def test_encodedstream_set_data():
     assert cc[NameObject("/Test")] == "/MyTest"
 
 
+@pytest.mark.enable_socket()
 def test_calling_indirect_objects():
     """Cope with cases where attributes/items are called from indirectObject"""
     url = (
@@ -1277,3 +1278,32 @@ def test_indirect_object_page_dimensions():
     reader = PdfReader(data, strict=False)
     mediabox = reader.pages[0].mediabox
     assert mediabox == RectangleObject((0, 0, 792, 612))
+
+
+def test_array_operators():
+    a = ArrayObject(
+        [
+            NumberObject(1),
+            NumberObject(2),
+            NumberObject(3),
+            NumberObject(4),
+        ]
+    )
+    b = a + 5
+    assert isinstance(b, ArrayObject)
+    assert b == [1, 2, 3, 4, 5]
+    assert a == [1, 2, 3, 4]
+    a -= 2
+    a += "abc"
+    a -= (3, 4)
+    a += ["d", "e"]
+    a += BooleanObject(True)
+    assert a == [1, "abc", "d", "e", True]
+    a += "/toto"
+    assert isinstance(a[-1], NameObject)
+    assert isinstance(a[1], TextStringObject)
+    a += b"1234"
+    assert a[-1] == ByteStringObject(b"1234")
+    la = len(a)
+    a -= 300
+    assert len(a) == la

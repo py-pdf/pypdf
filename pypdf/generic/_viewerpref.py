@@ -59,6 +59,12 @@ class ViewerPreferences(DictionaryObject):
         return self.get(key, None if deft is None else ArrayObject(deft))
 
     def _set_arr(self, key: str, v: Optional[ArrayObject]) -> None:
+        if v is None:
+            try:
+                del self[NameObject(key)]
+            except KeyError:
+                pass
+            return
         if not isinstance(v, ArrayObject):
             raise ValueError("ArrayObject is expected")
         self[NameObject(key)] = v
@@ -68,6 +74,10 @@ class ViewerPreferences(DictionaryObject):
 
     def _set_int(self, key: str, v: int) -> None:
         self[NameObject(key)] = NumberObject(v)
+
+    @property
+    def PRINT_SCALING(self) -> NameObject:
+        return NameObject("/PrintScaling")
 
     def __new__(cls: Any, value: Any = None) -> "ViewerPreferences":
         def _add_prop_bool(key: str, deft: Optional[BooleanObject]) -> property:
@@ -139,6 +149,8 @@ class ViewerPreferences(DictionaryObject):
         cls.pick_tray_by_pdfsize = _add_prop_bool("/PickTrayByPDFSize", None)
         cls.print_pagerange = _add_prop_arr("/PrintPageRange", None)
         cls.num_copies = _add_prop_int("/NumCopies", None)
+
+        cls.enforce = _add_prop_arr("/Enforce", ArrayObject())
 
         return DictionaryObject.__new__(cls)
 
