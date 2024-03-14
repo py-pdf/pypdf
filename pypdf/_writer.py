@@ -250,11 +250,14 @@ class PdfWriter(PdfDocCommon):
     @property
     def pdf_header(self) -> str:
         """
+        Read/Write Property
         Header of the PDF document that is written.
 
-        This should be something like ``b'%PDF-1.5'``. It is recommended to set
+        This should be something like ``'%PDF-1.5'``. It is recommended to set
         the lowest version that supports all features which are used within the
         PDF file.
+
+        Note: `pdf_header` returns a string but accepts bytes or str for writing
         """
         return self._header.decode()
 
@@ -351,7 +354,7 @@ class PdfWriter(PdfDocCommon):
                 int : page number to be removed
 
             clean: replace PageObject with NullObject to prevent destination,
-            annotation to reference a detached page
+                annotation to reference a detached page
         """
         if self.flattened_pages is None:
             return
