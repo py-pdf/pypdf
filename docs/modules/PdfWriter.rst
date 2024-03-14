@@ -3,6 +3,7 @@ The PdfWriter Class
 
 .. autoclass:: pypdf.PdfWriter
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 
