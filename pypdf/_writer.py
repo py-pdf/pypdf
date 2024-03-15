@@ -148,7 +148,8 @@ def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
 
 class PdfWriter(PdfDocCommon):
     """
-    Write a PDF file out, given pages produced by another class.
+    Write a PDF file out, given pages produced by another class or through
+    cloning a PDF file during initialization.
 
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
     """
@@ -225,10 +226,10 @@ class PdfWriter(PdfDocCommon):
     @property
     def root_object(self) -> DictionaryObject:
         """
-        Provide direct access to Pdf Structure
+        Provide direct access to Pdf Structure.
 
         Note:
-            Recommended be used only for read access
+            Recommended be used only for read access.
         """
         return self._root_object
 
@@ -408,7 +409,7 @@ class PdfWriter(PdfDocCommon):
             None
         """
         # See 12.7.2 and 7.7.2 for more information:
-        # http://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
+        # https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
         try:
             # get the AcroForm tree
             if CatalogDictionary.ACRO_FORM not in self._root_object:
@@ -499,7 +500,7 @@ class PdfWriter(PdfDocCommon):
         self, width: Optional[float] = None, height: Optional[float] = None
     ) -> PageObject:
         """
-        Append a blank page to this PDF file and returns it.
+        Append a blank page to this PDF file and return it.
 
         If no page size is specified, use the size of the last page.
 
@@ -526,7 +527,7 @@ class PdfWriter(PdfDocCommon):
         index: int = 0,
     ) -> PageObject:
         """
-        Insert a blank page to this PDF file and returns it.
+        Insert a blank page to this PDF file and return it.
 
         If no page size is specified, use the size of the last page.
 
@@ -538,7 +539,7 @@ class PdfWriter(PdfDocCommon):
             index: Position to add the page.
 
         Returns:
-            The newly appended page
+            The newly appended page.
 
         Raises:
             PageSizeNotDefinedError: if width and height are not defined
@@ -580,7 +581,7 @@ class PdfWriter(PdfDocCommon):
 
     def add_js(self, javascript: str) -> None:
         """
-        Add Javascript which will launch upon opening this PDF.
+        Add JavaScript which will launch upon opening this PDF.
 
         Args:
             javascript: Your Javascript.
@@ -618,7 +619,7 @@ class PdfWriter(PdfDocCommon):
         Embed a file inside the PDF.
 
         Reference:
-        https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
+        https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
         Section 7.11.3
 
         Args:
@@ -715,7 +716,7 @@ class PdfWriter(PdfDocCommon):
         Args:
             reader: a PdfReader object from which to copy page
                 annotations to this writer object.  The writer's annots
-                will then be updated
+                will then be updated.
             after_page_append:
                 Callback function that is invoked after each page is appended to
                 the writer. Signature includes a reference to the appended page
@@ -878,12 +879,12 @@ class PdfWriter(PdfDocCommon):
             page: Page reference from PDF writer where the
                 annotations and field data will be updated.
             fields: a Python dictionary of field names (/T) and text
-                values (/V)
+                values (/V).
             flags: An integer (0 to 7). The first bit sets ReadOnly, the
                 second bit sets Required, the third bit sets NoExport. See
                 PDF Reference Table 8.70 for details.
             auto_regenerate: set/unset the need_appearances flag ;
-                the flag is unchanged if auto_regenerate is None
+                the flag is unchanged if auto_regenerate is None.
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
             raise PyPdfError("No /AcroForm dictionary in PdfWriter Object")
@@ -957,13 +958,14 @@ class PdfWriter(PdfDocCommon):
     ) -> List[DictionaryObject]:
         """
         Parse annotations within the page looking for orphan fields and
-        reattach then into the Fields Structure
+        reattach then into the Fields Structure.
 
         Args:
             page: page to analyze.
-                  If none is provided, all pages will be analyzed
+                  If none is provided, all pages will be analyzed.
+
         Returns:
-            list of reattached fields
+            list of reattached fields.
         """
         lst = []
         if page is None:
@@ -1068,7 +1070,7 @@ class PdfWriter(PdfDocCommon):
         Generate an identifier for the PDF that will be written.
 
         The only point of this is ensuring uniqueness. Reproducibility is not
-        required;
+        required.
         When a file is first written, both identifiers shall be set to the same value.
         If both identifiers match when a file reference is resolved, it is very
         likely that the correct and unchanged file has been found. If only the first
@@ -1111,8 +1113,8 @@ class PdfWriter(PdfDocCommon):
                 Bit position 3 is for printing, 4 is for modifying content,
                 5 and 6 control annotations, 9 for form fields,
                 10 for extraction of text and graphics.
-            algorithm: encrypt algorithm. Values maybe one of "RC4-40", "RC4-128",
-                "AES-128", "AES-256-R5", "AES-256". If it's valid,
+            algorithm: encrypt algorithm. Values may be one of "RC4-40", "RC4-128",
+                "AES-128", "AES-256-R5", "AES-256". If it is valid,
                 `use_128bit` will be ignored.
         """
         if owner_password is None:
@@ -1163,7 +1165,7 @@ class PdfWriter(PdfDocCommon):
         Write the collection of pages added to this object out as a PDF file.
 
         Args:
-            stream: An object to write the file to.  The object can support
+            stream: An object to write the file to. The object can support
                 the write method and the tell method, similar to a file object, or
                 be a file path, just like the fileobj, just named it stream to keep
                 existing workflow.
@@ -1435,7 +1437,7 @@ class PdfWriter(PdfDocCommon):
         """
         The list of threads.
 
-        See §8.3.2 from PDF 1.7 spec.
+        See §12.4.3 of the PDF 1.7 or PDF 2.0 specification.
 
         Returns:
             An array (possibly empty) of Dictionaries with ``/F`` and

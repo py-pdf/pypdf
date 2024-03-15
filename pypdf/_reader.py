@@ -119,7 +119,7 @@ class PdfReader(PdfDocCommon):
             Defaults to ``False``.
         password: Decrypt PDF file at initialization. If the
             password is None, the file will not be decrypted.
-            Defaults to ``None``
+            Defaults to ``None``.
     """
 
     def __init__(
@@ -251,9 +251,9 @@ class PdfReader(PdfDocCommon):
         """
         Retrieve the PDF file's document information dictionary, if it exists.
 
-        Note that some PDF files use metadata streams instead of docinfo
-        dictionaries, and these metadata streams will not be accessed by this
-        function.
+        Note that some PDF files use metadata streams instead of document
+        information dictionaries, and these metadata streams will not be
+        accessed by this function.
         """
         if TK.INFO not in self.trailer:
             return None
@@ -279,7 +279,7 @@ class PdfReader(PdfDocCommon):
         Calculate the number of pages in this PDF file.
 
         Returns:
-            The number of pages of the parsed PDF file
+            The number of pages of the parsed PDF file.
 
         Raises:
             PdfReadError: if file is encrypted and restrictions prevent
@@ -337,7 +337,7 @@ class PdfReader(PdfDocCommon):
             tree:
             retval:
             fileobj: A file object (usually a text file) to write
-                a report to on all interactive form fields found.
+                a report of all interactive form fields found.
 
         Returns:
             A dictionary where each key is a field name, and each
@@ -476,7 +476,7 @@ class PdfReader(PdfDocCommon):
         Retrieve form fields from the document with textual data.
 
         Args:
-            full_qualified_name: to get full name
+            full_qualified_name: to get full name.
 
         Returns:
             A dictionary. The key is the name of the form field,
@@ -516,7 +516,7 @@ class PdfReader(PdfDocCommon):
         Provides list of pages where the field is called.
 
         Args:
-            field: Field Object, PdfObject or IndirectObject referencing a Field
+            field: Field Object, PdfObject or IndirectObject referencing a Field.
 
         Returns:
             list of pages:
@@ -712,9 +712,9 @@ class PdfReader(PdfDocCommon):
         """
         Read-only property for the list of threads.
 
-        See §8.3.2 from PDF 1.7 spec.
+        See §12.4.3 of the PDF 1.7 or PDF 2.0 specification.
 
-        It's an array of dictionaries with "/F" and "/I" properties or
+        An array of dictionaries with "/F" and "/I" properties or
         None if there are no articles.
         """
         catalog = self.root_object
