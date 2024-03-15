@@ -464,7 +464,7 @@ class PdfWriter:
         Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`.
         this property allows to get a page or  a range of pages.
 
-        It also provides capability to remove a page or range of pages from 
+        It also provides capability to remove a page or range of pages from
         the list (through del operator).
         Note: only the page entry is removed, as the objects beneath can be used
         elsewhere.
@@ -976,6 +976,7 @@ class PdfWriter:
         Args:
             page: page to analyze.
                   If none is provided, all pages will be analyzed.
+
         Returns:
             list of reattached fields.
         """

@@ -419,8 +419,8 @@ class PdfReader:
         """
         Retrieve the PDF file's document information dictionary, if it exists.
 
-        Note that some PDF files use metadata streams instead of document 
-        information dictionaries, and these metadata streams will not be 
+        Note that some PDF files use metadata streams instead of document
+        information dictionaries, and these metadata streams will not be
         accessed by this function.
         """
         if TK.INFO not in self.trailer:
