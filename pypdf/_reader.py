@@ -29,7 +29,8 @@
 
 import os
 import re
-from io import BytesIO, UnsupportedOperation
+import weakref
+from io import BytesIO, FileIO, UnsupportedOperation
 from pathlib import Path
 from typing import (
     Any,
@@ -121,9 +122,11 @@ class PdfReader(PdfDocCommon):
                 "It may not be read correctly.",
                 __name__,
             )
+
         if isinstance(stream, (str, Path)):
-            with open(stream, "rb") as fh:
-                stream = BytesIO(fh.read())
+            stream = FileIO(stream, "rb")
+            weakref.finalize(self, stream.close)
+
         self.read(stream)
         self.stream = stream
 
@@ -152,6 +155,10 @@ class PdfReader(PdfDocCommon):
             self._override_encryption = False
         elif password is not None:
             raise PdfReadError("Not encrypted file")
+
+    def close(self) -> None:
+        """Close the underlying file handle"""
+        self.stream.close()
 
     @property
     def root_object(self) -> DictionaryObject:
