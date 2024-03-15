@@ -1,7 +1,6 @@
 """Test the pypdf._page module."""
 import json
 import math
-from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from random import shuffle
@@ -154,25 +153,25 @@ def test_mediabox_expansion_after_rotation(
 
 
 def test_transformation_equivalence():
-    pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
-    reader_base = PdfReader(pdf_path)
-    page_base = reader_base.pages[0]
+    def get_pages() -> Tuple[PageObject, PageObject]:
+        pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
+        reader_base = PdfReader(pdf_path)
+        page_base = reader_base.pages[0]
 
-    pdf_path = RESOURCE_ROOT / "box.pdf"
-    reader_add = PdfReader(pdf_path)
-    page_box = reader_add.pages[0]
+        pdf_path = RESOURCE_ROOT / "box.pdf"
+        reader_add = PdfReader(pdf_path)
+        page_box = reader_add.pages[0]
+        return page_box, page_base
 
     op = Transformation().scale(2).rotate(45)
 
     # Option 1: The new way
-    page_box1 = deepcopy(page_box)
-    page_base1 = deepcopy(page_base)
+    page_box1, page_base1 = get_pages()
     page_box1.add_transformation(op, expand=True)
     page_base1.merge_page(page_box1, expand=False)
 
     # Option 2: The old way
-    page_box2 = deepcopy(page_box)
-    page_base2 = deepcopy(page_base)
+    page_box2, page_base2 = get_pages()
     page_base2.merge_transformed_page(page_box2, op, expand=False)
     page_box2.add_transformation(op)
     page_base2.merge_page(page_box2)
