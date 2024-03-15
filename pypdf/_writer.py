@@ -300,6 +300,11 @@ class PdfWriter(PdfDocCommon):
                 raise ValueError("pdf must be self")
             indirect_reference = indirect_reference.idnum
         gen = self._objects[indirect_reference - 1].indirect_reference.generation  # type: ignore
+        if (
+            getattr(obj, "indirect_reference", None) is not None
+            and obj.indirect_reference.pdf != self  # type: ignore
+        ):
+            obj = obj.clone(self)
         self._objects[indirect_reference - 1] = obj
         obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
         return self._objects[indirect_reference - 1]

@@ -2258,7 +2258,7 @@ class _VirtualList(Sequence[PageObject]):
                 try:
                     assert ind is not None
                     del ind.pdf.flattened_pages[index]  # case of page in a Reader
-                except AttributeError:
+                except Exception:  # pragma: no cover
                     pass
                 if "/Count" in parent:
                     parent[NameObject("/Count")] = NumberObject(parent["/Count"] - 1)

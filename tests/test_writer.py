@@ -2029,3 +2029,10 @@ def test_get_pagenumber_from_indirectobject():
     assert writer._get_page_number_by_indirect(ind) == 0
     assert writer._get_page_number_by_indirect(ind.idnum) == 0
     assert writer._get_page_number_by_indirect(ind.idnum + 1) is None
+
+
+def test_replace_object():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=reader)
+    writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
