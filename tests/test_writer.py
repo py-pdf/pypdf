@@ -2035,4 +2035,5 @@ def test_replace_object():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     writer = PdfWriter(clone_from=reader)
-    writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
+    with pytest.raises(ValueError):
+        writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
