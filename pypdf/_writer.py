@@ -337,7 +337,7 @@ class PdfWriter:
             None
         """
         # See 12.7.2 and 7.7.2 for more information:
-        # http://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
+        # https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
         try:
             # get the AcroForm tree
             if CatalogDictionary.ACRO_FORM not in self._root_object:
@@ -619,7 +619,7 @@ class PdfWriter:
         Embed a file inside the PDF.
 
         Reference:
-        https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
+        https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
         Section 7.11.3
 
         Args:
