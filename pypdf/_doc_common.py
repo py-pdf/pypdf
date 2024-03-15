@@ -955,6 +955,7 @@ class PdfDocCommon:
         Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`.
         this property allows to get a page or  a range of pages.
 
+        For PdfWriter Only:
         It provides also capability to remove a page/range of page from the list
         (through del operator)
         Note: only the page entry is removed. As the objects beneath can be used

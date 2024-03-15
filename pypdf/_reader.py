@@ -30,7 +30,6 @@
 import os
 import re
 import struct
-import zlib
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
 from typing import (
@@ -38,9 +37,7 @@ from typing import (
     Callable,
     Dict,
     Iterable,
-    Iterator,
     List,
-    Mapping,
     Optional,
     Tuple,
     Union,
@@ -49,13 +46,11 @@ from typing import (
 
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import Encryption, PasswordType
-from ._page import PageObject, _VirtualList
-from ._page_labels import index2label as page_index2page_label
+from ._page import PageObject
 from ._utils import (
     StrByteType,
     StreamType,
     b_,
-    deprecate_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_previous_line,
@@ -67,7 +62,6 @@ from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
-    GoToActionArguments,
     UserAccessPermissions,
 )
 from .constants import Core as CO
@@ -83,15 +77,11 @@ from .errors import (
 )
 from .generic import (
     ArrayObject,
-    BooleanObject,
     ContentStream,
     DecodedStreamObject,
-    Destination,
     DictionaryObject,
     EncodedStreamObject,
     Field,
-    Fit,
-    FloatObject,
     IndirectObject,
     NameObject,
     NullObject,
@@ -101,7 +91,7 @@ from .generic import (
     TreeObject,
     read_object,
 )
-from .types import OutlineType, PagemodeType
+from .types import OutlineType
 from .xmp import XmpInformation
 
 
@@ -760,206 +750,6 @@ class PdfReader(PdfDocCommon):
         ret = self._page_id2num.get(idnum, None)
         return ret
 
-    def get_page_number(self, page: PageObject) -> Optional[int]:
-        """
-        Retrieve page number of a given PageObject.
-
-        Args:
-            page: The page to get page number. Should be
-                an instance of :class:`PageObject<pypdf._page.PageObject>`
-
-        Returns:
-            The page number or None if page is not found
-        """
-        return self._get_page_number_by_indirect(page.indirect_reference)
-
-    def get_destination_page_number(self, destination: Destination) -> Optional[int]:
-        """
-        Retrieve page number of a given Destination object.
-
-        Args:
-            destination: The destination to get page number.
-
-        Returns:
-            The page number or None if page is not found
-        """
-        return self._get_page_number_by_indirect(destination.page)
-
-    def _build_destination(
-        self,
-        title: str,
-        array: Optional[
-            List[
-                Union[NumberObject, IndirectObject, None, NullObject, DictionaryObject]
-            ]
-        ],
-    ) -> Destination:
-        page, typ = None, None
-        # handle outline items with missing or invalid destination
-        if (
-            isinstance(array, (NullObject, str))
-            or (isinstance(array, ArrayObject) and len(array) == 0)
-            or array is None
-        ):
-            page = NullObject()
-            return Destination(title, page, Fit.fit())
-        else:
-            page, typ = array[0:2]  # type: ignore
-            array = array[2:]
-            try:
-                return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
-            except PdfReadError:
-                logger_warning(f"Unknown destination: {title} {array}", __name__)
-                if self.strict:
-                    raise
-                # create a link to first Page
-                tmp = self.pages[0].indirect_reference
-                indirect_reference = NullObject() if tmp is None else tmp
-                return Destination(title, indirect_reference, Fit.fit())  # type: ignore
-
-    def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
-        dest, title, outline_item = None, None, None
-
-        # title required for valid outline
-        # PDF Reference 1.7: TABLE 8.4 Entries in an outline item dictionary
-        try:
-            title = cast("str", node["/Title"])
-        except KeyError:
-            if self.strict:
-                raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")
-            title = ""
-
-        if "/A" in node:
-            # Action, PDFv1.7 Section 12.6 (only type GoTo supported)
-            action = cast(DictionaryObject, node["/A"])
-            action_type = cast(NameObject, action[GoToActionArguments.S])
-            if action_type == "/GoTo":
-                dest = action[GoToActionArguments.D]
-        elif "/Dest" in node:
-            # Destination, PDFv1.7 Section 12.3.2
-            dest = node["/Dest"]
-            # if array was referenced in another object, will be a dict w/ key "/D"
-            if isinstance(dest, DictionaryObject) and "/D" in dest:
-                dest = dest["/D"]
-
-        if isinstance(dest, ArrayObject):
-            outline_item = self._build_destination(title, dest)
-        elif isinstance(dest, str):
-            # named destination, addresses NameObject Issue #193
-            # TODO : keep named destination instead of replacing it ?
-            try:
-                outline_item = self._build_destination(
-                    title, self._namedDests[dest].dest_array
-                )
-            except KeyError:
-                # named destination not found in Name Dict
-                outline_item = self._build_destination(title, None)
-        elif dest is None:
-            # outline item not required to have destination or action
-            # PDFv1.7 Table 153
-            outline_item = self._build_destination(title, dest)
-        else:
-            if self.strict:
-                raise PdfReadError(f"Unexpected destination {dest!r}")
-            else:
-                logger_warning(
-                    f"Removed unexpected destination {dest!r} from destination",
-                    __name__,
-                )
-            outline_item = self._build_destination(title, None)
-
-        # if outline item created, add color, format, and child count if present
-        if outline_item:
-            if "/C" in node:
-                # Color of outline item font in (R, G, B) with values ranging 0.0-1.0
-                outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore
-            if "/F" in node:
-                # specifies style characteristics bold and/or italic
-                # with 1=italic, 2=bold, 3=both
-                outline_item[NameObject("/F")] = node["/F"]
-            if "/Count" in node:
-                # absolute value = num. visible children
-                # with positive = open/unfolded, negative = closed/folded
-                outline_item[NameObject("/Count")] = node["/Count"]
-            #  if count is 0 we will consider it as open ( in order to have always an is_open to simplify
-            outline_item[NameObject("/%is_open%")] = BooleanObject(
-                node.get("/Count", 0) >= 0
-            )
-        outline_item.node = node
-        try:
-            outline_item.indirect_reference = node.indirect_reference
-        except AttributeError:
-            pass
-        return outline_item
-
-    @property
-    def pages(self) -> List[PageObject]:
-        """Read-only property that emulates a list of :py:class:`PageObject<pypdf._page.PageObject>` objects."""
-        return _VirtualList(self._get_num_pages, self._get_page)  # type: ignore
-
-    @property
-    def page_labels(self) -> List[str]:
-        """
-        A list of labels for the pages in this document.
-
-        This property is read-only. The labels are in the order that the pages
-        appear in the document.
-        """
-        return [page_index2page_label(self, i) for i in range(len(self.pages))]
-
-    @property
-    def page_layout(self) -> Optional[str]:
-        """
-        Get the page layout currently being used.
-
-        .. list-table:: Valid ``layout`` values
-           :widths: 50 200
-
-           * - /NoLayout
-             - Layout explicitly not specified
-           * - /SinglePage
-             - Show one page at a time
-           * - /OneColumn
-             - Show one column at a time
-           * - /TwoColumnLeft
-             - Show pages in two columns, odd-numbered pages on the left
-           * - /TwoColumnRight
-             - Show pages in two columns, odd-numbered pages on the right
-           * - /TwoPageLeft
-             - Show two pages at a time, odd-numbered pages on the left
-           * - /TwoPageRight
-             - Show two pages at a time, odd-numbered pages on the right
-        """
-        if CD.PAGE_LAYOUT in self.root_object:
-            return cast(NameObject, self.root_object[CD.PAGE_LAYOUT])
-        return None
-
-    @property
-    def page_mode(self) -> Optional[PagemodeType]:
-        """
-        Get the page mode currently being used.
-
-        .. list-table:: Valid ``mode`` values
-           :widths: 50 200
-
-           * - /UseNone
-             - Do not show outline or thumbnails panels
-           * - /UseOutlines
-             - Show outline (aka bookmarks) panel
-           * - /UseThumbs
-             - Show page thumbnails panel
-           * - /FullScreen
-             - Fullscreen view
-           * - /UseOC
-             - Show Optional Content Group (OCG) panel
-           * - /UseAttachments
-             - Show attachments panel
-        """
-        try:
-            return self.root_object["/PageMode"]  # type: ignore
-        except KeyError:
-            return None
-
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
     ) -> Union[int, PdfObject, str]:
@@ -1013,21 +803,6 @@ class PdfReader(PdfDocCommon):
         if self.strict:
             raise PdfReadError("This is a fatal error in strict mode.")
         return NullObject()
-
-    def _get_indirect_object(self, num: int, gen: int) -> Optional[PdfObject]:
-        """
-        Used to ease development.
-
-        This is equivalent to generic.IndirectObject(num,gen,self).get_object()
-
-        Args:
-            num: The object number of the indirect object.
-            gen: The generation number of the indirect object.
-
-        Returns:
-            A PdfObject
-        """
-        return IndirectObject(num, gen, self).get_object()
 
     def get_object(
         self, indirect_reference: Union[int, IndirectObject]
@@ -1694,30 +1469,6 @@ class PdfReader(PdfDocCommon):
         # TODO: raise Exception for wrong password
         return self._encryption.verify(password)
 
-    def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
-        """Take the permissions as an integer, return the allowed access."""
-        deprecate_with_replacement(
-            old_name="decode_permissions",
-            new_name="user_access_permissions",
-            removed_in="5.0.0",
-        )
-
-        permissions_mapping = {
-            "print": UserAccessPermissions.PRINT,
-            "modify": UserAccessPermissions.MODIFY,
-            "copy": UserAccessPermissions.EXTRACT,
-            "annotations": UserAccessPermissions.ADD_OR_MODIFY,
-            "forms": UserAccessPermissions.FILL_FORM_FIELDS,
-            "accessability": UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS,
-            "assemble": UserAccessPermissions.ASSEMBLE_DOC,
-            "print_high_quality": UserAccessPermissions.PRINT_TO_REPRESENTATION,
-        }
-
-        return {
-            key: permissions_code & flag != 0
-            for key, flag in permissions_mapping.items()
-        }
-
     @property
     def user_access_permissions(self) -> Optional[UserAccessPermissions]:
         """Get the user access permissions for encrypted documents. Returns None if not encrypted."""
@@ -1734,30 +1485,6 @@ class PdfReader(PdfDocCommon):
         :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
         """
         return TK.ENCRYPT in self.trailer
-
-    @property
-    def xfa(self) -> Optional[Dict[str, Any]]:
-        tree: Optional[TreeObject] = None
-        retval: Dict[str, Any] = {}
-        catalog = self.root_object
-
-        if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
-            return None
-
-        tree = cast(TreeObject, catalog["/AcroForm"])
-
-        if "/XFA" in tree:
-            fields = cast(ArrayObject, tree["/XFA"])
-            i = iter(fields)
-            for f in i:
-                tag = f
-                f = next(i)
-                if isinstance(f, IndirectObject):
-                    field = cast(Optional[EncodedStreamObject], f.get_object())
-                    if field:
-                        es = zlib.decompress(b_(field._data))
-                        retval[tag] = es
-        return retval
 
     def add_form_topname(self, name: str) -> Optional[DictionaryObject]:
         """
@@ -1827,105 +1554,3 @@ class PdfReader(PdfDocCommon):
         )
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
-
-    @property
-    def attachments(self) -> Mapping[str, List[bytes]]:
-        return LazyDict(
-            {
-                name: (self._get_attachment_list, name)
-                for name in self._list_attachments()
-            }
-        )
-
-    def _list_attachments(self) -> List[str]:
-        """
-        Retrieves the list of filenames of file attachments.
-
-        Returns:
-            list of filenames
-        """
-        catalog = self.root_object
-        # From the catalog get the embedded file names
-        try:
-            filenames = cast(
-                ArrayObject,
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
-                )["/Names"],
-            )
-        except KeyError:
-            return []
-        attachments_names = [f for f in filenames if isinstance(f, str)]
-        return attachments_names
-
-    def _get_attachment_list(self, name: str) -> List[bytes]:
-        out = self._get_attachments(name)[name]
-        if isinstance(out, list):
-            return out
-        return [out]
-
-    def _get_attachments(
-        self, filename: Optional[str] = None
-    ) -> Dict[str, Union[bytes, List[bytes]]]:
-        """
-        Retrieves all or selected file attachments of the PDF as a dictionary of file names
-        and the file data as a bytestring.
-
-        Args:
-            filename: If filename is None, then a dictionary of all attachments
-                will be returned, where the key is the filename and the value
-                is the content. Otherwise, a dictionary with just a single key
-                - the filename - and its content will be returned.
-
-        Returns:
-            dictionary of filename -> Union[bytestring or List[ByteString]]
-            if the filename exists multiple times a List of the different version will be provided
-        """
-        catalog = self.root_object
-        # From the catalog get the embedded file names
-        try:
-            filenames = cast(
-                ArrayObject,
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
-                )["/Names"],
-            )
-        except KeyError:
-            return {}
-        attachments: Dict[str, Union[bytes, List[bytes]]] = {}
-        # Loop through attachments
-        for i in range(len(filenames)):
-            f = filenames[i]
-            if isinstance(f, str):
-                if filename is not None and f != filename:
-                    continue
-                name = f
-                f_dict = filenames[i + 1].get_object()
-                f_data = f_dict["/EF"]["/F"].get_data()
-                if name in attachments:
-                    if not isinstance(attachments[name], list):
-                        attachments[name] = [attachments[name]]  # type:ignore
-                    attachments[name].append(f_data)  # type:ignore
-                else:
-                    attachments[name] = f_data
-        return attachments
-
-
-class LazyDict(Mapping[Any, Any]):
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        self._raw_dict = dict(*args, **kw)
-
-    def __getitem__(self, key: str) -> Any:
-        func, arg = self._raw_dict.__getitem__(key)
-        return func(arg)
-
-    def __iter__(self) -> Iterator[Any]:
-        return iter(self._raw_dict)
-
-    def __len__(self) -> int:
-        return len(self._raw_dict)
-
-    def __str__(self) -> str:
-        return f"LazyDict(keys={list(self.keys())})"
