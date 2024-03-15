@@ -950,7 +950,7 @@ def test_text_extraction_issue_1091():
 
 
 @pytest.mark.enable_socket()
-def test_empyt_password_1088():
+def test_empty_password_1088():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
     stream = BytesIO(get_data_from_url(url, name=name))
