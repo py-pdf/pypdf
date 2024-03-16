@@ -57,11 +57,6 @@ from ._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from .constants import (
-    CheckboxRadioButtonAttributes,
-)
-from .constants import FieldDictionaryAttributes as FA
-from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
 from .errors import (
     EmptyFileError,
@@ -83,7 +78,6 @@ from .generic import (
     NumberObject,
     PdfObject,
     TextStringObject,
-    TreeObject,
     read_object,
 )
 from .xmp import XmpInformation
@@ -275,51 +269,6 @@ class PdfReader(PdfDocCommon):
             self._flatten()
         assert self.flattened_pages is not None, "hint for mypy"
         return self.flattened_pages[page_number]
-
-    def _check_kids(
-        self, tree: Union[TreeObject, DictionaryObject], retval: Any, fileobj: Any
-    ) -> None:
-        if PA.KIDS in tree:
-            # recurse down the tree
-            for kid in tree[PA.KIDS]:  # type: ignore
-                self.get_fields(kid.get_object(), retval, fileobj)
-
-    def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
-        field_attributes_tuple = FA.attributes()
-        field_attributes_tuple = (
-            field_attributes_tuple + CheckboxRadioButtonAttributes.attributes()
-        )
-
-        for attr in field_attributes_tuple:
-            if attr in (
-                FA.Kids,
-                FA.AA,
-            ):
-                continue
-            attr_name = field_attributes[attr]
-            try:
-                if attr == FA.FT:
-                    # Make the field type value more clear
-                    types = {
-                        "/Btn": "Button",
-                        "/Tx": "Text",
-                        "/Ch": "Choice",
-                        "/Sig": "Signature",
-                    }
-                    if field[attr] in types:
-                        fileobj.write(f"{attr_name}: {types[field[attr]]}\n")
-                elif attr == FA.Parent:
-                    # Let's just write the name of the parent
-                    try:
-                        name = field[attr][FA.TM]
-                    except KeyError:
-                        name = field[attr][FA.T]
-                    fileobj.write(f"{attr_name}: {name}\n")
-                else:
-                    fileobj.write(f"{attr_name}: {field[attr]}\n")
-            except KeyError:
-                # Field attribute is N/A or unknown, so don't write anything
-                pass
 
     def get_pages_showing_field(
         self, field: Union[Field, PdfObject, IndirectObject]
