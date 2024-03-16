@@ -31,7 +31,7 @@ for page in reader.pages:
             print(annotation)
 ```
 
-Reading the most common ones is described here.
+Examples of reading three of the most common annotations:
 
 ## Text
 

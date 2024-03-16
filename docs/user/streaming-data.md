@@ -3,7 +3,7 @@
 In some cases you might want to avoid saving things explicitly as a file
 to disk, e.g. when you want to store the PDF in a database or AWS S3.
 
-pypdf supports streaming data to a file-like object and here is how.
+pypdf supports streaming data to a file-like object:
 
 ```python
 from io import BytesIO

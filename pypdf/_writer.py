@@ -148,7 +148,8 @@ def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
 
 class PdfWriter:
     """
-    Write a PDF file out, given pages produced by another class.
+    Write a PDF file out, given pages produced by another class or through
+    cloning a PDF file during initialization.
 
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
     """
@@ -210,6 +211,16 @@ class PdfWriter:
         self._encryption: Optional[Encryption] = None
         self._encrypt_entry: Optional[DictionaryObject] = None
         self._ID: Union[ArrayObject, None] = None
+
+    @property
+    def root_object(self) -> DictionaryObject:
+        """
+        Provide direct access to Pdf Structure.
+
+        Note:
+            Recommended be used only for read access.
+        """
+        return self._root_object
 
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""
@@ -326,7 +337,7 @@ class PdfWriter:
             None
         """
         # See 12.7.2 and 7.7.2 for more information:
-        # http://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
+        # https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
         try:
             # get the AcroForm tree
             if CatalogDictionary.ACRO_FORM not in self._root_object:
@@ -453,11 +464,11 @@ class PdfWriter:
         Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`.
         this property allows to get a page or  a range of pages.
 
-        It provides also capability to remove a page/range of page from the list
-        (through del operator)
-        Note: only the page entry is removed. As the objects beneath can be used
-        somewhere else.
-        a solution to completely remove them - if they are not used somewhere -
+        It also provides capability to remove a page or range of pages from
+        the list (through del operator).
+        Note: only the page entry is removed, as the objects beneath can be used
+        elsewhere.
+        A solution to completely remove them - if they are not used somewhere -
         is to write to a buffer/temporary and to then load it into a new PdfWriter
         object.
         """
@@ -467,7 +478,7 @@ class PdfWriter:
         self, width: Optional[float] = None, height: Optional[float] = None
     ) -> PageObject:
         """
-        Append a blank page to this PDF file and returns it.
+        Append a blank page to this PDF file and return it.
 
         If no page size is specified, use the size of the last page.
 
@@ -494,7 +505,7 @@ class PdfWriter:
         index: int = 0,
     ) -> PageObject:
         """
-        Insert a blank page to this PDF file and returns it.
+        Insert a blank page to this PDF file and return it.
 
         If no page size is specified, use the size of the last page.
 
@@ -506,7 +517,7 @@ class PdfWriter:
             index: Position to add the page.
 
         Returns:
-            The newly appended page
+            The newly appended page.
 
         Raises:
             PageSizeNotDefinedError: if width and height are not defined
@@ -570,7 +581,7 @@ class PdfWriter:
 
     def add_js(self, javascript: str) -> None:
         """
-        Add Javascript which will launch upon opening this PDF.
+        Add JavaScript which will launch upon opening this PDF.
 
         Args:
             javascript: Your Javascript.
@@ -608,7 +619,7 @@ class PdfWriter:
         Embed a file inside the PDF.
 
         Reference:
-        https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
+        https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
         Section 7.11.3
 
         Args:
@@ -705,7 +716,7 @@ class PdfWriter:
         Args:
             reader: a PdfReader object from which to copy page
                 annotations to this writer object.  The writer's annots
-                will then be updated
+                will then be updated.
             after_page_append:
                 Callback function that is invoked after each page is appended to
                 the writer. Signature includes a reference to the appended page
@@ -881,12 +892,12 @@ class PdfWriter:
             page: Page reference from PDF writer where the
                 annotations and field data will be updated.
             fields: a Python dictionary of field names (/T) and text
-                values (/V)
+                values (/V).
             flags: An integer (0 to 7). The first bit sets ReadOnly, the
                 second bit sets Required, the third bit sets NoExport. See
                 PDF Reference Table 8.70 for details.
             auto_regenerate: set/unset the need_appearances flag ;
-                the flag is unchanged if auto_regenerate is None
+                the flag is unchanged if auto_regenerate is None.
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
             raise PyPdfError("No /AcroForm dictionary in PdfWriter Object")
@@ -960,13 +971,14 @@ class PdfWriter:
     ) -> List[DictionaryObject]:
         """
         Parse annotations within the page looking for orphan fields and
-        reattach then into the Fields Structure
+        reattach then into the Fields Structure.
 
         Args:
             page: page to analyze.
-                  If none is provided, all pages will be analyzed
+                  If none is provided, all pages will be analyzed.
+
         Returns:
-            list of reattached fields
+            list of reattached fields.
         """
         lst = []
         if page is None:
@@ -1084,7 +1096,7 @@ class PdfWriter:
             reader: PdfReader from the document root should be copied.
         """
         self._objects.clear()
-        self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT].clone(self))
+        self._root_object = reader.root_object.clone(self)
         self._root = self._root_object.indirect_reference  # type: ignore[assignment]
         self._pages = self._root_object.raw_get("/Pages")
         self._flatten()
@@ -1165,10 +1177,10 @@ class PdfWriter:
         """
         self.clone_reader_document_root(reader)
         if TK.INFO in reader.trailer:
-            self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
+            self._info = reader._info.clone(self).indirect_reference  # type: ignore
         try:
-            self._ID = cast(ArrayObject, reader.trailer[TK.ID].clone(self))
-        except KeyError:
+            self._ID = cast(ArrayObject, reader._ID).clone(self)
+        except AttributeError:
             pass
         if callable(after_page_append):
             for page in cast(
@@ -1187,7 +1199,7 @@ class PdfWriter:
         Generate an identifier for the PDF that will be written.
 
         The only point of this is ensuring uniqueness. Reproducibility is not
-        required;
+        required.
         When a file is first written, both identifiers shall be set to the same value.
         If both identifiers match when a file reference is resolved, it is very
         likely that the correct and unchanged file has been found. If only the first
@@ -1230,8 +1242,8 @@ class PdfWriter:
                 Bit position 3 is for printing, 4 is for modifying content,
                 5 and 6 control annotations, 9 for form fields,
                 10 for extraction of text and graphics.
-            algorithm: encrypt algorithm. Values maybe one of "RC4-40", "RC4-128",
-                "AES-128", "AES-256-R5", "AES-256". If it's valid,
+            algorithm: encrypt algorithm. Values may be one of "RC4-40", "RC4-128",
+                "AES-128", "AES-256-R5", "AES-256". If it is valid,
                 `use_128bit` will be ignored.
         """
         if owner_password is None:
@@ -1282,7 +1294,7 @@ class PdfWriter:
         Write the collection of pages added to this object out as a PDF file.
 
         Args:
-            stream: An object to write the file to.  The object can support
+            stream: An object to write the file to. The object can support
                 the write method and the tell method, similar to a file object, or
                 be a file path, just like the fileobj, just named it stream to keep
                 existing workflow.
@@ -1554,7 +1566,7 @@ class PdfWriter:
         """
         The list of threads.
 
-        See §8.3.2 from PDF 1.7 spec.
+        See §12.4.3 of the PDF 1.7 or PDF 2.0 specification.
 
         Returns:
             An array (possibly empty) of Dictionaries with ``/F`` and
@@ -2546,7 +2558,7 @@ class PdfWriter:
         else:
             outline_item_typ = self.get_outline_root()
 
-        _ro = cast("DictionaryObject", reader.trailer[TK.ROOT])
+        _ro = reader.root_object
         if import_outline and CO.OUTLINES in _ro:
             outline = self._get_filtered_outline(
                 _ro.get(CO.OUTLINES, None), srcpages, reader
@@ -2569,7 +2581,7 @@ class PdfWriter:
                 self._root_object[NameObject("/AcroForm")] = self._add_object(
                     cast(
                         DictionaryObject,
-                        cast(DictionaryObject, reader.trailer["/Root"])["/AcroForm"],
+                        reader.root_object["/AcroForm"],
                     ).clone(self, False, ("/Fields",))
                 )
                 arr = ArrayObject()
@@ -2580,7 +2592,7 @@ class PdfWriter:
                 )
             trslat = self._id_translated[id(reader)]
             try:
-                for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
+                for f in reader.root_object["/AcroForm"]["/Fields"]:  # type: ignore
                     try:
                         ind = IndirectObject(trslat[f.idnum], 0, self)
                         if ind not in arr:
