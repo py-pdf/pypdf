@@ -35,6 +35,7 @@ from datetime import datetime
 from typing import (
     Any,
     Dict,
+    Iterable,
     Iterator,
     List,
     Mapping,
@@ -271,6 +272,22 @@ class PdfDocCommon:
 
     @abstractmethod
     def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
+        ...  # pragma: no cover
+
+    @abstractmethod
+    def _repr_mimebundle_(
+        self,
+        include: Union[None, Iterable[str]] = None,
+        exclude: Union[None, Iterable[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Integration into Jupyter Notebooks.
+
+        This method returns a dictionary that maps a mime-type to it's
+        representation.
+
+        See https://ipython.readthedocs.io/en/stable/config/integrating.html
+        """
         ...  # pragma: no cover
 
     @property

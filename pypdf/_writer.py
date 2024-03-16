@@ -248,6 +248,35 @@ class PdfWriter(PdfDocCommon):
         if self.fileobj:
             self.write(self.fileobj)
 
+    def _repr_mimebundle_(
+        self,
+        include: Union[None, Iterable[str]] = None,
+        exclude: Union[None, Iterable[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Integration into Jupyter Notebooks.
+
+        This method returns a dictionary that maps a mime-type to it's
+        representation.
+
+        See https://ipython.readthedocs.io/en/stable/config/integrating.html
+        """
+        pdf_data = BytesIO()
+        self.write(pdf_data)
+        data = {
+            "application/pdf": pdf_data,
+        }
+
+        if include is not None:
+            # Filter representations based on include list
+            data = {k: v for k, v in data.items() if k in include}
+
+        if exclude is not None:
+            # Remove representations based on exclude list
+            data = {k: v for k, v in data.items() if k not in exclude}
+
+        return data
+
     @property
     def pdf_header(self) -> str:
         """

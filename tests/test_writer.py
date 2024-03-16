@@ -2075,3 +2075,11 @@ def test_replace_object():
     reader._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)
     reader._replace_object(reader.pages[0].indirect_reference, pg)
+
+
+def test_mime_jupyter():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=reader)
+    assert reader._repr_mimebundle_(("include",), ("exclude",)) == {}
+    assert writer._repr_mimebundle_(("include",), ("exclude",)) == {}
