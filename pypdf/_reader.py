@@ -800,9 +800,9 @@ class PdfReader(PdfDocCommon):
                 obj = NullObject()
             return obj
 
-        if self.strict:
+        if self.strict:  # pragma: no cover
             raise PdfReadError("This is a fatal error in strict mode.")
-        return NullObject()
+        return NullObject()  # pragma: no cover
 
     def get_object(
         self, indirect_reference: Union[int, IndirectObject]
@@ -981,6 +981,7 @@ class PdfReader(PdfDocCommon):
         return obj
 
     def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
+        # function reserved for future dev
         if indirect.pdf != self:
             raise ValueError("Can not update pdfreader with external object")
         if (indirect.generation, indirect.idnum) in self.resolved_objects:

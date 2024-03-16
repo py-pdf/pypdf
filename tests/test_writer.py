@@ -1984,9 +1984,11 @@ def test_merging_many_temporary_files(caplog):
         text = page.extract_text()
         assert text == str(n)
     # test completed to validate remove_page
-    writer.remove_page(writer.pages[-1])
+    writer.remove_page(writer.pages[-1], True)
 
     writer2 = PdfWriter()
+    writer2.remove_page(0)
+    writer2.flattened_page = None
     writer2.remove_page(0)
 
     caplog.clear()
@@ -2060,5 +2062,14 @@ def test_replace_object():
     writer = PdfWriter(clone_from=reader)
     with pytest.raises(ValueError):
         writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
+    writer._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)
     writer._replace_object(writer.pages[0].indirect_reference, pg)
+
+    # mainly for coverage
+    reader = PdfReader(pdf_path)  # reload a new instance
+    with pytest.raises(ValueError):
+        reader._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
+    reader._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    reader._replace_object(writer.pages[0].indirect_reference, pg)
