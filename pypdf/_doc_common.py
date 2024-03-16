@@ -256,22 +256,22 @@ class PdfDocCommon:
     @property
     @abstractmethod
     def root_object(self) -> DictionaryObject:
-        ...
+        ...  # pragma: no cover
 
     @property
     @abstractmethod
     def pdf_header(self) -> str:
-        ...
+        ...  # pragma: no cover
 
     @abstractmethod
     def get_object(
         self, indirect_reference: Union[int, IndirectObject]
     ) -> Optional[PdfObject]:
-        ...
+        ...  # pragma: no cover
 
     @abstractmethod
     def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
-        ...
+        ...  # pragma: no cover
 
     @property
     def viewer_preferences(self) -> Optional[ViewerPreferences]:
@@ -814,7 +814,7 @@ class PdfDocCommon:
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
     ) -> Optional[int]:
-        ...
+        ...  # pragma: no cover
 
     def get_page_number(self, page: PageObject) -> Optional[int]:
         """
@@ -1140,7 +1140,7 @@ class PdfDocCommon:
         Note that this property, if true, will remain true even after the
         :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
         """
-        ...
+        ...  # pragma: no cover
 
     @property
     def xfa(self) -> Optional[Dict[str, Any]]:

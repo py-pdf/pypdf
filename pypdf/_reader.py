@@ -29,7 +29,6 @@
 
 import os
 import re
-import struct
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
 from typing import (
@@ -44,7 +43,7 @@ from typing import (
     cast,
 )
 
-from ._doc_common import DocumentInformation, PdfDocCommon
+from ._doc_common import DocumentInformation, PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
 from ._page import PageObject
 from ._utils import (
@@ -58,13 +57,9 @@ from ._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from .constants import CatalogAttributes as CA
-from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
-    UserAccessPermissions,
 )
-from .constants import Core as CO
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
@@ -91,16 +86,7 @@ from .generic import (
     TreeObject,
     read_object,
 )
-from .types import OutlineType
 from .xmp import XmpInformation
-
-
-def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
-    if size > 8:
-        raise PdfReadError("invalid size in convert_to_int")
-    d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
-    d = d[-8:]
-    return struct.unpack(">q", d)[0]
 
 
 class PdfReader(PdfDocCommon):
@@ -311,121 +297,6 @@ class PdfReader(PdfDocCommon):
         assert self.flattened_pages is not None, "hint for mypy"
         return self.flattened_pages[page_number]
 
-    @property
-    def named_destinations(self) -> Dict[str, Any]:
-        """
-        A read-only dictionary which maps names to
-        :class:`Destinations<pypdf.generic.Destination>`
-        """
-        return self._get_named_destinations()
-
-    # A select group of relevant field attributes. For the complete list,
-    # see section 8.6.2 of the PDF 1.7 reference.
-
-    def get_fields(
-        self,
-        tree: Optional[TreeObject] = None,
-        retval: Optional[Dict[Any, Any]] = None,
-        fileobj: Optional[Any] = None,
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Extract field data if this PDF contains interactive form fields.
-
-        The *tree* and *retval* parameters are for recursive use.
-
-        Args:
-            tree:
-            retval:
-            fileobj: A file object (usually a text file) to write
-                a report of all interactive form fields found.
-
-        Returns:
-            A dictionary where each key is a field name, and each
-            value is a :class:`Field<pypdf.generic.Field>` object. By
-            default, the mapping name is used for keys.
-            ``None`` if form data could not be located.
-        """
-        field_attributes = FA.attributes_dict()
-        field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
-        if retval is None:
-            retval = {}
-            catalog = self.root_object
-            # get the AcroForm tree
-            if CD.ACRO_FORM in catalog:
-                tree = cast(Optional[TreeObject], catalog[CD.ACRO_FORM])
-            else:
-                return None
-        if tree is None:
-            return retval
-        self._check_kids(tree, retval, fileobj)
-        for attr in field_attributes:
-            if attr in tree:
-                # Tree is a field
-                self._build_field(tree, retval, fileobj, field_attributes)
-                break
-
-        if "/Fields" in tree:
-            fields = cast(ArrayObject, tree["/Fields"])
-            for f in fields:
-                field = f.get_object()
-                self._build_field(field, retval, fileobj, field_attributes)
-
-        return retval
-
-    def _build_field(
-        self,
-        field: Union[TreeObject, DictionaryObject],
-        retval: Dict[Any, Any],
-        fileobj: Any,
-        field_attributes: Any,
-    ) -> None:
-        self._check_kids(field, retval, fileobj)
-        try:
-            key = cast(str, field["/TM"])
-        except KeyError:
-            try:
-                if "/Parent" in field:
-                    key = (
-                        self._get_qualified_field_name(
-                            cast(DictionaryObject, field["/Parent"])
-                        )
-                        + "."
-                    )
-                else:
-                    key = ""
-                key += cast(str, field["/T"])
-            except KeyError:
-                # Ignore no-name field for now
-                return
-        if fileobj:
-            self._write_field(fileobj, field, field_attributes)
-            fileobj.write("\n")
-        retval[key] = Field(field)
-        obj = retval[key].indirect_reference.get_object()  # to get the full object
-        if obj.get(FA.FT, "") == "/Ch":
-            retval[key][NameObject("/_States_")] = obj[NameObject(FA.Opt)]
-        if obj.get(FA.FT, "") == "/Btn" and "/AP" in obj:
-            #  Checkbox
-            retval[key][NameObject("/_States_")] = ArrayObject(
-                list(obj["/AP"]["/N"].keys())
-            )
-            if "/Off" not in retval[key]["/_States_"]:
-                retval[key][NameObject("/_States_")].append(NameObject("/Off"))
-        elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
-            states: List[str] = []
-            retval[key][NameObject("/_States_")] = ArrayObject(states)
-            for k in obj.get(FA.Kids, {}):
-                k = k.get_object()
-                for s in list(k["/AP"]["/N"].keys()):
-                    if s not in states:
-                        states.append(s)
-                retval[key][NameObject("/_States_")] = ArrayObject(states)
-            if (
-                obj.get(FA.Ff, 0) & FA.FfBits.NoToggleToOff != 0
-                and "/Off" in retval[key]["/_States_"]
-            ):
-                del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
-
     def _check_kids(
         self, tree: Union[TreeObject, DictionaryObject], retval: Any, fileobj: Any
     ) -> None:
@@ -470,44 +341,6 @@ class PdfReader(PdfDocCommon):
             except KeyError:
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
-
-    def get_form_text_fields(self, full_qualified_name: bool = False) -> Dict[str, Any]:
-        """
-        Retrieve form fields from the document with textual data.
-
-        Args:
-            full_qualified_name: to get full name.
-
-        Returns:
-            A dictionary. The key is the name of the form field,
-            the value is the content of the field.
-
-            If the document contains multiple form fields with the same name, the
-            second and following will get the suffix .2, .3, ...
-        """
-
-        def indexed_key(k: str, fields: Dict[Any, Any]) -> str:
-            if k not in fields:
-                return k
-            else:
-                return (
-                    k
-                    + "."
-                    + str(sum([1 for kk in fields if kk.startswith(k + ".")]) + 2)
-                )
-
-        # Retrieve document form fields
-        formfields = self.get_fields()
-        if formfields is None:
-            return {}
-        ff = {}
-        for field, value in formfields.items():
-            if value.get("/FT") == "/Tx":
-                if full_qualified_name:
-                    ff[field] = value.get("/V")
-                else:
-                    ff[indexed_key(cast(str, value["/T"]), ff)] = value.get("/V")
-        return ff
 
     def get_pages_showing_field(
         self, field: Union[Field, PdfObject, IndirectObject]
@@ -585,143 +418,6 @@ class PdfReader(PdfDocCommon):
             else (self.pages[self._get_page_number_by_indirect(x.indirect_reference)])  # type: ignore
             for x in ret
         ]
-
-    def _get_named_destinations(
-        self,
-        tree: Union[TreeObject, None] = None,
-        retval: Optional[Any] = None,
-    ) -> Dict[str, Any]:
-        """
-        Retrieve the named destinations present in the document.
-
-        Args:
-            tree:
-            retval:
-
-        Returns:
-            A dictionary which maps names to
-            :class:`Destinations<pypdf.generic.Destination>`.
-        """
-        if retval is None:
-            retval = {}
-            catalog = self.root_object
-
-            # get the name tree
-            if CA.DESTS in catalog:
-                tree = cast(TreeObject, catalog[CA.DESTS])
-            elif CA.NAMES in catalog:
-                names = cast(DictionaryObject, catalog[CA.NAMES])
-                if CA.DESTS in names:
-                    tree = cast(TreeObject, names[CA.DESTS])
-
-        if tree is None:
-            return retval
-
-        if PA.KIDS in tree:
-            # recurse down the tree
-            for kid in cast(ArrayObject, tree[PA.KIDS]):
-                self._get_named_destinations(kid.get_object(), retval)
-        # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
-        elif CA.NAMES in tree:  # KIDS and NAMES are exclusives (PDF 1.7 specs p 162)
-            names = cast(DictionaryObject, tree[CA.NAMES])
-            i = 0
-            while i < len(names):
-                key = cast(str, names[i].get_object())
-                i += 1
-                if not isinstance(key, str):
-                    continue
-                try:
-                    value = names[i].get_object()
-                except IndexError:
-                    break
-                i += 1
-                if isinstance(value, DictionaryObject):
-                    if "/D" in value:
-                        value = value["/D"]
-                    else:
-                        continue
-                dest = self._build_destination(key, value)  # type: ignore
-                if dest is not None:
-                    retval[key] = dest
-        else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF1.1
-            for k__, v__ in tree.items():
-                val = v__.get_object()
-                if isinstance(val, DictionaryObject):
-                    if "/D" in val:
-                        val = val["/D"].get_object()
-                    else:
-                        continue
-                dest = self._build_destination(k__, val)
-                if dest is not None:
-                    retval[k__] = dest
-        return retval
-
-    @property
-    def outline(self) -> OutlineType:
-        """
-        Read-only property for the outline present in the document.
-
-        (i.e., a collection of 'outline items' which are also known as
-        'bookmarks')
-        """
-        return self._get_outline()
-
-    def _get_outline(
-        self, node: Optional[DictionaryObject] = None, outline: Optional[Any] = None
-    ) -> OutlineType:
-        if outline is None:
-            outline = []
-            catalog = self.root_object
-
-            # get the outline dictionary and named destinations
-            if CO.OUTLINES in catalog:
-                lines = cast(DictionaryObject, catalog[CO.OUTLINES])
-
-                if isinstance(lines, NullObject):
-                    return outline
-
-                # TABLE 8.3 Entries in the outline dictionary
-                if lines is not None and "/First" in lines:
-                    node = cast(DictionaryObject, lines["/First"])
-            self._namedDests = self._get_named_destinations()
-
-        if node is None:
-            return outline
-
-        # see if there are any more outline items
-        while True:
-            outline_obj = self._build_outline_item(node)
-            if outline_obj:
-                outline.append(outline_obj)
-
-            # check for sub-outline
-            if "/First" in node:
-                sub_outline: List[Any] = []
-                self._get_outline(cast(DictionaryObject, node["/First"]), sub_outline)
-                if sub_outline:
-                    outline.append(sub_outline)
-
-            if "/Next" not in node:
-                break
-            node = cast(DictionaryObject, node["/Next"])
-
-        return outline
-
-    @property
-    def threads(self) -> Optional[ArrayObject]:
-        """
-        Read-only property for the list of threads.
-
-        See §12.4.3 of the PDF 1.7 or PDF 2.0 specification.
-
-        An array of dictionaries with "/F" and "/I" properties or
-        None if there are no articles.
-        """
-        catalog = self.root_object
-        if CO.THREADS in catalog:
-            return cast("ArrayObject", catalog[CO.THREADS])
-        else:
-            return None
 
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
@@ -984,7 +680,7 @@ class PdfReader(PdfDocCommon):
         # function reserved for future dev
         if indirect.pdf != self:
             raise ValueError("Can not update pdfreader with external object")
-        if (indirect.generation, indirect.idnum) in self.resolved_objects:
+        if (indirect.generation, indirect.idnum) not in self.resolved_objects:
             raise ValueError("Can not find referenced object")
         self.resolved_objects[(indirect.generation, indirect.idnum)] = obj
         obj.indirect_reference = indirect
@@ -1469,13 +1165,6 @@ class PdfReader(PdfDocCommon):
             raise PdfReadError("Not encrypted file")
         # TODO: raise Exception for wrong password
         return self._encryption.verify(password)
-
-    @property
-    def user_access_permissions(self) -> Optional[UserAccessPermissions]:
-        """Get the user access permissions for encrypted documents. Returns None if not encrypted."""
-        if self._encryption is None:
-            return None
-        return UserAccessPermissions(self._encryption.P)
 
     @property
     def is_encrypted(self) -> bool:
