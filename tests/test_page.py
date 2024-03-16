@@ -1317,9 +1317,11 @@ def test_merge_with_no_resources():
 def test_get_contents_from_nullobject():
     """Issue #2157"""
     writer = PdfWriter()
-    p = writer.add_blank_page(100, 100)
-    p[NameObject("/Contents")] = writer._add_object(NullObject())
-    p.get_contents()
+    page1 = writer.add_blank_page(100, 100)
+    page1[NameObject("/Contents")] = writer._add_object(NullObject())
+    assert page1.get_contents() is None
+    page2 = writer.add_blank_page(100, 100)
+    page1.merge_page(page2, over=True)
 
 
 @pytest.mark.enable_socket()
