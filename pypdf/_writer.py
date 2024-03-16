@@ -1923,7 +1923,7 @@ class PdfWriter:
             elt: DictionaryObject, stack: List[DictionaryObject]
         ) -> Tuple[List[str], List[str]]:
             nonlocal to_delete
-            # elt in recursive is a new contentstream object so we have to check the indirect_reference
+            # elt in recursive call is a new ContentStream object, so we have to check the indirect_reference
             if (elt in stack) or (
                 hasattr(elt, "indirect_reference")
                 and any(
@@ -1970,7 +1970,7 @@ class PdfWriter:
                             except AttributeError:  # pragma: no cover
                                 pass
                         stack.append(elt)
-                        clean_forms(content, stack)  # clean sub forms
+                        clean_forms(content, stack)  # clean subforms
                     if content is not None:
                         if isinstance(v, IndirectObject):
                             self._objects[v.idnum - 1] = content
