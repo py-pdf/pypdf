@@ -444,6 +444,7 @@ def test_get_form(src, expected, expected_get_fields, txt_file_path):
 def test_get_page_number(src, page_number):
     src = RESOURCE_ROOT / src
     reader = PdfReader(src)
+    reader.get_page(0)
     page = reader.pages[page_number]
     assert reader.get_page_number(page) == page_number
 

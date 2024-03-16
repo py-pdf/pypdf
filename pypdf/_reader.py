@@ -493,7 +493,7 @@ class PdfReader(PdfDocCommon):
                 if self.strict:
                     raise PdfReadError(f"Can't read object stream: {exc}")
                 # Replace with null. Hopefully it's nothing important.
-                obj = NullObject()
+                obj = NullObject()  # pragma: no cover
             return obj
 
         if self.strict:  # pragma: no cover

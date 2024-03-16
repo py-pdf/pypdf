@@ -1988,7 +1988,7 @@ def test_merging_many_temporary_files(caplog):
 
     writer2 = PdfWriter()
     writer2.remove_page(0)
-    writer2.flattened_page = None
+    writer2.flattened_pages = None
     writer2.remove_page(0)
 
     caplog.clear()
@@ -2070,6 +2070,8 @@ def test_replace_object():
     reader = PdfReader(pdf_path)  # reload a new instance
     with pytest.raises(ValueError):
         reader._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
+    with pytest.raises(ValueError):
+        reader._replace_object(IndirectObject(9999, 9999, reader), reader.pages[0])
     reader._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)
     reader._replace_object(reader.pages[0].indirect_reference, pg)
