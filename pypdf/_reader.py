@@ -490,14 +490,18 @@ class PdfReader(PdfDocCommon):
                     __name__,
                 )
 
-                if self.strict:
-                    raise PdfReadError(f"Can't read object stream: {exc}")
+                if self.strict:  # pragma: no cover
+                    raise PdfReadError(
+                        f"Can't read object stream: {exc}"
+                    )  # pragma: no cover
                 # Replace with null. Hopefully it's nothing important.
                 obj = NullObject()  # pragma: no cover
             return obj
 
         if self.strict:  # pragma: no cover
-            raise PdfReadError("This is a fatal error in strict mode.")
+            raise PdfReadError(
+                "This is a fatal error in strict mode."
+            )  # pragma: no cover
         return NullObject()  # pragma: no cover
 
     def get_object(
