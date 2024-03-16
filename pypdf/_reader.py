@@ -260,27 +260,6 @@ class PdfReader(PdfDocCommon):
         finally:
             self._override_encryption = False
 
-    def _get_num_pages(self) -> int:
-        """
-        Calculate the number of pages in this PDF file.
-
-        Returns:
-            The number of pages of the parsed PDF file.
-
-        Raises:
-            PdfReadError: if file is encrypted and restrictions prevent
-                this action.
-        """
-        # Flattened pages will not work on an Encrypted PDF;
-        # the PDF file's page count is used in this case. Otherwise,
-        # the original method (flattened page count) is used.
-        if self.is_encrypted:
-            return self.root_object["/Pages"]["/Count"]  # type: ignore
-        else:
-            if self.flattened_pages is None:
-                self._flatten()
-            return len(self.flattened_pages)  # type: ignore
-
     def _get_page(self, page_number: int) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
