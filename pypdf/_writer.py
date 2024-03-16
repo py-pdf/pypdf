@@ -395,8 +395,8 @@ class PdfWriter(PdfDocCommon):
                     cast(NumberObject, page_parent[NameObject("/Count")]) - 1
                 )
                 page_parent = page_parent.get("/Parent", None)
-        except ValueError:
-            logger_warning(f"Page Index Error in {page_parent}", __name__)
+        except (ValueError, TypeError):  # TypeError if parent is not a dictionnary
+            logger_warning(f"Page Index Error in parent {page_parent}", __name__)
         del self.flattened_pages[page]
 
     def set_need_appearances_writer(self, state: bool = True) -> None:

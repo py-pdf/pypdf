@@ -1956,7 +1956,7 @@ REFERENCES 76"""
         bookmarks.append(new_bookmark)
 
 
-def test_merging_many_temporary_files():
+def test_merging_many_temporary_files(caplog):
     def create_number_pdf(n) -> BytesIO:
         pytest.importorskip("fpdf")
         from fpdf import FPDF
@@ -1983,6 +1983,29 @@ def test_merging_many_temporary_files():
     for n, page in enumerate(reader.pages):
         text = page.extract_text()
         assert text == str(n)
+    # test completed to validate remove_page
+    writer.remove_page(writer.pages[-1])
+
+    writer2 = PdfWriter()
+    writer2.remove_page(0)
+
+    caplog.clear()
+    writer.remove_page(writer.pages[-1]["/Contents"].indirect_reference)
+    assert "IndirectObject is not referencing to a page" in caplog.text
+
+    caplog.clear()
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    writer.remove_page(pg)
+    assert "Can't find page in pages" in caplog.text
+
+    caplog.clear()
+    writer.remove_page(999999)
+    assert "page number is out of range" in caplog.text
+
+    writer.flattened_pages.append(pg)
+    caplog.clear()
+    writer.remove_page(pg)
+    assert "Page Index Error in parent" in caplog.text
 
 
 @pytest.mark.enable_socket()
@@ -2037,3 +2060,5 @@ def test_replace_object():
     writer = PdfWriter(clone_from=reader)
     with pytest.raises(ValueError):
         writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    writer._replace_object(writer.pages[0].indirect_reference, pg)
