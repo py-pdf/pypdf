@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710496631020,
+  "lastUpdate": 1710591364745,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -49136,6 +49136,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04180928101282496",
             "extra": "mean: 16.158620320199997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8ef399a15b9a6d0bb5f214b2824d43b3792c2c16",
+          "message": "TST: Improve test_get_contents_from_nullobject to show real use-case (#2524)\n\nFixes #2157 by addressing https://github.com/py-pdf/pypdf/issues/2157#issuecomment-1712744267",
+          "timestamp": "2024-03-16T13:13:03+01:00",
+          "tree_id": "e87b211c1742a4865cf421e19041224c37da11ee",
+          "url": "https://github.com/py-pdf/pypdf/commit/8ef399a15b9a6d0bb5f214b2824d43b3792c2c16"
+        },
+        "date": 1710591361241,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3416129122504987,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005956825860930547",
+            "extra": "mean: 299.25668420000306 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.437284385753951,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007804652911614937",
+            "extra": "mean: 80.40340390909054 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2712438658767989,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017295398036231317",
+            "extra": "mean: 3.686719317199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.86504234970524,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012141737806082352",
+            "extra": "mean: 59.294247785715015 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.061585319319505866,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0716647927674257",
+            "extra": "mean: 16.237636031599997 sec\nrounds: 5"
           }
         ]
       }
