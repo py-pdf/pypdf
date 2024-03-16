@@ -102,6 +102,8 @@ def test_get_formatted_changes():
 
 
 def test_get_formatted_changes__other():
+    make_release = pytest.importorskip("make_release")
+
     changes = [
         make_release.Change(
             commit_hash="f20c36eabd59ea661f30c5da35af7c9e435c7de9",
