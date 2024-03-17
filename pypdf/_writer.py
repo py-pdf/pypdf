@@ -2809,7 +2809,7 @@ class PdfWriter:
         if node is None:
             node = NullObject()
         node = node.get_object()
-        if isinstance(node, NullObject):
+        if node is None or isinstance(node, NullObject):
             node = DictionaryObject()
         if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
             node = node.get("/First", None)
