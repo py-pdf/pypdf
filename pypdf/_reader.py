@@ -1452,6 +1452,7 @@ class PdfReader:
                     try:
                         pid, _pgen = self.read_object_header(stream)
                     except ValueError:
+                        self._rebuild_xref_table(stream)
                         break
                     if pid == id - self.xref_index:
                         # fixing index item per item is required for revised PDF.
