@@ -436,14 +436,14 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         def get_next_obj_pos(
             p: int, p1: int, rem_gens: List[int], pdf: PdfReaderProtocol
         ) -> int:
-            loc = pdf.xref[rem_gens[0]]
-            for o in loc:
-                if p1 > loc[o] and p < loc[o]:
-                    p1 = loc[o]
-            if len(rem_gens) == 1:
-                return p1
-            else:
-                return get_next_obj_pos(p, p1, rem_gens[1:], pdf)
+            out = p1
+            for gen in rem_gens:
+                loc = pdf.xref[gen]
+                try:
+                    out = min(out, min([x for x in loc.values() if p < x <= p1]))
+                except ValueError:
+                    pass
+            return out
 
         def read_unsized_from_stream(
             stream: StreamType, pdf: PdfReaderProtocol
