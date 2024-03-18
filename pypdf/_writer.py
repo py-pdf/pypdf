@@ -396,7 +396,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(page, IndirectObject):
             p = page.get_object()
             if not isinstance(p, PageObject):
-                logger_warning("IndirectObject is not referencing to a page", __name__)
+                logger_warning("IndirectObject is not referencing a page", __name__)
                 return
             page = p
         if not isinstance(page, int):
