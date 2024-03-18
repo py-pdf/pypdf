@@ -807,7 +807,8 @@ class PdfReader(PdfDocCommon):
                     # any existing key is already set correctly.
                     pass
                 else:
-                    self.xref[generation][num] = offset
+                    if entry_type_b == b"n":
+                        self.xref[generation][num] = offset
                     try:
                         self.xref_free_entry[generation][num] = entry_type_b == b"f"
                     except Exception:
