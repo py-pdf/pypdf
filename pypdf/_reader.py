@@ -613,7 +613,7 @@ class PdfReader(PdfDocCommon):
         if indirect.pdf != self:
             raise ValueError("Cannot update PdfReader with external object")
         if (indirect.generation, indirect.idnum) not in self.resolved_objects:
-            raise ValueError("Can not find referenced object")
+            raise ValueError("Cannot find referenced object")
         self.resolved_objects[(indirect.generation, indirect.idnum)] = obj
         obj.indirect_reference = indirect
         return obj
