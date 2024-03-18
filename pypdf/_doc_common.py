@@ -247,7 +247,7 @@ class PdfDocCommon:
     """
     Common functions from PdfWriter and PdfReader objects.
 
-    This root class is strongly abstracted
+    This root class is strongly abstracted.
     """
 
     strict: bool = False  # default
