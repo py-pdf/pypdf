@@ -611,7 +611,7 @@ class PdfReader(PdfDocCommon):
     def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
         # function reserved for future dev
         if indirect.pdf != self:
-            raise ValueError("Can not update pdfreader with external object")
+            raise ValueError("Cannot update PdfReader with external object")
         if (indirect.generation, indirect.idnum) not in self.resolved_objects:
             raise ValueError("Can not find referenced object")
         self.resolved_objects[(indirect.generation, indirect.idnum)] = obj
