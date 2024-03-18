@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710619418782,
+  "lastUpdate": 1710745579286,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -49254,6 +49254,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08600134774778695",
             "extra": "mean: 16.266598237199993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bbbc9dd8ceee80f32f2f5f856ae789e402172164",
+          "message": "FIX: robustify stream extraction (#2526)\n\nFixes #2523.\r\n\r\nSituation met:\r\n\r\n* Length field is not correct\r\n* xref may contains not ordered stream data\r\n* xref contains some free entries (i.e. does not contain stream offset)",
+          "timestamp": "2024-03-18T08:03:16+01:00",
+          "tree_id": "39e39b13aca41ce8ac54342651000d347d54e36c",
+          "url": "https://github.com/py-pdf/pypdf/commit/bbbc9dd8ceee80f32f2f5f856ae789e402172164"
+        },
+        "date": 1710745575559,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2954396353877056,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004648540766607232",
+            "extra": "mean: 303.4496488000002 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.260789139115628,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008375208925607093",
+            "extra": "mean: 81.56081869230565 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.270180881699592,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032978918792207705",
+            "extra": "mean: 3.701224134399996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.34770393316473,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004363390849747162",
+            "extra": "mean: 57.644516176474234 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05953795945772008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0661931785066753",
+            "extra": "mean: 16.7960072718 sec\nrounds: 5"
           }
         ]
       }
