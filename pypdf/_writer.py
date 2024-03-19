@@ -1246,6 +1246,8 @@ class PdfWriter:
                 "AES-128", "AES-256-R5", "AES-256". If it is valid,
                 `use_128bit` will be ignored.
         """
+        permissions_flag.check()
+
         if owner_password is None:
             owner_password = user_password
 
