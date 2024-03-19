@@ -393,7 +393,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         See Table 347 — Additional entries in a metadata stream dictionary.
 
         Returns:
-          Returns a {@link #xmp.XmpInformation XmlInformation} instance
+          Returns a :class:`~pypdf.xmp.XmpInformation` instance
           that can be used to access XMP metadata from the document.  Can also
           return None if no metadata was found on the document root.
         """
