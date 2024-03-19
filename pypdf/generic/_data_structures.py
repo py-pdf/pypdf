@@ -968,19 +968,23 @@ class EncodedStreamObject(StreamObject):
 
 class ContentStream(DecodedStreamObject):
     """
-    In order to be fast, this data structure can contain either raw data in ._data,
-    or parsed stream operations in ._operations.
+    In order to be fast, this data structure can contain either:
+
+    * raw data in ._data
+    * parsed stream operations in ._operations.
 
     At any time, ContentStream object can either have both of those fields defined,
     or one field defined and the other set to None.
 
     These fields are "rebuilt" lazily, when accessed:
-        * when .get_data() is called, if ._data is None, it is rebuilt from ._operations.
-        * when .operations is called, if ._operations is None, it is rebuilt from ._data.
+
+    * when .get_data() is called, if ._data is None, it is rebuilt from ._operations.
+    * when .operations is called, if ._operations is None, it is rebuilt from ._data.
 
     Conversely, these fields can be invalidated:
-        * when .set_data() is called, ._operations is set to None.
-        * when .operations is set, ._data is set to None.
+
+    * when .set_data() is called, ._operations is set to None.
+    * when .operations is set, ._data is set to None.
     """
 
     def __init__(
