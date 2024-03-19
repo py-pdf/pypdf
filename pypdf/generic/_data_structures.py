@@ -390,8 +390,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         Retrieve XMP (Extensible Metadata Platform) data relevant to the this
         object, if available.
 
-        Stability: Added in v1.12, will exist for all future v1.x releases.
-        See Table 315 – Additional entries in a metadata stream dictionary
+        See Table 347 — Additional entries in a metadata stream dictionary.
 
         Returns:
           Returns a {@link #xmp.XmpInformation XmlInformation} instance
@@ -969,20 +968,19 @@ class EncodedStreamObject(StreamObject):
 
 class ContentStream(DecodedStreamObject):
     """
-    In order to be fast, this datastructure can contain either:
-    * raw data in ._data
-    * parsed stream operations in ._operations
+    In order to be fast, this data structure can contain either raw data in ._data,
+    or parsed stream operations in ._operations.
 
-    At any time, ContentStream object can either have one or both of those fields defined,
-    and zero or one of those fields set to None.
+    At any time, ContentStream object can either have both of those fields defined,
+    or one field defined and the other set to None.
 
-    Those fields are "rebuilt" lazily, when accessed:
-    * when .get_data() is called, if ._data is None, it is rebuilt from ._operations
-    * when .operations is called, if ._operations is None, it is rebuilt from ._data
+    These fields are "rebuilt" lazily, when accessed:
+        * when .get_data() is called, if ._data is None, it is rebuilt from ._operations.
+        * when .operations is called, if ._operations is None, it is rebuilt from ._data.
 
-    On the other side, those fields can be invalidated:
-    * when .set_data() is called, ._operations is set to None
-    * when .operations is set, ._data is set to None
+    Conversely, these fields can be invalidated:
+        * when .set_data() is called, ._operations is set to None.
+        * when .operations is set, ._data is set to None.
     """
 
     def __init__(
