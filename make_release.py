@@ -251,8 +251,11 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
 
     if grouped:
         output += "\n### Other\n"
+        output_with_user += "\n### Other\n"
         for prefix in grouped:
-            output += f"- {prefix}: {grouped[prefix]}\n"
+            for commit in grouped[prefix]:
+                output += f"- {prefix}: {commit['msg']}\n"
+                output_with_user += f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
 
     return output, output_with_user
 
@@ -341,7 +344,7 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
         raise ValueError(f"Invalid commit line: '{line}'")
     commit_hash, rest, author = parts
     if ":" in rest:
-        prefix, message = rest.split(":", 1)
+        prefix, message = rest.split(": ", 1)
     else:
         prefix = ""
         message = rest
