@@ -21,8 +21,6 @@ jobs:
       # Ensure it's on PyPI
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT }}
       - name: Extract version from commit message
         id: extract_version
         run: |
