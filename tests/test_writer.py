@@ -1993,7 +1993,7 @@ def test_merging_many_temporary_files(caplog):
 
     caplog.clear()
     writer.remove_page(writer.pages[-1]["/Contents"].indirect_reference)
-    assert "IndirectObject is not referencing to a page" in caplog.text
+    assert "IndirectObject is not referencing a page" in caplog.text
 
     caplog.clear()
     pg = PageObject.create_blank_page(writer, 1000, 1000)
