@@ -1091,7 +1091,7 @@ class PdfReader(PdfDocCommon):
             password: The password to match.
 
         Returns:
-            An indicator if the document was decrypted and weather it was the
+            An indicator if the document was decrypted and whether it was the
             owner password or the user password.
         """
         if not self._encryption:

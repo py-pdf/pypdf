@@ -196,7 +196,7 @@ class DocumentInformation(DictionaryObject):
         Read-only property accessing the document's producer.
 
         If the document was converted to PDF from another format, this is the
-        name of the application (for example, OSX Quartz) that converted it to
+        name of the application (for example, macOS Quartz) that converted it to
         PDF. Returns a ``TextStringObject`` or ``None`` if the producer is not
         specified.
         """
@@ -444,8 +444,8 @@ class PdfDocCommon:
                     retval[k__] = dest
         return retval
 
-    # A select group of relevant field attributes. For the complete list,
-    # see section 8.6.2 of the PDF 1.7 reference.
+    # A select group of relevant field attributes. For the complete list.
+    # See §12.3.2 of the PDF 1.7 or PDF 2.0 specification.
 
     def get_fields(
         self,
