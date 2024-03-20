@@ -13,7 +13,7 @@ jobs:
   build_and_publish:
     name: Publish a new version of pypdf
     runs-on: ubuntu-latest
-    if: "startsWith(${{ github.event.head_commit.message}}, 'REL: ')"
+    if: "${{ startsWith(github.event.head_commit.message, 'REL: ') }}"
 
     steps:
       # Ensure it's on PyPI
