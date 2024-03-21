@@ -30,10 +30,12 @@
 import os
 import re
 import struct
+import weakref
 import zlib
 from datetime import datetime
-from io import BytesIO, UnsupportedOperation
+from io import BytesIO, FileIO, UnsupportedOperation
 from pathlib import Path
+from types import TracebackType
 from typing import (
     Any,
     Callable,
@@ -44,6 +46,7 @@ from typing import (
     Mapping,
     Optional,
     Tuple,
+    Type,
     Union,
     cast,
 )
@@ -310,9 +313,13 @@ class PdfReader:
                 "It may not be read correctly.",
                 __name__,
             )
+
+        self._opened_automatically = False
         if isinstance(stream, (str, Path)):
-            with open(stream, "rb") as fh:
-                stream = BytesIO(fh.read())
+            stream = FileIO(stream, "rb")
+            self._opened_automatically = True
+            weakref.finalize(self, stream.close)
+
         self.read(stream)
         self.stream = stream
 
@@ -341,6 +348,24 @@ class PdfReader:
             self._override_encryption = False
         elif password is not None:
             raise PdfReadError("Not encrypted file")
+
+    def close(self) -> None:
+        """Close the underlying file handle"""
+        self.stream.close()
+
+    def __enter__(self) -> "PdfReader":
+        """Use PdfReader as context manager"""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        """Close the underlying stream if owned by the PdfReader"""
+        if self._opened_automatically:
+            self.close()
 
     @property
     def root_object(self) -> DictionaryObject:
