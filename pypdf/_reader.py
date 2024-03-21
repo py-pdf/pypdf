@@ -32,6 +32,7 @@ import re
 import weakref
 from io import BytesIO, FileIO, UnsupportedOperation
 from pathlib import Path
+from types import TracebackType
 from typing import (
     Any,
     Callable,
@@ -40,6 +41,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    Type,
     Union,
     cast,
 )
@@ -100,6 +102,9 @@ class PdfReader(PdfDocCommon):
         password: Decrypt PDF file at initialization. If the
             password is None, the file will not be decrypted.
             Defaults to ``None``.
+
+    Can also be instantiated as a contextmanager which will automatically close
+    the underlying file pointer if passed via filenames.
     """
 
     def __init__(
@@ -123,8 +128,10 @@ class PdfReader(PdfDocCommon):
                 __name__,
             )
 
+        self._opened_automatically = False
         if isinstance(stream, (str, Path)):
             stream = FileIO(stream, "rb")
+            self._opened_automatically = True
             weakref.finalize(self, stream.close)
 
         self.read(stream)
@@ -159,6 +166,20 @@ class PdfReader(PdfDocCommon):
     def close(self) -> None:
         """Close the underlying file handle"""
         self.stream.close()
+
+    def __enter__(self) -> "PdfReader":
+        """Use PdfReader as context manager"""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        """Close the underlying stream if owned by the PdfReader"""
+        if self._opened_automatically:
+            self.close()
 
     @property
     def root_object(self) -> DictionaryObject:
