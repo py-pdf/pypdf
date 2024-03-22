@@ -90,6 +90,7 @@ from .generic import (
     create_string_object,
 )
 from .types import OutlineType, PagemodeType
+from .xmp import XmpInformation
 
 
 def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
@@ -274,6 +275,30 @@ class PdfDocCommon:
     def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
         ...  # pragma: no cover
 
+    @property
+    @abstractmethod
+    def _info(self) -> Optional[DictionaryObject]:
+        ...  # pragma: no cover
+
+    @property
+    def metadata(self) -> Optional[DocumentInformation]:
+        """
+        Retrieve the PDF file's document information dictionary, if it exists.
+
+        Note that some PDF files use metadata streams instead of document
+        information dictionaries, and these metadata streams will not be
+        accessed by this function.
+        """
+        retval = DocumentInformation()
+        if self._info is None:
+            return None
+        retval.update(self._info)
+        return retval
+
+    @property
+    def xmp_metadata(self) -> Optional[XmpInformation]:
+        ...  # pragma: no cover
+
     @abstractmethod
     def _repr_mimebundle_(
         self,
@@ -305,23 +330,8 @@ class PdfDocCommon:
                 self.root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
         return o
 
-    # ????#
-    """def _repr_mimebundle_(
-        self,
-        include: Union[None, Iterable[str]] = None,
-        exclude: Union[None, Iterable[str]] = None,
-    ) -> Dict[str, Any]:
-        """
-
-    # ????#@property
-    # ????#def metadata(self) -> Optional[DocumentInformation]:
-
-    # ????#@property
-    # ????#def xmp_metadata(self) -> Optional[XmpInformation]:
-
     flattened_pages: Optional[List[PageObject]] = None
 
-    ### common
     def get_num_pages(self) -> int:
         """
         Calculate the number of pages in this PDF file.
@@ -371,7 +381,39 @@ class PdfDocCommon:
         """
         return self._get_named_destinations()
 
-    # ???? add get_named_dest_root caution if
+    def get_named_dest_root(self) -> ArrayObject:
+        nd = ArrayObject()
+        if CA.NAMES in self.root_object and isinstance(
+            self.root_object[CA.NAMES], DictionaryObject
+        ):
+            names = cast(DictionaryObject, self.root_object[CA.NAMES])
+            names_ref = names.indirect_reference
+            if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
+                # 3.6.3 Name Dictionary (PDF spec 1.7)
+                dests = cast(DictionaryObject, names[CA.DESTS])
+                dests_ref = dests.indirect_reference
+                if CA.NAMES in dests:
+                    # TABLE 3.33 Entries in a name tree node dictionary
+                    nd = cast(ArrayObject, dests[CA.NAMES])
+                else:
+                    nd = ArrayObject()
+                    dests[NameObject(CA.NAMES)] = nd
+            elif hasattr(self, "_add_object"):
+                dests = DictionaryObject()
+                dests_ref = self._add_object(dests)
+                names[NameObject(CA.DESTS)] = dests_ref
+                dests[NameObject(CA.NAMES)] = nd
+
+        elif hasattr(self, "_add_object"):
+            names = DictionaryObject()
+            names_ref = self._add_object(names)
+            self.root_object[NameObject(CA.NAMES)] = names_ref
+            dests = DictionaryObject()
+            dests_ref = self._add_object(dests)
+            names[NameObject(CA.DESTS)] = dests_ref
+            dests[NameObject(CA.NAMES)] = nd
+
+        return nd
 
     ## common
     def _get_named_destinations(

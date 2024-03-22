@@ -43,7 +43,7 @@ from typing import (
     cast,
 )
 
-from ._doc_common import DocumentInformation, PdfDocCommon, convert_to_int
+from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
 from ._page import PageObject
 from ._utils import (
@@ -168,7 +168,15 @@ class PdfReader(PdfDocCommon):
             /Info Dictionary ; None if the entry does not exists
         """
         info = self.trailer.get(TK.INFO, None)
-        return None if info is None else cast(DictionaryObject, info.get_object())
+        if info is None:
+            return None
+        else:
+            info = info.get_object()
+            if info is None:
+                raise PdfReadError(
+                    "trailer not found or does not point to document information directory"
+                )
+            return cast(DictionaryObject, info)
 
     @property
     def _ID(self) -> Optional[ArrayObject]:
@@ -225,25 +233,6 @@ class PdfReader(PdfDocCommon):
         pdf_file_version = self.stream.read(8).decode("utf-8", "backslashreplace")
         self.stream.seek(loc, 0)  # return to where it was
         return pdf_file_version
-
-    @property
-    def metadata(self) -> Optional[DocumentInformation]:
-        """
-        Retrieve the PDF file's document information dictionary, if it exists.
-
-        Note that some PDF files use metadata streams instead of document
-        information dictionaries, and these metadata streams will not be
-        accessed by this function.
-        """
-        if TK.INFO not in self.trailer:
-            return None
-        retval = DocumentInformation()
-        if isinstance(self._info, type(None)):
-            raise PdfReadError(
-                "trailer not found or does not point to document information directory"
-            )
-        retval.update(self._info)  # type: ignore
-        return retval
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:

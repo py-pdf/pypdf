@@ -121,6 +121,7 @@ from .types import (
     OutlineType,
     PagemodeType,
 )
+from .xmp import XmpInformation
 
 OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions.all()
@@ -200,7 +201,7 @@ class PdfWriter(PdfDocCommon):
                 )
             }
         )
-        self._info = self._add_object(info)
+        self._info_obj = self._add_object(info)
 
         # root object
         self._root_object = DictionaryObject()
@@ -232,6 +233,36 @@ class PdfWriter(PdfDocCommon):
             Recommended be used only for read access.
         """
         return self._root_object
+
+    @property
+    def _info(self) -> Optional[DictionaryObject]:
+        """
+        Provide access to "/Info". standardized with PdfWriter.
+
+        Returns:
+            /Info Dictionary ; None if the entry does not exists
+        """
+        return cast(DictionaryObject, self._info_obj.get_object())
+
+    @_info.setter
+    def _info(self, value: DictionaryObject) -> None:
+        self._info_obj = value
+
+    @property
+    def xmp_metadata(self) -> Optional[XmpInformation]:
+        """XMP (Extensible Metadata Platform) data."""
+        return self.root_object.xmp_metadata
+
+    @xmp_metadata.setter
+    def xmp_metadata(self, value: Optional[XmpInformation]) -> None:
+        """XMP (Extensible Metadata Platform) data."""
+        if value is None:
+            if "/Metadata" in self.root_object:
+                del self.root_object["/Metadata"]
+        else:
+            self.root_object[NameObject("/Metadata")] = value
+
+        return self.root_object.xmp_metadata
 
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""
@@ -1080,9 +1111,7 @@ class PdfWriter(PdfDocCommon):
         """
         self.clone_reader_document_root(reader)
         if TK.INFO in reader.trailer:
-            self._info = self._add_object(
-                cast(DictionaryObject, reader._info).clone(self)
-            )
+            self._info = self._add_object(reader._info.clone(self))
         try:
             self._ID = cast(ArrayObject, reader._ID).clone(self)
         except AttributeError:
@@ -1263,7 +1292,7 @@ class PdfWriter(PdfDocCommon):
             {
                 NameObject(TK.SIZE): NumberObject(len(self._objects) + 1),
                 NameObject(TK.ROOT): self._root,
-                NameObject(TK.INFO): self._info,
+                NameObject(TK.INFO): self._info_obj,
             }
         )
         if self._ID:
@@ -1288,7 +1317,8 @@ class PdfWriter(PdfDocCommon):
             if isinstance(value, PdfObject):
                 value = value.get_object()
             args[NameObject(key)] = create_string_object(str(value))
-        cast(DictionaryObject, self._info.get_object()).update(args)
+        assert isinstance(self._info, DictionaryObject)
+        self._info.update(args)
 
     def _sweep_indirect_references(
         self,
@@ -1495,41 +1525,6 @@ class PdfWriter(PdfDocCommon):
         Each element is a dictionaries with ``/F`` and ``/I`` keys.
         """
         return self.get_threads_root()
-
-    def get_named_dest_root(self) -> ArrayObject:
-        if CA.NAMES in self._root_object and isinstance(
-            self._root_object[CA.NAMES], DictionaryObject
-        ):
-            names = cast(DictionaryObject, self._root_object[CA.NAMES])
-            names_ref = names.indirect_reference
-            if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
-                # 3.6.3 Name Dictionary (PDF spec 1.7)
-                dests = cast(DictionaryObject, names[CA.DESTS])
-                dests_ref = dests.indirect_reference
-                if CA.NAMES in dests:
-                    # TABLE 3.33 Entries in a name tree node dictionary
-                    nd = cast(ArrayObject, dests[CA.NAMES])
-                else:
-                    nd = ArrayObject()
-                    dests[NameObject(CA.NAMES)] = nd
-            else:
-                dests = DictionaryObject()
-                dests_ref = self._add_object(dests)
-                names[NameObject(CA.DESTS)] = dests_ref
-                nd = ArrayObject()
-                dests[NameObject(CA.NAMES)] = nd
-
-        else:
-            names = DictionaryObject()
-            names_ref = self._add_object(names)
-            self._root_object[NameObject(CA.NAMES)] = names_ref
-            dests = DictionaryObject()
-            dests_ref = self._add_object(dests)
-            names[NameObject(CA.DESTS)] = dests_ref
-            nd = ArrayObject()
-            dests[NameObject(CA.NAMES)] = nd
-
-        return nd
 
     def add_outline_item_destination(
         self,
