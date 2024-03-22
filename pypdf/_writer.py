@@ -201,7 +201,7 @@ class PdfWriter(PdfDocCommon):
                 )
             }
         )
-        self._info_obj = self._add_object(info)
+        self._info_obj: PdfObject = self._add_object(info)
 
         # root object
         self._root_object = DictionaryObject()
@@ -245,7 +245,9 @@ class PdfWriter(PdfDocCommon):
         return cast(DictionaryObject, self._info_obj.get_object())
 
     @_info.setter
-    def _info(self, value: DictionaryObject) -> None:
+    def _info(self, value: Union[IndirectObject, DictionaryObject]) -> None:
+        if isinstance(value, IndirectObject) and value.pdf != self:
+            value = value.clone(self)
         self._info_obj = value
 
     @property
@@ -262,7 +264,7 @@ class PdfWriter(PdfDocCommon):
         else:
             self.root_object[NameObject("/Metadata")] = value
 
-        return self.root_object.xmp_metadata
+        return self.root_object.xmp_metadata  # type: ignore
 
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""

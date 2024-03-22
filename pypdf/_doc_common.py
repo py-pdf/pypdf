@@ -354,7 +354,6 @@ class PdfDocCommon:
             assert self.flattened_pages is not None
             return len(self.flattened_pages)
 
-    ### common
     def get_page(self, page_number: int) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
@@ -372,7 +371,6 @@ class PdfDocCommon:
         assert self.flattened_pages is not None, "hint for mypy"
         return self.flattened_pages[page_number]
 
-    ## common
     @property
     def named_destinations(self) -> Dict[str, Any]:
         """
@@ -539,7 +537,6 @@ class PdfDocCommon:
 
         return retval
 
-    #### ??? : a mettre en PR indep
     def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
         if "/TM" in parent:
             return cast(str, parent["/TM"])
@@ -883,7 +880,6 @@ class PdfDocCommon:
                 self._flatten()
             return len(self.flattened_pages)  # type: ignore
 
-    # ????# to be merged ?
     @abstractmethod
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
@@ -1022,7 +1018,6 @@ class PdfDocCommon:
             pass
         return outline_item
 
-    ## common
     @property
     def pages(self) -> List[PageObject]:
         """
@@ -1199,7 +1194,6 @@ class PdfDocCommon:
             for key, flag in permissions_mapping.items()
         }
 
-    # ????#
     @property
     def user_access_permissions(self) -> Optional[UserAccessPermissions]:
         """Get the user access permissions for encrypted documents. Returns None if not encrypted."""

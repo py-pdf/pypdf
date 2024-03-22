@@ -239,7 +239,7 @@ class PdfReader(PdfDocCommon):
         """XMP (Extensible Metadata Platform) data."""
         try:
             self._override_encryption = True
-            return self.root_object.xmp_metadata  # type: ignore
+            return self.root_object.xmp_metadata
         finally:
             self._override_encryption = False
 
