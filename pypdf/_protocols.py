@@ -39,6 +39,10 @@ class PdfObjectProtocol(Protocol):
         ...  # pragma: no cover
 
 
+class XmpInformationProtocol(PdfObjectProtocol):
+    pass
+
+
 class PdfCommonDocProtocol(Protocol):
     @property
     def pdf_header(self) -> str:

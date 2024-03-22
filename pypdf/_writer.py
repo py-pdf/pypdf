@@ -253,7 +253,7 @@ class PdfWriter(PdfDocCommon):
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
         """XMP (Extensible Metadata Platform) data."""
-        return self.root_object.xmp_metadata
+        return cast(XmpInformation, self.root_object.xmp_metadata)
 
     @xmp_metadata.setter
     def xmp_metadata(self, value: Optional[XmpInformation]) -> None:

@@ -47,7 +47,7 @@ from typing import (
     cast,
 )
 
-from .._protocols import PdfReaderProtocol, PdfWriterProtocol
+from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationProtocol
 from .._utils import (
     WHITESPACES,
     StreamType,
@@ -385,7 +385,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         return dict.__getitem__(self, key).get_object()
 
     @property
-    def xmp_metadata(self) -> Optional["XmpInformation"]:  # noqa
+    def xmp_metadata(self) -> Optional[XmpInformationProtocol]:
         """
         Retrieve XMP (Extensible Metadata Platform) data relevant to the this
         object, if available.
