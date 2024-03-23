@@ -246,9 +246,9 @@ class PdfWriter(PdfDocCommon):
 
     @_info.setter
     def _info(self, value: Union[IndirectObject, DictionaryObject]) -> None:
-        if isinstance(value, IndirectObject) and value.pdf != self:
-            value = value.clone(self)
-        self._info_obj = value
+        obj = cast(DictionaryObject, self._info_obj.get_object())
+        obj.clear()
+        obj.update(cast(DictionaryObject, value.get_object()))
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
@@ -1112,8 +1112,9 @@ class PdfWriter(PdfDocCommon):
                 document.
         """
         self.clone_reader_document_root(reader)
+        self._info_obj = self._add_object(DictionaryObject())
         if TK.INFO in reader.trailer:
-            self._info = self._add_object(reader._info.clone(self))
+            self._info = reader._info  # actually copy fields
         try:
             self._ID = cast(ArrayObject, reader._ID).clone(self)
         except AttributeError:
