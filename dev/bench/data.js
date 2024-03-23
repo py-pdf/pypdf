@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1710856367743,
+  "lastUpdate": 1711206498924,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -49372,6 +49372,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13892476277178675",
             "extra": "mean: 16.270754422199992 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d0d8bc51188215df1493e8e1f0dc7539d818c253",
+          "message": "DOC: Update annotation list (#2534)\n\nCopied in order from Table 171 annotation types of the PDF 2.0 Specification. The three added annotations are Redact (PDF 1.7), Projection (PDF 2.0) and RichMedia (PDF 2.0).",
+          "timestamp": "2024-03-23T16:05:28+01:00",
+          "tree_id": "f2aaf4f8b77daebc4d4d2e9ae383873c521aebfe",
+          "url": "https://github.com/py-pdf/pypdf/commit/d0d8bc51188215df1493e8e1f0dc7539d818c253"
+        },
+        "date": 1711206497284,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.272559017258968,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00769389814643262",
+            "extra": "mean: 305.571265399999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.112935219870565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010875597774121348",
+            "extra": "mean: 82.55637315384618 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2651880910602634,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04609525683479554",
+            "extra": "mean: 3.7709083994000023 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.220746599502363,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007865987751088472",
+            "extra": "mean: 61.64944343749745 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06221023328880306,
+            "unit": "iter/sec",
+            "range": "stddev: 0.15446907877317556",
+            "extra": "mean: 16.074525799600007 sec\nrounds: 5"
           }
         ]
       }
