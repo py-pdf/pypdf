@@ -48,7 +48,7 @@ In BibTeX format:
                   Martin Thoma and
                   Matthew Peveler and
                   exiledkingcc and {pypdf Contributors}},
- year          = {2022},
+ year          = {2024},
  url           = {https://pypi.org/project/pypdf/}
  note          = {See https://pypdf.readthedocs.io/en/latest/meta/CONTRIBUTORS.html for all contributors}
 }

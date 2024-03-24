@@ -213,7 +213,7 @@ class DocumentInformation(DictionaryObject):
         Read-only property accessing the document's producer.
 
         If the document was converted to PDF from another format, this is the
-        name of the application (for example, OSX Quartz) that converted it to
+        name of the application (for example, macOS Quartz) that converted it to
         PDF. Returns a ``TextStringObject`` or ``None`` if the producer is not
         specified.
         """
@@ -487,8 +487,8 @@ class PdfReader:
         """
         return self._get_named_destinations()
 
-    # A select group of relevant field attributes. For the complete list,
-    # see section 8.6.2 of the PDF 1.7 reference.
+    # A select group of relevant field attributes. For the complete list.
+    # See §12.3.2 of the PDF 1.7 or PDF 2.0 specification.
 
     def get_fields(
         self,
@@ -1897,7 +1897,7 @@ class PdfReader:
             password: The password to match.
 
         Returns:
-            An indicator if the document was decrypted and weather it was the
+            An indicator if the document was decrypted and whether it was the
             owner password or the user password.
         """
         if not self._encryption:
