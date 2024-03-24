@@ -1274,11 +1274,6 @@ class PdfReader:
             self.stream.seek(start, 0)
             try:
                 idnum, generation = self.read_object_header(self.stream)
-                if (
-                    idnum != indirect_reference.idnum
-                    or generation != indirect_reference.generation
-                ):
-                    raise PdfReadError("not matching, we parse the file for it")
             except Exception:
                 if hasattr(self.stream, "getbuffer"):
                     buf = bytes(self.stream.getbuffer())
