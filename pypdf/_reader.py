@@ -1274,6 +1274,11 @@ class PdfReader:
             self.stream.seek(start, 0)
             try:
                 idnum, generation = self.read_object_header(self.stream)
+                if (
+                    idnum != indirect_reference.idnum
+                    or generation != indirect_reference.generation
+                ):
+                    raise PdfReadError("not matching, we parse the file for it")
             except Exception:
                 if hasattr(self.stream, "getbuffer"):
                     buf = bytes(self.stream.getbuffer())
@@ -1452,6 +1457,7 @@ class PdfReader:
                     try:
                         pid, _pgen = self.read_object_header(stream)
                     except ValueError:
+                        self._rebuild_xref_table(stream)
                         break
                     if pid == id - self.xref_index:
                         # fixing index item per item is required for revised PDF.

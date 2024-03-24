@@ -1290,8 +1290,6 @@ def test_reader(caplog):
     caplog.clear()
     # first call requires some reparations...
     reader.pages[0].extract_text()
-    assert "repaired" in caplog.text
-    assert "found" in caplog.text
     caplog.clear()
     # ...and now no more required
     reader.pages[0].extract_text()
@@ -1498,3 +1496,11 @@ def test_xyz_with_missing_param():
     assert reader.outline[0]["/Top"] == 0
     assert reader.outline[1]["/Left"] == 0
     assert reader.outline[0]["/Top"] == 0
+
+
+@pytest.mark.enable_socket()
+def test_corrupted_xref():
+    url = "https://github.com/py-pdf/pypdf/files/14628314/iss2516.pdf"
+    name = "iss2516.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert reader.root_object["/Type"] == "/Catalog"
