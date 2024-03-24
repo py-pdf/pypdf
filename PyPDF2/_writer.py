@@ -158,7 +158,7 @@ class PdfWriter:
         info.update(
             {
                 NameObject("/Producer"): create_string_object(
-                    codecs.BOM_UTF16_BE + "PyPDF2".encode("utf-16be")
+                    codecs.BOM_UTF16_BE + "".encode("utf-16be")
                 )
             }
         )
