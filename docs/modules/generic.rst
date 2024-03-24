@@ -14,6 +14,12 @@ Generic PDF objects
     :show-inheritance:
 
 
+.. autoclass:: pypdf._protocols.XmpInformationProtocol
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 .. autoclass:: pypdf._protocols.PdfCommonDocProtocol
        :members:
        :undoc-members:
