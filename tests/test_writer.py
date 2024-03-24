@@ -1980,7 +1980,7 @@ def test_merging_many_temporary_files(caplog):
     assert len(writer.pages) == 101
     caplog.clear()
     writer.remove_page(pg)
-    assert "Can't find page in pages" in caplog.text
+    assert "Cannot find page in pages" in caplog.text
     assert len(writer.pages) == 101
     writer.remove_page(pg1)
     assert len(writer.pages) == 100
@@ -2019,7 +2019,7 @@ def test_merging_many_temporary_files(caplog):
     writer.flattened_pages.append(pg)
     caplog.clear()
     writer.remove_page(pg)
-    assert "Can't find page in pages" in caplog.text
+    assert "Cannot find page in pages" in caplog.text
 
 
 @pytest.mark.enable_socket()
