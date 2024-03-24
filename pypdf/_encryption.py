@@ -774,6 +774,7 @@ class EncryptionValues:
     OE: bytes
     UE: bytes
     Perms: bytes
+    Recipients: Optional[bytes]
 
 
 class Encryption:
@@ -949,6 +950,14 @@ class Encryption:
         return pwd
 
     def verify(self, password: Union[bytes, str]) -> PasswordType:
+        if not password:
+            return PasswordType.NOT_DECRYPTED
+        if self.values.Recipients:
+            to_hash = password[:20] + self.values.Recipients
+            key = hashlib.sha1(to_hash).digest()[:(self.Length//8)]
+            self._password_type = PasswordType.OWNER_PASSWORD
+            self._key = key
+            return self._password_type
         pwd = self._encode_password(password)
         key, rc = self.verify_v4(pwd) if self.V <= 4 else self.verify_v5(pwd)
         if rc != PasswordType.NOT_DECRYPTED:
@@ -1077,6 +1086,8 @@ class Encryption:
 
     @staticmethod
     def read(encryption_entry: DictionaryObject, first_id_entry: bytes) -> "Encryption":
+        if encryption_entry.get("/Filter") == "/Adobe.PubSec":
+            return Encryption.read_pubsec(encryption_entry, first_id_entry)
         if encryption_entry.get("/Filter") != "/Standard":
             raise NotImplementedError(
                 "only Standard PDF encryption handler is available"
@@ -1131,6 +1142,66 @@ class Encryption:
             R=alg_rev,
             Length=key_bits,
             P=perm_flags,
+            EncryptMetadata=encrypt_metadata,
+            first_id_entry=first_id_entry,
+            values=values,
+            StrF=str_filter,
+            StmF=stm_filter,
+            EFF=ef_filter,
+            entry=encryption_entry,  # Dummy entry for the moment; will get removed
+        )
+
+    @staticmethod
+    def read_pubsec(encryption_entry: DictionaryObject, first_id_entry: bytes) -> "Encryption":
+        if encryption_entry.get("/Filter") != "/Adobe.PubSec":
+            raise NotImplementedError(
+                "only pubsec PDF encryption handler is available"
+            )
+        if encryption_entry.get("/SubFilter") != '/adbe.pkcs7.s5':
+            raise NotImplementedError("/SubFilter other than '/adbe.pkcs7.s5' NOT supported")
+
+        stm_filter = "/V2"
+        str_filter = "/V2"
+        ef_filter = "/V2"
+
+        alg_ver = encryption_entry.get("/V", 0)
+        if alg_ver not in (1, 2, 3, 4, 5):
+            raise NotImplementedError(f"Encryption V={alg_ver} NOT supported")
+        if alg_ver >= 4:
+            filters = encryption_entry["/CF"]
+
+            stm_filter = encryption_entry.get("/StmF", "/Identity")
+            str_filter = encryption_entry.get("/StrF", "/Identity")
+            ef_filter = encryption_entry.get("/EFF", stm_filter)
+
+            if stm_filter != "/Identity":
+                stm_filter = filters[stm_filter]["/CFM"]  # type: ignore
+            if str_filter != "/Identity":
+                str_filter = filters[str_filter]["/CFM"]  # type: ignore
+            if ef_filter != "/Identity":
+                ef_filter = filters[ef_filter]["/CFM"]  # type: ignore
+
+            allowed_methods = ("/Identity", "/V2", "/AESV2", "/AESV3")
+            if stm_filter not in allowed_methods:
+                raise NotImplementedError(f"StmF Method {stm_filter} NOT supported!")
+            if str_filter not in allowed_methods:
+                raise NotImplementedError(f"StrF Method {str_filter} NOT supported!")
+            if ef_filter not in allowed_methods:
+                raise NotImplementedError(f"EFF Method {ef_filter} NOT supported!")
+
+        alg_rev = cast(int, encryption_entry["/R"])
+        key_bits = encryption_entry.get("/Length", 40)
+        encrypt_metadata = encryption_entry.get("/EncryptMetadata")
+        encrypt_metadata = (
+            encrypt_metadata.value if encrypt_metadata is not None else True
+        )
+        values = EncryptionValues()
+        values.Recipients = encryption_entry['/CF']['/DefaultCryptFilter']['/Recipients'][0]
+        return Encryption(
+            V=alg_ver,
+            R=alg_rev,
+            Length=key_bits,
+            P=0,
             EncryptMetadata=encrypt_metadata,
             first_id_entry=first_id_entry,
             values=values,
