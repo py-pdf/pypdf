@@ -558,7 +558,7 @@ class PdfWriter(PdfDocCommon):
             PageSizeNotDefinedError: if width and height are not defined
                 and previous page does not exist.
         """
-        if width is None or height is None and (self._get_num_pages() - 1) >= index:
+        if width is None or height is None and (self.get_num_pages() - 1) >= index:
             oldpage = self.pages[index]
             width = oldpage.mediabox.width
             height = oldpage.mediabox.height

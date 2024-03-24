@@ -2008,11 +2008,11 @@ def test_merging_many_temporary_files(caplog):
     caplog.clear()
     pg = PageObject.create_blank_page(writer, 1000, 1000)
     writer.remove_page(pg)
-    assert "Can't find page in pages" in caplog.text
+    assert "Cannot find page in pages" in caplog.text
 
     caplog.clear()
     writer.remove_page(999999)
-    assert "page number is out of range" in caplog.text
+    assert "Page number is out of range" in caplog.text
 
     pg = PageObject.create_blank_page(writer, 1000, 1000)
     pg = writer._add_object(pg)

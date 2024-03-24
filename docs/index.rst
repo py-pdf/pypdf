@@ -47,7 +47,6 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    :caption: API Reference
    :maxdepth: 1
 
-   modules/PdfDocCommon
    modules/PdfReader
    modules/PdfWriter
    modules/Destination
@@ -64,6 +63,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    modules/constants
    modules/errors
    modules/generic
+   modules/PdfDocCommon
 
 .. toctree::
    :caption: Developer Guide
