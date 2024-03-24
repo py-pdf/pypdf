@@ -1153,6 +1153,51 @@ class PdfDocCommon:
             # TODO: Could flattened_pages be None at this point?
             self.flattened_pages.append(page_obj)  # type: ignore
 
+    def remove_page(
+        self,
+        page: Union[int, PageObject, IndirectObject],
+        clean: bool = False,
+    ) -> None:
+        """
+        Remove page from pages list.
+
+        Args:
+            page: int / PageObject / IndirectObject
+                PageObject : page to be removed. If the page appears many times
+                only the first one will be removed
+
+                IndirectObject: Reference to page to be removed
+
+                int : page number to be removed
+
+            clean: replace PageObject with NullObject to prevent destination,
+                annotation to reference a detached page
+        """
+        if self.flattened_pages is None:
+            self._flatten()
+        assert self.flattened_pages is not None
+        if isinstance(page, IndirectObject):
+            p = page.get_object()
+            if not isinstance(p, PageObject):
+                logger_warning("IndirectObject is not referencing a page", __name__)
+                return
+            page = p
+
+        if not isinstance(page, int):
+            try:
+                page = self.flattened_pages.index(page)
+            except ValueError:
+                logger_warning("Can't find page in pages", __name__)
+                return
+        if not (0 <= page < len(self.flattened_pages)):
+            logger_warning("page number is out of range", __name__)
+            return
+
+        ind = self.pages[page].indirect_reference
+        del self.pages[page]
+        if clean and ind is not None:
+            self._replace_object(ind, NullObject())
+
     def _get_indirect_object(self, num: int, gen: int) -> Optional[PdfObject]:
         """
         Used to ease development.

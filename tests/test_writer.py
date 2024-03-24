@@ -1975,6 +1975,16 @@ def test_merging_many_temporary_files(caplog):
             # Should only be one page.
             writer.add_page(page)
 
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    pg1 = writer.add_page(pg)
+    assert len(writer.pages) == 101
+    caplog.clear()
+    writer.remove_page(pg)
+    assert "Can't find page in pages" in caplog.text
+    assert len(writer.pages) == 101
+    writer.remove_page(pg1)
+    assert len(writer.pages) == 100
+
     out = BytesIO()
     writer.write(out)
 
@@ -2004,10 +2014,12 @@ def test_merging_many_temporary_files(caplog):
     writer.remove_page(999999)
     assert "page number is out of range" in caplog.text
 
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    pg = writer._add_object(pg)
     writer.flattened_pages.append(pg)
     caplog.clear()
     writer.remove_page(pg)
-    assert "Page Index Error in parent" in caplog.text
+    assert "Can't find page in pages" in caplog.text
 
 
 @pytest.mark.enable_socket()

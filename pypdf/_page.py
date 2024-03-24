@@ -2237,7 +2237,7 @@ class _VirtualList(Sequence[PageObject]):
             r.sort()
             r.reverse()
             for p in r:
-                del self[p]
+                del self[p]  # recursive call
             return
         if not isinstance(index, int):
             raise TypeError("index must be integers")

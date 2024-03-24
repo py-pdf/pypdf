@@ -331,7 +331,10 @@ class PdfWriter(PdfDocCommon):
         self._header = new_header
 
     def _add_object(self, obj: PdfObject) -> IndirectObject:
-        if hasattr(obj, "indirect_reference") and obj.indirect_reference.pdf == self:  # type: ignore
+        if (
+            getattr(obj, "indirect_reference", None) is not None
+            and obj.indirect_reference.pdf == self  # type: ignore
+        ):
             return obj.indirect_reference  # type: ignore
         # check for /Contents in Pages (/Contents in annotation are strings)
         if isinstance(obj, DictionaryObject) and isinstance(
@@ -403,63 +406,6 @@ class PdfWriter(PdfDocCommon):
         page_count = cast(int, pages[PA.COUNT])
         pages[NameObject(PA.COUNT)] = NumberObject(page_count + 1)
         return page
-
-    def remove_page(
-        self,
-        page: Union[int, PageObject, IndirectObject],
-        clean: bool = False,
-    ) -> None:
-        """
-        Remove page from pages list.
-
-        Args:
-            page: int / PageObject / IndirectObject
-                PageObject : page to be removed. If the page appears many times
-                only the first one will be removed
-
-                IndirectObject: Reference to page to be removed
-
-                int : page number to be removed
-
-            clean: replace PageObject with NullObject to prevent destination,
-                annotation to reference a detached page
-        """
-        if self.flattened_pages is None:
-            return
-        if isinstance(page, IndirectObject):
-            p = page.get_object()
-            if not isinstance(p, PageObject):
-                logger_warning("IndirectObject is not referencing a page", __name__)
-                return
-            page = p
-        if not isinstance(page, int):
-            try:
-                page = self.flattened_pages.index(page)
-            except ValueError:
-                logger_warning("Can't find page in pages", __name__)
-                return
-        if not (0 <= page < len(self.flattened_pages)):
-            logger_warning("page number is out of range", __name__)
-            return
-        if clean:
-            self._replace_object(
-                cast(IndirectObject, self.flattened_pages[page].indirect_reference),
-                NullObject(),
-            )
-        page_parent = cast(DictionaryObject, self.flattened_pages[page]["/Parent"])
-        try:
-            parent_idx = cast(ArrayObject, page_parent["/Kids"]).index(
-                self.flattened_pages[page].indirect_reference
-            )
-            del cast(ArrayObject, page_parent["/Kids"])[parent_idx]
-            while page_parent:  # decrement /Count in all parents
-                page_parent[NameObject("/Count")] = NumberObject(
-                    cast(NumberObject, page_parent[NameObject("/Count")]) - 1
-                )
-                page_parent = page_parent.get("/Parent", None)
-        except (ValueError, TypeError):  # TypeError if parent is not a dictionnary
-            logger_warning(f"Page Index Error in parent {page_parent}", __name__)
-        del self.flattened_pages[page]
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
         """
