@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711279574068,
+  "lastUpdate": 1711287840299,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -49490,6 +49490,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07175263980628105",
             "extra": "mean: 16.67850180160001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f8edf3c0023b106971b776fca6cb64b048fef698",
+          "message": "ROB: Rebuild xref table if one entry is invalid (#2528)\n\nFixes #2523\r\n\r\nSituation met:\r\n* length field is not correct\r\n* xref may contain unordered stream data\r\n* xref contains some free entries (i.e. does not contain stream offset)",
+          "timestamp": "2024-03-24T14:41:05+01:00",
+          "tree_id": "8dc9fc6e6b52295bd93eb3864acca2b502d8b721",
+          "url": "https://github.com/py-pdf/pypdf/commit/f8edf3c0023b106971b776fca6cb64b048fef698"
+        },
+        "date": 1711287837408,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2733936890216606,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007655522272804208",
+            "extra": "mean: 305.49334879999606 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.5189348394885,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010684914872644337",
+            "extra": "mean: 86.81358249999487 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2604445576472162,
+            "unit": "iter/sec",
+            "range": "stddev: 0.041144630080041274",
+            "extra": "mean: 3.8395887747999895 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.883081568425595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006181039446956165",
+            "extra": "mean: 59.23089312499563 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06219642690907621,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1334391878831831",
+            "extra": "mean: 16.078094027200006 sec\nrounds: 5"
           }
         ]
       }
