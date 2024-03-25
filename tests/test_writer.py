@@ -876,14 +876,14 @@ def test_some_appends(pdf_file_path, url, name):
 
 def test_pdf_header():
     writer = PdfWriter()
-    assert writer.pdf_header == b"%PDF-1.3"
+    assert writer.pdf_header == "%PDF-1.3"
 
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     writer.add_page(reader.pages[0])
-    assert writer.pdf_header == b"%PDF-1.5"
+    assert writer.pdf_header == "%PDF-1.5"
 
     writer.pdf_header = b"%PDF-1.6"
-    assert writer.pdf_header == b"%PDF-1.6"
+    assert writer.pdf_header == "%PDF-1.6"
 
 
 def test_write_dict_stream_object(pdf_file_path):
@@ -1956,7 +1956,7 @@ REFERENCES 76"""
         bookmarks.append(new_bookmark)
 
 
-def test_merging_many_temporary_files():
+def test_merging_many_temporary_files(caplog):
     def create_number_pdf(n) -> BytesIO:
         pytest.importorskip("fpdf")
         from fpdf import FPDF
@@ -1975,6 +1975,16 @@ def test_merging_many_temporary_files():
             # Should only be one page.
             writer.add_page(page)
 
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    pg1 = writer.add_page(pg)
+    assert len(writer.pages) == 101
+    caplog.clear()
+    writer.remove_page(pg)
+    assert "Cannot find page in pages" in caplog.text
+    assert len(writer.pages) == 101
+    writer.remove_page(pg1)
+    assert len(writer.pages) == 100
+
     out = BytesIO()
     writer.write(out)
 
@@ -1983,6 +1993,33 @@ def test_merging_many_temporary_files():
     for n, page in enumerate(reader.pages):
         text = page.extract_text()
         assert text == str(n)
+    # test completed to validate remove_page
+    writer.remove_page(writer.pages[-1], True)
+
+    writer2 = PdfWriter()
+    writer2.remove_page(0)
+    writer2.flattened_pages = None
+    writer2.remove_page(0)
+
+    caplog.clear()
+    writer.remove_page(writer.pages[-1]["/Contents"].indirect_reference)
+    assert "IndirectObject is not referencing a page" in caplog.text
+
+    caplog.clear()
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    writer.remove_page(pg)
+    assert "Cannot find page in pages" in caplog.text
+
+    caplog.clear()
+    writer.remove_page(999999)
+    assert "Page number is out of range" in caplog.text
+
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    pg = writer._add_object(pg)
+    writer.flattened_pages.append(pg)
+    caplog.clear()
+    writer.remove_page(pg)
+    assert "Cannot find page in pages" in caplog.text
 
 
 @pytest.mark.enable_socket()
@@ -2029,3 +2066,32 @@ def test_get_pagenumber_from_indirectobject():
     assert writer._get_page_number_by_indirect(ind) == 0
     assert writer._get_page_number_by_indirect(ind.idnum) == 0
     assert writer._get_page_number_by_indirect(ind.idnum + 1) is None
+
+
+def test_replace_object():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=reader)
+    with pytest.raises(ValueError):
+        writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
+    writer._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    writer._replace_object(writer.pages[0].indirect_reference, pg)
+
+    # mainly for coverage
+    reader = PdfReader(pdf_path)  # reload a new instance
+    with pytest.raises(ValueError):
+        reader._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
+    with pytest.raises(ValueError):
+        reader._replace_object(IndirectObject(9999, 9999, reader), reader.pages[0])
+    reader._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    reader._replace_object(reader.pages[0].indirect_reference, pg)
+
+
+def test_mime_jupyter():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=reader)
+    assert reader._repr_mimebundle_(("include",), ("exclude",)) == {}
+    assert writer._repr_mimebundle_(("include",), ("exclude",)) == {}
