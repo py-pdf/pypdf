@@ -137,7 +137,7 @@ def test_broken_meta_data(pdf_path):
         with pytest.raises(
             PdfReadError,
             match=(
-                "trailer not found or does not point to document "
+                "Trailer not found or does not point to document "
                 "information directory"
             ),
         ):
