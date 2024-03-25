@@ -173,7 +173,7 @@ class PdfReader(PdfDocCommon):
             info = info.get_object()
             if info is None:
                 raise PdfReadError(
-                    "trailer not found or does not point to document information directory"
+                    "Trailer not found or does not point to document information directory"
                 )
             return cast(DictionaryObject, info)
 
@@ -331,7 +331,7 @@ class PdfReader(PdfDocCommon):
 
                 if self.strict:  # pragma: no cover
                     raise PdfReadError(
-                        f"Can't read object stream: {exc}"
+                        f"Cannot read object stream: {exc}"
                     )  # pragma: no cover
                 # Replace with null. Hopefully it's nothing important.
                 obj = NullObject()  # pragma: no cover

@@ -343,7 +343,7 @@ class PdfDocCommon:
             PdfReadError: if file is encrypted and restrictions prevent
                 this action.
         """
-        # Flattened pages will not work on an Encrypted PDF;
+        # Flattened pages will not work on an encrypted PDF;
         # the PDF file's page count is used in this case. Otherwise,
         # the original method (flattened page count) is used.
         if self.is_encrypted:
@@ -357,7 +357,7 @@ class PdfDocCommon:
     def get_page(self, page_number: int) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
-        Most of the time ```.pages[page_number]``` is prefered
+        Most of the time ```.pages[page_number]``` is preferred.
 
         Args:
             page_number: The page number to retrieve
@@ -471,7 +471,7 @@ class PdfDocCommon:
                 dest = self._build_destination(key, value)  # type: ignore
                 if dest is not None:
                     retval[key] = dest
-        else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF1.1
+        else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF 1.1)
             for k__, v__ in tree.items():
                 val = v__.get_object()
                 if isinstance(val, DictionaryObject):
@@ -1001,16 +1001,16 @@ class PdfDocCommon:
     def pages(self) -> List[PageObject]:
         """
         Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`.
-        this property allows to get a page or  a range of pages.
+        this property allows to get a page or a range of pages.
 
         For PdfWriter Only:
         It provides also capability to remove a page/range of page from the list
         (through del operator)
         Note: only the page entry is removed. As the objects beneath can be used
         somewhere else.
-        a solution to completely remove them - if they are not used somewhere -
-        is to write to a buffer/temporary and to then load it into a new PdfWriter
-        object.
+        A solution to completely remove them - if they are not used anywhere -
+        is to write to a buffer/temporary file and to load it into a new PdfWriter
+        object afterwards.
         """
         return _VirtualList(self.get_num_pages, self.get_page)  # type: ignore
 
@@ -1147,7 +1147,7 @@ class PdfDocCommon:
 
                 IndirectObject: Reference to page to be removed
 
-                int : page number to be removed
+                int: Page number to be removed
 
             clean: replace PageObject with NullObject to prevent destination,
                 annotation to reference a detached page
@@ -1312,7 +1312,7 @@ class PdfDocCommon:
 
         Returns:
             dictionary of filename -> Union[bytestring or List[ByteString]]
-            if the filename exists multiple times a List of the different version will be provided
+            If the filename exists multiple times a list of the different versions will be provided.
         """
         catalog = self.root_object
         # From the catalog get the embedded file names
