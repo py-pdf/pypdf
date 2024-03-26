@@ -57,9 +57,9 @@ It is recommended to use the user_matrix as it takes into all transformations.
 Notes :
 
  - As indicated in §8.3.3 of the PDF 1.7 or PDF 2.0 specification, the user matrix applies to text space/image space/form space/pattern space.
- - If you want to get the full transformation from text to user space, you can use the `mult` function (availalbe in global import) as follows:
+ - If you want to get the full transformation from text to user space, you can use the `mult` function (available in global import) as follows:
 `txt2user = mult(tm, cm))`.
-The font-size is the raw text size, that is affected by the `user_matrix`.
+The font size is the raw text size and affected by the `user_matrix`.
 
 
 The font-dictionary may be None in case of unknown fonts.
