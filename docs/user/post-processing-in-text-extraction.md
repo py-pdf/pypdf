@@ -1,15 +1,13 @@
-# Post-Processing in Text Extraction
+# Post-Processing of Text Extraction
 
-Post-processing can recognizably improve the results of text extraction.
-It is, however, outside of the scope of pypdf itself. Hence the library will
-not give any direct support for it. It is a natural language processing (NLP)
-task.
+Post-processing can recognizably improve the results of text extraction. It is,
+however, outside of the scope of pypdf itself. Hence the library will not give
+any direct support for it. It is a natural language processing (NLP) task.
 
-This page lists a few examples what can be done as well as a community
-recipie that can be used as a best-practice general purpose post processing
-step. If you know more about the specific domain of your documents, e.g. the
-language, it is likely that you can find custom solutions that work better in
-your context
+This page lists a few examples what can be done as well as a community recipe
+that can be used as a general purpose post-processing step. If you know more
+about the specific domain of your documents, e.g. the language, it is likely
+that you can find custom solutions that work better in your context.
 
 ## Ligature Replacement
 
@@ -32,7 +30,7 @@ def replace_ligatures(text: str) -> str:
     return text
 ```
 
-## De-Hyphenation
+## Dehyphenation
 
 Hyphens are used to break words up so that the appearance of the page is nicer.
 
@@ -77,11 +75,11 @@ def dehyphenate(lines: List[str], line_no: int) -> List[str]:
 
 The following header/footer removal has several drawbacks:
 
-* False-positives, e.g. for the first page when there is a date like 2021.
+* False-positives, e.g. for the first page when there is a date like 2024.
 * False-negatives in many cases:
-    * Dynamic part, e.g. page label is in the header
-    * Even/odd pages have different headers
-    * Some pages, e.g. the first one or chapter pages, don't have a header
+    * Dynamic part, e.g. page label is in the header.
+    * Even/odd pages have different headers.
+    * Some pages, e.g. the first one or chapter pages, do not have a header.
 
 ```python
 def remove_footer(extracted_texts: list[str], page_labels: list[str]):
@@ -105,9 +103,9 @@ def remove_footer(extracted_texts: list[str], page_labels: list[str]):
 
 ## Other ideas
 
-* Whitespaces between Units: Between a number and it's unit should be a space
+* Whitespaces in units: Between a number and its unit should be a space.
   ([source](https://tex.stackexchange.com/questions/20962/should-i-put-a-space-between-a-number-and-its-unit)).
   That means: 42 ms, 42 GHz, 42 GB.
 * Percent: English style guides prescribe writing the percent sign following the number without any space between (e.g. 50%).
-* Whitespaces before dots: Should typically be removed
-* Whitespaces after dots: Should typically be added
+* Whitespaces before dots: Should typically be removed.
+* Whitespaces after dots: Should typically be added.
