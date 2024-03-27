@@ -318,7 +318,7 @@ class AnnotationBuilder:
                 specifying the highlighted area
             quad_points: An ArrayObject of 8 FloatObjects. Must match a word or
                 a group of words, otherwise no highlight will be shown.
-            highlight_color: The color used for the hightlight
+            highlight_color: The color used for the highlight.
 
         Returns:
             A dictionary object representing the annotation.

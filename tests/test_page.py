@@ -135,7 +135,7 @@ def test_mediabox_expansion_after_rotation(
     angle: float, expected_width: int, expected_height: int
 ):
     """
-    Mediabox dimensions after rotation at a non-right angle with expension are correct.
+    Mediabox dimensions after rotation at a non-right angle with expansion are correct.
 
     The test was validated against pillow (see PR #2282)
     """
@@ -961,7 +961,7 @@ def test_empyt_password_1088():
 
 @pytest.mark.enable_socket()
 def test_old_habibi():
-    # this habibi has som multiple characters associated with the h
+    # this habibi has multiple characters associated with the h
     reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
     txt = reader.pages[0].extract_text()  # very odd file
     # extract from acrobat reader "حَبيبي habibi􀀃􀏲􀎒􀏴􀎒􀎣􀋴

@@ -1144,7 +1144,7 @@ def test_set_page_label(pdf_file_path):
         "II",
     ]
 
-    # Tests full lenght with labels assigned at first and last elements
+    # Tests full length with labels assigned at first and last elements
     # Tests different labels assigned to consecutive ranges
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -1169,7 +1169,7 @@ def test_set_page_label(pdf_file_path):
     assert PdfReader(pdf_file_path).page_labels == expected
 
     # Tests labels assigned only in the middle
-    # Tests label assigned to a range already containing labled ranges
+    # Tests label assigned to a range already containing labelled ranges
     expected = ["1", "2", "i", "ii", "iii", "iv", "v", "1"]
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -1181,7 +1181,7 @@ def test_set_page_label(pdf_file_path):
 
     # Tests labels assigned inside a previously existing range
     expected = ["1", "2", "i", "a", "b", "A", "1", "1", "2"]
-    # Ones repeat because user didnt cover the entire original range
+    # Ones repeat because user did not cover the entire original range
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     writer.set_page_label(2, 6, "/r")
@@ -1227,7 +1227,7 @@ def test_set_page_label(pdf_file_path):
     writer.write(pdf_file_path)
     assert PdfReader(pdf_file_path).page_labels[: len(expected)] == expected
 
-    # Tests replacing existing lables
+    # Tests replacing existing labels
     expected = ["A", "B", "1", "1", "2"]
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
