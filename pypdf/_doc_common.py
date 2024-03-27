@@ -380,7 +380,7 @@ class PdfDocCommon:
         return self._get_named_destinations()
 
     def get_named_dest_root(self) -> ArrayObject:
-        nd = ArrayObject()
+        named_dest = ArrayObject()
         if CA.NAMES in self.root_object and isinstance(
             self.root_object[CA.NAMES], DictionaryObject
         ):
@@ -392,15 +392,15 @@ class PdfDocCommon:
                 dests_ref = dests.indirect_reference
                 if CA.NAMES in dests:
                     # TABLE 3.33 Entries in a name tree node dictionary
-                    nd = cast(ArrayObject, dests[CA.NAMES])
+                    named_dest = cast(ArrayObject, dests[CA.NAMES])
                 else:
-                    nd = ArrayObject()
-                    dests[NameObject(CA.NAMES)] = nd
+                    named_dest = ArrayObject()
+                    dests[NameObject(CA.NAMES)] = named_dest
             elif hasattr(self, "_add_object"):
                 dests = DictionaryObject()
                 dests_ref = self._add_object(dests)
                 names[NameObject(CA.DESTS)] = dests_ref
-                dests[NameObject(CA.NAMES)] = nd
+                dests[NameObject(CA.NAMES)] = named_dest
 
         elif hasattr(self, "_add_object"):
             names = DictionaryObject()
@@ -409,9 +409,9 @@ class PdfDocCommon:
             dests = DictionaryObject()
             dests_ref = self._add_object(dests)
             names[NameObject(CA.DESTS)] = dests_ref
-            dests[NameObject(CA.NAMES)] = nd
+            dests[NameObject(CA.NAMES)] = named_dest
 
-        return nd
+        return named_dest
 
     ## common
     def _get_named_destinations(
@@ -1208,6 +1208,7 @@ class PdfDocCommon:
             "copy": UserAccessPermissions.EXTRACT,
             "annotations": UserAccessPermissions.ADD_OR_MODIFY,
             "forms": UserAccessPermissions.FILL_FORM_FIELDS,
+            # Do not fix typo, as part of official, but deprecated API.
             "accessability": UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS,
             "assemble": UserAccessPermissions.ASSEMBLE_DOC,
             "print_high_quality": UserAccessPermissions.PRINT_TO_REPRESENTATION,

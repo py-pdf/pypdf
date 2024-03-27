@@ -26,7 +26,7 @@ writer.add_page(page3)
 
 # add some Javascript to launch the print window on opening this PDF.
 # the password dialog may prevent the print dialog from being shown,
-# comment the the encription lines, if that's the case, to try this out:
+# comment the the encryption lines, if that's the case, to try this out:
 writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
 # write to document-output.pdf
@@ -212,7 +212,7 @@ pypdf._page.MERGE_CROP_BOX = "trimbox"
 
 # Transforming several copies of the same page
 
-We have designed the following business card (A8 format) to advertize our new startup.
+We have designed the following business card (A8 format) to advertise our new startup.
 
 ![](nup-source.png)
 

@@ -719,7 +719,7 @@ def test_issue604(caplog, strict):
 def test_decode_permissions():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     base = {
-        "accessability": False,
+        "accessability": False,  # Do not fix typo, as part of official, but deprecated API.
         "annotations": False,
         "assemble": False,
         "copy": False,
@@ -1197,7 +1197,7 @@ def test_outline_missing_title(caplog):
 @pytest.mark.parametrize(
     ("url", "name"),
     [
-        # 1st case : the named_dest are stored directly as a dictionnary, PDF1.1 style
+        # 1st case : the named_dest are stored directly as a dictionary, PDF 1.1 style
         (
             "https://github.com/py-pdf/pypdf/files/9197028/lorem_ipsum.pdf",
             "lorem_ipsum.pdf",
@@ -1207,7 +1207,7 @@ def test_outline_missing_title(caplog):
             "https://github.com/py-pdf/pypdf/files/11714214/PDF32000_2008.pdf",
             "PDF32000_2008.pdf",
         )
-        # 3nd case : Dests with Name tree (TODO: Add this case)
+        # 3rd case : Dests with Name tree (TODO: Add this case)
     ],
     ids=["stored_directly", "dest_below_names_with_kids"],
 )

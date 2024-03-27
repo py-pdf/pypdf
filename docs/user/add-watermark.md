@@ -69,7 +69,7 @@ Example of watermark:
 ## Stamping images directly
 
 The above code only works for stamps that are already in PDF format.
-However, you can easilly convert an image to PDF image using
+However, you can easily convert an image to PDF image using
 [Pillow](https://pypi.org/project/Pillow/).
 
 

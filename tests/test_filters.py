@@ -190,9 +190,9 @@ def test_ascii85decode_five_zero_bytes():
 
 
 def test_ccitparameters():
-    parms = CCITParameters()
-    assert parms.K == 0  # zero is the default according to page 78
-    assert parms.group == 3
+    params = CCITParameters()
+    assert params.K == 0  # zero is the default according to page 78
+    assert params.group == 3
 
 
 @pytest.mark.parametrize(
@@ -203,8 +203,8 @@ def test_ccitparameters():
     ],
 )
 def test_ccitt_get_parameters(parameters, expected_k):
-    parmeters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
-    assert parmeters.K == expected_k  # noqa: SIM300
+    parameters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
+    assert parameters.K == expected_k  # noqa: SIM300
 
 
 def test_ccitt_fax_decode():
@@ -313,7 +313,7 @@ def test_pa_image_extraction():
     assert len(images) == 1
     assert images[0].name == "Im1.png"
 
-    # Ensure visual appearence
+    # Ensure visual appearance
     data = get_data_from_url(name="issue-1801.png")
     assert data == images[0].data
 

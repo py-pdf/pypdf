@@ -899,27 +899,27 @@ class StreamObject(DictionaryObject):
             if isinstance(f, ArrayObject):
                 f = ArrayObject([NameObject(FT.FLATE_DECODE), *f])
                 try:
-                    parms = ArrayObject(
+                    params = ArrayObject(
                         [NullObject(), *self.get(SA.DECODE_PARMS, ArrayObject())]
                     )
                 except TypeError:
                     # case of error where the * operator is not working (not an array
-                    parms = ArrayObject(
+                    params = ArrayObject(
                         [NullObject(), self.get(SA.DECODE_PARMS, ArrayObject())]
                     )
             else:
                 f = ArrayObject([NameObject(FT.FLATE_DECODE), f])
-                parms = ArrayObject(
+                params = ArrayObject(
                     [NullObject(), self.get(SA.DECODE_PARMS, NullObject())]
                 )
         else:
             f = NameObject(FT.FLATE_DECODE)
-            parms = None
+            params = None
         retval = EncodedStreamObject()
         retval.update(self)
         retval[NameObject(SA.FILTER)] = f
-        if parms is not None:
-            retval[NameObject(SA.DECODE_PARMS)] = parms
+        if params is not None:
+            retval[NameObject(SA.DECODE_PARMS)] = params
         retval._data = FlateDecode.encode(b_(self._data), level)
         return retval
 
