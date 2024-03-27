@@ -690,7 +690,7 @@ PDF_KEYS = (
     PageAttributes,
     PageLayouts,
     PagesAttributes,
-    Ressources,
+    Resources,
     StreamAttributes,
     TrailerKeys,
     TypArguments,
