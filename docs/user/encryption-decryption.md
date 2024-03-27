@@ -20,11 +20,7 @@ You can encrypt a PDF by using a password:
 from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("example.pdf")
-writer = PdfWriter()
-
-# Add all pages to the writer
-for page in reader.pages:
-    writer.add_page(page)
+writer = PdfWriter(clone_from=reader)
 
 # Add a password to the new PDF
 writer.encrypt("my-secret-password", algorithm="AES-256")
@@ -47,14 +43,11 @@ You can decrypt a PDF using the appropriate password:
 from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("encrypted-pdf.pdf")
-writer = PdfWriter()
 
 if reader.is_encrypted:
     reader.decrypt("my-secret-password")
 
-# Add all pages to the writer
-for page in reader.pages:
-    writer.add_page(page)
+writer = PdfWriter(clone_from=reader)
 
 # Save the new PDF to a file
 with open("decrypted-pdf.pdf", "wb") as f:
