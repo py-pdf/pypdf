@@ -539,6 +539,9 @@ class PdfReader(PdfDocCommon):
         self._find_eof_marker(stream)
         startxref = self._find_startxref_pos(stream)
 
+        self.startxref = startxref
+        self.xrefstream = False
+
         # check and eventually correct the startxref only in not strict
         xref_issue_nr = self._get_xref_issues(stream, startxref)
         if xref_issue_nr != 0:
@@ -867,6 +870,7 @@ class PdfReader(PdfDocCommon):
         stream.seek(-1, 1)
         idnum, generation = self.read_object_header(stream)
         xrefstream = cast(ContentStream, read_object(stream, self))
+        self.xrefstream = True
         assert cast(str, xrefstream["/Type"]) == "/XRef"
         self.cache_indirect_object(generation, idnum, xrefstream)
         stream_data = BytesIO(b_(xrefstream.get_data()))
