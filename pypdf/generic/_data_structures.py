@@ -1416,7 +1416,7 @@ class Destination(TreeObject):
     node: Optional[
         DictionaryObject
     ] = None  # node provide access to the original Object
-    childs: List[
+    _filtered_children: List[
         Any
     ] = []  # used in PdfWriter - TODO: should be children  # noqa: RUF012
 
