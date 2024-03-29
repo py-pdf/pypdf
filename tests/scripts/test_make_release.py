@@ -136,7 +136,8 @@ def test_get_formatted_changes__other():
     with mock.patch.object(make_release, "get_git_commits_since_tag", return_value=changes):
         output, output_with_user = make_release.get_formatted_changes("dummy")
 
-    assert output == """
+    assert (
+        output == """
 ### New Features (ENH)
 - Add reattach_fields function (#2480)
 
@@ -144,8 +145,10 @@ def test_get_formatted_changes__other():
 - : Improve lossless compression example (#2488)
 - FIX: Broken test due to expired test file URL (#2468)
 """
+    )
 
-    assert output_with_user == """
+    assert (
+        output_with_user == """
 ### New Features (ENH)
 - Add reattach_fields function (#2480) by @pubpub-zz
 
