@@ -69,7 +69,7 @@ from ._utils import (
 from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
-from .constants import Ressources as RES
+from .constants import Resources as RES
 from .errors import PageSizeNotDefinedError, PdfReadError
 from .filters import _xobj_to_image
 from .generic import (

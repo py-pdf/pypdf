@@ -2675,10 +2675,15 @@ class PdfWriter(PdfDocCommon):
                     v = NullObject()
                 o[NameObject("/Page")] = v
                 if "/First" in node:
-                    o.childs = self._get_filtered_outline(node["/First"], pages, reader)
+                    o._filtered_children = self._get_filtered_outline(
+                        node["/First"], pages, reader
+                    )
                 else:
-                    o.childs = []
-                if not isinstance(o["/Page"], NullObject) or len(o.childs) > 0:
+                    o._filtered_children = []
+                if (
+                    not isinstance(o["/Page"], NullObject)
+                    or len(o._filtered_children) > 0
+                ):
                     new_outline.append(o)
                 node = node.get("/Next", None)
         return new_outline
@@ -2716,7 +2721,7 @@ class PdfWriter(PdfDocCommon):
             else:
                 np = self._clone_outline(dest)
                 cast(TreeObject, parent.get_object()).insert_child(np, before, self)
-            self._insert_filtered_outline(dest.childs, np, None)
+            self._insert_filtered_outline(dest._filtered_children, np, None)
 
     def close(self) -> None:
         """To match the functions from Merger."""
