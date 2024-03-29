@@ -104,6 +104,7 @@ def test_get_formatted_changes():
 ### Testing (TST)
 - Avoid catching not emitted warnings (#2429) by @stefan6419846
 """
+    )
 
 
 def test_get_formatted_changes__other():
