@@ -815,9 +815,16 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             ".tiff",
             False,
         )
+    elif mode == "CMYK":
+        img, image_format, extension, invert_color = (
+            Image.frombytes(mode, size, data),
+            "TIFF",
+            ".tif",
+            False,
+        )
+    elif mode == "":
+        raise PdfReadError(f"ColorSpace field not found in {x_object_obj}")
     else:
-        if mode == "":
-            raise PdfReadError(f"ColorSpace field not found in {x_object_obj}")
         img, image_format, extension, invert_color = (
             Image.frombytes(mode, size, data),
             "PNG",
