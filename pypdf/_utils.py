@@ -111,14 +111,14 @@ def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
     raise ValueError(f"Can not convert date: {orgtext}")
 
 
-def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
+def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     versions = (
-        b"%PDF-1.3",
-        b"%PDF-1.4",
-        b"%PDF-1.5",
-        b"%PDF-1.6",
-        b"%PDF-1.7",
-        b"%PDF-2.0",
+        "%PDF-1.3",
+        "%PDF-1.4",
+        "%PDF-1.5",
+        "%PDF-1.6",
+        "%PDF-1.7",
+        "%PDF-2.0",
     )
     pdf_header_indices = []
     if header1 in versions:

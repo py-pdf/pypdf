@@ -876,14 +876,14 @@ def test_some_appends(pdf_file_path, url, name):
 
 def test_pdf_header():
     writer = PdfWriter()
-    assert writer.pdf_header == b"%PDF-1.3"
+    assert writer.pdf_header == "%PDF-1.3"
 
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     writer.add_page(reader.pages[0])
-    assert writer.pdf_header == b"%PDF-1.5"
+    assert writer.pdf_header == "%PDF-1.5"
 
     writer.pdf_header = b"%PDF-1.6"
-    assert writer.pdf_header == b"%PDF-1.6"
+    assert writer.pdf_header == "%PDF-1.6"
 
 
 def test_write_dict_stream_object(pdf_file_path):
@@ -998,7 +998,7 @@ def test_startup_dest():
     assert pdf_file_writer.open_destination is None
     pdf_file_writer.open_destination = pdf_file_writer.pages[9]
     # checked also using Acrobrat to verify the good page is opened
-    op = pdf_file_writer._root_object["/OpenAction"]
+    op = pdf_file_writer.root_object["/OpenAction"]
     assert op[0] == pdf_file_writer.pages[9].indirect_reference
     assert op[1] == "/Fit"
     op = pdf_file_writer.open_destination
@@ -1008,16 +1008,16 @@ def test_startup_dest():
     assert pdf_file_writer.open_destination == op
 
     # irrelevant, just for coverage
-    pdf_file_writer._root_object[NameObject("/OpenAction")][0] = NumberObject(0)
+    pdf_file_writer.root_object[NameObject("/OpenAction")][0] = NumberObject(0)
     pdf_file_writer.open_destination
     with pytest.raises(Exception) as exc:
-        del pdf_file_writer._root_object[NameObject("/OpenAction")][0]
+        del pdf_file_writer.root_object[NameObject("/OpenAction")][0]
         pdf_file_writer.open_destination
     assert "Invalid Destination" in str(exc.value)
 
     pdf_file_writer.open_destination = "Test"
     # checked also using Acrobrat to verify open_destination
-    op = pdf_file_writer._root_object["/OpenAction"]
+    op = pdf_file_writer.root_object["/OpenAction"]
     assert isinstance(op, TextStringObject)
     assert op == "Test"
     op = pdf_file_writer.open_destination
@@ -1025,10 +1025,10 @@ def test_startup_dest():
     assert op == "Test"
 
     # irrelevant, this is just for coverage
-    pdf_file_writer._root_object[NameObject("/OpenAction")] = NumberObject(0)
+    pdf_file_writer.root_object[NameObject("/OpenAction")] = NumberObject(0)
     assert pdf_file_writer.open_destination is None
     pdf_file_writer.open_destination = None
-    assert "/OpenAction" not in pdf_file_writer._root_object
+    assert "/OpenAction" not in pdf_file_writer.root_object
     pdf_file_writer.open_destination = None
 
 
@@ -1112,7 +1112,7 @@ def test_append_multiple():
         reader, [0, 0, 0]
     )  # to demonstre multiple insertion of same page at once
     writer.append(reader, [0, 0, 0])  # second pack
-    pages = writer._root_object["/Pages"]["/Kids"]
+    pages = writer.root_object["/Pages"]["/Kids"]
     assert pages[0] not in pages[1:]  # page not repeated
     assert pages[-1] not in pages[0:-1]  # page not repeated
 
@@ -1144,7 +1144,7 @@ def test_set_page_label(pdf_file_path):
         "II",
     ]
 
-    # Tests full lenght with labels assigned at first and last elements
+    # Tests full length with labels assigned at first and last elements
     # Tests different labels assigned to consecutive ranges
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -1169,7 +1169,7 @@ def test_set_page_label(pdf_file_path):
     assert PdfReader(pdf_file_path).page_labels == expected
 
     # Tests labels assigned only in the middle
-    # Tests label assigned to a range already containing labled ranges
+    # Tests label assigned to a range already containing labelled ranges
     expected = ["1", "2", "i", "ii", "iii", "iv", "v", "1"]
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -1181,7 +1181,7 @@ def test_set_page_label(pdf_file_path):
 
     # Tests labels assigned inside a previously existing range
     expected = ["1", "2", "i", "a", "b", "A", "1", "1", "2"]
-    # Ones repeat because user didnt cover the entire original range
+    # Ones repeat because user did not cover the entire original range
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     writer.set_page_label(2, 6, "/r")
@@ -1227,7 +1227,7 @@ def test_set_page_label(pdf_file_path):
     writer.write(pdf_file_path)
     assert PdfReader(pdf_file_path).page_labels[: len(expected)] == expected
 
-    # Tests replacing existing lables
+    # Tests replacing existing labels
     expected = ["A", "B", "1", "1", "2"]
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
@@ -1436,10 +1436,10 @@ def test_named_dest_page_number():
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
     writer.append(BytesIO(get_data_from_url(url, name=name)), pages=[0, 1, 2])
-    assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 2
-    assert writer._root_object["/Names"]["/Dests"]["/Names"][-1][0] == (1 + 1)
+    assert len(writer.root_object["/Names"]["/Dests"]["/Names"]) == 2
+    assert writer.root_object["/Names"]["/Dests"]["/Names"][-1][0] == (1 + 1)
     writer.append(BytesIO(get_data_from_url(url, name=name)))
-    assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 6
+    assert len(writer.root_object["/Names"]["/Dests"]["/Names"]) == 6
     writer2 = PdfWriter()
     writer2.add_blank_page(100, 100)
     dest = writer2.add_named_destination("toto", 0)
@@ -1448,7 +1448,7 @@ def test_named_dest_page_number():
     writer2.write(b)
     b.seek(0)
     writer.append(b)
-    assert len(writer._root_object["/Names"]["/Dests"]["/Names"]) == 6
+    assert len(writer.root_object["/Names"]["/Dests"]["/Names"]) == 6
 
 
 def test_update_form_fields(tmp_path):
@@ -1681,7 +1681,7 @@ def test_missing_fields(pdf_file_path):
 
     writer = PdfWriter()
     writer.append(reader, [0])
-    del writer._root_object["/AcroForm"]["/Fields"]
+    del writer.root_object["/AcroForm"]["/Fields"]
     with pytest.raises(PyPdfError) as exc:
         writer.update_page_form_field_values(
             writer.pages[0], {"foo": "some filled in text"}, flags=1
@@ -1765,8 +1765,7 @@ def test_viewerpreferences():
     assert v.center_window == True  # noqa: E712
     v.center_window = False
     assert (
-        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
-        == False  # noqa: E712
+        writer.root_object["/ViewerPreferences"]["/CenterWindow"] == False  # noqa: E712
     )
     assert v.print_area == "/CropBox"
     with pytest.raises(ValueError):
@@ -1775,7 +1774,7 @@ def test_viewerpreferences():
         v.non_fullscreen_pagemode = "/toto"
     v.non_fullscreen_pagemode = "/UseOutlines"
     assert (
-        writer._root_object["/ViewerPreferences"]["/NonFullScreenPageMode"]
+        writer.root_object["/ViewerPreferences"]["/NonFullScreenPageMode"]
         == "/UseOutlines"
     )
     writer = PdfWriter(clone_from=reader)
@@ -1783,19 +1782,17 @@ def test_viewerpreferences():
     assert v.center_window == True  # noqa: E712
     v.center_window = False
     assert (
-        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
-        == False  # noqa: E712
+        writer.root_object["/ViewerPreferences"]["/CenterWindow"] == False  # noqa: E712
     )
 
     writer = PdfWriter(clone_from=reader)
-    writer._root_object[NameObject("/ViewerPreferences")] = writer._add_object(
-        writer._root_object["/ViewerPreferences"]
+    writer.root_object[NameObject("/ViewerPreferences")] = writer._add_object(
+        writer.root_object["/ViewerPreferences"]
     )
     v = writer.viewer_preferences
     v.center_window = False
     assert (
-        writer._root_object["/ViewerPreferences"]["/CenterWindow"]
-        == False  # noqa: E712
+        writer.root_object["/ViewerPreferences"]["/CenterWindow"] == False  # noqa: E712
     )
     v.num_copies = 1
     assert v.num_copies == 1
@@ -1806,9 +1803,17 @@ def test_viewerpreferences():
     assert len(v.print_pagerange) == 0
 
     writer.create_viewer_preferences()
-    assert len(writer._root_object["/ViewerPreferences"]) == 0
+    assert len(writer.root_object["/ViewerPreferences"]) == 0
     writer.viewer_preferences.direction = "/R2L"
-    assert len(writer._root_object["/ViewerPreferences"]) == 1
+    assert len(writer.root_object["/ViewerPreferences"]) == 1
+
+    assert writer.viewer_preferences.enforce == []
+    assert "/Enforce" not in writer.viewer_preferences
+    writer.viewer_preferences.enforce += writer.viewer_preferences.PRINT_SCALING
+    assert writer.viewer_preferences["/Enforce"] == ["/PrintScaling"]
+    writer.viewer_preferences.enforce = None
+    assert "/Enforce" not in writer.viewer_preferences
+    writer.viewer_preferences.enforce = None
 
     del reader.trailer["/Root"]["/ViewerPreferences"]
     assert reader.viewer_preferences is None
@@ -1951,7 +1956,7 @@ REFERENCES 76"""
         bookmarks.append(new_bookmark)
 
 
-def test_merging_many_temporary_files():
+def test_merging_many_temporary_files(caplog):
     def create_number_pdf(n) -> BytesIO:
         pytest.importorskip("fpdf")
         from fpdf import FPDF
@@ -1970,6 +1975,16 @@ def test_merging_many_temporary_files():
             # Should only be one page.
             writer.add_page(page)
 
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    pg1 = writer.add_page(pg)
+    assert len(writer.pages) == 101
+    caplog.clear()
+    writer.remove_page(pg)
+    assert "Cannot find page in pages" in caplog.text
+    assert len(writer.pages) == 101
+    writer.remove_page(pg1)
+    assert len(writer.pages) == 100
+
     out = BytesIO()
     writer.write(out)
 
@@ -1978,6 +1993,33 @@ def test_merging_many_temporary_files():
     for n, page in enumerate(reader.pages):
         text = page.extract_text()
         assert text == str(n)
+    # test completed to validate remove_page
+    writer.remove_page(writer.pages[-1], True)
+
+    writer2 = PdfWriter()
+    writer2.remove_page(0)
+    writer2.flattened_pages = None
+    writer2.remove_page(0)
+
+    caplog.clear()
+    writer.remove_page(writer.pages[-1]["/Contents"].indirect_reference)
+    assert "IndirectObject is not referencing a page" in caplog.text
+
+    caplog.clear()
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    writer.remove_page(pg)
+    assert "Cannot find page in pages" in caplog.text
+
+    caplog.clear()
+    writer.remove_page(999999)
+    assert "Page number is out of range" in caplog.text
+
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    pg = writer._add_object(pg)
+    writer.flattened_pages.append(pg)
+    caplog.clear()
+    writer.remove_page(pg)
+    assert "Cannot find page in pages" in caplog.text
 
 
 @pytest.mark.enable_socket()
@@ -1994,11 +2036,11 @@ def test_reattach_fields():
         writer.add_page(p)
     assert len(writer.reattach_fields()) == 15
     assert len(writer.reattach_fields()) == 0  # nothing to append anymore
-    assert len(writer._root_object["/AcroForm"]["/Fields"]) == 15
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 15
     writer = PdfWriter(clone_from=reader)
     assert len(writer.reattach_fields()) == 7
     writer.reattach_fields()
-    assert len(writer._root_object["/AcroForm"]["/Fields"]) == 15
+    assert len(writer.root_object["/AcroForm"]["/Fields"]) == 15
 
     writer = PdfWriter()
     for p in reader.pages:
@@ -2024,3 +2066,32 @@ def test_get_pagenumber_from_indirectobject():
     assert writer._get_page_number_by_indirect(ind) == 0
     assert writer._get_page_number_by_indirect(ind.idnum) == 0
     assert writer._get_page_number_by_indirect(ind.idnum + 1) is None
+
+
+def test_replace_object():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=reader)
+    with pytest.raises(ValueError):
+        writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
+    writer._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    writer._replace_object(writer.pages[0].indirect_reference, pg)
+
+    # mainly for coverage
+    reader = PdfReader(pdf_path)  # reload a new instance
+    with pytest.raises(ValueError):
+        reader._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
+    with pytest.raises(ValueError):
+        reader._replace_object(IndirectObject(9999, 9999, reader), reader.pages[0])
+    reader._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
+    pg = PageObject.create_blank_page(writer, 1000, 1000)
+    reader._replace_object(reader.pages[0].indirect_reference, pg)
+
+
+def test_mime_jupyter():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=reader)
+    assert reader._repr_mimebundle_(("include",), ("exclude",)) == {}
+    assert writer._repr_mimebundle_(("include",), ("exclude",)) == {}

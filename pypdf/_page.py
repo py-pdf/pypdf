@@ -49,7 +49,7 @@ from typing import (
 )
 
 from ._cmap import build_char_map, unknown_char_map
-from ._protocols import PdfReaderProtocol, PdfWriterProtocol
+from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     OrientationNotFoundError,
     _layout_mode,
@@ -328,11 +328,11 @@ class PageObject(DictionaryObject):
 
     def __init__(
         self,
-        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = None,
+        pdf: Optional[PdfCommonDocProtocol] = None,
         indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
         DictionaryObject.__init__(self)
-        self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
+        self.pdf = pdf
         self.inline_images: Optional[Dict[str, ImageFile]] = None
         # below Union for mypy but actually Optional[List[str]]
         self.inline_images_keys: Optional[List[Union[str, List[str]]]] = None
@@ -356,7 +356,7 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def create_blank_page(
-        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = None,
+        pdf: Optional[PdfCommonDocProtocol] = None,
         width: Union[float, Decimal, None] = None,
         height: Union[float, Decimal, None] = None,
     ) -> "PageObject":
@@ -797,7 +797,7 @@ class PageObject(DictionaryObject):
     def _content_stream_rename(
         stream: ContentStream,
         rename: Dict[Any, Any],
-        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
+        pdf: Optional[PdfCommonDocProtocol],
     ) -> ContentStream:
         if not rename:
             return stream
@@ -818,7 +818,7 @@ class PageObject(DictionaryObject):
     @staticmethod
     def _add_transformation_matrix(
         contents: Any,
-        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
+        pdf: Optional[PdfCommonDocProtocol],
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
         """Add transformation matrix at the beginning of the given contents stream."""
@@ -924,7 +924,7 @@ class PageObject(DictionaryObject):
         else:
             content.indirect_reference = self[
                 PG.CONTENTS
-            ].indirect_reference  # TODO: in a future may required generation managment
+            ].indirect_reference  # TODO: in a future may required generation management
             try:
                 self.indirect_reference.pdf._objects[
                     content.indirect_reference.idnum - 1  # type: ignore
@@ -1582,7 +1582,7 @@ class PageObject(DictionaryObject):
                 # /Resources can be inherited sometimes so we look to parents
                 objr = objr["/Parent"].get_object()
                 # if no parents we will have no /Resources will be available
-                # => an exception wil be raised
+                # => an exception will be raised
             resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
         except Exception:
             # no resources means no text is possible (no font) we consider the
@@ -2237,7 +2237,7 @@ class _VirtualList(Sequence[PageObject]):
             r.sort()
             r.reverse()
             for p in r:
-                del self[p]
+                del self[p]  # recursive call
             return
         if not isinstance(index, int):
             raise TypeError("index must be integers")
@@ -2258,7 +2258,7 @@ class _VirtualList(Sequence[PageObject]):
                 try:
                     assert ind is not None
                     del ind.pdf.flattened_pages[index]  # case of page in a Reader
-                except AttributeError:
+                except Exception:  # pragma: no cover
                     pass
                 if "/Count" in parent:
                     parent[NameObject("/Count")] = NumberObject(parent["/Count"] - 1)

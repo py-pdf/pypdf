@@ -13,7 +13,7 @@ A `pypdf` release contains the following artifacts:
 `pypdf` should typically only be released by one of the core maintainers / the
 core maintainer. At the moment, this is Martin Thoma.
 
-Any owner of the py-pdf organization has also the technical permissions to
+Any owner of the py-pdf organization also has the technical permissions to
 release.
 
 ## How is it done?
@@ -21,10 +21,10 @@ release.
 The release contains the following steps:
 
 1. Update the CHANGELOG.md and the _version.py via `python make_release.py`.
-   This also prepares the release commit message
+   This also prepares the release commit message.
 2. Create a release commit: `git commit -eF RELEASE_COMMIT_MSG.md`.
 3. Tag that commit: `git tag -s {{version}} -eF RELEASE_TAG_MSG.md`.
-4. Push both: `git push && git push --tags`
+4. Push both: `git push && git push --tags`.
 5. CI now builds a source and a wheels package which it pushes to PyPI. It also
    creates a GitHub release.
 
@@ -33,7 +33,7 @@ The release contains the following steps:
 ### The Release Tag
 
 * Use the release version as the tag name. No need for a leading "v".
-* Use the changelog entry as the body
+* Use the changelog entry as the body.
 
 
 ## When are releases done?

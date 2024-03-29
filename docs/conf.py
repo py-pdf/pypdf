@@ -66,7 +66,10 @@ intersphinx_mapping = {
 nitpick_ignore_regex = [
     # For reasons unclear at this stage the io module prefixes everything with _io
     # and this confuses sphinx
-    (r"py:class", r"_io.(FileIO|BytesIO|Buffered(Reader|Writer))"),
+    (
+        r"py:class",
+        r"(_io.(FileIO|BytesIO|Buffered(Reader|Writer))|pypdf.*PdfDocCommon)",
+    ),
 ]
 
 autodoc_default_options = {

@@ -31,6 +31,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import logging
 import re
+import sys
 from io import BytesIO
 from typing import (
     Any,
@@ -46,7 +47,7 @@ from typing import (
     cast,
 )
 
-from .._protocols import PdfReaderProtocol, PdfWriterProtocol
+from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationProtocol
 from .._utils import (
     WHITESPACES,
     StreamType,
@@ -70,6 +71,7 @@ from ..constants import TypFitArguments as TF
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
 from ._base import (
     BooleanObject,
+    ByteStringObject,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -80,6 +82,11 @@ from ._base import (
 )
 from ._fit import Fit
 from ._utils import read_hex_string_from_stream, read_string_from_stream
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
 NumberSigns = b"+-"
@@ -120,6 +127,65 @@ class ArrayObject(List[Any], PdfObject):
     def items(self) -> Iterable[Any]:
         """Emulate DictionaryObject.items for a list (index, object)."""
         return enumerate(self)
+
+    def _to_lst(self, lst: Any) -> List[Any]:
+        # Convert to list, internal
+        if isinstance(lst, (list, tuple, set)):
+            pass
+        elif isinstance(lst, PdfObject):
+            lst = [lst]
+        elif isinstance(lst, str):
+            if lst[0] == "/":
+                lst = [NameObject(lst)]
+            else:
+                lst = [TextStringObject(lst)]
+        elif isinstance(lst, bytes):
+            lst = [ByteStringObject(lst)]
+        else:  # for numbers,...
+            lst = [lst]
+        return lst
+
+    def __add__(self, lst: Any) -> "ArrayObject":
+        """
+        Allow extension by adding list or add one element only
+
+        Args:
+            lst: any list, tuples are extended the list.
+            other types(numbers,...) will be appended.
+            if str is passed it will be converted into TextStringObject
+            or NameObject (if starting with "/")
+            if bytes is passed it will be converted into ByteStringObject
+
+        Returns:
+            ArrayObject with all elements
+        """
+        temp = ArrayObject(self)
+        temp.extend(self._to_lst(lst))
+        return temp
+
+    def __iadd__(self, lst: Any) -> Self:
+        """
+         Allow extension by adding list or add one element only
+
+        Args:
+            lst: any list, tuples are extended the list.
+            other types(numbers,...) will be appended.
+            if str is passed it will be converted into TextStringObject
+            or NameObject (if starting with "/")
+            if bytes is passed it will be converted into ByteStringObject
+        """
+        self.extend(self._to_lst(lst))
+        return self
+
+    def __isub__(self, lst: Any) -> Self:
+        """Allow to remove items"""
+        for x in self._to_lst(lst):
+            try:
+                x = self.index(x)
+                del self[x]
+            except ValueError:
+                pass
+        return self
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
@@ -319,16 +385,15 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         return dict.__getitem__(self, key).get_object()
 
     @property
-    def xmp_metadata(self) -> Optional[PdfObject]:
+    def xmp_metadata(self) -> Optional[XmpInformationProtocol]:
         """
         Retrieve XMP (Extensible Metadata Platform) data relevant to the this
         object, if available.
 
-        Stability: Added in v1.12, will exist for all future v1.x releases.
-        See Table 315 – Additional entries in a metadata stream dictionary
+        See Table 347 — Additional entries in a metadata stream dictionary.
 
         Returns:
-          Returns a {@link #xmp.XmpInformation XmlInformation} instance
+          Returns a :class:`~pypdf.xmp.XmpInformation` instance
           that can be used to access XMP metadata from the document.  Can also
           return None if no metadata was found on the document root.
         """
@@ -370,14 +435,14 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         def get_next_obj_pos(
             p: int, p1: int, rem_gens: List[int], pdf: PdfReaderProtocol
         ) -> int:
-            loc = pdf.xref[rem_gens[0]]
-            for o in loc:
-                if p1 > loc[o] and p < loc[o]:
-                    p1 = loc[o]
-            if len(rem_gens) == 1:
-                return p1
-            else:
-                return get_next_obj_pos(p, p1, rem_gens[1:], pdf)
+            out = p1
+            for gen in rem_gens:
+                loc = pdf.xref[gen]
+                try:
+                    out = min(out, min([x for x in loc.values() if p < x <= p1]))
+                except ValueError:
+                    pass
+            return out
 
         def read_unsized_from_stream(
             stream: StreamType, pdf: PdfReaderProtocol
@@ -834,27 +899,27 @@ class StreamObject(DictionaryObject):
             if isinstance(f, ArrayObject):
                 f = ArrayObject([NameObject(FT.FLATE_DECODE), *f])
                 try:
-                    parms = ArrayObject(
+                    params = ArrayObject(
                         [NullObject(), *self.get(SA.DECODE_PARMS, ArrayObject())]
                     )
                 except TypeError:
                     # case of error where the * operator is not working (not an array
-                    parms = ArrayObject(
+                    params = ArrayObject(
                         [NullObject(), self.get(SA.DECODE_PARMS, ArrayObject())]
                     )
             else:
                 f = ArrayObject([NameObject(FT.FLATE_DECODE), f])
-                parms = ArrayObject(
+                params = ArrayObject(
                     [NullObject(), self.get(SA.DECODE_PARMS, NullObject())]
                 )
         else:
             f = NameObject(FT.FLATE_DECODE)
-            parms = None
+            params = None
         retval = EncodedStreamObject()
         retval.update(self)
         retval[NameObject(SA.FILTER)] = f
-        if parms is not None:
-            retval[NameObject(SA.DECODE_PARMS)] = parms
+        if params is not None:
+            retval[NameObject(SA.DECODE_PARMS)] = params
         retval._data = FlateDecode.encode(b_(self._data), level)
         return retval
 
@@ -903,20 +968,23 @@ class EncodedStreamObject(StreamObject):
 
 class ContentStream(DecodedStreamObject):
     """
-    In order to be fast, this datastructure can contain either:
+    In order to be fast, this data structure can contain either:
+
     * raw data in ._data
-    * parsed stream operations in ._operations
+    * parsed stream operations in ._operations.
 
-    At any time, ContentStream object can either have one or both of those fields defined,
-    and zero or one of those fields set to None.
+    At any time, ContentStream object can either have both of those fields defined,
+    or one field defined and the other set to None.
 
-    Those fields are "rebuilt" lazily, when accessed:
-    * when .get_data() is called, if ._data is None, it is rebuilt from ._operations
-    * when .operations is called, if ._operations is None, it is rebuilt from ._data
+    These fields are "rebuilt" lazily, when accessed:
 
-    On the other side, those fields can be invalidated:
-    * when .set_data() is called, ._operations is set to None
-    * when .operations is set, ._data is set to None
+    * when .get_data() is called, if ._data is None, it is rebuilt from ._operations.
+    * when .operations is called, if ._operations is None, it is rebuilt from ._data.
+
+    Conversely, these fields can be invalidated:
+
+    * when .set_data() is called, ._operations is set to None.
+    * when .operations is set, ._data is set to None.
     """
 
     def __init__(

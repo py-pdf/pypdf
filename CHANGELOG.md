@@ -243,7 +243,7 @@ nobody will be affected though. Hence only the patch update.
 -  Avoid endless recursion of reading damaged PDF file (#2093)
 
 ### Performance Improvements (PI)
--  Re-use content stream (#2101)
+-  Reuse content stream (#2101)
 
 ### Maintenance (MAINT)
 -  Make ParseError inherit from PyPdfError (#2097)
@@ -411,7 +411,7 @@ nobody will be affected though. Hence only the patch update.
 
 ### New Features (ENH)
 -  Simplify metadata input (Document Information Dictionary) (#1851)
--  Extend cmap compatibilty to GBK_EUC_H/V (#1812)
+-  Extend cmap compatibility to GBK_EUC_H/V (#1812)
 
 ### Bug Fixes (BUG)
 -  Prevent infinite loop when no character follows after a comment (#1828)
@@ -432,7 +432,7 @@ nobody will be affected though. Hence only the patch update.
 -  Refactor internal Encryption class (#1821)
 -  Add R parameter to generate_values (#1820)
 -  Make encryption_key parameter of write_to_stream optional (#1819)
--  Prepare for adding AES enryption support (#1818)
+-  Prepare for adding AES encryption support (#1818)
 
 [Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.1...3.9.0)
 
@@ -665,7 +665,7 @@ NOTICE: pypdf changed the way it represents numbers parsed from PDF files.
 ## Version 3.2.0, 2022-12-31
 
 ### Performance Improvement (PI)
--  Help the specializing adpative interpreter (#1522)
+-  Help the specializing adaptive interpreter (#1522)
 
 ### New Features (ENH)
 -  Add support for page labels (#1519)
@@ -999,12 +999,12 @@ BUG: Add PyPDF2.generic to PyPI distribution
 
 ### Documentation (DOC)
 -  Update changelog url in package metadata (#1180)
--  Mantion camelot for table extraction (#1179)
+-  Mention camelot for table extraction (#1179)
 -  Mention pyHanko for signing PDF documents (#1178)
 -  Weow have CMAP support since a while (#1177)
 
 ### Maintenance (MAINT)
--  Consistant usage of warnings / log messages (#1164)
+-  Consistent usage of warnings / log messages (#1164)
 -  Consistent terminology for outline items (#1156)
 
 
@@ -1082,7 +1082,7 @@ BUG: Add PyPDF2.generic to PyPI distribution
 
 ### Code Style (STY)
 -  Fixing typos (#1137)
--  Re-use code via get_outlines_property in tests (#1130)
+-  Reuse code via get_outlines_property in tests (#1130)
 
 [Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.6.0...2.7.0)
 
@@ -1246,7 +1246,7 @@ BUG: Add PyPDF2.generic to PyPI distribution
 
 ## Version 2.3.1, 2022-06-19
 
-BUG: Forgot to add the interal `_codecs` subpackage.
+BUG: Forgot to add the internal `_codecs` subpackage.
 
 [Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.3.0...2.3.1)
 
@@ -1285,7 +1285,7 @@ The highlight of this release is improved support for file encryption
 -  Fix corrupted (wrongly) linear PDF (#1008)
 
 ### Maintenance (MAINT)
--  Move PDF_Samples folder into ressources
+-  Move PDF_Samples folder into resources
 -  Fix typos (#1007)
 
 ### Testing (TST)

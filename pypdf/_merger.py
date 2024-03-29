@@ -306,8 +306,8 @@ class PdfMerger:
     def close(self) -> None:
         """Shut all file descriptors (input and output) and clear all memory usage."""
         self.pages = []
-        for fo, _reader in self.inputs:
-            fo.close()
+        for file_descriptor, _reader in self.inputs:
+            file_descriptor.close()
 
         self.inputs = []
         self.output = None
