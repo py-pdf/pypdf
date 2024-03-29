@@ -1272,3 +1272,12 @@ def test_get_page_showing_field():
             writer._root_object["/AcroForm"]["/Fields"][-1]
         )
     ] == []
+
+
+@pytest.mark.enable_socket()
+def test_extract_empty_page():
+    """Cf #2533"""
+    url = "https://github.com/py-pdf/pypdf/files/14718318/test.pdf"
+    name = "iss2533.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name)))
+    assert reader.pages[1].extract_text(extraction_mode="layout") == ""

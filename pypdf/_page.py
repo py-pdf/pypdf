@@ -1891,28 +1891,30 @@ class PageObject(DictionaryObject):
         """
         # Font retrieval logic adapted from pypdf.PageObject._extract_text()
         objr: Any = self
-        while NameObject(PG.RESOURCES) not in objr:
-            objr = objr["/Parent"].get_object()
-        resources_dict: Any = objr[PG.RESOURCES]
         fonts: Dict[str, _layout_mode.Font] = {}
-        if "/Font" in resources_dict and self.pdf is not None:
-            for font_name in resources_dict["/Font"]:
-                *cmap, font_dict_obj = build_char_map(font_name, 200.0, self)
-                font_dict = {
-                    k: self.pdf.get_object(v)
-                    if isinstance(v, IndirectObject)
-                    else [
-                        self.pdf.get_object(_v)
-                        if isinstance(_v, IndirectObject)
-                        else _v
-                        for _v in v
-                    ]
-                    if isinstance(v, ArrayObject)
-                    else v
-                    for k, v in font_dict_obj.items()
-                }
-                # mypy really sucks at unpacking
-                fonts[font_name] = _layout_mode.Font(*cmap, font_dict)  # type: ignore[call-arg,arg-type]
+        while objr is not None:
+            try:
+                resources_dict: Any = objr[PG.RESOURCES]
+            except KeyError:
+                resources_dict = {}
+            if "/Font" in resources_dict and self.pdf is not None:
+                for font_name in resources_dict["/Font"]:
+                    *cmap, font_dict_obj = build_char_map(font_name, 200.0, self)
+                    font_dict = {
+                        k: v.get_object()
+                        if isinstance(v, IndirectObject)
+                        else [_v.get_object() for _v in v]
+                        if isinstance(v, ArrayObject)
+                        else v
+                        for k, v in font_dict_obj.items()
+                    }
+                    # mypy really sucks at unpacking
+                    fonts[font_name] = _layout_mode.Font(*cmap, font_dict)  # type: ignore[call-arg,arg-type]
+            try:
+                objr = objr["/Parent"].get_object()
+            except KeyError:
+                objr = None
+
         return fonts
 
     def _layout_mode_text(
