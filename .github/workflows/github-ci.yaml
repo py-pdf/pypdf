@@ -121,12 +121,25 @@ jobs:
     - name: Install pypdf
       run: |
         pip install .
-    - name: Prepare
+    - name: Download test files
       run: |
         python -c "from tests import download_test_pdfs; download_test_pdfs()"
+    - name: Setup sitecustomize.py for coverage
+      run: |
+        SITE_PACKAGES="$(python -m site --user-site)"
+        SITECUSTOMIZE_PATH="$SITE_PACKAGES/sitecustomize.py"
+        mkdir -p $SITE_PACKAGES
+        touch $SITECUSTOMIZE_PATH
+        echo "try:" >> $SITECUSTOMIZE_PATH
+        echo "    import coverage" >> $SITECUSTOMIZE_PATH
+        echo "    coverage.process_startup()" >> $SITECUSTOMIZE_PATH
+        echo "except ImportError:" >> $SITECUSTOMIZE_PATH
+        echo "    pass" >> $SITECUSTOMIZE_PATH
     - name: Test with pytest
       run: |
         python -m pytest tests --cov=pypdf --cov-append -n auto -vv
+      env:
+        COVERAGE_PROCESS_START: 'pyproject.toml'
     - name: Rename coverage data file
       run: mv .coverage ".coverage.$RANDOM"
     - name: Upload coverage data
