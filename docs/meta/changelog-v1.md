@@ -295,13 +295,13 @@ large PDF files (#808) 🎉
 ### Bug Fixes (BUG)
 -  Clip by trimBox when merging pages, which would otherwise be ignored (#240)
 -  Add overwriteWarnings parameter PdfFileMerger (#243)
--  IndexError for getPage() of decryped file (#359)
+-  IndexError for getPage() of decrypted file (#359)
 -  Handle cases where decodeParms is an ArrayObject (#405)
 -  Updated PDF fields don't show up when page is written (#412)
 -  Set Linked Form Value (#414)
 -  Fix zlib -5 error for corrupt files (#603)
 -  Fix reading more than last1K for EOF (#642)
--  Acciental import
+-  Accidental import
 
 ### Robustness (ROB)
 -  Allow extra whitespace before "obj" in readObjectHeader (#567)
@@ -788,7 +788,7 @@ UPCOMING:
 
 ## Version 1.18, 2013-08-19
 
- - Fixed a bug where older verions of objects were incorrectly added to the
+ - Fixed a bug where older versions of objects were incorrectly added to the
    cache, resulting in outdated or missing pages, images, and other objects
    (from speedplane)
 

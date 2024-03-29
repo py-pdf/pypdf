@@ -56,7 +56,6 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    modules/PageObject
    modules/PageRange
    modules/PaperSize
-   modules/PdfMerger
    modules/RectangleObject
    modules/Transformation
    modules/XmpInformation
@@ -64,6 +63,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    modules/constants
    modules/errors
    modules/generic
+   modules/PdfDocCommon
 
 .. toctree::
    :caption: Developer Guide

@@ -20,7 +20,7 @@ pypdf makes use of 3 mechanisms to show that something went wrong:
 
 ## Exceptions
 
-Exeptions need to be catched if you want to handle them. For example, you could
+Exceptions need to be caught if you want to handle them. For example, you could
 want to read the text from a PDF as a part of a search function.
 
 Most PDF files don't follow the specifications. In this case pypdf needs to

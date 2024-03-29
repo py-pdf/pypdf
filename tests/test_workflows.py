@@ -67,7 +67,7 @@ def test_basic_features(tmp_path):
 
     # add some Javascript to launch the print window on opening this PDF.
     # the password dialog may prevent the print dialog from being shown,
-    # comment the the encription lines, if that's the case, to try this out
+    # comment the encryption lines, if that's the case, to try this out
     writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
     # encrypt your new PDF and add a password
@@ -1045,7 +1045,7 @@ Division / Dept: 50 / 170
 Season: SUMMER-B 2023"""
         in reader.pages[0].extract_text()
     )
-    # currently threre is still a white space on last line missing
+    # currently there is still a white space on last line missing
     # so we can not do a full comparison.
 
 
