@@ -1416,9 +1416,6 @@ class Destination(TreeObject):
     node: Optional[
         DictionaryObject
     ] = None  # node provide access to the original Object
-    _filtered_children: List[
-        Any
-    ] = []  # used in PdfWriter - TODO: should be children  # noqa: RUF012
 
     def __init__(
         self,
@@ -1426,6 +1423,8 @@ class Destination(TreeObject):
         page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
         fit: Fit,
     ) -> None:
+        self._filtered_children: List[Any] = []  # used in PdfWriter
+
         typ = fit.fit_type
         args = fit.fit_args
 
