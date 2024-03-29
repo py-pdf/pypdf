@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711711166050,
+  "lastUpdate": 1711721670960,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -49903,6 +49903,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05395548354656863",
             "extra": "mean: 15.729324606599993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "68b04656288afc179f6db0b54380ae574663825a",
+          "message": "DEV: Add REL to known PR prefixes (#2554)",
+          "timestamp": "2024-03-29T15:11:39+01:00",
+          "tree_id": "32aa501732700933b78c7b2d1c34d498a5b2ef1f",
+          "url": "https://github.com/py-pdf/pypdf/commit/68b04656288afc179f6db0b54380ae574663825a"
+        },
+        "date": 1711721667841,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2987220921487905,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008612388607730274",
+            "extra": "mean: 303.1476954000084 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.303443452546858,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009214516531881064",
+            "extra": "mean: 81.27805876922987 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27094511395394194,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016659800277465282",
+            "extra": "mean: 3.6907844006000063 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.522210132346117,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003377995144020765",
+            "extra": "mean: 57.07042618750435 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06289435767391996,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10476844656898332",
+            "extra": "mean: 15.899677443000012 sec\nrounds: 5"
           }
         ]
       }
