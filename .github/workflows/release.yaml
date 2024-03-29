@@ -27,12 +27,23 @@ jobs:
           VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP '(?<=REL: )\d+\.\d+\.\d+')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Extract tag message from commit message
+        id: extract_message
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          delimiter="$(openssl rand -hex 8)"
+          MESSAGE=$(echo "${{ github.event.head_commit.message }}" | sed "0,/REL: $VERSION/s///" )
+          echo "message<<${delimiter}" >> $GITHUB_OUTPUT
+          echo "$MESSAGE" >> $GITHUB_OUTPUT
+          echo "${delimiter}" >> $GITHUB_OUTPUT
+
       - name: Create Git Tag
         run: |
           VERSION="${{ steps.extract_version.outputs.version }}"
+          MESSAGE="${{ steps.extract_message.outputs.message }}"
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git tag "$VERSION" -m "${{ github.event.head_commit.message }}"
+          git tag "$VERSION" -m "$MESSAGE"
           git push origin $VERSION
 
       - name: Set up Python
