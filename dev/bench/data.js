@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711788646099,
+  "lastUpdate": 1711789376269,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -50198,6 +50198,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07227238213822089",
             "extra": "mean: 15.561320200199992 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3a6e4d0d42351fdea8e7ce0efe814684bd9b7497",
+          "message": "ENH: Tolerate PDF with invalid xref pointed objects (#2335)\n\nCloses #2326",
+          "timestamp": "2024-03-30T10:00:06+01:00",
+          "tree_id": "f49962beb0d292262e8f289c4fb920daec3a9686",
+          "url": "https://github.com/py-pdf/pypdf/commit/3a6e4d0d42351fdea8e7ce0efe814684bd9b7497"
+        },
+        "date": 1711789373131,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3915418989115764,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005842083494764338",
+            "extra": "mean: 294.8511413999995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.567419614288818,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006353808534867333",
+            "extra": "mean: 79.5708292307696 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.280409549217201,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017195277602464233",
+            "extra": "mean: 3.5662123589999966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.921371585919477,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011500679188646405",
+            "extra": "mean: 52.85029129411314 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06419263778320382,
+            "unit": "iter/sec",
+            "range": "stddev: 0.16761864404468202",
+            "extra": "mean: 15.578110427199999 sec\nrounds: 5"
           }
         ]
       }
