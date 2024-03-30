@@ -61,7 +61,7 @@ from typing import Iterator, List, Optional, Tuple, cast
 
 from ._protocols import PdfCommonDocProtocol
 from ._utils import logger_warning
-from .generic import ArrayObject, DictionaryObject, NumberObject
+from .generic import ArrayObject, DictionaryObject, NullObject, NumberObject
 
 
 def number2uppercase_roman_numeral(num: int) -> str:
@@ -169,7 +169,7 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
     number_tree = cast(DictionaryObject, root["/PageLabels"].get_object())
     if "/Nums" in number_tree:
         return get_label_from_nums(number_tree, index)
-    if "/Kids" in number_tree:
+    if "/Kids" in number_tree and not isinstance(number_tree["/Kids"], NullObject):
         # number_tree = {'/Kids': [IndirectObject(7333, 0, 140132998195856), ...]}
         kids: List[DictionaryObject] = cast(List[DictionaryObject], number_tree["/Kids"])
         for kid in kids:
