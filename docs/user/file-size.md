@@ -81,16 +81,11 @@ Deflate compression can be applied to a page via
 [`page.compress_content_streams`](https://pypdf.readthedocs.io/en/latest/modules/PageObject.html#pypdf._page.PageObject.compress_content_streams):
 
 ```python
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfWriter
 
-reader = PdfReader("example.pdf")
-writer = PdfWriter()
-
-for page in reader.pages:
-    writer.add_page(page)
+writer = PdfWriter(clone_from="example.pdf")
 
 for page in writer.pages:
-    # ⚠️ This has to be done on the writer, not the reader!
     page.compress_content_streams()  # This is CPU intensive!
 
 with open("out.pdf", "wb") as f:

@@ -7,8 +7,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple
 
-from rich.prompt import Prompt
-
 GH_ORG = "py-pdf"
 GH_PROJECT = "pypdf"
 VERSION_FILE_PATH = "pypdf/_version.py"
@@ -84,6 +82,8 @@ def adjust_version_py(version: str) -> None:
 
 def get_version_interactive(new_version: str, changes: str) -> str:
     """Get the new __version__ interactively."""
+    from rich.prompt import Prompt
+
     print("The changes are:")
     print(changes)
     orig = new_version
@@ -251,8 +251,11 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
 
     if grouped:
         output += "\n### Other\n"
+        output_with_user += "\n### Other\n"
         for prefix in grouped:
-            output += f"- {prefix}: {grouped[prefix]}\n"
+            for commit in grouped[prefix]:
+                output += f"- {prefix}: {commit['msg']}\n"
+                output_with_user += f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
 
     return output, output_with_user
 
@@ -308,19 +311,17 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
     Returns:
         List of all changes since git_tag.
     """
-    commits = str(
-        subprocess.check_output(
-            [
-                "git",
-                "--no-pager",
-                "log",
-                f"{git_tag}..HEAD",
-                '--pretty=format:"%H:::%s:::%aN"',
-            ],
-            stderr=subprocess.STDOUT,
-        )
-    ).strip("'b\\n")
-    lines = commits.split("\\n")
+    commits = subprocess.check_output(
+        [
+            "git",
+            "--no-pager",
+            "log",
+            f"{git_tag}..HEAD",
+            '--pretty=format:"%H:::%s:::%aN"',
+        ],
+        stderr=subprocess.STDOUT,
+    ).decode("UTF-8").strip()
+    lines = commits.splitlines()
     authors = get_author_mapping(len(lines))
     return [parse_commit_line(line, authors) for line in lines if line != ""]
 
@@ -343,7 +344,7 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
         raise ValueError(f"Invalid commit line: '{line}'")
     commit_hash, rest, author = parts
     if ":" in rest:
-        prefix, message = rest.split(":", 1)
+        prefix, message = rest.split(": ", 1)
     else:
         prefix = ""
         message = rest

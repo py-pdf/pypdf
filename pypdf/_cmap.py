@@ -1,11 +1,9 @@
-import warnings
 from binascii import unhexlify
 from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
-from ._utils import b_, logger_warning
-from .errors import PdfReadWarning
+from ._utils import b_, logger_error, logger_warning
 from .generic import (
     DecodedStreamObject,
     DictionaryObject,
@@ -121,13 +119,15 @@ _predefined_cmap: Dict[str, str] = {
     "/GBpc-EUC-V": "gb2312",  # TBC
     "/GBK-EUC-H": "gbk",  # TBC
     "/GBK-EUC-V": "gbk",  # TBC
+    "/GBK2K-H": "gb18030",
+    "/GBK2K-V": "gb18030",
     # UCS2 in code
 }
 
 
 # manually extracted from http://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz
 _default_fonts_space_width: Dict[str, int] = {
-    "/Courrier": 600,
+    "/Courier": 600,
     "/Courier-Bold": 600,
     "/Courier-BoldOblique": 600,
     "/Courier-Oblique": 600,
@@ -180,18 +180,15 @@ def parse_encoding(
             else:
                 raise Exception("not found")
         except Exception:
-            warnings.warn(
-                f"Advanced encoding {enc} not implemented yet",
-                PdfReadWarning,
-            )
+            logger_error(f"Advanced encoding {enc} not implemented yet", __name__)
             encoding = enc
     elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
         try:
             encoding = charset_encoding[cast(str, enc["/BaseEncoding"])].copy()
         except Exception:
-            warnings.warn(
+            logger_error(
                 f"Advanced encoding {encoding} not implemented yet",
-                PdfReadWarning,
+                __name__,
             )
             encoding = charset_encoding["/StandardCoding"].copy()
     else:

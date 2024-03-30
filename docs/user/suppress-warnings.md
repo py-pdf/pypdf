@@ -5,7 +5,8 @@ pypdf makes use of 3 mechanisms to show that something went wrong:
 * **Log messages** are informative messages that can be used for post-mortem
   analysis. Most of the time, users can ignore them. They come in different
   *levels*, such as info / warning / error indicating the severity.
-  Examples are non-standard compliant PDF files which pypdf can deal with.
+  Examples are non-standard compliant PDF files which pypdf can deal with or
+  a missing implementation that leads to a part of the text not being extracted.
 * **Warnings** are avoidable issues, such as using deprecated classes /
   functions / parameters. Another example is missing capabilities of pypdf.
   In those cases, pypdf users should adjust their code. Warnings
@@ -19,7 +20,7 @@ pypdf makes use of 3 mechanisms to show that something went wrong:
 
 ## Exceptions
 
-Exeptions need to be catched if you want to handle them. For example, you could
+Exceptions need to be caught if you want to handle them. For example, you could
 want to read the text from a PDF as a part of a search function.
 
 Most PDF files don't follow the specifications. In this case pypdf needs to

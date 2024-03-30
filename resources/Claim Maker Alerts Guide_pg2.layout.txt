@@ -1,0 +1,54 @@
+ Updated System Responses for Common Scenarios
+
+
+  Scenario                                 Before Change             After                           Why?
+
+  An On Hold / Missing                     New doc info was          Leave state as On               Batches can be released early
+  Documents case receives its              logged but no             Hold and update state           and coders can code all they can
+  first documentation set after            further automated         reason to Ready To              and then leave the batch in In
+  coding operations have                   action was taken.         Code.                           Progress. When docs come in,
+  already begun for the batch                                                                        the case is picked up by the
+  (batch state = In Progress).                                                                       normal On Hold process due to
+                                                                                                     the assignment of the Ready to
+                                                                                                     Code state reason.
+
+  An “incomplete” case (not                All documents             All manually attached           Ensures that ALL info that has
+  Code Completed or Ignored)               were “overwritten”        PDFs are preserved              arrived for the case remains
+  in an “in flight” batch (state =         with data from the        in place and all                visible to users. Specifically
+  Reconciled, Assigned, or In              new documents.            “extracted”                     addresses split labor / C-section
+  Progress) receives new                                             documents are                   cases, allowing a coder to refer
+  documents.                                                         aggregated under a              back to the “Superseded”
+                                                                     SUPERSEDED ON                   documents to make sure a newly
+                                                                     [DATE] text doc with            extracted “C-section only”
+                                                                     type Complete                   document wasn’t really a Labor
+                                                                     Record.                         to C-section case.
+
+  New documents are received               New doc info was          Existing documents              Prompts the coder to review the
+  for a Code Completed or                  logged but no             are “superseded”                new documentation set while
+  Ignored case in an “in flight”           further automated         (see previous) and              retaining all previously applied
+  batch.                                   action was taken.         the case is set back            codes.  If no significant change is
+                                                                     to On Hold / Ready to           noted, the case can simply be set
+                                                                     Code.                           back to Code Completed.
+
+  Documentation for an                     New case info             The case is added to            Ensures proper review of any
+  “uncoded” (aka not Code                  was logged but            a new batch with the            additional documentation
+  Completed) case or a new                 no further                same date of service.           received for a previously
+  patient is received for a                automated action          Set state to Ignored            completed batch as well as
+  Complete or Charges Entered              was taken.                on the original case (if        documentation for brand new
+  batch.                                                             it exists) and add              cases after a batch has already
+                                                                     notes to both the               been Completed. Notes on the
+                                                                     original and new                original and duplicate case
+                                                                     cases indicating the            ensure that users are aware of
+                                                                     link between the two.           actions taken by the system.
+
+  Documentation for a Code                 New doc info was          Existing case                   The status of the new document
+  Completed case in a                      logged but no             documents are left in           is clearly indicated as arriving
+  Complete or Charges Entered              further automated         place and the new               AFTER the associated case was
+  batch is received.                       action was taken.         documentation is                coded avoiding potential
+                                                                     added as a PDF                  confusion regarding which
+                                                                     attachment with type            documentation was utilized at the
+                                                                     “complete record” and           time of coding while also
+                                                                     title POSTED LATE -             providing access to the new info
+                                                                     [DATE].                         and allowing the end user to
+                                                                                                     determine the correct course of
+                                                                                                     action.

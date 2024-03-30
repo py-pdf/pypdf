@@ -5,7 +5,6 @@ import pytest
 
 from pypdf import PdfReader
 from pypdf._cmap import build_char_map
-from pypdf.errors import PdfReadWarning
 
 from . import get_data_from_url
 
@@ -85,11 +84,11 @@ def test_text_extraction_fast(caplog, url: str, name: str, strict: bool):
 
 
 @pytest.mark.enable_socket()
-def test_parse_encoding_advanced_encoding_not_implemented():
+def test_parse_encoding_advanced_encoding_not_implemented(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-957144.pdf")))
-    with pytest.warns(PdfReadWarning, match="Advanced encoding .* not implemented yet"):
-        for page in reader.pages:
-            page.extract_text()
+    for page in reader.pages:
+        page.extract_text()
+    assert "Advanced encoding /WinAnsEncoding not implemented yet" in caplog.text
 
 
 @pytest.mark.enable_socket()

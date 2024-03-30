@@ -58,7 +58,7 @@ from ._data_structures import (
     read_object,
 )
 from ._fit import Fit
-from ._outline import Bookmark, OutlineItem
+from ._outline import OutlineItem
 from ._rectangle import RectangleObject
 from ._utils import (
     create_string_object,
@@ -318,7 +318,7 @@ class AnnotationBuilder:
                 specifying the highlighted area
             quad_points: An ArrayObject of 8 FloatObjects. Must match a word or
                 a group of words, otherwise no highlight will be shown.
-            highlight_color: The color used for the hightlight
+            highlight_color: The color used for the highlight.
 
         Returns:
             A dictionary object representing the annotation.
@@ -449,7 +449,6 @@ __all__ = [
     # Outline
     "OutlineItem",
     "OutlineFontFlag",
-    "Bookmark",
     # Data structures core functions
     "read_object",
     # Utility functions

@@ -599,7 +599,7 @@ class CCITTFaxDecode:
             deprecation_no_replacement(
                 "decode_parms being an ArrayObject", removed_in="3.15.5"
             )
-        parms = CCITTFaxDecode._get_parameters(decode_parms, height)
+        params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
         tiff_header_struct = "<2shlh" + "hhll" * 8 + "h"
@@ -612,11 +612,11 @@ class CCITTFaxDecode:
             256,
             4,
             1,
-            parms.columns,  # ImageWidth, LONG, 1, width
+            params.columns,  # ImageWidth, LONG, 1, width
             257,
             4,
             1,
-            parms.rows,  # ImageLength, LONG, 1, length
+            params.rows,  # ImageLength, LONG, 1, length
             258,
             3,
             1,
@@ -624,7 +624,7 @@ class CCITTFaxDecode:
             259,
             3,
             1,
-            parms.group,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
+            params.group,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
             262,
             3,
             1,
@@ -638,7 +638,7 @@ class CCITTFaxDecode:
             278,
             4,
             1,
-            parms.rows,  # RowsPerStrip, LONG, 1, length
+            params.rows,  # RowsPerStrip, LONG, 1, length
             279,
             4,
             1,

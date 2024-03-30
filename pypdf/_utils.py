@@ -41,7 +41,6 @@ from os import SEEK_CUR
 from typing import (
     IO,
     Any,
-    Callable,
     Dict,
     List,
     Optional,
@@ -112,14 +111,14 @@ def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
     raise ValueError(f"Can not convert date: {orgtext}")
 
 
-def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
+def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     versions = (
-        b"%PDF-1.3",
-        b"%PDF-1.4",
-        b"%PDF-1.5",
-        b"%PDF-1.6",
-        b"%PDF-1.7",
-        b"%PDF-2.0",
+        "%PDF-1.3",
+        "%PDF-1.4",
+        "%PDF-1.5",
+        "%PDF-1.6",
+        "%PDF-1.7",
+        "%PDF-2.0",
     )
     pdf_header_indices = []
     if header1 in versions:
@@ -201,7 +200,7 @@ def check_if_whitespace_only(value: bytes) -> bool:
         True if the value only has whitespace characters, otherwise return False.
     """
     for index in range(len(value)):
-        current = value[index:index + 1]
+        current = value[index : index + 1]
         if current not in WHITESPACES:
             return False
     return True
@@ -363,21 +362,11 @@ def b_(s: Union[str, bytes]) -> bytes:
         return r
 
 
-@overload
-def str_(b: str) -> str:
-    ...
-
-
-@overload
-def str_(b: bytes) -> str:
-    ...
-
-
-def str_(b: Union[str, bytes]) -> str:
+def str_(b: Any) -> str:
     if isinstance(b, bytes):
         return b.decode("latin-1")
     else:
-        return b
+        return str(b)  # will return b.__str__() if defined
 
 
 @overload
@@ -427,28 +416,36 @@ def deprecation(msg: str) -> None:
     raise DeprecationError(msg)
 
 
-def deprecate_with_replacement(
-    old_name: str, new_name: str, removed_in: str = "3.0.0"
-) -> None:
+def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed, but has a replacement."""
     deprecate(DEPR_MSG.format(old_name, removed_in, new_name), 4)
 
 
-def deprecation_with_replacement(
-    old_name: str, new_name: str, removed_in: str = "3.0.0"
-) -> None:
+def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed, but has a replacement."""
     deprecation(DEPR_MSG_HAPPENED.format(old_name, removed_in, new_name))
 
 
-def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+def deprecate_no_replacement(name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed without replacement."""
     deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
 
 
-def deprecation_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+def deprecation_no_replacement(name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed without replacement."""
     deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
+
+
+def logger_error(msg: str, src: str) -> None:
+    """
+    Use this instead of logger.error directly.
+
+    That allows people to overwrite it more easily.
+
+    See the docs on when to use which:
+    https://pypdf.readthedocs.io/en/latest/user/suppress-warnings.html
+    """
+    logging.getLogger(src).error(msg)
 
 
 def logger_warning(msg: str, src: str) -> None:
@@ -468,26 +465,6 @@ def logger_warning(msg: str, src: str) -> None:
       to strict=False mode.
     """
     logging.getLogger(src).warning(msg)
-
-
-def deprecation_bookmark(**aliases: str) -> Callable[..., Any]:
-    """
-    Decorator for deprecated term "bookmark".
-
-    To be used for methods and function arguments
-        outline_item = a bookmark
-        outline = a collection of outline items.
-    """
-
-    def decoration(func: Callable[..., Any]) -> Any:
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            rename_kwargs(func.__name__, kwargs, aliases, fail=True)
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decoration
 
 
 def rename_kwargs(
@@ -562,7 +539,7 @@ class ImageFile(File):
         Replace the Image with a new PIL image.
 
         Args:
-            new_image (Image.Image): The new PIL image to replace the existing image.
+            new_image (PIL.Image.Image): The new PIL image to replace the existing image.
             **kwargs: Additional keyword arguments to pass to `Image.Image.save()`.
 
         Raises:

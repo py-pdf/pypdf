@@ -1,5 +1,92 @@
 # CHANGELOG
 
+## Version 4.1.0, 2024-03-03
+
+Generating name objects (`NameObject`) without a leading slash
+is considered deprecated now. Previously, just a plain warning
+would be logged, leading to possibly invalid PDF files. According
+to our deprecation policy, this will log a *DeprecationWarning*
+for now.
+
+### New Features (ENH)
+- Add get_pages_from_field  (#2494)
+- Add reattach_fields function (#2480)
+- Automatic access to pointed object for IndirectObject (#2464)
+
+### Bug Fixes (BUG)
+- Missing error on name without leading / (#2387)
+- encode_pdfdocencoding() always returns bytes (#2440)
+- BI in text content identified as image tag (#2459)
+
+### Robustness (ROB)
+- Missing basefont entry in type 3 font (#2469)
+
+### Documentation (DOC)
+- Improve lossless compression example (#2488)
+- Amend robustness documentation (#2479)
+
+### Developer Experience (DEV)
+- Fix changelog for UTF-8 characters (#2462)
+
+### Maintenance (MAINT)
+- Add _get_page_number_from_indirect in writer (#2493)
+- Remove user assignment for feature requests (#2483)
+- Remove reference to old 2.0.0 branch (#2482)
+
+### Testing (TST)
+- Fix benchmark failures (#2481)
+- Broken test due to expired test file URL (#2468)
+- Resolve file naming conflict in test_iss1767 (#2445)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.0.2...4.1.0)
+
+## Version 4.0.2, 2024-02-18
+
+### Bug Fixes (BUG)
+-  Use NumberObject for /Border elements of annotations (#2451)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.0.1...4.0.2)
+
+## Version 4.0.1, 2024-01-28
+
+### Bug Fixes (BUG)
+-  layout mode text extraction ZeroDivisionError (#2417)
+
+### Testing (TST)
+-  Skip tests using fpdf2 if it's not installed (#2419)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.0.0...4.0.1)
+
+## Version 4.0.0, 2024-01-19
+
+### Deprecations (DEP)
+-  Drop Python 3.6 support (#2369)
+-  Remove deprecated code (#2367)
+-  Remove deprecated XMP properties (#2386)
+
+### New Features (ENH)
+-  Add "layout" mode for text extraction (#2388)
+-  Add Jupyter Notebook integration for PdfReader (#2375)
+-  Improve/rewrite PDF permission retrieval (#2400)
+
+### Bug Fixes (BUG)
+-  PdfWriter.add_uri was setting the wrong type (#2406)
+-  Add support for GBK2K cmaps (#2385)
+
+### Maintenance (MAINT)
+-  Return None instead of -1 when page is not attached (#2376)
+-  Complete FileSpecificationDictionaryEntries constants (#2416)
+-  Replace warning with logging.error (#2377)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.4...4.0.0)
+
+## Version 3.17.4, 2023-12-24
+
+### Bug Fixes (BUG)
+-  Handle IndirectObject as image filter (#2355)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.17.3...3.17.4)
+
 ## Version 3.17.3, 2023-12-17
 
 ### Robustness (ROB)
@@ -156,7 +243,7 @@ nobody will be affected though. Hence only the patch update.
 -  Avoid endless recursion of reading damaged PDF file (#2093)
 
 ### Performance Improvements (PI)
--  Re-use content stream (#2101)
+-  Reuse content stream (#2101)
 
 ### Maintenance (MAINT)
 -  Make ParseError inherit from PyPdfError (#2097)
@@ -324,7 +411,7 @@ nobody will be affected though. Hence only the patch update.
 
 ### New Features (ENH)
 -  Simplify metadata input (Document Information Dictionary) (#1851)
--  Extend cmap compatibilty to GBK_EUC_H/V (#1812)
+-  Extend cmap compatibility to GBK_EUC_H/V (#1812)
 
 ### Bug Fixes (BUG)
 -  Prevent infinite loop when no character follows after a comment (#1828)
@@ -345,7 +432,7 @@ nobody will be affected though. Hence only the patch update.
 -  Refactor internal Encryption class (#1821)
 -  Add R parameter to generate_values (#1820)
 -  Make encryption_key parameter of write_to_stream optional (#1819)
--  Prepare for adding AES enryption support (#1818)
+-  Prepare for adding AES encryption support (#1818)
 
 [Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.1...3.9.0)
 
@@ -578,7 +665,7 @@ NOTICE: pypdf changed the way it represents numbers parsed from PDF files.
 ## Version 3.2.0, 2022-12-31
 
 ### Performance Improvement (PI)
--  Help the specializing adpative interpreter (#1522)
+-  Help the specializing adaptive interpreter (#1522)
 
 ### New Features (ENH)
 -  Add support for page labels (#1519)
@@ -912,12 +999,12 @@ BUG: Add PyPDF2.generic to PyPI distribution
 
 ### Documentation (DOC)
 -  Update changelog url in package metadata (#1180)
--  Mantion camelot for table extraction (#1179)
+-  Mention camelot for table extraction (#1179)
 -  Mention pyHanko for signing PDF documents (#1178)
 -  Weow have CMAP support since a while (#1177)
 
 ### Maintenance (MAINT)
--  Consistant usage of warnings / log messages (#1164)
+-  Consistent usage of warnings / log messages (#1164)
 -  Consistent terminology for outline items (#1156)
 
 
@@ -995,7 +1082,7 @@ BUG: Add PyPDF2.generic to PyPI distribution
 
 ### Code Style (STY)
 -  Fixing typos (#1137)
--  Re-use code via get_outlines_property in tests (#1130)
+-  Reuse code via get_outlines_property in tests (#1130)
 
 [Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.6.0...2.7.0)
 
@@ -1159,7 +1246,7 @@ BUG: Add PyPDF2.generic to PyPI distribution
 
 ## Version 2.3.1, 2022-06-19
 
-BUG: Forgot to add the interal `_codecs` subpackage.
+BUG: Forgot to add the internal `_codecs` subpackage.
 
 [Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.3.0...2.3.1)
 
@@ -1198,7 +1285,7 @@ The highlight of this release is improved support for file encryption
 -  Fix corrupted (wrongly) linear PDF (#1008)
 
 ### Maintenance (MAINT)
--  Move PDF_Samples folder into ressources
+-  Move PDF_Samples folder into resources
 -  Fix typos (#1007)
 
 ### Testing (TST)

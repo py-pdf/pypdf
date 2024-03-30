@@ -41,6 +41,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Perrensen, Olsen](https://github.com/olsonperrensen)
 * [pilotandy](https://github.com/pilotandy)
 * [Pinheiro, Arthur](https://github.com/xilopaint)
+* [pmiller66](https://github.com/pmiller66)
 * [Poddar, Arka](https://github.com/postmeback)
 * [programmarchy](https://github.com/programmarchy)
 * [pubpub-zz](https://github.com/pubpub-zz): involved in community development
@@ -50,11 +51,14 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Roder, Thomas](https://github.com/MrTomRod)
 * [Rogmann, Sascha](https://github.com/srogmann)
 * [Röthenbacher, Thomas](https://github.com/troethe)
+* [shartzog](https://github.com/shartzog)
+* [stefan6419846](https://github.com/stefan6419846)
 * [sietzeberends](https://github.com/sietzeberends)
 * [Stober, Marc](https://github.com/marcstober)
 * [Stüber, Timo](https://github.com/omit66)
 * [Thoma, Martin](https://github.com/MartinThoma): Maintainer of pypdf since April 2022. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
 * [Thomas, Reuben](https://github.com/rrthomas)
+* [Tobeabellwether](https://github.com/Tobeabellwether)
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
 * [Wilson, Huon](https://github.com/huonw)
 * ztravis
@@ -63,28 +67,32 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 
 Contributors are:
 
-* Anybody who has an commit in main - no matter how big/small or how many. Also if it's via co-authored-by.
+* Anybody who has an commit in `main` - no matter how big/small or how many. Also if it's via *co-authored-by*.
 * People who opened helpful issues:
-  (1) Bugs: with complete MCVE
-  (2) Well-described feature requests
-  (3) Potentially some more.
+
+  1. Bugs: with complete MCVE
+  2. Well-described feature requests
+  3. Potentially some more.
+
   The maintainers of pypdf have the last call on that one.
 * Community work: This is exceptional. If the maintainers of pypdf see people
   being super helpful in answering issues / discussions or being very active on
   Stackoverflow, we also consider them being contributors to pypdf.
 
-Contributors can add themselves or ask via an Github Issue to be added.
+Contributors can add themselves or ask via an GitHub Issue to be added.
 
 Please use the following format:
 
 ```
-* Last name, First name: 140-characters of text; links to linkedin / github / other profiles and personal pages are ok
+* Last name, First name: 140-characters of text; links to LinkedIn / GitHub / other profiles and personal pages are ok
+```
 
 OR
 
-* GitHub Username: 140-characters of text; links to linkedin / github / other profiles and personal pages are ok
+```
+* GitHub Username: 140-characters of text; links to LinkedIn / GitHub / other profiles and personal pages are ok
 ```
 
-and add the entry in the alphabetical order. People who . The 140 characters are everything visible after the `Name:`.
+and add the entry in the alphabetical order. The 140 characters are everything visible after the `Name:`.
 
 Please don't use images.
