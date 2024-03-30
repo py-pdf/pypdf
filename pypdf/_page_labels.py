@@ -167,7 +167,7 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
     if "/PageLabels" not in root:
         return str(index + 1)  # Fallback
     number_tree = cast(DictionaryObject, root["/PageLabels"].get_object())
-    if "/Nums": in number_tree:
+    if "/Nums" in number_tree:
         return get_label_from_nums(number_tree, index)
     if "/Kids" in number_tree:
         # number_tree = {'/Kids': [IndirectObject(7333, 0, 140132998195856), IndirectObject(7334, 0, 140132998195856), ...]}
