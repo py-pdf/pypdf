@@ -114,4 +114,8 @@ def test_index2label_kids():
         "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
         "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII",
     ] + list(map(str, range(1, 284)))
+    for x in ["20", "44", "58", "82", "94", "116", "154", "166", "192", "224", "250"]:
+        # Some page labels are unused. Removing them is still easier than copying the
+        # whole list itself here.
+        expected.remove(x)
     assert r.page_labels == expected
