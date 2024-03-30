@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711789376269,
+  "lastUpdate": 1711804395586,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -50257,6 +50257,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.16761864404468202",
             "extra": "mean: 15.578110427199999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a36f9b094bc74d13cd4ec1a3b6deb40c9ce4e98a",
+          "message": "DEV: Remove page labels PR link from message (#2561)\n\nMaintaining/validating example images inside a PR is complicated. Rather use the existing issue #2560 if there are new findings.",
+          "timestamp": "2024-03-30T14:10:24+01:00",
+          "tree_id": "e51e83f0161ff73ba88b51b3fd3ce6cfede689ce",
+          "url": "https://github.com/py-pdf/pypdf/commit/a36f9b094bc74d13cd4ec1a3b6deb40c9ce4e98a"
+        },
+        "date": 1711804393900,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3171638469102396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005277043909131915",
+            "extra": "mean: 301.4623474000075 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.337950487353146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008081226547255155",
+            "extra": "mean: 81.05073861538322 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2712465468825444,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028169301403679865",
+            "extra": "mean: 3.686682877599992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.585680939156276,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009302333595338552",
+            "extra": "mean: 56.86444576470168 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06459492020561806,
+            "unit": "iter/sec",
+            "range": "stddev: 0.14277631649988845",
+            "extra": "mean: 15.481093510400006 sec\nrounds: 5"
           }
         ]
       }
