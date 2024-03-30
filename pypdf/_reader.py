@@ -573,7 +573,7 @@ class PdfReader(PdfDocCommon):
                     # non-zero-index is actually correct
             stream.seek(loc, 0)  # return to where it was
 
-        # remove wrong objects( not pointing to correct structures) - cf #2326
+        # remove wrong objects (not pointing to correct structures) - cf #2326
         if not self.strict:
             loc = stream.tell()
             for gen, xref_entry in self.xref.items():
@@ -586,7 +586,7 @@ class PdfReader(PdfDocCommon):
                         self.read_object_header(stream)
                     except ValueError:
                         logger_warning(
-                            f"ignore wrong pointing object {id} {gen} (offset {xref_entry[id]})",
+                            f"Ignoring wrong pointing object {id} {gen} (offset {xref_entry[id]})",
                             __name__,
                         )
                         del xref_entry[id]  # we can delete the id, we are parsing ids
