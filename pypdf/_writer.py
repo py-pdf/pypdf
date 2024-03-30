@@ -180,7 +180,7 @@ class PdfWriter(PdfDocCommon):
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
         """Maps hash values of indirect objects to their IndirectObject instances."""
 
-        self._id_translated: WeakKeyDictionary[PdfReaderProtocol, dict[int, int]] = WeakKeyDictionary()
+        self._id_translated: "WeakKeyDictionary[PdfReaderProtocol, dict[int, int]]" = WeakKeyDictionary()
 
         # The root of our page tree node.
         pages = DictionaryObject()

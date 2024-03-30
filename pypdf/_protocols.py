@@ -79,7 +79,7 @@ class PdfReaderProtocol(PdfCommonDocProtocol, Protocol):
 
 class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
     _objects: List[Any]
-    _id_translated: WeakKeyDictionary["PdfReaderProtocol", Dict[int, int]]
+    _id_translated: "WeakKeyDictionary[PdfReaderProtocol, Dict[int, int]]"
 
     @abstractmethod
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:
