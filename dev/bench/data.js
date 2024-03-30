@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1711788123430,
+  "lastUpdate": 1711788646099,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -50139,6 +50139,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01933584677161244",
             "extra": "mean: 15.577807455600004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "788358078822a79eed4a951eb4a765667b07d572",
+          "message": "BUG: Process CMYK images without a filter correctly (#2557)\n\nCloses #2522",
+          "timestamp": "2024-03-30T09:47:54+01:00",
+          "tree_id": "186bf16030931706d598c1ad988845c2260c00bf",
+          "url": "https://github.com/py-pdf/pypdf/commit/788358078822a79eed4a951eb4a765667b07d572"
+        },
+        "date": 1711788643516,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.30128751751591,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005782798351491432",
+            "extra": "mean: 302.91211979999275 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.241978733475278,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009289762617400756",
+            "extra": "mean: 81.6861409230792 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2698566598154102,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020295797310984257",
+            "extra": "mean: 3.705671005800002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.472205628965554,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00090417958345396",
+            "extra": "mean: 57.233758647058984 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06426189983463923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07227238213822089",
+            "extra": "mean: 15.561320200199992 sec\nrounds: 5"
           }
         ]
       }
