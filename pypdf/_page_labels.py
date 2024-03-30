@@ -124,7 +124,7 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
     # The keys shall be sorted in numerical order,
     # analogously to the arrangement of keys in a name tree
     # as described in 7.9.6, "Name Trees."
-    nums = cast(ArrayObject, number_tree["/Nums"])
+    nums = cast(ArrayObject, dictionary_object["/Nums"])
     i = 0
     value = None
     start_index = 0
@@ -170,7 +170,7 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
     if "/Nums" in number_tree:
         return get_label_from_nums(number_tree, index)
     if "/Kids" in number_tree:
-        # number_tree = {'/Kids': [IndirectObject(7333, 0, 140132998195856), IndirectObject(7334, 0, 140132998195856), ...]}
+        # number_tree = {'/Kids': [IndirectObject(7333, 0, 140132998195856), ...]}
         kids: List[DictionaryObject] = number_tree["/Kids"]
         for kid in kids:
             # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
