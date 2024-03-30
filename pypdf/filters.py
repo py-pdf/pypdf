@@ -285,8 +285,8 @@ class ASCIIHexDecode:
         index = 0
         while True:
             if index >= len(data):
+                logger_warning("missing EOD in ASCIIHexDecode, check if output is OK", __name__)
                 break  # reach End Of String even if no EOD
-                # raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
             char = data[index : index + 1]
             if char == b">":
                 break
@@ -341,8 +341,8 @@ class RunLengthDecode:
         index = 0
         while True:
             if index >= len(data):
+                logger_warning("missing EOD in RunLengthDecode, check if output is OK", __name__)
                 break  # reach End Of String even if no EOD
-                # raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
             length = data[index]
             index += 1
             if length == 128:
@@ -855,7 +855,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     if IA.S_MASK in x_object_obj:  # add alpha channel
         alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
         if img.size != alpha.size:
-            logger_warning(f"image and mask size not matching: {obj_as_text}", __name__)
+            logger_warning(f"image and mask size not matching: {obj_as_text}"
         else:
             # TODO : implement mask
             if alpha.mode != "L":
