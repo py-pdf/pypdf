@@ -169,8 +169,7 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
         logger_warning(
             (
                 "/Kids or /Limits found in PageLabels. "
-                "Please share this PDF with pypdf: "
-                "https://github.com/py-pdf/pypdf/pull/1519"
+                "This is not yet supported."
             ),
             __name__,
         )
