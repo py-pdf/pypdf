@@ -246,3 +246,12 @@ def test_bi_in_text():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.pages[0].images.keys() == ["~0~"]
     assert reader.pages[0].images[0].name == "~0~.png"
+
+
+@pytest.mark.enable_socket()
+def test_cmyk_no_filter():
+    """Cf #2522"""
+    url = "https://github.com/py-pdf/pypdf/files/14614887/out3.pdf"
+    name = "iss2522.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].images[0].image
