@@ -103,3 +103,13 @@ def test_index2label(caplog):
     r.trailer["/Root"]["/PageLabels"][NameObject("/Kids")] = NullObject()
     assert index2label(r, 1) == "2"
     assert caplog.text != ""
+
+
+@pytest.mark.enable_socket()
+def test_index2label_kids():
+    url = "https://www.bk.admin.ch/dam/bk/de/dokumente/terminologie/publikation_25_jahre_rtd.pdf.download.pdf/Terminologie_Epochen,%20Schwerpunkte,%20Umsetzungen.pdf"  # noqa: E501
+    r = PdfReader(BytesIO(get_data_from_url(url=url, name="index2label_kids.pdf")))
+    expected = [
+        "C1", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII",
+    ] + list(map(str, range(1, 284)))
+    assert r.page_labels == expected
