@@ -102,7 +102,7 @@ you can use  {py:class}`PolyLine <pypdf.annotations.PolyLine>`:
 
 ```python
 from pypdf import PdfReader, PdfWriter
-from pypdf.annotations import Polyline
+from pypdf.annotations import PolyLine
 
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
@@ -111,7 +111,7 @@ writer = PdfWriter()
 writer.add_page(page)
 
 # Add the polyline
-annotation = Polyline(
+annotation = PolyLine(
     vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
 )
 writer.add_annotation(page_number=0, annotation=annotation)
@@ -304,7 +304,7 @@ with open("annotated-pdf.pdf", "wb") as fp:
 Text markup annotations refer to a specific piece of text within the document.
 
 Those are a bit more complicated as you need to know exactly where the text
-is. Those are the "Quad points".
+is, the so-called "Quad points".
 
 ### Highlighting
 
@@ -317,6 +317,7 @@ you can use the {py:class}`Highlight <pypdf.annotations.Highlight>`:
 ```python
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Highlight
+from pypdf.generic import ArrayObject, FloatObject
 
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
@@ -324,9 +325,13 @@ page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
 
+rect = (50, 550, 200, 650)
+quad_points = [rect[0], rect[1], rect[2], rect[1], rect[0], rect[3], rect[2], rect[3]]
+
 # Add the highlight
 annotation = Highlight(
-    vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+    rect=rect,
+    quad_points=ArrayObject([FloatObject(quad_point) for quad_point in quad_points]),
 )
 writer.add_annotation(page_number=0, annotation=annotation)
 

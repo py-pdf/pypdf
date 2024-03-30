@@ -1,0 +1,39 @@
+All Postprocedure Notes
+   Last edited 10/11/23 0919 by Danny Chaung, DO
+   Date of Service 10/11/23 0918
+   Status: Signed
+Anesthesia Post Evaluation
+
+Procedure Summary
+
+   Date: 10/11/23                                                Room / Location: EHMC ENDOSCOPY
+   Anesthesia Start: 0852                                        Anesthesia Stop: 0918
+   Procedure: COLONOSCOPY                                        Diagnosis: Cancer screening
+   Scheduled Providers: Walter A Klein, MD; Danny Chaung,        Responsible Provider: Danny Chaung, DO
+   DO
+   Anesthesia Type: general                                      ASA Status: 2
+
+
+Patient location during evaluation: PACU
+Post op Vital Signs: stable
+
+Level of consciousness: awake and alert
+Pain management: adequate analgesia
+Airway patency: patent
+Anesthetic complications: no
+Respiratory status: unassisted
+Hydration status: continuing
+Post-op Complications: No
+
+
+
+Assessment: Nausea and Vomiting: absent
+
+
+
+
+MIPS Measure #404 - Smoking Abstinence
+Is the patient a current smoker? No (XX404)
+
+
+

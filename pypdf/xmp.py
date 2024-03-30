@@ -16,18 +16,12 @@ from typing import (
     Optional,
     TypeVar,
     Union,
-    cast,
 )
 from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
 
-from ._utils import (
-    StreamType,
-    deprecate_no_replacement,
-    deprecate_with_replacement,
-    deprecation_with_replacement,
-)
+from ._utils import StreamType, deprecate_no_replacement
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
 
@@ -227,11 +221,6 @@ class XmpInformation(PdfObject):
         )[0]
         self.cache: Dict[Any, Any] = {}
 
-    @property
-    def rdfRoot(self) -> XmlElement:  # deprecated
-        deprecate_with_replacement("rdfRoot", "rdf_root", "4.0.0")
-        return self.rdf_root
-
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
@@ -241,17 +230,6 @@ class XmpInformation(PdfObject):
             )
         self.stream.write_to_stream(stream)
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        """
-        Use :meth:`write_to_stream` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
-
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
         for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
@@ -259,17 +237,6 @@ class XmpInformation(PdfObject):
                 if attr is not None:
                     yield attr
                 yield from desc.getElementsByTagNameNS(namespace, name)
-
-    def getElement(
-        self, aboutUri: str, namespace: str, name: str
-    ) -> Iterator[Any]:  # deprecated
-        """
-        Use :meth:`get_element` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("getElement", "get_element", "3.0.0")
-        return self.get_element(aboutUri, namespace, name)
 
     def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Iterator[Any]:
         for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
@@ -281,19 +248,6 @@ class XmpInformation(PdfObject):
                 for child in desc.childNodes:
                     if child.namespaceURI == namespace:
                         yield child
-
-    def getNodesInNamespace(
-        self, aboutUri: str, namespace: str
-    ) -> Iterator[Any]:  # deprecated
-        """
-        Use :meth:`get_nodes_in_namespace` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement(
-            "getNodesInNamespace", "get_nodes_in_namespace", "3.0.0"
-        )
-        return self.get_nodes_in_namespace(aboutUri, namespace)
 
     def _get_text(self, element: XmlElement) -> str:
         text = ""
@@ -379,16 +333,6 @@ class XmpInformation(PdfObject):
     The date and time are returned as a UTC datetime.datetime object.
     """
 
-    @property
-    def xmp_createDate(self) -> datetime.datetime:  # deprecated
-        deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
-        return self.xmp_create_date
-
-    @xmp_createDate.setter
-    def xmp_createDate(self, value: datetime.datetime) -> None:  # deprecated
-        deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
-        self.xmp_create_date = value
-
     xmp_modify_date = property(
         _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
     )
@@ -397,16 +341,6 @@ class XmpInformation(PdfObject):
 
     The date and time are returned as a UTC datetime.datetime object.
     """
-
-    @property
-    def xmp_modifyDate(self) -> datetime.datetime:  # deprecated
-        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
-        return self.xmp_modify_date
-
-    @xmp_modifyDate.setter
-    def xmp_modifyDate(self, value: datetime.datetime) -> None:  # deprecated
-        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
-        self.xmp_modify_date = value
 
     xmp_metadata_date = property(
         _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)
@@ -417,55 +351,15 @@ class XmpInformation(PdfObject):
     The date and time are returned as a UTC datetime.datetime object.
     """
 
-    @property
-    def xmp_metadataDate(self) -> datetime.datetime:  # deprecated
-        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
-        return self.xmp_metadata_date
-
-    @xmp_metadataDate.setter
-    def xmp_metadataDate(self, value: datetime.datetime) -> None:  # deprecated
-        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
-        self.xmp_metadata_date = value
-
     xmp_creator_tool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))
     """The name of the first known tool used to create the resource."""
-
-    @property
-    def xmp_creatorTool(self) -> str:  # deprecated
-        deprecation_with_replacement("xmp_creatorTool", "xmp_creator_tool", "3.0.0")
-        return self.xmp_creator_tool
-
-    @xmp_creatorTool.setter
-    def xmp_creatorTool(self, value: str) -> None:  # deprecated
-        deprecation_with_replacement("xmp_creatorTool", "xmp_creator_tool", "3.0.0")
-        self.xmp_creator_tool = value
 
     xmpmm_document_id = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
     """The common identifier for all versions and renditions of this resource."""
 
-    @property
-    def xmpmm_documentId(self) -> str:  # deprecated
-        deprecation_with_replacement("xmpmm_documentId", "xmpmm_document_id", "3.0.0")
-        return self.xmpmm_document_id
-
-    @xmpmm_documentId.setter
-    def xmpmm_documentId(self, value: str) -> None:  # deprecated
-        deprecation_with_replacement("xmpmm_documentId", "xmpmm_document_id", "3.0.0")
-        self.xmpmm_document_id = value
-
     xmpmm_instance_id = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
     """An identifier for a specific incarnation of a document, updated each
     time a file is saved."""
-
-    @property
-    def xmpmm_instanceId(self) -> str:  # deprecated
-        deprecation_with_replacement("xmpmm_instanceId", "xmpmm_instance_id", "3.0.0")
-        return cast(str, self.xmpmm_instance_id)
-
-    @xmpmm_instanceId.setter
-    def xmpmm_instanceId(self, value: str) -> None:  # deprecated
-        deprecation_with_replacement("xmpmm_instanceId", "xmpmm_instance_id", "3.0.0")
-        self.xmpmm_instance_id = value
 
     @property
     def custom_properties(self) -> Dict[Any, Any]:

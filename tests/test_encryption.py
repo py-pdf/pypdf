@@ -204,7 +204,7 @@ def test_attempt_decrypt_unencrypted_pdf():
     """Attempting to decrypt an unencrypted PDF raises a PdfReadError."""
     path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(PdfReadError) as exc:
-        PdfReader(path, password="nonexistant")
+        PdfReader(path, password="nonexistent")
     assert exc.value.args[0] == "Not encrypted file"
 
 
@@ -344,6 +344,7 @@ def test_aes_decrypt_corrupted_data():
         aes.decrypt(secrets.token_bytes(num))
 
 
+@pytest.mark.samples()
 def test_encrypt_stream_dictionary(pdf_file_path):
     user_password = secrets.token_urlsafe(10)
 

@@ -8,12 +8,13 @@ You can read the full docs at https://pypdf.readthedocs.io/.
 """
 
 from ._crypt_providers import crypt_provider
+from ._doc_common import DocumentInformation
 from ._encryption import PasswordType
-from ._merger import PdfFileMerger, PdfMerger
+from ._merger import PdfMerger
 from ._page import PageObject, Transformation, mult
-from ._reader import DocumentInformation, PdfFileReader, PdfReader
+from ._reader import PdfReader
 from ._version import __version__
-from ._writer import ObjectDeletionFlag, PdfFileWriter, PdfWriter
+from ._writer import ObjectDeletionFlag, PdfWriter
 from .constants import ImageType
 from .pagerange import PageRange, parse_filename_page_ranges
 from .papersizes import PaperSize
@@ -39,9 +40,6 @@ __all__ = [
     "DocumentInformation",
     "ObjectDeletionFlag",
     "parse_filename_page_ranges",
-    "PdfFileMerger",  # will be removed in pypdf==4.0.0; use PdfMerger instead
-    "PdfFileReader",  # will be removed in pypdf==4.0.0; use PdfReader instead
-    "PdfFileWriter",  # will be removed in pypdf==4.0.0; use PdfWriter instead
     "PdfMerger",
     "PdfReader",
     "PdfWriter",

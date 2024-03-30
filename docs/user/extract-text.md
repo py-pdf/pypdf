@@ -1,6 +1,6 @@
 # Extract Text from a PDF
 
-You can extract text from a PDF like this:
+You can extract text from a PDF:
 
 ```python
 from pypdf import PdfReader
@@ -10,7 +10,7 @@ page = reader.pages[0]
 print(page.extract_text())
 ```
 
-you can also choose to limit the text orientation you want to extract, e.g:
+You can also choose to limit the text orientation you want to extract:
 
 ```python
 # extract only text oriented up
@@ -20,11 +20,29 @@ print(page.extract_text(0))
 print(page.extract_text((0, 90)))
 ```
 
+You can also extract text in "layout" mode:
+
+```python
+# extract text in a fixed width format that closely adheres to the rendered
+# layout in the source pdf
+print(page.extract_text(extraction_mode="layout"))
+
+# extract text preserving horizontal positioning without excess vertical
+# whitespace (removes blank and "whitespace only" lines)
+print(page.extract_text(extraction_mode="layout", layout_mode_space_vertically=False))
+
+# adjust horizontal spacing
+print(page.extract_text(extraction_mode="layout", layout_mode_scale_weight=1.0))
+
+# exclude (default) or include (as shown below) text rotated w.r.t. the page
+print(page.extract_text(extraction_mode="layout", layout_mode_strip_rotated=False))
+```
+
 Refer to [extract\_text](../modules/PageObject.html#pypdf._page.PageObject.extract_text) for more details.
 
 ## Using a visitor
 
-You can use visitor-functions to control which part of a page you want to process and extract. The visitor-functions you provide will get called for each operator or for each text fragment.
+You can use visitor functions to control which part of a page you want to process and extract. The visitor functions you provide will get called for each operator or for each text fragment.
 
 The function provided in argument visitor_text of function extract_text has five arguments:
 * text: the current text (as long as possible, can be up to a full line)
@@ -33,19 +51,19 @@ The function provided in argument visitor_text of function extract_text has five
 * font-dictionary: full font dictionary
 * font-size: the size (in text coordinate space)
 
-The matrix stores 6 parameters. The first 4 provide the rotation/scaling matrix and the last two provide the translation (horizontal/vertical)
+The matrix stores six parameters. The first four provide the rotation/scaling matrix and the last two provide the translation (horizontal/vertical).
 It is recommended to use the user_matrix as it takes into all transformations.
 
 Notes :
 
- - as indicated in the PDF 1.7 reference, page 204 the user matrix applies to text space/image space/form space/pattern space.
- - if you want to get the full transformation from text to user space, you can use the `mult` function (availalbe in global import) as follows:
-`txt2user = mult(tm, cm))`
-The font-size is the raw text size, that is affected by the `user_matrix`
+ - As indicated in §8.3.3 of the PDF 1.7 or PDF 2.0 specification, the user matrix applies to text space/image space/form space/pattern space.
+ - If you want to get the full transformation from text to user space, you can use the `mult` function (available in global import) as follows:
+`txt2user = mult(tm, cm))`.
+The font size is the raw text size and affected by the `user_matrix`.
 
 
 The font-dictionary may be None in case of unknown fonts.
-If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
+If not None it could contain something like key "/BaseFont" with value "/Arial,Bold".
 
 **Caveat**: In complicated documents the calculated positions may be difficult to (if you move from multiple forms to page user space for example).
 
@@ -54,7 +72,7 @@ operator, operand-arguments, current transformation matrix and text matrix.
 
 ### Example 1: Ignore header and footer
 
-The following example reads the text of page 4 of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores header (y < 720) and footer (y > 50).
+The following example reads the text of page four of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores the header (y < 720) and footer (y > 50).
 
 ```python
 from pypdf import PdfReader
@@ -79,10 +97,10 @@ print(text_body)
 
 ### Example 2: Extract rectangles and texts into a SVG-file
 
-The following example converts page 3 of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf) into a
+The following example converts page three of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf) into a
 [SVG file](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics).
 
-Such a SVG export may help to understand whats going on in a page.
+Such a SVG export may help to understand what is going on in a page.
 
 ```python
 from pypdf import PdfReader
@@ -113,13 +131,13 @@ dwg.save()
 
 The SVG generated here is bottom-up because the coordinate systems of PDF and SVG differ.
 
-Unfortunately in complicated PDF documents the coordinates given to the visitor-functions may be wrong.
+Unfortunately in complicated PDF documents the coordinates given to the visitor functions may be wrong.
 
 ## Why Text Extraction is hard
 
 ### Unclear Objective
 
-Extracting text from a PDF can be pretty tricky. In several cases there is no
+Extracting text from a PDF can be tricky. In several cases there is no
 clear answer what the expected result should look like:
 
 1. **Paragraphs**: Should the text of a paragraph have line breaks at the same places
@@ -173,7 +191,7 @@ printing. It was not created for parsing the content. PDF files don't contain a
 semantic layer.
 
 Specifically, there is no information what the header, footer, page numbers,
-tables, and paragraphs are. The visual appearence is there and people might
+tables, and paragraphs are. The visual appearance is there and people might
 find heuristics to make educated guesses, but there is no way of being certain.
 
 This is a shortcoming of the PDF file format, not of pypdf.

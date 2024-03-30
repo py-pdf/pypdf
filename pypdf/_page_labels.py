@@ -11,12 +11,12 @@ page label. This makes things more complicated.
 Example 1
 ---------
 
->>> reader.trailer["/Root"]["/PageLabels"]["/Nums"]
+>>> reader.root_object["/PageLabels"]["/Nums"]
 [0, IndirectObject(18, 0, 139929798197504),
  8, IndirectObject(19, 0, 139929798197504)]
->>> reader.get_object(reader.trailer["/Root"]["/PageLabels"]["/Nums"][1])
+>>> reader.get_object(reader.root_object["/PageLabels"]["/Nums"][1])
 {'/S': '/r'}
->>> reader.get_object(reader.trailer["/Root"]["/PageLabels"]["/Nums"][3])
+>>> reader.get_object(reader.root_object["/PageLabels"]["/Nums"][3])
 {'/S': '/D'}
 
 Example 2
@@ -57,9 +57,9 @@ a       Lowercase letters (a to z for the first 26 pages,
                            aa to zz for the next 26, and so on)
 """
 
-from typing import Iterator, Optional, Tuple
+from typing import Iterator, Optional, Tuple, cast
 
-from ._protocols import PdfReaderProtocol
+from ._protocols import PdfCommonDocProtocol
 from ._utils import logger_warning
 from .generic import ArrayObject, DictionaryObject, NumberObject
 
@@ -116,7 +116,7 @@ def number2lowercase_letter(number: int) -> str:
     return number2uppercase_letter(number).lower()
 
 
-def index2label(reader: PdfReaderProtocol, index: int) -> str:
+def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
     """
     See 7.9.7 "Number Trees".
 
@@ -127,10 +127,10 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
     Returns:
         The label of the page, e.g. "iv" or "4".
     """
-    root = reader.trailer["/Root"]
+    root = cast(DictionaryObject, reader.root_object)
     if "/PageLabels" not in root:
         return str(index + 1)  # Fallback
-    number_tree = root["/PageLabels"]
+    number_tree = cast(DictionaryObject, root["/PageLabels"].get_object())
     if "/Nums" in number_tree:
         # [Nums] shall be an array of the form
         #   [ key 1 value 1 key 2 value 2 ... key n value n ]
@@ -139,7 +139,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
         # The keys shall be sorted in numerical order,
         # analogously to the arrangement of keys in a name tree
         # as described in 7.9.6, "Name Trees."
-        nums = number_tree["/Nums"]
+        nums = cast(ArrayObject, number_tree["/Nums"])
         i = 0
         value = None
         start_index = 0

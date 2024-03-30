@@ -17,13 +17,21 @@ from PIL import __version__ as pil_version
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning
-from pypdf.generic import ContentStream, NameObject, read_object
+from pypdf.generic import (
+    ArrayObject,
+    ContentStream,
+    DictionaryObject,
+    NameObject,
+    TextStringObject,
+    read_object,
+)
 
 from . import get_data_from_url, normalize_warnings
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 sys.path.append(str(PROJECT_ROOT))
 
@@ -59,7 +67,7 @@ def test_basic_features(tmp_path):
 
     # add some Javascript to launch the print window on opening this PDF.
     # the password dialog may prevent the print dialog from being shown,
-    # comment the the encription lines, if that's the case, to try this out
+    # comment the encryption lines, if that's the case, to try this out
     writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
     # encrypt your new PDF and add a password
@@ -268,20 +276,14 @@ def test_extract_textbench(enable, url, pages, print_result=False):
 @pytest.mark.slow()
 def test_orientations():
     p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
-    with pytest.warns(DeprecationWarning):
-        p.extract_text("", "")
-    with pytest.warns(DeprecationWarning):
-        p.extract_text("", "", 0)
-    with pytest.warns(DeprecationWarning):
-        p.extract_text("", "", 0, 200)
-
-    with pytest.warns(DeprecationWarning):
-        p.extract_text(Tj_sep="", TJ_sep="")
+    p.extract_text("", "")
+    p.extract_text("", "", 0)
+    p.extract_text("", "", 0, 200)
+    p.extract_text()
     assert findall("\\((.)\\)", p.extract_text()) == ["T", "B", "L", "R"]
     with pytest.raises(Exception):
         p.extract_text(None)
-    with pytest.raises(Exception):
-        p.extract_text("", 0)
+    p.extract_text("", 0)
     with pytest.raises(Exception):
         p.extract_text("", "", None)
     with pytest.raises(Exception):
@@ -1047,5 +1049,239 @@ Division / Dept: 50 / 170
 Season: SUMMER-B 2023"""
         in reader.pages[0].extract_text()
     )
-    # currently threre is still a white space on last line missing
+    # currently there is still a white space on last line missing
     # so we can not do a full comparison.
+
+
+def remove_trailing_whitespace(text: str) -> str:
+    text = text.strip()
+    return "\n".join(line.rstrip() for line in text.splitlines())
+
+
+@pytest.mark.samples()
+@pytest.mark.parametrize(
+    ("pdf_path", "expected_path"),
+    [
+        (
+            SAMPLE_ROOT / "026-latex-multicolumn/multicolumn.pdf",
+            RESOURCE_ROOT / "multicolumn-lorem-ipsum.txt",
+        ),
+        (
+            SAMPLE_ROOT / "010-pdflatex-forms/pdflatex-forms.pdf",
+            RESOURCE_ROOT / "010-pdflatex-forms.txt",
+        ),
+    ],
+)
+def test_text_extraction_layout_mode(pdf_path, expected_path):
+    reader = PdfReader(pdf_path)
+    actual = reader.pages[0].extract_text(extraction_mode="layout")
+    expected = expected_path.read_text(encoding="utf-8")
+    # We don't care about trailing whitespace
+    assert remove_trailing_whitespace(actual) == remove_trailing_whitespace(expected)
+
+
+@pytest.mark.enable_socket()
+def test_layout_mode_space_vertically():
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2138.pdf")))
+    # remove automatically added final newline
+    expected = (
+        (RESOURCE_ROOT / "AEO.1172.layout.txt").read_text(encoding="utf-8").rstrip()
+    )
+    assert expected == reader.pages[0].extract_text(
+        extraction_mode="layout", layout_mode_space_vertically=False
+    )
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.parametrize(
+    ("rotation", "strip_rotated"), [(90, True), (180, False), (270, True)]
+)
+def test_layout_mode_rotations(rotation, strip_rotated):
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2138.pdf")))
+    rotated_page = reader.pages[0].rotate(rotation)
+    rotated_page.transfer_rotation_to_content()
+    expected = ""
+    if not strip_rotated:
+        expected = (
+            (RESOURCE_ROOT / "AEO.1172.layout.rot180.txt")
+            .read_text(encoding="utf-8")
+            .rstrip()
+        )  # remove automatically added final newline
+    assert expected == rotated_page.extract_text(
+        extraction_mode="layout",
+        layout_mode_space_vertically=False,
+        layout_mode_strip_rotated=strip_rotated,
+    )
+
+
+def test_text_extraction_invalid_mode():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    with pytest.raises(ValueError, match="Invalid text extraction mode"):
+        reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore
+
+
+@pytest.mark.enable_socket()
+def test_get_page_showing_field():
+    """
+    Uses testfile from #2452 in order to get fields on multiple pages,
+        choices boxes,...
+    """
+    url = "https://github.com/py-pdf/pypdf/files/14031491/Form_Structure_v50.pdf"
+    name = "iss2452.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name)))
+    writer = PdfWriter(clone_from=reader)
+
+    # validate with Field:  only works on Reader (no get_fields on writer yet)
+    fld = reader.get_fields()
+    assert [
+        p.page_number for p in reader.get_pages_showing_field(fld["FormVersion"])
+    ] == [0]
+
+    # validate with dictionary object
+    # NRCategory field is a radio box
+    assert [
+        p.page_number
+        for p in reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][8].get_object()
+        )
+    ] == [0, 0, 0, 0, 0]
+    assert [
+        p.page_number
+        for p in writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][8].get_object()
+        )
+    ] == [0, 0, 0, 0, 0]
+
+    # validate with IndirectObject
+    # SiteID field is a textbox on multiple pages
+    assert [
+        p.page_number
+        for p in reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][99]
+        )
+    ] == [0, 1]
+    assert [
+        p.page_number
+        for p in writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][99]
+        )
+    ] == [0, 1]
+    # test directly on the widget:
+    assert [
+        p.page_number
+        for p in reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][99]["/Kids"][1]
+        )
+    ] == [1]
+    assert [
+        p.page_number
+        for p in writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][99]["/Kids"][1]
+        )
+    ] == [1]
+
+    # Exceptions:
+    # Invalid Object
+    with pytest.raises(ValueError) as exc:
+        reader.get_pages_showing_field(None)
+    with pytest.raises(ValueError) as exc:
+        writer.get_pages_showing_field(None)
+    assert "field type is invalid" in exc.value.args[0]
+
+    # Damage Field
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][1].get_object()["/FT"]
+    del writer._root_object["/AcroForm"]["/Fields"][1].get_object()["/FT"]
+    with pytest.raises(ValueError) as exc:
+        reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][1]
+        )
+    with pytest.raises(ValueError) as exc:
+        writer.get_pages_showing_field(writer._root_object["/AcroForm"]["/Fields"][1])
+    assert "field is not valid" in exc.value.args[0]
+
+    # missing Parent in field
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()[
+        "/Parent"
+    ]
+    del writer._root_object["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()[
+        "/Parent"
+    ]
+    with pytest.raises(ValueError) as exc:
+        reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][1]
+        )
+    with pytest.raises(ValueError) as exc:
+        writer.get_pages_showing_field(writer._root_object["/AcroForm"]["/Fields"][1])
+
+    # remove "/P" (optional)
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][8]["/Kids"][1].get_object()[
+        "/P"
+    ]
+    del writer._root_object["/AcroForm"]["/Fields"][8]["/Kids"][1].get_object()["/P"]
+    assert [
+        p.page_number
+        for p in reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][8]["/Kids"][1]
+        )
+    ] == [0]
+    assert [
+        p.page_number
+        for p in writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][8]["/Kids"][1]
+        )
+    ] == [0]
+    assert [
+        p.page_number
+        for p in reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][8].get_object()
+        )
+    ] == [0, 0, 0, 0, 0]
+    assert [
+        p.page_number
+        for p in writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][8].get_object()
+        )
+    ] == [0, 0, 0, 0, 0]
+
+    # Grouping fields
+    reader.trailer["/Root"]["/AcroForm"]["/Fields"][-1].get_object()[
+        NameObject("/Kids")
+    ] = ArrayObject([reader.trailer["/Root"]["/AcroForm"]["/Fields"][0]])
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][-1].get_object()["/T"]
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][-1].get_object()["/P"]
+    del reader.trailer["/Root"]["/AcroForm"]["/Fields"][-1].get_object()["/Subtype"]
+    writer._root_object["/AcroForm"]["/Fields"].append(
+        writer._add_object(
+            DictionaryObject(
+                {
+                    NameObject("/T"): TextStringObject("grouping"),
+                    NameObject("/FT"): NameObject("/Tx"),
+                    NameObject("/Kids"): ArrayObject(
+                        [reader.trailer["/Root"]["/AcroForm"]["/Fields"][0]]
+                    ),
+                }
+            )
+        )
+    )
+    assert [
+        p.page_number
+        for p in reader.get_pages_showing_field(
+            reader.trailer["/Root"]["/AcroForm"]["/Fields"][-1]
+        )
+    ] == []
+    assert [
+        p.page_number
+        for p in writer.get_pages_showing_field(
+            writer._root_object["/AcroForm"]["/Fields"][-1]
+        )
+    ] == []
+
+
+@pytest.mark.enable_socket()
+def test_extract_empty_page():
+    """Cf #2533"""
+    url = "https://github.com/py-pdf/pypdf/files/14718318/test.pdf"
+    name = "iss2533.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name)))
+    assert reader.pages[1].extract_text(extraction_mode="layout") == ""

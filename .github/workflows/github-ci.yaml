@@ -5,12 +5,14 @@ name: CI
 
 on:
   push:
-    branches: [ main, 2.0.0-dev ]
+    branches:
+      - main
     paths-ignore:
       - '**/*.md'
       - '**/*.rst'
   pull_request:
-    branches: [ main, 2.0.0-dev ]
+    branches:
+      - main
     paths-ignore:
       - '**/*.md'
       - '**/*.rst'
@@ -58,7 +60,7 @@ jobs:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
         use-crypto-lib: ["cryptography"]
         include:
-          - python-version: "3.6"
+          - python-version: "3.7"
             use-crypto-lib: "pycryptodome"
           - python-version: "3.7"
             use-crypto-lib: "none"
@@ -75,13 +77,13 @@ jobs:
         submodules: 'recursive'
     - name: Cache Downloaded Files
       id: cache-downloaded-files
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: '**/tests/pdf_cache/*'
         key: cache-downloaded-files
     - name: Setup Python
       uses: actions/setup-python@v5
-      if: matrix.python-version == '3.6' || matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      if: matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -100,7 +102,7 @@ jobs:
     - name: Install requirements (Python 3)
       run: |
         pip install -r requirements/ci.txt
-      if: matrix.python-version == '3.6' || matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      if: matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
     - name: Install requirements (Python 3.11+)
       run: |
         pip install -r requirements/ci-3.11.txt
@@ -128,9 +130,9 @@ jobs:
     - name: Rename coverage data file
       run: mv .coverage ".coverage.$RANDOM"
     - name: Upload coverage data
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: coverage-data
+        name: coverage-data.${{ matrix.python-version }}-${{ matrix.use-crypto-lib }}
         path: .coverage.*
         if-no-files-found: ignore
 
@@ -164,6 +166,10 @@ jobs:
     - name: Test with mypy
       run : |
         mypy pypdf
+    - name: Test docs build
+      run: |
+        pip install -r requirements/docs.txt
+        sphinx-build -n -W --keep-going -T -b html docs build/sphinx/html
 
   package:
     name: Build & verify package
@@ -201,9 +207,10 @@ jobs:
 
       - run: python -m pip install --upgrade coverage[toml]
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: coverage-data
+          pattern: coverage-data*
+          merge-multiple: true
 
       - name: Check Number of Downloaded Files
         run: |
@@ -220,7 +227,7 @@ jobs:
           python -m coverage combine
           python -m coverage xml
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml

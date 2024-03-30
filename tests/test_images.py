@@ -73,18 +73,21 @@ def image_similarity(
     return 1 - mse
 
 
+@pytest.mark.samples()
 def test_image_similarity_one():
     path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
     path_b = path_a
     assert image_similarity(path_a, path_b) == 1
 
 
+@pytest.mark.samples()
 def test_image_similarity_zero():
     path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
     path_b = SAMPLE_ROOT / "009-pdflatex-geotopo/page-23-Im2.png"
     assert image_similarity(path_a, path_b) == 0
 
 
+@pytest.mark.samples()
 def test_image_similarity_mid():
     path_a = SAMPLE_ROOT / "018-base64-image/page-0-QuickPDFImd32aa1ab.png"
     img_b = Image.open(path_a)
@@ -233,3 +236,13 @@ def test_devicen_cmyk_black_only():
     name = "iss2321_img1.pdf"
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     assert image_similarity(reader.pages[10].images[0].image, img) >= 0.99
+
+
+@pytest.mark.enable_socket()
+def test_bi_in_text():
+    """Cf #2456"""
+    url = "https://github.com/py-pdf/pypdf/files/14322910/BI_text_with_one_image.pdf"
+    name = "BI_text_with_one_image.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert reader.pages[0].images.keys() == ["~0~"]
+    assert reader.pages[0].images[0].name == "~0~.png"

@@ -1,0 +1,397 @@
+[
+  {
+    "sha": "b7bfd0d7eddfd0865a94cc9e7027df6596242cf7",
+    "node_id": "C_kwDOAC-ZndoAKGI3YmZkMGQ3ZWRkZmQwODY1YTk0Y2M5ZTcwMjdkZjY1OTYyNDJjZjc",
+    "commit": {
+      "author": {
+        "name": "rsinger417",
+        "email": "159086296+rsinger417@users.noreply.github.com",
+        "date": "2024-02-13T21:42:56Z"
+      },
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com",
+        "date": "2024-02-13T21:42:56Z"
+      },
+      "message": "BUG: Use NumberObject for /Border elements of annotations (#2451)\n\nAs defined in Table 164 – Entries common to all annotation dictionaries, the /Border Array consists of NumberObjects. Previously, pypdf used NameObject which is wrong.\r\n\r\nThe previous version caused a warning in the class NameObject: \"Incorrect first char in NameObject:({self})\".\r\n\r\nFixes #2444",
+      "tree": {
+        "sha": "e75b96ca1bb3e60a696bd57c5bb5aac9e7c5651b",
+        "url": "https://api.github.com/repos/py-pdf/pypdf/git/trees/e75b96ca1bb3e60a696bd57c5bb5aac9e7c5651b"
+      },
+      "url": "https://api.github.com/repos/py-pdf/pypdf/git/commits/b7bfd0d7eddfd0865a94cc9e7027df6596242cf7",
+      "comment_count": 0,
+      "verification": {
+        "verified": true,
+        "reason": "valid",
+        "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJly+JgCRC1aQ7uu5UhlAAA56IQAKmAJws3vIKAR1dTx6e8fgp+\nWFMSZub7HGMi0Wz6MKF+hp1fxTNheBwlWVvVHuIGggtg9QSFkpHmi5Qqn+IUHJq1\nI5Jst6Il3lCF2UXUboyN+XbS/lo6rXHriz+Yi7Xwgj+JulHnruFvFEU40AdKnI1w\n88Wh94KXEJqQ6nyP4R2qpDLLlhQ0/4FTIZCWfw8XK1vPmTQwP0ZroL5N7s1pq2s9\nBBDtvcxTE1EbWIyyMzAiNByxdaTakqNLRMq80saiArR4t6f1H4v8dgYep/6R5dxU\n2GGXjh6JOS6xNObrSNvuFanrgAxZoft255OGsU5Y/2yxryp+Bs1QO/PXYXch2ERN\nXyYQKxp886PRcL1vGukksqx5t8Oc781z7RHV/QCIJ5Ry66vC7zDmkk2+Eq6gwWMr\nHzTg3eQ2DL+I4CsNIezb470UOKdIWu9SdQmOrGeUAnQ0rB0V7VOe9n1buPmMP/e0\ngXcq/BNFaNWTCyIHv1XgB6G516k4zM1F5j1BF0GCrhrdX8lXMZUB+WI3V8CsRObI\naKdnE9aGBJPZCFN5O+92ntKt7tUQQLmLNPDgYZktzBg73ejRlpQ4zOBRBFiSNfPj\nRrNzBn1LFtSLxc7/MsP1lLl5NtI0oLWrZMjym3CcAJQYmqsZCv22b94R4hSorAwW\nGr2/wRH3JQVIToDU1/W4\n=JYMh\n-----END PGP SIGNATURE-----\n",
+        "payload": "tree e75b96ca1bb3e60a696bd57c5bb5aac9e7c5651b\nparent 8cacb0fc8fee9920b0515d1289e6ee8191eb3f21\nauthor rsinger417 <159086296+rsinger417@users.noreply.github.com> 1707860576 -0600\ncommitter GitHub <noreply@github.com> 1707860576 +0100\n\nBUG: Use NumberObject for /Border elements of annotations (#2451)\n\nAs defined in Table 164 – Entries common to all annotation dictionaries, the /Border Array consists of NumberObjects. Previously, pypdf used NameObject which is wrong.\r\n\r\nThe previous version caused a warning in the class NameObject: \"Incorrect first char in NameObject:({self})\".\r\n\r\nFixes #2444"
+      }
+    },
+    "url": "https://api.github.com/repos/py-pdf/pypdf/commits/b7bfd0d7eddfd0865a94cc9e7027df6596242cf7",
+    "html_url": "https://github.com/py-pdf/pypdf/commit/b7bfd0d7eddfd0865a94cc9e7027df6596242cf7",
+    "comments_url": "https://api.github.com/repos/py-pdf/pypdf/commits/b7bfd0d7eddfd0865a94cc9e7027df6596242cf7/comments",
+    "author": {
+      "login": "rsinger417",
+      "id": 159086296,
+      "node_id": "U_kgDOCXt22A",
+      "avatar_url": "https://avatars.githubusercontent.com/u/159086296?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rsinger417",
+      "html_url": "https://github.com/rsinger417",
+      "followers_url": "https://api.github.com/users/rsinger417/followers",
+      "following_url": "https://api.github.com/users/rsinger417/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rsinger417/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rsinger417/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rsinger417/subscriptions",
+      "organizations_url": "https://api.github.com/users/rsinger417/orgs",
+      "repos_url": "https://api.github.com/users/rsinger417/repos",
+      "events_url": "https://api.github.com/users/rsinger417/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rsinger417/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "web-flow",
+      "id": 19864447,
+      "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/web-flow",
+      "html_url": "https://github.com/web-flow",
+      "followers_url": "https://api.github.com/users/web-flow/followers",
+      "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+      "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+      "organizations_url": "https://api.github.com/users/web-flow/orgs",
+      "repos_url": "https://api.github.com/users/web-flow/repos",
+      "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/web-flow/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "8cacb0fc8fee9920b0515d1289e6ee8191eb3f21",
+        "url": "https://api.github.com/repos/py-pdf/pypdf/commits/8cacb0fc8fee9920b0515d1289e6ee8191eb3f21",
+        "html_url": "https://github.com/py-pdf/pypdf/commit/8cacb0fc8fee9920b0515d1289e6ee8191eb3f21"
+      }
+    ]
+  },
+  {
+    "sha": "8cacb0fc8fee9920b0515d1289e6ee8191eb3f21",
+    "node_id": "C_kwDOAC-ZndoAKDhjYWNiMGZjOGZlZTk5MjBiMDUxNWQxMjg5ZTZlZTgxOTFlYjNmMjE",
+    "commit": {
+      "author": {
+        "name": "Stefan",
+        "email": "96178532+stefan6419846@users.noreply.github.com",
+        "date": "2024-02-13T21:33:37Z"
+      },
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com",
+        "date": "2024-02-13T21:33:37Z"
+      },
+      "message": "DOC: Document easier way to update metadata (#2454)",
+      "tree": {
+        "sha": "79408055102933a8d62a3d1ec49df9f25fd5e963",
+        "url": "https://api.github.com/repos/py-pdf/pypdf/git/trees/79408055102933a8d62a3d1ec49df9f25fd5e963"
+      },
+      "url": "https://api.github.com/repos/py-pdf/pypdf/git/commits/8cacb0fc8fee9920b0515d1289e6ee8191eb3f21",
+      "comment_count": 0,
+      "verification": {
+        "verified": true,
+        "reason": "valid",
+        "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJly+AxCRC1aQ7uu5UhlAAAd2kQAB8venK8xBYafzASXTRV2ye/\nOkGIVobepYja0lKIgZpipPlmDbDnHB2UptWRMpAd7rNiL9iYnSqBNxOmCvfux99/\nqx0h9XuYzSZ1KJ6cK43ab1ErSsrjvLpO/LsMmtakzZR7BrFUjO6mIE3YuU0GmhKM\nNUPngT+A6/Lxz6Z+UwqkeylkcDj+90gNAPiKY2yr+mKmg99RI5Xqvm7j++vT3bPF\nJQmr46w0aiGW30Von0JAtu/IvprGksrfHWALFIYMHnJCaXJdv2mPJ8mwiLew/o4L\n0uicPmwnDvS7VdCObi6EKbEP4ptgierco8pAMVRpkUpnmu8ObgT7ZzPLT6iay6U1\n2Gtc0zYXlcVSo4JQW9iE9zrGMk91m+BmIOZAhJsgfdz4DewCWCBxmz4+u0wlIlzN\n6JwwZQsW3Yq/P/gJ9qxBUKPe3SAcs3jz2VG3fiOt/HzAA6YLAUPUDxnhwvWhju5i\nLiQEApEnIri4OeNhqYmOjsEI3aV/3s6jE2fEiGPDkQW61yMAAiSVgZk3BcnFwZzL\nHrf+JWTRnosPFOhkRoTH3AOzmOWOKUCCUmVdC8nKn4Sp0tp+31HIH/h3LmVflBLy\nXHwPT/6OwW1yBzueYM6LWwovNlk3AS2g19fgylOmokIkrnlmi4nCwD30hM8plEFk\ni7hsSGE/rfsjTt5lTBip\n=1RO9\n-----END PGP SIGNATURE-----\n",
+        "payload": "tree 79408055102933a8d62a3d1ec49df9f25fd5e963\nparent 3fb63f7e3839ce39ac98978c996f3086ba230a20\nauthor Stefan <96178532+stefan6419846@users.noreply.github.com> 1707860017 +0100\ncommitter GitHub <noreply@github.com> 1707860017 +0100\n\nDOC: Document easier way to update metadata (#2454)\n\n"
+      }
+    },
+    "url": "https://api.github.com/repos/py-pdf/pypdf/commits/8cacb0fc8fee9920b0515d1289e6ee8191eb3f21",
+    "html_url": "https://github.com/py-pdf/pypdf/commit/8cacb0fc8fee9920b0515d1289e6ee8191eb3f21",
+    "comments_url": "https://api.github.com/repos/py-pdf/pypdf/commits/8cacb0fc8fee9920b0515d1289e6ee8191eb3f21/comments",
+    "author": {
+      "login": "stefan6419846",
+      "id": 96178532,
+      "node_id": "U_kgDOBbuRZA",
+      "avatar_url": "https://avatars.githubusercontent.com/u/96178532?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/stefan6419846",
+      "html_url": "https://github.com/stefan6419846",
+      "followers_url": "https://api.github.com/users/stefan6419846/followers",
+      "following_url": "https://api.github.com/users/stefan6419846/following{/other_user}",
+      "gists_url": "https://api.github.com/users/stefan6419846/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/stefan6419846/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/stefan6419846/subscriptions",
+      "organizations_url": "https://api.github.com/users/stefan6419846/orgs",
+      "repos_url": "https://api.github.com/users/stefan6419846/repos",
+      "events_url": "https://api.github.com/users/stefan6419846/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/stefan6419846/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "web-flow",
+      "id": 19864447,
+      "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/web-flow",
+      "html_url": "https://github.com/web-flow",
+      "followers_url": "https://api.github.com/users/web-flow/followers",
+      "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+      "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+      "organizations_url": "https://api.github.com/users/web-flow/orgs",
+      "repos_url": "https://api.github.com/users/web-flow/repos",
+      "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/web-flow/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "3fb63f7e3839ce39ac98978c996f3086ba230a20",
+        "url": "https://api.github.com/repos/py-pdf/pypdf/commits/3fb63f7e3839ce39ac98978c996f3086ba230a20",
+        "html_url": "https://github.com/py-pdf/pypdf/commit/3fb63f7e3839ce39ac98978c996f3086ba230a20"
+      }
+    ]
+  },
+  {
+    "sha": "3fb63f7e3839ce39ac98978c996f3086ba230a20",
+    "node_id": "C_kwDOAC-ZndoAKDNmYjYzZjdlMzgzOWNlMzlhYzk4OTc4Yzk5NmYzMDg2YmEyMzBhMjA",
+    "commit": {
+      "author": {
+        "name": "Stefan",
+        "email": "96178532+stefan6419846@users.noreply.github.com",
+        "date": "2024-02-04T20:32:49Z"
+      },
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com",
+        "date": "2024-02-04T20:32:49Z"
+      },
+      "message": "TST: Avoid catching not emitted warnings (#2429)\n\nFix compatibility with pytest==8. \r\n\r\nRelevant upstream change: pytest-dev/pytest#9288\r\n\r\nFixes #2427",
+      "tree": {
+        "sha": "c96cab2f682f6db4c84440e26869b4d9de6a2bab",
+        "url": "https://api.github.com/repos/py-pdf/pypdf/git/trees/c96cab2f682f6db4c84440e26869b4d9de6a2bab"
+      },
+      "url": "https://api.github.com/repos/py-pdf/pypdf/git/commits/3fb63f7e3839ce39ac98978c996f3086ba230a20",
+      "comment_count": 0,
+      "verification": {
+        "verified": true,
+        "reason": "valid",
+        "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJlv/RxCRC1aQ7uu5UhlAAATI8QAB/yRz+hoeJVtjW/CePJo2Jv\n451gPAo66s7JMG+PwcCiI8KAAUEusDbrJAmdq8rfqnShSB83h/7g/s5oFr/1lFyh\noKkwoeMt6hGKtwEkTpa877gAWJ4ssRb1ymJoy7quPNlbFYtKngMC60Vc5TNEY1ZX\nQ1FdIG5rVRBsA5H7fP7k0q2QC6w/Ns6nftpPFIf3JSVnillJ/RKDLhEfPw6/PMi0\nnIJ2moTgTs6uyc4R0blR44BoElPd46ot/SQDcnHEwIQlWpfa2RIpulhF8qkO9fe3\neCRBQ7TZXjedsG+Da71QKxRWRFdwPqO+HI4u5EHNLIaw8z9450jtbz5H1NhNIB1s\nkIDTMgFXxGVuFKXfneduA6TAxrrJ12ONHcrUkN30y9AQ7Qe/B8LJ50iXQvo81SwZ\nqTFBluB6WiVuMMMT0pHgNCjsAEPvaagPa10qvjVokXh1rXlzQiNwqBWCbwj2b6f4\n8i3Vf9ufrK5p2WhsfO1aCW7Yc2C620sq66ic2Ck5cT2HLJA+cF1j7d7PT3/N0veo\ncnpPpAFeUs2A6R/zL0yJSoPV+BLM0BdahxfsBlT9pdrdqvBA7JIGOC9c3msSWBZY\n6GmfmsmWp0xdwYDJEzUL06shKjH6GlzhWvkjYuYH3myJBCoAjlUWCsJCvXWOD3iX\nPID6Cv+BtDfu80muR94A\n=bK1N\n-----END PGP SIGNATURE-----\n",
+        "payload": "tree c96cab2f682f6db4c84440e26869b4d9de6a2bab\nparent 61b73d49778e8f0fb172d5323e67677c9974e420\nauthor Stefan <96178532+stefan6419846@users.noreply.github.com> 1707078769 +0100\ncommitter GitHub <noreply@github.com> 1707078769 +0100\n\nTST: Avoid catching not emitted warnings (#2429)\n\nFix compatibility with pytest==8. \r\n\r\nRelevant upstream change: pytest-dev/pytest#9288\r\n\r\nFixes #2427"
+      }
+    },
+    "url": "https://api.github.com/repos/py-pdf/pypdf/commits/3fb63f7e3839ce39ac98978c996f3086ba230a20",
+    "html_url": "https://github.com/py-pdf/pypdf/commit/3fb63f7e3839ce39ac98978c996f3086ba230a20",
+    "comments_url": "https://api.github.com/repos/py-pdf/pypdf/commits/3fb63f7e3839ce39ac98978c996f3086ba230a20/comments",
+    "author": {
+      "login": "stefan6419846",
+      "id": 96178532,
+      "node_id": "U_kgDOBbuRZA",
+      "avatar_url": "https://avatars.githubusercontent.com/u/96178532?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/stefan6419846",
+      "html_url": "https://github.com/stefan6419846",
+      "followers_url": "https://api.github.com/users/stefan6419846/followers",
+      "following_url": "https://api.github.com/users/stefan6419846/following{/other_user}",
+      "gists_url": "https://api.github.com/users/stefan6419846/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/stefan6419846/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/stefan6419846/subscriptions",
+      "organizations_url": "https://api.github.com/users/stefan6419846/orgs",
+      "repos_url": "https://api.github.com/users/stefan6419846/repos",
+      "events_url": "https://api.github.com/users/stefan6419846/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/stefan6419846/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "web-flow",
+      "id": 19864447,
+      "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/web-flow",
+      "html_url": "https://github.com/web-flow",
+      "followers_url": "https://api.github.com/users/web-flow/followers",
+      "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+      "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+      "organizations_url": "https://api.github.com/users/web-flow/orgs",
+      "repos_url": "https://api.github.com/users/web-flow/repos",
+      "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/web-flow/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "61b73d49778e8f0fb172d5323e67677c9974e420",
+        "url": "https://api.github.com/repos/py-pdf/pypdf/commits/61b73d49778e8f0fb172d5323e67677c9974e420",
+        "html_url": "https://github.com/py-pdf/pypdf/commit/61b73d49778e8f0fb172d5323e67677c9974e420"
+      }
+    ]
+  },
+  {
+    "sha": "61b73d49778e8f0fb172d5323e67677c9974e420",
+    "node_id": "C_kwDOAC-ZndoAKDYxYjczZDQ5Nzc4ZThmMGZiMTcyZDUzMjNlNjc2NzdjOTk3NGU0MjA",
+    "commit": {
+      "author": {
+        "name": "CWKSC",
+        "email": "cwksc.person@gmail.com",
+        "date": "2024-02-03T08:02:35Z"
+      },
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com",
+        "date": "2024-02-03T08:02:35Z"
+      },
+      "message": "DOC: Typo `Polyline` → `PolyLine` in adding-pdf-annotations.md (#2426)",
+      "tree": {
+        "sha": "9fb79466999d9d73c6ba15afdc76ce4d6f59c470",
+        "url": "https://api.github.com/repos/py-pdf/pypdf/git/trees/9fb79466999d9d73c6ba15afdc76ce4d6f59c470"
+      },
+      "url": "https://api.github.com/repos/py-pdf/pypdf/git/commits/61b73d49778e8f0fb172d5323e67677c9974e420",
+      "comment_count": 0,
+      "verification": {
+        "verified": true,
+        "reason": "valid",
+        "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJlvfMbCRC1aQ7uu5UhlAAA1X0QADKiCwRr4WJNPYlwgJKp/I4l\nO/6H/uQ5XO6fSvkLNchzU+017kgwEfaPoEunTvb0rpAVfwjJknytCCaR5duQQ7np\naP23J6gIViawM15qp20C53q+5r6NUZnerOIrMKMGLaRtsDMIePYT6zd5Q9KTnx5/\nhF6X+LMx5zKDuXHmRV8Jhmii+8IQA4Ekgv/t+UNmkqpVQig603/IzPTVnUkY+Gcu\nNEHb1W66bS5/BvMyrqwDx//Z0kpxJltNAoaVNAAz1+KgUm/NncBJcuR95U7ffGkO\neoi9UqlF06YO4mkA7ZbAUfgujWEDsbCsnFuVsKe5RJLeRvidHQl7YJQg36mWV+He\nNTMttZX2UJOiFLDeWeEoJ+DixBmXO5EbYsZlFDhGFizNAtY14zW/7RUioBao20DZ\ny8RmYmmJW5p39h4gEvDD6+62lYqz+2SIPPSQdPNmANn2OOge43KArfyNYHbg4M13\n6yLzMZuY61B5arfV0JdDlBdLncws3C7JjKljOfSCYCJ0/Bq8fKL5206k60U3jyru\nRCoTtHFIWn1vzHgOf9cJMiIPWTa8HxH2+2mvZbDxmT+p4J5qgfRJ0BUw1i/klWqt\n1OfmSgMgdkgPxczSjHd2gnnasClNy4yyrWsdDjRKaTEOMSIsb7DUm8UnD3oDs+nC\nKMudDi6gn5ASiZf+ZsA5\n=MAdq\n-----END PGP SIGNATURE-----\n",
+        "payload": "tree 9fb79466999d9d73c6ba15afdc76ce4d6f59c470\nparent f851a532a5ec23b572d86bd7185b327a3fac6b58\nauthor CWKSC <cwksc.person@gmail.com> 1706947355 +0800\ncommitter GitHub <noreply@github.com> 1706947355 +0100\n\nDOC: Typo `Polyline` → `PolyLine` in adding-pdf-annotations.md (#2426)\n\n"
+      }
+    },
+    "url": "https://api.github.com/repos/py-pdf/pypdf/commits/61b73d49778e8f0fb172d5323e67677c9974e420",
+    "html_url": "https://github.com/py-pdf/pypdf/commit/61b73d49778e8f0fb172d5323e67677c9974e420",
+    "comments_url": "https://api.github.com/repos/py-pdf/pypdf/commits/61b73d49778e8f0fb172d5323e67677c9974e420/comments",
+    "author": {
+      "login": "CWKSC",
+      "id": 53114952,
+      "node_id": "MDQ6VXNlcjUzMTE0OTUy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53114952?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/CWKSC",
+      "html_url": "https://github.com/CWKSC",
+      "followers_url": "https://api.github.com/users/CWKSC/followers",
+      "following_url": "https://api.github.com/users/CWKSC/following{/other_user}",
+      "gists_url": "https://api.github.com/users/CWKSC/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/CWKSC/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/CWKSC/subscriptions",
+      "organizations_url": "https://api.github.com/users/CWKSC/orgs",
+      "repos_url": "https://api.github.com/users/CWKSC/repos",
+      "events_url": "https://api.github.com/users/CWKSC/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/CWKSC/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "web-flow",
+      "id": 19864447,
+      "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/web-flow",
+      "html_url": "https://github.com/web-flow",
+      "followers_url": "https://api.github.com/users/web-flow/followers",
+      "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+      "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+      "organizations_url": "https://api.github.com/users/web-flow/orgs",
+      "repos_url": "https://api.github.com/users/web-flow/repos",
+      "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/web-flow/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "f851a532a5ec23b572d86bd7185b327a3fac6b58",
+        "url": "https://api.github.com/repos/py-pdf/pypdf/commits/f851a532a5ec23b572d86bd7185b327a3fac6b58",
+        "html_url": "https://github.com/py-pdf/pypdf/commit/f851a532a5ec23b572d86bd7185b327a3fac6b58"
+      }
+    ]
+  },
+  {
+    "sha": "f851a532a5ec23b572d86bd7185b327a3fac6b58",
+    "node_id": "C_kwDOAC-ZndoAKGY4NTFhNTMyYTVlYzIzYjU3MmQ4NmJkNzE4NWIzMjdhM2ZhYzZiNTg",
+    "commit": {
+      "author": {
+        "name": "dependabot[bot]",
+        "email": "49699333+dependabot[bot]@users.noreply.github.com",
+        "date": "2024-02-03T08:00:35Z"
+      },
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com",
+        "date": "2024-02-03T08:00:35Z"
+      },
+      "message": "DEV: Bump codecov/codecov-action from 3 to 4 (#2430)\n\nBumps [codecov/codecov-action](https://github.com/codecov/codecov-action) from 3 to 4.\r\n- [Release notes](https://github.com/codecov/codecov-action/releases)\r\n- [Changelog](https://github.com/codecov/codecov-action/blob/main/CHANGELOG.md)\r\n- [Commits](https://github.com/codecov/codecov-action/compare/v3...v4)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: codecov/codecov-action\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-major\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+      "tree": {
+        "sha": "fb40fe05c5f1a6679bc1e7a24b0f9fc55c150c88",
+        "url": "https://api.github.com/repos/py-pdf/pypdf/git/trees/fb40fe05c5f1a6679bc1e7a24b0f9fc55c150c88"
+      },
+      "url": "https://api.github.com/repos/py-pdf/pypdf/git/commits/f851a532a5ec23b572d86bd7185b327a3fac6b58",
+      "comment_count": 0,
+      "verification": {
+        "verified": true,
+        "reason": "valid",
+        "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJlvfKjCRC1aQ7uu5UhlAAA9NUQAGTOt3JzejSo6o5fHUrLreus\nv8TScA1B4nuWsJLH0nvGArZ8y8L/9JqG2fUTs3WGjY3PL9Dgn9fhmO+3dMcUDEav\nEtBXdNHsodAUvNHKh1d9ZwCK+jSzbO9tSKiY4enxqUHnr+0m0q3XQHkYLf9eUklE\n9/vi/OCV8JSptRkiS+VOsSrqfO+zqNUfnOxpNy6UNLPaNDwZyom6WROZE6yXLm1W\nE0rsG10rBEXyvhjF2E4znoEcN/5+OIJr87h1Jys7y3qMXOo61my6bEpHY+gZpBRQ\nN3xo3ptu4BhP0a4oI8iDjnQMQLS4cLN++LeMuUbWIEpKtiKkF5q/bGP3s1wniLTD\nSYh14z0jIaJ7QPdkOEK2/Fv9lx5tno66bFe4vKC4DSmX3itcqh/XOiPFPkgRAalj\nAd5g6hs1QlJErAwQShe6lzNDRnIDGoD6ZOaTMdxlbRNdwInr83Qz4Gt92D+dX4eQ\njln9Welx4xTuPnYv6Qhmdc69Kk2nyhRuTnCsI0jaoqDRSLQxlzCuuQMn7u5XyqSS\npSkWUYOw8zjrJd7ItPVe3YII5JIiRLEkHrDzTwGZAcy2E6GPMDLeXsx4K6GUhsfC\nXenOpPuoo6BDk/bhrkWb7klyYG09JQtum31bCpDp1qxafXh5jh9Y0mztZJ4gWjaF\n0NawJ3AozsNrioHxf6xz\n=0OMP\n-----END PGP SIGNATURE-----\n",
+        "payload": "tree fb40fe05c5f1a6679bc1e7a24b0f9fc55c150c88\nparent 757932944f54ba661b89e0629ed3fc9d8345dbab\nauthor dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> 1706947235 +0100\ncommitter GitHub <noreply@github.com> 1706947235 +0100\n\nDEV: Bump codecov/codecov-action from 3 to 4 (#2430)\n\nBumps [codecov/codecov-action](https://github.com/codecov/codecov-action) from 3 to 4.\r\n- [Release notes](https://github.com/codecov/codecov-action/releases)\r\n- [Changelog](https://github.com/codecov/codecov-action/blob/main/CHANGELOG.md)\r\n- [Commits](https://github.com/codecov/codecov-action/compare/v3...v4)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: codecov/codecov-action\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-major\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>"
+      }
+    },
+    "url": "https://api.github.com/repos/py-pdf/pypdf/commits/f851a532a5ec23b572d86bd7185b327a3fac6b58",
+    "html_url": "https://github.com/py-pdf/pypdf/commit/f851a532a5ec23b572d86bd7185b327a3fac6b58",
+    "comments_url": "https://api.github.com/repos/py-pdf/pypdf/commits/f851a532a5ec23b572d86bd7185b327a3fac6b58/comments",
+    "author": {
+      "login": "dependabot[bot]",
+      "id": 49699333,
+      "node_id": "MDM6Qm90NDk2OTkzMzM=",
+      "avatar_url": "https://avatars.githubusercontent.com/in/29110?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/dependabot%5Bbot%5D",
+      "html_url": "https://github.com/apps/dependabot",
+      "followers_url": "https://api.github.com/users/dependabot%5Bbot%5D/followers",
+      "following_url": "https://api.github.com/users/dependabot%5Bbot%5D/following{/other_user}",
+      "gists_url": "https://api.github.com/users/dependabot%5Bbot%5D/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/dependabot%5Bbot%5D/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/dependabot%5Bbot%5D/subscriptions",
+      "organizations_url": "https://api.github.com/users/dependabot%5Bbot%5D/orgs",
+      "repos_url": "https://api.github.com/users/dependabot%5Bbot%5D/repos",
+      "events_url": "https://api.github.com/users/dependabot%5Bbot%5D/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/dependabot%5Bbot%5D/received_events",
+      "type": "Bot",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "web-flow",
+      "id": 19864447,
+      "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/web-flow",
+      "html_url": "https://github.com/web-flow",
+      "followers_url": "https://api.github.com/users/web-flow/followers",
+      "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+      "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+      "organizations_url": "https://api.github.com/users/web-flow/orgs",
+      "repos_url": "https://api.github.com/users/web-flow/repos",
+      "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/web-flow/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "757932944f54ba661b89e0629ed3fc9d8345dbab",
+        "url": "https://api.github.com/repos/py-pdf/pypdf/commits/757932944f54ba661b89e0629ed3fc9d8345dbab",
+        "html_url": "https://github.com/py-pdf/pypdf/commit/757932944f54ba661b89e0629ed3fc9d8345dbab"
+      }
+    ]
+  }
+]

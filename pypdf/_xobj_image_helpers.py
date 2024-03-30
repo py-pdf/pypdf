@@ -4,7 +4,7 @@ import sys
 from io import BytesIO
 from typing import Any, List, Tuple, Union, cast
 
-from ._utils import WHITESPACES, logger_warning
+from ._utils import check_if_whitespace_only, logger_warning
 from .constants import ColorSpaces
 from .errors import PdfReadError
 from .generic import (
@@ -20,7 +20,7 @@ if sys.version_info[:2] >= (3, 8):
 else:
     # PEP 586 introduced typing.Literal with Python 3.8
     # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import Literal  # type: ignore[assignment]
+    from typing_extensions import Literal
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeAlias
@@ -64,7 +64,7 @@ def _get_imagemode(
         pass
     elif not isinstance(color_space, list):
         raise PdfReadError(
-            "can not interprete colorspace", color_space
+            "Cannot interpret colorspace", color_space
         )  # pragma: no cover
     elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
         color_space = "/Device" + color_space[0][4:]
@@ -198,10 +198,14 @@ def _handle_flate(
                 expected_count = 2 * nb
                 if len(lookup) != expected_count:
                     if len(lookup) < expected_count:
-                        raise PdfReadError(f"Not enough lookup values: Expected {expected_count}, got {len(lookup)}.")
+                        raise PdfReadError(
+                            f"Not enough lookup values: Expected {expected_count}, got {len(lookup)}."
+                        )
+                    if not check_if_whitespace_only(lookup[expected_count:]):
+                        raise PdfReadError(
+                            f"Too many lookup values: Expected {expected_count}, got {len(lookup)}."
+                        )
                     lookup = lookup[:expected_count]
-                    if not all(_value in WHITESPACES for _value in lookup[expected_count:]):
-                        raise PdfReadError(f"Too many lookup values: Expected {expected_count}, got {len(lookup)}.")
                 colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
                     [

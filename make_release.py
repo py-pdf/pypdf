@@ -1,4 +1,4 @@
-"""Internal tool to update the changelog."""
+"""Internal tool to update the CHANGELOG."""
 
 import json
 import subprocess
@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple
 
-from rich.prompt import Prompt
+GH_ORG = "py-pdf"
+GH_PROJECT = "pypdf"
+VERSION_FILE_PATH = "pypdf/_version.py"
+CHANGELOG_FILE_PATH = "CHANGELOG.md"
 
 
 @dataclass(frozen=True)
@@ -41,7 +44,7 @@ def main(changelog_path: str) -> None:
 
     today = datetime.now(tz=timezone.utc)
     header = f"## Version {new_version}, {today:%Y-%m-%d}\n"
-    url = f"https://github.com/py-pdf/pypdf/compare/{git_tag}...{new_version}"
+    url = f"https://github.com/{GH_ORG}/{GH_PROJECT}/compare/{git_tag}...{new_version}"
     trailer = f"\n[Full Changelog]({url})\n\n"
     new_entry = header + changes + trailer
     print(new_entry)
@@ -61,8 +64,8 @@ def main(changelog_path: str) -> None:
 def print_instructions(new_version: str) -> None:
     """Print release instructions."""
     print("=" * 80)
-    print(f"☑  _version.py was adjusted to '{new_version}'")
-    print("☑  CHANGELOG.md was adjusted")
+    print(f"☑  {VERSION_FILE_PATH} was adjusted to '{new_version}'")
+    print(f"☑  {CHANGELOG_FILE_PATH} was adjusted")
     print("")
     print("Now run:")
     print("  git commit -eF RELEASE_COMMIT_MSG.md")
@@ -73,12 +76,14 @@ def print_instructions(new_version: str) -> None:
 
 def adjust_version_py(version: str) -> None:
     """Adjust the __version__ string."""
-    with open("pypdf/_version.py", "w") as fp:
+    with open(VERSION_FILE_PATH, "w") as fp:
         fp.write(f'__version__ = "{version}"\n')
 
 
 def get_version_interactive(new_version: str, changes: str) -> str:
     """Get the new __version__ interactively."""
+    from rich.prompt import Prompt
+
     print("The changes are:")
     print(changes)
     orig = new_version
@@ -93,8 +98,7 @@ def get_version_interactive(new_version: str, changes: str) -> str:
 
 def is_semantic_version(version: str) -> bool:
     """Check if the given version is a semantic version."""
-    # It's not so important to cover the edge-cases like pre-releases
-    # This is meant for pypdf only and we don't make pre-releases
+    # This doesn't cover the edge-cases like pre-releases
     if version.count(".") != 2:
         return False
     try:
@@ -247,8 +251,11 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
 
     if grouped:
         output += "\n### Other\n"
+        output_with_user += "\n### Other\n"
         for prefix in grouped:
-            output += f"- {prefix}: {grouped[prefix]}\n"
+            for commit in grouped[prefix]:
+                output += f"- {prefix}: {commit['msg']}\n"
+                output_with_user += f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
 
     return output, output_with_user
 
@@ -284,7 +291,7 @@ def get_author_mapping(line_count: int) -> Dict[str, str]:
     mapping: Dict[str, str] = {}
     for _ in range(0, line_count, per_page):
         with urllib.request.urlopen(  # noqa: S310
-            f"https://api.github.com/repos/py-pdf/pypdf/commits?per_page={per_page}&page={page}"
+            f"https://api.github.com/repos/{GH_ORG}/{GH_PROJECT}/commits?per_page={per_page}&page={page}"
         ) as response:
             commits = json.loads(response.read())
         page += 1
@@ -304,19 +311,17 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
     Returns:
         List of all changes since git_tag.
     """
-    commits = str(
-        subprocess.check_output(
-            [
-                "git",
-                "--no-pager",
-                "log",
-                f"{git_tag}..HEAD",
-                '--pretty=format:"%H:::%s:::%aN"',
-            ],
-            stderr=subprocess.STDOUT,
-        )
-    ).strip("'b\\n")
-    lines = commits.split("\\n")
+    commits = subprocess.check_output(
+        [
+            "git",
+            "--no-pager",
+            "log",
+            f"{git_tag}..HEAD",
+            '--pretty=format:"%H:::%s:::%aN"',
+        ],
+        stderr=subprocess.STDOUT,
+    ).decode("UTF-8").strip()
+    lines = commits.splitlines()
     authors = get_author_mapping(len(lines))
     return [parse_commit_line(line, authors) for line in lines if line != ""]
 
@@ -339,7 +344,7 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
         raise ValueError(f"Invalid commit line: '{line}'")
     commit_hash, rest, author = parts
     if ":" in rest:
-        prefix, message = rest.split(":", 1)
+        prefix, message = rest.split(": ", 1)
     else:
         prefix = ""
         message = rest
@@ -366,4 +371,4 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
 
 
 if __name__ == "__main__":
-    main("CHANGELOG.md")
+    main(CHANGELOG_FILE_PATH)

@@ -3,6 +3,7 @@ Testing the text-extraction submodule and ensuring the quality of text extractio
 
 The tested code might be in _page.py.
 """
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -10,12 +11,15 @@ import pytest
 from pypdf import PdfReader, mult
 from pypdf._text_extraction import set_custom_rtl
 
+from . import get_data_from_url
+
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
+@pytest.mark.samples()
 @pytest.mark.parametrize(("visitor_text"), [None, lambda a, b, c, d, e: None])
 def test_multi_language(visitor_text):
     reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
@@ -99,3 +103,56 @@ def test_visitor_text_matrices(file_name, constraints):
         x = matches[0]["x"]
         y = matches[0]["y"]
         assert constraint(x, y), f'Line "{text}" is wrong at x:{x}, y:{y}'
+
+
+@pytest.mark.xfail(reason="known whitespace issue #2336")
+@pytest.mark.enable_socket()
+def test_issue_2336():
+    name = "Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(name=name)))
+    page = reader.pages[0]
+    actual_text = page.extract_text()
+    assert "Beira Rio" in actual_text
+
+
+def test_layout_mode_font_class_to_dict():
+    from pypdf._text_extraction._layout_mode._font import Font
+
+    font = Font("foo", space_width=8, encoding="utf-8", char_map={}, font_dictionary={})
+    assert Font.to_dict(font) == {
+        "char_map": {},
+        "encoding": "utf-8",
+        "font_dictionary": {},
+        "space_width": 8,
+        "subtype": "foo",
+        "width_map": {},
+    }
+
+
+@pytest.mark.enable_socket()
+def test_layout_mode_epic_page_fonts():
+    url = "https://github.com/py-pdf/pypdf/files/13836944/Epic.Page.PDF"
+    name = "Epic Page.PDF"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    expected = (RESOURCE_ROOT / "Epic.Page.layout.txt").read_text(encoding="utf-8")
+    assert expected == reader.pages[0].extract_text(extraction_mode="layout")
+
+
+def test_layout_mode_uncommon_operators():
+    # coverage for layout mode Tc, Tz, Ts, ', ", TD, TL, and Tw
+    reader = PdfReader(RESOURCE_ROOT / "toy.pdf")
+    expected = (RESOURCE_ROOT / "toy.layout.txt").read_text(encoding="utf-8")
+    assert expected == reader.pages[0].extract_text(extraction_mode="layout")
+
+
+@pytest.mark.enable_socket()
+def test_layout_mode_type0_font_widths():
+    # Cover both the 'int int int' and 'int [int int ...]' formats for Type0
+    # /DescendantFonts /W array entries.
+    url = "https://github.com/py-pdf/pypdf/files/13533204/Claim.Maker.Alerts.Guide_pg2.PDF"
+    name = "Claim Maker Alerts Guide_pg2.PDF"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    expected = (RESOURCE_ROOT / "Claim Maker Alerts Guide_pg2.layout.txt").read_text(
+        encoding="utf-8"
+    )
+    assert expected == reader.pages[0].extract_text(extraction_mode="layout")

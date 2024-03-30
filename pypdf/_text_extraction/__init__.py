@@ -12,6 +12,7 @@ from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
 CUSTOM_RTL_MIN: int = -1
 CUSTOM_RTL_MAX: int = -1
 CUSTOM_RTL_SPECIAL_CHARS: List[int] = []
+LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS: int = 5
 
 
 class OrientationNotFoundError(Exception):
@@ -216,7 +217,7 @@ def handle_tj(
 ) -> Tuple[str, bool]:
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
-    if orientation in orientations:
+    if orientation in orientations and len(operands) > 0:
         if isinstance(operands[0], str):
             text += operands[0]
         else:
