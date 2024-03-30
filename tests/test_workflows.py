@@ -547,7 +547,11 @@ def test_get_fields_warns(tmp_path, caplog, url, name):
         retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert retrieved_fields == {}
-    assert normalize_warnings(caplog.text) == ["Object 2 0 not defined."]
+    assert normalize_warnings(caplog.text) == [
+        "Ignoring wrong pointing object 1 65536 (offset 0)",
+        "Ignoring wrong pointing object 2 65536 (offset 0)",
+        "Object 2 0 not defined.",
+    ]
 
 
 @pytest.mark.enable_socket()

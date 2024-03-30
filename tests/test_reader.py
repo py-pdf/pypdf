@@ -268,7 +268,9 @@ def test_get_images(src, expected_images):
             False,
             -1,
             False,
-            ["startxref on same line as offset"],
+            [
+                "startxref on same line as offset",
+            ],
         ),
         (
             False,
@@ -322,11 +324,12 @@ def test_get_images_raw(
         b"%%%%EOF"
     )
     pdf_data = pdf_data % (
-        pdf_data.find(b"1 0 obj"),
-        pdf_data.find(b"2 0 obj"),
-        pdf_data.find(b"3 0 obj"),
-        pdf_data.find(b"4 0 obj"),
-        pdf_data.find(b"5 0 obj"),
+        # - 1 below in the find because of the double %
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"4 0 obj") - 1,
+        pdf_data.find(b"5 0 obj") - 1,
         b"/Prev 0 " if with_prev_0 else b"",
         # startx_correction should be -1 due to double % at the beginning
         # inducing an error on startxref computation
@@ -593,11 +596,11 @@ def test_read_unknown_zero_pages(caplog):
         b"%%%%EOF"
     )
     pdf_data = pdf_data % (
-        pdf_data.find(b"1 0 obj"),
-        pdf_data.find(b"2 0 obj"),
-        pdf_data.find(b"3 0 obj"),
-        pdf_data.find(b"4 0 obj"),
-        pdf_data.find(b"5 0 obj"),
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"4 0 obj") - 1,
+        pdf_data.find(b"5 0 obj") - 1,
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
