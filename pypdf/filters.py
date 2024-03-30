@@ -855,7 +855,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     if IA.S_MASK in x_object_obj:  # add alpha channel
         alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
         if img.size != alpha.size:
-            logger_warning(f"image and mask size not matching: {obj_as_text}", __name__)                
+            logger_warning(f"image and mask size not matching: {obj_as_text}", __name__)
         else:
             # TODO : implement mask
             if alpha.mode != "L":
