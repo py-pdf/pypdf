@@ -1,10 +1,12 @@
 """Test the pypdf._page_labels module."""
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
 from pypdf import PdfReader
 from pypdf._page_labels import (
+    get_label_from_nums,
     index2label,
     number2lowercase_letter,
     number2lowercase_roman_numeral,
@@ -15,6 +17,7 @@ from pypdf._page_labels import (
     nums_next,
 )
 from pypdf.generic import (
+    ArrayObject,
     DictionaryObject,
     NameObject,
     NullObject,
@@ -22,6 +25,10 @@ from pypdf.generic import (
 )
 
 from . import get_data_from_url
+
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
@@ -119,3 +126,19 @@ def test_index2label_kids():
         # whole list itself here.
         expected.remove(x)
     assert r.page_labels == expected
+
+
+def test_get_label_from_nums__empty_nums_list():
+    dictionary_object = DictionaryObject()
+    dictionary_object[NameObject("/Nums")] = ArrayObject()
+    assert get_label_from_nums(dictionary_object, 13) == "14"
+
+
+def test_index2label__empty_kids_list():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    number_tree = DictionaryObject()
+    number_tree[NameObject("/Kids")] = ArrayObject()
+    root = reader.root_object
+    root[NameObject("/PageLabels")] = number_tree
+
+    assert index2label(reader, 42) == "43"
