@@ -1,20 +1,18 @@
-.. pypdf documentation main file, created by
+.. PyPDF2 documentation main file, created by
    sphinx-quickstart on Thu Apr  7 20:13:19 2022.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to pypdf
+Welcome to PyPDF2
 =================
 
-pypdf is a `free <https://en.wikipedia.org/wiki/Free_software>`_ and open
+PyPDF2 is a `free <https://en.wikipedia.org/wiki/Free_software>`_ and open
 source pure-python PDF library capable of splitting,
 merging, cropping, and transforming the pages of PDF files. It can also add
 custom data, viewing options, and passwords to PDF files.
-pypdf can retrieve text and metadata from PDFs as well.
+PyPDF2 can retrieve text and metadata from PDFs as well.
 
-See `pdfly <https://github.com/py-pdf/pdfly>`_ for a CLI application that uses pypdf to interact with PDFs.
-
-You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
+You can contribute to `PyPDF2 on GitHub <https://github.com/py-pdf/PyPDF2>`_.
 
 .. toctree::
    :caption: User Guide
@@ -26,21 +24,17 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    user/suppress-warnings
    user/metadata
    user/extract-text
-   user/post-processing-in-text-extraction
    user/extract-images
-   user/extract-attachments
    user/encryption-decryption
    user/merging-pdfs
    user/cropping-and-transforming
    user/add-watermark
    user/reading-pdf-annotations
    user/adding-pdf-annotations
-   user/viewer-preferences
    user/forms
    user/streaming-data
    user/file-size
    user/pdf-version-support
-   user/pdfa-compliance
 
 
 .. toctree::
@@ -49,21 +43,18 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
 
    modules/PdfReader
    modules/PdfWriter
-   modules/Destination
-   modules/DocumentInformation
-   modules/Field
-   modules/Fit
+   modules/PdfMerger
    modules/PageObject
-   modules/PageRange
-   modules/PaperSize
-   modules/RectangleObject
    modules/Transformation
+   modules/DocumentInformation
    modules/XmpInformation
-   modules/annotations
-   modules/constants
-   modules/errors
-   modules/generic
-   modules/PdfDocCommon
+   modules/Destination
+   modules/RectangleObject
+   modules/Field
+   modules/PageRange
+   modules/AnnotationBuilder
+   modules/Fit
+   modules/PaperSize
 
 .. toctree::
    :caption: Developer Guide
@@ -71,25 +62,19 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
 
    dev/intro
    dev/pdf-format
-   dev/pypdf-parsing
-   dev/pypdf-writing
    dev/cmaps
    dev/deprecations
-   dev/documentation
    dev/testing
-   dev/releasing
 
 .. toctree::
-   :caption: About pypdf
+   :caption: About PyPDF2
    :maxdepth: 1
 
    meta/CHANGELOG
    meta/changelog-v1
    meta/project-governance
-   meta/taking-ownership
    meta/history
    meta/CONTRIBUTORS
-   meta/scope-of-pypdf
    meta/comparisons
    meta/faq
 

@@ -1,10 +1,9 @@
-"""
-Configuration file for the Sphinx documentation builder.
+# Configuration file for the Sphinx documentation builder.
+#
+# This file only contains a selection of the most common options. For a full
+# list see the documentation:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-This file only contains a selection of the most common options.
-For a full list see the documentation:
-https://www.sphinx-doc.org/en/master/usage/configuration.html
-"""
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -17,30 +16,17 @@ import sys
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
 
-import pypdf as py_pkg  # noqa: E402
-
 shutil.copyfile("../CHANGELOG.md", "meta/CHANGELOG.md")
 shutil.copyfile("../CONTRIBUTORS.md", "meta/CONTRIBUTORS.md")
 
 # -- Project information -----------------------------------------------------
 
-project = py_pkg.__name__
-copyright = "2006 - 2023, Mathieu Fenniak and pypdf contributors"
+project = "PyPDF2"
+copyright = "2006 - 2008, Mathieu Fenniak"
 author = "Mathieu Fenniak"
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-#
-# The short X.Y version.
-version = py_pkg.__version__
-# The full version, including alpha/beta/rc tags.
-release = py_pkg.__version__
 
 # -- General configuration ---------------------------------------------------
-# If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = "4.0.0"
-
 myst_all_links_external = True
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -52,40 +38,13 @@ rst_epilog = """
 
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
-    # External
     "myst_parser",
 ]
-
-python_version = ".".join(map(str, sys.version_info[:2]))
-intersphinx_mapping = {
-    "python": (f"https://docs.python.org/{python_version}", None),
-    "Pillow": ("https://pillow.readthedocs.io/en/latest/", None),
-}
-
-nitpick_ignore_regex = [
-    # For reasons unclear at this stage the io module prefixes everything with _io
-    # and this confuses sphinx
-    (
-        r"py:class",
-        r"(_io.(FileIO|BytesIO|Buffered(Reader|Writer))|pypdf.*PdfDocCommon)",
-    ),
-]
-
-autodoc_default_options = {
-    "member-order": "bysource",
-    "members": True,
-    "show-inheritance": True,
-    "undoc-members": True,
-}
-autodoc_inherit_docstrings = False
-autodoc_typehints_format = "short"
-python_use_unqualified_type_names = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -127,10 +86,3 @@ html_logo = "_static/logo.png"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-
-# -- Options for Napoleon  -----------------------------------------------------
-
-napoleon_google_docstring = True
-napoleon_numpy_docstring = False  # Explicitly prefer Google style docstring
-napoleon_use_param = True  # for type hint support
-napoleon_use_rtype = False  # False so the return type is inline with the description.

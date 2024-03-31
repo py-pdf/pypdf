@@ -1,15 +1,14 @@
-"""Test the pypdf.generic module."""
-
+import os
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-from pypdf import PdfMerger, PdfReader, PdfWriter
-from pypdf.constants import CheckboxRadioButtonAttributes
-from pypdf.errors import PdfReadError, PdfStreamError
-from pypdf.generic import (
+from PyPDF2 import PdfMerger, PdfReader, PdfWriter
+from PyPDF2.constants import CheckboxRadioButtonAttributes
+from PyPDF2.errors import PdfReadError, PdfStreamError
+from PyPDF2.generic import (
     AnnotationBuilder,
     ArrayObject,
     BooleanObject,
@@ -35,7 +34,7 @@ from pypdf.generic import (
     read_string_from_stream,
 )
 
-from . import ReaderDummy, get_data_from_url
+from . import ReaderDummy, get_pdf_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -59,7 +58,7 @@ def test_number_object_exception(caplog):
 
 
 def test_number_object_no_exception():
-    NumberObject(2**100_000_000)
+    NumberObject(2**100000000)
 
 
 def test_create_string_object_exception():
@@ -87,7 +86,7 @@ def test_boolean_object(value, expected, tell):
 def test_boolean_object_write():
     stream = BytesIO()
     boolobj = BooleanObject(None)
-    boolobj.write_to_stream(stream)
+    boolobj.write_to_stream(stream, encryption_key=None)
     stream.seek(0, 0)
     assert stream.read() == b"false"
 
@@ -133,53 +132,53 @@ def test_indirect_object_premature(value):
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_read_hex_string_from_stream():
+def test_readHexStringFromStream():
     stream = BytesIO(b"a1>")
     assert read_hex_string_from_stream(stream) == "\x10"
 
 
-def test_read_hex_string_from_stream_exception():
+def test_readHexStringFromStream_exception():
     stream = BytesIO(b"")
     with pytest.raises(PdfStreamError) as exc:
         read_hex_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_read_string_from_stream_exception():
+def test_readStringFromStream_exception():
     stream = BytesIO(b"x")
     with pytest.raises(PdfStreamError) as exc:
         read_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_read_string_from_stream_not_in_escapedict_no_digit():
+def test_readStringFromStream_not_in_escapedict_no_digit():
     stream = BytesIO(b"x\\y")
     with pytest.raises(PdfReadError) as exc:
         read_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_read_string_from_stream_multichar_eol():
+def test_readStringFromStream_multichar_eol():
     stream = BytesIO(b"x\\\n )")
     assert read_string_from_stream(stream) == " "
 
 
-def test_read_string_from_stream_multichar_eol2():
+def test_readStringFromStream_multichar_eol2():
     stream = BytesIO(b"x\\\n\n)")
     assert read_string_from_stream(stream) == ""
 
 
-def test_read_string_from_stream_excape_digit():
+def test_readStringFromStream_excape_digit():
     stream = BytesIO(b"x\\1a )")
     assert read_string_from_stream(stream) == "\x01a "
 
 
-def test_read_string_from_stream_excape_digit2():
+def test_readStringFromStream_excape_digit2():
     stream = BytesIO(b"(hello \\1\\2\\3\\4)")
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
 
 
-def test_name_object(caplog):
+def test_NameObject(caplog):
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
@@ -214,23 +213,24 @@ def test_name_object(caplog):
 
     # test write
     b = BytesIO()
-    NameObject("/hello").write_to_stream(b)
+    NameObject("/hello").write_to_stream(b, None)
     assert bytes(b.getbuffer()) == b"/hello"
 
     caplog.clear()
     b = BytesIO()
-    with pytest.raises(DeprecationWarning):
-        NameObject("hello").write_to_stream(b)
+    NameObject("hello").write_to_stream(b, None)
+    assert bytes(b.getbuffer()) == b"hello"
+    assert "Incorrect first char" in caplog.text
 
     caplog.clear()
     b = BytesIO()
-    NameObject("/DIJMAC+Arial Black#1").write_to_stream(b)
+    NameObject("/DIJMAC+Arial Black#1").write_to_stream(b, None)
     assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
     assert caplog.text == ""
 
     b = BytesIO()
-    NameObject("/你好世界 (%)").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
+    NameObject("/你好世界").write_to_stream(b, None)
+    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C"
     assert caplog.text == ""
 
 
@@ -250,10 +250,7 @@ def test_destination_fit_r():
 
 
 def test_destination_fit_v():
-    d = Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
-
-    writer = PdfWriter()
-    writer.add_named_destination_object(d)
+    Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
 
     # Trigger Exception
     Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=None))
@@ -262,25 +259,15 @@ def test_destination_fit_v():
 def test_outline_item_write_to_stream():
     stream = BytesIO()
     oi = OutlineItem(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
-    oi.write_to_stream(stream)
+    oi.write_to_stream(stream, None)
     stream.seek(0, 0)
-    assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0.0 ]\n>>"
+    assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0 ]\n>>"
 
 
 def test_encode_pdfdocencoding_keyerror():
     with pytest.raises(UnicodeEncodeError) as exc:
         encode_pdfdocencoding("😀")
     assert exc.value.args[0] == "pdfdocencoding"
-
-
-@pytest.mark.parametrize("test_input", ["", "data"])
-def test_encode_pdfdocencoding_returns_bytes(test_input):
-    """
-    Test that encode_pdfdocencoding() always returns bytes because bytearray
-    is duck type compatible with bytes in mypy
-    """
-    out = encode_pdfdocencoding(test_input)
-    assert isinstance(out, bytes)
 
 
 def test_read_object_comment_exception():
@@ -312,60 +299,60 @@ def test_read_object_comment():
     assert out == 1
 
 
-def test_bytestringobject():
+def test_ByteStringObject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")
-    bo.write_to_stream(stream)
+    bo.write_to_stream(stream, encryption_key="foobar")
     stream.seek(0, 0)
-    assert stream.read() == b"<73747265616d>"  # TODO: how can we verify this?
+    assert stream.read() == b"<1cdd628b972e>"  # TODO: how can we verify this?
 
 
-def test_dictionaryobject_key_is_no_pdfobject():
+def test_DictionaryObject_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do["foo"] = NameObject("/GoTo")
     assert exc.value.args[0] == "key must be PdfObject"
 
 
-def test_dictionaryobject_xmp_meta():
+def test_DictionaryObject_xmp_meta():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     assert do.xmp_metadata is None
 
 
-def test_dictionaryobject_value_is_no_pdfobject():
+def test_DictionaryObject_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do[NameObject("/S")] = "/GoTo"
     assert exc.value.args[0] == "value must be PdfObject"
 
 
-def test_dictionaryobject_setdefault_key_is_no_pdfobject():
+def test_DictionaryObject_setdefault_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault("foo", NameObject("/GoTo"))
     assert exc.value.args[0] == "key must be PdfObject"
 
 
-def test_dictionaryobject_setdefault_value_is_no_pdfobject():
+def test_DictionaryObject_setdefault_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
     assert exc.value.args[0] == "value must be PdfObject"
 
 
-def test_dictionaryobject_setdefault_value():
+def test_DictionaryObject_setdefault_value():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     do.setdefault(NameObject("/S"), NameObject("/GoTo"))
 
 
-def test_dictionaryobject_read_from_stream():
+def test_DictionaryObject_read_from_stream():
     stream = BytesIO(b"<< /S /GoTo >>")
     pdf = None
     out = DictionaryObject.read_from_stream(stream, pdf)
     assert out.get_object() == {NameObject("/S"): NameObject("/GoTo")}
 
 
-def test_dictionaryobject_read_from_stream_broken():
+def test_DictionaryObject_read_from_stream_broken():
     stream = BytesIO(b"< /S /GoTo >>")
     pdf = None
     with pytest.raises(PdfReadError) as exc:
@@ -376,7 +363,7 @@ def test_dictionaryobject_read_from_stream_broken():
     )
 
 
-def test_dictionaryobject_read_from_stream_unexpected_end():
+def test_DictionaryObject_read_from_stream_unexpected_end():
     stream = BytesIO(b"<< \x00/S /GoTo")
     pdf = None
     with pytest.raises(PdfStreamError) as exc:
@@ -384,7 +371,7 @@ def test_dictionaryobject_read_from_stream_unexpected_end():
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_dictionaryobject_read_from_stream_stream_no_newline():
+def test_DictionaryObject_read_from_stream_stream_no_newline():
     stream = BytesIO(b"<< /S /GoTo >>stream")
     pdf = None
     with pytest.raises(PdfReadError) as exc:
@@ -393,22 +380,17 @@ def test_dictionaryobject_read_from_stream_stream_no_newline():
 
 
 @pytest.mark.parametrize(("strict"), [(True), (False)])
-def test_dictionaryobject_read_from_stream_stream_no_stream_length(strict, caplog):
-    stream = BytesIO(b"<< /S /GoTo >>stream\n123456789endstream abcd")
+def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
+    stream = BytesIO(b"<< /S /GoTo >>stream\n")
 
     class Tst:  # to replace pdf
         strict = False
 
     pdf = Tst()
     pdf.strict = strict
-    if strict:
-        with pytest.raises(PdfReadError) as exc:
-            DictionaryObject.read_from_stream(stream, pdf)
-        assert exc.value.args[0] == "Stream length not defined"
-    else:
-        o = DictionaryObject.read_from_stream(stream, pdf)
-        assert "Stream length not defined" in caplog.text
-        assert o.get_data() == b"123456789"
+    with pytest.raises(PdfReadError) as exc:
+        DictionaryObject.read_from_stream(stream, pdf)
+    assert exc.value.args[0] == "Stream length not defined"
 
 
 @pytest.mark.parametrize(
@@ -421,7 +403,7 @@ def test_dictionaryobject_read_from_stream_stream_no_stream_length(strict, caplo
         (False, 10, False),
     ],
 )
-def test_dictionaryobject_read_from_stream_stream_stream_valid(
+def test_DictionaryObject_read_from_stream_stream_stream_valid(
     strict, length, should_fail
 ):
     stream = BytesIO(b"<< /S /GoTo /Length %d >>stream\nBT /F1\nendstream\n" % length)
@@ -436,12 +418,12 @@ def test_dictionaryobject_read_from_stream_stream_stream_valid(
         # TODO: What should happen with the stream?
         assert do == {"/S": "/GoTo"}
         if length in (6, 10):
-            assert b"BT /F1" in do.get_data()
+            assert b"BT /F1" in do._StreamObject__data
         raise PdfReadError("__ALLGOOD__")
     assert should_fail ^ (exc.value.args[0] == "__ALLGOOD__")
 
 
-def test_rectangleobject():
+def test_RectangleObject():
     ro = RectangleObject((1, 2, 3, 4))
     assert ro.lower_left == (1, 2)
     assert ro.lower_right == (3, 2)
@@ -468,20 +450,21 @@ def test_rectangleobject():
     assert ro.upper_right == (14, 18)
 
 
-def test_textstringobject_exc():
+def test_TextStringObject_exc():
     tso = TextStringObject("foo")
     with pytest.raises(Exception) as exc:
         tso.get_original_bytes()
     assert exc.value.args[0] == "no information about original bytes"
 
 
-def test_textstringobject_autodetect_utf16():
+def test_TextStringObject_autodetect_utf16():
     tso = TextStringObject("foo")
     tso.autodetect_utf16 = True
     assert tso.get_original_bytes() == b"\xfe\xff\x00f\x00o\x00o"
 
 
 def test_remove_child_not_in_tree():
+
     tree = TreeObject()
     with pytest.raises(ValueError) as exc:
         tree.remove_child(ChildDummy())
@@ -489,6 +472,7 @@ def test_remove_child_not_in_tree():
 
 
 def test_remove_child_not_in_that_tree():
+
     tree = TreeObject()
     tree.indirect_reference = NullObject()
     child = TreeObject()
@@ -505,7 +489,7 @@ def test_remove_child_not_in_that_tree():
 def test_remove_child_not_found_in_tree():
     class ChildDummy(DictionaryObject):
         @property
-        def indirect_reference(self) -> "ChildDummy":
+        def indirect_reference(self):
             return self
 
     tree = TreeObject()
@@ -534,7 +518,7 @@ def test_remove_child_found_in_tree():
     child1_ref = writer._add_object(child1)
     tree.add_child(child1_ref, writer)
     assert tree[NameObject("/Count")] == 1
-    assert len(list(tree.children())) == 1
+    assert len([el for el in tree.children()]) == 1
 
     # Add second child
     child2 = TreeObject()
@@ -542,12 +526,12 @@ def test_remove_child_found_in_tree():
     child2_ref = writer._add_object(child2)
     tree.add_child(child2_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len(list(tree.children())) == 2
+    assert len([el for el in tree.children()]) == 2
 
     # Remove last child
     tree.remove_child(child2_ref)
     assert tree[NameObject("/Count")] == 1
-    assert len(list(tree.children())) == 1
+    assert len([el for el in tree.children()]) == 1
 
     # Add new child
     child3 = TreeObject()
@@ -555,32 +539,33 @@ def test_remove_child_found_in_tree():
     child3_ref = writer._add_object(child3)
     tree.add_child(child3_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len(list(tree.children())) == 2
+    assert len([el for el in tree.children()]) == 2
 
     # Remove first child
     child1 = tree[NameObject("/First")]
     tree.remove_child(child1)
     assert tree[NameObject("/Count")] == 1
-    assert len(list(tree.children())) == 1
+    assert len([el for el in tree.children()]) == 1
 
     child4 = TreeObject()
     child4[NameObject("/Foo")] = TextStringObject("4")
     child4_ref = writer._add_object(child4)
     tree.add_child(child4_ref, writer)
     assert tree[NameObject("/Count")] == 2
-    assert len(list(tree.children())) == 2
+    assert len([el for el in tree.children()]) == 2
 
     child5 = TreeObject()
     child5[NameObject("/Foo")] = TextStringObject("5")
     child5_ref = writer._add_object(child5)
     tree.add_child(child5_ref, writer)
     assert tree[NameObject("/Count")] == 3
-    assert len(list(tree.children())) == 3
+    assert len([el for el in tree.children()]) == 3
 
     # Remove middle child
+    # tree.remove_child(child4)
     child4.remove_from_tree()
     assert tree[NameObject("/Count")] == 2
-    assert len(list(tree.children())) == 2
+    assert len([el for el in tree.children()]) == 2
 
     tree.empty_tree()
 
@@ -601,73 +586,78 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.parametrize(
-    ("url", "name", "caplog_content"),
-    [
-        (  # parse_content_stream_peek_percentage
-            "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf",
-            "tika-985770.pdf",
-            "",
-        ),
-        (  # read_inline_image_no_has_q
-            "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf",
-            "tika-998719.pdf",
-            "",
-        ),
-        (  # read_inline_image_loc_neg_1
-            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf",
-            "tika-935066.pdf",
-            "",
-        ),
-        (  # object_read_from_stream_unicode_error
-            "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf",
-            "tika-974966.pdf",
-            "",
-        ),
-        (  # dict_read_from_stream
-            "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf",
-            "tika-984877.pdf",
-            "Multiple definitions in dictionary at byte 0x1084 for key /Length",
-        ),
-    ],
-    ids=[
-        "parse_content_stream_peek_percentage",
-        "read_inline_image_no_has_q",
-        "read_inline_image_loc_neg_1",
-        "object_read_from_stream_unicode_error",
-        "dict_read_from_stream",
-    ],
-)
-def test_extract_text(caplog, url: str, name: str, caplog_content: str):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+@pytest.mark.external
+def test_dict_read_from_stream(caplog):
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
+    name = "tika-984877.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
-    if caplog_content == "":
-        assert caplog_content == caplog.text
-    else:
-        assert caplog_content in caplog.text
+    assert (
+        "Multiple definitions in dictionary at byte 0x1084 for key /Length"
+        in caplog.text
+    )
 
 
-@pytest.mark.slow()
-@pytest.mark.enable_socket()
+@pytest.mark.external
+def test_parse_content_stream_peek_percentage():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
+    name = "tika-985770.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+@pytest.mark.external
+def test_read_inline_image_no_has_q():
+    # pdf/df7e1add3156af17a372bc165e47a244.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
+    name = "tika-998719.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+@pytest.mark.external
+def test_read_inline_image_loc_neg_1():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
+    name = "tika-935066.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+@pytest.mark.slow
+@pytest.mark.external
 def test_text_string_write_to_stream():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
     name = "tika-924562.pdf"
 
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    writer = PdfWriter()
-    writer.clone_document_from_reader(reader)
-    for page in writer.pages:
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
         page.compress_content_streams()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.external
+def test_name_object_read_from_stream_unicode_error():  # L588
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
+    name = "tika-974966.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+@pytest.mark.external
 def test_bool_repr(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
     name = "tika-932449.pdf"
 
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     write_path = tmp_path / "tmp-fields-report.txt"
     with open(write_path, "w") as fp:
         fields = reader.get_fields(fileobj=fp)
@@ -682,37 +672,40 @@ def test_bool_repr(tmp_path):
     )
 
 
-@pytest.mark.enable_socket()
-@patch("pypdf._reader.logger_warning")
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_issue_997(mock_logger_warning, pdf_file_path):
-    url = (
-        "https://github.com/py-pdf/pypdf/files/8908874/"
-        "Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
-    )
+@pytest.mark.external
+@patch("PyPDF2._reader.logger_warning")
+def test_issue_997(mock_logger_warning):
+    url = "https://github.com/py-pdf/PyPDF2/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
     name = "gh-issue-997.pdf"
 
     merger = PdfMerger()
-    merger.append(BytesIO(get_data_from_url(url, name=name)))  # here the error raises
-    with open(pdf_file_path, "wb") as f:
+    merged_filename = "tmp-out.pdf"
+    merger.append(BytesIO(get_pdf_from_url(url, name=name)))  # here the error raises
+    with open(merged_filename, "wb") as f:
         merger.write(f)
     merger.close()
 
-    mock_logger_warning.assert_called_with("Overwriting cache for 0 4", "pypdf._reader")
+    mock_logger_warning.assert_called_with(
+        "Overwriting cache for 0 4", "PyPDF2._reader"
+    )
 
     # Strict
     merger = PdfMerger(strict=True)
+    merged_filename = "tmp-out.pdf"
     with pytest.raises(PdfReadError) as exc:
         merger.append(
-            BytesIO(get_data_from_url(url, name=name))
+            BytesIO(get_pdf_from_url(url, name=name))
         )  # here the error raises
     assert exc.value.args[0] == "Could not find object."
-    with open(pdf_file_path, "wb") as f:
+    with open(merged_filename, "wb") as f:
         merger.write(f)
     merger.close()
 
+    # cleanup
+    os.remove(merged_filename)
 
-def test_annotation_builder_free_text(pdf_file_path):
+
+def test_annotation_builder_free_text():
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -721,40 +714,41 @@ def test_annotation_builder_free_text(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
-        free_text_annotation = AnnotationBuilder.free_text(
-            "Hello World - bold and italic\nThis is the second line!",
-            rect=(50, 550, 200, 650),
-            font="Arial",
-            bold=True,
-            italic=True,
-            font_size="20pt",
-            font_color="00ff00",
-            border_color=None,
-            background_color=None,
-        )
+    free_text_annotation = AnnotationBuilder.free_text(
+        "Hello World - bold and italic\nThis is the second line!",
+        rect=(50, 550, 200, 650),
+        font="Arial",
+        bold=True,
+        italic=True,
+        font_size="20pt",
+        font_color="00ff00",
+        border_color="0000ff",
+        background_color="cdcdcd",
+    )
     writer.add_annotation(0, free_text_annotation)
 
-    with pytest.warns(DeprecationWarning):
-        free_text_annotation = AnnotationBuilder.free_text(
-            "Another free text annotation (not bold, not italic)",
-            rect=(500, 550, 200, 650),
-            font="Arial",
-            bold=False,
-            italic=False,
-            font_size="20pt",
-            font_color="00ff00",
-            border_color="0000ff",
-            background_color="cdcdcd",
-        )
+    free_text_annotation = AnnotationBuilder.free_text(
+        "Another free text annotation (not bold, not italic)",
+        rect=(500, 550, 200, 650),
+        font="Arial",
+        bold=False,
+        italic=False,
+        font_size="20pt",
+        font_color="00ff00",
+        border_color="0000ff",
+        background_color="cdcdcd",
+    )
     writer.add_annotation(0, free_text_annotation)
 
     # Assert: You need to inspect the file manually
-    with open(pdf_file_path, "wb") as fp:
+    target = "annotated-pdf.pdf"
+    with open(target, "wb") as fp:
         writer.write(fp)
 
+    os.remove(target)  # comment this out for manual inspection
 
-def test_annotation_builder_polygon(pdf_file_path):
+
+def test_annotation_builder_line():
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -763,70 +757,23 @@ def test_annotation_builder_polygon(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
-        AnnotationBuilder.polygon(
-            vertices=[],
-        )
-    assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
-
-    with pytest.warns(DeprecationWarning):
-        annotation = AnnotationBuilder.polygon(
-            vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
-        )
-    writer.add_annotation(0, annotation)
-
-    # Assert: You need to inspect the file manually
-    with open(pdf_file_path, "wb") as fp:
-        writer.write(fp)
-
-
-def test_annotation_builder_polyline(pdf_file_path, pdf_reader_page):
-    # Arrange
-    writer = PdfWriter()
-    writer.add_page(pdf_reader_page)
-
-    # Act
-    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
-        AnnotationBuilder.polyline(
-            vertices=[],
-        )
-    assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
-
-    with pytest.warns(DeprecationWarning):
-        annotation = AnnotationBuilder.polyline(
-            vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
-        )
-    writer.add_annotation(0, annotation)
-
-    # Assert: You need to inspect the file manually
-    with open(pdf_file_path, "wb") as fp:
-        writer.write(fp)
-
-
-def test_annotation_builder_line(pdf_file_path):
-    # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
-    writer = PdfWriter()
-    writer.add_page(page)
-
-    # Act
-    with pytest.warns(DeprecationWarning):
-        line_annotation = AnnotationBuilder.line(
-            text="Hello World\nLine2",
-            rect=(50, 550, 200, 650),
-            p1=(50, 550),
-            p2=(200, 650),
-        )
+    line_annotation = AnnotationBuilder.line(
+        text="Hello World\nLine2",
+        rect=(50, 550, 200, 650),
+        p1=(50, 550),
+        p2=(200, 650),
+    )
     writer.add_annotation(0, line_annotation)
 
     # Assert: You need to inspect the file manually
-    with open(pdf_file_path, "wb") as fp:
+    target = "annotated-pdf.pdf"
+    with open(target, "wb") as fp:
         writer.write(fp)
 
+    os.remove(target)  # comment this out for manual inspection
 
-def test_annotation_builder_square(pdf_file_path):
+
+def test_annotation_builder_square():
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -835,84 +782,25 @@ def test_annotation_builder_square(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
-        square_annotation = AnnotationBuilder.rectangle(
-            rect=(50, 550, 200, 650), interiour_color="ff0000"
-        )
+    square_annotation = AnnotationBuilder.rectangle(
+        rect=(50, 550, 200, 650), interiour_color="ff0000"
+    )
     writer.add_annotation(0, square_annotation)
 
-    with pytest.warns(DeprecationWarning):
-        square_annotation = AnnotationBuilder.rectangle(
-            rect=(40, 400, 150, 450),
-        )
+    square_annotation = AnnotationBuilder.rectangle(
+        rect=(40, 400, 150, 450),
+    )
     writer.add_annotation(0, square_annotation)
 
     # Assert: You need to inspect the file manually
-    with open(pdf_file_path, "wb") as fp:
+    target = "annotated-pdf-square.pdf"
+    with open(target, "wb") as fp:
         writer.write(fp)
 
-
-def test_annotation_builder_highlight(pdf_file_path):
-    # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
-    writer = PdfWriter()
-    writer.add_page(page)
-
-    # Act
-    with pytest.warns(DeprecationWarning):
-        highlight_annotation = AnnotationBuilder.highlight(
-            rect=(95.79332, 704.31777, 138.55779, 724.6855),
-            highlight_color="ff0000",
-            quad_points=ArrayObject(
-                [
-                    FloatObject(100.060779),
-                    FloatObject(723.55398),
-                    FloatObject(134.29033),
-                    FloatObject(723.55398),
-                    FloatObject(100.060779),
-                    FloatObject(705.4493),
-                    FloatObject(134.29033),
-                    FloatObject(705.4493),
-                ]
-            ),
-        )
-    writer.add_annotation(0, highlight_annotation)
-
-    # Assert: You need to inspect the file manually
-    with open(pdf_file_path, "wb") as fp:
-        writer.write(fp)
+    os.remove(target)  # comment this out for manual inspection
 
 
-def test_annotation_builder_circle(pdf_file_path):
-    # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
-    writer = PdfWriter()
-    writer.add_page(page)
-
-    # Act
-    with pytest.warns(DeprecationWarning):
-        circle_annotation = AnnotationBuilder.ellipse(
-            rect=(50, 550, 200, 650), interiour_color="ff0000"
-        )
-    writer.add_annotation(0, circle_annotation)
-
-    diameter = 100
-    with pytest.warns(DeprecationWarning):
-        circle_annotation = AnnotationBuilder.ellipse(
-            rect=(110, 500, 110 + diameter, 500 + diameter),
-        )
-    writer.add_annotation(0, circle_annotation)
-
-    # Assert: You need to inspect the file manually
-    with open(pdf_file_path, "wb") as fp:
-        writer.write(fp)
-
-
-def test_annotation_builder_link(pdf_file_path):
+def test_annotation_builder_link():
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
@@ -922,19 +810,19 @@ def test_annotation_builder_link(pdf_file_path):
 
     # Act
     # Part 1: Too many args
-    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:
         AnnotationBuilder.link(
             rect=(50, 550, 200, 650),
             url="https://martin-thoma.com/",
             target_page_index=3,
         )
-    assert exc.value.args[0] == (
-        "Either 'url' or 'target_page_index' have to be provided. "
-        "url=https://martin-thoma.com/, target_page_index=3"
+    assert (
+        exc.value.args[0]
+        == "Either 'url' or 'target_page_index' have to be provided. url=https://martin-thoma.com/, target_page_index=3"
     )
 
     # Part 2: Too few args
-    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:
         AnnotationBuilder.link(
             rect=(50, 550, 200, 650),
         )
@@ -944,32 +832,33 @@ def test_annotation_builder_link(pdf_file_path):
     )
 
     # Part 3: External Link
-    with pytest.warns(DeprecationWarning):
-        link_annotation = AnnotationBuilder.link(
-            rect=(50, 50, 100, 100),
-            url="https://martin-thoma.com/",
-            border=[1, 0, 6, [3, 2]],
-        )
+    link_annotation = AnnotationBuilder.link(
+        rect=(50, 50, 100, 100),
+        url="https://martin-thoma.com/",
+        border=[1, 0, 6, [3, 2]],
+    )
     writer.add_annotation(0, link_annotation)
 
     # Part 4: Internal Link
-    with pytest.warns(DeprecationWarning):
-        link_annotation = AnnotationBuilder.link(
-            rect=(100, 100, 300, 200),
-            target_page_index=1,
-            border=[50, 10, 4],
-        )
+    link_annotation = AnnotationBuilder.link(
+        rect=(100, 100, 300, 200),
+        target_page_index=1,
+        border=[50, 10, 4],
+    )
     writer.add_annotation(0, link_annotation)
 
     for page in reader.pages[1:]:
         writer.add_page(page)
 
     # Assert: You need to inspect the file manually
-    with open(pdf_file_path, "wb") as fp:
+    target = "annotated-pdf-link.pdf"
+    with open(target, "wb") as fp:
         writer.write(fp)
 
+    os.remove(target)  # comment this out for manual inspection
 
-def test_annotation_builder_text(pdf_file_path):
+
+def test_annotation_builder_text():
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
@@ -978,60 +867,22 @@ def test_annotation_builder_text(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
-        text_annotation = AnnotationBuilder.text(
-            text="Hello World\nThis is the second line!",
-            rect=(50, 550, 500, 650),
-            open=True,
-        )
+    text_annotation = AnnotationBuilder.text(
+        text="Hello World\nThis is the second line!",
+        rect=(50, 550, 500, 650),
+        open=True,
+    )
     writer.add_annotation(0, text_annotation)
 
     # Assert: You need to inspect the file manually
-    with open(pdf_file_path, "wb") as fp:
+    target = "annotated-pdf-popup.pdf"
+    with open(target, "wb") as fp:
         writer.write(fp)
 
-
-def test_annotation_builder_popup(caplog):
-    # Arrange
-    pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
-    writer = PdfWriter()
-    writer.add_page(page)
-
-    # Act
-    with pytest.warns(DeprecationWarning):
-        text_annotation = AnnotationBuilder.text(
-            text="Hello World\nThis is the second line!",
-            rect=(50, 550, 200, 650),
-            open=True,
-        )
-    ta = writer.add_annotation(0, text_annotation)
-
-    with pytest.warns(DeprecationWarning):
-        popup_annotation = AnnotationBuilder.popup(
-            rect=(50, 550, 200, 650),
-            open=True,
-            parent=ta,  # prefer to use for evolutivity
-        )
-
-    assert caplog.text == ""
-    with pytest.warns(DeprecationWarning):
-        AnnotationBuilder.popup(
-            rect=(50, 550, 200, 650),
-            open=True,
-            parent=True,  # broken parameter  # type: ignore
-        )
-    assert "Unregistered Parent object : No Parent field set" in caplog.text
-
-    writer.add_annotation(writer.pages[0], popup_annotation)
-
-    target = "annotated-pdf-popup.pdf"
-    writer.write(target)
-    Path(target).unlink()  # comment this out for manual inspection
+    os.remove(target)  # comment this out for manual inspection
 
 
-def test_checkboxradiobuttonattributes_opt():
+def test_CheckboxRadioButtonAttributes_opt():
     assert "/Opt" in CheckboxRadioButtonAttributes.attributes_dict()
 
 
@@ -1055,22 +906,6 @@ def test_indirect_object_invalid_read():
     assert exc.value.args[0] == "Error reading indirect object reference at byte 0x5"
 
 
-def test_create_string_object_utf16be_bom():
-    result = create_string_object(
-        b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
-    )
-    assert result == "PaperPort 14\x00"
-    assert result.autodetect_utf16 is True
-
-
-def test_create_string_object_utf16le_bom():
-    result = create_string_object(
-        b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
-    )
-    assert result == "PaperPort 14\x00"
-    assert result.autodetect_utf16 is True
-
-
 def test_create_string_object_force():
     assert create_string_object(b"Hello World", []) == "Hello World"
     assert create_string_object(b"Hello World", {72: "A"}) == "Aello World"
@@ -1080,34 +915,32 @@ def test_create_string_object_force():
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        ("0.000000", "0.0"),
-        ("0.0", "0.0"),
+        ("0.000000", "0"),
+        ("0.0", "0"),
         ("1.0", "1"),
         ("0.123000", "0.123"),
         ("0.000123000", "0.000123"),
-        ("0.0", "0.0"),
-        ("0", "0.0"),
+        ("0.0", "0"),
+        ("0", "0"),
         ("1", "1"),
         ("1.0", "1"),
         ("1.01", "1.01"),
         ("1.010", "1.01"),
-        ("0000.0000", "0.0"),
+        ("0000.0000", "0"),
         ("0.10101010", "0.1010101"),
         ("50000000000", "50000000000"),
-        ("99900000000000000123", "99900000000000000000"),
-        ("99900000000000000123.456000", "99900000000000000000"),
+        ("99900000000000000123", "99900000000000000123"),
+        ("99900000000000000123.456000", "99900000000000000123.456"),
         ("0.00000000000000000000123", "0.00000000000000000000123"),
-        ("0.00000123", "0.00000123"),
         ("0.00000000000000000000123000", "0.00000000000000000000123"),
-        ("-4.6", "-4.6"),  # from #1910
-        # (
-        #    "50032481330523882508234.00000000000000000000123000",
-        #    "50032481330523882508234.00000000000000000000123",
-        # ),
-        # (
-        #    "928457298572093487502198745102973402987412908743.75249875981374981237498213740000",
-        #    "928457298572093487502198745102973402987412908743.7524987598137498123749821374",
-        # ),
+        (
+            "50032481330523882508234.00000000000000000000123000",
+            "50032481330523882508234.00000000000000000000123",
+        ),
+        (
+            "928457298572093487502198745102973402987412908743.75249875981374981237498213740000",
+            "928457298572093487502198745102973402987412908743.7524987598137498123749821374",
+        ),
     ],
 )
 def test_float_object_decimal_to_string(value, expected):
@@ -1115,10 +948,13 @@ def test_float_object_decimal_to_string(value, expected):
 
 
 def test_cloning(caplog):
+    # pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    # reader = PdfReader(pdf_path)
+    # page = reader.pages[0]
     writer = PdfWriter()
     with pytest.raises(Exception) as exc:
         PdfObject().clone(writer)
-    assert "PdfObject does not implement .clone so far" in exc.value.args[0]
+    assert "clone PdfObject" in exc.value.args[0]
 
     obj1 = DictionaryObject()
     obj1.indirect_reference = None
@@ -1157,153 +993,3 @@ def test_cloning(caplog):
     obj21 = obj20.clone(writer, ignore_fields=None)
     assert "/Test" in obj21
     assert isinstance(obj21.get("/Test2"), IndirectObject)
-
-
-@pytest.mark.enable_socket()
-def test_append_with_indirectobject_not_pointing(caplog):
-    """
-    reported in #1631
-    the object 43 0 is not invalid
-    """
-    url = "https://github.com/py-pdf/pypdf/files/10729142/document.pdf"
-    name = "tst_iss1631.pdf"
-    data = BytesIO(get_data_from_url(url, name=name))
-    reader = PdfReader(data, strict=False)
-    writer = PdfWriter()
-    writer.append(reader)
-    assert "Object 43 0 not defined." in caplog.text
-
-
-@pytest.mark.enable_socket()
-def test_iss1615_1673():
-    """
-    test cases where /N is not indicating chains of objects
-    test also where /N,... are not part of chains
-    """
-    # #1615
-    url = "https://github.com/py-pdf/pypdf/files/10671366/graph_letter.pdf"
-    name = "graph_letter.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    writer = PdfWriter()
-    writer.append(reader)
-    assert (
-        "/N"
-        in writer.pages[0]["/Annots"][0]
-        .get_object()["/AP"]["/N"]["/Resources"]["/ColorSpace"]["/Cs1"][1]
-        .get_object()
-    )
-    # #1673
-    url = "https://github.com/py-pdf/pypdf/files/10848750/budgeting-loan-form-sf500.pdf"
-    name = "budgeting-loan-form-sf500.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    writer = PdfWriter()
-    writer.clone_document_from_reader(reader)
-
-
-@pytest.mark.enable_socket()
-def test_destination_withoutzoom():
-    """Cf issue #1832"""
-    url = (
-        "https://raw.githubusercontent.com/xrkk/tmpppppp/main/"
-        "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
-    )
-    name = "2021_book_security.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    reader.outline
-
-    out = BytesIO()
-    writer = PdfWriter(clone_from=reader)
-    writer.write(out)
-
-
-def test_encodedstream_set_data():
-    """
-    EncodedStreamObject.set_data to extend data stream works.
-
-    Checks also the flate_encode.
-    """
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    co = reader.pages[0]["/Contents"][0].get_object()
-    co.set_data(b"%hello\n" + co.get_data())
-    assert b"hello" in co.get_data()
-    b = BytesIO()
-    co.write_to_stream(b)
-    b.seek(0)
-    aa = read_object(b, None)
-    assert b"hello" in aa.get_data()
-    assert aa["/Filter"] == "/FlateDecode"
-    assert "/DecodeParms" not in aa
-    bb = aa.flate_encode()
-    assert b"hello" in bb.get_data()
-    assert bb["/Filter"] == ["/FlateDecode", "/FlateDecode"]
-    assert str(bb["/DecodeParms"]) == "[NullObject, NullObject]"
-    bb[NameObject("/Test")] = NameObject("/MyTest")
-    cc = bb.flate_encode()
-    assert bb["/Filter"] == ["/FlateDecode", "/FlateDecode"]
-    assert b"hello" in cc.get_data()
-    assert cc["/Filter"] == ["/FlateDecode", "/FlateDecode", "/FlateDecode"]
-    assert str(cc["/DecodeParms"]) == "[NullObject, NullObject, NullObject]"
-    assert cc[NameObject("/Test")] == "/MyTest"
-
-
-@pytest.mark.enable_socket()
-def test_calling_indirect_objects():
-    """Cope with cases where attributes/items are called from indirectObject"""
-    url = (
-        "https://raw.githubusercontent.com/xrkk/tmpppppp/main/"
-        "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
-    )
-    name = "2021_book_security.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    reader.trailer.get("/Info")["/Creator"]
-    reader.pages[0]["/Contents"][0].get_data()
-    writer = PdfWriter(clone_from=reader)
-    ind = writer._add_object(writer)
-    assert ind.fileobj == writer.fileobj
-    with pytest.raises(AttributeError):
-        ind.not_existing_attribute
-    # create an IndirectObject referencing an IndirectObject.
-    writer._objects.append(writer.pages[0].indirect_reference)
-    ind = IndirectObject(len(writer._objects), 0, writer)
-    with pytest.raises(PdfStreamError):
-        ind["/Type"]
-
-
-@pytest.mark.enable_socket()
-def test_indirect_object_page_dimensions():
-    url = "https://github.com/py-pdf/pypdf/files/13302338/Zymeworks_Corporate.Presentation_FINAL1101.pdf.pdf"
-    name = "issue2287.pdf"
-    data = BytesIO(get_data_from_url(url, name=name))
-    reader = PdfReader(data, strict=False)
-    mediabox = reader.pages[0].mediabox
-    assert mediabox == RectangleObject((0, 0, 792, 612))
-
-
-def test_array_operators():
-    a = ArrayObject(
-        [
-            NumberObject(1),
-            NumberObject(2),
-            NumberObject(3),
-            NumberObject(4),
-        ]
-    )
-    b = a + 5
-    assert isinstance(b, ArrayObject)
-    assert b == [1, 2, 3, 4, 5]
-    assert a == [1, 2, 3, 4]
-    a -= 2
-    a += "abc"
-    a -= (3, 4)
-    a += ["d", "e"]
-    a += BooleanObject(True)
-    assert a == [1, "abc", "d", "e", True]
-    a += "/toto"
-    assert isinstance(a[-1], NameObject)
-    assert isinstance(a[1], TextStringObject)
-    a += b"1234"
-    assert a[-1] == ByteStringObject(b"1234")
-    la = len(a)
-    a -= 300
-    assert len(a) == la

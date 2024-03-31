@@ -1,13 +1,7 @@
 The PdfWriter Class
 -------------------
 
-.. autoclass:: pypdf.PdfWriter
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: pypdf.ObjectDeletionFlag
+.. autoclass:: PyPDF2.PdfWriter
     :members:
     :undoc-members:
     :show-inheritance:

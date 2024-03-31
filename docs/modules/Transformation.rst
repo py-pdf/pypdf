@@ -1,7 +1,7 @@
 The Transformation Class
 ------------------------
 
-.. autoclass:: pypdf.Transformation
+.. autoclass:: PyPDF2.Transformation
     :members:
     :undoc-members:
     :show-inheritance:

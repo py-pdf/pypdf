@@ -1,42 +1,27 @@
 # Reading PDF Annotations
 
-PDF 2.0 defines the following annotation types:
+PDF 1.7 defines 25 different annotation types:
 
 * Text
 * Link
 * FreeText
-* Line
-* Square
-* Circle
-* Polygon
-* PolyLine
-* Highlight
-* Underline
-* Squiggly
-* StrikeOut
-* Caret
-* Stamp
-* Ink
+* Line, Square, Circle, Polygon, PolyLine, Highlight, Underline, Squiggly, StrikeOut
+* Stamp, Caret, Ink
 * Popup
 * FileAttachment
-* Sound
-* Movie
-* Screen
-* Widget
+* Sound, Movie
+* Widget, Screen
 * PrinterMark
 * TrapNet
 * Watermark
 * 3D
-* Redact
-* Projection
-* RichMedia
 
 In general, annotations can be read like this:
 
 ```python
-from pypdf import PdfReader
+from PyPDF2 import PdfReader
 
-reader = PdfReader("annotated.pdf")
+reader = PdfReader("commented.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
@@ -46,12 +31,12 @@ for page in reader.pages:
             print(annotation)
 ```
 
-Examples of reading three of the most common annotations:
+Reading the most common ones is described here.
 
 ## Text
 
 ```python
-from pypdf import PdfReader
+from PyPDF2 import PdfReader
 
 reader = PdfReader("example.pdf")
 
@@ -66,9 +51,9 @@ for page in reader.pages:
 ## Highlights
 
 ```python
-from pypdf import PdfReader
+from PyPDF2 import PdfReader
 
-reader = PdfReader("example.pdf")
+reader = PdfReader("commented.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
@@ -82,7 +67,7 @@ for page in reader.pages:
 ## Attachments
 
 ```python
-from pypdf import PdfReader
+from PyPDF2 import PdfReader
 
 reader = PdfReader("example.pdf")
 

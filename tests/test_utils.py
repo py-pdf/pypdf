@@ -1,32 +1,28 @@
-"""Test the pypdf._utils module."""
 import io
+import os
 from pathlib import Path
 
 import pytest
 
-import pypdf._utils
-from pypdf._utils import (
+import PyPDF2._utils
+from PyPDF2 import PdfReader
+from PyPDF2._utils import (
     File,
-    Version,
     _get_max_pdf_version_header,
     _human_readable_bytes,
-    check_if_whitespace_only,
-    deprecate_with_replacement,
-    deprecation_no_replacement,
+    deprecation_bookmark,
     mark_location,
     matrix_multiply,
-    parse_iso8824_date,
     read_block_backwards,
     read_previous_line,
     read_until_regex,
     read_until_whitespace,
-    rename_kwargs,
     skip_over_comment,
     skip_over_whitespace,
 )
-from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
+from PyPDF2.errors import DeprecationError, PdfReadError, PdfStreamError
 
-from . import is_sublist
+from . import get_pdf_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -48,23 +44,6 @@ def test_skip_over_whitespace(stream, expected):
     assert skip_over_whitespace(stream) == expected
 
 
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    [
-        (b"foo", False),
-        (b" a", False),
-        (b" a\n b", False),
-        (b"", True),
-        (b" ", True),
-        (b"  ", True),
-        (b"  \n", True),
-        (b"    \n", True),
-    ],
-)
-def test_check_if_whitespace_only(value, expected):
-    assert check_if_whitespace_only(value) is expected
-
-
 def test_read_until_whitespace():
     assert read_until_whitespace(io.BytesIO(b"foo"), maxchars=1) == b"f"
 
@@ -83,11 +62,20 @@ def test_skip_over_comment(stream, remainder):
     assert stream.read() == remainder
 
 
+def test_read_until_regex_premature_ending_raise():
+    import re
+
+    stream = io.BytesIO(b"")
+    with pytest.raises(PdfStreamError) as exc:
+        read_until_regex(stream, re.compile(b"."))
+    assert exc.value.args[0] == "Stream has ended unexpectedly"
+
+
 def test_read_until_regex_premature_ending_name():
     import re
 
     stream = io.BytesIO(b"")
-    assert read_until_regex(stream, re.compile(b".")) == b""
+    assert read_until_regex(stream, re.compile(b"."), ignore_eof=True) == b""
 
 
 @pytest.mark.parametrize(
@@ -105,29 +93,25 @@ def test_matrix_multiply(a, b, expected):
 def test_mark_location():
     stream = io.BytesIO(b"abde" * 6000)
     mark_location(stream)
-    Path("pypdf_pdfLocation.txt").unlink()  # cleanup
+    os.remove("PyPDF2_pdfLocation.txt")  # cleanup
 
 
-@pytest.mark.parametrize(
-    ("input_str", "expected"),
-    [
-        ("foo", b"foo"),
-        ("😀", "😀".encode()),
-        ("‰", "‰".encode()),
-        ("▷", "▷".encode()),
-        ("世", "世".encode()),
-        # A multi-character string example with non-latin-1 characters:
-        ("😀😃", "😀😃".encode()),
-    ],
-)
-def test_b(input_str: str, expected: str):
-    assert pypdf._utils.b_(input_str) == expected
+def test_hex_str():
+    assert PyPDF2._utils.hex_str(10) == "0xa"
+
+
+def test_b():
+    assert PyPDF2._utils.b_("foo") == b"foo"
+    assert PyPDF2._utils.b_("😀") == "😀".encode()
+    assert PyPDF2._utils.b_("‰") == "‰".encode()
+    assert PyPDF2._utils.b_("▷") == "▷".encode()
+    assert PyPDF2._utils.b_("世") == "世".encode()
 
 
 def test_deprecate_no_replacement():
     with pytest.warns(DeprecationWarning) as warn:
-        pypdf._utils.deprecate_no_replacement("foo", removed_in="3.0.0")
-    error_msg = "foo is deprecated and will be removed in pypdf 3.0.0."
+        PyPDF2._utils.deprecate_no_replacement("foo")
+    error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
     assert warn[0].message.args[0] == error_msg
 
 
@@ -146,7 +130,22 @@ def test_deprecate_no_replacement():
     ],
 )
 def test_paeth_predictor(left, up, upleft, expected):
-    assert pypdf._utils.paeth_predictor(left, up, upleft) == expected
+    assert PyPDF2._utils.paeth_predictor(left, up, upleft) == expected
+
+
+@pytest.mark.parametrize(
+    ("dat", "pos", "to_read"),
+    [
+        (b"", 0, 1),
+        (b"a", 0, 1),
+        (b"abc", 0, 10),
+    ],
+)
+def test_read_block_backwards_errs(dat, pos, to_read):
+    with pytest.raises(PdfStreamError) as _:
+        s = io.BytesIO(dat)
+        s.seek(pos)
+        read_block_backwards(s, to_read)
 
 
 @pytest.mark.parametrize(
@@ -159,19 +158,12 @@ def test_paeth_predictor(left, up, upleft, expected):
         (b"abc", 3, 1, b"c", 2),
         (b"abc", 3, 2, b"bc", 1),
         (b"abc", 3, 3, b"abc", 0),
-        (b"", 0, 1, None, 0),
-        (b"a", 0, 1, None, 0),
-        (b"abc", 0, 10, None, 0),
     ],
 )
 def test_read_block_backwards(dat, pos, to_read, expected, expected_pos):
     s = io.BytesIO(dat)
     s.seek(pos)
-    if expected is not None:
-        assert read_block_backwards(s, to_read) == expected
-    else:
-        with pytest.raises(PdfStreamError):
-            read_block_backwards(s, to_read)
+    assert read_block_backwards(s, to_read) == expected
     assert s.tell() == expected_pos
 
 
@@ -244,67 +236,26 @@ def test_read_block_backwards_exception():
     assert exc.value.args[0] == "Could not read malformed PDF file"
 
 
-def test_deprecate_with_replacement():
-    def foo() -> None:
-        deprecate_with_replacement("foo", "bar", removed_in="4.3.2")
+def test_deprecation_bookmark():
+    @deprecation_bookmark(old_param="new_param")
+    def foo(old_param=1, baz=2):
+        return old_param * baz
 
-    with pytest.warns(
-        DeprecationWarning,
-        match="foo is deprecated and will be removed in pypdf 4.3.2. Use bar instead.",
-    ):
-        foo()
-
-
-def test_deprecation_no_replacement():
-    def foo() -> None:
-        deprecation_no_replacement("foo", removed_in="4.3.2")
-
-    with pytest.raises(
-        DeprecationError,
-        match="foo is deprecated and was removed in pypdf 4.3.2.",
-    ):
-        foo()
-
-
-def test_rename_kwargs():
-    import functools
-    from typing import Any, Callable
-
-    def deprecation_bookmark_nofail(**aliases: str) -> Callable:
-        """
-        Decorator for deprecated term "bookmark".
-
-        To be used for methods and function arguments
-            outline_item = a bookmark
-            outline = a collection of outline items.
-        """
-
-        def decoration(func: Callable) -> Any:  # type: ignore
-            @functools.wraps(func)
-            def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore
-                rename_kwargs(func.__name__, kwargs, aliases, fail=False)
-                return func(*args, **kwargs)
-
-            return wrapper
-
-        return decoration
-
-    @deprecation_bookmark_nofail(old_param="new_param")
-    def foo(old_param: int = 1, baz: int = 2, new_param: int = 1) -> None:
-        pass
-
-    expected_msg = (
-        "foo received both old_param and new_param as an argument. "
-        "old_param is deprecated. Use new_param instead."
-    )
-    with pytest.raises(TypeError, match=expected_msg):
+    with pytest.raises(DeprecationError) as exc:
         foo(old_param=12, new_param=13)
+    expected_msg = "old_param is deprecated as an argument. Use new_param instead"
+    assert exc.value.args[0] == expected_msg
 
-    with pytest.warns(
-        DeprecationWarning,
-        match="old_param is deprecated as an argument. Use new_param instead",
-    ):
-        foo(old_param=12)
+
+@pytest.mark.external
+def test_escapedcode_followed_by_int():
+    # iss #1294
+    url = "https://github.com/timedegree/playground_files/raw/main/%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
+    name = "keppler.pdf"
+
+    reader = PdfReader(io.BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
 
 
 @pytest.mark.parametrize(
@@ -319,108 +270,10 @@ def test_rename_kwargs():
     ],
 )
 def test_human_readable_bytes(input_int, expected_output):
-    """_human_readable_bytes correctly transforms the integer to a string."""
     assert _human_readable_bytes(input_int) == expected_output
 
 
-def test_file_class():
-    """File class can be instantiated and string representation is ok."""
+def test_file():
     f = File(name="image.png", data=b"")
     assert str(f) == "File(name=image.png, data: 0 Byte)"
     assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"
-
-
-@pytest.mark.parametrize(
-    ("text", "expected"),
-    [
-        ("D:20210318000756", "2021-03-18T00:07:56"),
-        ("20210318000756", "2021-03-18T00:07:56"),
-        ("D:2021", "2021-01-01T00:00:00"),
-        ("D:202103", "2021-03-01T00:00:00"),
-        ("D:20210304", "2021-03-04T00:00:00"),
-        ("D:2021030402", "2021-03-04T02:00:00"),
-        ("D:20210408054711", "2021-04-08T05:47:11"),
-        ("D:20210408054711Z", "2021-04-08T05:47:11+00:00"),
-        ("D:20210408054711Z00", "2021-04-08T05:47:11+00:00"),
-        ("D:20210408054711Z0000", "2021-04-08T05:47:11+00:00"),
-        ("D:20210408075331+02'00'", "2021-04-08T07:53:31+02:00"),
-        ("D:20210408075331-03'00'", "2021-04-08T07:53:31-03:00"),
-    ],
-)
-def test_parse_datetime(text, expected):
-    date = parse_iso8824_date(text)
-    date_str = (date.isoformat() + date.strftime("%z"))[: len(expected)]
-    assert date_str == expected
-
-
-def test_parse_datetime_err():
-    with pytest.raises(ValueError) as ex:
-        parse_iso8824_date("D:20210408T054711Z")
-    assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
-    assert parse_iso8824_date("D:20210408054711").tzinfo is None
-
-
-def test_is_sublist():
-    # Basic checks:
-    assert is_sublist([0, 1], [0, 1, 2]) is True
-    assert is_sublist([0, 2], [0, 1, 2]) is True
-    assert is_sublist([1, 2], [0, 1, 2]) is True
-    assert is_sublist([0, 3], [0, 1, 2]) is False
-    # Ensure order is checked:
-    assert is_sublist([1, 0], [0, 1, 2]) is False
-    # Ensure duplicates are handled:
-    assert is_sublist([0, 1, 1], [0, 1, 1, 2]) is True
-    assert is_sublist([0, 1, 1], [0, 1, 2]) is False
-    # Edge cases with empty lists:
-    assert is_sublist([], [0, 1, 2]) is True
-    assert is_sublist([0, 1], []) is False
-    # Self-sublist edge case:
-    assert is_sublist([0, 1, 2], [0, 1, 2]) is True
-
-
-@pytest.mark.parametrize(
-    ("left", "right", "is_less_than"),
-    [
-        ("1", "2", True),
-        ("2", "1", False),
-        ("1", "1", False),
-        ("1.0", "1.1", True),
-        ("1", "1.1", True),
-        # suffix left
-        ("1a", "2", True),
-        ("2a", "1", False),
-        ("1a", "1", False),
-        ("1.0a", "1.1", True),
-        # I'm not sure about that, but seems special enoguht that it
-        # probably doesn't matter:
-        ("1a", "1.1", False),
-        # suffix right
-        ("1", "2a", True),
-        ("2", "1a", False),
-        ("1", "1a", True),
-        ("1.0", "1.1a", True),
-        ("1", "1.1a", True),
-        ("", "0.0.0", True),
-        # just suffix matters ... hm, I think this is actually wrong:
-        ("1.0a", "1.0", False),
-        ("1.0", "1.0a", True),
-    ],
-)
-def test_version_compare(left, right, is_less_than):
-    assert (Version(left) < Version(right)) is is_less_than
-
-
-def test_version_compare_equal_str():
-    a = Version("1.0")
-    assert (a == "1.0") is False
-
-
-def test_version_compare_lt_str():
-    a = Version("1.0")
-    with pytest.raises(ValueError) as exc:
-        a < "1.0"  # noqa
-    assert exc.value.args[0] == "Version cannot be compared against <class 'str'>"
-
-
-def test_bad_version():
-    assert Version("a").components == [(0, "a")]

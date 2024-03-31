@@ -1,9 +1,9 @@
 [build-system]
-requires = ["flit_core >=3.9,<4"]
+requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "pypdf"
+name = "PyPDF2"
 authors = [{ name = "Mathieu Fenniak", email = "biziqe@mathieu.fenniak.net" }]
 maintainers = [{ name = "Martin Thoma", email = "info@martin-thoma.de" }]
 description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
@@ -16,41 +16,32 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-
 dependencies = [
-    "typing_extensions >= 4.0; python_version < '3.11'",
+    "typing_extensions >= 3.10.0.0; python_version < '3.10'",
     "dataclasses; python_version < '3.7'",
 ]
 
 [project.urls]
-Documentation = "https://pypdf.readthedocs.io/en/latest/"
-Source = "https://github.com/py-pdf/pypdf"
-"Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
-Changelog = "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html"
+Documentation = "https://pypdf2.readthedocs.io/en/latest/"
+Source = "https://github.com/py-pdf/PyPDF2"
+"Bug Reports" = "https://github.com/py-pdf/PyPDF2/issues"
+Changelog = "https://pypdf2.readthedocs.io/en/latest/meta/CHANGELOG.html"
 
 [project.optional-dependencies]
-full = [
-    "cryptography; python_version >= '3.7'",
-    "PyCryptodome; python_version == '3.6'",
-    "Pillow>=8.0.0",
-]
-crypto = [
-    "cryptography; python_version >= '3.7'",
-    "PyCryptodome; python_version == '3.6'",
-]
-image = ["Pillow>=8.0.0"]
-dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "flit", "wheel", "pytest-xdist"]
+full = ["PyCryptodome", "Pillow"]
+crypto = ["PyCryptodome"]
+image = ["Pillow"]
+dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "flit", "wheel"]
 docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
 
 [tool.mutmut]
@@ -59,18 +50,17 @@ runner = "./mutmut-test.sh"
 tests_dir = "tests/"
 
 [tool.check-wheel-contents]
-package = "./pypdf"
+package = "./PyPDF2"
 
 [tool.flit.sdist]
-exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", "tests/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
+exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", "tests/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_changelog.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
 
 [tool.pytest.ini_options]
-addopts = "--disable-socket"
 filterwarnings = ["error"]
 markers = [
     "slow: Test which require more than a second",
     "samples: Tests which use files from https://github.com/py-pdf/sample-files",
-    "enable_socket: Tests which need to download files"
+    "external: Tests which need to download files"
 ]
 testpaths = ["tests"]
 norecursedirs = ["tests/pdf_cache"]
@@ -83,7 +73,7 @@ include_trailing_comma = true
 known_third_party = ["pytest", "setuptools"]
 
 [tool.coverage.run]
-source = ["pypdf"]
+source = ["PyPDF2"]
 branch = true
 
 [tool.coverage.report]
@@ -93,9 +83,6 @@ exclude_lines = [
     "pragma: no cover",
     "@overload",
     "deprecated",
-
-    # Don't complain about type-checking code not being hit by unit tests
-    "if TYPE_CHECKING",
 
     # Don't complain about missing debug-only code:
     "def __repr__",
@@ -110,124 +97,3 @@ exclude_lines = [
     "if 0:",
     "if __name__ == .__main__.:",
 ]
-
-[tool.ruff]
-line-length = 120
-select = ["ALL"]
-ignore = [
-    "D404",  # First word of the docstring should not be "This"
-    # I would like to have it, but there are a few annoying exceptions:
-    "D401", # First line of docstring should be in imperative mood - false positives
-    "ERA001",
-    "UP031",
-    "D205",  # 1 blank line required between summary line and description
-    "D400",  # First line should end with a period
-    "D415",  # First line should end with a period
-    # Introduces bugs
-    "RUF001", "RUF002", "RUF005",
-    "ARG",
-    "DTZ001", # The use of `datetime.datetime()` without `tzinfo` is necessary
-    "PLC",
-    # Personal preference
-    "PLR1714",  # Consider merging multiple comparisons
-    "FA100", # Missing `from __future__ import annotations`, but uses `typing.Dict`
-    "TD002",  # Authors of TODOs can be found via git
-    "FIX002",  # TODOs should typically not be in the code, but sometimes are ok
-    "D406", # Section name should end with a newline ("Returns")
-    "D212",  # I want multiline-docstrings to start at the second line
-    "D407",  # google-style docstrings don't have dashses
-    "N806",  # Variable `NO` in function should be lowercase
-    "N814", # Camelcase `PageAttributes` imported as constant `PG`
-    "N817",  # CamelCase `PagesAttributes` imported as acronym `PA`
-    "ANN101",  # annotating 'self' seems weird (at least before 3.11)
-    "ANN102",  # Missing type annotation for `cls` in classmethod
-    "ANN204", # Missing return type annotation for special method `__init__`
-    "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
-    "BLE",  # we want to capture Exception sometimes
-    "COM812",  # yes, they make the diff smaller
-    "D105",  # Missing docstring in magic method
-    "D106",  # Missing docstring in public nested class
-    "D107",  # Missing docstring in `__init__`
-    "D203", # one-blank-line-before-class
-    "EM",  # exception messages
-    "G004",  # f-string in logging statement
-    "RET",
-    "S110", # `try`-`except`-`pass` detected, consider logging the exception
-    "SIM105",  # contextlib.suppress
-    "SIM108",  # don't enforce ternary operators
-    "TID252",  # we want relative imports
-    "TRY", # I don't know what this is about
-    # As long as we are not on Python 3.9+
-    "UP035", # PEP 585
-    # As long as we are not on Python 3.10+
-    "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604
-    # As long as we are not on Python 3.11+
-    "UP006", "UP007",
-    # for the moment, fix it later:
-    "TD003", # Missing issue link on the line following this TODO
-    "TD004",  # Missing colon in TODO
-    "TD005", # Missing issue description after `TODO`
-    "A",  # Variable is shadowing a built-in
-    "B028",  # No explicit `stacklevel` keyword argument found
-    "B904", # Within an `except` clause, raise exceptions with
-    "B905",  # `zip()` without an explicit `strict=` parameter
-    "D101",  # Missing docstring in public class
-    "D102", # Missing docstring in public method
-    "D417",  # Missing argument descriptions in the docstring
-    "FBT001", # Boolean positional arg in function definition
-    "FBT002", # Boolean default value in function definition
-    "FBT003", # Boolean positional value in function call
-    "PGH", # Use specific error messages
-    "PLE",  # too many arguments for logging
-    "PLW",  # global variables
-    "PT011", # `pytest.raises(ValueError)` is too broad, set the `match`
-    "PT012",  # `pytest.raises()` block should contain a single simple statement
-    "PTH123", # `open()` should be replaced by `Path.open()`
-    "S101",  # Use of `assert` detected
-    "SLF001",  # Private member accessed
-    "PD011",  # Use `.to_numpy()` instead of `.values`
-    "FA102",  # Missing `from __future__ import annotations`, but uses PEP 604 union
-    "PERF203",  # `try`-`except` within a loop incurs performance overhead
-    "PYI042",  # Type alias `mode_str_type` should be CamelCase
-    # Ruff bug
-    "PT014",  # Duplicate of test case at index 1 in `@pytest_mark.parametrize`
-]
-
-[tool.ruff.mccabe]
-max-complexity = 54  # Recommended: 10
-
-[tool.ruff.per-file-ignores]
-"_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
-"_encryption.py" = ["S324"]
-"_writer.py" = ["S324"]
-"docs/conf.py" = ["PTH", "INP001"]
-"json_consistency.py" = ["T201"]
-"make_release.py" = ["T201", "S603", "S607"]
-"pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff:
-"sample-files/*" = ["D100", "INP001"]
-"tests/*" = ["S101", "ANN001", "ANN201","D104", "S105", "S106", "D103", "B018", "B017"]
-"tests/test_workflows.py" =  ["T201"]
-
-[tool.ruff.pylint]
-allow-magic-value-types = ["bytes", "float", "int", "str"]
-max-args = 12  # Recommended: 5
-max-branches = 36  # Recommended: 12
-max-returns = 11  # Recommended: 6
-max-statements = 176  # Recommended: 50
-
-[tool.docformatter]
-pre-summary-newline = true
-wrap-summaries = 0
-wrap-descriptions = 0
-
-[tool.mypy]
-show_error_codes = true
-ignore_missing_imports = true
-check_untyped_defs = true
-disallow_any_generics = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_unused_configs = true
-exclude = ['venv', '.venv', 'tests', 'make_release.py']

@@ -1,10 +1,8 @@
-"""Test topics around the usage of JavaScript in PDF documents."""
 from pathlib import Path
-from typing import Any
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from PyPDF2 import PdfReader, PdfWriter
 
 # Configure path environment
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -32,7 +30,7 @@ def test_add_js(pdf_file_writer):
 
 
 def test_added_js(pdf_file_writer):
-    def get_javascript_name() -> Any:
+    def get_javascript_name():
         assert "/Names" in pdf_file_writer._root_object
         assert "/JavaScript" in pdf_file_writer._root_object["/Names"]
         assert "/Names" in pdf_file_writer._root_object["/Names"]["/JavaScript"]

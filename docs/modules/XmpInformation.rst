@@ -1,7 +1,7 @@
 The XmpInformation Class
 -------------------------
 
-.. autoclass:: pypdf.xmp.XmpInformation
+.. autoclass:: PyPDF2.xmp.XmpInformation
     :members:
     :undoc-members:
     :show-inheritance:

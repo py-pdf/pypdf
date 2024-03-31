@@ -1,7 +1,7 @@
 The Destination Class
 ---------------------
 
-.. autoclass:: pypdf.generic.Destination
+.. autoclass:: PyPDF2.generic.Destination
     :members:
     :undoc-members:
     :show-inheritance:

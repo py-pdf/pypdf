@@ -1,7 +1,7 @@
 The Field Class
 ---------------
 
-.. autoclass:: pypdf.generic.Field
+.. autoclass:: PyPDF2.generic.Field
     :members:
     :undoc-members:
     :show-inheritance:
