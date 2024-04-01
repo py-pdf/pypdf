@@ -33,7 +33,7 @@ myst_all_links_external = True
 # ones.
 rst_epilog = """
 .. note::
-   This page is about PyPDF2. PyPDF2 is deprecated, please use PyPDF.
+   This page is about PyPDF2. PyPDF2 is deprecated, please use pypdf.
 """
 
 extensions = [
