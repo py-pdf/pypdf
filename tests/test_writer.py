@@ -1507,11 +1507,16 @@ def test_update_form_fields(tmp_path):
     del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DA"]
     del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DR"]["/Font"]
     writer.update_page_form_field_values(
-        writer.pages[0],
+        [writer.pages[0]],
         {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
         auto_regenerate=False,
     )
     assert b"/Helv " in writer.pages[0]["/Annots"][1]["/AP"]["/N"].get_data()
+    writer.update_page_form_field_values(
+        None,
+        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        auto_regenerate=False,
+    )
 
     Path(write_data_here).unlink()
 
