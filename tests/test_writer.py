@@ -1520,6 +1520,13 @@ def test_update_form_fields(tmp_path):
 
     Path(write_data_here).unlink()
 
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer.update_page_form_field_values(
+        [writer.pages[0]],
+        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        auto_regenerate=False,
+    )
+
 
 @pytest.mark.enable_socket()
 def test_update_form_fields2():
