@@ -896,7 +896,7 @@ class PdfWriter(PdfDocCommon):
 
     def update_page_form_field_values(
         self,
-        page: PageObject,
+        page: Union[PageObject, List[PageObject], None],
         fields: Dict[str, Any],
         flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
         auto_regenerate: Optional[bool] = True,
@@ -908,8 +908,10 @@ class PdfWriter(PdfDocCommon):
         If the field links to a parent object, add the information to the parent.
 
         Args:
-            page: Page reference from PDF writer where the
+            page: `PageObject` - references **PDF writer's page** where the
                 annotations and field data will be updated.
+                `List[Pageobject]` - provides list of page to be processsed.
+                `None` - all pages.
             fields: a Python dictionary of field names (/T) and text
                 values (/V).
             flags: An integer (0 to 7). The first bit sets ReadOnly, the
@@ -925,6 +927,14 @@ class PdfWriter(PdfDocCommon):
             raise PyPdfError("No /Fields dictionary in Pdf in PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
+        # Iterate through pages, update field values
+        if page is None:
+            page = self.pages
+        if isinstance(page, list):
+            for p in page:
+                if PG.ANNOTS in p:  # just to prevent warnings
+                    self.update_page_form_field_values(p, fields, flags, None)
+            return None
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
