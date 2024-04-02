@@ -1499,6 +1499,20 @@ def test_update_form_fields(tmp_path):
     assert all(x in flds["RadioGroup1"]["/_States_"] for x in ["/1", "/2", "/3"])
     assert all(x in flds["Liste1"]["/_States_"] for x in ["Liste1", "Liste2", "Liste3"])
 
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.add_annotation(
+        page_number=0,
+        annotation=Link(target_page_index=1, rect=RectangleObject([0, 0, 100, 100])),
+    )
+    del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DA"]
+    del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DR"]["/Font"]
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        auto_regenerate=False,
+    )
+    assert b"/Helv " in writer.pages[0]["/Annots"][1]["/AP"]["/N"].get_data()
+
     Path(write_data_here).unlink()
 
 
@@ -1556,7 +1570,7 @@ def test_update_form_fields2():
 
         for page in writer.pages:
             writer.update_page_form_field_values(
-                page, myFiles[file]["usage"]["fields"], auto_regenerate=False
+                page, myFiles[file]["usage"]["fields"], auto_regenerate=True
             )
         merger.append(writer)
     assert merger.get_form_text_fields(True) == {

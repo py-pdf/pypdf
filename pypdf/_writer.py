@@ -965,7 +965,9 @@ class PdfWriter(PdfDocCommon):
                 ):
                     # textbox
                     self._update_field_annotation(writer_parent_annot, writer_annot)
-                elif writer_annot.get(FA.FT) == "/Sig":
+                elif (
+                    writer_annot.get(FA.FT) == "/Sig"
+                ):  # deprecated  # not implemented yet
                     # signature
                     logger_warning("Signature forms not implemented yet", __name__)
 
