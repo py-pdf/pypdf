@@ -171,7 +171,7 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
         return get_label_from_nums(number_tree, index)
     if "/Kids" in number_tree and not isinstance(number_tree["/Kids"], NullObject):
         # number_tree = {'/Kids': [IndirectObject(7333, 0, 140132998195856), ...]}
-        kids: List[DictionaryObject] = cast(List[DictionaryObject], number_tree["/Kids"])
+        kids = cast(List[DictionaryObject], number_tree["/Kids"])
         for kid in kids:
             # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
             limits: List[int] = cast(List[int], kid["/Limits"])
