@@ -1504,14 +1504,20 @@ def test_update_form_fields(tmp_path):
         page_number=0,
         annotation=Link(target_page_index=1, rect=RectangleObject([0, 0, 100, 100])),
     )
+    writer.insert_blank_page(100, 100, 0)
     del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DA"]
     del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DR"]["/Font"]
     writer.update_page_form_field_values(
-        writer.pages[0],
+        [writer.pages[0], writer.pages[1]],
         {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
         auto_regenerate=False,
     )
-    assert b"/Helv " in writer.pages[0]["/Annots"][1]["/AP"]["/N"].get_data()
+    assert b"/Helv " in writer.pages[1]["/Annots"][1]["/AP"]["/N"].get_data()
+    writer.update_page_form_field_values(
+        None,
+        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        auto_regenerate=False,
+    )
 
     Path(write_data_here).unlink()
 
@@ -1568,10 +1574,9 @@ def test_update_form_fields2():
         reader.add_form_topname(file)
         writer = PdfWriter(clone_from=reader)
 
-        for page in writer.pages:
-            writer.update_page_form_field_values(
-                page, myFiles[file]["usage"]["fields"], auto_regenerate=True
-            )
+        writer.update_page_form_field_values(
+            None, myFiles[file]["usage"]["fields"], auto_regenerate=True
+        )
         merger.append(writer)
     assert merger.get_form_text_fields(True) == {
         "test1.First Name": "Reed",
