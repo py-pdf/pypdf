@@ -367,6 +367,30 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
     def raw_get(self, key: Any) -> Any:
         return dict.__getitem__(self, key)
 
+    def get_herited(self, key: str, default: Any = None) -> Any:
+        """
+        Returns the value of a key or from the parent if not found
+        If not found returns default
+
+        Args:
+            key: string identifying the field to return
+
+            default: default value to return
+
+        Returns:
+            current key of herited one else default value
+        """
+        if key in self:
+            return self[key]
+        try:
+            if "/Parent" not in self:
+                return default
+            raise KeyError("not present")
+        except KeyError:
+            return cast("DictionaryObject", self["/Parent"].get_object()).get_herited(
+                key, default
+            )
+
     def __setitem__(self, key: Any, value: Any) -> Any:
         if not isinstance(key, PdfObject):
             raise ValueError("key must be PdfObject")
