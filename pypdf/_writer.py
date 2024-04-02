@@ -929,7 +929,7 @@ class PdfWriter(PdfDocCommon):
             self.set_need_appearances_writer(auto_regenerate)
         # Iterate through pages, update field values
         if page is None:
-            page = self.pages
+            page = list(self.pages)
         if isinstance(page, list):
             for p in page:
                 if PG.ANNOTS in p:  # just to prevent warnings
