@@ -369,7 +369,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
 
     def get_inherited(self, key: str, default: Any = None) -> Any:
         """
-        Returns the value of a key or from the parent if not found
+        Returns the value of a key or from the parent if not found.
         If not found returns default.
 
         Args:
