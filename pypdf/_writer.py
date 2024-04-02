@@ -755,7 +755,7 @@ class PdfWriter(PdfDocCommon):
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
 
         # Extract font information
-        da = anno.get_herited(
+        da = anno.get_inherited(
             AA.DA,
             cast(DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]).get(
                 AA.DA, None
