@@ -367,10 +367,10 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
     def raw_get(self, key: Any) -> Any:
         return dict.__getitem__(self, key)
 
-    def get_herited(self, key: str, default: Any = None) -> Any:
+    def get_inherited(self, key: str, default: Any = None) -> Any:
         """
-        Returns the value of a key or from the parent if not found
-        If not found returns default
+        Returns the value of a key or from the parent if not found.
+        If not found returns default.
 
         Args:
             key: string identifying the field to return
@@ -378,7 +378,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             default: default value to return
 
         Returns:
-            current key of herited one else default value
+            Current key or inherited one, otherwise default value.
         """
         if key in self:
             return self[key]
@@ -387,7 +387,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                 return default
             raise KeyError("not present")
         except KeyError:
-            return cast("DictionaryObject", self["/Parent"].get_object()).get_herited(
+            return cast("DictionaryObject", self["/Parent"].get_object()).get_inherited(
                 key, default
             )
 

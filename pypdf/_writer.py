@@ -755,7 +755,7 @@ class PdfWriter(PdfDocCommon):
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
 
         # Extract font information
-        da = anno.get_herited(
+        da = anno.get_inherited(
             AA.DA,
             cast(DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]).get(
                 AA.DA, None
@@ -780,7 +780,7 @@ class PdfWriter(PdfDocCommon):
             DictionaryObject,
             cast(
                 DictionaryObject,
-                anno.get_herited(
+                anno.get_inherited(
                     "/DR",
                     cast(
                         DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]
@@ -825,7 +825,7 @@ class PdfWriter(PdfDocCommon):
         # Retrieve field text and selected values
         field_flags = field.get(FA.Ff, 0)
         if field.get(FA.FT, "/Tx") == "/Ch" and field_flags & FA.FfBits.Combo == 0:
-            txt = "\n".join(anno.get_herited(FA.Opt, {}))
+            txt = "\n".join(anno.get_inherited(FA.Opt, []))
             sel = field.get("/V", [])
             if not isinstance(sel, list):
                 sel = [sel]
@@ -975,7 +975,9 @@ class PdfWriter(PdfDocCommon):
                 ):
                     # textbox
                     self._update_field_annotation(writer_parent_annot, writer_annot)
-                elif writer_annot.get(FA.FT) == "/Sig":
+                elif (
+                    writer_annot.get(FA.FT) == "/Sig"
+                ):  # deprecated  # not implemented yet
                     # signature
                     logger_warning("Signature forms not implemented yet", __name__)
 
