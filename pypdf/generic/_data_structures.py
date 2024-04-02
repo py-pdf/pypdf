@@ -378,7 +378,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             default: default value to return
 
         Returns:
-            current key of herited one else default value
+            Current key or inherited one, otherwise default value.
         """
         if key in self:
             return self[key]
