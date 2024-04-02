@@ -1499,7 +1499,103 @@ def test_update_form_fields(tmp_path):
     assert all(x in flds["RadioGroup1"]["/_States_"] for x in ["/1", "/2", "/3"])
     assert all(x in flds["Liste1"]["/_States_"] for x in ["Liste1", "Liste2", "Liste3"])
 
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.add_annotation(
+        page_number=0,
+        annotation=Link(target_page_index=1, rect=RectangleObject([0, 0, 100, 100])),
+    )
+    del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DA"]
+    del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DR"]["/Font"]
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        auto_regenerate=False,
+    )
+    assert b"/Helv " in writer.pages[0]["/Annots"][1]["/AP"]["/N"].get_data()
+
     Path(write_data_here).unlink()
+
+
+@pytest.mark.enable_socket()
+def test_update_form_fields2():
+    myFiles = {
+        "test1": {
+            "name": "Test1 Form",
+            "url": "https://github.com/py-pdf/pypdf/files/14817365/test1.pdf",
+            "path": "iss2234a.pdf",
+            "usage": {
+                "fields": {
+                    "First Name": "Reed",
+                    "Middle Name": "R",
+                    "MM": "04",
+                    "DD": "21",
+                    "YY": "24",
+                    "Initial": "RRG",
+                    # "I DO NOT Agree": null,
+                    # "Last Name": null
+                },
+            },
+        },
+        "test2": {
+            "name": "Test2 Form",
+            "url": "https://github.com/py-pdf/pypdf/files/14817366/test2.pdf",
+            "path": "iss2234b.pdf",
+            "usage": {
+                "fields": {
+                    "p2 First Name": "Joe",
+                    "p2 Middle Name": "S",
+                    "p2 MM": "03",
+                    "p2 DD": "31",
+                    "p2 YY": "24",
+                    "Initial": "JSS",
+                    # "p2 I DO NOT Agree": "null",
+                    "p2 Last Name": "Smith",
+                    "p3 First Name": "John",
+                    "p3 Middle Name": "R",
+                    "p3 MM": "01",
+                    "p3 DD": "25",
+                    "p3 YY": "21",
+                },
+            },
+        },
+    }
+    merger = PdfWriter()
+
+    for file in myFiles:
+        reader = PdfReader(
+            BytesIO(get_data_from_url(myFiles[file]["url"], name=myFiles[file]["path"]))
+        )
+        reader.add_form_topname(file)
+        writer = PdfWriter(clone_from=reader)
+
+        for page in writer.pages:
+            writer.update_page_form_field_values(
+                page, myFiles[file]["usage"]["fields"], auto_regenerate=True
+            )
+        merger.append(writer)
+    assert merger.get_form_text_fields(True) == {
+        "test1.First Name": "Reed",
+        "test1.Middle Name": "R",
+        "test1.MM": "04",
+        "test1.DD": "21",
+        "test1.YY": "24",
+        "test1.Initial": "RRG",
+        "test1.I DO NOT Agree": None,
+        "test1.Last Name": None,
+        "test2.p2 First Name": "Joe",
+        "test2.p2 Middle Name": "S",
+        "test2.p2 MM": "03",
+        "test2.p2 DD": "31",
+        "test2.p2 YY": "24",
+        "test2.Initial": "JSS",
+        "test2.p2 I DO NOT Agree": None,
+        "test2.p2 Last Name": "Smith",
+        "test2.p3 First Name": "John",
+        "test2.p3 Middle Name": "R",
+        "test2.p3 MM": "01",
+        "test2.p3 DD": "25",
+        "test2.p3 YY": "21",
+    }
 
 
 @pytest.mark.enable_socket()
