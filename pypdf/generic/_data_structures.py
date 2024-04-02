@@ -387,7 +387,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                 return default
             raise KeyError("not present")
         except KeyError:
-            return cast("DictionaryObject", self["/Parent"].get_object()).get_herited(
+            return cast("DictionaryObject", self["/Parent"].get_object()).get_inherited(
                 key, default
             )
 
