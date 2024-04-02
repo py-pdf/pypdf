@@ -367,7 +367,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
     def raw_get(self, key: Any) -> Any:
         return dict.__getitem__(self, key)
 
-    def get_herited(self, key: str, default: Any = None) -> Any:
+    def get_inherited(self, key: str, default: Any = None) -> Any:
         """
         Returns the value of a key or from the parent if not found
         If not found returns default.
