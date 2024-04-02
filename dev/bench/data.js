@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712062286884,
+  "lastUpdate": 1712066110852,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -50375,6 +50375,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08784665338773716",
             "extra": "mean: 15.747820511399993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "50bb7f26a3574bb92448c2b64d0d125435f27638",
+          "message": "BUG: Fix fields update where annotations are kids of field (#2570)\n\nCloses #2234.\r\nCloses #2512.\r\n\r\nReplaces  #2333.",
+          "timestamp": "2024-04-02T15:52:19+02:00",
+          "tree_id": "85d18343250e71d0269c21e230f7e511aba445f9",
+          "url": "https://github.com/py-pdf/pypdf/commit/50bb7f26a3574bb92448c2b64d0d125435f27638"
+        },
+        "date": 1712066107895,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3133123408976695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007556013565226101",
+            "extra": "mean: 301.8127773999936 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.260654725167475,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007848621940529711",
+            "extra": "mean: 81.56171284615802 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27124136145229627,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023770039858971068",
+            "extra": "mean: 3.6867533573999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.03273205843492,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009748943025494893",
+            "extra": "mean: 55.454714058829694 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06339121220855912,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10336856389379215",
+            "extra": "mean: 15.775057222600003 sec\nrounds: 5"
           }
         ]
       }
