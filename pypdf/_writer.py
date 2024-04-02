@@ -825,7 +825,7 @@ class PdfWriter(PdfDocCommon):
         # Retrieve field text and selected values
         field_flags = field.get(FA.Ff, 0)
         if field.get(FA.FT, "/Tx") == "/Ch" and field_flags & FA.FfBits.Combo == 0:
-            txt = "\n".join(anno.get_herited(FA.Opt, {}))
+            txt = "\n".join(anno.get_inherited(FA.Opt, {}))
             sel = field.get("/V", [])
             if not isinstance(sel, list):
                 sel = [sel]
