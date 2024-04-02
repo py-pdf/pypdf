@@ -1573,10 +1573,9 @@ def test_update_form_fields2():
         reader.add_form_topname(file)
         writer = PdfWriter(clone_from=reader)
 
-        for page in writer.pages:
-            writer.update_page_form_field_values(
-                page, myFiles[file]["usage"]["fields"], auto_regenerate=True
-            )
+        writer.update_page_form_field_values(
+            None, myFiles[file]["usage"]["fields"], auto_regenerate=True
+        )
         merger.append(writer)
     assert merger.get_form_text_fields(True) == {
         "test1.First Name": "Reed",
