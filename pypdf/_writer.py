@@ -168,7 +168,7 @@ class PdfWriter(PdfDocCommon):
 
     def __init__(
         self,
-        fileobj: StrByteType = "",
+        fileobj: Union[None, PdfReader, StrByteType, Path] = "",
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
     ) -> None:
         self._header = b"%PDF-1.3"
@@ -213,12 +213,34 @@ class PdfWriter(PdfDocCommon):
         )
         self._root = self._add_object(self._root_object)
 
+        if not isinstance(fileobj, (str, Path, IO, BytesIO)) or (
+            fileobj != "" and clone_from is None
+        ):
+            cloning = True
+            if not (
+                not isinstance(fileobj, (str, Path))
+                or (
+                    Path(str(fileobj)).exists()
+                    and Path(str(fileobj)).stat().st_size > 0
+                )
+            ):
+                cloning = False
+            if isinstance(fileobj, (IO, BytesIO)):
+                t = fileobj.tell()
+                fileobj.seek(-1, 2)
+                if fileobj.tell() == 0:
+                    cloning = False
+                fileobj.seek(t, 0)
+            if cloning:
+                clone_from = fileobj
+        # to prevent overwriting
+        self.temp_fileobj = fileobj
+        self.fileobj = ""
+        self.with_as_usage = False
         if clone_from is not None:
             if not isinstance(clone_from, PdfReader):
                 clone_from = PdfReader(clone_from)
             self.clone_document_from_reader(clone_from)
-        self.fileobj = fileobj
-        self.with_as_usage = False
 
         self._encryption: Optional[Encryption] = None
         self._encrypt_entry: Optional[DictionaryObject] = None
@@ -268,7 +290,10 @@ class PdfWriter(PdfDocCommon):
 
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""
+        t = self.temp_fileobj
+        self.__init__()  # type: ignore
         self.with_as_usage = True
+        self.fileobj = t  # type: ignore
         return self
 
     def __exit__(
