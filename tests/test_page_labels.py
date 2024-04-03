@@ -1,10 +1,12 @@
 """Test the pypdf._page_labels module."""
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
 from pypdf import PdfReader
 from pypdf._page_labels import (
+    get_label_from_nums,
     index2label,
     number2lowercase_letter,
     number2lowercase_roman_numeral,
@@ -15,6 +17,7 @@ from pypdf._page_labels import (
     nums_next,
 )
 from pypdf.generic import (
+    ArrayObject,
     DictionaryObject,
     NameObject,
     NullObject,
@@ -22,6 +25,10 @@ from pypdf.generic import (
 )
 
 from . import get_data_from_url
+
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
@@ -103,3 +110,47 @@ def test_index2label(caplog):
     r.trailer["/Root"]["/PageLabels"][NameObject("/Kids")] = NullObject()
     assert index2label(r, 1) == "2"
     assert caplog.text != ""
+
+
+@pytest.mark.enable_socket()
+def test_index2label_kids():
+    url = "https://www.bk.admin.ch/dam/bk/de/dokumente/terminologie/publikation_25_jahre_rtd.pdf.download.pdf/Terminologie_Epochen,%20Schwerpunkte,%20Umsetzungen.pdf"  # noqa: E501
+    r = PdfReader(BytesIO(get_data_from_url(url=url, name="index2label_kids.pdf")))
+    expected = [
+        "C1",
+        "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+        "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII",
+    ] + list(map(str, range(1, 284)))
+    for x in ["20", "44", "58", "82", "94", "116", "154", "166", "192", "224", "250"]:
+        # Some page labels are unused. Removing them is still easier than copying the
+        # whole list itself here.
+        expected.remove(x)
+    assert r.page_labels == expected
+
+
+@pytest.mark.enable_socket()
+def test_index2label_kids__recursive(caplog):
+    url = "https://github.com/py-pdf/pypdf/files/14842446/tt1.pdf"
+    r = PdfReader(BytesIO(get_data_from_url(url=url, name="index2label_kids_recursive.pdf")))
+    expected = [
+        "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L",
+        "M", "N", "O", "P", "17", "18", "19"
+    ]
+    assert r.page_labels == expected
+    assert caplog.text != ""
+
+
+def test_get_label_from_nums__empty_nums_list():
+    dictionary_object = DictionaryObject()
+    dictionary_object[NameObject("/Nums")] = ArrayObject()
+    assert get_label_from_nums(dictionary_object, 13) == "14"
+
+
+def test_index2label__empty_kids_list():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    number_tree = DictionaryObject()
+    number_tree[NameObject("/Kids")] = ArrayObject()
+    root = reader.root_object
+    root[NameObject("/PageLabels")] = number_tree
+
+    assert index2label(reader, 42) == "43"
