@@ -747,13 +747,24 @@ class PdfWriter(PdfDocCommon):
             if callable(after_page_append):
                 after_page_append(writer_page)
 
-    def _update_text_field(self, field: DictionaryObject) -> None:
+    def _update_field_annotation(
+        self, field: DictionaryObject, anno: DictionaryObject
+    ) -> None:
         # Calculate rectangle dimensions
-        _rct = cast(RectangleObject, field[AA.Rect])
+        _rct = cast(RectangleObject, anno[AA.Rect])
         rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
 
         # Extract font information
-        da = cast(str, field[AA.DA])
+        da = anno.get_inherited(
+            AA.DA,
+            cast(DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]).get(
+                AA.DA, None
+            ),
+        )
+        if da is None:
+            da = TextStringObject("/Helv 0 Tf 0 g")
+        else:
+            da = da.get_object()
         font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
         font_properties = [x for x in font_properties if x != ""]
         font_name = font_properties[font_properties.index("Tf") - 2]
@@ -767,19 +778,27 @@ class PdfWriter(PdfDocCommon):
         # Retrieve font information from local DR ...
         dr: Any = cast(
             DictionaryObject,
-            cast(DictionaryObject, field.get("/DR", DictionaryObject())).get_object(),
+            cast(
+                DictionaryObject,
+                anno.get_inherited(
+                    "/DR",
+                    cast(
+                        DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]
+                    ).get("/DR", DictionaryObject()),
+                ),
+            ).get_object(),
         )
         dr = dr.get("/Font", DictionaryObject()).get_object()
         if font_name not in dr:
             # ...or AcroForm dictionary
             dr = cast(
                 Dict[Any, Any],
-                cast(DictionaryObject, self._root_object["/AcroForm"]).get("/DR", {}),
+                cast(
+                    DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]
+                ).get("/DR", {}),
             )
-            if isinstance(dr, IndirectObject):  # pragma: no cover
-                dr = dr.get_object()
-            dr = dr.get("/Font", DictionaryObject()).get_object()
-        font_res = dr.get(font_name)
+            dr = dr.get_object().get("/Font", DictionaryObject()).get_object()
+        font_res = dr.get(font_name, None)
         if font_res is not None:
             font_res = cast(DictionaryObject, font_res.get_object())
             font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
@@ -806,7 +825,7 @@ class PdfWriter(PdfDocCommon):
         # Retrieve field text and selected values
         field_flags = field.get(FA.Ff, 0)
         if field.get(FA.FT, "/Tx") == "/Ch" and field_flags & FA.FfBits.Combo == 0:
-            txt = "\n".join(field.get(FA.Opt, {}))
+            txt = "\n".join(anno.get_inherited(FA.Opt, []))
             sel = field.get("/V", [])
             if not isinstance(sel, list):
                 sel = [sel]
@@ -822,7 +841,7 @@ class PdfWriter(PdfDocCommon):
                 # may be improved but can not find how get fill working => replaced with lined box
                 ap_stream += (
                     f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
-                    f"0.5 0.5 0.5 rg s\n{field[AA.DA]}\n"
+                    f"0.5 0.5 0.5 rg s\n{da}\n"
                 ).encode()
             if line_number == 0:
                 ap_stream += f"2 {y_offset} Td\n".encode()
@@ -862,22 +881,22 @@ class PdfWriter(PdfDocCommon):
                     )
                 }
             )
-        if AA.AP not in field:
-            field[NameObject(AA.AP)] = DictionaryObject(
+        if AA.AP not in anno:
+            anno[NameObject(AA.AP)] = DictionaryObject(
                 {NameObject("/N"): self._add_object(dct)}
             )
-        elif "/N" not in cast(DictionaryObject, field[AA.AP]):
-            cast(DictionaryObject, field[NameObject(AA.AP)])[
+        elif "/N" not in cast(DictionaryObject, anno[AA.AP]):
+            cast(DictionaryObject, anno[NameObject(AA.AP)])[
                 NameObject("/N")
             ] = self._add_object(dct)
         else:  # [/AP][/N] exists
-            n = field[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
+            n = anno[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
             self._objects[n - 1] = dct
             dct.indirect_reference = IndirectObject(n, 0, self)
 
     def update_page_form_field_values(
         self,
-        page: PageObject,
+        page: Union[PageObject, List[PageObject], None],
         fields: Dict[str, Any],
         flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
         auto_regenerate: Optional[bool] = True,
@@ -889,8 +908,10 @@ class PdfWriter(PdfDocCommon):
         If the field links to a parent object, add the information to the parent.
 
         Args:
-            page: Page reference from PDF writer where the
+            page: `PageObject` - references **PDF writer's page** where the
                 annotations and field data will be updated.
+                `List[Pageobject]` - provides list of page to be processsed.
+                `None` - all pages.
             fields: a Python dictionary of field names (/T) and text
                 values (/V).
             flags: An integer (0 to 7). The first bit sets ReadOnly, the
@@ -907,64 +928,58 @@ class PdfWriter(PdfDocCommon):
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
         # Iterate through pages, update field values
+        if page is None:
+            page = list(self.pages)
+        if isinstance(page, list):
+            for p in page:
+                if PG.ANNOTS in p:  # just to prevent warnings
+                    self.update_page_form_field_values(p, fields, flags, None)
+            return None
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
-        # /Helvetica is just in case of but this is normally insufficient as we miss the font resource
-        default_da = af.get(
-            InteractiveFormDictEntries.DA, TextStringObject("/Helvetica 0 Tf 0 g")
-        )
         for writer_annot in page[PG.ANNOTS]:  # type: ignore
             writer_annot = cast(DictionaryObject, writer_annot.get_object())
-            # retrieve parent field values, if present
-            writer_parent_annot = writer_annot.get(
-                PG.PARENT, DictionaryObject()
-            ).get_object()
+            if writer_annot.get("/Subtype", "") != "/Widget":
+                continue
+            if "/FT" in writer_annot and "/T" in writer_annot:
+                writer_parent_annot = writer_annot
+            else:
+                writer_parent_annot = writer_annot.get(
+                    PG.PARENT, DictionaryObject()
+                ).get_object()
+
             for field, value in fields.items():
-                if (
-                    writer_annot.get(FA.T) == field
-                    or self._get_qualified_field_name(writer_annot) == field
+                if not (
+                    self._get_qualified_field_name(writer_parent_annot) == field
+                    or writer_parent_annot.get("/T", None) == field
                 ):
-                    if isinstance(value, list):
-                        lst = ArrayObject(TextStringObject(v) for v in value)
-                        writer_annot[NameObject(FA.V)] = lst
-                    else:
-                        writer_annot[NameObject(FA.V)] = TextStringObject(value)
-                    if writer_annot.get(FA.FT) in ("/Btn"):
-                        # case of Checkbox button (no /FT found in Radio widgets
-                        writer_annot[NameObject(AA.AS)] = NameObject(value)
-                    elif (
-                        writer_annot.get(FA.FT) == "/Tx"
-                        or writer_annot.get(FA.FT) == "/Ch"
-                    ):
-                        # textbox
-                        if AA.DA not in writer_annot:
-                            f = writer_annot
-                            da = default_da
-                            while AA.DA not in f:
-                                f = f.get("/Parent")
-                                if f is None:
-                                    break
-                                f = f.get_object()
-                                if AA.DA in f:
-                                    da = f[AA.DA]
-                            writer_annot[NameObject(AA.DA)] = da
-                        self._update_text_field(writer_annot)
-                    elif writer_annot.get(FA.FT) == "/Sig":
-                        # signature
-                        logger_warning("Signature forms not implemented yet", __name__)
-                    if flags:
-                        writer_annot[NameObject(FA.Ff)] = NumberObject(flags)
-                elif (
-                    writer_parent_annot.get(FA.T) == field
-                    or self._get_qualified_field_name(writer_parent_annot) == field
-                ):
+                    continue
+                if flags:
+                    writer_annot[NameObject(FA.Ff)] = NumberObject(flags)
+                if isinstance(value, list):
+                    lst = ArrayObject(TextStringObject(v) for v in value)
+                    writer_parent_annot[NameObject(FA.V)] = lst
+                else:
                     writer_parent_annot[NameObject(FA.V)] = TextStringObject(value)
-                    for k in writer_parent_annot[NameObject(FA.Kids)]:
-                        k = k.get_object()
-                        k[NameObject(AA.AS)] = NameObject(
-                            value if value in k[AA.AP]["/N"] else "/Off"
-                        )
+                if writer_parent_annot.get(FA.FT) in ("/Btn"):
+                    # case of Checkbox button (no /FT found in Radio widgets
+                    v = NameObject(value)
+                    if v not in writer_annot[NameObject(AA.AP)][NameObject("/N")]:
+                        v = NameObject("/Off")
+                    # other cases will be updated through the for loop
+                    writer_annot[NameObject(AA.AS)] = v
+                elif (
+                    writer_parent_annot.get(FA.FT) == "/Tx"
+                    or writer_parent_annot.get(FA.FT) == "/Ch"
+                ):
+                    # textbox
+                    self._update_field_annotation(writer_parent_annot, writer_annot)
+                elif (
+                    writer_annot.get(FA.FT) == "/Sig"
+                ):  # deprecated  # not implemented yet
+                    # signature
+                    logger_warning("Signature forms not implemented yet", __name__)
 
     def reattach_fields(
         self, page: Optional[PageObject] = None
@@ -2328,7 +2343,7 @@ class PdfWriter(PdfDocCommon):
         Raises:
             TypeError: The pages attribute is not configured properly
         """
-        if isinstance(fileobj, PdfReader):
+        if isinstance(fileobj, PdfDocCommon):
             reader = fileobj
         else:
             stream, encryption_obj = self._create_stream(fileobj)
