@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712076412852,
+  "lastUpdate": 1712172217012,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -50552,6 +50552,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07805244788422958",
             "extra": "mean: 15.581013074199996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bc299012f5253f04c3d990c8d1b3eec97c7d2006",
+          "message": "ENH: Add support for /Kids in page labels (#2562)\n\n* ENH: Add support for /Kids in page labels\r\n\r\n---------\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2024-04-03T21:20:46+02:00",
+          "tree_id": "7ac6d05d61a4e6bddfd0cfc28cbcbd1f93900d88",
+          "url": "https://github.com/py-pdf/pypdf/commit/bc299012f5253f04c3d990c8d1b3eec97c7d2006"
+        },
+        "date": 1712172214687,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3685812739876195,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005696127709641233",
+            "extra": "mean: 296.8608795999842 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.220475953809604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008326458412593336",
+            "extra": "mean: 81.82987338461729 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27496230401543464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033829615634041604",
+            "extra": "mean: 3.6368621640000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.962982090836284,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00039767546839139495",
+            "extra": "mean: 55.670043812499515 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0640159541417189,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10218526491355893",
+            "extra": "mean: 15.62110591660001 sec\nrounds: 5"
           }
         ]
       }
