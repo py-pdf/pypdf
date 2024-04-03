@@ -128,6 +128,18 @@ def test_index2label_kids():
     assert r.page_labels == expected
 
 
+@pytest.mark.enable_socket()
+def test_index2label_kids__recursive(caplog):
+    url = "https://github.com/py-pdf/pypdf/files/14842446/tt1.pdf"
+    r = PdfReader(BytesIO(get_data_from_url(url=url, name="index2label_kids_recursive.pdf")))
+    expected = [
+        "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L",
+        "M", "N", "O", "P", "17", "18", "19"
+    ]
+    assert r.page_labels == expected
+    assert caplog.text != ""
+
+
 def test_get_label_from_nums__empty_nums_list():
     dictionary_object = DictionaryObject()
     dictionary_object[NameObject("/Nums")] = ArrayObject()
