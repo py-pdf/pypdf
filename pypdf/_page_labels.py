@@ -171,12 +171,28 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
         return get_label_from_nums(number_tree, index)
     if "/Kids" in number_tree and not isinstance(number_tree["/Kids"], NullObject):
         # number_tree = {'/Kids': [IndirectObject(7333, 0, 140132998195856), ...]}
-        kids = cast(List[DictionaryObject], number_tree["/Kids"])
-        for kid in kids:
-            # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
-            limits: List[int] = cast(List[int], kid["/Limits"])
-            if limits[0] <= index <= limits[1]:
-                return get_label_from_nums(kid, index)
+        # Limit maximum depth.
+        level = 0
+        while level < 100:
+            kids = cast(List[DictionaryObject], number_tree["/Kids"])
+            for kid in kids:
+                # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
+                limits = cast(List[int], kid["/Limits"])
+                if limits[0] <= index <= limits[1]:
+                    if kid.get("/Kids", None) is not None:
+                        # Recursive definition.
+                        level += 1
+                        if level == 100:  # pragma: no cover
+                            raise NotImplementedError("Too deep nesting is not supported.")
+                        number_tree = kid
+                        # Exit the inner `for` loop and continue at the next level with the
+                        # next iteration of the `while` loop.
+                        break
+                    return get_label_from_nums(kid, index)
+            else:
+                # When there are no kids, make sure to exit the `while` loop directly
+                # and continue with the fallback.
+                break
 
     logger_warning(
         f"Could not reliably determine page label for {index}.",
