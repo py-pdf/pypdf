@@ -114,12 +114,27 @@ def test_index2label(caplog):
 
 @pytest.mark.enable_socket()
 def test_index2label_kids():
-    url = "https://www.bk.admin.ch/dam/bk/de/dokumente/terminologie/publikation_25_jahre_rtd.pdf.download.pdf/Terminologie_Epochen,%20Schwerpunkte,%20Umsetzungen.pdf"  # noqa: E501
+    url = "https://github.com/py-pdf/pypdf/files/14858124/Terminologie_Epochen.Schwerpunkte.Umsetzungen.pdf"
     r = PdfReader(BytesIO(get_data_from_url(url=url, name="index2label_kids.pdf")))
     expected = [
         "C1",
-        "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-        "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII",
+        "I",
+        "II",
+        "III",
+        "IV",
+        "V",
+        "VI",
+        "VII",
+        "VIII",
+        "IX",
+        "X",
+        "XI",
+        "XII",
+        "XIII",
+        "XIV",
+        "XV",
+        "XVI",
+        "XVII",
     ] + list(map(str, range(1, 284)))
     for x in ["20", "44", "58", "82", "94", "116", "154", "166", "192", "224", "250"]:
         # Some page labels are unused. Removing them is still easier than copying the
@@ -131,10 +146,29 @@ def test_index2label_kids():
 @pytest.mark.enable_socket()
 def test_index2label_kids__recursive(caplog):
     url = "https://github.com/py-pdf/pypdf/files/14842446/tt1.pdf"
-    r = PdfReader(BytesIO(get_data_from_url(url=url, name="index2label_kids_recursive.pdf")))
+    r = PdfReader(
+        BytesIO(get_data_from_url(url=url, name="index2label_kids_recursive.pdf"))
+    )
     expected = [
-        "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L",
-        "M", "N", "O", "P", "17", "18", "19"
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "17",
+        "18",
+        "19",
     ]
     assert r.page_labels == expected
     assert caplog.text != ""
