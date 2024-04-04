@@ -677,6 +677,14 @@ class PdfReader(PdfDocCommon):
             read_non_whitespace(stream)
             stream.seek(-1, 1)
             size = cast(int, read_object(stream, self))
+            if not isinstance(size, int):
+                logger_warning(
+                    "Invalid/Truncated xref table. Rebuild xref table",
+                    __name__,
+                )
+                self._rebuild_xref_table(stream)
+                stream.read()
+                return
             read_non_whitespace(stream)
             stream.seek(-1, 1)
             cnt = 0
@@ -815,6 +823,9 @@ class PdfReader(PdfDocCommon):
 
     def _read_xref(self, stream: StreamType) -> Optional[int]:
         self._read_standard_xref_table(stream)
+        if stream.read(1) == b"":
+            return None
+        stream.seek(-1, 1)
         read_non_whitespace(stream)
         stream.seek(-1, 1)
         new_trailer = cast(Dict[str, Any], read_object(stream, self))
