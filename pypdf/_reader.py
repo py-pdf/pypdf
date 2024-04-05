@@ -679,7 +679,7 @@ class PdfReader(PdfDocCommon):
             size = cast(int, read_object(stream, self))
             if not isinstance(size, int):
                 logger_warning(
-                    "Invalid/Truncated xref table. Rebuild xref table",
+                    "Invalid/Truncated xref table. Rebuilding it.",
                     __name__,
                 )
                 self._rebuild_xref_table(stream)

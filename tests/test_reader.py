@@ -1515,4 +1515,4 @@ def test_truncated_xref(caplog):
     url = "https://github.com/py-pdf/pypdf/files/14843553/002-trivial-libre-office-writer-broken.pdf"
     name = "iss2575.pdf"
     PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    assert "Invalid/Truncated xref table. Rebuild xref table" in caplog.text
+    assert "Invalid/Truncated xref table. Rebuilding it." in caplog.text
