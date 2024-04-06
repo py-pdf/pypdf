@@ -26,7 +26,7 @@ from pypdf.generic import (
     read_object,
 )
 
-from . import get_data_from_url, normalize_warnings
+from . import PILContext, get_data_from_url, normalize_warnings
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -672,12 +672,13 @@ def test_image_extraction(url, name):
     if not root.exists():
         root.mkdir()
 
-    for page in reader.pages:
-        for image in page.images:
-            filename = root / image.name
-            with open(filename, "wb") as img:
-                img.write(image.data)
-            images_extracted.append(filename)
+    with PILContext():
+        for page in reader.pages:
+            for image in page.images:
+                filename = root / image.name
+                with open(filename, "wb") as img:
+                    img.write(image.data)
+                images_extracted.append(filename)
 
     # Cleanup
     do_cleanup = True  # set this to False for manual inspection
