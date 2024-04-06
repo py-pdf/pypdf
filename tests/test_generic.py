@@ -1041,7 +1041,7 @@ def test_checkboxradiobuttonattributes_opt():
 
 
 def test_name_object_invalid_decode():
-    chrset = NameObject.CHARSETS
+    charsets = NameObject.CHARSETS
     NameObject.CHARSETS = ("utf-8",)
     stream = BytesIO(b"/\x80\x02\x03")
     # strict:
@@ -1052,7 +1052,7 @@ def test_name_object_invalid_decode():
     # non-strict:
     stream.seek(0)
     NameObject.read_from_stream(stream, ReaderDummy(strict=False))
-    NameObject.CHARSETS = chrset
+    NameObject.CHARSETS = charsets
 
 
 def test_indirect_object_invalid_read():

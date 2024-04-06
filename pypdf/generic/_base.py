@@ -672,8 +672,8 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 return NameObject(name.decode("charmap"))
             else:
                 raise PdfReadError(
-                    f"Illegal character in Name Object ({name!r})"
-                    "you may need to adjust NameObject.CHARSETS",
+                    f"Illegal character in NameObject ({name!r}). "
+                    "You may need to adjust NameObject.CHARSETS.",
                 ) from e
 
 
