@@ -615,7 +615,10 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")
         if out != b"/":
-            deprecate_no_replacement(f"Incorrect first char in NameObject, should start with '/': ({self})", "6.0.0")
+            deprecate_no_replacement(
+                f"Incorrect first char in NameObject, should start with '/': ({self})",
+                "6.0.0",
+            )
         for c in self[1:]:
             if c > "~":
                 for x in c.encode("utf-8"):
@@ -640,6 +643,8 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 i = i + 1
         return sin
 
+    CHARSETS = ("utf-8", "gbk", "latin1")
+
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
@@ -650,7 +655,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             name = NameObject.unnumber(name)
-            for enc in ("utf-8", "gbk"):
+            for enc in NameObject.CHARSETS:
                 try:
                     ret = name.decode(enc)
                     return NameObject(ret)
@@ -659,11 +664,16 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
             raise UnicodeDecodeError("", name, 0, 0, "Code Not Found")
         except (UnicodeEncodeError, UnicodeDecodeError) as e:
             if not pdf.strict:
-                logger_warning(f"Illegal character in Name Object ({name!r})", __name__)
+                logger_warning(
+                    f"Illegal character in Name Object ({name!r}),\n"
+                    "you may need to adjust NameObject.CHARSETS",
+                    __name__,
+                )
                 return NameObject(name.decode("charmap"))
             else:
                 raise PdfReadError(
                     f"Illegal character in Name Object ({name!r})"
+                    "you may need to adjust NameObject.CHARSETS",
                 ) from e
 
 

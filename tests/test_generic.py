@@ -212,6 +212,11 @@ def test_name_object(caplog):
         )
     ) == "/你好世界"
 
+    # to test latin-1 aka stdencoding
+    assert (
+        NameObject.read_from_stream(BytesIO(b"/DocuSign\xae"), None)
+    ) == "/DocuSign®"
+
     # test write
     b = BytesIO()
     NameObject("/hello").write_to_stream(b)
@@ -1036,8 +1041,9 @@ def test_checkboxradiobuttonattributes_opt():
 
 
 def test_name_object_invalid_decode():
+    chrset = NameObject.CHARSETS
+    NameObject.CHARSETS = ("utf-8",)
     stream = BytesIO(b"/\x80\x02\x03")
-
     # strict:
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, ReaderDummy(strict=True))
@@ -1046,6 +1052,7 @@ def test_name_object_invalid_decode():
     # non-strict:
     stream.seek(0)
     NameObject.read_from_stream(stream, ReaderDummy(strict=False))
+    NameObject.CHARSETS = chrset
 
 
 def test_indirect_object_invalid_read():
