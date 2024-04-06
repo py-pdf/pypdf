@@ -1,4 +1,4 @@
-# Adding a Stamp/Watermark to a PDF
+# Adding a Stamp or Watermark to a PDF
 
 Adding stamps or watermarks are two common ways to manipulate PDF files.
 A stamp is adding something on top of the document, a watermark is in the
@@ -21,7 +21,7 @@ for page in writer.pages:
 writer.write("out.pdf")
 ```
 
-Else use `merge_transformed_page()` with `Transformation()` if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
+Otherwise use `merge_transformed_page()` with `Transformation()` if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
 
 ```python
 from pathlib import Path
@@ -69,7 +69,7 @@ Example of watermark:
 ## Stamping images directly
 
 The above code only works for stamps that are already in PDF format.
-However, you can easilly convert an image to PDF image using
+However, you can easily convert an image to PDF image using
 [Pillow](https://pypi.org/project/Pillow/).
 
 

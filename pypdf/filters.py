@@ -285,7 +285,8 @@ class ASCIIHexDecode:
         index = 0
         while True:
             if index >= len(data):
-                raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
+                logger_warning("missing EOD in ASCIIHexDecode, check if output is OK", __name__)
+                break  # reach End Of String even if no EOD
             char = data[index : index + 1]
             if char == b">":
                 break
@@ -340,7 +341,8 @@ class RunLengthDecode:
         index = 0
         while True:
             if index >= len(data):
-                raise PdfStreamError("Unexpected EOD in RunLengthDecode")
+                logger_warning("missing EOD in RunLengthDecode, check if output is OK", __name__)
+                break  # reach End Of String even if no EOD
             length = data[index]
             index += 1
             if length == 128:
@@ -597,7 +599,7 @@ class CCITTFaxDecode:
             deprecation_no_replacement(
                 "decode_parms being an ArrayObject", removed_in="3.15.5"
             )
-        parms = CCITTFaxDecode._get_parameters(decode_parms, height)
+        params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
         tiff_header_struct = "<2shlh" + "hhll" * 8 + "h"
@@ -610,11 +612,11 @@ class CCITTFaxDecode:
             256,
             4,
             1,
-            parms.columns,  # ImageWidth, LONG, 1, width
+            params.columns,  # ImageWidth, LONG, 1, width
             257,
             4,
             1,
-            parms.rows,  # ImageLength, LONG, 1, length
+            params.rows,  # ImageLength, LONG, 1, length
             258,
             3,
             1,
@@ -622,7 +624,7 @@ class CCITTFaxDecode:
             259,
             3,
             1,
-            parms.group,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
+            params.group,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
             262,
             3,
             1,
@@ -636,7 +638,7 @@ class CCITTFaxDecode:
             278,
             4,
             1,
-            parms.rows,  # RowsPerStrip, LONG, 1, length
+            params.rows,  # RowsPerStrip, LONG, 1, length
             279,
             4,
             1,
@@ -815,9 +817,16 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             ".tiff",
             False,
         )
+    elif mode == "CMYK":
+        img, image_format, extension, invert_color = (
+            Image.frombytes(mode, size, data),
+            "TIFF",
+            ".tif",
+            False,
+        )
+    elif mode == "":
+        raise PdfReadError(f"ColorSpace field not found in {x_object_obj}")
     else:
-        if mode == "":
-            raise PdfReadError(f"ColorSpace field not found in {x_object_obj}")
         img, image_format, extension, invert_color = (
             Image.frombytes(mode, size, data),
             "PNG",

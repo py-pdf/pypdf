@@ -236,3 +236,22 @@ def test_devicen_cmyk_black_only():
     name = "iss2321_img1.pdf"
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     assert image_similarity(reader.pages[10].images[0].image, img) >= 0.99
+
+
+@pytest.mark.enable_socket()
+def test_bi_in_text():
+    """Cf #2456"""
+    url = "https://github.com/py-pdf/pypdf/files/14322910/BI_text_with_one_image.pdf"
+    name = "BI_text_with_one_image.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert reader.pages[0].images.keys() == ["~0~"]
+    assert reader.pages[0].images[0].name == "~0~.png"
+
+
+@pytest.mark.enable_socket()
+def test_cmyk_no_filter():
+    """Cf #2522"""
+    url = "https://github.com/py-pdf/pypdf/files/14614887/out3.pdf"
+    name = "iss2522.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].images[0].image

@@ -64,7 +64,7 @@ def _get_imagemode(
         pass
     elif not isinstance(color_space, list):
         raise PdfReadError(
-            "can not interprete colorspace", color_space
+            "Cannot interpret colorspace", color_space
         )  # pragma: no cover
     elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
         color_space = "/Device" + color_space[0][4:]

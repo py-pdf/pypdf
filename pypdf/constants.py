@@ -11,6 +11,8 @@ PDF Reference, sixth edition, Version 1.7, 2006.
 from enum import IntFlag, auto
 from typing import Dict, Tuple
 
+from ._utils import deprecate_with_replacement
+
 
 class Core:
     """Keywords that don't quite belong anywhere else."""
@@ -145,8 +147,11 @@ class UserAccessPermissions(IntFlag):
                     raise ValueError(f"Invalid value for reserved bit {name}.")
 
 
-class Ressources:
-    """TABLE 3.30 Entries in a resource dictionary."""
+class Resources:
+    """
+    TABLE 3.30 Entries in a resource dictionary.
+    used to be Ressources
+    """
 
     EXT_G_STATE = "/ExtGState"  # dictionary, optional
     COLOR_SPACE = "/ColorSpace"  # dictionary, optional
@@ -156,6 +161,62 @@ class Ressources:
     FONT = "/Font"  # dictionary, optional
     PROC_SET = "/ProcSet"  # array, optional
     PROPERTIES = "/Properties"  # dictionary, optional
+
+
+class Ressources:  # deprecated
+    """
+    Use :class: `Resources` instead.
+
+    .. deprecated:: 5.0.0
+    """
+
+    @classmethod  # type: ignore
+    @property
+    def EXT_G_STATE(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/ExtGState"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def COLOR_SPACE(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/ColorSpace"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def PATTERN(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/Pattern"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def SHADING(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/Shading"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def XOBJECT(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/XObject"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def FONT(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/Font"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def PROC_SET(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/ProcSet"  # array, optional
+
+    @classmethod  # type: ignore
+    @property
+    def PROPERTIES(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/Properties"  # dictionary, optional
 
 
 class PagesAttributes:
@@ -647,7 +708,7 @@ PDF_KEYS = (
     PageAttributes,
     PageLayouts,
     PagesAttributes,
-    Ressources,
+    Resources,
     StreamAttributes,
     TrailerKeys,
     TypArguments,

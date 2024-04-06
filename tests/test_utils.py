@@ -324,7 +324,7 @@ def test_human_readable_bytes(input_int, expected_output):
 
 
 def test_file_class():
-    """File class can be instanciated and string representation is ok."""
+    """File class can be instantiated and string representation is ok."""
     f = File(name="image.png", data=b"")
     assert str(f) == "File(name=image.png, data: 0 Byte)"
     assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"

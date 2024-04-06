@@ -1,4 +1,6 @@
 """Test the pypdf.generic module."""
+
+from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -211,6 +213,11 @@ def test_name_object(caplog):
         )
     ) == "/你好世界"
 
+    # to test latin-1 aka stdencoding
+    assert (
+        NameObject.read_from_stream(BytesIO(b"/DocuSign\xae"), None)
+    ) == "/DocuSign®"
+
     # test write
     b = BytesIO()
     NameObject("/hello").write_to_stream(b)
@@ -218,9 +225,8 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-    NameObject("hello").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"hello"
-    assert "Incorrect first char" in caplog.text
+    with pytest.raises(DeprecationWarning):
+        NameObject("hello").write_to_stream(b)
 
     caplog.clear()
     b = BytesIO()
@@ -271,6 +277,16 @@ def test_encode_pdfdocencoding_keyerror():
     with pytest.raises(UnicodeEncodeError) as exc:
         encode_pdfdocencoding("😀")
     assert exc.value.args[0] == "pdfdocencoding"
+
+
+@pytest.mark.parametrize("test_input", ["", "data"])
+def test_encode_pdfdocencoding_returns_bytes(test_input):
+    """
+    Test that encode_pdfdocencoding() always returns bytes because bytearray
+    is duck type compatible with bytes in mypy
+    """
+    out = encode_pdfdocencoding(test_input)
+    assert isinstance(out, bytes)
 
 
 def test_read_object_comment_exception():
@@ -1026,16 +1042,20 @@ def test_checkboxradiobuttonattributes_opt():
 
 
 def test_name_object_invalid_decode():
-    stream = BytesIO(b"/\x80\x02\x03")
+    charsets = deepcopy(NameObject.CHARSETS)
+    try:
+        NameObject.CHARSETS = ("utf-8",)
+        stream = BytesIO(b"/\x80\x02\x03")
+        # strict:
+        with pytest.raises(PdfReadError) as exc:
+            NameObject.read_from_stream(stream, ReaderDummy(strict=True))
+        assert "Illegal character in NameObject " in exc.value.args[0]
 
-    # strict:
-    with pytest.raises(PdfReadError) as exc:
-        NameObject.read_from_stream(stream, ReaderDummy(strict=True))
-    assert "Illegal character in Name Object" in exc.value.args[0]
-
-    # non-strict:
-    stream.seek(0)
-    NameObject.read_from_stream(stream, ReaderDummy(strict=False))
+        # non-strict:
+        stream.seek(0)
+        NameObject.read_from_stream(stream, ReaderDummy(strict=False))
+    finally:
+        NameObject.CHARSETS = charsets
 
 
 def test_indirect_object_invalid_read():
@@ -1235,3 +1255,65 @@ def test_encodedstream_set_data():
     assert cc["/Filter"] == ["/FlateDecode", "/FlateDecode", "/FlateDecode"]
     assert str(cc["/DecodeParms"]) == "[NullObject, NullObject, NullObject]"
     assert cc[NameObject("/Test")] == "/MyTest"
+
+
+@pytest.mark.enable_socket()
+def test_calling_indirect_objects():
+    """Cope with cases where attributes/items are called from indirectObject"""
+    url = (
+        "https://raw.githubusercontent.com/xrkk/tmpppppp/main/"
+        "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
+    )
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.trailer.get("/Info")["/Creator"]
+    reader.pages[0]["/Contents"][0].get_data()
+    writer = PdfWriter(clone_from=reader)
+    ind = writer._add_object(writer)
+    assert ind.fileobj == writer.fileobj
+    with pytest.raises(AttributeError):
+        ind.not_existing_attribute
+    # create an IndirectObject referencing an IndirectObject.
+    writer._objects.append(writer.pages[0].indirect_reference)
+    ind = IndirectObject(len(writer._objects), 0, writer)
+    with pytest.raises(PdfStreamError):
+        ind["/Type"]
+
+
+@pytest.mark.enable_socket()
+def test_indirect_object_page_dimensions():
+    url = "https://github.com/py-pdf/pypdf/files/13302338/Zymeworks_Corporate.Presentation_FINAL1101.pdf.pdf"
+    name = "issue2287.pdf"
+    data = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
+    mediabox = reader.pages[0].mediabox
+    assert mediabox == RectangleObject((0, 0, 792, 612))
+
+
+def test_array_operators():
+    a = ArrayObject(
+        [
+            NumberObject(1),
+            NumberObject(2),
+            NumberObject(3),
+            NumberObject(4),
+        ]
+    )
+    b = a + 5
+    assert isinstance(b, ArrayObject)
+    assert b == [1, 2, 3, 4, 5]
+    assert a == [1, 2, 3, 4]
+    a -= 2
+    a += "abc"
+    a -= (3, 4)
+    a += ["d", "e"]
+    a += BooleanObject(True)
+    assert a == [1, "abc", "d", "e", True]
+    a += "/toto"
+    assert isinstance(a[-1], NameObject)
+    assert isinstance(a[1], TextStringObject)
+    a += b"1234"
+    assert a[-1] == ByteStringObject(b"1234")
+    la = len(a)
+    a -= 300
+    assert len(a) == la

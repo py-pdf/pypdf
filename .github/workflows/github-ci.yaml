@@ -5,12 +5,14 @@ name: CI
 
 on:
   push:
-    branches: [ main, 2.0.0-dev ]
+    branches:
+      - main
     paths-ignore:
       - '**/*.md'
       - '**/*.rst'
   pull_request:
-    branches: [ main, 2.0.0-dev ]
+    branches:
+      - main
     paths-ignore:
       - '**/*.md'
       - '**/*.rst'
@@ -225,7 +227,7 @@ jobs:
           python -m coverage combine
           python -m coverage xml
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml

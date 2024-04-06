@@ -135,7 +135,7 @@ def test_mediabox_expansion_after_rotation(
     angle: float, expected_width: int, expected_height: int
 ):
     """
-    Mediabox dimensions after rotation at a non-right angle with expension are correct.
+    Mediabox dimensions after rotation at a non-right angle with expansion are correct.
 
     The test was validated against pillow (see PR #2282)
     """
@@ -961,7 +961,7 @@ def test_empyt_password_1088():
 
 @pytest.mark.enable_socket()
 def test_old_habibi():
-    # this habibi has som multiple characters associated with the h
+    # this habibi has multiple characters associated with the h
     reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
     txt = reader.pages[0].extract_text()  # very odd file
     # extract from acrobat reader "حَبيبي habibi􀀃􀏲􀎒􀏴􀎒􀎣􀋴
@@ -1203,8 +1203,11 @@ def test_merge_transformed_page_into_blank():
     inserted_blank = writer.add_page(blank)
     assert blank.page_number is None  # the inserted page is a clone
     assert inserted_blank.page_number == len(writer.pages) - 1
-    del writer._pages.get_object()["/Kids"][-1]
+    writer.remove_page(inserted_blank.indirect_reference)
     assert inserted_blank.page_number is None
+    inserted_blank = writer.add_page(blank)
+    del writer._pages.get_object()["/Kids"][-1]
+    assert inserted_blank.page_number is not None
 
 
 def test_pages_printing():
@@ -1270,6 +1273,7 @@ def test_compression():
     """Test for issue #1897"""
 
     def create_stamp_pdf() -> BytesIO:
+        pytest.importorskip("fpdf")
         from fpdf import FPDF
 
         pdf = FPDF()
@@ -1316,9 +1320,11 @@ def test_merge_with_no_resources():
 def test_get_contents_from_nullobject():
     """Issue #2157"""
     writer = PdfWriter()
-    p = writer.add_blank_page(100, 100)
-    p[NameObject("/Contents")] = writer._add_object(NullObject())
-    p.get_contents()
+    page1 = writer.add_blank_page(100, 100)
+    page1[NameObject("/Contents")] = writer._add_object(NullObject())
+    assert page1.get_contents() is None
+    page2 = writer.add_blank_page(100, 100)
+    page1.merge_page(page2, over=True)
 
 
 @pytest.mark.enable_socket()
@@ -1397,3 +1403,12 @@ def test_pos_text_in_textvisitor2():
         "hotels, short-term rentals, etc., advertised rates: mandatory fee disclosures,  SB 683",
         "housing rental properties advertised rates: disclosures,  SB 611",
     ]
+
+
+@pytest.mark.enable_socket()
+def test_missing_basefont_in_type3():
+    """Cf #2289"""
+    url = "https://github.com/py-pdf/pypdf/files/13307713/missing-base-font.pdf"
+    name = "missing-base-font.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0]._get_fonts()

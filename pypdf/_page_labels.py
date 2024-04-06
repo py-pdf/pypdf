@@ -11,12 +11,12 @@ page label. This makes things more complicated.
 Example 1
 ---------
 
->>> reader.trailer["/Root"]["/PageLabels"]["/Nums"]
+>>> reader.root_object["/PageLabels"]["/Nums"]
 [0, IndirectObject(18, 0, 139929798197504),
  8, IndirectObject(19, 0, 139929798197504)]
->>> reader.get_object(reader.trailer["/Root"]["/PageLabels"]["/Nums"][1])
+>>> reader.get_object(reader.root_object["/PageLabels"]["/Nums"][1])
 {'/S': '/r'}
->>> reader.get_object(reader.trailer["/Root"]["/PageLabels"]["/Nums"][3])
+>>> reader.get_object(reader.root_object["/PageLabels"]["/Nums"][3])
 {'/S': '/D'}
 
 Example 2
@@ -57,11 +57,11 @@ a       Lowercase letters (a to z for the first 26 pages,
                            aa to zz for the next 26, and so on)
 """
 
-from typing import Iterator, Optional, Tuple
+from typing import Iterator, List, Optional, Tuple, cast
 
-from ._protocols import PdfReaderProtocol
+from ._protocols import PdfCommonDocProtocol
 from ._utils import logger_warning
-from .generic import ArrayObject, DictionaryObject, NumberObject
+from .generic import ArrayObject, DictionaryObject, NullObject, NumberObject
 
 
 def number2uppercase_roman_numeral(num: int) -> str:
@@ -116,7 +116,43 @@ def number2lowercase_letter(number: int) -> str:
     return number2uppercase_letter(number).lower()
 
 
-def index2label(reader: PdfReaderProtocol, index: int) -> str:
+def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
+    # [Nums] shall be an array of the form
+    #   [ key 1 value 1 key 2 value 2 ... key n value n ]
+    # where each key_i is an integer and the corresponding
+    # value_i shall be the object associated with that key.
+    # The keys shall be sorted in numerical order,
+    # analogously to the arrangement of keys in a name tree
+    # as described in 7.9.6, "Name Trees."
+    nums = cast(ArrayObject, dictionary_object["/Nums"])
+    i = 0
+    value = None
+    start_index = 0
+    while i < len(nums):
+        start_index = nums[i]
+        value = nums[i + 1].get_object()
+        if i + 2 == len(nums):
+            break
+        if nums[i + 2] > index:
+            break
+        i += 2
+    m = {
+        None: lambda n: "",
+        "/D": lambda n: str(n),
+        "/R": number2uppercase_roman_numeral,
+        "/r": number2lowercase_roman_numeral,
+        "/A": number2uppercase_letter,
+        "/a": number2lowercase_letter,
+    }
+    # if /Nums array is not following the specification or if /Nums is empty
+    if not isinstance(value, dict):
+        return str(index + 1)  # Fallback
+    start = value.get("/St", 1)
+    prefix = value.get("/P", "")
+    return prefix + m[value.get("/S")](index - start_index + start)
+
+
+def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
     """
     See 7.9.7 "Number Trees".
 
@@ -127,55 +163,42 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
     Returns:
         The label of the page, e.g. "iv" or "4".
     """
-    root = reader.trailer["/Root"]
+    root = cast(DictionaryObject, reader.root_object)
     if "/PageLabels" not in root:
         return str(index + 1)  # Fallback
-    number_tree = root["/PageLabels"]
+    number_tree = cast(DictionaryObject, root["/PageLabels"].get_object())
     if "/Nums" in number_tree:
-        # [Nums] shall be an array of the form
-        #   [ key 1 value 1 key 2 value 2 ... key n value n ]
-        # where each key_i is an integer and the corresponding
-        # value_i shall be the object associated with that key.
-        # The keys shall be sorted in numerical order,
-        # analogously to the arrangement of keys in a name tree
-        # as described in 7.9.6, "Name Trees."
-        nums = number_tree["/Nums"]
-        i = 0
-        value = None
-        start_index = 0
-        while i < len(nums):
-            start_index = nums[i]
-            value = nums[i + 1].get_object()
-            if i + 2 == len(nums):
+        return get_label_from_nums(number_tree, index)
+    if "/Kids" in number_tree and not isinstance(number_tree["/Kids"], NullObject):
+        # number_tree = {'/Kids': [IndirectObject(7333, 0, 140132998195856), ...]}
+        # Limit maximum depth.
+        level = 0
+        while level < 100:
+            kids = cast(List[DictionaryObject], number_tree["/Kids"])
+            for kid in kids:
+                # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
+                limits = cast(List[int], kid["/Limits"])
+                if limits[0] <= index <= limits[1]:
+                    if kid.get("/Kids", None) is not None:
+                        # Recursive definition.
+                        level += 1
+                        if level == 100:  # pragma: no cover
+                            raise NotImplementedError("Too deep nesting is not supported.")
+                        number_tree = kid
+                        # Exit the inner `for` loop and continue at the next level with the
+                        # next iteration of the `while` loop.
+                        break
+                    return get_label_from_nums(kid, index)
+            else:
+                # When there are no kids, make sure to exit the `while` loop directly
+                # and continue with the fallback.
                 break
-            if nums[i + 2] > index:
-                break
-            i += 2
-        m = {
-            None: lambda n: "",
-            "/D": lambda n: str(n),
-            "/R": number2uppercase_roman_numeral,
-            "/r": number2lowercase_roman_numeral,
-            "/A": number2uppercase_letter,
-            "/a": number2lowercase_letter,
-        }
-        # if /Nums array is not following the specification or if /Nums is empty
-        if not isinstance(value, dict):
-            return str(index + 1)  # Fallback
-        start = value.get("/St", 1)
-        prefix = value.get("/P", "")
-        return prefix + m[value.get("/S")](index - start_index + start)
-    if "/Kids" in number_tree or "/Limits" in number_tree:
-        logger_warning(
-            (
-                "/Kids or /Limits found in PageLabels. "
-                "Please share this PDF with pypdf: "
-                "https://github.com/py-pdf/pypdf/pull/1519"
-            ),
-            __name__,
-        )
-    # TODO: Implement /Kids and /Limits for number tree
-    return str(index + 1)  # Fallback if /Nums is not in the number_tree
+
+    logger_warning(
+        f"Could not reliably determine page label for {index}.",
+        __name__
+    )
+    return str(index + 1)  # Fallback if neither /Nums nor /Kids is in the number_tree
 
 
 def nums_insert(
