@@ -21,7 +21,7 @@ from pypdf.filters import (
 )
 from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject
 
-from . import get_data_from_url
+from . import get_data_from_url, PILContext
 from .test_encryption import HAS_AES
 from .test_images import image_similarity
 
@@ -371,13 +371,14 @@ def test_tiff_predictor():
 @pytest.mark.enable_socket()
 def test_rgba():
     """Decode rgb with transparency"""
-    reader = PdfReader(BytesIO(get_data_from_url(name="tika-972174.pdf")))
-    data = reader.pages[0].images[0]
-    assert ".jp2" in data.name
-    similarity = image_similarity(
-        data.image, BytesIO(get_data_from_url(name="tika-972174_p0-im0.png"))
-    )
-    assert similarity > 0.99
+    with PILContext():
+        reader = PdfReader(BytesIO(get_data_from_url(name="tika-972174.pdf")))
+        data = reader.pages[0].images[0]
+        assert ".jp2" in data.name
+        similarity = image_similarity(
+            data.image, BytesIO(get_data_from_url(name="tika-972174_p0-im0.png"))
+        )
+        assert similarity >= 0.99
 
 
 @pytest.mark.enable_socket()
