@@ -21,7 +21,7 @@ from pypdf.filters import (
 )
 from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject
 
-from . import get_data_from_url, PILContext
+from . import PILContext, get_data_from_url
 from .test_encryption import HAS_AES
 from .test_images import image_similarity
 
