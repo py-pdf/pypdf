@@ -26,7 +26,7 @@ from pypdf.generic import (
     read_object,
 )
 
-from . import get_data_from_url, normalize_warnings, PILContext
+from . import PILContext, get_data_from_url, normalize_warnings
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
