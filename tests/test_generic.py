@@ -1049,7 +1049,7 @@ def test_name_object_invalid_decode():
         # strict:
         with pytest.raises(PdfReadError) as exc:
             NameObject.read_from_stream(stream, ReaderDummy(strict=True))
-        assert "Illegal character in NameObject. You may need " in exc.value.args[0]
+        assert "Illegal character in NameObject " in exc.value.args[0]
 
         # non-strict:
         stream.seek(0)
