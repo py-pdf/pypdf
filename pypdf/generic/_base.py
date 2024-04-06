@@ -665,7 +665,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         except (UnicodeEncodeError, UnicodeDecodeError) as e:
             if not pdf.strict:
                 logger_warning(
-                    f"Illegal character in Name Object ({name!r}),\n"
+                    f"Illegal character in NameObject ({name!r}), "
                     "you may need to adjust NameObject.CHARSETS",
                     __name__,
                 )
