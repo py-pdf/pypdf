@@ -1,5 +1,6 @@
 """Test the pypdf.generic module."""
 
+from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -1041,18 +1042,20 @@ def test_checkboxradiobuttonattributes_opt():
 
 
 def test_name_object_invalid_decode():
-    charsets = NameObject.CHARSETS
-    NameObject.CHARSETS = ("utf-8",)
-    stream = BytesIO(b"/\x80\x02\x03")
-    # strict:
-    with pytest.raises(PdfReadError) as exc:
-        NameObject.read_from_stream(stream, ReaderDummy(strict=True))
-    assert "Illegal character in Name Object" in exc.value.args[0]
-
-    # non-strict:
-    stream.seek(0)
-    NameObject.read_from_stream(stream, ReaderDummy(strict=False))
-    NameObject.CHARSETS = charsets
+    charsets = deepcopy(NameObject.CHARSETS)
+    try:
+        NameObject.CHARSETS = ("utf-8",)
+        stream = BytesIO(b"/\x80\x02\x03")
+        # strict:
+        with pytest.raises(PdfReadError) as exc:
+            NameObject.read_from_stream(stream, ReaderDummy(strict=True))
+        assert "Illegal character in NameObject. You may need " in exc.value.args[0]
+    
+        # non-strict:
+        stream.seek(0)
+        NameObject.read_from_stream(stream, ReaderDummy(strict=False))
+    finally:
+        NameObject.CHARSETS = charsets
 
 
 def test_indirect_object_invalid_read():
