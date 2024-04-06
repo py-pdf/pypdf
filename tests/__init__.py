@@ -146,9 +146,7 @@ def test_csv_consistency():
 
 
 class PILContext:
-    """
-    Allow changing the PIL/Pillow configuration for some limited scope.
-    """
+    """Allow changing the PIL/Pillow configuration for some limited scope."""
 
     def __init__(self):
         self._saved_load_truncated_images = False
