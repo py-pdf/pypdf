@@ -378,7 +378,7 @@ def test_rgba():
         similarity = image_similarity(
             data.image, BytesIO(get_data_from_url(name="tika-972174_p0-im0.png"))
         )
-        assert similarity >= 0.99
+        assert similarity > 0.99
 
 
 @pytest.mark.enable_socket()
