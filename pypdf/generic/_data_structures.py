@@ -1256,7 +1256,7 @@ class ContentStream(DecodedStreamObject):
             self._operations.insert(0, ([], "q"))
             self._operations.append(([], "Q"))
         elif self._data:
-            self._data = b"q\n" + b_(self._data) + b"Q\n"
+            self._data = b"q\n" + b_(self._data) + b"\nQ"
 
     # This overrides the parent method:
     def write_to_stream(

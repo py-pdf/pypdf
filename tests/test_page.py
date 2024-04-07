@@ -187,6 +187,7 @@ def test_transformation_equivalence():
     )
 
 
+
 def test_transformation_equivalence2():
     pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
     reader_base = PdfReader(pdf_path)
@@ -1266,6 +1267,17 @@ def test_pdf_pages_missing_type():
     reader.pages[0]
     writer = PdfWriter(clone_from=reader)
     writer.pages[0]
+
+
+@pytest.mark.samples()
+def test_merge_with_stream_ending_in_Q():
+    """Test for issue #2587"""
+    reader = PdfReader(SAMPLE_ROOT / "027-blank-push-pop/blank.pdf")
+    page_one = reader.pages[0]
+    assert b"q Q" == page_one.get_contents()._data
+    page_two = reader.pages[0]
+    page_one.merge_page(page_two)
+    assert b"QQ" not in page_one.get_contents()._data
 
 
 @pytest.mark.samples()
