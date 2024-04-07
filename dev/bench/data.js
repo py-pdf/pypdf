@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712478641397,
+  "lastUpdate": 1712493598914,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -50906,6 +50906,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04787950801649886",
             "extra": "mean: 15.605622464199996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2ac88e635c8e16478fc11bde02411cfa573a7807",
+          "message": "REL: 4.2.0\n\nREL: 4.2.0\r\n\r\n## What's new\r\n\r\n### New Features (ENH)\r\n- Allow multiple charsets for NameObject.read_from_stream (#2585) by @pubpub-zz\r\n- Add support for /Kids in page labels (#2562) by @stefan6419846\r\n- Allow to update fields on many pages (#2571) by @pubpub-zz\r\n- Tolerate PDF with invalid xref pointed objects (#2335) by @pubpub-zz\r\n- Add Enforce from PDF2.0 in viewer_preferences (#2511) by @pubpub-zz\r\n- Add += and -= operators to ArrayObject (#2510) by @pubpub-zz\r\n\r\n### Bug Fixes (BUG)\r\n- Fix merge_page sometimes generating unknown operator 'QQ' (#2588) by @rfotino\r\n- Fix fields update where annotations are kids of field (#2570) by @pubpub-zz\r\n- Process CMYK images without a filter correctly (#2557) by @pubpub-zz\r\n- Extract text in layout mode without finding resources (#2555) by @pubpub-zz\r\n- Prevent recursive loop in some PDF files (#2505) by @pubpub-zz\r\n\r\n### Robustness (ROB)\r\n- Tolerate \"truncated\" xref (#2580) by @pubpub-zz\r\n- Replace error by warning for EOD in RunLengthDecode/ASCIIHexDecode (#2334) by @pubpub-zz\r\n- Rebuild xref table if one entry is invalid (#2528) by @pubpub-zz\r\n- Robustify stream extraction (#2526) by @pubpub-zz\r\n\r\n### Documentation (DOC)\r\n- Update release process for latest changes (#2564) by @stefan6419846\r\n- Encryption/decryption: Clone document instead of copying all pages (#2546) by @redfast00\r\n- Minor improvements (#2542) by @j-t-1\r\n- Update annotation list (#2534) by @j-t-1\r\n- Update references and formatting (#2529) by @j-t-1\r\n- Correct threads reference, plus minor changes (#2521) by @j-t-1\r\n- Minor readability increases (#2515) by @j-t-1\r\n- Simplify PaperSize examples (#2504) by @j-t-1\r\n- Minor improvements (#2501) by @j-t-1\r\n\r\n### Developer Experience (DEV)\r\n- Remove unused dependencies (#2572) by @stefan6419846\r\n- Remove page labels PR link from message (#2561) by @stefan6419846\r\n- Fix changelog generator regarding whitespace and handling of \"Other\" group (#2492) by @stefan6419846\r\n- Add REL to known PR prefixes (#2554) by @stefan6419846\r\n- Release using the REL commit instead of git tag (#2500) by @MartinThoma\r\n- Unify code between PdfReader and PdfWriter (#2497) by @pubpub-zz\r\n- Bump softprops/action-gh-release from 1 to 2 (#2514) by @dependabot[bot]\r\n\r\n### Maintenance (MAINT)\r\n- Ressources → Resources (and internal name childs) (#2550) by @pubpub-zz\r\n- Fix typos found by codespell (#2549) by @stefan6419846\r\n- Update Read the Docs configuration (#2538) by @j-t-1\r\n- Add root_object, _info and _ID to PdfReader (#2495) by @pubpub-zz\r\n\r\n### Testing (TST)\r\n- Allow loading truncated images if required (#2586) by @stefan6419846\r\n- Fix download issues from #2562 (#2578) by @pubpub-zz\r\n- Improve test_get_contents_from_nullobject to show real use-case (#2524) by @stefan6419846\r\n- Add missing test annotations (#2507) by @stefan6419846\r\n\r\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.1.0...4.2.0)",
+          "timestamp": "2024-04-07T14:37:08+02:00",
+          "tree_id": "66206cfb87fc27cf1003187f67983d9475bb1082",
+          "url": "https://github.com/py-pdf/pypdf/commit/2ac88e635c8e16478fc11bde02411cfa573a7807"
+        },
+        "date": 1712493595884,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.242706532192985,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018683175594956976",
+            "extra": "mean: 308.384366599995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.175178347685351,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009080899513598929",
+            "extra": "mean: 82.13432045454283 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2666964471156327,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01006081673476473",
+            "extra": "mean: 3.7495812591999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.44001991674922,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013072299375790498",
+            "extra": "mean: 57.33938405882267 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06292466347230588,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1603779065037418",
+            "extra": "mean: 15.8920198348 sec\nrounds: 5"
           }
         ]
       }
