@@ -14,12 +14,14 @@
 - Fix merge_page sometimes generating unknown operator 'QQ' (#2588)
 - Fix fields update where annotations are kids of field (#2570)
 - Process CMYK images without a filter correctly (#2557)
+- Extract text in layout mode without finding resources (#2555)
 - Prevent recursive loop in some PDF files (#2505)
 
 ### Robustness (ROB)
 - Tolerate "truncated" xref (#2580)
 - Replace error by warning for EOD in RunLengthDecode/ASCIIHexDecode (#2334)
 - Rebuild xref table if one entry is invalid (#2528)
+- Robustify stream extraction (#2526)
 
 ### Documentation (DOC)
 - Update release process for latest changes (#2564)
@@ -52,10 +54,6 @@
 - Fix download issues from #2562 (#2578)
 - Improve test_get_contents_from_nullobject to show real use-case (#2524)
 - Add missing test annotations (#2507)
-
-### Other
-- FIX: Extract text in layout mode without finding resources (#2555)
-- FIX: Robustify stream extraction (#2526)
 
 [Full Changelog](https://github.com/py-pdf/pypdf/compare/4.1.0...4.2.0)
 
