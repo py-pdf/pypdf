@@ -1278,7 +1278,7 @@ def test_merge_with_stream_wrapped_in_save_restore():
     assert page_one.get_contents().get_data() == b"q Q"
     page_two = reader.pages[0]
     page_one.merge_page(page_two)
-    assert b"QQ" not in page_one.get_contents()._data
+    assert b"QQ" not in page_one.get_contents().get_data()
 
 
 @pytest.mark.samples()
