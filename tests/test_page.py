@@ -1268,12 +1268,14 @@ def test_pdf_pages_missing_type():
     writer.pages[0]
 
 
-@pytest.mark.samples()
-def test_merge_with_stream_ending_in_Q():
+@pytest.mark.enable_socket()
+def test_merge_with_stream_wrapped_in_save_restore():
     """Test for issue #2587"""
-    reader = PdfReader(SAMPLE_ROOT / "027-blank-push-pop/blank.pdf")
+    url = "https://github.com/py-pdf/pypdf/files/14895914/blank_portrait.pdf"
+    name = "blank_portrait.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page_one = reader.pages[0]
-    assert b"q Q" == page_one.get_contents()._data
+    assert page_one.get_contents()._data == b"q Q"
     page_two = reader.pages[0]
     page_one.merge_page(page_two)
     assert b"QQ" not in page_one.get_contents()._data
