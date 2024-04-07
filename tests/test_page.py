@@ -1275,7 +1275,7 @@ def test_merge_with_stream_wrapped_in_save_restore():
     name = "blank_portrait.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page_one = reader.pages[0]
-    assert page_one.get_contents()._data == b"q Q"
+    assert page_one.get_contents().get_data() == b"q Q"
     page_two = reader.pages[0]
     page_one.merge_page(page_two)
     assert b"QQ" not in page_one.get_contents()._data
