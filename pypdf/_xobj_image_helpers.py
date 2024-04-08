@@ -125,6 +125,20 @@ def _get_imagemode(
     return mode, mode == "CMYK"
 
 
+def _extended_image_frombytes(
+    mode: str, size: Tuple[int, int], data: bytes
+) -> Any:  # Any = ImageType
+    try:
+        img = Image.frombytes(mode, size, data)
+    except ValueError as exc:
+        if len(data) % (size[0] * size[1]) != 0:
+            raise exc
+        k = size[0] * size[1] * len(mode) / len(data)
+        data = b"".join([bytes((x,) * int(k)) for x in data])
+        img = Image.frombytes(mode, size, data)
+    return img
+
+
 def _handle_flate(
     size: Tuple[int, int],
     data: bytes,
@@ -168,7 +182,7 @@ def _handle_flate(
     elif mode == "4bits":
         mode = "P"
         data = bits2byte(data, size, 4)
-    img = Image.frombytes(mode, size, data)
+    img = _extended_image_frombytes(mode, size, data)
     if color_space == "/Indexed":
         from .generic import TextStringObject
 
