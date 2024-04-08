@@ -263,11 +263,7 @@ def test_separation_1byte_to_rgb_inverted():
     url = "https://github.com/py-pdf/pypdf/files/13679585/test2_P038-038.pdf"
     name = "iss2343.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    url = (
-        "https://private-user-images.githubusercontent.com/4083478/"
-        "320313822-b7f41897-96ef-4ea6-b165-5ef307a92b87.png?"
-        "jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTI1MjQ0OTgsIm5iZiI6MTcxMjUyNDE5OCwicGF0aCI6Ii80MDgzNDc4LzMyMDMxMzgyMi1iN2Y0MTg5Ny05NmVmLTRlYTYtYjE2NS01ZWYzMDdhOTJiODcucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI0MDQwNyUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNDA0MDdUMjEwOTU4WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9NDAxNzIxOTM4YjdkMjE5NGQ1MGY1NzMzYjY2ZmMwOWYzMjk1ZWQzMzMxNDIyOGI2ZThmOTg2NTRiOWNkZDRkYSZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.jlaFEusLfEElwynVjtUk5VtMB1bZAjKfPJdYX3L_gBY"
-    )
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/b7f41897-96ef-4ea6-b165-5ef307a92b87"
     name = "iss2343.png"
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
@@ -279,11 +275,7 @@ def test_data_with_lf():
     url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
     name = "iss2343b.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    url = (
-        "https://private-user-images.githubusercontent.com/4083478/"
-        "320594409-1120b0cf-a67a-403f-aa1a-9a191cbc087f.png?"
-        "jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTI1OTc5MTAsIm5iZiI6MTcxMjU5NzYxMCwicGF0aCI6Ii80MDgzNDc4LzMyMDU5NDQwOS0xMTIwYjBjZi1hNjdhLTQwM2YtYWExYS05YTE5MWNiYzA4N2YucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI0MDQwOCUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNDA0MDhUMTczMzMwWiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9YWMxY2U0NzU1NWVkYzQwNWViNmYyOTFjOWQ0ZTkyN2Q3NmM1NTg4MGM4ZGZiYzRhYjg4MmVkNjRiZDcxZGRkMSZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.mDhPeMtRdV2ut1683_5JTJfxfb-wYSFGbWITR5RnRNw"
-    )
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/1120b0cf-a67a-403f-aa1a-9a191cbc087f"
     name = "iss2343b0.png"
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
-    assert image_similarity(reader.pages[8].images[9].image, img) >= 0.99
+    assert image_similarity(reader.pages[8].images[9].image, img) == 1.0

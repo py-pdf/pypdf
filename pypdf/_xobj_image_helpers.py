@@ -127,13 +127,14 @@ def _get_imagemode(
 
 def _extended_image_frombytes(
     mode: str, size: Tuple[int, int], data: bytes
-) -> Any:  # Any = ImageType
+) -> Image.Image:
     try:
         img = Image.frombytes(mode, size, data)
     except ValueError as exc:
-        if len(data) % (size[0] * size[1]) != 0:
+        nb_pix = size[0] * size[1]
+        if len(data) % nb_pix != 0:
             raise exc
-        k = size[0] * size[1] * len(mode) / len(data)
+        k = nb_pix * len(mode) / len(data)
         data = b"".join([bytes((x,) * int(k)) for x in data])
         img = Image.frombytes(mode, size, data)
     return img
