@@ -267,6 +267,10 @@ def test_separation_1byte_to_rgb_inverted():
     name = "iss2343.png"
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
+    obj = reader.pages[0].images[0].indirect_reference.get_object()
+    obj.set_data(obj.get_data() + b"\x00")
+    with pytest.raises(ValueError):
+        reader.pages[0].images[0]
 
 
 @pytest.mark.enable_socket()
