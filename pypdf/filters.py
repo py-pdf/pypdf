@@ -894,10 +894,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     img_byte_arr = BytesIO()
     try:
         img.save(img_byte_arr, format=image_format)
-    except OSError:  # pragma: no cover
-        # odd error
+    except OSError:
+        # in case of we convert to RGBA and then to PNG
+        img1 = img.convert("RGBA")
+        image_format = "PNG"
+        extension = ".png"
         img_byte_arr = BytesIO()
-        img.save(img_byte_arr, format=image_format)
+        img1.save(img_byte_arr, format=image_format)
     data = img_byte_arr.getvalue()
 
     try:  # temporary try/except until other fixes of images

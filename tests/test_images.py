@@ -283,3 +283,14 @@ def test_data_with_lf():
     name = "iss2343b0.png"
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     assert image_similarity(reader.pages[8].images[9].image, img) == 1.0
+
+
+@pytest.mark.enable_socket()
+def test_oserror():
+    """Cf #2265"""
+    url = "https://github.com/py-pdf/pypdf/files/13127130/Binance.discovery.responses.2.gov.uscourts.dcd.256060.140.1.pdf"
+    name = "iss2265.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[2].images[1]
+    # due to errors in translation in pillow we may not be have to get
+    # the correct image therefore we cannot use image_similarity
