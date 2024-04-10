@@ -15,6 +15,7 @@ from ._page import PageObject, Transformation, mult
 from ._reader import PdfReader
 from ._version import __version__
 from ._writer import ObjectDeletionFlag, PdfWriter
+from ._writerincremental import PdfWriterIncremental
 from .constants import ImageType
 from .pagerange import PageRange, parse_filename_page_ranges
 from .papersizes import PaperSize
@@ -43,6 +44,7 @@ __all__ = [
     "PdfMerger",
     "PdfReader",
     "PdfWriter",
+    "PdfWriterIncremental",
     "Transformation",
     "PageObject",
     "PasswordType",
