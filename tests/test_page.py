@@ -1268,6 +1268,19 @@ def test_pdf_pages_missing_type():
     writer.pages[0]
 
 
+@pytest.mark.enable_socket()
+def test_merge_with_stream_wrapped_in_save_restore():
+    """Test for issue #2587"""
+    url = "https://github.com/py-pdf/pypdf/files/14895914/blank_portrait.pdf"
+    name = "blank_portrait.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page_one = reader.pages[0]
+    assert page_one.get_contents().get_data() == b"q Q"
+    page_two = reader.pages[0]
+    page_one.merge_page(page_two)
+    assert b"QQ" not in page_one.get_contents().get_data()
+
+
 @pytest.mark.samples()
 def test_compression():
     """Test for issue #1897"""

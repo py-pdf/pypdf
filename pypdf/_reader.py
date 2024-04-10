@@ -576,6 +576,25 @@ class PdfReader(PdfDocCommon):
                     # non-zero-index is actually correct
             stream.seek(loc, 0)  # return to where it was
 
+        # remove wrong objects (not pointing to correct structures) - cf #2326
+        if not self.strict:
+            loc = stream.tell()
+            for gen, xref_entry in self.xref.items():
+                if gen == 65535:
+                    continue
+                ids = list(xref_entry.keys())
+                for id in ids:
+                    stream.seek(xref_entry[id], 0)
+                    try:
+                        self.read_object_header(stream)
+                    except ValueError:
+                        logger_warning(
+                            f"Ignoring wrong pointing object {id} {gen} (offset {xref_entry[id]})",
+                            __name__,
+                        )
+                        del xref_entry[id]  # we can delete the id, we are parsing ids
+            stream.seek(loc, 0)  # return to where it was
+
     def _basic_validation(self, stream: StreamType) -> None:
         """Ensure file is not empty. Read at most 5 bytes."""
         stream.seek(0, os.SEEK_SET)
@@ -661,6 +680,14 @@ class PdfReader(PdfDocCommon):
             read_non_whitespace(stream)
             stream.seek(-1, 1)
             size = cast(int, read_object(stream, self))
+            if not isinstance(size, int):
+                logger_warning(
+                    "Invalid/Truncated xref table. Rebuilding it.",
+                    __name__,
+                )
+                self._rebuild_xref_table(stream)
+                stream.read()
+                return
             read_non_whitespace(stream)
             stream.seek(-1, 1)
             cnt = 0
@@ -799,6 +826,9 @@ class PdfReader(PdfDocCommon):
 
     def _read_xref(self, stream: StreamType) -> Optional[int]:
         self._read_standard_xref_table(stream)
+        if stream.read(1) == b"":
+            return None
+        stream.seek(-1, 1)
         read_non_whitespace(stream)
         stream.seek(-1, 1)
         new_trailer = cast(Dict[str, Any], read_object(stream, self))

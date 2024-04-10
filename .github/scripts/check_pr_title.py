@@ -15,6 +15,7 @@ KNOWN_PREFIXES = (
     "DEV: ",
     "STY: ",
     "MAINT: ",
+    "REL: ",  # For internal use only.
 )
 PR_TITLE = os.getenv("PR_TITLE", "")
 

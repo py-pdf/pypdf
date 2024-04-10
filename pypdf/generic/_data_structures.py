@@ -367,6 +367,30 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
     def raw_get(self, key: Any) -> Any:
         return dict.__getitem__(self, key)
 
+    def get_inherited(self, key: str, default: Any = None) -> Any:
+        """
+        Returns the value of a key or from the parent if not found.
+        If not found returns default.
+
+        Args:
+            key: string identifying the field to return
+
+            default: default value to return
+
+        Returns:
+            Current key or inherited one, otherwise default value.
+        """
+        if key in self:
+            return self[key]
+        try:
+            if "/Parent" not in self:
+                return default
+            raise KeyError("not present")
+        except KeyError:
+            return cast("DictionaryObject", self["/Parent"].get_object()).get_inherited(
+                key, default
+            )
+
     def __setitem__(self, key: Any, value: Any) -> Any:
         if not isinstance(key, PdfObject):
             raise ValueError("key must be PdfObject")
@@ -1232,7 +1256,7 @@ class ContentStream(DecodedStreamObject):
             self._operations.insert(0, ([], "q"))
             self._operations.append(([], "Q"))
         elif self._data:
-            self._data = b"q\n" + b_(self._data) + b"Q\n"
+            self._data = b"q\n" + b_(self._data) + b"\nQ\n"
 
     # This overrides the parent method:
     def write_to_stream(
@@ -1416,9 +1440,6 @@ class Destination(TreeObject):
     node: Optional[
         DictionaryObject
     ] = None  # node provide access to the original Object
-    childs: List[
-        Any
-    ] = []  # used in PdfWriter - TODO: should be children  # noqa: RUF012
 
     def __init__(
         self,
@@ -1426,6 +1447,8 @@ class Destination(TreeObject):
         page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
         fit: Fit,
     ) -> None:
+        self._filtered_children: List[Any] = []  # used in PdfWriter
+
         typ = fit.fit_type
         args = fit.fit_args
 
