@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1712500420516,
+  "lastUpdate": 1712732745688,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -51024,6 +51024,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.14057713421537213",
             "extra": "mean: 16.119455258200002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ced67e1b68abd82b007f30f71230b608fe3d8ca1",
+          "message": "ROB: Cope with some image extraction issues (#2591)\n\nCloses #2343:\r\n1st case : image with images in 1 byte encoding with Separation color space\r\n\r\n2nd case: similar + \\n to be ignored at the end of the image data",
+          "timestamp": "2024-04-10T09:02:57+02:00",
+          "tree_id": "6b5ee6e8388e9dc0df4347fc6e591c78b40004cd",
+          "url": "https://github.com/py-pdf/pypdf/commit/ced67e1b68abd82b007f30f71230b608fe3d8ca1"
+        },
+        "date": 1712732743795,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2299711889671183,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006067118322490116",
+            "extra": "mean: 309.6002847999955 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.342170442189653,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008785347691551074",
+            "extra": "mean: 81.02302627272645 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27206034476483204,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021000410502194058",
+            "extra": "mean: 3.675655122999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.405780668832936,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007503527645036567",
+            "extra": "mean: 57.45217747059261 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06456351070738889,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08572060496926269",
+            "extra": "mean: 15.488624906600013 sec\nrounds: 5"
           }
         ]
       }
