@@ -26,7 +26,7 @@ from pypdf.generic import (
     read_object,
 )
 
-from . import get_data_from_url, normalize_warnings
+from . import PILContext, get_data_from_url, normalize_warnings
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -547,7 +547,11 @@ def test_get_fields_warns(tmp_path, caplog, url, name):
         retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert retrieved_fields == {}
-    assert normalize_warnings(caplog.text) == ["Object 2 0 not defined."]
+    assert normalize_warnings(caplog.text) == [
+        "Ignoring wrong pointing object 1 65536 (offset 0)",
+        "Ignoring wrong pointing object 2 65536 (offset 0)",
+        "Object 2 0 not defined.",
+    ]
 
 
 @pytest.mark.enable_socket()
@@ -668,12 +672,13 @@ def test_image_extraction(url, name):
     if not root.exists():
         root.mkdir()
 
-    for page in reader.pages:
-        for image in page.images:
-            filename = root / image.name
-            with open(filename, "wb") as img:
-                img.write(image.data)
-            images_extracted.append(filename)
+    with PILContext():
+        for page in reader.pages:
+            for image in page.images:
+                filename = root / image.name
+                with open(filename, "wb") as img:
+                    img.write(image.data)
+                images_extracted.append(filename)
 
     # Cleanup
     do_cleanup = True  # set this to False for manual inspection
@@ -1272,3 +1277,12 @@ def test_get_page_showing_field():
             writer._root_object["/AcroForm"]["/Fields"][-1]
         )
     ] == []
+
+
+@pytest.mark.enable_socket()
+def test_extract_empty_page():
+    """Cf #2533"""
+    url = "https://github.com/py-pdf/pypdf/files/14718318/test.pdf"
+    name = "iss2533.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name)))
+    assert reader.pages[1].extract_text(extraction_mode="layout") == ""
