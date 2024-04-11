@@ -293,4 +293,4 @@ def test_oserror():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[2].images[1]
     # due to errors in translation in pillow we may not be have to get
-    # the correct image therefore we cannot use image_similarity
+    # the correct image. Therefore we cannot use `image_similarity`.
