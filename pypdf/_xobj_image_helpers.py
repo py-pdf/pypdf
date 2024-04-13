@@ -289,20 +289,15 @@ def _handle_jpx(
     if img1.mode == "RGBA" and mode == "RGB":
         mode = "RGBA"
     # we need to convert to the good mode
-    try:
-        if (img1.mode == mode) or (img1.mode in ("L", "P") and mode in ("L", "P")):
-            img = img1
-        elif (
-            img1.mode == "RGBA"
-            and mode == "CMYK"
-            or img1.mode == "CMYK"
-            and mode == "RGBA"
-        ):
-            img = Image.frombytes(mode, img1.size, img1.tobytes())
-        else:
-            img = img1.convert(mode)
-    except OSError:
+    if img1.mode == mode or {img1.mode, mode} == {"L", "P"}:  # compare (unorder) sets
+        # L,P are indexed mode, where there should not be changed
+        img = img1
+    elif {img1.mode, mode} == {"RGBA", "CMYK"}:
+        # RGBA / CMYK are 4bytes encoding where
+        # the encoding should be corrected
         img = Image.frombytes(mode, img1.size, img1.tobytes())
+    else:
+        img = img1.convert(mode)
     # for CMYK conversion :
     # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
     # not implemented for the moment as I need to get properly the ICC
