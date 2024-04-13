@@ -894,7 +894,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     img_byte_arr = BytesIO()
     try:
         img.save(img_byte_arr, format=image_format)
-    except OSError:  # pragma: no cover  # coverred with pillow version(10.3)
+    except OSError:  # pragma: no cover  # covered with pillow 10.3
         # in case of we convert to RGBA and then to PNG
         img1 = img.convert("RGBA")
         image_format = "PNG"

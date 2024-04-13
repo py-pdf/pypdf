@@ -289,8 +289,8 @@ def _handle_jpx(
     if img1.mode == "RGBA" and mode == "RGB":
         mode = "RGBA"
     # we need to convert to the good mode
-    if img1.mode == mode or {img1.mode, mode} == {"L", "P"}:  # compare (unorder) sets
-        # L,P are indexed mode, where there should not be changed
+    if img1.mode == mode or {img1.mode, mode} == {"L", "P"}:  # compare (unordered) sets
+        # L,P are indexed modes which should not be changed.
         img = img1
     elif {img1.mode, mode} == {"RGBA", "CMYK"}:
         # RGBA / CMYK are 4bytes encoding where
