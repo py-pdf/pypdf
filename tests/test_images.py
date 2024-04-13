@@ -8,6 +8,7 @@ and/or the actual image data with the expected value.
 from io import BytesIO
 from pathlib import Path
 from typing import Union
+from zipfile import ZipFile
 
 import pytest
 from PIL import Image, ImageChops, ImageDraw
@@ -294,3 +295,54 @@ def test_oserror():
     reader.pages[2].images[1]
     # Due to errors in translation in pillow we may not get
     # the correct image. Therefore we cannot use `image_similarity`.
+
+
+@pytest.mark.parametrize(
+    ("pdf", "pdf_name", "images", "images_name", "filtr"),
+    [
+        (
+            "https://github.com/py-pdf/pypdf/files/13127197/FTX.Claim.SC30.01072023101624File595287144.pdf",
+            "iss2266a.pdf",
+            "https://github.com/py-pdf/pypdf/files/14967061/iss2266a_images.zip",
+            "iss2266a_images.zip",
+            ((0, 0), (1, 0), (4, 0), (9, 0)),  # random pick-up to speed up test
+        ),
+        (
+            "https://github.com/py-pdf/pypdf/files/13127242/FTX.Claim.Skybridge.Capital.30062023113350File971325116.pdf",
+            "iss2266b.pdf",
+            "https://github.com/py-pdf/pypdf/files/14967099/iss2266b_images.zip",
+            "iss2266b_images.zip",
+            ((0, 0), (1, 0), (4, 0), (9, 0)),  # random pick-up to speed up test
+        ),
+    ],
+)
+@pytest.mark.enable_socket()
+def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
+    """
+    Code to create zipfile:
+    import pypdf;zipfile
+
+    with pypdf.PdfReader("____inputfile___") as r:
+     with zipfile.ZipFile("__outputzip___","w") as z:
+      for p in r.pages:
+       for ii,i in enumerate(p.images):
+        print(i.name)
+        b=BytesIO()
+        i.image.save(b,"JPEG")
+        z.writestr(f"image_{p.page_number}_{ii}_{i.name}",b.getbuffer())
+    """
+    url = pdf
+    name = pdf_name
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = images
+    name = images_name
+    print(pdf_name, images_name)  # noqa: T201
+    with ZipFile(BytesIO(get_data_from_url(url, name=name)), "r") as zf:
+        for fn in zf.namelist():
+            sp = fn.split("_")
+            p, i = int(sp[1]), int(sp[2])
+            if filtr is not None and (p, i) not in filtr:
+                continue
+            print(fn)  # noqa: T201
+            img = Image.open(BytesIO(zf.read(fn)))
+            assert image_similarity(reader.pages[p].images[i].image, img) >= 0.99
