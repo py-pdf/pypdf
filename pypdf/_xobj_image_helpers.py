@@ -296,7 +296,7 @@ def _handle_jpx(
         # RGBA / CMYK are 4bytes encoding where
         # the encoding should be corrected
         img = Image.frombytes(mode, img1.size, img1.tobytes())
-    else:
+    else:  # pragma: no cover
         img = img1.convert(mode)
     # for CMYK conversion :
     # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
