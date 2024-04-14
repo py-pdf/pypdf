@@ -2196,3 +2196,24 @@ def test_mime_jupyter():
     writer = PdfWriter(clone_from=reader)
     assert reader._repr_mimebundle_(("include",), ("exclude",)) == {}
     assert writer._repr_mimebundle_(("include",), ("exclude",)) == {}
+
+
+def test_init_without_named_arg():
+    """Test to use file_obj argument and not clone_from"""
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=reader)
+    nb = len(writer._objects)
+    writer = PdfWriter(reader)
+    assert len(writer._objects) == nb
+    with open(pdf_path, "rb") as f:
+        writer = PdfWriter(f)
+        f.seek(0, 0)
+        by = BytesIO(f.read())
+    assert len(writer._objects) == nb
+    writer = PdfWriter(pdf_path)
+    assert len(writer._objects) == nb
+    writer = PdfWriter(str(pdf_path))
+    assert len(writer._objects) == nb
+    writer = PdfWriter(by)
+    assert len(writer._objects) == nb
