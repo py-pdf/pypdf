@@ -213,7 +213,9 @@ class PdfWriter(PdfDocCommon):
         )
         self._root = self._add_object(self._root_object)
 
-        def _get_clone_from(fileobj: Union[str, Path, IO, BytesIO], clone_from: Optional[Union[str, Path, IO, BytesIO]] = None) -> Union[None, str, Path, IO, BytesIO]:
+        def _get_clone_from(fileobj: Union[str, Path, IO, BytesIO], 
+                            clone_from: Optional[Union[str, Path, IO, BytesIO]] = None
+            ) -> Union[None, str, Path, IO, BytesIO]:
             if not isinstance(fileobj, (str, Path, IO, BytesIO)) or (
                 fileobj != "" and clone_from is None
             ):
