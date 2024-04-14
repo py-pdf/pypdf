@@ -213,26 +213,30 @@ class PdfWriter(PdfDocCommon):
         )
         self._root = self._add_object(self._root_object)
 
-        if not isinstance(fileobj, (str, Path, IO, BytesIO)) or (
-            fileobj != "" and clone_from is None
-        ):
-            cloning = True
-            if not (
-                not isinstance(fileobj, (str, Path))
-                or (
-                    Path(str(fileobj)).exists()
-                    and Path(str(fileobj)).stat().st_size > 0
-                )
+        def _get_clone_from(fileobj: Union[str, Path, IO, BytesIO], clone_from: Optional[Union[str, Path, IO, BytesIO]] = None) -> Union[None, str, Path, IO, BytesIO]:
+            if not isinstance(fileobj, (str, Path, IO, BytesIO)) or (
+                fileobj != "" and clone_from is None
             ):
-                cloning = False
-            if isinstance(fileobj, (IO, BytesIO)):
-                t = fileobj.tell()
-                fileobj.seek(-1, 2)
-                if fileobj.tell() == 0:
+                cloning = True
+                if not (
+                    not isinstance(fileobj, (str, Path))
+                    or (
+                        Path(str(fileobj)).exists()
+                        and Path(str(fileobj)).stat().st_size > 0
+                    )
+                ):
                     cloning = False
-                fileobj.seek(t, 0)
-            if cloning:
-                clone_from = fileobj
+                if isinstance(fileobj, (IO, BytesIO)):
+                    t = fileobj.tell()
+                    fileobj.seek(-1, 2)
+                    if fileobj.tell() == 0:
+                        cloning = False
+                    fileobj.seek(t, 0)
+                if cloning:
+                    clone_from = fileobj
+            return clone_from
+
+        clone_from = _get_clone_from(fileobj, clone_from)
         # to prevent overwriting
         self.temp_fileobj = fileobj
         self.fileobj = ""
