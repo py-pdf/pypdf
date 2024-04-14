@@ -143,3 +143,25 @@ def test_csv_consistency():
 
     # Ensure the urls are unique
     assert len(pdfs) == len({pdf["url"] for pdf in pdfs})
+
+
+class PILContext:
+    """Allow changing the PIL/Pillow configuration for some limited scope."""
+
+    def __init__(self):
+        self._saved_load_truncated_images = False
+
+    def __enter__(self):
+        # Allow loading incomplete images.
+        from PIL import ImageFile
+        self._saved_load_truncated_images = ImageFile.LOAD_TRUNCATED_IMAGES
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
+        return self
+
+    def __exit__(self, type_, value, traceback):
+        from PIL import ImageFile
+        ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images
+        if type_:
+            # Error.
+            return
+        return True

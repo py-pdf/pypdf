@@ -255,3 +255,31 @@ def test_cmyk_no_filter():
     name = "iss2522.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].images[0].image
+
+
+@pytest.mark.enable_socket()
+def test_separation_1byte_to_rgb_inverted():
+    """Cf #2343"""
+    url = "https://github.com/py-pdf/pypdf/files/13679585/test2_P038-038.pdf"
+    name = "iss2343.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/b7f41897-96ef-4ea6-b165-5ef307a92b87"
+    name = "iss2343.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
+    obj = reader.pages[0].images[0].indirect_reference.get_object()
+    obj.set_data(obj.get_data() + b"\x00")
+    with pytest.raises(ValueError):
+        reader.pages[0].images[0]
+
+
+@pytest.mark.enable_socket()
+def test_data_with_lf():
+    """Cf #2343"""
+    url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
+    name = "iss2343b.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/1120b0cf-a67a-403f-aa1a-9a191cbc087f"
+    name = "iss2343b0.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(reader.pages[8].images[9].image, img) == 1.0
