@@ -10,9 +10,6 @@ on:
     types:
       - completed
 
-permissions:
-  contents: write
-
 jobs:
   build_and_publish:
     name: Publish a new version
