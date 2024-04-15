@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1713113725231,
+  "lastUpdate": 1713201220335,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -51142,6 +51142,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0899842500326412",
             "extra": "mean: 16.026618715999984 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "730189dff0f46485adef1473b54a267707253515",
+          "message": "DEV: Different workflows for git tag / PyPI / GH Release Page (#2596)\n\n\r\n\r\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2024-04-15T19:10:45+02:00",
+          "tree_id": "9efce0faca9381f11b0937677c496db0e31cda12",
+          "url": "https://github.com/py-pdf/pypdf/commit/730189dff0f46485adef1473b54a267707253515"
+        },
+        "date": 1713201218251,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1967884868496497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0046716274628796255",
+            "extra": "mean: 312.81393939999873 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.106111744270457,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016419305125327386",
+            "extra": "mean: 90.04051309999568 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.264798379735405,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021375946487636775",
+            "extra": "mean: 3.776458152799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.182541751050138,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005793885683304434",
+            "extra": "mean: 58.19860731249982 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06367833651025484,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13882849555399943",
+            "extra": "mean: 15.703927816000009 sec\nrounds: 5"
           }
         ]
       }
