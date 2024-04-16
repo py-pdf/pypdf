@@ -1,5 +1,5 @@
 """Test the pypdf.generic module."""
-
+import warnings
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -202,7 +202,7 @@ def test_name_object(caplog):
             BytesIO(b"/#f1j#d4#aa#0c#ce#87#b4#b3#b0#23J#86#fe#2a#b2jYJ#94"),
             ReaderDummy(),
         )
-        == "/ñjÔª\x0cÎ\x87´³°#J\x86þ*²jYJ\x94"
+        == "/ñjÔª\x0cÎ⁄´³°#Jƒþ*²jYJﬂ"
     )
 
     assert (NameObject.read_from_stream(BytesIO(b"/#JA#231f"), None)) == "/#JA#1f"
@@ -211,7 +211,7 @@ def test_name_object(caplog):
         NameObject.read_from_stream(
             BytesIO(b"/#e4#bd#a0#e5#a5#bd#e4#b8#96#e7#95#8c"), None
         )
-    ) == "/你好世界"
+    ) == "/ä½€å¥½ä¸ŒçŁ„"
 
     # to test latin-1 aka stdencoding
     assert (
@@ -234,10 +234,34 @@ def test_name_object(caplog):
     assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
     assert caplog.text == ""
 
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
     b = BytesIO()
     NameObject("/你好世界 (%)").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
     assert caplog.text == ""
+
+    warnings.filterwarnings("error", category=DeprecationWarning)
+    with pytest.raises(DeprecationWarning):
+        NameObject("/你好世界 (%)").write_to_stream(b)
+
+    # ISO/DIS 32000-2 Table 4: Examples of literal names
+    for b, n in (
+        (b"/Name1", "Name1"),
+        (b"/ASomewhatLongerName", "ASomewhatLongerName"),
+        (b"/A;Name_With-Various***Characters?", "A;Name_With-Various***Characters?"),
+        (b"/1.2", "1.2"),
+        (b"/$$", "$$"),
+        (b"/@pattern", "@pattern"),
+        (b"/.notdef", ".notdef"),
+        (b"/Lime#20Green", "Lime Green"),
+        (b"/paired#28#29parentheses", "paired()parentheses"),
+        (b"/The_Key_of_F#23_Minor", "The_Key_of_F#_Minor"),
+    ):
+        assert (NameObject.read_from_stream(BytesIO(b), None)) == "/" + n
+        bio = BytesIO()
+        NameObject("/" + n).write_to_stream(bio)
+        assert bio.getbuffer() == b
+    assert (NameObject.read_from_stream(BytesIO(b"/A#42"), None)) == "/" + "AB"
 
 
 def test_destination_fit_r():

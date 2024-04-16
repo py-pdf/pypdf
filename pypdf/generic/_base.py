@@ -583,12 +583,9 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     surfix = b"/"
     renumber_table: ClassVar[Dict[str, bytes]] = {
-        "#": b"#23",
-        "(": b"#28",
-        ")": b"#29",
-        "/": b"#2F",
-        "%": b"#25",
-        **{chr(i): f"#{i:02X}".encode() for i in range(33)},
+        **{chr(i): f"#{i:02X}".encode() for i in range(0x21)},
+        **{chr(i): f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
+        **{chr(i): f"#{i:02X}".encode() for i in range(0x7F, 0x100)},
     }
 
     def clone(
@@ -613,21 +610,25 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         stream.write(self.renumber())
 
     def renumber(self) -> bytes:
-        out = self[0].encode("utf-8")
-        if out != b"/":
+        out = b"/"
+        if self[0] != "/":
             deprecate_no_replacement(
                 f"Incorrect first char in NameObject, should start with '/': ({self})",
                 "6.0.0",
             )
         for c in self[1:]:
-            if c > "~":
-                for x in c.encode("utf-8"):
-                    out += f"#{x:02X}".encode()
-            else:
+            try:
+                out += self.renumber_table[c]
+            except KeyError:
                 try:
-                    out += self.renumber_table[c]
-                except KeyError:
-                    out += c.encode("utf-8")
+                    out += encode_pdfdocencoding(c)
+                except UnicodeEncodeError:
+                    deprecate_no_replacement(
+                        f"Only 8-bit characters are allowed by specs in NameObject: ({self})",
+                        "6.0.0",
+                    )
+                    for x in c.encode("utf-8"):
+                        out += f"#{x:02X}".encode()
         return out
 
     @staticmethod
@@ -643,38 +644,16 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 i = i + 1
         return sin
 
-    CHARSETS = ("utf-8", "gbk", "latin1")
-
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
-        try:
-            # Name objects should represent irregular characters
-            # with a '#' followed by the symbol's hex number
-            name = NameObject.unnumber(name)
-            for enc in NameObject.CHARSETS:
-                try:
-                    ret = name.decode(enc)
-                    return NameObject(ret)
-                except Exception:
-                    pass
-            raise UnicodeDecodeError("", name, 0, 0, "Code Not Found")
-        except (UnicodeEncodeError, UnicodeDecodeError) as e:
-            if not pdf.strict:
-                logger_warning(
-                    f"Illegal character in NameObject ({name!r}), "
-                    "you may need to adjust NameObject.CHARSETS",
-                    __name__,
-                )
-                return NameObject(name.decode("charmap"))
-            else:
-                raise PdfReadError(
-                    f"Illegal character in NameObject ({name!r}). "
-                    "You may need to adjust NameObject.CHARSETS.",
-                ) from e
+
+        from ._utils import decode_pdfdocencoding
+
+        return NameObject(decode_pdfdocencoding(NameObject.unnumber(name)))
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
