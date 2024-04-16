@@ -14,6 +14,7 @@ jobs:
   build_and_publish:
     name: Publish a new version
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
