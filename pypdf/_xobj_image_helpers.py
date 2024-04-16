@@ -73,9 +73,7 @@ def _get_imagemode(
         color_components = cast(int, icc_profile["/N"])
         color_space = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
-        color_space = color_space[1]
-        if isinstance(color_space, IndirectObject):
-            color_space = color_space.get_object()
+        color_space = color_space[1].get_object()
         mode2, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )
@@ -291,13 +289,15 @@ def _handle_jpx(
     if img1.mode == "RGBA" and mode == "RGB":
         mode = "RGBA"
     # we need to convert to the good mode
-    try:
-        if img1.mode != mode:
-            img = Image.frombytes(mode, img1.size, img1.tobytes())
-        else:
-            img = img1
-    except OSError:
+    if img1.mode == mode or {img1.mode, mode} == {"L", "P"}:  # compare (unordered) sets
+        # L,P are indexed modes which should not be changed.
+        img = img1
+    elif {img1.mode, mode} == {"RGBA", "CMYK"}:
+        # RGBA / CMYK are 4bytes encoding where
+        # the encoding should be corrected
         img = Image.frombytes(mode, img1.size, img1.tobytes())
+    else:  # pragma: no cover
+        img = img1.convert(mode)
     # for CMYK conversion :
     # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
     # not implemented for the moment as I need to get properly the ICC
