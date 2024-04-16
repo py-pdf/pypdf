@@ -202,7 +202,7 @@ def test_name_object(caplog):
             BytesIO(b"/#f1j#d4#aa#0c#ce#87#b4#b3#b0#23J#86#fe#2a#b2jYJ#94"),
             ReaderDummy(),
         )
-        == "/ñjÔª\x0cÎ⁄´³°#Jƒþ*²jYJﬂ"
+        == "/ñjÔª\x0cÎ\x87´³°#J\x86þ*²jYJ\x94"
     )
 
     assert (NameObject.read_from_stream(BytesIO(b"/#JA#231f"), None)) == "/#JA#1f"
@@ -211,7 +211,7 @@ def test_name_object(caplog):
         NameObject.read_from_stream(
             BytesIO(b"/#e4#bd#a0#e5#a5#bd#e4#b8#96#e7#95#8c"), None
         )
-    ) == "/ä½€å¥½ä¸ŒçŁ„"
+    ) == "/ä½\xa0å¥½ä¸\x96ç\x95\x8c"
 
     # to test latin-1 aka stdencoding
     assert (
@@ -265,6 +265,12 @@ def test_name_object(caplog):
 
     with pytest.raises(PyPdfError):
         NameObject("/\0").write_to_stream(BytesIO())
+
+    value = "/" + bytes(range(1, 0x100)).decode("latin1")
+    bio = BytesIO()
+    NameObject(value).write_to_stream(bio)
+    bio.seek(0)
+    assert NameObject.read_from_stream(bio, None) == value
 
 
 def test_destination_fit_r():

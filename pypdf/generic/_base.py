@@ -628,7 +628,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 out += self.renumber_table[c]
             except KeyError:
                 try:
-                    out += encode_pdfdocencoding(c)
+                    out += c.encode("latin1")
                 except UnicodeEncodeError:
                     deprecate_no_replacement(
                         f"Only 8-bit characters are allowed by specs in NameObject: ({self})",
@@ -657,10 +657,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
-
-        from ._utils import decode_pdfdocencoding
-
-        return NameObject(decode_pdfdocencoding(NameObject.unnumber(name)))
+        return NameObject(NameObject.unnumber(name).decode("latin1"))
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
