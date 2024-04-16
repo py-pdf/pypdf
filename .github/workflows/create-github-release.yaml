@@ -32,7 +32,7 @@ jobs:
           git --no-pager tag -l "${latest_tag}" --format='%(contents:body)' >> "$GITHUB_ENV"
           echo "$EOF" >> "$GITHUB_ENV"
       - name: Create GitHub Release 🚀
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.latest_tag }}
           name: Version ${{ env.latest_tag }}, ${{ env.date }}
