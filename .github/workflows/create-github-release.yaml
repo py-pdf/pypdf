@@ -17,6 +17,7 @@ jobs:
   build_and_publish:
     name: Create a GitHub release page
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
