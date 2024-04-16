@@ -9,7 +9,7 @@ import pytest
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import CheckboxRadioButtonAttributes
-from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.errors import PdfReadError, PdfStreamError, PyPdfError
 from pypdf.generic import (
     AnnotationBuilder,
     ArrayObject,
@@ -262,6 +262,9 @@ def test_name_object(caplog):
         NameObject("/" + n).write_to_stream(bio)
         assert bio.getbuffer() == b
     assert (NameObject.read_from_stream(BytesIO(b"/A#42"), None)) == "/" + "AB"
+
+    with pytest.raises(PyPdfError):
+        NameObject("/\0").write_to_stream(BytesIO())
 
 
 def test_destination_fit_r():

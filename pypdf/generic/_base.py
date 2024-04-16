@@ -43,7 +43,12 @@ from .._utils import (
     read_until_regex,
     str_,
 )
-from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
+from ..errors import (
+    STREAM_TRUNCATED_PREMATURELY,
+    PdfReadError,
+    PdfStreamError,
+    PyPdfError,
+)
 
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
@@ -607,6 +612,8 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
+        if "\0" in self:
+            raise PyPdfError("Null character is not allowed in NameObject")
         stream.write(self.renumber())
 
     def renumber(self) -> bytes:
