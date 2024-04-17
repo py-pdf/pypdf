@@ -585,12 +585,14 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
 
 class NameObject(str, PdfObject):  # noqa: SLOT000
+    encoding = "utf8"
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     surfix = b"/"
-    renumber_table: ClassVar[Dict[str, bytes]] = {
-        **{chr(i): f"#{i:02X}".encode() for i in range(0x21)},
-        **{chr(i): f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
-        **{chr(i): f"#{i:02X}".encode() for i in range(0x7F, 0x100)},
+    renumber_table: ClassVar[Dict[int, bytes]] = {
+        **{i: f"#{i:02X}".encode() for i in range(0x21)},
+        **{i: bytes([i]) for i in range(0x21, 0x7F)},
+        **{i: f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
+        **{i: f"#{i:02X}".encode() for i in range(0x7F, 0x100)},
     }
 
     def clone(
@@ -617,25 +619,14 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         stream.write(self.renumber())
 
     def renumber(self) -> bytes:
-        out = b"/"
+        out = self.surfix
         if self[0] != "/":
             deprecate_no_replacement(
                 f"Incorrect first char in NameObject, should start with '/': ({self})",
                 "6.0.0",
             )
-        for c in self[1:]:
-            try:
-                out += self.renumber_table[c]
-            except KeyError:
-                try:
-                    out += c.encode("latin1")
-                except UnicodeEncodeError:
-                    deprecate_no_replacement(
-                        f"Only 8-bit characters are allowed by specs in NameObject: ({self})",
-                        "6.0.0",
-                    )
-                    for x in c.encode("utf-8"):
-                        out += f"#{x:02X}".encode()
+        for c in self[1:].encode(self.encoding):
+            out += self.renumber_table[c]
         return out
 
     @staticmethod
@@ -657,7 +648,13 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
-        return NameObject(NameObject.unnumber(name).decode("latin1"))
+        name = NameObject.unnumber(name)
+        try:
+            name = NameObject(name.decode(NameObject.encoding))
+        except UnicodeDecodeError:
+            name = NameObject(name.decode("latin1"))
+            name.encoding = "latin1"
+        return name
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:

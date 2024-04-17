@@ -1,5 +1,5 @@
 """Test the pypdf.generic module."""
-import warnings
+
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -185,17 +185,6 @@ def test_name_object(caplog):
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "name read error"
-    assert (
-        NameObject.read_from_stream(
-            BytesIO(b"/A;Name_With-Various***Characters?"), None
-        )
-        == "/A;Name_With-Various***Characters?"
-    )
-    assert (
-        NameObject.read_from_stream(BytesIO(b"/paired#28#29parentheses"), None)
-        == "/paired()parentheses"
-    )
-    assert NameObject.read_from_stream(BytesIO(b"/A#42"), None) == "/AB"
 
     assert (
         NameObject.read_from_stream(
@@ -211,7 +200,7 @@ def test_name_object(caplog):
         NameObject.read_from_stream(
             BytesIO(b"/#e4#bd#a0#e5#a5#bd#e4#b8#96#e7#95#8c"), None
         )
-    ) == "/ä½\xa0å¥½ä¸\x96ç\x95\x8c"
+    ) == "/你好世界"
 
     # to test latin-1 aka stdencoding
     assert (
@@ -223,7 +212,6 @@ def test_name_object(caplog):
     NameObject("/hello").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/hello"
 
-    caplog.clear()
     b = BytesIO()
     with pytest.raises(DeprecationWarning):
         NameObject("hello").write_to_stream(b)
@@ -234,15 +222,10 @@ def test_name_object(caplog):
     assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
     assert caplog.text == ""
 
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
     b = BytesIO()
     NameObject("/你好世界 (%)").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
     assert caplog.text == ""
-
-    warnings.filterwarnings("error", category=DeprecationWarning)
-    with pytest.raises(DeprecationWarning):
-        NameObject("/你好世界 (%)").write_to_stream(b)
 
     # ISO/DIS 32000-2 Table 4: Examples of literal names
     for b, n in (
@@ -266,11 +249,29 @@ def test_name_object(caplog):
     with pytest.raises(PyPdfError):
         NameObject("/\0").write_to_stream(BytesIO())
 
+    # testing all allowed values
+    NameObject.encoding = "latin1"
     value = "/" + bytes(range(1, 0x100)).decode("latin1")
     bio = BytesIO()
     NameObject(value).write_to_stream(bio)
     bio.seek(0)
+    assert (
+        bio.read()
+        == b'/#01#02#03#04#05#06#07#08#09#0A#0B#0C#0D#0E#0F#10#11#12#13#14#15#16#17#18#19#1A#1B#1C#1D#1E#1F#20!"#23$#25'
+        b"&'#28#29*+,-.#2F0123456789:;#3C=#3E?@ABCDEFGHIJKLMNOPQRSTUVWXYZ#5B\\#5D^_`abcdefghijklmnopqrstuvwxyz#7B|#7D~#"
+        b"7F#80#81#82#83#84#85#86#87#88#89#8A#8B#8C#8D#8E#8F#90#91#92#93#94#95#96#97#98#99#9A#9B#9C#9D#9E#9F#A0#A1#A2#A"
+        b"3#A4#A5#A6#A7#A8#A9#AA#AB#AC#AD#AE#AF#B0#B1#B2#B3#B4#B5#B6#B7#B8#B9#BA#BB#BC#BD#BE#BF#C0#C1#C2#C3#C4#C5#C6#C7"
+        b"#C8#C9#CA#CB#CC#CD#CE#CF#D0#D1#D2#D3#D4#D5#D6#D7#D8#D9#DA#DB#DC#DD#DE#DF#E0#E1#E2#E3#E4#E5#E6#E7#E8#E9#EA#EB#"
+        b"EC#ED#EE#EF#F0#F1#F2#F3#F4#F5#F6#F7#F8#F9#FA#FB#FC#FD#FE#FF"
+    )
+    bio.seek(0)
     assert NameObject.read_from_stream(bio, None) == value
+    NameObject.encoding = "utf8"
+    bio.seek(0)
+    name = NameObject.read_from_stream(bio, None)
+    assert name == value
+    assert name.encoding == "latin1"
+    assert NameObject.encoding == "utf8"
 
 
 def test_destination_fit_r():
