@@ -648,6 +648,8 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
+        if pdf and pdf.strict and not name.isascii():
+            raise PdfReadError(f"Illegal character in NameObject ({name})")
         name = NameObject.unnumber(name)
         try:
             name = NameObject(name.decode(NameObject.encoding))

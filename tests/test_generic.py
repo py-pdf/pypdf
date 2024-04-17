@@ -1076,20 +1076,15 @@ def test_checkboxradiobuttonattributes_opt():
 
 
 def test_name_object_invalid_decode():
-    charsets = deepcopy(NameObject.CHARSETS)
-    try:
-        NameObject.CHARSETS = ("utf-8",)
-        stream = BytesIO(b"/\x80\x02\x03")
-        # strict:
-        with pytest.raises(PdfReadError) as exc:
-            NameObject.read_from_stream(stream, ReaderDummy(strict=True))
-        assert "Illegal character in NameObject " in exc.value.args[0]
+    stream = BytesIO(b"/\x80\x02\x03")
+    # strict:
+    with pytest.raises(PdfReadError) as exc:
+        NameObject.read_from_stream(stream, ReaderDummy(strict=True))
+    assert "Illegal character in NameObject " in exc.value.args[0]
 
-        # non-strict:
-        stream.seek(0)
-        NameObject.read_from_stream(stream, ReaderDummy(strict=False))
-    finally:
-        NameObject.CHARSETS = charsets
+    # non-strict:
+    stream.seek(0)
+    NameObject.read_from_stream(stream, ReaderDummy(strict=False))
 
 
 def test_indirect_object_invalid_read():
