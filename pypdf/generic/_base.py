@@ -589,7 +589,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     surfix = b"/"
     renumber_table: ClassVar[Dict[int, bytes]] = {
-        **{i: f"#{i:02X}".encode() for i in range(0x21)},
+        **{i: f"#{i:02X}".encode() for i in range(1, 0x21)},
         **{i: bytes([i]) for i in range(0x21, 0x7F)},
         **{i: f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
         **{i: f"#{i:02X}".encode() for i in range(0x7F, 0x100)},
@@ -614,8 +614,6 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
-        if "\0" in self:
-            raise PyPdfError("Null character is not allowed in NameObject")
         stream.write(self.renumber())
 
     def renumber(self) -> bytes:
