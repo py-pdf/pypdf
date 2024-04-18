@@ -47,7 +47,6 @@ from ..errors import (
     STREAM_TRUNCATED_PREMATURELY,
     PdfReadError,
     PdfStreamError,
-    PyPdfError,
 )
 
 __author__ = "Mathieu Fenniak"

@@ -8,7 +8,7 @@ import pytest
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import CheckboxRadioButtonAttributes
-from pypdf.errors import PdfReadError, PdfStreamError, PyPdfError
+from pypdf.errors import PdfReadError, PdfStreamError
 from pypdf.generic import (
     AnnotationBuilder,
     ArrayObject,
