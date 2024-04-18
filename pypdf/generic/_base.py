@@ -43,11 +43,7 @@ from .._utils import (
     read_until_regex,
     str_,
 )
-from ..errors import (
-    STREAM_TRUNCATED_PREMATURELY,
-    PdfReadError,
-    PdfStreamError,
-)
+from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
 
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
