@@ -5,10 +5,6 @@ on:
     tags:
       - '*.*.*'
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Create git tag"]
-    types:
-      - completed
 
 jobs:
   build_and_publish:
