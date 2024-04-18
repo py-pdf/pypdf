@@ -245,7 +245,7 @@ def test_name_object(caplog):
         assert bio.getbuffer() == b
     assert (NameObject.read_from_stream(BytesIO(b"/A#42"), None)) == "/" + "AB"
 
-    with pytest.raises(PyPdfError):
+    with pytest.raises(KeyError):
         NameObject("/\0").write_to_stream(BytesIO())
 
     # testing all allowed values
