@@ -416,6 +416,18 @@ class AnnotationBuilder:
             fit=fit,
         )
 
+class FreeTextAnnotation(AnnotationBuilder):
+    def __init__(self, rect, contents=None, da=None, annotation_format="current"):
+        super().__init__("/FreeText", rect, contents, annotation_format)
+        self.da = da
+    
+    def build(self):
+        annotation = super().build()
+        
+        if self.da is not None:
+            annotation[NameObject("/DA")] = TextStringObject(self.da)
+        
+        return annotation
 
 __all__ = [
     # Base types
