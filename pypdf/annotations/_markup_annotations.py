@@ -239,6 +239,7 @@ class Highlight(MarkupAnnotation):
         self.update(
             {
                 NameObject("/Subtype"): NameObject("/Highlight"),
+                NameObject("/F"): NumberObject(4),
                 NameObject("/Rect"): RectangleObject(rect),
                 NameObject("/QuadPoints"): quad_points,
                 NameObject("/C"): ArrayObject(
