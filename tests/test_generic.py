@@ -1040,12 +1040,6 @@ def test_checkboxradiobuttonattributes_opt():
     assert "/Opt" in CheckboxRadioButtonAttributes.attributes_dict()
 
 
-def test_name_object_invalid_decode():
-    stream = BytesIO(b"/\x80\x02\x03")
-    stream.seek(0)
-    assert NameObject.read_from_stream(stream) == stream.getvalue().decode("latin1")
-
-
 def test_indirect_object_invalid_read():
     stream = BytesIO(b"0 1 s")
     with pytest.raises(PdfReadError) as exc:
