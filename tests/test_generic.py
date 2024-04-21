@@ -179,7 +179,14 @@ def test_read_string_from_stream_excape_digit2():
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
 
 
-def test_name_object(caplog):
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_deprecated_name_object():
+    b = BytesIO()
+    NameObject("wrong").write_to_stream(b)
+    assert b.getvalue() == b"wrong"
+
+
+def test_name_object():
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
