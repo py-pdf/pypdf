@@ -618,6 +618,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 f"Incorrect first char in NameObject, should start with '/': ({self})",
                 "6.0.0",
             )
+            out = self[0].encode(self.encoding)
         for c in self[1:].encode(self.encoding):
             out += self.renumber_table[c]
         return out
@@ -636,13 +637,13 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         return sin
 
     @staticmethod
-    def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
+    def read_from_stream(
+        stream: StreamType, pdf: Any = None
+    ) -> "NameObject":  # PdfReader
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
-        if pdf and pdf.strict and not name.isascii():
-            raise PdfReadError(f"Illegal character in NameObject ({name})")
         name = NameObject.unnumber(name)
         try:
             name = NameObject(name.decode(NameObject.encoding))

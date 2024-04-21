@@ -185,49 +185,12 @@ def test_name_object(caplog):
         NameObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "name read error"
 
-    assert (
-        NameObject.read_from_stream(
-            BytesIO(b"/#f1j#d4#aa#0c#ce#87#b4#b3#b0#23J#86#fe#2a#b2jYJ#94"),
-            ReaderDummy(),
-        )
-        == "/ñjÔª\x0cÎ\x87´³°#J\x86þ*²jYJ\x94"
-    )
-
-    assert (NameObject.read_from_stream(BytesIO(b"/#JA#231f"), None)) == "/#JA#1f"
-
-    assert (
-        NameObject.read_from_stream(
-            BytesIO(b"/#e4#bd#a0#e5#a5#bd#e4#b8#96#e7#95#8c"), None
-        )
-    ) == "/你好世界"
-
-    # to test latin-1 aka stdencoding
-    assert (
-        NameObject.read_from_stream(BytesIO(b"/DocuSign\xae"), None)
-    ) == "/DocuSign®"
-
-    # test write
-    b = BytesIO()
-    NameObject("/hello").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/hello"
-
     b = BytesIO()
     with pytest.raises(DeprecationWarning):
         NameObject("hello").write_to_stream(b)
 
-    caplog.clear()
-    b = BytesIO()
-    NameObject("/DIJMAC+Arial Black#1").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
-    assert caplog.text == ""
-
-    b = BytesIO()
-    NameObject("/你好世界 (%)").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
-    assert caplog.text == ""
-
-    # ISO/DIS 32000-2 Table 4: Examples of literal names
-    for b, n in (
+    for test in (
+        # ISO/DIS 32000-2 Table 4: Examples of literal names
         (b"/Name1", "Name1"),
         (b"/ASomewhatLongerName", "ASomewhatLongerName"),
         (b"/A;Name_With-Various***Characters?", "A;Name_With-Various***Characters?"),
@@ -238,43 +201,42 @@ def test_name_object(caplog):
         (b"/Lime#20Green", "Lime Green"),
         (b"/paired#28#29parentheses", "paired()parentheses"),
         (b"/The_Key_of_F#23_Minor", "The_Key_of_F#_Minor"),
+        (b"/A#42", "AB", b"/AB"),
+        # misc tests
+        (
+            b"/#f1j#d4#aa#0c#ce#87#b4#b3#b0#23J#86#fe#2a#b2jYJ#94",
+            "ñjÔª\x0cÎ\x87´³°#J\x86þ*²jYJ\x94",
+            b"/#F1j#D4#AA#0C#CE#87#B4#B3#B0#23J#86#FE*#B2jYJ#94",
+        ),
+        (b"/#JA#231f", "#JA#1f", b"/#23JA#231f"),
+        (b"/DocuSign\xae", "DocuSign®", b"/DocuSign#AE"),
+        (b"/DocuSign\xc2\xae", "DocuSign®", b"/DocuSign#C2#AE"),
+        (b"/DIJMAC+Arial#20Black#231", "DIJMAC+Arial Black#1"),
+        (
+            b"/#e4#bd#a0#e5#a5#bd#e4#b8#96#e7#95#8c",
+            "你好世界",
+            b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C",
+        ),
+        (b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29", "你好世界 (%)"),
+        (  # try all allowed values
+            b'/#01#02#03#04#05#06#07#08#09#0A#0B#0C#0D#0E#0F#10#11#12#13#14#15#16#17#18#19#1A#1B#1C#1D#1E#1F#20!"#23$#2'
+            rb"5&'#28#29*+,-.#2F0123456789:;#3C=#3E?@ABCDEFGHIJKLMNOPQRSTUVWXYZ#5B\#5D^_`abcdefghijklmnopqrstuvwxyz#7B|"
+            b"#7D~#7F#80#81#82#83#84#85#86#87#88#89#8A#8B#8C#8D#8E#8F#90#91#92#93#94#95#96#97#98#99#9A#9B#9C#9D#9E#9F#A"
+            b"0#A1#A2#A3#A4#A5#A6#A7#A8#A9#AA#AB#AC#AD#AE#AF#B0#B1#B2#B3#B4#B5#B6#B7#B8#B9#BA#BB#BC#BD#BE#BF#C0#C1#C2#C"
+            b"3#C4#C5#C6#C7#C8#C9#CA#CB#CC#CD#CE#CF#D0#D1#D2#D3#D4#D5#D6#D7#D8#D9#DA#DB#DC#DD#DE#DF#E0#E1#E2#E3#E4#E5#E"
+            b"6#E7#E8#E9#EA#EB#EC#ED#EE#EF#F0#F1#F2#F3#F4#F5#F6#F7#F8#F9#FA#FB#FC#FD#FE#FF",
+            bytes(range(1, 0x100)).decode("latin1"),
+        ),
+        (b"/\x80\x02\x03", "\x80\x02\x03", b"/#80#02#03"),
     ):
-        assert (NameObject.read_from_stream(BytesIO(b), None)) == "/" + n
+        name = NameObject.read_from_stream(BytesIO(test[0]))
+        assert name == f"/{test[1]}"
         bio = BytesIO()
-        NameObject("/" + n).write_to_stream(bio)
-        assert bio.getbuffer() == b
-    assert (NameObject.read_from_stream(BytesIO(b"/A#42"), None)) == "/" + "AB"
+        name.write_to_stream(bio)
+        assert bio.getvalue() == (test[0] if len(test) == 2 else test[2])
 
     with pytest.raises(KeyError):
         NameObject("/\0").write_to_stream(BytesIO())
-
-    # testing all allowed values
-    encoding = NameObject.encoding
-    try:
-        NameObject.encoding = "latin1"
-        value = "/" + bytes(range(1, 0x100)).decode("latin1")
-        bio = BytesIO()
-        NameObject(value).write_to_stream(bio)
-        bio.seek(0)
-        assert (
-            bio.read()
-            == b'/#01#02#03#04#05#06#07#08#09#0A#0B#0C#0D#0E#0F#10#11#12#13#14#15#16#17#18#19#1A#1B#1C#1D#1E#1F#20!"#23'
-            b"$#25&'#28#29*+,-.#2F0123456789:;#3C=#3E?@ABCDEFGHIJKLMNOPQRSTUVWXYZ#5B\\#5D^_`abcdefghijklmnopqrstuvwxyz#"
-            b"7B|#7D~#7F#80#81#82#83#84#85#86#87#88#89#8A#8B#8C#8D#8E#8F#90#91#92#93#94#95#96#97#98#99#9A#9B#9C#9D#9E#9"
-            b"F#A0#A1#A2#A3#A4#A5#A6#A7#A8#A9#AA#AB#AC#AD#AE#AF#B0#B1#B2#B3#B4#B5#B6#B7#B8#B9#BA#BB#BC#BD#BE#BF#C0#C1#C"
-            b"2#C3#C4#C5#C6#C7#C8#C9#CA#CB#CC#CD#CE#CF#D0#D1#D2#D3#D4#D5#D6#D7#D8#D9#DA#DB#DC#DD#DE#DF#E0#E1#E2#E3#E4#E"
-            b"5#E6#E7#E8#E9#EA#EB#EC#ED#EE#EF#F0#F1#F2#F3#F4#F5#F6#F7#F8#F9#FA#FB#FC#FD#FE#FF"
-        )
-        bio.seek(0)
-        assert NameObject.read_from_stream(bio, None) == value
-        NameObject.encoding = encoding
-        bio.seek(0)
-        name = NameObject.read_from_stream(bio, None)
-        assert name == value
-        assert name.encoding == "latin1"
-        assert NameObject.encoding == encoding
-    finally:
-        NameObject.encoding = encoding
 
 
 def test_destination_fit_r():
@@ -1080,14 +1042,8 @@ def test_checkboxradiobuttonattributes_opt():
 
 def test_name_object_invalid_decode():
     stream = BytesIO(b"/\x80\x02\x03")
-    # strict:
-    with pytest.raises(PdfReadError) as exc:
-        NameObject.read_from_stream(stream, ReaderDummy(strict=True))
-    assert "Illegal character in NameObject " in exc.value.args[0]
-
-    # non-strict:
     stream.seek(0)
-    NameObject.read_from_stream(stream, ReaderDummy(strict=False))
+    assert NameObject.read_from_stream(stream) == stream.getvalue().decode("latin1")
 
 
 def test_indirect_object_invalid_read():
