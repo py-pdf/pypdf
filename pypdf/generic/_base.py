@@ -580,7 +580,6 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
 
 class NameObject(str, PdfObject):  # noqa: SLOT000
-    encoding = "utf8"
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     surfix = b"/"
     renumber_table: ClassVar[Dict[int, bytes]] = {
@@ -618,8 +617,8 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 f"Incorrect first char in NameObject, should start with '/': ({self})",
                 "6.0.0",
             )
-            out = self[0].encode(self.encoding)
-        for c in self[1:].encode(self.encoding):
+            out = self[0].encode(self.CHARSETS[0])
+        for c in self[1:].encode(self.CHARSETS[0]):
             out += self.renumber_table[c]
         return out
 
@@ -636,21 +635,34 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 i = i + 1
         return sin
 
+    CHARSETS = ("utf-8", "latin1")
+
     @staticmethod
-    def read_from_stream(
-        stream: StreamType, pdf: Any = None
-    ) -> "NameObject":  # PdfReader
+    def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
         name = NameObject.unnumber(name)
-        try:
-            name = NameObject(name.decode(NameObject.encoding))
-        except UnicodeDecodeError:
-            name = NameObject(name.decode("latin1"))
-            name.encoding = "latin1"
-        return name
+        for enc in NameObject.CHARSETS:
+            try:
+                name = NameObject(name.decode(enc))
+                name.CHARSETS = [enc]
+                return name
+            except UnicodeDecodeError:
+                pass
+        if not pdf.strict:
+            logger_warning(
+                f"Illegal character in NameObject ({name!r}), "
+                "you may need to adjust NameObject.CHARSETS",
+                __name__,
+            )
+            return NameObject(name.decode("charmap"))
+        else:
+            raise PdfReadError(
+                f"Illegal character in NameObject ({name!r}). "
+                "You may need to adjust NameObject.CHARSETS.",
+            )
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
