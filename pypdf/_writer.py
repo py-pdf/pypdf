@@ -1085,6 +1085,26 @@ class PdfWriter(PdfDocCommon):
             NameObject("/Kids")
         ] = ArrayObject([p.indirect_reference for p in self.flattened_pages])
 
+    def correct_annotation_encodings(self):
+        """
+        Corrects the encoding of fonts in annotations where necessary.
+        """
+        # Assuming self._pages is the root of the page tree
+        # and that it contains a "/Kids" entry with an array of page objects
+        for page_ref in self._pages.get("/Kids", []):
+            page = page_ref.get_object()
+            if "/Annots" in page:
+                for annot_ref in page["/Annots"]:
+                    annot = annot_ref.get_object()
+                    if "/DR" in annot and "/Font" in annot["/DR"]:
+                        fonts = annot["/DR"]["/Font"]
+                        for font_key, font_value in fonts.items():
+                            if "/Encoding" in font_value and isinstance(font_value["/Encoding"], NameObject):
+                                encoding = font_value["/Encoding"]
+                                if encoding not in [NameObject("/WinAnsiEncoding"), NameObject("/MacRomanEncoding")]:
+                                    font_value["/Encoding"] = NameObject("/PDFDocEncoding")
+
+
     def clone_document_from_reader(
         self,
         reader: PdfReader,
@@ -1106,6 +1126,7 @@ class PdfWriter(PdfDocCommon):
         """
         self.clone_reader_document_root(reader)
         self._info_obj = self._add_object(DictionaryObject())
+        self.correct_annotation_encodings()
         if TK.INFO in reader.trailer:
             self._info = reader._info  # actually copy fields
         try:
