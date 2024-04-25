@@ -196,18 +196,22 @@ def test_name_object():
     with pytest.raises(DeprecationWarning):
         NameObject("hello").write_to_stream(b)
 
-    for test in (
+    for binary, value, binary_pypdf in (
         # ISO/DIS 32000-2 Table 4: Examples of literal names
-        (b"/Name1", "Name1"),
-        (b"/ASomewhatLongerName", "ASomewhatLongerName"),
-        (b"/A;Name_With-Various***Characters?", "A;Name_With-Various***Characters?"),
-        (b"/1.2", "1.2"),
-        (b"/$$", "$$"),
-        (b"/@pattern", "@pattern"),
-        (b"/.notdef", ".notdef"),
-        (b"/Lime#20Green", "Lime Green"),
-        (b"/paired#28#29parentheses", "paired()parentheses"),
-        (b"/The_Key_of_F#23_Minor", "The_Key_of_F#_Minor"),
+        (b"/Name1", "Name1", None),
+        (b"/ASomewhatLongerName", "ASomewhatLongerName", None),
+        (
+            b"/A;Name_With-Various***Characters?",
+            "A;Name_With-Various***Characters?",
+            None,
+        ),
+        (b"/1.2", "1.2", None),
+        (b"/$$", "$$", None),
+        (b"/@pattern", "@pattern", None),
+        (b"/.notdef", ".notdef", None),
+        (b"/Lime#20Green", "Lime Green", None),
+        (b"/paired#28#29parentheses", "paired()parentheses", None),
+        (b"/The_Key_of_F#23_Minor", "The_Key_of_F#_Minor", None),
         (b"/A#42", "AB", b"/AB"),
         # misc tests
         (
@@ -218,13 +222,13 @@ def test_name_object():
         (b"/#JA#231f", "#JA#1f", b"/#23JA#231f"),
         (b"/DocuSign\xae", "DocuSign®", b"/DocuSign#AE"),
         (b"/DocuSign\xc2\xae", "DocuSign®", b"/DocuSign#C2#AE"),
-        (b"/DIJMAC+Arial#20Black#231", "DIJMAC+Arial Black#1"),
+        (b"/DIJMAC+Arial#20Black#231", "DIJMAC+Arial Black#1", None),
         (
             b"/#e4#bd#a0#e5#a5#bd#e4#b8#96#e7#95#8c",
             "你好世界",
             b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C",
         ),
-        (b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29", "你好世界 (%)"),
+        (b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29", "你好世界 (%)", None),
         (  # try all allowed values
             b'/#01#02#03#04#05#06#07#08#09#0A#0B#0C#0D#0E#0F#10#11#12#13#14#15#16#17#18#19#1A#1B#1C#1D#1E#1F#20!"#23$#2'
             rb"5&'#28#29*+,-.#2F0123456789:;#3C=#3E?@ABCDEFGHIJKLMNOPQRSTUVWXYZ#5B\#5D^_`abcdefghijklmnopqrstuvwxyz#7B|"
@@ -233,14 +237,18 @@ def test_name_object():
             b"3#C4#C5#C6#C7#C8#C9#CA#CB#CC#CD#CE#CF#D0#D1#D2#D3#D4#D5#D6#D7#D8#D9#DA#DB#DC#DD#DE#DF#E0#E1#E2#E3#E4#E5#E"
             b"6#E7#E8#E9#EA#EB#EC#ED#EE#EF#F0#F1#F2#F3#F4#F5#F6#F7#F8#F9#FA#FB#FC#FD#FE#FF",
             bytes(range(1, 0x100)).decode("latin1"),
+            None,
         ),
         (b"/\x80\x02\x03", "\x80\x02\x03", b"/#80#02#03"),
     ):
-        name = NameObject.read_from_stream(BytesIO(test[0]), None)
-        assert name == f"/{test[1]}"
+        name = NameObject.read_from_stream(BytesIO(binary), None)
+        assert name == f"/{value}"
         bio = BytesIO()
         name.write_to_stream(bio)
-        assert bio.getvalue() == (test[0] if len(test) == 2 else test[2])
+        if binary_pypdf:
+            assert bio.getvalue() == binary_pypdf
+        else:
+            assert bio.getvalue() == binary
 
     with pytest.raises(KeyError):
         NameObject("/\0").write_to_stream(BytesIO())
