@@ -90,7 +90,7 @@ The community can expect the following:
   easier for maintainers to see that the contribution will not harm the overall
   project. Their contributions are documented in the git history and in the
   public issues. [Let us know](https://github.com/py-pdf/pypdf/discussions/798)
-  if you would appriciate something else!
+  if you would appreciate something else!
 * Every **community member** uses a respectful language. We are all human, we
   get upset about things we care and other things than what's visible on the
   internet go on in our live. pypdf does not pay its contributors - keep all

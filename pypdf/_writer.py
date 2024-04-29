@@ -942,7 +942,7 @@ class PdfWriter(PdfDocCommon):
         Args:
             page: `PageObject` - references **PDF writer's page** where the
                 annotations and field data will be updated.
-                `List[Pageobject]` - provides list of page to be processsed.
+                `List[Pageobject]` - provides list of pages to be processed.
                 `None` - all pages.
             fields: a Python dictionary of field names (/T) and text
                 values (/V).
