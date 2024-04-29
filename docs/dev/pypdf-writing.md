@@ -34,7 +34,7 @@ has the following core steps:
 
 ## How others do it
 
-Looking at altrnative software designs and implementations can help to improve
+Looking at alternative software designs and implementations can help to improve
 our choices.
 
 ### fpdf2
