@@ -20,7 +20,8 @@ writer = PdfWriter()
 for page in reader.pages:
     writer.add_page(page)
 
-writer.add_metadata(reader.metadata)
+if reader.metadata is not None:
+    writer.add_metadata(reader.metadata)
 
 with open("smaller-new-file.pdf", "wb") as fp:
     writer.write(fp)
