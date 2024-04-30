@@ -883,8 +883,14 @@ def test_annotation_builder_highlight(pdf_file_path):
                     FloatObject(705.4493),
                 ]
             ),
+            printing=True,
         )
     writer.add_annotation(0, highlight_annotation)
+    for annot in writer.pages[0]["/Annots"]:
+        obj = annot.get_object()
+        subtype = obj["/Subtype"]
+        if subtype == "/Highlight":
+            assert obj["/F"] == NumberObject(4)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
