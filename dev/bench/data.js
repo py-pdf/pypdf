@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1714564829369,
+  "lastUpdate": 1714573722533,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -51614,6 +51614,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06194634995177875",
             "extra": "mean: 15.566860139600005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d9bf67f1de07e57b97ee31d6b2709d0760d4ace1",
+          "message": "DOC: Make ordering on warnings page consistent (#2616)\n\nPut exceptions, warnings, and log messages in a consistent order",
+          "timestamp": "2024-05-01T16:25:41+02:00",
+          "tree_id": "9c25eb2b48c33a3bc7ee3014fed9cf70fd38c566",
+          "url": "https://github.com/py-pdf/pypdf/commit/d9bf67f1de07e57b97ee31d6b2709d0760d4ace1"
+        },
+        "date": 1714573718558,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2693536837260684,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025731101221242465",
+            "extra": "mean: 305.8708530000047 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.082606071204694,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009710569719411125",
+            "extra": "mean: 82.76360200000258 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26977162141588423,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020769476107211488",
+            "extra": "mean: 3.706839120999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.126320168221113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005165225582464492",
+            "extra": "mean: 55.1683954999973 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06387169119555755,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09091761209607746",
+            "extra": "mean: 15.656388319800005 sec\nrounds: 5"
           }
         ]
       }
