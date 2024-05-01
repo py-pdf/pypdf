@@ -346,3 +346,24 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
             print(fn)  # noqa: T201
             img = Image.open(BytesIO(zf.read(fn)))
             assert image_similarity(reader.pages[p].images[i].image, img) >= 0.99
+
+
+@pytest.mark.enable_socket()
+def test_extract_image_from_object(caplog):
+    url = "https://github.com/py-pdf/pypdf/files/15176076/B2.pdf"
+    name = "iss2613.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    image = reader.pages[0]["/Resources"]["/Pattern"]["/P1"]["/Resources"]["/XObject"][
+        "/X1"
+    ].decode_as_image()
+    assert isinstance(image, Image.Image)
+    with pytest.raises(Exception):
+        co = reader.pages[0].get_contents()
+        co.decode_as_image()
+    assert "does not seems to be an Image" in caplog.text
+    caplog.clear()
+    co.indirect_reference = "for_test"
+    with pytest.raises(Exception):
+        co = reader.pages[0].get_contents()
+        co.decode_as_image()
+    assert "does not seems to be an Image" in caplog.text
