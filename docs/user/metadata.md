@@ -12,11 +12,13 @@ meta = reader.metadata
 print(len(reader.pages))
 
 # All of the following could be None!
+print(meta.title)
 print(meta.author)
+print(meta.subject)
 print(meta.creator)
 print(meta.producer)
-print(meta.subject)
-print(meta.title)
+print(meta.creation_date)
+print(meta.modification_date)
 ```
 
 ## Writing metadata
