@@ -2217,3 +2217,16 @@ def test_init_without_named_arg():
     assert len(writer._objects) == nb
     writer = PdfWriter(by)
     assert len(writer._objects) == nb
+
+
+@pytest.mark.enable_socket()
+def test_i_in_choice_fields():
+    """Cf #2611"""
+    url = "https://github.com/py-pdf/pypdf/files/15176321/FRA.F.6180.150.pdf"
+    name = "iss2611.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    assert "/I" in writer.get_fields()["State"].indirect_reference.get_object()
+    writer.update_page_form_field_values(
+        writer.pages[0], {"State": "NY"}, auto_regenerate=False
+    )
+    assert "/I" not in writer.get_fields()["State"].indirect_reference.get_object()

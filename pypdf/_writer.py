@@ -987,6 +987,11 @@ class PdfWriter(PdfDocCommon):
                     or writer_parent_annot.get("/T", None) == field
                 ):
                     continue
+                if (
+                    writer_parent_annot.get("/FT", None) == "/Ch"
+                    and "/I" in writer_parent_annot
+                ):
+                    del writer_parent_annot["/I"]
                 if flags:
                     writer_annot[NameObject(FA.Ff)] = NumberObject(flags)
                 if isinstance(value, list):
