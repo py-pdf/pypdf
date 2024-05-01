@@ -953,6 +953,11 @@ class StreamObject(DictionaryObject):
 
         Returns:
             a PIL image if proper decoding has been found
+        Raises:
+            Exceptions during decoding to to invalid object or
+            errors during decoding will be reported
+            It is recommended to catch exceptions to prevent
+            stops in your program.
         """
         from ..filters import _xobj_to_image
 
