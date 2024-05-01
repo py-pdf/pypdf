@@ -2,7 +2,7 @@
 
 pypdf makes use of three mechanisms to show if something went wrong:
 
-* **Exceptions** are error-cases that pypdf users should explicitly handle.
+* **Exceptions** are error cases that pypdf users should explicitly handle.
   In the `strict=True` mode, most log messages with the warning level will
   become exceptions. This can be useful in applications where you can require
   a user to fix the broken PDF.
