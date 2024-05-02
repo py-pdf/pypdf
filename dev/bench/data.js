@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1714573722533,
+  "lastUpdate": 1714659442293,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -51673,6 +51673,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09091761209607746",
             "extra": "mean: 15.656388319800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "39554817+farjasju@users.noreply.github.com",
+            "name": "Jules Farjas",
+            "username": "farjasju"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e92b20e0b35e4feb5a2a7f347de7a4c3f713011a",
+          "message": "BUG: Fix UnboundLocalError on malformed pdf (#2619)\n\nCloses #2617\r\n\r\nCo-authored-by: jules <jules@harfanglab.fr>",
+          "timestamp": "2024-05-02T16:14:31+02:00",
+          "tree_id": "9772f8e54bf8c5ed0ef426288063892da4869eb2",
+          "url": "https://github.com/py-pdf/pypdf/commit/e92b20e0b35e4feb5a2a7f347de7a4c3f713011a"
+        },
+        "date": 1714659440447,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2919891841089712,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009272726077840236",
+            "extra": "mean: 303.7677051999992 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.05225292824282,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010750298922350807",
+            "extra": "mean: 82.97203899999772 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2704623511115924,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027309465659907373",
+            "extra": "mean: 3.6973722808000047 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.800261576713055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008277932091837276",
+            "extra": "mean: 59.52288274999873 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06343137752604695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09039491571806293",
+            "extra": "mean: 15.765068314800004 sec\nrounds: 5"
           }
         ]
       }
