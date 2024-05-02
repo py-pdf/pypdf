@@ -1516,3 +1516,17 @@ def test_truncated_xref(caplog):
     name = "iss2575.pdf"
     PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert "Invalid/Truncated xref table. Rebuilding it." in caplog.text
+
+
+@pytest.mark.enable_socket()
+def test_damaged_pdf():
+    url = "https://github.com/py-pdf/pypdf/files/15186107/malformed_pdf.pdf"
+    name = "malformed_pdf.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=False)
+    len(reader.pages)
+    strict_reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=True)
+    with pytest.raises(PdfReadError) as exc:
+        len(strict_reader.pages)
+    assert (
+        exc.value.args[0] == "Expected object ID (21 0) does not match actual (-1 -1)."
+    )

@@ -398,7 +398,8 @@ class PdfReader(PdfDocCommon):
                     self.stream.seek(m.start(0) + 1)
                     idnum, generation = self.read_object_header(self.stream)
                 else:
-                    idnum = -1  # exception will be raised below
+                    idnum = -1
+                    generation = -1  # exception will be raised below
             if idnum != indirect_reference.idnum and self.xref_index:
                 # Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict:
