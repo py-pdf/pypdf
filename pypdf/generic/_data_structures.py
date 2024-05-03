@@ -49,7 +49,6 @@ from typing import (
 
 from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationProtocol
 from .._utils import (
-    WHITESPACES,
     StreamType,
     b_,
     deprecate_no_replacement,
@@ -81,6 +80,13 @@ from ._base import (
     TextStringObject,
 )
 from ._fit import Fit
+from ._image_inline import (
+    extract_inline_A85,
+    extract_inline_AHex,
+    extract_inline_DCT,
+    extract_inline_default,
+    extract_inline_RL,
+)
 from ._utils import read_hex_string_from_stream, read_string_from_stream
 
 if sys.version_info >= (3, 11):
@@ -1152,65 +1158,40 @@ class ContentStream(DecodedStreamObject):
         # left at beginning of ID
         tmp = stream.read(3)
         assert tmp[:2] == b"ID"
-        data = BytesIO()
-        # Read the inline image, while checking for EI (End Image) operator.
-        while True:
-            # Read 8 kB at a time and check if the chunk contains the E operator.
-            buf = stream.read(8192)
-            # We have reached the end of the stream, but haven't found the EI operator.
-            if not buf:
-                raise PdfReadError("Unexpected end of stream")
-            loc = buf.find(
-                b"E"
-            )  # we can not look straight for "EI" because it may not have been loaded in the buffer
-
-            if loc == -1:
-                data.write(buf)
+        filtr = settings.get("/F", "not set")
+        # print("inline", stream.tell(),filtr,"*",settings)
+        if isinstance(filtr, list):
+            filtr = filtr[0]  # used forencoding
+        if filtr == "AHx":
+            data = extract_inline_AHex(stream)
+        elif filtr == "A85":
+            data = extract_inline_A85(stream)
+        elif filtr == "RL":
+            data = extract_inline_RL(stream)
+        elif filtr == "DCT":
+            data = extract_inline_DCT(stream)
+        elif filtr == "not set":
+            cs = settings["/CS"]
+            if cs == "/I" or cs == "/G":
+                lcs = 1
+            elif cs == "/RGB":
+                lcs = 3
+            elif cs == "/CMYK":
+                lcs = 4
             else:
-                # Write out everything before the E.
-                data.write(buf[0:loc])
+                raise PdfReadError("Invalid CS value:", cs)
+            data = stream.read(
+                cast(int, settings["/W"]) * cast(int, settings["/H"]) * lcs
+            )
+            ei = read_non_whitespace(stream)
+            ei += stream.read(1)
+            stream.seek(-2, 1)
+        else:
+            data = extract_inline_default(stream)
 
-                # Seek back in the stream to read the E next.
-                stream.seek(loc - len(buf), 1)
-                tok = stream.read(1)  # E of "EI"
-                # Check for End Image
-                tok2 = stream.read(1)  # I of "EI"
-                if tok2 != b"I":
-                    stream.seek(-1, 1)
-                    data.write(tok)
-                    continue
-                # for further debug : print("!!!!",buf[loc-1:loc+10])
-                info = tok + tok2
-                tok3 = stream.read(
-                    1
-                )  # possible space after "EI" may not been loaded  in buf
-                if tok3 not in WHITESPACES:
-                    stream.seek(-2, 1)  # to step back on I
-                    data.write(tok)
-                elif buf[loc - 1 : loc] in WHITESPACES:  # and tok3 in WHITESPACES:
-                    # Data can contain [\s]EI[\s]: 4 chars sufficient, checking Q operator not required.
-                    while tok3 in WHITESPACES:
-                        # needed ???? : info += tok3
-                        tok3 = stream.read(1)
-                    stream.seek(-1, 1)
-                    # we do not insert EI
-                    break
-                else:  # buf[loc - 1 : loc] not in WHITESPACES and tok3 in WHITESPACES:
-                    # Data can contain [!\s]EI[\s],  so check for Q or EMC operator is required to have 4 chars.
-                    while tok3 in WHITESPACES:
-                        info += tok3
-                        tok3 = stream.read(1)
-                    stream.seek(-1, 1)
-                    if tok3 == b"Q":
-                        break
-                    elif tok3 == b"E":
-                        ope = stream.read(3)
-                        stream.seek(-3, 1)
-                        if ope == b"EMC":
-                            break
-                    else:
-                        data.write(info)
-        return {"settings": settings, "data": data.getvalue()}
+        ei = stream.read(2)
+        assert ei == b"EI"
+        return {"settings": settings, "data": data}
 
     # This overrides the parent method:
     def get_data(self) -> bytes:
