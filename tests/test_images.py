@@ -358,3 +358,9 @@ def test_inline_image_extraction():
     reader.pages[1].extract_text()
     reader.pages[2].extract_text()
     reader.pages[3].extract_text()
+
+    url = "https://github.com/py-pdf/pypdf/files/15210011/Pages.62.73.from.0560-22_WSP.Plan_July.2022_Version.1.pdf"
+    name = "iss2598a.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].extract_text()
+    reader.pages[1].extract_text()

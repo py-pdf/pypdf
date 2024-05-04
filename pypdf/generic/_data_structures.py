@@ -1185,13 +1185,15 @@ class ContentStream(DecodedStreamObject):
                 if bits > 0:
                     lcs = bits / 8.0
                 else:
-                    raise PdfReadError("Invalid CS value:", cs)
-            data = stream.read(
-                ceil(cast(int, settings["/W"]) * lcs) * cast(int, settings["/H"])
-            )
-            ei = read_non_whitespace(stream)
-            ei += stream.read(1)
-            stream.seek(-2, 1)
+                    data = extract_inline_default(stream)
+                    lcs = -1
+            if lcs > 0:
+                data = stream.read(
+                    ceil(cast(int, settings["/W"]) * lcs) * cast(int, settings["/H"])
+                )
+                ei = read_non_whitespace(stream)
+                ei += stream.read(1)
+                stream.seek(-2, 1)
         else:
             data = extract_inline_default(stream)
 
