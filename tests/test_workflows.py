@@ -935,9 +935,7 @@ def test_extra_test_iss1541():
     stream = BytesIO()
     cs.write_to_stream(stream)
     stream.seek(0)
-    with pytest.raises(PdfReadError) as exc:
-        ContentStream(read_object(stream, None, None), None, None).operations
-    assert exc.value.args[0] == "Unexpected end of stream"
+    ContentStream(read_object(stream, None, None), None, None).operations
 
     b = BytesIO(data.getbuffer())
     reader = PdfReader(

@@ -33,6 +33,7 @@ import logging
 import re
 import sys
 from io import BytesIO
+from math import ceil
 from typing import (
     Any,
     Callable,
@@ -1159,29 +1160,34 @@ class ContentStream(DecodedStreamObject):
         tmp = stream.read(3)
         assert tmp[:2] == b"ID"
         filtr = settings.get("/F", "not set")
+        savpos = stream.tell()
         # print("inline", stream.tell(),filtr,"*",settings)
         if isinstance(filtr, list):
             filtr = filtr[0]  # used forencoding
-        if filtr == "AHx":
+        if filtr == "AHx" or "ASCIIHexDecode" in filtr:
             data = extract_inline_AHex(stream)
-        elif filtr == "A85":
+        elif filtr == "A85" or "ASCII85Decode" in filtr:
             data = extract_inline_A85(stream)
-        elif filtr == "RL":
+        elif filtr == "RL" or "RunLengthDecode" in filtr:
             data = extract_inline_RL(stream)
-        elif filtr == "DCT":
+        elif filtr == "DCT" or "DCTDecode" in filtr:
             data = extract_inline_DCT(stream)
         elif filtr == "not set":
-            cs = settings["/CS"]
-            if cs == "/I" or cs == "/G":
+            cs = settings.get("/CS", "")
+            if cs == "/I" or cs == "/G" or cs == "/Indexed" or cs == "/DeviceGray":
                 lcs = 1
-            elif cs == "/RGB":
+            elif "RGB" in cs:
                 lcs = 3
-            elif cs == "/CMYK":
+            elif "CMYK" in cs:
                 lcs = 4
             else:
-                raise PdfReadError("Invalid CS value:", cs)
+                bits = settings.get("/BPC", -1)
+                if bits > 0:
+                    lcs = bits / 8.0
+                else:
+                    raise PdfReadError("Invalid CS value:", cs)
             data = stream.read(
-                cast(int, settings["/W"]) * cast(int, settings["/H"]) * lcs
+                ceil(cast(int, settings["/W"]) * lcs) * cast(int, settings["/H"])
             )
             ei = read_non_whitespace(stream)
             ei += stream.read(1)
@@ -1190,7 +1196,9 @@ class ContentStream(DecodedStreamObject):
             data = extract_inline_default(stream)
 
         ei = stream.read(2)
-        assert ei == b"EI"
+        if ei != b"EI":
+            stream.seek(savpos, 0)
+            data = extract_inline_default(stream)
         return {"settings": settings, "data": data}
 
     # This overrides the parent method:
