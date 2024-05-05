@@ -2,6 +2,7 @@ import sys
 from abc import ABC
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
+from ..constants import AnnotationFlag
 from ..generic import ArrayObject, DictionaryObject
 from ..generic._base import (
     BooleanObject,
@@ -233,6 +234,7 @@ class Highlight(MarkupAnnotation):
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         quad_points: ArrayObject,
         highlight_color: str = "ff0000",
+        printing: bool = False,
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
@@ -246,6 +248,8 @@ class Highlight(MarkupAnnotation):
                 ),
             }
         )
+        if printing:
+            self.flags = AnnotationFlag.PRINT
 
 
 class Ellipse(MarkupAnnotation):
