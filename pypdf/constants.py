@@ -645,7 +645,7 @@ class CatalogDictionary:
 
     TYPE = "/Type"  # name, required; must be /Catalog
     VERSION = "/Version"  # name
-    EXTENSIONS = /Extensions  # dictionary, optional; ISO 32000-1
+    EXTENSIONS = "/Extensions"  # dictionary, optional; ISO 32000-1
     PAGES = "/Pages"  # dictionary, required
     PAGE_LABELS = "/PageLabels"  # number tree, optional
     NAMES = "/Names"  # dictionary, optional
