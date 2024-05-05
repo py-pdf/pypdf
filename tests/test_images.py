@@ -364,3 +364,12 @@ def test_inline_image_extraction():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].extract_text()
     reader.pages[1].extract_text()
+
+    url = "https://github.com/mozilla/pdf.js/raw/master/test/pdfs/issue14256.pdf"
+    name = "iss2598b.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/71bc5053-cfc7-44ba-b7be-8e2333e2c749"
+    name = "iss2598b.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    for i in range(8):
+        assert image_similarity(reader.pages[0].images[i].image, img) == 1

@@ -803,7 +803,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         # I'm not sure if the following logic is correct.
         # There might not be any relationship between the filters and the
         # extension
-        if x_object_obj[SA.FILTER] in [[FT.LZW_DECODE], [FT.CCITT_FAX_DECODE]]:
+        if lfilters in (FT.LZW_DECODE, FT.CCITT_FAX_DECODE):
             extension = ".tiff"  # mime_type = "image/tiff"
             image_format = "TIFF"
         else:
