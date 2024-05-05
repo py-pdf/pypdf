@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1714926336591,
+  "lastUpdate": 1714926534239,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -51791,6 +51791,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06979096818188288",
             "extra": "mean: 15.9187985844 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c73ad2648b0a9addd99e6ad0ab6034e5cc31f9e5",
+          "message": "DOC: Add some references to ISO 32000-2:2020 (PDF 2.0) (#2623)\n\nAdd some references to ISO 32000-2:2020 (PDF 2.0)\r\nAlso reorder to match the PDF 2.0 table order.\r\nAdd fields to PageLayouts and CatalogDictionary.",
+          "timestamp": "2024-05-05T18:26:00+02:00",
+          "tree_id": "e4d86ac6972f124a9d8e28ab3bb68ca2ccf3d988",
+          "url": "https://github.com/py-pdf/pypdf/commit/c73ad2648b0a9addd99e6ad0ab6034e5cc31f9e5"
+        },
+        "date": 1714926530885,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3006116372666128,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001732074366610935",
+            "extra": "mean: 302.97414840000556 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.127735399557267,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00830411302106146",
+            "extra": "mean: 82.45562481817554 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27092826661940544,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0115389634777824",
+            "extra": "mean: 3.6910139073999972 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.303858641626245,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001087659859535749",
+            "extra": "mean: 54.63328905555582 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06445519995506564,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07767740591618527",
+            "extra": "mean: 15.514652048200002 sec\nrounds: 5"
           }
         ]
       }
