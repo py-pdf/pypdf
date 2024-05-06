@@ -862,8 +862,8 @@ class PageObject(DictionaryObject):
         Access the page contents.
 
         Returns:
-            The ``/Contents`` object, or ``None`` if it doesn't exist.
-            ``/Contents`` is optional, as described in §7.7.3.3 of the PDF Reference  
+            The ``/Contents`` object, or ``None`` if it does not exist.
+            ``/Contents`` is optional, as described in §7.7.3.3 of the PDF Reference.
         """
         if PG.CONTENTS in self:
             try:
