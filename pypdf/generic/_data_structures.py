@@ -1164,13 +1164,13 @@ class ContentStream(DecodedStreamObject):
         # print("inline", stream.tell(),filtr,"*",settings)
         if isinstance(filtr, list):
             filtr = filtr[0]  # used forencoding
-        if filtr == "AHx" or "ASCIIHexDecode" in filtr:
+        if "AHx" in filtr or "ASCIIHexDecode" in filtr:
             data = extract_inline_AHex(stream)
-        elif filtr == "A85" or "ASCII85Decode" in filtr:
+        elif "A85" in filtr or "ASCII85Decode" in filtr:
             data = extract_inline_A85(stream)
-        elif filtr == "RL" or "RunLengthDecode" in filtr:
+        elif "RL" in filtr or "RunLengthDecode" in filtr:
             data = extract_inline_RL(stream)
-        elif filtr == "DCT" or "DCTDecode" in filtr:
+        elif "DCT" in filtr or "DCTDecode" in filtr:
             data = extract_inline_DCT(stream)
         elif filtr == "not set":
             cs = settings.get("/CS", "")
@@ -1191,9 +1191,9 @@ class ContentStream(DecodedStreamObject):
                 data = stream.read(
                     ceil(cast(int, settings["/W"]) * lcs) * cast(int, settings["/H"])
                 )
-                ei = read_non_whitespace(stream)
-                ei += stream.read(1)
-                stream.seek(-2, 1)
+            ei = read_non_whitespace(stream)
+            ei += stream.read(1)
+            stream.seek(-2, 1)
         else:
             data = extract_inline_default(stream)
 

@@ -55,11 +55,11 @@ def extract_inline_AHex(stream: StreamType) -> bytes:
         loc = buf.find(b">")
         if loc >= 0:  # found >
             data += buf[: (loc + 1)]
-            stream.seek(-BUFFER_SIZE + loc + 1)
+            stream.seek(-len(buf) + loc + 1, 1)
             break
         loc = buf.find(b"EI")
         if loc >= 0:  # found EI
-            stream.seek(-BUFFER_SIZE + loc - 1, 1)
+            stream.seek(-len(buf) + loc - 1, 1)
             c = stream.read(1)
             while c in WHITESPACES:
                 stream.seek(-2, 1)
@@ -93,7 +93,7 @@ def extract_inline_A85(stream: StreamType) -> bytes:
         loc = buf.find(b"~>")
         if loc >= 0:  # found!
             data += buf[: loc + 2]
-            stream.seek(-BUFFER_SIZE + loc + 2, 1)
+            stream.seek(-len(buf) + loc + 2, 1)
             break
         data += buf[:-1]  # back by one char in case of in the middle of ~>
         stream.seek(-1, 1)
@@ -121,7 +121,7 @@ def extract_inline_RL(stream: StreamType) -> bytes:
         loc = buf.find(b"\x80")
         if loc >= 0:  # found
             data = buf[: loc + 1]
-            stream.seek(-BUFFER_SIZE + loc + 1, 1)
+            stream.seek(-len(buf) + loc + 1, 1)
             break
         data += buf  # back by one char in case of in the middle of ~>
 
