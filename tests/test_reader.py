@@ -1408,7 +1408,7 @@ def test_iss1689():
 
 @pytest.mark.enable_socket()
 def test_iss1710():
-    url = "https://nlp.stanford.edu/IR-book/pdf/irbookonlinereading.pdf"
+    url = ""
     name = "irbookonlinereading.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.outline
