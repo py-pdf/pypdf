@@ -1408,7 +1408,7 @@ def test_iss1689():
 
 @pytest.mark.enable_socket()
 def test_iss1710():
-    url = ""
+    url = "https://github.com/py-pdf/pypdf/files/15234776/irbookonlinereading.pdf"
     name = "irbookonlinereading.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.outline
