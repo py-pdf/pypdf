@@ -49,7 +49,7 @@ def extract_inline_AHex(stream: StreamType) -> bytes:
     # Read data until delimiter > and EI as backup
     # ignoring backup.
     while True:
-        buf = stream.read(BUFFER_SIZE)
+        buf = read_non_whitespace(stream) + stream.read(BUFFER_SIZE)
         if not buf:
             raise PdfReadError("Unexpected end of stream")
         loc = buf.find(b">")
@@ -87,7 +87,7 @@ def extract_inline_A85(stream: StreamType) -> bytes:
     # Read data up to delimiter ~>
     # see §3.3.2 from PDF ref 1.7
     while True:
-        buf = stream.read(BUFFER_SIZE)
+        buf = read_non_whitespace(stream) + stream.read(BUFFER_SIZE)
         if not buf:
             raise PdfReadError("Unexpected end of stream")
         loc = buf.find(b"~>")

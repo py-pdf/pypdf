@@ -37,10 +37,12 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import math
 import struct
 import zlib
+from base64 import a85decode, a85encode
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import (
+    WHITESPACES_AS_BYTES,
     b_,
     deprecate_with_replacement,
     deprecation_no_replacement,
@@ -462,7 +464,7 @@ class LZWDecode:
         Decode an LZW encoded data stream.
 
         Args:
-          data: bytes`` or ``str`` text to decode.
+          data: ``bytes`` or ``str`` text to decode.
           decode_parms: a dictionary of parameter values.
 
         Returns:
@@ -482,29 +484,34 @@ class ASCII85Decode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        """
+        Decode an Ascii85 encoded data stream.
 
+        Args:
+          data: ``bytes`` or ``str`` text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
+        """
         if isinstance(data, str):
-            data = data.encode("ascii")
-        group_index = b = 0
-        out = bytearray()
-        for char in data:
-            if ord("!") <= char <= ord("u"):
-                group_index += 1
-                b = b * 85 + (char - 33)
-                if group_index == 5:
-                    out += struct.pack(b">L", b)
-                    group_index = b = 0
-            elif char == ord("z"):
-                assert group_index == 0
-                out += b"\0\0\0\0"
-            elif char == ord("~"):
-                if group_index:
-                    for _ in range(5 - group_index):
-                        b = b * 85 + 84
-                    out += struct.pack(b">L", b)[: group_index - 1]
-                break
-        return bytes(out)
+            data = data.encode()
+        data = data.strip(WHITESPACES_AS_BYTES)
+        return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
+
+    @staticmethod
+    def encode(data: bytes, level: int = -1) -> bytes:
+        """
+        Compress the input data using A85 encoding in Adobe format.
+
+        Args:
+            data: The data to be compressed.
+            level: See https://docs.python.org/3/library/zlib.html#zlib.compress
+
+        Returns:
+            The compressed data.
+        """
+        return a85encode(data, adobe=True, wrapcol=32)
 
 
 class DCTDecode:
@@ -737,6 +744,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     """
     from ._xobj_image_helpers import (
         Image,
+        UnidentifiedImageError,
         _extended_image_frombytes,
         _get_imagemode,
         _handle_flate,
@@ -809,7 +817,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         else:
             extension = ".png"  # mime_type = "image/png"
             image_format = "PNG"
-        img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
+        try:
+            img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
+        except UnidentifiedImageError:
+            img = _extended_image_frombytes(mode, size, data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged

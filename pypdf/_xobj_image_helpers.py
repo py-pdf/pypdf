@@ -29,7 +29,7 @@ else:
 
 
 try:
-    from PIL import Image
+    from PIL import Image, UnidentifiedImageError  # noqa: F401
 except ImportError:
     raise ImportError(
         "pillow is required to do image extraction. "
