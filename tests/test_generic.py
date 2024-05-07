@@ -883,8 +883,41 @@ def test_annotation_builder_highlight(pdf_file_path):
                     FloatObject(705.4493),
                 ]
             ),
+            printing=False
         )
     writer.add_annotation(0, highlight_annotation)
+    for annot in writer.pages[0]["/Annots"]:
+        obj = annot.get_object()
+        subtype = obj["/Subtype"]
+        if subtype == "/Highlight":
+            assert "/F" not in obj or obj["/F"] == NumberObject(0)
+
+    writer.add_page(page)
+    # Act
+    with pytest.warns(DeprecationWarning):
+        highlight_annotation = AnnotationBuilder.highlight(
+            rect=(95.79332, 704.31777, 138.55779, 724.6855),
+            highlight_color="ff0000",
+            quad_points=ArrayObject(
+                [
+                    FloatObject(100.060779),
+                    FloatObject(723.55398),
+                    FloatObject(134.29033),
+                    FloatObject(723.55398),
+                    FloatObject(100.060779),
+                    FloatObject(705.4493),
+                    FloatObject(134.29033),
+                    FloatObject(705.4493),
+                ]
+            ),
+            printing=True
+        )
+    writer.add_annotation(1, highlight_annotation)
+    for annot in writer.pages[1]["/Annots"]:
+        obj = annot.get_object()
+        subtype = obj["/Subtype"]
+        if subtype == "/Highlight":
+            assert obj["/F"] == NumberObject(4)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
