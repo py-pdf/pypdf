@@ -55,11 +55,11 @@ def extract_inline_AHex(stream: StreamType) -> bytes:
         loc = buf.find(b">")
         if loc >= 0:  # found >
             data += buf[: (loc + 1)]
-            stream.seek(-BUFFER_SIZE + loc + 1)
+            stream.seek(-len(buf) + loc + 1, 1)
             break
         loc = buf.find(b"EI")
         if loc >= 0:  # found EI
-            stream.seek(-BUFFER_SIZE + loc - 1, 1)
+            stream.seek(-len(buf) + loc - 1, 1)
             c = stream.read(1)
             while c in WHITESPACES:
                 stream.seek(-2, 1)
@@ -93,7 +93,7 @@ def extract_inline_A85(stream: StreamType) -> bytes:
         loc = buf.find(b"~>")
         if loc >= 0:  # found!
             data += buf[: loc + 2]
-            stream.seek(-BUFFER_SIZE + loc + 2, 1)
+            stream.seek(-len(buf) + loc + 2, 1)
             break
         data += buf[:-1]  # back by one char in case of in the middle of ~>
         stream.seek(-1, 1)
@@ -121,7 +121,7 @@ def extract_inline_RL(stream: StreamType) -> bytes:
         loc = buf.find(b"\x80")
         if loc >= 0:  # found
             data = buf[: loc + 1]
-            stream.seek(-BUFFER_SIZE + loc + 1, 1)
+            stream.seek(-len(buf) + loc + 1, 1)
             break
         data += buf  # back by one char in case of in the middle of ~>
 
@@ -142,31 +142,33 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
     data: bytes = b""
     # Read Blocks of data (ID/Size/data) up to ID=FF/D9
     # see https://www.digicamsoft.com/itu/itu-t81-36.html
+    notfirst = False
     while True:
         c = stream.read(1)
-        data += c
+        if notfirst or (c == b"\xff"):
+            data += c
         if c != b"\xff":
             continue
+        else:
+            notfirst = True
         c = stream.read(1)
+        data += c
         if c == b"\xff":
             stream.seek(-1, 1)
         elif c == b"\x00":  # stuffing
-            data += c
+            pass
         elif c == b"\xd9":  # end
-            data += c
             break
         elif c in (
             b"\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc9\xca\xcb\xcc\xcd\xce\xcf"
             b"\xda\xdb\xdc\xdd\xde\xdf"
             b"\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xfe"
         ):
-            data += c
             c = stream.read(2)
             data += c
-            sz = ord(c[0]) * 256 + c[1]
+            sz = c[0] * 256 + c[1]
             data += stream.read(sz - 2)
-        else:
-            data += c
+        # else: pass
 
     ei = read_non_whitespace(stream)
     ei += stream.read(1)

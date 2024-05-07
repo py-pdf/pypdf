@@ -374,3 +374,11 @@ def test_inline_image_extraction():
     for i in range(8):
         assert image_similarity(reader.pages[0].images[i].image, img) == 1
     reader.pages[0].extract_text()
+
+    url = "https://github.com/py-pdf/pypdf/files/15233597/bug1065245.pdf"
+    name = "iss2598c.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/bfb221be-11bd-46fe-8129-55a58088a4b6"
+    name = "iss2598c.jpg"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    image_similarity(reader.pages[0].images[0].image, img) >= 0.99
