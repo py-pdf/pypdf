@@ -381,4 +381,4 @@ def test_inline_image_extraction():
     url = "https://github.com/py-pdf/pypdf/assets/4083478/bfb221be-11bd-46fe-8129-55a58088a4b6"
     name = "iss2598c.jpg"
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
-    image_similarity(reader.pages[0].images[0].image, img) >= 0.99
+    assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
