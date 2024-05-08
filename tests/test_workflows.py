@@ -1025,6 +1025,11 @@ def test_inline_images():
     with pytest.raises(KeyError) as exc:
         reader.pages[2]._get_image(("test",))
 
+    url = "https://github.com/py-pdf/pypdf/files/15233597/bug1065245.pdf"
+    name = "iss2598c.pdf"  # test coming from another test in test_image.py
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert len(reader.pages[0].images) == 3
+
 
 @pytest.mark.enable_socket()
 def test_iss():

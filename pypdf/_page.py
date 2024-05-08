@@ -28,7 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-import re
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -58,7 +57,6 @@ from ._text_extraction import (
     mult,
 )
 from ._utils import (
-    WHITESPACES_AS_REGEXP,
     CompressedTransformationMatrix,
     File,
     ImageFile,
@@ -335,7 +333,6 @@ class PageObject(DictionaryObject):
         self.pdf = pdf
         self.inline_images: Optional[Dict[str, ImageFile]] = None
         # below Union for mypy but actually Optional[List[str]]
-        self.inline_images_keys: Optional[List[Union[str, List[str]]]] = None
         self.indirect_reference = indirect_reference
 
     def hash_value_data(self) -> bytes:
@@ -439,19 +436,8 @@ class PageObject(DictionaryObject):
             return []
         else:
             call_stack.append(_i)
-        if self.inline_images_keys is None:
-            content = self._get_contents_as_bytes() or b""
-            nb_inlines = 0
-            for matching in re.finditer(
-                WHITESPACES_AS_REGEXP + b"BI" + WHITESPACES_AS_REGEXP,
-                content,
-            ):
-                start_of_string = content[: matching.start()]
-                if len(re.findall(b"[^\\\\]\\(", start_of_string)) == len(
-                    re.findall(b"[^\\\\]\\)", start_of_string)
-                ):
-                    nb_inlines += 1
-            self.inline_images_keys = [f"~{x}~" for x in range(nb_inlines)]
+        if self.inline_images is None:
+            self.inline_images = self._get_inline_images()
         if obj is None:
             obj = self
         if ancest is None:
@@ -460,7 +446,7 @@ class PageObject(DictionaryObject):
         if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
             DictionaryObject, obj[PG.RESOURCES]
         ):
-            return self.inline_images_keys
+            return [] if self.inline_images is None else list(self.inline_images.keys())
 
         x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
@@ -470,7 +456,9 @@ class PageObject(DictionaryObject):
                 lst.append(o if len(ancest) == 0 else ancest + [o])
             else:  # is a form with possible images inside
                 lst.extend(self._get_ids_image(x_object[o], ancest + [o], call_stack))
-        return lst + self.inline_images_keys
+        if self.inline_images is not None:
+            lst.extend(list(self.inline_images.keys()))
+        return lst
 
     def _get_image(
         self,
