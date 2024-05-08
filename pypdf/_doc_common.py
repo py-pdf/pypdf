@@ -308,7 +308,7 @@ class PdfDocCommon:
         """
         Integration into Jupyter Notebooks.
 
-        This method returns a dictionary that maps a mime-type to it's
+        This method returns a dictionary that maps a mime-type to its
         representation.
 
         See https://ipython.readthedocs.io/en/stable/config/integrating.html
@@ -848,9 +848,9 @@ class PdfDocCommon:
         """
         Read-only property for the list of threads.
 
-        See §8.3.2 from PDF 1.7 spec.
+        See §12.4.3 from the PDF 1.7 or 2.0 specification.
 
-        It's an array of dictionaries with "/F" and "/I" properties or
+        It is an array of dictionaries with "/F" and "/I" properties or
         None if there are no articles.
         """
         catalog = self.root_object
@@ -1005,9 +1005,9 @@ class PdfDocCommon:
 
         For PdfWriter Only:
         It provides also capability to remove a page/range of page from the list
-        (through del operator)
+        (using the del operator)
         Note: only the page entry is removed. As the objects beneath can be used
-        somewhere else.
+        elsewhere.
         A solution to completely remove them - if they are not used anywhere -
         is to write to a buffer/temporary file and to load it into a new PdfWriter
         object afterwards.
