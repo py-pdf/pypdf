@@ -84,7 +84,7 @@ parts = []
 
 
 def visitor_body(text, cm, tm, font_dict, font_size):
-    y = cm[5]
+    y = tm[5]
     if y > 50 and y < 720:
         parts.append(text)
 
@@ -118,8 +118,8 @@ def visitor_svg_rect(op, args, cm, tm):
         dwg.add(dwg.rect((x, y), (w, h), stroke="red", fill_opacity=0.05))
 
 
-def visitor_svg_text(text, cm, tm, fontDict, fontSize):
-    (x, y) = (cm[4], cm[5])
+def visitor_svg_text(text, cm, tm, font_dict, font_size):
+    (x, y) = (tm[4], tm[5])
     dwg.add(dwg.text(text, insert=(x, y), fill="blue"))
 
 
