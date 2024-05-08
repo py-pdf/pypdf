@@ -72,7 +72,7 @@ operator, operand-arguments, current transformation matrix and text matrix.
 
 ### Example 1: Ignore header and footer
 
-The following example reads the text of page four of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores the header (y < 720) and footer (y > 50).
+The following example reads the text of page four of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores the header (y > 720) and footer (y < 50).
 
 ```python
 from pypdf import PdfReader

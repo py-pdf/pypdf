@@ -1996,11 +1996,11 @@ class PageObject(DictionaryObject):
         will change if this function is made more sophisticated.
 
         Arabic and Hebrew are extracted in the correct order.
-        If required an custom RTL range of characters can be defined;
+        If required a custom RTL range of characters can be defined;
         see function set_custom_rtl
 
-        Additionally you can provide visitor-methods to get informed on all
-        operations and all text-objects.
+        Additionally you can provide visitor methods to get informed on all
+        operations and all text objects.
         For example in some PDF files this can be useful to parse tables.
 
         Args:
