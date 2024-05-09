@@ -85,7 +85,7 @@ parts = []
 
 def visitor_body(text, cm, tm, font_dict, font_size):
     y = cm[5]
-    if y > 50 and y < 720:
+    if  50 < y < 720:
         parts.append(text)
 
 
