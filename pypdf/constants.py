@@ -433,6 +433,31 @@ class InteractiveFormDictEntries:
     Q = "/Q"
     XFA = "/XFA"
 
+    # Common Field Flags
+    Ff_ReadOnly = 1
+    Ff_Required = 2
+    Ff_NoExport = 4
+    # Text Field Flags
+    Ff_Multiline = 1 << (13 - 1)
+    Ff_Password = 1 << (14 - 1)
+    Ff_FileSelect = 1 << (21 - 1)
+    Ff_DoNotSpellCheck = 1 << (23 - 1)
+    Ff_DoNotScroll = 1 << (24 - 1)
+    Ff_Comb = 1 << (25 - 1)
+    Ff_RichText = 1 << (26 - 1)
+    # Button Field Flags
+    Ff_NoToggleToOff = 1 << (15 - 1)
+    Ff_Radio = 1 << (16 - 1)
+    Ff_Pushbutton = 1 << (17 - 1)
+    Ff_RadiosInUnison = 1 << (26 - 1)
+    # Choice Field FlagsZ
+    Ff_Combo = 1 << (18 - 1)
+    Ff_Edit = 1 << (19 - 1)
+    Ff_Sort = 1 << (20 - 1)
+    Ff_MultiSelect = 1 << (22 - 1)
+    # Ff_DoNotSpellCheck
+    Ff_CommitOnSelChange = 1 << (27 - 1)
+
 
 class FieldDictionaryAttributes:
     """Table 8.69 Entries common to all field dictionaries (PDF 1.7 reference)."""
