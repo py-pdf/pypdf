@@ -101,6 +101,6 @@ In case of missing _field_ objects in `/Fields`, `writer.reattach_fields()` will
 
 ## Identify pages where fields are used
 
-In order to ease locating page fields you can use `page.get_pages_using_field`. This method accepts a field object, a *PdfObject* that represents a field (as extracted from `_root_object["/AcroForm"]["/Fields"]`). The method returns a list of pages, because a field can have multiple widgets as mentioned previously (e.g. radio buttons or text displayed on multiple pages).
+In order to ease locating page fields you can use `get_pages_showing_field` of PdfReader or PdfWriter. This method accepts a field object, a *PdfObject* that represents a field (as extracted from `_root_object["/AcroForm"]["/Fields"]`). The method returns a list of pages, because a field can have multiple widgets as mentioned previously (e.g. radio buttons or text displayed on multiple pages).
 
 The page numbers can then be retrieved as usual by using `page.page_number`.
