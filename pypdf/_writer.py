@@ -959,15 +959,16 @@ class PdfWriter(PdfDocCommon):
                 `List[Pageobject]` - provides list of pages to be processed.
                 `None` - all pages.
             fields: a Python dictionary of:
-                - field names (/T) as keys and  text values (/V) as value
-                - field names (/T) as keys and  list of text values (/V)
-                  for multiple choice list
-                - field names (/T) as keys and  tuple of :
+
+                * field names (/T) as keys and  text values (/V) as value
+                * field names (/T) as keys and  list of text values (/V) for multiple choice list
+                * field names (/T) as keys and  tuple of :
                     * text values (/V)
                     * font id (e.g. /F1, the font id must exist)
                     * font size (0 for autosize)
             flags: An integer. You can build it with InteractiveFormDictEntries:
-                ex: InteractiveFormDictEntries.Ff_ReadOnly ^ InteractiveFormDictEntries.Ff_Multiline
+            ex: InteractiveFormDictEntries.Ff_ReadOnly ^ InteractiveFormDictEntries.Ff_Multiline
+
             auto_regenerate: set/unset the need_appearances flag ;
                 the flag is unchanged if auto_regenerate is None.
         """
