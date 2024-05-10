@@ -960,7 +960,7 @@ class PdfWriter(PdfDocCommon):
                 `None` - all pages.
             fields: a Python dictionary of:
 
-                * field names (/T) as keys and  text values (/V) as value
+                * field names (/T) as keys and text values (/V) as value
                 * field names (/T) as keys and  list of text values (/V) for multiple choice list
                 * field names (/T) as keys and  tuple of :
                     * text values (/V)
