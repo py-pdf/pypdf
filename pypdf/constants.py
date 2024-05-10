@@ -454,7 +454,7 @@ class FieldDictionaryAttributes:
     AA = "/AA"  # dictionary, optional
     Opt = "/Opt"
 
-    class FfBits:
+    class FfBits(IntFlag):
         """
         Ease building /Ff flags
         Some entries may be specific to:
@@ -464,6 +464,7 @@ class FieldDictionaryAttributes:
         * List(Ch) (Table 8.79 PDF 1.7 reference)
         """
 
+        Nul = 0
         ReadOnly = 1 << 0
         """common to Tx/Btn/Ch in Table 8.70"""
         Required = 1 << 1

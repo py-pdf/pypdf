@@ -70,7 +70,6 @@ from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
 from .constants import (
     CatalogDictionary,
-    FieldFlag,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
     ImageType,
@@ -123,7 +122,6 @@ from .types import (
 )
 from .xmp import XmpInformation
 
-OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions.all()
 DEFAULT_FONT_HEIGHT_IN_MULTILINE = 12
 
@@ -945,7 +943,7 @@ class PdfWriter(PdfDocCommon):
         self,
         page: Union[PageObject, List[PageObject], None],
         fields: Dict[str, Any],
-        flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
+        flags: FA.FfBits = FA.FfBits.Nul,
         auto_regenerate: Optional[bool] = True,
     ) -> None:
         """
