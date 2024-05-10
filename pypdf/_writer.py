@@ -961,7 +961,7 @@ class PdfWriter(PdfDocCommon):
             fields: a Python dictionary of:
 
                 * field names (/T) as keys and text values (/V) as value
-                * field names (/T) as keys and  list of text values (/V) for multiple choice list
+                * field names (/T) as keys and list of text values (/V) for multiple choice list
                 * field names (/T) as keys and  tuple of :
                     * text values (/V)
                     * font id (e.g. /F1, the font id must exist)
