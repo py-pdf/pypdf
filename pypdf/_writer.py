@@ -939,11 +939,13 @@ class PdfWriter(PdfDocCommon):
             self._objects[n - 1] = dct
             dct.indirect_reference = IndirectObject(n, 0, self)
 
+    FFBITS_NUL = FA.FfBits(0)
+
     def update_page_form_field_values(
         self,
         page: Union[PageObject, List[PageObject], None],
         fields: Dict[str, Any],
-        flags: FA.FfBits = FA.FfBits.Nul,
+        flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
     ) -> None:
         """
