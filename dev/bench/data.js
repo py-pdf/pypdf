@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1715172526502,
+  "lastUpdate": 1715339077987,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -52027,6 +52027,65 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.14078047143359962",
             "extra": "mean: 15.866213342799977 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "32f826bea2b14c392770614732890001269a151e",
+          "message": "DOC: Slightly improve wording and three examples (#2634)\n\n* DOC: Slightly improve wording and three examples\r\n\r\n* DOC: Slightly improve wording and three examples\r\n\r\n* DOC: Slightly improve wording and three examples\r\n\r\n* DOC: Slightly improve wording and three examples\r\n\r\nAlso change get_pages_using_field to get_pages_showing_field.\r\n\r\n* DOC: Slightly improve wording and three examples\r\n\r\nRevert wording back to \"id est\".",
+          "timestamp": "2024-05-10T13:01:41+02:00",
+          "tree_id": "ff999609bbdc9f40d7f9ecd73d6d5a9c55ce8d13",
+          "url": "https://github.com/py-pdf/pypdf/commit/32f826bea2b14c392770614732890001269a151e"
+        },
+        "date": 1715339075958,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3374451547625354,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002334688478528539",
+            "extra": "mean: 299.63039200000026 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.173110542634017,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00708706692931933",
+            "extra": "mean: 82.14827233332755 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2749559204113736,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019715023369381114",
+            "extra": "mean: 3.636946600400006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.817591883240542,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001024655866147201",
+            "extra": "mean: 56.12430717647164 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06050944175520898,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11065066554389331",
+            "extra": "mean: 16.526346483999987 sec\nrounds: 5"
           }
         ]
       }
