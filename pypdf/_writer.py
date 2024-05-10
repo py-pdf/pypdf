@@ -125,6 +125,7 @@ from .xmp import XmpInformation
 
 OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions.all()
+DEFAULT_FONT_HEIGHT_IN_MULTILINE = 12
 
 
 class ObjectDeletionFlag(enum.IntFlag):
@@ -813,8 +814,8 @@ class PdfWriter(PdfDocCommon):
             else float(font_properties[font_properties.index("Tf") - 1])
         )
         if font_height == 0:
-            if field.get("/Ff", 0) & InteractiveFormDictEntries.Ff_Multiline:
-                font_height = 12
+            if field.get(FA.Ff, 0) & FA.FfBits.Multiline:
+                font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE
             else:
                 font_height = rct.height - 2
         font_properties[font_properties.index("Tf") - 1] = str(font_height)
@@ -966,8 +967,9 @@ class PdfWriter(PdfDocCommon):
                     * text values (/V)
                     * font id (e.g. /F1, the font id must exist)
                     * font size (0 for autosize)
-            flags: An integer. You can build it with InteractiveFormDictEntries:
-            ex: InteractiveFormDictEntries.Ff_ReadOnly ^ InteractiveFormDictEntries.Ff_Multiline
+
+            flags: An integer. You can build it using FieldDictionaryAttributes.FfBits
+                see :doc:`FfBits in constants</modules/constants>`
 
             auto_regenerate: set/unset the need_appearances flag ;
                 the flag is unchanged if auto_regenerate is None.

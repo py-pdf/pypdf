@@ -433,34 +433,14 @@ class InteractiveFormDictEntries:
     Q = "/Q"
     XFA = "/XFA"
 
-    # Common Field Flags
-    Ff_ReadOnly = 1
-    Ff_Required = 2
-    Ff_NoExport = 4
-    # Text Field Flags
-    Ff_Multiline = 1 << (13 - 1)
-    Ff_Password = 1 << (14 - 1)
-    Ff_FileSelect = 1 << (21 - 1)
-    Ff_DoNotSpellCheck = 1 << (23 - 1)
-    Ff_DoNotScroll = 1 << (24 - 1)
-    Ff_Comb = 1 << (25 - 1)
-    Ff_RichText = 1 << (26 - 1)
-    # Button Field Flags
-    Ff_NoToggleToOff = 1 << (15 - 1)
-    Ff_Radio = 1 << (16 - 1)
-    Ff_Pushbutton = 1 << (17 - 1)
-    Ff_RadiosInUnison = 1 << (26 - 1)
-    # Choice Field FlagsZ
-    Ff_Combo = 1 << (18 - 1)
-    Ff_Edit = 1 << (19 - 1)
-    Ff_Sort = 1 << (20 - 1)
-    Ff_MultiSelect = 1 << (22 - 1)
-    # Ff_DoNotSpellCheck
-    Ff_CommitOnSelChange = 1 << (27 - 1)
-
 
 class FieldDictionaryAttributes:
-    """Table 8.69 Entries common to all field dictionaries (PDF 1.7 reference)."""
+    """
+    Entries common to all field dictionaries (Table 8.69 PDF 1.7 reference)
+    (*very partially documented here*).
+
+    FFBits provides the constants used for `/Ff` from Table 8.70/8.75/8.77/8.79
+    """
 
     FT = "/FT"  # name, required for terminal fields
     Parent = "/Parent"  # dictionary, required for children
@@ -475,33 +455,62 @@ class FieldDictionaryAttributes:
     Opt = "/Opt"
 
     class FfBits:
+        """
+        Ease building /Ff flags
+        Some entries may be specific to:
+
+        * Text(Tx) (Table 8.75 PDF 1.7 reference)
+        * Buttons(Btn) (Table 8.77 PDF 1.7 reference)
+        * List(Ch) (Table 8.79 PDF 1.7 reference)
+        """
+
         ReadOnly = 1 << 0
+        """common to Tx/Btn/Ch in Table 8.70"""
         Required = 1 << 1
+        """common to Tx/Btn/Ch in Table 8.70"""
         NoExport = 1 << 2
-        Multiline = 1 << 12  # Tx Table 8.77
-        Password = 1 << 13  # Tx
+        """common to Tx/Btn/Ch in Table 8.70"""
 
-        NoToggleToOff = 1 << 14  # Btn table 8.75
-        Radio = 1 << 15  # Btn
-        Pushbutton = 1 << 16  # Btn
+        Multiline = 1 << 12
+        """Tx"""
+        Password = 1 << 13
+        """Tx"""
 
-        Combo = 1 << 17  # Ch table 8.79
-        Edit = 1 << 18  # Ch
-        Sort = 1 << 19  # Ch
+        NoToggleToOff = 1 << 14
+        """Btn"""
+        Radio = 1 << 15
+        """Btn"""
+        Pushbutton = 1 << 16
+        """Btn"""
 
-        FileSelect = 1 << 20  # Tx
+        Combo = 1 << 17
+        """Ch"""
+        Edit = 1 << 18
+        """Ch"""
+        Sort = 1 << 19
+        """Ch"""
 
-        MultiSelect = 1 << 21  # Ch
+        FileSelect = 1 << 20
+        """Tx"""
 
-        DoNotSpellCheck = 1 << 22  # Tx / Ch
-        DoNotScroll = 1 << 23  # Tx
-        Comb = 1 << 24  # Tx
+        MultiSelect = 1 << 21
+        """Tx"""
 
-        RadiosInUnison = 1 << 25  # Btn
+        DoNotSpellCheck = 1 << 22
+        """Tx/Ch"""
+        DoNotScroll = 1 << 23
+        """Tx"""
+        Comb = 1 << 24
+        """Tx"""
 
-        RichText = 1 << 25  # Tx
+        RadiosInUnison = 1 << 25
+        """Btn"""
 
-        CommitOnSelChange = 1 << 26  # Ch
+        RichText = 1 << 25
+        """Tx"""
+
+        CommitOnSelChange = 1 << 26
+        """Ch"""
 
     @classmethod
     def attributes(cls) -> Tuple[str, ...]:
