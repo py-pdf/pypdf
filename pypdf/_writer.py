@@ -969,7 +969,7 @@ class PdfWriter(PdfDocCommon):
             flags: An integer. You can build it with InteractiveFormDictEntries:
             ex: InteractiveFormDictEntries.Ff_ReadOnly ^ InteractiveFormDictEntries.Ff_Multiline
 
-            auto_regenerate: set/unset the need_appearances flag ;
+            auto_regenerate: Set/unset the need_appearances flag;
                 the flag is unchanged if auto_regenerate is None.
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
