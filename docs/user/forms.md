@@ -63,7 +63,7 @@ To flesh out this overview:
   - `/V`: Field Value
   - `/DV` : Default Field Value (used when resetting a form for example)
 * In order to streamline readability, _Field_ Objects and _Widget_ Objects can be fused housing all properties.
-* Fields can be organised hierarchically, that is one field can be placed under another. In such instances, the `/Parent` will have an IndirectObject providing Bottom-Up links and `/Kids` is an array carrying IndirectObjects for Top-Down navigation; _Widget_ Objects are still required for visual rendering. To call upon them, use the *fully qualified field name* (where all the individual names of the parent objects are separated by `.`)
+* Fields can be organised hierarchically, id est one field can be placed under another. In such instances, the `/Parent` will have an IndirectObject providing Bottom-Up links and `/Kids` is an array carrying IndirectObjects for Top-Down navigation; _Widget_ Objects are still required for visual rendering. To call upon them, use the *fully qualified field name* (where all the individual names of the parent objects are separated by `.`)
 
   For instance take two (visual) fields both called _city_, but attached below _sender_ and _receiver_; the corresponding full names will be _sender.city_ and _receiver.city_.
 * When a field is repeated on multiple pages, the Field Object will have many _Widget_ Objects in  `/Kids`. These objects are pure _widgets_, containing no _field_ specific data.
