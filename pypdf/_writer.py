@@ -961,9 +961,9 @@ class PdfWriter(PdfDocCommon):
                 `None` - all pages.
             fields: a Python dictionary of:
 
-                * field names (/T) as keys and  text values (/V) as value
-                * field names (/T) as keys and  list of text values (/V) for multiple choice list
-                * field names (/T) as keys and  tuple of :
+                * field names (/T) as keys and text values (/V) as value
+                * field names (/T) as keys and list of text values (/V) for multiple choice list
+                * field names (/T) as keys and tuple of:
                     * text values (/V)
                     * font id (e.g. /F1, the font id must exist)
                     * font size (0 for autosize)
@@ -971,7 +971,7 @@ class PdfWriter(PdfDocCommon):
             flags: An integer. You can build it using FieldDictionaryAttributes.FfBits
                 see :doc:`FfBits in constants</modules/constants>`
 
-            auto_regenerate: set/unset the need_appearances flag ;
+            auto_regenerate: Set/unset the need_appearances flag;
                 the flag is unchanged if auto_regenerate is None.
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
