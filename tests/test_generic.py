@@ -1380,11 +1380,12 @@ def test_unitary_extract_inline_buffer_invalid():
         extract_inline_DCT(BytesIO(b"\xFF\xD9"))
 
 
-def test_unitary_extract_inline_ahx():
+def test_unitary_extract_inline():
+    # AHx
     b = 16000 * b"00"
-    b += b" EI"
-    assert len(extract_inline_AHex(BytesIO(b))) == 16000 * 2
-    b = 16000 * b"00"
-    b += b">"
+    assert len(extract_inline_AHex(BytesIO(b + b" EI"))) == len(b)
     with pytest.raises(PdfReadError):
-        extract_inline_AHex(BytesIO(b))
+        extract_inline_AHex(BytesIO(b + b"> "))
+    # RL
+    b = 8200 * b"\x00\xAB" + b"\x80"
+    assert len(extract_inline_RL(BytesIO(b + b" EI"))) == len(b)

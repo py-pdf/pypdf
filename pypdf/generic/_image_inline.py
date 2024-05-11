@@ -69,7 +69,7 @@ def extract_inline_AHex(stream: StreamType) -> bytes:
             break
         elif len(buf) == 2:
             data += buf
-            break
+            raise PdfReadError("Unexpected end of stream")
         else:  # > nor EI found
             data += buf[:-2]
             stream.seek(-2, 1)
@@ -101,7 +101,7 @@ def extract_inline_A85(stream: StreamType) -> bytes:
             break
         elif len(buf) == 2:  # end of buffer
             data += buf
-            break
+            raise PdfReadError("Unexpected end of stream")
         data += buf[:-2]  # back by one char in case of in the middle of ~>
         stream.seek(-2, 1)
 
@@ -127,7 +127,7 @@ def extract_inline_RL(stream: StreamType) -> bytes:
             raise PdfReadError("Unexpected end of stream")
         loc = buf.find(b"\x80")
         if loc >= 0:  # found
-            data = buf[: loc + 1]
+            data += buf[: loc + 1]
             stream.seek(-len(buf) + loc + 1, 1)
             break
         data += buf
@@ -203,48 +203,28 @@ def extract_inline_default(stream: StreamType) -> bytes:
             data.write(buf)
         else:
             # Write out everything before the E.
-            data.write(buf[0:loc])
+            data.write(buf[0 : (loc + 1)])
 
             # Seek back in the stream to read the E next.
-            stream.seek(loc - len(buf), 1)
+            stream.seek(loc + 1 - len(buf), 1)
             saved_pos = stream.tell()
-            tok = stream.read(1)  # E of "EI"
             # Check for End Image
             tok2 = stream.read(1)  # I of "EI"
             if tok2 != b"I":
-                stream.seek(-1, 1)
-                data.write(tok)
+                stream.seek(saved_pos, 0)
                 continue
-            # for further debug : print("!!!!",buf[loc-1:loc+10])
-            info = tok + tok2
-            tok3 = stream.read(
-                1
-            )  # possible space after "EI" may not been loaded  in buf
+            tok3 = stream.read(1)  # possible space after "EI"
             if tok3 not in WHITESPACES:
-                stream.seek(-2, 1)  # to step back on I
-                data.write(tok)
-            elif buf[loc - 1 : loc] in WHITESPACES:  # and tok3 in WHITESPACES:
-                # Data can contain [\s]EI[\s]: 4 chars sufficient, checking Q operator not required.
-                while tok3 in WHITESPACES:
-                    # needed ???? : info += tok3
-                    tok3 = stream.read(1)
-                stream.seek(-1, 1)
-                # we do not insert EI
-                break
-            else:  # buf[loc - 1 : loc] not in WHITESPACES and tok3 in WHITESPACES:
-                # Data can contain [!\s]EI[\s],  so check for Q or EMC operator is required to have 4 chars.
-                while tok3 in WHITESPACES:
-                    info += tok3
-                    tok3 = stream.read(1)
-                stream.seek(-1, 1)
-                if tok3 == b"Q":
-                    break
-                elif tok3 == b"E":
-                    ope = stream.read(3)
-                    stream.seek(-3, 1)
-                    if ope == b"EMC":
-                        break
-                else:
-                    data.write(info)
-    stream.seek(saved_pos, 0)
+                stream.seek(saved_pos, 0)
+                continue
+            while tok3 in WHITESPACES:
+                tok3 = stream.read(1)
+            if buf[loc - 1 : loc] not in WHITESPACES and tok3 not in (
+                b"Q",
+                b"E",
+            ):  # for Q ou EMC
+                stream.seek(saved_pos, 0)
+                continue
+            # Data contains [\s]EI[\s](Q|EMC): 4 chars sufficient, checking Q operator not required.
+            break
     return data.getvalue()
