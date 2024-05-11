@@ -130,7 +130,7 @@ def extract_inline_RL(stream: StreamType) -> bytes:
             data = buf[: loc + 1]
             stream.seek(-len(buf) + loc + 1, 1)
             break
-        data += buf  # back by one char in case of in the middle of ~>
+        data += buf
 
     ei = read_non_whitespace(stream)
     ei += stream.read(1)

@@ -39,6 +39,7 @@ from pypdf.generic import (
 from pypdf.generic._image_inline import (
     extract_inline_A85,
     extract_inline_AHex,
+    extract_inline_DCT,
     extract_inline_RL,
 )
 
@@ -1369,6 +1370,10 @@ def test_unitary_extract_inline_buffer_empty():
         extract_inline_A85(BytesIO(a85encode(b"1")))
     with pytest.raises(PdfReadError):
         extract_inline_RL(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_RL(BytesIO(b"\x01\x01\x80"))
+    with pytest.raises(PdfReadError):
+        extract_inline_DCT(BytesIO(b"\xFF\xD9"))
 
 
 def test_unitary_extract_inline_ahx():
