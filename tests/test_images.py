@@ -214,6 +214,49 @@ def test_image_extraction(src, page_index, image_key, expected):
     assert image_similarity(BytesIO(actual_image.data), expected) >= 0.99
 
 
+@pytest.mark.parametrize(
+    ("src", "page_index", "image_key", "expected"),
+    [
+        (
+            SAMPLE_ROOT / "027-onlyoffice-image/Patterns.pdf",
+            0,
+            "/Pattern/P1/X1",
+            SAMPLE_ROOT / "027-onlyoffice-image/P1_X1.jpg",
+        ),
+        (
+            SAMPLE_ROOT / "027-onlyoffice-image/Patterns.pdf",
+            0,
+            "/Pattern/P2/X1",
+            SAMPLE_ROOT / "027-onlyoffice-image/P2_X1.jpg",
+        ),
+        (
+            SAMPLE_ROOT / "027-onlyoffice-image/Patterns.pdf",
+            0,
+            "/Pattern/P3/X1",
+            SAMPLE_ROOT / "027-onlyoffice-image/P3_X1.jpg",
+        ),
+    ],
+    ids=[
+        "027-onlyoffice-image/P1_X1.jpg",
+        "027-onlyoffice-image/P2_X1.jpg",
+        "027-onlyoffice-image/P3_X1.jpg",
+    ],
+)
+@pytest.mark.samples()
+def test_patterns_image_extraction(src, page_index, image_key, expected):
+    reader = PdfReader(src)
+    extreactedIDs = reader.pages[page_index].images
+
+    assert (
+        str(extreactedIDs)
+        == "[Image_0=/Pattern/P1/X1, Image_1=/Pattern/P2/X1, Image_2=/Pattern/P3/X1]"
+    )
+
+    actual_image = reader.pages[page_index].images[image_key]
+
+    assert image_similarity(BytesIO(actual_image.data), expected) >= 0.99
+
+
 @pytest.mark.enable_socket()
 @pytest.mark.timeout(30)
 def test_loop_in_image_keys():
