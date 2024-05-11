@@ -373,6 +373,7 @@ def test_inline_image_extraction():
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     for i in range(8):
         assert image_similarity(reader.pages[0].images[i].image, img) == 1
+    reader.pages[0].images[i].image  # to test acceleration of second call
     reader.pages[0].extract_text()
 
     url = "https://github.com/py-pdf/pypdf/files/15233597/bug1065245.pdf"

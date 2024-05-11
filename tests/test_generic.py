@@ -1359,15 +1359,19 @@ def test_array_operators():
     assert len(a) == la
 
 
-def test_unitary_extract_inline_buffer_empty():
+def test_unitary_extract_inline_buffer_invalid():
     with pytest.raises(PdfReadError):
         extract_inline_AHex(BytesIO())
     with pytest.raises(PdfReadError):
         extract_inline_AHex(BytesIO(4095 * b"00" + b"   "))
     with pytest.raises(PdfReadError):
+        extract_inline_AHex(BytesIO(b"00"))
+    with pytest.raises(PdfReadError):
         extract_inline_A85(BytesIO())
     with pytest.raises(PdfReadError):
         extract_inline_A85(BytesIO(a85encode(b"1")))
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1234578" * 990)))
     with pytest.raises(PdfReadError):
         extract_inline_RL(BytesIO())
     with pytest.raises(PdfReadError):

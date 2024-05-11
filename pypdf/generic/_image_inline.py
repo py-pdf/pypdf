@@ -102,8 +102,8 @@ def extract_inline_A85(stream: StreamType) -> bytes:
         elif len(buf) == 2:  # end of buffer
             data += buf
             break
-        data += buf[:-1]  # back by one char in case of in the middle of ~>
-        stream.seek(-1, 1)
+        data += buf[:-2]  # back by one char in case of in the middle of ~>
+        stream.seek(-2, 1)
 
     ei = read_non_whitespace(stream)
     ei += stream.read(1)
