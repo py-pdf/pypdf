@@ -35,6 +35,11 @@ from pypdf.generic import (
     read_object,
     read_string_from_stream,
 )
+from pypdf.generic._image_inline import (
+    extract_inline_A85,
+    extract_inline_AHex,
+    extract_inline_RL,
+)
 
 from . import ReaderDummy, get_data_from_url
 
@@ -883,7 +888,7 @@ def test_annotation_builder_highlight(pdf_file_path):
                     FloatObject(705.4493),
                 ]
             ),
-            printing=False
+            printing=False,
         )
     writer.add_annotation(0, highlight_annotation)
     for annot in writer.pages[0]["/Annots"]:
@@ -910,7 +915,7 @@ def test_annotation_builder_highlight(pdf_file_path):
                     FloatObject(705.4493),
                 ]
             ),
-            printing=True
+            printing=True,
         )
     writer.add_annotation(1, highlight_annotation)
     for annot in writer.pages[1]["/Annots"]:
@@ -1350,3 +1355,22 @@ def test_array_operators():
     la = len(a)
     a -= 300
     assert len(a) == la
+
+
+def test_unitary_extract_inline_buffer_empty():
+    with pytest.raises(PdfReadError):
+        extract_inline_AHex(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_RL(BytesIO())
+
+
+def test_unitary_extract_inline_ahx():
+    b = 16000 * b"00"
+    b += b" EI"
+    assert len(extract_inline_AHex(BytesIO(b))) == 16000 * 2
+    b = 16000 * b"00"
+    b += b">"
+    with pytest.raises(PdfReadError):
+        extract_inline_AHex(BytesIO(b))

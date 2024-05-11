@@ -66,9 +66,13 @@ def extract_inline_AHex(stream: StreamType) -> bytes:
                 c = stream.read(1)
                 loc -= 1
             data += buf[:loc]
+            break
+        elif len(buf) == 2:
+            data += buf
+            break
         else:  # > nor EI found
-            data += buf[:-1]
-            stream.seek(-1, 1)
+            data += buf[:-2]
+            stream.seek(-2, 1)
 
     ei = read_non_whitespace(stream)
     ei += stream.read(1)
@@ -153,7 +157,7 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
         c = stream.read(1)
         data += c
         if c == b"\xff":
-            stream.seek(-1, 1)
+            stream.seek(-1, 1)  # pragma: no cover
         elif c == b"\x00":  # stuffing
             pass
         elif c == b"\xd9":  # end
