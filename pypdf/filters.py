@@ -37,7 +37,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import math
 import struct
 import zlib
-from base64 import a85decode, a85encode
+from base64 import a85decode
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -499,9 +499,9 @@ class ASCII85Decode:
         data = data.strip(WHITESPACES_AS_BYTES)
         return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
 
-    @staticmethod
+    """@staticmethod
     def encode(data: bytes, level: int = -1) -> bytes:
-        """
+        '''
         Compress the input data using A85 encoding in Adobe format.
 
         Args:
@@ -510,8 +510,9 @@ class ASCII85Decode:
 
         Returns:
             The compressed data.
-        """
+        '''
         return a85encode(data, adobe=True, wrapcol=32)
+    """
 
 
 class DCTDecode:
