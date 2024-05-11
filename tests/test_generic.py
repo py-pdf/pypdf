@@ -1,5 +1,6 @@
 """Test the pypdf.generic module."""
 
+from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -1361,7 +1362,11 @@ def test_unitary_extract_inline_buffer_empty():
     with pytest.raises(PdfReadError):
         extract_inline_AHex(BytesIO())
     with pytest.raises(PdfReadError):
+        extract_inline_AHex(BytesIO(4095 * b"00" + b"   "))
+    with pytest.raises(PdfReadError):
         extract_inline_A85(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1")))
     with pytest.raises(PdfReadError):
         extract_inline_RL(BytesIO())
 
