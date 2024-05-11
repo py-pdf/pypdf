@@ -125,7 +125,6 @@ def extract_inline_RL(stream: StreamType) -> bytes:
             break
         data += buf  # back by one char in case of in the middle of ~>
 
-    data += buf[:loc]
     ei = read_non_whitespace(stream)
     ei += stream.read(1)
     stream.seek(-2, 1)
