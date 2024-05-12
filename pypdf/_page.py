@@ -461,8 +461,7 @@ class PageObject(DictionaryObject):
         if PG.RESOURCES in obj:
             if RES.PATTERN in cast(DictionaryObject, obj[PG.RESOURCES]):
                 for patternName, pattern in obj[PG.RESOURCES][RES.PATTERN].items():
-                    if PG.RESOURCES in pattern.get_object():
-                        if RES.XOBJECT in cast(DictionaryObject, pattern[PG.RESOURCES]):
+                    if PG.RESOURCES in pattern.get_object() and RES.XOBJECT in cast(DictionaryObject, pattern[PG.RESOURCES]):
                             x_object = pattern[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
                             for o in x_object:
                                 if not isinstance(x_object[o], StreamObject):
