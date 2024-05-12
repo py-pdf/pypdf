@@ -460,11 +460,14 @@ class PageObject(DictionaryObject):
 
         if PG.RESOURCES in obj:
             if RES.PATTERN in cast(DictionaryObject, obj[PG.RESOURCES]):
-                for patternName, pattern in obj[PG.RESOURCES][RES.PATTERN].items():
+                for patternName, pattern in cast(
+                    DictionaryObject,
+                    cast(DictionaryObject, obj[PG.RESOURCES])[RES.PATTERN],
+                ).items():
                     if PG.RESOURCES in pattern.get_object() and RES.XOBJECT in cast(
                         DictionaryObject, pattern[PG.RESOURCES]
                     ):
-                        x_object = pattern[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
+                        x_object = pattern[PG.RESOURCES][RES.XOBJECT].get_object()
                         for o in x_object:
                             if not isinstance(x_object[o], StreamObject):
                                 continue
@@ -476,7 +479,10 @@ class PageObject(DictionaryObject):
                                 )
 
             if RES.XOBJECT in cast(DictionaryObject, obj[PG.RESOURCES]):
-                x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
+                x_object = cast(
+                    DictionaryObject,
+                    cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT],
+                ).get_object()
                 for o in x_object:
                     if not isinstance(x_object[o], StreamObject):
                         continue
@@ -512,11 +518,11 @@ class PageObject(DictionaryObject):
 
                 xobjs = cast(
                     DictionaryObject,
-                    cast(DictionaryObject, patterns[pattern_name][PG.RESOURCES])[
-                        RES.XOBJECT
-                    ],
+                    cast(
+                        DictionaryObject,
+                        cast(DictionaryObject, patterns[pattern_name])[PG.RESOURCES],
+                    )[RES.XOBJECT],
                 )
-
             else:
                 xobjs = cast(
                     DictionaryObject,
