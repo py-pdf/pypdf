@@ -462,16 +462,16 @@ class PageObject(DictionaryObject):
             if RES.PATTERN in cast(DictionaryObject, obj[PG.RESOURCES]):
                 for patternName, pattern in obj[PG.RESOURCES][RES.PATTERN].items():
                     if PG.RESOURCES in pattern.get_object() and RES.XOBJECT in cast(DictionaryObject, pattern[PG.RESOURCES]):
-                            x_object = pattern[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
-                            for o in x_object:
-                                if not isinstance(x_object[o], StreamObject):
-                                    continue
-                                if x_object[o][IA.SUBTYPE] == "/Image":
-                                    lst.append(
-                                        f"{RES.PATTERN}{patternName}{o}"
-                                        if len(ancest) == 0
-                                        else ancest + [o]
-                                    )
+                        x_object = pattern[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
+                        for o in x_object:
+                            if not isinstance(x_object[o], StreamObject):
+                                continue
+                            if x_object[o][IA.SUBTYPE] == "/Image":
+                                lst.append(
+                                    f"{RES.PATTERN}{patternName}{o}"
+                                    if len(ancest) == 0
+                                    else ancest + [o]
+                                )
 
             if RES.XOBJECT in cast(DictionaryObject, obj[PG.RESOURCES]):
                 x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
