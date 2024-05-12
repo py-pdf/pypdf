@@ -951,6 +951,8 @@ class PageObject(DictionaryObject):
                 # as a backup solution, we put content as an object although not in accordance with pdf ref
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
+        # forces recalculation of inline_images
+        self.inline_images = None
 
     def merge_page(
         self, page2: "PageObject", expand: bool = False, over: bool = True
