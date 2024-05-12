@@ -31,7 +31,7 @@ else:
 try:
     from PIL import Image, UnidentifiedImageError  # noqa: F401
 except ImportError:  # deprecated
-    raise ImportError(
+    raise ImportError(  # deprecated
         "pillow is required to do image extraction. "
         "It can be installed via 'pip install pypdf[image]'"
     )
@@ -145,12 +145,6 @@ def _extended_image_frombytes(
     mode: str, size: Tuple[int, int], data: bytes
 ) -> Image.Image:
     try:
-        if mode == "2bits":
-            mode = "P"
-            data = bits2byte(data, size, 2)
-        elif mode == "4bits":
-            mode = "P"
-            data = bits2byte(data, size, 4)
         img = Image.frombytes(mode, size, data)
     except ValueError as exc:
         nb_pix = size[0] * size[1]
