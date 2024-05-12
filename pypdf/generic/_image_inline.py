@@ -75,9 +75,9 @@ def extract_inline_AHex(stream: StreamType) -> bytes:
             stream.seek(-2, 1)
 
     ei = read_non_whitespace(stream)
-    ei += stream.read(1)
-    stream.seek(-2, 1)
-    if ei != b"EI":
+    ei += stream.read(2)
+    stream.seek(-3, 1)
+    if ei[0:2] != b"EI" or not (ei[2:3] == b"" or ei[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data
 
@@ -106,9 +106,9 @@ def extract_inline_A85(stream: StreamType) -> bytes:
         stream.seek(-2, 1)
 
     ei = read_non_whitespace(stream)
-    ei += stream.read(1)
-    stream.seek(-2, 1)
-    if ei != b"EI":
+    ei += stream.read(2)
+    stream.seek(-3, 1)
+    if ei[0:2] != b"EI" or not (ei[2:3] == b"" or ei[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data
 
@@ -133,9 +133,9 @@ def extract_inline_RL(stream: StreamType) -> bytes:
         data += buf
 
     ei = read_non_whitespace(stream)
-    ei += stream.read(1)
-    stream.seek(-2, 1)
-    if ei != b"EI":
+    ei += stream.read(2)
+    stream.seek(-3, 1)
+    if ei[0:2] != b"EI" or not (ei[2:3] == b"" or ei[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data
 
@@ -177,9 +177,9 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
         # else: pass
 
     ei = read_non_whitespace(stream)
-    ei += stream.read(1)
-    stream.seek(-2, 1)
-    if ei != b"EI":
+    ei += stream.read(2)
+    stream.seek(-3, 1)
+    if ei[0:2] != b"EI" or not (ei[2:3] == b"" or ei[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data
 

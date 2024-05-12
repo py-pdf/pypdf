@@ -16,6 +16,8 @@ from pypdf.generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
+    ContentStream,
+    DecodedStreamObject,
     Destination,
     DictionaryObject,
     Fit,
@@ -1391,3 +1393,29 @@ def test_unitary_extract_inline():
     # RL
     b = 8200 * b"\x00\xAB" + b"\x80"
     assert len(extract_inline_RL(BytesIO(b + b" EI"))) == len(b)
+
+    # default
+    # EIDD instead of EI; using A85
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F [/A85 /Fl]\nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>
+EIDD
+Q\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "EI stream not found" in exc.value.args[0]
+    # EIDD instead of EI; using /Fl (default extraction)
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F /Fl \nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>
+EIDD
+Q\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "Unexpected end of stream" in exc.value.args[0]

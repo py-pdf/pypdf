@@ -50,6 +50,7 @@ from typing import (
 
 from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationProtocol
 from .._utils import (
+    WHITESPACES,
     StreamType,
     b_,
     deprecate_no_replacement,
@@ -1198,8 +1199,9 @@ class ContentStream(DecodedStreamObject):
         else:
             data = extract_inline_default(stream)
 
-        ei = stream.read(2)
-        if ei != b"EI":
+        ei = stream.read(3)
+        stream.seek(-1, 1)
+        if ei[0:2] != b"EI" or ei[2:3] not in WHITESPACES:
             stream.seek(savpos, 0)
             data = extract_inline_default(stream)
         return {"settings": settings, "data": data}
