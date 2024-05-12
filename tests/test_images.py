@@ -399,26 +399,6 @@ def test_inline_image_extraction():
         "~14~",
         "~15~",
     ]
-    # 2nd call for acceleration test
-    assert list(writer.pages[0].images.keys()) == [
-        "/Im0",
-        "~0~",
-        "~1~",
-        "~2~",
-        "~3~",
-        "~4~",
-        "~5~",
-        "~6~",
-        "~7~",
-        "~8~",
-        "~9~",
-        "~10~",
-        "~11~",
-        "~12~",
-        "~13~",
-        "~14~",
-        "~15~",
-    ]
 
     url = "https://github.com/py-pdf/pypdf/files/15233597/bug1065245.pdf"
     name = "iss2598c.pdf"

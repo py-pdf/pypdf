@@ -457,8 +457,8 @@ class PageObject(DictionaryObject):
                 lst.append(o if len(ancest) == 0 else ancest + [o])
             else:  # is a form with possible images inside
                 lst.extend(self._get_ids_image(x_object[o], ancest + [o], call_stack))
-        if self.inline_images is not None:
-            lst.extend(list(self.inline_images.keys()))
+        assert self.inline_images is not None
+        lst.extend(list(self.inline_images.keys()))
         return lst
 
     def _get_image(
