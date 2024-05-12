@@ -13,7 +13,7 @@ from zipfile import ZipFile
 import pytest
 from PIL import Image, ImageChops, ImageDraw
 
-from pypdf import PageObject, PdfReader
+from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf.generic import NameObject, NullObject
 
 from . import get_data_from_url
@@ -367,14 +367,58 @@ def test_inline_image_extraction():
 
     url = "https://github.com/mozilla/pdf.js/raw/master/test/pdfs/issue14256.pdf"
     name = "iss2598b.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
     url = "https://github.com/py-pdf/pypdf/assets/4083478/71bc5053-cfc7-44ba-b7be-8e2333e2c749"
     name = "iss2598b.png"
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     for i in range(8):
-        assert image_similarity(reader.pages[0].images[i].image, img) == 1
-    reader.pages[0].images[i].image  # to test acceleration of second call
-    reader.pages[0].extract_text()
+        assert image_similarity(writer.pages[0].images[i].image, img) == 1
+    writer.pages[0].extract_text()
+    # check recalculation of inline images
+    assert writer.pages[0].inline_images is not None
+    writer.pages[0].merge_scaled_page(writer.pages[0], 0.25)
+    assert writer.pages[0].inline_images is None
+    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    writer.pages[0].merge_page(reader.pages[0])
+    assert list(writer.pages[0].images.keys()) == [
+        "/Im0",
+        "~0~",
+        "~1~",
+        "~2~",
+        "~3~",
+        "~4~",
+        "~5~",
+        "~6~",
+        "~7~",
+        "~8~",
+        "~9~",
+        "~10~",
+        "~11~",
+        "~12~",
+        "~13~",
+        "~14~",
+        "~15~",
+    ]
+    # 2nd call for acceleration test
+    assert list(writer.pages[0].images.keys()) == [
+        "/Im0",
+        "~0~",
+        "~1~",
+        "~2~",
+        "~3~",
+        "~4~",
+        "~5~",
+        "~6~",
+        "~7~",
+        "~8~",
+        "~9~",
+        "~10~",
+        "~11~",
+        "~12~",
+        "~13~",
+        "~14~",
+        "~15~",
+    ]
 
     url = "https://github.com/py-pdf/pypdf/files/15233597/bug1065245.pdf"
     name = "iss2598c.pdf"

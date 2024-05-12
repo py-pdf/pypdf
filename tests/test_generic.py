@@ -1371,6 +1371,8 @@ def test_unitary_extract_inline_buffer_invalid():
     with pytest.raises(PdfReadError):
         extract_inline_A85(BytesIO(a85encode(b"1")))
     with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1") + b"~> Q"))
+    with pytest.raises(PdfReadError):
         extract_inline_A85(BytesIO(a85encode(b"1234578" * 990)))
     with pytest.raises(PdfReadError):
         extract_inline_RL(BytesIO())
