@@ -1430,3 +1430,21 @@ BT\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
     with pytest.raises(PdfReadError) as exc:
         co.operations
     assert "Unexpected end of stream" in exc.value.args[0]
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 4 /H 4 /CS /G \nID
+abcdefghijklmnopEI
+Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 4 /H 4 \nID
+abcdefghijklmnopEI
+Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    assert co.operations[7][0]["data"] == b"abcdefghijklmnop"

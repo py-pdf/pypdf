@@ -1176,14 +1176,20 @@ class ContentStream(DecodedStreamObject):
             data = extract_inline_DCT(stream)
         elif filtr == "not set":
             cs = settings.get("/CS", "")
-            if cs == "/I" or cs == "/G" or cs == "/Indexed" or cs == "/DeviceGray":
-                lcs = 1
-            elif "RGB" in cs:
+            if "RGB" in cs:
                 lcs = 3
             elif "CMYK" in cs:
                 lcs = 4
             else:
-                bits = settings.get("/BPC", -1)
+                bits = settings.get(
+                    "/BPC",
+                    8
+                    if cs == "/I"
+                    or cs == "/G"
+                    or cs == "/Indexed"
+                    or cs == "/DeviceGray"
+                    else -1,
+                )
                 if bits > 0:
                     lcs = bits / 8.0
                 else:
@@ -1194,8 +1200,7 @@ class ContentStream(DecodedStreamObject):
                     ceil(cast(int, settings["/W"]) * lcs) * cast(int, settings["/H"])
                 )
             ei = read_non_whitespace(stream)
-            ei += stream.read(1)
-            stream.seek(-2, 1)
+            stream.seek(-1, 1)
         else:
             data = extract_inline_default(stream)
 

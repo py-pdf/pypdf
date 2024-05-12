@@ -203,7 +203,7 @@ def extract_inline_default(stream: StreamType) -> bytes:
             data.write(buf)
         else:
             # Write out everything before the E.
-            data.write(buf[0 : (loc + 1)])
+            data.write(buf[0:loc])
 
             # Seek back in the stream to read the E next.
             stream.seek(loc + 1 - len(buf), 1)
