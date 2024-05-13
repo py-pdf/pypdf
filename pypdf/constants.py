@@ -541,7 +541,7 @@ class GraphicsStateParameters:
 
 
 class CatalogDictionary:
-    """§7.7.2  of the 1.7 and 2.0 references."""
+    """§7.7.2 of the 1.7 and 2.0 references."""
 
     TYPE = "/Type"  # name, required; must be /Catalog
     VERSION = "/Version"  # name
