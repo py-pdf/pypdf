@@ -213,7 +213,7 @@ class StreamAttributes:
 
 
 class FilterTypes:
-    """§7.4  of the 1.7 and 2.0 references."""
+    """§7.4 of the 1.7 and 2.0 references."""
 
     ASCII_HEX_DECODE = "/ASCIIHexDecode"  # abbreviation: AHx
     ASCII_85_DECODE = "/ASCII85Decode"  # abbreviation: A85
