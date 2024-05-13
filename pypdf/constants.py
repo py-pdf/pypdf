@@ -261,7 +261,7 @@ class CcittFaxDecodeParameters:
 
 
 class ImageAttributes:
-    """§11.6.5  of the 1.7 and 2.0 references."""
+    """§11.6.5 of the 1.7 and 2.0 references."""
 
     TYPE = "/Type"  # name, required; must be /XObject
     SUBTYPE = "/Subtype"  # name, required; must be /Image
