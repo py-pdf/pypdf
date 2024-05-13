@@ -9,7 +9,7 @@ PDF comes in the following versions:
 * 2001: 1.4
 * 2003: 1.5
 * 2004: 1.6
-* 2006 - 2012: 1.7, ISO 32000-1:2008
+* 2006: 1.7
 * 2017: 2.0
 
 The general format didn't change, but new features got added. It can be that
