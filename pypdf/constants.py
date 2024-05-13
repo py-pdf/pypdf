@@ -226,7 +226,7 @@ class FilterTypes:
 
 
 class FilterTypeAbbreviations:
-    """§8.9.7  of the 1.7 and 2.0 references."""
+    """§8.9.7 of the 1.7 and 2.0 references."""
 
     AHx = "/AHx"
     A85 = "/A85"
