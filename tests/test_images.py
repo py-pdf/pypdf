@@ -349,6 +349,16 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
 
 
 @pytest.mark.enable_socket()
+@pytest.mark.timeout(30)
+def test_large_compressed_image():
+    url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
+    reader = PdfReader(
+        BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf"))
+    )
+    list(reader.pages[0].images)
+
+
+@pytest.mark.enable_socket()
 def test_inline_image_extraction():
     """Cf #2598"""
     url = "https://github.com/py-pdf/pypdf/files/14982414/lebo102.pdf"

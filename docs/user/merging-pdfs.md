@@ -67,9 +67,9 @@ If you want to insert pages in the middle of the destination, use `merge` (which
 You can insert the same page multiple times, if necessary even using a list-based syntax:
 
 ```python
+# Insert pages 2 and 3, with page 1 before, between, and after
 writer.append(reader, [0, 1, 0, 2, 0])
 ```
-will insert the pages 1 and 2 with page 0 before, in the middle and after.
 
 ## add_page / insert_page
 

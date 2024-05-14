@@ -1,13 +1,14 @@
 """
-See Portable Document Format Reference Manual, 1993. ISBN 0-201-62628-4.
+PDF Specification Archive
+https://pdfa.org/resource/pdf-specification-archive/
 
-See https://ia802202.us.archive.org/8/items/pdfy-0vt8s-egqFwDl7L2/PDF%20Reference%201.0.pdf
+Portable Document Format Reference Manual, 1993. ISBN 0-201-62628-4
+https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.0.pdf
 
-PDF Reference, third edition, Version 1.4, 2001. ISBN 0-201-75839-3.
+ISO 32000-1:2008 (PDF 1.7)
+https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
 
-PDF Reference, sixth edition, Version 1.7, 2006.
-
-ISO 32000-2:2020 (PDF 2.0).
+ISO 32000-2:2020 (PDF 2.0)
 """
 
 from enum import IntFlag, auto
@@ -290,13 +291,7 @@ class StreamAttributes:
 
 
 class FilterTypes:
-    """
-    Table 4.3 of the 1.4 Manual.
-
-    Page 354 of the 1.7 Manual.
-
-    Table 6 of the 2.0 manual.
-    """
+    """§7.4 of the 1.7 and 2.0 references."""
 
     ASCII_HEX_DECODE = "/ASCIIHexDecode"  # abbreviation: AHx
     ASCII_85_DECODE = "/ASCII85Decode"  # abbreviation: A85
@@ -309,10 +304,7 @@ class FilterTypes:
 
 
 class FilterTypeAbbreviations:
-    """
-    Table 4.44 of the 1.7 Manual (page 353ff).
-    Table 92 of the 2.0 manual.
-    """
+    """§8.9.7 of the 1.7 and 2.0 references."""
 
     AHx = "/AHx"
     A85 = "/A85"
@@ -353,7 +345,7 @@ class CcittFaxDecodeParameters:
 
 
 class ImageAttributes:
-    """Table 4.39 PDF Reference 1.7 page 340+"""
+    """§11.6.5 of the 1.7 and 2.0 references."""
 
     TYPE = "/Type"  # name, required; must be /XObject
     SUBTYPE = "/Subtype"  # name, required; must be /Image
@@ -638,10 +630,7 @@ class GraphicsStateParameters:
 
 
 class CatalogDictionary:
-    """
-    Table 3.25 in the 1.7 reference.
-    Table 29 in the 2.0 reference.
-    """
+    """§7.7.2 of the 1.7 and 2.0 references."""
 
     TYPE = "/Type"  # name, required; must be /Catalog
     VERSION = "/Version"  # name

@@ -1424,7 +1424,7 @@ class Destination(TreeObject):
     """
     A class representing a destination within a PDF file.
 
-    See section 8.2.1 of the PDF 1.6 reference.
+    See section 12.3.2 of the PDF 2.0 reference.
 
     Args:
         title: Title of this destination.
