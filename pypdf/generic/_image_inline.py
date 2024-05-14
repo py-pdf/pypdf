@@ -203,7 +203,7 @@ def extract_inline_default(stream: StreamType) -> bytes:
             data.write(buf)
         else:
             # Write out everything before the E.
-            data.write(buf[0:loc])
+            data.write(buf[0 : loc + 1])
 
             # Seek back in the stream to read the E next.
             stream.seek(loc + 1 - len(buf), 1)
@@ -227,4 +227,5 @@ def extract_inline_default(stream: StreamType) -> bytes:
                 continue
             # Data contains [\s]EI[\s](Q|EMC): 4 chars sufficient, checking Q operator not required.
             break
+
     return data.getvalue()
