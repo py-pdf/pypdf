@@ -2,15 +2,19 @@
 PDF Specification Archive
 https://pdfa.org/resource/pdf-specification-archive/
 
-Portable Document Format Reference Manual, 1993. ISBN 0-201-62628-4.
+Portable Document Format Reference Manual, 1993. ISBN 0-201-62628-4
 https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.0.pdf
 
 ISO 32000-1:2008 (PDF 1.7)
 https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
+
+ISO 32000-2:2020 (PDF 2.0)
 """
 
 from enum import IntFlag, auto
 from typing import Dict, Tuple
+
+from ._utils import deprecate_with_replacement
 
 
 class Core:
@@ -40,7 +44,8 @@ class EncryptionDictAttributes:
     """
     Additional encryption dictionary entries for the standard security handler.
 
-    TABLE 3.19, Page 122
+    Table 3.19, Page 122.
+    Table 21 of the 2.0 manual.
     """
 
     R = "/R"  # number, required; revision of the standard security handler
@@ -51,7 +56,10 @@ class EncryptionDictAttributes:
 
 
 class UserAccessPermissions(IntFlag):
-    """TABLE 3.20 User access permissions."""
+    """
+    Table 3.20 User access permissions.
+    Table 22 of the 2.0 manual.
+    """
 
     R1 = 1
     R2 = 2
@@ -128,8 +136,13 @@ class UserAccessPermissions(IntFlag):
         return cls((2**32 - 1) - cls.R1 - cls.R2)
 
 
-class Ressources:
-    """TABLE 3.30 Entries in a resource dictionary."""
+class Resources:
+    """
+    Table 3.30 Entries in a resource dictionary.
+    used to be Ressources
+
+    Table 34 in the 2.0 reference.
+    """
 
     EXT_G_STATE = "/ExtGState"  # dictionary, optional
     COLOR_SPACE = "/ColorSpace"  # dictionary, optional
@@ -141,17 +154,79 @@ class Ressources:
     PROPERTIES = "/Properties"  # dictionary, optional
 
 
+class Ressources:  # deprecated
+    """
+    Use :class: `Resources` instead.
+
+    .. deprecated:: 5.0.0
+    """
+
+    @classmethod  # type: ignore
+    @property
+    def EXT_G_STATE(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/ExtGState"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def COLOR_SPACE(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/ColorSpace"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def PATTERN(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/Pattern"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def SHADING(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/Shading"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def XOBJECT(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/XObject"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def FONT(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/Font"  # dictionary, optional
+
+    @classmethod  # type: ignore
+    @property
+    def PROC_SET(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/ProcSet"  # array, optional
+
+    @classmethod  # type: ignore
+    @property
+    def PROPERTIES(cls) -> str:
+        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
+        return "/Properties"  # dictionary, optional
+
+
 class PagesAttributes:
-    """Page Attributes, Table 6.2, Page 52."""
+    """
+    Page Attributes, Table 6.2, Page 52.
+    Page tree node, Table 30 in the 2.0 reference.
+    """
 
     TYPE = "/Type"  # name, required; must be /Pages
+    PARENT = "/Parent"  # dictionary, required; indirect reference to pages object
     KIDS = "/Kids"  # array, required; List of indirect references
     COUNT = "/Count"  # integer, required; the number of all nodes und this node
-    PARENT = "/Parent"  # dictionary, required; indirect reference to pages object
 
 
 class PageAttributes:
-    """TABLE 3.27 Entries in a page object."""
+    """
+    Table 3.27 Entries in a page object.
+    Table 31 in the 2.0 reference.
+    """
 
     TYPE = "/Type"  # name, required; must be /Page
     PARENT = "/Parent"  # dictionary, required; a pages object
@@ -187,7 +262,7 @@ class PageAttributes:
 
 
 class FileSpecificationDictionaryEntries:
-    """TABLE 3.41 Entries in a file specification dictionary."""
+    """Table 3.41 Entries in a file specification dictionary."""
 
     Type = "/Type"
     FS = "/FS"  # The name of the file system to be used to interpret this file specification
@@ -205,7 +280,10 @@ class FileSpecificationDictionaryEntries:
 
 
 class StreamAttributes:
-    """Table 4.2."""
+    """
+    Table 4.2.
+    Table 5 in the 2.0 reference.
+    """
 
     LENGTH = "/Length"  # integer, required
     FILTER = "/Filter"  # name or array of names, optional
@@ -238,17 +316,23 @@ class FilterTypeAbbreviations:
 
 
 class LzwFilterParameters:
-    """Table 4.4."""
+    """
+    Table 4.4.
+    Table 8 in the 2.0 reference.
+    """
 
     PREDICTOR = "/Predictor"  # integer
-    COLUMNS = "/Columns"  # integer
     COLORS = "/Colors"  # integer
     BITS_PER_COMPONENT = "/BitsPerComponent"  # integer
+    COLUMNS = "/Columns"  # integer
     EARLY_CHANGE = "/EarlyChange"  # integer
 
 
 class CcittFaxDecodeParameters:
-    """Table 4.5."""
+    """
+    Table 4.5.
+    Table 11 in the 2.0 reference.
+    """
 
     K = "/K"  # integer
     END_OF_LINE = "/EndOfLine"  # boolean
@@ -312,7 +396,7 @@ class GoToActionArguments:
 
 
 class AnnotationDictionaryAttributes:
-    """TABLE 8.15 Entries common to all annotation dictionaries."""
+    """Table 8.15 Entries common to all annotation dictionaries."""
 
     Type = "/Type"
     Subtype = "/Subtype"
@@ -343,7 +427,7 @@ class InteractiveFormDictEntries:
 
 
 class FieldDictionaryAttributes:
-    """TABLE 8.69 Entries common to all field dictionaries (PDF 1.7 reference)."""
+    """Table 8.69 Entries common to all field dictionaries (PDF 1.7 reference)."""
 
     FT = "/FT"  # name, required for terminal fields
     Parent = "/Parent"  # dictionary, required for children
@@ -439,7 +523,7 @@ class FieldDictionaryAttributes:
 
 
 class CheckboxRadioButtonAttributes:
-    """TABLE 8.76 Field flags common to all field types."""
+    """Table 8.76 Field flags common to all field types."""
 
     Opt = "/Opt"  # Options, Optional
 
@@ -478,7 +562,7 @@ class CheckboxRadioButtonAttributes:
 
 
 class FieldFlag(IntFlag):
-    """TABLE 8.70 Field flags common to all field types."""
+    """Table 8.70 Field flags common to all field types."""
 
     READ_ONLY = 1
     REQUIRED = 2
@@ -500,12 +584,17 @@ class DocumentInformationAttributes:
 
 
 class PageLayouts:
-    """Page 84, PDF 1.4 reference."""
+    """
+    Page 84, PDF 1.4 reference.
+    Page 115, PDF 2.0 reference.
+    """
 
     SINGLE_PAGE = "/SinglePage"
     ONE_COLUMN = "/OneColumn"
     TWO_COLUMN_LEFT = "/TwoColumnLeft"
     TWO_COLUMN_RIGHT = "/TwoColumnRight"
+    TWO_PAGE_LEFT = "/TwoPageLeft"  # (PDF 1.5)
+    TWO_PAGE_RIGHT = "/TwoPageRight"  # (PDF 1.5)
 
 
 class GraphicsStateParameters:
@@ -545,6 +634,7 @@ class CatalogDictionary:
 
     TYPE = "/Type"  # name, required; must be /Catalog
     VERSION = "/Version"  # name
+    EXTENSIONS = "/Extensions"  # dictionary, optional; ISO 32000-1
     PAGES = "/Pages"  # dictionary, required
     PAGE_LABELS = "/PageLabels"  # number tree, optional
     NAMES = "/Names"  # dictionary, optional
@@ -571,6 +661,9 @@ class CatalogDictionary:
     REQUIREMENTS = "/Requirements"  # array, optional
     COLLECTION = "/Collection"  # dictionary, optional
     NEEDS_RENDERING = "/NeedsRendering"  # boolean, optional
+    DSS = "/DSS"  # dictionary, optional
+    AF = "/AF"  # array of dictionaries, optional
+    D_PART_ROOT = "/DPartRoot"  # dictionary, optional
 
 
 class OutlineFontFlag(IntFlag):
@@ -581,17 +674,20 @@ class OutlineFontFlag(IntFlag):
 
 
 class PageLabelStyle:
-    """Table 8.10 in the 1.7 reference."""
+    """
+    Table 8.10 in the 1.7 reference.
+    Table 161 in the 2.0 reference.
+    """
 
-    DECIMAL = "/D"  # Decimal arabics
-    LOWERCASE_ROMAN = "/r"  # Lowercase roman numbers
-    UPPERCASE_ROMAN = "/R"  # Uppercase roman numbers
-    LOWERCASE_LETTER = "/a"  # Lowercase letters
+    DECIMAL = "/D"  # Decimal Arabic numerals
+    UPPERCASE_ROMAN = "/R"  # Uppercase Roman numerals
+    LOWERCASE_ROMAN = "/r"  # Lowercase Roman numerals
     UPPERCASE_LETTER = "/A"  # Uppercase letters
+    LOWERCASE_LETTER = "/a"  # Lowercase letters
 
 
 class AnnotationFlag(IntFlag):
-    """See 12.5.3 "Annotation Flags"."""
+    """See §12.5.3 "Annotation Flags"."""
 
     INVISIBLE = 1
     HIDDEN = 2
@@ -626,7 +722,7 @@ PDF_KEYS = (
     PageAttributes,
     PageLayouts,
     PagesAttributes,
-    Ressources,
+    Resources,
     StreamAttributes,
     TrailerKeys,
     TypArguments,

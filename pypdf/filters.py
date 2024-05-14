@@ -285,7 +285,10 @@ class ASCIIHexDecode:
         index = 0
         while True:
             if index >= len(data):
-                raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
+                logger_warning(
+                    "missing EOD in ASCIIHexDecode, check if output is OK", __name__
+                )
+                break  # reach End Of String even if no EOD
             char = data[index : index + 1]
             if char == b">":
                 break
@@ -340,7 +343,10 @@ class RunLengthDecode:
         index = 0
         while True:
             if index >= len(data):
-                raise PdfStreamError("Unexpected EOD in RunLengthDecode")
+                logger_warning(
+                    "missing EOD in RunLengthDecode, check if output is OK", __name__
+                )
+                break  # reach End Of String even if no EOD
             length = data[index]
             index += 1
             if length == 128:
@@ -597,7 +603,7 @@ class CCITTFaxDecode:
             deprecation_no_replacement(
                 "decode_parms being an ArrayObject", removed_in="3.15.5"
             )
-        parms = CCITTFaxDecode._get_parameters(decode_parms, height)
+        params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
         tiff_header_struct = "<2shlh" + "hhll" * 8 + "h"
@@ -610,11 +616,11 @@ class CCITTFaxDecode:
             256,
             4,
             1,
-            parms.columns,  # ImageWidth, LONG, 1, width
+            params.columns,  # ImageWidth, LONG, 1, width
             257,
             4,
             1,
-            parms.rows,  # ImageLength, LONG, 1, length
+            params.rows,  # ImageLength, LONG, 1, length
             258,
             3,
             1,
@@ -622,7 +628,7 @@ class CCITTFaxDecode:
             259,
             3,
             1,
-            parms.group,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
+            params.group,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
             262,
             3,
             1,
@@ -636,7 +642,7 @@ class CCITTFaxDecode:
             278,
             4,
             1,
-            parms.rows,  # RowsPerStrip, LONG, 1, length
+            params.rows,  # RowsPerStrip, LONG, 1, length
             279,
             4,
             1,
@@ -731,6 +737,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     """
     from ._xobj_image_helpers import (
         Image,
+        _extended_image_frombytes,
         _get_imagemode,
         _handle_flate,
         _handle_jpx,
@@ -745,10 +752,12 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     else:
         obj_as_text = x_object_obj.__repr__()
 
-    size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
+    size = (cast(int, x_object_obj[IA.WIDTH]), cast(int, x_object_obj[IA.HEIGHT]))
     data = x_object_obj.get_data()  # type: ignore
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
+    if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'
+        data = data[:-1]
     colors = x_object_obj.get("/Colors", 1)
     color_space: Any = x_object_obj.get("/ColorSpace", NullObject()).get_object()
     if isinstance(color_space, list) and len(color_space) == 1:
@@ -815,11 +824,18 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             ".tiff",
             False,
         )
-    else:
-        if mode == "":
-            raise PdfReadError(f"ColorSpace field not found in {x_object_obj}")
+    elif mode == "CMYK":
         img, image_format, extension, invert_color = (
-            Image.frombytes(mode, size, data),
+            _extended_image_frombytes(mode, size, data),
+            "TIFF",
+            ".tif",
+            False,
+        )
+    elif mode == "":
+        raise PdfReadError(f"ColorSpace field not found in {x_object_obj}")
+    else:
+        img, image_format, extension, invert_color = (
+            _extended_image_frombytes(mode, size, data),
             "PNG",
             ".png",
             False,
@@ -840,6 +856,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         and color_space[0].get_object() == "/Indexed"
     ):
         decode = None  # decode is meanless of Indexed
+    if (
+        isinstance(color_space, ArrayObject)
+        and color_space[0].get_object() == "/Separation"
+    ):
+        decode = [1.0, 0.0] * len(img.getbands())
     if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
         lut: List[int] = []
         for i in range(0, len(decode), 2):
@@ -873,10 +894,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     img_byte_arr = BytesIO()
     try:
         img.save(img_byte_arr, format=image_format)
-    except OSError:  # pragma: no cover
-        # odd error
+    except OSError:  # pragma: no cover  # covered with pillow 10.3
+        # in case of we convert to RGBA and then to PNG
+        img1 = img.convert("RGBA")
+        image_format = "PNG"
+        extension = ".png"
         img_byte_arr = BytesIO()
-        img.save(img_byte_arr, format=image_format)
+        img1.save(img_byte_arr, format=image_format)
     data = img_byte_arr.getvalue()
 
     try:  # temporary try/except until other fixes of images

@@ -6,7 +6,7 @@ that if I become unavailable, e.g. due to severe health issues.
 
 This currently is just an abstract scenario. I'm fine and I will likely do this
 for several more years, but I have seen how projects stand still for many years
-because of the maintainer becomming inactive.
+because of the maintainer becoming inactive.
 
 I've also followed the [GitHub Deceased User Policy](https://docs.github.com/en/site-policy/other-site-policies/github-deceased-user-policy)
 and added a [pre-designated successor](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-access-to-your-personal-repositories/maintaining-ownership-continuity-of-your-personal-accounts-repositories).

@@ -69,7 +69,7 @@ from ._utils import (
 from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
-from .constants import Ressources as RES
+from .constants import Resources as RES
 from .errors import PageSizeNotDefinedError, PdfReadError
 from .filters import _xobj_to_image
 from .generic import (
@@ -367,7 +367,7 @@ class PageObject(DictionaryObject):
         from the last page of *pdf*.
 
         Args:
-            pdf: PDF file the page belongs to
+            pdf: PDF file the page is within.
             width: The width of the new page expressed in default user
                 space units.
             height: The height of the new page expressed in default user
@@ -651,7 +651,7 @@ class PageObject(DictionaryObject):
     @property
     def rotation(self) -> int:
         """
-        The VISUAL rotation of the page.
+        The visual rotation of the page.
 
         This number has to be a multiple of 90 degrees: 0, 90, 180, or 270 are
         valid values. This property does not affect ``/Contents``.
@@ -668,7 +668,7 @@ class PageObject(DictionaryObject):
         Apply the rotation of the page to the content and the media/crop/...
         boxes.
 
-        It's recommended to apply this function before page merging.
+        It is recommended to apply this function before page merging.
         """
         r = -self.rotation  # rotation to apply is in the otherway
         self.rotation = 0
@@ -862,8 +862,8 @@ class PageObject(DictionaryObject):
         Access the page contents.
 
         Returns:
-            The ``/Contents`` object, or ``None`` if it doesn't exist.
-            ``/Contents`` is optional, as described in PDF Reference  7.7.3.3
+            The ``/Contents`` object, or ``None`` if it does not exist.
+            ``/Contents`` is optional, as described in §7.7.3.3 of the PDF Reference.
         """
         if PG.CONTENTS in self:
             try:
@@ -884,7 +884,7 @@ class PageObject(DictionaryObject):
         """
         Replace the page contents with the new content and nullify old objects
         Args:
-            content : new content. if None delete the content field.
+            content : new content; if None delete the content field.
         """
         if not hasattr(self, "indirect_reference") or self.indirect_reference is None:
             # the page is not attached : the content is directly attached.
@@ -924,7 +924,7 @@ class PageObject(DictionaryObject):
         else:
             content.indirect_reference = self[
                 PG.CONTENTS
-            ].indirect_reference  # TODO: in a future may required generation managment
+            ].indirect_reference  # TODO: in a future may required generation management
             try:
                 self.indirect_reference.pdf._objects[
                     content.indirect_reference.idnum - 1  # type: ignore
@@ -1077,7 +1077,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         # First we work on merging the resource dictionaries.  This allows us
-        # to find out what symbols in the content streams we might need to
+        # to find which symbols in the content streams we might need to
         # rename.
         assert isinstance(self.indirect_reference, IndirectObject)
         pdf = self.indirect_reference.pdf
@@ -1496,10 +1496,10 @@ class PageObject(DictionaryObject):
     @property
     def page_number(self) -> Optional[int]:
         """
-        Read-only property which return the page number with the pdf file.
+        Read-only property which return the page number within the PDF file.
 
         Returns:
-            int : page number ; None if the page is not attached to a pdf
+            int : page number; None if the page is not attached to a PDF
         """
         if self.indirect_reference is None:
             return None
@@ -1582,7 +1582,7 @@ class PageObject(DictionaryObject):
                 # /Resources can be inherited sometimes so we look to parents
                 objr = objr["/Parent"].get_object()
                 # if no parents we will have no /Resources will be available
-                # => an exception wil be raised
+                # => an exception will be raised
             resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
         except Exception:
             # no resources means no text is possible (no font) we consider the
@@ -1891,28 +1891,30 @@ class PageObject(DictionaryObject):
         """
         # Font retrieval logic adapted from pypdf.PageObject._extract_text()
         objr: Any = self
-        while NameObject(PG.RESOURCES) not in objr:
-            objr = objr["/Parent"].get_object()
-        resources_dict: Any = objr[PG.RESOURCES]
         fonts: Dict[str, _layout_mode.Font] = {}
-        if "/Font" in resources_dict and self.pdf is not None:
-            for font_name in resources_dict["/Font"]:
-                *cmap, font_dict_obj = build_char_map(font_name, 200.0, self)
-                font_dict = {
-                    k: self.pdf.get_object(v)
-                    if isinstance(v, IndirectObject)
-                    else [
-                        self.pdf.get_object(_v)
-                        if isinstance(_v, IndirectObject)
-                        else _v
-                        for _v in v
-                    ]
-                    if isinstance(v, ArrayObject)
-                    else v
-                    for k, v in font_dict_obj.items()
-                }
-                # mypy really sucks at unpacking
-                fonts[font_name] = _layout_mode.Font(*cmap, font_dict)  # type: ignore[call-arg,arg-type]
+        while objr is not None:
+            try:
+                resources_dict: Any = objr[PG.RESOURCES]
+            except KeyError:
+                resources_dict = {}
+            if "/Font" in resources_dict and self.pdf is not None:
+                for font_name in resources_dict["/Font"]:
+                    *cmap, font_dict_obj = build_char_map(font_name, 200.0, self)
+                    font_dict = {
+                        k: v.get_object()
+                        if isinstance(v, IndirectObject)
+                        else [_v.get_object() for _v in v]
+                        if isinstance(v, ArrayObject)
+                        else v
+                        for k, v in font_dict_obj.items()
+                    }
+                    # mypy really sucks at unpacking
+                    fonts[font_name] = _layout_mode.Font(*cmap, font_dict)  # type: ignore[call-arg,arg-type]
+            try:
+                objr = objr["/Parent"].get_object()
+            except KeyError:
+                objr = None
+
         return fonts
 
     def _layout_mode_text(
@@ -1993,19 +1995,19 @@ class PageObject(DictionaryObject):
         Do not rely on the order of text coming out of this function, as it
         will change if this function is made more sophisticated.
 
-        Arabic, Hebrew,... are extracted in the good order.
-        If required an custom RTL range of characters can be defined;
+        Arabic and Hebrew are extracted in the correct order.
+        If required a custom RTL range of characters can be defined;
         see function set_custom_rtl
 
-        Additionally you can provide visitor-methods to get informed on all
-        operations and all text-objects.
+        Additionally you can provide visitor methods to get informed on all
+        operations and all text objects.
         For example in some PDF files this can be useful to parse tables.
 
         Args:
-            orientations: list of orientations text_extraction will look for
+            orientations: list of orientations extract_text will look for
                 default = (0, 90, 180, 270)
-                note: currently only 0(Up),90(turned Left), 180(upside Down),
-                270 (turned Right)
+                note: currently only 0 (up),90 (turned left), 180 (upside down),
+                270 (turned right)
             space_width: force default space width
                 if not extracted from font (default: 200)
             visitor_operand_before: function to be called before processing an operation.
@@ -2024,7 +2026,7 @@ class PageObject(DictionaryObject):
                 NOTE: orientations, space_width, and visitor_* parameters are NOT respected
                 in "layout" mode.
 
-        KwArgs:
+        kwargs:
             layout_mode_space_vertically (bool): include blank lines inferred from
                 y distance + font height. Defaults to True.
             layout_mode_scale_weight (float): multiplier for string length when calculating
@@ -2182,8 +2184,8 @@ class PageObject(DictionaryObject):
         """
         Set the annotations array of the page.
 
-        Typically you don't want to set this value, but append to it.
-        If you append to it, don't forget to add the object first to the writer
+        Typically you do not want to set this value, but append to it.
+        If you append to it, remember to add the object first to the writer
         and only add the indirect object.
         """
         if value is None:

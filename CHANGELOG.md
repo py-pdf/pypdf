@@ -1,5 +1,62 @@
 # CHANGELOG
 
+## Version 4.2.0, 2024-04-07
+
+### New Features (ENH)
+- Allow multiple charsets for NameObject.read_from_stream (#2585)
+- Add support for /Kids in page labels (#2562)
+- Allow to update fields on many pages (#2571)
+- Tolerate PDF with invalid xref pointed objects (#2335)
+- Add Enforce from PDF2.0 in viewer_preferences (#2511)
+- Add += and -= operators to ArrayObject (#2510)
+
+### Bug Fixes (BUG)
+- Fix merge_page sometimes generating unknown operator 'QQ' (#2588)
+- Fix fields update where annotations are kids of field (#2570)
+- Process CMYK images without a filter correctly (#2557)
+- Extract text in layout mode without finding resources (#2555)
+- Prevent recursive loop in some PDF files (#2505)
+
+### Robustness (ROB)
+- Tolerate "truncated" xref (#2580)
+- Replace error by warning for EOD in RunLengthDecode/ASCIIHexDecode (#2334)
+- Rebuild xref table if one entry is invalid (#2528)
+- Robustify stream extraction (#2526)
+
+### Documentation (DOC)
+- Update release process for latest changes (#2564)
+- Encryption/decryption: Clone document instead of copying all pages (#2546)
+- Minor improvements (#2542)
+- Update annotation list (#2534)
+- Update references and formatting (#2529)
+- Correct threads reference, plus minor changes (#2521)
+- Minor readability increases (#2515)
+- Simplify PaperSize examples (#2504)
+- Minor improvements (#2501)
+
+### Developer Experience (DEV)
+- Remove unused dependencies (#2572)
+- Remove page labels PR link from message (#2561)
+- Fix changelog generator regarding whitespace and handling of "Other" group (#2492)
+- Add REL to known PR prefixes (#2554)
+- Release using the REL commit instead of git tag (#2500)
+- Unify code between PdfReader and PdfWriter (#2497)
+- Bump softprops/action-gh-release from 1 to 2 (#2514)
+
+### Maintenance (MAINT)
+- Ressources → Resources (and internal name childs) (#2550)
+- Fix typos found by codespell (#2549)
+- Update Read the Docs configuration (#2538)
+- Add root_object, _info and _ID to PdfReader (#2495)
+
+### Testing (TST)
+- Allow loading truncated images if required (#2586)
+- Fix download issues from #2562 (#2578)
+- Improve test_get_contents_from_nullobject to show real use-case (#2524)
+- Add missing test annotations (#2507)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.1.0...4.2.0)
+
 ## Version 4.1.0, 2024-03-03
 
 Generating name objects (`NameObject`) without a leading slash
@@ -243,7 +300,7 @@ nobody will be affected though. Hence only the patch update.
 -  Avoid endless recursion of reading damaged PDF file (#2093)
 
 ### Performance Improvements (PI)
--  Re-use content stream (#2101)
+-  Reuse content stream (#2101)
 
 ### Maintenance (MAINT)
 -  Make ParseError inherit from PyPdfError (#2097)
@@ -411,7 +468,7 @@ nobody will be affected though. Hence only the patch update.
 
 ### New Features (ENH)
 -  Simplify metadata input (Document Information Dictionary) (#1851)
--  Extend cmap compatibilty to GBK_EUC_H/V (#1812)
+-  Extend cmap compatibility to GBK_EUC_H/V (#1812)
 
 ### Bug Fixes (BUG)
 -  Prevent infinite loop when no character follows after a comment (#1828)
@@ -432,7 +489,7 @@ nobody will be affected though. Hence only the patch update.
 -  Refactor internal Encryption class (#1821)
 -  Add R parameter to generate_values (#1820)
 -  Make encryption_key parameter of write_to_stream optional (#1819)
--  Prepare for adding AES enryption support (#1818)
+-  Prepare for adding AES encryption support (#1818)
 
 [Full Changelog](https://github.com/py-pdf/pypdf/compare/3.8.1...3.9.0)
 
@@ -665,7 +722,7 @@ NOTICE: pypdf changed the way it represents numbers parsed from PDF files.
 ## Version 3.2.0, 2022-12-31
 
 ### Performance Improvement (PI)
--  Help the specializing adpative interpreter (#1522)
+-  Help the specializing adaptive interpreter (#1522)
 
 ### New Features (ENH)
 -  Add support for page labels (#1519)
@@ -999,12 +1056,12 @@ BUG: Add PyPDF2.generic to PyPI distribution
 
 ### Documentation (DOC)
 -  Update changelog url in package metadata (#1180)
--  Mantion camelot for table extraction (#1179)
+-  Mention camelot for table extraction (#1179)
 -  Mention pyHanko for signing PDF documents (#1178)
 -  Weow have CMAP support since a while (#1177)
 
 ### Maintenance (MAINT)
--  Consistant usage of warnings / log messages (#1164)
+-  Consistent usage of warnings / log messages (#1164)
 -  Consistent terminology for outline items (#1156)
 
 
@@ -1082,7 +1139,7 @@ BUG: Add PyPDF2.generic to PyPI distribution
 
 ### Code Style (STY)
 -  Fixing typos (#1137)
--  Re-use code via get_outlines_property in tests (#1130)
+-  Reuse code via get_outlines_property in tests (#1130)
 
 [Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.6.0...2.7.0)
 
@@ -1246,7 +1303,7 @@ BUG: Add PyPDF2.generic to PyPI distribution
 
 ## Version 2.3.1, 2022-06-19
 
-BUG: Forgot to add the interal `_codecs` subpackage.
+BUG: Forgot to add the internal `_codecs` subpackage.
 
 [Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.3.0...2.3.1)
 
@@ -1285,7 +1342,7 @@ The highlight of this release is improved support for file encryption
 -  Fix corrupted (wrongly) linear PDF (#1008)
 
 ### Maintenance (MAINT)
--  Move PDF_Samples folder into ressources
+-  Move PDF_Samples folder into resources
 -  Fix typos (#1007)
 
 ### Testing (TST)

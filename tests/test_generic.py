@@ -1,5 +1,6 @@
 """Test the pypdf.generic module."""
 
+from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -211,6 +212,11 @@ def test_name_object(caplog):
             BytesIO(b"/#e4#bd#a0#e5#a5#bd#e4#b8#96#e7#95#8c"), None
         )
     ) == "/你好世界"
+
+    # to test latin-1 aka stdencoding
+    assert (
+        NameObject.read_from_stream(BytesIO(b"/DocuSign\xae"), None)
+    ) == "/DocuSign®"
 
     # test write
     b = BytesIO()
@@ -877,8 +883,41 @@ def test_annotation_builder_highlight(pdf_file_path):
                     FloatObject(705.4493),
                 ]
             ),
+            printing=False
         )
     writer.add_annotation(0, highlight_annotation)
+    for annot in writer.pages[0]["/Annots"]:
+        obj = annot.get_object()
+        subtype = obj["/Subtype"]
+        if subtype == "/Highlight":
+            assert "/F" not in obj or obj["/F"] == NumberObject(0)
+
+    writer.add_page(page)
+    # Act
+    with pytest.warns(DeprecationWarning):
+        highlight_annotation = AnnotationBuilder.highlight(
+            rect=(95.79332, 704.31777, 138.55779, 724.6855),
+            highlight_color="ff0000",
+            quad_points=ArrayObject(
+                [
+                    FloatObject(100.060779),
+                    FloatObject(723.55398),
+                    FloatObject(134.29033),
+                    FloatObject(723.55398),
+                    FloatObject(100.060779),
+                    FloatObject(705.4493),
+                    FloatObject(134.29033),
+                    FloatObject(705.4493),
+                ]
+            ),
+            printing=True
+        )
+    writer.add_annotation(1, highlight_annotation)
+    for annot in writer.pages[1]["/Annots"]:
+        obj = annot.get_object()
+        subtype = obj["/Subtype"]
+        if subtype == "/Highlight":
+            assert obj["/F"] == NumberObject(4)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
@@ -1036,16 +1075,20 @@ def test_checkboxradiobuttonattributes_opt():
 
 
 def test_name_object_invalid_decode():
-    stream = BytesIO(b"/\x80\x02\x03")
+    charsets = deepcopy(NameObject.CHARSETS)
+    try:
+        NameObject.CHARSETS = ("utf-8",)
+        stream = BytesIO(b"/\x80\x02\x03")
+        # strict:
+        with pytest.raises(PdfReadError) as exc:
+            NameObject.read_from_stream(stream, ReaderDummy(strict=True))
+        assert "Illegal character in NameObject " in exc.value.args[0]
 
-    # strict:
-    with pytest.raises(PdfReadError) as exc:
-        NameObject.read_from_stream(stream, ReaderDummy(strict=True))
-    assert "Illegal character in Name Object" in exc.value.args[0]
-
-    # non-strict:
-    stream.seek(0)
-    NameObject.read_from_stream(stream, ReaderDummy(strict=False))
+        # non-strict:
+        stream.seek(0)
+        NameObject.read_from_stream(stream, ReaderDummy(strict=False))
+    finally:
+        NameObject.CHARSETS = charsets
 
 
 def test_indirect_object_invalid_read():

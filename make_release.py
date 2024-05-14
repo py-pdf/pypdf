@@ -49,7 +49,7 @@ def main(changelog_path: str) -> None:
     new_entry = header + changes + trailer
     print(new_entry)
     write_commit_msg_file(new_version, changes_with_author + trailer)
-    write_release_msg_file(new_version, changes_with_author + trailer, today)
+    # write_release_msg_file(new_version, changes_with_author + trailer, today)
 
     # Make the script idempotent by checking if the new entry is already in the changelog
     if new_entry in changelog:
@@ -69,9 +69,7 @@ def print_instructions(new_version: str) -> None:
     print("")
     print("Now run:")
     print("  git commit -eF RELEASE_COMMIT_MSG.md")
-    print(f"  git tag -s {new_version} -eF RELEASE_TAG_MSG.md")
     print("  git push")
-    print("  git push --tags")
 
 
 def adjust_version_py(version: str) -> None:
@@ -251,8 +249,11 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
 
     if grouped:
         output += "\n### Other\n"
+        output_with_user += "\n### Other\n"
         for prefix in grouped:
-            output += f"- {prefix}: {grouped[prefix]}\n"
+            for commit in grouped[prefix]:
+                output += f"- {prefix}: {commit['msg']}\n"
+                output_with_user += f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
 
     return output, output_with_user
 
@@ -341,7 +342,7 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
         raise ValueError(f"Invalid commit line: '{line}'")
     commit_hash, rest, author = parts
     if ":" in rest:
-        prefix, message = rest.split(":", 1)
+        prefix, message = rest.split(": ", 1)
     else:
         prefix = ""
         message = rest

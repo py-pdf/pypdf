@@ -268,7 +268,9 @@ def test_get_images(src, expected_images):
             False,
             -1,
             False,
-            ["startxref on same line as offset"],
+            [
+                "startxref on same line as offset",
+            ],
         ),
         (
             False,
@@ -322,11 +324,12 @@ def test_get_images_raw(
         b"%%%%EOF"
     )
     pdf_data = pdf_data % (
-        pdf_data.find(b"1 0 obj"),
-        pdf_data.find(b"2 0 obj"),
-        pdf_data.find(b"3 0 obj"),
-        pdf_data.find(b"4 0 obj"),
-        pdf_data.find(b"5 0 obj"),
+        # - 1 below in the find because of the double %
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"4 0 obj") - 1,
+        pdf_data.find(b"5 0 obj") - 1,
         b"/Prev 0 " if with_prev_0 else b"",
         # startx_correction should be -1 due to double % at the beginning
         # inducing an error on startxref computation
@@ -593,11 +596,11 @@ def test_read_unknown_zero_pages(caplog):
         b"%%%%EOF"
     )
     pdf_data = pdf_data % (
-        pdf_data.find(b"1 0 obj"),
-        pdf_data.find(b"2 0 obj"),
-        pdf_data.find(b"3 0 obj"),
-        pdf_data.find(b"4 0 obj"),
-        pdf_data.find(b"5 0 obj"),
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"4 0 obj") - 1,
+        pdf_data.find(b"5 0 obj") - 1,
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
@@ -719,7 +722,7 @@ def test_issue604(caplog, strict):
 def test_decode_permissions():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     base = {
-        "accessability": False,
+        "accessability": False,  # Do not fix typo, as part of official, but deprecated API.
         "annotations": False,
         "assemble": False,
         "copy": False,
@@ -1197,7 +1200,7 @@ def test_outline_missing_title(caplog):
 @pytest.mark.parametrize(
     ("url", "name"),
     [
-        # 1st case : the named_dest are stored directly as a dictionnary, PDF1.1 style
+        # 1st case : the named_dest are stored directly as a dictionary, PDF 1.1 style
         (
             "https://github.com/py-pdf/pypdf/files/9197028/lorem_ipsum.pdf",
             "lorem_ipsum.pdf",
@@ -1207,7 +1210,7 @@ def test_outline_missing_title(caplog):
             "https://github.com/py-pdf/pypdf/files/11714214/PDF32000_2008.pdf",
             "PDF32000_2008.pdf",
         )
-        # 3nd case : Dests with Name tree (TODO: Add this case)
+        # 3rd case : Dests with Name tree (TODO: Add this case)
     ],
     ids=["stored_directly", "dest_below_names_with_kids"],
 )
@@ -1405,7 +1408,7 @@ def test_iss1689():
 
 @pytest.mark.enable_socket()
 def test_iss1710():
-    url = "https://nlp.stanford.edu/IR-book/pdf/irbookonlinereading.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/15234776/irbookonlinereading.pdf"
     name = "irbookonlinereading.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.outline
@@ -1505,3 +1508,25 @@ def test_corrupted_xref():
     name = "iss2516.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.root_object["/Type"] == "/Catalog"
+
+
+@pytest.mark.enable_socket()
+def test_truncated_xref(caplog):
+    url = "https://github.com/py-pdf/pypdf/files/14843553/002-trivial-libre-office-writer-broken.pdf"
+    name = "iss2575.pdf"
+    PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert "Invalid/Truncated xref table. Rebuilding it." in caplog.text
+
+
+@pytest.mark.enable_socket()
+def test_damaged_pdf():
+    url = "https://github.com/py-pdf/pypdf/files/15186107/malformed_pdf.pdf"
+    name = "malformed_pdf.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=False)
+    len(reader.pages)
+    strict_reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=True)
+    with pytest.raises(PdfReadError) as exc:
+        len(strict_reader.pages)
+    assert (
+        exc.value.args[0] == "Expected object ID (21 0) does not match actual (-1 -1)."
+    )

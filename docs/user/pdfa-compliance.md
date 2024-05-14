@@ -22,7 +22,7 @@ against future technological changes and obsolescence.
   improvements over PDF/A-1, while maintaining compatibility with PDF/A-1b
   (Level B) documents.
     * **Level B** (Basic): Like PDF/A-1b, but support for PDF 1.7 features such
-      as transparancy layers.
+      as transparency layers.
     * **Level U** (Unicode): Ensures Unicode mapping without the full
       accessibility requirements of PDF/A-1a (Level A).
     * **Level A** (Accessible): Similar to PDF/A-1a

@@ -9,14 +9,14 @@ reader = PdfReader("example.pdf")
 
 meta = reader.metadata
 
-print(len(reader.pages))
-
 # All of the following could be None!
+print(meta.title)
 print(meta.author)
+print(meta.subject)
 print(meta.creator)
 print(meta.producer)
-print(meta.subject)
-print(meta.title)
+print(meta.creation_date)
+print(meta.modification_date)
 ```
 
 ## Writing metadata
@@ -32,9 +32,9 @@ writer = PdfWriter()
 for page in reader.pages:
     writer.add_page(page)
 
-# If you want to add the old metadata, include this line
-metadata = reader.metadata
-writer.add_metadata(metadata)
+# If you want to add the old metadata, include these two lines
+if reader.metadata is not None:
+    writer.add_metadata(reader.metadata)
 
 # Format the current date and time for the metadata
 utc_time = "-05'00'"  # UTC time optional
