@@ -1,7 +1,7 @@
 # Robustness and strict=False
 
-PDF is [specified in various versions](https://www.pdfa.org/resource/pdf-specification-index/).
-The specification of PDF 1.7 has 978 pages. This length makes it hard to get
+PDF is [specified in various versions](https://pdfa.org/resource/pdf-specification-archive/).
+The specification of PDF 2.0 has 1003 pages. This length makes it hard to get
 everything right. As a consequence, a lot of PDF files are not strictly following the
 specification.
 
