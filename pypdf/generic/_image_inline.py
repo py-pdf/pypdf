@@ -202,9 +202,9 @@ def extract_inline_default(stream: StreamType) -> bytes:
         if loc == -1:
             data.write(buf)
         else:
-            # Write out everything before the E.
+            # Write out everything including E (the one from EI to be removed).
             data.write(buf[0 : loc + 1])
-
+            dataposE = data.tell() - 1
             # Seek back in the stream to read the E next.
             stream.seek(loc + 1 - len(buf), 1)
             saved_pos = stream.tell()
@@ -225,7 +225,9 @@ def extract_inline_default(stream: StreamType) -> bytes:
             ):  # for Q ou EMC
                 stream.seek(saved_pos, 0)
                 continue
-            # Data contains [\s]EI[\s](Q|EMC): 4 chars sufficient, checking Q operator not required.
+            # Data contains [\s]EI[\s](Q|EMC): 4 chars are sufficients
+            # remove E(I) wrongly inserted earlier
+            data.truncate(dataposE)
             break
 
     return data.getvalue()
