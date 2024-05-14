@@ -227,3 +227,14 @@ def test_image_new_property_performance(benchmark):
     data = BytesIO(get_data_from_url(url, name=name))
 
     benchmark(image_new_property, data)
+
+
+def image_extraction(reader):
+    for page in reader.pages:
+        list(page.images)
+
+@pytest.mark.enable_socket()
+def test_large_compressed_image_performance(benchmark):
+    url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf")))
+    benchmark(image_extraction, reader)
