@@ -250,10 +250,10 @@ def test_onlyoffice_form_images_extraction():
 
     assert (
         str(reader.pages[0].images)
-        == "[Image_0=/Pattern/P1/X1, Image_1=/Pattern/P2/X1]"
+        == "[Image_0=/Annots/Image2_af_image/Img, Image_1=/Annots/Image3_af_image/Img]"
     )
 
-    assert str(reader.pages[1].images) == "[Image_0=/Pattern/P1/X1]"
+    assert str(reader.pages[1].images) == "[Image_0=/Annots/Image4_af_image/Img]"
 
     url = "https://github.com/py-pdf/pypdf/assets/67143274/cc28b39b-2e96-4bd3-b33c-c545c5cec2d9"
     name = "iss2613-P1_X1.jpg"
