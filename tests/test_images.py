@@ -245,10 +245,10 @@ def test_image_extraction(src, page_index, image_key, expected):
 @pytest.mark.samples()
 def test_patterns_image_extraction(src, page_index, image_key, expected):
     reader = PdfReader(src)
-    extreactedIDs = reader.pages[page_index].images
+    extractedIDs = reader.pages[page_index].images
 
     assert (
-        str(extreactedIDs)
+        str(extractedIDs)
         == "[Image_0=/Pattern/P1/X1, Image_1=/Pattern/P2/X1, Image_2=/Pattern/P3/X1]"
     )
 
