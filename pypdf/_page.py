@@ -540,7 +540,6 @@ class PageObject(DictionaryObject):
 
             if id.find("/Pattern") == 0:
                 image_identifier = id[id.rfind("/") :]
-
                 image_name = pattern_name[1:] + "_" + image_identifier[1:]
             else:
                 image_identifier = str(id)
