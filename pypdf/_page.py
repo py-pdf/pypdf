@@ -509,7 +509,6 @@ class PageObject(DictionaryObject):
         try:
             if isinstance(id, str) and id.find(RES.PATTERN) == 0:
                 pattern_name = id[len(RES.PATTERN) : id.find("/", len(RES.PATTERN) + 1)]
-                image_name = id[id.rfind("/") :]
 
                 patterns = cast(
                     DictionaryObject,
@@ -538,26 +537,24 @@ class PageObject(DictionaryObject):
                 if self.inline_images is None:  # pragma: no cover
                     raise KeyError("no inline image can be found")
                 return self.inline_images[id]
-            elif id.find("/Pattern") == 0:
-                imgd = _xobj_to_image(cast(DictionaryObject, xobjs[image_name]))
-                extension, byte_stream = imgd[:2]
-                f = ImageFile(
-                    name=f"{pattern_name[1:]}_{image_name[1:]}{extension}",
-                    data=byte_stream,
-                    image=imgd[2],
-                    indirect_reference=xobjs[image_name].indirect_reference,
-                )
-                return f
+
+            if id.find("/Pattern") == 0:
+                image_identifier = id[id.rfind("/") :]
+
+                image_name = pattern_name[1:] + "_" + image_identifier[1:]
             else:
-                imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
-                extension, byte_stream = imgd[:2]
-                f = ImageFile(
-                    name=f"{id[1:]}{extension}",
-                    data=byte_stream,
-                    image=imgd[2],
-                    indirect_reference=xobjs[id].indirect_reference,
-                )
-                return f
+                image_identifier = str(id)
+                image_name = id[1:]
+
+            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[image_identifier]))
+            image_extension, byte_stream = imgd[:2]
+
+            return ImageFile(
+                name=image_name + str(image_extension),
+                data=byte_stream,
+                image=imgd[2],
+                indirect_reference=xobjs[image_identifier].indirect_reference,
+            )
         else:  # in a sub object
             ids = id[1:]
             return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
