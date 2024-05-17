@@ -244,7 +244,7 @@ def test_onlyoffice_standard_images_extraction():
     assert image_similarity(reader.pages[0].images[2].image, P3_X1) >= 0.99
 
 
-@pytest.mark.samples()
+@pytest.mark.enable_socket()
 def test_onlyoffice_form_images_extraction():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2613-onlyoffice-form.pdf")))
 
