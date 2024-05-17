@@ -458,9 +458,38 @@ class PageObject(DictionaryObject):
             ancest = []
         lst: List[Union[str, List[str]]] = []
 
+        if PG.ANNOTS in obj:
+            for annot in cast(DictionaryObject, obj[PG.ANNOTS]):
+                if (
+                    "/AP" in cast(DictionaryObject, annot.keys())
+                    and "/N" in cast(DictionaryObject, annot["/AP"].keys())
+                    and PG.RESOURCES in annot["/AP"]["/N"].get_object()
+                    and RES.XOBJECT
+                    in cast(DictionaryObject, annot["/AP"]["/N"][PG.RESOURCES])
+                    and "/FRM"
+                    in cast(
+                        DictionaryObject, annot["/AP"]["/N"][PG.RESOURCES][RES.XOBJECT]
+                    )
+                ):
+                    frame = annot["/AP"]["/N"][PG.RESOURCES][RES.XOBJECT]["/FRM"]
+
+                    if PG.RESOURCES in frame.get_object() and RES.XOBJECT in cast(
+                        DictionaryObject, frame[PG.RESOURCES]
+                    ):
+                        x_object = frame[PG.RESOURCES][RES.XOBJECT]
+                        for o in x_object:
+                            if x_object[o][IA.SUBTYPE] == "/Image":
+                                if not isinstance(x_object[o], StreamObject):
+                                    continue
+                                lst.append(
+                                    f"{PG.ANNOTS}/{annot['/T']}{o}"
+                                    if len(ancest) == 0
+                                    else ancest + [o]
+                                )
+
         if PG.RESOURCES in obj:
             if RES.PATTERN in cast(DictionaryObject, obj[PG.RESOURCES]):
-                for patternName, pattern in cast(
+                for pattern_name, pattern in cast(
                     DictionaryObject,
                     cast(DictionaryObject, obj[PG.RESOURCES])[RES.PATTERN],
                 ).items():
@@ -473,7 +502,7 @@ class PageObject(DictionaryObject):
                                 continue
                             if x_object[o][IA.SUBTYPE] == "/Image":
                                 lst.append(
-                                    f"{RES.PATTERN}{patternName}{o}"
+                                    f"{RES.PATTERN}{pattern_name}{o}"
                                     if len(ancest) == 0
                                     else ancest + [o]
                                 )
@@ -522,6 +551,30 @@ class PageObject(DictionaryObject):
                         cast(DictionaryObject, patterns[pattern_name])[PG.RESOURCES],
                     )[RES.XOBJECT],
                 )
+            elif isinstance(id, str) and id.find(PG.ANNOTS) == 0:
+                annot_name = id[len(RES.PATTERN) : id.find("/", len(RES.PATTERN) + 1)]
+                annots = cast(DictionaryObject, obj[PG.ANNOTS])
+
+                for temp_annot in annots:
+                    if temp_annot["/T"] == annot_name:
+                        annot = temp_annot
+                        break
+
+                frame_xobjs = cast(
+                    DictionaryObject,
+                    cast(
+                        DictionaryObject,
+                        cast(DictionaryObject, annot["/AP"]["/N"])[PG.RESOURCES],
+                    )[RES.XOBJECT],
+                )
+
+                xobjs = cast(
+                    DictionaryObject,
+                    cast(
+                        DictionaryObject,
+                        cast(DictionaryObject, frame_xobjs["/FRM"])[PG.RESOURCES],
+                    )[RES.XOBJECT],
+                )
             else:
                 xobjs = cast(
                     DictionaryObject,
@@ -541,6 +594,9 @@ class PageObject(DictionaryObject):
             if id.find("/Pattern") == 0:
                 image_identifier = id[id.rfind("/") :]
                 image_name = pattern_name[1:] + "_" + image_identifier[1:]
+            elif id.find("/Annot") == 0:
+                image_identifier = id[id.rfind("/") :]
+                image_name = annot_name + "_" + image_identifier[1:]
             else:
                 image_identifier = str(id)
                 image_name = id[1:]
