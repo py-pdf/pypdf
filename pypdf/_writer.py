@@ -155,17 +155,6 @@ class PdfWriter(PdfDocCommon):
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
     """
 
-    # for commonality
-    @property
-    def is_encrypted(self) -> bool:
-        """
-        Read-only boolean property showing whether this PDF file is encrypted.
-
-        Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
-        """
-        return False
-
     def __init__(
         self,
         fileobj: Union[None, PdfReader, StrByteType, Path] = "",
@@ -254,95 +243,6 @@ class PdfWriter(PdfDocCommon):
         self._ID: Union[ArrayObject, None] = None
 
     @property
-    def root_object(self) -> DictionaryObject:
-        """
-        Provide direct access to Pdf Structure.
-
-        Note:
-            Recommended be used only for read access.
-        """
-        return self._root_object
-
-    @property
-    def _info(self) -> Optional[DictionaryObject]:
-        """
-        Provide access to "/Info". standardized with PdfWriter.
-
-        Returns:
-            /Info Dictionary ; None if the entry does not exists
-        """
-        return cast(DictionaryObject, self._info_obj.get_object())
-
-    @_info.setter
-    def _info(self, value: Union[IndirectObject, DictionaryObject]) -> None:
-        obj = cast(DictionaryObject, self._info_obj.get_object())
-        obj.clear()
-        obj.update(cast(DictionaryObject, value.get_object()))
-
-    @property
-    def xmp_metadata(self) -> Optional[XmpInformation]:
-        """XMP (Extensible Metadata Platform) data."""
-        return cast(XmpInformation, self.root_object.xmp_metadata)
-
-    @xmp_metadata.setter
-    def xmp_metadata(self, value: Optional[XmpInformation]) -> None:
-        """XMP (Extensible Metadata Platform) data."""
-        if value is None:
-            if "/Metadata" in self.root_object:
-                del self.root_object["/Metadata"]
-        else:
-            self.root_object[NameObject("/Metadata")] = value
-
-        return self.root_object.xmp_metadata  # type: ignore
-
-    def __enter__(self) -> "PdfWriter":
-        """Store that writer is initialized by 'with'."""
-        t = self.temp_fileobj
-        self.__init__()  # type: ignore
-        self.with_as_usage = True
-        self.fileobj = t  # type: ignore
-        return self
-
-    def __exit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> None:
-        """Write data to the fileobj."""
-        if self.fileobj:
-            self.write(self.fileobj)
-
-    def _repr_mimebundle_(
-        self,
-        include: Union[None, Iterable[str]] = None,
-        exclude: Union[None, Iterable[str]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to it's
-        representation.
-
-        See https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
-        pdf_data = BytesIO()
-        self.write(pdf_data)
-        data = {
-            "application/pdf": pdf_data,
-        }
-
-        if include is not None:
-            # Filter representations based on include list
-            data = {k: v for k, v in data.items() if k in include}
-
-        if exclude is not None:
-            # Remove representations based on exclude list
-            data = {k: v for k, v in data.items() if k not in exclude}
-
-        return data
-
-    @property
     def pdf_header(self) -> str:
         """
         Read/Write Property
@@ -361,6 +261,77 @@ class PdfWriter(PdfDocCommon):
         if isinstance(new_header, str):
             new_header = new_header.encode()
         self._header = new_header
+
+    # For commonality
+    @property
+    def is_encrypted(self) -> bool:
+        """
+        Read-only boolean property showing whether this PDF file is encrypted.
+
+        Note that this property, if true, will remain true even after the
+        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
+        """
+        return False
+
+    @property
+    def root_object(self) -> DictionaryObject:
+        """
+        Provide direct access to PDF Structure.
+
+        Note:
+            Recommended only for read access.
+        """
+        return self._root_object
+
+    @property
+    def xmp_metadata(self) -> Optional[XmpInformation]:
+        """XMP (Extensible Metadata Platform) data."""
+        return cast(XmpInformation, self.root_object.xmp_metadata)
+
+    @xmp_metadata.setter
+    def xmp_metadata(self, value: Optional[XmpInformation]) -> None:
+        """XMP (Extensible Metadata Platform) data."""
+        if value is None:
+            if "/Metadata" in self.root_object:
+                del self.root_object["/Metadata"]
+        else:
+            self.root_object[NameObject("/Metadata")] = value
+
+        return self.root_object.xmp_metadata  # type: ignore
+
+    @property
+    def _info(self) -> Optional[DictionaryObject]:
+        """
+        Provide access to "/Info". Standardized with PdfWriter.
+
+        Returns:
+            /Info Dictionary ; None if the entry does not exists
+        """
+        return cast(DictionaryObject, self._info_obj.get_object())
+
+    @_info.setter
+    def _info(self, value: Union[IndirectObject, DictionaryObject]) -> None:
+        obj = cast(DictionaryObject, self._info_obj.get_object())
+        obj.clear()
+        obj.update(cast(DictionaryObject, value.get_object()))
+
+    def __enter__(self) -> "PdfWriter":
+        """Store that writer is initialized by 'with'."""
+        t = self.temp_fileobj
+        self.__init__()  # type: ignore
+        self.with_as_usage = True
+        self.fileobj = t  # type: ignore
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        """Write data to the fileobj."""
+        if self.fileobj:
+            self.write(self.fileobj)
 
     def _add_object(self, obj: PdfObject) -> IndirectObject:
         if (
@@ -949,7 +920,7 @@ class PdfWriter(PdfDocCommon):
             flags: An integer (0 to 7). The first bit sets ReadOnly, the
                 second bit sets Required, the third bit sets NoExport. See
                 PDF Reference Table 8.70 for details.
-            auto_regenerate: set/unset the need_appearances flag ;
+            auto_regenerate: set/unset the need_appearances flag;
                 the flag is unchanged if auto_regenerate is None.
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
@@ -2441,7 +2412,7 @@ class PdfWriter(PdfDocCommon):
             elif isinstance(dest["/Page"], NullObject):
                 pass
             elif isinstance(dest["/Page"], int):
-                # the page reference is a page number normally not iaw Pdf Reference
+                # the page reference is a page number normally not a PDF Reference
                 # page numbers as int are normally accepted only in external goto
                 p = reader.pages[dest["/Page"]]
                 assert p.indirect_reference is not None
@@ -2960,6 +2931,35 @@ class PdfWriter(PdfDocCommon):
 
         page_labels[NameObject("/Nums")] = nums
         self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
+
+    def _repr_mimebundle_(
+        self,
+        include: Union[None, Iterable[str]] = None,
+        exclude: Union[None, Iterable[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Integration into Jupyter Notebooks.
+
+        This method returns a dictionary that maps a mime-type to it's
+        representation.
+
+        https://ipython.readthedocs.io/en/stable/config/integrating.html
+        """
+        pdf_data = BytesIO()
+        self.write(pdf_data)
+        data = {
+            "application/pdf": pdf_data,
+        }
+
+        if include is not None:
+            # Filter representations based on include list
+            data = {k: v for k, v in data.items() if k in include}
+
+        if exclude is not None:
+            # Remove representations based on exclude list
+            data = {k: v for k, v in data.items() if k not in exclude}
+
+        return data
 
 
 def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:

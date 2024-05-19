@@ -154,70 +154,6 @@ class PdfReader(PdfDocCommon):
             raise PdfReadError("Not encrypted file")
 
     @property
-    def root_object(self) -> DictionaryObject:
-        """Provide access to "/Root". standardized with PdfWriter."""
-        return cast(DictionaryObject, self.trailer[TK.ROOT].get_object())
-
-    @property
-    def _info(self) -> Optional[DictionaryObject]:
-        """
-        Provide access to "/Info". standardized with PdfWriter.
-
-        Returns:
-            /Info Dictionary ; None if the entry does not exists
-        """
-        info = self.trailer.get(TK.INFO, None)
-        if info is None:
-            return None
-        else:
-            info = info.get_object()
-            if info is None:
-                raise PdfReadError(
-                    "Trailer not found or does not point to document information directory"
-                )
-            return cast(DictionaryObject, info)
-
-    @property
-    def _ID(self) -> Optional[ArrayObject]:
-        """
-        Provide access to "/ID". standardized with PdfWriter.
-
-        Returns:
-            /ID array ; None if the entry does not exists
-        """
-        id = self.trailer.get(TK.ID, None)
-        return None if id is None else cast(ArrayObject, id.get_object())
-
-    def _repr_mimebundle_(
-        self,
-        include: Union[None, Iterable[str]] = None,
-        exclude: Union[None, Iterable[str]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to it's
-        representation.
-
-        See https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
-        self.stream.seek(0)
-        pdf_data = self.stream.read()
-        data = {
-            "application/pdf": pdf_data,
-        }
-
-        if include is not None:
-            # Filter representations based on include list
-            data = {k: v for k, v in data.items() if k in include}
-
-        if exclude is not None:
-            # Remove representations based on exclude list
-            data = {k: v for k, v in data.items() if k not in exclude}
-
-        return data
-
-    @property
     def pdf_header(self) -> str:
         """
         The first 8 bytes of the file.
@@ -232,6 +168,45 @@ class PdfReader(PdfDocCommon):
         pdf_file_version = self.stream.read(8).decode("utf-8", "backslashreplace")
         self.stream.seek(loc, 0)  # return to where it was
         return pdf_file_version
+
+    @property
+    def is_encrypted(self) -> bool:
+        """
+        Read-only boolean property showing whether this PDF file is encrypted.
+
+        Note that this property, if true, will remain true even after the
+        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
+        """
+        return TK.ENCRYPT in self.trailer
+
+    def decrypt(self, password: Union[str, bytes]) -> PasswordType:
+        """
+        When using an encrypted / secured PDF file with the PDF Standard
+        encryption handler, this function will allow the file to be decrypted.
+        It checks the given password against the document's user password and
+        owner password, and then stores the resulting decryption key if either
+        password is correct.
+
+        It does not matter which password was matched.  Both passwords provide
+        the correct decryption key that will allow the document to be used with
+        this library.
+
+        Args:
+            password: The password to match.
+
+        Returns:
+            An indicator if the document was decrypted and whether it was the
+            owner password or the user password.
+        """
+        if not self._encryption:
+            raise PdfReadError("Not encrypted file")
+        # TODO: raise Exception for wrong password
+        return self._encryption.verify(password)
+
+    @property
+    def root_object(self) -> DictionaryObject:
+        """Provide access to "/Root". Standardized with PdfWriter."""
+        return cast(DictionaryObject, self.trailer[TK.ROOT].get_object())
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
@@ -285,63 +260,35 @@ class PdfReader(PdfDocCommon):
         ret = self._page_id2num.get(idnum, None)
         return ret
 
-    def _get_object_from_stream(
-        self, indirect_reference: IndirectObject
-    ) -> Union[int, PdfObject, str]:
-        # indirect reference to object in object stream
-        # read the entire object stream into memory
-        stmnum, idx = self.xref_objStm[indirect_reference.idnum]
-        obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
-        # This is an xref to a stream, so its type better be a stream
-        assert cast(str, obj_stm["/Type"]) == "/ObjStm"
-        # /N is the number of indirect objects in the stream
-        assert idx < obj_stm["/N"]
-        stream_data = BytesIO(b_(obj_stm.get_data()))
-        for i in range(obj_stm["/N"]):  # type: ignore
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-            objnum = NumberObject.read_from_stream(stream_data)
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-            offset = NumberObject.read_from_stream(stream_data)
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-            if objnum != indirect_reference.idnum:
-                # We're only interested in one object
-                continue
-            if self.strict and idx != i:
-                raise PdfReadError("Object is in wrong index.")
-            stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
+    @property
+    def _info(self) -> Optional[DictionaryObject]:
+        """
+        Provide access to "/Info". Standardized with PdfWriter.
 
-            # to cope with some case where the 'pointer' is on a white space
-            read_non_whitespace(stream_data)
-            stream_data.seek(-1, 1)
-
-            try:
-                obj = read_object(stream_data, self)
-            except PdfStreamError as exc:
-                # Stream object cannot be read. Normally, a critical error, but
-                # Adobe Reader doesn't complain, so continue (in strict mode?)
-                logger_warning(
-                    f"Invalid stream (index {i}) within object "
-                    f"{indirect_reference.idnum} {indirect_reference.generation}: "
-                    f"{exc}",
-                    __name__,
+        Returns:
+            /Info Dictionary; None if the entry does not exist
+        """
+        info = self.trailer.get(TK.INFO, None)
+        if info is None:
+            return None
+        else:
+            info = info.get_object()
+            if info is None:
+                raise PdfReadError(
+                    "Trailer not found or does not point to document information directory"
                 )
+            return cast(DictionaryObject, info)
 
-                if self.strict:  # pragma: no cover
-                    raise PdfReadError(
-                        f"Cannot read object stream: {exc}"
-                    )  # pragma: no cover
-                # Replace with null. Hopefully it's nothing important.
-                obj = NullObject()  # pragma: no cover
-            return obj
+    @property
+    def _ID(self) -> Optional[ArrayObject]:
+        """
+        Provide access to "/ID". Standardized with PdfWriter.
 
-        if self.strict:  # pragma: no cover
-            raise PdfReadError(
-                "This is a fatal error in strict mode."
-            )  # pragma: no cover
-        return NullObject()  # pragma: no cover
+        Returns:
+            /ID array; None if the entry does not exist
+        """
+        id = self.trailer.get(TK.ID, None)
+        return None if id is None else cast(ArrayObject, id.get_object())
 
     def get_object(
         self, indirect_reference: Union[int, IndirectObject]
@@ -479,6 +426,64 @@ class PdfReader(PdfDocCommon):
         )
         return retval
 
+    def _get_object_from_stream(
+        self, indirect_reference: IndirectObject
+    ) -> Union[int, PdfObject, str]:
+        # indirect reference to object in object stream
+        # read the entire object stream into memory
+        stmnum, idx = self.xref_objStm[indirect_reference.idnum]
+        obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
+        # This is an xref to a stream, so its type better be a stream
+        assert cast(str, obj_stm["/Type"]) == "/ObjStm"
+        # /N is the number of indirect objects in the stream
+        assert idx < obj_stm["/N"]
+        stream_data = BytesIO(b_(obj_stm.get_data()))
+        for i in range(obj_stm["/N"]):  # type: ignore
+            read_non_whitespace(stream_data)
+            stream_data.seek(-1, 1)
+            objnum = NumberObject.read_from_stream(stream_data)
+            read_non_whitespace(stream_data)
+            stream_data.seek(-1, 1)
+            offset = NumberObject.read_from_stream(stream_data)
+            read_non_whitespace(stream_data)
+            stream_data.seek(-1, 1)
+            if objnum != indirect_reference.idnum:
+                # We're only interested in one object
+                continue
+            if self.strict and idx != i:
+                raise PdfReadError("Object is in wrong index.")
+            stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
+
+            # to cope with some case where the 'pointer' is on a white space
+            read_non_whitespace(stream_data)
+            stream_data.seek(-1, 1)
+
+            try:
+                obj = read_object(stream_data, self)
+            except PdfStreamError as exc:
+                # Stream object cannot be read. Normally, a critical error, but
+                # Adobe Reader doesn't complain, so continue (in strict mode?)
+                logger_warning(
+                    f"Invalid stream (index {i}) within object "
+                    f"{indirect_reference.idnum} {indirect_reference.generation}: "
+                    f"{exc}",
+                    __name__,
+                )
+
+                if self.strict:  # pragma: no cover
+                    raise PdfReadError(
+                        f"Cannot read object stream: {exc}"
+                    )  # pragma: no cover
+                # Replace with null. Hopefully it's nothing important.
+                obj = NullObject()  # pragma: no cover
+            return obj
+
+        if self.strict:  # pragma: no cover
+            raise PdfReadError(
+                "This is a fatal error in strict mode."
+            )  # pragma: no cover
+        return NullObject()  # pragma: no cover
+
     def read_object_header(self, stream: StreamType) -> Tuple[int, int]:
         # Should never be necessary to read out whitespace, since the
         # cross-reference table should put us in the right spot to read the
@@ -523,16 +528,6 @@ class PdfReader(PdfDocCommon):
         self.resolved_objects[(generation, idnum)] = obj
         if obj is not None:
             obj.indirect_reference = IndirectObject(idnum, generation, self)
-        return obj
-
-    def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
-        # function reserved for future dev
-        if indirect.pdf != self:
-            raise ValueError("Cannot update PdfReader with external object")
-        if (indirect.generation, indirect.idnum) not in self.resolved_objects:
-            raise ValueError("Cannot find referenced object")
-        self.resolved_objects[(indirect.generation, indirect.idnum)] = obj
-        obj.indirect_reference = indirect
         return obj
 
     def read(self, stream: StreamType) -> None:
@@ -592,6 +587,75 @@ class PdfReader(PdfDocCommon):
                         )
                         del xref_entry[id]  # we can delete the id, we are parsing ids
             stream.seek(loc, 0)  # return to where it was
+
+    def add_form_topname(self, name: str) -> Optional[DictionaryObject]:
+        """
+        Add a top level form that groups all form fields below it.
+
+        Args:
+            name: text string of the "/T" Attribute of the created object
+
+        Returns:
+            The created object. ``None`` means no object was created.
+        """
+        catalog = self.root_object
+
+        if "/AcroForm" not in catalog or not isinstance(
+            catalog["/AcroForm"], DictionaryObject
+        ):
+            return None
+        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
+        if "/Fields" not in acroform:
+            # TODO: No error returns but may be extended for XFA Forms
+            return None
+
+        interim = DictionaryObject()
+        interim[NameObject("/T")] = TextStringObject(name)
+        interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
+        self.cache_indirect_object(
+            0,
+            max([i for (g, i) in self.resolved_objects if g == 0]) + 1,
+            interim,
+        )
+        arr = ArrayObject()
+        arr.append(interim.indirect_reference)
+        acroform[NameObject("/Fields")] = arr
+        for o in cast(ArrayObject, interim["/Kids"]):
+            obj = o.get_object()
+            if "/Parent" in obj:
+                logger_warning(
+                    f"Top Level Form Field {obj.indirect_reference} have a non-expected parent",
+                    __name__,
+                )
+            obj[NameObject("/Parent")] = interim.indirect_reference
+        return interim
+
+    def rename_form_topname(self, name: str) -> Optional[DictionaryObject]:
+        """
+        Rename top level form field that groups all form fields below it.
+
+        Args:
+            name: text string of the "/T" field of the created object
+
+        Returns:
+            The modified object. ``None`` means no object was modified.
+        """
+        catalog = self.root_object
+
+        if "/AcroForm" not in catalog or not isinstance(
+            catalog["/AcroForm"], DictionaryObject
+        ):
+            return None
+        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
+        if "/Fields" not in acroform:
+            return None
+
+        interim = cast(
+            DictionaryObject,
+            cast(ArrayObject, acroform[NameObject("/Fields")])[0].get_object(),
+        )
+        interim[NameObject("/T")] = TextStringObject(name)
+        return interim
 
     def _basic_validation(self, stream: StreamType) -> None:
         """Ensure file is not empty. Read at most 5 bytes."""
@@ -1023,105 +1087,41 @@ class PdfReader(PdfDocCommon):
             if (i + 1) >= len(array):
                 break
 
-    def decrypt(self, password: Union[str, bytes]) -> PasswordType:
+    def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
+        # Function reserved for future development
+        if indirect.pdf != self:
+            raise ValueError("Cannot update PdfReader with external object")
+        if (indirect.generation, indirect.idnum) not in self.resolved_objects:
+            raise ValueError("Cannot find referenced object")
+        self.resolved_objects[(indirect.generation, indirect.idnum)] = obj
+        obj.indirect_reference = indirect
+        return obj
+
+    def _repr_mimebundle_(
+        self,
+        include: Union[None, Iterable[str]] = None,
+        exclude: Union[None, Iterable[str]] = None,
+    ) -> Dict[str, Any]:
         """
-        When using an encrypted / secured PDF file with the PDF Standard
-        encryption handler, this function will allow the file to be decrypted.
-        It checks the given password against the document's user password and
-        owner password, and then stores the resulting decryption key if either
-        password is correct.
+        Integration into Jupyter Notebooks.
 
-        It does not matter which password was matched.  Both passwords provide
-        the correct decryption key that will allow the document to be used with
-        this library.
+        This method returns a dictionary that maps a mime-type to it's
+        representation.
 
-        Args:
-            password: The password to match.
-
-        Returns:
-            An indicator if the document was decrypted and whether it was the
-            owner password or the user password.
+        https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
-        if not self._encryption:
-            raise PdfReadError("Not encrypted file")
-        # TODO: raise Exception for wrong password
-        return self._encryption.verify(password)
+        self.stream.seek(0)
+        pdf_data = self.stream.read()
+        data = {
+            "application/pdf": pdf_data,
+        }
 
-    @property
-    def is_encrypted(self) -> bool:
-        """
-        Read-only boolean property showing whether this PDF file is encrypted.
+        if include is not None:
+            # Filter representations based on include list
+            data = {k: v for k, v in data.items() if k in include}
 
-        Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
-        """
-        return TK.ENCRYPT in self.trailer
+        if exclude is not None:
+            # Remove representations based on exclude list
+            data = {k: v for k, v in data.items() if k not in exclude}
 
-    def add_form_topname(self, name: str) -> Optional[DictionaryObject]:
-        """
-        Add a top level form that groups all form fields below it.
-
-        Args:
-            name: text string of the "/T" Attribute of the created object
-
-        Returns:
-            The created object. ``None`` means no object was created.
-        """
-        catalog = self.root_object
-
-        if "/AcroForm" not in catalog or not isinstance(
-            catalog["/AcroForm"], DictionaryObject
-        ):
-            return None
-        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
-        if "/Fields" not in acroform:
-            # TODO: :No error returns but may be extended for XFA Forms
-            return None
-
-        interim = DictionaryObject()
-        interim[NameObject("/T")] = TextStringObject(name)
-        interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
-        self.cache_indirect_object(
-            0,
-            max([i for (g, i) in self.resolved_objects if g == 0]) + 1,
-            interim,
-        )
-        arr = ArrayObject()
-        arr.append(interim.indirect_reference)
-        acroform[NameObject("/Fields")] = arr
-        for o in cast(ArrayObject, interim["/Kids"]):
-            obj = o.get_object()
-            if "/Parent" in obj:
-                logger_warning(
-                    f"Top Level Form Field {obj.indirect_reference} have a non-expected parent",
-                    __name__,
-                )
-            obj[NameObject("/Parent")] = interim.indirect_reference
-        return interim
-
-    def rename_form_topname(self, name: str) -> Optional[DictionaryObject]:
-        """
-        Rename top level form field that all form fields below it.
-
-        Args:
-            name: text string of the "/T" field of the created object
-
-        Returns:
-            The modified object. ``None`` means no object was modified.
-        """
-        catalog = self.root_object
-
-        if "/AcroForm" not in catalog or not isinstance(
-            catalog["/AcroForm"], DictionaryObject
-        ):
-            return None
-        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
-        if "/Fields" not in acroform:
-            return None
-
-        interim = cast(
-            DictionaryObject,
-            cast(ArrayObject, acroform[NameObject("/Fields")])[0].get_object(),
-        )
-        interim[NameObject("/T")] = TextStringObject(name)
-        return interim
+        return data
