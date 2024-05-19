@@ -1530,3 +1530,22 @@ def test_damaged_pdf():
     assert (
         exc.value.args[0] == "Expected object ID (21 0) does not match actual (-1 -1)."
     )
+
+
+@pytest.mark.enable_socket()
+def test_looping_form():
+    """Cf iss 2643"""
+    url = "https://github.com/py-pdf/pypdf/files/15306053/inheritance.pdf"
+    name = "iss2643.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=False)
+    flds = reader.get_fields()
+    assert all(
+        x in flds
+        for x in (
+            "Text10",
+            "Text10.0.0.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1",
+            "amt1.0",
+            "amt1.1",
+            "DSS#3pg3#0hgu7",
+        )
+    )
