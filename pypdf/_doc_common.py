@@ -500,7 +500,7 @@ class PdfDocCommon:
         The *tree*, *retval*, *stack* parameters are for recursive use.
 
         Args:
-            tree: current object parsed
+            tree: Current object to parse.
             retval: In-progress list of fields.
             fileobj: A file object (usually a text file) to write
                 a report to on all interactive form fields found.
