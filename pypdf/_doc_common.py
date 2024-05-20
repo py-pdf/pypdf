@@ -531,11 +531,9 @@ class PdfDocCommon:
             for f in fields:
                 field = f.get_object()
                 self._build_field(field, retval, fileobj, field_attributes, stack)
-        else:
-            self._check_kids(tree, retval, fileobj, stack)
-            if any(attr in tree for attr in field_attributes):
-                # Tree is a field
-                self._build_field(tree, retval, fileobj, field_attributes, stack)
+        elif any(attr in tree for attr in field_attributes):
+            # Tree is a field
+            self._build_field(tree, retval, fileobj, field_attributes, stack)
         return retval
 
     def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
@@ -560,7 +558,6 @@ class PdfDocCommon:
         field_attributes: Any,
         stack: List[PdfObject],
     ) -> None:
-        self._check_kids(field, retval, fileobj, stack)
         if all(attr not in field for attr in ("/T", "/TM")):
             return
         key = self._get_qualified_field_name(field)
@@ -592,6 +589,8 @@ class PdfDocCommon:
                 and "/Off" in retval[key]["/_States_"]
             ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
+        # at last for order
+        self._check_kids(field, retval, fileobj, stack)
 
     def _check_kids(
         self,
@@ -610,15 +609,6 @@ class PdfDocCommon:
             # recurse down the tree
             for kid in tree[PA.KIDS]:  # type: ignore
                 kid = kid.get_object()
-                if tree.indirect_reference != kid.get("/Parent", None):
-                    logger_warning(
-                        (
-                            f'"/Parent" of {self._get_qualified_field_name(kid)} '
-                            f"different from {self._get_qualified_field_name(tree)}"
-                        ),
-                        __name__,
-                    )
-                    continue
                 self.get_fields(kid, retval, fileobj, stack)
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
