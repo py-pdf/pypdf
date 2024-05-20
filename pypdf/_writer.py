@@ -1201,7 +1201,7 @@ class PdfWriter(PdfDocCommon):
                 encryption.  When false, 40bit encryption will be used.
                 By default, this flag is on.
             permissions_flag: permissions as described in
-                TABLE 3.20 of the PDF 1.7 specification. A bit value of 1 means
+                Table 3.20 of the PDF 1.7 specification. A bit value of 1 means
                 the permission is grantend.
                 Hence an integer value of -1 will set all flags.
                 Bit position 3 is for printing, 4 is for modifying content,
@@ -1511,7 +1511,7 @@ class PdfWriter(PdfDocCommon):
 
     def get_outline_root(self) -> TreeObject:
         if CO.OUTLINES in self._root_object:
-            # TABLE 3.25 Entries in the catalog dictionary
+            # Table 3.25 Entries in the catalog dictionary
             outline = cast(TreeObject, self._root_object[CO.OUTLINES])
             if not isinstance(outline, TreeObject):
                 t = TreeObject(outline)
@@ -1539,7 +1539,7 @@ class PdfWriter(PdfDocCommon):
             ``/I`` properties.
         """
         if CO.THREADS in self._root_object:
-            # TABLE 3.25 Entries in the catalog dictionary
+            # Table 3.25 Entries in the catalog dictionary
             threads = cast(ArrayObject, self._root_object[CO.THREADS])
         else:
             threads = ArrayObject()

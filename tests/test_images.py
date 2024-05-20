@@ -346,3 +346,11 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
             print(fn)  # noqa: T201
             img = Image.open(BytesIO(zf.read(fn)))
             assert image_similarity(reader.pages[p].images[i].image, img) >= 0.99
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.timeout(30)
+def test_large_compressed_image():
+    url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf")))
+    list(reader.pages[0].images)

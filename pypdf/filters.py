@@ -80,14 +80,19 @@ def decompress(data: bytes) -> bytes:
     try:
         return zlib.decompress(data)
     except zlib.error:
-        d = zlib.decompressobj(zlib.MAX_WBITS | 32)
-        result_str = b""
-        for b in [data[i : i + 1] for i in range(len(data))]:
-            try:
-                result_str += d.decompress(b)
-            except zlib.error:
-                pass
-        return result_str
+        try:
+            # For larger files, use Decompress object to enable buffered reading
+            return zlib.decompressobj().decompress(data)
+        except zlib.error:
+            # If still failed, then try with increased window size
+            d = zlib.decompressobj(zlib.MAX_WBITS | 32)
+            result_str = b""
+            for b in [data[i : i + 1] for i in range(len(data))]:
+                try:
+                    result_str += d.decompress(b)
+                except zlib.error:
+                    pass
+            return result_str
 
 
 class FlateDecode:
