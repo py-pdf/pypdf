@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 BUFFER_SIZE = 8192
 
 
-def extract_inline_AHex(stream: StreamType) -> bytes:
+def extract_inline_AHx(stream: StreamType) -> bytes:
     """
     Extract HexEncoded Stream from Inline Image.
     the stream will be moved onto the EI
