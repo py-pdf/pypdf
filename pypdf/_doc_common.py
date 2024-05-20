@@ -504,7 +504,7 @@ class PdfDocCommon:
             retval: In-progress list of fields.
             fileobj: A file object (usually a text file) to write
                 a report to on all interactive form fields found.
-            stack: list of object already parsed
+            stack: List of already parsed objects.
 
         Returns:
             A dictionary where each key is a field name, and each
