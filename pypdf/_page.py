@@ -577,7 +577,7 @@ class PageObject(DictionaryObject):
                     res = cast(DictionaryObject, self["/Resources"])["/ColorSpace"]
                     v = cast(DictionaryObject, res)[v]
                 except KeyError:  # for res and v
-                    raise PdfReadError(f"Can not find resource entry {v} for {k}")
+                    raise PdfReadError(f"Cannot find resource entry {v} for {k}")
         return v
 
     def _get_inline_images(self) -> Dict[str, ImageFile]:
