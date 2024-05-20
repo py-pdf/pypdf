@@ -1533,7 +1533,8 @@ def test_damaged_pdf():
 
 
 @pytest.mark.enable_socket()
-def test_looping_form():
+@pytest.mark.timeout(4)
+def test_looping_form(caplog):
     """Cf iss 2643"""
     url = "https://github.com/py-pdf/pypdf/files/15306053/inheritance.pdf"
     name = "iss2643.pdf"
@@ -1549,3 +1550,10 @@ def test_looping_form():
             "DSS#3pg3#0hgu7",
         )
     )
+    writer = PdfWriter(reader)
+    writer.root_object["/AcroForm"]["/Fields"][5]["/Kids"].append(
+        writer.root_object["/AcroForm"]["/Fields"][5]["/Kids"][0]
+    )
+    flds2 = writer.get_fields()
+    assert "Text68.0 already parsed" in caplog.text
+    assert list(flds.keys()) == list(flds2.keys())
