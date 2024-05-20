@@ -622,7 +622,7 @@ class PageObject(DictionaryObject):
                 "/Length": len(ii["__streamdata__"]),
             }
             for k, v in ii["settings"].items():
-                if k in ("/Length", "/L"):  # no length is expected
+                if k in {"/Length", "/L"}:  # no length is expected
                     continue
                 if isinstance(v, list):
                     v = ArrayObject(
