@@ -572,7 +572,7 @@ class PageObject(DictionaryObject):
         except (TypeError, KeyError):
             if isinstance(v, NameObject):
                 # It is a custom name, thus we have to look in resources.
-                # the only applicable case is for ColorSpace
+                # The only applicable case is for ColorSpace.
                 try:
                     res = cast(DictionaryObject, self["/Resources"])["/ColorSpace"]
                     v = cast(DictionaryObject, res)[v]
