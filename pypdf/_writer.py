@@ -968,8 +968,7 @@ class PdfWriter(PdfDocCommon):
                     * font id (e.g. /F1, the font id must exist)
                     * font size (0 for autosize)
 
-            flags: An integer. You can build it using FieldDictionaryAttributes.FfBits
-                see :doc:`FfBits in constants</modules/constants>`
+            flags: A set of flags from :class:`~pypdf.constants.FieldDictionaryAttributes.FfBits`.
 
             auto_regenerate: Set/unset the need_appearances flag;
                 the flag is unchanged if auto_regenerate is None.
