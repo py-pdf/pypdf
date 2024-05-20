@@ -1162,7 +1162,6 @@ class ContentStream(DecodedStreamObject):
         assert tmp[:2] == b"ID"
         filtr = settings.get("/F", settings.get("/Filter", "not set"))
         savpos = stream.tell()
-        # import pdb;pdb.set_trace()
         # print("inline", stream.tell(),filtr,"*",settings)
         if isinstance(filtr, list):
             filtr = filtr[0]  # used forencoding
