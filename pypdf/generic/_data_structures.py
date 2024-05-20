@@ -1181,12 +1181,7 @@ class ContentStream(DecodedStreamObject):
             else:
                 bits = settings.get(
                     "/BPC",
-                    8
-                    if cs == "/I"
-                    or cs == "/G"
-                    or cs == "/Indexed"
-                    or cs == "/DeviceGray"
-                    else -1,
+                    8 if cs in {"/I", "/G", "/Indexed", "/DeviceGray"} else -1,
                 )
                 if bits > 0:
                     lcs = bits / 8.0

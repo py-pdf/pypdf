@@ -504,21 +504,6 @@ class ASCII85Decode:
         data = data.strip(WHITESPACES_AS_BYTES)
         return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
 
-    """@staticmethod
-    def encode(data: bytes, level: int = -1) -> bytes:
-        '''
-        Compress the input data using A85 encoding in Adobe format.
-
-        Args:
-            data: The data to be compressed.
-            level: See https://docs.python.org/3/library/zlib.html#zlib.compress
-
-        Returns:
-            The compressed data.
-        '''
-        return a85encode(data, adobe=True, wrapcol=32)
-    """
-
 
 class DCTDecode:
     @staticmethod

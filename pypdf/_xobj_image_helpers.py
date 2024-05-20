@@ -30,8 +30,8 @@ else:
 
 try:
     from PIL import Image, UnidentifiedImageError  # noqa: F401
-except ImportError:  # deprecated
-    raise ImportError(  # deprecated
+except ImportError:  # pragma: no cover
+    raise ImportError(  # pragma: no cover
         "pillow is required to do image extraction. "
         "It can be installed via 'pip install pypdf[image]'"
     )
