@@ -2230,3 +2230,26 @@ def test_i_in_choice_fields():
         writer.pages[0], {"State": "NY"}, auto_regenerate=False
     )
     assert "/I" not in writer.get_fields()["State"].indirect_reference.get_object()
+
+
+def test_selfont():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Text1": ("Text_1", "", 5), "Text2": ("Text_2", "/F3", 0)},
+        auto_regenerate=False,
+    )
+    assert (
+        b"/F3 5 Tf"
+        in writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"].get_data()
+    )
+    assert (
+        b"Text_1" in writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"].get_data()
+    )
+    assert (
+        b"/F3 12 Tf"
+        in writer.pages[0]["/Annots"][2].get_object()["/AP"]["/N"].get_data()
+    )
+    assert (
+        b"Text_2" in writer.pages[0]["/Annots"][2].get_object()["/AP"]["/N"].get_data()
+    )

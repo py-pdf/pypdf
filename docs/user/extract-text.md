@@ -72,7 +72,7 @@ operator, operand-arguments, current transformation matrix and text matrix.
 
 ### Example 1: Ignore header and footer
 
-The following example reads the text of page four of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores the header (y < 720) and footer (y > 50).
+The following example reads the text of page four of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores the header (y > 720) and footer (y < 50).
 
 ```python
 from pypdf import PdfReader
@@ -85,7 +85,7 @@ parts = []
 
 def visitor_body(text, cm, tm, font_dict, font_size):
     y = cm[5]
-    if y > 50 and y < 720:
+    if 50 < y < 720:
         parts.append(text)
 
 
@@ -171,9 +171,9 @@ Then there are issues where most people would agree on the correct output, but
 the way PDF stores information just makes it hard to achieve that:
 
 1. **Tables**: Typically, tables are just absolutely positioned text. In the worst
-   case, ever single letter could be absolutely positioned. That makes it hard
+   case, every single letter could be absolutely positioned. That makes it hard
    to tell where columns / rows are.
-2. **Images**: Sometimes PDFs do not contain the text as it's displayed, but
+2. **Images**: Sometimes PDFs do not contain the text as it is displayed, but
     instead an image. You notice that when you cannot copy the text. Then there
     are PDF files that contain an image and a text layer in the background.
     That typically happens when a document was scanned. Although the scanning
@@ -181,7 +181,7 @@ the way PDF stores information just makes it hard to achieve that:
     is no OCR software; it will not be able to detect those failures. pypdf
     will also never be able to extract text from images.
 
-And finally there are issues that pypdf will deal with. If you find such a
+Finally there are issues that pypdf will deal with. If you find such a
 text extraction bug, please share the PDF with us so we can work on it!
 
 ### Missing Semantic Layer
@@ -196,7 +196,7 @@ find heuristics to make educated guesses, but there is no way of being certain.
 
 This is a shortcoming of the PDF file format, not of pypdf.
 
-It would be possible to apply machine learning on PDF documents to make good
+It is possible to apply machine learning on PDF documents to make good
 heuristics, but that will not be part of pypdf. However, pypdf could be used to
 feed such a machine learning system with the relevant information.
 
@@ -229,7 +229,7 @@ More information:
 Optical Character Recognition (OCR) is the process of extracting text from
 images. Software which does this is called *OCR software*. The
 [tesseract OCR engine](https://github.com/tesseract-ocr/tesseract) is the
-most commonly known Open Source OCR software.
+most commonly known open source OCR software.
 
 pypdf is **not** OCR software.
 
@@ -279,7 +279,7 @@ pypdf also has an edge when it comes to characters which are rare, e.g.
 
 ## Attempts to prevent text extraction
 
-If people who share PDF documents want to prevent text extraction, there are
+If people who share PDF documents want to prevent text extraction, they have
 multiple ways to do so:
 
 1. Store the contents of the PDF as an image

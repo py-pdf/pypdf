@@ -9,8 +9,8 @@ PDF comes in the following versions:
 * 2001: 1.4
 * 2003: 1.5
 * 2004: 1.6
-* 2006 - 2012: 1.7, ISO 32000-1:2008
-* 2017: 2.0
+* 2008: 1.7, ISO 32000-1:2008
+* 2017: 2.0, ISO 32000-2:2017
 
 The general format didn't change, but new features got added. It can be that
 pypdf can do the operations you want on PDF 2.0 files without fully supporting

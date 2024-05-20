@@ -70,7 +70,6 @@ from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
 from .constants import (
     CatalogDictionary,
-    FieldFlag,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
     ImageType,
@@ -123,8 +122,8 @@ from .types import (
 )
 from .xmp import XmpInformation
 
-OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions.all()
+DEFAULT_FONT_HEIGHT_IN_MULTILINE = 12
 
 
 class ObjectDeletionFlag(enum.IntFlag):
@@ -780,7 +779,11 @@ class PdfWriter(PdfDocCommon):
                 after_page_append(writer_page)
 
     def _update_field_annotation(
-        self, field: DictionaryObject, anno: DictionaryObject
+        self,
+        field: DictionaryObject,
+        anno: DictionaryObject,
+        font_name: str = "",
+        font_size: float = -1,
     ) -> None:
         # Calculate rectangle dimensions
         _rct = cast(RectangleObject, anno[AA.Rect])
@@ -799,12 +802,22 @@ class PdfWriter(PdfDocCommon):
             da = da.get_object()
         font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
         font_properties = [x for x in font_properties if x != ""]
-        font_name = font_properties[font_properties.index("Tf") - 2]
-        font_height = float(font_properties[font_properties.index("Tf") - 1])
+        if font_name:
+            font_properties[font_properties.index("Tf") - 2] = font_name
+        else:
+            font_name = font_properties[font_properties.index("Tf") - 2]
+        font_height = (
+            font_size
+            if font_size >= 0
+            else float(font_properties[font_properties.index("Tf") - 1])
+        )
         if font_height == 0:
-            font_height = rct.height - 2
-            font_properties[font_properties.index("Tf") - 1] = str(font_height)
-            da = " ".join(font_properties)
+            if field.get(FA.Ff, 0) & FA.FfBits.Multiline:
+                font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE
+            else:
+                font_height = rct.height - 2
+        font_properties[font_properties.index("Tf") - 1] = str(font_height)
+        da = " ".join(font_properties)
         y_offset = rct.height - 1 - font_height
 
         # Retrieve font information from local DR ...
@@ -926,11 +939,13 @@ class PdfWriter(PdfDocCommon):
             self._objects[n - 1] = dct
             dct.indirect_reference = IndirectObject(n, 0, self)
 
+    FFBITS_NUL = FA.FfBits(0)
+
     def update_page_form_field_values(
         self,
         page: Union[PageObject, List[PageObject], None],
         fields: Dict[str, Any],
-        flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
+        flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
     ) -> None:
         """
@@ -944,12 +959,18 @@ class PdfWriter(PdfDocCommon):
                 annotations and field data will be updated.
                 `List[Pageobject]` - provides list of pages to be processed.
                 `None` - all pages.
-            fields: a Python dictionary of field names (/T) and text
-                values (/V).
-            flags: An integer (0 to 7). The first bit sets ReadOnly, the
-                second bit sets Required, the third bit sets NoExport. See
-                PDF Reference Table 8.70 for details.
-            auto_regenerate: set/unset the need_appearances flag ;
+            fields: a Python dictionary of:
+
+                * field names (/T) as keys and text values (/V) as value
+                * field names (/T) as keys and list of text values (/V) for multiple choice list
+                * field names (/T) as keys and tuple of:
+                    * text values (/V)
+                    * font id (e.g. /F1, the font id must exist)
+                    * font size (0 for autosize)
+
+            flags: A set of flags from :class:`~pypdf.constants.FieldDictionaryAttributes.FfBits`.
+
+            auto_regenerate: Set/unset the need_appearances flag;
                 the flag is unchanged if auto_regenerate is None.
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
@@ -997,6 +1018,10 @@ class PdfWriter(PdfDocCommon):
                 if isinstance(value, list):
                     lst = ArrayObject(TextStringObject(v) for v in value)
                     writer_parent_annot[NameObject(FA.V)] = lst
+                elif isinstance(value, tuple):
+                    writer_annot[NameObject(FA.V)] = TextStringObject(
+                        value[0],
+                    )
                 else:
                     writer_parent_annot[NameObject(FA.V)] = TextStringObject(value)
                 if writer_parent_annot.get(FA.FT) in ("/Btn"):
@@ -1011,7 +1036,12 @@ class PdfWriter(PdfDocCommon):
                     or writer_parent_annot.get(FA.FT) == "/Ch"
                 ):
                     # textbox
-                    self._update_field_annotation(writer_parent_annot, writer_annot)
+                    if isinstance(value, tuple):
+                        self._update_field_annotation(
+                            writer_parent_annot, writer_annot, value[1], value[2]
+                        )
+                    else:
+                        self._update_field_annotation(writer_parent_annot, writer_annot)
                 elif (
                     writer_annot.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
@@ -1171,7 +1201,7 @@ class PdfWriter(PdfDocCommon):
                 encryption.  When false, 40bit encryption will be used.
                 By default, this flag is on.
             permissions_flag: permissions as described in
-                TABLE 3.20 of the PDF 1.7 specification. A bit value of 1 means
+                Table 3.20 of the PDF 1.7 specification. A bit value of 1 means
                 the permission is grantend.
                 Hence an integer value of -1 will set all flags.
                 Bit position 3 is for printing, 4 is for modifying content,
@@ -1481,7 +1511,7 @@ class PdfWriter(PdfDocCommon):
 
     def get_outline_root(self) -> TreeObject:
         if CO.OUTLINES in self._root_object:
-            # TABLE 3.25 Entries in the catalog dictionary
+            # Table 3.25 Entries in the catalog dictionary
             outline = cast(TreeObject, self._root_object[CO.OUTLINES])
             if not isinstance(outline, TreeObject):
                 t = TreeObject(outline)
@@ -1509,7 +1539,7 @@ class PdfWriter(PdfDocCommon):
             ``/I`` properties.
         """
         if CO.THREADS in self._root_object:
-            # TABLE 3.25 Entries in the catalog dictionary
+            # Table 3.25 Entries in the catalog dictionary
             threads = cast(ArrayObject, self._root_object[CO.THREADS])
         else:
             threads = ArrayObject()
