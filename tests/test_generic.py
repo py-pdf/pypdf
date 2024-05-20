@@ -40,7 +40,7 @@ from pypdf.generic import (
 )
 from pypdf.generic._image_inline import (
     extract_inline_A85,
-    extract_inline_AHex,
+    extract_inline_AHx,
     extract_inline_DCT,
     extract_inline_RL,
 )
@@ -1363,11 +1363,11 @@ def test_array_operators():
 
 def test_unitary_extract_inline_buffer_invalid():
     with pytest.raises(PdfReadError):
-        extract_inline_AHex(BytesIO())
+        extract_inline_AHx(BytesIO())
     with pytest.raises(PdfReadError):
-        extract_inline_AHex(BytesIO(4095 * b"00" + b"   "))
+        extract_inline_AHx(BytesIO(4095 * b"00" + b"   "))
     with pytest.raises(PdfReadError):
-        extract_inline_AHex(BytesIO(b"00"))
+        extract_inline_AHx(BytesIO(b"00"))
     with pytest.raises(PdfReadError):
         extract_inline_A85(BytesIO())
     with pytest.raises(PdfReadError):
@@ -1387,9 +1387,9 @@ def test_unitary_extract_inline_buffer_invalid():
 def test_unitary_extract_inline():
     # AHx
     b = 16000 * b"00"
-    assert len(extract_inline_AHex(BytesIO(b + b" EI"))) == len(b)
+    assert len(extract_inline_AHx(BytesIO(b + b" EI"))) == len(b)
     with pytest.raises(PdfReadError):
-        extract_inline_AHex(BytesIO(b + b"> "))
+        extract_inline_AHx(BytesIO(b + b"> "))
     # RL
     b = 8200 * b"\x00\xAB" + b"\x80"
     assert len(extract_inline_RL(BytesIO(b + b" EI"))) == len(b)
