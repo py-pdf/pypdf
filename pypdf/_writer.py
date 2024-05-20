@@ -154,17 +154,6 @@ class PdfWriter(PdfDocCommon):
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
     """
 
-    # for commonality
-    @property
-    def is_encrypted(self) -> bool:
-        """
-        Read-only boolean property showing whether this PDF file is encrypted.
-
-        Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
-        """
-        return False
-
     def __init__(
         self,
         fileobj: Union[None, PdfReader, StrByteType, Path] = "",
@@ -251,6 +240,17 @@ class PdfWriter(PdfDocCommon):
         self._encryption: Optional[Encryption] = None
         self._encrypt_entry: Optional[DictionaryObject] = None
         self._ID: Union[ArrayObject, None] = None
+
+    # for commonality
+    @property
+    def is_encrypted(self) -> bool:
+        """
+        Read-only boolean property showing whether this PDF file is encrypted.
+
+        Note that this property, if true, will remain true even after the
+        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
+        """
+        return False
 
     @property
     def root_object(self) -> DictionaryObject:
@@ -2471,7 +2471,7 @@ class PdfWriter(PdfDocCommon):
             elif isinstance(dest["/Page"], NullObject):
                 pass
             elif isinstance(dest["/Page"], int):
-                # the page reference is a page number normally not iaw Pdf Reference
+                # the page reference is a page number normally not a PDF Reference
                 # page numbers as int are normally accepted only in external goto
                 p = reader.pages[dest["/Page"]]
                 assert p.indirect_reference is not None

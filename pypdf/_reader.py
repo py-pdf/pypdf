@@ -164,7 +164,7 @@ class PdfReader(PdfDocCommon):
         Provide access to "/Info". standardized with PdfWriter.
 
         Returns:
-            /Info Dictionary ; None if the entry does not exists
+            /Info Dictionary; None if the entry does not exist
         """
         info = self.trailer.get(TK.INFO, None)
         if info is None:
@@ -183,7 +183,7 @@ class PdfReader(PdfDocCommon):
         Provide access to "/ID". standardized with PdfWriter.
 
         Returns:
-            /ID array ; None if the entry does not exists
+            /ID array; None if the entry does not exist
         """
         id = self.trailer.get(TK.ID, None)
         return None if id is None else cast(ArrayObject, id.get_object())
