@@ -84,7 +84,7 @@ from ._base import (
 from ._fit import Fit
 from ._image_inline import (
     extract_inline_A85,
-    extract_inline_AHex,
+    extract_inline_AHx,
     extract_inline_DCT,
     extract_inline_default,
     extract_inline_RL,
@@ -1165,7 +1165,7 @@ class ContentStream(DecodedStreamObject):
         if isinstance(filtr, list):
             filtr = filtr[0]  # used forencoding
         if "AHx" in filtr or "ASCIIHexDecode" in filtr:
-            data = extract_inline_AHex(stream)
+            data = extract_inline_AHx(stream)
         elif "A85" in filtr or "ASCII85Decode" in filtr:
             data = extract_inline_A85(stream)
         elif "RL" in filtr or "RunLengthDecode" in filtr:
