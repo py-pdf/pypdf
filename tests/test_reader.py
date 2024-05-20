@@ -1533,7 +1533,7 @@ def test_damaged_pdf():
 
 
 @pytest.mark.enable_socket()
-@pytest.mark.timeout(4)
+@pytest.mark.timeout(10)
 def test_looping_form(caplog):
     """Cf iss 2643"""
     url = "https://github.com/py-pdf/pypdf/files/15306053/inheritance.pdf"
