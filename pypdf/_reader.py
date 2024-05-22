@@ -113,7 +113,13 @@ class PdfReader(PdfDocCommon):
         self.flattened_pages: Optional[List[PageObject]] = None
         #: Storage of parsed PDF objects.
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
+
         self.xref_index = 0
+        self.xref: Dict[int, Dict[Any, Any]] = {}
+        self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
+        self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
+        self.trailer = DictionaryObject()
+
         self._page_id2num: Optional[
             Dict[Any, Any]
         ] = None  # map page indirect_reference number to Page Number
@@ -165,6 +171,12 @@ class PdfReader(PdfDocCommon):
         exc_tb: Optional[TracebackType],
     ) -> None:
         self.stream.close()
+        self.flattened_pages = []
+        self.resolved_objects = {}
+        self.trailer = DictionaryObject()
+        self.xref = {}
+        self.xref_free_entry = {}
+        self.xref_objStm = {}
 
     @property
     def root_object(self) -> DictionaryObject:
@@ -789,9 +801,9 @@ class PdfReader(PdfDocCommon):
     def _read_xref_tables_and_trailers(
         self, stream: StreamType, startxref: Optional[int], xref_issue_nr: int
     ) -> None:
-        self.xref: Dict[int, Dict[Any, Any]] = {}
-        self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
-        self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
+        self.xref = {}
+        self.xref_free_entry = {}
+        self.xref_objStm = {}
         self.trailer = DictionaryObject()
         while startxref is not None:
             # load the xref table
