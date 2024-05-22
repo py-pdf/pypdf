@@ -44,6 +44,29 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
+def test_fill_form_without_font(pdf_file_path):
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
+    writer = PdfWriter()
+
+    writer.append(reader, [0])
+    writer.append(RESOURCE_ROOT / "crazyones.pdf", [0])
+
+    writer.update_page_form_field_values(
+        writer.pages[0], {"foo": "some filled in text"}, flags=1
+    )
+
+    # check if no fields to fill in the page
+    writer.update_page_form_field_values(
+        writer.pages[1], {"foo": "some filled in text"}, flags=1
+    )
+
+    writer.update_page_form_field_values(
+        writer.pages[0], {"foo": "some filled in text"}
+    )
+
+    # write "output" to pypdf-output.pdf
+    with open(pdf_file_path, "wb") as output_stream:
+        writer.write(output_stream)
 
 def _get_write_target(convert) -> Any:
     target = convert
@@ -51,7 +74,6 @@ def _get_write_target(convert) -> Any:
         with NamedTemporaryFile(suffix=".pdf", delete=False) as temporary:
             target = temporary.name
     return target
-
 
 def test_writer_exception_non_binary(tmp_path, caplog):
     src = RESOURCE_ROOT / "pdflatex-outline.pdf"
