@@ -265,7 +265,7 @@ class PdfWriter(PdfDocCommon):
     @property
     def _info(self) -> Optional[DictionaryObject]:
         """
-        Provide access to "/Info". standardized with PdfReader.
+        Provide access to "/Info". Standardized with PdfReader.
 
         Returns:
             /Info Dictionary; None if the entry does not exist
