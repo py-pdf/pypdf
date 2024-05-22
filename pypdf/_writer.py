@@ -255,20 +255,20 @@ class PdfWriter(PdfDocCommon):
     @property
     def root_object(self) -> DictionaryObject:
         """
-        Provide direct access to Pdf Structure.
+        Provide direct access to PDF Structure.
 
         Note:
-            Recommended be used only for read access.
+            Recommended only for read access.
         """
         return self._root_object
 
     @property
     def _info(self) -> Optional[DictionaryObject]:
         """
-        Provide access to "/Info". standardized with PdfWriter.
+        Provide access to "/Info". standardized with PdfReader.
 
         Returns:
-            /Info Dictionary ; None if the entry does not exists
+            /Info Dictionary; None if the entry does not exist
         """
         return cast(DictionaryObject, self._info_obj.get_object())
 
@@ -320,7 +320,7 @@ class PdfWriter(PdfDocCommon):
         """
         Integration into Jupyter Notebooks.
 
-        This method returns a dictionary that maps a mime-type to it's
+        This method returns a dictionary that maps a mime-type to its
         representation.
 
         See https://ipython.readthedocs.io/en/stable/config/integrating.html

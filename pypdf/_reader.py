@@ -196,7 +196,7 @@ class PdfReader(PdfDocCommon):
         """
         Integration into Jupyter Notebooks.
 
-        This method returns a dictionary that maps a mime-type to it's
+        This method returns a dictionary that maps a mime-type to its
         representation.
 
         See https://ipython.readthedocs.io/en/stable/config/integrating.html
