@@ -31,6 +31,7 @@ import os
 import re
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
+from types import TracebackType
 from typing import (
     Any,
     Callable,
@@ -39,6 +40,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    Type,
     Union,
     cast,
 )
@@ -152,6 +154,17 @@ class PdfReader(PdfDocCommon):
             self._override_encryption = False
         elif password is not None:
             raise PdfReadError("Not encrypted file")
+
+    def __enter__(self) -> "PdfReader":
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        self.stream.close()
 
     @property
     def root_object(self) -> DictionaryObject:
