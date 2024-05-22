@@ -839,7 +839,7 @@ class PdfWriter(PdfDocCommon):
             font_dict = dr["/Font"]
             font_entry = DictionaryObject({
                 NameObject("/Type"): NameObject("/Font"),
-                NameObject("/Subtype"): NameObject("/Type1"),
+                NameObject("/Subtype"): NameObject("/TrueType"),
                 NameObject("/BaseFont"): NameObject("/Helvetica"),
                 NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
             })
