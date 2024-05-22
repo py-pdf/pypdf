@@ -46,10 +46,10 @@ NestedList = Union[int, None, List["NestedList"]]
 )
 def test_get_num_pages(src, num_pages):
     src = RESOURCE_ROOT / src
-    reader = PdfReader(src)
-    assert len(reader.pages) == num_pages
-    # from #1911
-    assert "/Size" in reader.trailer
+    with PdfReader(src) as reader:
+        assert len(reader.pages) == num_pages
+        # from #1911
+        assert "/Size" in reader.trailer
 
 
 @pytest.mark.parametrize(
@@ -111,20 +111,20 @@ def test_read_metadata(pdf_path, expected):
 
 
 def test_iss1943():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    docinfo = reader.metadata
-    docinfo.update(
-        {
-            NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
-            NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
-        }
-    )
-    docinfo.creation_date
-    docinfo.creation_date_raw
-    docinfo.modification_date
-    docinfo.modification_date_raw
-    docinfo.update({NameObject("/CreationDate"): NumberObject(1)})
-    assert docinfo.creation_date is None
+    with PdfReader(RESOURCE_ROOT / "crazyones.pdf") as reader:
+        docinfo = reader.metadata
+        docinfo.update(
+            {
+                NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
+                NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
+            }
+        )
+        docinfo.creation_date
+        docinfo.creation_date_raw
+        docinfo.modification_date
+        docinfo.modification_date_raw
+        docinfo.update({NameObject("/CreationDate"): NumberObject(1)})
+        assert docinfo.creation_date is None
 
 
 @pytest.mark.samples()
@@ -152,14 +152,13 @@ def test_broken_meta_data(pdf_path):
     ],
 )
 def test_get_annotations(src):
-    reader = PdfReader(src)
-
-    for page in reader.pages:
-        if PG.ANNOTS in page:
-            for annot in page[PG.ANNOTS]:
-                subtype = annot.get_object()[IA.SUBTYPE]
-                if subtype == "/Text":
-                    annot.get_object()[PG.CONTENTS]
+    with PdfReader(src) as reader:
+        for page in reader.pages:
+            if PG.ANNOTS in page:
+                for annot in page[PG.ANNOTS]:
+                    subtype = annot.get_object()[IA.SUBTYPE]
+                    if subtype == "/Text":
+                        annot.get_object()[PG.CONTENTS]
 
 
 @pytest.mark.parametrize(
