@@ -13,7 +13,7 @@ from zipfile import ZipFile
 import pytest
 from PIL import Image, ImageChops, ImageDraw
 
-from pypdf import PageObject, PdfReader
+from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf.generic import NameObject, NullObject
 
 from . import get_data_from_url
@@ -352,5 +352,23 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
 @pytest.mark.timeout(30)
 def test_large_compressed_image():
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf")))
+    reader = PdfReader(
+        BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf"))
+    )
     list(reader.pages[0].images)
+
+
+@pytest.mark.enable_socket()
+def test_ff_fe_starting_lut():
+    """Cf  issue #2660"""
+    url = "https://github.com/py-pdf/pypdf/files/15385628/original_before_merge.pdf"
+    name = "iss2660.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(b)
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/6150700d-87fd-43a2-8695-c2c05a44838c"
+    name = "iss2660.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(writer.pages[1].images[0].image, img) == 1.0
+    assert image_similarity(reader.pages[1].images[0].image, img) == 1.0

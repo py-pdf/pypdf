@@ -1,5 +1,6 @@
 """Test the pypdf.generic module."""
 
+import codecs
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -476,14 +477,13 @@ def test_rectangleobject():
 
 def test_textstringobject_exc():
     tso = TextStringObject("foo")
-    with pytest.raises(Exception) as exc:
-        tso.get_original_bytes()
-    assert exc.value.args[0] == "no information about original bytes"
+    assert tso.get_original_bytes() == b"foo"
 
 
 def test_textstringobject_autodetect_utf16():
     tso = TextStringObject("foo")
     tso.autodetect_utf16 = True
+    tso.utf16_bom = codecs.BOM_UTF16_BE
     assert tso.get_original_bytes() == b"\xfe\xff\x00f\x00o\x00o"
 
 
@@ -883,7 +883,7 @@ def test_annotation_builder_highlight(pdf_file_path):
                     FloatObject(705.4493),
                 ]
             ),
-            printing=False
+            printing=False,
         )
     writer.add_annotation(0, highlight_annotation)
     for annot in writer.pages[0]["/Annots"]:
@@ -910,7 +910,7 @@ def test_annotation_builder_highlight(pdf_file_path):
                     FloatObject(705.4493),
                 ]
             ),
-            printing=True
+            printing=True,
         )
     writer.add_annotation(1, highlight_annotation)
     for annot in writer.pages[1]["/Annots"]:
@@ -1098,20 +1098,37 @@ def test_indirect_object_invalid_read():
     assert exc.value.args[0] == "Error reading indirect object reference at byte 0x5"
 
 
-def test_create_string_object_utf16be_bom():
+def test_create_string_object_utf16_bom():
+    # utf16-be
     result = create_string_object(
         b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
     )
     assert result == "PaperPort 14\x00"
     assert result.autodetect_utf16 is True
+    assert result.utf16_bom == b"\xfe\xff"
+    assert (
+        result.get_encoded_bytes()
+        == b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
+    )
 
-
-def test_create_string_object_utf16le_bom():
+    # utf16-le
     result = create_string_object(
         b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
     )
     assert result == "PaperPort 14\x00"
     assert result.autodetect_utf16 is True
+    assert result.utf16_bom == b"\xff\xfe"
+    assert (
+        result.get_encoded_bytes()
+        == b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
+
+    # utf16-be without bom
+    result = TextStringObject("ÿ")
+    result.autodetect_utf16 = True
+    result.utf16_bom = b""
+    assert result.get_encoded_bytes() == b"\x00\xFF"
+    assert result.original_bytes == b"\x00\xFF"
 
 
 def test_create_string_object_force():

@@ -27,7 +27,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import codecs
 import collections
 import decimal
 import enum
@@ -182,13 +181,7 @@ class PdfWriter(PdfDocCommon):
 
         # info object
         info = DictionaryObject()
-        info.update(
-            {
-                NameObject("/Producer"): create_string_object(
-                    codecs.BOM_UTF16_BE + "pypdf".encode("utf-16be")
-                )
-            }
-        )
+        info.update({NameObject("/Producer"): create_string_object("pypdf")})
         self._info_obj: PdfObject = self._add_object(info)
 
         # root object

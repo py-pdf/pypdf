@@ -152,7 +152,7 @@ def _handle_flate(
     """
 
     def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
-        mask = (2 << bits) - 1
+        mask = (1 << bits) - 1
         nbuff = bytearray(size[0] * size[1])
         by = 0
         bit = 8 - bits
