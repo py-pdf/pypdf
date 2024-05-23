@@ -1138,13 +1138,12 @@ class PdfDocCommon:
         Remove page from pages list.
 
         Args:
-            page: int / PageObject / IndirectObject.
-                int: Page number to be removed.
+            int: Page number to be removed.
 
-                PageObject : page to be removed. If the page appears many times
-                only the first one will be removed.
+            PageObject: page to be removed. If the page appears many times
+            only the first one will be removed.
 
-                IndirectObject: Reference to page to be removed.
+            IndirectObject: Reference to page to be removed.
 
             clean: replace PageObject with NullObject to prevent annotations
                 or destinations to reference a detached page.
