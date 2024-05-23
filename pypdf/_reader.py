@@ -129,9 +129,11 @@ class PdfReader(PdfDocCommon):
                 "It may not be read correctly.",
                 __name__,
             )
+        self._stream_opened = False
         if isinstance(stream, (str, Path)):
             with open(stream, "rb") as fh:
                 stream = BytesIO(fh.read())
+            self._stream_opened = True
         self.read(stream)
         self.stream = stream
 
@@ -170,7 +172,12 @@ class PdfReader(PdfDocCommon):
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> None:
-        self.stream.close()
+        self.close()
+
+    def close(self) -> None:
+        """Close the stream if opened in __init__ and clear memory."""
+        if self._stream_opened:
+            self.stream.close()
         self.flattened_pages = []
         self.resolved_objects = {}
         self.trailer = DictionaryObject()
