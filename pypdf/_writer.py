@@ -64,6 +64,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
+    deprecate_with_replacement,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
