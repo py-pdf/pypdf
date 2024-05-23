@@ -228,8 +228,6 @@ def test_get_images(src, expected_images, tmp_path):
     assert len(images_extracted) == len(expected_images)
     for image, expected_image in zip(images_extracted, expected_images):
         assert image.name == expected_image
-        with open(tmp_path / f"test-out-{image.name}", "wb") as fp:
-            fp.write(image.data)
         assert (
             image.name.split(".")[-1].upper()
             == Image.open(io.BytesIO(image.data)).format
