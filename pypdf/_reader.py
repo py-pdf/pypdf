@@ -187,13 +187,13 @@ class PdfReader(PdfDocCommon):
 
     @property
     def root_object(self) -> DictionaryObject:
-        """Provide access to "/Root". standardized with PdfWriter."""
+        """Provide access to "/Root". Standardized with PdfWriter."""
         return cast(DictionaryObject, self.trailer[TK.ROOT].get_object())
 
     @property
     def _info(self) -> Optional[DictionaryObject]:
         """
-        Provide access to "/Info". standardized with PdfWriter.
+        Provide access to "/Info". Standardized with PdfWriter.
 
         Returns:
             /Info Dictionary; None if the entry does not exist
@@ -212,7 +212,7 @@ class PdfReader(PdfDocCommon):
     @property
     def _ID(self) -> Optional[ArrayObject]:
         """
-        Provide access to "/ID". standardized with PdfWriter.
+        Provide access to "/ID". Standardized with PdfWriter.
 
         Returns:
             /ID array; None if the entry does not exist
@@ -228,7 +228,7 @@ class PdfReader(PdfDocCommon):
         """
         Integration into Jupyter Notebooks.
 
-        This method returns a dictionary that maps a mime-type to it's
+        This method returns a dictionary that maps a mime-type to its
         representation.
 
         See https://ipython.readthedocs.io/en/stable/config/integrating.html
