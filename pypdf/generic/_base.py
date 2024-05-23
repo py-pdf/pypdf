@@ -571,7 +571,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         elif self.autodetect_pdfdocencoding:
             return encode_pdfdocencoding(self)
         else:
-            raise Exception("no information about original bytes")
+            raise Exception("no information about original bytes")  # pragma: no cover
 
     def get_encoded_bytes(self) -> bytes:
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
