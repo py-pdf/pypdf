@@ -1138,12 +1138,11 @@ class PdfDocCommon:
         Remove page from pages list.
 
         Args:
-            int: Page number to be removed.
-
-            PageObject: page to be removed. If the page appears many times
-            only the first one will be removed.
-
-            IndirectObject: Reference to page to be removed.
+            page:
+                * :class:`int`: Page number to be removed.
+                * :class:`~pypdf._page.PageObject`: page to be removed. If the page appears many times
+                  only the first one will be removed.
+                * :class:`~pypdf.generic.IndirectObject`: Reference to page to be removed.
 
             clean: replace PageObject with NullObject to prevent annotations
                 or destinations to reference a detached page.
