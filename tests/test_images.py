@@ -360,7 +360,7 @@ def test_large_compressed_image():
 
 @pytest.mark.enable_socket()
 def test_ff_fe_starting_lut():
-    """Cf  issue #2660"""
+    """Cf issue #2660"""
     url = "https://github.com/py-pdf/pypdf/files/15385628/original_before_merge.pdf"
     name = "iss2660.pdf"
     writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
