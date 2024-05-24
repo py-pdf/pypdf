@@ -1432,4 +1432,9 @@ def test_invalid_index():
     reader = PdfReader(src_abs)
     with pytest.raises(TypeError):
         _ = reader.pages["0"]
+
+
+def test_negative_index():
+    src_abs = RESOURCE_ROOT / "git.pdf"
+    reader = PdfReader(src_abs)
     assert reader.pages[0] == reader.pages[-1]
