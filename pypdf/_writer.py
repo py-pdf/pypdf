@@ -63,6 +63,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
+    deprecate_with_replacement,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
@@ -876,7 +877,7 @@ class PdfWriter(PdfDocCommon):
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
             if line in sel:
-                # may be improved but can not find how get fill working => replaced with lined box
+                # may be improved but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
                     f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{da}\n"
@@ -2192,7 +2193,7 @@ class PdfWriter(PdfDocCommon):
         """
         Add a single annotation to the page.
         The added annotation must be a new annotation.
-        It can not be recycled.
+        It cannot be recycled.
 
         Args:
             page_number: PageObject or page index.
@@ -2840,6 +2841,7 @@ class PdfWriter(PdfDocCommon):
         .. deprecated:: 2.9.0
             Use :meth:`find_outline_item` instead.
         """
+        deprecate_with_replacement("find_bookmark", "find_outline_item", "5.0.0")
         return self.find_outline_item(outline_item, root)
 
     def reset_translation(
