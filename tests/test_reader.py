@@ -217,7 +217,7 @@ def test_get_outline(src, outline_elements):
         (SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf", ["X0.png"]),
     ],
 )
-def test_get_images(src, expected_images, tmp_path):
+def test_get_images(src, expected_images):
     from PIL import Image
 
     src_abs = RESOURCE_ROOT / src
