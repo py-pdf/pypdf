@@ -1432,3 +1432,4 @@ def test_invalid_index():
     reader = PdfReader(src_abs)
     with pytest.raises(TypeError):
         _ = reader.pages["0"]
+    assert reader.pages[0] == reader.pages[-1]
