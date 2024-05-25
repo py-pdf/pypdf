@@ -413,26 +413,22 @@ def deprecation(msg: str) -> None:
 
 def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed, but has a replacement."""
-    DEPR_MSG = f"{old_name} is deprecated and will be removed in pypdf {removed_in}. Use {new_name} instead."
-    deprecate(DEPR_MSG, 4)
+    deprecate(f"{old_name} is deprecated and will be removed in pypdf {removed_in}. Use {new_name} instead.", 4)
 
 
 def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed, but has a replacement."""
-    DEPR_MSG_HAPPENED = f"{old_name} is deprecated and was removed in pypdf {removed_in}. Use {new_name} instead."
-    deprecation(DEPR_MSG_HAPPENED)
+    deprecation(f"{old_name} is deprecated and was removed in pypdf {removed_in}. Use {new_name} instead.")
 
 
 def deprecate_no_replacement(name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed without replacement."""
-    DEPR_MSG_NO_REPLACEMENT = f"{name} is deprecated and will be removed in pypdf {removed_in}."
-    deprecate(DEPR_MSG_NO_REPLACEMENT, 4)
+    deprecate(f"{name} is deprecated and will be removed in pypdf {removed_in}.", 4)
 
 
 def deprecation_no_replacement(name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed without replacement."""
-    DEPR_MSG_NO_REPLACEMENT_HAPPENED = f"{name} is deprecated and was removed in pypdf {removed_in}."
-    deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED)
+    deprecation(f"{name} is deprecated and was removed in pypdf {removed_in}.")
 
 
 def logger_error(msg: str, src: str) -> None:
