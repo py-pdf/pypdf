@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1716544349305,
+  "lastUpdate": 1716664155487,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -52607,6 +52607,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0720619665869406",
             "extra": "mean: 804.6172337999906 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "08731fa6289e23840ab70b564c0618aaa8df8ed9",
+          "message": "STY: Change deprecation functions to use f-strings (#2676)\n\n* STY: Change deprecation functions to use f-strings\r\n\r\n* STY: Change deprecation functions to use f-strings",
+          "timestamp": "2024-05-25T21:06:15+02:00",
+          "tree_id": "831e9e2f1f22791b9860400e2ed2da60e5856d64",
+          "url": "https://github.com/py-pdf/pypdf/commit/08731fa6289e23840ab70b564c0618aaa8df8ed9"
+        },
+        "date": 1716664152070,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.288242291555221,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014006502007510263",
+            "extra": "mean: 304.11384300000464 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.439850354933188,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008900037853207894",
+            "extra": "mean: 80.38681909090944 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2711315189981041,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013748468141050407",
+            "extra": "mean: 3.6882469574000085 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.464876610096873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001494489044203528",
+            "extra": "mean: 57.25777641176551 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06323366909462946,
+            "unit": "iter/sec",
+            "range": "stddev: 0.042676300077560445",
+            "extra": "mean: 15.814359886400007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2824971865923296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026097308569081657",
+            "extra": "mean: 779.7288060000028 msec\nrounds: 5"
           }
         ]
       }
