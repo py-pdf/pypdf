@@ -73,11 +73,6 @@ CompressedTransformationMatrix: TypeAlias = Tuple[
 StreamType = IO[Any]
 StrByteType = Union[str, StreamType]
 
-DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in pypdf {}."
-DEPR_MSG_NO_REPLACEMENT_HAPPENED = "{} is deprecated and was removed in pypdf {}."
-DEPR_MSG = "{} is deprecated and will be removed in pypdf {}. Use {} instead."
-DEPR_MSG_HAPPENED = "{} is deprecated and was removed in pypdf {}. Use {} instead."
-
 
 def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
     orgtext = text
@@ -418,22 +413,26 @@ def deprecation(msg: str) -> None:
 
 def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed, but has a replacement."""
-    deprecate(DEPR_MSG.format(old_name, removed_in, new_name), 4)
+    DEPR_MSG = f"{old_name} is deprecated and will be removed in pypdf {removed_in}. Use {new_name} instead."
+    deprecate(DEPR_MSG, 4)
 
 
 def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed, but has a replacement."""
-    deprecation(DEPR_MSG_HAPPENED.format(old_name, removed_in, new_name))
+    DEPR_MSG_HAPPENED = f"{old_name} is deprecated and was removed in pypdf {removed_in}. Use {new_name} instead."
+    deprecation(DEPR_MSG_HAPPENED)
 
 
 def deprecate_no_replacement(name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed without replacement."""
-    deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
+    DEPR_MSG_NO_REPLACEMENT = f"{name} is deprecated and will be removed in pypdf {removed_in}."
+    deprecate(DEPR_MSG_NO_REPLACEMENT, 4)
 
 
 def deprecation_no_replacement(name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed without replacement."""
-    deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
+    DEPR_MSG_NO_REPLACEMENT_HAPPENED = f"{name} is deprecated and was removed in pypdf {removed_in}."
+    deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED)
 
 
 def logger_error(msg: str, src: str) -> None:
