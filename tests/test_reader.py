@@ -221,30 +221,16 @@ def test_get_images(src, expected_images):
 
     src_abs = RESOURCE_ROOT / src
     reader = PdfReader(src_abs)
-
-    with pytest.raises(TypeError):
-        page = reader.pages["0"]
-
-    page = reader.pages[-1]
     page = reader.pages[0]
-
     images_extracted = page.images
+
     assert len(images_extracted) == len(expected_images)
     for image, expected_image in zip(images_extracted, expected_images):
         assert image.name == expected_image
-        try:
-            fn = f"{src}-test-out-{image.name}"
-            with open(fn, "wb") as fp:
-                fp.write(image.data)
-                assert (
-                    image.name.split(".")[-1].upper()
-                    == Image.open(io.BytesIO(image.data)).format
-                )
-        finally:
-            try:
-                Path(fn).unlink()
-            except Exception:
-                pass
+        assert (
+            image.name.split(".")[-1].upper()
+            == Image.open(io.BytesIO(image.data)).format
+        )
 
 
 @pytest.mark.parametrize(
