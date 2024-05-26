@@ -64,6 +64,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
+    deprecate_with_replacement,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
@@ -78,11 +79,8 @@ from .constants import (
     TypFitArguments,
     UserAccessPermissions,
 )
-from .constants import CatalogDictionary as CD
 from .constants import Core as CO
-from .constants import (
-    FieldDictionaryAttributes as FA,
-)
+from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
@@ -153,17 +151,6 @@ class PdfWriter(PdfDocCommon):
 
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
     """
-
-    # for commonality
-    @property
-    def is_encrypted(self) -> bool:
-        """
-        Read-only boolean property showing whether this PDF file is encrypted.
-
-        Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
-        """
-        return False
 
     def __init__(
         self,
@@ -252,23 +239,34 @@ class PdfWriter(PdfDocCommon):
         self._encrypt_entry: Optional[DictionaryObject] = None
         self._ID: Union[ArrayObject, None] = None
 
+    # for commonality
+    @property
+    def is_encrypted(self) -> bool:
+        """
+        Read-only boolean property showing whether this PDF file is encrypted.
+
+        Note that this property, if true, will remain true even after the
+        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
+        """
+        return False
+
     @property
     def root_object(self) -> DictionaryObject:
         """
-        Provide direct access to Pdf Structure.
+        Provide direct access to PDF Structure.
 
         Note:
-            Recommended be used only for read access.
+            Recommended only for read access.
         """
         return self._root_object
 
     @property
     def _info(self) -> Optional[DictionaryObject]:
         """
-        Provide access to "/Info". standardized with PdfWriter.
+        Provide access to "/Info". Standardized with PdfReader.
 
         Returns:
-            /Info Dictionary ; None if the entry does not exists
+            /Info Dictionary; None if the entry does not exist
         """
         return cast(DictionaryObject, self._info_obj.get_object())
 
@@ -320,7 +318,7 @@ class PdfWriter(PdfDocCommon):
         """
         Integration into Jupyter Notebooks.
 
-        This method returns a dictionary that maps a mime-type to it's
+        This method returns a dictionary that maps a mime-type to its
         representation.
 
         See https://ipython.readthedocs.io/en/stable/config/integrating.html
@@ -472,7 +470,7 @@ class PdfWriter(PdfDocCommon):
 
     def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
-        self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = self._add_object(o)
+        self._root_object[NameObject(CatalogDictionary.VIEWER_PREFERENCES)] = self._add_object(o)
         return o
 
     def add_page(
@@ -883,7 +881,7 @@ class PdfWriter(PdfDocCommon):
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
             if line in sel:
-                # may be improved but can not find how get fill working => replaced with lined box
+                # may be improved but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
                     f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{da}\n"
@@ -2199,7 +2197,7 @@ class PdfWriter(PdfDocCommon):
         """
         Add a single annotation to the page.
         The added annotation must be a new annotation.
-        It can not be recycled.
+        It cannot be recycled.
 
         Args:
             page_number: PageObject or page index.
@@ -2471,7 +2469,7 @@ class PdfWriter(PdfDocCommon):
             elif isinstance(dest["/Page"], NullObject):
                 pass
             elif isinstance(dest["/Page"], int):
-                # the page reference is a page number normally not iaw Pdf Reference
+                # the page reference is a page number normally not a PDF Reference
                 # page numbers as int are normally accepted only in external goto
                 p = reader.pages[dest["/Page"]]
                 assert p.indirect_reference is not None
@@ -2847,6 +2845,7 @@ class PdfWriter(PdfDocCommon):
         .. deprecated:: 2.9.0
             Use :meth:`find_outline_item` instead.
         """
+        deprecate_with_replacement("find_bookmark", "find_outline_item", "5.0.0")
         return self.find_outline_item(outline_item, root)
 
     def reset_translation(

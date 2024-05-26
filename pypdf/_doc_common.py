@@ -762,8 +762,8 @@ class PdfDocCommon:
     ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
         """
         Property to access the opening destination (``/OpenAction`` entry in
-        the PDF catalog). It returns ``None`` if the entry does not exist is not
-        set.
+        the PDF catalog). It returns ``None`` if the entry does not exist
+        or is not set.
 
         Raises:
             Exception: If a destination is invalid.
@@ -793,10 +793,9 @@ class PdfDocCommon:
     @property
     def outline(self) -> OutlineType:
         """
-        Read-only property for the outline present in the document.
-
+        Read-only property for the outline present in the document
         (i.e., a collection of 'outline items' which are also known as
-        'bookmarks')
+        'bookmarks').
         """
         return self._get_outline()
 
@@ -1002,8 +1001,8 @@ class PdfDocCommon:
         this property allows to get a page or a range of pages.
 
         For PdfWriter Only:
-        It provides also capability to remove a page/range of page from the list
-        (using the del operator)
+        Provides the capability to remove a page/range of page from the list
+        (using the del operator).
         Note: only the page entry is removed. As the objects beneath can be used
         elsewhere.
         A solution to completely remove them - if they are not used anywhere -
@@ -1139,16 +1138,14 @@ class PdfDocCommon:
         Remove page from pages list.
 
         Args:
-            page: int / PageObject / IndirectObject
-                PageObject : page to be removed. If the page appears many times
-                only the first one will be removed
+            page:
+                * :class:`int`: Page number to be removed.
+                * :class:`~pypdf._page.PageObject`: page to be removed. If the page appears many times
+                  only the first one will be removed.
+                * :class:`~pypdf.generic.IndirectObject`: Reference to page to be removed.
 
-                IndirectObject: Reference to page to be removed
-
-                int: Page number to be removed
-
-            clean: replace PageObject with NullObject to prevent destination,
-                annotation to reference a detached page
+            clean: replace PageObject with NullObject to prevent annotations
+                or destinations to reference a detached page.
         """
         if self.flattened_pages is None:
             self._flatten()
