@@ -79,11 +79,8 @@ from .constants import (
     TypFitArguments,
     UserAccessPermissions,
 )
-from .constants import CatalogDictionary as CD
 from .constants import Core as CO
-from .constants import (
-    FieldDictionaryAttributes as FA,
-)
+from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
@@ -473,7 +470,7 @@ class PdfWriter(PdfDocCommon):
 
     def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
-        self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = self._add_object(o)
+        self._root_object[NameObject(CatalogDictionary.VIEWER_PREFERENCES)] = self._add_object(o)
         return o
 
     def add_page(
