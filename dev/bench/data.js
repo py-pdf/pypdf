@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1716724719518,
+  "lastUpdate": 1716732769624,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -52805,6 +52805,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003566578512246352",
             "extra": "mean: 779.3976127999713 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c8d722cd21d52819d3738a622d7f931bdf622ad7",
+          "message": "STY: Within PdfWriter name CatalogDictionary consistently (#2680)\n\nCatalogDictionary is imported twice, with one of them is a rename: \"from .constants import CatalogDictionary as CD\". Removed this as \"CD\" is only used once.",
+          "timestamp": "2024-05-26T16:09:51+02:00",
+          "tree_id": "3ce612439c5e9dcb5396e12e7063d49197431652",
+          "url": "https://github.com/py-pdf/pypdf/commit/c8d722cd21d52819d3738a622d7f931bdf622ad7"
+        },
+        "date": 1716732766486,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2080824830446404,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016716090670108063",
+            "extra": "mean: 311.7126836000011 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.161497123989065,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010783589995987648",
+            "extra": "mean: 82.22671845454438 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2657785525512695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026685550047891398",
+            "extra": "mean: 3.7625308378000026 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.967708787342232,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000377868250516344",
+            "extra": "mean: 58.93547635294116 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06213978537662017,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08652716317291012",
+            "extra": "mean: 16.092749499200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2443491628261207,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005789617144015095",
+            "extra": "mean: 803.6329592000016 msec\nrounds: 5"
           }
         ]
       }
