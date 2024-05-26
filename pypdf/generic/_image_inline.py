@@ -1,4 +1,4 @@
-# Copyright (c) 2024, pypdf contributors 
+# Copyright (c) 2024, pypdf contributors
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
