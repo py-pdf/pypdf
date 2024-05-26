@@ -1024,7 +1024,7 @@ def test_inline_images():
         reader.pages[2]._get_image(("test",))
 
     url = "https://github.com/py-pdf/pypdf/files/15233597/bug1065245.pdf"
-    name = "iss2598c.pdf"  # test coming from another test in test_image.py
+    name = "iss2598c.pdf"  # test data also used in test_images.py/test_inline_image_extraction()
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert len(reader.pages[0].images) == 3
 
