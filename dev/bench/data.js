@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1716664155487,
+  "lastUpdate": 1716708630889,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -52673,6 +52673,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0026097308569081657",
             "extra": "mean: 779.7288060000028 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "75096465+tibor-reiss@users.noreply.github.com",
+            "name": "Tibor Reiss",
+            "username": "tibor-reiss"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b9920fa1bec3428b6249734efa1a9ce4bd94d14d",
+          "message": "ENH: context manager for pdfreader (#2666)\n\n* Add minimal change\r\n\r\n* Beautify\r\n\r\n* Update some tests to use the context manager\r\n\r\n* Implement feedback from CR\r\n\r\n* Add test for context manager with stream\r\n\r\n---------\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2024-05-26T09:27:32+02:00",
+          "tree_id": "dddc7b5a8349fb2e4b8513cb190a86ddcb957bfa",
+          "url": "https://github.com/py-pdf/pypdf/commit/b9920fa1bec3428b6249734efa1a9ce4bd94d14d"
+        },
+        "date": 1716708628305,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.318272270663925,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018717360542938979",
+            "extra": "mean: 301.3616480000053 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.487492059672286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008645344538181379",
+            "extra": "mean: 80.08013099999869 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2724560703461961,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00829813020649888",
+            "extra": "mean: 3.6703164614 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.287151514795173,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009163355410809164",
+            "extra": "mean: 57.8464300000004 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06309320872876868,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05403512598825538",
+            "extra": "mean: 15.849566381999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2717787956865214,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00878717126947663",
+            "extra": "mean: 786.3002617999996 msec\nrounds: 5"
           }
         ]
       }
