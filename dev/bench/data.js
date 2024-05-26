@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1716708630889,
+  "lastUpdate": 1716724719518,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -52739,6 +52739,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00878717126947663",
             "extra": "mean: 786.3002617999996 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "59fdd6ec486a811b227a6593590dd87c76c00bdc",
+          "message": "MAINT: Update AnnotationSubtype (#2679)\n\nAlso reordered FitType and AnnotationSubtype to be in the same order as tabled in ISO 32000-2:2020 (PDF 2.0).",
+          "timestamp": "2024-05-26T13:55:40+02:00",
+          "tree_id": "1abcdeb1d9a93d2149ff8dcac1064183e13efcc0",
+          "url": "https://github.com/py-pdf/pypdf/commit/59fdd6ec486a811b227a6593590dd87c76c00bdc"
+        },
+        "date": 1716724716123,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.370134537442326,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001898461045970479",
+            "extra": "mean: 296.7240591999996 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.555297479788806,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006889500505984353",
+            "extra": "mean: 79.64765483333025 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2745977169039861,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02470634384098804",
+            "extra": "mean: 3.641690875200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.411021080147652,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001149423608659583",
+            "extra": "mean: 57.43488537500063 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.060836418596606705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032513253976583695",
+            "extra": "mean: 16.437522508200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.283042164329345,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003566578512246352",
+            "extra": "mean: 779.3976127999713 msec\nrounds: 5"
           }
         ]
       }
