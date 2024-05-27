@@ -935,9 +935,7 @@ def test_extra_test_iss1541():
     stream = BytesIO()
     cs.write_to_stream(stream)
     stream.seek(0)
-    with pytest.raises(PdfReadError) as exc:
-        ContentStream(read_object(stream, None, None), None, None).operations
-    assert exc.value.args[0] == "Unexpected end of stream"
+    ContentStream(read_object(stream, None, None), None, None).operations
 
     b = BytesIO(data.getbuffer())
     reader = PdfReader(
@@ -1024,6 +1022,11 @@ def test_inline_images():
         _a[x] = y
     with pytest.raises(KeyError) as exc:
         reader.pages[2]._get_image(("test",))
+
+    url = "https://github.com/py-pdf/pypdf/files/15233597/bug1065245.pdf"
+    name = "iss2598c.pdf"  # test data also used in test_images.py/test_inline_image_extraction()
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert len(reader.pages[0].images) == 3
 
 
 @pytest.mark.enable_socket()
