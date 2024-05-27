@@ -139,7 +139,7 @@ class UserAccessPermissions(IntFlag):
 class Resources:
     """
     Table 3.30 Entries in a resource dictionary.
-    used to be Ressources
+    Used to be Ressources (a misspelling).
 
     Table 34 in the 2.0 reference.
     """
@@ -219,7 +219,8 @@ class PagesAttributes:
     TYPE = "/Type"  # name, required; must be /Pages
     PARENT = "/Parent"  # dictionary, required; indirect reference to pages object
     KIDS = "/Kids"  # array, required; List of indirect references
-    COUNT = "/Count"  # integer, required; the number of all nodes und this node
+    COUNT = "/Count"  # integer, required; the number of leaf nodes (page objects)
+                      # that are descendants of this node within the page tree
 
 
 class PageAttributes:
@@ -230,9 +231,7 @@ class PageAttributes:
 
     TYPE = "/Type"  # name, required; must be /Page
     PARENT = "/Parent"  # dictionary, required; a pages object
-    LAST_MODIFIED = (
-        "/LastModified"  # date, optional; date and time of last modification
-    )
+    LAST_MODIFIED = "/LastModified"  # date, optional; date and time of last modification
     RESOURCES = "/Resources"  # dictionary, required if there are any
     MEDIABOX = "/MediaBox"  # rectangle, required; rectangle specifying page size
     CROPBOX = "/CropBox"  # rectangle, optional; rectangle

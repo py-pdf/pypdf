@@ -342,8 +342,7 @@ class PdfWriter(PdfDocCommon):
     @property
     def pdf_header(self) -> str:
         """
-        Read/Write Property
-        Header of the PDF document that is written.
+        Read/Write property of the PDF header that is written.
 
         This should be something like ``'%PDF-1.5'``. It is recommended to set
         the lowest version that supports all features which are used within the
@@ -553,7 +552,7 @@ class PdfWriter(PdfDocCommon):
                 user space units.
 
         Returns:
-            The newly appended page
+            The newly appended page.
 
         Raises:
             PageSizeNotDefinedError: if width and height are not defined
@@ -581,7 +580,7 @@ class PdfWriter(PdfDocCommon):
             index: Position to add the page.
 
         Returns:
-            The newly appended page.
+            The newly inserted page.
 
         Raises:
             PageSizeNotDefinedError: if width and height are not defined
@@ -1098,7 +1097,7 @@ class PdfWriter(PdfDocCommon):
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
-        Copy the reader document root to the writer and all sub elements,
+        Copy the reader document root to the writer and all sub-elements,
         including pages, threads, outlines,... For partial insertion, ``append``
         should be considered.
 
@@ -1200,7 +1199,7 @@ class PdfWriter(PdfDocCommon):
                 By default, this flag is on.
             permissions_flag: permissions as described in
                 Table 3.20 of the PDF 1.7 specification. A bit value of 1 means
-                the permission is grantend.
+                the permission is granted.
                 Hence an integer value of -1 will set all flags.
                 Bit position 3 is for printing, 4 is for modifying content,
                 5 and 6 control annotations, 9 for form fields,
@@ -1758,7 +1757,7 @@ class PdfWriter(PdfDocCommon):
         Remove annotations by annotation subtype.
 
         Args:
-            subtypes: SubType or list of SubTypes to be removed.
+            subtypes: subtype or list of subtypes to be removed.
                 Examples are: "/Link", "/FileAttachment", "/Sound",
                 "/Movie", "/Screen", ...
                 If you want to remove all annotations, use subtypes=None.
