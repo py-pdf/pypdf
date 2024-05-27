@@ -1,5 +1,6 @@
 """Test the pypdf.generic module."""
 
+import codecs
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
