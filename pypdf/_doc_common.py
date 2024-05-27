@@ -337,7 +337,7 @@ class PdfDocCommon:
         Calculate the number of pages in this PDF file.
 
         Returns:
-            The number of pages of the parsed PDF file
+            The number of pages of the parsed PDF file.
 
         Raises:
             PdfReadError: if file is encrypted and restrictions prevent
@@ -357,7 +357,7 @@ class PdfDocCommon:
     def get_page(self, page_number: int) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
-        Most of the time ```.pages[page_number]``` is preferred.
+        Most of the time ``.pages[page_number]`` is preferred.
 
         Args:
             page_number: The page number to retrieve
