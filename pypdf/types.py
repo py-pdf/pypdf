@@ -10,7 +10,7 @@ else:
     from typing_extensions import Literal
 
 if sys.version_info[:2] >= (3, 10):
-    # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
+    # Python 3.10+: https://www.python.org/dev/peps/pep-0484
     from typing import TypeAlias
 else:
     from typing_extensions import TypeAlias
@@ -22,7 +22,7 @@ from .generic._outline import OutlineItem
 BorderArrayType: TypeAlias = List[Union[NameObject, NumberObject, ArrayObject]]
 OutlineItemType: TypeAlias = Union[OutlineItem, Destination]
 FitType: TypeAlias = Literal[
-    "/Fit", "/XYZ", "/FitH", "/FitV", "/FitR", "/FitB", "/FitBH", "/FitBV"
+    "/XYZ", "/Fit", "/FitH", "/FitV", "/FitR", "/FitB", "/FitBH", "/FitBV"
 ]
 # Those go with the FitType: They specify values for the fit
 ZoomArgType: TypeAlias = Union[NumberObject, NullObject, float]
@@ -61,21 +61,23 @@ AnnotationSubtype: TypeAlias = Literal[
     "/Polygon",
     "/PolyLine",
     "/Highlight",
-    "/Unterline",
+    "/Underline",
     "/Squiggly",
     "/StrikeOut",
-    "/Stamp",
     "/Caret",
+    "/Stamp",
     "/Ink",
     "/Popup",
     "/FileAttachment",
     "/Sound",
     "/Movie",
-    "/Widget",
     "/Screen",
+    "/Widget",
     "/PrinterMark",
     "/TrapNet",
     "/Watermark",
     "/3D",
     "/Redact",
+    "/Projection",
+    "/RichMedia",
 ]

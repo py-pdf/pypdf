@@ -80,6 +80,7 @@ from .generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     RectangleObject,
     StreamObject,
 )
@@ -456,8 +457,8 @@ class PageObject(DictionaryObject):
                 lst.append(o if len(ancest) == 0 else ancest + [o])
             else:  # is a form with possible images inside
                 lst.extend(self._get_ids_image(x_object[o], ancest + [o], call_stack))
-        if self.inline_images is not None:
-            lst.extend(list(self.inline_images.keys()))
+        assert self.inline_images is not None
+        lst.extend(list(self.inline_images.keys()))
         return lst
 
     def _get_image(
@@ -539,6 +540,46 @@ class PageObject(DictionaryObject):
         """
         return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
 
+    def _translate_value_inlineimage(self, k: str, v: PdfObject) -> PdfObject:
+        """Translate values used in inline image"""
+        try:
+            v = NameObject(
+                {
+                    "/G": "/DeviceGray",
+                    "/RGB": "/DeviceRGB",
+                    "/CMYK": "/DeviceCMYK",
+                    "/I": "/Indexed",
+                    "/AHx": "/ASCIIHexDecode",
+                    "/A85": "/ASCII85Decode",
+                    "/LZW": "/LZWDecode",
+                    "/Fl": "/FlateDecode",
+                    "/RL": "/RunLengthDecode",
+                    "/CCF": "/CCITTFaxDecode",
+                    "/DCT": "/DCTDecode",
+                    "/DeviceGray": "/DeviceGray",
+                    "/DeviceRGB": "/DeviceRGB",
+                    "/DeviceCMYK": "/DeviceCMYK",
+                    "/Indexed": "/Indexed",
+                    "/ASCIIHexDecode": "/ASCIIHexDecode",
+                    "/ASCII85Decode": "/ASCII85Decode",
+                    "/LZWDecode": "/LZWDecode",
+                    "/FlateDecode": "/FlateDecode",
+                    "/RunLengthDecode": "/RunLengthDecode",
+                    "/CCITTFaxDecode": "/CCITTFaxDecode",
+                    "/DCTDecode": "/DCTDecode",
+                }[cast(str, v)]
+            )
+        except (TypeError, KeyError):
+            if isinstance(v, NameObject):
+                # It is a custom name, thus we have to look in resources.
+                # The only applicable case is for ColorSpace.
+                try:
+                    res = cast(DictionaryObject, self["/Resources"])["/ColorSpace"]
+                    v = cast(DictionaryObject, res)[v]
+                except KeyError:  # for res and v
+                    raise PdfReadError(f"Cannot find resource entry {v} for {k}")
+        return v
+
     def _get_inline_images(self) -> Dict[str, ImageFile]:
         """
         get inline_images
@@ -581,51 +622,39 @@ class PageObject(DictionaryObject):
                 "/Length": len(ii["__streamdata__"]),
             }
             for k, v in ii["settings"].items():
-                try:
-                    v = NameObject(
-                        {
-                            "/G": "/DeviceGray",
-                            "/RGB": "/DeviceRGB",
-                            "/CMYK": "/DeviceCMYK",
-                            "/I": "/Indexed",
-                            "/AHx": "/ASCIIHexDecode",
-                            "/A85": "/ASCII85Decode",
-                            "/LZW": "/LZWDecode",
-                            "/Fl": "/FlateDecode",
-                            "/RL": "/RunLengthDecode",
-                            "/CCF": "/CCITTFaxDecode",
-                            "/DCT": "/DCTDecode",
-                        }[v]
+                if k in {"/Length", "/L"}:  # no length is expected
+                    continue
+                if isinstance(v, list):
+                    v = ArrayObject(
+                        [self._translate_value_inlineimage(k, x) for x in v]
                     )
-                except (TypeError, KeyError):
-                    if isinstance(v, NameObject):
-                        #  it is a custom name : we have to look in resources :
-                        # the only applicable case is for ColorSpace
-                        try:
-                            res = cast(DictionaryObject, self["/Resources"])[
-                                "/ColorSpace"
-                            ]
-                            v = cast(DictionaryObject, res)[v]
-                        except KeyError:  # for res and v
-                            raise PdfReadError(
-                                f"Can not find resource entry {v} for {k}"
-                            )
-                init[
-                    NameObject(
-                        {
-                            "/BPC": "/BitsPerComponent",
-                            "/CS": "/ColorSpace",
-                            "/D": "/Decode",
-                            "/DP": "/DecodeParms",
-                            "/F": "/Filter",
-                            "/H": "/Height",
-                            "/W": "/Width",
-                            "/I": "/Interpolate",
-                            "/Intent": "/Intent",
-                            "/IM": "/ImageMask",
-                        }[k]
-                    )
-                ] = v
+                else:
+                    v = self._translate_value_inlineimage(k, v)
+                k = NameObject(
+                    {
+                        "/BPC": "/BitsPerComponent",
+                        "/CS": "/ColorSpace",
+                        "/D": "/Decode",
+                        "/DP": "/DecodeParms",
+                        "/F": "/Filter",
+                        "/H": "/Height",
+                        "/W": "/Width",
+                        "/I": "/Interpolate",
+                        "/Intent": "/Intent",
+                        "/IM": "/ImageMask",
+                        "/BitsPerComponent": "/BitsPerComponent",
+                        "/ColorSpace": "/ColorSpace",
+                        "/Decode": "/Decode",
+                        "/DecodeParms": "/DecodeParms",
+                        "/Filter": "/Filter",
+                        "/Height": "/Height",
+                        "/Width": "/Width",
+                        "/Interpolate": "/Interpolate",
+                        "/ImageMask": "/ImageMask",
+                    }[k]
+                )
+                if k not in init:
+                    init[k] = v
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
             extension, byte_stream, img = _xobj_to_image(ii["object"])
             files[f"~{num}~"] = ImageFile(
@@ -922,6 +951,8 @@ class PageObject(DictionaryObject):
                 # as a backup solution, we put content as an object although not in accordance with pdf ref
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
+        # forces recalculation of inline_images
+        self.inline_images = None
 
     def merge_page(
         self, page2: "PageObject", expand: bool = False, over: bool = True

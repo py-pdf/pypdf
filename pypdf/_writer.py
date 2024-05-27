@@ -27,7 +27,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import codecs
 import collections
 import decimal
 import enum
@@ -64,6 +63,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
+    deprecate_with_replacement,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
@@ -78,11 +78,8 @@ from .constants import (
     TypFitArguments,
     UserAccessPermissions,
 )
-from .constants import CatalogDictionary as CD
 from .constants import Core as CO
-from .constants import (
-    FieldDictionaryAttributes as FA,
-)
+from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
@@ -154,17 +151,6 @@ class PdfWriter(PdfDocCommon):
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
     """
 
-    # for commonality
-    @property
-    def is_encrypted(self) -> bool:
-        """
-        Read-only boolean property showing whether this PDF file is encrypted.
-
-        Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
-        """
-        return False
-
     def __init__(
         self,
         fileobj: Union[None, PdfReader, StrByteType, Path] = "",
@@ -193,13 +179,7 @@ class PdfWriter(PdfDocCommon):
 
         # info object
         info = DictionaryObject()
-        info.update(
-            {
-                NameObject("/Producer"): create_string_object(
-                    codecs.BOM_UTF16_BE + "pypdf".encode("utf-16be")
-                )
-            }
-        )
+        info.update({NameObject("/Producer"): create_string_object("pypdf")})
         self._info_obj: PdfObject = self._add_object(info)
 
         # root object
@@ -252,23 +232,34 @@ class PdfWriter(PdfDocCommon):
         self._encrypt_entry: Optional[DictionaryObject] = None
         self._ID: Union[ArrayObject, None] = None
 
+    # for commonality
+    @property
+    def is_encrypted(self) -> bool:
+        """
+        Read-only boolean property showing whether this PDF file is encrypted.
+
+        Note that this property, if true, will remain true even after the
+        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
+        """
+        return False
+
     @property
     def root_object(self) -> DictionaryObject:
         """
-        Provide direct access to Pdf Structure.
+        Provide direct access to PDF Structure.
 
         Note:
-            Recommended be used only for read access.
+            Recommended only for read access.
         """
         return self._root_object
 
     @property
     def _info(self) -> Optional[DictionaryObject]:
         """
-        Provide access to "/Info". standardized with PdfWriter.
+        Provide access to "/Info". Standardized with PdfReader.
 
         Returns:
-            /Info Dictionary ; None if the entry does not exists
+            /Info Dictionary; None if the entry does not exist
         """
         return cast(DictionaryObject, self._info_obj.get_object())
 
@@ -320,7 +311,7 @@ class PdfWriter(PdfDocCommon):
         """
         Integration into Jupyter Notebooks.
 
-        This method returns a dictionary that maps a mime-type to it's
+        This method returns a dictionary that maps a mime-type to its
         representation.
 
         See https://ipython.readthedocs.io/en/stable/config/integrating.html
@@ -344,8 +335,7 @@ class PdfWriter(PdfDocCommon):
     @property
     def pdf_header(self) -> str:
         """
-        Read/Write Property
-        Header of the PDF document that is written.
+        Read/Write property of the PDF header that is written.
 
         This should be something like ``'%PDF-1.5'``. It is recommended to set
         the lowest version that supports all features which are used within the
@@ -472,7 +462,7 @@ class PdfWriter(PdfDocCommon):
 
     def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
-        self._root_object[NameObject(CD.VIEWER_PREFERENCES)] = self._add_object(o)
+        self._root_object[NameObject(CatalogDictionary.VIEWER_PREFERENCES)] = self._add_object(o)
         return o
 
     def add_page(
@@ -555,7 +545,7 @@ class PdfWriter(PdfDocCommon):
                 user space units.
 
         Returns:
-            The newly appended page
+            The newly appended page.
 
         Raises:
             PageSizeNotDefinedError: if width and height are not defined
@@ -583,7 +573,7 @@ class PdfWriter(PdfDocCommon):
             index: Position to add the page.
 
         Returns:
-            The newly appended page.
+            The newly inserted page.
 
         Raises:
             PageSizeNotDefinedError: if width and height are not defined
@@ -883,7 +873,7 @@ class PdfWriter(PdfDocCommon):
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
         for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
             if line in sel:
-                # may be improved but can not find how get fill working => replaced with lined box
+                # may be improved but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
                     f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{da}\n"
@@ -1100,7 +1090,7 @@ class PdfWriter(PdfDocCommon):
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
-        Copy the reader document root to the writer and all sub elements,
+        Copy the reader document root to the writer and all sub-elements,
         including pages, threads, outlines,... For partial insertion, ``append``
         should be considered.
 
@@ -1202,7 +1192,7 @@ class PdfWriter(PdfDocCommon):
                 By default, this flag is on.
             permissions_flag: permissions as described in
                 Table 3.20 of the PDF 1.7 specification. A bit value of 1 means
-                the permission is grantend.
+                the permission is granted.
                 Hence an integer value of -1 will set all flags.
                 Bit position 3 is for printing, 4 is for modifying content,
                 5 and 6 control annotations, 9 for form fields,
@@ -1760,7 +1750,7 @@ class PdfWriter(PdfDocCommon):
         Remove annotations by annotation subtype.
 
         Args:
-            subtypes: SubType or list of SubTypes to be removed.
+            subtypes: subtype or list of subtypes to be removed.
                 Examples are: "/Link", "/FileAttachment", "/Sound",
                 "/Movie", "/Screen", ...
                 If you want to remove all annotations, use subtypes=None.
@@ -2199,7 +2189,7 @@ class PdfWriter(PdfDocCommon):
         """
         Add a single annotation to the page.
         The added annotation must be a new annotation.
-        It can not be recycled.
+        It cannot be recycled.
 
         Args:
             page_number: PageObject or page index.
@@ -2471,7 +2461,7 @@ class PdfWriter(PdfDocCommon):
             elif isinstance(dest["/Page"], NullObject):
                 pass
             elif isinstance(dest["/Page"], int):
-                # the page reference is a page number normally not iaw Pdf Reference
+                # the page reference is a page number normally not a PDF Reference
                 # page numbers as int are normally accepted only in external goto
                 p = reader.pages[dest["/Page"]]
                 assert p.indirect_reference is not None
@@ -2847,6 +2837,7 @@ class PdfWriter(PdfDocCommon):
         .. deprecated:: 2.9.0
             Use :meth:`find_outline_item` instead.
         """
+        deprecate_with_replacement("find_bookmark", "find_outline_item", "5.0.0")
         return self.find_outline_item(outline_item, root)
 
     def reset_translation(

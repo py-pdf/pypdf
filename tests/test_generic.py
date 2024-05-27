@@ -1,5 +1,7 @@
 """Test the pypdf.generic module."""
 
+import codecs
+from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -15,6 +17,8 @@ from pypdf.generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
+    ContentStream,
+    DecodedStreamObject,
     Destination,
     DictionaryObject,
     Fit,
@@ -34,6 +38,12 @@ from pypdf.generic import (
     read_hex_string_from_stream,
     read_object,
     read_string_from_stream,
+)
+from pypdf.generic._image_inline import (
+    extract_inline_A85,
+    extract_inline_AHx,
+    extract_inline_DCT,
+    extract_inline_RL,
 )
 
 from . import ReaderDummy, get_data_from_url
@@ -476,14 +486,13 @@ def test_rectangleobject():
 
 def test_textstringobject_exc():
     tso = TextStringObject("foo")
-    with pytest.raises(Exception) as exc:
-        tso.get_original_bytes()
-    assert exc.value.args[0] == "no information about original bytes"
+    assert tso.get_original_bytes() == b"foo"
 
 
 def test_textstringobject_autodetect_utf16():
     tso = TextStringObject("foo")
     tso.autodetect_utf16 = True
+    tso.utf16_bom = codecs.BOM_UTF16_BE
     assert tso.get_original_bytes() == b"\xfe\xff\x00f\x00o\x00o"
 
 
@@ -883,7 +892,7 @@ def test_annotation_builder_highlight(pdf_file_path):
                     FloatObject(705.4493),
                 ]
             ),
-            printing=False
+            printing=False,
         )
     writer.add_annotation(0, highlight_annotation)
     for annot in writer.pages[0]["/Annots"]:
@@ -910,7 +919,7 @@ def test_annotation_builder_highlight(pdf_file_path):
                     FloatObject(705.4493),
                 ]
             ),
-            printing=True
+            printing=True,
         )
     writer.add_annotation(1, highlight_annotation)
     for annot in writer.pages[1]["/Annots"]:
@@ -1098,20 +1107,37 @@ def test_indirect_object_invalid_read():
     assert exc.value.args[0] == "Error reading indirect object reference at byte 0x5"
 
 
-def test_create_string_object_utf16be_bom():
+def test_create_string_object_utf16_bom():
+    # utf16-be
     result = create_string_object(
         b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
     )
     assert result == "PaperPort 14\x00"
     assert result.autodetect_utf16 is True
+    assert result.utf16_bom == b"\xfe\xff"
+    assert (
+        result.get_encoded_bytes()
+        == b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
+    )
 
-
-def test_create_string_object_utf16le_bom():
+    # utf16-le
     result = create_string_object(
         b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
     )
     assert result == "PaperPort 14\x00"
     assert result.autodetect_utf16 is True
+    assert result.utf16_bom == b"\xff\xfe"
+    assert (
+        result.get_encoded_bytes()
+        == b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
+
+    # utf16-be without bom
+    result = TextStringObject("ÿ")
+    result.autodetect_utf16 = True
+    result.utf16_bom = b""
+    assert result.get_encoded_bytes() == b"\x00\xFF"
+    assert result.original_bytes == b"\x00\xFF"
 
 
 def test_create_string_object_force():
@@ -1350,3 +1376,92 @@ def test_array_operators():
     la = len(a)
     a -= 300
     assert len(a) == la
+
+
+def test_unitary_extract_inline_buffer_invalid():
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO(4095 * b"00" + b"   "))
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO(b"00"))
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1")))
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1") + b"~> Q"))
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1234578" * 990)))
+    with pytest.raises(PdfReadError):
+        extract_inline_RL(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_RL(BytesIO(b"\x01\x01\x80"))
+    with pytest.raises(PdfReadError):
+        extract_inline_DCT(BytesIO(b"\xFF\xD9"))
+
+
+def test_unitary_extract_inline():
+    # AHx
+    b = 16000 * b"00"
+    assert len(extract_inline_AHx(BytesIO(b + b" EI"))) == len(b)
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO(b + b"> "))
+    # RL
+    b = 8200 * b"\x00\xAB" + b"\x80"
+    assert len(extract_inline_RL(BytesIO(b + b" EI"))) == len(b)
+
+    # default
+    # EIDD instead of EI; using A85
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F [/A85 /Fl]\nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>
+EIDD
+Q\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "EI stream not found" in exc.value.args[0]
+    # EIDD instead of EI; using /Fl (default extraction)
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F /Fl \nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>
+EIDD
+Q\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "Unexpected end of stream" in exc.value.args[0]
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F /Fl \nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>EI
+BT\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "Unexpected end of stream" in exc.value.args[0]
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 4 /H 4 /CS /G \nID
+abcdefghijklmnopEI
+Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 4 /H 4 \nID
+abcdefghijklmnopEI
+Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
