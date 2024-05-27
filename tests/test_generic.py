@@ -1,6 +1,6 @@
 """Test the pypdf.generic module."""
 
-import codecs
+from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -16,6 +16,8 @@ from pypdf.generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
+    ContentStream,
+    DecodedStreamObject,
     Destination,
     DictionaryObject,
     Fit,
@@ -35,6 +37,12 @@ from pypdf.generic import (
     read_hex_string_from_stream,
     read_object,
     read_string_from_stream,
+)
+from pypdf.generic._image_inline import (
+    extract_inline_A85,
+    extract_inline_AHx,
+    extract_inline_DCT,
+    extract_inline_RL,
 )
 
 from . import ReaderDummy, get_data_from_url
@@ -1367,3 +1375,92 @@ def test_array_operators():
     la = len(a)
     a -= 300
     assert len(a) == la
+
+
+def test_unitary_extract_inline_buffer_invalid():
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO(4095 * b"00" + b"   "))
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO(b"00"))
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1")))
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1") + b"~> Q"))
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1234578" * 990)))
+    with pytest.raises(PdfReadError):
+        extract_inline_RL(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_RL(BytesIO(b"\x01\x01\x80"))
+    with pytest.raises(PdfReadError):
+        extract_inline_DCT(BytesIO(b"\xFF\xD9"))
+
+
+def test_unitary_extract_inline():
+    # AHx
+    b = 16000 * b"00"
+    assert len(extract_inline_AHx(BytesIO(b + b" EI"))) == len(b)
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO(b + b"> "))
+    # RL
+    b = 8200 * b"\x00\xAB" + b"\x80"
+    assert len(extract_inline_RL(BytesIO(b + b" EI"))) == len(b)
+
+    # default
+    # EIDD instead of EI; using A85
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F [/A85 /Fl]\nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>
+EIDD
+Q\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "EI stream not found" in exc.value.args[0]
+    # EIDD instead of EI; using /Fl (default extraction)
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F /Fl \nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>
+EIDD
+Q\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "Unexpected end of stream" in exc.value.args[0]
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F /Fl \nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>EI
+BT\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "Unexpected end of stream" in exc.value.args[0]
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 4 /H 4 /CS /G \nID
+abcdefghijklmnopEI
+Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 4 /H 4 \nID
+abcdefghijklmnopEI
+Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    assert co.operations[7][0]["data"] == b"abcdefghijklmnop"

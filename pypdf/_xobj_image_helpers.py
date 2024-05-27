@@ -29,7 +29,7 @@ else:
 
 
 try:
-    from PIL import Image
+    from PIL import Image, UnidentifiedImageError  # noqa: F401
 except ImportError:
     raise ImportError(
         "pillow is required to do image extraction. "
@@ -121,6 +121,24 @@ def _get_imagemode(
         or prev_mode
     )
     return mode, mode == "CMYK"
+
+
+def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
+    mask = (1 << bits) - 1
+    nbuff = bytearray(size[0] * size[1])
+    by = 0
+    bit = 8 - bits
+    for y in range(size[1]):
+        if (bit != 0) and (bit != 8 - bits):
+            by += 1
+            bit = 8 - bits
+        for x in range(size[0]):
+            nbuff[y * size[0] + x] = (data[by] >> bit) & mask
+            bit -= bits
+            if bit < 0:
+                by += 1
+                bit = 8 - bits
+    return bytes(nbuff)
 
 
 def _extended_image_frombytes(

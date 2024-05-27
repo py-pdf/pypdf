@@ -372,3 +372,73 @@ def test_ff_fe_starting_lut():
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     assert image_similarity(writer.pages[1].images[0].image, img) == 1.0
     assert image_similarity(reader.pages[1].images[0].image, img) == 1.0
+
+
+@pytest.mark.enable_socket()
+def test_inline_image_extraction():
+    """Cf #2598"""
+    url = "https://github.com/py-pdf/pypdf/files/14982414/lebo102.pdf"
+    name = "iss2598.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    # there is no error because images are correctly extracted
+    reader.pages[1].extract_text()
+    reader.pages[2].extract_text()
+    reader.pages[3].extract_text()
+
+    url = "https://github.com/py-pdf/pypdf/files/15210011/Pages.62.73.from.0560-22_WSP.Plan_July.2022_Version.1.pdf"
+    name = "iss2598a.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].extract_text()
+    reader.pages[1].extract_text()
+
+    url = "https://github.com/mozilla/pdf.js/raw/master/test/pdfs/issue14256.pdf"
+    name = "iss2598b.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/71bc5053-cfc7-44ba-b7be-8e2333e2c749"
+    name = "iss2598b.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    for i in range(8):
+        assert image_similarity(writer.pages[0].images[i].image, img) == 1
+    writer.pages[0].extract_text()
+    # check recalculation of inline images
+    assert writer.pages[0].inline_images is not None
+    writer.pages[0].merge_scaled_page(writer.pages[0], 0.25)
+    assert writer.pages[0].inline_images is None
+    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    writer.pages[0].merge_page(reader.pages[0])
+    assert list(writer.pages[0].images.keys()) == [
+        "/Im0",
+        "~0~",
+        "~1~",
+        "~2~",
+        "~3~",
+        "~4~",
+        "~5~",
+        "~6~",
+        "~7~",
+        "~8~",
+        "~9~",
+        "~10~",
+        "~11~",
+        "~12~",
+        "~13~",
+        "~14~",
+        "~15~",
+    ]
+
+    url = "https://github.com/py-pdf/pypdf/files/15233597/bug1065245.pdf"
+    name = "iss2598c.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/bfb221be-11bd-46fe-8129-55a58088a4b6"
+    name = "iss2598c.jpg"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
+
+    url = "https://github.com/py-pdf/pypdf/files/15282904/tt.pdf"
+    name = "iss2598d.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/1a770e1b-9ad2-4125-89ae-6069992dda23"
+    name = "iss2598d.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(reader.pages[0].images[0].image, img) == 1
+    
