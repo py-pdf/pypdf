@@ -211,10 +211,7 @@ class Ressources:  # deprecated
 
 
 class PagesAttributes:
-    """
-    Page Attributes, Table 6.2, Page 52.
-    Page tree node, Table 30 in the 2.0 reference.
-    """
+    """§7.7.3.2 of the 1.7 and 2.0 reference."""
 
     TYPE = "/Type"  # name, required; must be /Pages
     PARENT = "/Parent"  # dictionary, required; indirect reference to pages object
@@ -224,10 +221,7 @@ class PagesAttributes:
 
 
 class PageAttributes:
-    """
-    Table 3.27 Entries in a page object.
-    Table 31 in the 2.0 reference.
-    """
+    """§7.7.3.3 of the 1.7 and 2.0 reference."""
 
     TYPE = "/Type"  # name, required; must be /Page
     PARENT = "/Parent"  # dictionary, required; a pages object
@@ -253,11 +247,15 @@ class PageAttributes:
     STRUCT_PARENTS = "/StructParents"  # integer, optional
     ID = "/ID"  # byte string, optional
     PZ = "/PZ"  # number, optional
+    SEPARATION_INFO = "/SeparationInfo"  # dictionary, optional
     TABS = "/Tabs"  # name, optional
     TEMPLATE_INSTANTIATED = "/TemplateInstantiated"  # name, optional
     PRES_STEPS = "/PresSteps"  # dictionary, optional
     USER_UNIT = "/UserUnit"  # number, optional
     VP = "/VP"  # dictionary, optional
+    AF = "/AF"  # array of dictionaries, optional
+    OUTPUT_INTENTS = "/OutputIntents"  # array, optional
+    D_PART = "/DPart"  # dictionary, required, if this page is within the range of a DPart, not permitted otherwise
 
 
 class FileSpecificationDictionaryEntries:
