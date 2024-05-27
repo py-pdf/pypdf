@@ -86,7 +86,7 @@ def merge():
     writer.append(reader)
 
     # PdfReader object:
-    writer.append(PdfReader(pdf_path, "rb"), outline_item=True)
+    writer.append(PdfReader(pdf_path, "rb"), outline_item="outline_top")
 
     # File handle
     with open(pdf_path, "rb") as fh:
