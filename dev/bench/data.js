@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1716732769624,
+  "lastUpdate": 1716793172537,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -52871,6 +52871,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005789617144015095",
             "extra": "mean: 803.6329592000016 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "23a81baad19e14ecaaa1949e52edd531b1c49efd",
+          "message": "ROB: Improve inline image extraction (#2622)\n\nCloses  #2598.",
+          "timestamp": "2024-05-27T08:56:30+02:00",
+          "tree_id": "8b8a333f30bc4c5a2c4bf41fbe3fc546a25af331",
+          "url": "https://github.com/py-pdf/pypdf/commit/23a81baad19e14ecaaa1949e52edd531b1c49efd"
+        },
+        "date": 1716793170135,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2075676754888307,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025594074348574522",
+            "extra": "mean: 311.7627128000038 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.953217077380302,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012695656923178412",
+            "extra": "mean: 83.65948627272505 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26205931883177597,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020058958798030317",
+            "extra": "mean: 3.815929936999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.03010394444072,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003715499906425921",
+            "extra": "mean: 58.71954764706168 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06200787565518509,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13138130767697714",
+            "extra": "mean: 16.126983700599975 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.318575521050093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038583537012364536",
+            "extra": "mean: 758.3941792000019 msec\nrounds: 5"
           }
         ]
       }
