@@ -508,6 +508,28 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
     to occur.
     """
 
+    autodetect_pdfdocencoding: bool
+    autodetect_utf16: bool
+    utf16_bom: bytes
+
+    def __new__(cls, value: Any) -> "TextStringObject":
+        if isinstance(value, bytes):
+            value = value.decode("charmap")
+        o = str.__new__(cls, value)
+        o.autodetect_utf16 = False
+        o.autodetect_pdfdocencoding = False
+        o.utf16_bom = b""
+        if value.startswith(("\xfe\xff", "\xff\xfe")):
+            o.autodetect_utf16 = True
+            o.utf16_bom = value[:2].encode("charmap")
+        else:
+            try:
+                encode_pdfdocencoding(o)
+                o.autodetect_pdfdocencoding = True
+            except UnicodeEncodeError:
+                o.autodetect_utf16 = True
+        return o
+
     def clone(
         self,
         pdf_dest: Any,
@@ -518,12 +540,10 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         obj = TextStringObject(self)
         obj.autodetect_pdfdocencoding = self.autodetect_pdfdocencoding
         obj.autodetect_utf16 = self.autodetect_utf16
+        obj.utf16_bom = self.utf16_bom
         return cast(
             "TextStringObject", self._reference_clone(obj, pdf_dest, force_duplicate)
         )
-
-    autodetect_pdfdocencoding = False
-    autodetect_utf16 = False
 
     @property
     def original_bytes(self) -> bytes:
@@ -542,20 +562,32 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         # would have been used to create this object, based upon the autodetect
         # method.
         if self.autodetect_utf16:
-            return codecs.BOM_UTF16_BE + self.encode("utf-16be")
+            if self.utf16_bom == codecs.BOM_UTF16_LE:
+                return codecs.BOM_UTF16_LE + self.encode("utf-16le")
+            elif self.utf16_bom == codecs.BOM_UTF16_BE:
+                return codecs.BOM_UTF16_BE + self.encode("utf-16be")
+            else:
+                return self.encode("utf-16be")
         elif self.autodetect_pdfdocencoding:
             return encode_pdfdocencoding(self)
         else:
-            raise Exception("no information about original bytes")
+            raise Exception("no information about original bytes")  # pragma: no cover
 
     def get_encoded_bytes(self) -> bytes:
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
         # here for trying...
         try:
+            if self.autodetect_utf16:
+                raise UnicodeEncodeError("", "forced", -1, -1, "")
             bytearr = encode_pdfdocencoding(self)
         except UnicodeEncodeError:
-            bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
+            if self.utf16_bom == codecs.BOM_UTF16_LE:
+                bytearr = codecs.BOM_UTF16_LE + self.encode("utf-16le")
+            elif self.utf16_bom == codecs.BOM_UTF16_BE:
+                bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
+            else:
+                bytearr = self.encode("utf-16be")
         return bytearr
 
     def write_to_stream(
