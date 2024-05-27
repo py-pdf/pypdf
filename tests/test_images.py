@@ -441,4 +441,3 @@ def test_inline_image_extraction():
     name = "iss2598d.png"
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     assert image_similarity(reader.pages[0].images[0].image, img) == 1
-    
