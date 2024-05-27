@@ -211,9 +211,7 @@ class Ressources:  # deprecated
 
 
 class PagesAttributes:
-    """
-    §7.7.3.2 of the 1.7 and 2.0 reference.
-    """
+    """§7.7.3.2 of the 1.7 and 2.0 reference."""
 
     TYPE = "/Type"  # name, required; must be /Pages
     PARENT = "/Parent"  # dictionary, required; indirect reference to pages object
@@ -223,9 +221,7 @@ class PagesAttributes:
 
 
 class PageAttributes:
-    """
-    §7.7.3.3 of the 1.7 and 2.0 reference.
-    """
+    """§7.7.3.3 of the 1.7 and 2.0 reference."""
 
     TYPE = "/Type"  # name, required; must be /Page
     PARENT = "/Parent"  # dictionary, required; a pages object
