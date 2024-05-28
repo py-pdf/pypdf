@@ -110,7 +110,7 @@ class AnnotationBuilder:
     Instead, use the annotation classes in pypdf.annotations.
 
     See `adding PDF annotations <../user/adding-pdf-annotations.html>`_ for
-    it's usage combined with PdfWriter.
+    its usage combined with PdfWriter.
     """
 
     from ..generic._rectangle import RectangleObject
@@ -291,7 +291,7 @@ class AnnotationBuilder:
             rect: array of four integers ``[xLL, yLL, xUR, yUR]``
                 specifying the clickable rectangular area
             interiour_color: None or hex-string for the color, e.g. cdcdcd
-                If None is used, the interiour is transparent.
+                If None is used, the interior is transparent.
 
         Returns:
             A dictionary object representing the annotation.
@@ -341,7 +341,7 @@ class AnnotationBuilder:
         interiour_color: Optional[str] = None,
     ) -> DictionaryObject:
         """
-        Draw a rectangle on the PDF.
+        Draw an ellipse on the PDF.
 
         This method uses the /Circle annotation type of the PDF format.
 
@@ -349,7 +349,7 @@ class AnnotationBuilder:
             rect: array of four integers ``[xLL, yLL, xUR, yUR]`` specifying
                 the bounding box of the ellipse
             interiour_color: None or hex-string for the color, e.g. cdcdcd
-                If None is used, the interiour is transparent.
+                If None is used, the interior is transparent.
 
         Returns:
             A dictionary object representing the annotation.
