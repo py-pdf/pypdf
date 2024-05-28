@@ -209,7 +209,7 @@ class Rectangle(MarkupAnnotation):
         self,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         *,
-        interiour_color: Optional[str] = None,
+        interior_color: Optional[str] = None,
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
@@ -221,7 +221,11 @@ class Rectangle(MarkupAnnotation):
             }
         )
 
-        if interiour_color:
+        if kwargs.get("interiour_color"):
+            interior_color = kwargs["interiour_color"]
+            deprecate_with_replacement("interiour_color", "interior_color", "6.0.0")
+
+        if interior_color:
             self[NameObject("/IC")] = ArrayObject(
                 [FloatObject(n) for n in hex_to_rgb(interiour_color)]
             )
@@ -257,7 +261,7 @@ class Ellipse(MarkupAnnotation):
         self,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         *,
-        interiour_color: Optional[str] = None,
+        interior_color: Optional[str] = None,
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
@@ -269,7 +273,11 @@ class Ellipse(MarkupAnnotation):
             }
         )
 
-        if interiour_color:
+        if kwargs.get("interiour_color"):
+            interior_color = kwargs["interiour_color"]
+            deprecate_with_replacement("interiour_color", "interior_color", "6.0.0")
+
+        if interior_color:
             self[NameObject("/IC")] = ArrayObject(
                 [FloatObject(n) for n in hex_to_rgb(interiour_color)]
             )
