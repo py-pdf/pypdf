@@ -10,13 +10,13 @@ from pypdf import PdfReader, PdfWriter
 reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
-# Add page 1 from reader to output document, unchanged
+# Add page 1 from reader to output document, unchanged.
 writer.add_page(reader.pages[0])
 
-# Add page 2 from reader, but rotated clockwise 90 degrees
+# Add page 2 from reader, but rotated clockwise 90 degrees.
 writer.add_page(reader.pages[1].rotate(90))
 
-# Add page 3 from reader, but crop it to half size
+# Add page 3 from reader, but crop it to half size.
 page3 = reader.pages[2]
 page3.mediabox.upper_right = (
     page3.mediabox.right / 2,
@@ -30,7 +30,7 @@ writer.add_page(page3)
 # https://opensource.adobe.com/dc-acrobat-sdk-docs/library/jsapiref/index.html
 writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
-# write to document-output.pdf
+# Write to pypdf-output.pdf.
 with open("pypdf-output.pdf", "wb") as fp:
     writer.write(fp)
 ```
