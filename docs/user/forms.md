@@ -95,9 +95,9 @@ However, while similar, there are some very important differences between the tw
 
 However, it is also important to note that the two lists do not *always* refer to the same underlying PDF object. For example, if the form contains radio buttons, you will find that `reader.get_fields()` will get the parent object (the group of radio buttons) whereas `page.annotations` will return all the child objects (the individual radio buttons).
 
-.. note::
-
-   Remember that fields are not stored in pages; if you use `add_page()` the field structure is not copied. It is recommended to use `.append()` with the proper parameters instead.
+```{note}
+Remember that fields are not stored in pages; if you use `add_page()` the field structure is not copied. It is recommended to use `.append()` with the proper parameters instead.
+```
 
 In case of missing _field_ objects in `/Fields`, `writer.reattach_fields()` will parse page(s) annotations and will reattach them. This fix cannot guess intermediate fields and will not report fields using the same _name_.
 
