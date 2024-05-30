@@ -38,7 +38,7 @@ with open("filled-out.pdf", "wb") as output_stream:
 
 Generally speaking, you will always want to use `auto_regenerate=False`. The
 parameter is `True` by default for legacy compatibility, but this flags the PDF
-Viewer to recompute the field's rendering, and may trigger a "save changes"
+processor to recompute the field's rendering, and may trigger a "save changes"
 dialog for users who open the generated PDF.
 
 ## Some notes about form fields and annotations
@@ -58,10 +58,10 @@ PDF forms have a dual-nature approach about the fields:
 To flesh out this overview:
 
 * The core specific properties of a field are:
-  - `/FT`: Field Type (Button, Text, Choice, Signatures)
-  - `/T`: Partial Field Name (see PDF Reference for more details)
-  - `/V`: Field Value
-  - `/DV` : Default Field Value (used when resetting a form for example)
+  - `/FT`: The field type (Button, Text, Choice, or Signature).
+  - `/T`:  The partial field name.
+  - `/V`:  The field’s value, whose format varies depending on the field type.
+  - `/DV`: The default value to which the field reverts when a reset-form action is executed.
 * In order to streamline readability, _Field_ Objects and _Widget_ Objects can be fused housing all properties.
 * Fields can be organised hierarchically, id est one field can be placed under another. In such instances, the `/Parent` will have an IndirectObject providing Bottom-Up links and `/Kids` is an array carrying IndirectObjects for Top-Down navigation; _Widget_ Objects are still required for visual rendering. To call upon them, use the *fully qualified field name* (where all the individual names of the parent objects are separated by `.`)
 
@@ -95,7 +95,7 @@ However, while similar, there are some very important differences between the tw
 
 However, it is also important to note that the two lists do not *always* refer to the same underlying PDF object. For example, if the form contains radio buttons, you will find that `reader.get_fields()` will get the parent object (the group of radio buttons) whereas `page.annotations` will return all the child objects (the individual radio buttons).
 
-__Caution: Remember that fields are not stored in pages; if you use  `add_page()` the field structure is not copied. It is recommended to use `.append()` with the proper parameters instead.__
+__Remember that fields are not stored in pages; if you use  `add_page()` the field structure is not copied. It is recommended to use `.append()` with the proper parameters instead.__
 
 In case of missing _field_ objects in `/Fields`, `writer.reattach_fields()` will parse page(s) annotations and will reattach them. This fix cannot guess intermediate fields and will not report fields using the same _name_.
 
