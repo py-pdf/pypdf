@@ -215,7 +215,7 @@ with open("annotated-pdf.pdf", "wb") as fp:
 
 ## Popup
 
-Manage the Popup windows for markups. looks like this:
+Manage the Popup windows for markups, looks like this:
 
 ![](annotation-popup.png)
 
