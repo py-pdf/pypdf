@@ -51,7 +51,9 @@ from typing import (
     Union,
     cast,
 )
+from weakref import WeakKeyDictionary
 
+from ._protocols import PdfReaderProtocol
 from ._cmap import build_char_map_from_dict
 from ._doc_common import PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
@@ -163,7 +165,7 @@ class PdfWriter(PdfDocCommon):
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
         """Maps hash values of indirect objects to their IndirectObject instances."""
 
-        self._id_translated: Dict[int, Dict[int, int]] = {}
+        self._id_translated: "WeakKeyDictionary[PdfReaderProtocol, dict[int, int]]" = WeakKeyDictionary()
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -410,7 +412,7 @@ class PdfWriter(PdfDocCommon):
         # page, we need to create a new dictionary for the page, however the
         # objects below (including content) are not duplicated:
         try:  # delete an already existing page
-            del self._id_translated[id(page_org.indirect_reference.pdf)][  # type: ignore
+            del self._id_translated[page_org.indirect_reference.pdf][  # type: ignore
                 page_org.indirect_reference.idnum  # type: ignore
             ]
         except Exception:
@@ -2523,7 +2525,7 @@ class PdfWriter(PdfDocCommon):
                     ArrayObject,
                     cast(DictionaryObject, self._root_object["/AcroForm"])["/Fields"],
                 )
-            trslat = self._id_translated[id(reader)]
+            trslat = self._id_translated[reader]
             try:
                 for f in reader.root_object["/AcroForm"]["/Fields"]:  # type: ignore
                     try:
@@ -2636,7 +2638,7 @@ class PdfWriter(PdfDocCommon):
                 else:
                     thr = thr.get_object()
                 if thr.indirect_reference.idnum not in self._id_translated[
-                    id(reader)
+                    reader
                 ] and fltr.search((thr["/I"] if "/I" in thr else {}).get("/Title", "")):
                     self._add_articles_thread(thr, pages, reader)
 
@@ -2853,15 +2855,15 @@ class PdfWriter(PdfDocCommon):
                 if set to None or omitted, all tables will be reset.
         """
         if reader is None:
-            self._id_translated = {}
+            self._id_translated = WeakKeyDictionary()
         elif isinstance(reader, PdfReader):
             try:
-                del self._id_translated[id(reader)]
+                del self._id_translated[reader]
             except Exception:
                 pass
         elif isinstance(reader, IndirectObject):
             try:
-                del self._id_translated[id(reader.pdf)]
+                del self._id_translated[reader.pdf]
             except Exception:
                 pass
         else:
