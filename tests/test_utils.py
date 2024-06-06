@@ -430,11 +430,11 @@ def test_bad_version():
 def test_classproperty():
     class Container:
         @classproperty
-        def value1(cls):
+        def value1(cls) -> int:  # noqa: N805
             return 42
 
         @classproperty
-        def value2(cls):
+        def value2(cls) -> int:  # noqa: N805
             return 1337
 
     assert Container.value1 == 42

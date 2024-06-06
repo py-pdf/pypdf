@@ -666,18 +666,18 @@ class Version:
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------------
-class classproperty:
+class classproperty:  # noqa: N801
     """
     Decorator that converts a method with a single cls argument into a property
     that can be accessed directly from the class.
     """
 
-    def __init__(self, method=None):
+    def __init__(self, method=None):  # noqa: ANN001
         self.fget = method
 
-    def __get__(self, instance, cls=None):
+    def __get__(self, instance, cls=None) -> Any:  # noqa: ANN001
         return self.fget(cls)
 
-    def getter(self, method):
+    def getter(self, method):  # noqa: ANN001, ANN202
         self.fget = method
         return self

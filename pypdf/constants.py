@@ -162,42 +162,42 @@ class Ressources:  # deprecated
     """
 
     @classproperty
-    def EXT_G_STATE(cls) -> str:
+    def EXT_G_STATE(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/ExtGState"  # dictionary, optional
 
     @classproperty
-    def COLOR_SPACE(cls) -> str:
+    def COLOR_SPACE(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/ColorSpace"  # dictionary, optional
 
     @classproperty
-    def PATTERN(cls) -> str:
+    def PATTERN(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Pattern"  # dictionary, optional
 
     @classproperty
-    def SHADING(cls) -> str:
+    def SHADING(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Shading"  # dictionary, optional
 
     @classproperty
-    def XOBJECT(cls) -> str:
+    def XOBJECT(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/XObject"  # dictionary, optional
 
     @classproperty
-    def FONT(cls) -> str:
+    def FONT(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Font"  # dictionary, optional
 
     @classproperty
-    def PROC_SET(cls) -> str:
+    def PROC_SET(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/ProcSet"  # array, optional
 
     @classproperty
-    def PROPERTIES(cls) -> str:
+    def PROPERTIES(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Properties"  # dictionary, optional
 
