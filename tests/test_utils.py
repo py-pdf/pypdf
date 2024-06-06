@@ -442,7 +442,7 @@ def test_classproperty():
             return 1
 
         @value3.getter
-        def value3(cls) -> int:
+        def value3(cls) -> int:  # noqa: N805
             return 2
 
     assert Container.value1 == 42
