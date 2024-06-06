@@ -1272,7 +1272,7 @@ def test_iss1615_1673():
 @pytest.mark.enable_socket()
 def test_destination_withoutzoom():
     """Cf issue #1832"""
-    url = "https://link.springer.com/content/pdf/10.1007/978-3-030-10591-4.pdf"
+    url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
     name = "2021_book_security.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.outline
@@ -1316,7 +1316,7 @@ def test_encodedstream_set_data():
 @pytest.mark.enable_socket()
 def test_calling_indirect_objects():
     """Cope with cases where attributes/items are called from indirectObject"""
-    url = "https://link.springer.com/content/pdf/10.1007/978-3-030-10591-4.pdf"
+    url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
     name = "2021_book_security.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.trailer.get("/Info")["/Creator"]
