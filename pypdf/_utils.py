@@ -672,12 +672,12 @@ class classproperty:  # noqa: N801
     that can be accessed directly from the class.
     """
 
-    def __init__(self, method=None):  # noqa: ANN001
+    def __init__(self, method=None):  # noqa: ANN001  # type: ignore[no-untyped-def]
         self.fget = method
 
-    def __get__(self, instance, cls=None) -> Any:  # noqa: ANN001
+    def __get__(self, instance, cls=None) -> Any:  # noqa: ANN001  # type: ignore[no-untyped-def]
         return self.fget(cls)
 
-    def getter(self, method):  # noqa: ANN001, ANN202
+    def getter(self, method):  # noqa: ANN001, ANN202  # type: ignore[no-untyped-def]
         self.fget = method
         return self
