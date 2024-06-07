@@ -52,7 +52,7 @@ from typing import (
     cast,
 )
 
-from ._cmap import build_char_map_from_dict
+from ._cmap import _default_fonts_space_width, build_char_map_from_dict
 from ._doc_common import PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject
@@ -824,7 +824,8 @@ class PdfWriter(PdfDocCommon):
             ).get_object(),
         )
         dr = dr.get("/Font", DictionaryObject()).get_object()
-        if font_name not in dr:
+        # _default_fonts_space_width keys is the list of Standard fonts
+        if font_name not in dr and font_name not in _default_fonts_space_width:
             # ...or AcroForm dictionary
             dr = cast(
                 Dict[Any, Any],

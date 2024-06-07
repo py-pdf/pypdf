@@ -2253,3 +2253,19 @@ def test_selfont():
     assert (
         b"Text_2" in writer.pages[0]["/Annots"][2].get_object()["/AP"]["/N"].get_data()
     )
+
+
+@pytest.mark.enable_socket()
+def test_no_ressource_for_14_std_fonts(caplog):
+    """Cf #2670"""
+    url = "https://github.com/py-pdf/pypdf/files/15405390/f1040.pdf"
+    name = "iss2670.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    p = writer.pages[0]
+    for a in p["/Annots"]:
+        a = a.get_object()
+        if a["/FT"] == "/Tx":
+            writer.update_page_form_field_values(
+                p, {a["/T"]: "Brooks"}, auto_regenerate=False
+            )
+    assert "Font dictionary for /Helvetica not found." in caplog.text
