@@ -3,11 +3,51 @@
 from pathlib import Path
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.annotations import FreeText, Text
+from pypdf.annotations import Ellipse, FreeText, Rectangle, Text
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+
+
+def test_ellipse_annotation(pdf_file_path):
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    ellipse_annotation = Ellipse(
+        rect=(50, 550, 500, 650),
+        interior_color="ff0000",
+    )
+    writer.add_annotation(0, ellipse_annotation)
+
+    # Assert: You need to inspect the file manually
+    with open(pdf_file_path, "wb") as fp:
+        writer.write(fp)
+
+
+def test_rectangle_annotation(pdf_file_path):
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    rectangle_annotation = Rectangle(
+        rect=(50, 550, 500, 650),
+        interior_color="ff0000",
+    )
+    writer.add_annotation(0, rectangle_annotation)
+
+    # Assert: You need to inspect the file manually
+    with open(pdf_file_path, "wb") as fp:
+        writer.write(fp)
 
 
 def test_text_annotation(pdf_file_path):

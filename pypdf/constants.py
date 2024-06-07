@@ -14,7 +14,7 @@ ISO 32000-2:2020 (PDF 2.0)
 from enum import IntFlag, auto
 from typing import Dict, Tuple
 
-from ._utils import deprecate_with_replacement
+from ._utils import classproperty, deprecate_with_replacement
 
 
 class Core:
@@ -161,51 +161,43 @@ class Ressources:  # deprecated
     .. deprecated:: 5.0.0
     """
 
-    @classmethod  # type: ignore
-    @property
-    def EXT_G_STATE(cls) -> str:
+    @classproperty
+    def EXT_G_STATE(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/ExtGState"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def COLOR_SPACE(cls) -> str:
+    @classproperty
+    def COLOR_SPACE(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/ColorSpace"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def PATTERN(cls) -> str:
+    @classproperty
+    def PATTERN(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Pattern"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def SHADING(cls) -> str:
+    @classproperty
+    def SHADING(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Shading"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def XOBJECT(cls) -> str:
+    @classproperty
+    def XOBJECT(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/XObject"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def FONT(cls) -> str:
+    @classproperty
+    def FONT(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Font"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def PROC_SET(cls) -> str:
+    @classproperty
+    def PROC_SET(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/ProcSet"  # array, optional
 
-    @classmethod  # type: ignore
-    @property
-    def PROPERTIES(cls) -> str:
+    @classproperty
+    def PROPERTIES(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Properties"  # dictionary, optional
 

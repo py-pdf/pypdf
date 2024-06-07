@@ -5,18 +5,18 @@
 > away can still be restored.
 
 ```python
-from pypdf import PdfWriter, PdfReader
+from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
-# add page 1 from reader to output document, unchanged:
+# Add page 1 from reader to output document, unchanged.
 writer.add_page(reader.pages[0])
 
-# add page 2 from reader, but rotated clockwise 90 degrees:
+# Add page 2 from reader, but rotated clockwise 90 degrees.
 writer.add_page(reader.pages[1].rotate(90))
 
-# add page 3 from reader, but crop it to half size:
+# Add page 3 from reader, but crop it to half size.
 page3 = reader.pages[2]
 page3.mediabox.upper_right = (
     page3.mediabox.right / 2,
@@ -24,12 +24,13 @@ page3.mediabox.upper_right = (
 )
 writer.add_page(page3)
 
-# add some Javascript to launch the print window on opening this PDF.
-# the password dialog may prevent the print dialog from being shown,
-# comment the the encryption lines, if that's the case, to try this out:
+# Add some JavaScript to launch the print window on opening this PDF.
+# The password dialog may prevent the print dialog from being shown,
+# comment the encryption lines, if that's the case, to try this out.
+# https://opensource.adobe.com/dc-acrobat-sdk-docs/library/jsapiref/index.html
 writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
-# write to document-output.pdf
+# Write to pypdf-output.pdf.
 with open("pypdf-output.pdf", "wb") as fp:
     writer.write(fp)
 ```
@@ -42,11 +43,10 @@ do that with the [`rotate` method](https://pypdf.readthedocs.io/en/latest/module
 of the `PageObject` class:
 
 ```python
-from pypdf import PdfWriter, PdfReader
+from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("input.pdf")
 writer = PdfWriter()
-
 
 writer.add_page(reader.pages[0])
 writer.pages[0].rotate(90)
@@ -219,7 +219,7 @@ We have designed the following business card (A8 format) to advertise our new st
 We would like to copy this card sixteen times on an A4 page, to print it, cut it, and give it to all our friends. Having learned about the ``merge_page()`` method and the ``Transformation`` class, we run the following code. Notice that we had to tweak the media box of the source page to extend it, which is already a dirty hack (in this case).
 
 ```python
-from pypdf import PdfReader, PdfWriter, Transformation, PaperSize
+from pypdf import PaperSize, PdfReader, PdfWriter, Transformation
 
 # Read source file
 reader = PdfReader("nup-source.pdf")
@@ -261,7 +261,7 @@ We need a way to merge a transformed page, *without* modifying the source page. 
 - transformations are only applied *once*.
 
 ```python
-from pypdf import PdfReader, PdfWriter, Transformation, PaperSize
+from pypdf import PaperSize, PdfReader, PdfWriter, Transformation
 
 # Read source file
 reader = PdfReader("nup-source.pdf")

@@ -2197,8 +2197,8 @@ class PdfWriter(PdfDocCommon):
             annotation: Annotation to be added (created with annotation).
 
         Returns:
-            The inserted object
-            This can be used for pop-up creation, for example
+            The inserted object.
+            This can be used for popup creation, for example.
         """
         page = page_number
         if isinstance(page, int):
