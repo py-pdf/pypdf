@@ -210,9 +210,13 @@ class Rectangle(MarkupAnnotation):
         self,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         *,
-        interiour_color: Optional[str] = None,
+        interior_color: Optional[str] = None,
         **kwargs: Any,
     ):
+        if "interiour_color" in kwargs:
+            deprecate_with_replacement("interiour_color", "interior_color", "6.0.0")
+            interior_color = kwargs["interiour_color"]
+            del kwargs["interiour_color"]
         super().__init__(**kwargs)
         self.update(
             {
@@ -222,9 +226,9 @@ class Rectangle(MarkupAnnotation):
             }
         )
 
-        if interiour_color:
+        if interior_color:
             self[NameObject("/IC")] = ArrayObject(
-                [FloatObject(n) for n in hex_to_rgb(interiour_color)]
+                [FloatObject(n) for n in hex_to_rgb(interior_color)]
             )
 
 
