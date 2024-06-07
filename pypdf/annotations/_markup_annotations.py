@@ -258,7 +258,7 @@ class Ellipse(MarkupAnnotation):
         self,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         *,
-        interiour_color: Optional[str] = None,
+        interior_color: Optional[str] = None,
         **kwargs: Any,
     ):
         if "interiour_color" in kwargs:
