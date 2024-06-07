@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1717777400427,
+  "lastUpdate": 1717778968256,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -53399,6 +53399,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004772357780702392",
             "extra": "mean: 785.3574483999978 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "44d08ae5584d6847c8890f10a4a9035dd4b9f84c",
+          "message": "MAINT: Deprecate interiour_color with replacement interior_color (#2706)\n\n* MAINT: Deprecate interiour_color with replacement interior_color\r\n\r\n* MAINT: Deprecate interiour_color with replacement interior_color\r\n\r\n* MAINT: Deprecate interiour_color with replacement interior_color\r\n\r\n* MAINT: Deprecate interiour_color with replacement interior_color\r\n\r\n* MAINT: Deprecate interiour_color with replacement interior_color\r\n\r\n* MAINT: Deprecate interiour_color with replacement interior_color\r\n\r\n* MAINT: Deprecate interiour_color with replacement interior_color\r\n\r\n---------\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2024-06-07T18:46:29+02:00",
+          "tree_id": "225a1237e3444eae56a3db757ba23c9a3db0c391",
+          "url": "https://github.com/py-pdf/pypdf/commit/44d08ae5584d6847c8890f10a4a9035dd4b9f84c"
+        },
+        "date": 1717778965064,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8316260056602705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002294390146261513",
+            "extra": "mean: 353.1539821999985 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.103867991941081,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00918828570514365",
+            "extra": "mean: 82.61821763636331 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2689257803956521,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02052852154879349",
+            "extra": "mean: 3.7184980872000013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.896492996036253,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006856405482166997",
+            "extra": "mean: 112.403842777771 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06279899202423568,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07900616496340218",
+            "extra": "mean: 15.923822465400008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2778987791307932,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004206877757632615",
+            "extra": "mean: 782.5345922000054 msec\nrounds: 5"
           }
         ]
       }
