@@ -264,6 +264,7 @@ class Ellipse(MarkupAnnotation):
         if "interiour_color" in kwargs:
             deprecate_with_replacement("interiour_color", "interior_color", "6.0.0")
             interior_color = kwargs["interiour_color"]
+            del kwargs["interiour_color"]
         super().__init__(**kwargs)
 
         self.update(
