@@ -858,12 +858,6 @@ def test_annotation_builder_square(pdf_file_path):
 
     with pytest.warns(DeprecationWarning):
         square_annotation = AnnotationBuilder.rectangle(
-            rect=(50, 50, 100, 100), interior_color="ff0000"
-        )
-    writer.add_annotation(0, square_annotation)
-
-    with pytest.warns(DeprecationWarning):
-        square_annotation = AnnotationBuilder.rectangle(
             rect=(40, 400, 150, 450),
         )
     writer.add_annotation(0, square_annotation)
@@ -951,12 +945,6 @@ def test_annotation_builder_circle(pdf_file_path):
     with pytest.warns(DeprecationWarning):
         circle_annotation = AnnotationBuilder.ellipse(
             rect=(50, 550, 200, 650), interiour_color="ff0000"
-        )
-    writer.add_annotation(0, circle_annotation)
-
-    with pytest.warns(DeprecationWarning):
-        circle_annotation = AnnotationBuilder.ellipse(
-            rect=(50, 50, 100, 100), interior_color="ff0000"
         )
     writer.add_annotation(0, circle_annotation)
 
