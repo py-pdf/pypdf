@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1717752617531,
+  "lastUpdate": 1717777400427,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -53333,6 +53333,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003832241932051589",
             "extra": "mean: 781.6199014000063 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "aa4ddef11d30013ebc6f2f5e495379c19828dce9",
+          "message": "BUG: Fix deprecation for Ressources when using old constants (#2705)\n\n* BUG: fix deprecation for Ressources when using old constants\r\n\r\nFixes #2697\r\n\r\n* fix for ruff\r\n\r\n* fix mypy\r\n\r\n* fix mypy\r\n\r\n* move class to fix circular import\r\n\r\n* add test overriding classproperty getter\r\n\r\n* fix ruff",
+          "timestamp": "2024-06-07T18:20:14+02:00",
+          "tree_id": "e63f94fadfdc69700cc6145d59671ab573626683",
+          "url": "https://github.com/py-pdf/pypdf/commit/aa4ddef11d30013ebc6f2f5e495379c19828dce9"
+        },
+        "date": 1717777397142,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.90331957430835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026318541475944205",
+            "extra": "mean: 344.433319999996 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.944923607815872,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008797575805339661",
+            "extra": "mean: 83.71757181818009 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27004627816608706,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013892910887110182",
+            "extra": "mean: 3.7030689953999967 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.748589304555246,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009770817713698982",
+            "extra": "mean: 114.30414266667161 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05718298314204766,
+            "unit": "iter/sec",
+            "range": "stddev: 0.2075860349188354",
+            "extra": "mean: 17.487720035799992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2733055528247572,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004772357780702392",
+            "extra": "mean: 785.3574483999978 msec\nrounds: 5"
           }
         ]
       }
