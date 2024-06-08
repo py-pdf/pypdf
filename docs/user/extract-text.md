@@ -8,21 +8,13 @@ from pypdf import PdfReader
 reader = PdfReader("example.pdf")
 page = reader.pages[0]
 print(page.extract_text())
-```
 
-You can also choose to limit the text orientation you want to extract:
-
-```python
 # extract only text oriented up
 print(page.extract_text(0))
 
 # extract text oriented up and turned left
 print(page.extract_text((0, 90)))
-```
 
-You can also extract text in "layout" mode:
-
-```python
 # extract text in a fixed width format that closely adheres to the rendered
 # layout in the source pdf
 print(page.extract_text(extraction_mode="layout"))
