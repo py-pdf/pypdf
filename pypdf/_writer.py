@@ -1096,7 +1096,7 @@ class PdfWriter(PdfDocCommon):
         should be considered.
 
         Args:
-            reader: PdfReader from the document root should be copied.
+            reader: PdfReader from which the document root should be copied.
         """
         self._objects.clear()
         self._root_object = reader.root_object.clone(self)
@@ -1256,7 +1256,7 @@ class PdfWriter(PdfDocCommon):
                 existing workflow.
 
         Returns:
-            A tuple (bool, IO)
+            A tuple (bool, IO).
         """
         my_file = False
 
