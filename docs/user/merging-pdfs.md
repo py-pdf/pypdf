@@ -122,12 +122,11 @@ The same holds true if you try to clone an object twice. It will return the prev
 assert object.clone(writer) == object.clone(writer)
 ```
 
-Please note that if you clone an object, you will clone all the objects below as
-well, including the objects pointed by *IndirectObject*. Due to this, if you
-clone a page that includes some articles (`"/B"`), not only the first article,
-but also all the chained articles and the pages where those articles can be read
-will be copied. This means that you may copy lots of objects which will be saved
-in the output PDF as well.
+Please note that if you clone an object, you will clone all the objects below as well,
+including the objects pointed by *IndirectObject*. Due to this, if you clone a page that
+includes some articles (`"/B"`), not only the first article, but also all the chained articles
+and the pages where those articles can be read will be copied.
+This means that you may copy lots of objects which will be saved in the output PDF as well.
 
 In order to prevent this, you can provide the list of fields in the dictionaries to be ignored:
 
