@@ -92,11 +92,10 @@ fields will be listed.
 
 ## reset_translation
 
-During cloning, if an object has been already cloned, it will not be cloned
-again, and a pointer to this previously cloned object is returned instead.
-Because of that, if you add/merge a page that has already been added, the same
-object will be added the second time. If you modify any of these two pages
-later, both pages can be modified independently.
+During cloning, if an object has been already cloned, it will not be cloned again, and a pointer
+to this previously cloned object is returned instead. Because of that, if you add/merge a page that has
+already been added, the same object will be added the second time. If you modify any of these two pages later,
+both pages can be modified independently.
 
 To reset, call  `writer.reset_translation(reader)`.
 
