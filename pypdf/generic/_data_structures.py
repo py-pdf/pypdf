@@ -971,7 +971,7 @@ class StreamObject(DictionaryObject):
 
         if self.get("/Subtype", "") != "/Image":
             try:
-                msg = f"{self.indirect_reference} does not seems to be an Image"  # pragma: no cover
+                msg = f"{self.indirect_reference} does not seem to be an Image"  # pragma: no cover
             except AttributeError:
                 msg = f"{self.__repr__()} object does not seems to be an Image"  # pragma: no cover
             logger_warning(msg, __name__)
