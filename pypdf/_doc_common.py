@@ -391,7 +391,7 @@ class PdfDocCommon:
                 dests = cast(DictionaryObject, names[CA.DESTS])
                 dests_ref = dests.indirect_reference
                 if CA.NAMES in dests:
-                    # TABLE 3.33 Entries in a name tree node dictionary
+                    # §7.9.6, entries in a name tree node dictionary
                     named_dest = cast(ArrayObject, dests[CA.NAMES])
                 else:
                     named_dest = ArrayObject()
@@ -449,8 +449,8 @@ class PdfDocCommon:
             # recurse down the tree
             for kid in cast(ArrayObject, tree[PA.KIDS]):
                 self._get_named_destinations(kid.get_object(), retval)
-        # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
-        elif CA.NAMES in tree:  # KIDS and NAMES are exclusives (PDF 1.7 specs p 162)
+        # §7.9.6, entries in a name tree node dictionary
+        elif CA.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
             names = cast(DictionaryObject, tree[CA.NAMES])
             i = 0
             while i < len(names):
@@ -929,7 +929,7 @@ class PdfDocCommon:
         dest, title, outline_item = None, None, None
 
         # title required for valid outline
-        # PDF Reference 1.7: TABLE 8.4 Entries in an outline item dictionary
+        # § 12.3.3, entries in an outline item dictionary
         try:
             title = cast("str", node["/Title"])
         except KeyError:
