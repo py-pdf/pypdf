@@ -7,9 +7,9 @@ Note that the `/ViewerPreferences` dictionary does not exist by default.
 If it is not already present, it must be created by calling the
 `create_viewer_preferences` method of a `PdfWriter` object.
 
-If viewer preferences exist in a PDF file being read with `PdfReader`, you can
-access them as properties of `viewer_preferences`. Otherwise, the
-`viewer_preferences` property will be set to `None`.
+If viewer preferences exist in a PDF file being read with `PdfReader`,
+you can access them as properties of `viewer_preferences`.
+Otherwise, the `viewer_preferences` property will be set to `None`.
 
 ## Example
 
