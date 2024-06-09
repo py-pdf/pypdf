@@ -77,8 +77,7 @@ It is recommended to use `append` or `merge` instead.
 
 ## Merging forms
 
-When merging forms, some form fields may have the same names, preventing access
-to some data.
+When merging forms, some form fields may have the same names, preventing access to some data.
 
 A grouping field should be added before adding the source PDF to prevent that.
 The original fields will be identified by adding the group name.
@@ -128,8 +127,8 @@ Please note that if you clone an object, you will clone all the objects below as
 well, including the objects pointed by *IndirectObject*. Due to this, if you
 clone a page that includes some articles (`"/B"`), not only the first article,
 but also all the chained articles and the pages where those articles can be read
-will be copied.  This means that you may copy lots of objects which will be
-saved in the output PDF as well.
+will be copied. This means that you may copy lots of objects which will be saved
+in the output PDF as well.
 
 In order to prevent this, you can provide the list of fields in the dictionaries to be ignored:
 
