@@ -28,7 +28,7 @@ For example, this document contains such stamps:
 
 [test_stamp.pdf](https://github.com/user-attachments/files/15751424/test_stamp.pdf)
 
-you can extract the image from the annotation with the following code
+You can extract the image from the annotation with the following code:
 
 ```python
 from pypdf import PdfReader
