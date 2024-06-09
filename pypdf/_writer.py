@@ -2797,7 +2797,7 @@ class PdfWriter(PdfDocCommon):
             self._insert_filtered_outline(dest._filtered_children, np, None)
 
     def close(self) -> None:
-        """To match the functions from Merger."""
+        """Implemented for API harmonization."""
         return
 
     def find_outline_item(
