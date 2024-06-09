@@ -1013,6 +1013,7 @@ class PdfDocCommon:
         solution to completely remove them - if they are not used anywhere - is
         to write to a buffer/temporary file and then load it into a new
         PdfWriter.
+
         """
         return _VirtualList(self.get_num_pages, self.get_page)  # type: ignore
 
