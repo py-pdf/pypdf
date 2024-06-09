@@ -955,6 +955,31 @@ class StreamObject(DictionaryObject):
         retval._data = FlateDecode.encode(b_(self._data), level)
         return retval
 
+    def decode_as_image(self) -> Any:
+        """
+        Try to decode the stream object as an image
+
+        Returns:
+            a PIL image if proper decoding has been found
+        Raises:
+            Exception: (any)during decoding to to invalid object or
+                errors during decoding will be reported
+                It is recommended to catch exceptions to prevent
+                stops in your program.
+        """
+        from ..filters import _xobj_to_image
+
+        if self.get("/Subtype", "") != "/Image":
+            try:
+                msg = f"{self.indirect_reference} does not seem to be an Image"  # pragma: no cover
+            except AttributeError:
+                msg = f"{self.__repr__()} object does not seem to be an Image"  # pragma: no cover
+            logger_warning(msg, __name__)
+        extension, byte_stream, img = _xobj_to_image(self)
+        if extension is None:
+            return None  # pragma: no cover
+        return img
+
 
 class DecodedStreamObject(StreamObject):
     pass
