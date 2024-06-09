@@ -110,7 +110,7 @@ class AnnotationBuilder:
     Instead, use the annotation classes in pypdf.annotations.
 
     See `adding PDF annotations <../user/adding-pdf-annotations.html>`_ for
-    it's usage combined with PdfWriter.
+    its usage combined with PdfWriter.
     """
 
     from ..generic._rectangle import RectangleObject
@@ -309,6 +309,7 @@ class AnnotationBuilder:
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         quad_points: ArrayObject,
         highlight_color: str = "ff0000",
+        printing: bool = False,
     ) -> DictionaryObject:
         """
         Add a highlight annotation to the document.
@@ -319,6 +320,8 @@ class AnnotationBuilder:
             quad_points: An ArrayObject of 8 FloatObjects. Must match a word or
                 a group of words, otherwise no highlight will be shown.
             highlight_color: The color used for the highlight.
+            printing: Whether to print out the highlight annotation when the page
+                is printed.
 
         Returns:
             A dictionary object representing the annotation.
@@ -329,7 +332,7 @@ class AnnotationBuilder:
         from ..annotations import Highlight
 
         return Highlight(
-            rect=rect, quad_points=quad_points, highlight_color=highlight_color
+            rect=rect, quad_points=quad_points, highlight_color=highlight_color, printing=printing
         )
 
     @staticmethod
@@ -338,7 +341,7 @@ class AnnotationBuilder:
         interiour_color: Optional[str] = None,
     ) -> DictionaryObject:
         """
-        Draw a rectangle on the PDF.
+        Draw an ellipse on the PDF.
 
         This method uses the /Circle annotation type of the PDF format.
 

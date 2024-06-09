@@ -147,6 +147,7 @@ def create_string_object(
                 if string.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
                     retval = TextStringObject(string.decode("utf-16"))
                     retval.autodetect_utf16 = True
+                    retval.utf16_bom = string[:2]
                     return retval
                 else:
                     # This is probably a big performance hit here, but we need

@@ -215,13 +215,11 @@ with open("annotated-pdf.pdf", "wb") as fp:
 
 ## Popup
 
-Manage the Popup windows for markups. looks like this:
+Manage the Popup windows for markups, looks like this:
 
 ![](annotation-popup.png)
 
 you can use the {py:class}`Popup <pypdf.annotations.Popup>`:
-
-you have to use the returned result from add_annotation() to fill-up the
 
 ```python
 from pypdf.annotations import Popup, Text
@@ -248,6 +246,9 @@ popup_annotation = Popup(
 
 writer.write("annotated-pdf-popup.pdf")
 ```
+
+You have to use the returned result from add_annotation() as it is
+the parent annotation with which this popup annotation shall be associated.
 
 ## Link
 
@@ -303,7 +304,7 @@ with open("annotated-pdf.pdf", "wb") as fp:
 
 Text markup annotations refer to a specific piece of text within the document.
 
-Those are a bit more complicated as you need to know exactly where the text
+These are a bit more complicated as you need to know exactly where the text
 is, the so-called "Quad points".
 
 ### Highlighting

@@ -13,7 +13,7 @@ from zipfile import ZipFile
 import pytest
 from PIL import Image, ImageChops, ImageDraw
 
-from pypdf import PageObject, PdfReader
+from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf.generic import NameObject, NullObject
 
 from . import get_data_from_url
@@ -348,6 +348,101 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
             assert image_similarity(reader.pages[p].images[i].image, img) >= 0.99
 
 
+@pytest.mark.enable_socket()
+@pytest.mark.timeout(30)
+def test_large_compressed_image():
+    url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
+    reader = PdfReader(
+        BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf"))
+    )
+    list(reader.pages[0].images)
+
+
+@pytest.mark.enable_socket()
+def test_ff_fe_starting_lut():
+    """Cf issue #2660"""
+    url = "https://github.com/py-pdf/pypdf/files/15385628/original_before_merge.pdf"
+    name = "iss2660.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(b)
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/6150700d-87fd-43a2-8695-c2c05a44838c"
+    name = "iss2660.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(writer.pages[1].images[0].image, img) == 1.0
+    assert image_similarity(reader.pages[1].images[0].image, img) == 1.0
+
+
+@pytest.mark.enable_socket()
+def test_inline_image_extraction():
+    """Cf #2598"""
+    url = "https://github.com/py-pdf/pypdf/files/14982414/lebo102.pdf"
+    name = "iss2598.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    # there is no error because images are correctly extracted
+    reader.pages[1].extract_text()
+    reader.pages[2].extract_text()
+    reader.pages[3].extract_text()
+
+    url = "https://github.com/py-pdf/pypdf/files/15210011/Pages.62.73.from.0560-22_WSP.Plan_July.2022_Version.1.pdf"
+    name = "iss2598a.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.pages[0].extract_text()
+    reader.pages[1].extract_text()
+
+    url = "https://github.com/mozilla/pdf.js/raw/master/test/pdfs/issue14256.pdf"
+    name = "iss2598b.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/71bc5053-cfc7-44ba-b7be-8e2333e2c749"
+    name = "iss2598b.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    for i in range(8):
+        assert image_similarity(writer.pages[0].images[i].image, img) == 1
+    writer.pages[0].extract_text()
+    # check recalculation of inline images
+    assert writer.pages[0].inline_images is not None
+    writer.pages[0].merge_scaled_page(writer.pages[0], 0.25)
+    assert writer.pages[0].inline_images is None
+    reader = PdfReader(RESOURCE_ROOT / "imagemagick-ASCII85Decode.pdf")
+    writer.pages[0].merge_page(reader.pages[0])
+    assert list(writer.pages[0].images.keys()) == [
+        "/Im0",
+        "~0~",
+        "~1~",
+        "~2~",
+        "~3~",
+        "~4~",
+        "~5~",
+        "~6~",
+        "~7~",
+        "~8~",
+        "~9~",
+        "~10~",
+        "~11~",
+        "~12~",
+        "~13~",
+        "~14~",
+        "~15~",
+    ]
+
+    url = "https://github.com/py-pdf/pypdf/files/15233597/bug1065245.pdf"
+    name = "iss2598c.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/bfb221be-11bd-46fe-8129-55a58088a4b6"
+    name = "iss2598c.jpg"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(reader.pages[0].images[0].image, img) >= 0.99
+
+    url = "https://github.com/py-pdf/pypdf/files/15282904/tt.pdf"
+    name = "iss2598d.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/assets/4083478/1a770e1b-9ad2-4125-89ae-6069992dda23"
+    name = "iss2598d.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(reader.pages[0].images[0].image, img) == 1
+
+    
 @pytest.mark.enable_socket()
 def test_extract_image_from_object(caplog):
     url = "https://github.com/py-pdf/pypdf/files/15176076/B2.pdf"

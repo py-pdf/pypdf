@@ -11,7 +11,7 @@ The process of stamping and watermarking is the same, you just need to set `over
 You can use `merge_page()` if you don't need to transform the stamp:
 
 ```python
-from pypdf import PdfWriter, PdfReader
+from pypdf import PdfReader, PdfWriter
 
 stamp = PdfReader("bg.pdf").pages[0]
 writer = PdfWriter(clone_from="source.pdf")

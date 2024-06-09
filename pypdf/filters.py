@@ -37,10 +37,12 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import math
 import struct
 import zlib
+from base64 import a85decode
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import (
+    WHITESPACES_AS_BYTES,
     b_,
     deprecate_with_replacement,
     deprecation_no_replacement,
@@ -80,14 +82,19 @@ def decompress(data: bytes) -> bytes:
     try:
         return zlib.decompress(data)
     except zlib.error:
-        d = zlib.decompressobj(zlib.MAX_WBITS | 32)
-        result_str = b""
-        for b in [data[i : i + 1] for i in range(len(data))]:
-            try:
-                result_str += d.decompress(b)
-            except zlib.error:
-                pass
-        return result_str
+        try:
+            # For larger files, use Decompress object to enable buffered reading
+            return zlib.decompressobj().decompress(data)
+        except zlib.error:
+            # If still failed, then try with increased window size
+            d = zlib.decompressobj(zlib.MAX_WBITS | 32)
+            result_str = b""
+            for b in [data[i : i + 1] for i in range(len(data))]:
+                try:
+                    result_str += d.decompress(b)
+                except zlib.error:
+                    pass
+            return result_str
 
 
 class FlateDecode:
@@ -462,7 +469,7 @@ class LZWDecode:
         Decode an LZW encoded data stream.
 
         Args:
-          data: bytes`` or ``str`` text to decode.
+          data: ``bytes`` or ``str`` text to decode.
           decode_parms: a dictionary of parameter values.
 
         Returns:
@@ -482,29 +489,20 @@ class ASCII85Decode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        """
+        Decode an Ascii85 encoded data stream.
 
+        Args:
+          data: ``bytes`` or ``str`` text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
+        """
         if isinstance(data, str):
-            data = data.encode("ascii")
-        group_index = b = 0
-        out = bytearray()
-        for char in data:
-            if ord("!") <= char <= ord("u"):
-                group_index += 1
-                b = b * 85 + (char - 33)
-                if group_index == 5:
-                    out += struct.pack(b">L", b)
-                    group_index = b = 0
-            elif char == ord("z"):
-                assert group_index == 0
-                out += b"\0\0\0\0"
-            elif char == ord("~"):
-                if group_index:
-                    for _ in range(5 - group_index):
-                        b = b * 85 + 84
-                    out += struct.pack(b">L", b)[: group_index - 1]
-                break
-        return bytes(out)
+            data = data.encode()
+        data = data.strip(WHITESPACES_AS_BYTES)
+        return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
 
 
 class DCTDecode:
@@ -737,6 +735,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     """
     from ._xobj_image_helpers import (
         Image,
+        UnidentifiedImageError,
         _extended_image_frombytes,
         _get_imagemode,
         _handle_flate,
@@ -803,13 +802,16 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         # I'm not sure if the following logic is correct.
         # There might not be any relationship between the filters and the
         # extension
-        if x_object_obj[SA.FILTER] in [[FT.LZW_DECODE], [FT.CCITT_FAX_DECODE]]:
+        if lfilters in (FT.LZW_DECODE, FT.CCITT_FAX_DECODE):
             extension = ".tiff"  # mime_type = "image/tiff"
             image_format = "TIFF"
         else:
             extension = ".png"  # mime_type = "image/png"
             image_format = "PNG"
-        img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
+        try:
+            img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
+        except UnidentifiedImageError:
+            img = _extended_image_frombytes(mode, size, data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged

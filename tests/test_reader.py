@@ -46,10 +46,10 @@ NestedList = Union[int, None, List["NestedList"]]
 )
 def test_get_num_pages(src, num_pages):
     src = RESOURCE_ROOT / src
-    reader = PdfReader(src)
-    assert len(reader.pages) == num_pages
-    # from #1911
-    assert "/Size" in reader.trailer
+    with PdfReader(src) as reader:
+        assert len(reader.pages) == num_pages
+        # from #1911
+        assert "/Size" in reader.trailer
 
 
 @pytest.mark.parametrize(
@@ -111,20 +111,20 @@ def test_read_metadata(pdf_path, expected):
 
 
 def test_iss1943():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    docinfo = reader.metadata
-    docinfo.update(
-        {
-            NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
-            NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
-        }
-    )
-    docinfo.creation_date
-    docinfo.creation_date_raw
-    docinfo.modification_date
-    docinfo.modification_date_raw
-    docinfo.update({NameObject("/CreationDate"): NumberObject(1)})
-    assert docinfo.creation_date is None
+    with PdfReader(RESOURCE_ROOT / "crazyones.pdf") as reader:
+        docinfo = reader.metadata
+        docinfo.update(
+            {
+                NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
+                NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
+            }
+        )
+        docinfo.creation_date
+        docinfo.creation_date_raw
+        docinfo.modification_date
+        docinfo.modification_date_raw
+        docinfo.update({NameObject("/CreationDate"): NumberObject(1)})
+        assert docinfo.creation_date is None
 
 
 @pytest.mark.samples()
@@ -152,14 +152,13 @@ def test_broken_meta_data(pdf_path):
     ],
 )
 def test_get_annotations(src):
-    reader = PdfReader(src)
-
-    for page in reader.pages:
-        if PG.ANNOTS in page:
-            for annot in page[PG.ANNOTS]:
-                subtype = annot.get_object()[IA.SUBTYPE]
-                if subtype == "/Text":
-                    annot.get_object()[PG.CONTENTS]
+    with PdfReader(src) as reader:
+        for page in reader.pages:
+            if PG.ANNOTS in page:
+                for annot in page[PG.ANNOTS]:
+                    subtype = annot.get_object()[IA.SUBTYPE]
+                    if subtype == "/Text":
+                        annot.get_object()[PG.CONTENTS]
 
 
 @pytest.mark.parametrize(
@@ -222,30 +221,16 @@ def test_get_images(src, expected_images):
 
     src_abs = RESOURCE_ROOT / src
     reader = PdfReader(src_abs)
-
-    with pytest.raises(TypeError):
-        page = reader.pages["0"]
-
-    page = reader.pages[-1]
     page = reader.pages[0]
-
     images_extracted = page.images
+
     assert len(images_extracted) == len(expected_images)
     for image, expected_image in zip(images_extracted, expected_images):
         assert image.name == expected_image
-        try:
-            fn = f"{src}-test-out-{image.name}"
-            with open(fn, "wb") as fp:
-                fp.write(image.data)
-                assert (
-                    image.name.split(".")[-1].upper()
-                    == Image.open(io.BytesIO(image.data)).format
-                )
-        finally:
-            try:
-                Path(fn).unlink()
-            except Exception:
-                pass
+        assert (
+            image.name.split(".")[-1].upper()
+            == Image.open(io.BytesIO(image.data)).format
+        )
 
 
 @pytest.mark.parametrize(
@@ -1408,7 +1393,7 @@ def test_iss1689():
 
 @pytest.mark.enable_socket()
 def test_iss1710():
-    url = "https://nlp.stanford.edu/IR-book/pdf/irbookonlinereading.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/15234776/irbookonlinereading.pdf"
     name = "irbookonlinereading.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.outline
@@ -1516,3 +1501,79 @@ def test_truncated_xref(caplog):
     name = "iss2575.pdf"
     PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert "Invalid/Truncated xref table. Rebuilding it." in caplog.text
+
+
+@pytest.mark.enable_socket()
+def test_damaged_pdf():
+    url = "https://github.com/py-pdf/pypdf/files/15186107/malformed_pdf.pdf"
+    name = "malformed_pdf.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=False)
+    len(reader.pages)
+    strict_reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=True)
+    with pytest.raises(PdfReadError) as exc:
+        len(strict_reader.pages)
+    assert (
+        exc.value.args[0] == "Expected object ID (21 0) does not match actual (-1 -1)."
+    )
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.timeout(10)
+def test_looping_form(caplog):
+    """Cf iss 2643"""
+    url = "https://github.com/py-pdf/pypdf/files/15306053/inheritance.pdf"
+    name = "iss2643.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=False)
+    flds = reader.get_fields()
+    assert all(
+        x in flds
+        for x in (
+            "Text10",
+            "Text10.0.0.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1",
+            "amt1.0",
+            "amt1.1",
+            "DSS#3pg3#0hgu7",
+        )
+    )
+    writer = PdfWriter(reader)
+    writer.root_object["/AcroForm"]["/Fields"][5]["/Kids"].append(
+        writer.root_object["/AcroForm"]["/Fields"][5]["/Kids"][0]
+    )
+    flds2 = writer.get_fields()
+    assert "Text68.0 already parsed" in caplog.text
+    assert list(flds.keys()) == list(flds2.keys())
+
+
+def test_context_manager_with_stream():
+    pdf_data = (
+        b"%%PDF-1.7\n"
+        b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref 1 5\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << /Root 5 0 R /Size 6 >>\n"
+        b"startxref %d\n"
+        b"%%%%EOF"
+    )
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj"),
+        pdf_data.find(b"2 0 obj"),
+        pdf_data.find(b"3 0 obj"),
+        pdf_data.find(b"4 0 obj"),
+        pdf_data.find(b"5 0 obj"),
+        pdf_data.find(b"xref") - 1,
+    )
+    pdf_stream = io.BytesIO(pdf_data)
+    with PdfReader(pdf_stream) as reader:
+        assert not reader.stream.closed
+    assert not pdf_stream.closed
