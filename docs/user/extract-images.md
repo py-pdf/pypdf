@@ -25,7 +25,6 @@ for image_file_object in page.images:
 Some other objects can contain images, such as stamp annotations.
 
 For example, this document contains such stamps:
-
 [test_stamp.pdf](https://github.com/user-attachments/files/15751424/test_stamp.pdf)
 
 You can extract the image from the annotation with the following code:
