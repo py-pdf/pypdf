@@ -442,7 +442,7 @@ def test_inline_image_extraction():
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     assert image_similarity(reader.pages[0].images[0].image, img) == 1
 
-    
+
 @pytest.mark.enable_socket()
 def test_extract_image_from_object(caplog):
     url = "https://github.com/py-pdf/pypdf/files/15176076/B2.pdf"
@@ -455,10 +455,10 @@ def test_extract_image_from_object(caplog):
     with pytest.raises(Exception):
         co = reader.pages[0].get_contents()
         co.decode_as_image()
-    assert "does not seems to be an Image" in caplog.text
+    assert "does not seem to be an Image" in caplog.text
     caplog.clear()
     co.indirect_reference = "for_test"
     with pytest.raises(Exception):
         co = reader.pages[0].get_contents()
         co.decode_as_image()
-    assert "does not seems to be an Image" in caplog.text
+    assert "does not seem to be an Image" in caplog.text
