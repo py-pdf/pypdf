@@ -848,7 +848,7 @@ class PdfDocCommon:
         See §12.4.3 from the PDF 1.7 or 2.0 specification.
 
         It is an array of dictionaries with "/F" (the first bead in the thread)
-        and "/I" (a thread information dictionary containing information about 
+        and "/I" (a thread information dictionary containing information about
         the thread, such as its title, author, and creation date) properties or
         None if there are no articles.
 
