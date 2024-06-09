@@ -973,7 +973,7 @@ class StreamObject(DictionaryObject):
             try:
                 msg = f"{self.indirect_reference} does not seem to be an Image"  # pragma: no cover
             except AttributeError:
-                msg = f"{self.__repr__()} object does not seems to be an Image"  # pragma: no cover
+                msg = f"{self.__repr__()} object does not seem to be an Image"  # pragma: no cover
             logger_warning(msg, __name__)
         extension, byte_stream, img = _xobj_to_image(self)
         if extension is None:
