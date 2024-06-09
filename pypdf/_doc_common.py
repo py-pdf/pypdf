@@ -108,12 +108,12 @@ class DocumentInformation(DictionaryObject):
     :py:class:`PdfReader.metadata<pypdf.PdfReader.metadata>`.
 
     All text properties of the document metadata have
-    *two* properties, eg. author and author_raw. The non-raw property will
-    always return a ``TextStringObject``, making it ideal for a case where
-    the metadata is being displayed. The raw property can sometimes return
-    a ``ByteStringObject``, if pypdf was unable to decode the string's
-    text encoding; this requires additional safety in the caller and
-    therefore is not as commonly accessed.
+    *two* properties, e.g. author and author_raw. The non-raw property will
+    always return a ``TextStringObject``, making it ideal for a case where the
+    metadata is being displayed. The raw property can sometimes return a
+    ``ByteStringObject``, if pypdf was unable to decode the string's text
+    encoding; this requires additional safety in the caller and therefore is not
+    as commonly accessed.
     """
 
     def __init__(self) -> None:
@@ -813,7 +813,7 @@ class PdfDocCommon:
                 if isinstance(lines, NullObject):
                     return outline
 
-                # TABLE 8.3 Entries in the outline dictionary
+                # §12.3.3 Document outline, entries in the outline dictionary
                 if lines is not None and "/First" in lines:
                     node = cast(DictionaryObject, lines["/First"])
             self._namedDests = self._get_named_destinations()
@@ -847,8 +847,14 @@ class PdfDocCommon:
 
         See §12.4.3 from the PDF 1.7 or 2.0 specification.
 
-        It is an array of dictionaries with "/F" and "/I" properties or
+        It is an array of dictionaries with "/F" (the first bead in the thread)
+        and "/I" (a thread information dictionary containing information about 
+        the thread, such as its title, author, and creation date) properties or
         None if there are no articles.
+
+        Since PDF 2.0 it can also contain an indirect reference to a metadata
+        stream containing information about the thread, such as its title,
+        author, and creation date.
         """
         catalog = self.root_object
         if CO.THREADS in catalog:
@@ -998,16 +1004,13 @@ class PdfDocCommon:
     def pages(self) -> List[PageObject]:
         """
         Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`.
-        this property allows to get a page or a range of pages.
+        This property allows to get a page or a range of pages.
 
-        For PdfWriter Only:
-        Provides the capability to remove a page/range of page from the list
-        (using the del operator).
-        Note: only the page entry is removed. As the objects beneath can be used
-        elsewhere.
-        A solution to completely remove them - if they are not used anywhere -
-        is to write to a buffer/temporary file and to load it into a new PdfWriter
-        object afterwards.
+        For PdfWriter only: provides the capability to remove a page/range of
+        page from the list (using the del operator).  Note: only the page entry
+        is removed, as the objects beneath can be used elsewhere.  A solution to
+        completely remove them - if they are not used anywhere - is to write to
+        a buffer/temporary file and then load it into a new PdfWriter.
         """
         return _VirtualList(self.get_num_pages, self.get_page)  # type: ignore
 

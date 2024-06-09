@@ -77,13 +77,14 @@ It is recommended to use `append` or `merge` instead.
 
 ## Merging forms
 
-When merging forms, some form fields may have the same names, preventing access to some data.
+When merging forms, some form fields may have the same names, preventing access
+to some data.
 
 A grouping field should be added before adding the source PDF to prevent that.
 The original fields will be identified by adding the group name.
 
 For example, after calling `reader.add_form_topname("form1")`, the field
-previously named `field1` will now identified as `form1.field1` when calling
+previously named `field1` is now identified as `form1.field1` when calling
 `reader.get_form_text_fields(True)` or `reader.get_fields()`.
 
 After that, you can append the input PDF completely or partially using
@@ -92,10 +93,11 @@ fields will be listed.
 
 ## reset_translation
 
-During cloning, if an object has been already cloned, it will not be cloned again, and a pointer
-to this previously cloned object is returned instead. Because of that, if you add/merge a page that has
-already been added, the same object will be added the second time. If you modify any of these two pages later,
-both pages can be modified independently.
+During cloning, if an object has been already cloned, it will not be cloned
+again, and a pointer to this previously cloned object is returned instead.
+Because of that, if you add/merge a page that has already been added, the same
+object will be added the second time. If you modify any of these two pages
+later, both pages can be modified independently.
 
 To reset, call  `writer.reset_translation(reader)`.
 
@@ -122,11 +124,12 @@ The same holds true if you try to clone an object twice. It will return the prev
 assert object.clone(writer) == object.clone(writer)
 ```
 
-Please note that if you clone an object, you will clone all the objects below as well,
-including the objects pointed by *IndirectObject*. Due to this, if you clone a page that
-includes some articles (`"/B"`), not only the first article, but also all the chained articles
-and the pages where those articles can be read will be copied.
-This means that you may copy lots of objects which will be saved in the output PDF as well.
+Please note that if you clone an object, you will clone all the objects below as
+well, including the objects pointed by *IndirectObject*. Due to this, if you
+clone a page that includes some articles (`"/B"`), not only the first article,
+but also all the chained articles and the pages where those articles can be read
+will be copied.  This means that you may copy lots of objects which will be
+saved in the output PDF as well.
 
 In order to prevent this, you can provide the list of fields in the dictionaries to be ignored:
 
