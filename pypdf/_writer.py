@@ -2238,7 +2238,7 @@ class PdfWriter(PdfDocCommon):
     def clean_page(self, page: Union[PageObject, IndirectObject]) -> PageObject:
         """
         Perform some clean up in the page.
-        Currently: convert NameObject nameddestination to TextStringObject
+        Currently: convert NameObject named destination to TextStringObject
         (required for names/dests list)
 
         Args:
