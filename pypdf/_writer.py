@@ -1096,7 +1096,7 @@ class PdfWriter(PdfDocCommon):
         should be considered.
 
         Args:
-            reader: PdfReader from the document root should be copied.
+            reader: PdfReader from which the document root should be copied.
         """
         self._objects.clear()
         self._root_object = reader.root_object.clone(self)
@@ -1256,7 +1256,7 @@ class PdfWriter(PdfDocCommon):
                 existing workflow.
 
         Returns:
-            A tuple (bool, IO)
+            A tuple (bool, IO).
         """
         my_file = False
 
@@ -2238,7 +2238,7 @@ class PdfWriter(PdfDocCommon):
     def clean_page(self, page: Union[PageObject, IndirectObject]) -> PageObject:
         """
         Perform some clean up in the page.
-        Currently: convert NameObject nameddestination to TextStringObject
+        Currently: convert NameObject named destination to TextStringObject
         (required for names/dests list)
 
         Args:
@@ -2797,7 +2797,7 @@ class PdfWriter(PdfDocCommon):
             self._insert_filtered_outline(dest._filtered_children, np, None)
 
     def close(self) -> None:
-        """To match the functions from Merger."""
+        """Implemented for API harmonization."""
         return
 
     def find_outline_item(

@@ -83,7 +83,7 @@ A grouping field should be added before adding the source PDF to prevent that.
 The original fields will be identified by adding the group name.
 
 For example, after calling `reader.add_form_topname("form1")`, the field
-previously named `field1` will now identified as `form1.field1` when calling
+previously named `field1` is now identified as `form1.field1` when calling
 `reader.get_form_text_fields(True)` or `reader.get_fields()`.
 
 After that, you can append the input PDF completely or partially using
