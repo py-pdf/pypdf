@@ -123,7 +123,7 @@ class PageRange:
             n:  the length of the list of pages to choose from.
 
         Returns:
-            Arguments for range()
+            Arguments for range().
         """
         return self._slice.indices(n)
 
