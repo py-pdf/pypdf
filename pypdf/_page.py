@@ -720,7 +720,7 @@ class PageObject(DictionaryObject):
         Rotate a page clockwise by increments of 90 degrees.
 
         Args:
-            angle: Angle to rotate the page.  Must be an increment of 90 deg.
+            angle: Angle to rotate the page. Must be an increment of 90 deg.
 
         Returns:
             The rotated PageObject
@@ -901,7 +901,7 @@ class PageObject(DictionaryObject):
         """
         Replace the page contents with the new content and nullify old objects
         Args:
-            content : new content; if None delete the content field.
+            content: new content; if None delete the content field.
         """
         if not hasattr(self, "indirect_reference") or self.indirect_reference is None:
             # the page is not attached : the content is directly attached.
@@ -961,16 +961,16 @@ class PageObject(DictionaryObject):
         Merge the content streams of two pages into one.
 
         Resource references
-        (i.e. fonts) are maintained from both pages.  The mediabox/cropbox/etc
-        of this page are not altered.  The parameter page's content stream will
+        (i.e. fonts) are maintained from both pages. The mediabox/cropbox/etc
+        of this page are not altered. The parameter page's content stream will
         be added to the end of this page's content stream, meaning that it will
         be drawn after, or "on top" of this page.
 
         Args:
             page2: The page to be merged into this one. Should be
                 an instance of :class:`PageObject<PageObject>`.
-            over: set the page2 content over page1 if True(default) else under
-            expand: If true, the current page dimensions will be
+            over: set the page2 content over page1 if True (default) else under
+            expand: If True, the current page dimensions will be
                 expanded to accommodate the dimensions of the page to be merged.
         """
         self._merge_page(page2, over=over, expand=expand)
@@ -983,7 +983,7 @@ class PageObject(DictionaryObject):
         over: bool = True,
         expand: bool = False,
     ) -> None:
-        # First we work on merging the resource dictionaries.  This allows us
+        # First we work on merging the resource dictionaries. This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
         try:
@@ -1095,7 +1095,7 @@ class PageObject(DictionaryObject):
         over: bool = True,
         expand: bool = False,
     ) -> None:
-        # First we work on merging the resource dictionaries.  This allows us
+        # First we work on merging the resource dictionaries. This allows us
         # to find which symbols in the content streams we might need to
         # rename.
         assert isinstance(self.indirect_reference, IndirectObject)
@@ -1284,7 +1284,7 @@ class PageObject(DictionaryObject):
           page2: The page to be merged into this one.
           ctm: a 6-element tuple containing the operands of the
                  transformation matrix
-          over: set the page2 content over page1 if True(default) else under
+          over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the dimensions
             of the page to be merged.
         """
@@ -1310,7 +1310,7 @@ class PageObject(DictionaryObject):
         Args:
           page2: The page to be merged into this one.
           scale: The scaling factor
-          over: set the page2 content over page1 if True(default) else under
+          over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
@@ -1331,7 +1331,7 @@ class PageObject(DictionaryObject):
         Args:
           page2: The page to be merged into this one.
           rotation: The angle of the rotation, in degrees
-          over: set the page2 content over page1 if True(default) else under
+          over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
@@ -1354,7 +1354,7 @@ class PageObject(DictionaryObject):
           page2: the page to be merged into this one.
           tx: The translation on X axis
           ty: The translation on Y axis
-          over: set the page2 content over page1 if True(default) else under
+          over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
@@ -1515,10 +1515,10 @@ class PageObject(DictionaryObject):
     @property
     def page_number(self) -> Optional[int]:
         """
-        Read-only property which return the page number within the PDF file.
+        Read-only property which returns the page number within the PDF file.
 
         Returns:
-            int : page number; None if the page is not attached to a PDF
+            int : page number; None if the page is not attached to a PDF.
         """
         if self.indirect_reference is None:
             return None
@@ -1626,7 +1626,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, pdf, "bytes")
         except KeyError:  # it means no content can be extracted(certainly empty page)
             return ""
-        # Note: we check all strings are TextStringObjects.  ByteStringObjects
+        # Note: we check all strings are TextStringObjects. ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
@@ -2016,7 +2016,7 @@ class PageObject(DictionaryObject):
 
         Arabic and Hebrew are extracted in the correct order.
         If required a custom RTL range of characters can be defined;
-        see function set_custom_rtl
+        see function set_custom_rtl.
 
         Additionally you can provide visitor methods to get informed on all
         operations and all text objects.
@@ -2172,7 +2172,7 @@ class PageObject(DictionaryObject):
 
     When the page is displayed or printed, its contents are to be clipped
     (cropped) to this rectangle and then imposed on the output medium in some
-    implementation-defined manner.  Default value: same as
+    implementation-defined manner. Default value: same as
     :attr:`mediabox<mediabox>`.
     """
 
