@@ -134,8 +134,8 @@ class FlateDecode:
                 pass  # Usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:
-            # The /Columns param. has 1 as the default value; see ISO 32000,
-            # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
+            # /Columns, the number of samples in each row, has a default value of 1;
+            # §7.4.4.3, ISO 32000.
             DEFAULT_BITS_PER_COMPONENT = 8
             try:
                 columns = cast(int, decode_parms[LZW.COLUMNS].get_object())  # type: ignore
@@ -528,7 +528,7 @@ class JPXDecode:
 
 
 class CCITParameters:
-    """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter."""
+    """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     def __init__(self, K: int = 0, columns: int = 0, rows: int = 0) -> None:
         self.K = K
@@ -552,12 +552,12 @@ class CCITParameters:
 
 class CCITTFaxDecode:
     """
-    See 3.3.5 CCITTFaxDecode Filter (PDF 1.7 Standard).
+    §7.4.6, CCITTFaxDecode filter (ISO 32000).
 
     Either Group 3 or Group 4 CCITT facsimile (fax) encoding.
     CCITT encoding is bit-oriented, not byte-oriented.
 
-    See: TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
+    §7.4.6, optional parameters for the CCITTFaxDecode filter.
     """
 
     @staticmethod
@@ -565,7 +565,7 @@ class CCITTFaxDecode:
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
         rows: int,
     ) -> CCITParameters:
-        # TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
+        # §7.4.6, optional parameters for the CCITTFaxDecode filter
         k = 0
         columns = 1728
         if parameters:
