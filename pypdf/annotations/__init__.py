@@ -17,14 +17,13 @@ from ._markup_annotations import (
     FreeText,
     Highlight,
     Line,
-    Link,
     MarkupAnnotation,
     Polygon,
     PolyLine,
     Rectangle,
     Text,
 )
-from ._non_markup_annotations import Popup
+from ._non_markup_annotations import Link, Popup
 
 __all__ = [
     "NO_FLAGS",
