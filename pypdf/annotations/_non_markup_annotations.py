@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 
 from ..constants import AnnotationFlag
 from ..generic._base import (

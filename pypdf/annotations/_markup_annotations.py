@@ -1,6 +1,6 @@
 import sys
 from abc import ABC
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from .._utils import deprecate_with_replacement
 from ..constants import AnnotationFlag
@@ -12,7 +12,6 @@ from ..generic._base import (
     NumberObject,
     TextStringObject,
 )
-from ..generic._fit import DEFAULT_FIT, Fit
 from ..generic._rectangle import RectangleObject
 from ..generic._utils import hex_to_rgb
 from ._base import NO_FLAGS, AnnotationDictionary
