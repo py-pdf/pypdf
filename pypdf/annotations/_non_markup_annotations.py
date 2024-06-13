@@ -4,8 +4,11 @@ from ..constants import AnnotationFlag
 from ..generic._base import (
     BooleanObject,
     NameObject,
+    NumberObject,
+    TextStringObject,
 )
-from ..generic._data_structures import DictionaryObject
+from ..generic._data_structures import ArrayObject, DictionaryObject
+from ..generic._fit import DEFAULT_FIT, Fit
 from ..generic._rectangle import RectangleObject
 from ._base import AnnotationDictionary
 
