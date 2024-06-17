@@ -38,15 +38,15 @@ XMPMM_NAMESPACE = "http://ns.adobe.com/xap/1.0/mm/"
 # documented meaning.
 #
 # Elements in the namespace are key/value-style storage,
-# where the element name is the key and the content is the value.  The keys
+# where the element name is the key and the content is the value. The keys
 # are transformed into valid XML identifiers by substituting an invalid
 # identifier character with \u2182 followed by the unicode hex ID of the
-# original character.  A key like "my car" is therefore "my\u21820020car".
+# original character. A key like "my car" is therefore "my\u21820020car".
 #
 # \u2182 is the unicode character \u{ROMAN NUMERAL TEN THOUSAND}
 #
-# The pdfx namespace should be avoided.  A
-# custom data schema and sensical XML elements could be used instead, as is
+# The pdfx namespace should be avoided.
+# A custom data schema and sensical XML elements could be used instead, as is
 # suggested by Adobe's own documentation on XMP under "Extensibility of
 # Schemas".
 PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"

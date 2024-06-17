@@ -514,7 +514,7 @@ class PdfReader(PdfDocCommon):
     def read_object_header(self, stream: StreamType) -> Tuple[int, int]:
         # Should never be necessary to read out whitespace, since the
         # cross-reference table should put us in the right spot to read the
-        # object header.  In reality... some files have stupid cross reference
+        # object header. In reality some files have stupid cross reference
         # tables that are off by whitespace bytes.
         extra = False
         skip_over_comment(stream)
@@ -736,8 +736,8 @@ class PdfReader(PdfDocCommon):
 
                 # On the other hand, some malformed PDF files
                 # use a single character EOL without a preceding
-                # space.  Detect that case, and seek the stream
-                # back one character.  (0-9 means we've bled into
+                # space. Detect that case, and seek the stream
+                # back one character (0-9 means we've bled into
                 # the next xref entry, t means we've bled into the
                 # text "trailer"):
                 if line[-1] in b"0123456789t":
@@ -896,7 +896,7 @@ class PdfReader(PdfDocCommon):
                 __name__,
             )
             return None
-        # bad xref character at startxref.  Let's see if we can find
+        # bad xref character at startxref. Let's see if we can find
         # the xref table nearby, as we've observed this error with an
         # off-by-one before.
         stream.seek(-11, 1)
@@ -1063,7 +1063,7 @@ class PdfReader(PdfDocCommon):
         owner password, and then stores the resulting decryption key if either
         password is correct.
 
-        It does not matter which password was matched.  Both passwords provide
+        It does not matter which password was matched. Both passwords provide
         the correct decryption key that will allow the document to be used with
         this library.
 
