@@ -353,7 +353,7 @@ class PdfWriter(PdfDocCommon):
 
     def _add_object(self, obj: PdfObject) -> IndirectObject:
         if (
-            getattr(obj, "indirect_reference", None) is not None
+            hasattr(obj, "indirect_reference")
             and obj.indirect_reference.pdf == self  # type: ignore
         ):
             return obj.indirect_reference  # type: ignore
@@ -387,7 +387,7 @@ class PdfWriter(PdfDocCommon):
             indirect_reference = indirect_reference.idnum
         gen = self._objects[indirect_reference - 1].indirect_reference.generation  # type: ignore
         if (
-            getattr(obj, "indirect_reference", None) is not None
+            hasattr(obj, "indirect_reference")
             and obj.indirect_reference.pdf != self  # type: ignore
         ):
             obj = obj.clone(self)
