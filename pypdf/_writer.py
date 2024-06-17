@@ -170,8 +170,8 @@ class PdfWriter(PdfDocCommon):
         pages.update(
             {
                 NameObject(PA.TYPE): NameObject("/Pages"),
-                NameObject(PA.KIDS): ArrayObject(),
                 NameObject(PA.COUNT): NumberObject(0),
+                NameObject(PA.KIDS): ArrayObject(),
             }
         )
         self._pages = self._add_object(pages)
