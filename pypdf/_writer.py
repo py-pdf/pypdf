@@ -170,8 +170,8 @@ class PdfWriter(PdfDocCommon):
         pages.update(
             {
                 NameObject(PA.TYPE): NameObject("/Pages"),
-                NameObject(PA.COUNT): NumberObject(0),
                 NameObject(PA.KIDS): ArrayObject(),
+                NameObject(PA.COUNT): NumberObject(0),
             }
         )
         self._pages = self._add_object(pages)
@@ -749,7 +749,7 @@ class PdfWriter(PdfDocCommon):
 
         Args:
             reader: a PdfReader object from which to copy page
-                annotations to this writer object.  The writer's annots
+                annotations to this writer object. The writer's annots
                 will then be updated.
             after_page_append:
                 Callback function that is invoked after each page is appended to
@@ -1186,10 +1186,10 @@ class PdfWriter(PdfDocCommon):
             user_password: The password which allows for opening
                 and reading the PDF file with the restrictions provided.
             owner_password: The password which allows for
-                opening the PDF files without any restrictions.  By default,
+                opening the PDF files without any restrictions. By default,
                 the owner password is the same as the user password.
             use_128bit: flag as to whether to use 128bit
-                encryption.  When false, 40bit encryption will be used.
+                encryption. When false, 40bit encryption will be used.
                 By default, this flag is on.
             permissions_flag: permissions as described in
                 Table 3.20 of the PDF 1.7 specification. A bit value of 1 means
@@ -1413,7 +1413,7 @@ class PdfWriter(PdfDocCommon):
             # an array update the value
             if isinstance(parent, (DictionaryObject, ArrayObject)):
                 if isinstance(data, StreamObject):
-                    # a dictionary value is a stream.  streams must be indirect
+                    # a dictionary value is a stream; streams must be indirect
                     # objects, so we need to change this value.
                     data = self._resolve_indirect_object(self._add_object(data))
 
