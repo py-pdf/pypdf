@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1718297225250,
+  "lastUpdate": 1718621064707,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -53861,6 +53861,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00033545666341482143",
             "extra": "mean: 777.607014199998 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a195cb3587577fba8329a767f5a8c9fabd16d7dc",
+          "message": "STY: Consistency of spaces after period (#2717)\n\nRemove two spaces after a period so everywhere one space is used.",
+          "timestamp": "2024-06-17T12:41:24+02:00",
+          "tree_id": "572d57ab3aa5457a8f8224354939ec27722afe6a",
+          "url": "https://github.com/py-pdf/pypdf/commit/a195cb3587577fba8329a767f5a8c9fabd16d7dc"
+        },
+        "date": 1718621062851,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9137042807004896,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024769030260390367",
+            "extra": "mean: 343.2057283999967 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.248362596018797,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008394654603455325",
+            "extra": "mean: 81.64356600000065 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2730966761418621,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019698831238731524",
+            "extra": "mean: 3.661706960800001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.937870706690987,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00033883415698120954",
+            "extra": "mean: 111.88347122222177 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06095887636388925,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17249753599225418",
+            "extra": "mean: 16.4045018486 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2860438854240193,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007511237199757859",
+            "extra": "mean: 777.5784413999929 msec\nrounds: 5"
           }
         ]
       }
