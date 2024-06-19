@@ -557,8 +557,8 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
     def get_original_bytes(self) -> bytes:
         # We're a text string object, but the library is trying to get our raw
-        # bytes.  This can happen if we auto-detected this string as text, but
-        # we were wrong.  It's pretty common.  Return the original bytes that
+        # bytes. This can happen if we auto-detected this string as text, but
+        # we were wrong. It's pretty common. Return the original bytes that
         # would have been used to create this object, based upon the autodetect
         # method.
         if self.autodetect_utf16:
@@ -574,8 +574,8 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
             raise Exception("no information about original bytes")  # pragma: no cover
 
     def get_encoded_bytes(self) -> bytes:
-        # Try to write the string out as a PDFDocEncoding encoded string.  It's
-        # nicer to look at in the PDF file.  Sadly, we take a performance hit
+        # Try to write the string out as a PDFDocEncoding encoded string. It's
+        # nicer to look at in the PDF file. Sadly, we take a performance hit
         # here for trying...
         try:
             if self.autodetect_utf16:

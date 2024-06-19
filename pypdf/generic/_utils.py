@@ -95,7 +95,7 @@ def read_string_from_stream(
                     tok = b_(chr(int(tok, base=8)))
                 elif tok in b"\n\r":
                     # This case is  hit when a backslash followed by a line
-                    # break occurs.  If it's a multi-char EOL, consume the
+                    # break occurs. If it's a multi-char EOL, consume the
                     # second character:
                     tok = stream.read(1)
                     if tok not in b"\n\r":
