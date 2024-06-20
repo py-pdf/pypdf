@@ -426,7 +426,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
 
         Returns:
           Returns a :class:`~pypdf.xmp.XmpInformation` instance
-          that can be used to access XMP metadata from the document.  Can also
+          that can be used to access XMP metadata from the document. Can also
           return None if no metadata was found on the document root.
         """
         from ..xmp import XmpInformation
@@ -1158,10 +1158,10 @@ class ContentStream(DecodedStreamObject):
                     operands = []
             elif peek == b"%":
                 # If we encounter a comment in the content stream, we have to
-                # handle it here.  Typically, read_object will handle
+                # handle it here. Typically, read_object will handle
                 # encountering a comment -- but read_object assumes that
                 # following the comment must be the object we're trying to
-                # read.  In this case, it could be an operator instead.
+                # read. In this case, it could be an operator instead.
                 while peek not in (b"\r", b"\n", b""):
                     peek = stream.read(1)
             else:
