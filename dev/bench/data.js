@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1718621064707,
+  "lastUpdate": 1718880983896,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -53927,6 +53927,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007511237199757859",
             "extra": "mean: 777.5784413999929 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a512408c9559771c5b7e67d9c62de64e09ca4c08",
+          "message": "DEV: Delete tox.ini (#2713)\n\nWe are not using tox for CI, but GitHub Actions and their workflow matrix, which basically is the same.",
+          "timestamp": "2024-06-20T12:53:25+02:00",
+          "tree_id": "8aa567cd228e0e2a110e8159aed2717af7df554c",
+          "url": "https://github.com/py-pdf/pypdf/commit/a512408c9559771c5b7e67d9c62de64e09ca4c08"
+        },
+        "date": 1718880981884,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8919098049908794,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006546524446221706",
+            "extra": "mean: 345.79225059999885 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.101464557964707,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008957373403175671",
+            "extra": "mean: 82.63462618182355 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2713888314804562,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02771018939182692",
+            "extra": "mean: 3.684750011800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.887812607699974,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006447135399498089",
+            "extra": "mean: 112.51362333333266 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06183642219657205,
+            "unit": "iter/sec",
+            "range": "stddev: 0.23015273209997855",
+            "extra": "mean: 16.171698886800016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2764029613400314,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008922981319255568",
+            "extra": "mean: 783.4516452000003 msec\nrounds: 5"
           }
         ]
       }
