@@ -121,9 +121,14 @@ _predefined_cmap: Dict[str, str] = {
     "/GBK-EUC-V": "gbk",  # TBC
     "/GBK2K-H": "gb18030",
     "/GBK2K-V": "gb18030",
+    "/ETen-B5-H": "cp950",
+    "/ETen-B5-V": "cp950",
+    "/ETenms-B5-H": "cp950",
+    "/ETenms-B5-V": "cp950",
+    "/UniCNS-UTF16-H": "utf-16-be",  # TBC
+    "/UniCNS-UTF16-V": "utf-16-be",  # TBC
     # UCS2 in code
 }
-
 
 # manually extracted from http://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz
 _default_fonts_space_width: Dict[str, int] = {
