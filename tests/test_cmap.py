@@ -199,3 +199,10 @@ def test_ignoring_non_put_entries():
     """Issue #2290"""
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
     reader.pages[0].extract_text()
+
+
+@pytest.mark.enable_socket()
+def test_eten_b5():
+    """Issue #2356"""
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
+    reader.pages[0].extract_text().startswith("1/7 \n富邦新終身壽險")

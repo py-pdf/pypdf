@@ -113,20 +113,20 @@ unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]] 
 _predefined_cmap: Dict[str, str] = {
     "/Identity-H": "utf-16-be",
     "/Identity-V": "utf-16-be",
-    "/GB-EUC-H": "gbk",  # TBC
-    "/GB-EUC-V": "gbk",  # TBC
-    "/GBpc-EUC-H": "gb2312",  # TBC
-    "/GBpc-EUC-V": "gb2312",  # TBC
-    "/GBK-EUC-H": "gbk",  # TBC
-    "/GBK-EUC-V": "gbk",  # TBC
+    "/GB-EUC-H": "gbk",
+    "/GB-EUC-V": "gbk",
+    "/GBpc-EUC-H": "gb2312",
+    "/GBpc-EUC-V": "gb2312",
+    "/GBK-EUC-H": "gbk",
+    "/GBK-EUC-V": "gbk",
     "/GBK2K-H": "gb18030",
     "/GBK2K-V": "gb18030",
     "/ETen-B5-H": "cp950",
     "/ETen-B5-V": "cp950",
     "/ETenms-B5-H": "cp950",
     "/ETenms-B5-V": "cp950",
-    "/UniCNS-UTF16-H": "utf-16-be",  # TBC
-    "/UniCNS-UTF16-V": "utf-16-be",  # TBC
+    "/UniCNS-UTF16-H": "utf-16-be",
+    "/UniCNS-UTF16-V": "utf-16-be",
     # UCS2 in code
 }
 
