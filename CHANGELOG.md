@@ -5,7 +5,7 @@
 ### New Features (ENH)
 - Accept ETen-B5 and UniCNS-UTF16 encodings (#2721)
 - Add decode_as_image() to ContentStreams (#2615)
-- context manager for pdfreader (#2666)
+- context manager for PdfReader (#2666)
 - Add capability to set font and size in fields (#2636)
 - Allow to pass input file without named argument (#2576)
 
