@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1719132552669,
+  "lastUpdate": 1719135998522,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -54125,6 +54125,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0017495061140247218",
             "extra": "mean: 778.1613573999948 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d3ef5e5720c98162d84f7a5f72847315980caaed",
+          "message": "REL: 4.3.0\n\n## What's new\r\n\r\n### New Features (ENH)\r\n- Accept ETen-B5 and UniCNS-UTF16 encodings (#2721) by @pubpub-zz\r\n- Add decode_as_image() to ContentStreams (#2615) by @pubpub-zz\r\n- context manager for PdfReader (#2666) by @tibor-reiss\r\n- Add capability to set font and size in fields (#2636) by @pubpub-zz\r\n- Allow to pass input file without named argument (#2576) by @pubpub-zz\r\n\r\n### Bug Fixes (BUG)\r\n- Fix deprecation for Ressources when using old constants (#2705) by @stefan6419846\r\n- Fix images issue 4 bits encoding and LUT starting with UTF16_BOM (#2675) by @pubpub-zz\r\n- Reading large compressed images takes huge time to process (#2644) by @snanda85\r\n- Highlighted Text Cannot Be Printed (#2604) by @Nifury\r\n- Fix UnboundLocalError on malformed pdf (#2619) by @farjasju\r\n\r\n### Documentation (DOC)\r\n- Various improvements on docstrings and examples by @j-t-1\r\n\r\n### Robustness (ROB)\r\n- Cope with missing Standard 14 fonts in fields (#2677) by @pubpub-zz\r\n- Improve inline image extraction (#2622) by @pubpub-zz\r\n- Cope with loops in Fields tree (#2656) by @pubpub-zz\r\n- Discard /I in choice fields for compatibility with Acrobat (#2614) by @pubpub-zz\r\n- Cope with some issues in pillow (#2595) by @pubpub-zz\r\n- Cope with some image extraction issues (#2591) by @pubpub-zz\r\n\r\n### Maintenance (MAINT)\r\n- Deprecate interiour_color with replacement interior_color (#2706) by @j-t-1\r\n- Add deprecate_with_replacement to PdfWriter.find_bookmark (#2674) by @j-t-1\r\n\r\n### Code Style (STY)\r\n- Change Link to be a non-markup annotation (#2714) by @j-t-1\r\n\r\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.2.0...4.3.0)",
+          "timestamp": "2024-06-23T11:43:39+02:00",
+          "tree_id": "6fb446de46f9eb5ab8a3fb64779511455bbbe5d2",
+          "url": "https://github.com/py-pdf/pypdf/commit/d3ef5e5720c98162d84f7a5f72847315980caaed"
+        },
+        "date": 1719135996666,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.936616470076994,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00519730140529669",
+            "extra": "mean: 340.5279546000031 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.267192179003128,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0072776831402258735",
+            "extra": "mean: 81.51824683334041 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27042577501626164,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024404668732966497",
+            "extra": "mean: 3.6978723641999975 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.042332611481374,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011418895806012779",
+            "extra": "mean: 110.59093299999428 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06130376149548768,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04156335036754672",
+            "extra": "mean: 16.3122127518 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2771431377946885,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006440688622425817",
+            "extra": "mean: 782.9975908000051 msec\nrounds: 5"
           }
         ]
       }
