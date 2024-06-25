@@ -1,7 +1,7 @@
 """
-Anything related to XMP metadata.
+Anything related to Extensible Metadata Platform (XMP) metadata.
 
-See https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
+https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
 """
 
 import datetime
@@ -202,7 +202,7 @@ def _getter_single(
 
 class XmpInformation(PdfObject):
     """
-    An object that represents Adobe XMP metadata.
+    An object that represents Extensible Metadata Platform (XMP) metadata.
     Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`
 
     Raises:
