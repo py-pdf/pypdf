@@ -689,6 +689,7 @@ class PdfWriter(PdfDocCommon):
         #  /F (hello.txt)
         #  /EF << /F 8 0 R >>
         # >>
+        # endobj
 
         ef_entry = DictionaryObject()
         ef_entry.update({NameObject("/F"): self._add_object(file_entry)})
