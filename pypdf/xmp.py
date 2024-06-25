@@ -203,7 +203,7 @@ def _getter_single(
 class XmpInformation(PdfObject):
     """
     An object that represents Extensible Metadata Platform (XMP) metadata.
-    Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`
+    Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`.
 
     Raises:
       PdfReadError: if XML is invalid
@@ -319,7 +319,7 @@ class XmpInformation(PdfObject):
     """An unformatted text string representing document keywords."""
 
     pdf_pdfversion = property(_getter_single(PDF_NAMESPACE, "PDFVersion"))
-    """The PDF file version, for example 1.0, 1.3."""
+    """The PDF file version, for example 1.0 or 1.3."""
 
     pdf_producer = property(_getter_single(PDF_NAMESPACE, "Producer"))
     """The name of the tool that created the PDF document."""
