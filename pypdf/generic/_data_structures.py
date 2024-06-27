@@ -909,7 +909,7 @@ class StreamObject(DictionaryObject):
         deprecate_with_replacement(
             "initializeFromDictionary", "initialize_from_dictionary", "5.0.0"
         )  # pragma: no cover
-        return StreamObject.initialize_from_dictionary(data)
+        return StreamObject.initialize_from_dictionary(data)  # pragma: no cover
 
     @staticmethod
     def initialize_from_dictionary(
