@@ -903,10 +903,13 @@ class StreamObject(DictionaryObject):
         stream.write(b"\nendstream")
 
     @staticmethod
-    def initializeFromDictionary(  # TODO: mention when to deprecate
+    def initializeFromDictionary(
         data: Dict[str, Any]
-    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:  # deprecated
-        return StreamObject.initialize_from_dictionary(data)
+    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
+        deprecate_with_replacement(
+            "initializeFromDictionary", "initialize_from_dictionary", "5.0.0"
+        )  # pragma: no cover
+        return StreamObject.initialize_from_dictionary(data)  # pragma: no cover
 
     @staticmethod
     def initialize_from_dictionary(
