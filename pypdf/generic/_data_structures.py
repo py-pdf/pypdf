@@ -906,7 +906,9 @@ class StreamObject(DictionaryObject):
     def initializeFromDictionary(
         data: Dict[str, Any]
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
-        deprecate_with_replacement("initializeFromDictionary", "initialize_from_dictionary", "5.0.0")  # pragma: no cover
+        deprecate_with_replacement(
+            "initializeFromDictionary", "initialize_from_dictionary", "5.0.0"
+        )  # pragma: no cover
         return StreamObject.initialize_from_dictionary(data)
 
     @staticmethod
