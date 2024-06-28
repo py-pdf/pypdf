@@ -462,7 +462,9 @@ class PdfWriter(PdfDocCommon):
 
     def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
-        self._root_object[NameObject(CatalogDictionary.VIEWER_PREFERENCES)] = self._add_object(o)
+        self._root_object[
+            NameObject(CatalogDictionary.VIEWER_PREFERENCES)
+        ] = self._add_object(o)
         return o
 
     def add_page(
@@ -778,7 +780,7 @@ class PdfWriter(PdfDocCommon):
     ) -> None:
         # Calculate rectangle dimensions
         _rct = cast(RectangleObject, anno[AA.Rect])
-        rct = RectangleObject((0, 0, _rct[2] - _rct[0], _rct[3] - _rct[1]))
+        rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
 
         # Extract font information
         da = anno.get_inherited(
