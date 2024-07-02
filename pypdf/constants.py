@@ -220,10 +220,10 @@ class PageAttributes:
     LAST_MODIFIED = "/LastModified"  # date, optional; date and time of last modification
     RESOURCES = "/Resources"  # dictionary, required if there are any
     MEDIABOX = "/MediaBox"  # rectangle, required; rectangle specifying page size
-    CROPBOX = "/CropBox"  # rectangle, optional; rectangle
-    BLEEDBOX = "/BleedBox"  # rectangle, optional; rectangle
-    TRIMBOX = "/TrimBox"  # rectangle, optional; rectangle
-    ARTBOX = "/ArtBox"  # rectangle, optional; rectangle
+    CROPBOX = "/CropBox"  # rectangle, optional
+    BLEEDBOX = "/BleedBox"  # rectangle, optional
+    TRIMBOX = "/TrimBox"  # rectangle, optional
+    ARTBOX = "/ArtBox"  # rectangle, optional
     BOX_COLOR_INFO = "/BoxColorInfo"  # dictionary, optional
     CONTENTS = "/Contents"  # stream or array, optional
     ROTATE = "/Rotate"  # integer, optional; page rotation in degrees
