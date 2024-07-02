@@ -347,12 +347,12 @@ def b_(s: Union[str, bytes]) -> bytes:
         return bc[s]
     try:
         r = s.encode("latin-1")
-        if len(s) < 2:
+        if len(s) > 1:
             bc[s] = r
         return r
     except Exception:
         r = s.encode("utf-8")
-        if len(s) < 2:
+        if len(s) > 1:
             bc[s] = r
         return r
 
