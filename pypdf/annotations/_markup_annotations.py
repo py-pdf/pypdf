@@ -75,7 +75,6 @@ class Text(MarkupAnnotation):
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
-        super()
         self[NameObject("/Subtype")] = NameObject("/Text")
         self[NameObject("/Rect")] = RectangleObject(rect)
         self[NameObject("/Contents")] = TextStringObject(text)
