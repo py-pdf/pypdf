@@ -20,11 +20,11 @@ all features of PDF 2.0.
 
 | Feature                                 | PDF Version | pypdf Support  |
 | --------------------------------------- | ----------- | -------------- |
-| Transparent Graphics                    | 1.4         | —              |
+| Transparent Graphics                    | 1.4         | ❓             |
 | CMaps                                   | 1.4         | ✅             |
-| Object Streams                          | 1.5         | —              |
+| Object Streams                          | 1.5         | ❓             |
 | Cross-reference Streams                 | 1.5         | ✅             |
-| Optional Content Groups (OCGs) - Layers | 1.5         | —              |
+| Optional Content Groups (OCGs) - Layers | 1.5         | ❓             |
 | Content Stream Compression              | 1.5         | ✅             |
 | AES Encryption                          | 1.6         | ✅             |
 
