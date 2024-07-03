@@ -19,7 +19,7 @@ all features of PDF 2.0.
 ## PDF Feature Support by pypdf
 
 | Feature                                 | PDF Version | pypdf Support  |
-| --------------------------------------- | ----------- | -------------- |
+| --------------------------------------- |:-----------:|:--------------:|
 | Transparent Graphics                    | 1.4         | ❓             |
 | CMaps                                   | 1.4         | ✅             |
 | Object Streams                          | 1.5         | ❓             |
