@@ -702,9 +702,7 @@ def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
                 height = stream.get(IA.HEIGHT, ())
                 data = CCITTFaxDecode.decode(data, params, height)
             elif filter_type == "/Crypt":
-                if "/Name" not in params and "/Type" not in params:
-                    pass
-                else:
+                if "/Name" in params or "/Type" in params:
                     raise NotImplementedError(
                         "/Crypt filter with /Name or /Type not supported yet"
                     )
