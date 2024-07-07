@@ -52,7 +52,7 @@ pip install pypdf[image]
 
 Since pypdf 4.0, every release, including point releases, should work with all
 supported versions of [Python](https://devguide.python.org/versions/). Thus
-every point release is designed to work with all concurrent Python versions,
+every point release is designed to work with all existing Python versions,
 excluding end-of-life versions.
 
 Previous versions of pypdf support the following versions of Python:
