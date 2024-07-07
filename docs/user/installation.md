@@ -50,10 +50,10 @@ pip install pypdf[image]
 
 ## Python Version Support
 
-Since pypdf 4.0 it is every release should work with all supported versions of
-[Python](https://devguide.python.org/versions/). Thus every pypdf release,
-including point releases, is designed to work with all concurrent Python
-versions excluding end-of-life versions.
+Since pypdf 4.0, every release, including point releases, should work with all
+supported versions of [Python](https://devguide.python.org/versions/). Thus
+every point release is designed to work with all concurrent Python versions,
+excluding end-of-life versions.
 
 Previous versions of pypdf support the following versions of Python:
 
