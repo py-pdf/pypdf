@@ -100,7 +100,7 @@ def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
         except ValueError:
             continue
         else:
-            if text[-5:] == "+0000":
+            if text.endswith("+0000"):
                 d = d.replace(tzinfo=timezone.utc)
             return d
     raise ValueError(f"Can not convert date: {orgtext}")
