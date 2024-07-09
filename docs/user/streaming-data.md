@@ -79,8 +79,7 @@ To use with Google cloud storage
 from io import BytesIO
 from google.cloud import storage
 import os
-
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "Set this up either as secret or json file downloaded from gcloud"
+# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] must be set 
 storage_client = storage.Client()
 blob = storage_client.bucket('my-bucket').blob('mydoc.pdf')
 file_stream = BytesIO()
