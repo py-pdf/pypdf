@@ -13,8 +13,6 @@ from pypdf import PdfWriter
 writer = PdfWriter(clone_from="example.pdf")
 
 # Add JavaScript to launch the print window on opening this PDF.
-# The password dialog may prevent the print dialog from being shown,
-# comment the encryption lines, if that's the case, to try this out.
 writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
 # Write to pypdf-output.pdf.
