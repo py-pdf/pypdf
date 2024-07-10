@@ -77,8 +77,8 @@ To use with Google Cloud storage:
 
 ```python
 from io import BytesIO
+
 from google.cloud import storage
-import os
 
 # os.environ["GOOGLE_APPLICATION_CREDENTIALS"] must be set 
 storage_client = storage.Client()
