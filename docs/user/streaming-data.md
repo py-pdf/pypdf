@@ -73,7 +73,7 @@ obj = s3.get_object(Body=csv_buffer.getvalue(), Bucket="my-bucket", Key="my/doc.
 reader = PdfReader(BytesIO(obj["Body"].read()))
 ```
 
-To use with Google cloud storage
+To use with Google cloud storage:
 
 ```python
 from io import BytesIO
