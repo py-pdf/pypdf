@@ -24,12 +24,6 @@ page3.mediabox.upper_right = (
 )
 writer.add_page(page3)
 
-# Add some JavaScript to launch the print window on opening this PDF.
-# The password dialog may prevent the print dialog from being shown,
-# comment the encryption lines, if that's the case, to try this out.
-# https://opensource.adobe.com/dc-acrobat-sdk-docs/library/jsapiref/index.html
-writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-
 # Write to pypdf-output.pdf.
 with open("pypdf-output.pdf", "wb") as fp:
     writer.write(fp)
