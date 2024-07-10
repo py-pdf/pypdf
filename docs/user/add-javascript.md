@@ -1,28 +1,17 @@
-# Cropping and Transforming PDFs
+# Adding JavaScript to a PDF
 
-> **Notice**: Just because content is no longer visible, it is not gone.
-> Cropping works by adjusting the viewbox. That means content that was cropped
-> away can still be restored.
+
+# https://opensource.adobe.com/dc-acrobat-sdk-docs/library/jsapiref/index.html
 
 ```python
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfWriter
 
-reader = PdfReader("example.pdf")
-writer = PdfWriter()
+writer = PdfWriter(clone_from="example.pdf")
 
-# Add page 1 from reader to output document, unchanged.
-writer.add_page(reader.pages[0])
-
-# Add page 2 from reader, but rotated clockwise 90 degrees.
-writer.add_page(reader.pages[1].rotate(90))
-
-# Add page 3 from reader, but crop it to half size.
-page3 = reader.pages[2]
-page3.mediabox.upper_right = (
-    page3.mediabox.right / 2,
-    page3.mediabox.top / 2,
-)
-writer.add_page(page3)
+# Add some JavaScript to launch the print window on opening this PDF.
+# The password dialog may prevent the print dialog from being shown,
+# comment the encryption lines, if that's the case, to try this out.
+writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
 # Write to pypdf-output.pdf.
 with open("pypdf-output.pdf", "wb") as fp:
