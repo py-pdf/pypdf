@@ -23,7 +23,7 @@ all features of PDF 2.0.
 | CMaps                                   | 1.4         | ✅             |
 | Transparent Graphics                    | 1.4         | ❓             |
 | Content Stream Compression              | 1.5         | ✅             |
-| Cross-reference Streams                 | 1.5         | ❓             |
+| Cross-reference Streams                 | 1.5         | ✅             |
 | Object Streams                          | 1.5         | ❓             |
 | Optional Content Groups (OCGs)          | 1.5         | ❓             |
 | AES Encryption                          | 1.6         | ✅             |
