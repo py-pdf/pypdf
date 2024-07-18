@@ -223,7 +223,7 @@ def test_name_object(caplog):
         )
     ) == "/你好世界"
 
-    # to test latin-1 aka stdencoding
+    # to test PDFDocEncoding (latin-1)
     assert (
         NameObject.read_from_stream(BytesIO(b"/DocuSign\xae"), None)
     ) == "/DocuSign®"
