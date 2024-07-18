@@ -265,7 +265,7 @@ page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
 
-# Add the line
+# Add the link
 annotation = Link(
     rect=(50, 550, 200, 650),
     url="https://martin-thoma.com/",
@@ -282,6 +282,7 @@ You can also add internal links:
 ```python
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Link
+from pypdf.generic import Fit
 
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
@@ -289,9 +290,11 @@ page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
 
-# Add the line
+# Add the link
 annotation = Link(
-    rect=(50, 550, 200, 650), target_page_index=3, fit="/FitH", fit_args=(123,)
+    rect=(50, 550, 200, 650),
+    target_page_index=3,
+    fit=Fit(fit_type="/FitH", fit_args=(123,)),
 )
 writer.add_annotation(page_number=0, annotation=annotation)
 
