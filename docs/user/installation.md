@@ -58,11 +58,11 @@ excluding end-of-life versions.
 Previous versions of pypdf support the following versions of Python:
 
 | Python                 | 3.11 | 3.10 | 3.9 | 3.8 | 3.7 | 3.6 | 2.7 |
-| ---------------------- | ---- | ---- | --- | --- | --- | --- | --- |
-| pypdf 3.x              | YES  | YES  | YES | YES | YES | YES |     |
-| PyPDF2 >= 2.0          | YES  | YES  | YES | YES | YES | YES |     |
-| PyPDF2 1.20.0 - 1.28.4 |      | YES  | YES | YES | YES | YES | YES |
-| PyPDF2 1.15.0 - 1.20.0 |      |      |     |     |     |     | YES |
+| ---------------------- |:----:|:----:|:---:|:---:|:---:|:---:|:---:|
+| pypdf 3.x              | ✅   | ✅  | ✅ | ✅  | ✅  | ✅ | ❌ |
+| PyPDF2 >= 2.0          | ✅   | ✅  | ✅ | ✅  | ✅  | ✅ | ❌ |
+| PyPDF2 1.20.0 - 1.28.4 | ❌   | ✅  | ✅ | ✅  | ✅  | ✅ | ✅ |
+| PyPDF2 1.15.0 - 1.20.0 | ❌   | ❌  | ❌ | ❌  | ❌  | ❌ | ✅ |
 
 
 ## Anaconda
