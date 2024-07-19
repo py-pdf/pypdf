@@ -906,6 +906,10 @@ class PdfWriter(PdfDocCommon):
                 "/Length": 0,
             }
         )
+        if AA.AP in anno:
+            for k, v in cast(DictionaryObject, anno[AA.AP]).get("/N", {}).items():
+                if k not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
+                    dct[k] = v
 
         # Update Resources with font information if necessary
         if font_res is not None:

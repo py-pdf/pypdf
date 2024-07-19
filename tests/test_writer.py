@@ -2286,3 +2286,17 @@ def test_field_box_upside_down():
     box = writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"]["/BBox"]
     assert box[2] > 0
     assert box[3] > 0
+
+
+@pytest.mark.enable_socket()
+def test_matrix_entry_in_field_annots():
+    """Cf #2731"""
+    url = "https://github.com/user-attachments/files/16036514/template.pdf"
+    name = "iss2731.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Stellenbezeichnung_1": "some filled in text"},
+        auto_regenerate=False,
+    )
+    assert "/Matrix" in writer.pages[0]["/Annots"][5].get_object()["/AP"]["/N"]
