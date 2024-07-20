@@ -41,7 +41,6 @@ from os import SEEK_CUR
 from typing import (
     IO,
     Any,
-    Callable,
     Dict,
     List,
     Optional,
@@ -74,11 +73,6 @@ CompressedTransformationMatrix: TypeAlias = Tuple[
 StreamType = IO[Any]
 StrByteType = Union[str, StreamType]
 
-DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in pypdf {}."
-DEPR_MSG_NO_REPLACEMENT_HAPPENED = "{} is deprecated and was removed in pypdf {}."
-DEPR_MSG = "{} is deprecated and will be removed in pypdf {}. Use {} instead."
-DEPR_MSG_HAPPENED = "{} is deprecated and was removed in pypdf {}. Use {} instead."
-
 
 def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
     orgtext = text
@@ -106,20 +100,20 @@ def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
         except ValueError:
             continue
         else:
-            if text[-5:] == "+0000":
+            if text.endswith("+0000"):
                 d = d.replace(tzinfo=timezone.utc)
             return d
     raise ValueError(f"Can not convert date: {orgtext}")
 
 
-def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
+def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     versions = (
-        b"%PDF-1.3",
-        b"%PDF-1.4",
-        b"%PDF-1.5",
-        b"%PDF-1.6",
-        b"%PDF-1.7",
-        b"%PDF-2.0",
+        "%PDF-1.3",
+        "%PDF-1.4",
+        "%PDF-1.5",
+        "%PDF-1.6",
+        "%PDF-1.7",
+        "%PDF-2.0",
     )
     pdf_header_indices = []
     if header1 in versions:
@@ -201,7 +195,7 @@ def check_if_whitespace_only(value: bytes) -> bool:
         True if the value only has whitespace characters, otherwise return False.
     """
     for index in range(len(value)):
-        current = value[index:index + 1]
+        current = value[index : index + 1]
         if current not in WHITESPACES:
             return False
     return True
@@ -363,21 +357,11 @@ def b_(s: Union[str, bytes]) -> bytes:
         return r
 
 
-@overload
-def str_(b: str) -> str:
-    ...
-
-
-@overload
-def str_(b: bytes) -> str:
-    ...
-
-
-def str_(b: Union[str, bytes]) -> str:
+def str_(b: Any) -> str:
     if isinstance(b, bytes):
         return b.decode("latin-1")
     else:
-        return b
+        return str(b)  # will return b.__str__() if defined
 
 
 @overload
@@ -402,7 +386,8 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
 
 
 WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
-WHITESPACES_AS_REGEXP = b"[ \n\r\t\x00]"
+WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
+WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
 
 
 def paeth_predictor(left: int, up: int, up_left: int) -> int:
@@ -427,28 +412,36 @@ def deprecation(msg: str) -> None:
     raise DeprecationError(msg)
 
 
-def deprecate_with_replacement(
-    old_name: str, new_name: str, removed_in: str = "3.0.0"
-) -> None:
+def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed, but has a replacement."""
-    deprecate(DEPR_MSG.format(old_name, removed_in, new_name), 4)
+    deprecate(f"{old_name} is deprecated and will be removed in pypdf {removed_in}. Use {new_name} instead.", 4)
 
 
-def deprecation_with_replacement(
-    old_name: str, new_name: str, removed_in: str = "3.0.0"
-) -> None:
+def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed, but has a replacement."""
-    deprecation(DEPR_MSG_HAPPENED.format(old_name, removed_in, new_name))
+    deprecation(f"{old_name} is deprecated and was removed in pypdf {removed_in}. Use {new_name} instead.")
 
 
-def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+def deprecate_no_replacement(name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed without replacement."""
-    deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
+    deprecate(f"{name} is deprecated and will be removed in pypdf {removed_in}.", 4)
 
 
-def deprecation_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+def deprecation_no_replacement(name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed without replacement."""
-    deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
+    deprecation(f"{name} is deprecated and was removed in pypdf {removed_in}.")
+
+
+def logger_error(msg: str, src: str) -> None:
+    """
+    Use this instead of logger.error directly.
+
+    That allows people to overwrite it more easily.
+
+    See the docs on when to use which:
+    https://pypdf.readthedocs.io/en/latest/user/suppress-warnings.html
+    """
+    logging.getLogger(src).error(msg)
 
 
 def logger_warning(msg: str, src: str) -> None:
@@ -468,26 +461,6 @@ def logger_warning(msg: str, src: str) -> None:
       to strict=False mode.
     """
     logging.getLogger(src).warning(msg)
-
-
-def deprecation_bookmark(**aliases: str) -> Callable[..., Any]:
-    """
-    Decorator for deprecated term "bookmark".
-
-    To be used for methods and function arguments
-        outline_item = a bookmark
-        outline = a collection of outline items.
-    """
-
-    def decoration(func: Callable[..., Any]) -> Any:
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            rename_kwargs(func.__name__, kwargs, aliases, fail=True)
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decoration
 
 
 def rename_kwargs(
@@ -534,6 +507,57 @@ def _human_readable_bytes(bytes: int) -> str:
         return f"{bytes / 10**9:.1f} GB"
 
 
+# The following class has been copied from Django:
+# https://github.com/django/django/blob/adae619426b6f50046b3daaa744db52989c9d6db/django/utils/functional.py#L51-L65
+#
+# Original license:
+#
+# ---------------------------------------------------------------------------------
+# Copyright (c) Django Software Foundation and individual contributors.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+#     1. Redistributions of source code must retain the above copyright notice,
+#        this list of conditions and the following disclaimer.
+#
+#     2. Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#
+#     3. Neither the name of Django nor the names of its contributors may be used
+#        to endorse or promote products derived from this software without
+#        specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# ---------------------------------------------------------------------------------
+class classproperty:  # noqa: N801
+    """
+    Decorator that converts a method with a single cls argument into a property
+    that can be accessed directly from the class.
+    """
+
+    def __init__(self, method=None):  # type: ignore  # noqa: ANN001
+        self.fget = method
+
+    def __get__(self, instance, cls=None) -> Any:  # type: ignore  # noqa: ANN001
+        return self.fget(cls)
+
+    def getter(self, method):  # type: ignore  # noqa: ANN001, ANN202
+        self.fget = method
+        return self
+
+
 @dataclass
 class File:
     from .generic import IndirectObject
@@ -562,7 +586,7 @@ class ImageFile(File):
         Replace the Image with a new PIL image.
 
         Args:
-            new_image (Image.Image): The new PIL image to replace the existing image.
+            new_image (PIL.Image.Image): The new PIL image to replace the existing image.
             **kwargs: Additional keyword arguments to pass to `Image.Image.save()`.
 
         Raises:

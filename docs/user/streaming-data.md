@@ -3,7 +3,7 @@
 In some cases you might want to avoid saving things explicitly as a file
 to disk, e.g. when you want to store the PDF in a database or AWS S3.
 
-pypdf supports streaming data to a file-like object and here is how.
+pypdf supports streaming data to a file-like object:
 
 ```python
 from io import BytesIO
@@ -73,4 +73,18 @@ obj = s3.get_object(Body=csv_buffer.getvalue(), Bucket="my-bucket", Key="my/doc.
 reader = PdfReader(BytesIO(obj["Body"].read()))
 ```
 
-It works similarly for Google Cloud Storage ([example](https://stackoverflow.com/a/68403628/562769))
+To use with Google Cloud storage:
+
+```python
+from io import BytesIO
+
+from google.cloud import storage
+
+# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] must be set 
+storage_client = storage.Client()
+blob = storage_client.bucket("my-bucket").blob("mydoc.pdf")
+file_stream = BytesIO()
+blob.download_to_file(file_stream)
+reader = PdfReader(file_stream)
+```
+

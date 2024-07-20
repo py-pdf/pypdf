@@ -1,4 +1,8 @@
 """Test the pypdf.generic module."""
+
+import codecs
+from base64 import a85encode
+from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -13,6 +17,8 @@ from pypdf.generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
+    ContentStream,
+    DecodedStreamObject,
     Destination,
     DictionaryObject,
     Fit,
@@ -32,6 +38,12 @@ from pypdf.generic import (
     read_hex_string_from_stream,
     read_object,
     read_string_from_stream,
+)
+from pypdf.generic._image_inline import (
+    extract_inline_A85,
+    extract_inline_AHx,
+    extract_inline_DCT,
+    extract_inline_RL,
 )
 
 from . import ReaderDummy, get_data_from_url
@@ -211,6 +223,11 @@ def test_name_object(caplog):
         )
     ) == "/你好世界"
 
+    # to test PDFDocEncoding (latin-1)
+    assert (
+        NameObject.read_from_stream(BytesIO(b"/DocuSign\xae"), None)
+    ) == "/DocuSign®"
+
     # test write
     b = BytesIO()
     NameObject("/hello").write_to_stream(b)
@@ -218,9 +235,8 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-    NameObject("hello").write_to_stream(b)
-    assert bytes(b.getbuffer()) == b"hello"
-    assert "Incorrect first char" in caplog.text
+    with pytest.raises(DeprecationWarning):
+        NameObject("hello").write_to_stream(b)
 
     caplog.clear()
     b = BytesIO()
@@ -271,6 +287,16 @@ def test_encode_pdfdocencoding_keyerror():
     with pytest.raises(UnicodeEncodeError) as exc:
         encode_pdfdocencoding("😀")
     assert exc.value.args[0] == "pdfdocencoding"
+
+
+@pytest.mark.parametrize("test_input", ["", "data"])
+def test_encode_pdfdocencoding_returns_bytes(test_input):
+    """
+    Test that encode_pdfdocencoding() always returns bytes because bytearray
+    is duck type compatible with bytes in mypy
+    """
+    out = encode_pdfdocencoding(test_input)
+    assert isinstance(out, bytes)
 
 
 def test_read_object_comment_exception():
@@ -460,14 +486,13 @@ def test_rectangleobject():
 
 def test_textstringobject_exc():
     tso = TextStringObject("foo")
-    with pytest.raises(Exception) as exc:
-        tso.get_original_bytes()
-    assert exc.value.args[0] == "no information about original bytes"
+    assert tso.get_original_bytes() == b"foo"
 
 
 def test_textstringobject_autodetect_utf16():
     tso = TextStringObject("foo")
     tso.autodetect_utf16 = True
+    tso.utf16_bom = codecs.BOM_UTF16_BE
     assert tso.get_original_bytes() == b"\xfe\xff\x00f\x00o\x00o"
 
 
@@ -867,8 +892,41 @@ def test_annotation_builder_highlight(pdf_file_path):
                     FloatObject(705.4493),
                 ]
             ),
+            printing=False,
         )
     writer.add_annotation(0, highlight_annotation)
+    for annot in writer.pages[0]["/Annots"]:
+        obj = annot.get_object()
+        subtype = obj["/Subtype"]
+        if subtype == "/Highlight":
+            assert "/F" not in obj or obj["/F"] == NumberObject(0)
+
+    writer.add_page(page)
+    # Act
+    with pytest.warns(DeprecationWarning):
+        highlight_annotation = AnnotationBuilder.highlight(
+            rect=(95.79332, 704.31777, 138.55779, 724.6855),
+            highlight_color="ff0000",
+            quad_points=ArrayObject(
+                [
+                    FloatObject(100.060779),
+                    FloatObject(723.55398),
+                    FloatObject(134.29033),
+                    FloatObject(723.55398),
+                    FloatObject(100.060779),
+                    FloatObject(705.4493),
+                    FloatObject(134.29033),
+                    FloatObject(705.4493),
+                ]
+            ),
+            printing=True,
+        )
+    writer.add_annotation(1, highlight_annotation)
+    for annot in writer.pages[1]["/Annots"]:
+        obj = annot.get_object()
+        subtype = obj["/Subtype"]
+        if subtype == "/Highlight":
+            assert obj["/F"] == NumberObject(4)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
@@ -1026,16 +1084,20 @@ def test_checkboxradiobuttonattributes_opt():
 
 
 def test_name_object_invalid_decode():
-    stream = BytesIO(b"/\x80\x02\x03")
+    charsets = deepcopy(NameObject.CHARSETS)
+    try:
+        NameObject.CHARSETS = ("utf-8",)
+        stream = BytesIO(b"/\x80\x02\x03")
+        # strict:
+        with pytest.raises(PdfReadError) as exc:
+            NameObject.read_from_stream(stream, ReaderDummy(strict=True))
+        assert "Illegal character in NameObject " in exc.value.args[0]
 
-    # strict:
-    with pytest.raises(PdfReadError) as exc:
-        NameObject.read_from_stream(stream, ReaderDummy(strict=True))
-    assert "Illegal character in Name Object" in exc.value.args[0]
-
-    # non-strict:
-    stream.seek(0)
-    NameObject.read_from_stream(stream, ReaderDummy(strict=False))
+        # non-strict:
+        stream.seek(0)
+        NameObject.read_from_stream(stream, ReaderDummy(strict=False))
+    finally:
+        NameObject.CHARSETS = charsets
 
 
 def test_indirect_object_invalid_read():
@@ -1045,20 +1107,37 @@ def test_indirect_object_invalid_read():
     assert exc.value.args[0] == "Error reading indirect object reference at byte 0x5"
 
 
-def test_create_string_object_utf16be_bom():
+def test_create_string_object_utf16_bom():
+    # utf16-be
     result = create_string_object(
         b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
     )
     assert result == "PaperPort 14\x00"
     assert result.autodetect_utf16 is True
+    assert result.utf16_bom == b"\xfe\xff"
+    assert (
+        result.get_encoded_bytes()
+        == b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
+    )
 
-
-def test_create_string_object_utf16le_bom():
+    # utf16-le
     result = create_string_object(
         b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
     )
     assert result == "PaperPort 14\x00"
     assert result.autodetect_utf16 is True
+    assert result.utf16_bom == b"\xff\xfe"
+    assert (
+        result.get_encoded_bytes()
+        == b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
+
+    # utf16-be without bom
+    result = TextStringObject("ÿ")
+    result.autodetect_utf16 = True
+    result.utf16_bom = b""
+    assert result.get_encoded_bytes() == b"\x00\xFF"
+    assert result.original_bytes == b"\x00\xFF"
 
 
 def test_create_string_object_force():
@@ -1193,10 +1272,7 @@ def test_iss1615_1673():
 @pytest.mark.enable_socket()
 def test_destination_withoutzoom():
     """Cf issue #1832"""
-    url = (
-        "https://raw.githubusercontent.com/xrkk/tmpppppp/main/"
-        "2021%20----%20book%20-%20Security%20of%20biquitous%20Computing%20Systems.pdf"
-    )
+    url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
     name = "2021_book_security.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.outline
@@ -1235,3 +1311,151 @@ def test_encodedstream_set_data():
     assert cc["/Filter"] == ["/FlateDecode", "/FlateDecode", "/FlateDecode"]
     assert str(cc["/DecodeParms"]) == "[NullObject, NullObject, NullObject]"
     assert cc[NameObject("/Test")] == "/MyTest"
+
+
+@pytest.mark.enable_socket()
+def test_calling_indirect_objects():
+    """Cope with cases where attributes/items are called from indirectObject"""
+    url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
+    name = "2021_book_security.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader.trailer.get("/Info")["/Creator"]
+    reader.pages[0]["/Contents"][0].get_data()
+    writer = PdfWriter(clone_from=reader)
+    ind = writer._add_object(writer)
+    assert ind.fileobj == writer.fileobj
+    with pytest.raises(AttributeError):
+        ind.not_existing_attribute
+    # create an IndirectObject referencing an IndirectObject.
+    writer._objects.append(writer.pages[0].indirect_reference)
+    ind = IndirectObject(len(writer._objects), 0, writer)
+    with pytest.raises(PdfStreamError):
+        ind["/Type"]
+
+
+@pytest.mark.enable_socket()
+def test_indirect_object_page_dimensions():
+    url = "https://github.com/py-pdf/pypdf/files/13302338/Zymeworks_Corporate.Presentation_FINAL1101.pdf.pdf"
+    name = "issue2287.pdf"
+    data = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
+    mediabox = reader.pages[0].mediabox
+    assert mediabox == RectangleObject((0, 0, 792, 612))
+
+
+def test_array_operators():
+    a = ArrayObject(
+        [
+            NumberObject(1),
+            NumberObject(2),
+            NumberObject(3),
+            NumberObject(4),
+        ]
+    )
+    b = a + 5
+    assert isinstance(b, ArrayObject)
+    assert b == [1, 2, 3, 4, 5]
+    assert a == [1, 2, 3, 4]
+    a -= 2
+    a += "abc"
+    a -= (3, 4)
+    a += ["d", "e"]
+    a += BooleanObject(True)
+    assert a == [1, "abc", "d", "e", True]
+    a += "/toto"
+    assert isinstance(a[-1], NameObject)
+    assert isinstance(a[1], TextStringObject)
+    a += b"1234"
+    assert a[-1] == ByteStringObject(b"1234")
+    la = len(a)
+    a -= 300
+    assert len(a) == la
+
+
+def test_unitary_extract_inline_buffer_invalid():
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO(4095 * b"00" + b"   "))
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO(b"00"))
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1")))
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1") + b"~> Q"))
+    with pytest.raises(PdfReadError):
+        extract_inline_A85(BytesIO(a85encode(b"1234578" * 990)))
+    with pytest.raises(PdfReadError):
+        extract_inline_RL(BytesIO())
+    with pytest.raises(PdfReadError):
+        extract_inline_RL(BytesIO(b"\x01\x01\x80"))
+    with pytest.raises(PdfReadError):
+        extract_inline_DCT(BytesIO(b"\xFF\xD9"))
+
+
+def test_unitary_extract_inline():
+    # AHx
+    b = 16000 * b"00"
+    assert len(extract_inline_AHx(BytesIO(b + b" EI"))) == len(b)
+    with pytest.raises(PdfReadError):
+        extract_inline_AHx(BytesIO(b + b"> "))
+    # RL
+    b = 8200 * b"\x00\xAB" + b"\x80"
+    assert len(extract_inline_RL(BytesIO(b + b" EI"))) == len(b)
+
+    # default
+    # EIDD instead of EI; using A85
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F [/A85 /Fl]\nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>
+EIDD
+Q\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "EI stream not found" in exc.value.args[0]
+    # EIDD instead of EI; using /Fl (default extraction)
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F /Fl \nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>
+EIDD
+Q\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "Unexpected end of stream" in exc.value.args[0]
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 16 /H 16 /BPC 8 /CS /RGB /F /Fl \nID
+Gar8O(o6*is8QV#;;JAuTq2lQ8J;%6#\'d5b"Q[+ZD?\'\\+CGj9~>EI
+BT\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    with pytest.raises(PdfReadError) as exc:
+        co.operations
+    assert "Unexpected end of stream" in exc.value.args[0]
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 4 /H 4 /CS /G \nID
+abcdefghijklmnopEI
+Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
+
+    b = b"""1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET\nq 100 0 0 100 100 100 cm
+BI\n/W 4 /H 4 \nID
+abcdefghijklmnopEI
+Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
+    ec = DecodedStreamObject()
+    ec.set_data(b)
+    co = ContentStream(ec, None)
+    assert co.operations[7][0]["data"] == b"abcdefghijklmnop"

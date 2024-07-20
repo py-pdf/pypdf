@@ -3,20 +3,20 @@ import io
 import time
 from io import BytesIO
 from pathlib import Path
+from typing import List, Union
 
 import pytest
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
-from pypdf._reader import convert_to_int, convertToInt
+from pypdf._reader import convert_to_int
 from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
+from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
-    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
-    PdfReadWarning,
     WrongPasswordError,
 )
 from pypdf.generic import (
@@ -37,16 +37,19 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
+NestedList = Union[int, None, List["NestedList"]]
+
+
 @pytest.mark.parametrize(
     ("src", "num_pages"),
     [("selenium-pypdf-issue-177.pdf", 1), ("pdflatex-outline.pdf", 4)],
 )
 def test_get_num_pages(src, num_pages):
     src = RESOURCE_ROOT / src
-    reader = PdfReader(src)
-    assert len(reader.pages) == num_pages
-    # from #1911
-    assert "/Size" in reader.trailer
+    with PdfReader(src) as reader:
+        assert len(reader.pages) == num_pages
+        # from #1911
+        assert "/Size" in reader.trailer
 
 
 @pytest.mark.parametrize(
@@ -108,20 +111,20 @@ def test_read_metadata(pdf_path, expected):
 
 
 def test_iss1943():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    docinfo = reader.metadata
-    docinfo.update(
-        {
-            NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
-            NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
-        }
-    )
-    docinfo.creation_date
-    docinfo.creation_date_raw
-    docinfo.modification_date
-    docinfo.modification_date_raw
-    docinfo.update({NameObject("/CreationDate"): NumberObject(1)})
-    assert docinfo.creation_date is None
+    with PdfReader(RESOURCE_ROOT / "crazyones.pdf") as reader:
+        docinfo = reader.metadata
+        docinfo.update(
+            {
+                NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
+                NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
+            }
+        )
+        docinfo.creation_date
+        docinfo.creation_date_raw
+        docinfo.modification_date
+        docinfo.modification_date_raw
+        docinfo.update({NameObject("/CreationDate"): NumberObject(1)})
+        assert docinfo.creation_date is None
 
 
 @pytest.mark.samples()
@@ -134,7 +137,7 @@ def test_broken_meta_data(pdf_path):
         with pytest.raises(
             PdfReadError,
             match=(
-                "trailer not found or does not point to document "
+                "Trailer not found or does not point to document "
                 "information directory"
             ),
         ):
@@ -149,14 +152,13 @@ def test_broken_meta_data(pdf_path):
     ],
 )
 def test_get_annotations(src):
-    reader = PdfReader(src)
-
-    for page in reader.pages:
-        if PG.ANNOTS in page:
-            for annot in page[PG.ANNOTS]:
-                subtype = annot.get_object()[IA.SUBTYPE]
-                if subtype == "/Text":
-                    annot.get_object()[PG.CONTENTS]
+    with PdfReader(src) as reader:
+        for page in reader.pages:
+            if PG.ANNOTS in page:
+                for annot in page[PG.ANNOTS]:
+                    subtype = annot.get_object()[IA.SUBTYPE]
+                    if subtype == "/Text":
+                        annot.get_object()[PG.CONTENTS]
 
 
 @pytest.mark.parametrize(
@@ -219,30 +221,16 @@ def test_get_images(src, expected_images):
 
     src_abs = RESOURCE_ROOT / src
     reader = PdfReader(src_abs)
-
-    with pytest.raises(TypeError):
-        page = reader.pages["0"]
-
-    page = reader.pages[-1]
     page = reader.pages[0]
-
     images_extracted = page.images
+
     assert len(images_extracted) == len(expected_images)
     for image, expected_image in zip(images_extracted, expected_images):
         assert image.name == expected_image
-        try:
-            fn = f"{src}-test-out-{image.name}"
-            with open(fn, "wb") as fp:
-                fp.write(image.data)
-                assert (
-                    image.name.split(".")[-1].upper()
-                    == Image.open(io.BytesIO(image.data)).format
-                )
-        finally:
-            try:
-                Path(fn).unlink()
-            except Exception:
-                pass
+        assert (
+            image.name.split(".")[-1].upper()
+            == Image.open(io.BytesIO(image.data)).format
+        )
 
 
 @pytest.mark.parametrize(
@@ -265,7 +253,9 @@ def test_get_images(src, expected_images):
             False,
             -1,
             False,
-            ["startxref on same line as offset"],
+            [
+                "startxref on same line as offset",
+            ],
         ),
         (
             False,
@@ -319,11 +309,12 @@ def test_get_images_raw(
         b"%%%%EOF"
     )
     pdf_data = pdf_data % (
-        pdf_data.find(b"1 0 obj"),
-        pdf_data.find(b"2 0 obj"),
-        pdf_data.find(b"3 0 obj"),
-        pdf_data.find(b"4 0 obj"),
-        pdf_data.find(b"5 0 obj"),
+        # - 1 below in the find because of the double %
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"4 0 obj") - 1,
+        pdf_data.find(b"5 0 obj") - 1,
         b"/Prev 0 " if with_prev_0 else b"",
         # startx_correction should be -1 due to double % at the beginning
         # inducing an error on startxref computation
@@ -331,7 +322,7 @@ def test_get_images_raw(
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+        with pytest.raises(PdfReadError) as exc:
             PdfReader(pdf_stream, strict=strict)
         assert exc.type == PdfReadError
         if startx_correction == -1:
@@ -441,6 +432,7 @@ def test_get_form(src, expected, expected_get_fields, txt_file_path):
 def test_get_page_number(src, page_number):
     src = RESOURCE_ROOT / src
     reader = PdfReader(src)
+    reader._get_page(0)
     page = reader.pages[page_number]
     assert reader.get_page_number(page) == page_number
 
@@ -526,7 +518,7 @@ def test_read_prev_0_trailer():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
-    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+    with pytest.raises(PdfReadError) as exc:
         PdfReader(pdf_stream, strict=True)
     assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
 
@@ -589,11 +581,11 @@ def test_read_unknown_zero_pages(caplog):
         b"%%%%EOF"
     )
     pdf_data = pdf_data % (
-        pdf_data.find(b"1 0 obj"),
-        pdf_data.find(b"2 0 obj"),
-        pdf_data.find(b"3 0 obj"),
-        pdf_data.find(b"4 0 obj"),
-        pdf_data.find(b"5 0 obj"),
+        pdf_data.find(b"1 0 obj") - 1,
+        pdf_data.find(b"2 0 obj") - 1,
+        pdf_data.find(b"3 0 obj") - 1,
+        pdf_data.find(b"4 0 obj") - 1,
+        pdf_data.find(b"5 0 obj") - 1,
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
@@ -603,7 +595,7 @@ def test_read_unknown_zero_pages(caplog):
         "Xref table not zero-indexed. ID numbers for objects will be corrected.",
     ]
     assert normalize_warnings(caplog.text) == warnings
-    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+    with pytest.raises(PdfReadError) as exc:
         len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
@@ -613,7 +605,7 @@ def test_read_unknown_zero_pages(caplog):
         "startxref on same line as offset",
     ]
     assert normalize_warnings(caplog.text) == warnings
-    with pytest.raises(AttributeError) as exc, pytest.warns(PdfReadWarning):
+    with pytest.raises(AttributeError) as exc:
         len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
@@ -683,7 +675,7 @@ def test_issue604(caplog, strict):
         outline = None
         if strict:
             pdf = PdfReader(f, strict=strict)
-            with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+            with pytest.raises(PdfReadError) as exc:
                 outline = pdf.outline
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
@@ -696,12 +688,14 @@ def test_issue604(caplog, strict):
             ]
             assert normalize_warnings(caplog.text) == msg
 
-        def get_dest_pages(x) -> int:
+        def get_dest_pages(x) -> NestedList:
             if isinstance(x, list):
-                r = [get_dest_pages(y) for y in x]
-                return r
+                return [get_dest_pages(y) for y in x]
             else:
-                return pdf.get_destination_page_number(x) + 1
+                destination_page_number = pdf.get_destination_page_number(x)
+                if destination_page_number is None:
+                    return destination_page_number
+                return destination_page_number + 1
 
         out = []
 
@@ -713,7 +707,7 @@ def test_issue604(caplog, strict):
 def test_decode_permissions():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     base = {
-        "accessability": False,
+        "accessability": False,  # Do not fix typo, as part of official, but deprecated API.
         "annotations": False,
         "assemble": False,
         "copy": False,
@@ -725,11 +719,54 @@ def test_decode_permissions():
 
     print_ = base.copy()
     print_["print"] = True
-    assert reader.decode_permissions(4) == print_
+    with pytest.raises(
+        DeprecationWarning,
+        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+    ):
+        assert reader.decode_permissions(4) == print_
 
     modify = base.copy()
     modify["modify"] = True
-    assert reader.decode_permissions(8) == modify
+    with pytest.raises(
+        DeprecationWarning,
+        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+    ):
+        assert reader.decode_permissions(8) == modify
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+def test_user_access_permissions():
+    # Not encrypted.
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    assert reader.user_access_permissions is None
+
+    # Encrypted.
+    reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-owner-password.pdf")
+    assert reader.user_access_permissions == UAP.all()
+
+    # Custom writer permissions.
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer.encrypt(
+        user_password="",
+        owner_password="abc",
+        permissions_flag=UAP.PRINT | UAP.FILL_FORM_FIELDS,
+    )
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    assert reader.user_access_permissions == (UAP.PRINT | UAP.FILL_FORM_FIELDS)
+
+    # All writer permissions.
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer.encrypt(
+        user_password="",
+        owner_password="abc",
+        permissions_flag=UAP.all(),
+    )
+    output = BytesIO()
+    writer.write(output)
+    reader = PdfReader(output)
+    assert reader.user_access_permissions == UAP.all()
 
 
 def test_pages_attribute():
@@ -758,18 +795,6 @@ def test_convert_to_int_error():
     with pytest.raises(PdfReadError) as exc:
         convert_to_int(b"256", 16)
     assert exc.value.args[0] == "invalid size in convert_to_int"
-
-
-def test_converttoint_deprecated():
-    msg = (
-        "convertToInt is deprecated and was removed in pypdf 3.0.0. "
-        "Use convert_to_int instead."
-    )
-    with pytest.raises(
-        DeprecationError,
-        match=msg,
-    ):
-        assert convertToInt(b"\x01", 8) == 1
 
 
 @pytest.mark.enable_socket()
@@ -1160,7 +1185,7 @@ def test_outline_missing_title(caplog):
 @pytest.mark.parametrize(
     ("url", "name"),
     [
-        # 1st case : the named_dest are stored directly as a dictionnary, PDF1.1 style
+        # 1st case : the named_dest are stored directly as a dictionary, PDF 1.1 style
         (
             "https://github.com/py-pdf/pypdf/files/9197028/lorem_ipsum.pdf",
             "lorem_ipsum.pdf",
@@ -1170,7 +1195,7 @@ def test_outline_missing_title(caplog):
             "https://github.com/py-pdf/pypdf/files/11714214/PDF32000_2008.pdf",
             "PDF32000_2008.pdf",
         )
-        # 3nd case : Dests with Name tree (TODO: Add this case)
+        # 3rd case : Dests with Name tree (TODO: Add this case)
     ],
     ids=["stored_directly", "dest_below_names_with_kids"],
 )
@@ -1254,8 +1279,6 @@ def test_reader(caplog):
     caplog.clear()
     # first call requires some reparations...
     reader.pages[0].extract_text()
-    assert "repaired" in caplog.text
-    assert "found" in caplog.text
     caplog.clear()
     # ...and now no more required
     reader.pages[0].extract_text()
@@ -1370,7 +1393,7 @@ def test_iss1689():
 
 @pytest.mark.enable_socket()
 def test_iss1710():
-    url = "https://nlp.stanford.edu/IR-book/pdf/irbookonlinereading.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/15234776/irbookonlinereading.pdf"
     name = "irbookonlinereading.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.outline
@@ -1462,3 +1485,95 @@ def test_xyz_with_missing_param():
     assert reader.outline[0]["/Top"] == 0
     assert reader.outline[1]["/Left"] == 0
     assert reader.outline[0]["/Top"] == 0
+
+
+@pytest.mark.enable_socket()
+def test_corrupted_xref():
+    url = "https://github.com/py-pdf/pypdf/files/14628314/iss2516.pdf"
+    name = "iss2516.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert reader.root_object["/Type"] == "/Catalog"
+
+
+@pytest.mark.enable_socket()
+def test_truncated_xref(caplog):
+    url = "https://github.com/py-pdf/pypdf/files/14843553/002-trivial-libre-office-writer-broken.pdf"
+    name = "iss2575.pdf"
+    PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert "Invalid/Truncated xref table. Rebuilding it." in caplog.text
+
+
+@pytest.mark.enable_socket()
+def test_damaged_pdf():
+    url = "https://github.com/py-pdf/pypdf/files/15186107/malformed_pdf.pdf"
+    name = "malformed_pdf.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=False)
+    len(reader.pages)
+    strict_reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=True)
+    with pytest.raises(PdfReadError) as exc:
+        len(strict_reader.pages)
+    assert (
+        exc.value.args[0] == "Expected object ID (21 0) does not match actual (-1 -1)."
+    )
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.timeout(10)
+def test_looping_form(caplog):
+    """Cf iss 2643"""
+    url = "https://github.com/py-pdf/pypdf/files/15306053/inheritance.pdf"
+    name = "iss2643.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=False)
+    flds = reader.get_fields()
+    assert all(
+        x in flds
+        for x in (
+            "Text10",
+            "Text10.0.0.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1",
+            "amt1.0",
+            "amt1.1",
+            "DSS#3pg3#0hgu7",
+        )
+    )
+    writer = PdfWriter(reader)
+    writer.root_object["/AcroForm"]["/Fields"][5]["/Kids"].append(
+        writer.root_object["/AcroForm"]["/Fields"][5]["/Kids"][0]
+    )
+    flds2 = writer.get_fields()
+    assert "Text68.0 already parsed" in caplog.text
+    assert list(flds.keys()) == list(flds2.keys())
+
+
+def test_context_manager_with_stream():
+    pdf_data = (
+        b"%%PDF-1.7\n"
+        b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref 1 5\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << /Root 5 0 R /Size 6 >>\n"
+        b"startxref %d\n"
+        b"%%%%EOF"
+    )
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj"),
+        pdf_data.find(b"2 0 obj"),
+        pdf_data.find(b"3 0 obj"),
+        pdf_data.find(b"4 0 obj"),
+        pdf_data.find(b"5 0 obj"),
+        pdf_data.find(b"xref") - 1,
+    )
+    pdf_stream = io.BytesIO(pdf_data)
+    with PdfReader(pdf_stream) as reader:
+        assert not reader.stream.closed
+    assert not pdf_stream.closed

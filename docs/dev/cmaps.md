@@ -40,7 +40,7 @@ It defines a starting point:
 That means that `1B` (Hex for 27) maps to the unicode character [`FB00`](https://unicode-table.com/en/FB00/) - the ligature ﬀ (two lowercase f's).
 
 The two numbers in `begincodespacerange` mean that it starts with an offset of
-0 (hence from `1B ➜ FB00`) upt to an offset of FF (dec: 255), hence 1B+FF = 282
+0 (hence from `1B ➜ FB00`) up to an offset of FF (dec: 255), hence 1B+FF = 282
 ➜ [FBFF](https://www.compart.com/de/unicode/U+FBFF).
 
 Within the text stream, there is

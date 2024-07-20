@@ -93,7 +93,7 @@
 - local_filename: o1whh9b3.pdf
   url: https://github.com/py-pdf/pypdf/files/11578953/USC.EMBA.-.Pre-Season.and.Theme.I.pdf
 - local_filename: selbst.72916.pdf
-  url: https://www.selbst.de/paidcontent/dl/64733/72916
+  url: https://github.com/py-pdf/pypdf/files/14395695/selbst.72916.pdf
 - local_filename: iss1912.pdf
   url: https://github.com/py-pdf/pypdf/files/11845099/GeoTopo-komprimiert.pdf
 - local_filename: calRGB.pdf
@@ -110,3 +110,7 @@
   url: https://github.com/py-pdf/pypdf/assets/4083478/56c93021-33cd-4387-ae13-5cbe7e673f42
 - local_filename: paid.pdf
   url: https://github.com/py-pdf/pypdf/files/12050253/tt.pdf
+- local_filename: Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf
+  url: https://www.joinville.sc.gov.br/wp-content/uploads/2023/11/Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf
+- local_filename: iss2138.pdf
+  url: https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf

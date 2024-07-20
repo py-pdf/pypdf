@@ -32,9 +32,10 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    user/encryption-decryption
    user/merging-pdfs
    user/cropping-and-transforming
-   user/add-watermark
    user/reading-pdf-annotations
    user/adding-pdf-annotations
+   user/add-watermark
+   user/add-javascript
    user/viewer-preferences
    user/forms
    user/streaming-data
@@ -49,18 +50,21 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
 
    modules/PdfReader
    modules/PdfWriter
-   modules/PdfMerger
-   modules/PageObject
-   modules/Transformation
-   modules/DocumentInformation
-   modules/XmpInformation
    modules/Destination
-   modules/RectangleObject
+   modules/DocumentInformation
    modules/Field
-   modules/PageRange
-   modules/annotations
    modules/Fit
+   modules/PageObject
+   modules/PageRange
    modules/PaperSize
+   modules/RectangleObject
+   modules/Transformation
+   modules/XmpInformation
+   modules/annotations
+   modules/constants
+   modules/errors
+   modules/generic
+   modules/PdfDocCommon
 
 .. toctree::
    :caption: Developer Guide

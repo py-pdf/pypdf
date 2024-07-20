@@ -10,14 +10,15 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
+import datetime
 import os
 import shutil
 import sys
 
-import pypdf as py_pkg
-
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
+
+import pypdf as py_pkg  # noqa: E402
 
 shutil.copyfile("../CHANGELOG.md", "meta/CHANGELOG.md")
 shutil.copyfile("../CONTRIBUTORS.md", "meta/CONTRIBUTORS.md")
@@ -25,7 +26,7 @@ shutil.copyfile("../CONTRIBUTORS.md", "meta/CONTRIBUTORS.md")
 # -- Project information -----------------------------------------------------
 
 project = py_pkg.__name__
-copyright = "2006 - 2023, Mathieu Fenniak and pypdf contributors"
+copyright = f"2006 - {datetime.datetime.now(tz=datetime.timezone.utc).year}, Mathieu Fenniak and pypdf contributors"
 author = "Mathieu Fenniak"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -57,14 +58,19 @@ extensions = [
     "myst_parser",
 ]
 
+python_version = ".".join(map(str, sys.version_info[:2]))
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.8", None),
+    "python": (f"https://docs.python.org/{python_version}", None),
+    "Pillow": ("https://pillow.readthedocs.io/en/latest/", None),
 }
 
 nitpick_ignore_regex = [
     # For reasons unclear at this stage the io module prefixes everything with _io
     # and this confuses sphinx
-    (r"py:class", r"_io.(FileIO|BytesIO|Buffered(Reader|Writer))"),
+    (
+        r"py:class",
+        r"(_io.(FileIO|BytesIO|Buffered(Reader|Writer))|pypdf.*PdfDocCommon)",
+    ),
 ]
 
 autodoc_default_options = {
@@ -88,13 +94,13 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
+# The theme to use for HTML and HTML Help pages. See the documentation for
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
+# further. For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
     "canonical_url": "",

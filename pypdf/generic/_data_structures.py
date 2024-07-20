@@ -31,7 +31,9 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import logging
 import re
+import sys
 from io import BytesIO
+from math import ceil
 from typing import (
     Any,
     Callable,
@@ -46,14 +48,13 @@ from typing import (
     cast,
 )
 
-from .._protocols import PdfReaderProtocol, PdfWriterProtocol
+from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationProtocol
 from .._utils import (
     WHITESPACES,
     StreamType,
     b_,
     deprecate_no_replacement,
     deprecate_with_replacement,
-    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -71,6 +72,7 @@ from ..constants import TypFitArguments as TF
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
 from ._base import (
     BooleanObject,
+    ByteStringObject,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -80,7 +82,19 @@ from ._base import (
     TextStringObject,
 )
 from ._fit import Fit
+from ._image_inline import (
+    extract_inline_A85,
+    extract_inline_AHx,
+    extract_inline_DCT,
+    extract_inline_default,
+    extract_inline_RL,
+)
 from ._utils import read_hex_string_from_stream, read_string_from_stream
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
 NumberSigns = b"+-"
@@ -122,6 +136,65 @@ class ArrayObject(List[Any], PdfObject):
         """Emulate DictionaryObject.items for a list (index, object)."""
         return enumerate(self)
 
+    def _to_lst(self, lst: Any) -> List[Any]:
+        # Convert to list, internal
+        if isinstance(lst, (list, tuple, set)):
+            pass
+        elif isinstance(lst, PdfObject):
+            lst = [lst]
+        elif isinstance(lst, str):
+            if lst[0] == "/":
+                lst = [NameObject(lst)]
+            else:
+                lst = [TextStringObject(lst)]
+        elif isinstance(lst, bytes):
+            lst = [ByteStringObject(lst)]
+        else:  # for numbers,...
+            lst = [lst]
+        return lst
+
+    def __add__(self, lst: Any) -> "ArrayObject":
+        """
+        Allow extension by adding list or add one element only
+
+        Args:
+            lst: any list, tuples are extended the list.
+            other types(numbers,...) will be appended.
+            if str is passed it will be converted into TextStringObject
+            or NameObject (if starting with "/")
+            if bytes is passed it will be converted into ByteStringObject
+
+        Returns:
+            ArrayObject with all elements
+        """
+        temp = ArrayObject(self)
+        temp.extend(self._to_lst(lst))
+        return temp
+
+    def __iadd__(self, lst: Any) -> Self:
+        """
+         Allow extension by adding list or add one element only
+
+        Args:
+            lst: any list, tuples are extended the list.
+            other types(numbers,...) will be appended.
+            if str is passed it will be converted into TextStringObject
+            or NameObject (if starting with "/")
+            if bytes is passed it will be converted into ByteStringObject
+        """
+        self.extend(self._to_lst(lst))
+        return self
+
+    def __isub__(self, lst: Any) -> Self:
+        """Allow to remove items"""
+        for x in self._to_lst(lst):
+            try:
+                x = self.index(x)
+                del self[x]
+            except ValueError:
+                pass
+        return self
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
@@ -134,12 +207,6 @@ class ArrayObject(List[Any], PdfObject):
             stream.write(b" ")
             data.write_to_stream(stream)
         stream.write(b" ]")
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
 
     @staticmethod
     def read_from_stream(
@@ -165,13 +232,6 @@ class ArrayObject(List[Any], PdfObject):
             # read and append obj
             arr.append(read_object(stream, pdf, forced_encoding))
         return arr
-
-    @staticmethod
-    def readFromStream(
-        stream: StreamType, pdf: PdfReaderProtocol
-    ) -> "ArrayObject":  # deprecated
-        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
-        return ArrayObject.read_from_stream(stream, pdf)
 
 
 class DictionaryObject(Dict[Any, Any], PdfObject):
@@ -315,6 +375,30 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
     def raw_get(self, key: Any) -> Any:
         return dict.__getitem__(self, key)
 
+    def get_inherited(self, key: str, default: Any = None) -> Any:
+        """
+        Returns the value of a key or from the parent if not found.
+        If not found returns default.
+
+        Args:
+            key: string identifying the field to return
+
+            default: default value to return
+
+        Returns:
+            Current key or inherited one, otherwise default value.
+        """
+        if key in self:
+            return self[key]
+        try:
+            if "/Parent" not in self:
+                return default
+            raise KeyError("not present")
+        except KeyError:
+            return cast("DictionaryObject", self["/Parent"].get_object()).get_inherited(
+                key, default
+            )
+
     def __setitem__(self, key: Any, value: Any) -> Any:
         if not isinstance(key, PdfObject):
             raise ValueError("key must be PdfObject")
@@ -333,17 +417,16 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         return dict.__getitem__(self, key).get_object()
 
     @property
-    def xmp_metadata(self) -> Optional[PdfObject]:
+    def xmp_metadata(self) -> Optional[XmpInformationProtocol]:
         """
         Retrieve XMP (Extensible Metadata Platform) data relevant to the this
         object, if available.
 
-        Stability: Added in v1.12, will exist for all future v1.x releases.
-        See Table 315 – Additional entries in a metadata stream dictionary
+        See Table 347 — Additional entries in a metadata stream dictionary.
 
         Returns:
-          Returns a {@link #xmp.XmpInformation XmlInformation} instance
-          that can be used to access XMP metadata from the document.  Can also
+          Returns a :class:`~pypdf.xmp.XmpInformation` instance
+          that can be used to access XMP metadata from the document. Can also
           return None if no metadata was found on the document root.
         """
         from ..xmp import XmpInformation
@@ -357,27 +440,6 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             metadata = XmpInformation(metadata)
             self[NameObject("/Metadata")] = metadata
         return metadata
-
-    def getXmpMetadata(
-        self,
-    ) -> Optional[PdfObject]:  # deprecated
-        """
-        Use :meth:`xmp_metadata` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("getXmpMetadata", "xmp_metadata", "3.0.0")
-        return self.xmp_metadata
-
-    @property
-    def xmpMetadata(self) -> Optional[PdfObject]:  # deprecated
-        """
-        Use :meth:`xmp_metadata` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("xmpMetadata", "xmp_metadata", "3.0.0")
-        return self.xmp_metadata
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
@@ -396,12 +458,6 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             stream.write(b"\n")
         stream.write(b">>")
 
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # deprecated
-        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
-        self.write_to_stream(stream)
-
     @staticmethod
     def read_from_stream(
         stream: StreamType,
@@ -411,14 +467,14 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         def get_next_obj_pos(
             p: int, p1: int, rem_gens: List[int], pdf: PdfReaderProtocol
         ) -> int:
-            loc = pdf.xref[rem_gens[0]]
-            for o in loc:
-                if p1 > loc[o] and p < loc[o]:
-                    p1 = loc[o]
-            if len(rem_gens) == 1:
-                return p1
-            else:
-                return get_next_obj_pos(p, p1, rem_gens[1:], pdf)
+            out = p1
+            for gen in rem_gens:
+                loc = pdf.xref[gen]
+                try:
+                    out = min(out, min([x for x in loc.values() if p < x <= p1]))
+                except ValueError:
+                    pass
+            return out
 
         def read_unsized_from_stream(
             stream: StreamType, pdf: PdfReaderProtocol
@@ -552,13 +608,6 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             retval.update(data)
             return retval
 
-    @staticmethod
-    def readFromStream(
-        stream: StreamType, pdf: PdfReaderProtocol
-    ) -> "DictionaryObject":  # deprecated
-        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
-        return DictionaryObject.read_from_stream(stream, pdf)
-
 
 class TreeObject(DictionaryObject):
     def __init__(self, dct: Optional[DictionaryObject] = None) -> None:
@@ -590,10 +639,6 @@ class TreeObject(DictionaryObject):
             if child_ref is None:
                 return
             child = child_ref.get_object()
-
-    def addChild(self, child: Any, pdf: Any) -> None:  # deprecated
-        deprecation_with_replacement("addChild", "add_child", "3.0.0")
-        self.add_child(child, pdf)
 
     def add_child(self, child: Any, pdf: PdfWriterProtocol) -> None:
         self.insert_child(child, None, pdf)
@@ -676,10 +721,6 @@ class TreeObject(DictionaryObject):
         child_obj[NameObject("/Parent")] = self.indirect_reference
         inc_parent_counter(self, child_obj.get("/Count", 1))
         return child
-
-    def removeChild(self, child: Any) -> None:  # deprecated
-        deprecation_with_replacement("removeChild", "remove_child", "3.0.0")
-        self.remove_child(child)
 
     def _remove_node_from_tree(
         self, prev: Any, prev_ref: Any, cur: Any, last: Any
@@ -842,28 +883,10 @@ class StreamObject(DictionaryObject):
     def set_data(self, data: bytes) -> None:
         self._data = data
 
-    def getData(self) -> Any:  # deprecated
-        deprecation_with_replacement("getData", "get_data", "3.0.0")
-        return self._data
-
-    def setData(self, data: Any) -> None:  # deprecated
-        deprecation_with_replacement("setData", "set_data", "3.0.0")
-        self.set_data(data)
-
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
         data += b_(self._data)
         return data
-
-    @property
-    def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # deprecated
-        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
-        return self.decoded_self
-
-    @decodedSelf.setter
-    def decodedSelf(self, value: "DecodedStreamObject") -> None:  # deprecated
-        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
-        self.decoded_self = value
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
@@ -882,8 +905,11 @@ class StreamObject(DictionaryObject):
     @staticmethod
     def initializeFromDictionary(
         data: Dict[str, Any]
-    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:  # deprecated
-        return StreamObject.initialize_from_dictionary(data)
+    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
+        deprecate_with_replacement(
+            "initializeFromDictionary", "initialize_from_dictionary", "5.0.0"
+        )  # pragma: no cover
+        return StreamObject.initialize_from_dictionary(data)  # pragma: no cover
 
     @staticmethod
     def initialize_from_dictionary(
@@ -900,10 +926,6 @@ class StreamObject(DictionaryObject):
         retval.update(data)
         return retval
 
-    def flateEncode(self) -> "EncodedStreamObject":  # deprecated
-        deprecation_with_replacement("flateEncode", "flate_encode", "3.0.0")
-        return self.flate_encode()
-
     def flate_encode(self, level: int = -1) -> "EncodedStreamObject":
         from ..filters import FlateDecode
 
@@ -912,29 +934,54 @@ class StreamObject(DictionaryObject):
             if isinstance(f, ArrayObject):
                 f = ArrayObject([NameObject(FT.FLATE_DECODE), *f])
                 try:
-                    parms = ArrayObject(
+                    params = ArrayObject(
                         [NullObject(), *self.get(SA.DECODE_PARMS, ArrayObject())]
                     )
                 except TypeError:
                     # case of error where the * operator is not working (not an array
-                    parms = ArrayObject(
+                    params = ArrayObject(
                         [NullObject(), self.get(SA.DECODE_PARMS, ArrayObject())]
                     )
             else:
                 f = ArrayObject([NameObject(FT.FLATE_DECODE), f])
-                parms = ArrayObject(
+                params = ArrayObject(
                     [NullObject(), self.get(SA.DECODE_PARMS, NullObject())]
                 )
         else:
             f = NameObject(FT.FLATE_DECODE)
-            parms = None
+            params = None
         retval = EncodedStreamObject()
         retval.update(self)
         retval[NameObject(SA.FILTER)] = f
-        if parms is not None:
-            retval[NameObject(SA.DECODE_PARMS)] = parms
+        if params is not None:
+            retval[NameObject(SA.DECODE_PARMS)] = params
         retval._data = FlateDecode.encode(b_(self._data), level)
         return retval
+
+    def decode_as_image(self) -> Any:
+        """
+        Try to decode the stream object as an image
+
+        Returns:
+            a PIL image if proper decoding has been found
+        Raises:
+            Exception: (any)during decoding to to invalid object or
+                errors during decoding will be reported
+                It is recommended to catch exceptions to prevent
+                stops in your program.
+        """
+        from ..filters import _xobj_to_image
+
+        if self.get("/Subtype", "") != "/Image":
+            try:
+                msg = f"{self.indirect_reference} does not seem to be an Image"  # pragma: no cover
+            except AttributeError:
+                msg = f"{self.__repr__()} object does not seem to be an Image"  # pragma: no cover
+            logger_warning(msg, __name__)
+        extension, byte_stream, img = _xobj_to_image(self)
+        if extension is None:
+            return None  # pragma: no cover
+        return img
 
 
 class DecodedStreamObject(StreamObject):
@@ -944,16 +991,6 @@ class DecodedStreamObject(StreamObject):
 class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
         self.decoded_self: Optional[DecodedStreamObject] = None
-
-    @property
-    def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # deprecated
-        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
-        return self.decoded_self
-
-    @decodedSelf.setter
-    def decodedSelf(self, value: DecodedStreamObject) -> None:  # deprecated
-        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
-        self.decoded_self = value
 
     # This overrides the parent method:
     def get_data(self) -> Union[bytes, str]:
@@ -991,20 +1028,23 @@ class EncodedStreamObject(StreamObject):
 
 class ContentStream(DecodedStreamObject):
     """
-    In order to be fast, this datastructure can contain either:
+    In order to be fast, this data structure can contain either:
+
     * raw data in ._data
-    * parsed stream operations in ._operations
+    * parsed stream operations in ._operations.
 
-    At any time, ContentStream object can either have one or both of those fields defined,
-    and zero or one of those fields set to None.
+    At any time, ContentStream object can either have both of those fields defined,
+    or one field defined and the other set to None.
 
-    Those fields are "rebuilt" lazily, when accessed:
-    * when .get_data() is called, if ._data is None, it is rebuilt from ._operations
-    * when .operations is called, if ._operations is None, it is rebuilt from ._data
+    These fields are "rebuilt" lazily, when accessed:
 
-    On the other side, those fields can be invalidated:
-    * when .set_data() is called, ._operations is set to None
-    * when .operations is set, ._data is set to None
+    * when .get_data() is called, if ._data is None, it is rebuilt from ._operations.
+    * when .operations is called, if ._operations is None, it is rebuilt from ._data.
+
+    Conversely, these fields can be invalidated:
+
+    * when .set_data() is called, ._operations is set to None.
+    * when .operations is set, ._data is set to None.
     """
 
     def __init__(
@@ -1121,10 +1161,10 @@ class ContentStream(DecodedStreamObject):
                     operands = []
             elif peek == b"%":
                 # If we encounter a comment in the content stream, we have to
-                # handle it here.  Typically, read_object will handle
+                # handle it here. Typically, read_object will handle
                 # encountering a comment -- but read_object assumes that
                 # following the comment must be the object we're trying to
-                # read.  In this case, it could be an operator instead.
+                # read. In this case, it could be an operator instead.
                 while peek not in (b"\r", b"\n", b""):
                     peek = stream.read(1)
             else:
@@ -1148,65 +1188,49 @@ class ContentStream(DecodedStreamObject):
         # left at beginning of ID
         tmp = stream.read(3)
         assert tmp[:2] == b"ID"
-        data = BytesIO()
-        # Read the inline image, while checking for EI (End Image) operator.
-        while True:
-            # Read 8 kB at a time and check if the chunk contains the E operator.
-            buf = stream.read(8192)
-            # We have reached the end of the stream, but haven't found the EI operator.
-            if not buf:
-                raise PdfReadError("Unexpected end of stream")
-            loc = buf.find(
-                b"E"
-            )  # we can not look straight for "EI" because it may not have been loaded in the buffer
-
-            if loc == -1:
-                data.write(buf)
+        filtr = settings.get("/F", settings.get("/Filter", "not set"))
+        savpos = stream.tell()
+        if isinstance(filtr, list):
+            filtr = filtr[0]  # used forencoding
+        if "AHx" in filtr or "ASCIIHexDecode" in filtr:
+            data = extract_inline_AHx(stream)
+        elif "A85" in filtr or "ASCII85Decode" in filtr:
+            data = extract_inline_A85(stream)
+        elif "RL" in filtr or "RunLengthDecode" in filtr:
+            data = extract_inline_RL(stream)
+        elif "DCT" in filtr or "DCTDecode" in filtr:
+            data = extract_inline_DCT(stream)
+        elif filtr == "not set":
+            cs = settings.get("/CS", "")
+            if "RGB" in cs:
+                lcs = 3
+            elif "CMYK" in cs:
+                lcs = 4
             else:
-                # Write out everything before the E.
-                data.write(buf[0:loc])
+                bits = settings.get(
+                    "/BPC",
+                    8 if cs in {"/I", "/G", "/Indexed", "/DeviceGray"} else -1,
+                )
+                if bits > 0:
+                    lcs = bits / 8.0
+                else:
+                    data = extract_inline_default(stream)
+                    lcs = -1
+            if lcs > 0:
+                data = stream.read(
+                    ceil(cast(int, settings["/W"]) * lcs) * cast(int, settings["/H"])
+                )
+            ei = read_non_whitespace(stream)
+            stream.seek(-1, 1)
+        else:
+            data = extract_inline_default(stream)
 
-                # Seek back in the stream to read the E next.
-                stream.seek(loc - len(buf), 1)
-                tok = stream.read(1)  # E of "EI"
-                # Check for End Image
-                tok2 = stream.read(1)  # I of "EI"
-                if tok2 != b"I":
-                    stream.seek(-1, 1)
-                    data.write(tok)
-                    continue
-                # for further debug : print("!!!!",buf[loc-1:loc+10])
-                info = tok + tok2
-                tok3 = stream.read(
-                    1
-                )  # possible space after "EI" may not been loaded  in buf
-                if tok3 not in WHITESPACES:
-                    stream.seek(-2, 1)  # to step back on I
-                    data.write(tok)
-                elif buf[loc - 1 : loc] in WHITESPACES:  # and tok3 in WHITESPACES:
-                    # Data can contain [\s]EI[\s]: 4 chars sufficient, checking Q operator not required.
-                    while tok3 in WHITESPACES:
-                        # needed ???? : info += tok3
-                        tok3 = stream.read(1)
-                    stream.seek(-1, 1)
-                    # we do not insert EI
-                    break
-                else:  # buf[loc - 1 : loc] not in WHITESPACES and tok3 in WHITESPACES:
-                    # Data can contain [!\s]EI[\s],  so check for Q or EMC operator is required to have 4 chars.
-                    while tok3 in WHITESPACES:
-                        info += tok3
-                        tok3 = stream.read(1)
-                    stream.seek(-1, 1)
-                    if tok3 == b"Q":
-                        break
-                    elif tok3 == b"E":
-                        ope = stream.read(3)
-                        stream.seek(-3, 1)
-                        if ope == b"EMC":
-                            break
-                    else:
-                        data.write(info)
-        return {"settings": settings, "data": data.getvalue()}
+        ei = stream.read(3)
+        stream.seek(-1, 1)
+        if ei[0:2] != b"EI" or ei[2:3] not in WHITESPACES:
+            stream.seek(savpos, 0)
+            data = extract_inline_default(stream)
+        return {"settings": settings, "data": data}
 
     # This overrides the parent method:
     def get_data(self) -> bytes:
@@ -1252,7 +1276,7 @@ class ContentStream(DecodedStreamObject):
             self._operations.insert(0, ([], "q"))
             self._operations.append(([], "Q"))
         elif self._data:
-            self._data = b"q\n" + b_(self._data) + b"Q\n"
+            self._data = b"q\n" + b_(self._data) + b"\nQ\n"
 
     # This overrides the parent method:
     def write_to_stream(
@@ -1355,16 +1379,6 @@ class Field(TreeObject):
         return self.get(FieldDictionaryAttributes.FT)
 
     @property
-    def fieldType(self) -> Optional[NameObject]:  # deprecated
-        """
-        Use :py:attr:`field_type` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("fieldType", "field_type", "3.0.0")
-        return self.field_type
-
-    @property
     def parent(self) -> Optional[DictionaryObject]:
         """Read-only property accessing the parent of this field."""
         return self.get(FieldDictionaryAttributes.Parent)
@@ -1385,16 +1399,6 @@ class Field(TreeObject):
         return self.get(FieldDictionaryAttributes.TU)
 
     @property
-    def altName(self) -> Optional[str]:  # deprecated
-        """
-        Use :py:attr:`alternate_name` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("altName", "alternate_name", "3.0.0")
-        return self.alternate_name
-
-    @property
     def mapping_name(self) -> Optional[str]:
         """
         Read-only property accessing the mapping name of this field.
@@ -1403,16 +1407,6 @@ class Field(TreeObject):
         :meth:`get_fields()<pypdf.PdfReader.get_fields>`
         """
         return self.get(FieldDictionaryAttributes.TM)
-
-    @property
-    def mappingName(self) -> Optional[str]:  # deprecated
-        """
-        Use :py:attr:`mapping_name` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("mappingName", "mapping_name", "3.0.0")
-        return self.mapping_name
 
     @property
     def flags(self) -> Optional[int]:
@@ -1437,16 +1431,6 @@ class Field(TreeObject):
         return self.get(FieldDictionaryAttributes.DV)
 
     @property
-    def defaultValue(self) -> Optional[Any]:  # deprecated
-        """
-        Use :py:attr:`default_value` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("defaultValue", "default_value", "3.0.0")
-        return self.default_value
-
-    @property
     def additional_actions(self) -> Optional[DictionaryObject]:
         """
         Read-only property accessing the additional actions dictionary.
@@ -1456,22 +1440,12 @@ class Field(TreeObject):
         """
         return self.get(FieldDictionaryAttributes.AA)
 
-    @property
-    def additionalActions(self) -> Optional[DictionaryObject]:  # deprecated
-        """
-        Use :py:attr:`additional_actions` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("additionalActions", "additional_actions", "3.0.0")
-        return self.additional_actions
-
 
 class Destination(TreeObject):
     """
     A class representing a destination within a PDF file.
 
-    See section 8.2.1 of the PDF 1.6 reference.
+    See section 12.3.2 of the PDF 2.0 reference.
 
     Args:
         title: Title of this destination.
@@ -1486,9 +1460,6 @@ class Destination(TreeObject):
     node: Optional[
         DictionaryObject
     ] = None  # node provide access to the original Object
-    childs: List[
-        Any
-    ] = []  # used in PdfWriter - TODO: should be children  # noqa: RUF012
 
     def __init__(
         self,
@@ -1496,6 +1467,8 @@ class Destination(TreeObject):
         page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
         fit: Fit,
     ) -> None:
+        self._filtered_children: List[Any] = []  # used in PdfWriter
+
         typ = fit.fit_type
         args = fit.fit_args
 
@@ -1551,15 +1524,6 @@ class Destination(TreeObject):
                 if x in self
             ]
         )
-
-    def getDestArray(self) -> "ArrayObject":  # deprecated
-        """
-        Use :py:attr:`dest_array` instead.
-
-        .. deprecated:: 1.28.3
-        """
-        deprecation_with_replacement("getDestArray", "dest_array", "3.0.0")
-        return self.dest_array
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None

@@ -25,7 +25,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
 from io import BytesIO, FileIO, IOBase
 from pathlib import Path
 from types import TracebackType
@@ -47,8 +46,6 @@ from ._reader import PdfReader
 from ._utils import (
     StrByteType,
     deprecate_with_replacement,
-    deprecation_bookmark,
-    deprecation_with_replacement,
     str_,
 )
 from ._writer import PdfWriter
@@ -70,7 +67,7 @@ from .generic import (
     TreeObject,
 )
 from .pagerange import PageRange, PageRangeSpec
-from .types import FitType, LayoutType, OutlineType, PagemodeType, ZoomArgType
+from .types import LayoutType, OutlineType, PagemodeType
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 
@@ -92,7 +89,6 @@ class PdfMerger:
     .. deprecated:: 5.0.0
     """
 
-    @deprecation_bookmark(bookmarks="outline")
     def __init__(
         self, strict: bool = False, fileobj: Union[Path, StrByteType] = ""
     ) -> None:
@@ -122,15 +118,13 @@ class PdfMerger:
             self.write(self.fileobj)
         self.close()
 
-    @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
-        page_number: Optional[int] = None,
-        fileobj: Union[None, Path, StrByteType, PdfReader] = None,
+        page_number: int,
+        fileobj: Union[Path, StrByteType, PdfReader],
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
-        position: Optional[int] = None,  # deprecated
     ) -> None:
         """
         Merge the pages from the given file into the output file at the
@@ -142,7 +136,6 @@ class PdfMerger:
             fileobj: A File Object or an object that supports the standard
                 read and seek methods similar to a File Object. Could also be a
                 string representing a path to a PDF file.
-                None as an argument is deprecated.
             outline_item: Optionally, you may specify an outline item
                 (previously referred to as a 'bookmark') to be applied at the
                 beginning of the included file by supplying the text of the outline item.
@@ -155,33 +148,6 @@ class PdfMerger:
                 outline (collection of outline items, previously referred to as
                 'bookmarks') from being imported by specifying this as ``False``.
         """
-        if position is not None:  # deprecated
-            if page_number is None:
-                page_number = position
-                old_term = "position"
-                new_term = "page_number"
-                warnings.warn(
-                    (
-                        f"{old_term} is deprecated as an argument and will be "
-                        f"removed in pypdf=4.0.0. Use {new_term} instead"
-                    ),
-                    DeprecationWarning,
-                )
-            else:
-                raise ValueError(
-                    "The argument position of merge is deprecated. "
-                    "Use page_number only."
-                )
-
-        if page_number is None:  # deprecated
-            # The parameter is only marked as Optional as long as
-            # position is not fully deprecated
-            raise ValueError("page_number may not be None")
-        if fileobj is None:  # deprecated
-            # The argument is only Optional due to the deprecated position
-            # argument
-            raise ValueError("fileobj may not be None")
-
         stream, encryption_obj = self._create_stream(fileobj)
 
         # Create a new PdfReader instance using the stream
@@ -274,7 +240,6 @@ class PdfMerger:
             )
         return stream, encryption_obj
 
-    @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def append(
         self,
         fileobj: Union[StrByteType, PdfReader, Path],
@@ -341,8 +306,8 @@ class PdfMerger:
     def close(self) -> None:
         """Shut all file descriptors (input and output) and clear all memory usage."""
         self.pages = []
-        for fo, _reader in self.inputs:
-            fo.close()
+        for file_descriptor, _reader in self.inputs:
+            file_descriptor.close()
 
         self.inputs = []
         self.output = None
@@ -359,24 +324,6 @@ class PdfMerger:
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.add_metadata(infos)
-
-    def addMetadata(self, infos: Dict[str, Any]) -> None:  # deprecated
-        """
-        Use :meth:`add_metadata` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("addMetadata", "add_metadata")
-        self.add_metadata(infos)
-
-    def setPageLayout(self, layout: LayoutType) -> None:  # deprecated
-        """
-        Use :meth:`set_page_layout` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("setPageLayout", "set_page_layout")
-        self.set_page_layout(layout)
 
     def set_page_layout(self, layout: LayoutType) -> None:
         """
@@ -407,16 +354,33 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output._set_page_layout(layout)
 
-    def setPageMode(self, mode: PagemodeType) -> None:  # deprecated
-        """
-        Use :meth:`set_page_mode` instead.
-
-        .. deprecated:: 1.28.0
-        """
-        deprecation_with_replacement("setPageMode", "set_page_mode", "3.0.0")
-        self.set_page_mode(mode)
-
     def set_page_mode(self, mode: PagemodeType) -> None:
+        """
+        Set the page mode.
+
+        Args:
+            mode: The page mode to use.
+
+        .. list-table:: Valid ``mode`` arguments
+           :widths: 50 200
+
+           * - /UseNone
+             - Do not show outline or thumbnails panels
+           * - /UseOutlines
+             - Show outline (aka bookmarks) panel
+           * - /UseThumbs
+             - Show page thumbnails panel
+           * - /FullScreen
+             - Fullscreen view
+           * - /UseOC
+             - Show Optional Content Group (OCG) panel
+           * - /UseAttachments
+             - Show attachments panel
+        """
+        self.page_mode = mode
+
+    @property
+    def page_mode(self) -> Optional[PagemodeType]:
         """
         Set the page mode.
 
@@ -441,7 +405,13 @@ class PdfMerger:
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
-        self.output.set_page_mode(mode)
+        return self.output.page_mode
+
+    @page_mode.setter
+    def page_mode(self, mode: PagemodeType) -> None:
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
+        self.output.page_mode = mode
 
     def _trim_dests(
         self,
@@ -523,7 +493,6 @@ class PdfMerger:
             if page_index is not None:  # deprecated
                 self.output.add_named_destination_object(named_dest)
 
-    @deprecation_bookmark(bookmarks="outline")
     def _write_outline(
         self,
         outline: Optional[Iterable[OutlineItem]] = None,
@@ -551,7 +520,6 @@ class PdfMerger:
                 del outline_item["/Page"], outline_item["/Type"]
                 last_added = self.output.add_outline_item_dict(outline_item, parent)
 
-    @deprecation_bookmark(bookmark="outline_item")
     def _write_outline_item_on_page(
         self, outline_item: Union[OutlineItem, Destination], page: _MergedPage
     ) -> None:
@@ -604,7 +572,6 @@ class PdfMerger:
                 )
             named_dest[NameObject("/Page")] = NumberObject(page_index)
 
-    @deprecation_bookmark(bookmarks="outline")
     def _associate_outline_items_to_pages(
         self, pages: List[_MergedPage], outline: Optional[Iterable[OutlineItem]] = None
     ) -> None:
@@ -629,7 +596,6 @@ class PdfMerger:
             if page_index is not None:
                 outline_item[NameObject("/Page")] = NumberObject(page_index)
 
-    @deprecation_bookmark(bookmark="outline_item")
     def find_outline_item(
         self,
         outline_item: Dict[str, Any],
@@ -642,7 +608,7 @@ class PdfMerger:
             if isinstance(oi_enum, list):
                 # oi_enum is still an inner node
                 # (OutlineType, if recursive types were supported by mypy)
-                res = self.find_outline_item(outline_item, oi_enum)
+                res = self.find_outline_item(outline_item, oi_enum)  # type: ignore
                 if res:  # deprecated
                     return [i] + res
             elif (
@@ -654,28 +620,15 @@ class PdfMerger:
 
         return None
 
-    @deprecation_bookmark(bookmark="outline_item")
-    def find_bookmark(
-        self,
-        outline_item: Dict[str, Any],
-        root: Optional[OutlineType] = None,
-    ) -> Optional[List[int]]:  # deprecated
-        """
-        .. deprecated:: 2.9.0
-            Use :meth:`find_outline_item` instead.
-        """
-        return self.find_outline_item(outline_item, root)
-
     def add_outline_item(
         self,
         title: str,
-        page_number: Optional[int] = None,
+        page_number: int,
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
         fit: Fit = PAGE_FIT,
-        pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
         Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
@@ -691,24 +644,6 @@ class PdfMerger:
             italic: Outline item font is italic
             fit: The fit of the destination page.
         """
-        if page_number is not None and pagenum is not None:
-            raise ValueError(
-                "The argument pagenum of add_outline_item is deprecated. "
-                "Use page_number only."
-            )
-        if pagenum is not None:  # deprecated
-            old_term = "pagenum"
-            new_term = "page_number"
-            warnings.warn(
-                (
-                    f"{old_term} is deprecated as an argument and will be "
-                    f"removed in pypdf==4.0.0. Use {new_term} instead"
-                ),
-                DeprecationWarning,
-            )
-            page_number = pagenum
-        if page_number is None:  # deprecated
-            raise ValueError("page_number may not be None")
         writer = self.output
         if writer is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
@@ -723,73 +658,10 @@ class PdfMerger:
             fit,
         )
 
-    def addBookmark(
-        self,
-        title: str,
-        pagenum: int,  # deprecated, but the whole method is deprecated
-        parent: Union[None, TreeObject, IndirectObject] = None,
-        color: Optional[Tuple[float, float, float]] = None,
-        bold: bool = False,
-        italic: bool = False,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
-    ) -> IndirectObject:  # deprecated
-        """
-        .. deprecated:: 1.28.0
-            Use :meth:`add_outline_item` instead.
-        """
-        deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
-        return self.add_outline_item(
-            title,
-            pagenum,
-            parent,
-            color,
-            bold,
-            italic,
-            Fit(fit_type=fit, fit_args=args),
-        )
-
-    def add_bookmark(
-        self,
-        title: str,
-        pagenum: int,  # deprecated, but the whole method is deprecated already
-        parent: Union[None, TreeObject, IndirectObject] = None,
-        color: Optional[Tuple[float, float, float]] = None,
-        bold: bool = False,
-        italic: bool = False,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
-    ) -> IndirectObject:  # deprecated
-        """
-        .. deprecated:: 2.9.0
-            Use :meth:`add_outline_item` instead.
-        """
-        deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
-        return self.add_outline_item(
-            title,
-            pagenum,
-            parent,
-            color,
-            bold,
-            italic,
-            Fit(fit_type=fit, fit_args=args),
-        )
-
-    def addNamedDestination(self, title: str, pagenum: int) -> None:  # deprecated
-        """
-        .. deprecated:: 1.28.0
-            Use :meth:`add_named_destination` instead.
-        """
-        deprecation_with_replacement(
-            "addNamedDestination", "add_named_destination", "3.0.0"
-        )
-        return self.add_named_destination(title, pagenum)
-
     def add_named_destination(
         self,
         title: str,
-        page_number: Optional[int] = None,
-        pagenum: Optional[int] = None,
+        page_number: int,
     ) -> None:
         """
         Add a destination to the output.
@@ -798,36 +670,9 @@ class PdfMerger:
             title: Title to use
             page_number: Page number this destination points at.
         """
-        if page_number is not None and pagenum is not None:
-            raise ValueError(
-                "The argument pagenum of add_named_destination is deprecated. "
-                "Use page_number only."
-            )
-        if pagenum is not None:  # deprecated
-            old_term = "pagenum"
-            new_term = "page_number"
-            warnings.warn(
-                (
-                    f"{old_term} is deprecated as an argument and will be "
-                    f"removed in pypdf==4.0.0. Use {new_term} instead"
-                ),
-                DeprecationWarning,
-            )
-            page_number = pagenum
-        if page_number is None:  # deprecated
-            raise ValueError("page_number may not be None")
         dest = Destination(
             TextStringObject(title),
             NumberObject(page_number),
             Fit.fit_horizontally(top=826),
         )
         self.named_dests.append(dest)
-
-
-class PdfFileMerger(PdfMerger):  # deprecated
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecation_with_replacement("PdfFileMerger", "PdfMerger", "3.0.0")
-
-        if "strict" not in kwargs and len(args) < 1:
-            kwargs["strict"] = True  # maintain the default
-        super().__init__(*args, **kwargs)

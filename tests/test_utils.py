@@ -11,8 +11,8 @@ from pypdf._utils import (
     _get_max_pdf_version_header,
     _human_readable_bytes,
     check_if_whitespace_only,
+    classproperty,
     deprecate_with_replacement,
-    deprecation_bookmark,
     deprecation_no_replacement,
     mark_location,
     matrix_multiply,
@@ -121,13 +121,13 @@ def test_mark_location():
         ("😀😃", "😀😃".encode()),
     ],
 )
-def test_b(input_str: str, expected: str):
+def test_b(input_str: str, expected: bytes):
     assert pypdf._utils.b_(input_str) == expected
 
 
 def test_deprecate_no_replacement():
     with pytest.warns(DeprecationWarning) as warn:
-        pypdf._utils.deprecate_no_replacement("foo")
+        pypdf._utils.deprecate_no_replacement("foo", removed_in="3.0.0")
     error_msg = "foo is deprecated and will be removed in pypdf 3.0.0."
     assert warn[0].message.args[0] == error_msg
 
@@ -245,17 +245,6 @@ def test_read_block_backwards_exception():
     assert exc.value.args[0] == "Could not read malformed PDF file"
 
 
-def test_deprecation_bookmark():
-    @deprecation_bookmark(old_param="new_param")
-    def foo(old_param: int = 1, baz: int = 2) -> None:
-        pass
-
-    with pytest.raises(DeprecationError) as exc:
-        foo(old_param=12, new_param=13)
-    expected_msg = "old_param is deprecated as an argument. Use new_param instead"
-    assert exc.value.args[0] == expected_msg
-
-
 def test_deprecate_with_replacement():
     def foo() -> None:
         deprecate_with_replacement("foo", "bar", removed_in="4.3.2")
@@ -336,7 +325,7 @@ def test_human_readable_bytes(input_int, expected_output):
 
 
 def test_file_class():
-    """File class can be instanciated and string representation is ok."""
+    """File class can be instantiated and string representation is ok."""
     f = File(name="image.png", data=b"")
     assert str(f) == "File(name=image.png, data: 0 Byte)"
     assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"
@@ -436,3 +425,29 @@ def test_version_compare_lt_str():
 
 def test_bad_version():
     assert Version("a").components == [(0, "a")]
+
+
+def test_classproperty():
+    class Container:
+        @classproperty
+        def value1(cls) -> int:  # noqa: N805
+            return 42
+
+        @classproperty
+        def value2(cls) -> int:  # noqa: N805
+            return 1337
+
+        @classproperty
+        def value3(cls) -> int:  # noqa: N805
+            return 1
+
+        @value3.getter
+        def value3(cls) -> int:  # noqa: N805
+            return 2
+
+    assert Container.value1 == 42
+    assert Container.value2 == 1337
+    assert Container.value3 == 2
+    assert Container().value1 == 42
+    assert Container().value2 == 1337
+    assert Container().value3 == 2

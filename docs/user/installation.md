@@ -4,7 +4,7 @@ There are several ways to install pypdf. The most common option is to use pip.
 
 ## pip
 
-pypdf requires Python 3.6+ to run.
+pypdf requires Python 3.7+ to run.
 
 Typically Python comes with `pip`, a package installer. Using it you can
 install pypdf:
@@ -50,12 +50,19 @@ pip install pypdf[image]
 
 ## Python Version Support
 
+Since pypdf 4.0, every release, including point releases, should work with all
+supported versions of [Python](https://devguide.python.org/versions/). Thus
+every point release is designed to work with all existing Python versions,
+excluding end-of-life versions.
+
+Previous versions of pypdf support the following versions of Python:
+
 | Python                 | 3.11 | 3.10 | 3.9 | 3.8 | 3.7 | 3.6 | 2.7 |
-| ---------------------- | ---- | ---- | --- | --- | --- | --- | --- |
-| pypdf>=3.0             | YES  | YES  | YES | YES | YES | YES |     |
-| PyPDF2>=2.0            | YES  | YES  | YES | YES | YES | YES |     |
-| PyPDF2 1.20.0 - 1.28.4 |      | YES  | YES | YES | YES | YES | YES |
-| PyPDF2 1.15.0 - 1.20.0 |      |      |     |     |     |     | YES |
+| ---------------------- |:----:|:----:|:---:|:---:|:---:|:---:|:---:|
+| pypdf 3.x              | ✅   | ✅  | ✅ | ✅  | ✅  | ✅ | ❌ |
+| PyPDF2 >= 2.0          | ✅   | ✅  | ✅ | ✅  | ✅  | ✅ | ❌ |
+| PyPDF2 1.20.0 - 1.28.4 | ❌   | ✅  | ✅ | ✅  | ✅  | ✅ | ✅ |
+| PyPDF2 1.15.0 - 1.20.0 | ❌   | ❌  | ❌ | ❌  | ❌  | ❌ | ✅ |
 
 
 ## Anaconda

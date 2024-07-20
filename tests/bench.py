@@ -6,6 +6,7 @@ Please keep in mind that the variance is high.
 """
 from io import BytesIO
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import pytest
 
@@ -85,7 +86,7 @@ def merge():
     writer.append(reader)
 
     # PdfReader object:
-    writer.append(PdfReader(pdf_path, "rb"), outline_item=True)
+    writer.append(PdfReader(pdf_path, "rb"), outline_item="True")
 
     # File handle
     with open(pdf_path, "rb") as fh:
@@ -93,32 +94,33 @@ def merge():
 
     outline_item = writer.add_outline_item("An outline item", 0)
     writer.add_outline_item("deeper", 0, parent=outline_item)
-    writer.add_metadata({"author": "Martin Thoma"})
+    writer.add_metadata({"/Author": "Martin Thoma"})
     writer.add_named_destination("title", 0)
     writer.set_page_layout("/SinglePage")
-    writer.set_page_mode("/UseThumbs")
+    writer.page_mode = "/UseThumbs"
 
-    write_path = "dont_commit_merged.pdf"
-    writer.write(write_path)
-    writer.close()
+    with NamedTemporaryFile(suffix=".pdf") as target_file:
+        write_path = target_file.name
+        writer.write(write_path)
+        writer.close()
 
-    # Check if outline is correct
-    reader = PdfReader(write_path)
-    assert [
-        el.title for el in reader._get_outline() if isinstance(el, Destination)
-    ] == [
-        "Foo",
-        "Bar",
-        "Baz",
-        "Foo",
-        "Bar",
-        "Baz",
-        "Foo",
-        "Bar",
-        "Baz",
-        "True",
-        "An outline item",
-    ]
+        # Check if outline is correct
+        reader = PdfReader(write_path)
+        assert [
+            el.title for el in reader._get_outline() if isinstance(el, Destination)
+        ] == [
+            "Foo",
+            "Bar",
+            "Baz",
+            "Foo",
+            "Bar",
+            "Baz",
+            "Foo",
+            "Bar",
+            "Baz",
+            "True",
+            "An outline item",
+        ]
 
 
 def test_merge(benchmark):
@@ -131,10 +133,11 @@ def test_merge(benchmark):
 
 
 def text_extraction(pdf_path):
-    reader = PdfReader(pdf_path)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text()
+    with open(pdf_path, mode="rb") as fd:
+        reader = PdfReader(fd)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
     return text
 
 
@@ -224,3 +227,15 @@ def test_image_new_property_performance(benchmark):
     data = BytesIO(get_data_from_url(url, name=name))
 
     benchmark(image_new_property, data)
+
+
+def image_extraction(data):
+    reader = PdfReader(data)
+    list(reader.pages[0].images)
+
+
+@pytest.mark.enable_socket()
+def test_large_compressed_image_performance(benchmark):
+    url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
+    data = BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf"))
+    benchmark(image_extraction, data)
