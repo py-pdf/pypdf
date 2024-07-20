@@ -31,6 +31,7 @@ import os
 import re
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
+from types import TracebackType
 from typing import (
     Any,
     Callable,
@@ -39,6 +40,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    Type,
     Union,
     cast,
 )
@@ -111,7 +113,13 @@ class PdfReader(PdfDocCommon):
         self.flattened_pages: Optional[List[PageObject]] = None
         #: Storage of parsed PDF objects.
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
+
         self.xref_index = 0
+        self.xref: Dict[int, Dict[Any, Any]] = {}
+        self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
+        self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
+        self.trailer = DictionaryObject()
+
         self._page_id2num: Optional[
             Dict[Any, Any]
         ] = None  # map page indirect_reference number to Page Number
@@ -121,9 +129,11 @@ class PdfReader(PdfDocCommon):
                 "It may not be read correctly.",
                 __name__,
             )
+        self._stream_opened = False
         if isinstance(stream, (str, Path)):
             with open(stream, "rb") as fh:
                 stream = BytesIO(fh.read())
+            self._stream_opened = True
         self.read(stream)
         self.stream = stream
 
@@ -153,18 +163,40 @@ class PdfReader(PdfDocCommon):
         elif password is not None:
             raise PdfReadError("Not encrypted file")
 
+    def __enter__(self) -> "PdfReader":
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        self.close()
+
+    def close(self) -> None:
+        """Close the stream if opened in __init__ and clear memory."""
+        if self._stream_opened:
+            self.stream.close()
+        self.flattened_pages = []
+        self.resolved_objects = {}
+        self.trailer = DictionaryObject()
+        self.xref = {}
+        self.xref_free_entry = {}
+        self.xref_objStm = {}
+
     @property
     def root_object(self) -> DictionaryObject:
-        """Provide access to "/Root". standardized with PdfWriter."""
+        """Provide access to "/Root". Standardized with PdfWriter."""
         return cast(DictionaryObject, self.trailer[TK.ROOT].get_object())
 
     @property
     def _info(self) -> Optional[DictionaryObject]:
         """
-        Provide access to "/Info". standardized with PdfWriter.
+        Provide access to "/Info". Standardized with PdfWriter.
 
         Returns:
-            /Info Dictionary ; None if the entry does not exists
+            /Info Dictionary; None if the entry does not exist
         """
         info = self.trailer.get(TK.INFO, None)
         if info is None:
@@ -180,10 +212,10 @@ class PdfReader(PdfDocCommon):
     @property
     def _ID(self) -> Optional[ArrayObject]:
         """
-        Provide access to "/ID". standardized with PdfWriter.
+        Provide access to "/ID". Standardized with PdfWriter.
 
         Returns:
-            /ID array ; None if the entry does not exists
+            /ID array; None if the entry does not exist
         """
         id = self.trailer.get(TK.ID, None)
         return None if id is None else cast(ArrayObject, id.get_object())
@@ -196,7 +228,7 @@ class PdfReader(PdfDocCommon):
         """
         Integration into Jupyter Notebooks.
 
-        This method returns a dictionary that maps a mime-type to it's
+        This method returns a dictionary that maps a mime-type to its
         representation.
 
         See https://ipython.readthedocs.io/en/stable/config/integrating.html
@@ -398,7 +430,8 @@ class PdfReader(PdfDocCommon):
                     self.stream.seek(m.start(0) + 1)
                     idnum, generation = self.read_object_header(self.stream)
                 else:
-                    idnum = -1  # exception will be raised below
+                    idnum = -1
+                    generation = -1  # exception will be raised below
             if idnum != indirect_reference.idnum and self.xref_index:
                 # Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict:
@@ -481,7 +514,7 @@ class PdfReader(PdfDocCommon):
     def read_object_header(self, stream: StreamType) -> Tuple[int, int]:
         # Should never be necessary to read out whitespace, since the
         # cross-reference table should put us in the right spot to read the
-        # object header.  In reality... some files have stupid cross reference
+        # object header. In reality some files have stupid cross reference
         # tables that are off by whitespace bytes.
         extra = False
         skip_over_comment(stream)
@@ -703,8 +736,8 @@ class PdfReader(PdfDocCommon):
 
                 # On the other hand, some malformed PDF files
                 # use a single character EOL without a preceding
-                # space.  Detect that case, and seek the stream
-                # back one character.  (0-9 means we've bled into
+                # space. Detect that case, and seek the stream
+                # back one character (0-9 means we've bled into
                 # the next xref entry, t means we've bled into the
                 # text "trailer"):
                 if line[-1] in b"0123456789t":
@@ -775,9 +808,9 @@ class PdfReader(PdfDocCommon):
     def _read_xref_tables_and_trailers(
         self, stream: StreamType, startxref: Optional[int], xref_issue_nr: int
     ) -> None:
-        self.xref: Dict[int, Dict[Any, Any]] = {}
-        self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
-        self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
+        self.xref = {}
+        self.xref_free_entry = {}
+        self.xref_objStm = {}
         self.trailer = DictionaryObject()
         while startxref is not None:
             # load the xref table
@@ -863,7 +896,7 @@ class PdfReader(PdfDocCommon):
                 __name__,
             )
             return None
-        # bad xref character at startxref.  Let's see if we can find
+        # bad xref character at startxref. Let's see if we can find
         # the xref table nearby, as we've observed this error with an
         # off-by-one before.
         stream.seek(-11, 1)
@@ -1030,7 +1063,7 @@ class PdfReader(PdfDocCommon):
         owner password, and then stores the resulting decryption key if either
         password is correct.
 
-        It does not matter which password was matched.  Both passwords provide
+        It does not matter which password was matched. Both passwords provide
         the correct decryption key that will allow the document to be used with
         this library.
 

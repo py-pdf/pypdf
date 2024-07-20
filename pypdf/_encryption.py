@@ -814,7 +814,7 @@ class Encryption:
         EFF: str,
         values: Optional[EncryptionValues],
     ) -> None:
-        # See TABLE 3.18 Entries common to all encryption dictionaries
+        # §7.6.2, entries common to all encryption dictionaries
         # use same name as keys of encryption dictionaries entries
         self.V = V
         self.R = R

@@ -67,9 +67,9 @@ If you want to insert pages in the middle of the destination, use `merge` (which
 You can insert the same page multiple times, if necessary even using a list-based syntax:
 
 ```python
+# Insert pages 2 and 3, with page 1 before, between, and after
 writer.append(reader, [0, 1, 0, 2, 0])
 ```
-will insert the pages 1 and 2 with page 0 before, in the middle and after.
 
 ## add_page / insert_page
 
@@ -83,7 +83,7 @@ A grouping field should be added before adding the source PDF to prevent that.
 The original fields will be identified by adding the group name.
 
 For example, after calling `reader.add_form_topname("form1")`, the field
-previously named `field1` will now identified as `form1.field1` when calling
+previously named `field1` is now identified as `form1.field1` when calling
 `reader.get_form_text_fields(True)` or `reader.get_fields()`.
 
 After that, you can append the input PDF completely or partially using

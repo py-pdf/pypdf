@@ -215,13 +215,11 @@ with open("annotated-pdf.pdf", "wb") as fp:
 
 ## Popup
 
-Manage the Popup windows for markups. looks like this:
+Manage the Popup windows for markups, looks like this:
 
 ![](annotation-popup.png)
 
 you can use the {py:class}`Popup <pypdf.annotations.Popup>`:
-
-you have to use the returned result from add_annotation() to fill-up the
 
 ```python
 from pypdf.annotations import Popup, Text
@@ -249,6 +247,9 @@ popup_annotation = Popup(
 writer.write("annotated-pdf-popup.pdf")
 ```
 
+You have to use the returned result from add_annotation() as it is
+the parent annotation with which this popup annotation shall be associated.
+
 ## Link
 
 If you want to add a link, you can use
@@ -264,7 +265,7 @@ page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
 
-# Add the line
+# Add the link
 annotation = Link(
     rect=(50, 550, 200, 650),
     url="https://martin-thoma.com/",
@@ -281,6 +282,7 @@ You can also add internal links:
 ```python
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Link
+from pypdf.generic import Fit
 
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
@@ -288,9 +290,11 @@ page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
 
-# Add the line
+# Add the link
 annotation = Link(
-    rect=(50, 550, 200, 650), target_page_index=3, fit="/FitH", fit_args=(123,)
+    rect=(50, 550, 200, 650),
+    target_page_index=3,
+    fit=Fit(fit_type="/FitH", fit_args=(123,)),
 )
 writer.add_annotation(page_number=0, annotation=annotation)
 
@@ -303,7 +307,7 @@ with open("annotated-pdf.pdf", "wb") as fp:
 
 Text markup annotations refer to a specific piece of text within the document.
 
-Those are a bit more complicated as you need to know exactly where the text
+These are a bit more complicated as you need to know exactly where the text
 is, the so-called "Quad points".
 
 ### Highlighting

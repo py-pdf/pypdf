@@ -20,7 +20,8 @@ writer = PdfWriter()
 for page in reader.pages:
     writer.add_page(page)
 
-writer.add_metadata(reader.metadata)
+if reader.metadata is not None:
+    writer.add_metadata(reader.metadata)
 
 with open("smaller-new-file.pdf", "wb") as fp:
     writer.write(fp)
@@ -34,13 +35,9 @@ reduction (from 5.7 MB to 0.8 MB) within a real PDF.
 
 
 ```python
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfWriter
 
-reader = PdfReader("example.pdf")
-writer = PdfWriter()
-
-for page in reader.pages:
-    writer.add_page(page)
+writer = PdfWriter(clone_from="example.pdf")
 
 writer.remove_images()
 
@@ -55,13 +52,9 @@ reduce the file size of the PDF overall. That depends on how well the reduced
 quality image can be compressed.
 
 ```python
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfWriter
 
-reader = PdfReader("example.pdf")
-writer = PdfWriter()
-
-for page in reader.pages:
-    writer.add_page(page)
+writer = PdfWriter(clone_from="example.pdf")
 
 for page in writer.pages:
     for img in page.images:

@@ -3,24 +3,24 @@
 # and it's decided what should be in the release.
 # This action only ensures the release is done with the proper contents
 # and that it's announced with a Github release.
-name: Publish Python Package to PyPI
+name: Create git tag
 on:
   push:
     branches:
       - main
+
 permissions:
   contents: write
 
 jobs:
   build_and_publish:
-    name: Publish a new version of pypdf
+    name: Publish a new version
     runs-on: ubuntu-latest
     if: "${{ startsWith(github.event.head_commit.message, 'REL: ') }}"
-
     steps:
-      # Ensure it's on PyPI
       - name: Checkout Repository
         uses: actions/checkout@v4
+
       - name: Extract version from commit message
         id: extract_version
         run: |
@@ -45,41 +45,3 @@ jobs:
           git config user.email github-actions@github.com
           git tag "$VERSION" -m "$MESSAGE"
           git push origin $VERSION
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
-
-      - name: Install Flit
-        run: |
-          python -m pip install --upgrade pip
-          pip install flit
-
-      - name: Publish Package to PyPI🚀
-        env:
-          FLIT_USERNAME: '__token__'
-          FLIT_PASSWORD: ${{ secrets.FLIT_PASSWORD }}
-        run: |
-          flit publish
-
-      # Create the Github Page
-      - name: Prepare variables
-        id: prepare_variables
-        run: |
-          git fetch --tags --force
-          latest_tag=$(git describe --tags --abbrev=0)
-          echo "latest_tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
-          echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "tag_body<<$EOF" >> "$GITHUB_ENV"
-          git --no-pager tag -l "${latest_tag}" --format='%(contents:body)' >> "$GITHUB_ENV"
-          echo "$EOF" >> "$GITHUB_ENV"
-      - name: Create GitHub Release 🚀
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.latest_tag }}
-          name: Version ${{ env.latest_tag }}, ${{ env.date }}
-          draft: false
-          prerelease: false
-          body: ${{ env.tag_body }}
