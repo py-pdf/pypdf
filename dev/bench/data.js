@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721569434058,
+  "lastUpdate": 1721590014325,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -55379,6 +55379,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0020806995277734813",
             "extra": "mean: 774.34949740001 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8f621201210bad8fcd56bd50a037e1e9fe79c500",
+          "message": "REL: 4.3.1\n\n## What's new\r\n\r\n### Bug Fixes (BUG)\r\n- Cope with Matrix entry in field annotations (#2736) by @pubpub-zz\r\n\r\n### Robustness (ROB)\r\n- Cope with fields with upside down box/rectangle (#2729) by @pubpub-zz\r\n\r\n### Documentation (DOC)\r\n- Update Link Documentation Example (#2759) by @jparris\r\n- Make table consistent with pdf-version-support.md (#2758) by @j-t-1\r\n- Add feature support by pypdf (#2738) by @j-t-1\r\n- Move JavaScript example (#2746) by @j-t-1\r\n- Added example for downloading a PDF from Google Cloud Storage  (#2745) by @prodeveloper\r\n- Miscellaneous tiny changes (#2744) by @j-t-1\r\n- Amend comment with rectangle duplication (#2733) by @j-t-1\r\n- Use enumerate in extract example (#2727) by @j-t-1\r\n- Tiny changes (#2723) by @j-t-1\r\n\r\n### Maintenance (MAINT)\r\n- Remove redundant pass statement (#2739) by @j-t-1\r\n- Update Python version support documentation (#2740) by @j-t-1\r\n- Remove redundant super() (#2734) by @j-t-1\r\n- Add deprecate_with_replacement to StreamObject.initializeFromDictionary (#2728) by @j-t-1\r\n- Deal with cryptography>=43 moving ARC4 (#2765) by @MartinThoma\r\n\r\n### Code Style (STY)\r\n- Change argument type (#2741) by @j-t-1\r\n- Use endswith instead of logical equals (#2732) by @j-t-1\r\n\r\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.3.0...4.3.1)",
+          "timestamp": "2024-07-21T21:23:53+02:00",
+          "tree_id": "c439aec1d0c0b973e83fa8b5ddf9bde4b7ecfd57",
+          "url": "https://github.com/py-pdf/pypdf/commit/8f621201210bad8fcd56bd50a037e1e9fe79c500"
+        },
+        "date": 1721590010369,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.9181256382943292,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002207168941432113",
+            "extra": "mean: 342.68572500000687 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.106677198096598,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007855153601521964",
+            "extra": "mean: 82.59904709090775 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2709691900661612,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010968497275392593",
+            "extra": "mean: 3.6904564676000065 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.658171376657723,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006262681651493156",
+            "extra": "mean: 115.49782933333732 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06146651373966878,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10881323676598854",
+            "extra": "mean: 16.269020953999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.282447166257189,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007184911790847757",
+            "extra": "mean: 779.7592183999996 msec\nrounds: 5"
           }
         ]
       }
