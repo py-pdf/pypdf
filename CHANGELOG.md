@@ -10,6 +10,7 @@
 
 ### Maintenance (MAINT)
 - Add deprecate_with_replacement to StreamObject.initializeFromD… (#2728)
+- Deal with cryptography>=43 moving ARC4 (#2765)
 
 [Full Changelog](https://github.com/py-pdf/pypdf/compare/4.3.0...4.3.1)
 
