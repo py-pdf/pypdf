@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 4.3.1, 2024-07-21
+
+### Bug Fixes (BUG)
+- Cope with Matrix entry in field annotations (#2736)
+
+### Robustness (ROB)
+- Cope with fields with upside down box/rectangle (#2729)
+
+### Maintenance (MAINT)
+- Add deprecate_with_replacement to StreamObject.initializeFromD… (#2728)
+- Deal with cryptography>=43 moving ARC4 (#2765)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.3.0...4.3.1)
+
 ## Version 4.3.0, 2024-06-23
 
 ### New Features (ENH)
