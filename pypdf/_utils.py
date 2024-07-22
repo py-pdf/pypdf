@@ -336,7 +336,7 @@ def mark_location(stream: StreamType) -> None:
     stream.seek(-radius, 1)
 
 
-B_CACHE: Dict[Union[str, bytes], bytes] = {}
+B_CACHE: Dict[str, bytes] = {}
 
 
 def b_(s: Union[str, bytes]) -> bytes:
