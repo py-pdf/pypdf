@@ -396,12 +396,7 @@ def paeth_predictor(left: int, up: int, up_left: int) -> int:
     dist_up = abs(p - up)
     dist_up_left = abs(p - up_left)
 
-    if dist_left <= dist_up and dist_left <= dist_up_left:
-        return left
-    elif dist_up <= dist_up_left:
-        return up
-    else:
-        return up_left
+    return min((left, dist_left), (up, dist_up), (up_left, dist_up_left), key=lambda x: x[1])[0]
 
 
 def deprecate(msg: str, stacklevel: int = 3) -> None:
