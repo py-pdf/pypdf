@@ -350,10 +350,6 @@ def b_(s: Union[str, bytes]) -> bytes:
     except Exception:
         r = s.encode("utf-8")
     if len(s) < 2:
-        # Automated reporting frameworks and 'document to PDF' conversion tools love to
-        # use a 'render every character one at a time' paradigm for creating a
-        # 'justified' text layout, and many of them just behave that way by default to
-        # simplify their implementation.
         bc[s] = r
     return r
 
