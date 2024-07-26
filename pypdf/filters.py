@@ -190,18 +190,18 @@ class FlateDecode:
             filter_byte = rowdata[0]
 
             if filter_byte == 0:
-                # PNG None Predictor 
+                # PNG None Predictor
                 pass
             elif filter_byte == 1:
-                # PNG Sub Predictor 
+                # PNG Sub Predictor
                 for i in range(bpp + 1, rowlength):
                     rowdata[i] = (rowdata[i] + rowdata[i - bpp]) % 256
             elif filter_byte == 2:
-                # PNG Up Predictor 
+                # PNG Up Predictor
                 for i in range(1, rowlength):
                     rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
             elif filter_byte == 3:
-                # PNG Average Predictor 
+                # PNG Average Predictor
                 for i in range(1, bpp + 1):
                     floor = prev_rowdata[i] // 2
                     rowdata[i] = (rowdata[i] + floor) % 256
@@ -210,7 +210,7 @@ class FlateDecode:
                     floor = (left + prev_rowdata[i]) // 2
                     rowdata[i] = (rowdata[i] + floor) % 256
             elif filter_byte == 4:
-                # PNG Paeth Predictor 
+                # PNG Paeth Predictor
                 for i in range(1, bpp + 1):
                     rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
                 for i in range(bpp + 1, rowlength):
