@@ -30,16 +30,16 @@ __all__ = [
     # Export abstract base classes so that they are shown in the docs
     "AnnotationDictionary",
     "MarkupAnnotation",
-    # markup annotations
+    # Markup annotations
     "Ellipse",
     "FreeText",
     "Highlight",
     "Line",
-    "Link",
     "Polygon",
     "PolyLine",
     "Rectangle",
     "Text",
     # Non-markup annotations
+    "Link",
     "Popup",
 ]
