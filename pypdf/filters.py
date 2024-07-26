@@ -184,7 +184,7 @@ class FlateDecode:
             raise PdfReadError("Image data is not rectangular")
         output = []
         prev_rowdata = (0,) * rowlength
-        bpp = rowlength - 1 // columns  # recomputed locally to not change params
+        bpp = (rowlength - 1) // columns  # recomputed locally to not change params
         for row in range(0, len(data), rowlength):
             rowdata: List[int] = list(data[row : row + rowlength])
             filter_byte = rowdata[0]
