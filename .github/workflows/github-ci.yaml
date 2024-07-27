@@ -90,7 +90,7 @@ jobs:
         cache-dependency-path: '**/requirements/ci.txt'
     - name: Setup Python (3.11+)
       uses: actions/setup-python@v5
-      if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
+      if: matrix.python-version == '3.11' || matrix.python-version == '3.12' || matrix.python-version == '3.13-dev'
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
