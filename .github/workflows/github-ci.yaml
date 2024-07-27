@@ -106,7 +106,7 @@ jobs:
     - name: Install requirements (Python 3.11+)
       run: |
         pip install -r requirements/ci-3.11.txt
-      if: matrix.python-version == '3.11' || matrix.python-version == '3.12' || matrix.python-verson == '3.13-dev'
+      if: matrix.python-version == '3.11' || matrix.python-version == '3.12' || matrix.python-version == '3.13-dev'
     - name: Remove pycryptodome and cryptography
       run: |
         pip uninstall pycryptodome cryptography -y
