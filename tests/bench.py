@@ -86,7 +86,7 @@ def merge():
     writer.append(reader)
 
     # PdfReader object:
-    writer.append(PdfReader(pdf_path, "rb"), outline_item=True)
+    writer.append(PdfReader(pdf_path, "rb"), outline_item="True")
 
     # File handle
     with open(pdf_path, "rb") as fh:
@@ -227,3 +227,15 @@ def test_image_new_property_performance(benchmark):
     data = BytesIO(get_data_from_url(url, name=name))
 
     benchmark(image_new_property, data)
+
+
+def image_extraction(data):
+    reader = PdfReader(data)
+    list(reader.pages[0].images)
+
+
+@pytest.mark.enable_socket()
+def test_large_compressed_image_performance(benchmark):
+    url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
+    data = BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf"))
+    benchmark(image_extraction, data)

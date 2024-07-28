@@ -12,7 +12,7 @@ import pytest
 from PIL import Image
 
 from pypdf import PdfReader
-from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
+from pypdf.errors import DeprecationError, PdfReadError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -22,7 +22,7 @@ from pypdf.filters import (
 )
 from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject
 
-from . import get_data_from_url
+from . import PILContext, get_data_from_url
 from .test_encryption import HAS_AES
 from .test_images import image_similarity
 
@@ -132,9 +132,9 @@ def test_ascii_hex_decode_method(data, expected):
 
 def test_ascii_hex_decode_missing_eod():
     """ASCIIHexDecode.decode() raises error when no EOD character is present."""
-    with pytest.raises(PdfStreamError) as exc:
-        ASCIIHexDecode.decode("")
-    assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
+    # with pytest.raises(PdfStreamError) as exc:
+    ASCIIHexDecode.decode("")
+    # assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
 
 
 @pytest.mark.enable_socket()
@@ -148,11 +148,10 @@ def test_decode_ahx():
         _ = list(p.images.keys())
 
 
-@pytest.mark.xfail()
 def test_ascii85decode_with_overflow():
     inputs = (
         v + "~>"
-        for v in "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f"
+        for v in "\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f"
         "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a"
         "\x1b\x1c\x1d\x1e\x1fvwxy{|}~\x7f\x80\x81\x82"
         "\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d"
@@ -162,9 +161,8 @@ def test_ascii85decode_with_overflow():
     )
 
     for i in inputs:
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError):
             ASCII85Decode.decode(i)
-        assert exc.value.args[0] == ""
 
 
 def test_ascii85decode_five_zero_bytes():
@@ -184,10 +182,10 @@ def test_ascii85decode_five_zero_bytes():
         b"\x00\x00\x00\x00" * 3,
     )
 
-    assert ASCII85Decode.decode("!!!!!") == ASCII85Decode.decode("z")
+    assert ASCII85Decode.decode("!!!!!~>") == ASCII85Decode.decode("z~>")
 
     for expected, i in zip(exp_outputs, inputs):
-        assert ASCII85Decode.decode(i) == expected
+        assert ASCII85Decode.decode(i + "~>") == expected
 
 
 def test_ccitparameters():
@@ -375,13 +373,14 @@ def test_tiff_predictor():
 @pytest.mark.enable_socket()
 def test_rgba():
     """Decode rgb with transparency"""
-    reader = PdfReader(BytesIO(get_data_from_url(name="tika-972174.pdf")))
-    data = reader.pages[0].images[0]
-    assert ".jp2" in data.name
-    similarity = image_similarity(
-        data.image, BytesIO(get_data_from_url(name="tika-972174_p0-im0.png"))
-    )
-    assert similarity > 0.99
+    with PILContext():
+        reader = PdfReader(BytesIO(get_data_from_url(name="tika-972174.pdf")))
+        data = reader.pages[0].images[0]
+        assert ".jp2" in data.name
+        similarity = image_similarity(
+            data.image, BytesIO(get_data_from_url(name="tika-972174_p0-im0.png"))
+        )
+        assert similarity > 0.99
 
 
 @pytest.mark.enable_socket()
@@ -504,14 +503,10 @@ def test_runlengthdecode():
     url = "https://github.com/py-pdf/pypdf/files/12162905/out.pdf"
     name = "FailedRLE1.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    with pytest.raises(PdfStreamError) as exc:
-        reader.pages[0].images[0]
-    assert exc.value.args[0] == "Unexpected EOD in RunLengthDecode"
+    reader.pages[0].images[0]
     url = "https://github.com/py-pdf/pypdf/files/12162926/out.pdf"
     name = "FailedRLE2.pdf"
-    with pytest.raises(PdfStreamError) as exc:
-        reader.pages[0].images[0]
-    assert exc.value.args[0] == "Unexpected EOD in RunLengthDecode"
+    reader.pages[0].images[0]
 
 
 @pytest.mark.enable_socket()

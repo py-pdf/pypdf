@@ -1,13 +1,13 @@
 # Contributors
 
-pypdf had a lot of contributors since it started with pyPdf in 2005. We are
+pypdf had a lot of contributors since it started as pyPdf in 2005. We are
 a free software project without any company affiliation. We cannot pay
 contributors, but we do value their contributions. A lot of time, effort, and
-expertise went into this project. With this list, we recognize those awesome
+expertise went into this project. With this list, we recognize these awesome
 people 🤗
 
 The list is definitely not complete. You can find more contributors via the git
-history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/graphs/contributors).
+history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/graphs/contributors).
 
 ## Contributors to the pypdf (formerly pyPdf / PyPDF2) project
 

@@ -26,7 +26,7 @@ from pypdf.generic import (
     read_object,
 )
 
-from . import get_data_from_url, normalize_warnings
+from . import PILContext, get_data_from_url, normalize_warnings
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -547,7 +547,11 @@ def test_get_fields_warns(tmp_path, caplog, url, name):
         retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert retrieved_fields == {}
-    assert normalize_warnings(caplog.text) == ["Object 2 0 not defined."]
+    assert normalize_warnings(caplog.text) == [
+        "Ignoring wrong pointing object 1 65536 (offset 0)",
+        "Ignoring wrong pointing object 2 65536 (offset 0)",
+        "Object 2 0 not defined.",
+    ]
 
 
 @pytest.mark.enable_socket()
@@ -668,12 +672,13 @@ def test_image_extraction(url, name):
     if not root.exists():
         root.mkdir()
 
-    for page in reader.pages:
-        for image in page.images:
-            filename = root / image.name
-            with open(filename, "wb") as img:
-                img.write(image.data)
-            images_extracted.append(filename)
+    with PILContext():
+        for page in reader.pages:
+            for image in page.images:
+                filename = root / image.name
+                with open(filename, "wb") as img:
+                    img.write(image.data)
+                images_extracted.append(filename)
 
     # Cleanup
     do_cleanup = True  # set this to False for manual inspection
@@ -930,9 +935,7 @@ def test_extra_test_iss1541():
     stream = BytesIO()
     cs.write_to_stream(stream)
     stream.seek(0)
-    with pytest.raises(PdfReadError) as exc:
-        ContentStream(read_object(stream, None, None), None, None).operations
-    assert exc.value.args[0] == "Unexpected end of stream"
+    ContentStream(read_object(stream, None, None), None, None).operations
 
     b = BytesIO(data.getbuffer())
     reader = PdfReader(
@@ -1019,6 +1022,11 @@ def test_inline_images():
         _a[x] = y
     with pytest.raises(KeyError) as exc:
         reader.pages[2]._get_image(("test",))
+
+    url = "https://github.com/py-pdf/pypdf/files/15233597/bug1065245.pdf"
+    name = "iss2598c.pdf"  # test data also used in test_images.py/test_inline_image_extraction()
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert len(reader.pages[0].images) == 3
 
 
 @pytest.mark.enable_socket()

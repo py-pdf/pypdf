@@ -95,7 +95,7 @@ def read_string_from_stream(
                     tok = b_(chr(int(tok, base=8)))
                 elif tok in b"\n\r":
                     # This case is  hit when a backslash followed by a line
-                    # break occurs.  If it's a multi-char EOL, consume the
+                    # break occurs. If it's a multi-char EOL, consume the
                     # second character:
                     tok = stream.read(1)
                     if tok not in b"\n\r":
@@ -147,6 +147,7 @@ def create_string_object(
                 if string.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
                     retval = TextStringObject(string.decode("utf-16"))
                     retval.autodetect_utf16 = True
+                    retval.utf16_bom = string[:2]
                     return retval
                 else:
                     # This is probably a big performance hit here, but we need

@@ -1499,7 +1499,108 @@ def test_update_form_fields(tmp_path):
     assert all(x in flds["RadioGroup1"]["/_States_"] for x in ["/1", "/2", "/3"])
     assert all(x in flds["Liste1"]["/_States_"] for x in ["Liste1", "Liste2", "Liste3"])
 
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.add_annotation(
+        page_number=0,
+        annotation=Link(target_page_index=1, rect=RectangleObject([0, 0, 100, 100])),
+    )
+    writer.insert_blank_page(100, 100, 0)
+    del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DA"]
+    del writer.root_object["/AcroForm"]["/Fields"][1].get_object()["/DR"]["/Font"]
+    writer.update_page_form_field_values(
+        [writer.pages[0], writer.pages[1]],
+        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        auto_regenerate=False,
+    )
+    assert b"/Helv " in writer.pages[1]["/Annots"][1]["/AP"]["/N"].get_data()
+    writer.update_page_form_field_values(
+        None,
+        {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
+        auto_regenerate=False,
+    )
+
     Path(write_data_here).unlink()
+
+
+@pytest.mark.enable_socket()
+def test_update_form_fields2():
+    myFiles = {
+        "test1": {
+            "name": "Test1 Form",
+            "url": "https://github.com/py-pdf/pypdf/files/14817365/test1.pdf",
+            "path": "iss2234a.pdf",
+            "usage": {
+                "fields": {
+                    "First Name": "Reed",
+                    "Middle Name": "R",
+                    "MM": "04",
+                    "DD": "21",
+                    "YY": "24",
+                    "Initial": "RRG",
+                    # "I DO NOT Agree": null,
+                    # "Last Name": null
+                },
+            },
+        },
+        "test2": {
+            "name": "Test2 Form",
+            "url": "https://github.com/py-pdf/pypdf/files/14817366/test2.pdf",
+            "path": "iss2234b.pdf",
+            "usage": {
+                "fields": {
+                    "p2 First Name": "Joe",
+                    "p2 Middle Name": "S",
+                    "p2 MM": "03",
+                    "p2 DD": "31",
+                    "p2 YY": "24",
+                    "Initial": "JSS",
+                    # "p2 I DO NOT Agree": "null",
+                    "p2 Last Name": "Smith",
+                    "p3 First Name": "John",
+                    "p3 Middle Name": "R",
+                    "p3 MM": "01",
+                    "p3 DD": "25",
+                    "p3 YY": "21",
+                },
+            },
+        },
+    }
+    merger = PdfWriter()
+
+    for file in myFiles:
+        reader = PdfReader(
+            BytesIO(get_data_from_url(myFiles[file]["url"], name=myFiles[file]["path"]))
+        )
+        reader.add_form_topname(file)
+        writer = PdfWriter(clone_from=reader)
+
+        writer.update_page_form_field_values(
+            None, myFiles[file]["usage"]["fields"], auto_regenerate=True
+        )
+        merger.append(writer)
+    assert merger.get_form_text_fields(True) == {
+        "test1.First Name": "Reed",
+        "test1.Middle Name": "R",
+        "test1.MM": "04",
+        "test1.DD": "21",
+        "test1.YY": "24",
+        "test1.Initial": "RRG",
+        "test1.I DO NOT Agree": None,
+        "test1.Last Name": None,
+        "test2.p2 First Name": "Joe",
+        "test2.p2 Middle Name": "S",
+        "test2.p2 MM": "03",
+        "test2.p2 DD": "31",
+        "test2.p2 YY": "24",
+        "test2.Initial": "JSS",
+        "test2.p2 I DO NOT Agree": None,
+        "test2.p2 Last Name": "Smith",
+        "test2.p3 First Name": "John",
+        "test2.p3 Middle Name": "R",
+        "test2.p3 MM": "01",
+        "test2.p3 DD": "25",
+        "test2.p3 YY": "21",
+    }
 
 
 @pytest.mark.enable_socket()
@@ -2095,3 +2196,107 @@ def test_mime_jupyter():
     writer = PdfWriter(clone_from=reader)
     assert reader._repr_mimebundle_(("include",), ("exclude",)) == {}
     assert writer._repr_mimebundle_(("include",), ("exclude",)) == {}
+
+
+def test_init_without_named_arg():
+    """Test to use file_obj argument and not clone_from"""
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=reader)
+    nb = len(writer._objects)
+    writer = PdfWriter(reader)
+    assert len(writer._objects) == nb
+    with open(pdf_path, "rb") as f:
+        writer = PdfWriter(f)
+        f.seek(0, 0)
+        by = BytesIO(f.read())
+    assert len(writer._objects) == nb
+    writer = PdfWriter(pdf_path)
+    assert len(writer._objects) == nb
+    writer = PdfWriter(str(pdf_path))
+    assert len(writer._objects) == nb
+    writer = PdfWriter(by)
+    assert len(writer._objects) == nb
+
+
+@pytest.mark.enable_socket()
+def test_i_in_choice_fields():
+    """Cf #2611"""
+    url = "https://github.com/py-pdf/pypdf/files/15176321/FRA.F.6180.150.pdf"
+    name = "iss2611.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    assert "/I" in writer.get_fields()["State"].indirect_reference.get_object()
+    writer.update_page_form_field_values(
+        writer.pages[0], {"State": "NY"}, auto_regenerate=False
+    )
+    assert "/I" not in writer.get_fields()["State"].indirect_reference.get_object()
+
+
+def test_selfont():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Text1": ("Text_1", "", 5), "Text2": ("Text_2", "/F3", 0)},
+        auto_regenerate=False,
+    )
+    assert (
+        b"/F3 5 Tf"
+        in writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"].get_data()
+    )
+    assert (
+        b"Text_1" in writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"].get_data()
+    )
+    assert (
+        b"/F3 12 Tf"
+        in writer.pages[0]["/Annots"][2].get_object()["/AP"]["/N"].get_data()
+    )
+    assert (
+        b"Text_2" in writer.pages[0]["/Annots"][2].get_object()["/AP"]["/N"].get_data()
+    )
+
+
+@pytest.mark.enable_socket()
+def test_no_ressource_for_14_std_fonts(caplog):
+    """Cf #2670"""
+    url = "https://github.com/py-pdf/pypdf/files/15405390/f1040.pdf"
+    name = "iss2670.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    p = writer.pages[0]
+    for a in p["/Annots"]:
+        a = a.get_object()
+        if a["/FT"] == "/Tx":
+            writer.update_page_form_field_values(
+                p, {a["/T"]: "Brooks"}, auto_regenerate=False
+            )
+    assert "Font dictionary for /Helvetica not found." in caplog.text
+
+
+@pytest.mark.enable_socket()
+def test_field_box_upside_down():
+    """Cf #2724"""
+    url = "https://github.com/user-attachments/files/15996356/FRA.F.6180.55.pdf"
+    name = "iss2724.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    writer.update_page_form_field_values(None, {"FreightTrainMiles": "0"})
+    assert writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"].get_data() == (
+        b"q\n/Tx BMC \nq\n1 1 105.29520000000001 10.835000000000036 re\n"
+        b"W\nBT\n/Arial 8.0 Tf 0 g\n2 2.8350000000000364 Td\n(0) Tj\nET\n"
+        b"Q\nEMC\nQ\n"
+    )
+    box = writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"]["/BBox"]
+    assert box[2] > 0
+    assert box[3] > 0
+
+
+@pytest.mark.enable_socket()
+def test_matrix_entry_in_field_annots():
+    """Cf #2731"""
+    url = "https://github.com/user-attachments/files/16036514/template.pdf"
+    name = "iss2731.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Stellenbezeichnung_1": "some filled in text"},
+        auto_regenerate=False,
+    )
+    assert "/Matrix" in writer.pages[0]["/Annots"][5].get_object()["/AP"]["/N"]

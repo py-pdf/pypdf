@@ -1,5 +1,112 @@
 # CHANGELOG
 
+## Version 4.3.1, 2024-07-21
+
+### Bug Fixes (BUG)
+- Cope with Matrix entry in field annotations (#2736)
+
+### Robustness (ROB)
+- Cope with fields with upside down box/rectangle (#2729)
+
+### Maintenance (MAINT)
+- Add deprecate_with_replacement to StreamObject.initializeFromD… (#2728)
+- Deal with cryptography>=43 moving ARC4 (#2765)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.3.0...4.3.1)
+
+## Version 4.3.0, 2024-06-23
+
+### New Features (ENH)
+- Accept ETen-B5 and UniCNS-UTF16 encodings (#2721)
+- Add decode_as_image() to ContentStreams (#2615)
+- context manager for PdfReader (#2666)
+- Add capability to set font and size in fields (#2636)
+- Allow to pass input file without named argument (#2576)
+
+### Bug Fixes (BUG)
+- Fix deprecation for Ressources when using old constants (#2705)
+- Fix images issue 4 bits encoding and LUT starting with UTF16_BOM (#2675)
+- Reading large compressed images takes huge time to process (#2644)
+- Highlighted Text Cannot Be Printed (#2604)
+- Fix UnboundLocalError on malformed pdf (#2619)
+
+### Robustness (ROB)
+- Cope with missing Standard 14 fonts in fields (#2677)
+- Improve inline image extraction (#2622)
+- Cope with loops in Fields tree (#2656)
+- Discard /I in choice fields for compatibility with Acrobat (#2614)
+- Cope with some issues in pillow (#2595)
+- Cope with some image extraction issues (#2591)
+
+### Documentation (DOC)
+- Various improvements on docstrings and examples
+
+### Maintenance (MAINT)
+- Deprecate interiour_color with replacement interior_color (#2706)
+- Add deprecate_with_replacement to PdfWriter.find_bookmark (#2674)
+
+### Code Style (STY)
+- Change Link to be a non-markup annotation (#2714)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.2.0...4.3.0)
+
+## Version 4.2.0, 2024-04-07
+
+### New Features (ENH)
+- Allow multiple charsets for NameObject.read_from_stream (#2585)
+- Add support for /Kids in page labels (#2562)
+- Allow to update fields on many pages (#2571)
+- Tolerate PDF with invalid xref pointed objects (#2335)
+- Add Enforce from PDF2.0 in viewer_preferences (#2511)
+- Add += and -= operators to ArrayObject (#2510)
+
+### Bug Fixes (BUG)
+- Fix merge_page sometimes generating unknown operator 'QQ' (#2588)
+- Fix fields update where annotations are kids of field (#2570)
+- Process CMYK images without a filter correctly (#2557)
+- Extract text in layout mode without finding resources (#2555)
+- Prevent recursive loop in some PDF files (#2505)
+
+### Robustness (ROB)
+- Tolerate "truncated" xref (#2580)
+- Replace error by warning for EOD in RunLengthDecode/ASCIIHexDecode (#2334)
+- Rebuild xref table if one entry is invalid (#2528)
+- Robustify stream extraction (#2526)
+
+### Documentation (DOC)
+- Update release process for latest changes (#2564)
+- Encryption/decryption: Clone document instead of copying all pages (#2546)
+- Minor improvements (#2542)
+- Update annotation list (#2534)
+- Update references and formatting (#2529)
+- Correct threads reference, plus minor changes (#2521)
+- Minor readability increases (#2515)
+- Simplify PaperSize examples (#2504)
+- Minor improvements (#2501)
+
+### Developer Experience (DEV)
+- Remove unused dependencies (#2572)
+- Remove page labels PR link from message (#2561)
+- Fix changelog generator regarding whitespace and handling of "Other" group (#2492)
+- Add REL to known PR prefixes (#2554)
+- Release using the REL commit instead of git tag (#2500)
+- Unify code between PdfReader and PdfWriter (#2497)
+- Bump softprops/action-gh-release from 1 to 2 (#2514)
+
+### Maintenance (MAINT)
+- Ressources → Resources (and internal name childs) (#2550)
+- Fix typos found by codespell (#2549)
+- Update Read the Docs configuration (#2538)
+- Add root_object, _info and _ID to PdfReader (#2495)
+
+### Testing (TST)
+- Allow loading truncated images if required (#2586)
+- Fix download issues from #2562 (#2578)
+- Improve test_get_contents_from_nullobject to show real use-case (#2524)
+- Add missing test annotations (#2507)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.1.0...4.2.0)
+
 ## Version 4.1.0, 2024-03-03
 
 Generating name objects (`NameObject`) without a leading slash
