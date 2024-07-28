@@ -215,8 +215,8 @@ jobs:
       - name: Check Number of Downloaded Files
         run: |
           downloaded_files_count=$(find \.coverage* -type f | wc -l)
-          if [ $downloaded_files_count -eq 8 ]; then
-            echo "The expected number of files (8) were downloaded."
+          if [ $downloaded_files_count -eq 9 ]; then
+            echo "The expected number of files (9) were downloaded."
           else
             echo "ERROR: Expected 8 files, but found $downloaded_files_count files."
             exit 1
