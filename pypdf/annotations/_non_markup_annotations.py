@@ -12,8 +12,6 @@ from ..generic._fit import DEFAULT_FIT, Fit
 from ..generic._rectangle import RectangleObject
 from ._base import AnnotationDictionary
 
-DEFAULT_ANNOTATION_FLAG = AnnotationFlag(0)
-
 
 class Link(AnnotationDictionary):
     def __init__(
@@ -30,16 +28,16 @@ class Link(AnnotationDictionary):
         if TYPE_CHECKING:
             from ..types import BorderArrayType
 
-        is_external = url is not None
-        is_internal = target_page_index is not None
-        if not is_external and not is_internal:
+        external = url is not None
+        internal = target_page_index is not None
+        if not external and not internal:
             raise ValueError(
                 "Either 'url' or 'target_page_index' have to be provided. Both were None."
             )
-        if is_external and is_internal:
+        if external and internal:
             raise ValueError(
                 "Either 'url' or 'target_page_index' have to be provided. "
-                f"url={url}, target_page_index={target_page_index}"
+                f"{url=}, {target_page_index=}"
             )
 
         border_arr: BorderArrayType
@@ -59,7 +57,7 @@ class Link(AnnotationDictionary):
                 NameObject("/Border"): ArrayObject(border_arr),
             }
         )
-        if is_external:
+        if external:
             self[NameObject("/A")] = DictionaryObject(
                 {
                     NameObject("/S"): NameObject("/URI"),
@@ -67,7 +65,7 @@ class Link(AnnotationDictionary):
                     NameObject("/URI"): TextStringObject(url),
                 }
             )
-        if is_internal:
+        if internal:
             # This needs to be updated later!
             dest_deferred = DictionaryObject(
                 {
