@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 
-from ..constants import AnnotationFlag
 from ..generic._base import (
     BooleanObject,
     NameObject,
