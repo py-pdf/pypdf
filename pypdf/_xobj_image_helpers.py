@@ -6,7 +6,7 @@ from typing import Any, List, Tuple, Union, cast
 
 from ._utils import check_if_whitespace_only, logger_warning
 from .constants import ColorSpaces
-from .errors import PdfReadError
+from .errors import EmptyImageDataError, PdfReadError
 from .generic import (
     ArrayObject,
     DecodedStreamObject,
@@ -148,9 +148,12 @@ def _extended_image_frombytes(
         img = Image.frombytes(mode, size, data)
     except ValueError as exc:
         nb_pix = size[0] * size[1]
-        if len(data) % nb_pix != 0:
+        data_length = len(data)
+        if data_length == 0:
+            raise EmptyImageDataError("Data is 0 bytes, cannot process an image from empty data.") from exc
+        if data_length % nb_pix != 0:
             raise exc
-        k = nb_pix * len(mode) / len(data)
+        k = nb_pix * len(mode) / data_length
         data = b"".join([bytes((x,) * int(k)) for x in data])
         img = Image.frombytes(mode, size, data)
     return img
