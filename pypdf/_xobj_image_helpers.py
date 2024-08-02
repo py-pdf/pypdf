@@ -6,7 +6,7 @@ from typing import Any, List, Tuple, Union, cast
 
 from ._utils import check_if_whitespace_only, logger_warning
 from .constants import ColorSpaces
-from .errors import PdfReadError, EmptyImageDataError
+from .errors import EmptyImageDataError, PdfReadError
 from .generic import (
     ArrayObject,
     DecodedStreamObject,

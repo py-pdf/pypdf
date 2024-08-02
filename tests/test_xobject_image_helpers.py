@@ -4,9 +4,10 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader
-from pypdf._xobj_image_helpers import _handle_flate, _extended_image_frombytes
-from pypdf.errors import PdfReadError, EmptyImageDataError
+from pypdf._xobj_image_helpers import _extended_image_frombytes, _handle_flate
+from pypdf.errors import EmptyImageDataError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject
+
 from . import get_data_from_url
 
 
