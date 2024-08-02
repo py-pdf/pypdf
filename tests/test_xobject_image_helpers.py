@@ -7,7 +7,6 @@ from pypdf import PdfReader
 from pypdf._xobj_image_helpers import _handle_flate, _extended_image_frombytes
 from pypdf.errors import PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject
-
 from . import get_data_from_url
 
 
