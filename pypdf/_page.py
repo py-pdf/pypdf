@@ -515,7 +515,7 @@ class PageObject(DictionaryObject):
                         lst.extend(
                             self._get_ids_image(x_object[o], ancest + [o], call_stack)
                         )
-        
+
         assert self.inline_images is not None
         lst.extend(list(self.inline_images.keys()))
         return lst
