@@ -67,7 +67,7 @@ class Font:
                         # warning and or use reader's "strict" to force an ex???
                         continue
                     # check for format (1): `int [int int int int ...]`
-                    w_1 = _w[idx + 1].get_object() if isinstance(_w[idx + 1], IndirectObject) else _w[idx + 1]
+                    w_1 = _w[idx + 1].get_object()
                     if isinstance(w_1, Sequence):
                         start_idx, width_list = w_entry, w_1
                         self.width_map.update(
