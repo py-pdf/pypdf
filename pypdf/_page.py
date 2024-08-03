@@ -478,13 +478,18 @@ class PageObject(DictionaryObject):
                     ):
                         x_object = frame[PG.RESOURCES][RES.XOBJECT]
                         for o in x_object:
-                            if x_object[o][IA.SUBTYPE] == "/Image":
-                                if not isinstance(x_object[o], StreamObject):
-                                    continue
-                                lst.append(
-                                    f"{PG.ANNOTS}/{annot['/T']}{o}"
-                                    if len(ancest) == 0
-                                    else ancest + [o]
+                            if (
+                                isinstance(x_object[o], StreamObject)
+                                and x_object[o][IA.SUBTYPE] == "/Image"
+                            ):
+                                lst.extend(
+                                    [
+                                        (
+                                            f"{PG.ANNOTS}/{annot['/T']}{o}"
+                                            if len(ancest) == 0
+                                            else ancest + [o]
+                                        )
+                                    ]
                                 )
 
         if PG.RESOURCES in obj:
@@ -498,13 +503,18 @@ class PageObject(DictionaryObject):
                     ):
                         x_object = pattern[PG.RESOURCES][RES.XOBJECT].get_object()
                         for o in x_object:
-                            if not isinstance(x_object[o], StreamObject):
-                                continue
-                            if x_object[o][IA.SUBTYPE] == "/Image":
-                                lst.append(
-                                    f"{RES.PATTERN}{pattern_name}{o}"
-                                    if len(ancest) == 0
-                                    else ancest + [o]
+                            if (
+                                isinstance(x_object[o], StreamObject)
+                                and x_object[o][IA.SUBTYPE] == "/Image"
+                            ):
+                                lst.extend(
+                                    [
+                                        (
+                                            f"{RES.PATTERN}{pattern_name}{o}"
+                                            if len(ancest) == 0
+                                            else ancest + [o]
+                                        )
+                                    ]
                                 )
 
             if RES.XOBJECT in cast(DictionaryObject, obj[PG.RESOURCES]):
