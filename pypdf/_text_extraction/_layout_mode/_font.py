@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, Sequence, Union
 
+from ...errors import PdfReadError
 from ...generic import IndirectObject
 from ._font_widths import STANDARD_WIDTHS
 
@@ -66,8 +67,9 @@ class Font:
                         # warning and or use reader's "strict" to force an ex???
                         continue
                     # check for format (1): `int [int int int int ...]`
-                    if isinstance(_w[idx + 1], Sequence):
-                        start_idx, width_list = _w[idx : idx + 2]
+                    w_1 = _w[idx + 1].get_object() if isinstance(_w[idx + 1], IndirectObject) else _w[idx + 1]
+                    if isinstance(w_1, Sequence):
+                        start_idx, width_list = w_entry, w_1
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: _width
@@ -80,9 +82,7 @@ class Font:
                         )
                         skip_count = 1
                     # check for format (2): `int int int`
-                    if not isinstance(_w[idx + 1], Sequence) and not isinstance(
-                        _w[idx + 2], Sequence
-                    ):
+                    elif isinstance(w_1, (int, float)) and isinstance(_w[idx + 2], (int, float)):
                         start_idx, stop_idx, const_width = _w[idx : idx + 3]
                         self.width_map.update(
                             {
@@ -92,6 +92,11 @@ class Font:
                             }
                         )
                         skip_count = 2
+                    else:
+                        raise PdfReadError(
+                            f"Invalid font width definition. Next elements: {w_entry}, {w_1}, {_w[idx + 2]}"
+                        )  # pragma: no cover
+
         if not self.width_map and "/BaseFont" in self.font_dictionary:
             for key in STANDARD_WIDTHS:
                 if self.font_dictionary["/BaseFont"].startswith(f"/{key}"):
