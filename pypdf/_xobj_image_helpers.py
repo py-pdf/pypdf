@@ -6,7 +6,7 @@ from typing import Any, List, Tuple, Union, cast
 
 from ._utils import check_if_whitespace_only, logger_warning
 from .constants import ColorSpaces
-from .errors import PdfReadError
+from .errors import EmptyImageDataError, PdfReadError
 from .generic import (
     ArrayObject,
     DecodedStreamObject,
@@ -29,7 +29,7 @@ else:
 
 
 try:
-    from PIL import Image
+    from PIL import Image, UnidentifiedImageError  # noqa: F401
 except ImportError:
     raise ImportError(
         "pillow is required to do image extraction. "
@@ -123,6 +123,24 @@ def _get_imagemode(
     return mode, mode == "CMYK"
 
 
+def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
+    mask = (1 << bits) - 1
+    nbuff = bytearray(size[0] * size[1])
+    by = 0
+    bit = 8 - bits
+    for y in range(size[1]):
+        if (bit != 0) and (bit != 8 - bits):
+            by += 1
+            bit = 8 - bits
+        for x in range(size[0]):
+            nbuff[y * size[0] + x] = (data[by] >> bit) & mask
+            bit -= bits
+            if bit < 0:
+                by += 1
+                bit = 8 - bits
+    return bytes(nbuff)
+
+
 def _extended_image_frombytes(
     mode: str, size: Tuple[int, int], data: bytes
 ) -> Image.Image:
@@ -130,9 +148,12 @@ def _extended_image_frombytes(
         img = Image.frombytes(mode, size, data)
     except ValueError as exc:
         nb_pix = size[0] * size[1]
-        if len(data) % nb_pix != 0:
+        data_length = len(data)
+        if data_length == 0:
+            raise EmptyImageDataError("Data is 0 bytes, cannot process an image from empty data.") from exc
+        if data_length % nb_pix != 0:
             raise exc
-        k = nb_pix * len(mode) / len(data)
+        k = nb_pix * len(mode) / data_length
         data = b"".join([bytes((x,) * int(k)) for x in data])
         img = Image.frombytes(mode, size, data)
     return img
@@ -150,24 +171,6 @@ def _handle_flate(
     Process image encoded in flateEncode
     Returns img, image_format, extension, color inversion
     """
-
-    def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
-        mask = (2 << bits) - 1
-        nbuff = bytearray(size[0] * size[1])
-        by = 0
-        bit = 8 - bits
-        for y in range(size[1]):
-            if (bit != 0) and (bit != 8 - bits):
-                by += 1
-                bit = 8 - bits
-            for x in range(size[0]):
-                nbuff[y * size[0] + x] = (data[by] >> bit) & mask
-                bit -= bits
-                if bit < 0:
-                    by += 1
-                    bit = 8 - bits
-        return bytes(nbuff)
-
     extension = ".png"  # mime_type = "image/png"
     image_format = "PNG"
     lookup: Any

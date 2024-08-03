@@ -1,7 +1,7 @@
 """
-Anything related to XMP metadata.
+Anything related to Extensible Metadata Platform (XMP) metadata.
 
-See https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
+https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
 """
 
 import datetime
@@ -38,15 +38,15 @@ XMPMM_NAMESPACE = "http://ns.adobe.com/xap/1.0/mm/"
 # documented meaning.
 #
 # Elements in the namespace are key/value-style storage,
-# where the element name is the key and the content is the value.  The keys
+# where the element name is the key and the content is the value. The keys
 # are transformed into valid XML identifiers by substituting an invalid
 # identifier character with \u2182 followed by the unicode hex ID of the
-# original character.  A key like "my car" is therefore "my\u21820020car".
+# original character. A key like "my car" is therefore "my\u21820020car".
 #
 # \u2182 is the unicode character \u{ROMAN NUMERAL TEN THOUSAND}
 #
-# The pdfx namespace should be avoided.  A
-# custom data schema and sensical XML elements could be used instead, as is
+# The pdfx namespace should be avoided.
+# A custom data schema and sensical XML elements could be used instead, as is
 # suggested by Adobe's own documentation on XMP under "Extensibility of
 # Schemas".
 PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"
@@ -202,8 +202,8 @@ def _getter_single(
 
 class XmpInformation(PdfObject):
     """
-    An object that represents Adobe XMP metadata.
-    Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`
+    An object that represents Extensible Metadata Platform (XMP) metadata.
+    Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`.
 
     Raises:
       PdfReadError: if XML is invalid
@@ -319,7 +319,7 @@ class XmpInformation(PdfObject):
     """An unformatted text string representing document keywords."""
 
     pdf_pdfversion = property(_getter_single(PDF_NAMESPACE, "PDFVersion"))
-    """The PDF file version, for example 1.0, 1.3."""
+    """The PDF file version, for example 1.0 or 1.3."""
 
     pdf_producer = property(_getter_single(PDF_NAMESPACE, "Producer"))
     """The name of the tool that created the PDF document."""

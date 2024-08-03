@@ -14,7 +14,7 @@ ISO 32000-2:2020 (PDF 2.0)
 from enum import IntFlag, auto
 from typing import Dict, Tuple
 
-from ._utils import deprecate_with_replacement
+from ._utils import classproperty, deprecate_with_replacement
 
 
 class Core:
@@ -139,7 +139,7 @@ class UserAccessPermissions(IntFlag):
 class Resources:
     """
     Table 3.30 Entries in a resource dictionary.
-    used to be Ressources
+    Used to be Ressources (a misspelling).
 
     Table 34 in the 2.0 reference.
     """
@@ -161,84 +161,69 @@ class Ressources:  # deprecated
     .. deprecated:: 5.0.0
     """
 
-    @classmethod  # type: ignore
-    @property
-    def EXT_G_STATE(cls) -> str:
+    @classproperty
+    def EXT_G_STATE(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/ExtGState"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def COLOR_SPACE(cls) -> str:
+    @classproperty
+    def COLOR_SPACE(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/ColorSpace"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def PATTERN(cls) -> str:
+    @classproperty
+    def PATTERN(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Pattern"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def SHADING(cls) -> str:
+    @classproperty
+    def SHADING(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Shading"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def XOBJECT(cls) -> str:
+    @classproperty
+    def XOBJECT(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/XObject"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def FONT(cls) -> str:
+    @classproperty
+    def FONT(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Font"  # dictionary, optional
 
-    @classmethod  # type: ignore
-    @property
-    def PROC_SET(cls) -> str:
+    @classproperty
+    def PROC_SET(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/ProcSet"  # array, optional
 
-    @classmethod  # type: ignore
-    @property
-    def PROPERTIES(cls) -> str:
+    @classproperty
+    def PROPERTIES(cls) -> str:  # noqa: N805
         deprecate_with_replacement("Ressources", "Resources", "5.0.0")
         return "/Properties"  # dictionary, optional
 
 
 class PagesAttributes:
-    """
-    Page Attributes, Table 6.2, Page 52.
-    Page tree node, Table 30 in the 2.0 reference.
-    """
+    """§7.7.3.2 of the 1.7 and 2.0 reference."""
 
     TYPE = "/Type"  # name, required; must be /Pages
     PARENT = "/Parent"  # dictionary, required; indirect reference to pages object
     KIDS = "/Kids"  # array, required; List of indirect references
-    COUNT = "/Count"  # integer, required; the number of all nodes und this node
+    COUNT = "/Count"  # integer, required; the number of leaf nodes (page objects)
+                      # that are descendants of this node within the page tree
 
 
 class PageAttributes:
-    """
-    Table 3.27 Entries in a page object.
-    Table 31 in the 2.0 reference.
-    """
+    """§7.7.3.3 of the 1.7 and 2.0 reference."""
 
     TYPE = "/Type"  # name, required; must be /Page
     PARENT = "/Parent"  # dictionary, required; a pages object
-    LAST_MODIFIED = (
-        "/LastModified"  # date, optional; date and time of last modification
-    )
+    LAST_MODIFIED = "/LastModified"  # date, optional; date and time of last modification
     RESOURCES = "/Resources"  # dictionary, required if there are any
     MEDIABOX = "/MediaBox"  # rectangle, required; rectangle specifying page size
-    CROPBOX = "/CropBox"  # rectangle, optional; rectangle
-    BLEEDBOX = "/BleedBox"  # rectangle, optional; rectangle
-    TRIMBOX = "/TrimBox"  # rectangle, optional; rectangle
-    ARTBOX = "/ArtBox"  # rectangle, optional; rectangle
+    CROPBOX = "/CropBox"  # rectangle, optional
+    BLEEDBOX = "/BleedBox"  # rectangle, optional
+    TRIMBOX = "/TrimBox"  # rectangle, optional
+    ARTBOX = "/ArtBox"  # rectangle, optional
     BOX_COLOR_INFO = "/BoxColorInfo"  # dictionary, optional
     CONTENTS = "/Contents"  # stream or array, optional
     ROTATE = "/Rotate"  # integer, optional; page rotation in degrees
@@ -254,11 +239,15 @@ class PageAttributes:
     STRUCT_PARENTS = "/StructParents"  # integer, optional
     ID = "/ID"  # byte string, optional
     PZ = "/PZ"  # number, optional
+    SEPARATION_INFO = "/SeparationInfo"  # dictionary, optional
     TABS = "/Tabs"  # name, optional
     TEMPLATE_INSTANTIATED = "/TemplateInstantiated"  # name, optional
     PRES_STEPS = "/PresSteps"  # dictionary, optional
     USER_UNIT = "/UserUnit"  # number, optional
     VP = "/VP"  # dictionary, optional
+    AF = "/AF"  # array of dictionaries, optional
+    OUTPUT_INTENTS = "/OutputIntents"  # array, optional
+    D_PART = "/DPart"  # dictionary, required, if this page is within the range of a DPart, not permitted otherwise
 
 
 class FileSpecificationDictionaryEntries:
@@ -427,7 +416,12 @@ class InteractiveFormDictEntries:
 
 
 class FieldDictionaryAttributes:
-    """Table 8.69 Entries common to all field dictionaries (PDF 1.7 reference)."""
+    """
+    Entries common to all field dictionaries (Table 8.69 PDF 1.7 reference)
+    (*very partially documented here*).
+
+    FFBits provides the constants used for `/Ff` from Table 8.70/8.75/8.77/8.79
+    """
 
     FT = "/FT"  # name, required for terminal fields
     Parent = "/Parent"  # dictionary, required for children
@@ -441,34 +435,63 @@ class FieldDictionaryAttributes:
     AA = "/AA"  # dictionary, optional
     Opt = "/Opt"
 
-    class FfBits:
+    class FfBits(IntFlag):
+        """
+        Ease building /Ff flags
+        Some entries may be specific to:
+
+        * Text(Tx) (Table 8.75 PDF 1.7 reference)
+        * Buttons(Btn) (Table 8.77 PDF 1.7 reference)
+        * List(Ch) (Table 8.79 PDF 1.7 reference)
+        """
+
         ReadOnly = 1 << 0
+        """common to Tx/Btn/Ch in Table 8.70"""
         Required = 1 << 1
+        """common to Tx/Btn/Ch in Table 8.70"""
         NoExport = 1 << 2
-        Multiline = 1 << 12  # Tx Table 8.77
-        Password = 1 << 13  # Tx
+        """common to Tx/Btn/Ch in Table 8.70"""
 
-        NoToggleToOff = 1 << 14  # Btn table 8.75
-        Radio = 1 << 15  # Btn
-        Pushbutton = 1 << 16  # Btn
+        Multiline = 1 << 12
+        """Tx"""
+        Password = 1 << 13
+        """Tx"""
 
-        Combo = 1 << 17  # Ch table 8.79
-        Edit = 1 << 18  # Ch
-        Sort = 1 << 19  # Ch
+        NoToggleToOff = 1 << 14
+        """Btn"""
+        Radio = 1 << 15
+        """Btn"""
+        Pushbutton = 1 << 16
+        """Btn"""
 
-        FileSelect = 1 << 20  # Tx
+        Combo = 1 << 17
+        """Ch"""
+        Edit = 1 << 18
+        """Ch"""
+        Sort = 1 << 19
+        """Ch"""
 
-        MultiSelect = 1 << 21  # Ch
+        FileSelect = 1 << 20
+        """Tx"""
 
-        DoNotSpellCheck = 1 << 22  # Tx / Ch
-        DoNotScroll = 1 << 23  # Tx
-        Comb = 1 << 24  # Tx
+        MultiSelect = 1 << 21
+        """Tx"""
 
-        RadiosInUnison = 1 << 25  # Btn
+        DoNotSpellCheck = 1 << 22
+        """Tx/Ch"""
+        DoNotScroll = 1 << 23
+        """Tx"""
+        Comb = 1 << 24
+        """Tx"""
 
-        RichText = 1 << 25  # Tx
+        RadiosInUnison = 1 << 25
+        """Btn"""
 
-        CommitOnSelChange = 1 << 26  # Ch
+        RichText = 1 << 25
+        """Tx"""
+
+        CommitOnSelChange = 1 << 26
+        """Ch"""
 
     @classmethod
     def attributes(cls) -> Tuple[str, ...]:

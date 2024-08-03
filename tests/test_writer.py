@@ -2230,3 +2230,73 @@ def test_i_in_choice_fields():
         writer.pages[0], {"State": "NY"}, auto_regenerate=False
     )
     assert "/I" not in writer.get_fields()["State"].indirect_reference.get_object()
+
+
+def test_selfont():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "FormTestFromOo.pdf")
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Text1": ("Text_1", "", 5), "Text2": ("Text_2", "/F3", 0)},
+        auto_regenerate=False,
+    )
+    assert (
+        b"/F3 5 Tf"
+        in writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"].get_data()
+    )
+    assert (
+        b"Text_1" in writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"].get_data()
+    )
+    assert (
+        b"/F3 12 Tf"
+        in writer.pages[0]["/Annots"][2].get_object()["/AP"]["/N"].get_data()
+    )
+    assert (
+        b"Text_2" in writer.pages[0]["/Annots"][2].get_object()["/AP"]["/N"].get_data()
+    )
+
+
+@pytest.mark.enable_socket()
+def test_no_ressource_for_14_std_fonts(caplog):
+    """Cf #2670"""
+    url = "https://github.com/py-pdf/pypdf/files/15405390/f1040.pdf"
+    name = "iss2670.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    p = writer.pages[0]
+    for a in p["/Annots"]:
+        a = a.get_object()
+        if a["/FT"] == "/Tx":
+            writer.update_page_form_field_values(
+                p, {a["/T"]: "Brooks"}, auto_regenerate=False
+            )
+    assert "Font dictionary for /Helvetica not found." in caplog.text
+
+
+@pytest.mark.enable_socket()
+def test_field_box_upside_down():
+    """Cf #2724"""
+    url = "https://github.com/user-attachments/files/15996356/FRA.F.6180.55.pdf"
+    name = "iss2724.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    writer.update_page_form_field_values(None, {"FreightTrainMiles": "0"})
+    assert writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"].get_data() == (
+        b"q\n/Tx BMC \nq\n1 1 105.29520000000001 10.835000000000036 re\n"
+        b"W\nBT\n/Arial 8.0 Tf 0 g\n2 2.8350000000000364 Td\n(0) Tj\nET\n"
+        b"Q\nEMC\nQ\n"
+    )
+    box = writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"]["/BBox"]
+    assert box[2] > 0
+    assert box[3] > 0
+
+
+@pytest.mark.enable_socket()
+def test_matrix_entry_in_field_annots():
+    """Cf #2731"""
+    url = "https://github.com/user-attachments/files/16036514/template.pdf"
+    name = "iss2731.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Stellenbezeichnung_1": "some filled in text"},
+        auto_regenerate=False,
+    )
+    assert "/Matrix" in writer.pages[0]["/Annots"][5].get_object()["/AP"]["/N"]

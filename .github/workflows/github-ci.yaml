@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13-dev"]
         use-crypto-lib: ["cryptography"]
         include:
           - python-version: "3.7"
@@ -90,7 +90,7 @@ jobs:
         cache-dependency-path: '**/requirements/ci.txt'
     - name: Setup Python (3.11+)
       uses: actions/setup-python@v5
-      if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
+      if: matrix.python-version == '3.11' || matrix.python-version == '3.12' || matrix.python-version == '3.13-dev'
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
@@ -106,7 +106,7 @@ jobs:
     - name: Install requirements (Python 3.11+)
       run: |
         pip install -r requirements/ci-3.11.txt
-      if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
+      if: matrix.python-version == '3.11' || matrix.python-version == '3.12' || matrix.python-version == '3.13-dev'
     - name: Remove pycryptodome and cryptography
       run: |
         pip uninstall pycryptodome cryptography -y
@@ -215,8 +215,8 @@ jobs:
       - name: Check Number of Downloaded Files
         run: |
           downloaded_files_count=$(find \.coverage* -type f | wc -l)
-          if [ $downloaded_files_count -eq 8 ]; then
-            echo "The expected number of files (8) were downloaded."
+          if [ $downloaded_files_count -eq 9 ]; then
+            echo "The expected number of files (9) were downloaded."
           else
             echo "ERROR: Expected 8 files, but found $downloaded_files_count files."
             exit 1

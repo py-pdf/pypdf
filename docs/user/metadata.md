@@ -63,11 +63,11 @@ with open("meta-pdf.pdf", "wb") as f:
 ## Updating metadata
 
 ```python
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
 
-# Change some values.
+# Change some values
 writer.add_metadata(
     {
         "/Author": "Martin",

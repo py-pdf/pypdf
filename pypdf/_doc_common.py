@@ -108,12 +108,12 @@ class DocumentInformation(DictionaryObject):
     :py:class:`PdfReader.metadata<pypdf.PdfReader.metadata>`.
 
     All text properties of the document metadata have
-    *two* properties, eg. author and author_raw. The non-raw property will
-    always return a ``TextStringObject``, making it ideal for a case where
-    the metadata is being displayed. The raw property can sometimes return
-    a ``ByteStringObject``, if pypdf was unable to decode the string's
-    text encoding; this requires additional safety in the caller and
-    therefore is not as commonly accessed.
+    *two* properties, e.g. author and author_raw. The non-raw property will
+    always return a ``TextStringObject``, making it ideal for a case where the
+    metadata is being displayed. The raw property can sometimes return a
+    ``ByteStringObject``, if pypdf was unable to decode the string's text
+    encoding; this requires additional safety in the caller and therefore is not
+    as commonly accessed.
     """
 
     def __init__(self) -> None:
@@ -337,7 +337,7 @@ class PdfDocCommon:
         Calculate the number of pages in this PDF file.
 
         Returns:
-            The number of pages of the parsed PDF file
+            The number of pages of the parsed PDF file.
 
         Raises:
             PdfReadError: if file is encrypted and restrictions prevent
@@ -357,7 +357,7 @@ class PdfDocCommon:
     def get_page(self, page_number: int) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
-        Most of the time ```.pages[page_number]``` is preferred.
+        Most of the time ``.pages[page_number]`` is preferred.
 
         Args:
             page_number: The page number to retrieve
@@ -391,7 +391,7 @@ class PdfDocCommon:
                 dests = cast(DictionaryObject, names[CA.DESTS])
                 dests_ref = dests.indirect_reference
                 if CA.NAMES in dests:
-                    # TABLE 3.33 Entries in a name tree node dictionary
+                    # §7.9.6, entries in a name tree node dictionary
                     named_dest = cast(ArrayObject, dests[CA.NAMES])
                 else:
                     named_dest = ArrayObject()
@@ -449,8 +449,8 @@ class PdfDocCommon:
             # recurse down the tree
             for kid in cast(ArrayObject, tree[PA.KIDS]):
                 self._get_named_destinations(kid.get_object(), retval)
-        # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
-        elif CA.NAMES in tree:  # KIDS and NAMES are exclusives (PDF 1.7 specs p 162)
+        # §7.9.6, entries in a name tree node dictionary
+        elif CA.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
             names = cast(DictionaryObject, tree[CA.NAMES])
             i = 0
             while i < len(names):
@@ -492,17 +492,19 @@ class PdfDocCommon:
         tree: Optional[TreeObject] = None,
         retval: Optional[Dict[Any, Any]] = None,
         fileobj: Optional[Any] = None,
+        stack: Optional[List[PdfObject]] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Extract field data if this PDF contains interactive form fields.
 
-        The *tree* and *retval* parameters are for recursive use.
+        The *tree*, *retval*, *stack* parameters are for recursive use.
 
         Args:
-            tree:
-            retval:
+            tree: Current object to parse.
+            retval: In-progress list of fields.
             fileobj: A file object (usually a text file) to write
                 a report to on all interactive form fields found.
+            stack: List of already parsed objects.
 
         Returns:
             A dictionary where each key is a field name, and each
@@ -515,6 +517,7 @@ class PdfDocCommon:
         if retval is None:
             retval = {}
             catalog = self.root_object
+            stack = []
             # get the AcroForm tree
             if CD.ACRO_FORM in catalog:
                 tree = cast(Optional[TreeObject], catalog[CD.ACRO_FORM])
@@ -522,19 +525,15 @@ class PdfDocCommon:
                 return None
         if tree is None:
             return retval
-        self._check_kids(tree, retval, fileobj)
-        for attr in field_attributes:
-            if attr in tree:
-                # Tree is a field
-                self._build_field(tree, retval, fileobj, field_attributes)
-                break
-
+        assert stack is not None
         if "/Fields" in tree:
             fields = cast(ArrayObject, tree["/Fields"])
             for f in fields:
                 field = f.get_object()
-                self._build_field(field, retval, fileobj, field_attributes)
-
+                self._build_field(field, retval, fileobj, field_attributes, stack)
+        elif any(attr in tree for attr in field_attributes):
+            # Tree is a field
+            self._build_field(tree, retval, fileobj, field_attributes, stack)
         return retval
 
     def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
@@ -557,25 +556,11 @@ class PdfDocCommon:
         retval: Dict[Any, Any],
         fileobj: Any,
         field_attributes: Any,
+        stack: List[PdfObject],
     ) -> None:
-        self._check_kids(field, retval, fileobj)
-        try:
-            key = cast(str, field["/TM"])
-        except KeyError:
-            try:
-                if "/Parent" in field:
-                    key = (
-                        self._get_qualified_field_name(
-                            cast(DictionaryObject, field["/Parent"])
-                        )
-                        + "."
-                    )
-                else:
-                    key = ""
-                key += cast(str, field["/T"])
-            except KeyError:
-                # Ignore no-name field for now
-                return
+        if all(attr not in field for attr in ("/T", "/TM")):
+            return
+        key = self._get_qualified_field_name(field)
         if fileobj:
             self._write_field(fileobj, field, field_attributes)
             fileobj.write("\n")
@@ -604,14 +589,27 @@ class PdfDocCommon:
                 and "/Off" in retval[key]["/_States_"]
             ):
                 del retval[key]["/_States_"][retval[key]["/_States_"].index("/Off")]
+        # at last for order
+        self._check_kids(field, retval, fileobj, stack)
 
     def _check_kids(
-        self, tree: Union[TreeObject, DictionaryObject], retval: Any, fileobj: Any
+        self,
+        tree: Union[TreeObject, DictionaryObject],
+        retval: Any,
+        fileobj: Any,
+        stack: List[PdfObject],
     ) -> None:
+        if tree in stack:
+            logger_warning(
+                f"{self._get_qualified_field_name(tree)} already parsed", __name__
+            )
+            return
+        stack.append(tree)
         if PA.KIDS in tree:
             # recurse down the tree
             for kid in tree[PA.KIDS]:  # type: ignore
-                self.get_fields(kid.get_object(), retval, fileobj)
+                kid = kid.get_object()
+                self.get_fields(kid, retval, fileobj, stack)
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
         field_attributes_tuple = FA.attributes()
@@ -764,8 +762,8 @@ class PdfDocCommon:
     ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
         """
         Property to access the opening destination (``/OpenAction`` entry in
-        the PDF catalog). It returns ``None`` if the entry does not exist is not
-        set.
+        the PDF catalog). It returns ``None`` if the entry does not exist
+        or is not set.
 
         Raises:
             Exception: If a destination is invalid.
@@ -795,10 +793,9 @@ class PdfDocCommon:
     @property
     def outline(self) -> OutlineType:
         """
-        Read-only property for the outline present in the document.
-
+        Read-only property for the outline present in the document
         (i.e., a collection of 'outline items' which are also known as
-        'bookmarks')
+        'bookmarks').
         """
         return self._get_outline()
 
@@ -816,7 +813,7 @@ class PdfDocCommon:
                 if isinstance(lines, NullObject):
                     return outline
 
-                # TABLE 8.3 Entries in the outline dictionary
+                # §12.3.3 Document outline, entries in the outline dictionary
                 if lines is not None and "/First" in lines:
                     node = cast(DictionaryObject, lines["/First"])
             self._namedDests = self._get_named_destinations()
@@ -850,8 +847,14 @@ class PdfDocCommon:
 
         See §12.4.3 from the PDF 1.7 or 2.0 specification.
 
-        It is an array of dictionaries with "/F" and "/I" properties or
+        It is an array of dictionaries with "/F" (the first bead in the thread)
+        and "/I" (a thread information dictionary containing information about
+        the thread, such as its title, author, and creation date) properties or
         None if there are no articles.
+
+        Since PDF 2.0 it can also contain an indirect reference to a metadata
+        stream containing information about the thread, such as its title,
+        author, and creation date.
         """
         catalog = self.root_object
         if CO.THREADS in catalog:
@@ -926,7 +929,7 @@ class PdfDocCommon:
         dest, title, outline_item = None, None, None
 
         # title required for valid outline
-        # PDF Reference 1.7: TABLE 8.4 Entries in an outline item dictionary
+        # § 12.3.3, entries in an outline item dictionary
         try:
             title = cast("str", node["/Title"])
         except KeyError:
@@ -1001,16 +1004,16 @@ class PdfDocCommon:
     def pages(self) -> List[PageObject]:
         """
         Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`.
-        this property allows to get a page or a range of pages.
+        This property allows to get a page or a range of pages.
 
-        For PdfWriter Only:
-        It provides also capability to remove a page/range of page from the list
-        (using the del operator)
-        Note: only the page entry is removed. As the objects beneath can be used
-        elsewhere.
-        A solution to completely remove them - if they are not used anywhere -
-        is to write to a buffer/temporary file and to load it into a new PdfWriter
-        object afterwards.
+        Note:
+            For PdfWriter only: Provides the capability to remove a page/range of
+            page from the list (using the del operator). Remember: Only the page
+            entry is removed, as the objects beneath can be used elsewhere. A
+            solution to completely remove them - if they are not used anywhere - is
+            to write to a buffer/temporary file and then load it into a new
+            PdfWriter.
+
         """
         return _VirtualList(self.get_num_pages, self.get_page)  # type: ignore
 
@@ -1141,16 +1144,14 @@ class PdfDocCommon:
         Remove page from pages list.
 
         Args:
-            page: int / PageObject / IndirectObject
-                PageObject : page to be removed. If the page appears many times
-                only the first one will be removed
+            page:
+                * :class:`int`: Page number to be removed.
+                * :class:`~pypdf._page.PageObject`: page to be removed. If the page appears many times
+                  only the first one will be removed.
+                * :class:`~pypdf.generic.IndirectObject`: Reference to page to be removed.
 
-                IndirectObject: Reference to page to be removed
-
-                int: Page number to be removed
-
-            clean: replace PageObject with NullObject to prevent destination,
-                annotation to reference a detached page
+            clean: replace PageObject with NullObject to prevent annotations
+                or destinations to reference a detached page.
         """
         if self.flattened_pages is None:
             self._flatten()

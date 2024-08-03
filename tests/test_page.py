@@ -1425,3 +1425,16 @@ def test_missing_basefont_in_type3():
     name = "missing-base-font.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0]._get_fonts()
+
+
+def test_invalid_index():
+    src_abs = RESOURCE_ROOT / "git.pdf"
+    reader = PdfReader(src_abs)
+    with pytest.raises(TypeError):
+        _ = reader.pages["0"]
+
+
+def test_negative_index():
+    src_abs = RESOURCE_ROOT / "git.pdf"
+    reader = PdfReader(src_abs)
+    assert reader.pages[0] == reader.pages[-1]

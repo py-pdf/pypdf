@@ -147,11 +147,10 @@ def test_decode_ahx():
         _ = list(p.images.keys())
 
 
-@pytest.mark.xfail()
 def test_ascii85decode_with_overflow():
     inputs = (
         v + "~>"
-        for v in "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f"
+        for v in "\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f"
         "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a"
         "\x1b\x1c\x1d\x1e\x1fvwxy{|}~\x7f\x80\x81\x82"
         "\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d"
@@ -161,9 +160,8 @@ def test_ascii85decode_with_overflow():
     )
 
     for i in inputs:
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError):
             ASCII85Decode.decode(i)
-        assert exc.value.args[0] == ""
 
 
 def test_ascii85decode_five_zero_bytes():
@@ -183,10 +181,10 @@ def test_ascii85decode_five_zero_bytes():
         b"\x00\x00\x00\x00" * 3,
     )
 
-    assert ASCII85Decode.decode("!!!!!") == ASCII85Decode.decode("z")
+    assert ASCII85Decode.decode("!!!!!~>") == ASCII85Decode.decode("z~>")
 
     for expected, i in zip(exp_outputs, inputs):
-        assert ASCII85Decode.decode(i) == expected
+        assert ASCII85Decode.decode(i + "~>") == expected
 
 
 def test_ccitparameters():

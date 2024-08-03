@@ -37,10 +37,12 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import math
 import struct
 import zlib
+from base64 import a85decode
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import (
+    WHITESPACES_AS_BYTES,
     b_,
     deprecate_with_replacement,
     deprecation_no_replacement,
@@ -132,8 +134,8 @@ class FlateDecode:
                 pass  # Usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:
-            # The /Columns param. has 1 as the default value; see ISO 32000,
-            # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
+            # /Columns, the number of samples in each row, has a default value of 1;
+            # §7.4.4.3, ISO 32000.
             DEFAULT_BITS_PER_COMPONENT = 8
             try:
                 columns = cast(int, decode_parms[LZW.COLUMNS].get_object())  # type: ignore
@@ -188,16 +190,19 @@ class FlateDecode:
             filter_byte = rowdata[0]
 
             if filter_byte == 0:
+                # PNG None Predictor
                 pass
             elif filter_byte == 1:
+                # PNG Sub Predictor
                 for i in range(bpp + 1, rowlength):
                     rowdata[i] = (rowdata[i] + rowdata[i - bpp]) % 256
             elif filter_byte == 2:
+                # PNG Up Predictor
                 for i in range(1, rowlength):
                     rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
             elif filter_byte == 3:
+                # PNG Average Predictor
                 for i in range(1, bpp + 1):
-                    # left = 0
                     floor = prev_rowdata[i] // 2
                     rowdata[i] = (rowdata[i] + floor) % 256
                 for i in range(bpp + 1, rowlength):
@@ -205,12 +210,9 @@ class FlateDecode:
                     floor = (left + prev_rowdata[i]) // 2
                     rowdata[i] = (rowdata[i] + floor) % 256
             elif filter_byte == 4:
+                # PNG Paeth Predictor
                 for i in range(1, bpp + 1):
-                    # left = 0
-                    up = prev_rowdata[i]
-                    # up_left = 0
-                    paeth = up
-                    rowdata[i] = (rowdata[i] + paeth) % 256
+                    rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
                 for i in range(bpp + 1, rowlength):
                     left = rowdata[i - bpp]
                     up = prev_rowdata[i]
@@ -467,7 +469,7 @@ class LZWDecode:
         Decode an LZW encoded data stream.
 
         Args:
-          data: bytes`` or ``str`` text to decode.
+          data: ``bytes`` or ``str`` text to decode.
           decode_parms: a dictionary of parameter values.
 
         Returns:
@@ -487,29 +489,20 @@ class ASCII85Decode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        """
+        Decode an Ascii85 encoded data stream.
 
+        Args:
+          data: ``bytes`` or ``str`` text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
+        """
         if isinstance(data, str):
-            data = data.encode("ascii")
-        group_index = b = 0
-        out = bytearray()
-        for char in data:
-            if ord("!") <= char <= ord("u"):
-                group_index += 1
-                b = b * 85 + (char - 33)
-                if group_index == 5:
-                    out += struct.pack(b">L", b)
-                    group_index = b = 0
-            elif char == ord("z"):
-                assert group_index == 0
-                out += b"\0\0\0\0"
-            elif char == ord("~"):
-                if group_index:
-                    for _ in range(5 - group_index):
-                        b = b * 85 + 84
-                    out += struct.pack(b">L", b)[: group_index - 1]
-                break
-        return bytes(out)
+            data = data.encode()
+        data = data.strip(WHITESPACES_AS_BYTES)
+        return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
 
 
 class DCTDecode:
@@ -535,7 +528,7 @@ class JPXDecode:
 
 
 class CCITParameters:
-    """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter."""
+    """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     def __init__(self, K: int = 0, columns: int = 0, rows: int = 0) -> None:
         self.K = K
@@ -559,12 +552,12 @@ class CCITParameters:
 
 class CCITTFaxDecode:
     """
-    See 3.3.5 CCITTFaxDecode Filter (PDF 1.7 Standard).
+    §7.4.6, CCITTFaxDecode filter (ISO 32000).
 
     Either Group 3 or Group 4 CCITT facsimile (fax) encoding.
     CCITT encoding is bit-oriented, not byte-oriented.
 
-    See: TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
+    §7.4.6, optional parameters for the CCITTFaxDecode filter.
     """
 
     @staticmethod
@@ -572,7 +565,7 @@ class CCITTFaxDecode:
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
         rows: int,
     ) -> CCITParameters:
-        # TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
+        # §7.4.6, optional parameters for the CCITTFaxDecode filter
         k = 0
         columns = 1728
         if parameters:
@@ -709,9 +702,7 @@ def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
                 height = stream.get(IA.HEIGHT, ())
                 data = CCITTFaxDecode.decode(data, params, height)
             elif filter_type == "/Crypt":
-                if "/Name" not in params and "/Type" not in params:
-                    pass
-                else:
+                if "/Name" in params or "/Type" in params:
                     raise NotImplementedError(
                         "/Crypt filter with /Name or /Type not supported yet"
                     )
@@ -742,6 +733,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     """
     from ._xobj_image_helpers import (
         Image,
+        UnidentifiedImageError,
         _extended_image_frombytes,
         _get_imagemode,
         _handle_flate,
@@ -808,13 +800,16 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         # I'm not sure if the following logic is correct.
         # There might not be any relationship between the filters and the
         # extension
-        if x_object_obj[SA.FILTER] in [[FT.LZW_DECODE], [FT.CCITT_FAX_DECODE]]:
+        if lfilters in (FT.LZW_DECODE, FT.CCITT_FAX_DECODE):
             extension = ".tiff"  # mime_type = "image/tiff"
             image_format = "TIFF"
         else:
             extension = ".png"  # mime_type = "image/png"
             image_format = "PNG"
-        img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
+        try:
+            img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
+        except UnidentifiedImageError:
+            img = _extended_image_frombytes(mode, size, data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged

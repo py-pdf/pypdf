@@ -4,8 +4,8 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader
-from pypdf._xobj_image_helpers import _handle_flate
-from pypdf.errors import PdfReadError
+from pypdf._xobj_image_helpers import _extended_image_frombytes, _handle_flate
+from pypdf.errors import EmptyImageDataError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject
 
 from . import get_data_from_url
@@ -113,3 +113,12 @@ def test_handle_flate__image_mode_1():
             colors=2,
             obj_as_text="dummy",
         )
+
+
+def test_extended_image_frombytes_zero_data():
+    mode = "RGB"
+    size = (1, 1)
+    data = b""
+
+    with pytest.raises(EmptyImageDataError, match="Data is 0 bytes, cannot process an image from empty data."):
+        _extended_image_frombytes(mode, size, data)

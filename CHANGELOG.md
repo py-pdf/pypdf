@@ -1,5 +1,55 @@
 # CHANGELOG
 
+## Version 4.3.1, 2024-07-21
+
+### Bug Fixes (BUG)
+- Cope with Matrix entry in field annotations (#2736)
+
+### Robustness (ROB)
+- Cope with fields with upside down box/rectangle (#2729)
+
+### Maintenance (MAINT)
+- Add deprecate_with_replacement to StreamObject.initializeFromD… (#2728)
+- Deal with cryptography>=43 moving ARC4 (#2765)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.3.0...4.3.1)
+
+## Version 4.3.0, 2024-06-23
+
+### New Features (ENH)
+- Accept ETen-B5 and UniCNS-UTF16 encodings (#2721)
+- Add decode_as_image() to ContentStreams (#2615)
+- context manager for PdfReader (#2666)
+- Add capability to set font and size in fields (#2636)
+- Allow to pass input file without named argument (#2576)
+
+### Bug Fixes (BUG)
+- Fix deprecation for Ressources when using old constants (#2705)
+- Fix images issue 4 bits encoding and LUT starting with UTF16_BOM (#2675)
+- Reading large compressed images takes huge time to process (#2644)
+- Highlighted Text Cannot Be Printed (#2604)
+- Fix UnboundLocalError on malformed pdf (#2619)
+
+### Robustness (ROB)
+- Cope with missing Standard 14 fonts in fields (#2677)
+- Improve inline image extraction (#2622)
+- Cope with loops in Fields tree (#2656)
+- Discard /I in choice fields for compatibility with Acrobat (#2614)
+- Cope with some issues in pillow (#2595)
+- Cope with some image extraction issues (#2591)
+
+### Documentation (DOC)
+- Various improvements on docstrings and examples
+
+### Maintenance (MAINT)
+- Deprecate interiour_color with replacement interior_color (#2706)
+- Add deprecate_with_replacement to PdfWriter.find_bookmark (#2674)
+
+### Code Style (STY)
+- Change Link to be a non-markup annotation (#2714)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.2.0...4.3.0)
+
 ## Version 4.2.0, 2024-04-07
 
 ### New Features (ENH)

@@ -28,7 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-import re
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -58,7 +57,6 @@ from ._text_extraction import (
     mult,
 )
 from ._utils import (
-    WHITESPACES_AS_REGEXP,
     CompressedTransformationMatrix,
     File,
     ImageFile,
@@ -82,6 +80,7 @@ from .generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     RectangleObject,
     StreamObject,
 )
@@ -335,7 +334,6 @@ class PageObject(DictionaryObject):
         self.pdf = pdf
         self.inline_images: Optional[Dict[str, ImageFile]] = None
         # below Union for mypy but actually Optional[List[str]]
-        self.inline_images_keys: Optional[List[Union[str, List[str]]]] = None
         self.indirect_reference = indirect_reference
 
     def hash_value_data(self) -> bytes:
@@ -439,19 +437,8 @@ class PageObject(DictionaryObject):
             return []
         else:
             call_stack.append(_i)
-        if self.inline_images_keys is None:
-            content = self._get_contents_as_bytes() or b""
-            nb_inlines = 0
-            for matching in re.finditer(
-                WHITESPACES_AS_REGEXP + b"BI" + WHITESPACES_AS_REGEXP,
-                content,
-            ):
-                start_of_string = content[: matching.start()]
-                if len(re.findall(b"[^\\\\]\\(", start_of_string)) == len(
-                    re.findall(b"[^\\\\]\\)", start_of_string)
-                ):
-                    nb_inlines += 1
-            self.inline_images_keys = [f"~{x}~" for x in range(nb_inlines)]
+        if self.inline_images is None:
+            self.inline_images = self._get_inline_images()
         if obj is None:
             obj = self
         if ancest is None:
@@ -518,10 +505,7 @@ class PageObject(DictionaryObject):
                                 )
 
             if RES.XOBJECT in cast(DictionaryObject, obj[PG.RESOURCES]):
-                x_object = cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT],
-                ).get_object()
+                x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
                 for o in x_object:
                     if not isinstance(x_object[o], StreamObject):
                         continue
@@ -531,8 +515,10 @@ class PageObject(DictionaryObject):
                         lst.extend(
                             self._get_ids_image(x_object[o], ancest + [o], call_stack)
                         )
-
-        return lst + self.inline_images_keys
+        
+        assert self.inline_images is not None
+        lst.extend(list(self.inline_images.keys()))
+        return lst
 
     def _get_image(
         self,
@@ -664,6 +650,46 @@ class PageObject(DictionaryObject):
         """
         return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
 
+    def _translate_value_inlineimage(self, k: str, v: PdfObject) -> PdfObject:
+        """Translate values used in inline image"""
+        try:
+            v = NameObject(
+                {
+                    "/G": "/DeviceGray",
+                    "/RGB": "/DeviceRGB",
+                    "/CMYK": "/DeviceCMYK",
+                    "/I": "/Indexed",
+                    "/AHx": "/ASCIIHexDecode",
+                    "/A85": "/ASCII85Decode",
+                    "/LZW": "/LZWDecode",
+                    "/Fl": "/FlateDecode",
+                    "/RL": "/RunLengthDecode",
+                    "/CCF": "/CCITTFaxDecode",
+                    "/DCT": "/DCTDecode",
+                    "/DeviceGray": "/DeviceGray",
+                    "/DeviceRGB": "/DeviceRGB",
+                    "/DeviceCMYK": "/DeviceCMYK",
+                    "/Indexed": "/Indexed",
+                    "/ASCIIHexDecode": "/ASCIIHexDecode",
+                    "/ASCII85Decode": "/ASCII85Decode",
+                    "/LZWDecode": "/LZWDecode",
+                    "/FlateDecode": "/FlateDecode",
+                    "/RunLengthDecode": "/RunLengthDecode",
+                    "/CCITTFaxDecode": "/CCITTFaxDecode",
+                    "/DCTDecode": "/DCTDecode",
+                }[cast(str, v)]
+            )
+        except (TypeError, KeyError):
+            if isinstance(v, NameObject):
+                # It is a custom name, thus we have to look in resources.
+                # The only applicable case is for ColorSpace.
+                try:
+                    res = cast(DictionaryObject, self["/Resources"])["/ColorSpace"]
+                    v = cast(DictionaryObject, res)[v]
+                except KeyError:  # for res and v
+                    raise PdfReadError(f"Cannot find resource entry {v} for {k}")
+        return v
+
     def _get_inline_images(self) -> Dict[str, ImageFile]:
         """
         get inline_images
@@ -706,51 +732,39 @@ class PageObject(DictionaryObject):
                 "/Length": len(ii["__streamdata__"]),
             }
             for k, v in ii["settings"].items():
-                try:
-                    v = NameObject(
-                        {
-                            "/G": "/DeviceGray",
-                            "/RGB": "/DeviceRGB",
-                            "/CMYK": "/DeviceCMYK",
-                            "/I": "/Indexed",
-                            "/AHx": "/ASCIIHexDecode",
-                            "/A85": "/ASCII85Decode",
-                            "/LZW": "/LZWDecode",
-                            "/Fl": "/FlateDecode",
-                            "/RL": "/RunLengthDecode",
-                            "/CCF": "/CCITTFaxDecode",
-                            "/DCT": "/DCTDecode",
-                        }[v]
+                if k in {"/Length", "/L"}:  # no length is expected
+                    continue
+                if isinstance(v, list):
+                    v = ArrayObject(
+                        [self._translate_value_inlineimage(k, x) for x in v]
                     )
-                except (TypeError, KeyError):
-                    if isinstance(v, NameObject):
-                        #  it is a custom name : we have to look in resources :
-                        # the only applicable case is for ColorSpace
-                        try:
-                            res = cast(DictionaryObject, self["/Resources"])[
-                                "/ColorSpace"
-                            ]
-                            v = cast(DictionaryObject, res)[v]
-                        except KeyError:  # for res and v
-                            raise PdfReadError(
-                                f"Can not find resource entry {v} for {k}"
-                            )
-                init[
-                    NameObject(
-                        {
-                            "/BPC": "/BitsPerComponent",
-                            "/CS": "/ColorSpace",
-                            "/D": "/Decode",
-                            "/DP": "/DecodeParms",
-                            "/F": "/Filter",
-                            "/H": "/Height",
-                            "/W": "/Width",
-                            "/I": "/Interpolate",
-                            "/Intent": "/Intent",
-                            "/IM": "/ImageMask",
-                        }[k]
-                    )
-                ] = v
+                else:
+                    v = self._translate_value_inlineimage(k, v)
+                k = NameObject(
+                    {
+                        "/BPC": "/BitsPerComponent",
+                        "/CS": "/ColorSpace",
+                        "/D": "/Decode",
+                        "/DP": "/DecodeParms",
+                        "/F": "/Filter",
+                        "/H": "/Height",
+                        "/W": "/Width",
+                        "/I": "/Interpolate",
+                        "/Intent": "/Intent",
+                        "/IM": "/ImageMask",
+                        "/BitsPerComponent": "/BitsPerComponent",
+                        "/ColorSpace": "/ColorSpace",
+                        "/Decode": "/Decode",
+                        "/DecodeParms": "/DecodeParms",
+                        "/Filter": "/Filter",
+                        "/Height": "/Height",
+                        "/Width": "/Width",
+                        "/Interpolate": "/Interpolate",
+                        "/ImageMask": "/ImageMask",
+                    }[k]
+                )
+                if k not in init:
+                    init[k] = v
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
             extension, byte_stream, img = _xobj_to_image(ii["object"])
             files[f"~{num}~"] = ImageFile(
@@ -816,7 +830,7 @@ class PageObject(DictionaryObject):
         Rotate a page clockwise by increments of 90 degrees.
 
         Args:
-            angle: Angle to rotate the page.  Must be an increment of 90 deg.
+            angle: Angle to rotate the page. Must be an increment of 90 deg.
 
         Returns:
             The rotated PageObject
@@ -997,7 +1011,7 @@ class PageObject(DictionaryObject):
         """
         Replace the page contents with the new content and nullify old objects
         Args:
-            content : new content; if None delete the content field.
+            content: new content; if None delete the content field.
         """
         if not hasattr(self, "indirect_reference") or self.indirect_reference is None:
             # the page is not attached : the content is directly attached.
@@ -1047,6 +1061,8 @@ class PageObject(DictionaryObject):
                 # as a backup solution, we put content as an object although not in accordance with pdf ref
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
+        # forces recalculation of inline_images
+        self.inline_images = None
 
     def merge_page(
         self, page2: "PageObject", expand: bool = False, over: bool = True
@@ -1055,16 +1071,16 @@ class PageObject(DictionaryObject):
         Merge the content streams of two pages into one.
 
         Resource references
-        (i.e. fonts) are maintained from both pages.  The mediabox/cropbox/etc
-        of this page are not altered.  The parameter page's content stream will
+        (i.e. fonts) are maintained from both pages. The mediabox/cropbox/etc
+        of this page are not altered. The parameter page's content stream will
         be added to the end of this page's content stream, meaning that it will
         be drawn after, or "on top" of this page.
 
         Args:
             page2: The page to be merged into this one. Should be
                 an instance of :class:`PageObject<PageObject>`.
-            over: set the page2 content over page1 if True(default) else under
-            expand: If true, the current page dimensions will be
+            over: set the page2 content over page1 if True (default) else under
+            expand: If True, the current page dimensions will be
                 expanded to accommodate the dimensions of the page to be merged.
         """
         self._merge_page(page2, over=over, expand=expand)
@@ -1077,7 +1093,7 @@ class PageObject(DictionaryObject):
         over: bool = True,
         expand: bool = False,
     ) -> None:
-        # First we work on merging the resource dictionaries.  This allows us
+        # First we work on merging the resource dictionaries. This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
         try:
@@ -1189,7 +1205,7 @@ class PageObject(DictionaryObject):
         over: bool = True,
         expand: bool = False,
     ) -> None:
-        # First we work on merging the resource dictionaries.  This allows us
+        # First we work on merging the resource dictionaries. This allows us
         # to find which symbols in the content streams we might need to
         # rename.
         assert isinstance(self.indirect_reference, IndirectObject)
@@ -1378,7 +1394,7 @@ class PageObject(DictionaryObject):
           page2: The page to be merged into this one.
           ctm: a 6-element tuple containing the operands of the
                  transformation matrix
-          over: set the page2 content over page1 if True(default) else under
+          over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the dimensions
             of the page to be merged.
         """
@@ -1404,7 +1420,7 @@ class PageObject(DictionaryObject):
         Args:
           page2: The page to be merged into this one.
           scale: The scaling factor
-          over: set the page2 content over page1 if True(default) else under
+          over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
@@ -1425,7 +1441,7 @@ class PageObject(DictionaryObject):
         Args:
           page2: The page to be merged into this one.
           rotation: The angle of the rotation, in degrees
-          over: set the page2 content over page1 if True(default) else under
+          over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
@@ -1448,7 +1464,7 @@ class PageObject(DictionaryObject):
           page2: the page to be merged into this one.
           tx: The translation on X axis
           ty: The translation on Y axis
-          over: set the page2 content over page1 if True(default) else under
+          over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
@@ -1609,10 +1625,10 @@ class PageObject(DictionaryObject):
     @property
     def page_number(self) -> Optional[int]:
         """
-        Read-only property which return the page number within the PDF file.
+        Read-only property which returns the page number within the PDF file.
 
         Returns:
-            int : page number; None if the page is not attached to a PDF
+            int : page number; None if the page is not attached to a PDF.
         """
         if self.indirect_reference is None:
             return None
@@ -1720,7 +1736,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, pdf, "bytes")
         except KeyError:  # it means no content can be extracted(certainly empty page)
             return ""
-        # Note: we check all strings are TextStringObjects.  ByteStringObjects
+        # Note: we check all strings are TextStringObjects. ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
@@ -2110,7 +2126,7 @@ class PageObject(DictionaryObject):
 
         Arabic and Hebrew are extracted in the correct order.
         If required a custom RTL range of characters can be defined;
-        see function set_custom_rtl
+        see function set_custom_rtl.
 
         Additionally you can provide visitor methods to get informed on all
         operations and all text objects.
@@ -2266,7 +2282,7 @@ class PageObject(DictionaryObject):
 
     When the page is displayed or printed, its contents are to be clipped
     (cropped) to this rectangle and then imposed on the output medium in some
-    implementation-defined manner.  Default value: same as
+    implementation-defined manner. Default value: same as
     :attr:`mediabox<mediabox>`.
     """
 

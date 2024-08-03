@@ -12,6 +12,9 @@ on:
 permissions:
   contents: write
 
+env:
+  HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+
 jobs:
   build_and_publish:
     name: Publish a new version
@@ -24,7 +27,7 @@ jobs:
       - name: Extract version from commit message
         id: extract_version
         run: |
-          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP '(?<=REL: )\d+\.\d+\.\d+')
+          VERSION=$(echo "$HEAD_COMMIT_MESSAGE" | grep -oP '(?<=REL: )\d+\.\d+\.\d+')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Extract tag message from commit message
@@ -32,7 +35,7 @@ jobs:
         run: |
           VERSION="${{ steps.extract_version.outputs.version }}"
           delimiter="$(openssl rand -hex 8)"
-          MESSAGE=$(echo "${{ github.event.head_commit.message }}" | sed "0,/REL: $VERSION/s///" )
+          MESSAGE=$(echo "$HEAD_COMMIT_MESSAGE" | sed "0,/REL: $VERSION/s///" )
           echo "message<<${delimiter}" >> $GITHUB_OUTPUT
           echo "$MESSAGE" >> $GITHUB_OUTPUT
           echo "${delimiter}" >> $GITHUB_OUTPUT
