@@ -27,13 +27,13 @@ class Link(AnnotationDictionary):
         if TYPE_CHECKING:
             from ..types import BorderArrayType
 
-        external = url is not None
-        internal = target_page_index is not None
-        if not external and not internal:
+        is_external = url is not None
+        is_internal = target_page_index is not None
+        if not is_external and not is_internal:
             raise ValueError(
                 "Either 'url' or 'target_page_index' have to be provided. Both were None."
             )
-        if external and internal:
+        if is_external and is_internal:
             raise ValueError(
                 "Either 'url' or 'target_page_index' have to be provided. "
                 f"url={url}, target_page_index={target_page_index}"
@@ -56,7 +56,7 @@ class Link(AnnotationDictionary):
                 NameObject("/Border"): ArrayObject(border_arr),
             }
         )
-        if external:
+        if is_external:
             self[NameObject("/A")] = DictionaryObject(
                 {
                     NameObject("/S"): NameObject("/URI"),
@@ -64,7 +64,7 @@ class Link(AnnotationDictionary):
                     NameObject("/URI"): TextStringObject(url),
                 }
             )
-        if internal:
+        if is_internal:
             # This needs to be updated later!
             dest_deferred = DictionaryObject(
                 {
