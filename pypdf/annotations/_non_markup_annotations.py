@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 
-from ..constants import AnnotationFlag
 from ..generic._base import (
     BooleanObject,
     NameObject,
@@ -11,8 +10,6 @@ from ..generic._data_structures import ArrayObject, DictionaryObject
 from ..generic._fit import DEFAULT_FIT, Fit
 from ..generic._rectangle import RectangleObject
 from ._base import AnnotationDictionary
-
-DEFAULT_ANNOTATION_FLAG = AnnotationFlag(0)
 
 
 class Link(AnnotationDictionary):
