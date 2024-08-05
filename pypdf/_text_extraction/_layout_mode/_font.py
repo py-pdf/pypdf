@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, Sequence, Union
 
-from ...errors import PdfReadError
+from ...errors import ParseError
 from ...generic import IndirectObject
 from ._font_widths import STANDARD_WIDTHS
 
@@ -67,9 +67,9 @@ class Font:
                         # warning and or use reader's "strict" to force an ex???
                         continue
                     # check for format (1): `int [int int int int ...]`
-                    w_1 = _w[idx + 1].get_object()
-                    if isinstance(w_1, Sequence):
-                        start_idx, width_list = w_entry, w_1
+                    w_next_entry = _w[idx + 1].get_object()
+                    if isinstance(w_next_entry, Sequence):
+                        start_idx, width_list = w_entry, w_next_entry
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: _width
@@ -82,7 +82,7 @@ class Font:
                         )
                         skip_count = 1
                     # check for format (2): `int int int`
-                    elif isinstance(w_1, (int, float)) and isinstance(_w[idx + 2], (int, float)):
+                    elif isinstance(w_next_entry, (int, float)) and isinstance(_w[idx + 2], (int, float)):
                         start_idx, stop_idx, const_width = _w[idx : idx + 3]
                         self.width_map.update(
                             {
@@ -93,8 +93,8 @@ class Font:
                         )
                         skip_count = 2
                     else:
-                        raise PdfReadError(
-                            f"Invalid font width definition. Next elements: {w_entry}, {w_1}, {_w[idx + 2]}"
+                        raise ParseError(
+                            f"Invalid font width definition. Next elements: {w_entry}, {w_next_entry}, {_w[idx + 2]}"
                         )  # pragma: no cover
 
         if not self.width_map and "/BaseFont" in self.font_dictionary:
