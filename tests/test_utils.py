@@ -133,24 +133,6 @@ def test_deprecate_no_replacement():
 
 
 @pytest.mark.parametrize(
-    ("left", "up", "upleft", "expected"),
-    [
-        (0, 0, 0, 0),
-        (1, 0, 0, 1),
-        (0, 1, 0, 1),
-        (0, 0, 1, 0),
-        (1, 2, 3, 1),
-        (2, 1, 3, 1),
-        (1, 3, 2, 2),
-        (3, 1, 2, 2),
-        (3, 2, 1, 3),
-    ],
-)
-def test_paeth_predictor(left, up, upleft, expected):
-    assert pypdf._utils.paeth_predictor(left, up, upleft) == expected
-
-
-@pytest.mark.parametrize(
     ("dat", "pos", "to_read", "expected", "expected_pos"),
     [
         (b"abc", 1, 0, b"", 1),
