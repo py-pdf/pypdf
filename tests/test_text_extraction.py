@@ -163,8 +163,8 @@ def test_layout_mode_indirect_sequence_font_widths():
     # Cover the situation where the sequence for font widths is an IndirectObject
     # ref https://github.com/py-pdf/pypdf/pull/2788
     reader = PdfReader(RESOURCE_ROOT / "2788_example.pdf")
-    reader = PdfReader(RESOURCE_ROOT / "2788_example_malformed.pdf")
     assert reader.pages[0].extract_text(extraction_mode="layout") == ""
+    reader = PdfReader(RESOURCE_ROOT / "2788_example_malformed.pdf")
     with pytest.raises(ParseError) as exc:
         reader.pages[0].extract_text(extraction_mode="layout")
         assert str(exc.value).startswith("Invalid font width definition")
