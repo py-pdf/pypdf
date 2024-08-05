@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1722873143533,
+  "lastUpdate": 1722885435208,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -56039,6 +56039,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08999815205152739",
             "extra": "mean: 818.4269797999946 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "oded@acidremap.com",
+            "name": "owurman",
+            "username": "owurman"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b2d72043ab5221b58138c7d06c181b8cbc88ea8e",
+          "message": "BUG: Handle Sequence as an IndirectObject when extracting text with layout mode (#2788)\n\n* Handle Sequence as an IndirectObject\r\n\r\nThe spec allows an int or float to be an IndirectObject as well, but this commit does not address that theoretical possibility.\r\n\r\n* Update pypdf/_text_extraction/_layout_mode/_font.py\r\n\r\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>\r\n\r\n* Address PR comments\r\n\r\n-Rename w_1 to w_next_entry\r\n-Utilize ParseError instead of PdfReadError\r\n-Write a test (both positive and negative)\r\n\r\n* Handle unlikely case of IndirectObjects for float/int width elements\r\n\r\nAlso adds a comment to clarify that we don't explicitly handle the IndexError exception. Rather, we let it be raised as an IndexError.\r\n\r\n* Yoda condition I removed\r\n\r\n* Last commit was a bad patch, confused by non-committed changes\r\n\r\n* Use test files from URL rather than resources\r\n\r\n* Update tests/test_text_extraction.py\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>\r\n\r\n* Fix code style warnings in range() call\r\n\r\n---------\r\n\r\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2024-08-05T21:14:18+02:00",
+          "tree_id": "04a110d93ef54571b6348d949955fcf1132613c6",
+          "url": "https://github.com/py-pdf/pypdf/commit/b2d72043ab5221b58138c7d06c181b8cbc88ea8e"
+        },
+        "date": 1722885431570,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8437936623104134,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01055728757026316",
+            "extra": "mean: 351.6429525999996 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.6482903606798,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014345386811830285",
+            "extra": "mean: 85.84950830000082 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2643215612564005,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022429407887012823",
+            "extra": "mean: 3.7832706315999984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.977114328244154,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009673029214829637",
+            "extra": "mean: 111.39437055555372 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06557689282912722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05971333670455454",
+            "extra": "mean: 15.24927389600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.277633473818342,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005967287696851564",
+            "extra": "mean: 782.6970884000048 msec\nrounds: 5"
           }
         ]
       }
