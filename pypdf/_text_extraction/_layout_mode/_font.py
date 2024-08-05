@@ -59,6 +59,7 @@ class Font:
                 skip_count = 0
                 _w = d_font.get("/W", [])
                 for idx, w_entry in enumerate(_w):
+                    w_entry = w_entry.get_object()
                     if skip_count:
                         skip_count -= 1
                         continue
@@ -82,8 +83,8 @@ class Font:
                         )
                         skip_count = 1
                     # check for format (2): `int int int`
-                    elif isinstance(w_next_entry, (int, float)) and isinstance(_w[idx + 2], (int, float)):
-                        start_idx, stop_idx, const_width = _w[idx : idx + 3]
+                    elif isinstance(w_next_entry, (int, float)) and isinstance(_w[idx + 2].get_object(), (int, float)):
+                        start_idx, stop_idx, const_width = w_entry, w_next_entry, _w[idx + 2].get_object()
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: const_width
@@ -93,6 +94,8 @@ class Font:
                         )
                         skip_count = 2
                     else:
+                        # Note: this doesn't handle the case of out of bounds (reaching the end of the width definitions
+                        # while expecting more elements). This raises an IndexError which is sufficient.
                         raise ParseError(
                             f"Invalid font width definition. Next elements: {w_entry}, {w_next_entry}, {_w[idx + 2]}"
                         )  # pragma: no cover
