@@ -387,20 +387,6 @@ WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
 WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
 
 
-def paeth_predictor(left: int, up: int, up_left: int) -> int:
-    p = left + up - up_left
-    dist_left = abs(p - left)
-    dist_up = abs(p - up)
-    dist_up_left = abs(p - up_left)
-
-    if dist_left <= dist_up and dist_left <= dist_up_left:
-        return left
-    elif dist_up <= dist_up_left:
-        return up
-    else:
-        return up_left
-
-
 def deprecate(msg: str, stacklevel: int = 3) -> None:
     warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
 

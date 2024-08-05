@@ -104,9 +104,9 @@ class FreeText(MarkupAnnotation):
         self[NameObject("/Rect")] = RectangleObject(rect)
 
         font_str = "font: "
-        if bold is True:
+        if bold:
             font_str = f"{font_str}bold "
-        if italic is True:
+        if italic:
             font_str = f"{font_str}italic "
         font_str = f"{font_str}{font} {font_size}"
         font_str = f"{font_str};text-align:left;color:#{font_color}"

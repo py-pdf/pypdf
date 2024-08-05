@@ -59,4 +59,8 @@ class EmptyFileError(PdfReadError):
     """Raised when a PDF file is empty or has no content."""
 
 
+class EmptyImageDataError(PyPdfError):
+    """Raised when trying to process an image that has no data."""
+
+
 STREAM_TRUNCATED_PREMATURELY = "Stream has ended unexpectedly"
