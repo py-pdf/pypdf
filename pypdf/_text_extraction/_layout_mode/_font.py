@@ -1,7 +1,7 @@
 """Font constants and classes for "layout" mode text operations"""
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Sequence, Union
+from typing import Any, Dict, Sequence, Union, cast
 
 from ...errors import ParseError
 from ...generic import IndirectObject
@@ -75,7 +75,7 @@ class Font:
                             {
                                 ord_map[_cidx]: _width
                                 for _cidx, _width in zip(
-                                    range(start_idx, start_idx + len(width_list), 1),
+                                    range(cast(int, start_idx), cast(int, start_idx) + len(width_list), 1),
                                     width_list,
                                 )
                                 if _cidx in ord_map
@@ -88,7 +88,7 @@ class Font:
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: const_width
-                                for _cidx in range(start_idx, stop_idx + 1, 1)
+                                for _cidx in range(cast(int, start_idx), cast(int, stop_idx + 1), 1)
                                 if _cidx in ord_map
                             }
                         )
