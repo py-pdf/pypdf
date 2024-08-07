@@ -36,7 +36,7 @@ from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
-    b_,
+    bytes_,
     deprecate_no_replacement,
     logger_warning,
     read_non_whitespace,
@@ -607,7 +607,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
                 #   https://github.com/davidhalter/parso/issues/207
                 stream.write(("\\%03o" % c).encode())
             else:
-                stream.write(b_(chr(c)))
+                stream.write(bytes_(chr(c)))
         stream.write(b")")
 
 
@@ -713,7 +713,7 @@ def encode_pdfdocencoding(unicode_string: str) -> bytes:
     retval = bytearray()
     for c in unicode_string:
         try:
-            retval += b_(chr(_pdfdoc_encoding_rev[c]))
+            retval += bytes_(chr(_pdfdoc_encoding_rev[c]))
         except KeyError:
             raise UnicodeEncodeError(
                 "pdfdocencoding", c, -1, -1, "does not exist in translation table"

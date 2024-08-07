@@ -122,7 +122,7 @@ def test_mark_location():
     ],
 )
 def test_b(input_str: str, expected: bytes):
-    assert pypdf._utils.b_(input_str) == expected
+    assert pypdf._utils.bytes_(input_str) == expected
 
 
 def test_deprecate_no_replacement():

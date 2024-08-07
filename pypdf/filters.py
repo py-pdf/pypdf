@@ -43,7 +43,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import (
     WHITESPACES_AS_BYTES,
-    b_,
+    bytes_,
     deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
@@ -678,7 +678,7 @@ def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
     decodparms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
     if not isinstance(decodparms, (list, tuple)):
         decodparms = (decodparms,)
-    data: bytes = b_(stream._data)
+    data: bytes = bytes_(stream._data)
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filter_type, params in zip(filters, decodparms):
