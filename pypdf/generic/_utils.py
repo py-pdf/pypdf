@@ -2,7 +2,7 @@ import codecs
 from typing import Dict, List, Tuple, Union
 
 from .._codecs import _pdfdoc_encoding
-from .._utils import StreamType, b_, logger_warning, read_non_whitespace
+from .._utils import StreamType, bytes_, logger_warning, read_non_whitespace
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 from ._base import ByteStringObject, TextStringObject
 
@@ -32,7 +32,7 @@ def read_hex_string_from_stream(
         x += b"0"
     if len(x) == 2:
         txt += chr(int(x, base=16))
-    return create_string_object(b_(txt), forced_encoding)
+    return create_string_object(bytes_(txt), forced_encoding)
 
 
 def read_string_from_stream(
@@ -92,7 +92,7 @@ def read_string_from_stream(
                         else:
                             stream.seek(-1, 1)  # ntok has to be analyzed
                             break
-                    tok = b_(chr(int(tok, base=8)))
+                    tok = bytes_(chr(int(tok, base=8)))
                 elif tok in b"\n\r":
                     # This case is  hit when a backslash followed by a line
                     # break occurs. If it's a multi-char EOL, consume the

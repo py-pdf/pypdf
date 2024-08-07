@@ -336,13 +336,13 @@ def mark_location(stream: StreamType) -> None:
     stream.seek(-radius, 1)
 
 
-B_CACHE: Dict[str, bytes] = {}
+BYTE_CACHE: Dict[str, bytes] = {}
 
 
-def b_(s: Union[str, bytes]) -> bytes:
+def bytes_(s: Union[str, bytes]) -> bytes:
     if isinstance(s, bytes):
         return s
-    bc = B_CACHE
+    bc = BYTE_CACHE
     if s in bc:
         return bc[s]
     try:

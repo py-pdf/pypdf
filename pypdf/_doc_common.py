@@ -49,7 +49,7 @@ from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
 from ._utils import (
-    b_,
+    bytes_,
     deprecate_with_replacement,
     logger_warning,
     parse_iso8824_date,
@@ -1258,7 +1258,7 @@ class PdfDocCommon:
                 if isinstance(f, IndirectObject):
                     field = cast(Optional[EncodedStreamObject], f.get_object())
                     if field:
-                        es = zlib.decompress(b_(field._data))
+                        es = zlib.decompress(bytes_(field._data))
                         retval[tag] = es
         return retval
 

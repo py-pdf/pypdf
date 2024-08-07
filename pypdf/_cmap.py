@@ -3,7 +3,7 @@ from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
-from ._utils import b_, logger_error, logger_warning
+from ._utils import bytes_, logger_error, logger_warning
 from .generic import (
     DecodedStreamObject,
     DictionaryObject,
@@ -258,7 +258,7 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
     tu = ft["/ToUnicode"]
     cm: bytes
     if isinstance(tu, StreamObject):
-        cm = b_(cast(DecodedStreamObject, ft["/ToUnicode"]).get_data())
+        cm = bytes_(cast(DecodedStreamObject, ft["/ToUnicode"]).get_data())
     elif isinstance(tu, str) and tu.startswith("/Identity"):
         # the full range 0000-FFFF will be processed
         cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"
