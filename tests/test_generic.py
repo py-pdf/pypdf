@@ -1227,10 +1227,6 @@ def test_cloning(caplog):
     assert "/Test" in obj21
     assert isinstance(obj21.get("/Test2"), IndirectObject)
 
-    obj30 = TextStringObject("123")
-    obj31 = obj30.clone(writer, ignore_fields=None)
-    assert int(obj31) == 123
-
 
 @pytest.mark.enable_socket()
 def test_append_with_indirectobject_not_pointing(caplog):

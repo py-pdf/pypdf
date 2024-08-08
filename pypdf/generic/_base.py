@@ -311,10 +311,6 @@ class IndirectObject(PdfObject):
         # in this case we are looking for the pointed data
         return self.get_object().__float__()  # type: ignore
 
-    def __int__(self) -> str:
-        # in this case we are looking for the pointed data
-        return self.get_object().__int__()  # type: ignore
-
     def __str__(self) -> str:
         # in this case we are looking for the pointed data
         return self.get_object().__str__()
