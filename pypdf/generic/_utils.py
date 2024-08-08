@@ -41,7 +41,6 @@ __ESPACE_DICT__ = {
     b"t": ord(b"\t"),
     b"b": ord(b"\b"),
     b"f": ord(b"\f"),
-    # b"c": ord(rb"\c"),
     b"(": ord(b"("),
     b")": ord(b")"),
     b"/": ord(b"/"),
@@ -82,10 +81,7 @@ def read_string_from_stream(
         elif tok == b"\\":
             tok = stream.read(1)
             try:
-                if tok == b"c":
-                    txt.extend([__BACKSLASH_CODE__, 99])
-                else:
-                    txt.append(__ESPACE_DICT__[tok])
+                txt.append(__ESPACE_DICT__[tok])
                 continue
             except KeyError:
                 if b"0" <= tok <= b"7":

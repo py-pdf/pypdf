@@ -83,7 +83,7 @@ class _MergedPage:
 
 # transfered from _utils : as this function is only required here
 # and merger will be soon deprecated
-def str_(b: Any) -> str:
+def str_(b: Any) -> str:  # pragma: no cover
     if isinstance(b, bytes):
         return b.decode("latin-1")
     else:
