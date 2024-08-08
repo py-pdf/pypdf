@@ -461,6 +461,7 @@ def compute_space_width(
                 m = 0
                 cpt = 0
                 for x in w:
+                    x = cast(Any, x).get_object()
                     if x > 0:
                         m += x
                         cpt += 1
