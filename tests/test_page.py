@@ -1131,9 +1131,9 @@ def test_merge_page_resources_smoke_test():
     # use these keys for some "operations", to validate renaming
     # (the operand name doesn't matter)
     contents1 = page1[NO("/Contents")] = ContentStream(None, None)
-    contents1.operations = [(ArrayObject(props1.keys()), "page1-contents")]
+    contents1.operations = [(ArrayObject(props1.keys()), b"page1-contents")]
     contents2 = page2[NO("/Contents")] = ContentStream(None, None)
-    contents2.operations = [(ArrayObject(props2.keys()), "page2-contents")]
+    contents2.operations = [(ArrayObject(props2.keys()), b"page2-contents")]
 
     expected_properties = {
         "/just1": "/just1-value",

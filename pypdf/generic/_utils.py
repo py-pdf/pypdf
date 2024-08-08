@@ -2,7 +2,7 @@ import codecs
 from typing import Dict, List, Tuple, Union
 
 from .._codecs import _pdfdoc_encoding
-from .._utils import StreamType, b_, logger_warning, read_non_whitespace
+from .._utils import StreamType, logger_warning, read_non_whitespace
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 from ._base import ByteStringObject, TextStringObject
 
@@ -16,7 +16,7 @@ def read_hex_string_from_stream(
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     stream.read(1)
-    txt = ""
+    arr = []
     x = b""
     while True:
         tok = read_non_whitespace(stream)
@@ -26,13 +26,40 @@ def read_hex_string_from_stream(
             break
         x += tok
         if len(x) == 2:
-            txt += chr(int(x, base=16))
+            arr.append(int(x, base=16))
             x = b""
     if len(x) == 1:
         x += b"0"
-    if len(x) == 2:
-        txt += chr(int(x, base=16))
-    return create_string_object(b_(txt), forced_encoding)
+    if x != b"":
+        arr.append(int(x, base=16))
+    return create_string_object(bytes(arr), forced_encoding)
+
+
+__ESPACE_DICT__ = {
+    b"n": ord(b"\n"),
+    b"r": ord(b"\r"),
+    b"t": ord(b"\t"),
+    b"b": ord(b"\b"),
+    b"f": ord(b"\f"),
+    # b"c": ord(rb"\c"),
+    b"(": ord(b"("),
+    b")": ord(b")"),
+    b"/": ord(b"/"),
+    b"\\": ord(b"\\"),
+    b" ": ord(b" "),
+    b"%": ord(b"%"),
+    b"<": ord(b"<"),
+    b">": ord(b">"),
+    b"[": ord(b"["),
+    b"]": ord(b"]"),
+    b"#": ord(b"#"),
+    b"_": ord(b"_"),
+    b"&": ord(b"&"),
+    b"$": ord(
+        b"$",
+    ),
+}
+__BACKSLASH_CODE__ = 92
 
 
 def read_string_from_stream(
@@ -54,30 +81,12 @@ def read_string_from_stream(
                 break
         elif tok == b"\\":
             tok = stream.read(1)
-            escape_dict = {
-                b"n": b"\n",
-                b"r": b"\r",
-                b"t": b"\t",
-                b"b": b"\b",
-                b"f": b"\f",
-                b"c": rb"\c",
-                b"(": b"(",
-                b")": b")",
-                b"/": b"/",
-                b"\\": b"\\",
-                b" ": b" ",
-                b"%": b"%",
-                b"<": b"<",
-                b">": b">",
-                b"[": b"[",
-                b"]": b"]",
-                b"#": b"#",
-                b"_": b"_",
-                b"&": b"&",
-                b"$": b"$",
-            }
             try:
-                tok = escape_dict[tok]
+                if tok == b"c":
+                    txt.extend([__BACKSLASH_CODE__, 99])
+                else:
+                    txt.append(__ESPACE_DICT__[tok])
+                continue
             except KeyError:
                 if b"0" <= tok <= b"7":
                     # "The number ddd may consist of one, two, or three
@@ -85,6 +94,7 @@ def read_string_from_stream(
                     # Three octal digits shall be used, with leading zeros
                     # as needed, if the next character of the string is also
                     # a digit." (PDF reference 7.3.4.2, p 16)
+                    sav = stream.tell() - 1
                     for _ in range(2):
                         ntok = stream.read(1)
                         if b"0" <= ntok <= b"7":
@@ -92,7 +102,13 @@ def read_string_from_stream(
                         else:
                             stream.seek(-1, 1)  # ntok has to be analyzed
                             break
-                    tok = b_(chr(int(tok, base=8)))
+                    i = int(tok, base=8)
+                    if i > 255:
+                        txt.append(__BACKSLASH_CODE__)
+                        stream.seek(sav)
+                    else:
+                        txt.append(i)
+                    continue
                 elif tok in b"\n\r":
                     # This case is  hit when a backslash followed by a line
                     # break occurs. If it's a multi-char EOL, consume the
@@ -102,12 +118,13 @@ def read_string_from_stream(
                         stream.seek(-1, 1)
                     # Then don't add anything to the actual string, since this
                     # line break was escaped:
-                    tok = b""
+                    continue
                 else:
                     msg = f"Unexpected escaped string: {tok.decode('utf-8','ignore')}"
                     logger_warning(msg, __name__)
-        txt.append(tok)
-    return create_string_object(b"".join(txt), forced_encoding)
+                    txt.append(__BACKSLASH_CODE__)
+        txt.append(ord(tok))
+    return create_string_object(bytes(txt), forced_encoding)
 
 
 def create_string_object(

@@ -852,7 +852,7 @@ class PageObject(DictionaryObject):
                     FloatObject(e),
                     FloatObject(f),
                 ],
-                " cm",
+                b"cm",
             ],
         )
         return contents
@@ -870,7 +870,7 @@ class PageObject(DictionaryObject):
             if isinstance(obj, list):
                 return b"".join(x.get_object().get_data() for x in obj)
             else:
-                return cast(bytes, cast(EncodedStreamObject, obj).get_data())
+                return cast(EncodedStreamObject, obj).get_data()
         else:
             return None
 
@@ -1063,11 +1063,11 @@ class PageObject(DictionaryObject):
                             rect.height,
                         ],
                     ),
-                    "re",
+                    b"re",
                 ),
             )
-            page2content.operations.insert(1, ([], "W"))
-            page2content.operations.insert(2, ([], "n"))
+            page2content.operations.insert(1, ([], b"W"))
+            page2content.operations.insert(2, ([], b"n"))
             if page2transformation is not None:
                 page2content = page2transformation(page2content)
             page2content = PageObject._content_stream_rename(
@@ -1201,11 +1201,11 @@ class PageObject(DictionaryObject):
                             rect.height,
                         ],
                     ),
-                    "re",
+                    b"re",
                 ),
             )
-            page2content.operations.insert(1, ([], "W"))
-            page2content.operations.insert(2, ([], "n"))
+            page2content.operations.insert(1, ([], b"W"))
+            page2content.operations.insert(2, ([], b"n"))
             if page2transformation is not None:
                 page2content = page2transformation(page2content)
             page2content = PageObject._content_stream_rename(

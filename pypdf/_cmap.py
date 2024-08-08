@@ -3,7 +3,7 @@ from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
-from ._utils import b_, logger_error, logger_warning
+from ._utils import logger_error, logger_warning
 from .generic import (
     DecodedStreamObject,
     DictionaryObject,
@@ -258,7 +258,8 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
     tu = ft["/ToUnicode"]
     cm: bytes
     if isinstance(tu, StreamObject):
-        cm = b_(cast(DecodedStreamObject, ft["/ToUnicode"]).get_data())
+        cm = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
+        assert isinstance(cm, bytes)
     elif isinstance(tu, str) and tu.startswith("/Identity"):
         # the full range 0000-FFFF will be processed
         cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"
@@ -474,7 +475,7 @@ def compute_space_width(
         obj = sp_width.get_object()
         if obj is None or isinstance(obj, NullObject):
             return 0.0
-        return obj  # type: ignore
+        return obj
 
     return sp_width
 
