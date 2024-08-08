@@ -1,4 +1,5 @@
 """Test the pypdf.filters module."""
+import os
 import shutil
 import string
 import subprocess
@@ -252,6 +253,9 @@ def test_issue_399():
 
 @pytest.mark.enable_socket()
 def test_image_without_pillow(tmp_path):
+    env = os.environ.copy()
+    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
+
     name = "tika-914102.pdf"
     pdf_path = Path(__file__).parent / "pdf_cache" / name
     pdf_path_str = str(pdf_path.resolve()).replace("\\", "/")
@@ -279,7 +283,7 @@ for page in reader.pages:
     )
     result = subprocess.run(
         [shutil.which("python"), source_file],  # noqa: S603
-        capture_output=True,
+        capture_output=True, env=env,
     )
     assert result.returncode == 0
     assert result.stdout == b""
