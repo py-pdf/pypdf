@@ -1,18 +1,15 @@
 """Extract PDF text preserving the layout of the source PDF"""
 
-import sys
 from itertools import groupby
 from math import ceil
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, TypedDict
 
 from ..._utils import logger_warning
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
 from ._font import Font
 from ._text_state_manager import TextStateManager
 from ._text_state_params import TextStateParams
-
-from typing import Literal, TypedDict
 
 
 class BTGroup(TypedDict):

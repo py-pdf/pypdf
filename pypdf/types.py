@@ -1,9 +1,7 @@
 """Helpers for working with PDF types."""
 
 import sys
-from typing import List, Union
-
-from typing import Literal
+from typing import List, Literal, Union
 
 if sys.version_info[:2] >= (3, 10):
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484
