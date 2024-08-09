@@ -4,11 +4,7 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import IO, Any, Dict, List, Optional, Tuple, Union
 
-try:
-    # Python 3.8+: https://peps.python.org/pep-0586
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore[assignment]
+from typing import Protocol
 
 from ._utils import StrByteType, StreamType
 

@@ -12,10 +12,7 @@ from ._font import Font
 from ._text_state_manager import TextStateManager
 from ._text_state_params import TextStateParams
 
-if sys.version_info >= (3, 8):
-    from typing import Literal, TypedDict
-else:
-    from typing_extensions import Literal, TypedDict
+from typing import Literal, TypedDict
 
 
 class BTGroup(TypedDict):

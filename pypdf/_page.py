@@ -85,10 +85,7 @@ from .generic import (
     StreamObject,
 )
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing import Literal
 
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
