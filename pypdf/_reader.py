@@ -51,7 +51,6 @@ from ._page import PageObject
 from ._utils import (
     StrByteType,
     StreamType,
-    b_,
     logger_warning,
     read_non_whitespace,
     read_previous_line,
@@ -328,7 +327,7 @@ class PdfReader(PdfDocCommon):
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
-        stream_data = BytesIO(b_(obj_stm.get_data()))
+        stream_data = BytesIO(obj_stm.get_data())
         for i in range(obj_stm["/N"]):  # type: ignore
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
@@ -932,7 +931,7 @@ class PdfReader(PdfDocCommon):
         xrefstream = cast(ContentStream, read_object(stream, self))
         assert cast(str, xrefstream["/Type"]) == "/XRef"
         self.cache_indirect_object(generation, idnum, xrefstream)
-        stream_data = BytesIO(b_(xrefstream.get_data()))
+        stream_data = BytesIO(xrefstream.get_data())
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
         idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])

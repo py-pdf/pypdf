@@ -1,12 +1,18 @@
 """Test the pypdf_cmap module."""
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import build_char_map
+from pypdf.generic import ArrayObject, NameObject, NullObject
 
 from . import get_data_from_url
+
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.enable_socket()
@@ -206,3 +212,13 @@ def test_eten_b5():
     """Issue #2356"""
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
     reader.pages[0].extract_text().startswith("1/7 \n富邦新終身壽險")
+
+
+def test_null_missing_width():
+    """For coverage of 2792"""
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    ft = page["/Resources"]["/Font"]["/F1"]
+    ft[NameObject("/Widths")] = ArrayObject()
+    ft["/FontDescriptor"][NameObject("/MissingWidth")] = NullObject()
+    page.extract_text()

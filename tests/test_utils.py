@@ -109,22 +109,6 @@ def test_mark_location():
     Path("pypdf_pdfLocation.txt").unlink()  # cleanup
 
 
-@pytest.mark.parametrize(
-    ("input_str", "expected"),
-    [
-        ("foo", b"foo"),
-        ("😀", "😀".encode()),
-        ("‰", "‰".encode()),
-        ("▷", "▷".encode()),
-        ("世", "世".encode()),
-        # A multi-character string example with non-latin-1 characters:
-        ("😀😃", "😀😃".encode()),
-    ],
-)
-def test_b(input_str: str, expected: bytes):
-    assert pypdf._utils.b_(input_str) == expected
-
-
 def test_deprecate_no_replacement():
     with pytest.warns(DeprecationWarning) as warn:
         pypdf._utils.deprecate_no_replacement("foo", removed_in="3.0.0")

@@ -3,11 +3,10 @@ from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
-from ._utils import b_, logger_error, logger_warning
+from ._utils import logger_error, logger_warning
 from .generic import (
     DecodedStreamObject,
     DictionaryObject,
-    IndirectObject,
     NullObject,
     StreamObject,
 )
@@ -258,7 +257,7 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
     tu = ft["/ToUnicode"]
     cm: bytes
     if isinstance(tu, StreamObject):
-        cm = b_(cast(DecodedStreamObject, ft["/ToUnicode"]).get_data())
+        cm = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
     elif isinstance(tu, str) and tu.startswith("/Identity"):
         # the full range 0000-FFFF will be processed
         cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"
@@ -448,34 +447,27 @@ def compute_space_width(
             en: int = cast(int, ft["/LastChar"])
             if st > space_code or en < space_code:
                 raise Exception("Not in range")
-            if w[space_code - st] == 0:
+            if w[space_code - st].get_object() == 0:
                 raise Exception("null width")
-            sp_width = w[space_code - st]
+            sp_width = w[space_code - st].get_object()
         except Exception:
             if "/FontDescriptor" in ft and "/MissingWidth" in cast(
                 DictionaryObject, ft["/FontDescriptor"]
             ):
-                sp_width = ft["/FontDescriptor"]["/MissingWidth"]  # type: ignore
+                sp_width = ft["/FontDescriptor"]["/MissingWidth"].get_object()  # type: ignore
             else:
                 # will consider width of char as avg(width)/2
                 m = 0
                 cpt = 0
-                for x in w:
-                    if x > 0:
-                        m += x
+                for xx in w:
+                    xx = xx.get_object()
+                    if xx > 0:
+                        m += xx
                         cpt += 1
                 sp_width = m / max(1, cpt) / 2
 
-    if isinstance(sp_width, IndirectObject):
-        # According to
-        # 'Table 122 - Entries common to all font descriptors (continued)'
-        # the MissingWidth should be a number, but according to #2286 it can
-        # be an indirect object
-        obj = sp_width.get_object()
-        if obj is None or isinstance(obj, NullObject):
-            return 0.0
-        return obj  # type: ignore
-
+    if sp_width is None or isinstance(sp_width, NullObject):
+        sp_width = 0.0
     return sp_width
 
 

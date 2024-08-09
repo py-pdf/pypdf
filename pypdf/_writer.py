@@ -62,7 +62,6 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
-    b_,
     deprecate_with_replacement,
     logger_warning,
 )
@@ -678,9 +677,10 @@ class PdfWriter(PdfDocCommon):
         # Hello world!
         # endstream
         # endobj
-
+        if isinstance(data, str):
+            data = data.encode("latin-1")
         file_entry = DecodedStreamObject()
-        file_entry.set_data(b_(data))
+        file_entry.set_data(data)
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
 
         # The Filespec entry

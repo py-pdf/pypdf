@@ -43,7 +43,7 @@ from pypdf._crypt_providers import (
     rc4_encrypt,
 )
 
-from ._utils import b_, logger_warning
+from ._utils import logger_warning
 from .generic import (
     ArrayObject,
     ByteStringObject,
@@ -78,7 +78,7 @@ class CryptFilter:
         elif isinstance(obj, StreamObject):
             obj2 = StreamObject()
             obj2.update(obj)
-            obj2.set_data(self.stm_crypt.encrypt(b_(obj._data)))
+            obj2.set_data(self.stm_crypt.encrypt(obj._data))
             for key, value in obj.items():  # Dont forget the Stream dict.
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
@@ -96,7 +96,7 @@ class CryptFilter:
             data = self.str_crypt.decrypt(obj.original_bytes)
             obj = create_string_object(data)
         elif isinstance(obj, StreamObject):
-            obj._data = self.stm_crypt.decrypt(b_(obj._data))
+            obj._data = self.stm_crypt.decrypt(obj._data)
             for key, value in obj.items():  # Dont forget the Stream dict.
                 obj[key] = self.decrypt_object(value)
         elif isinstance(obj, DictionaryObject):
