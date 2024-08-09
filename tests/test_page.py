@@ -1438,3 +1438,12 @@ def test_negative_index():
     src_abs = RESOURCE_ROOT / "git.pdf"
     reader = PdfReader(src_abs)
     assert reader.pages[0] == reader.pages[-1]
+
+
+def test_get_contents_as_bytes():
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    co = writer.pages[0]["/Contents"][0]
+    expected = co.get_data()
+    assert writer.pages[0]._get_contents_as_bytes() == expected
+    writer.pages[0][NameObject("/Contents")] = writer.pages[0]["/Contents"][0]
+    assert writer.pages[0]._get_contents_as_bytes() == expected
