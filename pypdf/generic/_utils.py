@@ -54,9 +54,7 @@ __ESPACE_DICT__ = {
     b"#": ord(b"#"),
     b"_": ord(b"_"),
     b"&": ord(b"&"),
-    b"$": ord(
-        b"$",
-    ),
+    b"$": ord(b"$"),
 }
 __BACKSLASH_CODE__ = 92
 
