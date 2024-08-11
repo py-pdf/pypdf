@@ -240,6 +240,9 @@ class IndirectObject(PdfObject):
         self.generation = generation
         self.pdf = pdf
 
+    def __hash__(self) -> int:
+        return hash((self.idnum, self.generation, id(self.pdf)))
+
     def clone(
         self,
         pdf_dest: PdfWriterProtocol,
