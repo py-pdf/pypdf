@@ -62,6 +62,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
+    deprecate,
     deprecate_with_replacement,
     logger_warning,
 )
@@ -400,7 +401,8 @@ class PdfWriter(PdfDocCommon):
             obj = obj.clone(self)
         self._objects[indirect_reference - 1] = obj
         obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
-        assert isinstance(obj, IndirectObject)
+
+        assert isinstance(obj, PdfObject)
         return obj
 
     def _add_page(
@@ -1466,10 +1468,8 @@ class PdfWriter(PdfDocCommon):
         Args:
             root: The root of the PDF object tree to sweep.
         """
-        deprecate_with_replacement(
-            "_sweep_indirect_references",
-            "no replacement, please report to dev team if this warning is observed",
-            "5.0.0",
+        deprecate(
+            "_sweep_indirect_references has been removed, please report to dev team if this warning is observed",
         )
 
     def _resolve_indirect_object(
@@ -1499,10 +1499,8 @@ class PdfWriter(PdfDocCommon):
         Raises:
             ValueError: If the input stream is closed.
         """
-        deprecate_with_replacement(
-            "_resolve_indirect_object",
-            "no replacement, please report to dev team if this warning is observed",
-            "5.0.0",
+        deprecate(
+            "_resolve_indirect_object has been removed, please report to dev team if this warning is observed",
         )
         return IndirectObject(0, 0, self)
 
