@@ -34,6 +34,7 @@ import re
 import sys
 import uuid
 from io import BytesIO, FileIO, IOBase
+from itertools import compress
 from pathlib import Path
 from types import TracebackType
 from typing import (
@@ -1252,11 +1253,10 @@ class PdfWriter(PdfDocCommon):
                 "It may not be written to correctly.",
                 __name__,
             )
-
-        if not self._root:
-            self._root = self._add_object(self._root_object)
-
-        # no more used : self._sweep_indirect_references(self._root)
+        # no more used :
+        # if not self._root:
+        #   self._root = self._add_object(self._root_object)
+        # self._sweep_indirect_references(self._root)
 
         object_positions, free_objects = self._write_pdf_structure(stream)
         xref_location = self._write_xref_table(stream, object_positions, free_objects)
@@ -1371,16 +1371,22 @@ class PdfWriter(PdfDocCommon):
         assert isinstance(self._info, DictionaryObject)
         self._info.update(args)
 
-    def compress_identical_objects(self, verbose: Union[int, bool] = -1) -> None:
+    def compress_identical_objects(
+        self,
+        remove_identicals: bool = True,
+        remove_orphans: bool = True,
+        verbose: int = -1,
+    ) -> None:
         """
         Parse the Pdf file and merge objects that have same harsh.
         This will make objects common to multiple pages
         Recommended to be used just before writing output
 
         Args:
-            verbose: provide some progress information.
-                int : frequence of progress update; disable if negative
-                bool : True => 100 ; False = -1
+            remove_identicals: remove of identical objects
+            remove_orphans: remove of unreferenced objects
+            verbose: frequence of progress update; <0 => disable
+
         """
 
         def replace_in_obj(
@@ -1394,9 +1400,13 @@ class PdfWriter(PdfDocCommon):
                 return
             assert isinstance(obj, (DictionaryObject, ArrayObject))
             for k, v in key_val:
-                if isinstance(v, IndirectObject) and v in crossref:
-                    obj[k] = crossref[v]
-                else:  # if isinstance(v, (DictionaryObject, ArrayObject)):
+                if isinstance(v, IndirectObject):
+                    orphans[v.idnum - 1] = False
+                    if v in crossref:
+                        obj[k] = crossref[v]
+                else:
+                    """the filtering on DictionaryObject and ArrayObject only
+                    will be performed within replace_in_obj"""
                     replace_in_obj(v, crossref)
 
         # _idnum_hash :dict[hash]=(1st_ind_obj,[other_indir_objs,...])
@@ -1406,6 +1416,7 @@ class PdfWriter(PdfDocCommon):
         else:
             cpt_init = 100 if verbose else -1
         cpt = cpt_init
+        orphans = [True] * len(self._objects)
         # look for similar objects
         for idx, obj in enumerate(self._objects):
             if obj is None:
@@ -1416,7 +1427,7 @@ class PdfWriter(PdfDocCommon):
                 print("+", end="", file=sys.stderr)  # noqa: T201
                 cpt = cpt_init
             cpt -= 1
-            if h in self._idnum_hash:
+            if remove_identicals and h in self._idnum_hash:
                 self._idnum_hash[h][1].append(obj.indirect_reference)
                 self._objects[idx] = None
             else:
@@ -1437,6 +1448,19 @@ class PdfWriter(PdfDocCommon):
                     cpt = cpt_init
                 cpt -= 1
                 replace_in_obj(obj, cnv_rev)
+
+        # remove orphans (if applicable)
+        orphans[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
+        try:
+            orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
+        except Exception:
+            pass
+        try:
+            orphans[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
+        except Exception:
+            pass
+        for i in compress(range(len(self._objects)), orphans):
+            self._objects[i] = None
 
     def _sweep_indirect_references(
         self,
