@@ -400,8 +400,8 @@ class PdfWriter(PdfDocCommon):
             obj = obj.clone(self)
         self._objects[indirect_reference - 1] = obj
         obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
-        assert obj is None
-        return self._objects[indirect_reference - 1]
+        assert isinstance(obj, IndirectObject)
+        return obj
 
     def _add_page(
         self,
