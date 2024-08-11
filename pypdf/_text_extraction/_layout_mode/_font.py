@@ -44,7 +44,7 @@ class Font:
                 self.font_dictionary["/DescendantFonts"]
             ):
                 while isinstance(d_font, IndirectObject):
-                    d_font = d_font.get_object()  # type: ignore[assignment]
+                    d_font = d_font.get_object()
                 self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font
                 ord_map = {
                     ord(_target): _surrogate
@@ -75,7 +75,11 @@ class Font:
                             {
                                 ord_map[_cidx]: _width
                                 for _cidx, _width in zip(
-                                    range(cast(int, start_idx), cast(int, start_idx) + len(width_list), 1),
+                                    range(
+                                        cast(int, start_idx),
+                                        cast(int, start_idx) + len(width_list),
+                                        1,
+                                    ),
                                     width_list,
                                 )
                                 if _cidx in ord_map
@@ -83,12 +87,20 @@ class Font:
                         )
                         skip_count = 1
                     # check for format (2): `int int int`
-                    elif isinstance(w_next_entry, (int, float)) and isinstance(_w[idx + 2].get_object(), (int, float)):
-                        start_idx, stop_idx, const_width = w_entry, w_next_entry, _w[idx + 2].get_object()
+                    elif isinstance(w_next_entry, (int, float)) and isinstance(
+                        _w[idx + 2].get_object(), (int, float)
+                    ):
+                        start_idx, stop_idx, const_width = (
+                            w_entry,
+                            w_next_entry,
+                            _w[idx + 2].get_object(),
+                        )
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: const_width
-                                for _cidx in range(cast(int, start_idx), cast(int, stop_idx + 1), 1)
+                                for _cidx in range(
+                                    cast(int, start_idx), cast(int, stop_idx + 1), 1
+                                )
                                 if _cidx in ord_map
                             }
                         )
