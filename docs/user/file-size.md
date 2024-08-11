@@ -12,18 +12,19 @@ be embedded once and referenced twice.
 When adding data to a PdfWriter, the data are copied respecting the original format.
 For a example if two pages includes the same image which is duplicated, in the source document, the object will be duplicated in the PdfWriter object
 
-Also when you delete objects in a document, pypdf can not easily identify weither the object is used or not elsewhere or if the user wants to keep then in. When writing the pdf file these objects will be hidden(part of the file but not displayed) within.
+Also when you delete objects in a document, pypdf can not easily identify weither the objects are used or not elsewhere or if the user wants to keep then in. When writing the pdf file these objects will be hidden(part of the file but not displayed) within.
 
 in order to reduce the file size a compression process:
-`writer.compress_identical_objects(remove_identical: byte = True, remove_orphans:byte = True, verbose: int = -1)`
+`writer.compress_identical_objects(remove_identicals = True, remove_orphans= True, verbose = -1)`
 
 `remove_identical` enables / disables compression merging identical objects
+
 `remove_orphans` enables / disables suppression of unused objects
+
 `verbose` sets the value on how many objects are processed
 the progress status (printed on stderr) of the compression is printed as follow:
-		'+' during initial loop
-		'.' when removing duplicates
-		'\*' when removing hidden objects
+* '+' during initial loop
+* '.' when replacing duplicates
 
 It is recommended to apply this process just before writing to file/stream
 

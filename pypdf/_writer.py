@@ -1414,7 +1414,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(verbose, int):
             cpt_init = verbose
         else:
-            cpt_init = 100 if verbose else -1
+            cpt_init = -1
         cpt = cpt_init
         orphans = [True] * len(self._objects)
         # look for similar objects
@@ -1453,8 +1453,8 @@ class PdfWriter(PdfDocCommon):
         orphans[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
         try:
             orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
-        except Exception:
-            pass
+        except Exception:  # pragma: no cover
+            pass  # pragma: no cover
         try:
             orphans[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
         except Exception:

@@ -2319,7 +2319,7 @@ def test_compress_identical_objects():
     out2 = BytesIO()
     writer.write(out2)
     assert len(out1.getvalue()) - 100 < len(out2.getvalue())
-    writer.compress_identical_objects(remove_identicals=False, verbose=100)
+    writer.compress_identical_objects(remove_identicals=False, verbose="fake")
     out3 = BytesIO()
     writer.write(out3)
     assert len(out2.getvalue()) > len(out3.getvalue())
