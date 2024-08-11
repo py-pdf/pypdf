@@ -43,6 +43,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import (
     WHITESPACES_AS_BYTES,
+    deprecate,
     deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
@@ -457,7 +458,7 @@ class LZWDecode:
             return baos
 
     @staticmethod
-    def decode(
+    def _decodeb(
         data: bytes,
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
@@ -474,6 +475,26 @@ class LZWDecode:
         """
         # decode_parms is unused here
         return LZWDecode.Decoder(data).decode()
+
+    @staticmethod
+    def decode(
+        data: bytes,
+        decode_parms: Optional[DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> str:  # deprecated
+        """
+        Decode an LZW encoded data stream.
+
+        Args:
+          data: ``bytes`` or ``str`` text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
+        """
+        # decode_parms is unused here
+        deprecate("LZWDecode.decode will return bytes instead of str in pypdf 6.0.0")
+        return LZWDecode.Decoder(data).decode().decode("latin-1")
 
 
 class ASCII85Decode:
@@ -687,7 +708,7 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
             elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
                 data = RunLengthDecode.decode(data)
             elif filter_type in (FT.LZW_DECODE, FTA.LZW):
-                data = LZWDecode.decode(data, params)
+                data = LZWDecode._decodeb(data, params)
             elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
                 data = ASCII85Decode.decode(data)
             elif filter_type == FT.DCT_DECODE:
