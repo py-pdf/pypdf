@@ -2320,7 +2320,6 @@ def test_compress_identical_objects():
     writer.remove_page(
         1
     )  # page0 contains fields which keep reference to the deleted page
-    writer._info = None
     out2 = BytesIO()
     writer.write(out2)
     assert len(out1.getvalue()) - 100 < len(out2.getvalue())
@@ -2329,7 +2328,7 @@ def test_compress_identical_objects():
     writer.write(out3)
     assert len(out2.getvalue()) > len(out3.getvalue())
 
-    
+
 def test_set_need_appearances_writer():
     """Minimal test for coverage"""
     writer = PdfWriter()
