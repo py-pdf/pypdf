@@ -9,25 +9,23 @@ Some PDF documents contain the same object multiple times. For example, if an
 image appears three times in a PDF it could be embedded three times. Or it can
 be embedded once and referenced twice.
 
-When adding data to a PdfWriter, the data are copied respecting the original format.
-For a example if two pages includes the same image which is duplicated, in the source document, the object will be duplicated in the PdfWriter object
+When adding data to a PdfWriter, the data is copied while respecting the original format.
+For example, if two pages include the same image which is duplicated in the source document, the object will be duplicated in the PdfWriter object.
 
-Also when you delete objects in a document, pypdf can not easily identify weither the objects are used or not elsewhere or if the user wants to keep then in. When writing the pdf file these objects will be hidden(part of the file but not displayed) within.
+Additionally, when you delete objects in a document, pypdf cannot easily identify whether the objects are used elsewhere or not or if the user wants to keep them in. When writing the PDF file, these objects will be hidden within (part of the file, but not displayed).
 
-in order to reduce the file size a compression process:
-`writer.compress_identical_objects(remove_identicals = True, remove_orphans= True, verbose = -1)`
+In order to reduce the file size, use a compression call: `writer.compress_identical_objects(remove_identicals=True, remove_orphans=True, verbose=-1)`
 
-`remove_identical` enables / disables compression merging identical objects
+* `remove_identicals` enables/disables compression merging identical objects.
+* `remove_orphans` enables/disables suppression of unused objects.
+* `verbose` sets the value on how many objects are processed.
 
-`remove_orphans` enables / disables suppression of unused objects
+The progress status (printed on stderr) of the compression is printed as follows:
 
-`verbose` sets the value on how many objects are processed
-the progress status (printed on stderr) of the compression is printed as follow:
-* '+' during initial loop
-* '.' when replacing duplicates
+* `'+'` during initial loop
+* `'.'` when replacing duplicates
 
-It is recommended to apply this process just before writing to file/stream
-
+It is recommended to apply this process just before writing to file/stream.
 
 It depends on the PDF how well this works, but we have seen an 86% file
 reduction (from 5.7 MB to 0.8 MB) within a real PDF.
