@@ -1290,7 +1290,7 @@ def test_attachments():
     to_add = [
         ("foobar.txt", b"foobarcontent"),
         ("foobar2.txt", b"foobarcontent2"),
-        ("foobar2.txt", b"2nd_foobarcontent"),
+        ("foobar2.txt", "2nd_foobarcontent"),
     ]
     for name, content in to_add:
         writer.add_attachment(name, content)

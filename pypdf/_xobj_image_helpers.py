@@ -2,7 +2,7 @@
 
 import sys
 from io import BytesIO
-from typing import Any, List, Tuple, Union, cast
+from typing import Any, List, Literal, Tuple, Union, cast
 
 from ._utils import check_if_whitespace_only, logger_warning
 from .constants import ColorSpaces
@@ -14,13 +14,6 @@ from .generic import (
     IndirectObject,
     NullObject,
 )
-
-if sys.version_info[:2] >= (3, 8):
-    from typing import Literal
-else:
-    # PEP 586 introduced typing.Literal with Python 3.8
-    # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import Literal
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeAlias
@@ -150,7 +143,9 @@ def _extended_image_frombytes(
         nb_pix = size[0] * size[1]
         data_length = len(data)
         if data_length == 0:
-            raise EmptyImageDataError("Data is 0 bytes, cannot process an image from empty data.") from exc
+            raise EmptyImageDataError(
+                "Data is 0 bytes, cannot process an image from empty data."
+            ) from exc
         if data_length % nb_pix != 0:
             raise exc
         k = nb_pix * len(mode) / data_length
