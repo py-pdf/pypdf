@@ -1310,7 +1310,7 @@ class PdfWriter(PdfDocCommon):
             else:
                 object_positions.append(-1)
                 free_objects.append(i + 1)
-        free_objects.append(0)  # add 0 to loop iaw PDF spec
+        free_objects.append(0)  # add 0 to loop in accordance with PDF spec
         return object_positions, free_objects
 
     def _write_xref_table(
