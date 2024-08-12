@@ -2188,6 +2188,10 @@ def test_replace_object():
     reader._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)
     reader._replace_object(reader.pages[0].indirect_reference, pg)
+    pg = PageObject.create_blank_page(None, 1000, 1000)
+    pg[NameObject("/Contents")] = writer.pages[0]["/Contents"]
+    writer._add_object(pg)
+    writer.add_page(pg)
 
 
 def test_mime_jupyter():
@@ -2324,3 +2328,9 @@ def test_compress_identical_objects():
     out3 = BytesIO()
     writer.write(out3)
     assert len(out2.getvalue()) > len(out3.getvalue())
+
+    
+def test_set_need_appearances_writer():
+    """Minimal test for coverage"""
+    writer = PdfWriter()
+    writer.set_need_appearances_writer()
