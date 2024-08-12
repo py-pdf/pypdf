@@ -259,7 +259,7 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
     cm: bytes
     if isinstance(tu, StreamObject):
         cm = b_(cast(DecodedStreamObject, ft["/ToUnicode"]).get_data())
-    elif (tu is None) or cast(str, tu).startswith("/Identity"):  # pragma: no cover
+    else:  # if (tu is None) or cast(str, tu).startswith("/Identity"):
         # the full range 0000-FFFF will be processed
         cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"
     if isinstance(cm, str):
