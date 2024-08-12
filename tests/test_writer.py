@@ -2306,7 +2306,7 @@ def test_matrix_entry_in_field_annots():
     assert "/Matrix" in writer.pages[0]["/Annots"][5].get_object()["/AP"]["/N"]
 
 
-def test_set_need_apperances_writer():
+def test_set_need_appearances_writer():
     """Minimal test for coverage"""
     writer = PdfWriter()
     writer.set_need_appearances_writer()
