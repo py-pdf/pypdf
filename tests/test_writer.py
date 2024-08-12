@@ -1290,7 +1290,7 @@ def test_attachments():
     to_add = [
         ("foobar.txt", b"foobarcontent"),
         ("foobar2.txt", b"foobarcontent2"),
-        ("foobar2.txt", b"2nd_foobarcontent"),
+        ("foobar2.txt", "2nd_foobarcontent"),
     ]
     for name, content in to_add:
         writer.add_attachment(name, content)
@@ -2188,6 +2188,10 @@ def test_replace_object():
     reader._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)
     reader._replace_object(reader.pages[0].indirect_reference, pg)
+    pg = PageObject.create_blank_page(None, 1000, 1000)
+    pg[NameObject("/Contents")] = writer.pages[0]["/Contents"]
+    writer._add_object(pg)
+    writer.add_page(pg)
 
 
 def test_mime_jupyter():
@@ -2286,3 +2290,23 @@ def test_field_box_upside_down():
     box = writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"]["/BBox"]
     assert box[2] > 0
     assert box[3] > 0
+
+
+@pytest.mark.enable_socket()
+def test_matrix_entry_in_field_annots():
+    """Cf #2731"""
+    url = "https://github.com/user-attachments/files/16036514/template.pdf"
+    name = "iss2731.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Stellenbezeichnung_1": "some filled in text"},
+        auto_regenerate=False,
+    )
+    assert "/Matrix" in writer.pages[0]["/Annots"][5].get_object()["/AP"]["/N"]
+
+
+def test_set_need_appearances_writer():
+    """Minimal test for coverage"""
+    writer = PdfWriter()
+    writer.set_need_appearances_writer()

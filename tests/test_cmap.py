@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import build_char_map
-from pypdf.generic import IndirectObject, NameObject
+from pypdf.generic import ArrayObject, NameObject, NullObject
 
 from . import get_data_from_url
 
@@ -213,7 +213,7 @@ def test_eten_b5():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
     reader.pages[0].extract_text().startswith("1/7 \n富邦新終身壽險")
 
-
+    
 @pytest.mark.enable_socket()
 def test_missing_entries_in_cmap():
     """
@@ -228,3 +228,13 @@ def test_missing_entries_in_cmap():
         99999999, 0, reader
     )
     p.extract_text()
+
+
+def test_null_missing_width():
+    """For coverage of 2792"""
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    ft = page["/Resources"]["/Font"]["/F1"]
+    ft[NameObject("/Widths")] = ArrayObject()
+    ft["/FontDescriptor"][NameObject("/MissingWidth")] = NullObject()
+    page.extract_text()

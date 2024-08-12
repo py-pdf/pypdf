@@ -52,7 +52,6 @@ from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationPro
 from .._utils import (
     WHITESPACES,
     StreamType,
-    b_,
     deprecate_no_replacement,
     deprecate_with_replacement,
     logger_warning,
@@ -843,7 +842,7 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
 
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
-        self._data: Union[bytes, str] = b""
+        self._data: bytes = b""
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     def _clone(
@@ -877,7 +876,7 @@ class StreamObject(DictionaryObject):
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields, visited)
 
-    def get_data(self) -> Union[bytes, str]:
+    def get_data(self) -> bytes:
         return self._data
 
     def set_data(self, data: bytes) -> None:
@@ -885,7 +884,7 @@ class StreamObject(DictionaryObject):
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
-        data += b_(self._data)
+        data += self._data
         return data
 
     def write_to_stream(
@@ -955,7 +954,7 @@ class StreamObject(DictionaryObject):
         retval[NameObject(SA.FILTER)] = f
         if params is not None:
             retval[NameObject(SA.DECODE_PARMS)] = params
-        retval._data = FlateDecode.encode(b_(self._data), level)
+        retval._data = FlateDecode.encode(self._data, level)
         return retval
 
     def decode_as_image(self) -> Any:
@@ -993,7 +992,7 @@ class EncodedStreamObject(StreamObject):
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     # This overrides the parent method:
-    def get_data(self) -> Union[bytes, str]:
+    def get_data(self) -> bytes:
         from ..filters import decode_stream_data
 
         if self.decoded_self is not None:
@@ -1003,7 +1002,7 @@ class EncodedStreamObject(StreamObject):
             # create decoded object
             decoded = DecodedStreamObject()
 
-            decoded.set_data(b_(decode_stream_data(self)))
+            decoded.set_data(decode_stream_data(self))
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
@@ -1058,7 +1057,7 @@ class ContentStream(DecodedStreamObject):
         # The inner list has two elements:
         #  Element 0: List
         #  Element 1: str
-        self._operations: List[Tuple[Any, Any]] = []
+        self._operations: List[Tuple[Any, bytes]] = []
 
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
@@ -1069,14 +1068,14 @@ class ContentStream(DecodedStreamObject):
             if isinstance(stream, ArrayObject):
                 data = b""
                 for s in stream:
-                    data += b_(s.get_object().get_data())
+                    data += s.get_object().get_data()
                     if len(data) == 0 or data[-1] != b"\n":
                         data += b"\n"
                 super().set_data(bytes(data))
             else:
                 stream_data = stream.get_data()
                 assert stream_data is not None
-                super().set_data(b_(stream_data))
+                super().set_data(stream_data)
             self.forced_encoding = forced_encoding
 
     def clone(
@@ -1132,7 +1131,7 @@ class ContentStream(DecodedStreamObject):
             ignore_fields:
         """
         src_cs = cast("ContentStream", src)
-        super().set_data(b_(src_cs._data))
+        super().set_data(src_cs._data)
         self.pdf = pdf_dest
         self._operations = list(src_cs._operations)
         self.forced_encoding = src_cs.forced_encoding
@@ -1249,10 +1248,10 @@ class ContentStream(DecodedStreamObject):
                     for op in operands:
                         op.write_to_stream(new_data)
                         new_data.write(b" ")
-                    new_data.write(b_(operator))
+                    new_data.write(operator)
                 new_data.write(b"\n")
             self._data = new_data.getvalue()
-        return b_(self._data)
+        return self._data
 
     # This overrides the parent method:
     def set_data(self, data: bytes) -> None:
@@ -1262,21 +1261,21 @@ class ContentStream(DecodedStreamObject):
     @property
     def operations(self) -> List[Tuple[Any, Any]]:
         if not self._operations and self._data:
-            self._parse_content_stream(BytesIO(b_(self._data)))
+            self._parse_content_stream(BytesIO(self._data))
             self._data = b""
         return self._operations
 
     @operations.setter
-    def operations(self, operations: List[Tuple[Any, Any]]) -> None:
+    def operations(self, operations: List[Tuple[Any, bytes]]) -> None:
         self._operations = operations
         self._data = b""
 
     def isolate_graphics_state(self) -> None:
         if self._operations:
-            self._operations.insert(0, ([], "q"))
-            self._operations.append(([], "Q"))
+            self._operations.insert(0, ([], b"q"))
+            self._operations.append(([], b"Q"))
         elif self._data:
-            self._data = b"q\n" + b_(self._data) + b"\nQ\n"
+            self._data = b"q\n" + self._data + b"\nQ\n"
 
     # This overrides the parent method:
     def write_to_stream(

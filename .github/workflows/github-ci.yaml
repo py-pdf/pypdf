@@ -57,12 +57,12 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13-dev"]
         use-crypto-lib: ["cryptography"]
         include:
-          - python-version: "3.7"
+          - python-version: "3.8"
             use-crypto-lib: "pycryptodome"
-          - python-version: "3.7"
+          - python-version: "3.8"
             use-crypto-lib: "none"
     steps:
     - name: Update APT packages
@@ -83,14 +83,14 @@ jobs:
         key: cache-downloaded-files
     - name: Setup Python
       uses: actions/setup-python@v5
-      if: matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      if: matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci.txt'
     - name: Setup Python (3.11+)
       uses: actions/setup-python@v5
-      if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
+      if: matrix.python-version == '3.11' || matrix.python-version == '3.12' || matrix.python-version == '3.13-dev'
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
@@ -102,11 +102,11 @@ jobs:
     - name: Install requirements (Python 3)
       run: |
         pip install -r requirements/ci.txt
-      if: matrix.python-version == '3.7' || matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
+      if: matrix.python-version == '3.8' || matrix.python-version == '3.9' || matrix.python-version == '3.10'
     - name: Install requirements (Python 3.11+)
       run: |
         pip install -r requirements/ci-3.11.txt
-      if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
+      if: matrix.python-version == '3.11' || matrix.python-version == '3.12' || matrix.python-version == '3.13-dev'
     - name: Remove pycryptodome and cryptography
       run: |
         pip uninstall pycryptodome cryptography -y

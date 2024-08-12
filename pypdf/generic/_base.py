@@ -30,18 +30,17 @@ import hashlib
 import re
 from binascii import unhexlify
 from math import log10
+from struct import iter_unpack
 from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
-    b_,
     deprecate_no_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
-    str_,
 )
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
 
@@ -308,6 +307,10 @@ class IndirectObject(PdfObject):
         # items should be extracted from pointed Object
         return self._get_object_with_check()[key]  # type: ignore
 
+    def __float__(self) -> str:
+        # in this case we are looking for the pointed data
+        return self.get_object().__float__()  # type: ignore
+
     def __str__(self) -> str:
         # in this case we are looking for the pointed data
         return self.get_object().__str__()
@@ -369,10 +372,10 @@ FLOAT_WRITE_PRECISION = 8  # shall be min 5 digits max, allow user adj
 
 class FloatObject(float, PdfObject):
     def __new__(
-        cls, value: Union[str, Any] = "0.0", context: Optional[Any] = None
+        cls, value: Any = "0.0", context: Optional[Any] = None
     ) -> "FloatObject":
         try:
-            value = float(str_(value))
+            value = float(value)
             return float.__new__(cls, value)
         except Exception as e:
             # If this isn't a valid decimal (happens in malformed PDFs)
@@ -599,15 +602,16 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
             )
         bytearr = self.get_encoded_bytes()
         stream.write(b"(")
-        for c in bytearr:
-            if not chr(c).isalnum() and c != b" ":
+        for c_ in iter_unpack("c", bytearr):
+            c = cast(bytes, c_[0])
+            if not c.isalnum() and c != b" ":
                 # This:
                 #   stream.write(rf"\{c:0>3o}".encode())
                 # gives
                 #   https://github.com/davidhalter/parso/issues/207
-                stream.write(("\\%03o" % c).encode())
+                stream.write(b"\\%03o" % ord(c))
             else:
-                stream.write(b_(chr(c)))
+                stream.write(c)
         stream.write(b")")
 
 
@@ -710,12 +714,13 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
-    retval = bytearray()
-    for c in unicode_string:
-        try:
-            retval += b_(chr(_pdfdoc_encoding_rev[c]))
-        except KeyError:
-            raise UnicodeEncodeError(
-                "pdfdocencoding", c, -1, -1, "does not exist in translation table"
-            )
-    return bytes(retval)
+    try:
+        return bytes([_pdfdoc_encoding_rev[k] for k in unicode_string])
+    except KeyError:
+        raise UnicodeEncodeError(
+            "pdfdocencoding",
+            unicode_string,
+            -1,
+            -1,
+            "does not exist in translation table",
+        )
