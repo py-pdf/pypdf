@@ -31,7 +31,6 @@ import decimal
 import enum
 import hashlib
 import re
-import sys
 import uuid
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
@@ -62,6 +61,7 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
+    deprecate,
     deprecate_with_replacement,
     logger_warning,
 )
@@ -1425,7 +1425,6 @@ class PdfWriter(PdfDocCommon):
         cnv_rev: Dict[IndirectObject, IndirectObject] = {}
         for k, v in cnv.items():
             cnv_rev.update(zip(v, (k,) * len(v)))
-        cpt = cpt_init
 
         # replace reference to merged objects
         for obj in self._objects:
