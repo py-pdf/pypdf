@@ -391,11 +391,11 @@ def test_merge(tmp_path, url, name):
             {
                 "/Author": "Unknown",
                 "/CreationDate": "Thursday, May 06, 1999 3:56:54 PM",
-                "/Creator": "C:DEBÆł8",
+                "/Creator": r"C:\DEB\6338",
                 "/Keywords": "",
                 "/Producer": "Acrobat PDFWriter 3.02 for Windows",
                 "/Subject": "",
-                "/Title": "C:DEBÆł8-6R.PDF",
+                "/Title": r"C:\DEB\6338-6R.PDF",
             },
         )
     ],
