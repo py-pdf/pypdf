@@ -7,7 +7,7 @@ import pytest
 
 import pypdf.generic
 import pypdf.xmp
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
 
 from . import get_data_from_url
@@ -40,6 +40,35 @@ def test_read_xmp_metadata_samples(src):
         "other": "worlds",
         "⏰": "time",
     }
+
+
+def test_writer_xmp_metadata_samples():
+    writer = PdfWriter(SAMPLE_ROOT / "020-xmp/output_with_metadata_pymupdf.pdf")
+    xmp = writer.xmp_metadata
+    assert xmp
+    assert xmp.dc_contributor == []
+    assert xmp.dc_creator == ["John Doe"]
+    assert xmp.dc_source == "Martin Thoma"  # attribute node
+    assert xmp.dc_description == {"x-default": "This is a text"}
+    assert xmp.dc_date == [datetime(1990, 4, 28, 0, 0)]
+    assert xmp.dc_title == {"x-default": "Sample PDF with XMP Metadata"}
+    assert xmp.custom_properties == {
+        "Style": "FooBarStyle",
+        "other": "worlds",
+        "⏰": "time",
+    }
+    co = pypdf.generic.ContentStream(None, None)
+    co.set_data(
+        xmp.stream.get_data().replace(
+            b'dc:source="Martin Thoma"', b'dc:source="Pubpub-Zz"'
+        )
+    )
+    writer.xmp_metadata = pypdf.xmp.XmpInformation(co)
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(b)
+    xmp2 = reader.xmp_metadata
+    assert xmp2.dc_source == "Pubpub-Zz"
 
 
 @pytest.mark.parametrize(

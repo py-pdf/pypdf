@@ -2188,6 +2188,10 @@ def test_replace_object():
     reader._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)
     reader._replace_object(reader.pages[0].indirect_reference, pg)
+    pg = PageObject.create_blank_page(None, 1000, 1000)
+    pg[NameObject("/Contents")] = writer.pages[0]["/Contents"]
+    writer._add_object(pg)
+    writer.add_page(pg)
 
 
 def test_mime_jupyter():
@@ -2300,3 +2304,9 @@ def test_matrix_entry_in_field_annots():
         auto_regenerate=False,
     )
     assert "/Matrix" in writer.pages[0]["/Annots"][5].get_object()["/AP"]["/N"]
+
+
+def test_set_need_appearances_writer():
+    """Minimal test for coverage"""
+    writer = PdfWriter()
+    writer.set_need_appearances_writer()
