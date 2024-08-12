@@ -28,7 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-import sys
 from decimal import Decimal
 from pathlib import Path
 from typing import (
@@ -38,6 +37,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    Literal,
     Optional,
     Sequence,
     Set,
@@ -84,12 +84,6 @@ from .generic import (
     RectangleObject,
     StreamObject,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
-
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
