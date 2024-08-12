@@ -382,7 +382,7 @@ class PdfWriter(PdfDocCommon):
             raise ValueError("pdf must be self")
         else:
             obj = self._objects[indirect_reference.idnum - 1]
-        assert obj is not None
+        assert obj is not None  # clarification for mypy
         return obj
 
     def _replace_object(
@@ -403,7 +403,7 @@ class PdfWriter(PdfDocCommon):
         self._objects[indirect_reference - 1] = obj
         obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
 
-        assert isinstance(obj, PdfObject)
+        assert isinstance(obj, PdfObject)  # clarification for mypy
         return obj
 
     def _add_page(
@@ -1253,7 +1253,7 @@ class PdfWriter(PdfDocCommon):
                 "It may not be written to correctly.",
                 __name__,
             )
-        # no more used :
+        # deprecated to be removed in pypdf 6.0.0 :
         # if not self._root:
         #   self._root = self._add_object(self._root_object)
         # self._sweep_indirect_references(self._root)
@@ -1375,18 +1375,15 @@ class PdfWriter(PdfDocCommon):
         self,
         remove_identicals: bool = True,
         remove_orphans: bool = True,
-        verbose: int = -1,
     ) -> None:
         """
-        Parse the Pdf file and merge objects that have same harsh.
+        Parse the PDF file and merge objects that have same hash.
         This will make objects common to multiple pages
         Recommended to be used just before writing output
 
         Args:
             remove_identicals: remove of identical objects
             remove_orphans: remove of unreferenced objects
-            verbose: frequence of progress update; <0 => disable
-
         """
 
         def replace_in_obj(
@@ -1411,11 +1408,6 @@ class PdfWriter(PdfDocCommon):
 
         # _idnum_hash :dict[hash]=(1st_ind_obj,[other_indir_objs,...])
         self._idnum_hash = {}
-        if isinstance(verbose, int):
-            cpt_init = verbose
-        else:
-            cpt_init = -1
-        cpt = cpt_init
         orphans = [True] * len(self._objects)
         # look for similar objects
         for idx, obj in enumerate(self._objects):
@@ -1423,10 +1415,6 @@ class PdfWriter(PdfDocCommon):
                 continue
             assert isinstance(obj.indirect_reference, IndirectObject)
             h = obj.hash_value()
-            if cpt == 0:
-                print("+", end="", file=sys.stderr)  # noqa: T201
-                cpt = cpt_init
-            cpt -= 1
             if remove_identicals and h in self._idnum_hash:
                 self._idnum_hash[h][1].append(obj.indirect_reference)
                 self._objects[idx] = None
@@ -1443,21 +1431,17 @@ class PdfWriter(PdfDocCommon):
         # replace reference to merged objects
         for obj in self._objects:
             if isinstance(obj, (DictionaryObject, ArrayObject)):
-                if cpt == 0:
-                    print(".", end="", file=sys.stderr)  # noqa: T201
-                    cpt = cpt_init
-                cpt -= 1
                 replace_in_obj(obj, cnv_rev)
 
         # remove orphans (if applicable)
         orphans[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
         try:
             orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
-        except Exception:  # pragma: no cover
-            pass  # pragma: no cover
+        except AttributeError:
+            pass
         try:
             orphans[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
-        except Exception:
+        except AttributeError:
             pass
         for i in compress(range(len(self._objects)), orphans):
             self._objects[i] = None
