@@ -14,16 +14,10 @@ For example, if two pages include the same image which is duplicated in the sour
 
 Additionally, when you delete objects in a document, pypdf cannot easily identify whether the objects are used elsewhere or not or if the user wants to keep them in. When writing the PDF file, these objects will be hidden within (part of the file, but not displayed).
 
-In order to reduce the file size, use a compression call: `writer.compress_identical_objects(remove_identicals=True, remove_orphans=True, verbose=-1)`
+In order to reduce the file size, use a compression call: `writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)`
 
 * `remove_identicals` enables/disables compression merging identical objects.
 * `remove_orphans` enables/disables suppression of unused objects.
-* `verbose` sets the value on how many objects are processed.
-
-The progress status (printed on stderr) of the compression is printed as follows:
-
-* `'+'` during initial loop
-* `'.'` when replacing duplicates
 
 It is recommended to apply this process just before writing to file/stream.
 
