@@ -495,7 +495,7 @@ class PageObject(DictionaryObject):
             return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
-    def images(self) -> List[ImageFile]:
+    def images(self) -> _VirtualListImages:  # noqa: F821
         """
         Read-only property emulating a list of images on a page.
 
@@ -532,7 +532,7 @@ class PageObject(DictionaryObject):
         Inline images are extracted and named ~0~, ~1~, ..., with the
         indirect_reference set to None.
         """
-        return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
+        return _VirtualListImages(self._get_ids_image, self._get_image)
 
     def _translate_value_inlineimage(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""
