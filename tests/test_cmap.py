@@ -6,7 +6,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import build_char_map
-from pypdf.generic import ArrayObject, NameObject, NullObject
+from pypdf.generic import ArrayObject, IndirectObject, NameObject, NullObject
 
 from . import get_data_from_url
 
@@ -212,6 +212,22 @@ def test_eten_b5():
     """Issue #2356"""
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
     reader.pages[0].extract_text().startswith("1/7 \n富邦新終身壽險")
+
+
+@pytest.mark.enable_socket()
+def test_missing_entries_in_cmap():
+    """
+    Issue #2702: this issue is observed on damaged pdfs
+    use of this file in test has been discarded as too slow/long
+    we will create the same error from crazyones
+    """
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    p = reader.pages[0]
+    p["/Resources"]["/Font"]["/F1"][NameObject("/ToUnicode")] = IndirectObject(
+        99999999, 0, reader
+    )
+    p.extract_text()
 
 
 def test_null_missing_width():
