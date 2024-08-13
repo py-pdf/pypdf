@@ -9,23 +9,17 @@ Some PDF documents contain the same object multiple times. For example, if an
 image appears three times in a PDF it could be embedded three times. Or it can
 be embedded once and referenced twice.
 
-This can be done by reading and writing the file:
+When adding data to a PdfWriter, the data is copied while respecting the original format.
+For example, if two pages include the same image which is duplicated in the source document, the object will be duplicated in the PdfWriter object.
 
-```python
-from pypdf import PdfReader, PdfWriter
+Additionally, when you delete objects in a document, pypdf cannot easily identify whether the objects are used elsewhere or not or if the user wants to keep them in. When writing the PDF file, these objects will be hidden within (part of the file, but not displayed).
 
-reader = PdfReader("big-old-file.pdf")
-writer = PdfWriter()
+In order to reduce the file size, use a compression call: `writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)`
 
-for page in reader.pages:
-    writer.add_page(page)
+* `remove_identicals` enables/disables compression merging identical objects.
+* `remove_orphans` enables/disables suppression of unused objects.
 
-if reader.metadata is not None:
-    writer.add_metadata(reader.metadata)
-
-with open("smaller-new-file.pdf", "wb") as fp:
-    writer.write(fp)
-```
+It is recommended to apply this process just before writing to the file/stream.
 
 It depends on the PDF how well this works, but we have seen an 86% file
 reduction (from 5.7 MB to 0.8 MB) within a real PDF.
