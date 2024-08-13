@@ -19,7 +19,7 @@ In order to reduce the file size, use a compression call: `writer.compress_ident
 * `remove_identicals` enables/disables compression merging identical objects.
 * `remove_orphans` enables/disables suppression of unused objects.
 
-It is recommended to apply this process just before writing to file/stream.
+It is recommended to apply this process just before writing to the file/stream.
 
 It depends on the PDF how well this works, but we have seen an 86% file
 reduction (from 5.7 MB to 0.8 MB) within a real PDF.
