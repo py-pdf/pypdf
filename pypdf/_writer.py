@@ -160,11 +160,11 @@ class PdfWriter(PdfDocCommon):
         """The indirect objects in the PDF."""
 
         """Maps hash values of indirect objects to the list of IndirectObjects.
-           This is used for compression
+           This is used for compression.
         """
         self._idnum_hash: Dict[bytes, Tuple[IndirectObject, List[IndirectObject]]] = {}
 
-        """list of translation already done.
+        """List of already translated IDs.
            dict[id(pdf)][(idnum, generation)]
         """
         self._id_translated: Dict[int, Dict[int, int]] = {}
@@ -1377,12 +1377,12 @@ class PdfWriter(PdfDocCommon):
     ) -> None:
         """
         Parse the PDF file and merge objects that have same hash.
-        This will make objects common to multiple pages
-        Recommended to be used just before writing output
+        This will make objects common to multiple pages.
+        Recommended to be used just before writing output.
 
         Args:
-            remove_identicals: remove of identical objects
-            remove_orphans: remove of unreferenced objects
+            remove_identicals: Remove identical objects.
+            remove_orphans: Remove unreferenced objects.
         """
 
         def replace_in_obj(
