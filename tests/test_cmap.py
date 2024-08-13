@@ -6,7 +6,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import build_char_map
-from pypdf.generic import ArrayObject, NameObject, NullObject
+from pypdf.generic import ArrayObject, IndirectObject, NameObject, NullObject
 
 from . import get_data_from_url
 
@@ -213,7 +213,7 @@ def test_eten_b5():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
     reader.pages[0].extract_text().startswith("1/7 \n富邦新終身壽險")
 
-    
+
 @pytest.mark.enable_socket()
 def test_missing_entries_in_cmap():
     """
