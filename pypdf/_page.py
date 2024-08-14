@@ -301,7 +301,13 @@ class Transformation:
         return list(pt1) if isinstance(pt, list) else pt1
 
 
-class _VirtualListImages(Sequence[ImageFile]):
+class VirtualListImages(Sequence[ImageFile]):
+    """
+    Provides access to images referenced within a page.
+    One copy only will be returned if used many times in the same page
+    see #pypdf._page.PageObject.images for more details
+    """
+
     def __init__(
         self,
         ids_function: Callable[[], List[Union[str, List[str]]]],
@@ -552,7 +558,7 @@ class PageObject(DictionaryObject):
             return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
-    def images(self) -> _VirtualListImages:
+    def images(self) -> VirtualListImages:
         """
         Read-only property emulating a list of images on a page.
 
@@ -562,11 +568,10 @@ class PageObject(DictionaryObject):
         - An integer
 
         Examples:
-            reader.pages[0].images[0]        # return fist image
-            reader.pages[0].images['/I0']    # return image '/I0'
-            # return image '/Image1' within '/TP1' Xobject/Form:
-            reader.pages[0].images['/TP1','/Image1']
-            for img in reader.pages[0].images: # loop within all objects
+            `reader.pages[0].images[0]`        # return fist image
+            `reader.pages[0].images['/I0']`    # return image '/I0'
+            `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' Xobject/Form
+            `for img in reader.pages[0].images:` # loops through all objects
 
         images.keys() and images.items() can be used.
 
@@ -589,7 +594,7 @@ class PageObject(DictionaryObject):
         Inline images are extracted and named ~0~, ~1~, ..., with the
         indirect_reference set to None.
         """
-        return _VirtualListImages(self._get_ids_image, self._get_image)
+        return VirtualListImages(self._get_ids_image, self._get_image)
 
     def _translate_value_inlineimage(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""

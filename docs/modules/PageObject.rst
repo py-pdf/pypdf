@@ -6,7 +6,7 @@ The PageObject Class
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: pypdf._page._VirtualListImages
+.. autoclass:: pypdf._page.VirtualListImages
     :members:
     :undoc-members:
     :show-inheritance:
