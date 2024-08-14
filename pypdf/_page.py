@@ -28,8 +28,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
+from dataclasses import dataclass
 from decimal import Decimal
+from io import BytesIO
 from pathlib import Path
+from types import ModuleType
 from typing import (
     Any,
     Callable,
@@ -58,9 +61,8 @@ from ._text_extraction import (
 )
 from ._utils import (
     CompressedTransformationMatrix,
-    File,
-    ImageFile,
     TransformationMatrixType,
+    _human_readable_bytes,
     logger_warning,
     matrix_multiply,
 )
@@ -84,6 +86,12 @@ from .generic import (
     RectangleObject,
     StreamObject,
 )
+
+Image: Optional[ModuleType]
+try:
+    from PIL import Image
+except ImportError:
+    Image = None  # error will be raised only when using images
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
@@ -301,11 +309,102 @@ class Transformation:
         return list(pt1) if isinstance(pt, list) else pt1
 
 
+@dataclass
+class ImageFile:
+    """
+    Image within the PDF file. *This object is not designed to be built.*
+
+    This object should not be modified except using :func:`ImageFile:replace` to replace the image with a new one.
+    """
+
+    name: str = ""
+    """
+    FileName as identified within the PDF file
+    """
+
+    data: bytes = b""
+    """
+    data as bytes
+    """
+
+    image: Optional[Image.Image] = None  # type: ignore
+    """
+    data as PIL image;
+    """
+
+    indirect_reference: Optional[IndirectObject] = None
+    """
+    Reference to the Object storing the stream
+    """
+
+    def replace(self, new_image: Any, **kwargs: Any) -> None:
+        """
+        Replace the Image with a new PIL image.
+
+        Args:
+            new_image (PIL.Image.Image): The new PIL image to replace the existing image.
+            **kwargs: Additional keyword arguments to pass to `Image.Image.save()`.
+
+        Raises:
+            TypeError: If the image is inline or in a PdfReader.
+            TypeError: If the image does not belong to a PdfWriter.
+            TypeError: If `new_image` is not a PIL Image.
+
+        Note:
+            This method replaces the existing image with a new image.
+            It is not allowed for inline images or images within a PdfReader.
+            The `kwargs` parameter allows passing additional parameters
+            to `Image.Image.save()`, such as quality.
+        """
+        if Image is None:
+            raise ImportError(
+                "pillow is required to do image extraction. "
+                "It can be installed via 'pip install pypdf[image]'"
+            )
+
+        from ._reader import PdfReader
+
+        # to prevent circular import
+        from .filters import _xobj_to_image
+        from .generic import DictionaryObject, PdfObject
+
+        if self.indirect_reference is None:
+            raise TypeError("Can not update an inline image")
+        if not hasattr(self.indirect_reference.pdf, "_id_translated"):
+            raise TypeError("Can not update an image not belonging to a PdfWriter")
+        if not isinstance(new_image, Image.Image):
+            raise TypeError("new_image shall be a PIL Image")
+        b = BytesIO()
+        new_image.save(b, "PDF", **kwargs)
+        reader = PdfReader(b)
+        assert reader.pages[0].images[0].indirect_reference is not None
+        self.indirect_reference.pdf._objects[self.indirect_reference.idnum - 1] = (
+            reader.pages[0].images[0].indirect_reference.get_object()
+        )
+        cast(
+            PdfObject, self.indirect_reference.get_object()
+        ).indirect_reference = self.indirect_reference
+        # change the object attributes
+        extension, byte_stream, img = _xobj_to_image(
+            cast(DictionaryObject, self.indirect_reference.get_object())
+        )
+        assert extension is not None
+        self.name = self.name[: self.name.rfind(".")] + extension
+        self.data = byte_stream
+        self.image = img
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
+
+    def __repr__(self) -> str:
+        return self.__str__()[:-1] + f", hash: {hash(self.data)})"
+
+
 class VirtualListImages(Sequence[ImageFile]):
     """
     Provides access to images referenced within a page.
     One copy only will be returned if used many times in the same page
-    see #pypdf._page.PageObject.images for more details
+    see :func:`PageObject.images` for more details
     """
 
     def __init__(
@@ -454,33 +553,6 @@ class PageObject(DictionaryObject):
 
         return page
 
-    @property
-    def _old_images(self) -> List[File]:  # deprecated
-        """
-        Get a list of all images of the page.
-
-        This requires pillow. You can install it via 'pip install pypdf[image]'.
-
-        For the moment, this does NOT include inline images. They will be added
-        in future.
-        """
-        images_extracted: List[File] = []
-        if RES.XOBJECT not in self[PG.RESOURCES]:  # type: ignore
-            return images_extracted
-
-        x_object = self[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
-        for obj in x_object:
-            if x_object[obj][IA.SUBTYPE] == "/Image":
-                extension, byte_stream, img = _xobj_to_image(x_object[obj])
-                if extension is not None:
-                    filename = f"{obj[1:]}{extension}"
-                    images_extracted.append(File(name=filename, data=byte_stream))
-                    images_extracted[-1].image = img
-                    images_extracted[-1].indirect_reference = x_object[
-                        obj
-                    ].indirect_reference
-        return images_extracted
-
     def _get_ids_image(
         self,
         obj: Optional[DictionaryObject] = None,
@@ -568,19 +640,19 @@ class PageObject(DictionaryObject):
         - An integer
 
         Examples:
-            `reader.pages[0].images[0]`        # return fist image
-            `reader.pages[0].images['/I0']`    # return image '/I0'
-            `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' Xobject/Form
-            `for img in reader.pages[0].images:` # loops through all objects
+            * `reader.pages[0].images[0]`        # return fist image
+            * `reader.pages[0].images['/I0']`    # return image '/I0'
+            * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' Xobject/Form
+            * `for img in reader.pages[0].images:` # loops through all objects
 
         images.keys() and images.items() can be used.
 
         The ImageFile has the following properties:
 
-            `.name` : name of the object
-            `.data` : bytes of the object
-            `.image`  : PIL Image Object
-            `.indirect_reference` : object reference
+            * `.name` : name of the object
+            * `.data` : bytes of the object
+            * `.image`  : PIL Image Object
+            * `.indirect_reference` : object reference
 
         and the following methods:
             `.replace(new_image: PIL.Image.Image, **kwargs)` :
