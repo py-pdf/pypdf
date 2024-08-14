@@ -32,7 +32,6 @@ from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
-from types import ModuleType
 from typing import (
     Any,
     Callable,
@@ -87,11 +86,12 @@ from .generic import (
     StreamObject,
 )
 
-Image: Optional[ModuleType]
 try:
-    from PIL import Image
+    from PIL.Image import Image
+
+    pil_not_imported = False
 except ImportError:
-    Image = None  # error will be raised only when using images
+    pil_not_imported = True  # error will be raised only when using images
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
@@ -314,7 +314,7 @@ class ImageFile:
     """
     Image within the PDF file. *This object is not designed to be built.*
 
-    This object should not be modified except using :func:`ImageFile:replace` to replace the image with a new one.
+    This object should not be modified except using :func:`ImageFile.replace` to replace the image with a new one.
     """
 
     name: str = ""
@@ -327,7 +327,7 @@ class ImageFile:
     data as bytes
     """
 
-    image: Optional[Image.Image] = None  # type: ignore
+    image: Optional[Image] = None
     """
     data as PIL image;
     """
@@ -337,13 +337,13 @@ class ImageFile:
     Reference to the Object storing the stream
     """
 
-    def replace(self, new_image: Any, **kwargs: Any) -> None:
+    def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
         Replace the Image with a new PIL image.
 
         Args:
             new_image (PIL.Image.Image): The new PIL image to replace the existing image.
-            **kwargs: Additional keyword arguments to pass to `Image.Image.save()`.
+            **kwargs: Additional keyword arguments to pass to `Image.save()`.
 
         Raises:
             TypeError: If the image is inline or in a PdfReader.
@@ -354,9 +354,9 @@ class ImageFile:
             This method replaces the existing image with a new image.
             It is not allowed for inline images or images within a PdfReader.
             The `kwargs` parameter allows passing additional parameters
-            to `Image.Image.save()`, such as quality.
+            to `Image.save()`, such as quality.
         """
-        if Image is None:
+        if pil_not_imported:
             raise ImportError(
                 "pillow is required to do image extraction. "
                 "It can be installed via 'pip install pypdf[image]'"
@@ -372,7 +372,7 @@ class ImageFile:
             raise TypeError("Can not update an inline image")
         if not hasattr(self.indirect_reference.pdf, "_id_translated"):
             raise TypeError("Can not update an image not belonging to a PdfWriter")
-        if not isinstance(new_image, Image.Image):
+        if not isinstance(new_image, Image):
             raise TypeError("new_image shall be a PIL Image")
         b = BytesIO()
         new_image.save(b, "PDF", **kwargs)
