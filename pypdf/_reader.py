@@ -544,7 +544,7 @@ class PdfReader(PdfDocCommon):
         try:
             return self.resolved_objects.get((generation, idnum))
         except RecursionError:
-            raise PdfReadError("Max recursion Error")
+            raise PdfReadError("Maximum recursion depth reached.")
 
     def cache_indirect_object(
         self, generation: int, idnum: int, obj: Optional[PdfObject]

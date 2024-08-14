@@ -1125,7 +1125,7 @@ class PdfDocCommon:
                         self._flatten(obj, inherit, **addt)
                     except RecursionError:
                         raise PdfReadError(
-                            "Max Recursion reached during page flattening"
+                            "Maximum recursion depth reached during page flattening."
                         )
         elif t == "/Page":
             for attr_in, value in list(inherit.items()):
