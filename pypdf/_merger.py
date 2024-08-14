@@ -46,7 +46,6 @@ from ._reader import PdfReader
 from ._utils import (
     StrByteType,
     deprecate_with_replacement,
-    str_,
 )
 from ._writer import PdfWriter
 from .constants import GoToActionArguments, TypArguments, TypFitArguments
@@ -80,6 +79,15 @@ class _MergedPage:
         self.pagedata = pagedata
         self.out_pagedata = None
         self.id = id
+
+
+# transfered from _utils : as this function is only required here
+# and merger will be soon deprecated
+def str_(b: Any) -> str:  # pragma: no cover
+    if isinstance(b, bytes):
+        return b.decode("latin-1")
+    else:
+        return str(b)  # will return b.__str__() if defined
 
 
 class PdfMerger:

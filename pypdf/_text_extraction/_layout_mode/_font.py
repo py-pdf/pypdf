@@ -1,8 +1,9 @@
 """Font constants and classes for "layout" mode text operations"""
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Sequence, Union
+from typing import Any, Dict, Sequence, Union, cast
 
+from ...errors import ParseError
 from ...generic import IndirectObject
 from ._font_widths import STANDARD_WIDTHS
 
@@ -43,7 +44,7 @@ class Font:
                 self.font_dictionary["/DescendantFonts"]
             ):
                 while isinstance(d_font, IndirectObject):
-                    d_font = d_font.get_object()  # type: ignore[assignment]
+                    d_font = d_font.get_object()
                 self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font
                 ord_map = {
                     ord(_target): _surrogate
@@ -58,6 +59,7 @@ class Font:
                 skip_count = 0
                 _w = d_font.get("/W", [])
                 for idx, w_entry in enumerate(_w):
+                    w_entry = w_entry.get_object()
                     if skip_count:
                         skip_count -= 1
                         continue
@@ -66,13 +68,18 @@ class Font:
                         # warning and or use reader's "strict" to force an ex???
                         continue
                     # check for format (1): `int [int int int int ...]`
-                    if isinstance(_w[idx + 1], Sequence):
-                        start_idx, width_list = _w[idx : idx + 2]
+                    w_next_entry = _w[idx + 1].get_object()
+                    if isinstance(w_next_entry, Sequence):
+                        start_idx, width_list = w_entry, w_next_entry
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: _width
                                 for _cidx, _width in zip(
-                                    range(start_idx, start_idx + len(width_list), 1),
+                                    range(
+                                        cast(int, start_idx),
+                                        cast(int, start_idx) + len(width_list),
+                                        1,
+                                    ),
                                     width_list,
                                 )
                                 if _cidx in ord_map
@@ -80,18 +87,31 @@ class Font:
                         )
                         skip_count = 1
                     # check for format (2): `int int int`
-                    if not isinstance(_w[idx + 1], Sequence) and not isinstance(
-                        _w[idx + 2], Sequence
+                    elif isinstance(w_next_entry, (int, float)) and isinstance(
+                        _w[idx + 2].get_object(), (int, float)
                     ):
-                        start_idx, stop_idx, const_width = _w[idx : idx + 3]
+                        start_idx, stop_idx, const_width = (
+                            w_entry,
+                            w_next_entry,
+                            _w[idx + 2].get_object(),
+                        )
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: const_width
-                                for _cidx in range(start_idx, stop_idx + 1, 1)
+                                for _cidx in range(
+                                    cast(int, start_idx), cast(int, stop_idx + 1), 1
+                                )
                                 if _cidx in ord_map
                             }
                         )
                         skip_count = 2
+                    else:
+                        # Note: this doesn't handle the case of out of bounds (reaching the end of the width definitions
+                        # while expecting more elements). This raises an IndexError which is sufficient.
+                        raise ParseError(
+                            f"Invalid font width definition. Next elements: {w_entry}, {w_next_entry}, {_w[idx + 2]}"
+                        )  # pragma: no cover
+
         if not self.width_map and "/BaseFont" in self.font_dictionary:
             for key in STANDARD_WIDTHS:
                 if self.font_dictionary["/BaseFont"].startswith(f"/{key}"):

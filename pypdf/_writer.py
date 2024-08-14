@@ -27,20 +27,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import collections
 import decimal
 import enum
 import hashlib
 import re
 import uuid
 from io import BytesIO, FileIO, IOBase
+from itertools import compress
 from pathlib import Path
 from types import TracebackType
 from typing import (
     IO,
     Any,
     Callable,
-    Deque,
     Dict,
     Iterable,
     List,
@@ -62,7 +61,7 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
-    b_,
+    deprecate,
     deprecate_with_replacement,
     logger_warning,
 )
@@ -157,12 +156,17 @@ class PdfWriter(PdfDocCommon):
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
     ) -> None:
         self._header = b"%PDF-1.3"
-        self._objects: List[PdfObject] = []
+        self._objects: List[Optional[PdfObject]] = []
         """The indirect objects in the PDF."""
 
-        self._idnum_hash: Dict[bytes, IndirectObject] = {}
-        """Maps hash values of indirect objects to their IndirectObject instances."""
+        """Maps hash values of indirect objects to the list of IndirectObjects.
+           This is used for compression.
+        """
+        self._idnum_hash: Dict[bytes, Tuple[IndirectObject, List[IndirectObject]]] = {}
 
+        """List of already translated IDs.
+           dict[id(pdf)][(idnum, generation)]
+        """
         self._id_translated: Dict[int, Dict[int, int]] = {}
 
         # The root of our page tree node.
@@ -371,10 +375,13 @@ class PdfWriter(PdfDocCommon):
         indirect_reference: Union[int, IndirectObject],
     ) -> PdfObject:
         if isinstance(indirect_reference, int):
-            return self._objects[indirect_reference - 1]
-        if indirect_reference.pdf != self:
+            obj = self._objects[indirect_reference - 1]
+        elif indirect_reference.pdf != self:
             raise ValueError("pdf must be self")
-        return self._objects[indirect_reference.idnum - 1]
+        else:
+            obj = self._objects[indirect_reference.idnum - 1]
+        assert obj is not None  # clarification for mypy
+        return obj
 
     def _replace_object(
         self,
@@ -393,7 +400,9 @@ class PdfWriter(PdfDocCommon):
             obj = obj.clone(self)
         self._objects[indirect_reference - 1] = obj
         obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
-        return self._objects[indirect_reference - 1]
+
+        assert isinstance(obj, PdfObject)  # clarification for mypy
+        return obj
 
     def _add_page(
         self,
@@ -678,9 +687,10 @@ class PdfWriter(PdfDocCommon):
         # Hello world!
         # endstream
         # endobj
-
+        if isinstance(data, str):
+            data = data.encode("latin-1")
         file_entry = DecodedStreamObject()
-        file_entry.set_data(b_(data))
+        file_entry.set_data(data)
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
 
         # The Filespec entry
@@ -906,6 +916,10 @@ class PdfWriter(PdfDocCommon):
                 "/Length": 0,
             }
         )
+        if AA.AP in anno:
+            for k, v in cast(DictionaryObject, anno[AA.AP]).get("/N", {}).items():
+                if k not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
+                    dct[k] = v
 
         # Update Resources with font information if necessary
         if font_res is not None:
@@ -1238,14 +1252,13 @@ class PdfWriter(PdfDocCommon):
                 "It may not be written to correctly.",
                 __name__,
             )
+        # deprecated to be removed in pypdf 6.0.0 :
+        # if not self._root:
+        #   self._root = self._add_object(self._root_object)
+        # self._sweep_indirect_references(self._root)
 
-        if not self._root:
-            self._root = self._add_object(self._root_object)
-
-        self._sweep_indirect_references(self._root)
-
-        object_positions = self._write_pdf_structure(stream)
-        xref_location = self._write_xref_table(stream, object_positions)
+        object_positions, free_objects = self._write_pdf_structure(stream)
+        xref_location = self._write_xref_table(stream, object_positions, free_objects)
         self._write_trailer(stream, xref_location)
 
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:
@@ -1278,8 +1291,9 @@ class PdfWriter(PdfDocCommon):
 
         return my_file, stream
 
-    def _write_pdf_structure(self, stream: StreamType) -> List[int]:
+    def _write_pdf_structure(self, stream: StreamType) -> Tuple[List[int], List[int]]:
         object_positions = []
+        free_objects = []  # will contain list of all free entries
         stream.write(self.pdf_header.encode() + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
 
@@ -1292,15 +1306,26 @@ class PdfWriter(PdfDocCommon):
                     obj = self._encryption.encrypt_object(obj, idnum, 0)
                 obj.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
-        return object_positions
+            else:
+                object_positions.append(-1)
+                free_objects.append(i + 1)
+        free_objects.append(0)  # add 0 to loop in accordance with PDF spec
+        return object_positions, free_objects
 
-    def _write_xref_table(self, stream: StreamType, object_positions: List[int]) -> int:
+    def _write_xref_table(
+        self, stream: StreamType, object_positions: List[int], free_objects: List[int]
+    ) -> int:
         xref_location = stream.tell()
         stream.write(b"xref\n")
         stream.write(f"0 {len(self._objects) + 1}\n".encode())
-        stream.write(f"{0:0>10} {65535:0>5} f \n".encode())
+        stream.write(f"{free_objects[0]:0>10} {65535:0>5} f \n".encode())
+        free_idx = 1
         for offset in object_positions:
-            stream.write(f"{offset:0>10} {0:0>5} n \n".encode())
+            if offset > 0:
+                stream.write(f"{offset:0>10} {0:0>5} n \n".encode())
+            else:
+                stream.write(f"{free_objects[free_idx]:0>10} {1:0>5} f \n".encode())
+                free_idx += 1
         return xref_location
 
     def _write_trailer(self, stream: StreamType, xref_location: int) -> None:
@@ -1345,6 +1370,79 @@ class PdfWriter(PdfDocCommon):
         assert isinstance(self._info, DictionaryObject)
         self._info.update(args)
 
+    def compress_identical_objects(
+        self,
+        remove_identicals: bool = True,
+        remove_orphans: bool = True,
+    ) -> None:
+        """
+        Parse the PDF file and merge objects that have same hash.
+        This will make objects common to multiple pages.
+        Recommended to be used just before writing output.
+
+        Args:
+            remove_identicals: Remove identical objects.
+            remove_orphans: Remove unreferenced objects.
+        """
+
+        def replace_in_obj(
+            obj: PdfObject, crossref: Dict[IndirectObject, IndirectObject]
+        ) -> None:
+            if isinstance(obj, DictionaryObject):
+                key_val = obj.items()
+            elif isinstance(obj, ArrayObject):
+                key_val = enumerate(obj)  # type: ignore
+            else:
+                return
+            assert isinstance(obj, (DictionaryObject, ArrayObject))
+            for k, v in key_val:
+                if isinstance(v, IndirectObject):
+                    orphans[v.idnum - 1] = False
+                    if v in crossref:
+                        obj[k] = crossref[v]
+                else:
+                    """the filtering on DictionaryObject and ArrayObject only
+                    will be performed within replace_in_obj"""
+                    replace_in_obj(v, crossref)
+
+        # _idnum_hash :dict[hash]=(1st_ind_obj,[other_indir_objs,...])
+        self._idnum_hash = {}
+        orphans = [True] * len(self._objects)
+        # look for similar objects
+        for idx, obj in enumerate(self._objects):
+            if obj is None:
+                continue
+            assert isinstance(obj.indirect_reference, IndirectObject)
+            h = obj.hash_value()
+            if remove_identicals and h in self._idnum_hash:
+                self._idnum_hash[h][1].append(obj.indirect_reference)
+                self._objects[idx] = None
+            else:
+                self._idnum_hash[h] = (obj.indirect_reference, [])
+
+        # generate the dict converting others to 1st
+        cnv = {v[0]: v[1] for v in self._idnum_hash.values() if len(v[1]) > 0}
+        cnv_rev: Dict[IndirectObject, IndirectObject] = {}
+        for k, v in cnv.items():
+            cnv_rev.update(zip(v, (k,) * len(v)))
+
+        # replace reference to merged objects
+        for obj in self._objects:
+            if isinstance(obj, (DictionaryObject, ArrayObject)):
+                replace_in_obj(obj, cnv_rev)
+
+        # remove orphans (if applicable)
+        orphans[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
+
+        orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
+
+        try:
+            orphans[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
+        except AttributeError:
+            pass
+        for i in compress(range(len(self._objects)), orphans):
+            self._objects[i] = None
+
     def _sweep_indirect_references(
         self,
         root: Union[
@@ -1359,7 +1457,7 @@ class PdfWriter(PdfDocCommon):
             TextStringObject,
             NullObject,
         ],
-    ) -> None:
+    ) -> None:  # deprecated
         """
         Resolving any circular references to Page objects.
 
@@ -1375,73 +1473,13 @@ class PdfWriter(PdfDocCommon):
         Args:
             root: The root of the PDF object tree to sweep.
         """
-        stack: Deque[
-            Tuple[
-                Any,
-                Optional[Any],
-                Any,
-                List[PdfObject],
-            ]
-        ] = collections.deque()
-        discovered = []
-        parent = None
-        grant_parents: List[PdfObject] = []
-        key_or_id = None
+        deprecate(
+            "_sweep_indirect_references has been removed, please report to dev team if this warning is observed",
+        )
 
-        # Start from root
-        stack.append((root, parent, key_or_id, grant_parents))
-
-        while len(stack):
-            data, parent, key_or_id, grant_parents = stack.pop()
-
-            # Build stack for a processing depth-first
-            if isinstance(data, (ArrayObject, DictionaryObject)):
-                for key, value in data.items():
-                    stack.append(
-                        (
-                            value,
-                            data,
-                            key,
-                            grant_parents + [parent] if parent is not None else [],
-                        )
-                    )
-            elif isinstance(data, IndirectObject) and data.pdf != self:
-                data = self._resolve_indirect_object(data)
-
-                if str(data) not in discovered:
-                    discovered.append(str(data))
-                    stack.append((data.get_object(), None, None, []))
-
-            # Check if data has a parent and if it is a dict or
-            # an array update the value
-            if isinstance(parent, (DictionaryObject, ArrayObject)):
-                if isinstance(data, StreamObject):
-                    # a dictionary value is a stream; streams must be indirect
-                    # objects, so we need to change this value.
-                    data = self._resolve_indirect_object(self._add_object(data))
-
-                update_hashes = []
-
-                # Data changed and thus the hash value changed
-                if parent[key_or_id] != data:
-                    update_hashes = [parent.hash_value()] + [
-                        grant_parent.hash_value() for grant_parent in grant_parents
-                    ]
-                    parent[key_or_id] = data
-
-                # Update old hash value to new hash value
-                for old_hash in update_hashes:
-                    indirect_reference = self._idnum_hash.pop(old_hash, None)
-
-                    if indirect_reference is not None:
-                        indirect_reference_obj = indirect_reference.get_object()
-
-                        if indirect_reference_obj is not None:
-                            self._idnum_hash[
-                                indirect_reference_obj.hash_value()
-                            ] = indirect_reference
-
-    def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
+    def _resolve_indirect_object(
+        self, data: IndirectObject
+    ) -> IndirectObject:  # deprecated
         """
         Resolves an indirect object to an indirect object in this PDF file.
 
@@ -1466,36 +1504,10 @@ class PdfWriter(PdfDocCommon):
         Raises:
             ValueError: If the input stream is closed.
         """
-        if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
-            raise ValueError(f"I/O operation on closed file: {data.pdf.stream.name}")
-
-        if data.pdf == self:
-            return data
-
-        # Get real object indirect object
-        real_obj = data.pdf.get_object(data)
-
-        if real_obj is None:
-            logger_warning(
-                f"Unable to resolve [{data.__class__.__name__}: {data}], "
-                "returning NullObject instead",
-                __name__,
-            )
-            real_obj = NullObject()
-
-        hash_value = real_obj.hash_value()
-
-        # Check if object is handled
-        if hash_value in self._idnum_hash:
-            return self._idnum_hash[hash_value]
-
-        if data.pdf == self:
-            self._idnum_hash[hash_value] = IndirectObject(data.idnum, 0, self)
-        # This is new object in this pdf
-        else:
-            self._idnum_hash[hash_value] = self._add_object(real_obj)
-
-        return self._idnum_hash[hash_value]
+        deprecate(
+            "_resolve_indirect_object has been removed, please report to dev team if this warning is observed",
+        )
+        return IndirectObject(0, 0, self)
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1

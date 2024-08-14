@@ -28,7 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-import sys
 from decimal import Decimal
 from pathlib import Path
 from typing import (
@@ -38,6 +37,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    Literal,
     Optional,
     Sequence,
     Set,
@@ -84,12 +84,6 @@ from .generic import (
     RectangleObject,
     StreamObject,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
-
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
@@ -852,7 +846,7 @@ class PageObject(DictionaryObject):
                     FloatObject(e),
                     FloatObject(f),
                 ],
-                " cm",
+                b"cm",
             ],
         )
         return contents
@@ -870,7 +864,7 @@ class PageObject(DictionaryObject):
             if isinstance(obj, list):
                 return b"".join(x.get_object().get_data() for x in obj)
             else:
-                return cast(bytes, cast(EncodedStreamObject, obj).get_data())
+                return cast(EncodedStreamObject, obj).get_data()
         else:
             return None
 
@@ -1063,11 +1057,11 @@ class PageObject(DictionaryObject):
                             rect.height,
                         ],
                     ),
-                    "re",
+                    b"re",
                 ),
             )
-            page2content.operations.insert(1, ([], "W"))
-            page2content.operations.insert(2, ([], "n"))
+            page2content.operations.insert(1, ([], b"W"))
+            page2content.operations.insert(2, ([], b"n"))
             if page2transformation is not None:
                 page2content = page2transformation(page2content)
             page2content = PageObject._content_stream_rename(
@@ -1201,11 +1195,11 @@ class PageObject(DictionaryObject):
                             rect.height,
                         ],
                     ),
-                    "re",
+                    b"re",
                 ),
             )
-            page2content.operations.insert(1, ([], "W"))
-            page2content.operations.insert(2, ([], "n"))
+            page2content.operations.insert(1, ([], b"W"))
+            page2content.operations.insert(2, ([], b"n"))
             if page2transformation is not None:
                 page2content = page2transformation(page2content)
             page2content = PageObject._content_stream_rename(

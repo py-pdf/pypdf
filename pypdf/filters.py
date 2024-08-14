@@ -43,7 +43,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import (
     WHITESPACES_AS_BYTES,
-    b_,
+    deprecate,
     deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
@@ -190,16 +190,19 @@ class FlateDecode:
             filter_byte = rowdata[0]
 
             if filter_byte == 0:
+                # PNG None Predictor
                 pass
             elif filter_byte == 1:
+                # PNG Sub Predictor
                 for i in range(bpp + 1, rowlength):
                     rowdata[i] = (rowdata[i] + rowdata[i - bpp]) % 256
             elif filter_byte == 2:
+                # PNG Up Predictor
                 for i in range(1, rowlength):
                     rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
             elif filter_byte == 3:
+                # PNG Average Predictor
                 for i in range(1, bpp + 1):
-                    # left = 0
                     floor = prev_rowdata[i] // 2
                     rowdata[i] = (rowdata[i] + floor) % 256
                 for i in range(bpp + 1, rowlength):
@@ -207,12 +210,9 @@ class FlateDecode:
                     floor = (left + prev_rowdata[i]) // 2
                     rowdata[i] = (rowdata[i] + floor) % 256
             elif filter_byte == 4:
+                # PNG Paeth Predictor
                 for i in range(1, bpp + 1):
-                    # left = 0
-                    up = prev_rowdata[i]
-                    # up_left = 0
-                    paeth = up
-                    rowdata[i] = (rowdata[i] + paeth) % 256
+                    rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
                 for i in range(bpp + 1, rowlength):
                     left = rowdata[i - bpp]
                     up = prev_rowdata[i]
@@ -376,20 +376,18 @@ class LZWDecode:
     """
     Taken from:
 
-    http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-
-    Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
+    http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
 
     class Decoder:
+        STOP = 257
+        CLEARDICT = 256
+
         def __init__(self, data: bytes) -> None:
-            self.STOP = 257
-            self.CLEARDICT = 256
             self.data = data
             self.bytepos = 0
             self.bitpos = 0
-            self.dict = [""] * 4096
-            for i in range(256):
-                self.dict[i] = chr(i)
+            self.dict = [struct.pack("B", i) for i in range(256)] + [b""] * (4096 - 256)
             self.reset_dict()
 
         def reset_dict(self) -> None:
@@ -416,7 +414,7 @@ class LZWDecode:
                     self.bytepos = self.bytepos + 1
             return value
 
-        def decode(self) -> str:
+        def decode(self) -> bytes:
             """
             TIFF 6.0 specification explains in sufficient details the steps to
             implement the LZW encode() and decode() algorithms.
@@ -429,7 +427,7 @@ class LZWDecode:
               PdfReadError: If the stop code is missing
             """
             cW = self.CLEARDICT
-            baos = ""
+            baos = b""
             while True:
                 pW = cW
                 cW = self.next_code()
@@ -444,11 +442,11 @@ class LZWDecode:
                 else:
                     if cW < self.dictlen:
                         baos += self.dict[cW]
-                        p = self.dict[pW] + self.dict[cW][0]
+                        p = self.dict[pW] + self.dict[cW][0:1]
                         self.dict[self.dictlen] = p
                         self.dictlen += 1
                     else:
-                        p = self.dict[pW] + self.dict[pW][0]
+                        p = self.dict[pW] + self.dict[pW][0:1]
                         baos += p
                         self.dict[self.dictlen] = p
                         self.dictlen += 1
@@ -460,11 +458,11 @@ class LZWDecode:
             return baos
 
     @staticmethod
-    def decode(
+    def _decodeb(
         data: bytes,
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
-    ) -> str:
+    ) -> bytes:
         """
         Decode an LZW encoded data stream.
 
@@ -476,8 +474,27 @@ class LZWDecode:
           decoded data.
         """
         # decode_parms is unused here
-
         return LZWDecode.Decoder(data).decode()
+
+    @staticmethod
+    def decode(
+        data: bytes,
+        decode_parms: Optional[DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> str:  # deprecated
+        """
+        Decode an LZW encoded data stream.
+
+        Args:
+          data: ``bytes`` or ``str`` text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
+        """
+        # decode_parms is unused here
+        deprecate("LZWDecode.decode will return bytes instead of str in pypdf 6.0.0")
+        return LZWDecode.Decoder(data).decode().decode("latin-1")
 
 
 class ASCII85Decode:
@@ -651,7 +668,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
+def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
     """
     Decode the stream data based on the specified filters.
 
@@ -678,7 +695,7 @@ def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
     decodparms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
     if not isinstance(decodparms, (list, tuple)):
         decodparms = (decodparms,)
-    data: bytes = b_(stream._data)
+    data: bytes = stream._data
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filter_type, params in zip(filters, decodparms):
@@ -691,7 +708,7 @@ def decode_stream_data(stream: Any) -> Union[bytes, str]:  # utils.StreamObject
             elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
                 data = RunLengthDecode.decode(data)
             elif filter_type in (FT.LZW_DECODE, FTA.LZW):
-                data = LZWDecode.decode(data, params)  # type: ignore
+                data = LZWDecode._decodeb(data, params)
             elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
                 data = ASCII85Decode.decode(data)
             elif filter_type == FT.DCT_DECODE:
