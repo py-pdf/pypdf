@@ -1121,7 +1121,12 @@ class PdfDocCommon:
                 obj = page.get_object()
                 if obj:
                     # damaged file may have invalid child in /Pages
-                    self._flatten(obj, inherit, **addt)
+                    try:
+                        self._flatten(obj, inherit, **addt)
+                    except RecursionError:
+                        raise PdfReadError(
+                            "Maximum recursion depth reached during page flattening."
+                        )
         elif t == "/Page":
             for attr_in, value in list(inherit.items()):
                 # if the page has it's own value, it does not inherit the
