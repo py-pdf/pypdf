@@ -91,6 +91,7 @@ try:
 
     pil_not_imported = False
 except ImportError:
+    Image = object  # type: ignore
     pil_not_imported = True  # error will be raised only when using images
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
