@@ -115,7 +115,9 @@ def test_iss1943():
         docinfo = reader.metadata
         docinfo.update(
             {
-                NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
+                NameObject("/CreationDate"): TextStringObject(
+                    "D:20230705005151Z00'00'"
+                ),
                 NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
             }
         )
@@ -1577,3 +1579,13 @@ def test_context_manager_with_stream():
     with PdfReader(pdf_stream) as reader:
         assert not reader.stream.closed
     assert not pdf_stream.closed
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.timeout(10)
+def test_iss2761():
+    url = "https://github.com/user-attachments/files/16312198/crash-b26d05712a29b241ac6f9dc7fff57428ba2d1a04.pdf"
+    name = "iss2761.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=False)
+    with pytest.raises(PdfReadError):
+        reader.pages[0].extract_text()
