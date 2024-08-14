@@ -990,6 +990,13 @@ def test_replace_image(tmp_path):
         i.replace(reader.pages[0].images[0].image)
     assert exc.value.args[0] == "Can not update an inline image"
 
+    import pypdf
+
+    pypdf._page.pil_not_imported = True
+    with pytest.raises(ImportError) as exc:
+        i.replace(reader.pages[0].images[0].image)
+    pypdf._page.pil_not_imported = False
+
 
 @pytest.mark.enable_socket()
 def test_inline_images():
