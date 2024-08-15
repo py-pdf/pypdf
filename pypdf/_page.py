@@ -28,7 +28,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
+from dataclasses import dataclass
 from decimal import Decimal
+from io import BytesIO
 from pathlib import Path
 from typing import (
     Any,
@@ -58,9 +60,8 @@ from ._text_extraction import (
 )
 from ._utils import (
     CompressedTransformationMatrix,
-    File,
-    ImageFile,
     TransformationMatrixType,
+    _human_readable_bytes,
     logger_warning,
     matrix_multiply,
 )
@@ -84,6 +85,14 @@ from .generic import (
     RectangleObject,
     StreamObject,
 )
+
+try:
+    from PIL.Image import Image
+
+    pil_not_imported = False
+except ImportError:
+    Image = object  # type: ignore
+    pil_not_imported = True  # error will be raised only when using images
 
 MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
@@ -301,6 +310,160 @@ class Transformation:
         return list(pt1) if isinstance(pt, list) else pt1
 
 
+@dataclass
+class ImageFile:
+    """
+    Image within the PDF file. *This object is not designed to be built.*
+
+    This object should not be modified except using :func:`ImageFile.replace` to replace the image with a new one.
+    """
+
+    name: str = ""
+    """
+    Filename as identified within the PDF file.
+    """
+
+    data: bytes = b""
+    """
+    Data as bytes.
+    """
+
+    image: Optional[Image] = None
+    """
+    Data as PIL image.
+    """
+
+    indirect_reference: Optional[IndirectObject] = None
+    """
+    Reference to the object storing the stream.
+    """
+
+    def replace(self, new_image: Image, **kwargs: Any) -> None:
+        """
+        Replace the image with a new PIL image.
+
+        Args:
+            new_image (PIL.Image.Image): The new PIL image to replace the existing image.
+            **kwargs: Additional keyword arguments to pass to `Image.save()`.
+
+        Raises:
+            TypeError: If the image is inline or in a PdfReader.
+            TypeError: If the image does not belong to a PdfWriter.
+            TypeError: If `new_image` is not a PIL Image.
+
+        Note:
+            This method replaces the existing image with a new image.
+            It is not allowed for inline images or images within a PdfReader.
+            The `kwargs` parameter allows passing additional parameters
+            to `Image.save()`, such as quality.
+        """
+        if pil_not_imported:
+            raise ImportError(
+                "pillow is required to do image extraction. "
+                "It can be installed via 'pip install pypdf[image]'"
+            )
+
+        from ._reader import PdfReader
+
+        # to prevent circular import
+        from .filters import _xobj_to_image
+        from .generic import DictionaryObject, PdfObject
+
+        if self.indirect_reference is None:
+            raise TypeError("Cannot update an inline image.")
+        if not hasattr(self.indirect_reference.pdf, "_id_translated"):
+            raise TypeError("Cannot update an image not belonging to a PdfWriter.")
+        if not isinstance(new_image, Image):
+            raise TypeError("new_image shall be a PIL Image")
+        b = BytesIO()
+        new_image.save(b, "PDF", **kwargs)
+        reader = PdfReader(b)
+        assert reader.pages[0].images[0].indirect_reference is not None
+        self.indirect_reference.pdf._objects[self.indirect_reference.idnum - 1] = (
+            reader.pages[0].images[0].indirect_reference.get_object()
+        )
+        cast(
+            PdfObject, self.indirect_reference.get_object()
+        ).indirect_reference = self.indirect_reference
+        # change the object attributes
+        extension, byte_stream, img = _xobj_to_image(
+            cast(DictionaryObject, self.indirect_reference.get_object())
+        )
+        assert extension is not None
+        self.name = self.name[: self.name.rfind(".")] + extension
+        self.data = byte_stream
+        self.image = img
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
+
+    def __repr__(self) -> str:
+        return self.__str__()[:-1] + f", hash: {hash(self.data)})"
+
+
+class VirtualListImages(Sequence[ImageFile]):
+    """
+    Provides access to images referenced within a page.
+    Only one copy will be returned if the usage is used on the same page multiple times.
+    See :func:`PageObject.images` for more details.
+    """
+
+    def __init__(
+        self,
+        ids_function: Callable[[], List[Union[str, List[str]]]],
+        get_function: Callable[[Union[str, List[str], Tuple[str]]], ImageFile],
+    ) -> None:
+        self.ids_function = ids_function
+        self.get_function = get_function
+        self.current = -1
+
+    def __len__(self) -> int:
+        return len(self.ids_function())
+
+    def keys(self) -> List[Union[str, List[str]]]:
+        return self.ids_function()
+
+    def items(self) -> List[Tuple[Union[str, List[str]], ImageFile]]:
+        return [(x, self[x]) for x in self.ids_function()]
+
+    @overload
+    def __getitem__(self, index: Union[int, str, List[str]]) -> ImageFile:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[ImageFile]:
+        ...
+
+    def __getitem__(
+        self, index: Union[int, slice, str, List[str], Tuple[str]]
+    ) -> Union[ImageFile, Sequence[ImageFile]]:
+        lst = self.ids_function()
+        if isinstance(index, slice):
+            indices = range(*index.indices(len(self)))
+            lst = [lst[x] for x in indices]
+            cls = type(self)
+            return cls((lambda: lst), self.get_function)
+        if isinstance(index, (str, list, tuple)):
+            return self.get_function(index)
+        if not isinstance(index, int):
+            raise TypeError("invalid sequence indices type")
+        len_self = len(lst)
+        if index < 0:
+            # support negative indexes
+            index = len_self + index
+        if index < 0 or index >= len_self:
+            raise IndexError("sequence index out of range")
+        return self.get_function(lst[index])
+
+    def __iter__(self) -> Iterator[ImageFile]:
+        for i in range(len(self)):
+            yield self[i]
+
+    def __str__(self) -> str:
+        p = [f"Image_{i}={n}" for i, n in enumerate(self.ids_function())]
+        return f"[{', '.join(p)}]"
+
+
 class PageObject(DictionaryObject):
     """
     PageObject represents a single page within a PDF file.
@@ -391,33 +554,6 @@ class PageObject(DictionaryObject):
 
         return page
 
-    @property
-    def _old_images(self) -> List[File]:  # deprecated
-        """
-        Get a list of all images of the page.
-
-        This requires pillow. You can install it via 'pip install pypdf[image]'.
-
-        For the moment, this does NOT include inline images. They will be added
-        in future.
-        """
-        images_extracted: List[File] = []
-        if RES.XOBJECT not in self[PG.RESOURCES]:  # type: ignore
-            return images_extracted
-
-        x_object = self[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
-        for obj in x_object:
-            if x_object[obj][IA.SUBTYPE] == "/Image":
-                extension, byte_stream, img = _xobj_to_image(x_object[obj])
-                if extension is not None:
-                    filename = f"{obj[1:]}{extension}"
-                    images_extracted.append(File(name=filename, data=byte_stream))
-                    images_extracted[-1].image = img
-                    images_extracted[-1].indirect_reference = x_object[
-                        obj
-                    ].indirect_reference
-        return images_extracted
-
     def _get_ids_image(
         self,
         obj: Optional[DictionaryObject] = None,
@@ -495,7 +631,7 @@ class PageObject(DictionaryObject):
             return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
-    def images(self) -> List[ImageFile]:
+    def images(self) -> VirtualListImages:
         """
         Read-only property emulating a list of images on a page.
 
@@ -505,20 +641,19 @@ class PageObject(DictionaryObject):
         - An integer
 
         Examples:
-            reader.pages[0].images[0]        # return fist image
-            reader.pages[0].images['/I0']    # return image '/I0'
-            # return image '/Image1' within '/TP1' Xobject/Form:
-            reader.pages[0].images['/TP1','/Image1']
-            for img in reader.pages[0].images: # loop within all objects
+            * `reader.pages[0].images[0]`        # return fist image
+            * `reader.pages[0].images['/I0']`    # return image '/I0'
+            * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' Xobject/Form
+            * `for img in reader.pages[0].images:` # loops through all objects
 
         images.keys() and images.items() can be used.
 
         The ImageFile has the following properties:
 
-            `.name` : name of the object
-            `.data` : bytes of the object
-            `.image`  : PIL Image Object
-            `.indirect_reference` : object reference
+            * `.name` : name of the object
+            * `.data` : bytes of the object
+            * `.image`  : PIL Image Object
+            * `.indirect_reference` : object reference
 
         and the following methods:
             `.replace(new_image: PIL.Image.Image, **kwargs)` :
@@ -532,7 +667,7 @@ class PageObject(DictionaryObject):
         Inline images are extracted and named ~0~, ~1~, ..., with the
         indirect_reference set to None.
         """
-        return _VirtualListImages(self._get_ids_image, self._get_image)  # type: ignore
+        return VirtualListImages(self._get_ids_image, self._get_image)
 
     def _translate_value_inlineimage(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""
@@ -2393,60 +2528,3 @@ def _get_fonts_walk(
             for a in cast(DictionaryObject, cast(DictionaryObject, obj["/AP"])["/N"]):
                 _get_fonts_walk(cast(DictionaryObject, a), fnt, emb)
     return fnt, emb  # return the sets for each page
-
-
-class _VirtualListImages(Sequence[ImageFile]):
-    def __init__(
-        self,
-        ids_function: Callable[[], List[Union[str, List[str]]]],
-        get_function: Callable[[Union[str, List[str], Tuple[str]]], ImageFile],
-    ) -> None:
-        self.ids_function = ids_function
-        self.get_function = get_function
-        self.current = -1
-
-    def __len__(self) -> int:
-        return len(self.ids_function())
-
-    def keys(self) -> List[Union[str, List[str]]]:
-        return self.ids_function()
-
-    def items(self) -> List[Tuple[Union[str, List[str]], ImageFile]]:
-        return [(x, self[x]) for x in self.ids_function()]
-
-    @overload
-    def __getitem__(self, index: Union[int, str, List[str]]) -> ImageFile:
-        ...
-
-    @overload
-    def __getitem__(self, index: slice) -> Sequence[ImageFile]:
-        ...
-
-    def __getitem__(
-        self, index: Union[int, slice, str, List[str], Tuple[str]]
-    ) -> Union[ImageFile, Sequence[ImageFile]]:
-        lst = self.ids_function()
-        if isinstance(index, slice):
-            indices = range(*index.indices(len(self)))
-            lst = [lst[x] for x in indices]
-            cls = type(self)
-            return cls((lambda: lst), self.get_function)
-        if isinstance(index, (str, list, tuple)):
-            return self.get_function(index)
-        if not isinstance(index, int):
-            raise TypeError("invalid sequence indices type")
-        len_self = len(lst)
-        if index < 0:
-            # support negative indexes
-            index = len_self + index
-        if index < 0 or index >= len_self:
-            raise IndexError("sequence index out of range")
-        return self.get_function(lst[index])
-
-    def __iter__(self) -> Iterator[ImageFile]:
-        for i in range(len(self)):
-            yield self[i]
-
-    def __str__(self) -> str:
-        p = [f"Image_{i}={n}" for i, n in enumerate(self.ids_function())]
-        return f"[{', '.join(p)}]"
