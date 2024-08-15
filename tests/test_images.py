@@ -462,3 +462,14 @@ def test_extract_image_from_object(caplog):
         co = reader.pages[0].get_contents()
         co.decode_as_image()
     assert "does not seem to be an Image" in caplog.text
+
+
+@pytest.mark.enable_socket()
+def test_4bits_images(caplog):
+    url = "https://github.com/user-attachments/files/16624406/tt.pdf"
+    name = "iss2411.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    url = "https://github.com/user-attachments/assets/53058564-9a28-4e4a-818f-a6528013d7dc"
+    name = "iss2411.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+    assert image_similarity(reader.pages[0].images[1].image, img) == 1.0
