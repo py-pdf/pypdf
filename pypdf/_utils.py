@@ -530,7 +530,7 @@ class File:
     """
     data: bytes = b""
     """
-    data as bytes
+    Data as bytes.
     """
     indirect_reference: Optional[IndirectObject] = None
     """
