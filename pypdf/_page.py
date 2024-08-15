@@ -330,7 +330,7 @@ class ImageFile:
 
     image: Optional[Image] = None
     """
-    data as PIL image;
+    Data as PIL image.
     """
 
     indirect_reference: Optional[IndirectObject] = None
