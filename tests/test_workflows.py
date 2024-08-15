@@ -980,7 +980,7 @@ def test_replace_image(tmp_path):
     # extra tests for coverage
     with pytest.raises(TypeError) as exc:
         reader.pages[0].images[0].replace(img)
-    assert exc.value.args[0] == "Can not update an image not belonging to a PdfWriter"
+    assert exc.value.args[0] == "Cannot update an image not belonging to a PdfWriter."
     i = writer.pages[0].images[0]
     with pytest.raises(TypeError) as exc:
         i.replace(reader.pages[0].images[0])  # missing .image
@@ -992,10 +992,12 @@ def test_replace_image(tmp_path):
 
     import pypdf
 
-    pypdf._page.pil_not_imported = True
-    with pytest.raises(ImportError) as exc:
-        i.replace(reader.pages[0].images[0].image)
-    pypdf._page.pil_not_imported = False
+    try:
+        pypdf._page.pil_not_imported = True
+        with pytest.raises(ImportError) as exc:
+            i.replace(reader.pages[0].images[0].image)
+    finally:
+        pypdf._page.pil_not_imported = False
 
 
 @pytest.mark.enable_socket()
