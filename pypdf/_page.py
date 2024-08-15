@@ -325,22 +325,22 @@ class ImageFile:
 
     data: bytes = b""
     """
-    data as bytes
+    Data as bytes.
     """
 
     image: Optional[Image] = None
     """
-    data as PIL image;
+    Data as PIL image.
     """
 
     indirect_reference: Optional[IndirectObject] = None
     """
-    Reference to the Object storing the stream
+    Reference to the object storing the stream.
     """
 
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
-        Replace the Image with a new PIL image.
+        Replace the image with a new PIL image.
 
         Args:
             new_image (PIL.Image.Image): The new PIL image to replace the existing image.
@@ -370,9 +370,9 @@ class ImageFile:
         from .generic import DictionaryObject, PdfObject
 
         if self.indirect_reference is None:
-            raise TypeError("Can not update an inline image")
+            raise TypeError("Cannot update an inline image.")
         if not hasattr(self.indirect_reference.pdf, "_id_translated"):
-            raise TypeError("Can not update an image not belonging to a PdfWriter")
+            raise TypeError("Cannot update an image not belonging to a PdfWriter.")
         if not isinstance(new_image, Image):
             raise TypeError("new_image shall be a PIL Image")
         b = BytesIO()
@@ -404,8 +404,8 @@ class ImageFile:
 class VirtualListImages(Sequence[ImageFile]):
     """
     Provides access to images referenced within a page.
-    One copy only will be returned if used many times in the same page
-    see :func:`PageObject.images` for more details
+    Only one copy will be returned if the usage is used on the same page multiple times.
+    See :func:`PageObject.images` for more details.
     """
 
     def __init__(

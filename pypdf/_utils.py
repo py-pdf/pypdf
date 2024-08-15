@@ -526,15 +526,15 @@ class File:
 
     name: str = ""
     """
-    FileName as identified within the PDF file
+    Filename as identified within the PDF file.
     """
     data: bytes = b""
     """
-    data as bytes
+    Data as bytes.
     """
     indirect_reference: Optional[IndirectObject] = None
     """
-    Reference to the Object storing the stream
+    Reference to the object storing the stream.
     """
 
     def __str__(self) -> str:

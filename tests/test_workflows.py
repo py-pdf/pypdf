@@ -988,7 +988,7 @@ def test_replace_image(tmp_path):
     i.indirect_reference = None  # to behave like an inline image
     with pytest.raises(TypeError) as exc:
         i.replace(reader.pages[0].images[0].image)
-    assert exc.value.args[0] == "Can not update an inline image"
+    assert exc.value.args[0] == "Cannot update an inline image."
 
     import pypdf
 
@@ -1024,7 +1024,7 @@ def test_inline_images():
 
     with pytest.raises(TypeError) as exc:
         reader.pages[0].images[0].replace(img_ref)
-    assert exc.value.args[0] == "Can not update an inline image"
+    assert exc.value.args[0] == "Cannot update an inline image."
 
     _a = {}
     for x, y in reader.pages[2].images[0:-2].items():
