@@ -2333,3 +2333,25 @@ def test_set_need_appearances_writer():
     """Minimal test for coverage"""
     writer = PdfWriter()
     writer.set_need_appearances_writer()
+
+
+def test_utf16_metadata():
+    """See #2754"""
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    writer.add_metadata(
+        {
+            "/Subject": "Invoice №AI_047",
+        }
+    )
+    b = BytesIO()
+    writer.write(b)
+    writer.write("e:/tt.pdf")
+    b.seek(0)
+    reader = PdfReader(b)
+    assert reader.metadata.subject == "Invoice №AI_047"
+    bb = b.getvalue()
+    i = bb.find(b"/Subject")
+    assert bb[i : i + 100] == (
+        b"/Subject (\\376\\377\\000I\\000n\\000v\\000o\\000i\\000c\\000e"
+        b"\\000 \\041\\026\\000A\\000I\\000\\137\\0000\\0004\\0007)"
+    )
