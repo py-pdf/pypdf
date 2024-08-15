@@ -372,7 +372,7 @@ class ImageFile:
         if self.indirect_reference is None:
             raise TypeError("Cannot update an inline image.")
         if not hasattr(self.indirect_reference.pdf, "_id_translated"):
-            raise TypeError("Can not update an image not belonging to a PdfWriter")
+            raise TypeError("Cannot update an image not belonging to a PdfWriter.")
         if not isinstance(new_image, Image):
             raise TypeError("new_image shall be a PIL Image")
         b = BytesIO()
