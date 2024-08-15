@@ -122,7 +122,7 @@ def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
     by = 0
     bit = 8 - bits
     for y in range(size[1]):
-        if (bit != 0) and (bit != 8 - bits):
+        if bit != 8 - bits:
             by += 1
             bit = 8 - bits
         for x in range(size[0]):

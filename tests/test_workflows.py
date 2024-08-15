@@ -412,7 +412,7 @@ def test_get_metadata(url, name, expected_metadata):
     ("url", "name", "strict", "exception"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
+            "https://github.com/user-attachments/files/16624503/tika-938702.pdf",
             "tika-938702.pdf",
             False,
             None,  # iss #1090 is now fixed
