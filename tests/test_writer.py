@@ -2345,7 +2345,6 @@ def test_utf16_metadata():
     )
     b = BytesIO()
     writer.write(b)
-    writer.write("e:/tt.pdf")
     b.seek(0)
     reader = PdfReader(b)
     assert reader.metadata.subject == "Invoice №AI_047"
