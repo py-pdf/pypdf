@@ -404,7 +404,7 @@ class ImageFile:
 class VirtualListImages(Sequence[ImageFile]):
     """
     Provides access to images referenced within a page.
-    One copy only will be returned if used many times in the same page
+    Only one copy will be returned if the usage is used on the same page multiple times.
     See :func:`PageObject.images` for more details.
     """
 
