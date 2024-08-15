@@ -335,7 +335,7 @@ class ImageFile:
 
     indirect_reference: Optional[IndirectObject] = None
     """
-    Reference to the Object storing the stream
+    Reference to the object storing the stream.
     """
 
     def replace(self, new_image: Image, **kwargs: Any) -> None:
