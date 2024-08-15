@@ -534,7 +534,7 @@ class File:
     """
     indirect_reference: Optional[IndirectObject] = None
     """
-    Reference to the Object storing the stream
+    Reference to the object storing the stream.
     """
 
     def __str__(self) -> str:
