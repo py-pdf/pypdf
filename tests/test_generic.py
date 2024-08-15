@@ -1131,6 +1131,16 @@ def test_create_string_object_utf16_bom():
         result.get_encoded_bytes()
         == b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
     )
+    result = TextStringObject(
+        b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
+    assert result == "PaperPort 14\x00"
+    assert result.autodetect_utf16 is True
+    assert result.utf16_bom == b"\xff\xfe"
+    assert (
+        result.get_encoded_bytes()
+        == b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
 
     # utf16-be without bom
     result = TextStringObject("ÿ")

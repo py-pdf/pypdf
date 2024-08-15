@@ -530,8 +530,18 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         o.autodetect_pdfdocencoding = False
         o.utf16_bom = b""
         if value.startswith(("\xfe\xff", "\xff\xfe")):
+            assert org is not None  # for mypy
+            try:
+                o = str.__new__(cls, org.decode("utf-16"))
+            except UnicodeDecodeError as exc:
+                logger_warning(
+                    f"{exc!s}\ninitial string:{exc.object!r}",
+                    __name__,
+                )
+                o = str.__new__(cls, exc.object[: exc.start].decode("utf-16"))
+            o._original_bytes = org
             o.autodetect_utf16 = True
-            o.utf16_bom = value[:2].encode("charmap")
+            o.utf16_bom = org[:2]
         else:
             try:
                 encode_pdfdocencoding(o)
