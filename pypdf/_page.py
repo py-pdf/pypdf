@@ -320,7 +320,7 @@ class ImageFile:
 
     name: str = ""
     """
-    FileName as identified within the PDF file
+    Filename as identified within the PDF file.
     """
 
     data: bytes = b""
