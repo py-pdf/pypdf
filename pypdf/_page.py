@@ -405,7 +405,7 @@ class VirtualListImages(Sequence[ImageFile]):
     """
     Provides access to images referenced within a page.
     One copy only will be returned if used many times in the same page
-    see :func:`PageObject.images` for more details
+    See :func:`PageObject.images` for more details.
     """
 
     def __init__(
