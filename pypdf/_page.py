@@ -340,7 +340,7 @@ class ImageFile:
 
     def replace(self, new_image: Image, **kwargs: Any) -> None:
         """
-        Replace the Image with a new PIL image.
+        Replace the image with a new PIL image.
 
         Args:
             new_image (PIL.Image.Image): The new PIL image to replace the existing image.
