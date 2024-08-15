@@ -370,7 +370,7 @@ class ImageFile:
         from .generic import DictionaryObject, PdfObject
 
         if self.indirect_reference is None:
-            raise TypeError("Can not update an inline image")
+            raise TypeError("Cannot update an inline image.")
         if not hasattr(self.indirect_reference.pdf, "_id_translated"):
             raise TypeError("Can not update an image not belonging to a PdfWriter")
         if not isinstance(new_image, Image):
