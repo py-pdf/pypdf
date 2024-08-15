@@ -325,7 +325,7 @@ class ImageFile:
 
     data: bytes = b""
     """
-    data as bytes
+    Data as bytes.
     """
 
     image: Optional[Image] = None
