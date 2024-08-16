@@ -494,6 +494,9 @@ def test_textstringobject_autodetect_utf16():
     tso.autodetect_utf16 = True
     tso.utf16_bom = codecs.BOM_UTF16_BE
     assert tso.get_original_bytes() == b"\xfe\xff\x00f\x00o\x00o"
+    tso.utf16_bom = codecs.BOM_UTF16_LE
+    assert tso.get_original_bytes() == b"\xff\xfef\x00o\x00o\x00"
+    assert tso.get_encoded_bytes() == b"\xff\xfef\x00o\x00o\x00"
 
 
 def test_remove_child_not_in_tree():
@@ -1122,6 +1125,16 @@ def test_create_string_object_utf16_bom():
 
     # utf16-le
     result = create_string_object(
+        b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
+    assert result == "PaperPort 14\x00"
+    assert result.autodetect_utf16 is True
+    assert result.utf16_bom == b"\xff\xfe"
+    assert (
+        result.get_encoded_bytes()
+        == b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
+    result = TextStringObject(
         b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
     )
     assert result == "PaperPort 14\x00"

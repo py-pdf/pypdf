@@ -517,23 +517,38 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
     autodetect_pdfdocencoding: bool
     autodetect_utf16: bool
     utf16_bom: bytes
+    _original_bytes: Optional[bytes] = None
 
     def __new__(cls, value: Any) -> "TextStringObject":
+        org = None
         if isinstance(value, bytes):
+            org = value
             value = value.decode("charmap")
         o = str.__new__(cls, value)
+        o._original_bytes = org
         o.autodetect_utf16 = False
         o.autodetect_pdfdocencoding = False
         o.utf16_bom = b""
         if value.startswith(("\xfe\xff", "\xff\xfe")):
+            assert org is not None  # for mypy
+            try:
+                o = str.__new__(cls, org.decode("utf-16"))
+            except UnicodeDecodeError as exc:
+                logger_warning(
+                    f"{exc!s}\ninitial string:{exc.object!r}",
+                    __name__,
+                )
+                o = str.__new__(cls, exc.object[: exc.start].decode("utf-16"))
+            o._original_bytes = org
             o.autodetect_utf16 = True
-            o.utf16_bom = value[:2].encode("charmap")
+            o.utf16_bom = org[:2]
         else:
             try:
                 encode_pdfdocencoding(o)
                 o.autodetect_pdfdocencoding = True
             except UnicodeEncodeError:
                 o.autodetect_utf16 = True
+                o.utf16_bom = codecs.BOM_UTF16_BE
         return o
 
     def clone(
@@ -544,6 +559,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
     ) -> "TextStringObject":
         """Clone object into pdf_dest."""
         obj = TextStringObject(self)
+        obj._original_bytes = self._original_bytes
         obj.autodetect_pdfdocencoding = self.autodetect_pdfdocencoding
         obj.autodetect_utf16 = self.autodetect_utf16
         obj.utf16_bom = self.utf16_bom
@@ -559,7 +575,10 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         if that occurs, this "original_bytes" property can be used to
         back-calculate what the original encoded bytes were.
         """
-        return self.get_original_bytes()
+        if self._original_bytes is not None:
+            return self._original_bytes
+        else:
+            return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:
         # We're a text string object, but the library is trying to get our raw
@@ -584,6 +603,8 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         # nicer to look at in the PDF file. Sadly, we take a performance hit
         # here for trying...
         try:
+            if self._original_bytes is not None:
+                return self._original_bytes
             if self.autodetect_utf16:
                 raise UnicodeEncodeError("", "forced", -1, -1, "")
             bytearr = encode_pdfdocencoding(self)
