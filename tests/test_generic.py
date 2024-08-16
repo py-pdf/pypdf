@@ -494,6 +494,8 @@ def test_textstringobject_autodetect_utf16():
     tso.autodetect_utf16 = True
     tso.utf16_bom = codecs.BOM_UTF16_BE
     assert tso.get_original_bytes() == b"\xfe\xff\x00f\x00o\x00o"
+    tso.utf16_bom = codecs.BOM_UTF16_LE
+    assert tso.get_original_bytes() == b"\xff\xfef\x00o\x00o\x00"
 
 
 def test_remove_child_not_in_tree():
