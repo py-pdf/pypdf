@@ -33,6 +33,7 @@ from io import BytesIO, UnsupportedOperation
 from pathlib import Path
 from types import TracebackType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -47,7 +48,6 @@ from typing import (
 
 from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType
-from ._page import PageObject
 from ._utils import (
     StrByteType,
     StreamType,
@@ -81,6 +81,9 @@ from .generic import (
     read_object,
 )
 from .xmp import XmpInformation
+
+if TYPE_CHECKING:
+    from ._page import PageObject
 
 
 class PdfReader(PdfDocCommon):
@@ -272,22 +275,6 @@ class PdfReader(PdfDocCommon):
             return cast(XmpInformation, self.root_object.xmp_metadata)
         finally:
             self._override_encryption = False
-
-    def _get_page(self, page_number: int) -> PageObject:
-        """
-        Retrieve a page by number from this PDF file.
-
-        Args:
-            page_number: The page number to retrieve
-                (pages begin at zero)
-
-        Returns:
-            A :class:`PageObject<pypdf._page.PageObject>` instance.
-        """
-        if self.flattened_pages is None:
-            self._flatten()
-        assert self.flattened_pages is not None, "hint for mypy"
-        return self.flattened_pages[page_number]
 
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
