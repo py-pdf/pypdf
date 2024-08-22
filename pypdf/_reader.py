@@ -190,7 +190,10 @@ class PdfReader(PdfDocCommon):
     @property
     def root_object(self) -> DictionaryObject:
         """Provide access to "/Root". Standardized with PdfWriter."""
-        return cast(DictionaryObject, self.trailer[TK.ROOT].get_object())
+        root = self.trailer[TK.ROOT]
+        if root is None:
+            raise PdfReadError('Cannot find "/Root" key in trailer')
+        return cast(DictionaryObject, root.get_object())
 
     @property
     def _info(self) -> Optional[DictionaryObject]:
