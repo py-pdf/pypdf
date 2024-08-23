@@ -1021,7 +1021,7 @@ class EncodedStreamObject(StreamObject):
             super().set_data(FlateDecode.encode(data))
         else:
             raise PdfReadError(
-                "Streams encoded with different filter from only FlateDecode is not supported"
+                "Streams encoded with a filter different from FlateDecode are not supported"
             )
 
 
