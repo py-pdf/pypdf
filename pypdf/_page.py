@@ -493,6 +493,18 @@ class PageObject(DictionaryObject):
         # below Union for mypy but actually Optional[List[str]]
         self.indirect_reference = indirect_reference
 
+    def hash_bin(self) -> int:
+        """
+        Returns:
+            hash considering type and value
+        used to detect modified object
+        Note: this function is overloaded to return the same results
+            as a DictionaryObject
+        """
+        return hash(
+            (DictionaryObject, tuple(((k, v.hash_bin()) for k, v in self.items())))
+        )
+
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
         data += b"%d" % id(self)

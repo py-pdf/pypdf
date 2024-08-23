@@ -131,6 +131,14 @@ class ArrayObject(List[Any], PdfObject):
                 arr.append(data)
         return arr
 
+    def hash_bin(self) -> int:
+        """
+        Returns:
+            hash considering type and value
+        used to detect modified object
+        """
+        return hash((self.__class__, tuple(x.hash_bin() for x in self)))
+
     def items(self) -> Iterable[Any]:
         """Emulate DictionaryObject.items for a list (index, object)."""
         return enumerate(self)
@@ -370,6 +378,16 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                         if hasattr(v, "clone")
                         else v
                     )
+
+    def hash_bin(self) -> int:
+        """
+        Returns:
+            hash considering type and value
+        used to detect modified object
+        """
+        return hash(
+            (self.__class__, tuple(((k, v.hash_bin()) for k, v in self.items())))
+        )
 
     def raw_get(self, key: Any) -> Any:
         return dict.__getitem__(self, key)
@@ -875,6 +893,14 @@ class StreamObject(DictionaryObject):
         except Exception:
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields, visited)
+
+    def hash_bin(self) -> int:
+        """
+        Returns:
+            hash considering type and value
+        used to detect modified object
+        """
+        return hash((super().hash_bin(), self.get_data()))
 
     def get_data(self) -> bytes:
         return self._data

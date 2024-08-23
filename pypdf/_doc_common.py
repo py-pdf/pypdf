@@ -254,6 +254,8 @@ class PdfDocCommon:
 
     _encryption: Optional[Encryption] = None
 
+    _readonly: bool = False
+
     @property
     @abstractmethod
     def root_object(self) -> DictionaryObject:
@@ -349,7 +351,7 @@ class PdfDocCommon:
             return self.root_object["/Pages"]["/Count"]  # type: ignore
         else:
             if self.flattened_pages is None:
-                self._flatten()
+                self._flatten(self._readonly)
             assert self.flattened_pages is not None
             return len(self.flattened_pages)
 
@@ -366,7 +368,7 @@ class PdfDocCommon:
             A :class:`PageObject<pypdf._page.PageObject>` instance.
         """
         if self.flattened_pages is None:
-            self._flatten()
+            self._flatten(self._readonly)
         assert self.flattened_pages is not None, "hint for mypy"
         return self.flattened_pages[page_number]
 
@@ -1082,10 +1084,19 @@ class PdfDocCommon:
 
     def _flatten(
         self,
+        list_only: bool = False,
         pages: Union[None, DictionaryObject, PageObject] = None,
         inherit: Optional[Dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
+        """
+        prepare the document pages to ease searching
+        args:
+            list_only: will only list the pages witin _flatten_pages
+            pages,
+            inherit,
+            indirect_reference: used recursively to flatten the /Pages object
+        """
         inheritable_page_attributes = (
             NameObject(PG.RESOURCES),
             NameObject(PG.MEDIABOX),
@@ -1122,7 +1133,7 @@ class PdfDocCommon:
                 if obj:
                     # damaged file may have invalid child in /Pages
                     try:
-                        self._flatten(obj, inherit, **addt)
+                        self._flatten(list_only, obj, inherit, **addt)
                     except RecursionError:
                         raise PdfReadError(
                             "Maximum recursion depth reached during page flattening."
@@ -1134,7 +1145,8 @@ class PdfDocCommon:
                 if attr_in not in pages:
                     pages[attr_in] = value
             page_obj = PageObject(self, indirect_reference)
-            page_obj.update(pages)
+            if not list_only:
+                page_obj.update(pages)
 
             # TODO: Could flattened_pages be None at this point?
             self.flattened_pages.append(page_obj)  # type: ignore
@@ -1158,7 +1170,7 @@ class PdfDocCommon:
                 or destinations to reference a detached page.
         """
         if self.flattened_pages is None:
-            self._flatten()
+            self._flatten(self._readonly)
         assert self.flattened_pages is not None
         if isinstance(page, IndirectObject):
             p = page.get_object()
