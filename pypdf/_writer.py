@@ -160,21 +160,6 @@ class PdfWriter(PdfDocCommon):
         incremental: bool = False,
     ) -> None:
         self.incremental = incremental
-        if self.incremental:
-            if isinstance(fileobj, (str, Path)):
-                with open(fileobj, "rb") as f:
-                    fileobj = BytesIO(f.read(-1))
-            if isinstance(fileobj, IO):
-                fileobj = BytesIO(fileobj.read(-1))
-            if isinstance(fileobj, BytesIO):
-                fileobj = PdfReader(fileobj)
-            else:
-                raise PyPdfError("Invalid type for incremental mode")
-            self._reader = fileobj  # prev content is in _reader.stream
-            self._header = fileobj.pdf_header.encode()
-            self._readonly = True  # !!!TODO: to be analysed
-        else:
-            self._header = b"%PDF-1.3"
         """
         The indirect objects in the PDF.
         for the incremental it will be filled with None
@@ -197,6 +182,28 @@ class PdfWriter(PdfDocCommon):
         """
         self._id_translated: Dict[int, Dict[int, int]] = {}
         self._ID: Union[ArrayObject, None] = None
+        self._info_obj: PdfObject
+
+        if self.incremental:
+            if isinstance(fileobj, (str, Path)):
+                with open(fileobj, "rb") as f:
+                    fileobj = BytesIO(f.read(-1))
+            if isinstance(fileobj, IO):
+                fileobj = BytesIO(fileobj.read(-1))
+            if isinstance(fileobj, BytesIO):
+                fileobj = PdfReader(fileobj)
+            else:
+                raise PyPdfError("Invalid type for incremental mode")
+            self._reader = fileobj  # prev content is in _reader.stream
+            self._header = fileobj.pdf_header.encode()
+            self._readonly = True  # !!!TODO: to be analysed
+        else:
+            self._header = b"%PDF-1.3"
+            self._info_obj = self._add_object(
+                DictionaryObject(
+                    {NameObject("/Producer"): create_string_object("pypdf")}
+                )
+            )
 
         def _get_clone_from(
             fileobj: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
@@ -241,7 +248,6 @@ class PdfWriter(PdfDocCommon):
         self.flattened_pages = []
         self._encryption: Optional[Encryption] = None
         self._encrypt_entry: Optional[DictionaryObject] = None
-        self._info_obj: PdfObject
 
         if clone_from is not None:
             if not isinstance(clone_from, PdfReader):
@@ -258,10 +264,6 @@ class PdfWriter(PdfDocCommon):
                 }
             )
             self._add_object(self._root_object)
-            # info object
-            info = DictionaryObject()
-            info.update({NameObject("/Producer"): create_string_object("pypdf")})
-            self._info_obj = self._add_object(info)
         if isinstance(self._ID, list):
             if isinstance(self._ID[0], TextStringObject):
                 self._ID[0] = ByteStringObject(self._ID[0].get_original_bytes())
@@ -1192,8 +1194,8 @@ class PdfWriter(PdfDocCommon):
         """
         self.clone_reader_document_root(reader)
         if TK.INFO in reader.trailer:
+            inf = reader._info
             if self.incremental:
-                inf = reader._info
                 if inf is not None:
                     self._info_obj = cast(
                         IndirectObject, inf.clone(self).indirect_reference
@@ -1201,11 +1203,13 @@ class PdfWriter(PdfDocCommon):
                 self._original_hash[
                     cast(IndirectObject, self._info_obj.indirect_reference).idnum - 1
                 ] = self._info_obj.hash_bin()
-            else:
-                self._info = reader._info  # actually copy fields
-
+            elif inf is not None:
+                self._info_obj = self._add_object(
+                    DictionaryObject(cast(DictionaryObject, inf.get_object()))
+                )
         else:
             self._info_obj = self._add_object(DictionaryObject())
+
         try:
             self._ID = cast(ArrayObject, reader._ID).clone(self)
         except AttributeError:
