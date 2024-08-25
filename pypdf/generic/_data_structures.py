@@ -900,7 +900,8 @@ class StreamObject(DictionaryObject):
             hash considering type and value
         used to detect modified object
         """
-        return hash((super().hash_bin(), self.get_data()))
+        # use of _data to prevent errors on non decoded stream such as JBIG2
+        return hash((super().hash_bin(), self._data))
 
     def get_data(self) -> bytes:
         return self._data

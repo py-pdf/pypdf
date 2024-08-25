@@ -2354,3 +2354,39 @@ def test_utf16_metadata():
         b"/Subject (\\376\\377\\000I\\000n\\000v\\000o\\000i\\000c\\000e"
         b"\\000 \\041\\026\\000A\\000I\\000\\137\\0000\\0004\\0007)"
     )
+
+
+def test_list_objects_in_increment(caplog):
+    """Tests for #2811"""
+    writer = PdfWriter(
+        RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf",
+        incremental=True,
+    )
+    # Contains JBIG2 not decoded for the moment
+    assert writer.list_objects_in_increment() == []  # no flowdown of properties
+    # modify one object
+    writer.pages[0][NameObject("/MediaBox")] = ArrayObject(
+        [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
+    )
+    assert writer.list_objects_in_increment() == [IndirectObject(4, 0, writer)]
+    b = BytesIO()
+    writer.write(b)
+    assert b.getvalue().startswith(writer._reader.stream.getvalue())
+    b.seek(0)
+    reader = PdfReader(b)
+    assert reader.pages[0]["/MediaBox"] == ArrayObject(
+        [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
+    )
+    with pytest.raises(PyPdfError):
+        writer = PdfWriter(reader, incremental=True)
+    b.seek(0)
+    writer = PdfWriter(b, incremental=True)
+    assert writer.list_objects_in_increment() == []  # no flowdown of properties
+
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    # 1 object is modified: page 0  inherits MediaBox so is changed
+    assert len(writer.list_objects_in_increment()) == 1
+
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=False)
+    # 1 object is modified: page 0  inherits MediaBox so is changed
+    assert len(writer.list_objects_in_increment()) == len(writer._objects)

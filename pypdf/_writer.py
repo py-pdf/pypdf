@@ -1202,7 +1202,7 @@ class PdfWriter(PdfDocCommon):
                     )
                 self._original_hash[
                     cast(IndirectObject, self._info_obj.indirect_reference).idnum - 1
-                ] = self._info_obj.hash_bin()
+                ] = cast(DictionaryObject, self._info_obj.get_object()).hash_bin()
             elif inf is not None:
                 self._info_obj = self._add_object(
                     DictionaryObject(cast(DictionaryObject, inf.get_object()))
@@ -1359,18 +1359,16 @@ class PdfWriter(PdfDocCommon):
 
         return my_file, stream
 
-    def _list_objects_in_increment(self) -> List[IndirectObject]:
+    def list_objects_in_increment(self) -> List[IndirectObject]:
         """
         For debug / analysis
-        Provides the list of new/modified objects that are to be written
+        Provides the list of new/modified objects that will be written
+        in the increment
+        Deleted Objects will not be freeed but will become orphans
+
+        Returns:
+            List of (new / modified) IndirectObjects
         """
-        ##        lst = []
-        ##        for i in range(len(self._objects)):
-        ##            if (self._objects[i] is not None and
-        ##                (i >= len(self._original_hash)
-        ##                    or cast(PdfObject,self._objects[i]).hash_bin() != self._original_hash[i]
-        ##                )):
-        ##                    lst.append(self._objects[i].indirect_reference)
         return [
             cast(IndirectObject, self._objects[i]).indirect_reference
             for i in range(len(self._objects))
