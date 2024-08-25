@@ -500,6 +500,7 @@ class PageObject(DictionaryObject):
         Returns:
             hash considering type and value
         used to detect modified object
+
         Note: this function is overloaded to return the same results
         as a DictionaryObject
         """

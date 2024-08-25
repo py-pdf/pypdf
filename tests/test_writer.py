@@ -2369,6 +2369,10 @@ def test_list_objects_in_increment(caplog):
         [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
     )
     assert writer.list_objects_in_increment() == [IndirectObject(4, 0, writer)]
+    writer.pages[5][NameObject("/MediaBox")] = ArrayObject(
+        [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
+    )
+    assert len(writer.list_objects_in_increment()) == 2
     b = BytesIO()
     writer.write(b)
     assert b.getvalue().startswith(writer._reader.stream.getvalue())

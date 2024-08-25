@@ -1396,8 +1396,10 @@ class PdfWriter(PdfDocCommon):
                 # first write new/modified object
                 object_positions[idnum] = stream.tell()
                 stream.write(f"{idnum} 0 obj\n".encode())
+                """ encryption is not operational
                 if self._encryption and obj != self._encrypt_entry:
                     obj = self._encryption.encrypt_object(obj, idnum, 0)
+                """
                 obj.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
 
