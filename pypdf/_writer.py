@@ -188,8 +188,6 @@ class PdfWriter(PdfDocCommon):
             if isinstance(fileobj, (str, Path)):
                 with open(fileobj, "rb") as f:
                     fileobj = BytesIO(f.read(-1))
-            if isinstance(fileobj, IO):
-                fileobj = BytesIO(fileobj.read(-1))
             if isinstance(fileobj, BytesIO):
                 fileobj = PdfReader(fileobj)
             else:
