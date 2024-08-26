@@ -607,9 +607,9 @@ def test_read_unknown_zero_pages(caplog):
         "startxref on same line as offset",
     ]
     assert normalize_warnings(caplog.text) == warnings
-    with pytest.raises(AttributeError) as exc:
+    with pytest.raises(PdfReadError) as exc:
         len(reader.pages)
-    assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
+    assert exc.value.args[0] == 'Cannot find "/Root" key in trailer'
 
 
 def test_read_encrypted_without_decryption():
