@@ -151,6 +151,15 @@ class PdfWriter(PdfDocCommon):
     cloning a PDF file during initialization.
 
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
+
+    clone_from: identical to fileobj (for compatibility)
+
+    incremental: `bool`
+        If true, loads the document and set the PdfWriter in incremental mode
+
+        When writing the original document is written first and new/modified
+        are appened. to be used for signed document/forms to keep signature
+        valid.
     """
 
     def __init__(
@@ -161,26 +170,32 @@ class PdfWriter(PdfDocCommon):
     ) -> None:
         self.incremental = incremental
         """
+        Returns if the PdfWriter object has been started in incremental mode
+        """
+
+        self._objects: List[Optional[PdfObject]] = []
+        """
         The indirect objects in the PDF.
         for the incremental it will be filled with None
         in clone_reader_document_root
         """
-        self._objects: List[Optional[PdfObject]] = []
 
+        self._original_hash: List[int] = []
         """
         list of hashes after import; used to identify changes
         """
-        self._original_hash: List[int] = []
 
-        """Maps hash values of indirect objects to the list of IndirectObjects.
-           This is used for compression.
-        """
         self._idnum_hash: Dict[bytes, Tuple[IndirectObject, List[IndirectObject]]] = {}
+        """
+        Maps hash values of indirect objects to the list of IndirectObjects.
+        This is used for compression.
+        """
 
+        self._id_translated: Dict[int, Dict[int, int]] = {}
         """List of already translated IDs.
            dict[id(pdf)][(idnum, generation)]
         """
-        self._id_translated: Dict[int, Dict[int, int]] = {}
+
         self._ID: Union[ArrayObject, None] = None
         self._info_obj: PdfObject
 

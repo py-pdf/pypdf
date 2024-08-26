@@ -1252,9 +1252,10 @@ def test_del_pages():
     with pytest.raises(PdfReadError):
         del reader.pages[2]
 
-    url = "https://github.com/py-pdf/pypdf/files/13679585/test2_P038-038.pdf"
-    name = "iss2343.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
+    name = "iss2343b.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    del reader.pages[4]  # to propagate among /Pages
     del reader.pages[:]
     assert len(reader.pages) == 0
     assert len(reader.trailer["/Root"]["/Pages"]["/Kids"]) == 0
