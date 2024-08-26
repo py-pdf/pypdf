@@ -14,7 +14,7 @@ import pytest
 from PIL import Image, ImageChops
 from PIL import __version__ as pil_version
 
-from pypdf import PdfMerger, PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning
 from pypdf.generic import (
@@ -356,7 +356,7 @@ def test_overlay(pdf_file_path, base_path, overlay_path):
 def test_merge_with_warning(tmp_path, url, name):
     data = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(data)
-    merger = PdfMerger()
+    merger = PdfWriter()
     merger.append(reader)
     # This could actually be a performance bottleneck:
     merger.write(tmp_path / "tmp.merged.pdf")
@@ -376,7 +376,7 @@ def test_merge_with_warning(tmp_path, url, name):
 def test_merge(tmp_path, url, name):
     data = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(data)
-    merger = PdfMerger()
+    merger = PdfWriter()
     merger.append(reader)
     merger.write(tmp_path / "tmp.merged.pdf")
 
@@ -585,7 +585,6 @@ def test_scale_rectangle_indirect_object():
         page.scale(sx=2, sy=3)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_output(caplog):
     # Arrange
     base = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf"
@@ -593,10 +592,8 @@ def test_merge_output(caplog):
     expected = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
 
     # Act
-    merger = PdfMerger(strict=True)
+    merger = PdfWriter()
     merger.append(base)
-    msg = "Xref table not zero-indexed. ID numbers for objects will be corrected."
-    assert normalize_warnings(caplog.text) == [msg]
     merger.merge(1, crazy)
     stream = BytesIO()
     merger.write(stream)

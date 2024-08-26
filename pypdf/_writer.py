@@ -2305,7 +2305,7 @@ class PdfWriter(PdfDocCommon):
             stream = BytesIO(filecontent)
         else:
             raise NotImplementedError(
-                "PdfMerger.merge requires an object that PdfReader can parse. "
+                "merge requires an object that PdfReader can parse. "
                 "Typically, that is a Path or a string representing a Path, "
                 "a file object, or an object implementing .seek and .read. "
                 "Passing a PdfReader directly works as well."

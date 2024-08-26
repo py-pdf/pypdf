@@ -14,7 +14,6 @@ from pypdf import (
     ImageType,
     ObjectDeletionFlag,
     PageObject,
-    PdfMerger,
     PdfReader,
     PdfWriter,
     Transformation,
@@ -840,7 +839,7 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
+    merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
 
@@ -864,11 +863,6 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_some_appends(pdf_file_path, url, name):
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    # PdfMerger
-    merger = PdfMerger()
-    merger.append(reader)
-    merger.write(pdf_file_path)
-    # PdfWriter
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)

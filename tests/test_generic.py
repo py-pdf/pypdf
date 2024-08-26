@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pypdf import PdfMerger, PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 from pypdf.constants import CheckboxRadioButtonAttributes
 from pypdf.errors import PdfReadError, PdfStreamError
 from pypdf.generic import (
@@ -710,21 +710,9 @@ def test_issue_997(mock_logger_warning, pdf_file_path):
     )
     name = "gh-issue-997.pdf"
 
-    merger = PdfMerger()
-    merger.append(BytesIO(get_data_from_url(url, name=name)))  # here the error raises
-    with open(pdf_file_path, "wb") as f:
-        merger.write(f)
-    merger.close()
-
-    mock_logger_warning.assert_called_with("Overwriting cache for 0 4", "pypdf._reader")
-
     # Strict
-    merger = PdfMerger(strict=True)
-    with pytest.raises(PdfReadError) as exc:
-        merger.append(
-            BytesIO(get_data_from_url(url, name=name))
-        )  # here the error raises
-    assert exc.value.args[0] == "Could not find object."
+    merger = PdfWriter()
+    merger.append(BytesIO(get_data_from_url(url, name=name)))  # here the error raises
     with open(pdf_file_path, "wb") as f:
         merger.write(f)
     merger.close()
