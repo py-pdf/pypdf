@@ -1459,3 +1459,16 @@ def test_get_contents_as_bytes():
     assert writer.pages[0]._get_contents_as_bytes() == expected
     writer.pages[0][NameObject("/Contents")] = writer.pages[0]["/Contents"][0]
     assert writer.pages[0]._get_contents_as_bytes() == expected
+
+
+def test_recursive_get_page_from_node():
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    writer.root_object["/Pages"].get_object()[
+        NameObject("/Parent")
+    ] = writer.root_object["/Pages"].indirect_reference
+    with pytest.raises(PyPdfError):
+        writer.add_page(writer.pages[0])
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    writer.insert_page(writer.pages[0], -1)
+    with pytest.raises(ValueError):
+        writer.insert_page(writer.pages[0], -10)

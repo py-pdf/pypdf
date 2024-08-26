@@ -2356,7 +2356,7 @@ def test_utf16_metadata():
     )
 
 
-def test_list_objects_in_increment(caplog):
+def test_increment_writer(caplog):
     """Tests for #2811"""
     writer = PdfWriter(
         RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf",
@@ -2369,6 +2369,8 @@ def test_list_objects_in_increment(caplog):
         [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
     )
     assert writer.list_objects_in_increment() == [IndirectObject(4, 0, writer)]
+    b = BytesIO()
+    writer.write(b)
     writer.pages[5][NameObject("/MediaBox")] = ArrayObject(
         [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
     )

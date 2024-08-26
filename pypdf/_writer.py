@@ -484,6 +484,7 @@ class PdfWriter(PdfDocCommon):
                 self.flattened_pages.append(page)
         cpt = 1000
         while node is not None:
+            node = cast(DictionaryObject, node.get_object())
             node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
             node = node.get(PA.PARENT, None)
             cpt -= 1
@@ -1441,9 +1442,7 @@ class PdfWriter(PdfDocCommon):
                             [current_start, current_stop - current_start]
                         )
                     current_start = idnum
-                    current_stop = idnum + 1
-                else:
-                    current_stop = idnum + 1
+                current_stop = idnum + 1
         if current_start > 0:
             object_blocks.append([current_start, current_stop - current_start])
         # write incremented xref
