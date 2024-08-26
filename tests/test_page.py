@@ -1251,7 +1251,9 @@ def test_del_pages():
     del pp["/Parent"].get_object()["/Kids"][i]
     with pytest.raises(PdfReadError):
         del reader.pages[2]
-    # reader is corrupted we have to reload it
+
+    url = "https://github.com/py-pdf/pypdf/files/13679585/test2_P038-038.pdf"
+    name = "iss2343.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     del reader.pages[:]
     assert len(reader.pages) == 0

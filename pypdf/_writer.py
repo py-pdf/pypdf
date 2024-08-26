@@ -439,10 +439,12 @@ class PdfWriter(PdfDocCommon):
     def _add_page(
         self,
         page: PageObject,
-        action: Callable[[Any, Union[PageObject, IndirectObject]], None],
+        index: int,
         excluded_keys: Iterable[str] = (),
     ) -> PageObject:
-        assert cast(str, page[PA.TYPE]) == CO.PAGE
+        if not isinstance(page, PageObject) or page.get(PA.TYPE, None) != CO.PAGE:
+            raise ValueError("Invalid page Object")
+        assert self.flattened_pages is not None, "for mypy"
         page_org = page
         excluded_keys = list(excluded_keys)
         excluded_keys += [PA.PARENT, "/StructParents"]
@@ -460,13 +462,23 @@ class PdfWriter(PdfDocCommon):
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
-        page[NameObject(PA.PARENT)] = self._pages
-        pages = cast(DictionaryObject, self.get_object(self._pages))
-        assert page.indirect_reference is not None
-        action(pages[PA.KIDS], page.indirect_reference)
-        action(self.flattened_pages, page)
-        page_count = cast(int, pages[PA.COUNT])
-        pages[NameObject(PA.COUNT)] = NumberObject(page_count + 1)
+        node, idx = self._get_page_in_node(index)
+        page[NameObject(PA.PARENT)] = node.indirect_reference
+        if idx >= 0:  # to be a
+            cast(ArrayObject, node[PA.KIDS]).insert(idx, page.indirect_reference)
+            if self.flattened_pages != node[PA.KIDS]:
+                self.flattened_pages.insert(index, page)
+        else:
+            cast(ArrayObject, node[PA.KIDS]).append(page.indirect_reference)
+            if self.flattened_pages != node[PA.KIDS]:
+                self.flattened_pages.append(page)
+        cpt = 1000
+        while node is not None:
+            node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
+            node = node.get(PA.PARENT, None)
+            cpt -= 1
+            if cpt < 0:
+                raise PyPdfError("Recursive Error detected")
         return page
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
@@ -529,7 +541,8 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added PageObject.
         """
-        return self._add_page(page, list.append, excluded_keys)
+        assert self.flattened_pages is not None
+        return self._add_page(page, len(self.flattened_pages), excluded_keys)
 
     def insert_page(
         self,
@@ -549,7 +562,15 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added PageObject.
         """
-        return self._add_page(page, lambda kids, p: kids.insert(index, p))
+        assert self.flattened_pages is not None
+        if index < 0:
+            index = len(self.flattened_pages) + index
+        if index < 0:
+            raise ValueError("invalid index value")
+        if index >= len(self.flattened_pages):
+            return self.add_page(page, excluded_keys)
+        else:
+            return self._add_page(page, index, excluded_keys)
 
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]

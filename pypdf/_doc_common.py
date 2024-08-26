@@ -65,9 +65,7 @@ from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
-from .errors import (
-    PdfReadError,
-)
+from .errors import PdfReadError, PyPdfError
 from .generic import (
     ArrayObject,
     BooleanObject,
@@ -371,6 +369,43 @@ class PdfDocCommon:
             self._flatten(self._readonly)
         assert self.flattened_pages is not None, "hint for mypy"
         return self.flattened_pages[page_number]
+
+    def _get_page_in_node(
+        self,
+        page_number: int,
+    ) -> Tuple[DictionaryObject, int]:
+        """
+        Retrieve the node and position within the /Kids containing the page
+        if page_number is greater than the number of page, it returns top node, -1
+        """
+        top = cast(DictionaryObject, self.root_object["/Pages"])
+
+        def recurs(node: DictionaryObject, mi: int) -> Tuple[Optional[PdfObject], int]:
+            ma = cast(int, node.get("/Count", 1))  # default 1 for /Page types
+            if node["/Type"] == "/Page":
+                if page_number == mi:
+                    return node, -1
+                # else:
+                return None, mi + 1
+            if (page_number - mi) >= ma:  # not in nodes below
+                if node == top:
+                    return top, -1
+                # else
+                return None, mi + ma
+            for idx, kid in enumerate(cast(ArrayObject, node["/Kids"])):
+                kid = cast(DictionaryObject, kid.get_object())
+                n, i = recurs(kid, mi)
+                if n is not None:  # page has just been found ...
+                    if i < 0:  # ... just below!
+                        return node, idx
+                    # else:  # ... at lower levels
+                    return n, i
+                mi = i
+            raise PyPdfError("abnormal, can not find the node")
+
+        node, idx = recurs(top, 0)
+        assert isinstance(node, DictionaryObject)
+        return node, idx
 
     @property
     def named_destinations(self) -> Dict[str, Any]:

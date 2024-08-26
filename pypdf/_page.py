@@ -2414,27 +2414,33 @@ class _VirtualList(Sequence[PageObject]):
             raise IndexError("index out of range")
         ind = self[index].indirect_reference
         assert ind is not None
-        parent = cast(DictionaryObject, ind.get_object()).get("/Parent", None)
+        parent: Optional[PdfObject] = cast(DictionaryObject, ind.get_object()).get(
+            "/Parent", None
+        )
+        first = True
         while parent is not None:
             parent = cast(DictionaryObject, parent.get_object())
             try:
-                i = parent["/Kids"].index(ind)
-                del parent["/Kids"][i]
+                i = cast(ArrayObject, parent["/Kids"]).index(ind)
+                del cast(ArrayObject, parent["/Kids"])[i]
+                first = False
                 try:
                     assert ind is not None
                     del ind.pdf.flattened_pages[index]  # case of page in a Reader
                 except Exception:  # pragma: no cover
                     pass
                 if "/Count" in parent:
-                    parent[NameObject("/Count")] = NumberObject(parent["/Count"] - 1)
-                if len(parent["/Kids"]) == 0:
+                    parent[NameObject("/Count")] = NumberObject(
+                        cast(int, parent["/Count"]) - 1
+                    )
+                if len(cast(ArrayObject, parent["/Kids"])) == 0:
                     # No more objects in this part of this sub tree
                     ind = parent.indirect_reference
-                    parent = cast(DictionaryObject, parent.get("/Parent", None))
-                else:
-                    parent = None
+                parent = parent.get("/Parent", None)
             except ValueError:  # from index
-                raise PdfReadError(f"Page Not Found in Page Tree {ind}")
+                if first:
+                    raise PdfReadError(f"Page Not Found in Page Tree {ind}")
+                break
 
     def __iter__(self) -> Iterator[PageObject]:
         for i in range(len(self)):
