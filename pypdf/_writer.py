@@ -476,14 +476,13 @@ class PdfWriter(PdfDocCommon):
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
         node, idx = self._get_page_in_node(index)
         page[NameObject(PA.PARENT)] = node.indirect_reference
+
         if idx >= 0:  # to be a
             cast(ArrayObject, node[PA.KIDS]).insert(idx, page.indirect_reference)
-            if self.flattened_pages != node[PA.KIDS]:
-                self.flattened_pages.insert(index, page)
+            self.flattened_pages.insert(index, page)
         else:
             cast(ArrayObject, node[PA.KIDS]).append(page.indirect_reference)
-            if self.flattened_pages != node[PA.KIDS]:
-                self.flattened_pages.append(page)
+            self.flattened_pages.append(page)
         cpt = 1000
         while node is not None:
             node = cast(DictionaryObject, node.get_object())
