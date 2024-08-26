@@ -1795,6 +1795,9 @@ def test_missing_info():
 
     writer = PdfWriter(clone_from=reader)
     assert len(writer.pages) == len(reader.pages)
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    writer._info = reader._info
+    assert dict(writer._info) == dict(reader._info)
 
 
 @pytest.mark.enable_socket()
