@@ -1254,11 +1254,11 @@ def test_del_pages():
 
     url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
     name = "iss2343b.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    reader = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
     del reader.pages[4]  # to propagate among /Pages
     del reader.pages[:]
     assert len(reader.pages) == 0
-    assert len(reader.trailer["/Root"]["/Pages"]["/Kids"]) == 0
+    assert len(reader.root_object["/Pages"]["/Kids"]) == 0
     assert len(reader.flattened_pages) == 0
 
 
