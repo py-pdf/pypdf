@@ -2399,3 +2399,22 @@ def test_increment_writer(caplog):
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=False)
     # 1 object is modified: page 0  inherits MediaBox so is changed
     assert len(writer.list_objects_in_increment()) == len(writer._objects)
+
+    # insert pages in a tree
+    url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
+    name = "iss2343b.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    pg = writer.insert_page(reader.pages[0], 4)
+    assert (
+        pg.raw_get("/Parent")
+        == writer.root_object["/Pages"]["/Kids"][0].get_object()["/Kids"][0]
+    )
+    assert pg["/Parent"]["/Count"] == 8
+    assert writer.root_object["/Pages"]["/Count"] == 285
+    assert len(writer.flattened_pages) == 285
+
+    # clone without info
+    writer = PdfWriter(RESOURCE_ROOT / "missing_info.pdf", incremental=True)
+    assert len(writer.list_objects_in_increment()) == 1
+    assert writer._info == {}

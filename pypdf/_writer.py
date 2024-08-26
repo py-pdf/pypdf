@@ -468,7 +468,9 @@ class PdfWriter(PdfDocCommon):
             ]
         except Exception:
             pass
-        page = cast("PageObject", page_org.clone(self, False, excluded_keys))
+        page = cast(
+            "PageObject", page_org.clone(self, False, excluded_keys).get_object()
+        )
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
