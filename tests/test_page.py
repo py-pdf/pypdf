@@ -12,7 +12,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
 from pypdf.constants import PageAttributes as PG
-from pypdf.errors import PdfReadError, PdfReadWarning
+from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -887,6 +887,8 @@ def test_annotation_setter(pdf_file_path):
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
+    with pytest.raises(ValueError):
+        writer.add_page(DictionaryObject())
 
     # Act
     page_number = 0
@@ -1254,12 +1256,19 @@ def test_del_pages():
 
     url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
     name = "iss2343b.pdf"
-    reader = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
-    del reader.pages[4]  # to propagate among /Pages
-    del reader.pages[:]
-    assert len(reader.pages) == 0
-    assert len(reader.root_object["/Pages"]["/Kids"]) == 0
-    assert len(reader.flattened_pages) == 0
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
+    node, idx = writer._get_page_in_node(53)
+    assert (node.indirect_reference.idnum, idx) == (11776, 1)
+    node, idx = writer._get_page_in_node(10000)
+    assert (node.indirect_reference.idnum, idx) == (11769, -1)
+    with pytest.raises(PyPdfError):
+        writer._get_page_in_node(-1)
+
+    del writer.pages[4]  # to propagate among /Pages
+    del writer.pages[:]
+    assert len(writer.pages) == 0
+    assert len(writer.root_object["/Pages"]["/Kids"]) == 0
+    assert len(writer.flattened_pages) == 0
 
 
 def test_pdf_pages_missing_type():

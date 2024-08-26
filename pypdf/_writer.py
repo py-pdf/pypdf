@@ -1,6 +1,3 @@
-# TODO : thing about pages to have a global soluce without rework;
-# consider question about heritage of properties
-
 # Copyright (c) 2006, Mathieu Fenniak
 # Copyright (c) 2007, Ashish Kulkarni <kulkarni.ashish@gmail.com>
 #
@@ -154,12 +151,10 @@ class PdfWriter(PdfDocCommon):
 
     clone_from: identical to fileobj (for compatibility)
 
-    incremental: `bool`
-        If true, loads the document and set the PdfWriter in incremental mode
+    incremental: If true, loads the document and set the PdfWriter in incremental mode
 
-        When writing the original document is written first and new/modified
-        are appened. to be used for signed document/forms to keep signature
-        valid.
+    When writing in incremental the original document is written first and new/modified
+    are appened. to be used for signed document/forms to keep signature valid.
     """
 
     def __init__(
