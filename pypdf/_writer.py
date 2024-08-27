@@ -62,7 +62,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     deprecate,
-    deprecate_with_replacement,
+    deprecation_with_replacement,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
@@ -2846,13 +2846,12 @@ class PdfWriter(PdfDocCommon):
         self,
         outline_item: Dict[str, Any],
         root: Optional[OutlineType] = None,
-    ) -> Optional[List[int]]:  # deprecated
+    ) -> None:  # deprecated
         """
         .. deprecated:: 2.9.0
             Use :meth:`find_outline_item` instead.
         """
-        deprecate_with_replacement("find_bookmark", "find_outline_item", "5.0.0")
-        return self.find_outline_item(outline_item, root)
+        deprecation_with_replacement("find_bookmark", "find_outline_item", "5.0.0")
 
     def reset_translation(
         self, reader: Union[None, PdfReader, IndirectObject] = None

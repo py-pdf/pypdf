@@ -29,9 +29,11 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
-from .._utils import StreamType, deprecate_with_replacement
+from .._utils import (
+    deprecation_with_replacement,
+)
 from ..constants import OutlineFontFlag
 from ._base import (
     BooleanObject,
@@ -69,37 +71,6 @@ from ._utils import (
 )
 from ._viewerpref import ViewerPreferences
 
-
-def readHexStringFromStream(
-    stream: StreamType,
-) -> Union["TextStringObject", "ByteStringObject"]:  # deprecated
-    """Deprecated, use read_hex_string_from_stream."""
-    deprecate_with_replacement(
-        "readHexStringFromStream", "read_hex_string_from_stream", "4.0.0"
-    )
-    return read_hex_string_from_stream(stream)
-
-
-def readStringFromStream(
-    stream: StreamType,
-    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union["TextStringObject", "ByteStringObject"]:  # deprecated
-    """Deprecated, use read_string_from_stream."""
-    deprecate_with_replacement(
-        "readStringFromStream", "read_string_from_stream", "4.0.0"
-    )
-    return read_string_from_stream(stream, forced_encoding)
-
-
-def createStringObject(
-    string: Union[str, bytes],
-    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union[TextStringObject, ByteStringObject]:  # deprecated
-    """Deprecated, use create_string_object."""
-    deprecate_with_replacement("createStringObject", "create_string_object", "4.0.0")
-    return create_string_object(string, forced_encoding)
-
-
 PAGE_FIT = Fit.fit()
 
 
@@ -135,7 +106,7 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "AnnotationBuilder.text", "pypdf.annotations.Text", "4.0.0"
         )
         from ..annotations import Text
@@ -174,7 +145,7 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "AnnotationBuilder.free_text", "pypdf.annotations.FreeText", "4.0.0"
         )
         from ..annotations import FreeText
@@ -217,7 +188,7 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "AnnotationBuilder.popup", "pypdf.annotations.Popup", "4.0.0"
         )
         from ..annotations import Popup
@@ -250,7 +221,7 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "AnnotationBuilder.line", "pypdf.annotations.Line", "4.0.0"
         )
         from ..annotations import Line
@@ -270,7 +241,7 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "AnnotationBuilder.polyline", "pypdf.annotations.PolyLine", "4.0.0"
         )
         from ..annotations import PolyLine
@@ -296,7 +267,7 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "AnnotationBuilder.rectangle", "pypdf.annotations.Rectangle", "4.0.0"
         )
         from ..annotations import Rectangle
@@ -326,13 +297,16 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "AnnotationBuilder.highlight", "pypdf.annotations.Highlight", "4.0.0"
         )
         from ..annotations import Highlight
 
         return Highlight(
-            rect=rect, quad_points=quad_points, highlight_color=highlight_color, printing=printing
+            rect=rect,
+            quad_points=quad_points,
+            highlight_color=highlight_color,
+            printing=printing,
         )
 
     @staticmethod
@@ -354,7 +328,7 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "AnnotationBuilder.ellipse", "pypdf.annotations.Ellipse", "4.0.0"
         )
         from ..annotations import Ellipse
@@ -363,7 +337,7 @@ class AnnotationBuilder:
 
     @staticmethod
     def polygon(vertices: List[Tuple[float, float]]) -> DictionaryObject:
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "AnnotationBuilder.polygon", "pypdf.annotations.Polygon", "4.0.0"
         )
         from ..annotations import Polygon
@@ -406,7 +380,7 @@ class AnnotationBuilder:
         Returns:
             A dictionary object representing the annotation.
         """
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "AnnotationBuilder.link", "pypdf.annotations.Link", "4.0.0"
         )
         from ..annotations import Link

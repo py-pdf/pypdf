@@ -52,8 +52,8 @@ from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationPro
 from .._utils import (
     WHITESPACES,
     StreamType,
-    deprecate_no_replacement,
-    deprecate_with_replacement,
+    deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -198,7 +198,7 @@ class ArrayObject(List[Any], PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(b"[")
@@ -444,7 +444,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(b"<<\n")
@@ -613,10 +613,6 @@ class TreeObject(DictionaryObject):
         DictionaryObject.__init__(self)
         if dct:
             self.update(dct)
-
-    def hasChildren(self) -> bool:  # deprecated
-        deprecate_with_replacement("hasChildren", "has_children", "4.0.0")
-        return self.has_children()
 
     def has_children(self) -> bool:
         return "/First" in self
@@ -807,10 +803,6 @@ class TreeObject(DictionaryObject):
         else:
             cast("TreeObject", self["/Parent"]).remove_child(self)
 
-    def emptyTree(self) -> None:  # deprecated
-        deprecate_with_replacement("emptyTree", "empty_tree", "4.0.0")
-        self.empty_tree()
-
     def empty_tree(self) -> None:
         for child in self:
             child_obj = child.get_object()
@@ -891,7 +883,7 @@ class StreamObject(DictionaryObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
@@ -902,13 +894,10 @@ class StreamObject(DictionaryObject):
         stream.write(b"\nendstream")
 
     @staticmethod
-    def initializeFromDictionary(
-        data: Dict[str, Any]
-    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
-        deprecate_with_replacement(
+    def initializeFromDictionary(data: Dict[str, Any]) -> None:
+        deprecation_with_replacement(
             "initializeFromDictionary", "initialize_from_dictionary", "5.0.0"
         )  # pragma: no cover
-        return StreamObject.initialize_from_dictionary(data)  # pragma: no cover
 
     @staticmethod
     def initialize_from_dictionary(
@@ -1010,7 +999,7 @@ class EncodedStreamObject(StreamObject):
             return decoded.get_data()
 
     # This overrides the parent method:
-    def set_data(self, data: bytes) -> None:  # deprecated
+    def set_data(self, data: bytes) -> None:  # pragma: no cover
         from ..filters import FlateDecode
 
         if self.get(SA.FILTER, "") == FT.FLATE_DECODE:
@@ -1528,7 +1517,7 @@ class Destination(TreeObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(b"<<\n")
