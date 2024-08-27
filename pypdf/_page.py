@@ -1882,7 +1882,7 @@ class PageObject(DictionaryObject):
                     cmap = (
                         unknown_char_map[2],
                         unknown_char_map[3],
-                        "???" + operands[0],
+                        f"???{operands[0]}",
                         None,
                     )
                 try:
