@@ -11,7 +11,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import CheckboxRadioButtonAttributes
-from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 from pypdf.generic import (
     AnnotationBuilder,
     ArrayObject,
@@ -710,6 +710,12 @@ def test_issue_997(mock_logger_warning, pdf_file_path):
     )
     name = "gh-issue-997.pdf"
 
+    merger = PdfWriter()
+    merger.append(BytesIO(get_data_from_url(url, name=name)))  # here the error raises
+    with open(pdf_file_path, "wb") as f:
+        merger.write(f)
+    merger.close()
+
     # Strict
     merger = PdfWriter()
     merger.append(BytesIO(get_data_from_url(url, name=name)))  # here the error raises
@@ -727,7 +733,7 @@ def test_annotation_builder_free_text(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         free_text_annotation = AnnotationBuilder.free_text(
             "Hello World - bold and italic\nThis is the second line!",
             rect=(50, 550, 200, 650),
@@ -739,9 +745,9 @@ def test_annotation_builder_free_text(pdf_file_path):
             border_color=None,
             background_color=None,
         )
-    writer.add_annotation(0, free_text_annotation)
+        writer.add_annotation(0, free_text_annotation)
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         free_text_annotation = AnnotationBuilder.free_text(
             "Another free text annotation (not bold, not italic)",
             rect=(500, 550, 200, 650),
@@ -753,7 +759,7 @@ def test_annotation_builder_free_text(pdf_file_path):
             border_color="0000ff",
             background_color="cdcdcd",
         )
-    writer.add_annotation(0, free_text_annotation)
+        writer.add_annotation(0, free_text_annotation)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
@@ -769,17 +775,16 @@ def test_annotation_builder_polygon(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
+    with pytest.raises(DeprecationError), pytest.raises(ValueError):
         AnnotationBuilder.polygon(
             vertices=[],
         )
-    assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         annotation = AnnotationBuilder.polygon(
             vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
         )
-    writer.add_annotation(0, annotation)
+        writer.add_annotation(0, annotation)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
@@ -792,17 +797,16 @@ def test_annotation_builder_polyline(pdf_file_path, pdf_reader_page):
     writer.add_page(pdf_reader_page)
 
     # Act
-    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
+    with pytest.raises(DeprecationError), pytest.raises(ValueError):
         AnnotationBuilder.polyline(
             vertices=[],
         )
-    assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         annotation = AnnotationBuilder.polyline(
             vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
         )
-    writer.add_annotation(0, annotation)
+        writer.add_annotation(0, annotation)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
@@ -818,14 +822,14 @@ def test_annotation_builder_line(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         line_annotation = AnnotationBuilder.line(
             text="Hello World\nLine2",
             rect=(50, 550, 200, 650),
             p1=(50, 550),
             p2=(200, 650),
         )
-    writer.add_annotation(0, line_annotation)
+        writer.add_annotation(0, line_annotation)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
@@ -841,17 +845,17 @@ def test_annotation_builder_square(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         square_annotation = AnnotationBuilder.rectangle(
             rect=(50, 550, 200, 650), interiour_color="ff0000"
         )
-    writer.add_annotation(0, square_annotation)
+        writer.add_annotation(0, square_annotation)
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         square_annotation = AnnotationBuilder.rectangle(
             rect=(40, 400, 150, 450),
         )
-    writer.add_annotation(0, square_annotation)
+        writer.add_annotation(0, square_annotation)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
@@ -867,7 +871,7 @@ def test_annotation_builder_highlight(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         highlight_annotation = AnnotationBuilder.highlight(
             rect=(95.79332, 704.31777, 138.55779, 724.6855),
             highlight_color="ff0000",
@@ -885,16 +889,16 @@ def test_annotation_builder_highlight(pdf_file_path):
             ),
             printing=False,
         )
-    writer.add_annotation(0, highlight_annotation)
-    for annot in writer.pages[0]["/Annots"]:
-        obj = annot.get_object()
-        subtype = obj["/Subtype"]
-        if subtype == "/Highlight":
-            assert "/F" not in obj or obj["/F"] == NumberObject(0)
+        writer.add_annotation(0, highlight_annotation)
+        for annot in writer.pages[0]["/Annots"]:
+            obj = annot.get_object()
+            subtype = obj["/Subtype"]
+            if subtype == "/Highlight":
+                assert "/F" not in obj or obj["/F"] == NumberObject(0)
 
     writer.add_page(page)
     # Act
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         highlight_annotation = AnnotationBuilder.highlight(
             rect=(95.79332, 704.31777, 138.55779, 724.6855),
             highlight_color="ff0000",
@@ -912,12 +916,12 @@ def test_annotation_builder_highlight(pdf_file_path):
             ),
             printing=True,
         )
-    writer.add_annotation(1, highlight_annotation)
-    for annot in writer.pages[1]["/Annots"]:
-        obj = annot.get_object()
-        subtype = obj["/Subtype"]
-        if subtype == "/Highlight":
-            assert obj["/F"] == NumberObject(4)
+        writer.add_annotation(1, highlight_annotation)
+        for annot in writer.pages[1]["/Annots"]:
+            obj = annot.get_object()
+            subtype = obj["/Subtype"]
+            if subtype == "/Highlight":
+                assert obj["/F"] == NumberObject(4)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
@@ -933,18 +937,18 @@ def test_annotation_builder_circle(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         circle_annotation = AnnotationBuilder.ellipse(
             rect=(50, 550, 200, 650), interiour_color="ff0000"
         )
-    writer.add_annotation(0, circle_annotation)
+        writer.add_annotation(0, circle_annotation)
 
     diameter = 100
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         circle_annotation = AnnotationBuilder.ellipse(
             rect=(110, 500, 110 + diameter, 500 + diameter),
         )
-    writer.add_annotation(0, circle_annotation)
+        writer.add_annotation(0, circle_annotation)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
@@ -961,44 +965,36 @@ def test_annotation_builder_link(pdf_file_path):
 
     # Act
     # Part 1: Too many args
-    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
+    with pytest.raises(DeprecationError), pytest.raises(ValueError):
         AnnotationBuilder.link(
             rect=(50, 550, 200, 650),
             url="https://martin-thoma.com/",
             target_page_index=3,
         )
-    assert exc.value.args[0] == (
-        "Either 'url' or 'target_page_index' have to be provided. "
-        "url=https://martin-thoma.com/, target_page_index=3"
-    )
 
     # Part 2: Too few args
-    with pytest.warns(DeprecationWarning), pytest.raises(ValueError) as exc:
+    with pytest.raises(DeprecationError), pytest.raises(ValueError):
         AnnotationBuilder.link(
             rect=(50, 550, 200, 650),
         )
-    assert (
-        exc.value.args[0]
-        == "Either 'url' or 'target_page_index' have to be provided. Both were None."
-    )
 
     # Part 3: External Link
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         link_annotation = AnnotationBuilder.link(
             rect=(50, 50, 100, 100),
             url="https://martin-thoma.com/",
             border=[1, 0, 6, [3, 2]],
         )
-    writer.add_annotation(0, link_annotation)
+        writer.add_annotation(0, link_annotation)
 
     # Part 4: Internal Link
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         link_annotation = AnnotationBuilder.link(
             rect=(100, 100, 300, 200),
             target_page_index=1,
             border=[50, 10, 4],
         )
-    writer.add_annotation(0, link_annotation)
+        writer.add_annotation(0, link_annotation)
 
     for page in reader.pages[1:]:
         writer.add_page(page)
@@ -1017,13 +1013,13 @@ def test_annotation_builder_text(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         text_annotation = AnnotationBuilder.text(
             text="Hello World\nThis is the second line!",
             rect=(50, 550, 500, 650),
             open=True,
         )
-    writer.add_annotation(0, text_annotation)
+        writer.add_annotation(0, text_annotation)
 
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
@@ -1039,31 +1035,26 @@ def test_annotation_builder_popup(caplog):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         text_annotation = AnnotationBuilder.text(
             text="Hello World\nThis is the second line!",
             rect=(50, 550, 200, 650),
             open=True,
         )
-    ta = writer.add_annotation(0, text_annotation)
-
-    with pytest.warns(DeprecationWarning):
+        ta = writer.add_annotation(0, text_annotation)
         popup_annotation = AnnotationBuilder.popup(
             rect=(50, 550, 200, 650),
             open=True,
             parent=ta,  # prefer to use for evolutivity
         )
-
-    assert caplog.text == ""
-    with pytest.warns(DeprecationWarning):
         AnnotationBuilder.popup(
             rect=(50, 550, 200, 650),
             open=True,
             parent=True,  # broken parameter  # type: ignore
         )
-    assert "Unregistered Parent object : No Parent field set" in caplog.text
+        assert "Unregistered Parent object : No Parent field set" in caplog.text
 
-    writer.add_annotation(writer.pages[0], popup_annotation)
+        writer.add_annotation(writer.pages[0], popup_annotation)
 
     target = "annotated-pdf-popup.pdf"
     writer.write(target)
