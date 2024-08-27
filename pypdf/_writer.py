@@ -1611,6 +1611,7 @@ class PdfWriter(PdfDocCommon):
         outline_item_object = TreeObject()
         outline_item_object.update(outline_item)
 
+        """code currently unreachable
         if "/A" in outline_item:
             action = DictionaryObject()
             a_dict = cast(DictionaryObject, outline_item["/A"])
@@ -1618,7 +1619,7 @@ class PdfWriter(PdfDocCommon):
                 action[NameObject(str(k))] = v
             action_ref = self._add_object(action)
             outline_item_object[NameObject("/A")] = action_ref
-
+        """
         return self.add_outline_item_destination(
             outline_item_object, parent, before, is_open
         )
