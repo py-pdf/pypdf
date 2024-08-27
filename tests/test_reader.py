@@ -276,14 +276,22 @@ def test_get_images(src, expected_images):
             False,
             0,
             False,
-            ["startxref on same line as offset", "incorrect startxref pointer(1)"],
+            [
+                "startxref on same line as offset",
+                "incorrect startxref pointer(1)",
+                "parsing for Object Streams",
+            ],
         ),  # error on startxref, but no strict => xref rebuilt,no fail
         (
             False,
             True,
             0,
             False,
-            ["startxref on same line as offset", "incorrect startxref pointer(1)"],
+            [
+                "startxref on same line as offset",
+                "incorrect startxref pointer(1)",
+                "parsing for Object Streams",
+            ],
         ),
     ],
 )
@@ -344,7 +352,10 @@ def test_issue297(caplog):
     assert caplog.text == ""
     assert "Broken xref table" in exc.value.args[0]
     reader = PdfReader(path, strict=False)
-    assert normalize_warnings(caplog.text) == ["incorrect startxref pointer(1)"]
+    assert normalize_warnings(caplog.text) == [
+        "incorrect startxref pointer(1)",
+        "parsing for Object Streams",
+    ]
     reader.pages[0]
 
 
@@ -898,11 +909,14 @@ def test_form_topname_with_and_without_acroform(caplog):
 def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
-    msg = "incorrect startxref pointer(2)"
+    msg = [
+        "incorrect startxref pointer(2)",
+        "parsing for Object Streams",
+    ]
     reader = PdfReader(BytesIO(get_data_from_url(url, name="tika-981961.pdf")))
     for page in reader.pages:
         page.extract_text()
-    assert normalize_warnings(caplog.text) == [msg]
+    assert normalize_warnings(caplog.text) == msg
 
 
 @pytest.mark.enable_socket()
@@ -910,11 +924,13 @@ def test_extract_text_xref_issue_2(caplog):
 def test_extract_text_xref_issue_3(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
-    msg = "incorrect startxref pointer(3)"
+    msg = [
+        "incorrect startxref pointer(3)",
+    ]
     reader = PdfReader(BytesIO(get_data_from_url(url, name="tika-977774.pdf")))
     for page in reader.pages:
         page.extract_text()
-    assert normalize_warnings(caplog.text) == [msg]
+    assert normalize_warnings(caplog.text) == msg
 
 
 @pytest.mark.enable_socket()
@@ -1589,3 +1605,15 @@ def test_iss2761():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=False)
     with pytest.raises(PdfReadError):
         reader.pages[0].extract_text()
+
+
+@pytest.mark.enable_socket()
+def test_iss2817():
+    """Test for rebuiling Xref_ObjStm"""
+    url = "https://github.com/user-attachments/files/16764070/crash-7e1356f1179b4198337f282304cb611aea26a199.pdf"
+    name = "iss2817.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert (
+        reader.pages[0]["/Annots"][0].get_object()["/Contents"]
+        == "A\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0 B"
+    )
