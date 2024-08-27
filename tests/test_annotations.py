@@ -354,13 +354,13 @@ def test_popup(caplog):
 
     # Act
     text_annotation = Text(
+        title_bar="hello world",
         text="Hello World\nThis is the second line!",
         rect=(50, 550, 200, 650),
         open=True,
     )
     ta = writer.add_annotation(0, text_annotation)
     popup_annotation = Popup(
-        title_bar="hello world",
         rect=(50, 550, 200, 650),
         open=True,
         parent=ta,  # prefer to use for evolutivity
