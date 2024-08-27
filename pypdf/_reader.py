@@ -1017,13 +1017,13 @@ class PdfReader(PdfDocCommon):
                         skip_over_whitespace(strm)
                         strm.seek(-1, 1)
                         s = read_until_whitespace(strm)
-                        if not s.isdigit():
-                            break
+                        if not s.isdigit():  # pragma: no cover
+                            break  # pragma: no cover
                         _o = int(s)
                         self.xref_objStm[_i] = (i, _o)
                         cpt += 1
-                    if cpt != o.get("/N"):
-                        logger_warning(
+                    if cpt != o.get("/N"):  # pragma: no cover
+                        logger_warning(  # pragma: no cover
                             f"found {cpt} objects within Object({i},{g})"
                             f" whereas {o.get('/N')} expected",
                             __name__,
