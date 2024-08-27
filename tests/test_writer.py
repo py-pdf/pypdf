@@ -2367,6 +2367,16 @@ def test_increment_writer(caplog):
     )
     # Contains JBIG2 not decoded for the moment
     assert writer.list_objects_in_increment() == []  # no flowdown of properties
+
+    # test writing with empty increment
+    b = BytesIO()
+    writer.write(b)
+    b.seek(0)
+    writer2 = PdfWriter(b, incremental=True)
+    assert len([x for x in writer2._objects if x is not None]) == len(
+        [x for x in writer._objects if x is not None]
+    )
+
     # modify one object
     writer.pages[0][NameObject("/MediaBox")] = ArrayObject(
         [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
@@ -2378,6 +2388,9 @@ def test_increment_writer(caplog):
         [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
     )
     assert len(writer.list_objects_in_increment()) == 2
+    # modify object IndirectObject(5,0) : for coverage
+    writer.get_object(5)[NameObject("/ForTestOnly")] = NameObject("/ForTestOnly")
+
     b = BytesIO()
     writer.write(b)
     assert b.getvalue().startswith(writer._reader.stream.getvalue())
@@ -2386,6 +2399,7 @@ def test_increment_writer(caplog):
     assert reader.pages[0]["/MediaBox"] == ArrayObject(
         [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
     )
+    assert "/ForTestOnly" in reader.get_object(5)
     with pytest.raises(PyPdfError):
         writer = PdfWriter(reader, incremental=True)
     b.seek(0)
