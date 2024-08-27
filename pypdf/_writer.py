@@ -2658,14 +2658,12 @@ class PdfWriter(PdfDocCommon):
 
     def _get_cloned_page(
         self,
-        page: Union[None, int, IndirectObject, PageObject, NullObject],
+        page: Union[None, IndirectObject, PageObject, NullObject],
         pages: Dict[int, PageObject],
         reader: PdfReader,
     ) -> Optional[IndirectObject]:
         if isinstance(page, NullObject):
             return None
-        if isinstance(page, int):
-            _i = reader.pages[page].indirect_reference
         elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference
         elif isinstance(page, IndirectObject):

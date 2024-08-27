@@ -231,6 +231,7 @@ def test_trim_outline_list_with_writer(pdf_file_path):
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
+    merger.add_outline_item_dict(merger.outline[0])
     merger.write(pdf_file_path)
     merger.close()
 
@@ -242,6 +243,19 @@ def test_zoom_with_writer(pdf_file_path):
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
+    merger.write(pdf_file_path)
+    merger.close()
+
+
+@pytest.mark.enable_socket()
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_zoom_xyz_no_left_with_add_page(pdf_file_path):
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/933/933322.pdf"
+    name = "tika-933322.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    merger = PdfWriter()
+    for p in reader.pages:
+        merger.add_page(p)
     merger.write(pdf_file_path)
     merger.close()
 
@@ -390,3 +404,8 @@ def test_articles_with_writer(caplog):
 def test_deprecate_pdfmerger():
     with pytest.raises(DeprecationError), PdfMerger() as merger:
         merger.append(RESOURCE_ROOT / "crazyones.pdf")
+
+
+def test_get_reference():
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    assert writer.get_reference(writer.pages[0]) == writer.pages[0].indirect_reference
