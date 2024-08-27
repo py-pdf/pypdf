@@ -13,6 +13,7 @@ from pypdf.annotations import (
     Line,
     Link,
     Polygon,
+    PolyLine,
     Popup,
     Rectangle,
     Text,
@@ -151,6 +152,29 @@ def test_polygon(pdf_file_path):
         )
 
     annotation = Polygon(
+        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+    )
+    writer.add_annotation(0, annotation)
+
+    # Assert: You need to inspect the file manually
+    with open(pdf_file_path, "wb") as fp:
+        writer.write(fp)
+
+
+def test_polyline(pdf_file_path):
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    with pytest.raises(ValueError):
+        PolyLine(
+            vertices=[],
+        )
+
+    annotation = PolyLine(
         vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
     )
     writer.add_annotation(0, annotation)
@@ -336,6 +360,7 @@ def test_popup(caplog):
     )
     ta = writer.add_annotation(0, text_annotation)
     popup_annotation = Popup(
+        title_bar="hello world",
         rect=(50, 550, 200, 650),
         open=True,
         parent=ta,  # prefer to use for evolutivity
