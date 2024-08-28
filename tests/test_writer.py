@@ -1809,13 +1809,14 @@ def test_missing_info():
     assert b"/Info" in b.getvalue()
 
     writer.metadata = {}
+    writer._info = {}  # for code coverage
     b = BytesIO()
     writer.write(b)
     assert b"/Info" in b.getvalue()
     assert writer.metadata == {}
 
     writer.metadata = None
-    writer.metadata = None  # for code checking
+    writer.metadata = None  # for code coverage
     assert writer.metadata is None
     assert PdfWriter().metadata == {"/Producer": "pypdf"}
     b = BytesIO()
