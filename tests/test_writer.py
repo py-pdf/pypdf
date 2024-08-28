@@ -1809,7 +1809,7 @@ def test_missing_info():
     assert b"/Info" in b.getvalue()
 
     writer.metadata = {}
-    writer._info = {}  # for code coverage
+    writer._info = DictionaryObject()  # for code coverage
     b = BytesIO()
     writer.write(b)
     assert b"/Info" in b.getvalue()
