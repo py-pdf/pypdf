@@ -126,6 +126,8 @@ _predefined_cmap: Dict[str, str] = {
     "/ETenms-B5-V": "cp950",
     "/UniCNS-UTF16-H": "utf-16-be",
     "/UniCNS-UTF16-V": "utf-16-be",
+    "/UniGB-UTF16-H": "gb18030",
+    "/UniGB-UTF16-V": "gb18030",
     # UCS2 in code
 }
 
