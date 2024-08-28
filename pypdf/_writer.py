@@ -52,7 +52,7 @@ from typing import (
 )
 
 from ._cmap import _default_fonts_space_width, build_char_map_from_dict
-from ._doc_common import PdfDocCommon
+from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject
 from ._page_labels import nums_clear_range, nums_insert, nums_next
@@ -192,7 +192,7 @@ class PdfWriter(PdfDocCommon):
         """
 
         self._ID: Union[ArrayObject, None] = None
-        self._info_obj: PdfObject
+        self._info_obj: Optional[PdfObject]
 
         if self.incremental:
             if isinstance(fileobj, (str, Path)):
@@ -307,13 +307,26 @@ class PdfWriter(PdfDocCommon):
         Returns:
             /Info Dictionary; None if the entry does not exist
         """
-        return cast(DictionaryObject, self._info_obj.get_object())
+        return (
+            None
+            if self._info_obj is None
+            else cast(DictionaryObject, self._info_obj.get_object())
+        )
 
     @_info.setter
-    def _info(self, value: Union[IndirectObject, DictionaryObject]) -> None:
-        obj = cast(DictionaryObject, self._info_obj.get_object())
-        obj.clear()
-        obj.update(cast(DictionaryObject, value.get_object()))
+    def _info(self, value: Optional[Union[IndirectObject, DictionaryObject]]) -> None:
+        if value is None:
+            try:
+                self._objects[self._info_obj.indirect_reference.idnum - 1] = None  # type: ignore
+            except (KeyError, AttributeError):
+                pass
+            self._info_obj = None
+        else:
+            if self._info_obj is None:
+                self._info_obj = self._add_object(DictionaryObject())
+            obj = cast(DictionaryObject, self._info_obj.get_object())
+            obj.clear()
+            obj.update(cast(DictionaryObject, value.get_object()))
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
@@ -1184,6 +1197,7 @@ class PdfWriter(PdfDocCommon):
             self._objects = [None] * cast(int, reader.trailer["/Size"])
         else:
             self._objects.clear()
+        self._info_obj = None
         self._root_object = reader.root_object.clone(self)
         self._pages = self._root_object.raw_get("/Pages")
 
@@ -1224,22 +1238,21 @@ class PdfWriter(PdfDocCommon):
                 document.
         """
         self.clone_reader_document_root(reader)
-        if TK.INFO in reader.trailer:
-            inf = reader._info
-            if self.incremental:
-                if inf is not None:
-                    self._info_obj = cast(
-                        IndirectObject, inf.clone(self).indirect_reference
-                    )
-                self._original_hash[
-                    cast(IndirectObject, self._info_obj.indirect_reference).idnum - 1
-                ] = cast(DictionaryObject, self._info_obj.get_object()).hash_bin()
-            elif inf is not None:
-                self._info_obj = self._add_object(
-                    DictionaryObject(cast(DictionaryObject, inf.get_object()))
+        inf = reader._info
+        if self.incremental:
+            if inf is not None:
+                self._info_obj = cast(
+                    IndirectObject, inf.clone(self).indirect_reference
                 )
-        else:
-            self._info_obj = self._add_object(DictionaryObject())
+                assert isinstance(self._info, DictionaryObject), "for mypy"
+                self._original_hash[
+                    self._info_obj.indirect_reference.idnum - 1
+                ] = self._info.hash_bin()
+        elif inf is not None:
+            self._info_obj = self._add_object(
+                DictionaryObject(cast(DictionaryObject, inf.get_object()))
+            )
+        # else: _info_obj = None done in clone_reader_document_root()
 
         try:
             self._ID = cast(ArrayObject, reader._ID).clone(self)
@@ -1507,9 +1520,10 @@ class PdfWriter(PdfDocCommon):
             {
                 NameObject(TK.SIZE): NumberObject(len(self._objects) + 1),
                 NameObject(TK.ROOT): self.root_object.indirect_reference,
-                NameObject(TK.INFO): self._info_obj,
             }
         )
+        if self._info is not None:
+            trailer[NameObject(TK.INFO)] = self._info.indirect_reference
         if self.incremental:
             trailer[NameObject(TK.PREV)] = NumberObject(self._reader._startxref)
         if self._ID:
@@ -1518,6 +1532,34 @@ class PdfWriter(PdfDocCommon):
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt_entry.indirect_reference
         trailer.write_to_stream(stream)
         stream.write(f"\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
+
+    @property
+    def metadata(self) -> Optional[DocumentInformation]:
+        """
+        Retrieve/set the PDF file's document information dictionary, if it exists.
+
+        Args:
+            value: dict with the entries to be set. if None : remove the /Info entry from the pdf.
+
+        Note that some PDF files use (xmp)metadata streams instead of document
+        information dictionaries, and these metadata streams will not be
+        accessed by this function.
+        """
+        return super().metadata
+
+    @metadata.setter
+    def metadata(
+        self,
+        value: Optional[Union[DocumentInformation, DictionaryObject, Dict[Any, Any]]],
+    ) -> None:
+        if value is None:
+            self._info = None
+        else:
+            if self._info is not None:
+                self._info.clear()
+            else:
+                self._info = DictionaryObject()
+            self.add_metadata(value)
 
     def add_metadata(self, infos: Dict[str, Any]) -> None:
         """
