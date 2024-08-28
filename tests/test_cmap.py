@@ -214,7 +214,6 @@ def test_eten_b5():
     reader.pages[0].extract_text().startswith("1/7 \n富邦新終身壽險")
 
 
-@pytest.mark.enable_socket()
 def test_missing_entries_in_cmap():
     """
     Issue #2702: this issue is observed on damaged pdfs
@@ -231,10 +230,21 @@ def test_missing_entries_in_cmap():
 
 
 def test_null_missing_width():
-    """For coverage of 2792"""
+    """For coverage of #2792"""
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
     page = writer.pages[0]
     ft = page["/Resources"]["/Font"]["/F1"]
     ft[NameObject("/Widths")] = ArrayObject()
     ft["/FontDescriptor"][NameObject("/MissingWidth")] = NullObject()
     page.extract_text()
+
+
+@pytest.mark.enable_socket()
+def test_unigb_utf16():
+    """Cf #2812"""
+    url = (
+        "https://github.com/user-attachments/files/16767536/W020240105322424121296.pdf"
+    )
+    name = "iss2812.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert "《中国能源展望 2060（2024 年版）》编写委员会" in reader.pages[1].extract_text()
