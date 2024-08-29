@@ -1013,10 +1013,12 @@ class EncodedStreamObject(StreamObject):
     def set_data(self, data: bytes) -> None:  # deprecated
         from ..filters import FlateDecode
 
-        if self.get(SA.FILTER, "") == FT.FLATE_DECODE:
+        if self.get(SA.FILTER, "") in (FT.FLATE_DECODE, [FT.FLATE_DECODE]):
             if not isinstance(data, bytes):
                 raise TypeError("data must be bytes")
-            assert self.decoded_self is not None
+            if self.decoded_self is None:
+                self.get_data()  # to create self.decoded_self
+            assert self.decoded_self is not None, "mypy"
             self.decoded_self.set_data(data)
             super().set_data(FlateDecode.encode(data))
         else:
