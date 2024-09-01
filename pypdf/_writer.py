@@ -31,6 +31,7 @@ import decimal
 import enum
 import hashlib
 import re
+import struct
 import uuid
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
@@ -1351,8 +1352,8 @@ class PdfWriter(PdfDocCommon):
         if self.incremental:
             self._reader.stream.seek(0)
             stream.write(self._reader.stream.read(-1))
-            xref_location = self._write_increment(stream)
-            self._write_trailer(stream, xref_location)
+            if len(self.list_objects_in_increment()) > 0:
+                self._write_increment(stream)  # writes objs, Xref stream and startx
         else:
             object_positions, free_objects = self._write_pdf_structure(stream)
             xref_location = self._write_xref_table(
@@ -1413,7 +1414,7 @@ class PdfWriter(PdfDocCommon):
             )
         ]
 
-    def _write_increment(self, stream: StreamType) -> int:
+    def _write_increment(self, stream: StreamType) -> None:
         object_positions = {}
         object_blocks = []
         current_start = -1
@@ -1448,14 +1449,41 @@ class PdfWriter(PdfDocCommon):
             object_blocks.append([current_start, current_stop - current_start])
         # write incremented xref
         xref_location = stream.tell()
-        stream.write(b"xref\n")
-        stream.write(b"0 1\n")
-        stream.write(b"0000000000 65535 f \n")
-        for block in object_blocks:
-            stream.write(f"{block[0]} {block[1]}\n".encode())
-            for i in range(block[0], block[0] + block[1]):
-                stream.write(f"{object_positions[i]:0>10} {0:0>5} n \n".encode())
-        return xref_location
+        xr_id = len(self._objects) + 1
+        stream.write(f"{xr_id} 0 obj".encode())
+        init_data = {
+            NameObject("/Type"): NameObject("/XRef"),
+            NameObject("/Size"): NumberObject(xr_id + 1),
+            NameObject("/Root"): self.root_object.indirect_reference,
+            NameObject("/Filter"): NameObject("/FlateDecode"),
+            NameObject("/Index"): ArrayObject(
+                [NumberObject(_it) for _su in object_blocks for _it in _su]
+            ),
+            NameObject("/W"): ArrayObject(
+                [NumberObject(1), NumberObject(4), NumberObject(1)]
+            ),
+            "__streamdata__": b"",
+        }
+        if self._info is not None and (
+            not self.incremental
+            or self._info.hash_bin()  # kept for future
+            != self._original_hash[
+                cast(IndirectObject, self._info.indirect_reference).idnum - 1
+            ]
+        ):
+            init_data[NameObject(TK.INFO)] = self._info.indirect_reference
+        if self.incremental:  # kept for future
+            init_data[NameObject(TK.PREV)] = NumberObject(self._reader._startxref)
+        elif self._ID:
+            init_data[NameObject(TK.ID)] = self._ID
+        xr = StreamObject.initialize_from_dictionary(init_data)
+        xr.set_data(
+            b"".join(
+                [struct.pack(b">BIB", 1, _pos, 0) for _pos in object_positions.values()]
+            )
+        )
+        xr.write_to_stream(stream)
+        stream.write(f"\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
 
     def _write_pdf_structure(self, stream: StreamType) -> Tuple[List[int], List[int]]:
         object_positions = []
@@ -1507,12 +1535,11 @@ class PdfWriter(PdfDocCommon):
             {
                 NameObject(TK.SIZE): NumberObject(len(self._objects) + 1),
                 NameObject(TK.ROOT): self.root_object.indirect_reference,
-                NameObject(TK.INFO): self._info_obj,
             }
         )
-        if self.incremental:
-            trailer[NameObject(TK.PREV)] = NumberObject(self._reader._startxref)
-        if self._ID:
+        if self._info is not None:
+            trailer[NameObject(TK.INFO)] = self._info.indirect_reference
+        if self._ID is not None:
             trailer[NameObject(TK.ID)] = self._ID
         if self._encrypt_entry:
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt_entry.indirect_reference

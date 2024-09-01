@@ -948,7 +948,8 @@ class StreamObject(DictionaryObject):
             retval = DecodedStreamObject()
         retval._data = data["__streamdata__"]
         del data["__streamdata__"]
-        del data[SA.LENGTH]
+        if SA.LENGTH in data:
+            del data[SA.LENGTH]
         retval.update(data)
         return retval
 
