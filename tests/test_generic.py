@@ -1327,6 +1327,22 @@ def test_encodedstream_set_data():
 
 
 @pytest.mark.enable_socket()
+def test_set_data_2():
+    """
+    Modify a stream not yet loaded and
+    where the filter is ["/FlateDecode"]
+    """
+    url = "https://github.com/user-attachments/files/16796095/f5471sm-2.pdf"
+    name = "iss2780.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
+    writer.root_object["/AcroForm"]["/XFA"][7].set_data(b"test")
+    assert writer.root_object["/AcroForm"]["/XFA"][7].get_object()["/Filter"] == [
+        "/FlateDecode"
+    ]
+    assert writer.root_object["/AcroForm"]["/XFA"][7].get_object().get_data() == b"test"
+
+
+@pytest.mark.enable_socket()
 def test_calling_indirect_objects():
     """Cope with cases where attributes/items are called from indirectObject"""
     url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
