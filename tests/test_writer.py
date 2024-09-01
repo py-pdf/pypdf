@@ -2441,6 +2441,8 @@ def test_increment_writer(caplog):
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
     # 1 object is modified: page 0  inherits MediaBox so is changed
     assert len(writer.list_objects_in_increment()) == 1
+    b = BytesIO()
+    writer.write(b)
 
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=False)
     # 1 object is modified: page 0  inherits MediaBox so is changed
