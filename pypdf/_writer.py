@@ -1464,17 +1464,16 @@ class PdfWriter(PdfDocCommon):
             ),
             "__streamdata__": b"",
         }
-        if self._info is not None and (
-            not self.incremental
-            or self._info.hash_bin()  # kept for future
+        if (
+            self._info is not None
+            and self._info.hash_bin()  # kept for future
             != self._original_hash[
                 cast(IndirectObject, self._info.indirect_reference).idnum - 1
             ]
         ):
             init_data[NameObject(TK.INFO)] = self._info.indirect_reference
-        if self.incremental:  # kept for future
-            init_data[NameObject(TK.PREV)] = NumberObject(self._reader._startxref)
-        elif self._ID:
+        init_data[NameObject(TK.PREV)] = NumberObject(self._reader._startxref)
+        if self._ID:
             init_data[NameObject(TK.ID)] = self._ID
         xr = StreamObject.initialize_from_dictionary(init_data)
         xr.set_data(

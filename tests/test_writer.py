@@ -2371,11 +2371,19 @@ def test_increment_writer(caplog):
     # test writing with empty increment
     b = BytesIO()
     writer.write(b)
+    with open(
+        RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf", "rb"
+    ) as f:
+        assert b.getvalue() == f.read(-1)
     b.seek(0)
     writer2 = PdfWriter(b, incremental=True)
     assert len([x for x in writer2._objects if x is not None]) == len(
         [x for x in writer._objects if x is not None]
     )
+    writer2.add_metadata({"/Author": "test"})
+    assert len(writer2.list_objects_in_increment()) == 1
+    b = BytesIO()
+    writer2.write(b)
 
     # modify one object
     writer.pages[0][NameObject("/MediaBox")] = ArrayObject(
