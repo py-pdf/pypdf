@@ -1464,11 +1464,16 @@ class PdfWriter(PdfDocCommon):
             ),
             "__streamdata__": b"",
         }
-        if (
-            self._info is not None
-            and self._info.hash_bin()  # kept for future
+        # below just to trick mypy for code simplification : will be reworked in next PR
+        assert isinstance(
+            cast(IndirectObject, self._info).indirect_reference, IndirectObject
+        ), "for mypy"
+        if self._info is not None and (
+            cast(IndirectObject, self._info).indirect_reference.idnum - 1
+            >= len(self._original_hash)
+            or cast(IndirectObject, self._info).hash_bin()  # kept for future
             != self._original_hash[
-                cast(IndirectObject, self._info.indirect_reference).idnum - 1
+                cast(IndirectObject, self._info).indirect_reference.idnum - 1
             ]
         ):
             init_data[NameObject(TK.INFO)] = self._info.indirect_reference
