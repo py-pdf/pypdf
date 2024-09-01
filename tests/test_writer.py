@@ -2440,3 +2440,5 @@ def test_increment_writer(caplog):
     writer = PdfWriter(RESOURCE_ROOT / "missing_info.pdf", incremental=True)
     assert len(writer.list_objects_in_increment()) == 1
     assert writer._info == {}
+    b = BytesIO()
+    writer.write(b)
