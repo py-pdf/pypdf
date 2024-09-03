@@ -611,8 +611,9 @@ class PdfWriter(PdfDocCommon):
             The page number or None
         """
         # to provide same function as in PdfReader
-        if indirect_reference is None or isinstance(indirect_reference, NullObject):
+        if indirect_reference == None:  # noqa: E711
             return None
+        assert indirect_reference is not None, "mypy"
         if isinstance(indirect_reference, int):
             indirect_reference = IndirectObject(indirect_reference, 0, self)
         obj = indirect_reference.get_object()
@@ -2981,7 +2982,7 @@ class PdfWriter(PdfDocCommon):
         if node is None:
             node = NullObject()
         node = node.get_object()
-        if node is None or isinstance(node, NullObject):
+        if node == None:  # noqa: E711
             node = DictionaryObject()
         if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
             node = node.get("/First", None)

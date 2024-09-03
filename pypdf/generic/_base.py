@@ -208,6 +208,10 @@ class NullObject(PdfObject):
             raise PdfReadError("Could not read Null object")
         return NullObject()
 
+    def __eq__(self, value: object) -> bool:
+        """Overloaded for comparison with NullObject/None"""
+        return value is None or isinstance(value, NullObject)
+
     def __repr__(self) -> str:
         return "NullObject"
 

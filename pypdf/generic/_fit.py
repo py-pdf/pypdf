@@ -9,7 +9,7 @@ class Fit:
 
         self.fit_type = NameObject(fit_type)
         self.fit_args = [
-            NullObject() if a is None or isinstance(a, NullObject) else FloatObject(a)
+            NullObject() if a == None else FloatObject(a)  # noqa: E711
             for a in fit_args
         ]
 

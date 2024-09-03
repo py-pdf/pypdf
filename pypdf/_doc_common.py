@@ -759,7 +759,7 @@ class PdfDocCommon:
             field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
         except Exception as exc:
             raise ValueError("field type is invalid") from exc
-        if _get_inherited(field, "/FT") is None:
+        if _get_inherited(field, "/FT") == None:  # noqa: E711
             raise ValueError("field is not valid")
         ret = []
         if field.get("/Subtype", "") == "/Widget":

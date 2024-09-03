@@ -101,7 +101,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
     retval: Union[None, RectangleObject, IndirectObject] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
-    if retval is None:
+    if retval == None:  # noqa: E711
         for d in defaults:
             retval = self.get(d)
             if retval is not None:
@@ -730,9 +730,10 @@ class PageObject(DictionaryObject):
         entries will be identified as ~1~
         """
         content = self.get_contents()
-        if content is None:
+        if content == None:  # noqa: E711
             return {}
         imgs_data = []
+        assert content is not None, "mypy"
         for param, ope in content.operations:
             if ope == b"INLINE IMAGE":
                 imgs_data.append(
@@ -1062,7 +1063,7 @@ class PageObject(DictionaryObject):
             for i in range(len(content)):
                 content[i] = self.indirect_reference.pdf._add_object(content[i])
 
-        if content is None:
+        if content == None:  # noqa: E711
             if PG.CONTENTS not in self:
                 return
             else:
@@ -1083,6 +1084,7 @@ class PageObject(DictionaryObject):
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
         else:
+            assert content is not None, "mypy"
             content.indirect_reference = self[
                 PG.CONTENTS
             ].indirect_reference  # TODO: in a future may required generation management
