@@ -498,7 +498,7 @@ class PdfWriter(PdfDocCommon):
             cast(ArrayObject, node[PA.KIDS]).append(page.indirect_reference)
             self.flattened_pages.append(page)
         cpt = 1000
-        while node is not None:
+        while node != None:  # noqa: E711
             node = cast(DictionaryObject, node.get_object())
             node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
             node = node.get(PA.PARENT, None)
@@ -928,7 +928,7 @@ class PdfWriter(PdfDocCommon):
             )
             dr = dr.get_object().get("/Font", DictionaryObject()).get_object()
         font_res = dr.get(font_name, None)
-        if font_res is not None:
+        if font_res != None:  # noqa: E711
             font_res = cast(DictionaryObject, font_res.get_object())
             font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
                 200, font_res

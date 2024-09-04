@@ -212,6 +212,10 @@ class NullObject(PdfObject):
         """Overloaded for comparison with NullObject/None"""
         return value is None or isinstance(value, NullObject)
 
+    def __ne__(self, value: object) -> bool:
+        """Overloaded for comparison with NullObject/None"""
+        return not self.__eq__(value)
+
     def __repr__(self) -> str:
         return "NullObject"
 

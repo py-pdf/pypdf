@@ -492,7 +492,8 @@ class PageObject(DictionaryObject):
         self.inline_images: Optional[Dict[str, ImageFile]] = None
         # below Union for mypy but actually Optional[List[str]]
         self.indirect_reference = indirect_reference
-        if indirect_reference is not None:
+        if indirect_reference != None:  # noqa: E711
+            assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
 
     def hash_bin(self) -> int:

@@ -850,7 +850,7 @@ class PdfDocCommon:
                     return outline
 
                 # §12.3.3 Document outline, entries in the outline dictionary
-                if lines is not None and "/First" in lines:
+                if lines != None and "/First" in lines:  # noqa: E711
                     node = cast(DictionaryObject, lines["/First"])
             self._namedDests = self._get_named_destinations()
 
