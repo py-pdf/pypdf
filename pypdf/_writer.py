@@ -107,6 +107,7 @@ from .generic import (
     ViewerPreferences,
     create_string_object,
     hex_to_rgb,
+    is_null_or_none,
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
@@ -498,7 +499,7 @@ class PdfWriter(PdfDocCommon):
             cast(ArrayObject, node[PA.KIDS]).append(page.indirect_reference)
             self.flattened_pages.append(page)
         cpt = 1000
-        while node != None:  # noqa: E711
+        while not is_null_or_none(node):
             node = cast(DictionaryObject, node.get_object())
             node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
             node = node.get(PA.PARENT, None)
@@ -611,7 +612,7 @@ class PdfWriter(PdfDocCommon):
             The page number or None
         """
         # to provide same function as in PdfReader
-        if indirect_reference == None:  # noqa: E711
+        if is_null_or_none(indirect_reference):
             return None
         assert indirect_reference is not None, "mypy"
         if isinstance(indirect_reference, int):
@@ -928,7 +929,7 @@ class PdfWriter(PdfDocCommon):
             )
             dr = dr.get_object().get("/Font", DictionaryObject()).get_object()
         font_res = dr.get(font_name, None)
-        if font_res != None:  # noqa: E711
+        if not is_null_or_none(font_res):
             font_res = cast(DictionaryObject, font_res.get_object())
             font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
                 200, font_res
@@ -2982,7 +2983,7 @@ class PdfWriter(PdfDocCommon):
         if node is None:
             node = NullObject()
         node = node.get_object()
-        if node == None:  # noqa: E711
+        if is_null_or_none(node):
             node = DictionaryObject()
         if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
             node = node.get("/First", None)

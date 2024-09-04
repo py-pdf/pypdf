@@ -79,6 +79,7 @@ from ._base import (
     NumberObject,
     PdfObject,
     TextStringObject,
+    is_null_or_none,
 )
 from ._fit import Fit
 from ._image_inline import (
@@ -449,7 +450,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         from ..xmp import XmpInformation
 
         metadata = self.get("/Metadata", None)
-        if metadata == None:  # noqa: E711
+        if is_null_or_none(metadata):
             return None
         metadata = metadata.get_object()
 
@@ -653,7 +654,7 @@ class TreeObject(DictionaryObject):
             if child == self[NameObject("/Last")]:
                 return
             child_ref = child.get(NameObject("/Next"))  # type: ignore
-            if child_ref == None:  # noqa: E711
+            if is_null_or_none(child_ref):
                 return
             child = child_ref.get_object()
 
@@ -663,7 +664,7 @@ class TreeObject(DictionaryObject):
     def inc_parent_counter_default(
         self, parent: Union[None, IndirectObject, "TreeObject"], n: int
     ) -> None:
-        if parent == None:  # noqa: E711
+        if is_null_or_none(parent):
             return
         assert parent is not None, "mypy"
         parent = cast("TreeObject", parent.get_object())
@@ -676,7 +677,7 @@ class TreeObject(DictionaryObject):
     def inc_parent_counter_outline(
         self, parent: Union[None, IndirectObject, "TreeObject"], n: int
     ) -> None:
-        if parent == None:  # noqa: E711
+        if is_null_or_none(parent):
             return
         assert parent is not None, "mypy"
         parent = cast("TreeObject", parent.get_object())

@@ -44,6 +44,7 @@ from ._base import (
     PdfObject,
     TextStringObject,
     encode_pdfdocencoding,
+    is_null_or_none,
 )
 from ._data_structures import (
     ArrayObject,
@@ -332,7 +333,10 @@ class AnnotationBuilder:
         from ..annotations import Highlight
 
         return Highlight(
-            rect=rect, quad_points=quad_points, highlight_color=highlight_color, printing=printing
+            rect=rect,
+            quad_points=quad_points,
+            highlight_color=highlight_color,
+            printing=printing,
         )
 
     @staticmethod
@@ -459,6 +463,7 @@ __all__ = [
     "encode_pdfdocencoding",
     "decode_pdfdocencoding",
     "hex_to_rgb",
+    "is_null_or_none",
     "read_hex_string_from_stream",
     "read_string_from_stream",
 ]

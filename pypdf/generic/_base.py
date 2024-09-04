@@ -208,16 +208,18 @@ class NullObject(PdfObject):
             raise PdfReadError("Could not read Null object")
         return NullObject()
 
-    def __eq__(self, value: object) -> bool:
-        """Overloaded for comparison with NullObject/None"""
-        return value is None or isinstance(value, NullObject)
-
-    def __ne__(self, value: object) -> bool:
-        """Overloaded for comparison with NullObject/None"""
-        return not self.__eq__(value)
-
     def __repr__(self) -> str:
         return "NullObject"
+
+
+def is_null_or_none(x: Any) -> bool:
+    """
+    Returns:
+        returns true if x is None or NullObject
+    """
+    return x is None or (
+        isinstance(x, PdfObject) and isinstance(x.get_object(), NullObject)
+    )
 
 
 class BooleanObject(PdfObject):
@@ -383,9 +385,6 @@ class IndirectObject(PdfObject):
             and self.generation == other.generation
             and self.pdf is other.pdf
         )
-
-    def __ne__(self, other: object) -> bool:
-        return not self.__eq__(other)
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None

@@ -84,6 +84,7 @@ from .generic import (
     PdfObject,
     RectangleObject,
     StreamObject,
+    is_null_or_none,
 )
 
 try:
@@ -101,7 +102,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
     retval: Union[None, RectangleObject, IndirectObject] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
-    if retval == None:  # noqa: E711
+    if is_null_or_none(retval):
         for d in defaults:
             retval = self.get(d)
             if retval is not None:
@@ -492,7 +493,7 @@ class PageObject(DictionaryObject):
         self.inline_images: Optional[Dict[str, ImageFile]] = None
         # below Union for mypy but actually Optional[List[str]]
         self.indirect_reference = indirect_reference
-        if indirect_reference != None:  # noqa: E711
+        if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
 
@@ -731,7 +732,7 @@ class PageObject(DictionaryObject):
         entries will be identified as ~1~
         """
         content = self.get_contents()
-        if content == None:  # noqa: E711
+        if is_null_or_none(content):
             return {}
         imgs_data = []
         assert content is not None, "mypy"
@@ -1064,7 +1065,7 @@ class PageObject(DictionaryObject):
             for i in range(len(content)):
                 content[i] = self.indirect_reference.pdf._add_object(content[i])
 
-        if content == None:  # noqa: E711
+        if is_null_or_none(content):
             if PG.CONTENTS not in self:
                 return
             else:

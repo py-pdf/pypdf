@@ -8,6 +8,7 @@ from .generic import (
     DecodedStreamObject,
     DictionaryObject,
     StreamObject,
+    is_null_or_none,
 )
 
 
@@ -467,7 +468,7 @@ def compute_space_width(
                         cpt += 1
                 sp_width = m / max(1, cpt) / 2
 
-    if sp_width == None:  # noqa: E711
+    if is_null_or_none(sp_width):
         sp_width = 0.0
     return sp_width
 
@@ -481,7 +482,7 @@ def type1_alternative(
     if "/FontDescriptor" not in ft:
         return map_dict, space_code, int_entry
     ft_desc = cast(DictionaryObject, ft["/FontDescriptor"]).get("/FontFile")
-    if ft_desc == None:  # noqa: E711
+    if is_null_or_none(ft_desc):
         return map_dict, space_code, int_entry
     assert ft_desc is not None, "mypy"
     txt = ft_desc.get_object().get_data()

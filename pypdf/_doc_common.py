@@ -85,6 +85,7 @@ from .generic import (
     TreeObject,
     ViewerPreferences,
     create_string_object,
+    is_null_or_none,
 )
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
@@ -759,7 +760,7 @@ class PdfDocCommon:
             field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
         except Exception as exc:
             raise ValueError("field type is invalid") from exc
-        if _get_inherited(field, "/FT") == None:  # noqa: E711
+        if is_null_or_none(_get_inherited(field, "/FT")):
             raise ValueError("field is not valid")
         ret = []
         if field.get("/Subtype", "") == "/Widget":
@@ -850,7 +851,7 @@ class PdfDocCommon:
                     return outline
 
                 # §12.3.3 Document outline, entries in the outline dictionary
-                if lines != None and "/First" in lines:  # noqa: E711
+                if not is_null_or_none(lines) and "/First" in lines:
                     node = cast(DictionaryObject, lines["/First"])
             self._namedDests = self._get_named_destinations()
 
