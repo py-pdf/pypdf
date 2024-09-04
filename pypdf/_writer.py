@@ -31,6 +31,7 @@ import decimal
 import enum
 import hashlib
 import re
+import time
 import uuid
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
@@ -133,13 +134,6 @@ class ObjectDeletionFlag(enum.IntFlag):
     INLINE_IMAGES = enum.auto()
     DRAWING_IMAGES = enum.auto()
     IMAGES = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
-
-
-def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
-    hash = hashlib.md5()
-    for block in iter(lambda: stream.read(blocksize), b""):
-        hash.update(block)
-    return hash.hexdigest()
 
 
 class PdfWriter(PdfDocCommon):
@@ -1162,10 +1156,14 @@ class PdfWriter(PdfDocCommon):
                 after_page_append(page.get_object())
 
     def _compute_document_identifier(self) -> ByteStringObject:
-        stream = BytesIO()
-        self._write_pdf_structure(stream)
-        stream.seek(0)
-        return ByteStringObject(_rolling_checksum(stream).encode("utf8"))
+        md5 = hashlib.md5()
+        md5.update(str(time.time()).encode("utf-8"))
+        md5.update(str(self.fileobj).encode("utf-8"))
+        md5.update(str(len(self._objects)).encode("utf-8"))
+        if hasattr(self, "_info"):
+            for k, v in cast(DictionaryObject, self._info.get_object()).items():
+                md5.update(f"{k}={v}".encode())
+        return ByteStringObject(md5.hexdigest().encode("utf-8"))
 
     def generate_file_identifiers(self) -> None:
         """
@@ -1184,7 +1182,7 @@ class PdfWriter(PdfDocCommon):
             id2 = self._compute_document_identifier()
         else:
             id1 = self._compute_document_identifier()
-            id2 = id1
+            id2 = ByteStringObject(id1.original_bytes)
         self._ID = ArrayObject((id1, id2))
 
     def encrypt(
