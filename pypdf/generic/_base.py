@@ -386,6 +386,9 @@ class IndirectObject(PdfObject):
             and self.pdf is other.pdf
         )
 
+    def __ne__(self, other: object) -> bool:
+        return not self.__eq__(other)
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
