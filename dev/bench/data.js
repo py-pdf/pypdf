@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1724949140982,
+  "lastUpdate": 1725564910946,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -57161,6 +57161,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008362925636750443",
             "extra": "mean: 798.0745524000099 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e694d5571ced01b10d0e982ee97d704218b5f991",
+          "message": "DEV: Fix coverage uploads (#2832)\n\n* DEV: Fix coverage uploads\r\n\r\nStarting 2024-09-02, hidden files are ignored by default: https://redirect.github.com/actions/upload-artifact/issues/602\r\n\r\n* list files\r\n\r\n* no need to list files",
+          "timestamp": "2024-09-05T21:32:20+02:00",
+          "tree_id": "5fc715f75c1d2da6cb9cbec7891ceebc2edcdebd",
+          "url": "https://github.com/py-pdf/pypdf/commit/e694d5571ced01b10d0e982ee97d704218b5f991"
+        },
+        "date": 1725564908866,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.309545526966388,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0027580163402918874",
+            "extra": "mean: 302.15629060000424 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.65444924994147,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00846982033999531",
+            "extra": "mean: 79.02358927273151 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2805280865621602,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01590492740540203",
+            "extra": "mean: 3.5647054534000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 14.588238932596843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003914926698066622",
+            "extra": "mean: 68.54836999999634 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06437367073186694,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13439185630209838",
+            "extra": "mean: 15.534301347600012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2905537662837832,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023313080687377293",
+            "extra": "mean: 774.8611689999962 msec\nrounds: 5"
           }
         ]
       }
