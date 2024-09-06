@@ -981,7 +981,7 @@ def test_annotation_builder_link(pdf_file_path):
         )
     assert exc.value.args[0] == (
         "Either 'url' or 'target_page_index' have to be provided. "
-        "url=https://martin-thoma.com/, target_page_index=3"
+        "url='https://martin-thoma.com/', target_page_index=3"
     )
 
     # Part 2: Too few args
