@@ -21,6 +21,7 @@ class PaperSize:
     # So the height of the next bigger one is the width of the smaller one
     # The ratio is always approximately 1:2**0.5
     # Additionally, A0 is defined to have an area of 1 m**2
+    # https://en.wikipedia.org/wiki/ISO_216
     # Be aware of rounding issues!
     A0 = Dimensions(2384, 3370)  # 841mm x 1189mm
     A1 = Dimensions(1684, 2384)
