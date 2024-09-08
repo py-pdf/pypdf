@@ -401,7 +401,7 @@ class PdfDocCommon:
                     # else:  # ... at lower levels
                     return n, i
                 mi = i
-            raise PyPdfError("abnormal, can not find the node")
+            raise PyPdfError("Unexpectedly cannot find the node.")
 
         node, idx = recurs(top, 0)
         assert isinstance(node, DictionaryObject)
