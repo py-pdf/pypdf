@@ -375,7 +375,7 @@ class PdfDocCommon:
         page_number: int,
     ) -> Tuple[DictionaryObject, int]:
         """
-        Retrieve the node and position within the /Kids containing the page
+        Retrieve the node and position within the /Kids containing the page.
         if page_number is greater than the number of page, it returns top node, -1
         """
         top = cast(DictionaryObject, self.root_object["/Pages"])
