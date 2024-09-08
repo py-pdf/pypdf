@@ -579,7 +579,7 @@ class PdfWriter(PdfDocCommon):
         if index < 0:
             index = len(self.flattened_pages) + index
         if index < 0:
-            raise ValueError("invalid index value")
+            raise ValueError("Invalid index value")
         if index >= len(self.flattened_pages):
             return self.add_page(page, excluded_keys)
         else:
