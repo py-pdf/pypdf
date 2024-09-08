@@ -491,7 +491,7 @@ class PdfWriter(PdfDocCommon):
             node = node.get(PA.PARENT, None)
             cpt -= 1
             if cpt < 0:
-                raise PyPdfError("Recursive Error detected")
+                raise PyPdfError("Too many recursive calls!")
         return page
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
