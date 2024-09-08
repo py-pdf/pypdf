@@ -154,7 +154,7 @@ class PdfWriter(PdfDocCommon):
 
     incremental: If true, loads the document and set the PdfWriter in incremental mode
 
-    When writing in incremental the original document is written first and new/modified
+    When writing incrementally, the original document is written first and new/modified
     are appened. to be used for signed document/forms to keep signature valid.
     """
 
