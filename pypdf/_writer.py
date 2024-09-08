@@ -1395,7 +1395,7 @@ class PdfWriter(PdfDocCommon):
         """
         For debugging/analysis.
         Provides the list of new/modified objects that will be written
-        in the increment
+        in the increment.
         Deleted Objects will not be freeed but will become orphans
 
         Returns:
