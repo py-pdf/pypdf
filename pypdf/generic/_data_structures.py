@@ -133,9 +133,10 @@ class ArrayObject(List[Any], PdfObject):
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         return hash((self.__class__, tuple(x.hash_bin() for x in self)))
 
@@ -381,9 +382,10 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         return hash(
             (self.__class__, tuple(((k, v.hash_bin()) for k, v in self.items())))
@@ -896,9 +898,10 @@ class StreamObject(DictionaryObject):
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         # use of _data to prevent errors on non decoded stream such as JBIG2
         return hash((super().hash_bin(), self._data))
