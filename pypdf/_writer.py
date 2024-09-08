@@ -554,7 +554,7 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added PageObject.
         """
-        assert self.flattened_pages is not None
+        assert self.flattened_pages is not None, "mypy"
         return self._add_page(page, len(self.flattened_pages), excluded_keys)
 
     def insert_page(
@@ -575,7 +575,7 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added PageObject.
         """
-        assert self.flattened_pages is not None
+        assert self.flattened_pages is not None, "mypy"
         if index < 0:
             index = len(self.flattened_pages) + index
         if index < 0:
