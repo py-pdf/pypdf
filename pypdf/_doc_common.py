@@ -385,7 +385,7 @@ class PdfDocCommon:
             if node["/Type"] == "/Page":
                 if page_number == mi:
                     return node, -1
-                # else:
+                # else
                 return None, mi + 1
             if (page_number - mi) >= ma:  # not in nodes below
                 if node == top:
