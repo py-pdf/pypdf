@@ -172,13 +172,13 @@ class PdfWriter(PdfDocCommon):
         self._objects: List[Optional[PdfObject]] = []
         """
         The indirect objects in the PDF.
-        for the incremental it will be filled with None
-        in clone_reader_document_root
+        For the incremental case, it will be filled with None
+        in clone_reader_document_root.
         """
 
         self._original_hash: List[int] = []
         """
-        list of hashes after import; used to identify changes
+        List of hashes after import; used to identify changes.
         """
 
         self._idnum_hash: Dict[bytes, Tuple[IndirectObject, List[IndirectObject]]] = {}
@@ -454,7 +454,7 @@ class PdfWriter(PdfDocCommon):
         excluded_keys: Iterable[str] = (),
     ) -> PageObject:
         if not isinstance(page, PageObject) or page.get(PA.TYPE, None) != CO.PAGE:
-            raise ValueError("Invalid page Object")
+            raise ValueError("Invalid page object")
         assert self.flattened_pages is not None, "for mypy"
         page_org = page
         excluded_keys = list(excluded_keys)
@@ -1396,7 +1396,7 @@ class PdfWriter(PdfDocCommon):
         For debugging/analysis.
         Provides the list of new/modified objects that will be written
         in the increment.
-        Deleted Objects will not be freeed but will become orphans
+        Deleted objects will not be freed but will become orphans.
 
         Returns:
             List of (new / modified) IndirectObjects
