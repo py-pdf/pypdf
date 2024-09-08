@@ -55,9 +55,10 @@ class PdfObject(PdfObjectProtocol):
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not implement .hash_bin() so far"
@@ -186,9 +187,10 @@ class NullObject(PdfObject):
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         return hash((self.__class__,))
 
@@ -230,9 +232,10 @@ class BooleanObject(PdfObject):
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         return hash((self.__class__, self.value))
 
@@ -282,9 +285,10 @@ class IndirectObject(PdfObject):
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         return hash((self.__class__, self.idnum, self.generation, id(self.pdf)))
 
@@ -448,9 +452,10 @@ class FloatObject(float, PdfObject):
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         return hash((self.__class__, self.as_numeric))
 
@@ -501,9 +506,10 @@ class NumberObject(int, PdfObject):
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         return hash((self.__class__, self.as_numeric()))
 
@@ -552,9 +558,10 @@ class ByteStringObject(bytes, PdfObject):
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         return hash((self.__class__, bytes(self)))
 
@@ -639,9 +646,10 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         return hash((self.__class__, self.original_bytes))
 
@@ -743,9 +751,10 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
     def hash_bin(self) -> int:
         """
+        Used to detect modified object.
+
         Returns:
-            hash considering type and value
-        used to detect modified object
+            Hash considering type and value.
         """
         return hash((self.__class__, self))
 
