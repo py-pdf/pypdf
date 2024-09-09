@@ -376,8 +376,8 @@ class PdfDocCommon:
         page_number: int,
     ) -> Tuple[DictionaryObject, int]:
         """
-        Retrieve the node and position within the /Kids containing the page
-        if page_number is greater than the number of page, it returns top node, -1
+        Retrieve the node and position within the /Kids containing the page.
+        If page_number is greater than the number of pages, it returns the top node, -1
         """
         top = cast(DictionaryObject, self.root_object["/Pages"])
 
@@ -386,7 +386,7 @@ class PdfDocCommon:
             if node["/Type"] == "/Page":
                 if page_number == mi:
                     return node, -1
-                # else:
+                # else
                 return None, mi + 1
             if (page_number - mi) >= ma:  # not in nodes below
                 if node == top:
@@ -402,7 +402,7 @@ class PdfDocCommon:
                     # else:  # ... at lower levels
                     return n, i
                 mi = i
-            raise PyPdfError("abnormal, can not find the node")
+            raise PyPdfError("Unexpectedly cannot find the node.")
 
         node, idx = recurs(top, 0)
         assert isinstance(node, DictionaryObject)

@@ -2443,7 +2443,7 @@ class _VirtualList(Sequence[PageObject]):
                 parent = parent.get("/Parent", None)
             except ValueError:  # from index
                 if first:
-                    raise PdfReadError(f"Page Not Found in Page Tree {ind}")
+                    raise PdfReadError(f"Page not found in page tree: {ind}")
                 break
 
     def __iter__(self) -> Iterator[PageObject]:

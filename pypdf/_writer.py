@@ -155,8 +155,8 @@ class PdfWriter(PdfDocCommon):
 
     incremental: If true, loads the document and set the PdfWriter in incremental mode
 
-    When writing in incremental the original document is written first and new/modified
-    are appened. to be used for signed document/forms to keep signature valid.
+    When writing incrementally, the original document is written first and new/modified
+    content is appended. To be used for signed document/forms to keep signature valid.
     """
 
     def __init__(
@@ -173,13 +173,13 @@ class PdfWriter(PdfDocCommon):
         self._objects: List[Optional[PdfObject]] = []
         """
         The indirect objects in the PDF.
-        for the incremental it will be filled with None
-        in clone_reader_document_root
+        For the incremental case, it will be filled with None
+        in clone_reader_document_root.
         """
 
         self._original_hash: List[int] = []
         """
-        list of hashes after import; used to identify changes
+        List of hashes after import; used to identify changes.
         """
 
         self._idnum_hash: Dict[bytes, Tuple[IndirectObject, List[IndirectObject]]] = {}
@@ -468,7 +468,7 @@ class PdfWriter(PdfDocCommon):
         excluded_keys: Iterable[str] = (),
     ) -> PageObject:
         if not isinstance(page, PageObject) or page.get(PA.TYPE, None) != CO.PAGE:
-            raise ValueError("Invalid page Object")
+            raise ValueError("Invalid page object")
         assert self.flattened_pages is not None, "for mypy"
         page_org = page
         excluded_keys = list(excluded_keys)
@@ -505,7 +505,7 @@ class PdfWriter(PdfDocCommon):
             node = node.get(PA.PARENT, None)
             cpt -= 1
             if cpt < 0:
-                raise PyPdfError("Recursive Error detected")
+                raise PyPdfError("Too many recursive calls!")
         return page
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
@@ -568,7 +568,7 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added PageObject.
         """
-        assert self.flattened_pages is not None
+        assert self.flattened_pages is not None, "mypy"
         return self._add_page(page, len(self.flattened_pages), excluded_keys)
 
     def insert_page(
@@ -589,11 +589,11 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added PageObject.
         """
-        assert self.flattened_pages is not None
+        assert self.flattened_pages is not None, "mypy"
         if index < 0:
             index = len(self.flattened_pages) + index
         if index < 0:
-            raise ValueError("invalid index value")
+            raise ValueError("Invalid index value")
         if index >= len(self.flattened_pages):
             return self.add_page(page, excluded_keys)
         else:
@@ -1408,10 +1408,10 @@ class PdfWriter(PdfDocCommon):
 
     def list_objects_in_increment(self) -> List[IndirectObject]:
         """
-        For debug / analysis
+        For debugging/analysis.
         Provides the list of new/modified objects that will be written
-        in the increment
-        Deleted Objects will not be freeed but will become orphans
+        in the increment.
+        Deleted objects will not be freed but will become orphans.
 
         Returns:
             List of (new / modified) IndirectObjects
