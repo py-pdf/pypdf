@@ -306,7 +306,7 @@ class XmpInformation(PdfObject):
     """Unique identifier of the work from which this resource was derived."""
 
     dc_subject = property(_getter_bag(DC_NAMESPACE, "subject"))
-    """An unordered array of descriptive phrases or keywrods that specify the
+    """An unordered array of descriptive phrases or keywords that specify the
     topic of the content of the resource."""
 
     dc_title = property(_getter_langalt(DC_NAMESPACE, "title"))
