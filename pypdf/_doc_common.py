@@ -380,7 +380,9 @@ class PdfDocCommon:
         """
         top = cast(DictionaryObject, self.root_object["/Pages"])
 
-        def recurs(node: DictionaryObject, mi: int) -> Tuple[Optional[PdfObject], int]:
+        def recursive_call(
+            node: DictionaryObject, mi: int
+        ) -> Tuple[Optional[PdfObject], int]:
             ma = cast(int, node.get("/Count", 1))  # default 1 for /Page types
             if node["/Type"] == "/Page":
                 if page_number == mi:
@@ -394,7 +396,7 @@ class PdfDocCommon:
                 return None, mi + ma
             for idx, kid in enumerate(cast(ArrayObject, node["/Kids"])):
                 kid = cast(DictionaryObject, kid.get_object())
-                n, i = recurs(kid, mi)
+                n, i = recursive_call(kid, mi)
                 if n is not None:  # page has just been found ...
                     if i < 0:  # ... just below!
                         return node, idx
@@ -403,8 +405,8 @@ class PdfDocCommon:
                 mi = i
             raise PyPdfError("Unexpectedly cannot find the node.")
 
-        node, idx = recurs(top, 0)
-        assert isinstance(node, DictionaryObject)
+        node, idx = recursive_call(top, 0)
+        assert isinstance(node, DictionaryObject), "mypy"
         return node, idx
 
     @property
@@ -1125,12 +1127,13 @@ class PdfDocCommon:
         indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
         """
-        prepare the document pages to ease searching
-        args:
-            list_only: will only list the pages witin _flatten_pages
-            pages,
-            inherit,
-            indirect_reference: used recursively to flatten the /Pages object
+        Prepare the document pages to ease searching
+
+        Args:
+            list_only: Will only list the pages within _flatten_pages.
+            pages:
+            inherit:
+            indirect_reference: Used recursively to flatten the /Pages object.
         """
         inheritable_page_attributes = (
             NameObject(PG.RESOURCES),

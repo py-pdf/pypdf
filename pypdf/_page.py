@@ -497,12 +497,13 @@ class PageObject(DictionaryObject):
 
     def hash_bin(self) -> int:
         """
-        Returns:
-            hash considering type and value
-        used to detect modified object
+        Used to detect modified object.
 
         Note: this function is overloaded to return the same results
-        as a DictionaryObject
+        as a DictionaryObject.
+
+        Returns:
+            Hash considering type and value.
         """
         return hash(
             (DictionaryObject, tuple(((k, v.hash_bin()) for k, v in self.items())))
