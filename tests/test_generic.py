@@ -1126,3 +1126,9 @@ Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
     ec.set_data(b)
     co = ContentStream(ec, None)
     assert co.operations[7][0]["data"] == b"abcdefghijklmnop"
+
+
+def test_missing_hashbin():
+    assert NullObject().hash_bin() == hash((NullObject,))
+    t = ByteStringObject(b"123")
+    assert t.hash_bin() == hash((ByteStringObject, b"123"))

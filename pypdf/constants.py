@@ -31,6 +31,7 @@ class TrailerKeys:
     ID = "/ID"
     INFO = "/Info"
     SIZE = "/Size"
+    PREV = "/Prev"
 
 
 class CatalogAttributes:

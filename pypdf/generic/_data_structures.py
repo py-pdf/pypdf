@@ -131,6 +131,15 @@ class ArrayObject(List[Any], PdfObject):
                 arr.append(data)
         return arr
 
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        return hash((self.__class__, tuple(x.hash_bin() for x in self)))
+
     def items(self) -> Iterable[Any]:
         """Emulate DictionaryObject.items for a list (index, object)."""
         return enumerate(self)
@@ -370,6 +379,17 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                         if hasattr(v, "clone")
                         else v
                     )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        return hash(
+            (self.__class__, tuple(((k, v.hash_bin()) for k, v in self.items())))
+        )
 
     def raw_get(self, key: Any) -> Any:
         return dict.__getitem__(self, key)
@@ -868,6 +888,16 @@ class StreamObject(DictionaryObject):
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields, visited)
 
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        # use of _data to prevent errors on non decoded stream such as JBIG2
+        return hash((super().hash_bin(), self._data))
+
     def get_data(self) -> bytes:
         return self._data
 
@@ -910,7 +940,8 @@ class StreamObject(DictionaryObject):
             retval = DecodedStreamObject()
         retval._data = data["__streamdata__"]
         del data["__streamdata__"]
-        del data[SA.LENGTH]
+        if SA.LENGTH in data:
+            del data[SA.LENGTH]
         retval.update(data)
         return retval
 
