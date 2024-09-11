@@ -153,7 +153,7 @@ class PdfWriter(PdfDocCommon):
     Args:
         clone_from: identical to fileobj (for compatibility)
 
-        incremental: If true, loads the document and set the PdfWriter in incremental mode
+        incremental: If true, loads the document and set the PdfWriter in incremental mode.
 
             When writing incrementally, the original document is written first and new/modified
             content is appended. To be used for signed document/forms to keep signature valid.
