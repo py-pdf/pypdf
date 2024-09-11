@@ -167,7 +167,7 @@ class PdfWriter(PdfDocCommon):
     ) -> None:
         self.incremental = incremental
         """
-        Returns if the PdfWriter object has been started in incremental mode
+        Returns if the PdfWriter object has been started in incremental mode.
         """
 
         self._objects: List[Optional[PdfObject]] = []
