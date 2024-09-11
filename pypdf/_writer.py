@@ -31,6 +31,7 @@ import decimal
 import enum
 import hashlib
 import re
+import struct
 import uuid
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
@@ -148,53 +149,71 @@ class PdfWriter(PdfDocCommon):
     cloning a PDF file during initialization.
 
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
+
+    Args:
+        clone_from: identical to fileobj (for compatibility)
+
+        incremental: If true, loads the document and set the PdfWriter in incremental mode.
+
+            When writing incrementally, the original document is written first and new/modified
+            content is appended. To be used for signed document/forms to keep signature valid.
     """
 
     def __init__(
         self,
         fileobj: Union[None, PdfReader, StrByteType, Path] = "",
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
+        incremental: bool = False,
     ) -> None:
-        self._header = b"%PDF-1.3"
-        self._objects: List[Optional[PdfObject]] = []
-        """The indirect objects in the PDF."""
-
-        """Maps hash values of indirect objects to the list of IndirectObjects.
-           This is used for compression.
+        self.incremental = incremental
         """
-        self._idnum_hash: Dict[bytes, Tuple[IndirectObject, List[IndirectObject]]] = {}
+        Returns if the PdfWriter object has been started in incremental mode.
+        """
 
+        self._objects: List[Optional[PdfObject]] = []
+        """
+        The indirect objects in the PDF.
+        For the incremental case, it will be filled with None
+        in clone_reader_document_root.
+        """
+
+        self._original_hash: List[int] = []
+        """
+        List of hashes after import; used to identify changes.
+        """
+
+        self._idnum_hash: Dict[bytes, Tuple[IndirectObject, List[IndirectObject]]] = {}
+        """
+        Maps hash values of indirect objects to the list of IndirectObjects.
+        This is used for compression.
+        """
+
+        self._id_translated: Dict[int, Dict[int, int]] = {}
         """List of already translated IDs.
            dict[id(pdf)][(idnum, generation)]
         """
-        self._id_translated: Dict[int, Dict[int, int]] = {}
 
-        # The root of our page tree node.
-        pages = DictionaryObject()
-        pages.update(
-            {
-                NameObject(PA.TYPE): NameObject("/Pages"),
-                NameObject(PA.COUNT): NumberObject(0),
-                NameObject(PA.KIDS): ArrayObject(),
-            }
-        )
-        self._pages = self._add_object(pages)
-        self.flattened_pages = []
+        self._ID: Union[ArrayObject, None] = None
+        self._info_obj: PdfObject
 
-        # info object
-        info = DictionaryObject()
-        info.update({NameObject("/Producer"): create_string_object("pypdf")})
-        self._info_obj: PdfObject = self._add_object(info)
-
-        # root object
-        self._root_object = DictionaryObject()
-        self._root_object.update(
-            {
-                NameObject(PA.TYPE): NameObject(CO.CATALOG),
-                NameObject(CO.PAGES): self._pages,
-            }
-        )
-        self._root = self._add_object(self._root_object)
+        if self.incremental:
+            if isinstance(fileobj, (str, Path)):
+                with open(fileobj, "rb") as f:
+                    fileobj = BytesIO(f.read(-1))
+            if isinstance(fileobj, BytesIO):
+                fileobj = PdfReader(fileobj)
+            else:
+                raise PyPdfError("Invalid type for incremental mode")
+            self._reader = fileobj  # prev content is in _reader.stream
+            self._header = fileobj.pdf_header.encode()
+            self._readonly = True  # !!!TODO: to be analysed
+        else:
+            self._header = b"%PDF-1.3"
+            self._info_obj = self._add_object(
+                DictionaryObject(
+                    {NameObject("/Producer"): create_string_object("pypdf")}
+                )
+            )
 
         def _get_clone_from(
             fileobj: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
@@ -227,14 +246,39 @@ class PdfWriter(PdfDocCommon):
         self.temp_fileobj = fileobj
         self.fileobj = ""
         self.with_as_usage = False
+        # The root of our page tree node.
+        pages = DictionaryObject()
+        pages.update(
+            {
+                NameObject(PA.TYPE): NameObject("/Pages"),
+                NameObject(PA.COUNT): NumberObject(0),
+                NameObject(PA.KIDS): ArrayObject(),
+            }
+        )
+        self.flattened_pages = []
+        self._encryption: Optional[Encryption] = None
+        self._encrypt_entry: Optional[DictionaryObject] = None
+
         if clone_from is not None:
             if not isinstance(clone_from, PdfReader):
                 clone_from = PdfReader(clone_from)
             self.clone_document_from_reader(clone_from)
-
-        self._encryption: Optional[Encryption] = None
-        self._encrypt_entry: Optional[DictionaryObject] = None
-        self._ID: Union[ArrayObject, None] = None
+        else:
+            self._pages = self._add_object(pages)
+            # root object
+            self._root_object = DictionaryObject()
+            self._root_object.update(
+                {
+                    NameObject(PA.TYPE): NameObject(CO.CATALOG),
+                    NameObject(CO.PAGES): self._pages,
+                }
+            )
+            self._add_object(self._root_object)
+        if isinstance(self._ID, list):
+            if isinstance(self._ID[0], TextStringObject):
+                self._ID[0] = ByteStringObject(self._ID[0].get_original_bytes())
+            if isinstance(self._ID[1], TextStringObject):
+                self._ID[1] = ByteStringObject(self._ID[1].get_original_bytes())
 
     # for commonality
     @property
@@ -407,10 +451,12 @@ class PdfWriter(PdfDocCommon):
     def _add_page(
         self,
         page: PageObject,
-        action: Callable[[Any, Union[PageObject, IndirectObject]], None],
+        index: int,
         excluded_keys: Iterable[str] = (),
     ) -> PageObject:
-        assert cast(str, page[PA.TYPE]) == CO.PAGE
+        if not isinstance(page, PageObject) or page.get(PA.TYPE, None) != CO.PAGE:
+            raise ValueError("Invalid page object")
+        assert self.flattened_pages is not None, "for mypy"
         page_org = page
         excluded_keys = list(excluded_keys)
         excluded_keys += [PA.PARENT, "/StructParents"]
@@ -424,17 +470,29 @@ class PdfWriter(PdfDocCommon):
             ]
         except Exception:
             pass
-        page = cast("PageObject", page_org.clone(self, False, excluded_keys))
+        page = cast(
+            "PageObject", page_org.clone(self, False, excluded_keys).get_object()
+        )
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
-        page[NameObject(PA.PARENT)] = self._pages
-        pages = cast(DictionaryObject, self.get_object(self._pages))
-        assert page.indirect_reference is not None
-        action(pages[PA.KIDS], page.indirect_reference)
-        action(self.flattened_pages, page)
-        page_count = cast(int, pages[PA.COUNT])
-        pages[NameObject(PA.COUNT)] = NumberObject(page_count + 1)
+        node, idx = self._get_page_in_node(index)
+        page[NameObject(PA.PARENT)] = node.indirect_reference
+
+        if idx >= 0:
+            cast(ArrayObject, node[PA.KIDS]).insert(idx, page.indirect_reference)
+            self.flattened_pages.insert(index, page)
+        else:
+            cast(ArrayObject, node[PA.KIDS]).append(page.indirect_reference)
+            self.flattened_pages.append(page)
+        cpt = 1000
+        while node is not None:
+            node = cast(DictionaryObject, node.get_object())
+            node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
+            node = node.get(PA.PARENT, None)
+            cpt -= 1
+            if cpt < 0:
+                raise PyPdfError("Too many recursive calls!")
         return page
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
@@ -497,7 +555,8 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added PageObject.
         """
-        return self._add_page(page, list.append, excluded_keys)
+        assert self.flattened_pages is not None, "mypy"
+        return self._add_page(page, len(self.flattened_pages), excluded_keys)
 
     def insert_page(
         self,
@@ -517,7 +576,15 @@ class PdfWriter(PdfDocCommon):
         Returns:
             The added PageObject.
         """
-        return self._add_page(page, lambda kids, p: kids.insert(index, p))
+        assert self.flattened_pages is not None, "mypy"
+        if index < 0:
+            index = len(self.flattened_pages) + index
+        if index < 0:
+            raise ValueError("Invalid index value")
+        if index >= len(self.flattened_pages):
+            return self.add_page(page, excluded_keys)
+        else:
+            return self._add_page(page, index, excluded_keys)
 
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
@@ -1115,18 +1182,29 @@ class PdfWriter(PdfDocCommon):
         Args:
             reader: PdfReader from which the document root should be copied.
         """
-        self._objects.clear()
+        if self.incremental:
+            self._objects = [None] * cast(int, reader.trailer["/Size"])
+        else:
+            self._objects.clear()
         self._root_object = reader.root_object.clone(self)
-        self._root = self._root_object.indirect_reference  # type: ignore[assignment]
         self._pages = self._root_object.raw_get("/Pages")
+
+        assert len(self._objects) <= cast(int, reader.trailer["/Size"])  # for pytest
+        # must be done here before rewriting
+        if self.incremental:
+            self._original_hash = [
+                (obj.hash_bin() if obj is not None else 0) for obj in self._objects
+            ]
         self._flatten()
         assert self.flattened_pages is not None
         for p in self.flattened_pages:
-            p[NameObject("/Parent")] = self._pages
-            self._objects[cast(IndirectObject, p.indirect_reference).idnum - 1] = p
-        cast(DictionaryObject, self._pages.get_object())[
-            NameObject("/Kids")
-        ] = ArrayObject([p.indirect_reference for p in self.flattened_pages])
+            self._replace_object(cast(IndirectObject, p.indirect_reference).idnum, p)
+            if not self.incremental:
+                p[NameObject("/Parent")] = self._pages
+        if not self.incremental:
+            cast(DictionaryObject, self._pages.get_object())[
+                NameObject("/Kids")
+            ] = ArrayObject([p.indirect_reference for p in self.flattened_pages])
 
     def clone_document_from_reader(
         self,
@@ -1148,13 +1226,28 @@ class PdfWriter(PdfDocCommon):
                 document.
         """
         self.clone_reader_document_root(reader)
-        self._info_obj = self._add_object(DictionaryObject())
         if TK.INFO in reader.trailer:
-            self._info = reader._info  # actually copy fields
+            inf = reader._info
+            if self.incremental:
+                if inf is not None:
+                    self._info_obj = cast(
+                        IndirectObject, inf.clone(self).indirect_reference
+                    )
+                self._original_hash[
+                    cast(IndirectObject, self._info_obj.indirect_reference).idnum - 1
+                ] = cast(DictionaryObject, self._info_obj.get_object()).hash_bin()
+            elif inf is not None:
+                self._info_obj = self._add_object(
+                    DictionaryObject(cast(DictionaryObject, inf.get_object()))
+                )
+        else:
+            self._info_obj = self._add_object(DictionaryObject())
+
         try:
             self._ID = cast(ArrayObject, reader._ID).clone(self)
         except AttributeError:
             pass
+
         if callable(after_page_append):
             for page in cast(
                 ArrayObject, cast(DictionaryObject, self._pages.get_object())["/Kids"]
@@ -1257,9 +1350,17 @@ class PdfWriter(PdfDocCommon):
         #   self._root = self._add_object(self._root_object)
         # self._sweep_indirect_references(self._root)
 
-        object_positions, free_objects = self._write_pdf_structure(stream)
-        xref_location = self._write_xref_table(stream, object_positions, free_objects)
-        self._write_trailer(stream, xref_location)
+        if self.incremental:
+            self._reader.stream.seek(0)
+            stream.write(self._reader.stream.read(-1))
+            if len(self.list_objects_in_increment()) > 0:
+                self._write_increment(stream)  # writes objs, Xref stream and startx
+        else:
+            object_positions, free_objects = self._write_pdf_structure(stream)
+            xref_location = self._write_xref_table(
+                stream, object_positions, free_objects
+            )
+            self._write_trailer(stream, xref_location)
 
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:
         """
@@ -1290,6 +1391,100 @@ class PdfWriter(PdfDocCommon):
             stream.close()
 
         return my_file, stream
+
+    def list_objects_in_increment(self) -> List[IndirectObject]:
+        """
+        For debugging/analysis.
+        Provides the list of new/modified objects that will be written
+        in the increment.
+        Deleted objects will not be freed but will become orphans.
+
+        Returns:
+            List of (new / modified) IndirectObjects
+        """
+        return [
+            cast(IndirectObject, self._objects[i]).indirect_reference
+            for i in range(len(self._objects))
+            if (
+                self._objects[i] is not None
+                and (
+                    i >= len(self._original_hash)
+                    or cast(PdfObject, self._objects[i]).hash_bin()
+                    != self._original_hash[i]
+                )
+            )
+        ]
+
+    def _write_increment(self, stream: StreamType) -> None:
+        object_positions = {}
+        object_blocks = []
+        current_start = -1
+        current_stop = -2
+        for i, obj in enumerate(self._objects):
+            if self._objects[i] is not None and (
+                i >= len(self._original_hash)
+                or cast(PdfObject, self._objects[i]).hash_bin()
+                != self._original_hash[i]
+            ):
+                idnum = i + 1
+                assert isinstance(obj, PdfObject)  # mypy
+                # first write new/modified object
+                object_positions[idnum] = stream.tell()
+                stream.write(f"{idnum} 0 obj\n".encode())
+                """ encryption is not operational
+                if self._encryption and obj != self._encrypt_entry:
+                    obj = self._encryption.encrypt_object(obj, idnum, 0)
+                """
+                obj.write_to_stream(stream)
+                stream.write(b"\nendobj\n")
+
+                # prepare xref
+                if idnum != current_stop:
+                    if current_start > 0:
+                        object_blocks.append(
+                            [current_start, current_stop - current_start]
+                        )
+                    current_start = idnum
+                current_stop = idnum + 1
+        assert current_start > 0, "for pytest only"
+        object_blocks.append([current_start, current_stop - current_start])
+        # write incremented xref
+        xref_location = stream.tell()
+        xr_id = len(self._objects) + 1
+        stream.write(f"{xr_id} 0 obj".encode())
+        init_data = {
+            NameObject("/Type"): NameObject("/XRef"),
+            NameObject("/Size"): NumberObject(xr_id + 1),
+            NameObject("/Root"): self.root_object.indirect_reference,
+            NameObject("/Filter"): NameObject("/FlateDecode"),
+            NameObject("/Index"): ArrayObject(
+                [NumberObject(_it) for _su in object_blocks for _it in _su]
+            ),
+            NameObject("/W"): ArrayObject(
+                [NumberObject(1), NumberObject(4), NumberObject(1)]
+            ),
+            "__streamdata__": b"",
+        }
+        if self._info is not None and (
+            self._info.indirect_reference.idnum - 1  # type: ignore
+            >= len(self._original_hash)
+            or cast(IndirectObject, self._info).hash_bin()  # kept for future
+            != self._original_hash[
+                self._info.indirect_reference.idnum - 1  # type: ignore
+            ]
+        ):
+            init_data[NameObject(TK.INFO)] = self._info.indirect_reference
+        init_data[NameObject(TK.PREV)] = NumberObject(self._reader._startxref)
+        if self._ID:
+            init_data[NameObject(TK.ID)] = self._ID
+        xr = StreamObject.initialize_from_dictionary(init_data)
+        xr.set_data(
+            b"".join(
+                [struct.pack(b">BIB", 1, _pos, 0) for _pos in object_positions.values()]
+            )
+        )
+        xr.write_to_stream(stream)
+        stream.write(f"\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
 
     def _write_pdf_structure(self, stream: StreamType) -> Tuple[List[int], List[int]]:
         object_positions = []
@@ -1337,15 +1532,15 @@ class PdfWriter(PdfDocCommon):
             of certain special objects within the body of the file.
         """
         stream.write(b"trailer\n")
-        trailer = DictionaryObject()
-        trailer.update(
+        trailer = DictionaryObject(
             {
                 NameObject(TK.SIZE): NumberObject(len(self._objects) + 1),
-                NameObject(TK.ROOT): self._root,
-                NameObject(TK.INFO): self._info_obj,
+                NameObject(TK.ROOT): self.root_object.indirect_reference,
             }
         )
-        if self._ID:
+        if self._info is not None:
+            trailer[NameObject(TK.INFO)] = self._info.indirect_reference
+        if self._ID is not None:
             trailer[NameObject(TK.ID)] = self._ID
         if self._encrypt_entry:
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt_entry.indirect_reference

@@ -1795,6 +1795,9 @@ def test_missing_info():
 
     writer = PdfWriter(clone_from=reader)
     assert len(writer.pages) == len(reader.pages)
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    writer._info = reader._info
+    assert dict(writer._info) == dict(reader._info)
 
 
 @pytest.mark.enable_socket()
@@ -2354,3 +2357,88 @@ def test_utf16_metadata():
         b"/Subject (\\376\\377\\000I\\000n\\000v\\000o\\000i\\000c\\000e"
         b"\\000 \\041\\026\\000A\\000I\\000\\137\\0000\\0004\\0007)"
     )
+
+
+def test_increment_writer(caplog):
+    """Tests for #2811"""
+    writer = PdfWriter(
+        RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf",
+        incremental=True,
+    )
+    # Contains JBIG2 not decoded for the moment
+    assert writer.list_objects_in_increment() == []  # no flowdown of properties
+
+    # test writing with empty increment
+    b = BytesIO()
+    writer.write(b)
+    with open(
+        RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf", "rb"
+    ) as f:
+        assert b.getvalue() == f.read(-1)
+    b.seek(0)
+    writer2 = PdfWriter(b, incremental=True)
+    assert len([x for x in writer2._objects if x is not None]) == len(
+        [x for x in writer._objects if x is not None]
+    )
+    writer2.add_metadata({"/Author": "test"})
+    assert len(writer2.list_objects_in_increment()) == 1
+    b = BytesIO()
+    writer2.write(b)
+
+    # modify one object
+    writer.pages[0][NameObject("/MediaBox")] = ArrayObject(
+        [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
+    )
+    assert writer.list_objects_in_increment() == [IndirectObject(4, 0, writer)]
+    b = BytesIO()
+    writer.write(b)
+    writer.pages[5][NameObject("/MediaBox")] = ArrayObject(
+        [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
+    )
+    assert len(writer.list_objects_in_increment()) == 2
+    # modify object IndirectObject(5,0) : for coverage
+    writer.get_object(5)[NameObject("/ForTestOnly")] = NameObject("/ForTestOnly")
+
+    b = BytesIO()
+    writer.write(b)
+    assert b.getvalue().startswith(writer._reader.stream.getvalue())
+    b.seek(0)
+    reader = PdfReader(b)
+    assert reader.pages[0]["/MediaBox"] == ArrayObject(
+        [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
+    )
+    assert "/ForTestOnly" in reader.get_object(5)
+    with pytest.raises(PyPdfError):
+        writer = PdfWriter(reader, incremental=True)
+    b.seek(0)
+    writer = PdfWriter(b, incremental=True)
+    assert writer.list_objects_in_increment() == []  # no flowdown of properties
+
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    # 1 object is modified: page 0  inherits MediaBox so is changed
+    assert len(writer.list_objects_in_increment()) == 1
+
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=False)
+    # 1 object is modified: page 0  inherits MediaBox so is changed
+    assert len(writer.list_objects_in_increment()) == len(writer._objects)
+
+    # insert pages in a tree
+    url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
+    name = "iss2343b.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    pg = writer.insert_page(reader.pages[0], 4)
+    assert (
+        pg.raw_get("/Parent")
+        == writer.root_object["/Pages"]["/Kids"][0].get_object()["/Kids"][0]
+    )
+    assert pg["/Parent"]["/Count"] == 8
+    assert writer.root_object["/Pages"]["/Count"] == 285
+    assert len(writer.flattened_pages) == 285
+
+    # clone without info
+    writer = PdfWriter(RESOURCE_ROOT / "missing_info.pdf", incremental=True)
+    assert len(writer.list_objects_in_increment()) == 1
+    assert writer._info == {}
+    b = BytesIO()
+    writer.write(b)
