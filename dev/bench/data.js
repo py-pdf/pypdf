@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1725617342089,
+  "lastUpdate": 1726038316271,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -57293,6 +57293,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01070338665338935",
             "extra": "mean: 773.0565915999932 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "98d4425122e6432f32a87c2bb33f3290ff517eff",
+          "message": "ENH: Add incremental capability to PdfWriter (#2811)\n\nCloses #2780.",
+          "timestamp": "2024-09-11T09:02:10+02:00",
+          "tree_id": "bbcedc97b5cdef567c357fa18fa63049bffa8570",
+          "url": "https://github.com/py-pdf/pypdf/commit/98d4425122e6432f32a87c2bb33f3290ff517eff"
+        },
+        "date": 1726038312478,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2839587227589093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015872251384768633",
+            "extra": "mean: 304.5105266000064 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.51339279991827,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008795969057439346",
+            "extra": "mean: 79.91437781818304 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2776404429789313,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02044836476227681",
+            "extra": "mean: 3.6017807394000045 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 14.796523754031009,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004385472183017199",
+            "extra": "mean: 67.5834416666665 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06261850370232004,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07458767131566478",
+            "extra": "mean: 15.969720464 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2660828314926362,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00641588527596819",
+            "extra": "mean: 789.8377382000035 msec\nrounds: 5"
           }
         ]
       }
