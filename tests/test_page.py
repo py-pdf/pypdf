@@ -12,7 +12,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
 from pypdf.constants import PageAttributes as PG
-from pypdf.errors import PdfReadError, PdfReadWarning
+from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -887,6 +887,8 @@ def test_annotation_setter(pdf_file_path):
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
+    with pytest.raises(ValueError):
+        writer.add_page(DictionaryObject())
 
     # Act
     page_number = 0
@@ -1251,12 +1253,22 @@ def test_del_pages():
     del pp["/Parent"].get_object()["/Kids"][i]
     with pytest.raises(PdfReadError):
         del reader.pages[2]
-    # reader is corrupted we have to reload it
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    del reader.pages[:]
-    assert len(reader.pages) == 0
-    assert len(reader.trailer["/Root"]["/Pages"]["/Kids"]) == 0
-    assert len(reader.flattened_pages) == 0
+
+    url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
+    name = "iss2343b.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
+    node, idx = writer._get_page_in_node(53)
+    assert (node.indirect_reference.idnum, idx) == (11776, 1)
+    node, idx = writer._get_page_in_node(10000)
+    assert (node.indirect_reference.idnum, idx) == (11769, -1)
+    with pytest.raises(PyPdfError):
+        writer._get_page_in_node(-1)
+
+    del writer.pages[4]  # to propagate among /Pages
+    del writer.pages[:]
+    assert len(writer.pages) == 0
+    assert len(writer.root_object["/Pages"]["/Kids"]) == 0
+    assert len(writer.flattened_pages) == 0
 
 
 def test_pdf_pages_missing_type():
@@ -1447,3 +1459,16 @@ def test_get_contents_as_bytes():
     assert writer.pages[0]._get_contents_as_bytes() == expected
     writer.pages[0][NameObject("/Contents")] = writer.pages[0]["/Contents"][0]
     assert writer.pages[0]._get_contents_as_bytes() == expected
+
+
+def test_recursive_get_page_from_node():
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    writer.root_object["/Pages"].get_object()[
+        NameObject("/Parent")
+    ] = writer.root_object["/Pages"].indirect_reference
+    with pytest.raises(PyPdfError):
+        writer.add_page(writer.pages[0])
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    writer.insert_page(writer.pages[0], -1)
+    with pytest.raises(ValueError):
+        writer.insert_page(writer.pages[0], -10)

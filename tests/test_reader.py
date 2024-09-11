@@ -212,7 +212,7 @@ def test_get_outline(src, outline_elements):
         pytest.param(
             "imagemagick-ASCII85Decode.pdf",
             ["Im0.png"],
-            marks=pytest.mark.xfail(reason="broken image extraction"),
+            # marks=pytest.mark.xfail(reason="broken image extraction"),
         ),
         ("imagemagick-CCITTFaxDecode.pdf", ["Im0.tiff"]),
         (SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf", ["X0.png"]),

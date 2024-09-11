@@ -74,6 +74,9 @@ class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
     _objects: List[Any]
     _id_translated: Dict[int, Dict[int, int]]
 
+    incremental: bool
+    _reader: Any  # PdfReader
+
     @abstractmethod
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:
         ...  # pragma: no cover
