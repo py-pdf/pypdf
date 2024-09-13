@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1726038316271,
+  "lastUpdate": 1726213188403,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -57359,6 +57359,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00641588527596819",
             "extra": "mean: 789.8377382000035 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9d54f6317cda142eebd30cc5de060c3476aa6f13",
+          "message": "ENH: Robustify parsing for Object streams in XRef rebuilding (#2818)\n\nCloses #2817.",
+          "timestamp": "2024-09-13T09:36:48+02:00",
+          "tree_id": "337814f79ad2994257442140543cab7d4c56672d",
+          "url": "https://github.com/py-pdf/pypdf/commit/9d54f6317cda142eebd30cc5de060c3476aa6f13"
+        },
+        "date": 1726213185691,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.315365790212324,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001960518001310631",
+            "extra": "mean: 301.6258425999979 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.698163680032769,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008671065428360016",
+            "extra": "mean: 78.75154433333147 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2798268950979574,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03492545333080232",
+            "extra": "mean: 3.5736379080000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 14.55944880023404,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009038888301148266",
+            "extra": "mean: 68.6839188571428 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0636188221735243,
+            "unit": "iter/sec",
+            "range": "stddev: 0.14048760842017674",
+            "extra": "mean: 15.718618576000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2739630958232955,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018185429117875823",
+            "extra": "mean: 784.9520941999913 msec\nrounds: 5"
           }
         ]
       }
