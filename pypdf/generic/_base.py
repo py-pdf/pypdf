@@ -53,6 +53,17 @@ class PdfObject(PdfObjectProtocol):
     hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
     indirect_reference: Optional["IndirectObject"]
 
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement .hash_bin() so far"
+        )
+
     def hash_value_data(self) -> bytes:
         return ("%s" % self).encode()
 
@@ -121,7 +132,15 @@ class PdfObject(PdfObjectProtocol):
             ind = self.indirect_reference
         except AttributeError:
             return clone
-        i = len(pdf_dest._objects) + 1
+        if (
+            pdf_dest.incremental
+            and ind is not None
+            and ind.pdf == pdf_dest._reader
+            and ind.idnum <= len(pdf_dest._objects)
+        ):
+            i = ind.idnum
+        else:
+            i = len(pdf_dest._objects) + 1
         if ind is not None:
             if id(ind.pdf) not in pdf_dest._id_translated:
                 pdf_dest._id_translated[id(ind.pdf)] = {}
@@ -136,7 +155,11 @@ class PdfObject(PdfObjectProtocol):
                 assert obj is not None
                 return obj
             pdf_dest._id_translated[id(ind.pdf)][ind.idnum] = i
-        pdf_dest._objects.append(clone)
+        try:
+            pdf_dest._objects[i - 1] = clone
+        except IndexError:
+            pdf_dest._objects.append(clone)
+            i = len(pdf_dest._objects)
         clone.indirect_reference = IndirectObject(i, 0, pdf_dest)
         return clone
 
@@ -161,6 +184,15 @@ class NullObject(PdfObject):
         return cast(
             "NullObject", self._reference_clone(NullObject(), pdf_dest, force_duplicate)
         )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        return hash((self.__class__,))
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
@@ -197,6 +229,15 @@ class BooleanObject(PdfObject):
             "BooleanObject",
             self._reference_clone(BooleanObject(self.value), pdf_dest, force_duplicate),
         )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        return hash((self.__class__, self.value))
 
     def __eq__(self, __o: object) -> bool:
         if isinstance(__o, BooleanObject):
@@ -241,6 +282,15 @@ class IndirectObject(PdfObject):
 
     def __hash__(self) -> int:
         return hash((self.idnum, self.generation, id(self.pdf)))
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        return hash((self.__class__, self.idnum, self.generation, id(self.pdf)))
 
     def clone(
         self,
@@ -400,6 +450,15 @@ class FloatObject(float, PdfObject):
             self._reference_clone(FloatObject(self), pdf_dest, force_duplicate),
         )
 
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        return hash((self.__class__, self.as_numeric))
+
     def myrepr(self) -> str:
         if self == 0:
             return "0.0"
@@ -445,6 +504,15 @@ class NumberObject(int, PdfObject):
             self._reference_clone(NumberObject(self), pdf_dest, force_duplicate),
         )
 
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        return hash((self.__class__, self.as_numeric()))
+
     def as_numeric(self) -> int:
         return int(repr(self).encode("utf8"))
 
@@ -487,6 +555,15 @@ class ByteStringObject(bytes, PdfObject):
                 ByteStringObject(bytes(self)), pdf_dest, force_duplicate
             ),
         )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        return hash((self.__class__, bytes(self)))
 
     @property
     def original_bytes(self) -> bytes:
@@ -566,6 +643,15 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         return cast(
             "TextStringObject", self._reference_clone(obj, pdf_dest, force_duplicate)
         )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        return hash((self.__class__, self.original_bytes))
 
     @property
     def original_bytes(self) -> bytes:
@@ -662,6 +748,15 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
             "NameObject",
             self._reference_clone(NameObject(self), pdf_dest, force_duplicate),
         )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+        """
+        return hash((self.__class__, self))
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
