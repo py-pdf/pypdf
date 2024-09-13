@@ -150,12 +150,13 @@ class PdfWriter(PdfDocCommon):
 
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
 
-    clone_from: identical to fileobj (for compatibility)
+    Args:
+        clone_from: identical to fileobj (for compatibility)
 
-    incremental: If true, loads the document and set the PdfWriter in incremental mode
+        incremental: If true, loads the document and set the PdfWriter in incremental mode.
 
-    When writing incrementally, the original document is written first and new/modified
-    content is appended. To be used for signed document/forms to keep signature valid.
+            When writing incrementally, the original document is written first and new/modified
+            content is appended. To be used for signed document/forms to keep signature valid.
     """
 
     def __init__(
@@ -166,7 +167,7 @@ class PdfWriter(PdfDocCommon):
     ) -> None:
         self.incremental = incremental
         """
-        Returns if the PdfWriter object has been started in incremental mode
+        Returns if the PdfWriter object has been started in incremental mode.
         """
 
         self._objects: List[Optional[PdfObject]] = []
@@ -491,7 +492,7 @@ class PdfWriter(PdfDocCommon):
         node, idx = self._get_page_in_node(index)
         page[NameObject(PA.PARENT)] = node.indirect_reference
 
-        if idx >= 0:  # to be a
+        if idx >= 0:
             cast(ArrayObject, node[PA.KIDS]).insert(idx, page.indirect_reference)
             self.flattened_pages.insert(index, page)
         else:
