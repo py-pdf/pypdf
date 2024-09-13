@@ -26,7 +26,7 @@ class RectangleObject(ArrayObject):
         ArrayObject.__init__(self, [self._ensure_is_number(x) for x in arr])  # type: ignore
 
     def _ensure_is_number(self, value: Any) -> Union[FloatObject, NumberObject]:
-        if not isinstance(value, (NumberObject, FloatObject)):
+        if not isinstance(value, (FloatObject, NumberObject)):
             value = FloatObject(value)
         return value
 
