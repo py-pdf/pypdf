@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1726213188403,
+  "lastUpdate": 1726227234442,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -57425,6 +57425,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018185429117875823",
             "extra": "mean: 784.9520941999913 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c4e95bd0760dc4c1e593200ba3c2525978dd7543",
+          "message": "STY: Use f-string = functionality (#2835)\n\n* STY: Use f-string = functionality\r\n\r\n* STY: Use f-string = functionality\r\n\r\n* STY: Use f-string = functionality\r\n\r\nAlso switch the order of a tuple to match the order of the line above.\r\n\r\n---------\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2024-09-13T13:30:55+02:00",
+          "tree_id": "90d2069d794d17567c3edd1750f813a15355d36f",
+          "url": "https://github.com/py-pdf/pypdf/commit/c4e95bd0760dc4c1e593200ba3c2525978dd7543"
+        },
+        "date": 1726227230559,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1474855759722997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030703517925812704",
+            "extra": "mean: 317.7139261999912 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.193871083105103,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011483869204799192",
+            "extra": "mean: 82.00841169999933 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26442529813372,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0347325559066213",
+            "extra": "mean: 3.781786413999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 14.756865151913892,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011619365354609724",
+            "extra": "mean: 67.76506999999962 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06402296234086646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10078265771746368",
+            "extra": "mean: 15.619395970399989 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2748275066341042,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005202558230086055",
+            "extra": "mean: 784.4198487999961 msec\nrounds: 5"
           }
         ]
       }
