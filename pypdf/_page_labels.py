@@ -119,7 +119,7 @@ def number2lowercase_letter(number: int) -> str:
 
 def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
     # [Nums] shall be an array of the form
-    #   [ key 1 value 1 key 2 value 2 ... key n value n ]
+    #   [ key_1 value_1 key_2 value_2 ... key_n value_n ]
     # where each key_i is an integer and the corresponding
     # value_i shall be the object associated with that key.
     # The keys shall be sorted in numerical order,
