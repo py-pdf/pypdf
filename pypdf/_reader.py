@@ -77,6 +77,7 @@ from .generic import (
     NullObject,
     NumberObject,
     PdfObject,
+    StreamObject,
     TextStringObject,
     read_object,
 )
@@ -316,8 +317,6 @@ class PdfReader(PdfDocCommon):
         obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
         # This is an xref to a stream, so its type better be a stream
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
-        # /N is the number of indirect objects in the stream
-        assert idx < obj_stm["/N"]
         stream_data = BytesIO(obj_stm.get_data())
         for i in range(obj_stm["/N"]):  # type: ignore
             read_non_whitespace(stream_data)
@@ -999,6 +998,41 @@ class PdfReader(PdfDocCommon):
             if generation not in self.xref:
                 self.xref[generation] = {}
             self.xref[generation][idnum] = m.start(1)
+
+        logger_warning("parsing for Object Streams", __name__)
+        for g in self.xref:
+            for i in self.xref[g]:
+                # get_object in manual
+                stream.seek(self.xref[g][i], 0)
+                try:
+                    _ = self.read_object_header(stream)
+                    o = cast(StreamObject, read_object(stream, self))
+                    if o.get("/Type", "") != "/ObjStm":
+                        continue
+                    strm = BytesIO(o.get_data())
+                    cpt = 0
+                    while True:
+                        s = read_until_whitespace(strm)
+                        if not s.isdigit():
+                            break
+                        _i = int(s)
+                        skip_over_whitespace(strm)
+                        strm.seek(-1, 1)
+                        s = read_until_whitespace(strm)
+                        if not s.isdigit():  # pragma: no cover
+                            break  # pragma: no cover
+                        _o = int(s)
+                        self.xref_objStm[_i] = (i, _o)
+                        cpt += 1
+                    if cpt != o.get("/N"):  # pragma: no cover
+                        logger_warning(  # pragma: no cover
+                            f"found {cpt} objects within Object({i},{g})"
+                            f" whereas {o.get('/N')} expected",
+                            __name__,
+                        )
+                except Exception:  # could be of many cause
+                    pass
+
         stream.seek(0, 0)
         for m in re.finditer(rb"[\r\n \t][ \t]*trailer[\r\n \t]*(<<)", f_):
             stream.seek(m.start(1), 0)
