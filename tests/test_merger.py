@@ -37,7 +37,7 @@ def merger_operate(merger):
             data = fp.read()
         merger.append(data)
     assert exc.value.args[0].startswith(
-        "merge requires an object that PdfReader can parse. "
+        "Merging requires an object that PdfReader can parse. "
         "Typically, that is a Path"
     )
 
