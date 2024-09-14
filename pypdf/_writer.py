@@ -107,6 +107,7 @@ from .generic import (
     ViewerPreferences,
     create_string_object,
     hex_to_rgb,
+    is_null_or_none,
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
@@ -499,7 +500,7 @@ class PdfWriter(PdfDocCommon):
             cast(ArrayObject, node[PA.KIDS]).append(page.indirect_reference)
             self.flattened_pages.append(page)
         cpt = 1000
-        while node is not None:
+        while not is_null_or_none(node):
             node = cast(DictionaryObject, node.get_object())
             node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
             node = node.get(PA.PARENT, None)
@@ -612,8 +613,9 @@ class PdfWriter(PdfDocCommon):
             The page number or None
         """
         # to provide same function as in PdfReader
-        if indirect_reference is None or isinstance(indirect_reference, NullObject):
+        if is_null_or_none(indirect_reference):
             return None
+        assert indirect_reference is not None, "mypy"
         if isinstance(indirect_reference, int):
             indirect_reference = IndirectObject(indirect_reference, 0, self)
         obj = indirect_reference.get_object()
@@ -928,7 +930,7 @@ class PdfWriter(PdfDocCommon):
             )
             dr = dr.get_object().get("/Font", DictionaryObject()).get_object()
         font_res = dr.get(font_name, None)
-        if font_res is not None:
+        if not is_null_or_none(font_res):
             font_res = cast(DictionaryObject, font_res.get_object())
             font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
                 200, font_res
@@ -1566,9 +1568,9 @@ class PdfWriter(PdfDocCommon):
         Retrieve/set the PDF file's document information dictionary, if it exists.
 
         Args:
-            value: Dictionary with the entries to set. If None, remove the /Info entry from the PDF.
+            value: dict with the entries to be set. if None : remove the /Info entry from the pdf.
 
-        Note that some PDF files use (XMP) metadata streams instead of document
+        Note that some PDF files use (xmp)metadata streams instead of document
         information dictionaries, and these metadata streams will not be
         accessed by this function.
         """
@@ -2981,7 +2983,7 @@ class PdfWriter(PdfDocCommon):
         if node is None:
             node = NullObject()
         node = node.get_object()
-        if node is None or isinstance(node, NullObject):
+        if is_null_or_none(node):
             node = DictionaryObject()
         if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
             node = node.get("/First", None)

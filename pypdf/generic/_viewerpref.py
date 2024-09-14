@@ -32,7 +32,7 @@ from typing import (
     Optional,
 )
 
-from ._base import BooleanObject, NameObject, NumberObject
+from ._base import BooleanObject, NameObject, NumberObject, is_null_or_none
 from ._data_structures import ArrayObject, DictionaryObject
 
 f_obj = BooleanObject(False)
@@ -156,8 +156,8 @@ class ViewerPreferences(DictionaryObject):
 
     def __init__(self, obj: Optional[DictionaryObject] = None) -> None:
         super().__init__(self)
-        if obj is not None:
-            self.update(obj.items())
+        if not is_null_or_none(obj):
+            self.update(obj.items())  # type: ignore
         try:
             self.indirect_reference = obj.indirect_reference  # type: ignore
         except AttributeError:

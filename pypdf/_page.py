@@ -84,6 +84,7 @@ from .generic import (
     PdfObject,
     RectangleObject,
     StreamObject,
+    is_null_or_none,
 )
 
 try:
@@ -101,7 +102,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
     retval: Union[None, RectangleObject, IndirectObject] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
-    if retval is None:
+    if is_null_or_none(retval):
         for d in defaults:
             retval = self.get(d)
             if retval is not None:
@@ -492,7 +493,8 @@ class PageObject(DictionaryObject):
         self.inline_images: Optional[Dict[str, ImageFile]] = None
         # below Union for mypy but actually Optional[List[str]]
         self.indirect_reference = indirect_reference
-        if indirect_reference is not None:
+        if not is_null_or_none(indirect_reference):
+            assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
 
     def hash_bin(self) -> int:
@@ -731,9 +733,10 @@ class PageObject(DictionaryObject):
         entries will be identified as ~1~
         """
         content = self.get_contents()
-        if content is None:
+        if is_null_or_none(content):
             return {}
         imgs_data = []
+        assert content is not None, "mypy"
         for param, ope in content.operations:
             if ope == b"INLINE IMAGE":
                 imgs_data.append(
@@ -1063,7 +1066,7 @@ class PageObject(DictionaryObject):
             for i in range(len(content)):
                 content[i] = self.indirect_reference.pdf._add_object(content[i])
 
-        if content is None:
+        if is_null_or_none(content):
             if PG.CONTENTS not in self:
                 return
             else:
@@ -1084,6 +1087,7 @@ class PageObject(DictionaryObject):
                 # this will be fixed with the _add_object
                 self[NameObject(PG.CONTENTS)] = content
         else:
+            assert content is not None, "mypy"
             content.indirect_reference = self[
                 PG.CONTENTS
             ].indirect_reference  # TODO: in a future may required generation management
@@ -2218,10 +2222,11 @@ class PageObject(DictionaryObject):
         if extraction_mode not in ["plain", "layout"]:
             raise ValueError(f"Invalid text extraction mode '{extraction_mode}'")
         if extraction_mode == "layout":
-            for visitor in ("visitor_operand_before",
-                            "visitor_operand_after",
-                            "visitor_text",
-                            ):
+            for visitor in (
+                "visitor_operand_before",
+                "visitor_operand_after",
+                "visitor_text",
+            ):
                 if locals()[visitor]:
                     logger_warning(
                         f"Argument {visitor} is ignored in layout mode",

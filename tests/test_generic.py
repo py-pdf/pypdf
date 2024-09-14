@@ -33,6 +33,7 @@ from pypdf.generic import (
     TreeObject,
     create_string_object,
     encode_pdfdocencoding,
+    is_null_or_none,
     read_hex_string_from_stream,
     read_object,
     read_string_from_stream,
@@ -1139,3 +1140,18 @@ def test_missing_hashbin():
     assert NullObject().hash_bin() == hash((NullObject,))
     t = ByteStringObject(b"123")
     assert t.hash_bin() == hash((ByteStringObject, b"123"))
+
+
+def test_is_null_or_none():
+    assert is_null_or_none(NullObject())
+    assert not is_null_or_none(PdfObject())
+
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    # used with get
+    assert is_null_or_none(reader.root_object.get("/do_no_exist"))
+    # object unknown...
+    assert is_null_or_none(IndirectObject(99999, 0, reader).get_object())
+    # ... or which has been replaced with NullObject
+    writer = PdfWriter(reader)
+    writer.pages[0]["/Contents"].append(writer._add_object(NullObject()))
+    assert is_null_or_none(writer.pages[0]["/Contents"][-1])

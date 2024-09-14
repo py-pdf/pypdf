@@ -46,6 +46,7 @@ from ._base import (
     PdfObject,
     TextStringObject,
     encode_pdfdocencoding,
+    is_null_or_none,
 )
 from ._data_structures import (
     ArrayObject,
@@ -235,6 +236,7 @@ __all__ = [
     "encode_pdfdocencoding",
     "decode_pdfdocencoding",
     "hex_to_rgb",
+    "is_null_or_none",
     "read_hex_string_from_stream",
     "read_string_from_stream",
 ]

@@ -79,6 +79,7 @@ from .generic import (
     PdfObject,
     StreamObject,
     TextStringObject,
+    is_null_or_none,
     read_object,
 )
 from .xmp import XmpInformation
@@ -206,11 +207,11 @@ class PdfReader(PdfDocCommon):
             /Info Dictionary; None if the entry does not exist
         """
         info = self.trailer.get(TK.INFO, None)
-        if info is None:
+        if is_null_or_none(info):
             return None
         else:
             info = info.get_object()
-            if info is None:
+            if info == None:  # noqa: E711
                 raise PdfReadError(
                     "Trailer not found or does not point to document information directory"
                 )
@@ -225,7 +226,7 @@ class PdfReader(PdfDocCommon):
             /ID array; None if the entry does not exist
         """
         id = self.trailer.get(TK.ID, None)
-        return None if id is None else cast(ArrayObject, id.get_object())
+        return None if is_null_or_none(id) else cast(ArrayObject, id.get_object())
 
     def _repr_mimebundle_(
         self,
@@ -298,8 +299,9 @@ class PdfReader(PdfDocCommon):
                 x.indirect_reference.idnum: i for i, x in enumerate(self.pages)  # type: ignore
             }
 
-        if indirect_reference is None or isinstance(indirect_reference, NullObject):
+        if is_null_or_none(indirect_reference):
             return None
+        assert isinstance(indirect_reference, (int, IndirectObject)), "mypy"
         if isinstance(indirect_reference, int):
             idnum = indirect_reference
         else:
