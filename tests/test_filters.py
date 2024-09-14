@@ -5,7 +5,6 @@ import subprocess
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from PIL import Image
@@ -225,14 +224,11 @@ def test_ccitt_fax_decode():
 
 
 @pytest.mark.enable_socket()
-@patch("pypdf._reader.logger_warning")
-def test_decompress_zlib_error(mock_logger_warning):
+def test_decompress_zlib_error(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-952445.pdf")))
     for page in reader.pages:
         page.extract_text()
-    mock_logger_warning.assert_called_with(
-        "incorrect startxref pointer(3)", "pypdf._reader"
-    )
+    assert "incorrect startxref pointer(3)" in caplog.text
 
 
 @pytest.mark.enable_socket()

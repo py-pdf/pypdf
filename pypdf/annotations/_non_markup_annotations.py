@@ -36,7 +36,7 @@ class Link(AnnotationDictionary):
         if is_external and is_internal:
             raise ValueError(
                 "Either 'url' or 'target_page_index' have to be provided. "
-                f"url={url}, target_page_index={target_page_index}"
+                f"{url=}, {target_page_index=}"
             )
 
         border_arr: BorderArrayType

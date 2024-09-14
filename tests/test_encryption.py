@@ -171,7 +171,7 @@ def test_read_page_from_encrypted_file_aes_256(pdffile, password):
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_encrypted_pdfs(names):
     """Encrypted PDFs can be merged after decryption."""
-    merger = pypdf.PdfMerger()
+    merger = pypdf.PdfWriter()
     files = [RESOURCE_ROOT / "encryption" / x for x in names]
     pdfs = [pypdf.PdfReader(x) for x in files]
     for pdf in pdfs:
