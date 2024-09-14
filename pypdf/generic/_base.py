@@ -214,6 +214,16 @@ class NullObject(PdfObject):
         return "NullObject"
 
 
+def is_null_or_none(x: Any) -> bool:
+    """
+    Returns:
+        True if x is None or NullObject.
+    """
+    return x is None or (
+        isinstance(x, PdfObject) and isinstance(x.get_object(), NullObject)
+    )
+
+
 class BooleanObject(PdfObject):
     def __init__(self, value: Any) -> None:
         self.value = value

@@ -44,7 +44,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
-    deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
     ord_,
@@ -118,9 +117,6 @@ class FlateDecode:
         Raises:
           PdfReadError:
         """
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]
         if isinstance(decode_parms, ArrayObject):
             raise DeprecationError("decode_parms as ArrayObject is depreciated")
 
@@ -611,9 +607,6 @@ class CCITTFaxDecode:
         **kwargs: Any,
     ) -> bytes:
         # decode_parms is unused here
-        if "decodeParms" in kwargs:  # deprecated
-            deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]
         if isinstance(decode_parms, ArrayObject):  # deprecated
             deprecation_no_replacement(
                 "decode_parms being an ArrayObject", removed_in="3.15.5"
@@ -729,12 +722,6 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
     return data
 
 
-def decodeStreamData(stream: Any) -> Union[str, bytes]:  # deprecated
-    """Deprecated. Use decode_stream_data."""
-    deprecate_with_replacement("decodeStreamData", "decode_stream_data", "4.0.0")
-    return decode_stream_data(stream)
-
-
 def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
@@ -759,9 +746,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     )
 
     # for error reporting
-    if (
-        hasattr(x_object_obj, "indirect_reference") and x_object_obj is None
-    ):  # pragma: no cover
+    if x_object_obj is None:  # pragma: no cover
         obj_as_text = x_object_obj.indirect_reference.__repr__()
     else:
         obj_as_text = x_object_obj.__repr__()
