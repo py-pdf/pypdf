@@ -76,6 +76,30 @@ writer.add_metadata(
     }
 )
 
+# Clear all data but keep the entry in PDF
+writer.metadata = {}
+
+# Replace all entries with new set of entries
+writer.metadata = {
+    "/Author": "Martin",
+    "/Producer": "Libre Writer",
+}
+
+# Save the new PDF to a file
+with open("meta-pdf.pdf", "wb") as f:
+    writer.write(f)
+```
+
+## Removing metadata entry
+
+```python
+from pypdf import PdfWriter
+
+writer = PdfWriter("example.pdf")
+
+# Remove Metadata (/Info entry)
+writer.metadata = None
+
 # Save the new PDF to a file
 with open("meta-pdf.pdf", "wb") as f:
     writer.write(f)
