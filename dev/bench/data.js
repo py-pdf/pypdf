@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1726227234442,
+  "lastUpdate": 1726304337948,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -57491,6 +57491,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005202558230086055",
             "extra": "mean: 784.4198487999961 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "kaos.ocs@gmail.com",
+            "name": "Keith Owens",
+            "username": "kaos-ocs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "78baa8f30bf9f2acabd20c9efdc26a4b81042999",
+          "message": "BUG: Warn when visitor* arguments are ignored (#2845)\n\nvisitor* function arguments are silently ignored when\r\nextraction_mode=\"layout\".  Document this a bit better and add a warning\r\nwhen these arguments are ignored.\r\n\r\nCloses #2840.",
+          "timestamp": "2024-09-14T10:56:00+02:00",
+          "tree_id": "8d508b7fadf0e3e38aeb488155a205068ed0117e",
+          "url": "https://github.com/py-pdf/pypdf/commit/78baa8f30bf9f2acabd20c9efdc26a4b81042999"
+        },
+        "date": 1726304335199,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3489776425580087,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005493440967666195",
+            "extra": "mean: 298.5985894000123 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.709827697282726,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006898660783743977",
+            "extra": "mean: 78.67927274999904 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2846879738718687,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021585363174004578",
+            "extra": "mean: 3.5126176438000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 14.837328911760538,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007804656360547435",
+            "extra": "mean: 67.3975758000059 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06314638218383442,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07716801003216388",
+            "extra": "mean: 15.836219992600013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2777793495173695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006899670451161628",
+            "extra": "mean: 782.6077329999976 msec\nrounds: 5"
           }
         ]
       }
