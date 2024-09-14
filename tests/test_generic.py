@@ -963,6 +963,13 @@ def test_encodedstream_set_data():
     assert str(cc["/DecodeParms"]) == "[NullObject, NullObject, NullObject]"
     assert cc[NameObject("/Test")] == "/MyTest"
 
+    with pytest.raises(TypeError):
+        aa.set_data("toto")
+
+    aa[NameObject("/Filter")] = NameObject("/JPXEncode")
+    with pytest.raises(PdfReadError):
+        aa.set_data(b"toto")
+
 
 @pytest.mark.enable_socket()
 def test_set_data_2():
