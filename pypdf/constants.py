@@ -168,7 +168,7 @@ class PagesAttributes:
     PARENT = "/Parent"  # dictionary, required; indirect reference to pages object
     KIDS = "/Kids"  # array, required; List of indirect references
     COUNT = "/Count"  # integer, required; the number of leaf nodes (page objects)
-                     # that are descendants of this node within the page tree
+                      # that are descendants of this node within the page tree
 
 
 class PageAttributes:
