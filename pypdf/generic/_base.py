@@ -217,7 +217,7 @@ class NullObject(PdfObject):
 def is_null_or_none(x: Any) -> bool:
     """
     Returns:
-        returns true if x is None or NullObject
+        True if x is None or NullObject.
     """
     return x is None or (
         isinstance(x, PdfObject) and isinstance(x.get_object(), NullObject)
