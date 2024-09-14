@@ -5,6 +5,7 @@ The tested code might be in _page.py.
 """
 from io import BytesIO
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -173,3 +174,18 @@ def test_layout_mode_indirect_sequence_font_widths():
     with pytest.raises(ParseError) as exc:
         reader.pages[0].extract_text(extraction_mode="layout")
         assert str(exc.value).startswith("Invalid font width definition")
+
+def dummy_visitor_text(text, ctm, tm, fd, fs):
+    pass
+
+@patch("pypdf._page.logger_warning")
+def test_layout_mode_warnings(mock_logger_warning):
+    # Check that a warning is issued when an argument is ignored
+    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+    page = reader.pages[0]
+    page.extract_text(extraction_mode="plain", visitor_text=dummy_visitor_text)
+    mock_logger_warning.assert_not_called()
+    page.extract_text(extraction_mode="layout", visitor_text=dummy_visitor_text)
+    mock_logger_warning.assert_called_with(
+        "Argument visitor_text is ignored in layout mode", "pypdf._page"
+    )
