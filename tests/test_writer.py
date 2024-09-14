@@ -1795,9 +1795,33 @@ def test_missing_info():
 
     writer = PdfWriter(clone_from=reader)
     assert len(writer.pages) == len(reader.pages)
+    assert writer.metadata is None
+    b = BytesIO()
+    writer.write(b)
+    assert b"/Info" not in b.getvalue()
+
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    writer._info = reader._info
+    writer.metadata = reader.metadata
     assert dict(writer._info) == dict(reader._info)
+    assert writer.metadata == reader.metadata
+    b = BytesIO()
+    writer.write(b)
+    assert b"/Info" in b.getvalue()
+
+    writer.metadata = {}
+    writer._info = DictionaryObject()  # for code coverage
+    b = BytesIO()
+    writer.write(b)
+    assert b"/Info" in b.getvalue()
+    assert writer.metadata == {}
+
+    writer.metadata = None
+    writer.metadata = None  # for code coverage
+    assert writer.metadata is None
+    assert PdfWriter().metadata == {"/Producer": "pypdf"}
+    b = BytesIO()
+    writer.write(b)
+    assert b"/Info" not in b.getvalue()
 
 
 @pytest.mark.enable_socket()
@@ -2417,6 +2441,8 @@ def test_increment_writer(caplog):
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
     # 1 object is modified: page 0  inherits MediaBox so is changed
     assert len(writer.list_objects_in_increment()) == 1
+    b = BytesIO()
+    writer.write(b)
 
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=False)
     # 1 object is modified: page 0  inherits MediaBox so is changed
@@ -2438,7 +2464,13 @@ def test_increment_writer(caplog):
 
     # clone without info
     writer = PdfWriter(RESOURCE_ROOT / "missing_info.pdf", incremental=True)
+    assert len(writer.list_objects_in_increment()) == 0
+    assert writer.metadata is None
+    writer.metadata = {}
+    assert writer.metadata == {}
     assert len(writer.list_objects_in_increment()) == 1
-    assert writer._info == {}
+    writer.metadata = None
+    assert len(writer.list_objects_in_increment()) == 0
+    assert writer.metadata is None
     b = BytesIO()
     writer.write(b)
