@@ -63,7 +63,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     deprecate,
-    deprecate_with_replacement,
+    deprecation_with_replacement,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
@@ -1847,6 +1847,7 @@ class PdfWriter(PdfDocCommon):
         outline_item_object = TreeObject()
         outline_item_object.update(outline_item)
 
+        """code currently unreachable
         if "/A" in outline_item:
             action = DictionaryObject()
             a_dict = cast(DictionaryObject, outline_item["/A"])
@@ -1854,7 +1855,7 @@ class PdfWriter(PdfDocCommon):
                 action[NameObject(str(k))] = v
             action_ref = self._add_object(action)
             outline_item_object[NameObject("/A")] = action_ref
-
+        """
         return self.add_outline_item_destination(
             outline_item_object, parent, before, is_open
         )
@@ -2541,7 +2542,7 @@ class PdfWriter(PdfDocCommon):
             stream = BytesIO(filecontent)
         else:
             raise NotImplementedError(
-                "PdfMerger.merge requires an object that PdfReader can parse. "
+                "Merging requires an object that PdfReader can parse. "
                 "Typically, that is a Path or a string representing a Path, "
                 "a file object, or an object implementing .seek and .read. "
                 "Passing a PdfReader directly works as well."
@@ -2894,14 +2895,12 @@ class PdfWriter(PdfDocCommon):
 
     def _get_cloned_page(
         self,
-        page: Union[None, int, IndirectObject, PageObject, NullObject],
+        page: Union[None, IndirectObject, PageObject, NullObject],
         pages: Dict[int, PageObject],
         reader: PdfReader,
     ) -> Optional[IndirectObject]:
         if isinstance(page, NullObject):
             return None
-        if isinstance(page, int):
-            _i = reader.pages[page].indirect_reference
         elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference
         elif isinstance(page, IndirectObject):
@@ -3084,13 +3083,12 @@ class PdfWriter(PdfDocCommon):
         self,
         outline_item: Dict[str, Any],
         root: Optional[OutlineType] = None,
-    ) -> Optional[List[int]]:  # deprecated
+    ) -> None:  # deprecated
         """
         .. deprecated:: 2.9.0
             Use :meth:`find_outline_item` instead.
         """
-        deprecate_with_replacement("find_bookmark", "find_outline_item", "5.0.0")
-        return self.find_outline_item(outline_item, root)
+        deprecation_with_replacement("find_bookmark", "find_outline_item", "5.0.0")
 
     def reset_translation(
         self, reader: Union[None, PdfReader, IndirectObject] = None
