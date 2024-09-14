@@ -1566,9 +1566,9 @@ class PdfWriter(PdfDocCommon):
         Retrieve/set the PDF file's document information dictionary, if it exists.
 
         Args:
-            value: dict with the entries to be set. if None : remove the /Info entry from the pdf.
+            value: Dictionary with the entries to set. If None, remove the /Info entry from the PDF.
 
-        Note that some PDF files use (xmp)metadata streams instead of document
+        Note that some PDF files use (XMP) metadata streams instead of document
         information dictionaries, and these metadata streams will not be
         accessed by this function.
         """
