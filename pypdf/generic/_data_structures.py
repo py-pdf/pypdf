@@ -1030,7 +1030,7 @@ class EncodedStreamObject(StreamObject):
             return decoded.get_data()
 
     # This overrides the parent method:
-    def set_data(self, data: bytes) -> None:  # pragma: no cover
+    def set_data(self, data: bytes) -> None:
         from ..filters import FlateDecode
 
         if self.get(SA.FILTER, "") in (FT.FLATE_DECODE, [FT.FLATE_DECODE]):
