@@ -2172,19 +2172,24 @@ class PageObject(DictionaryObject):
                 default = (0, 90, 180, 270)
                 note: currently only 0 (up),90 (turned left), 180 (upside down),
                 270 (turned right)
+                Silently ignored in "layout" mode.
             space_width: force default space width
                 if not extracted from font (default: 200)
+                Silently ignored in "layout" mode.
             visitor_operand_before: function to be called before processing an operation.
                 It has four arguments: operator, operand-arguments,
                 current transformation matrix and text matrix.
+                Ignored with a warning in "layout" mode.
             visitor_operand_after: function to be called after processing an operation.
                 It has four arguments: operator, operand-arguments,
                 current transformation matrix and text matrix.
+                Ignored with a warning in "layout" mode.
             visitor_text: function to be called when extracting some text at some position.
                 It has five arguments: text, current transformation matrix,
                 text matrix, font-dictionary and font-size.
                 The font-dictionary may be None in case of unknown fonts.
                 If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
+                Ignored with a warning in "layout" mode.
             extraction_mode (Literal["plain", "layout"]): "plain" for legacy functionality,
                 "layout" for experimental layout mode functionality.
                 NOTE: orientations, space_width, and visitor_* parameters are NOT respected
@@ -2213,6 +2218,15 @@ class PageObject(DictionaryObject):
         if extraction_mode not in ["plain", "layout"]:
             raise ValueError(f"Invalid text extraction mode '{extraction_mode}'")
         if extraction_mode == "layout":
+            for visitor in ("visitor_operand_before",
+                            "visitor_operand_after",
+                            "visitor_text",
+                            ):
+                if locals()[visitor]:
+                    logger_warning(
+                        f"Argument {visitor} is ignored in layout mode",
+                        __name__,
+                    )
             return self._layout_mode_text(
                 space_vertically=kwargs.get("layout_mode_space_vertically", True),
                 scale_weight=kwargs.get("layout_mode_scale_weight", 1.25),
