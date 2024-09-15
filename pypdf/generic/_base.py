@@ -28,10 +28,16 @@ import binascii
 import codecs
 import hashlib
 import re
+import sys
 from binascii import unhexlify
 from math import log10
 from struct import iter_unpack
 from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Union, cast
+
+if sys.version_info[:2] >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard  # PEP 647
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
@@ -214,7 +220,7 @@ class NullObject(PdfObject):
         return "NullObject"
 
 
-def is_null_or_none(x: Any) -> bool:
+def is_null_or_none(x: Any) -> TypeGuard[None]:
     """
     Returns:
         True if x is None or NullObject.

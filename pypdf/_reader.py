@@ -300,7 +300,7 @@ class PdfReader(PdfDocCommon):
         """
         if self._page_id2num is None:
             self._page_id2num = {
-                x.indirect_reference.idnum: i
+                x.indirect_reference.idnum: i  # type: ignore
                 for i, x in enumerate(self.pages)
                 if is_null_or_none(x.indirect_reference)
             }
@@ -571,7 +571,7 @@ class PdfReader(PdfDocCommon):
         Read and process the PDF stream, extracting necessary data.
 
         Args:
-            stream (StreamType): The PDF file stream.
+            stream: The PDF file stream.
         """
         self._basic_validation(stream)
         self._find_eof_marker(stream)
