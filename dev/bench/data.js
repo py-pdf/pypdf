@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1726322758070,
+  "lastUpdate": 1726383284576,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -57755,6 +57755,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010384337098086704",
             "extra": "mean: 781.8163939999977 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "kaos.ocs@gmail.com",
+            "name": "Keith Owens",
+            "username": "kaos-ocs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8eefba8f84e8bd8289ab1cb37cf1954273fd25eb",
+          "message": "BUG: test_image_without_pillow cannot find pypdf (#2850)\n\ntest_image_without_pillow runs a generated script which causes the\r\nPython path to exclude the current directory.  The generated script\r\ntries to import pypdf and either cannot find it or it finds the\r\nversion in pyenv instead of the version being tested.  Add \".\" to\r\nPYTHONPATH so the correct version of pypdf is used.\r\n\r\nCloses #2849",
+          "timestamp": "2024-09-15T08:51:49+02:00",
+          "tree_id": "0258f8243df2ff36371f60e7da694495d47d9758",
+          "url": "https://github.com/py-pdf/pypdf/commit/8eefba8f84e8bd8289ab1cb37cf1954273fd25eb"
+        },
+        "date": 1726383282521,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3134410546186164,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002511963396914988",
+            "extra": "mean: 301.80105319999484 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.425480145487255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008805495828428437",
+            "extra": "mean: 80.47978736364443 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28027325045482854,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017672338746119745",
+            "extra": "mean: 3.5679466320000075 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 14.653741839717577,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009900751989784557",
+            "extra": "mean: 68.24195560000892 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06386126269056938,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03860147636479437",
+            "extra": "mean: 15.658944998399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2768464978815048,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004399924449627497",
+            "extra": "mean: 783.1794985999977 msec\nrounds: 5"
           }
         ]
       }
