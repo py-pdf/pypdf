@@ -2,25 +2,20 @@
 
 ## Version 5.0.0, 2024-09-15
 
-### Security (SEC)
-- Fix GitHub workflow vulnerable to script injection (#2787)
+### Maintenance (MAINT)
+- Deprecate PdfMerger, AnnotationBuilder and other deprecations cleanup (#2813)
+- Drop Python 3.7 support (#2793)
 
 ### New Features (ENH)
 - Add capability to remove /Info from PDF (#2820)
-- Robustify parsing for Object streams in XRef rebuilding (#2818)
 - Add incremental capability to PdfWriter (#2811)
-- add capability to remove /Info from pypdf
 - Add UniGB-UTF16 encodings (#2819)
-- Robustify on missing font for Tf  operator in text_extract() (#2816)
--  add incremental capability to PdfWriter
 - Accept utf strings for metadata (#2802)
 - Report PdfReadError instead of RecursionError (#2800)
 - Compress PDF files merging identical objects (#2795)
 
 ### Bug Fixes (BUG)
-- Warn when visitor* arguments are ignored (#2845)
 - Fix sheared image (#2801)
-- Handle Sequence as an IndirectObject when extracting text with layout mode (#2788)
 
 ### Robustness (ROB)
 - Robustify .set_data() (#2821)
@@ -28,34 +23,10 @@
 - Fix extract_text() issues on damaged PDFs (#2760)
 - Handle images with empty data when processing an image from bytes (#2786)
 
-### Documentation (DOC)
-- Small changes to PaperSize notes (#2834)
-
 ### Developer Experience (DEV)
 - Fix coverage uploads (#2832)
 - Test against Python 3.13 (#2776)
 
-### Maintenance (MAINT)
-- Deprecate PdfMerger, AnnotationBuilder and other deprecations cleanup (#2813)
-- simplify test with None and NullObject
-- Improve wording of set_data error message (#2810)
-- Remove unused code (#2805)
-- Fix mypy type output (#2799)
-- Improve test coverage (#2796)
-- Remove b_ and str_ (#2792)
-- Drop Python 3.7 support (#2793)
-- Remove unused AnnotationFlag
-- Remove unused paeth_predictor (#2773)
-
-### Code Style (STY)
-- Use f-string = functionality (#2835)
-- Refactor b_ (#2772)
-- Remove boolean value comparison (#2779)
-- Increase readability (#2775)
-- Reorder exported symbols (#2774)
-- Amend B_CACHE key types (#2766)
-
-### Other
 
 [Full Changelog](https://github.com/py-pdf/pypdf/compare/4.3.1...5.0.0)
 
