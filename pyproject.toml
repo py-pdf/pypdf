@@ -17,12 +17,12 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
@@ -30,7 +30,7 @@ classifiers = [
 
 dependencies = [
     "typing_extensions >= 4.0; python_version < '3.11'",
-    "dataclasses; python_version < '3.7'",
+    "dataclasses",
 ]
 
 [project.urls]
@@ -41,15 +41,14 @@ Changelog = "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html"
 
 [project.optional-dependencies]
 full = [
-    "cryptography; python_version >= '3.7'",
-    "PyCryptodome; python_version == '3.6'",
-    "Pillow>=8.0.0",
+    "cryptography; python_version >= '3.8'",
+    "Pillow>=10.3.0",
 ]
 crypto = [
-    "cryptography; python_version >= '3.7'",
-    "PyCryptodome; python_version == '3.6'",
+    "cryptography; python_version >= '3.8'",
+    "PyCryptodome; python_version >= '3.6'",
 ]
-image = ["Pillow>=8.0.0"]
+image = ["Pillow>=10.3.0"]
 dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "flit", "wheel", "pytest-xdist"]
 docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
 
