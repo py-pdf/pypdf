@@ -2,7 +2,7 @@
 
 ## Version 5.0.0, 2024-09-15
 
-### Maintenance (MAINT)
+### Deprecations (DEP)
 - Deprecate PdfMerger, AnnotationBuilder and other deprecations cleanup (#2813)
 - Drop Python 3.7 support (#2793)
 
