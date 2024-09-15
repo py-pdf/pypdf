@@ -248,6 +248,7 @@ def test_issue_399():
 
 @pytest.mark.enable_socket()
 def test_image_without_pillow(tmp_path):
+    import os
     name = "tika-914102.pdf"
     pdf_path = Path(__file__).parent / "pdf_cache" / name
     pdf_path_str = str(pdf_path.resolve()).replace("\\", "/")
@@ -273,9 +274,15 @@ for page in reader.pages:
     ), exc.value.args[0]
 """
     )
+    env = os.environ.copy()
+    try:
+        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
+    except KeyError:
+        env["PYTHONPATH"] = "."
     result = subprocess.run(
         [shutil.which("python"), source_file],  # noqa: S603
         capture_output=True,
+        env=env,
     )
     assert result.returncode == 0
     assert result.stdout == b""
