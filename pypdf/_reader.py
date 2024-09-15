@@ -306,12 +306,13 @@ class PdfReader(PdfDocCommon):
         if is_null_or_none(indirect_reference):
             return None
         assert isinstance(indirect_reference, (int, IndirectObject)), "mypy"
-        idnum = (
-            indirect_reference
-            if isinstance(indirect_reference, int)
-            else indirect_reference.idnum
-        )
-        return self._page_id2num.get(idnum)
+        if isinstance(indirect_reference, int):
+            idnum = indirect_reference
+        else:
+            idnum = indirect_reference.idnum
+        assert self._page_id2num is not None, "hint for mypy"
+        ret = self._page_id2num.get(idnum, None)
+        return ret
 
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
