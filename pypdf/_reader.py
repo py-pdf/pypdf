@@ -307,6 +307,7 @@ class PdfReader(PdfDocCommon):
 
         if is_null_or_none(indirect_reference):
             return None
+        assert isinstance(indirect_reference, (int, IndirectObject)), "mypy"
         idnum = (
             indirect_reference
             if isinstance(indirect_reference, int)

@@ -205,7 +205,7 @@ def test_attempt_decrypt_unencrypted_pdf():
     path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(PdfReadError) as exc:
         PdfReader(path, password="nonexistent")
-    assert exc.value.args[0] == "Not encrypted file"
+    assert exc.value.args[0] == "Not an encrypted file"
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")

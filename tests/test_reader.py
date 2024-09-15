@@ -1293,7 +1293,7 @@ def test_reader(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9464742/shiv_resume.pdf"
     name = "shiv_resume.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    assert "Previous trailer can not be read" in caplog.text
+    assert "Previous trailer cannot be read" in caplog.text
     caplog.clear()
     # first call requires some reparations...
     reader.pages[0].extract_text()
