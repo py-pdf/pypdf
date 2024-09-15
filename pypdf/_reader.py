@@ -302,7 +302,7 @@ class PdfReader(PdfDocCommon):
             self._page_id2num = {
                 x.indirect_reference.idnum: i  # type: ignore
                 for i, x in enumerate(self.pages)
-                if is_null_or_none(x.indirect_reference)
+                if x.indirect_reference is None
             }
 
         if is_null_or_none(indirect_reference):
