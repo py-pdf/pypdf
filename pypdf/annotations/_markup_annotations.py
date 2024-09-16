@@ -50,7 +50,7 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
 
     def __init__(self, *, title_bar: Optional[str] = None):
         if title_bar is not None:
-            self[NameObject("T")] = TextStringObject(title_bar)
+            self[NameObject("/T")] = TextStringObject(title_bar)
 
 
 class Text(MarkupAnnotation):

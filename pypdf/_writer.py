@@ -53,7 +53,7 @@ from typing import (
 )
 
 from ._cmap import _default_fonts_space_width, build_char_map_from_dict
-from ._doc_common import PdfDocCommon
+from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject
 from ._page_labels import nums_clear_range, nums_insert, nums_next
@@ -63,7 +63,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     deprecate,
-    deprecate_with_replacement,
+    deprecation_with_replacement,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
@@ -107,6 +107,7 @@ from .generic import (
     ViewerPreferences,
     create_string_object,
     hex_to_rgb,
+    is_null_or_none,
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
@@ -194,7 +195,7 @@ class PdfWriter(PdfDocCommon):
         """
 
         self._ID: Union[ArrayObject, None] = None
-        self._info_obj: PdfObject
+        self._info_obj: Optional[PdfObject]
 
         if self.incremental:
             if isinstance(fileobj, (str, Path)):
@@ -309,13 +310,26 @@ class PdfWriter(PdfDocCommon):
         Returns:
             /Info Dictionary; None if the entry does not exist
         """
-        return cast(DictionaryObject, self._info_obj.get_object())
+        return (
+            None
+            if self._info_obj is None
+            else cast(DictionaryObject, self._info_obj.get_object())
+        )
 
     @_info.setter
-    def _info(self, value: Union[IndirectObject, DictionaryObject]) -> None:
-        obj = cast(DictionaryObject, self._info_obj.get_object())
-        obj.clear()
-        obj.update(cast(DictionaryObject, value.get_object()))
+    def _info(self, value: Optional[Union[IndirectObject, DictionaryObject]]) -> None:
+        if value is None:
+            try:
+                self._objects[self._info_obj.indirect_reference.idnum - 1] = None  # type: ignore
+            except (KeyError, AttributeError):
+                pass
+            self._info_obj = None
+        else:
+            if self._info_obj is None:
+                self._info_obj = self._add_object(DictionaryObject())
+            obj = cast(DictionaryObject, self._info_obj.get_object())
+            obj.clear()
+            obj.update(cast(DictionaryObject, value.get_object()))
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
@@ -486,7 +500,7 @@ class PdfWriter(PdfDocCommon):
             cast(ArrayObject, node[PA.KIDS]).append(page.indirect_reference)
             self.flattened_pages.append(page)
         cpt = 1000
-        while node is not None:
+        while not is_null_or_none(node):
             node = cast(DictionaryObject, node.get_object())
             node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
             node = node.get(PA.PARENT, None)
@@ -599,8 +613,9 @@ class PdfWriter(PdfDocCommon):
             The page number or None
         """
         # to provide same function as in PdfReader
-        if indirect_reference is None or isinstance(indirect_reference, NullObject):
+        if is_null_or_none(indirect_reference):
             return None
+        assert indirect_reference is not None, "mypy"
         if isinstance(indirect_reference, int):
             indirect_reference = IndirectObject(indirect_reference, 0, self)
         obj = indirect_reference.get_object()
@@ -915,7 +930,7 @@ class PdfWriter(PdfDocCommon):
             )
             dr = dr.get_object().get("/Font", DictionaryObject()).get_object()
         font_res = dr.get(font_name, None)
-        if font_res is not None:
+        if not is_null_or_none(font_res):
             font_res = cast(DictionaryObject, font_res.get_object())
             font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
                 200, font_res
@@ -1186,6 +1201,7 @@ class PdfWriter(PdfDocCommon):
             self._objects = [None] * cast(int, reader.trailer["/Size"])
         else:
             self._objects.clear()
+        self._info_obj = None
         self._root_object = reader.root_object.clone(self)
         self._pages = self._root_object.raw_get("/Pages")
 
@@ -1226,22 +1242,21 @@ class PdfWriter(PdfDocCommon):
                 document.
         """
         self.clone_reader_document_root(reader)
-        if TK.INFO in reader.trailer:
-            inf = reader._info
-            if self.incremental:
-                if inf is not None:
-                    self._info_obj = cast(
-                        IndirectObject, inf.clone(self).indirect_reference
-                    )
-                self._original_hash[
-                    cast(IndirectObject, self._info_obj.indirect_reference).idnum - 1
-                ] = cast(DictionaryObject, self._info_obj.get_object()).hash_bin()
-            elif inf is not None:
-                self._info_obj = self._add_object(
-                    DictionaryObject(cast(DictionaryObject, inf.get_object()))
+        inf = reader._info
+        if self.incremental:
+            if inf is not None:
+                self._info_obj = cast(
+                    IndirectObject, inf.clone(self).indirect_reference
                 )
-        else:
-            self._info_obj = self._add_object(DictionaryObject())
+                assert isinstance(self._info, DictionaryObject), "for mypy"
+                self._original_hash[
+                    self._info_obj.indirect_reference.idnum - 1
+                ] = self._info.hash_bin()
+        elif inf is not None:
+            self._info_obj = self._add_object(
+                DictionaryObject(cast(DictionaryObject, inf.get_object()))
+            )
+        # else: _info_obj = None done in clone_reader_document_root()
 
         try:
             self._ID = cast(ArrayObject, reader._ID).clone(self)
@@ -1547,6 +1562,34 @@ class PdfWriter(PdfDocCommon):
         trailer.write_to_stream(stream)
         stream.write(f"\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
 
+    @property
+    def metadata(self) -> Optional[DocumentInformation]:
+        """
+        Retrieve/set the PDF file's document information dictionary, if it exists.
+
+        Args:
+            value: dict with the entries to be set. if None : remove the /Info entry from the pdf.
+
+        Note that some PDF files use (xmp)metadata streams instead of document
+        information dictionaries, and these metadata streams will not be
+        accessed by this function.
+        """
+        return super().metadata
+
+    @metadata.setter
+    def metadata(
+        self,
+        value: Optional[Union[DocumentInformation, DictionaryObject, Dict[Any, Any]]],
+    ) -> None:
+        if value is None:
+            self._info = None
+        else:
+            if self._info is not None:
+                self._info.clear()
+            else:
+                self._info = DictionaryObject()
+            self.add_metadata(value)
+
     def add_metadata(self, infos: Dict[str, Any]) -> None:
         """
         Add custom metadata to the output.
@@ -1806,6 +1849,7 @@ class PdfWriter(PdfDocCommon):
         outline_item_object = TreeObject()
         outline_item_object.update(outline_item)
 
+        """code currently unreachable
         if "/A" in outline_item:
             action = DictionaryObject()
             a_dict = cast(DictionaryObject, outline_item["/A"])
@@ -1813,7 +1857,7 @@ class PdfWriter(PdfDocCommon):
                 action[NameObject(str(k))] = v
             action_ref = self._add_object(action)
             outline_item_object[NameObject("/A")] = action_ref
-
+        """
         return self.add_outline_item_destination(
             outline_item_object, parent, before, is_open
         )
@@ -2500,7 +2544,7 @@ class PdfWriter(PdfDocCommon):
             stream = BytesIO(filecontent)
         else:
             raise NotImplementedError(
-                "PdfMerger.merge requires an object that PdfReader can parse. "
+                "Merging requires an object that PdfReader can parse. "
                 "Typically, that is a Path or a string representing a Path, "
                 "a file object, or an object implementing .seek and .read. "
                 "Passing a PdfReader directly works as well."
@@ -2853,14 +2897,12 @@ class PdfWriter(PdfDocCommon):
 
     def _get_cloned_page(
         self,
-        page: Union[None, int, IndirectObject, PageObject, NullObject],
+        page: Union[None, IndirectObject, PageObject, NullObject],
         pages: Dict[int, PageObject],
         reader: PdfReader,
     ) -> Optional[IndirectObject]:
         if isinstance(page, NullObject):
             return None
-        if isinstance(page, int):
-            _i = reader.pages[page].indirect_reference
         elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference
         elif isinstance(page, IndirectObject):
@@ -2941,7 +2983,7 @@ class PdfWriter(PdfDocCommon):
         if node is None:
             node = NullObject()
         node = node.get_object()
-        if node is None or isinstance(node, NullObject):
+        if is_null_or_none(node):
             node = DictionaryObject()
         if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
             node = node.get("/First", None)
@@ -3043,13 +3085,12 @@ class PdfWriter(PdfDocCommon):
         self,
         outline_item: Dict[str, Any],
         root: Optional[OutlineType] = None,
-    ) -> Optional[List[int]]:  # deprecated
+    ) -> None:  # deprecated
         """
         .. deprecated:: 2.9.0
             Use :meth:`find_outline_item` instead.
         """
-        deprecate_with_replacement("find_bookmark", "find_outline_item", "5.0.0")
-        return self.find_outline_item(outline_item, root)
+        deprecation_with_replacement("find_bookmark", "find_outline_item", "5.0.0")
 
     def reset_translation(
         self, reader: Union[None, PdfReader, IndirectObject] = None

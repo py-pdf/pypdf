@@ -1,5 +1,7 @@
 from typing import Any, Optional, Tuple, Union
 
+from ._base import is_null_or_none
+
 
 class Fit:
     def __init__(
@@ -9,8 +11,7 @@ class Fit:
 
         self.fit_type = NameObject(fit_type)
         self.fit_args = [
-            NullObject() if a is None or isinstance(a, NullObject) else FloatObject(a)
-            for a in fit_args
+            NullObject() if is_null_or_none(a) else FloatObject(a) for a in fit_args
         ]
 
     @classmethod

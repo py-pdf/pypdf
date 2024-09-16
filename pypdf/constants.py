@@ -14,8 +14,6 @@ ISO 32000-2:2020 (PDF 2.0)
 from enum import IntFlag, auto
 from typing import Dict, Tuple
 
-from ._utils import classproperty, deprecate_with_replacement
-
 
 class Core:
     """Keywords that don't quite belong anywhere else."""
@@ -161,46 +159,6 @@ class Ressources:  # deprecated
 
     .. deprecated:: 5.0.0
     """
-
-    @classproperty
-    def EXT_G_STATE(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/ExtGState"  # dictionary, optional
-
-    @classproperty
-    def COLOR_SPACE(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/ColorSpace"  # dictionary, optional
-
-    @classproperty
-    def PATTERN(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/Pattern"  # dictionary, optional
-
-    @classproperty
-    def SHADING(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/Shading"  # dictionary, optional
-
-    @classproperty
-    def XOBJECT(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/XObject"  # dictionary, optional
-
-    @classproperty
-    def FONT(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/Font"  # dictionary, optional
-
-    @classproperty
-    def PROC_SET(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/ProcSet"  # array, optional
-
-    @classproperty
-    def PROPERTIES(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/Properties"  # dictionary, optional
 
 
 class PagesAttributes:

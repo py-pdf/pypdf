@@ -62,7 +62,13 @@ from typing import Iterator, List, Optional, Tuple, cast
 
 from ._protocols import PdfCommonDocProtocol
 from ._utils import logger_warning
-from .generic import ArrayObject, DictionaryObject, NullObject, NumberObject
+from .generic import (
+    ArrayObject,
+    DictionaryObject,
+    NullObject,
+    NumberObject,
+    is_null_or_none,
+)
 
 
 def number2uppercase_roman_numeral(num: int) -> str:
@@ -180,11 +186,13 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
                 # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
                 limits = cast(List[int], kid["/Limits"])
                 if limits[0] <= index <= limits[1]:
-                    if kid.get("/Kids", None) is not None:
+                    if not is_null_or_none(kid.get("/Kids", None)):
                         # Recursive definition.
                         level += 1
                         if level == 100:  # pragma: no cover
-                            raise NotImplementedError("Too deep nesting is not supported.")
+                            raise NotImplementedError(
+                                "Too deep nesting is not supported."
+                            )
                         number_tree = kid
                         # Exit the inner `for` loop and continue at the next level with the
                         # next iteration of the `while` loop.
@@ -195,10 +203,7 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
                 # and continue with the fallback.
                 break
 
-    logger_warning(
-        f"Could not reliably determine page label for {index}.",
-        __name__
-    )
+    logger_warning(f"Could not reliably determine page label for {index}.", __name__)
     return str(index + 1)  # Fallback if neither /Nums nor /Kids is in the number_tree
 
 
