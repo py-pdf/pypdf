@@ -6,7 +6,7 @@
 
 
 ### Deprecations (DEP)
-- Deprecate PdfMerger, AnnotationBuilder and other deprecations cleanup (#2813)
+- Remove the deprecated PfdMerger and AnnotationBuilder classes and other deprecations cleanup (#2813)
 - Drop Python 3.7 support (#2793)
 
 ### New Features (ENH)
