@@ -53,4 +53,4 @@ The title of the PR will be used as the first line of that combined commit messa
 
 The first comment within the commit will be used as the message body.
 
-See [developer intro](intro.html#commit-messages)  for more details.
+See [developer intro](intro.html#commit-messages) for more details.
