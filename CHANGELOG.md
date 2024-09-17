@@ -2,7 +2,7 @@
 
 ## Version 5.0.0, 2024-09-15
 
-** Notice : this version drops support to Python 3.7 (not maintained since June 23), PdfMerger(use PdfWriter instead) and AnnotationBuilder(use annotations instead) **
+This version drops support for Python 3.7 (not maintained since July 2023), PdfMerger (use PdfWriter instead) and AnnotationBuilder (use annotations instead).
 
 
 ### Deprecations (DEP)
