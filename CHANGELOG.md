@@ -1,5 +1,38 @@
 # CHANGELOG
 
+## Version 5.0.0, 2024-09-15
+
+This version drops support for Python 3.7 (not maintained since July 2023), PdfMerger (use PdfWriter instead) and AnnotationBuilder (use annotations instead).
+
+
+### Deprecations (DEP)
+- Remove the deprecated PfdMerger and AnnotationBuilder classes and other deprecations cleanup (#2813)
+- Drop Python 3.7 support (#2793)
+
+### New Features (ENH)
+- Add capability to remove /Info from PDF (#2820)
+- Add incremental capability to PdfWriter (#2811)
+- Add UniGB-UTF16 encodings (#2819)
+- Accept utf strings for metadata (#2802)
+- Report PdfReadError instead of RecursionError (#2800)
+- Compress PDF files merging identical objects (#2795)
+
+### Bug Fixes (BUG)
+- Fix sheared image (#2801)
+
+### Robustness (ROB)
+- Robustify .set_data() (#2821)
+- Raise PdfReadError when missing /Root in trailer (#2808)
+- Fix extract_text() issues on damaged PDFs (#2760)
+- Handle images with empty data when processing an image from bytes (#2786)
+
+### Developer Experience (DEV)
+- Fix coverage uploads (#2832)
+- Test against Python 3.13 (#2776)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.3.1...5.0.0)
+
 ## Version 4.3.1, 2024-07-21
 
 ### Bug Fixes (BUG)
