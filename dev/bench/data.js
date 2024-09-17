@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1726383284576,
+  "lastUpdate": 1726591944520,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -57821,6 +57821,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004399924449627497",
             "extra": "mean: 783.1794985999977 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "637bc44dd2f00803bd888c9dfb398f9794e3ff18",
+          "message": "REL: 5.0.0 (#2851)\n\n## Version 5.0.0, 2024-09-15\r\n\r\nThis version drops support for Python 3.7 (not maintained since July 2023), PdfMerger (use PdfWriter instead) and AnnotationBuilder (use annotations instead).\r\n\r\n\r\n### Deprecations (DEP)\r\n- Remove the deprecated PfdMerger and AnnotationBuilder classes and other deprecations cleanup (#2813)\r\n- Drop Python 3.7 support (#2793)\r\n\r\n### New Features (ENH)\r\n- Add capability to remove /Info from PDF (#2820)\r\n- Add incremental capability to PdfWriter (#2811)\r\n- Add UniGB-UTF16 encodings (#2819)\r\n- Accept utf strings for metadata (#2802)\r\n- Report PdfReadError instead of RecursionError (#2800)\r\n- Compress PDF files merging identical objects (#2795)\r\n\r\n### Bug Fixes (BUG)\r\n- Fix sheared image (#2801)\r\n\r\n### Robustness (ROB)\r\n- Robustify .set_data() (#2821)\r\n- Raise PdfReadError when missing /Root in trailer (#2808)\r\n- Fix extract_text() issues on damaged PDFs (#2760)\r\n- Handle images with empty data when processing an image from bytes (#2786)\r\n\r\n### Developer Experience (DEV)\r\n- Fix coverage uploads (#2832)\r\n- Test against Python 3.13 (#2776)\r\n\r\n\r\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.3.1...5.0.0)",
+          "timestamp": "2024-09-17T18:49:30+02:00",
+          "tree_id": "4c4fb0649f2c744e5b874773603602b3fdc09977",
+          "url": "https://github.com/py-pdf/pypdf/commit/637bc44dd2f00803bd888c9dfb398f9794e3ff18"
+        },
+        "date": 1726591940937,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3391400645140825,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005526316445679841",
+            "extra": "mean: 299.4783030000036 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.798242442961435,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00628686675245526",
+            "extra": "mean: 78.13572875000219 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28408867646059893,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019824144268621485",
+            "extra": "mean: 3.520027663399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 14.334787837496377,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005299526633212798",
+            "extra": "mean: 69.76036278571485 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06490339997554785,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1056741800743675",
+            "extra": "mean: 15.407513325599997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2784793239165035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004424316299537971",
+            "extra": "mean: 782.1792510000023 msec\nrounds: 5"
           }
         ]
       }
