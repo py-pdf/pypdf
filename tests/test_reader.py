@@ -1617,3 +1617,27 @@ def test_iss2817():
         reader.pages[0]["/Annots"][0].get_object()["/Contents"]
         == "A\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0 B"
     )
+
+
+@pytest.mark.enable_socket()
+def test_truncated_files(caplog):
+    """Cf #2853"""
+    url = "https://github.com/user-attachments/files/16796095/f5471sm-2.pdf"
+    name = "iss2780.pdf"  # reused
+    b = get_data_from_url(url, name=name)
+    reader = PdfReader(BytesIO(b))
+    assert caplog.text == ""
+    # remove \n at end of file : invisible
+    reader = PdfReader(BytesIO(b[:-1]))
+    assert caplog.text == ""
+    # truncate but still detectable
+    for i in range(-2, -6, -1):
+        caplog.clear()
+        reader = PdfReader(BytesIO(b[:i]))
+        assert "EOF marker seems truncated" in caplog.text
+        assert reader._startxref == 100993
+    # remove completely EOF : we will not read last section
+    caplog.clear()
+    reader = PdfReader(BytesIO(b[:-6]))
+    assert "CAUTION : startxref found while searching for %%EOF" in caplog.text
+    assert reader._startxref < 100993

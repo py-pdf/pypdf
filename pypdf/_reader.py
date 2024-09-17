@@ -649,7 +649,23 @@ class PdfReader(PdfDocCommon):
         """
         HEADER_SIZE = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
+        first = True
         while line[:5] != b"%%EOF":
+            if line != b"" and first:
+                if any(
+                    line.strip().endswith(tr) for tr in (b"%%EO", b"%%E", b"%%", b"%")
+                ):
+                    # I consider the file has truncated and
+                    # I have enough confidence to carry on
+                    logger_warning("EOF marker seems truncated", __name__)
+                    break
+                first = False
+            if b"startxref" in line:
+                logger_warning(
+                    "CAUTION : startxref found while searching for %%EOF\n"
+                    "This could the file is truncated and mean some data will not be read",
+                    __name__,
+                )
             if stream.tell() < HEADER_SIZE:
                 if self.strict:
                     raise PdfReadError("EOF marker not found")
