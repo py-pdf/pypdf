@@ -1,9 +1,9 @@
 maint:
-	pyenv local 3.10.5
+	pyenv local 3.7.15
 	pre-commit autoupdate
 	pip-compile -U requirements/ci.in
-	pip-compile -U requirements/docs.in
 	pip-compile -U requirements/dev.in
+	pip-compile -U requirements/docs.in
 
 release:
 	python make_release.py
