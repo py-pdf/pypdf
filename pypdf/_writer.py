@@ -3132,16 +3132,16 @@ class PdfWriter(PdfDocCommon):
 
         Page indexes must be given starting from 0.
         Labels must have a style, a prefix or both.
-        If to a range is not assigned any page label a decimal label starting from 1 is applied.
+        If a range is not assigned any page label a decimal label starting from 1 is applied.
 
         Args:
             page_index_from: page index of the beginning of the range starting from 0
             page_index_to: page index of the beginning of the range starting from 0
             style: The numbering style to be used for the numeric portion of each page label:
 
-                       * ``/D`` Decimal arabic numerals
-                       * ``/R`` Uppercase roman numerals
-                       * ``/r`` Lowercase roman numerals
+                       * ``/D`` Decimal Arabic numerals
+                       * ``/R`` Uppercase Roman numerals
+                       * ``/r`` Lowercase Roman numerals
                        * ``/A`` Uppercase letters (A to Z for the first 26 pages,
                          AA to ZZ for the next 26, and so on)
                        * ``/a`` Lowercase letters (a to z for the first 26 pages,
@@ -3180,18 +3180,17 @@ class PdfWriter(PdfDocCommon):
         """
         Set a page label to a range of pages.
 
-        Page indexes must be given
-        starting from 0. Labels must have a style, a prefix or both. If to a
-        range is not assigned any page label a decimal label starting from 1 is
-        applied.
+        Page indexes must be given starting from 0.
+        Labels must have a style, a prefix or both.
+        If a range is not assigned any page label a decimal label starting from 1 is applied.
 
         Args:
             page_index_from: page index of the beginning of the range starting from 0
             page_index_to: page index of the beginning of the range starting from 0
             style:  The numbering style to be used for the numeric portion of each page label:
-                        /D Decimal arabic numerals
-                        /R Uppercase roman numerals
-                        /r Lowercase roman numerals
+                        /D Decimal Arabic numerals
+                        /R Uppercase Roman numerals
+                        /r Lowercase Roman numerals
                         /A Uppercase letters (A to Z for the first 26 pages,
                            AA to ZZ for the next 26, and so on)
                         /a Lowercase letters (a to z for the first 26 pages,
