@@ -1639,5 +1639,5 @@ def test_truncated_files(caplog):
     # remove completely EOF : we will not read last section
     caplog.clear()
     reader = PdfReader(BytesIO(b[:-6]))
-    assert "CAUTION : startxref found while searching for %%EOF" in caplog.text
+    assert "CAUTION: startxref found while searching for %%EOF" in caplog.text
     assert reader._startxref < 100993
