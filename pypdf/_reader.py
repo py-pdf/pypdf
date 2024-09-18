@@ -655,7 +655,7 @@ class PdfReader(PdfDocCommon):
                 if any(
                     line.strip().endswith(tr) for tr in (b"%%EO", b"%%E", b"%%", b"%")
                 ):
-                    # I consider the file has truncated and
+                    # Consider the file as truncated while
                     # I have enough confidence to carry on
                     logger_warning("EOF marker seems truncated", __name__)
                     break
