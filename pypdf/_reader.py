@@ -662,7 +662,7 @@ class PdfReader(PdfDocCommon):
                 first = False
             if b"startxref" in line:
                 logger_warning(
-                    "CAUTION : startxref found while searching for %%EOF\n"
+                    "CAUTION: startxref found while searching for %%EOF. "
                     "This could the file is truncated and mean some data will not be read",
                     __name__,
                 )
