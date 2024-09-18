@@ -663,7 +663,7 @@ class PdfReader(PdfDocCommon):
             if b"startxref" in line:
                 logger_warning(
                     "CAUTION: startxref found while searching for %%EOF. "
-                    "This could the file is truncated and mean some data will not be read",
+                    "The file might be truncated and some data might not be read.",
                     __name__,
                 )
             if stream.tell() < HEADER_SIZE:
