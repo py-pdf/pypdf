@@ -232,6 +232,10 @@ class ArrayObject(List[Any], PdfObject):
             tok = stream.read(1)
             while tok.isspace():
                 tok = stream.read(1)
+            if tok == b"%":
+                stream.seek(-1, 1)
+                skip_over_comment(stream)
+                continue
             stream.seek(-1, 1)
             # check for array ending
             peek_ahead = stream.read(1)
@@ -1341,12 +1345,7 @@ def read_object(
         return NullObject.read_from_stream(stream)
     elif tok == b"%":
         # comment
-        while tok not in (b"\r", b"\n"):
-            tok = stream.read(1)
-            # Prevents an infinite loop by raising an error if the stream is at
-            # the EOF
-            if len(tok) <= 0:
-                raise PdfStreamError("File ended unexpectedly.")
+        skip_over_comment(stream)
         tok = read_non_whitespace(stream)
         stream.seek(-1, 1)
         return read_object(stream, pdf, forced_encoding)
