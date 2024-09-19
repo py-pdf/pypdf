@@ -2699,7 +2699,7 @@ class PdfWriter(PdfDocCommon):
                 position += 1
             srcpages[pg.indirect_reference.idnum].original_page = pg
 
-        reader._namedDests = (
+        reader._named_destinations = (
             reader.named_destinations
         )  # need for the outline processing below
 
@@ -2739,7 +2739,7 @@ class PdfWriter(PdfDocCommon):
                 ].indirect_reference
                 self.add_named_destination_array(dest["/Title"], arr)
 
-        for dest in reader._namedDests.values():
+        for dest in reader._named_destinations.values():
             _process_named_dests(dest)
 
         outline_item_typ: TreeObject
