@@ -17,6 +17,7 @@ from pypdf.errors import (
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
+    PdfStreamError,
     WrongPasswordError,
 )
 from pypdf.generic import (
@@ -1617,3 +1618,42 @@ def test_iss2817():
         reader.pages[0]["/Annots"][0].get_object()["/Contents"]
         == "A\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0 B"
     )
+
+
+@pytest.mark.enable_socket()
+def test_truncated_files(caplog):
+    """Cf #2853"""
+    url = "https://github.com/user-attachments/files/16796095/f5471sm-2.pdf"
+    name = "iss2780.pdf"  # reused
+    b = get_data_from_url(url, name=name)
+    reader = PdfReader(BytesIO(b))
+    assert caplog.text == ""
+    # remove \n at end of file : invisible
+    reader = PdfReader(BytesIO(b[:-1]))
+    assert caplog.text == ""
+    # truncate but still detectable
+    for i in range(-2, -6, -1):
+        caplog.clear()
+        reader = PdfReader(BytesIO(b[:i]))
+        assert "EOF marker seems truncated" in caplog.text
+        assert reader._startxref == 100993
+    # remove completely EOF : we will not read last section
+    caplog.clear()
+    reader = PdfReader(BytesIO(b[:-6]))
+    assert "CAUTION: startxref found while searching for %%EOF" in caplog.text
+    assert reader._startxref < 100993
+
+
+@pytest.mark.enable_socket()
+def test_comments_in_array(caplog):
+    """Cf #2843: this deals with comments"""
+    url = "https://github.com/user-attachments/files/16992416/crash-2347912aa2a6f0fab5df4ebc8a424735d5d0d128.pdf"
+    name = "iss2843.pdf"  # reused
+    b = get_data_from_url(url, name=name)
+    reader = PdfReader(BytesIO(b))
+    reader.pages[0]
+    assert caplog.text == ""
+    reader = PdfReader(BytesIO(b))
+    reader.stream = BytesIO(b[:1149])
+    with pytest.raises(PdfStreamError):
+        reader.pages[0]
