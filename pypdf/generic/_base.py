@@ -220,7 +220,7 @@ class NullObject(PdfObject):
         return "NullObject"
 
 
-def is_null_or_none(x: Any) -> TypeGuard[None]:
+def is_null_or_none(x: Any) -> TypeGuard[None|NullObject|IndirectObject]:
     """
     Returns:
         True if x is None or NullObject.
