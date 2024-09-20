@@ -220,16 +220,6 @@ class NullObject(PdfObject):
         return "NullObject"
 
 
-def is_null_or_none(x: Any) -> TypeGuard[None|NullObject|IndirectObject]:
-    """
-    Returns:
-        True if x is None or NullObject.
-    """
-    return x is None or (
-        isinstance(x, PdfObject) and isinstance(x.get_object(), NullObject)
-    )
-
-
 class BooleanObject(PdfObject):
     def __init__(self, value: Any) -> None:
         self.value = value
@@ -859,3 +849,13 @@ def encode_pdfdocencoding(unicode_string: str) -> bytes:
             -1,
             "does not exist in translation table",
         )
+
+
+def is_null_or_none(x: Any) -> TypeGuard[Union[None, NullObject, IndirectObject]]:
+    """
+    Returns:
+        True if x is None or NullObject.
+    """
+    return x is None or (
+        isinstance(x, PdfObject) and isinstance(x.get_object(), NullObject)
+    )
