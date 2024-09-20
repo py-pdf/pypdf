@@ -855,7 +855,7 @@ class PdfDocCommon:
                 # §12.3.3 Document outline, entries in the outline dictionary
                 if not is_null_or_none(lines) and "/First" in lines:
                     node = cast(DictionaryObject, lines["/First"])
-            self._namedDests = self._get_named_destinations()
+            self._named_destinations = self._get_named_destinations()
 
         if node is None:
             return outline
@@ -996,7 +996,7 @@ class PdfDocCommon:
             # TODO : keep named destination instead of replacing it ?
             try:
                 outline_item = self._build_destination(
-                    title, self._namedDests[dest].dest_array
+                    title, self._named_destinations[dest].dest_array
                 )
             except KeyError:
                 # named destination not found in Name Dict
