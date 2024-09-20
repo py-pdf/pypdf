@@ -95,7 +95,7 @@ class AnnotationBuilder:  # deprecated
         flags: int = 0,
     ) -> None:
         deprecation_with_replacement(
-            "AnnotationBuilder.text", "pypdf.annotations.Text", "4.0.0"
+            "AnnotationBuilder.text", "pypdf.annotations.Text", "5.0.0"
         )
 
     @staticmethod
@@ -111,7 +111,7 @@ class AnnotationBuilder:  # deprecated
         background_color: Optional[str] = "ffffff",
     ) -> None:
         deprecation_with_replacement(
-            "AnnotationBuilder.free_text", "pypdf.annotations.FreeText", "4.0.0"
+            "AnnotationBuilder.free_text", "pypdf.annotations.FreeText", "5.0.0"
         )
 
     @staticmethod
@@ -123,7 +123,7 @@ class AnnotationBuilder:  # deprecated
         open: bool = False,
     ) -> None:
         deprecation_with_replacement(
-            "AnnotationBuilder.popup", "pypdf.annotations.Popup", "4.0.0"
+            "AnnotationBuilder.popup", "pypdf.annotations.Popup", "5.0.0"
         )
 
     @staticmethod
@@ -135,7 +135,7 @@ class AnnotationBuilder:  # deprecated
         title_bar: Optional[str] = None,
     ) -> None:
         deprecation_with_replacement(
-            "AnnotationBuilder.line", "pypdf.annotations.Line", "4.0.0"
+            "AnnotationBuilder.line", "pypdf.annotations.Line", "5.0.0"
         )
 
     @staticmethod
@@ -143,7 +143,7 @@ class AnnotationBuilder:  # deprecated
         vertices: List[Tuple[float, float]],
     ) -> None:
         deprecation_with_replacement(
-            "AnnotationBuilder.polyline", "pypdf.annotations.PolyLine", "4.0.0"
+            "AnnotationBuilder.polyline", "pypdf.annotations.PolyLine", "5.0.0"
         )
 
     @staticmethod
@@ -152,7 +152,7 @@ class AnnotationBuilder:  # deprecated
         interiour_color: Optional[str] = None,
     ) -> None:
         deprecation_with_replacement(
-            "AnnotationBuilder.rectangle", "pypdf.annotations.Rectangle", "4.0.0"
+            "AnnotationBuilder.rectangle", "pypdf.annotations.Rectangle", "5.0.0"
         )
 
     @staticmethod
@@ -164,7 +164,7 @@ class AnnotationBuilder:  # deprecated
         printing: bool = False,
     ) -> None:
         deprecation_with_replacement(
-            "AnnotationBuilder.highlight", "pypdf.annotations.Highlight", "4.0.0"
+            "AnnotationBuilder.highlight", "pypdf.annotations.Highlight", "5.0.0"
         )
 
     @staticmethod
@@ -173,13 +173,13 @@ class AnnotationBuilder:  # deprecated
         interiour_color: Optional[str] = None,
     ) -> None:
         deprecation_with_replacement(
-            "AnnotationBuilder.ellipse", "pypdf.annotations.Ellipse", "4.0.0"
+            "AnnotationBuilder.ellipse", "pypdf.annotations.Ellipse", "5.0.0"
         )
 
     @staticmethod
     def polygon(vertices: List[Tuple[float, float]]) -> None:
         deprecation_with_replacement(
-            "AnnotationBuilder.polygon", "pypdf.annotations.Polygon", "4.0.0"
+            "AnnotationBuilder.polygon", "pypdf.annotations.Polygon", "5.0.0"
         )
 
     from ._fit import DEFAULT_FIT
@@ -193,7 +193,7 @@ class AnnotationBuilder:  # deprecated
         fit: Fit = DEFAULT_FIT,
     ) -> None:
         deprecation_with_replacement(
-            "AnnotationBuilder.link", "pypdf.annotations.Link", "4.0.0"
+            "AnnotationBuilder.link", "pypdf.annotations.Link", "5.0.0"
         )
 
 
