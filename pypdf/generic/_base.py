@@ -28,10 +28,16 @@ import binascii
 import codecs
 import hashlib
 import re
+import sys
 from binascii import unhexlify
 from math import log10
 from struct import iter_unpack
 from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Union, cast
+
+if sys.version_info[:2] >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard  # PEP 647
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
@@ -212,16 +218,6 @@ class NullObject(PdfObject):
 
     def __repr__(self) -> str:
         return "NullObject"
-
-
-def is_null_or_none(x: Any) -> bool:
-    """
-    Returns:
-        True if x is None or NullObject.
-    """
-    return x is None or (
-        isinstance(x, PdfObject) and isinstance(x.get_object(), NullObject)
-    )
 
 
 class BooleanObject(PdfObject):
@@ -853,3 +849,13 @@ def encode_pdfdocencoding(unicode_string: str) -> bytes:
             -1,
             "does not exist in translation table",
         )
+
+
+def is_null_or_none(x: Any) -> TypeGuard[Union[None, NullObject, IndirectObject]]:
+    """
+    Returns:
+        True if x is None or NullObject.
+    """
+    return x is None or (
+        isinstance(x, PdfObject) and isinstance(x.get_object(), NullObject)
+    )
