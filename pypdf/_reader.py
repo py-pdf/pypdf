@@ -124,9 +124,19 @@ class PdfReader(PdfDocCommon):
         self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
 
-        self._page_id2num: Optional[
-            Dict[Any, Any]
-        ] = None  # map page indirect_reference number to Page Number
+        # map page indirect_reference number to page number
+        self._page_id2num: Optional[Dict[Any, Any]] = None
+
+        self._initialize_stream(stream)
+
+        self._override_encryption = False
+        self._encryption: Optional[Encryption] = None
+        if self.is_encrypted:
+            self._handle_encryption(password)
+        elif password is not None:
+            raise PdfReadError("Not an encrypted file")
+
+    def _initialize_stream(self, stream: Union[StrByteType, Path]) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
                 "PdfReader stream/file object is not in binary mode. "
@@ -142,31 +152,25 @@ class PdfReader(PdfDocCommon):
         self.read(stream)
         self.stream = stream
 
-        self._override_encryption = False
-        self._encryption: Optional[Encryption] = None
-        if self.is_encrypted:
-            self._override_encryption = True
-            # Some documents may not have a /ID, use two empty
-            # byte strings instead. Solves
-            # https://github.com/py-pdf/pypdf/issues/608
-            id_entry = self.trailer.get(TK.ID)
-            id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
-            encrypt_entry = cast(
-                DictionaryObject, self.trailer[TK.ENCRYPT].get_object()
-            )
-            self._encryption = Encryption.read(encrypt_entry, id1_entry)
+    def _handle_encryption(self, password: Optional[Union[str, bytes]]) -> None:
+        self._override_encryption = True
+        # Some documents may not have a /ID, use two empty
+        # byte strings instead. Solves
+        # https://github.com/py-pdf/pypdf/issues/608
+        id_entry = self.trailer.get(TK.ID)
+        id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
+        encrypt_entry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
+        self._encryption = Encryption.read(encrypt_entry, id1_entry)
 
-            # try empty password if no password provided
-            pwd = password if password is not None else b""
-            if (
-                self._encryption.verify(pwd) == PasswordType.NOT_DECRYPTED
-                and password is not None
-            ):
-                # raise if password provided
-                raise WrongPasswordError("Wrong password")
-            self._override_encryption = False
-        elif password is not None:
-            raise PdfReadError("Not encrypted file")
+        # try empty password if no password provided
+        pwd = password if password is not None else b""
+        if (
+            self._encryption.verify(pwd) == PasswordType.NOT_DECRYPTED
+            and password is not None
+        ):
+            # raise if password provided
+            raise WrongPasswordError("Wrong password")
+        self._override_encryption = False
 
     def __enter__(self) -> "PdfReader":
         return self
@@ -286,13 +290,13 @@ class PdfReader(PdfDocCommon):
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
     ) -> Optional[int]:
         """
-        Generate _page_id2num.
+        Retrieve the page number from an indirect reference.
 
         Args:
-            indirect_reference:
+            indirect_reference: The indirect reference to locate.
 
         Returns:
-            The page number or None
+            Page number or None.
         """
         if self._page_id2num is None:
             self._page_id2num = {
@@ -562,6 +566,12 @@ class PdfReader(PdfDocCommon):
         return obj
 
     def read(self, stream: StreamType) -> None:
+        """
+        Read and process the PDF stream, extracting necessary data.
+
+        Args:
+            stream: The PDF file stream.
+        """
         self._basic_validation(stream)
         self._find_eof_marker(stream)
         startxref = self._find_startxref_pos(stream)
@@ -621,7 +631,7 @@ class PdfReader(PdfDocCommon):
             stream.seek(loc, 0)  # return to where it was
 
     def _basic_validation(self, stream: StreamType) -> None:
-        """Ensure file is not empty. Read at most 5 bytes."""
+        """Ensure the stream is valid and not empty."""
         stream.seek(0, os.SEEK_SET)
         try:
             header_byte = stream.read(5)
@@ -819,6 +829,7 @@ class PdfReader(PdfDocCommon):
     def _read_xref_tables_and_trailers(
         self, stream: StreamType, startxref: Optional[int], xref_issue_nr: int
     ) -> None:
+        """Read the cross-reference tables and trailers in the PDF stream."""
         self.xref = {}
         self.xref_free_entry = {}
         self.xref_objStm = {}
@@ -843,27 +854,30 @@ class PdfReader(PdfDocCommon):
                 except Exception as e:
                     if TK.ROOT in self.trailer:
                         logger_warning(
-                            f"Previous trailer can not be read {e.args}",
-                            __name__,
+                            f"Previous trailer cannot be read: {e.args}", __name__
                         )
                         break
                     else:
-                        raise PdfReadError(f"trailer can not be read {e.args}")
-                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE
-                for key in trailer_keys:
-                    if key in xrefstream and key not in self.trailer:
-                        self.trailer[NameObject(key)] = xrefstream.raw_get(key)
-                if "/XRefStm" in xrefstream:
-                    p = stream.tell()
-                    stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
-                    self._read_pdf15_xref_stream(stream)
-                    stream.seek(p, 0)
+                        raise PdfReadError(f"Trailer cannot be read: {e.args}")
+                self._process_xref_stream(xrefstream)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
                 else:
                     break
             else:
                 startxref = self._read_xref_other_error(stream, startxref)
+
+    def _process_xref_stream(self, xrefstream: DictionaryObject) -> None:
+        """Process and handle the xref stream."""
+        trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID, TK.SIZE
+        for key in trailer_keys:
+            if key in xrefstream and key not in self.trailer:
+                self.trailer[NameObject(key)] = xrefstream.raw_get(key)
+        if "/XRefStm" in xrefstream:
+            p = self.stream.tell()
+            self.stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
+            self._read_pdf15_xref_stream(self.stream)
+            self.stream.seek(p, 0)
 
     def _read_xref(self, stream: StreamType) -> Optional[int]:
         self._read_standard_xref_table(stream)
@@ -937,7 +951,7 @@ class PdfReader(PdfDocCommon):
     def _read_pdf15_xref_stream(
         self, stream: StreamType
     ) -> Union[ContentStream, EncodedStreamObject, DecodedStreamObject]:
-        # PDF 1.5+ Cross-Reference Stream
+        """Read the cross-reference stream for PDF 1.5+."""
         stream.seek(-1, 1)
         idnum, generation = self.read_object_header(stream)
         xrefstream = cast(ContentStream, read_object(stream, self))
@@ -1065,6 +1079,7 @@ class PdfReader(PdfDocCommon):
         get_entry: Callable[[int], Union[int, Tuple[int, ...]]],
         used_before: Callable[[int, Union[int, Tuple[int, ...]]], bool],
     ) -> None:
+        """Read and process the subsections of the xref."""
         for start, size in self._pairs(idx_pairs):
             # The subsections must increase
             for num in range(start, start + size):
@@ -1094,12 +1109,11 @@ class PdfReader(PdfDocCommon):
                     raise PdfReadError(f"Unknown xref type: {xref_type}")
 
     def _pairs(self, array: List[int]) -> Iterable[Tuple[int, int]]:
+        """Iterate over pairs in the array."""
         i = 0
-        while True:
+        while i + 1 < len(array):
             yield array[i], array[i + 1]
             i += 2
-            if (i + 1) >= len(array):
-                break
 
     def decrypt(self, password: Union[str, bytes]) -> PasswordType:
         """
