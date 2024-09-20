@@ -370,7 +370,7 @@ class LZWDecode:
     """
     Taken from:
 
-    http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
+    https://github.com/katjas/PDFrenderer/blob/master/src/com/sun/pdfview/decode/LZWDecode.java
     """
 
     class Decoder:
