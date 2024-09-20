@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1726828496086,
+  "lastUpdate": 1726835086225,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -58217,6 +58217,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006527176817138299",
             "extra": "mean: 795.1261343999818 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8dd9fcb8d0ed06fa5230bd9a5ce5ffea80d04245",
+          "message": "STY: Minor code-style improvements for _reader.py (#2847)\n\n* STY: Minor code-style improvements for _reader.py\n\n* Fix tests\n\n* Update pypdf/_reader.py\n\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>\n\n* fix doc building warning\n\n* Undo is_null_or_none\n\n* Undo\n\n* Undo\n\n* TypeGuard refinement for is_null_or_none\n\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>\n\n* Move function to bottom for type annotations\n\n---------\n\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2024-09-20T14:21:21+02:00",
+          "tree_id": "23b74ed65385c34e42832cceea9b8430295641d6",
+          "url": "https://github.com/py-pdf/pypdf/commit/8dd9fcb8d0ed06fa5230bd9a5ce5ffea80d04245"
+        },
+        "date": 1726835084125,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.281726598590504,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002749385637918509",
+            "extra": "mean: 304.7176447999959 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.612692520914784,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00795474335810036",
+            "extra": "mean: 68.43365783333392 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27631605354311983,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016174183333441058",
+            "extra": "mean: 3.6190441603999943 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 14.101242280262614,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004550391093386517",
+            "extra": "mean: 70.91573778571914 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06259698210452311,
+            "unit": "iter/sec",
+            "range": "stddev: 0.20706768580238094",
+            "extra": "mean: 15.975211046599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.273248185135961,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008148101770708453",
+            "extra": "mean: 785.3928336000081 msec\nrounds: 5"
           }
         ]
       }
