@@ -2699,10 +2699,13 @@ class PdfWriter(PdfDocCommon):
                 position += 1
             srcpages[pg.indirect_reference.idnum].original_page = pg
 
-        reader._namedDests = (
+        reader._named_destinations = (
             reader.named_destinations
         )  # need for the outline processing below
-        for dest in reader._namedDests.values():
+
+        arr: Any
+
+        def _process_named_dests(dest: Any) -> None:
             arr = dest.dest_array
             if "/Names" in self._root_object and dest["/Title"] in cast(
                 List[Any],
@@ -2718,7 +2721,10 @@ class PdfWriter(PdfDocCommon):
             elif isinstance(dest["/Page"], int):
                 # the page reference is a page number normally not a PDF Reference
                 # page numbers as int are normally accepted only in external goto
-                p = reader.pages[dest["/Page"]]
+                try:
+                    p = reader.pages[dest["/Page"]]
+                except IndexError:
+                    return
                 assert p.indirect_reference is not None
                 try:
                     arr[NumberObject(0)] = NumberObject(
@@ -2732,6 +2738,9 @@ class PdfWriter(PdfDocCommon):
                     dest["/Page"].indirect_reference.idnum
                 ].indirect_reference
                 self.add_named_destination_array(dest["/Title"], arr)
+
+        for dest in reader._named_destinations.values():
+            _process_named_dests(dest)
 
         outline_item_typ: TreeObject
         if outline_item is not None:
