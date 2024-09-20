@@ -118,7 +118,7 @@ class FlateDecode:
           PdfReadError:
         """
         if isinstance(decode_parms, ArrayObject):
-            raise DeprecationError("decode_parms as ArrayObject is depreciated")
+            raise DeprecationError("decode_parms as ArrayObject is deprecated")
 
         str_data = decompress(data)
         predictor = 1
@@ -169,7 +169,6 @@ class FlateDecode:
                     str_data, columns, rowlength
                 )
             else:
-                # unsupported predictor
                 raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
         return str_data
 
@@ -228,7 +227,6 @@ class FlateDecode:
 
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
-                # unsupported PNG filter
                 raise PdfReadError(
                     f"Unsupported PNG filter {filter_byte!r}"
                 )  # pragma: no cover
@@ -372,7 +370,7 @@ class LZWDecode:
     """
     Taken from:
 
-    http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
+    https://github.com/katjas/PDFrenderer/blob/master/src/com/sun/pdfview/decode/LZWDecode.java
     """
 
     class Decoder:
@@ -717,8 +715,7 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
                         "/Crypt filter with /Name or /Type not supported yet"
                     )
             else:
-                # Unsupported filter
-                raise NotImplementedError(f"unsupported filter {filter_type}")
+                raise NotImplementedError(f"Unsupported filter {filter_type}")
     return data
 
 
