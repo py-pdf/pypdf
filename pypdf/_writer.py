@@ -220,26 +220,24 @@ class PdfWriter(PdfDocCommon):
             fileobj: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
             clone_from: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
         ) -> Union[None, PdfReader, str, Path, IO[Any], BytesIO]:
-            if not isinstance(fileobj, (str, Path, IO, BytesIO)) or (
-                fileobj != "" and clone_from is None
+            if isinstance(fileobj, (str, Path, IO, BytesIO)) and (
+                fileobj == "" or clone_from is not None
             ):
-                cloning = True
-                if not (
-                    not isinstance(fileobj, (str, Path))
-                    or (
-                        Path(str(fileobj)).exists()
-                        and Path(str(fileobj)).stat().st_size > 0
-                    )
-                ):
+                return clone_from
+            cloning = True
+            if isinstance(fileobj, (str, Path)) and (
+                not Path(str(fileobj)).exists()
+                or Path(str(fileobj)).stat().st_size == 0
+            ):
+                cloning = False
+            if isinstance(fileobj, (IO, BytesIO)):
+                t = fileobj.tell()
+                fileobj.seek(-1, 2)
+                if fileobj.tell() == 0:
                     cloning = False
-                if isinstance(fileobj, (IO, BytesIO)):
-                    t = fileobj.tell()
-                    fileobj.seek(-1, 2)
-                    if fileobj.tell() == 0:
-                        cloning = False
-                    fileobj.seek(t, 0)
-                if cloning:
-                    clone_from = fileobj
+                fileobj.seek(t, 0)
+            if cloning:
+                clone_from = fileobj
             return clone_from
 
         clone_from = _get_clone_from(fileobj, clone_from)
@@ -966,27 +964,9 @@ class PdfWriter(PdfDocCommon):
         # Escape parentheses (pdf 1.7 reference, table 3.2  Literal Strings)
         txt = txt.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
         # Generate appearance stream
-        ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
-        for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
-            if line in sel:
-                # may be improved but cannot find how to get fill working => replaced with lined box
-                ap_stream += (
-                    f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
-                    f"0.5 0.5 0.5 rg s\n{da}\n"
-                ).encode()
-            if line_number == 0:
-                ap_stream += f"2 {y_offset} Td\n".encode()
-            else:
-                # Td is a relative translation
-                ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
-            enc_line: List[bytes] = [
-                font_full_rev.get(c, c.encode("utf-16-be")) for c in line
-            ]
-            if any(len(c) >= 2 for c in enc_line):
-                ap_stream += b"<" + (b"".join(enc_line)).hex().encode() + b"> Tj\n"
-            else:
-                ap_stream += b"(" + b"".join(enc_line) + b") Tj\n"
-        ap_stream += b"ET\nQ\nEMC\nQ\n"
+        ap_stream = generate_appearance_stream(
+            txt, sel, da, font_full_rev, rct, font_height, y_offset
+        )
 
         # Create appearance dictionary
         dct = DecodedStreamObject.initialize_from_dictionary(
@@ -3297,3 +3277,36 @@ def _create_outline_item(
             format_flag += 2
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
+
+
+def generate_appearance_stream(
+    txt: str,
+    sel: List[str],
+    da: str,
+    font_full_rev: Dict[str, bytes],
+    rct: RectangleObject,
+    font_height: float,
+    y_offset: float,
+) -> bytes:
+    ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
+    for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
+        if line in sel:
+            # may be improved but cannot find how to get fill working => replaced with lined box
+            ap_stream += (
+                f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
+                f"0.5 0.5 0.5 rg s\n{da}\n"
+            ).encode()
+        if line_number == 0:
+            ap_stream += f"2 {y_offset} Td\n".encode()
+        else:
+            # Td is a relative translation
+            ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
+        enc_line: List[bytes] = [
+            font_full_rev.get(c, c.encode("utf-16-be")) for c in line
+        ]
+        if any(len(c) >= 2 for c in enc_line):
+            ap_stream += b"<" + (b"".join(enc_line)).hex().encode() + b"> Tj\n"
+        else:
+            ap_stream += b"(" + b"".join(enc_line) + b") Tj\n"
+    ap_stream += b"ET\nQ\nEMC\nQ\n"
+    return ap_stream
