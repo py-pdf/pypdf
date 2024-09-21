@@ -2468,3 +2468,15 @@ def test_increment_writer(caplog):
     assert writer.metadata is None
     b = BytesIO()
     writer.write(b)
+
+
+@pytest.mark.enable_socket()
+def test_append_pdf_with_dest_without_page(caplog):
+    """Tests for #2842"""
+    url = "https://github.com/user-attachments/files/16990834/test.pdf"
+    name = "iss2842.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+    assert "/__WKANCHOR_8" not in writer.named_destinations
+    assert len(writer.named_destinations) == 3
