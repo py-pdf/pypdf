@@ -15,6 +15,11 @@ from enum import Enum, IntFlag, auto, unique
 from typing import Dict, Tuple
 
 
+class StrEnum(str, Enum):  # Once we are on Python 3.11+: enum.StrEnum
+    def __str__(self) -> str:
+        return str(self.value)
+
+
 class Core:
     """Keywords that don't quite belong anywhere else."""
 
@@ -243,7 +248,7 @@ class StreamAttributes:
 
 
 @unique
-class FilterTypes(Enum):
+class FilterTypes(StrEnum):
     """§7.4 of the 1.7 and 2.0 references."""
 
     ASCII_HEX_DECODE = "/ASCIIHexDecode"  # abbreviation: AHx
