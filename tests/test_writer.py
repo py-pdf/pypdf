@@ -2426,7 +2426,7 @@ def test_increment_writer(caplog):
     )
     assert "/ForTestOnly" in reader.get_object(5)
     with pytest.raises(PyPdfError):
-        writer = PdfWriter(reader, incremental=True)
+        writer = PdfWriter(1, incremental=True)
     b.seek(0)
     writer = PdfWriter(b, incremental=True)
     assert writer.list_objects_in_increment() == []  # no flowdown of properties
