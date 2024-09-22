@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1726905588282,
+  "lastUpdate": 1727041250655,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -58349,6 +58349,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0015778836378204319",
             "extra": "mean: 780.7932699999981 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6cfa0c4fe8d8d9a144e32f120066e9de17005d04",
+          "message": "STY: Refactor _xobj_to_image (#2863)\n\n* STY: Refactor _xobj_to_image\r\n\r\n* Create _apply_decode and move it to _xobj_image_helpers\r\n* Create _get_mode_and_invert_color and move it to _xobj_image_helpers\r\n* Create _apply_alpha as an inner function as it's calling _xobj_to_image\r\n\r\nThis reduced the Cyclomatic Complexity from 44 to 19\r\n\r\n* Comment formatting\r\n\r\n* Fix",
+          "timestamp": "2024-09-22T23:37:58+02:00",
+          "tree_id": "512b7330599bc450476b00573388d096f53dacb1",
+          "url": "https://github.com/py-pdf/pypdf/commit/6cfa0c4fe8d8d9a144e32f120066e9de17005d04"
+        },
+        "date": 1727041248566,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.261732699105693,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00188037472318354",
+            "extra": "mean: 306.5855151999983 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.777037264318752,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006485163935876605",
+            "extra": "mean: 67.67256400000029 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28161088048703514,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006941572419951136",
+            "extra": "mean: 3.5509991598 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 14.466499352921351,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006602180255319297",
+            "extra": "mean: 69.12522342857334 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.06261875184787749,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07128036077832314",
+            "extra": "mean: 15.969657179199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2681041722763233,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010432585769974877",
+            "extra": "mean: 788.5787476000019 msec\nrounds: 5"
           }
         ]
       }
