@@ -11,8 +11,13 @@ https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
 ISO 32000-2:2020 (PDF 2.0)
 """
 
-from enum import IntFlag, auto
+from enum import Enum, IntFlag, auto, unique
 from typing import Dict, Tuple
+
+
+class StrEnum(str, Enum):  # Once we are on Python 3.11+: enum.StrEnum
+    def __str__(self) -> str:
+        return str(self.value)
 
 
 class Core:
@@ -167,8 +172,10 @@ class PagesAttributes:
     TYPE = "/Type"  # name, required; must be /Pages
     PARENT = "/Parent"  # dictionary, required; indirect reference to pages object
     KIDS = "/Kids"  # array, required; List of indirect references
-    COUNT = "/Count"  # integer, required; the number of leaf nodes (page objects)
-                      # that are descendants of this node within the page tree
+
+    COUNT = "/Count"
+    # integer, required; the number of leaf nodes (page objects)
+    # that are descendants of this node within the page tree
 
 
 class PageAttributes:
@@ -240,7 +247,8 @@ class StreamAttributes:
     DECODE_PARMS = "/DecodeParms"  # variable, optional -- 'decodeParams is wrong
 
 
-class FilterTypes:
+@unique
+class FilterTypes(StrEnum):
     """§7.4 of the 1.7 and 2.0 references."""
 
     ASCII_HEX_DECODE = "/ASCIIHexDecode"  # abbreviation: AHx
