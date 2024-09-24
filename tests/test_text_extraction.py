@@ -199,10 +199,10 @@ def test_space_with_one_unit_smaller_than_font_width():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     page = reader.pages[0]
     extracted = page.extract_text().split("Description:")[1].split("8/11/22")[0].strip()
-    assert """Reporting crude oil leak.
+    assert extracted == """Reporting crude oil leak.
 Leak was isolated to well
 pad. Segment of line was
 immediately isolated, now
 estimated at 5 barrels of oil
 spilt. Root cause still
-unknown at this time.""" == extracted
+unknown at this time."""
