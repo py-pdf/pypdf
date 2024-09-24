@@ -1988,8 +1988,9 @@ class PageObject(DictionaryObject):
                 for op in operands[0]:
                     if isinstance(op, (str, bytes)):
                         process_operation(b"Tj", [op])
+                    # The space width may be smaller than the font width, so the width should be 95%.
                     if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                        (math.ceil(abs(float(op))) >= _space_width)
+                        (abs(float(op) / 0.95) >= _space_width)
                         and (len(text) > 0)
                         and (text[-1] != " ")
                     ):
