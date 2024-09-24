@@ -189,3 +189,20 @@ def test_layout_mode_warnings(mock_logger_warning):
     mock_logger_warning.assert_called_with(
         "Argument visitor_text is ignored in layout mode", "pypdf._page"
     )
+
+
+@pytest.mark.enable_socket()
+def test_space_with_one_unit_smaller_than_font_width():
+    """Tests for #1328"""
+    url = "https://github.com/py-pdf/PyPDF2/files/9498481/0004.pdf"
+    name = "iss1328.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+    extracted = page.extract_text().split("Description:")[1].split("8/11/22")[0].strip()
+    assert extracted == """Reporting crude oil leak.
+Leak was isolated to well
+pad. Segment of line was
+immediately isolated, now
+estimated at 5 barrels of oil
+spilt. Root cause still
+unknown at this time."""
