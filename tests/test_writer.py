@@ -2376,6 +2376,7 @@ def test_utf16_metadata():
     )
 
 
+@pytest.mark.enable_socket()
 def test_increment_writer(caplog):
     """Tests for #2811"""
     writer = PdfWriter(
