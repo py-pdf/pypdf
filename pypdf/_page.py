@@ -1989,7 +1989,7 @@ class PageObject(DictionaryObject):
                     if isinstance(op, (str, bytes)):
                         process_operation(b"Tj", [op])
                     if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                        (abs(float(op)) >= _space_width)
+                        (math.ceil(abs(float(op))) >= _space_width)
                         and (len(text) > 0)
                         and (text[-1] != " ")
                     ):
