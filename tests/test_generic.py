@@ -1185,3 +1185,13 @@ def test_coverage_streamobject():
     co.clone(writer, False, None)
     co.indirect_reference = IndirectObject(1, 0, writer)
     assert co == co.clone(writer)
+
+    r = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    co = r.pages[0].get_contents()
+    co[NameObject("/testkey")] = NameObject("/test")
+    co.decoded_self = None
+    assert "/testkey" in co.replicate(writer)
+    co = r.pages[0].get_contents()
+    co[NameObject("/testkey")] = NameObject("/test")
+    co.decoded_self = DecodedStreamObject()
+    assert "/testkey" in co.replicate(writer)
