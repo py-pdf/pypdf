@@ -1985,12 +1985,13 @@ class PageObject(DictionaryObject):
                 process_operation(b"TL", [-operands[1]])
                 process_operation(b"Td", operands)
             elif operator == b"TJ":
+                # The space width may be smaller than the font width, so the width should be 95%.
+                _confirm_space_width = _space_width * 0.95
                 for op in operands[0]:
                     if isinstance(op, (str, bytes)):
                         process_operation(b"Tj", [op])
-                    # The space width may be smaller than the font width, so the width should be 95%.
                     if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                        (abs(float(op) / 0.95) >= _space_width)
+                        (abs(float(op)) >= _confirm_space_width)
                         and (len(text) > 0)
                         and (text[-1] != " ")
                     ):
