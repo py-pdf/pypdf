@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1727107570887,
+  "lastUpdate": 1727199954526,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -58481,6 +58481,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010171696991018537",
             "extra": "mean: 787.2223165999912 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "44630192+ssjkamei@users.noreply.github.com",
+            "name": "Ryo Kamei",
+            "username": "ssjkamei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "635a7c16c829acab942c7ded0ea43fdfb451ad4c",
+          "message": "BUG: Missing spaces in extract_text() method (#1328) (#2868)\n\n* BUG: Missing spaces in extract_text() method (#1328)\r\n\r\n* Revert \"BUG: Missing spaces in extract_text() method (#1328)\"\r\n\r\nThis reverts commit 5400f5ada933b7b4f54ba9eb7c9db53729ef551c.\r\n\r\n* BUG: Missing spaces in extract_text() method (#1328)\r\n\r\n* BUG: Missing spaces in extract_text() method (#1328) add test\r\n\r\n* Revert \"BUG: Missing spaces in extract_text() method (#1328)\"\r\n\r\nThis reverts commit 5400f5ada933b7b4f54ba9eb7c9db53729ef551c.\r\n\r\nBUG: Missing spaces in extract_text() method (#1328)\r\n\r\nBUG: Missing spaces in extract_text() method (#1328) add test\r\n\r\n* BUG: Missing spaces in extract_text() method (#1328) Convert font size comparison to ratio\r\n\r\n* Correction to new file URL.\r\n\r\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>\r\n\r\n* BUG: Missing spaces in extract_text() method (py-pdf#1328) calculation efficiency\r\n\r\n* BUG: Missing spaces in extract_text() method (py-pdf#1328) Simplify the assertion process\r\n\r\n---------\r\n\r\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2024-09-24T19:42:50+02:00",
+          "tree_id": "36a487768ec1056ae629da0a2070dd9cbfdad0fe",
+          "url": "https://github.com/py-pdf/pypdf/commit/635a7c16c829acab942c7ded0ea43fdfb451ad4c"
+        },
+        "date": 1727199952186,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.305830091998949,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002651594334381577",
+            "extra": "mean: 302.49588519999406 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.752510465914021,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006786365491474198",
+            "extra": "mean: 67.78507307691939 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27807453686886185,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013908065821877575",
+            "extra": "mean: 3.5961581066000066 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 13.943258036907396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004251682788974953",
+            "extra": "mean: 71.71924935714661 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0610718635114557,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05168921271478974",
+            "extra": "mean: 16.374152392000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.284300071058613,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003634798754772021",
+            "extra": "mean: 778.6342324000088 msec\nrounds: 5"
           }
         ]
       }
