@@ -87,8 +87,8 @@ class PdfObject(PdfObjectProtocol):
         pdf_dest: PdfWriterProtocol,
     ) -> "PdfObject":
         """
-        Clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter).
-        without ensuring links. this is used in clone_document_from_root with incremental = True
+        Clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
+        without ensuring links. This is used in clone_document_from_root with incremental = True.
 
         Args:
           pdf_dest: Target to clone to.

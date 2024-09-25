@@ -160,8 +160,8 @@ class PdfWriter(PdfDocCommon):
             When writing incrementally, the original document is written first and new/modified
             content is appended. To be used for signed document/forms to keep signature valid.
 
-        full: If true, loads all the objects (always full if incremental = True)
-            this parameters may allows to load very big pdfs.
+        full: If true, loads all the objects (always full if incremental = True).
+            This parameters may allows to load very big PDFs.
     """
 
     def __init__(
