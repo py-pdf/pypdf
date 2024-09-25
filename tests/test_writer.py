@@ -1140,8 +1140,7 @@ def test_set_page_label(pdf_file_path):
 
     # Tests full length with labels assigned at first and last elements
     # Tests different labels assigned to consecutive ranges
-    writer = PdfWriter()
-    writer.clone_document_from_reader(reader)
+    writer = PdfWriter(reader, full=True)
     writer.set_page_label(0, 1, "/r")
     writer.set_page_label(4, 5, "/A")
     writer.set_page_label(10, 10, "/A")
@@ -2428,7 +2427,7 @@ def test_increment_writer(caplog):
     )
     assert "/ForTestOnly" in reader.get_object(5)
     with pytest.raises(PyPdfError):
-        writer = PdfWriter(reader, incremental=True)
+        writer = PdfWriter(1, incremental=True)
     b.seek(0)
     writer = PdfWriter(b, incremental=True)
     assert writer.list_objects_in_increment() == []  # no flowdown of properties

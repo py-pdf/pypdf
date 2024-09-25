@@ -82,6 +82,22 @@ class PdfObject(PdfObjectProtocol):
             )
         ).encode()
 
+    def replicate(
+        self,
+        pdf_dest: PdfWriterProtocol,
+    ) -> "PdfObject":
+        """
+        Clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
+        without ensuring links. This is used in clone_document_from_root with incremental = True.
+
+        Args:
+          pdf_dest: Target to clone to.
+
+        Returns:
+          The cloned PdfObject
+        """
+        return self.clone(pdf_dest)
+
     def clone(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -297,6 +313,12 @@ class IndirectObject(PdfObject):
             Hash considering type and value.
         """
         return hash((self.__class__, self.idnum, self.generation, id(self.pdf)))
+
+    def replicate(
+        self,
+        pdf_dest: PdfWriterProtocol,
+    ) -> "PdfObject":
+        return IndirectObject(self.idnum, self.generation, pdf_dest)
 
     def clone(
         self,

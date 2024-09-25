@@ -102,6 +102,21 @@ IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
 class ArrayObject(List[Any], PdfObject):
+    def replicate(
+        self,
+        pdf_dest: PdfWriterProtocol,
+    ) -> "ArrayObject":
+        arr = cast(
+            "ArrayObject",
+            self._reference_clone(ArrayObject(), pdf_dest, False),
+        )
+        for data in self:
+            if hasattr(data, "replicate"):
+                arr.append(data.replicate(pdf_dest))
+            else:
+                arr.append(data)
+        return arr
+
     def clone(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -248,6 +263,20 @@ class ArrayObject(List[Any], PdfObject):
 
 
 class DictionaryObject(Dict[Any, Any], PdfObject):
+    def replicate(
+        self,
+        pdf_dest: PdfWriterProtocol,
+    ) -> "DictionaryObject":
+        d__ = cast(
+            "DictionaryObject",
+            self._reference_clone(self.__class__(), pdf_dest, False),
+        )
+        for k, v in self.items():
+            d__[k.replicate(pdf_dest)] = (
+                v.replicate(pdf_dest) if hasattr(v, "replicate") else v
+            )
+        return d__
+
     def clone(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -864,6 +893,31 @@ class StreamObject(DictionaryObject):
         self._data: bytes = b""
         self.decoded_self: Optional[DecodedStreamObject] = None
 
+    def replicate(
+        self,
+        pdf_dest: PdfWriterProtocol,
+    ) -> "StreamObject":
+        d__ = cast(
+            "StreamObject",
+            self._reference_clone(self.__class__(), pdf_dest, False),
+        )
+        d__._data = self._data
+        try:
+            decoded_self = self.decoded_self
+            if decoded_self is None:
+                self.decoded_self = None
+            else:
+                self.decoded_self = cast(
+                    "DecodedStreamObject", decoded_self.replicate(pdf_dest)
+                )
+        except Exception:
+            pass
+        for k, v in self.items():
+            d__[k.replicate(pdf_dest)] = (
+                v.replicate(pdf_dest) if hasattr(v, "replicate") else v
+            )
+        return d__
+
     def _clone(
         self,
         src: DictionaryObject,
@@ -1105,7 +1159,37 @@ class ContentStream(DecodedStreamObject):
                 stream_data = stream.get_data()
                 assert stream_data is not None
                 super().set_data(stream_data)
-            self.forced_encoding = forced_encoding
+        self.forced_encoding = forced_encoding
+
+    def replicate(
+        self,
+        pdf_dest: PdfWriterProtocol,
+    ) -> "ContentStream":
+        d__ = cast(
+            "ContentStream",
+            self._reference_clone(self.__class__(None, None), pdf_dest, False),
+        )
+        d__._data = self._data
+        try:
+            decoded_self = self.decoded_self
+            if decoded_self is None:
+                self.decoded_self = None
+            else:
+                self.decoded_self = cast(
+                    "DecodedStreamObject", decoded_self.replicate(pdf_dest)
+                )
+        except Exception:
+            pass
+        for k, v in self.items():
+            d__[k.replicate(pdf_dest)] = (
+                v.replicate(pdf_dest) if hasattr(v, "replicate") else v
+            )
+        return d__
+        d__.set_data(self._data)
+        d__.pdf = pdf_dest
+        d__._operations = list(self._operations)
+        d__.forced_encoding = self.forced_encoding
+        return d__
 
     def clone(
         self,
