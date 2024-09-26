@@ -1456,11 +1456,11 @@ def read_object(
     else:
         pos = stream.tell()
         stream.seek(-20, 1)
-        txt = stream.read(80)
+        stream_extract = stream.read(80)
         stream.seek(pos)
         read_until_whitespace(stream)
         raise PdfReadError(
-            f"Invalid Elementary Object starting with {tok!r} @{pos}: {txt!r}"
+            f"Invalid Elementary Object starting with {tok!r} @{pos}: {stream_extract!r}"
         )
 
 
