@@ -1657,3 +1657,49 @@ def test_comments_in_array(caplog):
     reader.stream = BytesIO(b[:1149])
     with pytest.raises(PdfStreamError):
         reader.pages[0]
+
+
+@pytest.mark.enable_socket()
+def test_space_in_names_to_continue_processing(caplog):
+    """
+    This deals with space not encoded in names inducing errors
+    Also covers case where NameObject not met for key
+    """
+    url = "https://github.com/user-attachments/files/17095516/crash-e108c4f677040b61e12fa9f1cfde025d704c9b0d.pdf"
+    name = "iss2866.pdf"  # reused
+    b = get_data_from_url(url, name=name)
+    reader = PdfReader(BytesIO(b))
+    obj = reader.get_object(70)
+    assert all(
+        x in obj
+        for x in (
+            "/BaseFont",
+            "/DescendantFonts",
+            "/Encoding",
+            "/Subtype",
+            "/ToUnicode",
+            "/Type",
+        )
+    )
+    assert obj["/BaseFont"] == "/AASGAA+Arial,Unicode"  # MS is missing to meet spec
+    assert 'PdfReadError("Invalid Elementary Object starting with' in caplog.text
+
+    caplog.clear()
+
+    b = b[:264] + b"(Inv) /d " + b[273:]
+    reader = PdfReader(BytesIO(b))
+    obj = reader.get_object(70)
+    assert all(
+        x in obj
+        for x in ["/DescendantFonts", "/Encoding", "/Subtype", "/ToUnicode", "/Type"]
+    )
+    assert all(
+        x in caplog.text
+        for x in (
+            "Expecting a NameObject for key but",
+            'PdfReadError("Invalid Elementary Object starting with',
+        )
+    )
+    reader = PdfReader(BytesIO(b), strict=True)
+    with pytest.raises(PdfReadError):
+        obj = reader.get_object(70)

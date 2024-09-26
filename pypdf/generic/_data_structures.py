@@ -57,6 +57,7 @@ from .._utils import (
     logger_warning,
     read_non_whitespace,
     read_until_regex,
+    read_until_whitespace,
     skip_over_comment,
 )
 from ..constants import (
@@ -567,7 +568,17 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                 break
             stream.seek(-1, 1)
             try:
-                key = read_object(stream, pdf)
+                try:
+                    key = read_object(stream, pdf)
+                    if not isinstance(key, NameObject):
+                        raise PdfReadError(
+                            f"Expecting a NameObject for key but found {key!r}"
+                        )
+                except PdfReadError as exc:
+                    if pdf is not None and pdf.strict:
+                        raise
+                    logger_warning(exc.__repr__(), __name__)
+                    continue
                 tok = read_non_whitespace(stream)
                 stream.seek(-1, 1)
                 value = read_object(stream, pdf, forced_encoding)
@@ -1443,9 +1454,13 @@ def read_object(
         else:
             return NumberObject.read_from_stream(stream)
     else:
+        pos = stream.tell()
         stream.seek(-20, 1)
+        txt = stream.read(80)
+        stream.seek(pos)
+        read_until_whitespace(stream)
         raise PdfReadError(
-            f"Invalid Elementary Object starting with {tok!r} @{stream.tell()}: {stream.read(80).__repr__()}"
+            f"Invalid Elementary Object starting with {tok!r} @{pos}: {txt!r}"
         )
 
 

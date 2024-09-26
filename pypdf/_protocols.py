@@ -59,6 +59,8 @@ class PdfCommonDocProtocol(Protocol):
 
 
 class PdfReaderProtocol(PdfCommonDocProtocol, Protocol):
+    strict: bool
+
     @property
     @abstractmethod
     def xref(self) -> Dict[int, Dict[int, Any]]:
