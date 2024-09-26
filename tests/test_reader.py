@@ -1662,8 +1662,8 @@ def test_comments_in_array(caplog):
 @pytest.mark.enable_socket()
 def test_space_in_names_to_continue_processing(caplog):
     """
-    This deals with space not encoded in names inducing errors
-    Also covers case where NameObject not met for key
+    This deals with space not encoded in names inducing errors.
+    Also covers case where NameObject not met for key.
     """
     url = "https://github.com/user-attachments/files/17095516/crash-e108c4f677040b61e12fa9f1cfde025d704c9b0d.pdf"
     name = "iss2866.pdf"  # reused
