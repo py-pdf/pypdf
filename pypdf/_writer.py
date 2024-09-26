@@ -156,8 +156,12 @@ class PdfWriter(PdfDocCommon):
 
         incremental: If true, loads the document and set the PdfWriter in incremental mode.
 
+
             When writing incrementally, the original document is written first and new/modified
             content is appended. To be used for signed document/forms to keep signature valid.
+
+        full: If true, loads all the objects (always full if incremental = True).
+            This parameters may allows to load very big PDFs.
     """
 
     def __init__(
@@ -165,8 +169,9 @@ class PdfWriter(PdfDocCommon):
         fileobj: Union[None, PdfReader, StrByteType, Path] = "",
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
         incremental: bool = False,
+        full: bool = False,
     ) -> None:
-        self.incremental = incremental
+        self.incremental = incremental or full
         """
         Returns if the PdfWriter object has been started in incremental mode.
         """
@@ -203,7 +208,7 @@ class PdfWriter(PdfDocCommon):
                     fileobj = BytesIO(f.read(-1))
             if isinstance(fileobj, BytesIO):
                 fileobj = PdfReader(fileobj)
-            else:
+            if not isinstance(fileobj, PdfReader):
                 raise PyPdfError("Invalid type for incremental mode")
             self._reader = fileobj  # prev content is in _reader.stream
             self._header = fileobj.pdf_header.encode()
@@ -273,6 +278,8 @@ class PdfWriter(PdfDocCommon):
                 }
             )
             self._add_object(self._root_object)
+        if full and not incremental:
+            self.incremental = False
         if isinstance(self._ID, list):
             if isinstance(self._ID[0], TextStringObject):
                 self._ID[0] = ByteStringObject(self._ID[0].get_original_bytes())
@@ -1177,11 +1184,15 @@ class PdfWriter(PdfDocCommon):
         Args:
             reader: PdfReader from which the document root should be copied.
         """
+        self._info_obj = None
         if self.incremental:
             self._objects = [None] * cast(int, reader.trailer["/Size"])
+            for i in range(len(self._objects) - 1):
+                o = reader.get_object(i + 1)
+                if o is not None:
+                    self._objects[i] = o.replicate(self)
         else:
             self._objects.clear()
-        self._info_obj = None
         self._root_object = reader.root_object.clone(self)
         self._pages = self._root_object.raw_get("/Pages")
 

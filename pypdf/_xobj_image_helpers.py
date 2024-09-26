@@ -2,10 +2,12 @@
 
 import sys
 from io import BytesIO
-from typing import Any, List, Literal, Tuple, Union, cast
+from typing import Any, Dict, List, Literal, Tuple, Union, cast
 
 from ._utils import check_if_whitespace_only, logger_warning
 from .constants import ColorSpaces
+from .constants import FilterTypes as FT
+from .constants import ImageAttributes as IA
 from .errors import EmptyImageDataError, PdfReadError
 from .generic import (
     ArrayObject,
@@ -303,3 +305,73 @@ def _handle_jpx(
         img = img.convert("RGB")
     image_format = "JPEG2000"
     return img, image_format, extension, invert_color
+
+
+def _apply_decode(
+    img: Image.Image,
+    x_object_obj: Dict[str, Any],
+    lfilters: FT,
+    color_space: Union[str, List[Any], Any],
+    invert_color: bool,
+) -> Image.Image:
+    # CMYK image and other colorspaces without decode
+    # requires reverting scale (cf p243,2§ last sentence)
+    decode = x_object_obj.get(
+        IA.DECODE,
+        ([1.0, 0.0] * len(img.getbands()))
+        if (
+            (img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE))
+            or (invert_color and img.mode == "L")
+        )
+        else None,
+    )
+    if (
+        isinstance(color_space, ArrayObject)
+        and color_space[0].get_object() == "/Indexed"
+    ):
+        decode = None  # decode is meanless of Indexed
+    if (
+        isinstance(color_space, ArrayObject)
+        and color_space[0].get_object() == "/Separation"
+    ):
+        decode = [1.0, 0.0] * len(img.getbands())
+    if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
+        lut: List[int] = []
+        for i in range(0, len(decode), 2):
+            dmin = decode[i]
+            dmax = decode[i + 1]
+            lut.extend(
+                round(255.0 * (j / 255.0 * (dmax - dmin) + dmin)) for j in range(256)
+            )
+        img = img.point(lut)
+    return img
+
+
+def _get_mode_and_invert_color(
+    x_object_obj: Dict[str, Any], colors: int, color_space: Union[str, List[Any], Any]
+) -> Tuple[mode_str_type, bool]:
+    if (
+        IA.COLOR_SPACE in x_object_obj
+        and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
+    ):
+        # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
+        mode: mode_str_type = "RGB"
+    if x_object_obj.get("/BitsPerComponent", 8) < 8:
+        mode, invert_color = _get_imagemode(
+            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
+        )
+    else:
+        mode, invert_color = _get_imagemode(
+            color_space,
+            2
+            if (
+                colors == 1
+                and (
+                    not isinstance(color_space, NullObject)
+                    and "Gray" not in color_space
+                )
+            )
+            else colors,
+            "",
+        )
+    return mode, invert_color
