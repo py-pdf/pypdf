@@ -207,7 +207,8 @@ def parse_encoding(
                 x = o
             else:  # isinstance(o,str):
                 try:
-                    encoding[x] = adobe_glyphs[o]  # type: ignore
+                    if x < len(encoding):
+                        encoding[x] = adobe_glyphs[o]  # type: ignore
                 except Exception:
                     encoding[x] = o  # type: ignore
                     if o == " ":

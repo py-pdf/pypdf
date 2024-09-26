@@ -248,3 +248,14 @@ def test_unigb_utf16():
     name = "iss2812.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert "《中国能源展望 2060（2024 年版）》编写委员会" in reader.pages[1].extract_text()
+
+
+@pytest.mark.enable_socket()
+def test_too_many_differences():
+    """Cf #2836"""
+    url = (
+        "https://github.com/user-attachments/files/16911741/dumb_extract_text_crash.pdf"
+    )
+    name = "iss2836.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert reader.pages[0].extract_text() == ""
