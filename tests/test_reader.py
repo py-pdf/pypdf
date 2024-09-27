@@ -621,7 +621,7 @@ def test_read_unknown_zero_pages(caplog):
     assert normalize_warnings(caplog.text) == warnings
     with pytest.raises(PdfReadError) as exc:
         len(reader.pages)
-    assert exc.value.args[0] == 'Cannot find "/Root" key in trailer'
+    assert exc.value.args[0] == "Invalid object in /Pages"
 
 
 def test_read_encrypted_without_decryption():
@@ -1724,7 +1724,7 @@ def test_repair_root(caplog):
     reader = PdfReader(BytesIO(b))
     assert len(reader.pages) == 1
     assert all(
-        msg in caplog.txt
+        msg in caplog.text
         for msg in (
             "Invalid Root Object",
             "trying to fix",
@@ -1733,11 +1733,11 @@ def test_repair_root(caplog):
     )
 
     # no /Root Entry
+    reader = PdfReader(BytesIO(b.replace(b"/Root", b"/Roo ")))
     caplog.clear()
-    reader = PdfReader(BytesIO(b.replace(b"/Root 1 0 R", b"")))
     assert len(reader.pages) == 1
     assert all(
-        msg in caplog.txt
+        msg in caplog.text
         for msg in (
             'Cannot find "/Root" key in trailer',
             "trying to fix",
@@ -1752,8 +1752,9 @@ def test_repair_root(caplog):
             b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
         )
     )
-    with pytest.raises("PdfReadError"):
+    with pytest.raises(PdfReadError):
         len(reader.pages)
     assert all(
-        msg in caplog.txt for msg in ("Invalid Root Object in trailer", "trying to fix")
+        msg in caplog.text
+        for msg in ("Invalid Root Object in trailer", "trying to fix")
     )

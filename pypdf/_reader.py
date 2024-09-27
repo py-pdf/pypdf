@@ -204,8 +204,13 @@ class PdfReader(PdfDocCommon):
         root = self.trailer.get(TK.ROOT)
         if is_null_or_none(root):
             logger_warning('Cannot find "/Root" key in trailer', __name__)
-        elif root and root.get("/Type") == "/Catalog":
-            self._validated_root = cast(DictionaryObject, root.get_object())
+        elif (
+            cast(DictionaryObject, cast(PdfObject, root).get_object()).get("/Type")
+            == "/Catalog"
+        ):
+            self._validated_root = cast(
+                DictionaryObject, cast(PdfObject, root).get_object()
+            )
         else:
             logger_warning("Invalid Root Object in trailer", __name__)
         if self._validated_root is None:
