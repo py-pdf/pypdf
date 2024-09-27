@@ -1703,3 +1703,12 @@ def test_space_in_names_to_continue_processing(caplog):
     reader = PdfReader(BytesIO(b), strict=True)
     with pytest.raises(PdfReadError):
         obj = reader.get_object(70)
+
+
+@pytest.mark.enable_socket()
+def test_unbalanced_brackets_in_dictionnaryobject(caplog):
+    """Cf #2877"""
+    url = "https://github.com/user-attachments/files/17162634/7f40cb209fb97d1782bffcefc5e7be40.pdf"
+    name = "iss2877.pdf"  # reused
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert len(reader.pages) == 43  # note:  /Count = 46 but 3 kids are None
