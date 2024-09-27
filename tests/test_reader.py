@@ -1706,7 +1706,7 @@ def test_space_in_names_to_continue_processing(caplog):
 
 
 @pytest.mark.enable_socket()
-def test_unbalanced_brackets_in_dictionnaryobject(caplog):
+def test_unbalanced_brackets_in_dictionary_object(caplog):
     """Cf #2877"""
     url = "https://github.com/user-attachments/files/17162634/7f40cb209fb97d1782bffcefc5e7be40.pdf"
     name = "iss2877.pdf"  # reused
