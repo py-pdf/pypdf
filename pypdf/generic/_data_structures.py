@@ -570,6 +570,8 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             try:
                 try:
                     key = read_object(stream, pdf)
+                    if isinstance(key, NullObject):
+                        break
                     if not isinstance(key, NameObject):
                         raise PdfReadError(
                             f"Expecting a NameObject for key but found {key!r}"
