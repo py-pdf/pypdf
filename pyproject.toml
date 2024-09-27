@@ -61,7 +61,8 @@ tests_dir = "tests/"
 package = "./pypdf"
 
 [tool.flit.sdist]
-exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", "tests/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
+exclude = [".github/*", "docs/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
+include = ["resources/", "tests/"]
 
 [tool.pytest.ini_options]
 addopts = "--disable-socket"
