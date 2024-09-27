@@ -127,6 +127,8 @@ class PdfReader(PdfDocCommon):
         # map page indirect_reference number to page number
         self._page_id2num: Optional[Dict[Any, Any]] = None
 
+        self._validated_root: Optional[DictionaryObject] = None
+
         self._initialize_stream(stream)
 
         self._override_encryption = False
@@ -197,10 +199,30 @@ class PdfReader(PdfDocCommon):
     @property
     def root_object(self) -> DictionaryObject:
         """Provide access to "/Root". Standardized with PdfWriter."""
-        root = self.trailer[TK.ROOT]
-        if root is None:
-            raise PdfReadError('Cannot find "/Root" key in trailer')
-        return cast(DictionaryObject, root.get_object())
+        if self._validated_root:
+            return self._validated_root
+        root = self.trailer.get(TK.ROOT)
+        if is_null_or_none(root):
+            logger_warning('Cannot find "/Root" key in trailer', __name__)
+        elif root and root.get("/Type") == "/Catalog":
+            self._validated_root = cast(DictionaryObject, root.get_object())
+        else:
+            logger_warning("Invalid Root Object in trailer", __name__)
+        if self._validated_root is None:
+            logger_warning("trying to fix", __name__)
+            nb = cast(int, self.trailer.get("/Size", 0))
+            for i in range(nb):
+                try:
+                    o = self.get_object(i + 1)
+                except Exception:  # to be sure to capture all errors
+                    o = None
+                if isinstance(o, DictionaryObject) and o.get("/Type") == "/Catalog":
+                    self._validated_root = o
+                    logger_warning(f"root found at {o.indirect_reference!r}", __name__)
+                    break
+            if self._validated_root is None:
+                raise PdfReadError("Cannot find Root object in pdf")
+        return self._validated_root
 
     @property
     def _info(self) -> Optional[DictionaryObject]:

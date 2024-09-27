@@ -1712,3 +1712,48 @@ def test_unbalanced_brackets_in_dictionary_object(caplog):
     name = "iss2877.pdf"  # reused
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert len(reader.pages) == 43  # note:  /Count = 46 but 3 kids are None
+
+
+@pytest.mark.enable_socket()
+def test_repair_root(caplog):
+    """Cf #2877"""
+    url = "https://github.com/user-attachments/files/17162216/crash-6620e8b1abfe3da639b654595da859b87f985748.pdf"
+    name = "iss2875.pdf"
+
+    b = get_data_from_url(url, name=name)
+    reader = PdfReader(BytesIO(b))
+    assert len(reader.pages) == 1
+    assert all(
+        msg in caplog.txt
+        for msg in (
+            "Invalid Root Object",
+            "trying to fix",
+            "root found at IndirectObject(2, 0,",
+        )
+    )
+
+    # no /Root Entry
+    caplog.clear()
+    reader = PdfReader(BytesIO(b.replace(b"/Root 1 0 R", b"")))
+    assert len(reader.pages) == 1
+    assert all(
+        msg in caplog.txt
+        for msg in (
+            'Cannot find "/Root" key in trailer',
+            "trying to fix",
+            "root found at IndirectObject(2, 0,",
+        )
+    )
+
+    # Invalid /Root Entry
+    caplog.clear()
+    reader = PdfReader(
+        BytesIO(
+            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+        )
+    )
+    with pytest.raises("PdfReadError"):
+        len(reader.pages)
+    assert all(
+        msg in caplog.txt for msg in ("Invalid Root Object in trailer", "trying to fix")
+    )
