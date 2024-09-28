@@ -223,7 +223,7 @@ class PdfReader(PdfDocCommon):
                     o = None
                 if isinstance(o, DictionaryObject) and o.get("/Type") == "/Catalog":
                     self._validated_root = o
-                    logger_warning(f"root found at {o.indirect_reference!r}", __name__)
+                    logger_warning(f"Root found at {o.indirect_reference!r}", __name__)
                     break
             if self._validated_root is None:
                 raise PdfReadError("Cannot find Root object in pdf")
