@@ -1758,3 +1758,15 @@ def test_repair_root(caplog):
         msg in caplog.text
         for msg in ("Invalid Root Object in trailer", "trying to fix")
     )
+
+    # Invalid /Root Entry + error in get_object
+    caplog.clear()
+    b = b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+    b = b[:5124] + b"A" + b[5125:]
+    reader = PdfReader(BytesIO(b))
+    with pytest.raises(PdfReadError):
+        len(reader.pages)
+    assert all(
+        msg in caplog.text
+        for msg in ("Invalid Root Object in trailer", "trying to fix")
+    )
