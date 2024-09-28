@@ -49,7 +49,7 @@ from typing import (
     overload,
 )
 
-from ._cmap import build_char_map, unknown_char_map, compute_font_width
+from ._cmap import build_char_map, compute_font_width, unknown_char_map
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     OrientationNotFoundError,
@@ -1716,6 +1716,19 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
+    def _get_font_widths(self, add_text: str, cmap: Tuple, default_width: float) -> float:
+        font_widths: float = 0
+        if add_text:
+            for char in add_text:
+                font_code = ord(char)
+                if cmap[3]:
+                    font_width = compute_font_width(cmap[3], font_code, default_width)
+                    if font_width:
+                        font_widths = font_widths + font_width
+                else:
+                    font_widths = default_width
+        return font_widths
+
     def _extract_text(
         self,
         obj: Any,
@@ -1952,16 +1965,7 @@ class PageObject(DictionaryObject):
                     rtl_dir,
                     visitor_text,
                 )
-                _font_widths = 0
-                if add_text:
-                    for char in add_text:
-                        font_code = ord(char)
-                        if cmap[3]:
-                            font_width = compute_font_width(cmap[3], font_code, _space_width)
-                            if font_width:
-                                _font_widths = _font_widths + font_width
-                        else:
-                            _font_widths = current_spacewidth()
+                _font_widths = self._get_font_widths(add_text, cmap, _space_width)
             else:
                 return None
             if check_crlf_space:
