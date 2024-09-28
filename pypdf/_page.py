@@ -1716,7 +1716,14 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-    def _get_font_widths(self, add_text: str, cmap: Tuple, default_width: float) -> float:
+    def _get_font_widths(
+        self,
+        add_text: str,
+        cmap: Tuple[
+            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+        ],
+        default_width: float
+    ) -> float:
         font_widths: float = 0
         if add_text:
             for char in add_text:

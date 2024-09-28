@@ -1,6 +1,6 @@
 from binascii import unhexlify
 from math import ceil
-from typing import Any, Dict, List, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
@@ -475,10 +475,14 @@ def compute_space_width(
 
 
 def compute_font_width(
-    cmap: Tuple, char_code: int, font_width: float
+    cmap: Tuple[
+        Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+    ],
+    char_code: int,
+    font_width: float
 ) -> float:
-    ft: DictionaryObject = cmap[3]
-    char_code_map: dict = cmap[1]
+    ft = cmap[3]
+    char_code_map = cmap[1]
     char_width: float = font_width * 2.0  # default value
     w = []
     char_code_width = {}
@@ -503,17 +507,17 @@ def compute_font_width(
                 # C_first - C_last same W
                 for x in range(st, second + 1):
                     try:
-                        char_code_width[ord(char_code_map[chr(x)])] = w[2]
+                        char_code_width[str(ord(char_code_map[chr(x)]))] = w[2]
                     except Exception:
-                        char_code_width[x] = w[2]
+                        char_code_width[str(x)] = w[2]
                 w = w[3:]
             elif isinstance(second, list):
                 # Starting C [W1 W2 ... Wn]
                 for y in second:
                     try:
-                        char_code_width[ord(char_code_map[chr(st)])] = y
+                        char_code_width[str(ord(char_code_map[chr(st)]))] = y
                     except Exception:
-                        char_code_width[st] = y
+                        char_code_width[str(st)] = y
                     st += 1
                 w = w[2:]
             else:
@@ -523,7 +527,7 @@ def compute_font_width(
                 )
                 break
         try:
-            char_width = char_code_width[char_code]
+            char_width = char_code_width[str(char_code)]
         except Exception:
             char_width = (
                 char_code_width["default"]
@@ -546,7 +550,7 @@ def compute_font_width(
             else:
                 return font_width
     if is_null_or_none(char_width):
-        char_width = None
+        char_width = char_code_width["default"]
     return char_width
 
 

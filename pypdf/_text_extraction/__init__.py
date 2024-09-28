@@ -123,8 +123,8 @@ def crlf_space_check(
         moved_height: float = delta_y
         moved_width: float = delta_x
     elif orientation in (90, 270):
-        moved_height: float = delta_x
-        moved_width: float = delta_y
+        moved_height = delta_x
+        moved_width = delta_y
     try:
         if abs(moved_height) > 0.8 * f:
             if (output + text)[-1] != "\n":
