@@ -137,14 +137,14 @@ def test_iss1943():
 def test_broken_meta_data(pdf_path):
     with open(pdf_path, "rb") as f:
         reader = PdfReader(f)
-        with pytest.raises(
-            PdfReadError,
-            match=(
-                "Trailer not found or does not point to document "
-                "information directory"
-            ),
-        ):
-            reader.metadata
+        assert reader.metadata is None
+
+    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as f:
+        b = f.read(-1)
+    reader = PdfReader(BytesIO(b.replace(b"/Info 2 0 R", b"/Info 2    ")))
+    with pytest.raises(PdfReadError) as exc:
+        reader.metadata
+    assert "does not point to document information directory" in repr(exc)
 
 
 @pytest.mark.parametrize(

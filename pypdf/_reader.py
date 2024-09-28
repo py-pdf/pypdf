@@ -242,11 +242,11 @@ class PdfReader(PdfDocCommon):
             return None
         else:
             info = info.get_object()
-            if info == None:  # noqa: E711
+            if not isinstance(info, DictionaryObject):
                 raise PdfReadError(
                     "Trailer not found or does not point to document information directory"
                 )
-            return cast(DictionaryObject, info)
+            return info
 
     @property
     def _ID(self) -> Optional[ArrayObject]:
