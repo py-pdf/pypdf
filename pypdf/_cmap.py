@@ -474,6 +474,33 @@ def compute_space_width(
     return sp_width
 
 
+def compute_font_width(
+    ft: DictionaryObject, char_code: int, font_width: float
+) -> float:
+    if "/Widths" not in ft:
+        return font_width
+
+    w = list(ft["/Widths"])
+    try:
+        st = cast(int, ft["/FirstChar"])
+        en: int = cast(int, ft["/LastChar"])
+        if st > char_code or en < char_code:
+            raise Exception("Not in range")
+        if w[char_code - st].get_object() == 0:
+            raise Exception("null width")
+        char_width = w[char_code - st].get_object()
+    except Exception:
+        if "/FontDescriptor" in ft and "/MissingWidth" in cast(
+            DictionaryObject, ft["/FontDescriptor"]
+        ):
+            char_width = ft["/FontDescriptor"]["/MissingWidth"].get_object()  # type: ignore
+        else:
+            return font_width
+    if is_null_or_none(char_width):
+        char_width = None
+    return char_width
+
+
 def type1_alternative(
     ft: DictionaryObject,
     map_dict: Dict[Any, Any],

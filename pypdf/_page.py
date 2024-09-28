@@ -49,7 +49,7 @@ from typing import (
     overload,
 )
 
-from ._cmap import build_char_map, unknown_char_map
+from ._cmap import build_char_map, unknown_char_map, compute_font_width
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     OrientationNotFoundError,
@@ -1793,18 +1793,23 @@ class PageObject(DictionaryObject):
         char_scale = 1.0
         space_scale = 1.0
         _space_width: float = 500.0  # will be set correctly at first Tf
+        _font_widths: float = 0.0
         TL = 0.0
         font_size = 12.0  # init just in case of
 
         def current_spacewidth() -> float:
             return _space_width / 1000.0
 
+        def current_fontwidths() -> float:
+            return _font_widths / 1000.0
+
         def process_operation(operator: bytes, operands: List[Any]) -> None:
             nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, memo_cm, memo_tm
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
-            nonlocal orientations, rtl_dir, visitor_text, output, text
+            nonlocal orientations, rtl_dir, visitor_text, output, text, _font_widths
             global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
+            add_text: str = ""
             check_crlf_space: bool = False
             # Table 5.4 page 405
             if operator == b"BT":
@@ -1935,7 +1940,7 @@ class PageObject(DictionaryObject):
 
             elif operator == b"Tj":
                 check_crlf_space = True
-                text, rtl_dir = handle_tj(
+                text, rtl_dir, add_text = handle_tj(
                     text,
                     operands,
                     cm_matrix,
@@ -1947,6 +1952,16 @@ class PageObject(DictionaryObject):
                     rtl_dir,
                     visitor_text,
                 )
+                _font_widths = 0
+                if add_text:
+                    for char in add_text:
+                        font_code = ord(char)
+                        if cmap[3]:
+                            font_width = compute_font_width(cmap[3], font_code, _space_width)
+                            if font_width:
+                                _font_widths = _font_widths + font_width
+                        else:
+                            _font_widths = current_spacewidth()
             else:
                 return None
             if check_crlf_space:
@@ -1962,6 +1977,7 @@ class PageObject(DictionaryObject):
                         font_size,
                         visitor_text,
                         current_spacewidth(),
+                        current_fontwidths()
                     )
                     if text == "":
                         memo_cm = cm_matrix.copy()
