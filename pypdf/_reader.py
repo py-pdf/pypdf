@@ -212,7 +212,7 @@ class PdfReader(PdfDocCommon):
                 DictionaryObject, cast(PdfObject, root).get_object()
             )
         else:
-            logger_warning("Invalid Root Object in trailer", __name__)
+            logger_warning("Invalid Root object in trailer", __name__)
         if self._validated_root is None:
             logger_warning("trying to fix", __name__)
             nb = cast(int, self.trailer.get("/Size", 0))
