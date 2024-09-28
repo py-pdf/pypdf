@@ -477,25 +477,66 @@ def compute_space_width(
 def compute_font_width(
     ft: DictionaryObject, char_code: int, font_width: float
 ) -> float:
-    if "/Widths" not in ft:
-        return font_width
-
-    w = list(ft["/Widths"])
-    try:
-        st = cast(int, ft["/FirstChar"])
-        en: int = cast(int, ft["/LastChar"])
-        if st > char_code or en < char_code:
-            raise Exception("Not in range")
-        if w[char_code - st].get_object() == 0:
-            raise Exception("null width")
-        char_width = w[char_code - st].get_object()
-    except Exception:
-        if "/FontDescriptor" in ft and "/MissingWidth" in cast(
-            DictionaryObject, ft["/FontDescriptor"]
-        ):
-            char_width = ft["/FontDescriptor"]["/MissingWidth"].get_object()  # type: ignore
+    char_width: float = font_width * 2.0  # default value
+    w = []
+    char_code_width = {}
+    st: int = 0
+    # p271 PDF32000_2008 9.7.4.3 Glyph Metrics in CIDFonts
+    # Widths for a CIDFont are defined using the DW and W entries.
+    # DW2 and W2 are for vertical use. Vertical type is not implemented.
+    if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
+        ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
+        try:
+            char_code_width["default"] = cast(float, ft1["/DW"])
+        except Exception:
+            char_code_width["default"] = 1000.0  # Default font width is 0.1
+        if "/W" in ft1:
+            # Starting C [W1 W2 ... Wn]
+            # C_first - C_last same W
+            w = list(ft1["/W"])
         else:
-            return font_width
+            w = []
+        while len(w) > 0:
+            st = w[0] if isinstance(w[0], int) else w[0].get_object()
+            second = w[1].get_object()
+            if isinstance(second, int):
+                for x in range(st, second):
+                    char_code_width[x] = w[2]
+                w = w[3:]
+            elif isinstance(second, list):
+                for y in second:
+                    char_code_width[st] = y
+                    st += 1
+                w = w[2:]
+            else:
+                logger_warning(
+                    "unknown widths : \n" + (ft1["/W"]).__repr__(),
+                    __name__,
+                )
+                break
+        try:
+            char_width = char_code_width[char_code]
+        except Exception:
+            char_width = (
+                char_code_width["default"]
+            )
+    elif "/Widths" in ft:
+        w = list(ft["/Widths"])
+        try:
+            st = cast(int, ft["/FirstChar"])
+            en: int = cast(int, ft["/LastChar"])
+            if st > char_code or en < char_code:
+                raise Exception("Not in range")
+            if w[char_code - st].get_object() == 0:
+                raise Exception("null width")
+            char_width = w[char_code - st].get_object()
+        except Exception:
+            if "/FontDescriptor" in ft and "/MissingWidth" in cast(
+                DictionaryObject, ft["/FontDescriptor"]
+            ):
+                char_width = ft["/FontDescriptor"]["/MissingWidth"].get_object()  # type: ignore
+            else:
+                return font_width
     if is_null_or_none(char_width):
         char_width = None
     return char_width
