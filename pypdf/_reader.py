@@ -214,7 +214,7 @@ class PdfReader(PdfDocCommon):
         else:
             logger_warning("Invalid Root object in trailer", __name__)
         if self._validated_root is None:
-            logger_warning('Searching object with "/Catalog" field', __name__)
+            logger_warning('Searching object with "/Catalog" key', __name__)
             nb = cast(int, self.trailer.get("/Size", 0))
             for i in range(nb):
                 try:
