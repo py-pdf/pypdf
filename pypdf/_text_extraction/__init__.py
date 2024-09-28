@@ -211,6 +211,7 @@ def handle_tj(
                     or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
                 ):
                     text = x + text if rtl_dir else text + x
+                    add_text = x if rtl_dir else add_text + x
                 elif (  # right-to-left characters set
                     0x0590 <= xx <= 0x08FF
                     or 0xFB1D <= xx <= 0xFDFF

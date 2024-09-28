@@ -475,8 +475,10 @@ def compute_space_width(
 
 
 def compute_font_width(
-    ft: DictionaryObject, char_code: int, font_width: float
+    cmap: Tuple, char_code: int, font_width: float
 ) -> float:
+    ft: DictionaryObject = cmap[3]
+    char_code_map: dict = cmap[1]
     char_width: float = font_width * 2.0  # default value
     w = []
     char_code_width = {}
@@ -491,8 +493,6 @@ def compute_font_width(
         except Exception:
             char_code_width["default"] = 1000.0  # Default font width is 0.1
         if "/W" in ft1:
-            # Starting C [W1 W2 ... Wn]
-            # C_first - C_last same W
             w = list(ft1["/W"])
         else:
             w = []
@@ -500,12 +500,20 @@ def compute_font_width(
             st = w[0] if isinstance(w[0], int) else w[0].get_object()
             second = w[1].get_object()
             if isinstance(second, int):
-                for x in range(st, second):
-                    char_code_width[x] = w[2]
+                # C_first - C_last same W
+                for x in range(st, second + 1):
+                    try:
+                        char_code_width[ord(char_code_map[chr(x)])] = w[2]
+                    except Exception:
+                        char_code_width[x] = w[2]
                 w = w[3:]
             elif isinstance(second, list):
+                # Starting C [W1 W2 ... Wn]
                 for y in second:
-                    char_code_width[st] = y
+                    try:
+                        char_code_width[ord(char_code_map[chr(st)])] = y
+                    except Exception:
+                        char_code_width[st] = y
                     st += 1
                 w = w[2:]
             else:

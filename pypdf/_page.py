@@ -1722,7 +1722,7 @@ class PageObject(DictionaryObject):
             for char in add_text:
                 font_code = ord(char)
                 if cmap[3]:
-                    font_width = compute_font_width(cmap[3], font_code, default_width)
+                    font_width = compute_font_width(cmap, font_code, default_width)
                     if font_width:
                         font_widths = font_widths + font_width
                 else:
@@ -1965,6 +1965,8 @@ class PageObject(DictionaryObject):
                     rtl_dir,
                     visitor_text,
                 )
+                if "San" in add_text:
+                    pass
                 _font_widths = self._get_font_widths(add_text, cmap, _space_width)
             else:
                 return None
