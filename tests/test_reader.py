@@ -1740,8 +1740,8 @@ def test_repair_root(caplog):
         msg in caplog.text
         for msg in (
             'Cannot find "/Root" key in trailer',
-            "trying to fix",
-            "root found at IndirectObject(2, 0,",
+            "Searching object with "/Catalog" key",
+            "Root found at IndirectObject(2, 0,",
         )
     )
 
@@ -1756,7 +1756,7 @@ def test_repair_root(caplog):
         len(reader.pages)
     assert all(
         msg in caplog.text
-        for msg in ("Invalid Root Object in trailer", "trying to fix")
+        for msg in ("Invalid Root object in trailer", "Searching object with "/Catalog" key")
     )
 
     # Invalid /Root Entry + error in get_object
@@ -1768,5 +1768,5 @@ def test_repair_root(caplog):
         len(reader.pages)
     assert all(
         msg in caplog.text
-        for msg in ("Invalid Root Object in trailer", "trying to fix")
+        for msg in ("Invalid Root object in trailer", "Searching object with "/Catalog" key")
     )
