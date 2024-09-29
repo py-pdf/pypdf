@@ -3,11 +3,11 @@
 ## Version 5.0.1, 2024-09-29
 
 ### New Features (ENH)
-- Add `fll` parameter to PdfWriter constructor (#2865)
+- Add `full` parameter to PdfWriter constructor (#2865)
 
 ### Bug Fixes (BUG)
-- Cope with unbalanced delimiters in dictionary object (#2878)
 - Update pyproject.toml with minimum Python version of 3.8 (#2859)
+- Cope with unbalanced delimiters in dictionary object (#2878)
 - Cope with encoding with too many differences (#2873)
 - Missing spaces in extract_text() method (#1328) (#2868)
 - Tolerate truncated files and no warning when jumping startxref (#2855)
@@ -15,26 +15,12 @@
 ### Robustness (ROB)
 - Repair PDF with invalid Root object (#2880)
 - Continue parsing dictionary object when error is detected (#2872)
-- Merge documents with named destinations with invalid page (#2857)
-- Tolerate comments in arrays (#2856)
+- Merge documents with invalid pages in named destinations (#2857)
+- Tolerate comments(%) in arrays (#2856)
 
-### Documentation (DOC)
-- Tiny changes (#2844)
+### Documentation (DOC), Testing (TST), Code Style (STY), Developer Experience (DEV), Maintenance (MAINT)
 
-### Developer Experience (DEV)
-- Use latest Python version for benchmarking (#2879)
-
-### Maintenance (MAINT)
-- Add tests to source distributions (#2874)
-- Refactor _update_field_annotation (#2862)
-
-### Testing (TST)
-- Mark test_increment_writer as enable_socket (#2867)
-
-### Code Style (STY)
-- Refactor _xobj_to_image (#2863)
-- Minor code-style improvements for _reader.py (#2847)
-- Remove duplicated comments (#2860)
+- (#2844), (#2862), (#2863), (#2847), (#2860), (#2867), (#2874), (#2879)
 
 [Full Changelog](https://github.com/py-pdf/pypdf/compare/5.0.0...5.0.1)
 
