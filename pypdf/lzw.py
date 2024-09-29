@@ -1,6 +1,6 @@
 """Lempel-Ziv-Welch (LZW) adaptive compression method."""
 
-from typing import List
+from typing import Dict, List
 
 
 class LzwCodec:
@@ -8,7 +8,8 @@ class LzwCodec:
 
     CLEAR_TABLE_MARKER = 256  # Special code to indicate table reset
     EOD_MARKER = 257  # End-of-data marker
-    MAX_CODE_WIDTH = 12  # Codes can range from 9 to 12 bits
+    INITIAL_BITS_PER_CODE = 9  # Initial code bit width
+    MAX_BITS_PER_CODE = 12  # Maximum code bit width
 
     def __init__(self) -> None:
         """Initialize codec and reset the compression table."""
@@ -16,8 +17,10 @@ class LzwCodec:
 
     def clear_table(self) -> None:
         """Reset the encoding table to initial state with single-byte sequences."""
-        self.table = {bytes([i]): i for i in range(256)}
+        self.table: Dict[bytes, int] = {bytes([i]): i for i in range(256)}
         self.next_code = self.EOD_MARKER + 1
+        self.bits_per_code = self.INITIAL_BITS_PER_CODE
+        self.max_code_value = (1 << self.bits_per_code) - 1
 
     def encode(self, data: bytes) -> bytes:
         """
@@ -25,11 +28,11 @@ class LzwCodec:
 
         Taken from PDF 1.7 specs, "7.4.4.2 Details of LZW Encoding".
         """
-        max_table_size = 1 << self.MAX_CODE_WIDTH  # 4096 entries when fully expanded
-        result_codes = []
+        result_codes: List[int] = []
 
         # The encoder shall begin by issuing a clear-table code
         result_codes.append(self.CLEAR_TABLE_MARKER)
+        self.clear_table()
 
         current_sequence = b""
         for byte in data:
@@ -42,16 +45,23 @@ class LzwCodec:
                 # Output code for the current sequence
                 result_codes.append(self.table[current_sequence])
 
-                # If the table is full, emit a clear-table command
-                if len(self.table) >= max_table_size:
-                    result_codes.append(self.CLEAR_TABLE_MARKER)
-                    self.clear_table()
-                else:
-                    # Add the new sequence to the table
+                # Add the new sequence to the table if there's room
+                if self.next_code <= (1 << self.MAX_BITS_PER_CODE) - 1:
                     self.table[next_sequence] = self.next_code
                     self.next_code += 1
+                    # Increase bits_per_code if necessary
+                    if (
+                        self.next_code > self.max_code_value
+                        and self.bits_per_code < self.MAX_BITS_PER_CODE
+                    ):
+                        self.bits_per_code += 1
+                        self.max_code_value = (1 << self.bits_per_code) - 1
+                else:
+                    # If the table is full, emit a clear-table command
+                    result_codes.append(self.CLEAR_TABLE_MARKER)
+                    self.clear_table()
 
-                # Reset to the new character
+                # Start new sequence
                 current_sequence = bytes([byte])
 
         # Ensure everything actually is encoded
@@ -62,18 +72,20 @@ class LzwCodec:
 
         return self.pack_codes_into_bytes(result_codes)
 
-    def pack_codes_into_bytes(self, result_codes: List[int]) -> bytes:
+    def pack_codes_into_bytes(self, codes: List[int]) -> bytes:
         """
-        Convert the list of result codes into a continuous byte stream, with codes packed as per the current bit-width.
+        Convert the list of result codes into a continuous byte stream, with codes packed as per the code bit-width.
         The bit-width starts at 9 bits and expands as needed.
         """
-        bits_per_code = 9  # Initially, the code length shall be 9 bits
-        max_code = 1 << bits_per_code  # 512
-        buffer = 0  # Temporary storage for bits to be packed into bytes
-        bits_in_buffer = 0  # Number of bits currently in the buffer
-        output = []
+        bits_per_code = self.INITIAL_BITS_PER_CODE
+        max_bits_per_code = self.MAX_BITS_PER_CODE
+        max_code_value = (1 << bits_per_code) - 1
+        next_code = self.EOD_MARKER + 1
+        buffer = 0
+        bits_in_buffer = 0
+        output = bytearray()
 
-        for code in result_codes:
+        for code in codes:
             buffer = (buffer << bits_per_code) | code
             bits_in_buffer += bits_per_code
 
@@ -84,16 +96,21 @@ class LzwCodec:
                 bits_in_buffer -= 8
                 output.append((buffer >> bits_in_buffer) & 0xFF)
 
-            # After a clear-table marker, reset to 9-bit codes
+            # After a clear-table marker, reset bits_per_code and next_code
             if code == self.CLEAR_TABLE_MARKER:
-                bits_per_code = 9
-                max_code = 1 << bits_per_code
-                continue
-
-            # Expand the code width if the next code exceeds the current range
-            if code >= max_code - 1 and bits_per_code < self.MAX_CODE_WIDTH:
-                bits_per_code += 1
-                max_code <<= 1  # Double the range for the new bit-width
+                bits_per_code = self.INITIAL_BITS_PER_CODE
+                max_code_value = (1 << bits_per_code) - 1
+                next_code = self.EOD_MARKER + 1
+            elif code == self.EOD_MARKER:
+                # Do not increment next_code for EOD_MARKER
+                pass
+            else:
+                # Increase next_code after processing each code (except special codes)
+                next_code += 1
+                # Increase bits_per_code if necessary
+                if next_code > max_code_value and bits_per_code < max_bits_per_code:
+                    bits_per_code += 1
+                    max_code_value = (1 << bits_per_code) - 1
 
         # Flush any remaining bits in the buffer
         if bits_in_buffer > 0:
