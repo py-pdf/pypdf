@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1727602630597,
+  "lastUpdate": 1727618463891,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -59141,6 +59141,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.023334120865347464",
             "extra": "mean: 796.5597665999894 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "42de71aa3b9ff3929a144d7a59f4547621fcd641",
+          "message": "TST: Add LzwCodec for encoding (#2883)\n\nThis PR adds an abstract Codec class as well as an LzwCodec encoder implementation.\r\n\r\nWhile we might only need decoding for pypdf, having both decoding and encoding in one class massively helps with testing. We can still get it wrong, but it's harder to get both the encoder and the decoder wrong in a consistent way.",
+          "timestamp": "2024-09-29T15:58:37+02:00",
+          "tree_id": "785fb5483f9047d9e6875a0b1d6370290eed8304",
+          "url": "https://github.com/py-pdf/pypdf/commit/42de71aa3b9ff3929a144d7a59f4547621fcd641"
+        },
+        "date": 1727618461852,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.809493663201914,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016089302830168317",
+            "extra": "mean: 355.9360226000024 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.253746981009447,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008585041655246123",
+            "extra": "mean: 75.45036142857141 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25109057143377717,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0568579856575418",
+            "extra": "mean: 3.9826266445999976 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.746784416184653,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010194382547650768",
+            "extra": "mean: 59.71295594117558 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08963815968937233,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09508053721365912",
+            "extra": "mean: 11.15596307940001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.27136242632824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0040462893294337075",
+            "extra": "mean: 786.5577740000163 msec\nrounds: 5"
           }
         ]
       }
