@@ -86,7 +86,8 @@ def build_char_map_from_dict(
     else:
         sp = space_code
     font_width_map = build_font_width_map(ft, map_dict)
-    half_space_width = compute_space_width(font_width_map, sp) / 2.0
+    half_space_width = compute_space_width(
+        font_width_map, sp, space_width) / 2.0
 
     return (
         font_type,
@@ -402,11 +403,11 @@ def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) ->
 def build_font_width_map(
     ft: DictionaryObject, map_dict: Dict[Any, Any]
 ) -> Dict[Any, float]:
-    font_width_map = {}
+    font_width_map: Dict[Any, float] = {}
     st: int = 0
     en: int = 0
     try:
-        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"])] * 2
+        default_font_width: float = _default_fonts_space_width[cast(str, ft["/BaseFont"])] * 2.0
     except Exception:
         default_font_width = 1000.0  # Default font width is 0.1
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
@@ -483,14 +484,17 @@ def build_font_width_map(
 
 
 def compute_space_width(
-    font_width_map: Dict[Any, float], sp: int
+    font_width_map: Dict[Any, float], sp: int, default_space_width: float
 ) -> float:
     try:
         sp_width = font_width_map[sp]
     except Exception:
-        sp_width = (
-            font_width_map["default"] / 2.0
-        )  # if using default we consider space will be only half size
+        if default_space_width:
+            sp_width = default_space_width
+        else:
+            sp_width = (
+                font_width_map["default"] / 2.0
+            )  # if using default we consider space will be only half size
 
     return sp_width
 
