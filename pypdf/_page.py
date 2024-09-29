@@ -49,7 +49,7 @@ from typing import (
     overload,
 )
 
-from ._cmap import build_char_map, compute_font_width, unknown_char_map
+from ._cmap import build_char_map, compute_font_width, compute_space_width, unknown_char_map
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     OrientationNotFoundError,
@@ -1719,21 +1719,16 @@ class PageObject(DictionaryObject):
     def _get_font_widths(
         self,
         add_text: str,
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
-        ],
+        font_width_map: Dict[Any, float],
         default_width: float
     ) -> float:
         font_widths: float = 0
         if add_text:
             for char in add_text:
-                font_code = ord(char)
-                if cmap[3]:
-                    font_width = compute_font_width(cmap, font_code, default_width)
-                    if font_width:
-                        font_widths = font_widths + font_width
+                if font_width_map:
+                    font_widths += compute_font_width(font_width_map, ord(char))
                 else:
-                    font_widths = default_width
+                    font_widths += default_width
         return font_widths
 
     def _extract_text(
@@ -1974,7 +1969,10 @@ class PageObject(DictionaryObject):
                 )
                 if "San" in add_text:
                     pass
-                _font_widths = self._get_font_widths(add_text, cmap, _space_width)
+                if add_text == "l":
+                    pass
+                _, font_width_map = compute_space_width(cmap[3], 32, cmap[1])
+                _font_widths = self._get_font_widths(add_text, font_width_map, _space_width)
             else:
                 return None
             if check_crlf_space:

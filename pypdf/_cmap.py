@@ -1,6 +1,6 @@
 from binascii import unhexlify
 from math import ceil
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
@@ -75,11 +75,6 @@ def build_char_map_from_dict(
         for x in int_entry:
             if x <= 255:
                 encoding[x] = chr(x)
-    try:
-        # override space_width with new params
-        space_width = _default_fonts_space_width[cast(str, ft["/BaseFont"])]
-    except Exception:
-        pass
     # I consider the space_code is available on one byte
     if isinstance(space_code, str):
         try:  # one byte
@@ -87,16 +82,17 @@ def build_char_map_from_dict(
         except Exception:
             sp = space_code.encode("utf-16-be")
             sp = sp[0] + 256 * sp[1]
+        sp = ord(map_dict[chr(sp)])
     else:
         sp = space_code
-    sp_width = compute_space_width(ft, sp, space_width)
+    sp_width, font_width_map = compute_space_width(ft, sp, map_dict)
 
     return (
         font_type,
-        float(sp_width / 2),
+        sp_width,
         encoding,
         # https://github.com/python/mypy/issues/4374
-        map_dict,
+        map_dict
     )
 
 
@@ -403,99 +399,25 @@ def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) ->
 
 
 def compute_space_width(
-    ft: DictionaryObject, space_code: int, space_width: float
-) -> float:
-    sp_width: float = space_width * 2.0  # default value
-    w = []
-    w1 = {}
-    st: int = 0
-    if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
-        ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
-        try:
-            w1[-1] = cast(float, ft1["/DW"])
-        except Exception:
-            w1[-1] = 1000.0
-        if "/W" in ft1:
-            w = list(ft1["/W"])
-        else:
-            w = []
-        while len(w) > 0:
-            st = w[0] if isinstance(w[0], int) else w[0].get_object()
-            second = w[1].get_object()
-            if isinstance(second, int):
-                for x in range(st, second):
-                    w1[x] = w[2]
-                w = w[3:]
-            elif isinstance(second, list):
-                for y in second:
-                    w1[st] = y
-                    st += 1
-                w = w[2:]
-            else:
-                logger_warning(
-                    "unknown widths : \n" + (ft1["/W"]).__repr__(),
-                    __name__,
-                )
-                break
-        try:
-            sp_width = w1[space_code]
-        except Exception:
-            sp_width = (
-                w1[-1] / 2.0
-            )  # if using default we consider space will be only half size
-    elif "/Widths" in ft:
-        w = list(ft["/Widths"])  # type: ignore
-        try:
-            st = cast(int, ft["/FirstChar"])
-            en: int = cast(int, ft["/LastChar"])
-            if st > space_code or en < space_code:
-                raise Exception("Not in range")
-            if w[space_code - st].get_object() == 0:
-                raise Exception("null width")
-            sp_width = w[space_code - st].get_object()
-        except Exception:
-            if "/FontDescriptor" in ft and "/MissingWidth" in cast(
-                DictionaryObject, ft["/FontDescriptor"]
-            ):
-                sp_width = ft["/FontDescriptor"]["/MissingWidth"].get_object()  # type: ignore
-            else:
-                # will consider width of char as avg(width)/2
-                m = 0
-                cpt = 0
-                for xx in w:
-                    xx = xx.get_object()
-                    if xx > 0:
-                        m += xx
-                        cpt += 1
-                sp_width = m / max(1, cpt) / 2
-
-    if is_null_or_none(sp_width):
-        sp_width = 0.0
-    return sp_width
-
-
-def compute_font_width(
-    cmap: Tuple[
-        Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
-    ],
-    char_code: int,
-    font_width: float
-) -> float:
-    ft = cmap[3]
-    char_code_map = cmap[1]
-    char_width: float = font_width * 2.0  # default value
-    w = []
+    ft: DictionaryObject, sp: int, map_dict: Dict[Any, Any]
+) -> Tuple[float, Dict[Any, float]]:
     char_code_width = {}
     st: int = 0
-    # p271 PDF32000_2008 9.7.4.3 Glyph Metrics in CIDFonts
-    # Widths for a CIDFont are defined using the DW and W entries.
-    # DW2 and W2 are for vertical use. Vertical type is not implemented.
+    en: int = 0
+    try:
+        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"])] * 2
+    except Exception:
+        default_font_width = 2000.0  # Default font width is 0.2
+    sp_width: float = default_font_width  # default value
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
+        # p271 PDF32000_2008 9.7.4.3 Glyph Metrics in CIDFonts
+        # Widths for a CIDFont are defined using the DW and W entries.
+        # DW2 and W2 are for vertical use. Vertical type is not implemented.
         ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
         try:
             char_code_width["default"] = cast(float, ft1["/DW"])
         except Exception:
-            char_code_width["default"] = 1000.0  # Default font width is 0.1
+            char_code_width["default"] = default_font_width
         if "/W" in ft1:
             w = list(ft1["/W"])
         else:
@@ -504,21 +426,25 @@ def compute_font_width(
             st = w[0] if isinstance(w[0], int) else w[0].get_object()
             second = w[1].get_object()
             if isinstance(second, int):
-                # C_first - C_last same W
-                for x in range(st, second + 1):
+                # C_first C_last same_W
+                en = second
+                for c_code in range(st, en + 1):
                     try:
-                        char_code_width[str(ord(char_code_map[chr(x)]))] = w[2]
+                        conversion_char = map_dict[chr(c_code)]
+                        char_code_width[ord(conversion_char)] = w[2]
                     except Exception:
-                        char_code_width[str(x)] = w[2]
+                        pass
                 w = w[3:]
             elif isinstance(second, list):
-                # Starting C [W1 W2 ... Wn]
-                for y in second:
+                # Starting_C [W1 W2 ... Wn]
+                c_code = st
+                for width in second:
                     try:
-                        char_code_width[str(ord(char_code_map[chr(st)]))] = y
+                        conversion_char = map_dict[chr(c_code)]
+                        char_code_width[ord(conversion_char)] = width
                     except Exception:
-                        char_code_width[str(st)] = y
-                    st += 1
+                        pass
+                    c_code += 1
                 w = w[2:]
             else:
                 logger_warning(
@@ -527,30 +453,60 @@ def compute_font_width(
                 )
                 break
         try:
-            char_width = char_code_width[str(char_code)]
+            sp_width = char_code_width[sp]
         except Exception:
-            char_width = (
-                char_code_width["default"]
-            )
+            sp_width = (
+                char_code_width["default"] / 2.0
+            )  # if using default we consider space will be only half size
     elif "/Widths" in ft:
         w = list(ft["/Widths"])
+        if "/FontDescriptor" in ft and "/MissingWidth" in cast(
+            DictionaryObject, ft["/FontDescriptor"]
+        ):
+            char_code_width["default"] = ft["/FontDescriptor"]["/MissingWidth"].get_object()  # type: ignore
+        else:
+            # will consider width of char as avg(width)
+            m = 0
+            cpt = 0
+            for xx in w:
+                xx = xx.get_object()
+                if xx > 0:
+                    m += xx
+                    cpt += 1
+            char_code_width["default"] = m / max(1, cpt)
         try:
             st = cast(int, ft["/FirstChar"])
-            en: int = cast(int, ft["/LastChar"])
-            if st > char_code or en < char_code:
-                raise Exception("Not in range")
-            if w[char_code - st].get_object() == 0:
-                raise Exception("null width")
-            char_width = w[char_code - st].get_object()
+            en = cast(int, ft["/LastChar"])
+            if st > sp or en < sp:
+                raise Exception("There is no space character code in the font range")
+            for c_code in range(st, en + 1):
+                width = w[c_code - st].get_object()
+                if width == 0:
+                    raise Exception("The PDF structure is invalid. The array is too "
+                                    "small for the specified font width.")
+                char_code_width[c_code] = width
         except Exception:
-            if "/FontDescriptor" in ft and "/MissingWidth" in cast(
-                DictionaryObject, ft["/FontDescriptor"]
-            ):
-                char_width = ft["/FontDescriptor"]["/MissingWidth"].get_object()  # type: ignore
-            else:
-                return font_width
-    if is_null_or_none(char_width):
-        char_width = char_code_width["default"]
+            if "default" in char_code_width:
+                sp_width = char_code_width["default"]
+        if not sp_width:
+            sp_width = char_code_width[sp].get_object()
+    if is_null_or_none(sp_width):
+        sp_width = 0.0
+    return sp_width, char_code_width
+
+
+def compute_font_width(
+    font_width_map: Dict[Any, float],
+    char_code: int
+) -> float:
+    char_width: float = 0.0
+    try:
+        char_width = font_width_map[char_code]
+    except Exception:
+        char_width = (
+            font_width_map["default"]
+        )
+
     return char_width
 
 
