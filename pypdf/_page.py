@@ -1968,7 +1968,7 @@ class PageObject(DictionaryObject):
                     visitor_text,
                 )
                 font_width_map = build_font_width_map(cmap[3], cmap[1])
-                _font_widths = self._get_font_widths(add_text, font_width_map, _space_width)
+                _font_widths = self._get_font_widths(add_text, font_width_map, _space_width * 2.0)
             else:
                 return None
             if check_crlf_space:
