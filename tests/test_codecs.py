@@ -26,3 +26,18 @@ def test_encode_decode(data):
     compressed_data = codec.encode(data)
     decoded = codec.decode(compressed_data)
     assert decoded == data
+
+
+@pytest.mark.parametrize(
+    ("plain", "expected_encoded"),
+    [
+        (b"", b"\x80@@"),
+        (b"A", b"\x80\x10` "),
+        (b"AAAAAA", b"\x80\x10`P8\x08"),
+        (b"Hello, World!", b"\x80\x12\x0c\xa6\xc3a\xbcX +\x9b\xceF\xc3 \x86\x02"),
+    ],
+)
+def test_encode_lzw(plain, expected_encoded):
+    codec = LzwCodec()
+    actual_encoded = codec.encode(plain)
+    assert actual_encoded == expected_encoded
