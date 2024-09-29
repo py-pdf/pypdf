@@ -155,4 +155,4 @@ class LzwCodec(Codec):
         """Decode data using LZW."""
         from .filters import LZWDecode
 
-        return LZWDecode._decodeb(data)
+        return LZWDecode.Decoder(data).decode()
