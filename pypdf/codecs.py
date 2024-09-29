@@ -1,9 +1,43 @@
-"""Lempel-Ziv-Welch (LZW) adaptive compression method."""
+"""
+This module is for codecs only.
 
+While the codec implementation can contain details of the PDF specification,
+the module should not do any PDF parsing.
+"""
+
+from abc import ABC, abstractmethod
 from typing import Dict, List
 
 
-class LzwCodec:
+class Codec(ABC):
+    """Abstract base class for all codecs."""
+
+    @abstractmethod
+    def encode(self, data: bytes) -> bytes:
+        """
+        Encode the input data.
+
+        Args:
+            data: Data to encode.
+
+        Returns:
+            Encoded data.
+        """
+
+    @abstractmethod
+    def decode(self, data: bytes) -> bytes:
+        """
+        Decode the input data.
+
+        Args:
+            data: Data to decode.
+
+        Returns:
+            Decoded data.
+        """
+
+
+class LzwCodec(Codec):
     """Lempel-Ziv-Welch (LZW) adaptive compression codec."""
 
     CLEAR_TABLE_MARKER = 256  # Special code to indicate table reset
@@ -116,3 +150,9 @@ class LzwCodec:
             output.append((buffer << (8 - bits_in_buffer)) & 0xFF)
 
         return bytes(output)
+
+    def decode(self, data: bytes) -> bytes:
+        """Decode data using LZW."""
+        from .filters import LZWDecode
+
+        return LZWDecode._decodeb(data)

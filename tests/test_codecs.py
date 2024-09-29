@@ -2,8 +2,7 @@
 
 import pytest
 
-from pypdf.filters import LZWDecode
-from pypdf.lzw import LzwCodec
+from pypdf.codecs import LzwCodec
 
 test_cases = [
     pytest.param(b"", id="Empty input"),
@@ -25,10 +24,5 @@ def test_encode_decode(data):
     """Decoder and encoder match."""
     codec = LzwCodec()
     compressed_data = codec.encode(data)
-    decoded = LZWDecode._decodeb(compressed_data)
-    msg = f"len(data)={len(data)}, len(decoded)={len(decoded)}, len(compressed_data)={len(compressed_data)}"
-    if decoded != data:
-        for i in range(len(data)):
-            assert decoded[i] == data[i], msg
-
+    decoded = codec.decode(compressed_data)
     assert decoded == data
