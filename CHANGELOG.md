@@ -16,7 +16,7 @@
 - Repair PDF with invalid Root object (#2880)
 - Continue parsing dictionary object when error is detected (#2872)
 - Merge documents with invalid pages in named destinations (#2857)
-- Tolerate comments(%) in arrays (#2856)
+- Tolerate comments in arrays (#2856)
 
 ### Developer Experience (DEV)
 - Use latest Python version for benchmarking (#2879)
