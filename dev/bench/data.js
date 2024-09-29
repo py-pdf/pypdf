@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1727527893108,
+  "lastUpdate": 1727602630597,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -59075,6 +59075,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.009366374005252105",
             "extra": "mean: 789.9422196000103 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ab21802a7f18b4aff2caa9d37fedf5c60797dd50",
+          "message": "REL: 5.0.1 (#2884)\n\n## Version 5.0.1, 2024-09-29\r\n\r\n### New Features (ENH)\r\n- Add `full` parameter to PdfWriter constructor (#2865)\r\n\r\n### Bug Fixes (BUG)\r\n- Update pyproject.toml with minimum Python version of 3.8 (#2859)\r\n- Cope with unbalanced delimiters in dictionary object (#2878)\r\n- Cope with encoding with too many differences (#2873)\r\n- Missing spaces in extract_text() method (#1328) (#2868)\r\n- Tolerate truncated files and no warning when jumping startxref (#2855)\r\n\r\n### Robustness (ROB)\r\n- Repair PDF with invalid Root object (#2880)\r\n- Continue parsing dictionary object when error is detected (#2872)\r\n- Merge documents with invalid pages in named destinations (#2857)\r\n- Tolerate comments in arrays (#2856)\r\n\r\n### Developer Experience (DEV)\r\n- Use latest Python version for benchmarking (#2879)\r\n\r\n### Maintenance (MAINT)\r\n- Add tests to source distributions (#2874)\r\n- Refactor _update_field_annotation (#2862)\r\n\r\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.0.0...5.0.1)",
+          "timestamp": "2024-09-29T11:34:44+02:00",
+          "tree_id": "07594f17fbf7e18f23f870744360409e5d140a99",
+          "url": "https://github.com/py-pdf/pypdf/commit/ab21802a7f18b4aff2caa9d37fedf5c60797dd50"
+        },
+        "date": 1727602628598,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.67261550539489,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0059660443656313795",
+            "extra": "mean: 374.1653066000026 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.762896862364038,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009495767246218104",
+            "extra": "mean: 78.35211792307571 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24741820608724832,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013382887708130347",
+            "extra": "mean: 4.0417397564 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.86713472919077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008439453987207587",
+            "extra": "mean: 59.28689229412331 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08896454748110848,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03693288654734158",
+            "extra": "mean: 11.240432602799995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2553985801572285,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023334120865347464",
+            "extra": "mean: 796.5597665999894 msec\nrounds: 5"
           }
         ]
       }
