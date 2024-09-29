@@ -479,12 +479,13 @@ def build_font_width_map(
         st = cast(int, ft["/FirstChar"])
         en = cast(int, ft["/LastChar"])
         for c_code in range(st, en + 1):
-            width = w[c_code - st].get_object()
-            if is_null_or_none(width):
+            try:
+                width = w[c_code - st].get_object()
+                font_width_map[c_code] = width
+            except Exception:
                 # The PDF structure is invalid. The array is too small
                 # for the specified font width.
                 pass
-            font_width_map[c_code] = width
     if "defalut" not in font_width_map:
         font_width_map["default"] = default_font_width
     return font_width_map
