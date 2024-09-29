@@ -49,7 +49,7 @@ from typing import (
     overload,
 )
 
-from ._cmap import build_char_map, compute_font_width, compute_space_width, unknown_char_map
+from ._cmap import build_char_map, build_font_width_map, compute_font_width, unknown_char_map
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     OrientationNotFoundError,
@@ -1967,11 +1967,7 @@ class PageObject(DictionaryObject):
                     rtl_dir,
                     visitor_text,
                 )
-                if "San" in add_text:
-                    pass
-                if add_text == "l":
-                    pass
-                _, font_width_map = compute_space_width(cmap[3], 32, cmap[1])
+                font_width_map = build_font_width_map(cmap[3], cmap[1])
                 _font_widths = self._get_font_widths(add_text, font_width_map, _space_width)
             else:
                 return None
