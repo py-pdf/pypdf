@@ -18,9 +18,12 @@
 - Merge documents with invalid pages in named destinations (#2857)
 - Tolerate comments(%) in arrays (#2856)
 
-### Documentation (DOC), Testing (TST), Code Style (STY), Developer Experience (DEV), Maintenance (MAINT)
+### Developer Experience (DEV)
+- Use latest Python version for benchmarking (#2879)
 
-- (#2844), (#2862), (#2863), (#2847), (#2860), (#2867), (#2874), (#2879)
+### Maintenance (MAINT)
+- Add tests to source distributions (#2874)
+- Refactor _update_field_annotation (#2862)
 
 [Full Changelog](https://github.com/py-pdf/pypdf/compare/5.0.0...5.0.1)
 
