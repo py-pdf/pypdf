@@ -137,14 +137,14 @@ def test_iss1943():
 def test_broken_meta_data(pdf_path):
     with open(pdf_path, "rb") as f:
         reader = PdfReader(f)
-        with pytest.raises(
-            PdfReadError,
-            match=(
-                "Trailer not found or does not point to document "
-                "information directory"
-            ),
-        ):
-            reader.metadata
+        assert reader.metadata is None
+
+    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as f:
+        b = f.read(-1)
+    reader = PdfReader(BytesIO(b.replace(b"/Info 2 0 R", b"/Info 2    ")))
+    with pytest.raises(PdfReadError) as exc:
+        reader.metadata
+    assert "does not point to document information directory" in repr(exc)
 
 
 @pytest.mark.parametrize(
@@ -621,7 +621,7 @@ def test_read_unknown_zero_pages(caplog):
     assert normalize_warnings(caplog.text) == warnings
     with pytest.raises(PdfReadError) as exc:
         len(reader.pages)
-    assert exc.value.args[0] == 'Cannot find "/Root" key in trailer'
+    assert exc.value.args[0] == "Invalid object in /Pages"
 
 
 def test_read_encrypted_without_decryption():
@@ -1712,3 +1712,67 @@ def test_unbalanced_brackets_in_dictionary_object(caplog):
     name = "iss2877.pdf"  # reused
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert len(reader.pages) == 43  # note:  /Count = 46 but 3 kids are None
+
+
+@pytest.mark.enable_socket()
+def test_repair_root(caplog):
+    """Cf #2877"""
+    url = "https://github.com/user-attachments/files/17162216/crash-6620e8b1abfe3da639b654595da859b87f985748.pdf"
+    name = "iss2875.pdf"
+
+    b = get_data_from_url(url, name=name)
+    reader = PdfReader(BytesIO(b))
+    assert len(reader.pages) == 1
+    assert all(
+        msg in caplog.text
+        for msg in (
+            "Invalid Root object",
+            'Searching object with "/Catalog" key',
+            "Root found at IndirectObject(2, 0,",
+        )
+    )
+
+    # no /Root Entry
+    reader = PdfReader(BytesIO(b.replace(b"/Root", b"/Roo ")))
+    caplog.clear()
+    assert len(reader.pages) == 1
+    assert all(
+        msg in caplog.text
+        for msg in (
+            'Cannot find "/Root" key in trailer',
+            'Searching object with "/Catalog" key',
+            "Root found at IndirectObject(2, 0,",
+        )
+    )
+
+    # Invalid /Root Entry
+    caplog.clear()
+    reader = PdfReader(
+        BytesIO(
+            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+        )
+    )
+    with pytest.raises(PdfReadError):
+        len(reader.pages)
+    assert all(
+        msg in caplog.text
+        for msg in (
+            "Invalid Root object in trailer",
+            'Searching object with "/Catalog" key',
+        )
+    )
+
+    # Invalid /Root Entry + error in get_object
+    caplog.clear()
+    b = b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+    b = b[:5124] + b"A" + b[5125:]
+    reader = PdfReader(BytesIO(b))
+    with pytest.raises(PdfReadError):
+        len(reader.pages)
+    assert all(
+        msg in caplog.text
+        for msg in (
+            "Invalid Root object in trailer",
+            'Searching object with "/Catalog" key',
+        )
+    )

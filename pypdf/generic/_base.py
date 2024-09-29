@@ -879,5 +879,6 @@ def is_null_or_none(x: Any) -> TypeGuard[Union[None, NullObject, IndirectObject]
         True if x is None or NullObject.
     """
     return x is None or (
-        isinstance(x, PdfObject) and isinstance(x.get_object(), NullObject)
+        isinstance(x, PdfObject)
+        and (x.get_object() is None or isinstance(x.get_object(), NullObject))
     )
