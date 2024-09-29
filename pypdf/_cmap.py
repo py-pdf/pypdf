@@ -82,7 +82,10 @@ def build_char_map_from_dict(
         except Exception:
             sp = space_code.encode("utf-16-be")
             sp = sp[0] + 256 * sp[1]
-        sp = ord(map_dict[chr(sp)])
+        try:
+            sp = ord(map_dict[chr(sp)])
+        except Exception:
+            pass
     else:
         sp = space_code
     font_width_map = build_font_width_map(ft, map_dict)
@@ -401,7 +404,7 @@ def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) ->
 
 
 def build_font_width_map(
-    ft: DictionaryObject, map_dict: Dict[Any, Any]
+    ft: Union[DictionaryObject, None], map_dict: Dict[Any, Any]
 ) -> Dict[Any, float]:
     font_width_map: Dict[Any, float] = {}
     st: int = 0
@@ -488,6 +491,8 @@ def compute_space_width(
 ) -> float:
     try:
         sp_width = font_width_map[sp]
+        if sp_width == 0:
+            raise Exception("Zero width")
     except Exception:
         if default_space_width:
             sp_width = default_space_width

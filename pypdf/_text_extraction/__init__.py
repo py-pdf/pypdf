@@ -137,10 +137,11 @@ def crlf_space_check(
                         cmap[3],
                         font_size,
                     )
-                    text = ""
+                text = ""
         elif (
             (math.sqrt(moved_width * moved_width + moved_height * moved_height)
                 > (spacewidth + font_width) * f)
+            and (moved_width >= 0)  # The string are not back.
             and (output + text)[-1] != " "
         ):
             text += " "
