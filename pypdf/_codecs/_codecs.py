@@ -153,6 +153,6 @@ class LzwCodec(Codec):
 
     def decode(self, data: bytes) -> bytes:
         """Decode data using LZW."""
-        from .filters import LZWDecode
+        from ..filters import LZWDecode
 
         return LZWDecode.Decoder(data).decode()

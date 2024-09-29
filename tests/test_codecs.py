@@ -2,7 +2,7 @@
 
 import pytest
 
-from pypdf.codecs import LzwCodec
+from pypdf._codecs._codecs import LzwCodec
 
 test_cases = [
     pytest.param(b"", id="Empty input"),
