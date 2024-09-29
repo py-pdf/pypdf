@@ -86,11 +86,11 @@ def build_char_map_from_dict(
     else:
         sp = space_code
     font_width_map = build_font_width_map(ft, map_dict)
-    sp_width = compute_space_width(font_width_map, sp)
+    half_space_width = compute_space_width(font_width_map, sp) / 2.0
 
     return (
         font_type,
-        sp_width,
+        half_space_width,
         encoding,
         # https://github.com/python/mypy/issues/4374
         map_dict
@@ -408,7 +408,7 @@ def build_font_width_map(
     try:
         default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"])] * 2
     except Exception:
-        default_font_width = 2000.0  # Default font width is 0.2
+        default_font_width = 1000.0  # Default font width is 0.1
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
         # p271 PDF32000_2008 9.7.4.3 Glyph Metrics in CIDFonts
         # Widths for a CIDFont are defined using the DW and W entries.
