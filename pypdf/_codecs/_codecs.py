@@ -48,7 +48,7 @@ class LzwCodec(Codec):
 
     def _initialize_encoding_table(self) -> None:
         """Initialize the encoding table and state to initial conditions."""
-        self.table: Dict[bytes, int] = {bytes([i]): i for i in range(256)}
+        self.encoding_table: Dict[bytes, int] = {bytes([i]): i for i in range(256)}
         self.next_code = self.EOD_MARKER + 1
         self.bits_per_code = self.INITIAL_BITS_PER_CODE
         self.max_code_value = (1 << self.bits_per_code) - 1
@@ -79,16 +79,16 @@ class LzwCodec(Codec):
         for byte in data:
             next_sequence = current_sequence + bytes([byte])
 
-            if next_sequence in self.table:
+            if next_sequence in self.encoding_table:
                 # Extend current sequence if already in the table
                 current_sequence = next_sequence
             else:
                 # Output code for the current sequence
-                result_codes.append(self.table[current_sequence])
+                result_codes.append(self.encoding_table[current_sequence])
 
                 # Add the new sequence to the table if there's room
                 if self.next_code <= (1 << self.MAX_BITS_PER_CODE) - 1:
-                    self.table[next_sequence] = self.next_code
+                    self.encoding_table[next_sequence] = self.next_code
                     self._increase_next_code()
                 else:
                     # If the table is full, emit a clear-table command
@@ -100,7 +100,7 @@ class LzwCodec(Codec):
 
         # Ensure everything actually is encoded
         if current_sequence:
-            result_codes.append(self.table[current_sequence])
+            result_codes.append(self.encoding_table[current_sequence])
         result_codes.append(self.EOD_MARKER)
 
         return self._pack_codes_into_bytes(result_codes)
@@ -139,7 +139,7 @@ class LzwCodec(Codec):
 
         return bytes(output)
 
-    def _next_code(self, data: bytes) -> int:
+    def _next_code_encode(self, data: bytes) -> int:
         self.bitpos: int
         self._next_bits: int
 
@@ -168,13 +168,19 @@ class LzwCodec(Codec):
 
         return value
 
-    def next_code_decode(self) -> int:
+    def _initialize_decoding_table(self) -> None:
+        self.decoding_table = [bytes([i]) for i in range(self.CLEAR_TABLE_MARKER)] + [
+            b""
+        ] * (4096 - self.CLEAR_TABLE_MARKER)
+        self._table_index = self.EOD_MARKER + 1
+        self._bits_to_get = 9
+
+    def _next_code_decode(self, data: bytes) -> int:
         self._next_data: int
-        assert self._data
         try:
             while self._next_bits < self._bits_to_get:
                 self._next_data = (self._next_data << 8) | (
-                    self._data[self._byte_pointer] & 0xFF
+                    data[self._byte_pointer] & 0xFF
                 )
                 self._byte_pointer += 1
                 self._next_bits += 8
@@ -186,7 +192,7 @@ class LzwCodec(Codec):
 
             return code
         except IndexError:
-            return 257  # End of data
+            return self.EOD_MARKER
 
     def decode(self, data: bytes) -> bytes:
         """
@@ -194,8 +200,6 @@ class LzwCodec(Codec):
         https://github.com/empira/PDFsharp/blob/master/src/foundation/src/PDFsharp/src/PdfSharp/Pdf.Filters/LzwDecode.cs
         """
         self._and_table = [511, 1023, 2047, 4095]
-        self._string_table: list[bytes]
-        self._data = None
         self._table_index = 0
         self._bits_to_get = 9
         self._byte_pointer = 0
@@ -207,49 +211,45 @@ class LzwCodec(Codec):
 
         output_stream = io.BytesIO()
 
-        self.initialize_decoding_table()
-        self._data = data
+        self._initialize_decoding_table()
         self._byte_pointer = 0
         self._next_data = 0
         self._next_bits = 0
-        old_code = 256  # Start with a reset code
+        old_code = self.CLEAR_TABLE_MARKER
 
         while True:
-            code = self.next_code_decode()
-            if code == 257:  # End of data code
+            code = self._next_code_decode(data)
+            if code == self.EOD_MARKER:
                 break
 
-            if code == 256:  # Clear code
-                self.initialize_decoding_table()
-                code = self.next_code_decode()
-                if code == 257:
+            if code == self.CLEAR_TABLE_MARKER:
+                self._initialize_decoding_table()
+                code = self._next_code_decode(data)
+                if code == self.EOD_MARKER:
                     break
-                output_stream.write(self._string_table[code])
+                output_stream.write(self.decoding_table[code])
                 old_code = code
             elif code < self._table_index:
-                string = self._string_table[code]
+                string = self.decoding_table[code]
                 output_stream.write(string)
-                if old_code != 256:
-                    self.add_entry_decode(self._string_table[old_code], string[0])
+                if old_code != self.CLEAR_TABLE_MARKER:
+                    self._add_entry_decode(self.decoding_table[old_code], string[0])
                 old_code = code
             else:
-                # Special case: code not in the table
-                string = self._string_table[old_code] + self._string_table[old_code][:1]
+                # The code not in the table and not one of the special codes
+                string = (
+                    self.decoding_table[old_code] + self.decoding_table[old_code][:1]
+                )
                 output_stream.write(string)
-                self.add_entry_decode(self._string_table[old_code], string[0])
+                self._add_entry_decode(self.decoding_table[old_code], string[0])
                 old_code = code
 
         output = output_stream.getvalue()
         return output
 
-    def initialize_decoding_table(self) -> None:
-        self._string_table = [bytes([i]) for i in range(256)] + [b""] * (4096 - 256)
-        self._table_index = 258
-        self._bits_to_get = 9
-
-    def add_entry_decode(self, old_string: bytes, new_char: int) -> None:
+    def _add_entry_decode(self, old_string: bytes, new_char: int) -> None:
         new_string = old_string + bytes([new_char])
-        self._string_table[self._table_index] = new_string
+        self.decoding_table[self._table_index] = new_string
         self._table_index += 1
 
         # Update the number of bits to get based on the table index
