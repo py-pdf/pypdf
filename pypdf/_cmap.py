@@ -486,7 +486,7 @@ def build_font_width_map(
                 # The PDF structure is invalid. The array is too small
                 # for the specified font width.
                 pass
-    if "default" not in font_width_map:
+    if is_null_or_none(font_width_map.get("default")):
         font_width_map["default"] = default_font_width
     return font_width_map
 
