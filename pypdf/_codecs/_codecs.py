@@ -139,35 +139,6 @@ class LzwCodec(Codec):
 
         return bytes(output)
 
-    def _next_code_encode(self, data: bytes) -> int:
-        self.bitpos: int
-        self._next_bits: int
-
-        fillbits = self.bits_per_code
-        value = 0
-
-        while fillbits > 0:
-            if self._byte_pointer >= len(data):
-                return -1
-
-            nextbits = data[self._byte_pointer]
-            bits_available = 8 - self.bitpos
-            bits_to_use = min(bits_available, fillbits)
-
-            value |= (
-                (nextbits >> (8 - self.bitpos - bits_to_use))
-                & (0xFF >> (8 - bits_to_use))
-            ) << (fillbits - bits_to_use)
-
-            fillbits -= bits_to_use
-            self.bitpos += bits_to_use
-
-            if self.bitpos == 8:
-                self.bitpos = 0
-                self._byte_pointer += 1
-
-        return value
-
     def _initialize_decoding_table(self) -> None:
         self.decoding_table = [bytes([i]) for i in range(self.CLEAR_TABLE_MARKER)] + [
             b""
