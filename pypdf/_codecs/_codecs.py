@@ -5,6 +5,7 @@ While the codec implementation can contain details of the PDF specification,
 the module should not do any PDF parsing.
 """
 
+import io
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
@@ -138,8 +139,123 @@ class LzwCodec(Codec):
 
         return bytes(output)
 
-    def decode(self, data: bytes) -> bytes:
-        """Decode data using LZW."""
-        from ..filters import LZWDecode
+    def _next_code(self, data: bytes) -> int:
+        self.bitpos: int
+        self._next_bits: int
 
-        return LZWDecode.Decoder(data).decode()
+        fillbits = self.bits_per_code
+        value = 0
+
+        while fillbits > 0:
+            if self._byte_pointer >= len(data):
+                return -1
+
+            nextbits = data[self._byte_pointer]
+            bits_available = 8 - self.bitpos
+            bits_to_use = min(bits_available, fillbits)
+
+            value |= (
+                (nextbits >> (8 - self.bitpos - bits_to_use))
+                & (0xFF >> (8 - bits_to_use))
+            ) << (fillbits - bits_to_use)
+
+            fillbits -= bits_to_use
+            self.bitpos += bits_to_use
+
+            if self.bitpos == 8:
+                self.bitpos = 0
+                self._byte_pointer += 1
+
+        return value
+
+    def next_code_decode(self) -> int:
+        self._next_data: int
+        assert self._data
+        try:
+            while self._next_bits < self._bits_to_get:
+                self._next_data = (self._next_data << 8) | (
+                    self._data[self._byte_pointer] & 0xFF
+                )
+                self._byte_pointer += 1
+                self._next_bits += 8
+
+            code = (
+                self._next_data >> (self._next_bits - self._bits_to_get)
+            ) & self._and_table[self._bits_to_get - 9]
+            self._next_bits -= self._bits_to_get
+
+            return code
+        except IndexError:
+            return 257  # End of data
+
+    def decode(self, data: bytes) -> bytes:
+        """
+        The following code was converted to Python from the following code:
+        https://github.com/empira/PDFsharp/blob/master/src/foundation/src/PDFsharp/src/PdfSharp/Pdf.Filters/LzwDecode.cs
+        """
+        self._and_table = [511, 1023, 2047, 4095]
+        self._string_table: list[bytes]
+        self._data = None
+        self._table_index = 0
+        self._bits_to_get = 9
+        self._byte_pointer = 0
+        self._next_data = 0
+        self._next_bits = 0
+
+        if data[0] == 0x00 and data[1] == 0x01:
+            raise Exception("LZW flavor not supported.")
+
+        output_stream = io.BytesIO()
+
+        self.initialize_decoding_table()
+        self._data = data
+        self._byte_pointer = 0
+        self._next_data = 0
+        self._next_bits = 0
+        old_code = 256  # Start with a reset code
+
+        while True:
+            code = self.next_code_decode()
+            if code == 257:  # End of data code
+                break
+
+            if code == 256:  # Clear code
+                self.initialize_decoding_table()
+                code = self.next_code_decode()
+                if code == 257:
+                    break
+                output_stream.write(self._string_table[code])
+                old_code = code
+            elif code < self._table_index:
+                string = self._string_table[code]
+                output_stream.write(string)
+                if old_code != 256:
+                    self.add_entry_decode(self._string_table[old_code], string[0])
+                old_code = code
+            else:
+                # Special case: code not in the table
+                string = self._string_table[old_code] + self._string_table[old_code][:1]
+                output_stream.write(string)
+                self.add_entry_decode(self._string_table[old_code], string[0])
+                old_code = code
+
+        output = output_stream.getvalue()
+        return output
+
+    def initialize_decoding_table(self) -> None:
+        self._string_table = [bytes([i]) for i in range(256)] + [b""] * (4096 - 256)
+        self._table_index = 258
+        self._bits_to_get = 9
+
+    def add_entry_decode(self, old_string: bytes, new_char: int) -> None:
+        new_string = old_string + bytes([new_char])
+        self._string_table[self._table_index] = new_string
+        self._table_index += 1
+
+        # Update the number of bits to get based on the table index
+        if self._table_index == 511:
+            self._bits_to_get = 10
+        elif self._table_index == 1023:
+            self._bits_to_get = 11
+        elif self._table_index == 2047:
+            self._bits_to_get = 12

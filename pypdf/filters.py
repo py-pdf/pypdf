@@ -41,12 +41,11 @@ from base64 import a85decode
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+from ._codecs._codecs import LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
-    deprecate,
     deprecation_no_replacement,
     logger_warning,
-    ord_,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
 from .constants import FilterTypeAbbreviations as FTA
@@ -365,131 +364,6 @@ class RunLengthDecode:
         return b"".join(lst)
 
 
-class LZWDecode:
-    """
-    Taken from:
-
-    https://github.com/katjas/PDFrenderer/blob/master/src/com/sun/pdfview/decode/LZWDecode.java
-    """
-
-    class Decoder:
-        STOP = 257
-        CLEARDICT = 256
-
-        def __init__(self, data: bytes) -> None:
-            self.data = data
-            self.bytepos = 0
-            self.bitpos = 0
-            self.dict = [struct.pack("B", i) for i in range(256)] + [b""] * (4096 - 256)
-            self.reset_dict()
-
-        def reset_dict(self) -> None:
-            self.dictlen = 258
-            self.bitspercode = 9
-
-        def next_code(self) -> int:
-            fillbits = self.bitspercode
-            value = 0
-            while fillbits > 0:
-                if self.bytepos >= len(self.data):
-                    return -1
-                nextbits = ord_(self.data[self.bytepos])
-                bitsfromhere = 8 - self.bitpos
-                bitsfromhere = min(bitsfromhere, fillbits)
-                value |= (
-                    (nextbits >> (8 - self.bitpos - bitsfromhere))
-                    & (0xFF >> (8 - bitsfromhere))
-                ) << (fillbits - bitsfromhere)
-                fillbits -= bitsfromhere
-                self.bitpos += bitsfromhere
-                if self.bitpos >= 8:
-                    self.bitpos = 0
-                    self.bytepos = self.bytepos + 1
-            return value
-
-        def decode(self) -> bytes:
-            """
-            TIFF 6.0 specification explains in sufficient details the steps to
-            implement the LZW encode() and decode() algorithms.
-
-            algorithm derived from:
-            http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
-            and the PDFReference
-
-            Raises:
-              PdfReadError: If the stop code is missing
-            """
-            cW = self.CLEARDICT
-            baos = b""
-            while True:
-                pW = cW
-                cW = self.next_code()
-                if cW == -1:
-                    raise PdfReadError("Missed the stop code in LZWDecode!")
-                if cW == self.STOP:
-                    break
-                elif cW == self.CLEARDICT:
-                    self.reset_dict()
-                elif pW == self.CLEARDICT:
-                    baos += self.dict[cW]
-                else:
-                    if cW < self.dictlen:
-                        baos += self.dict[cW]
-                        p = self.dict[pW] + self.dict[cW][0:1]
-                        self.dict[self.dictlen] = p
-                        self.dictlen += 1
-                    else:
-                        p = self.dict[pW] + self.dict[pW][0:1]
-                        baos += p
-                        self.dict[self.dictlen] = p
-                        self.dictlen += 1
-                    if (
-                        self.dictlen >= (1 << self.bitspercode) - 1
-                        and self.bitspercode < 12
-                    ):
-                        self.bitspercode += 1
-            return baos
-
-    @staticmethod
-    def _decodeb(
-        data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
-        **kwargs: Any,
-    ) -> bytes:
-        """
-        Decode an LZW encoded data stream.
-
-        Args:
-          data: ``bytes`` or ``str`` text to decode.
-          decode_parms: a dictionary of parameter values.
-
-        Returns:
-          decoded data.
-        """
-        # decode_parms is unused here
-        return LZWDecode.Decoder(data).decode()
-
-    @staticmethod
-    def decode(
-        data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
-        **kwargs: Any,
-    ) -> str:  # deprecated
-        """
-        Decode an LZW encoded data stream.
-
-        Args:
-          data: ``bytes`` or ``str`` text to decode.
-          decode_parms: a dictionary of parameter values.
-
-        Returns:
-          decoded data.
-        """
-        # decode_parms is unused here
-        deprecate("LZWDecode.decode will return bytes instead of str in pypdf 6.0.0")
-        return LZWDecode.Decoder(data).decode().decode("latin-1")
-
-
 class ASCII85Decode:
     """Decodes string ASCII85-encoded data into a byte format."""
 
@@ -698,7 +572,7 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
             elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
                 data = RunLengthDecode.decode(data)
             elif filter_type in (FT.LZW_DECODE, FTA.LZW):
-                data = LZWDecode._decodeb(data, params)
+                data = LzwCodec().decode(data)
             elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
                 data = ASCII85Decode.decode(data)
             elif filter_type == FT.DCT_DECODE:
