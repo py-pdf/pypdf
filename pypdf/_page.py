@@ -1759,6 +1759,7 @@ class PageObject(DictionaryObject):
                 str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject
             ],
         ] = {}
+        font_width_maps: Dict[str, Dict[str, float]] = {}
         try:
             objr = obj
             while NameObject(PG.RESOURCES) not in objr:
@@ -1822,10 +1823,12 @@ class PageObject(DictionaryObject):
             nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, memo_cm, memo_tm
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
             nonlocal orientations, rtl_dir, visitor_text, output, text, _font_widths
+            nonlocal font_width_maps
             global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
             add_text: str = ""
             check_crlf_space: bool = False
+            font_widths: float = 0.0
             # Table 5.4 page 405
             if operator == b"BT":
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
@@ -1939,6 +1942,8 @@ class PageObject(DictionaryObject):
                 ty = float(operands[1])
                 tm_matrix[4] += tx * tm_matrix[0] + ty * tm_matrix[2]
                 tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
+                font_widths = current_fontwidths()
+                _font_widths = 0.0
             elif operator == b"Tm":
                 check_crlf_space = True
                 tm_matrix = [
@@ -1967,8 +1972,10 @@ class PageObject(DictionaryObject):
                     rtl_dir,
                     visitor_text,
                 )
-                font_width_map = build_font_width_map(cmap[3], cmap[1])
-                _font_widths = self._get_font_widths(add_text, font_width_map, _space_width * 2.0)
+                if cmap[2] not in font_width_maps:
+                    font_width_maps[cmap[2]] = build_font_width_map(cmap[3], cmap[1])
+                font_width_map = font_width_maps[cmap[2]]
+                _font_widths += self._get_font_widths(add_text, font_width_map, _space_width * 2.0)
             else:
                 return None
             if check_crlf_space:
@@ -1984,7 +1991,7 @@ class PageObject(DictionaryObject):
                         font_size,
                         visitor_text,
                         current_spacewidth(),
-                        current_fontwidths()
+                        font_widths
                     )
                     if text == "":
                         memo_cm = cm_matrix.copy()
