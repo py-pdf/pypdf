@@ -206,9 +206,6 @@ class LzwCodec(Codec):
         self._next_data = 0
         self._next_bits = 0
 
-        if data[0] == 0x00 and data[1] == 0x01:
-            raise Exception("LZW flavor not supported.")
-
         output_stream = io.BytesIO()
 
         self._initialize_decoding_table()
