@@ -496,6 +496,7 @@ class PageObject(DictionaryObject):
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
+        self._font_width_maps: Dict[str, Dict[str, float]] = {}
 
     def hash_bin(self) -> int:
         """
@@ -1718,11 +1719,17 @@ class PageObject(DictionaryObject):
 
     def _get_font_widths(
         self,
+        cmap: Tuple[
+            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+        ],
         add_text: str,
-        font_width_map: Dict[Any, float],
         default_width: float
     ) -> float:
         font_widths: float = 0
+        font_name: str = cmap[2]
+        if font_name not in self._font_width_maps:
+            self._font_width_maps[font_name] = build_font_width_map(cmap[3], cmap[1])
+        font_width_map: Dict[Any, float] = self._font_width_maps[font_name]
         if add_text:
             for char in add_text:
                 if font_width_map:
@@ -1759,7 +1766,6 @@ class PageObject(DictionaryObject):
                 str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject
             ],
         ] = {}
-        font_width_maps: Dict[str, Dict[str, float]] = {}
         try:
             objr = obj
             while NameObject(PG.RESOURCES) not in objr:
@@ -1823,10 +1829,8 @@ class PageObject(DictionaryObject):
             nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, memo_cm, memo_tm
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
             nonlocal orientations, rtl_dir, visitor_text, output, text, _font_widths
-            nonlocal font_width_maps
             global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
-            add_text: str = ""
             check_crlf_space: bool = False
             font_widths: float = 0.0
             # Table 5.4 page 405
@@ -1959,7 +1963,6 @@ class PageObject(DictionaryObject):
             elif operator == b"T*":
                 check_crlf_space = True
                 tm_matrix[5] -= TL
-
             elif operator == b"Tj":
                 check_crlf_space = True
                 text, rtl_dir, add_text = handle_tj(
@@ -1974,10 +1977,7 @@ class PageObject(DictionaryObject):
                     rtl_dir,
                     visitor_text,
                 )
-                if cmap[2] not in font_width_maps:
-                    font_width_maps[cmap[2]] = build_font_width_map(cmap[3], cmap[1])
-                font_width_map = font_width_maps[cmap[2]]
-                _font_widths += self._get_font_widths(add_text, font_width_map, _space_width * 2.0)
+                _font_widths += self._get_font_widths(cmap, add_text, _space_width * 2.0)
             else:
                 return None
             if check_crlf_space:
@@ -2074,7 +2074,6 @@ class PageObject(DictionaryObject):
                     text = ""
                     memo_cm = cm_matrix.copy()
                     memo_tm = tm_matrix.copy()
-
             else:
                 process_operation(operator, operands)
             if visitor_operand_after is not None:
