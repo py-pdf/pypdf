@@ -85,7 +85,7 @@ def build_char_map_from_dict(
             sp = sp[0] + 256 * sp[1]
         try:
             sp = ord(map_dict[chr(sp)])
-        except Exception:
+        except KeyError:
             pass
     else:
         sp = space_code
@@ -439,7 +439,7 @@ def build_font_width_map(
                     try:
                         conversion_char = map_dict[chr(c_code)]
                         font_width_map[ord(conversion_char)] = w[2]
-                    except Exception:
+                    except KeyError:
                         pass
                 w = w[3:]
             elif isinstance(second, list):
@@ -449,7 +449,7 @@ def build_font_width_map(
                     try:
                         conversion_char = map_dict[chr(c_code)]
                         font_width_map[ord(conversion_char)] = width
-                    except Exception:
+                    except KeyError:
                         pass
                     c_code += 1
                 w = w[2:]
@@ -481,7 +481,7 @@ def build_font_width_map(
             try:
                 width = w[c_code - st].get_object()
                 font_width_map[c_code] = width
-            except Exception:
+            except KeyError:
                 # The PDF structure is invalid. The array is too small
                 # for the specified font width.
                 pass
@@ -496,8 +496,8 @@ def compute_space_width(
     try:
         sp_width = font_width_map[sp]
         if sp_width == 0:
-            raise Exception("Zero width")
-    except Exception:
+            raise ValueError("Zero width")
+    except ValueError:
         sp_width = (
             font_width_map["default"] / 2.0
         )  # if using default we consider space will be only half size
@@ -512,7 +512,7 @@ def compute_font_width(
     char_width: float = 0.0
     try:
         char_width = font_width_map[char_code]
-    except Exception:
+    except KeyError:
         char_width = (
             font_width_map["default"]
         )
