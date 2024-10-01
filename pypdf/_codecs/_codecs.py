@@ -235,7 +235,7 @@ class LzwCodec(Codec):
                     self._add_entry_decode(self.decoding_table[old_code], string[0])
                 old_code = code
             else:
-                # The code not in the table and not one of the special codes
+                # The code is not in the table and not one of the special codes
                 string = (
                     self.decoding_table[old_code] + self.decoding_table[old_code][:1]
                 )
