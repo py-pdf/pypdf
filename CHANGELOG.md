@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## Version 5.0.1, 2024-09-29
+
+### New Features (ENH)
+- Add `full` parameter to PdfWriter constructor (#2865)
+
+### Bug Fixes (BUG)
+- Update pyproject.toml with minimum Python version of 3.8 (#2859)
+- Cope with unbalanced delimiters in dictionary object (#2878)
+- Cope with encoding with too many differences (#2873)
+- Missing spaces in extract_text() method (#1328) (#2868)
+- Tolerate truncated files and no warning when jumping startxref (#2855)
+
+### Robustness (ROB)
+- Repair PDF with invalid Root object (#2880)
+- Continue parsing dictionary object when error is detected (#2872)
+- Merge documents with invalid pages in named destinations (#2857)
+- Tolerate comments in arrays (#2856)
+
+### Developer Experience (DEV)
+- Use latest Python version for benchmarking (#2879)
+
+### Maintenance (MAINT)
+- Add tests to source distributions (#2874)
+- Refactor _update_field_annotation (#2862)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.0.0...5.0.1)
+
 ## Version 5.0.0, 2024-09-15
 
 This version drops support for Python 3.7 (not maintained since July 2023), PdfMerger (use PdfWriter instead) and AnnotationBuilder (use annotations instead).
