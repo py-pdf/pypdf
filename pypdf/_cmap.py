@@ -421,7 +421,7 @@ def build_font_width_map(
         # Widths for a CIDFont are defined using the DW and W entries.
         # DW2 and W2 are for vertical use. Vertical type is not implemented.
         ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
-        w: List[PdfObject] = []
+        w: List[Union[int, PdfObject]] = []
         try:
             font_width_map["default"] = cast(float, ft1["/DW"])
         except Exception:
@@ -483,7 +483,11 @@ def build_font_width_map(
         en = cast(int, ft["/LastChar"])
         for c_code in range(st, en + 1):
             try:
-                width = w[c_code - st].get_object()
+                width_obj = w[c_code - st].get_object()
+                if is_null_or_none(width_obj):
+                    width = 0.0
+                else:
+                    width = float(width_obj)
                 font_width_map[chr(c_code)] = width
             except IndexError:
                 # The PDF structure is invalid. The array is too small
@@ -495,10 +499,10 @@ def build_font_width_map(
 
 
 def compute_space_width(
-    font_width_map: Dict[Any, float], sp: int
+    font_width_map: Dict[Any, float], space_char: str
 ) -> float:
     try:
-        sp_width = font_width_map[sp]
+        sp_width = font_width_map[space_char]
         if sp_width == 0:
             raise ValueError("Zero width")
     except (KeyError, ValueError):
