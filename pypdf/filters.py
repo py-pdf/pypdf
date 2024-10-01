@@ -388,6 +388,7 @@ class LZWDecode:
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
 
             and the PDFReference
+
             Raises:
               PdfReadError: If the stop code is missing
             """
