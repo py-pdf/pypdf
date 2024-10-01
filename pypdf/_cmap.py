@@ -486,7 +486,7 @@ def build_font_width_map(
                 # for the specified font width.
                 pass
     if is_null_or_none(font_width_map.get("default")):
-        font_width_map["default"] = 0.0
+        font_width_map["default"] = default_font_width if default_font_width else 0.0
     return font_width_map
 
 
