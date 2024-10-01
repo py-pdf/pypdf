@@ -89,9 +89,8 @@ def build_char_map_from_dict(
             pass
     else:
         sp = space_code
-    font_width_map = build_font_width_map(ft, map_dict)
-    half_space_width = compute_space_width(
-        font_width_map, sp, space_width) / 2.0
+    font_width_map = build_font_width_map(ft, map_dict, space_width * 2.0)
+    half_space_width = compute_space_width(font_width_map, sp) / 2.0
 
     return (
         font_type,
@@ -405,12 +404,11 @@ def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) ->
 
 
 def build_font_width_map(
-    ft: Union[DictionaryObject, None], map_dict: Dict[Any, Any]
+    ft: Union[DictionaryObject, None], map_dict: Dict[Any, Any], default_font_width: float
 ) -> Dict[Any, float]:
     font_width_map: Dict[Any, float] = {}
     st: int = 0
     en: int = 0
-    default_font_width: float = 1000.0  # Default font width is 0.1
     if ft is None:
         font_width_map["default"] = default_font_width
         return font_width_map
@@ -488,24 +486,21 @@ def build_font_width_map(
                 # for the specified font width.
                 pass
     if is_null_or_none(font_width_map.get("default")):
-        font_width_map["default"] = default_font_width
+        font_width_map["default"] = 0.0
     return font_width_map
 
 
 def compute_space_width(
-    font_width_map: Dict[Any, float], sp: int, default_space_width: float
+    font_width_map: Dict[Any, float], sp: int
 ) -> float:
     try:
         sp_width = font_width_map[sp]
         if sp_width == 0:
             raise Exception("Zero width")
     except Exception:
-        if default_space_width:
-            sp_width = default_space_width
-        else:
-            sp_width = (
-                font_width_map["default"] / 2.0
-            )  # if using default we consider space will be only half size
+        sp_width = (
+            font_width_map["default"] / 2.0
+        )  # if using default we consider space will be only half size
 
     return sp_width
 

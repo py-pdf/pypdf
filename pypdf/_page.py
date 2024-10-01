@@ -1729,7 +1729,7 @@ class PageObject(DictionaryObject):
         font_widths: float = 0
         font_name: str = cmap[2]
         if font_name not in self._font_width_maps:
-            self._font_width_maps[font_name] = build_font_width_map(cmap[3], cmap[1])
+            self._font_width_maps[font_name] = build_font_width_map(cmap[3], cmap[1], default_space_width * 2)
         font_width_map: Dict[Any, float] = self._font_width_maps[font_name]
         if add_text:
             for char in add_text:
