@@ -141,7 +141,7 @@ def crlf_space_check(
                     )
                 text = ""
         elif (
-            (moved_width >= spacewidth + str_widhts * scale_x)
+            (moved_width >= (spacewidth + str_widhts) * scale_x)
             and (output + text)[-1] != " "
         ):
             text += " "
