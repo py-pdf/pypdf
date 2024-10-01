@@ -1817,7 +1817,7 @@ class PageObject(DictionaryObject):
         space_scale = 1.0
         _space_width: float = 500.0  # will be set correctly at first Tf
         _actual_str_size: Dict[str, float] = {
-            "str_widths": 0.0, "space_width": 0.0, "str_height": 0.0}  # will be set string length calculation result
+            "str_widths": 0.0, "space_width": 0.0, "str_height": 0.0}  # will be set to string length calculation result
         TL = 0.0
         font_size = 12.0  # init just in case of
 
