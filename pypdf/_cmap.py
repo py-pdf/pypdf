@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
 from .generic import (
-    ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
     StreamObject,
@@ -460,7 +459,10 @@ def build_font_width_map(
                 )
                 break
     elif "/Widths" in ft:
-        w = list(ft["/Widths"]) if isinstance(ft["/Widths"], ArrayObject) else []
+        try:
+            w = cast(list, ft["/Widths"].get_object())
+        except Exception:
+            w = []
         if "/FontDescriptor" in ft and "/MissingWidth" in cast(
             DictionaryObject, ft["/FontDescriptor"]
         ):
