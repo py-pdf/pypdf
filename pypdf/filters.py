@@ -368,6 +368,7 @@ class RunLengthDecode:
 class LZWDecode:
     """
     Taken from:
+
     https://github.com/katjas/PDFrenderer/blob/master/src/com/sun/pdfview/decode/LZWDecode.java
     """
 
@@ -382,8 +383,10 @@ class LZWDecode:
             """
             TIFF 6.0 specification explains in sufficient details the steps to
             implement the LZW encode() and decode() algorithms.
+
             algorithm derived from:
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
+
             and the PDFReference
             Raises:
               PdfReadError: If the stop code is missing
