@@ -499,7 +499,7 @@ def compute_space_width(
         sp_width = font_width_map[sp]
         if sp_width == 0:
             raise ValueError("Zero width")
-    except ValueError:
+    except (KeyError, ValueError):
         sp_width = (
             font_width_map["default"] / 2.0
         )  # if using default we consider space will be only half size
