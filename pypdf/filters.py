@@ -44,6 +44,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from ._codecs._codecs import LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
+    deprecate,
     deprecation_no_replacement,
     logger_warning,
 )
@@ -362,6 +363,71 @@ class RunLengthDecode:
                 lst.append(bytes((data[index],)) * length)
                 index += 1
         return b"".join(lst)
+
+
+class LZWDecode:
+    """
+    Taken from:
+    https://github.com/katjas/PDFrenderer/blob/master/src/com/sun/pdfview/decode/LZWDecode.java
+    """
+
+    class Decoder:
+        STOP = 257
+        CLEARDICT = 256
+
+        def __init__(self, data: bytes) -> None:
+            self.data = data
+
+        def decode(self) -> bytes:
+            """
+            TIFF 6.0 specification explains in sufficient details the steps to
+            implement the LZW encode() and decode() algorithms.
+            algorithm derived from:
+            http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
+            and the PDFReference
+            Raises:
+              PdfReadError: If the stop code is missing
+            """
+            return LzwCodec().decode(self.data)
+
+    @staticmethod
+    def _decodeb(
+        data: bytes,
+        decode_parms: Optional[DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> bytes:
+        """
+        Decode an LZW encoded data stream.
+
+        Args:
+          data: ``bytes`` or ``str`` text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
+        """
+        # decode_parms is unused here
+        return LZWDecode.Decoder(data).decode()
+
+    @staticmethod
+    def decode(
+        data: bytes,
+        decode_parms: Optional[DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> str:  # deprecated
+        """
+        Decode an LZW encoded data stream.
+
+        Args:
+          data: ``bytes`` or ``str`` text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
+        """
+        # decode_parms is unused here
+        deprecate("LZWDecode.decode will return bytes instead of str in pypdf 6.0.0")
+        return LZWDecode.Decoder(data).decode().decode("latin-1")
 
 
 class ASCII85Decode:
