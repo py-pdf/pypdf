@@ -1734,7 +1734,7 @@ class PageObject(DictionaryObject):
         if add_text:
             for char in add_text:
                 if font_width_map:
-                    font_widths += compute_font_width(font_width_map, ord(char))
+                    font_widths += compute_font_width(font_width_map, char)
                 else:
                     font_widths += default_space_width * 2
         return (font_widths * font_size, default_space_width * font_size, font_size)
