@@ -98,7 +98,7 @@ def crlf_space_check(
     output: str,
     font_size: float,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
-    str_widhts: float,
+    str_widths: float,
     spacewidth: float,
     str_height: float,
 ) -> Tuple[str, str, List[float], List[float]]:
