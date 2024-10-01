@@ -1725,7 +1725,7 @@ class PageObject(DictionaryObject):
         add_text: str,
         font_size: float,
         default_space_width: float
-    ) -> float:
+    ) -> Tuple[float, float, float]:
         font_widths: float = 0
         font_name: str = cmap[2]
         if font_name not in self._font_width_maps:
