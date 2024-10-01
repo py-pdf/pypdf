@@ -417,7 +417,7 @@ def build_font_width_map(
     except Exception:
         pass
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
-        # PDF ref 1.7 9.7.4.3 Glyph Metrics in CIDFonts
+        # §9.7.4.3 of the 1.7 reference ("Glyph Metrics in CIDFonts")
         # Widths for a CIDFont are defined using the DW and W entries.
         # DW2 and W2 are for vertical use. Vertical type is not implemented.
         ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
