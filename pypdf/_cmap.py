@@ -7,6 +7,7 @@ from ._utils import logger_error, logger_warning
 from .generic import (
     DecodedStreamObject,
     DictionaryObject,
+    PdfObject,
     StreamObject,
     is_null_or_none,
 )
@@ -460,7 +461,7 @@ def build_font_width_map(
                 break
     elif "/Widths" in ft:
         try:
-            w = cast(list, ft["/Widths"].get_object())
+            w: List[PdfObject] = cast(list, ft["/Widths"].get_object())
         except Exception:
             w = []
         if "/FontDescriptor" in ft and "/MissingWidth" in cast(
