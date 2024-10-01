@@ -366,12 +366,6 @@ class RunLengthDecode:
 
 
 class LZWDecode:
-    """
-    Taken from:
-
-    https://github.com/katjas/PDFrenderer/blob/master/src/com/sun/pdfview/decode/LZWDecode.java
-    """
-
     class Decoder:
         STOP = 257
         CLEARDICT = 256
@@ -380,18 +374,6 @@ class LZWDecode:
             self.data = data
 
         def decode(self) -> bytes:
-            """
-            TIFF 6.0 specification explains in sufficient details the steps to
-            implement the LZW encode() and decode() algorithms.
-
-            algorithm derived from:
-            http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
-
-            and the PDFReference
-
-            Raises:
-              PdfReadError: If the stop code is missing
-            """
             return LzwCodec().decode(self.data)
 
     @staticmethod
