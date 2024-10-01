@@ -1717,13 +1717,14 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-    def _get_font_widths(
+    def _get_acutual_font_widths(
         self,
         cmap: Tuple[
             Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
         ],
         add_text: str,
-        default_width: float
+        font_size: float,
+        default_space_width: float
     ) -> float:
         font_widths: float = 0
         font_name: str = cmap[2]
@@ -1735,8 +1736,8 @@ class PageObject(DictionaryObject):
                 if font_width_map:
                     font_widths += compute_font_width(font_width_map, ord(char))
                 else:
-                    font_widths += default_width
-        return font_widths
+                    font_widths += default_space_width * 2
+        return (font_widths * font_size, default_space_width * font_size, font_size)
 
     def _extract_text(
         self,
@@ -1815,24 +1816,25 @@ class PageObject(DictionaryObject):
         char_scale = 1.0
         space_scale = 1.0
         _space_width: float = 500.0  # will be set correctly at first Tf
-        _font_widths: float = 0.0
+        _actual_str_size: Dict[str, float] = {
+            "str_widths": 0.0, "space_width": 0.0, "str_height": 0.0}  # will be set string length calculation result
         TL = 0.0
         font_size = 12.0  # init just in case of
 
         def current_spacewidth() -> float:
             return _space_width / 1000.0
 
-        def current_fontwidths() -> float:
-            return _font_widths / 1000.0
+        def current_strwidths() -> float:
+            return _actual_str_size["str_widths"] / 1000.0
 
         def process_operation(operator: bytes, operands: List[Any]) -> None:
             nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, memo_cm, memo_tm
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
-            nonlocal orientations, rtl_dir, visitor_text, output, text, _font_widths
+            nonlocal orientations, rtl_dir, visitor_text, output, text, _actual_str_size
             global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
             check_crlf_space: bool = False
-            font_widths: float = 0.0
+            str_widths: float = 0.0
             # Table 5.4 page 405
             if operator == b"BT":
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
@@ -1946,8 +1948,8 @@ class PageObject(DictionaryObject):
                 ty = float(operands[1])
                 tm_matrix[4] += tx * tm_matrix[0] + ty * tm_matrix[2]
                 tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
-                font_widths = current_fontwidths()
-                _font_widths = 0.0
+                str_widths = current_strwidths()
+                _actual_str_size["str_widths"] = 0.0
             elif operator == b"Tm":
                 check_crlf_space = True
                 tm_matrix = [
@@ -1958,8 +1960,8 @@ class PageObject(DictionaryObject):
                     float(operands[4]),
                     float(operands[5]),
                 ]
-                font_widths = current_fontwidths()
-                _font_widths = 0.0
+                str_widths = current_strwidths()
+                _actual_str_size["str_widths"] = 0.0
             elif operator == b"T*":
                 check_crlf_space = True
                 tm_matrix[5] -= TL
@@ -1977,7 +1979,9 @@ class PageObject(DictionaryObject):
                     rtl_dir,
                     visitor_text,
                 )
-                _font_widths += self._get_font_widths(cmap, add_text, _space_width * 2.0)
+                current_font_widths, _actual_str_size["space_width"], _actual_str_size["str_height"] = (
+                    self._get_acutual_font_widths(cmap, add_text, font_size, current_spacewidth()))
+                _actual_str_size["str_widths"] += current_font_widths
             else:
                 return None
             if check_crlf_space:
@@ -1992,8 +1996,9 @@ class PageObject(DictionaryObject):
                         output,
                         font_size,
                         visitor_text,
-                        current_spacewidth(),
-                        font_widths
+                        str_widths,
+                        _actual_str_size["space_width"],
+                        _actual_str_size["str_height"]
                     )
                     if text == "":
                         memo_cm = cm_matrix.copy()
