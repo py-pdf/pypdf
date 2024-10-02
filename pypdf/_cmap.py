@@ -421,15 +421,12 @@ def build_font_width_map(
         # Widths for a CIDFont are defined using the DW and W entries.
         # DW2 and W2 are for vertical use. Vertical type is not implemented.
         ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
-        w: List[Union[int, PdfObject]] = []
         try:
             font_width_map["default"] = cast(float, ft1["/DW"])
         except Exception:
             font_width_map["default"] = default_font_width
         if "/W" in ft1:
-            w = list(ft1["/W"])
-        else:
-            w = []
+            w = ft1["/W"].get_object()
         while len(w) > 0:
             st = w[0] if isinstance(w[0], int) else w[0].get_object()
             second = w[1].get_object()
@@ -461,10 +458,7 @@ def build_font_width_map(
                 )
                 break
     elif "/Widths" in ft:
-        try:
-            w = cast(list, ft["/Widths"].get_object())
-        except Exception:
-            w = []
+        w = ft["/Widths"].get_object()
         if "/FontDescriptor" in ft and "/MissingWidth" in cast(
             DictionaryObject, ft["/FontDescriptor"]
         ):
