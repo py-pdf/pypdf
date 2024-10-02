@@ -426,6 +426,8 @@ def build_font_width_map(
             font_width_map["default"] = default_font_width
         if "/W" in ft1:
             w = ft1["/W"].get_object()
+        else:
+            w = []
         while len(w) > 0:
             st = w[0] if isinstance(w[0], int) else w[0].get_object()
             second = w[1].get_object()
