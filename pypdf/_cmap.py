@@ -7,7 +7,6 @@ from ._utils import logger_error, logger_warning
 from .generic import (
     DecodedStreamObject,
     DictionaryObject,
-    PdfObject,
     StreamObject,
     is_null_or_none,
 )
