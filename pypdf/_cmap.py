@@ -489,7 +489,7 @@ def build_font_width_map(
                 else:
                     width = float(width_obj)
                 font_width_map[chr(c_code)] = width
-            except IndexError:
+            except (IndexError, KeyError):
                 # The PDF structure is invalid. The array is too small
                 # for the specified font width.
                 pass
