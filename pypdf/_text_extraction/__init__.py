@@ -115,8 +115,9 @@ def crlf_space_check(
     delta_x = m[4] - m_prev[4]
     delta_y = m[5] - m_prev[5]
     # Table 108 of the 1.7 reference ("Text positioning operators")
-    scale_x = math.sqrt(tm_prev[0]**2 + tm_prev[1]**2)
-    scale_y = math.sqrt(tm_prev[2]**2 + tm_prev[3]**2)
+    scale_prev_x = math.sqrt(tm_prev[0]**2 + tm_prev[1]**2)
+    scale_prev_y = math.sqrt(tm_prev[2]**2 + tm_prev[3]**2)
+    scale_y = math.sqrt(tm_matrix[2]**2 + tm_matrix[3]**2)
     cm_prev = m
 
     if orientation not in orientations:
@@ -128,7 +129,7 @@ def crlf_space_check(
         moved_height = delta_x
         moved_width = delta_y
     try:
-        if abs(moved_height) > 0.8 * str_height * scale_y:
+        if abs(moved_height) > 0.8 * min(str_height * scale_prev_y, font_size * scale_y):
             if (output + text)[-1] != "\n":
                 output += text + "\n"
                 if visitor_text is not None:
@@ -141,7 +142,7 @@ def crlf_space_check(
                     )
                 text = ""
         elif (
-            (moved_width >= (spacewidth + str_widths) * scale_x)
+            (moved_width >= (spacewidth + str_widths) * scale_prev_x)
             and (output + text)[-1] != " "
         ):
             text += " "
