@@ -1733,10 +1733,7 @@ class PageObject(DictionaryObject):
         font_width_map: Dict[Any, float] = self._font_width_maps[font_name]
         if add_text:
             for char in add_text:
-                if font_width_map:
-                    font_widths += compute_font_width(font_width_map, char)
-                else:
-                    font_widths += default_space_width * 2
+                font_widths += compute_font_width(font_width_map, char)
         return (font_widths * font_size, default_space_width * font_size, font_size)
 
     def _extract_text(

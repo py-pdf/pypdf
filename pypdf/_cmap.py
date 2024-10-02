@@ -478,11 +478,7 @@ def build_font_width_map(
         en = cast(int, ft["/LastChar"])
         for c_code in range(st, en + 1):
             try:
-                width_obj = w[c_code - st].get_object()
-                if is_null_or_none(width_obj):
-                    width = 0.0
-                else:
-                    width = float(width_obj)
+                width = w[c_code - st].get_object()
                 font_width_map[chr(c_code)] = width
             except (IndexError, KeyError):
                 # The PDF structure is invalid. The array is too small
