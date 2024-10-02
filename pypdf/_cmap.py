@@ -437,7 +437,7 @@ def build_font_width_map(
                 for c_code in range(st, en + 1):
                     try:
                         conversion_char = map_dict[chr(c_code)]
-                        font_width_map[ord(conversion_char)] = w[2]
+                        font_width_map[conversion_char] = w[2]
                     except KeyError:
                         pass
                 w = w[3:]
