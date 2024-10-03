@@ -41,7 +41,7 @@ from base64 import a85decode
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-from ._codecs._codecs import LzwCodec
+from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
@@ -374,7 +374,7 @@ class LZWDecode:
             self.data = data
 
         def decode(self) -> bytes:
-            return LzwCodec().decode(self.data)
+            return _LzwCodec().decode(self.data)
 
     @staticmethod
     def _decodeb(
@@ -624,7 +624,7 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
             elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
                 data = RunLengthDecode.decode(data)
             elif filter_type in (FT.LZW_DECODE, FTA.LZW):
-                data = LzwCodec().decode(data)
+                data = LZWDecode._decodeb(data, params)
             elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
                 data = ASCII85Decode.decode(data)
             elif filter_type == FT.DCT_DECODE:
