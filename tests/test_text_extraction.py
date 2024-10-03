@@ -200,3 +200,14 @@ def test_space_with_one_unit_smaller_than_font_width():
     page = reader.pages[0]
     extracted = page.extract_text()
     assert "Reporting crude oil leak.\n" in extracted
+
+
+@pytest.mark.enable_socket()
+def test_space_position_calculation():
+    """Tests for #1153"""
+    url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
+    name = "iss1153.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[3]
+    extracted = page.extract_text()
+    assert "Shortly after the Geneva BOF session, the" in extracted
