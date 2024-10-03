@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1727961316228,
+  "lastUpdate": 1727964789562,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -59339,6 +59339,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.014538782058270425",
             "extra": "mean: 776.042947399992 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e825ac07ea89c78962646245e348b934d48f9629",
+          "message": "MAINT: New LZW decoding implementation (#2887)\n\nMAINT: New LZW decoding implementation\r\n\r\n---------\r\n\r\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2024-10-03T16:10:33+02:00",
+          "tree_id": "b6fefc988cfc38fc9246db452ff7b0511e1be58b",
+          "url": "https://github.com/py-pdf/pypdf/commit/e825ac07ea89c78962646245e348b934d48f9629"
+        },
+        "date": 1727964785918,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.745011231411083,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031943188815437558",
+            "extra": "mean: 364.29723440000146 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.113538329016299,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008889859561881161",
+            "extra": "mean: 76.25706921428689 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22624300567937988,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03525806275095098",
+            "extra": "mean: 4.420026144000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.192903645529995,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007620850899731533",
+            "extra": "mean: 61.75544682352552 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08874574436504805,
+            "unit": "iter/sec",
+            "range": "stddev: 0.15734345484606918",
+            "extra": "mean: 11.268145950600012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2722277493874155,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030257724807140297",
+            "extra": "mean: 786.0227859999952 msec\nrounds: 5"
           }
         ]
       }
