@@ -54,5 +54,5 @@ def test_encode_lzw(plain, expected_encoded):
 )
 def test_decode_lzw(encoded, expected_decoded):
     codec = LzwCodec()
-    actual_decoded = codec.encode(encoded)
+    actual_decoded = codec.decode(encoded)
     assert actual_decoded == expected_decoded
