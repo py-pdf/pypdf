@@ -235,9 +235,7 @@ def test_decompress_zlib_error(caplog):
 def test_lzw_decode_neg1():
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-921632.pdf")))
     page = reader.pages[47]
-    with pytest.raises(PdfReadError) as exc:
-        page.extract_text()
-    assert exc.value.args[0] == "Missed the stop code in LZWDecode!"
+    assert page.extract_text().startswith("Chapter 2")
 
 
 @pytest.mark.enable_socket()
@@ -249,6 +247,7 @@ def test_issue_399():
 @pytest.mark.enable_socket()
 def test_image_without_pillow(tmp_path):
     import os
+
     name = "tika-914102.pdf"
     pdf_path = Path(__file__).parent / "pdf_cache" / name
     pdf_path_str = str(pdf_path.resolve()).replace("\\", "/")
