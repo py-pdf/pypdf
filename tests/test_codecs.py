@@ -41,3 +41,18 @@ def test_encode_lzw(plain, expected_encoded):
     codec = LzwCodec()
     actual_encoded = codec.encode(plain)
     assert actual_encoded == expected_encoded
+
+
+@pytest.mark.parametrize(
+    ("encoded", "expected_decoded"),
+    [
+        # _pack_codes_into_bytes([256, 65, 66, 67, 68, 256, 256, 69, 70, 71, 72, 257])
+        (b"\x80\x10HD2$\x02\x00E#\x11\xc9\x10\x10", b"ABCDEFGH", id="Clear twice"),
+        # _pack_codes_into_bytes([65, 66, 67, 68, 257])
+        (b" \x90\x88dH\x08", b"ABCD", id="No explicit initial clear marker"),
+    ],
+)
+def test_decode_lzw(encoded, expected_decoded):
+    codec = LzwCodec()
+    actual_decoded = codec.encode(encoded)
+    assert actual_decoded == expected_decoded
