@@ -399,13 +399,7 @@ def build_font_width_map(
     font_width_map: Dict[Any, float] = {}
     st: int = 0
     en: int = 0
-    if ft is None:
-        font_width_map["default"] = default_font_width
-        return font_width_map
-    try:
-        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"])] * 2.0
-    except Exception:
-        pass
+    default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object)] * 2.0
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
         # §9.7.4.3 of the 1.7 reference ("Glyph Metrics in CIDFonts")
         # Widths for a CIDFont are defined using the DW and W entries.
@@ -426,19 +420,13 @@ def build_font_width_map(
                 # C_first C_last same_W
                 en = second
                 for c_code in range(st, en + 1):
-                    try:
-                        font_width_map[chr(c_code)] = w[2]
-                    except KeyError:
-                        pass
+                    font_width_map[chr(c_code)] = w[2]
                 w = w[3:]
             elif isinstance(second, list):
                 # Starting_C [W1 W2 ... Wn]
                 c_code = st
                 for width in second:
-                    try:
-                        font_width_map[chr(c_code)] = width
-                    except KeyError:
-                        pass
+                    font_width_map[chr(c_code)] = width
                     c_code += 1
                 w = w[2:]
             else:
