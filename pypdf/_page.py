@@ -1738,15 +1738,14 @@ class PageObject(DictionaryObject):
         font_widths: float = 0
         font_name: str = cmap[2]
         if font_name not in self._font_width_maps:
-            if is_null_or_none(cmap[3]):
+            if cmap[3] is None:
                 font_width_map: Dict[Any, float] = {}
                 space_char = " "
                 space_char_len: float = space_width
             else:
                 space_code = 32
-                if isinstance(cmap[3], DictionaryObject):
-                    _, space_code = parse_encoding(cmap[3], space_code)
-                    _, space_code, _ = parse_to_unicode(cmap[3], space_code)
+                _, space_code = parse_encoding(cmap[3], space_code)
+                _, space_code, _ = parse_to_unicode(cmap[3], space_code)
                 if isinstance(space_code, str):
                     space_char = space_code
                 else:
