@@ -49,13 +49,21 @@ from typing import (
     overload,
 )
 
-from ._cmap import build_char_map, build_font_width_map, compute_font_width, unknown_char_map
+from ._cmap import (
+    build_char_map,
+    build_font_width_map,
+    compute_font_width,
+    parse_encoding,
+    parse_to_unicode,
+    unknown_char_map,
+)
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     OrientationNotFoundError,
     _layout_mode,
     crlf_space_check,
-    handle_tj,
+    get_display_str,
+    get_text_operands,
     mult,
 )
 from ._utils import (
@@ -84,6 +92,7 @@ from .generic import (
     PdfObject,
     RectangleObject,
     StreamObject,
+    TextStringObject,
     is_null_or_none,
 )
 
@@ -496,7 +505,7 @@ class PageObject(DictionaryObject):
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
-        self._font_width_maps: Dict[str, Dict[str, float]] = {}
+        self._font_width_maps: Dict[str, Tuple[Dict[str, float], str, float]] = {}
 
     def hash_bin(self) -> int:
         """
@@ -1722,19 +1731,78 @@ class PageObject(DictionaryObject):
         cmap: Tuple[
             Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
         ],
-        add_text: str,
+        text_operands: str,
         font_size: float,
-        default_space_width: float
+        space_width: float
     ) -> Tuple[float, float, float]:
         font_widths: float = 0
         font_name: str = cmap[2]
         if font_name not in self._font_width_maps:
-            self._font_width_maps[font_name] = build_font_width_map(cmap[3], cmap[1], default_space_width * 2)
-        font_width_map: Dict[Any, float] = self._font_width_maps[font_name]
-        if add_text:
-            for char in add_text:
+            if cmap[3] is None:
+                font_width_map: Dict[Any, float] = {}
+                space_char = " "
+                actual_space_width: float = space_width
+                font_width_map["default"] = actual_space_width * 2
+            else:
+                space_code = 32
+                _, space_code = parse_encoding(cmap[3], space_code)
+                _, space_code, _ = parse_to_unicode(cmap[3], space_code)
+                if isinstance(space_code, str):
+                    space_char = space_code
+                else:
+                    space_char = chr(space_code)
+                font_width_map = build_font_width_map(cmap[3], space_width * 2)
+                actual_space_width = compute_font_width(font_width_map, space_char)
+            if actual_space_width == 0:
+                actual_space_width = space_width
+            self._font_width_maps[font_name] = (font_width_map, space_char, actual_space_width)
+        font_width_map = self._font_width_maps[font_name][0]
+        space_char = self._font_width_maps[font_name][1]
+        actual_space_width = self._font_width_maps[font_name][2]
+
+        if text_operands:
+            for char in text_operands:
+                if char == space_char:
+                    font_widths += actual_space_width
+                    continue
                 font_widths += compute_font_width(font_width_map, char)
-        return (font_widths * font_size, default_space_width * font_size, font_size)
+        return (font_widths * font_size, space_width * font_size, font_size)
+
+    def _handle_tj(
+        self,
+        text: str,
+        operands: List[Union[str, TextStringObject]],
+        cm_matrix: List[float],
+        tm_matrix: List[float],
+        cmap: Tuple[
+            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+        ],
+        orientations: Tuple[int, ...],
+        font_size: float,
+        rtl_dir: bool,
+        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
+        space_width: float,
+        actual_str_size: Dict[str, float]
+    ) -> Tuple[str, bool, Dict[str, float]]:
+        text_operands, is_str_operands = get_text_operands(
+            operands, cm_matrix, tm_matrix, cmap, orientations)
+        if is_str_operands:
+            text += text_operands
+        else:
+            text, rtl_dir = get_display_str(
+                text,
+                cm_matrix,
+                tm_matrix,  # text matrix
+                cmap,
+                text_operands,
+                font_size,
+                rtl_dir,
+                visitor_text)
+        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
+            self._get_acutual_font_widths(cmap, text_operands, font_size, space_width))
+        actual_str_size["str_widths"] += font_widths
+
+        return text, rtl_dir, actual_str_size
 
     def _extract_text(
         self,
@@ -1818,11 +1886,8 @@ class PageObject(DictionaryObject):
         TL = 0.0
         font_size = 12.0  # init just in case of
 
-        def current_spacewidth() -> float:
-            return _space_width / 1000.0
-
-        def current_strwidths() -> float:
-            return _actual_str_size["str_widths"] / 1000.0
+        def compute_strwidths(str_widths: float) -> float:
+            return str_widths / 1000.0
 
         def process_operation(operator: bytes, operands: List[Any]) -> None:
             nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, memo_cm, memo_tm
@@ -1945,7 +2010,7 @@ class PageObject(DictionaryObject):
                 ty = float(operands[1])
                 tm_matrix[4] += tx * tm_matrix[0] + ty * tm_matrix[2]
                 tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
-                str_widths = current_strwidths()
+                str_widths = compute_strwidths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"Tm":
                 check_crlf_space = True
@@ -1957,28 +2022,26 @@ class PageObject(DictionaryObject):
                     float(operands[4]),
                     float(operands[5]),
                 ]
-                str_widths = current_strwidths()
+                str_widths = compute_strwidths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"T*":
                 check_crlf_space = True
                 tm_matrix[5] -= TL
             elif operator == b"Tj":
                 check_crlf_space = True
-                text, rtl_dir, add_text = handle_tj(
+                text, rtl_dir, _actual_str_size = self._handle_tj(
                     text,
                     operands,
                     cm_matrix,
                     tm_matrix,  # text matrix
                     cmap,
                     orientations,
-                    output,
                     font_size,
                     rtl_dir,
                     visitor_text,
+                    _space_width,
+                    _actual_str_size,
                 )
-                current_font_widths, _actual_str_size["space_width"], _actual_str_size["str_height"] = (
-                    self._get_acutual_font_widths(cmap, add_text, font_size, current_spacewidth()))
-                _actual_str_size["str_widths"] += current_font_widths
             else:
                 return None
             if check_crlf_space:
@@ -1994,7 +2057,7 @@ class PageObject(DictionaryObject):
                         font_size,
                         visitor_text,
                         str_widths,
-                        _actual_str_size["space_width"],
+                        compute_strwidths(_actual_str_size["space_width"]),
                         _actual_str_size["str_height"]
                     )
                     if text == "":

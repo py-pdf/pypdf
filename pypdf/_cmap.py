@@ -50,7 +50,7 @@ def build_char_map_from_dict(
         Font sub-type, space_width criteria(50% of width), encoding, map character-map.
         The font-dictionary itself is suitable for the curious.
     """
-    font_type: str = cast(str, ft["/Subtype"])
+    font_type = cast(str, ft["/Subtype"].get_object())
 
     space_code = 32
     encoding, space_code = parse_encoding(ft, space_code)
@@ -75,21 +75,12 @@ def build_char_map_from_dict(
         for x in int_entry:
             if x <= 255:
                 encoding[x] = chr(x)
-    # I consider the space_code is available on one byte
     if isinstance(space_code, str):
-        try:  # one byte
-            sp = space_code.encode("charmap")[0]
-        except Exception:
-            sp = space_code.encode("utf-16-be")
-            sp = sp[0] + 256 * sp[1]
-        try:
-            sp = ord(map_dict[chr(sp)])
-        except KeyError:
-            pass
-    else:
         sp = space_code
-    font_width_map = build_font_width_map(ft, map_dict, space_width * 2.0)
-    half_space_width = compute_space_width(font_width_map, chr(sp)) / 2.0
+    else:
+        sp = chr(space_code)
+    font_width_map = build_font_width_map(ft, space_width * 2.0)
+    half_space_width = compute_space_width(font_width_map, sp) / 2.0
 
     return (
         font_type,
@@ -403,17 +394,14 @@ def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) ->
 
 
 def build_font_width_map(
-    ft: Union[DictionaryObject, None], map_dict: Dict[Any, Any], default_font_width: float
+    ft: DictionaryObject, default_font_width: float
 ) -> Dict[Any, float]:
     font_width_map: Dict[Any, float] = {}
     st: int = 0
     en: int = 0
-    if ft is None:
-        font_width_map["default"] = default_font_width
-        return font_width_map
     try:
-        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"])] * 2.0
-    except Exception:
+        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object)] * 2.0
+    except KeyError:
         pass
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
         # §9.7.4.3 of the 1.7 reference ("Glyph Metrics in CIDFonts")
@@ -435,21 +423,13 @@ def build_font_width_map(
                 # C_first C_last same_W
                 en = second
                 for c_code in range(st, en + 1):
-                    try:
-                        conversion_char = map_dict[chr(c_code)]
-                        font_width_map[conversion_char] = w[2]
-                    except KeyError:
-                        pass
+                    font_width_map[chr(c_code)] = w[2]
                 w = w[3:]
             elif isinstance(second, list):
                 # Starting_C [W1 W2 ... Wn]
                 c_code = st
                 for width in second:
-                    try:
-                        conversion_char = map_dict[chr(c_code)]
-                        font_width_map[conversion_char] = width
-                    except KeyError:
-                        pass
+                    font_width_map[chr(c_code)] = width
                     c_code += 1
                 w = w[2:]
             else:

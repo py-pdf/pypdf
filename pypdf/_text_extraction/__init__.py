@@ -153,29 +153,25 @@ def crlf_space_check(
     return text, output, cm_prev, tm_prev
 
 
-def handle_tj(
-    text: str,
+def get_text_operands(
     operands: List[Union[str, TextStringObject]],
     cm_matrix: List[float],
     tm_matrix: List[float],
     cmap: Tuple[
         Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
     ],
-    orientations: Tuple[int, ...],
-    output: str,
-    font_size: float,
-    rtl_dir: bool,
-    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
-) -> Tuple[str, bool, str]:
-    add_text = ""
+    orientations: Tuple[int, ...]
+) -> Tuple[str, bool]:
+    t: str = ""
+    is_str_operands = False
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
     if orientation in orientations and len(operands) > 0:
         if isinstance(operands[0], str):
-            text += operands[0]
-            add_text = operands[0]
+            t = operands[0]
+            is_str_operands = True
         else:
-            t: str = ""
+            t = ""
             tt: bytes = (
                 encode_pdfdocencoding(operands[0])
                 if isinstance(operands[0], str)
@@ -196,47 +192,56 @@ def handle_tj(
                 t = "".join(
                     [cmap[0][x] if x in cmap[0] else bytes((x,)).decode() for x in tt]
                 )
-            # "\u0590 - \u08FF \uFB50 - \uFDFF"
-            for x in [cmap[1][x] if x in cmap[1] else x for x in t]:
-                # x can be a sequence of bytes ; ex: habibi.pdf
-                if len(x) == 1:
-                    xx = ord(x)
-                else:
-                    xx = 1
-                # fmt: off
-                if (
-                    # cases where the current inserting order is kept
-                    (xx <= 0x2F)                        # punctuations but...
-                    or 0x3A <= xx <= 0x40               # numbers (x30-39)
-                    or 0x2000 <= xx <= 0x206F           # upper punctuations..
-                    or 0x20A0 <= xx <= 0x21FF           # but (numbers) indices/exponents
-                    or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
-                ):
-                    text = x + text if rtl_dir else text + x
-                    add_text = x if rtl_dir else add_text + x
-                elif (  # right-to-left characters set
-                    0x0590 <= xx <= 0x08FF
-                    or 0xFB1D <= xx <= 0xFDFF
-                    or 0xFE70 <= xx <= 0xFEFF
-                    or CUSTOM_RTL_MIN <= xx <= CUSTOM_RTL_MAX
-                ):
-                    if not rtl_dir:
-                        rtl_dir = True
-                        output += text
-                        if visitor_text is not None:
-                            visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
-                        text = ""
-                    text = x + text
-                    add_text = x + add_text
-                else:  # left-to-right
-                    # print(">",xx,x,end="")
-                    if rtl_dir:
-                        rtl_dir = False
-                        output += text
-                        if visitor_text is not None:
-                            visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
-                        text = ""
-                    text = text + x
-                    add_text += x
-                # fmt: on
-    return text, rtl_dir, add_text
+    return (t, is_str_operands)
+
+
+def get_display_str(
+    text: str,
+    cm_matrix: List[float],
+    tm_matrix: List[float],
+    cmap: Tuple[
+        Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+    ],
+    text_operands: str,
+    font_size: float,
+    rtl_dir: bool,
+    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
+) -> Tuple[str, bool]:
+    # "\u0590 - \u08FF \uFB50 - \uFDFF"
+    for x in [cmap[1].get(x, x) for x in text_operands]:
+        # x can be a sequence of bytes ; ex: habibi.pdf
+        if len(x) == 1:
+            xx = ord(x)
+        else:
+            xx = 1
+        # fmt: off
+        if (
+            # cases where the current inserting order is kept
+            (xx <= 0x2F)                        # punctuations but...
+            or 0x3A <= xx <= 0x40               # numbers (x30-39)
+            or 0x2000 <= xx <= 0x206F           # upper punctuations..
+            or 0x20A0 <= xx <= 0x21FF           # but (numbers) indices/exponents
+            or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
+        ):
+            text = x + text if rtl_dir else text + x
+        elif (  # right-to-left characters set
+            0x0590 <= xx <= 0x08FF
+            or 0xFB1D <= xx <= 0xFDFF
+            or 0xFE70 <= xx <= 0xFEFF
+            or CUSTOM_RTL_MIN <= xx <= CUSTOM_RTL_MAX
+        ):
+            if not rtl_dir:
+                rtl_dir = True
+                if visitor_text is not None:
+                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                text = ""
+            text = x + text
+        else:  # left-to-right
+            if rtl_dir:
+                rtl_dir = False
+                if visitor_text is not None:
+                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                text = ""
+            text = text + x
+        # fmt: on
+    return text, rtl_dir
