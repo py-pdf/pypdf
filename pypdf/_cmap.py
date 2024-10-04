@@ -50,7 +50,7 @@ def build_char_map_from_dict(
         Font sub-type, space_width criteria(50% of width), encoding, map character-map.
         The font-dictionary itself is suitable for the curious.
     """
-    font_type: str = cast(str, ft["/Subtype"])
+    font_type: str = ft["/Subtype"].get_object()
 
     space_code = 32
     encoding, space_code = parse_encoding(ft, space_code)
@@ -75,21 +75,12 @@ def build_char_map_from_dict(
         for x in int_entry:
             if x <= 255:
                 encoding[x] = chr(x)
-    # I consider the space_code is available on one byte
     if isinstance(space_code, str):
-        try:  # one byte
-            sp = space_code.encode("charmap")[0]
-        except Exception:
-            sp = space_code.encode("utf-16-be")
-            sp = sp[0] + 256 * sp[1]
-        try:
-            sp = ord(map_dict[chr(sp)])
-        except KeyError:
-            pass
-    else:
         sp = space_code
-    font_width_map = build_font_width_map(ft, map_dict, space_width * 2.0)
-    half_space_width = compute_space_width(font_width_map, chr(sp)) / 2.0
+    else:
+        sp = chr(space_code)
+    font_width_map = build_font_width_map(ft, space_width * 2.0)
+    half_space_width = compute_space_width(font_width_map, sp) / 2.0
 
     return (
         font_type,
@@ -403,7 +394,7 @@ def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) ->
 
 
 def build_font_width_map(
-    ft: Union[DictionaryObject, None], map_dict: Dict[Any, Any], default_font_width: float
+    ft: Union[DictionaryObject, None], default_font_width: float
 ) -> Dict[Any, float]:
     font_width_map: Dict[Any, float] = {}
     st: int = 0
@@ -436,8 +427,7 @@ def build_font_width_map(
                 en = second
                 for c_code in range(st, en + 1):
                     try:
-                        conversion_char = map_dict[chr(c_code)]
-                        font_width_map[conversion_char] = w[2]
+                        font_width_map[chr(c_code)] = w[2]
                     except KeyError:
                         pass
                 w = w[3:]
@@ -446,8 +436,7 @@ def build_font_width_map(
                 c_code = st
                 for width in second:
                     try:
-                        conversion_char = map_dict[chr(c_code)]
-                        font_width_map[conversion_char] = width
+                        font_width_map[chr(c_code)] = width
                     except KeyError:
                         pass
                     c_code += 1
