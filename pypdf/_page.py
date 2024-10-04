@@ -1965,7 +1965,6 @@ class PageObject(DictionaryObject):
             elif operator == b"Tw":
                 space_scale = 1.0 + float(operands[0])
             elif operator == b"TL":
-                check_crlf_space = True
                 scale_x = math.sqrt(tm_matrix[0]**2 + tm_matrix[2]**2)
                 TL = float(operands[0]) * font_size * scale_x
             elif operator == b"Tf":
