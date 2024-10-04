@@ -1741,7 +1741,8 @@ class PageObject(DictionaryObject):
             if cmap[3] is None:
                 font_width_map: Dict[Any, float] = {}
                 space_char = " "
-                space_char_len: float = space_width
+                actual_space_width: float = space_width
+                font_width_map["default"] = actual_space_width * 2
             else:
                 space_code = 32
                 _, space_code = parse_encoding(cmap[3], space_code)
@@ -1751,23 +1752,20 @@ class PageObject(DictionaryObject):
                 else:
                     space_char = chr(space_code)
                 font_width_map = build_font_width_map(cmap[3], space_width * 2)
-                space_char_len = compute_font_width(font_width_map, space_char)
-            if space_char_len == 0:
-                space_char_len = space_width * 2
-            self._font_width_maps[font_name] = (font_width_map, space_char, space_char_len)
+                actual_space_width = compute_font_width(font_width_map, space_char)
+            if actual_space_width == 0:
+                actual_space_width = space_width
+            self._font_width_maps[font_name] = (font_width_map, space_char, actual_space_width)
         font_width_map = self._font_width_maps[font_name][0]
         space_char = self._font_width_maps[font_name][1]
-        space_char_len = self._font_width_maps[font_name][2]
+        actual_space_width = self._font_width_maps[font_name][2]
 
         if text_operands:
             for char in text_operands:
                 if char == space_char:
-                    font_widths += space_char_len
+                    font_widths += actual_space_width
                     continue
-                if font_width_map:
-                    font_widths += compute_font_width(font_width_map, char)
-                else:
-                    font_widths += space_width * 2
+                font_widths += compute_font_width(font_width_map, char)
         return (font_widths * font_size, space_width * font_size, font_size)
 
     def _handle_tj(
