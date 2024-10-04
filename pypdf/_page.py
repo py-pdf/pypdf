@@ -1888,7 +1888,7 @@ class PageObject(DictionaryObject):
         TL = 0.0
         font_size = 12.0  # init just in case of
 
-        def compute_strwidths(str_widths) -> float:
+        def compute_strwidths(str_widths: float) -> float:
             return str_widths / 1000.0
 
         def process_operation(operator: bytes, operands: List[Any]) -> None:
