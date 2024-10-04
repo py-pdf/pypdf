@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1727964789562,
+  "lastUpdate": 1728033873195,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -59405,6 +59405,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030257724807140297",
             "extra": "mean: 786.0227859999952 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "44630192+ssjkamei@users.noreply.github.com",
+            "name": "Ryo Kamei",
+            "username": "ssjkamei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "abb62ac613a23c650720b02153475a9c7be17eb3",
+          "message": "MAINT: Unnecessary character mapping process (#2888)\n\nThis is a fix for the problem that occurred when #2882 was changed.\r\n\r\nThe string length of characters was checked after conversion by cmap, but after cmap conversion, there is a pattern where the string length is more than one character, and it cannot be measured accurately.\r\n\r\nThis is necessary, for example, when considering whether to measure the distance from the ligature or the base character corresponding to the ligature in fixing #1351.\r\n\r\nThe change in handle_tj is because it cannot pass Ruff's check.\r\nError: PLR0915 Too many statements (nnn > 176)\r\n\r\nThe following code is only used to get the character code for a space.\r\nHowever, I think it would be better to split the code into parts for obtaining the character code.\r\nStyle changes are considered in another PR.",
+          "timestamp": "2024-10-04T11:21:41+02:00",
+          "tree_id": "0c6ad000df7d3f64a87a8b2cf79bab4c2dec13ed",
+          "url": "https://github.com/py-pdf/pypdf/commit/abb62ac613a23c650720b02153475a9c7be17eb3"
+        },
+        "date": 1728033870844,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.771280009884956,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014436127040335042",
+            "extra": "mean: 360.8440852000058 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.177197212995548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00811222468825823",
+            "extra": "mean: 75.88867221428431 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2205806781773766,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07862863899354486",
+            "extra": "mean: 4.533488645799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.280836915038005,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000983339561728848",
+            "extra": "mean: 61.42190387499902 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0887464782908076,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11461338798702751",
+            "extra": "mean: 11.268052763999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2616812321599462,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011281895915355514",
+            "extra": "mean: 792.5932276000026 msec\nrounds: 5"
           }
         ]
       }
