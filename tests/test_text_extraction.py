@@ -211,3 +211,11 @@ def test_space_position_calculation():
     page = reader.pages[3]
     extracted = page.extract_text()
     assert "Shortly after the Geneva BOF session, the" in extracted
+
+
+def test_text_leading_height_unit():
+    """Tests for #2262"""
+    reader = PdfReader(RESOURCE_ROOT / "toy.pdf")
+    page = reader.pages[0]
+    extracted = page.extract_text()
+    assert "Something[cited]\n" in extracted
