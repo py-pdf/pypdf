@@ -50,7 +50,7 @@ def build_char_map_from_dict(
         Font sub-type, space_width criteria(50% of width), encoding, map character-map.
         The font-dictionary itself is suitable for the curious.
     """
-    font_type: str = ft["/Subtype"].get_object()
+    font_type = ft["/Subtype"].get_object()
 
     space_code = 32
     encoding, space_code = parse_encoding(ft, space_code)

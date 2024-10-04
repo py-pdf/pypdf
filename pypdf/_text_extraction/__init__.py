@@ -162,7 +162,7 @@ def get_text_operands(
     ],
     orientations: Tuple[int, ...]
 ) -> Tuple[str, bool]:
-    t = ""
+    t: str = ""
     is_str_operands = False
     m = mult(tm_matrix, cm_matrix)
     orientation = orient(m)
@@ -171,7 +171,7 @@ def get_text_operands(
             t = operands[0]
             is_str_operands = True
         else:
-            t: str = ""
+            t = ""
             tt: bytes = (
                 encode_pdfdocencoding(operands[0])
                 if isinstance(operands[0], str)
