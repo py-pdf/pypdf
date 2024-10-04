@@ -2030,8 +2030,6 @@ class PageObject(DictionaryObject):
                 check_crlf_space = True
                 tm_matrix[5] -= TL
             elif operator == b"Tj":
-                if "—" in text:
-                    pass
                 check_crlf_space = True
                 text, rtl_dir, _actual_str_size = self._handle_tj(
                     text,
@@ -2046,8 +2044,6 @@ class PageObject(DictionaryObject):
                     _space_width,
                     _actual_str_size,
                 )
-                if "—" in text:
-                    pass
             else:
                 return None
             if check_crlf_space:
