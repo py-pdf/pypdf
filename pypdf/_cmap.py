@@ -399,7 +399,10 @@ def build_font_width_map(
     font_width_map: Dict[Any, float] = {}
     st: int = 0
     en: int = 0
-    default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object)] * 2.0
+    try:
+        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object)] * 2.0
+    except KeyError:
+        pass
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
         # §9.7.4.3 of the 1.7 reference ("Glyph Metrics in CIDFonts")
         # Widths for a CIDFont are defined using the DW and W entries.
