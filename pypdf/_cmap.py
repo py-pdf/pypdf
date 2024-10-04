@@ -394,7 +394,7 @@ def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) ->
 
 
 def build_font_width_map(
-    ft: Union[DictionaryObject, None], default_font_width: float
+    ft: DictionaryObject, default_font_width: float
 ) -> Dict[Any, float]:
     font_width_map: Dict[Any, float] = {}
     st: int = 0
