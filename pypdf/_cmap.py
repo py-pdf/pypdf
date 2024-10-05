@@ -545,7 +545,6 @@ def _type1_alternative(
                         v = chr(int(words[2][4:], 16))
                     except ValueError:  # pragma: no cover
                         continue
-                continue
             map_dict[chr(i)] = v
             int_entry.append(i)
     return map_dict, int_entry
