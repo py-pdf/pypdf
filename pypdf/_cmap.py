@@ -126,22 +126,11 @@ def get_encoding(
     encoding = _parse_encoding(ft)
     map_dict, int_entry = _parse_to_unicode(ft)
 
-    # encoding can be either a string for decode
-    # (on 1,2 or a variable number of bytes) of a char table (for 1 byte only for me)
-    # if empty string, it means it is than encoding field is not present and
-    # we have to select the good encoding from cmap input data
-    if encoding == "":
-        if -1 not in map_dict or map_dict[-1] == 1:
-            # I have not been able to find any rule for no /Encoding nor /ToUnicode
-            # One example shows /Symbol,bold I consider 8 bits encoding default
-            encoding = "charmap"
-        else:
-            encoding = "utf-16-be"
     # apply rule from PDF ref 1.7 §5.9.1, 1st bullet :
     #   if cmap not empty encoding should be discarded
     #   (here transformed into identity for those characters)
     # if encoding is an str it is expected to be a identity translation
-    elif isinstance(encoding, dict):
+    if isinstance(encoding, dict):
         for x in int_entry:
             if x <= 255:
                 encoding[x] = chr(x)
