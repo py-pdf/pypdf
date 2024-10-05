@@ -251,7 +251,7 @@ def _parse_to_unicode(
 
 def get_actual_str_key(
     value_char: str, encoding: Union[str, Dict[int, str]], map_dict: Dict[Any, Any]
-) -> str:
+) -> Union[str, None]:
     key_dict = {}
     if isinstance(encoding, dict):
         key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char or value == "\u0020"}
