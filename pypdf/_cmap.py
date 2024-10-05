@@ -154,19 +154,13 @@ def _parse_encoding(
 ) -> Union[str, Dict[int, str]]:
     encoding: Union[str, List[str], Dict[int, str]] = []
     if "/Encoding" not in ft:
-        try:
-            if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
-                encoding = dict(
-                    zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
-                )
-            else:
-                encoding = "charmap"
-            return encoding
-        except Exception:
-            if cast(str, ft["/Subtype"]) == "/Type1":
-                return "charmap"
-            else:
-                return ""
+        if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
+            encoding = dict(
+                zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
+            )
+        else:
+            encoding = "charmap"
+        return encoding
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
