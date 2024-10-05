@@ -53,8 +53,7 @@ from ._cmap import (
     build_char_map,
     build_font_width_map,
     compute_font_width,
-    parse_encoding,
-    parse_to_unicode,
+    get_actual_str_key,
     unknown_char_map,
 )
 from ._protocols import PdfCommonDocProtocol
@@ -1744,13 +1743,7 @@ class PageObject(DictionaryObject):
                 actual_space_width: float = space_width
                 font_width_map["default"] = actual_space_width * 2
             else:
-                space_code = 32
-                _, space_code = parse_encoding(cmap[3], space_code)
-                _, space_code, _ = parse_to_unicode(cmap[3], space_code)
-                if isinstance(space_code, str):
-                    space_char = space_code
-                else:
-                    space_char = chr(space_code)
+                space_char = get_actual_str_key(" ", cmap[0], cmap[1])
                 font_width_map = build_font_width_map(cmap[3], space_width * 2)
                 actual_space_width = compute_font_width(font_width_map, space_char)
             if actual_space_width == 0:
