@@ -164,7 +164,7 @@ def _parse_encoding(
                 )
             else:
                 encoding = "charmap"
-            return encoding, _default_fonts_space_width[cast(str, ft["/BaseFont"])]
+            return encoding
         except Exception:
             if cast(str, ft["/Subtype"]) == "/Type1":
                 return "charmap"
