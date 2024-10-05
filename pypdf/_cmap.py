@@ -54,9 +54,6 @@ def build_char_map_from_dict(
     encoding, map_dict = get_encoding(ft)
 
     space_key_char = get_actual_str_key(" ", encoding, map_dict)
-    if not space_key_char:
-        space_key_char = chr(32)
-
     font_width_map = build_font_width_map(ft, space_width * 2.0)
     half_space_width = compute_space_width(font_width_map, space_key_char) / 2.0
 
@@ -251,13 +248,13 @@ def _parse_to_unicode(
 
 def get_actual_str_key(
     value_char: str, encoding: Union[str, Dict[int, str]], map_dict: Dict[Any, Any]
-) -> Union[str, None]:
+) -> str:
     key_dict = {}
     if isinstance(encoding, dict):
         key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char}
     else:
         key_dict = {value: key for key, value in map_dict.items() if value == value_char}
-    key_char = key_dict.get(value_char, None)
+    key_char = key_dict.get(value_char, value_char)
     return key_char
 
 
