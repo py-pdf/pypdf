@@ -254,7 +254,7 @@ def get_actual_str_key(
 ) -> Union[str, None]:
     key_dict = {}
     if isinstance(encoding, dict):
-        key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char or value == "\u0020"}
+        key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char}
     else:
         key_dict = {value: key for key, value in map_dict.items() if value == value_char}
     key_char = key_dict.get(value_char, None)
