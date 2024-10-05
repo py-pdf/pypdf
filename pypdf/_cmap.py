@@ -517,7 +517,7 @@ def _type1_alternative(
     ft: DictionaryObject,
     map_dict: Dict[Any, Any],
     int_entry: List[int],
-) -> Tuple[Dict[Any, Any], int, List[int]]:
+) -> Tuple[Dict[Any, Any], List[int]]:
     if "/FontDescriptor" not in ft:
         return map_dict, int_entry
     ft_desc = cast(DictionaryObject, ft["/FontDescriptor"]).get("/FontFile")
