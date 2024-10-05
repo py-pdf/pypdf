@@ -155,7 +155,7 @@ def get_encoding(
 def _parse_encoding(
     ft: DictionaryObject
 ) -> Union[str, Dict[int, str]]:
-    encoding: Union[str, Dict[int, str]] = []
+    encoding: Union[str, List[str], Dict[int, str]] = []
     if "/Encoding" not in ft:
         try:
             if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
