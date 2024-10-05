@@ -254,9 +254,9 @@ def get_actual_str_key(
 ) -> str:
     key_dict = {}
     if isinstance(encoding, dict):
-        key_dict = {value: key for key, value in encoding.items() if value == " "}
+        key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char or value == "\u0020"}
     else:
-        key_dict = {value: key for key, value in map_dict.items() if value == " "}
+        key_dict = {value: key for key, value in map_dict.items() if value == value_char}
     key_char = key_dict.get(value_char, None)
     return key_char
 
@@ -545,8 +545,7 @@ def _type1_alternative(
                         v = chr(int(words[2][4:], 16))
                     except ValueError:  # pragma: no cover
                         continue
-                else:
-                    continue
+                continue
             map_dict[chr(i)] = v
             int_entry.append(i)
     return map_dict, int_entry
