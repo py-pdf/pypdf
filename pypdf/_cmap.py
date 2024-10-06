@@ -129,7 +129,7 @@ def get_encoding(
     # Apply rule from PDF ref 1.7 §5.9.1, 1st bullet:
     #   if cmap not empty encoding should be discarded
     #   (here transformed into identity for those characters)
-    # if encoding is an str it is expected to be a identity translation
+    # If encoding is a string it is expected to be an identity translation.
     if isinstance(encoding, dict):
         for x in int_entry:
             if x <= 255:
