@@ -126,7 +126,7 @@ def get_encoding(
     encoding = _parse_encoding(ft)
     map_dict, int_entry = _parse_to_unicode(ft)
 
-    # apply rule from PDF ref 1.7 §5.9.1, 1st bullet :
+    # Apply rule from PDF ref 1.7 §5.9.1, 1st bullet:
     #   if cmap not empty encoding should be discarded
     #   (here transformed into identity for those characters)
     # if encoding is an str it is expected to be a identity translation
