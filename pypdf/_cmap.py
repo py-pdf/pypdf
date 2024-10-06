@@ -51,36 +51,11 @@ def build_char_map_from_dict(
         The font-dictionary itself is suitable for the curious.
     """
     font_type = cast(str, ft["/Subtype"].get_object())
+    encoding, map_dict = get_encoding(ft)
 
-    space_code = 32
-    encoding, space_code = parse_encoding(ft, space_code)
-    map_dict, space_code, int_entry = parse_to_unicode(ft, space_code)
-
-    # encoding can be either a string for decode
-    # (on 1,2 or a variable number of bytes) of a char table (for 1 byte only for me)
-    # if empty string, it means it is than encoding field is not present and
-    # we have to select the good encoding from cmap input data
-    if encoding == "":
-        if -1 not in map_dict or map_dict[-1] == 1:
-            # I have not been able to find any rule for no /Encoding nor /ToUnicode
-            # One example shows /Symbol,bold I consider 8 bits encoding default
-            encoding = "charmap"
-        else:
-            encoding = "utf-16-be"
-    # apply rule from PDF ref 1.7 §5.9.1, 1st bullet :
-    #   if cmap not empty encoding should be discarded
-    #   (here transformed into identity for those characters)
-    # if encoding is an str it is expected to be a identity translation
-    elif isinstance(encoding, dict):
-        for x in int_entry:
-            if x <= 255:
-                encoding[x] = chr(x)
-    if isinstance(space_code, str):
-        sp = space_code
-    else:
-        sp = chr(space_code)
+    space_key_char = get_actual_str_key(" ", encoding, map_dict)
     font_width_map = build_font_width_map(ft, space_width * 2.0)
-    half_space_width = compute_space_width(font_width_map, sp) / 2.0
+    half_space_width = compute_space_width(font_width_map, space_key_char) / 2.0
 
     return (
         font_type,
@@ -145,24 +120,36 @@ _default_fonts_space_width: Dict[str, int] = {
 }
 
 
-def parse_encoding(
-    ft: DictionaryObject, space_code: int
-) -> Tuple[Union[str, Dict[int, str]], int]:
+def get_encoding(
+    ft: DictionaryObject
+) -> Tuple[Union[str, Dict[int, str]], Dict[Any, Any]]:
+    encoding = _parse_encoding(ft)
+    map_dict, int_entry = _parse_to_unicode(ft)
+
+    # Apply rule from PDF ref 1.7 §5.9.1, 1st bullet:
+    #   if cmap not empty encoding should be discarded
+    #   (here transformed into identity for those characters)
+    # If encoding is a string it is expected to be an identity translation.
+    if isinstance(encoding, dict):
+        for x in int_entry:
+            if x <= 255:
+                encoding[x] = chr(x)
+
+    return encoding, map_dict
+
+
+def _parse_encoding(
+    ft: DictionaryObject
+) -> Union[str, Dict[int, str]]:
     encoding: Union[str, List[str], Dict[int, str]] = []
     if "/Encoding" not in ft:
-        try:
-            if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
-                encoding = dict(
-                    zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
-                )
-            else:
-                encoding = "charmap"
-            return encoding, _default_fonts_space_width[cast(str, ft["/BaseFont"])]
-        except Exception:
-            if cast(str, ft["/Subtype"]) == "/Type1":
-                return "charmap", space_code
-            else:
-                return "", space_code
+        if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
+            encoding = dict(
+                zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
+            )
+        else:
+            encoding = "charmap"
+        return encoding
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
@@ -202,17 +189,15 @@ def parse_encoding(
                         encoding[x] = adobe_glyphs[o]  # type: ignore
                 except Exception:
                     encoding[x] = o  # type: ignore
-                    if o == " ":
-                        space_code = x
                 x += 1
     if isinstance(encoding, list):
         encoding = dict(zip(range(256), encoding))
-    return encoding, space_code
+    return encoding
 
 
-def parse_to_unicode(
-    ft: DictionaryObject, space_code: int
-) -> Tuple[Dict[Any, Any], int, List[int]]:
+def _parse_to_unicode(
+    ft: DictionaryObject
+) -> Tuple[Dict[Any, Any], List[int]]:
     # will store all translation code
     # and map_dict[-1] we will have the number of bytes to convert
     map_dict: Dict[Any, Any] = {}
@@ -222,9 +207,9 @@ def parse_to_unicode(
 
     if "/ToUnicode" not in ft:
         if ft.get("/Subtype", "") == "/Type1":
-            return type1_alternative(ft, map_dict, space_code, int_entry)
+            return _type1_alternative(ft, map_dict, int_entry)
         else:
-            return {}, space_code, []
+            return {}, []
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
@@ -241,10 +226,19 @@ def parse_to_unicode(
             int_entry,
         )
 
-    for a, value in map_dict.items():
-        if value == " ":
-            space_code = a
-    return map_dict, space_code, int_entry
+    return map_dict, int_entry
+
+
+def get_actual_str_key(
+    value_char: str, encoding: Union[str, Dict[int, str]], map_dict: Dict[Any, Any]
+) -> str:
+    key_dict = {}
+    if isinstance(encoding, dict):
+        key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char}
+    else:
+        key_dict = {value: key for key, value in map_dict.items() if value == value_char}
+    key_char = key_dict.get(value_char, value_char)
+    return key_char
 
 
 def prepare_cm(ft: DictionaryObject) -> bytes:
@@ -499,17 +493,16 @@ def compute_font_width(
     return char_width
 
 
-def type1_alternative(
+def _type1_alternative(
     ft: DictionaryObject,
     map_dict: Dict[Any, Any],
-    space_code: int,
     int_entry: List[int],
-) -> Tuple[Dict[Any, Any], int, List[int]]:
+) -> Tuple[Dict[Any, Any], List[int]]:
     if "/FontDescriptor" not in ft:
-        return map_dict, space_code, int_entry
+        return map_dict, int_entry
     ft_desc = cast(DictionaryObject, ft["/FontDescriptor"]).get("/FontFile")
     if is_null_or_none(ft_desc):
-        return map_dict, space_code, int_entry
+        return map_dict, int_entry
     assert ft_desc is not None, "mypy"
     txt = ft_desc.get_object().get_data()
     txt = txt.split(b"eexec\n")[0]  # only clear part
@@ -532,10 +525,6 @@ def type1_alternative(
                         v = chr(int(words[2][4:], 16))
                     except ValueError:  # pragma: no cover
                         continue
-                else:
-                    continue
-            if words[2].decode() == b" ":
-                space_code = i
             map_dict[chr(i)] = v
             int_entry.append(i)
-    return map_dict, space_code, int_entry
+    return map_dict, int_entry
