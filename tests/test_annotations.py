@@ -93,24 +93,6 @@ def test_text_annotation(pdf_file_path):
 
 
 def test_free_text_annotation(pdf_file_path):
-    free_text_annotation = FreeText(
-        text="Hello World",
-        rect=(0, 0, 0, 0),
-    )
-    assert free_text_annotation["/DS"] == "font: normal normal 14pt Helvetica;text-align:left;color:#000000"
-    free_text_annotation = FreeText(
-        text="Hello World",
-        rect=(50, 550, 200, 650),
-        font="Arial",
-        bold=True,
-        italic=True,
-        font_size="20pt",
-        font_color="00ff00",
-        border_color=None,
-        background_color=None,
-    )
-    assert free_text_annotation["/DS"] == "font: italic bold 20pt Arial;text-align:left;color:#00ff00"
-
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -148,6 +130,26 @@ def test_free_text_annotation(pdf_file_path):
     # Assert: You need to inspect the file manually
     with open(pdf_file_path, "wb") as fp:
         writer.write(fp)
+
+
+def test_free_text_annotation__font_specifier():
+    free_text_annotation = FreeText(
+        text="Hello World",
+        rect=(0, 0, 0, 0),
+    )
+    assert free_text_annotation["/DS"] == "font: normal normal 14pt Helvetica;text-align:left;color:#000000"
+    free_text_annotation = FreeText(
+        text="Hello World",
+        rect=(50, 550, 200, 650),
+        font="Arial",
+        bold=True,
+        italic=True,
+        font_size="20pt",
+        font_color="00ff00",
+        border_color=None,
+        background_color=None,
+    )
+    assert free_text_annotation["/DS"] == "font: italic bold 20pt Arial;text-align:left;color:#00ff00"
 
 
 def test_annotationdictionary():
