@@ -165,7 +165,7 @@ def get_changelog(changelog_path: str) -> str:
     Returns:
         Data of the CHANGELOG
     """
-    with open(changelog_path) as fh:
+    with open(changelog_path, encoding="utf-8") as fh:
         changelog = fh.read()
     return changelog
 
@@ -178,7 +178,7 @@ def write_changelog(new_changelog: str, changelog_path: str) -> None:
         new_changelog: Contents of the new CHANGELOG
         changelog_path: Path where the CHANGELOG file is
     """
-    with open(changelog_path, "w") as fh:
+    with open(changelog_path, "w", encoding="utf-8") as fh:
         fh.write(new_changelog)
 
 
@@ -253,7 +253,9 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
         for prefix in grouped:
             for commit in grouped[prefix]:
                 output += f"- {prefix}: {commit['msg']}\n"
-                output_with_user += f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
+                output_with_user += (
+                    f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
+                )
 
     return output, output_with_user
 
@@ -267,7 +269,7 @@ def get_most_recent_git_tag() -> str:
     """
     git_tag = str(
         subprocess.check_output(
-            ["git", "describe", "--abbrev=0"], stderr=subprocess.STDOUT
+            ["git", "describe", "--tag", "--abbrev=0"], stderr=subprocess.STDOUT
         )
     ).strip("'b\\n")
     return git_tag
@@ -309,16 +311,20 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
     Returns:
         List of all changes since git_tag.
     """
-    commits = subprocess.check_output(
-        [
-            "git",
-            "--no-pager",
-            "log",
-            f"{git_tag}..HEAD",
-            '--pretty=format:"%H:::%s:::%aN"',
-        ],
-        stderr=subprocess.STDOUT,
-    ).decode("UTF-8").strip()
+    commits = (
+        subprocess.check_output(
+            [
+                "git",
+                "--no-pager",
+                "log",
+                f"{git_tag}..HEAD",
+                '--pretty=format:"%H:::%s:::%aN"',
+            ],
+            stderr=subprocess.STDOUT,
+        )
+        .decode("UTF-8")
+        .strip()
+    )
     lines = commits.splitlines()
     authors = get_author_mapping(len(lines))
     return [parse_commit_line(line, authors) for line in lines if line != ""]
@@ -349,10 +355,8 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
 
     # Standardize
     message.strip()
-    commit_hash = commit_hash.strip('"')
+    commit_hash = commit_hash.strip('"\\ \r\n')
 
-    if author.endswith('"'):
-        author = author[:-1]
     author_login = authors[commit_hash]
 
     prefix = prefix.strip()
