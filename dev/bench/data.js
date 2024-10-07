@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1728208165654,
+  "lastUpdate": 1728299228348,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -59603,6 +59603,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0004208176376694593",
             "extra": "mean: 769.7673895999742 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "44630192+ssjkamei@users.noreply.github.com",
+            "name": "Ryo Kamei",
+            "username": "ssjkamei"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8245fbc89eea919879094cfe12c57f6c6d5bd71d",
+          "message": "BUG: Fix font specificier for FreeText annotation (#2893)\n\nCloses #1435.",
+          "timestamp": "2024-10-07T13:04:34+02:00",
+          "tree_id": "93a1b6b1b090eda3bca6c4e20d72c29c3f16401f",
+          "url": "https://github.com/py-pdf/pypdf/commit/8245fbc89eea919879094cfe12c57f6c6d5bd71d"
+        },
+        "date": 1728299224555,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7965322036430855,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022549824236643592",
+            "extra": "mean: 357.5857265999957 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.330863822550574,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00802131452222797",
+            "extra": "mean: 75.01389357142736 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23189612324803247,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03570600610262029",
+            "extra": "mean: 4.312275625799987 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.50862873832167,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009465798554951049",
+            "extra": "mean: 60.57438300000584 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08882654870364322,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0696436253361278",
+            "extra": "mean: 11.257895467000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1518863083421442,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06041782444984057",
+            "extra": "mean: 868.1412330000285 msec\nrounds: 5"
           }
         ]
       }
