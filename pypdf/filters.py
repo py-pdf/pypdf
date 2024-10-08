@@ -41,15 +41,14 @@ from base64 import a85decode
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
     deprecation_no_replacement,
     logger_warning,
-    ord_,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
-from .constants import ColorSpaces
 from .constants import FilterTypeAbbreviations as FTA
 from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
@@ -367,89 +366,15 @@ class RunLengthDecode:
 
 
 class LZWDecode:
-    """
-    Taken from:
-
-    https://github.com/katjas/PDFrenderer/blob/master/src/com/sun/pdfview/decode/LZWDecode.java
-    """
-
     class Decoder:
         STOP = 257
         CLEARDICT = 256
 
         def __init__(self, data: bytes) -> None:
             self.data = data
-            self.bytepos = 0
-            self.bitpos = 0
-            self.dict = [struct.pack("B", i) for i in range(256)] + [b""] * (4096 - 256)
-            self.reset_dict()
-
-        def reset_dict(self) -> None:
-            self.dictlen = 258
-            self.bitspercode = 9
-
-        def next_code(self) -> int:
-            fillbits = self.bitspercode
-            value = 0
-            while fillbits > 0:
-                if self.bytepos >= len(self.data):
-                    return -1
-                nextbits = ord_(self.data[self.bytepos])
-                bitsfromhere = 8 - self.bitpos
-                bitsfromhere = min(bitsfromhere, fillbits)
-                value |= (
-                    (nextbits >> (8 - self.bitpos - bitsfromhere))
-                    & (0xFF >> (8 - bitsfromhere))
-                ) << (fillbits - bitsfromhere)
-                fillbits -= bitsfromhere
-                self.bitpos += bitsfromhere
-                if self.bitpos >= 8:
-                    self.bitpos = 0
-                    self.bytepos = self.bytepos + 1
-            return value
 
         def decode(self) -> bytes:
-            """
-            TIFF 6.0 specification explains in sufficient details the steps to
-            implement the LZW encode() and decode() algorithms.
-
-            algorithm derived from:
-            http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
-            and the PDFReference
-
-            Raises:
-              PdfReadError: If the stop code is missing
-            """
-            cW = self.CLEARDICT
-            baos = b""
-            while True:
-                pW = cW
-                cW = self.next_code()
-                if cW == -1:
-                    raise PdfReadError("Missed the stop code in LZWDecode!")
-                if cW == self.STOP:
-                    break
-                elif cW == self.CLEARDICT:
-                    self.reset_dict()
-                elif pW == self.CLEARDICT:
-                    baos += self.dict[cW]
-                else:
-                    if cW < self.dictlen:
-                        baos += self.dict[cW]
-                        p = self.dict[pW] + self.dict[cW][0:1]
-                        self.dict[self.dictlen] = p
-                        self.dictlen += 1
-                    else:
-                        p = self.dict[pW] + self.dict[pW][0:1]
-                        baos += p
-                        self.dict[self.dictlen] = p
-                        self.dictlen += 1
-                    if (
-                        self.dictlen >= (1 << self.bitspercode) - 1
-                        and self.bitspercode < 12
-                    ):
-                        self.bitspercode += 1
-            return baos
+            return _LzwCodec().decode(self.data)
 
     @staticmethod
     def _decodeb(
@@ -735,57 +660,72 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     from ._xobj_image_helpers import (
         Image,
         UnidentifiedImageError,
+        _apply_decode,
         _extended_image_frombytes,
-        _get_imagemode,
+        _get_mode_and_invert_color,
         _handle_flate,
         _handle_jpx,
-        mode_str_type,
     )
 
-    # for error reporting
-    if x_object_obj is None:  # pragma: no cover
-        obj_as_text = x_object_obj.indirect_reference.__repr__()
-    else:
-        obj_as_text = x_object_obj.__repr__()
+    def _apply_alpha(
+        img: Image.Image,
+        x_object_obj: Dict[str, Any],
+        obj_as_text: str,
+        image_format: str,
+        extension: str,
+    ) -> Tuple[Image.Image, str, str]:
+        alpha = None
+        if IA.S_MASK in x_object_obj:  # add alpha channel
+            alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
+            if img.size != alpha.size:
+                logger_warning(
+                    f"image and mask size not matching: {obj_as_text}", __name__
+                )
+            else:
+                # TODO : implement mask
+                if alpha.mode != "L":
+                    alpha = alpha.convert("L")
+                if img.mode == "P":
+                    img = img.convert("RGB")
+                elif img.mode == "1":
+                    img = img.convert("L")
+                img.putalpha(alpha)
+            if "JPEG" in image_format:
+                extension = ".jp2"
+                image_format = "JPEG2000"
+            else:
+                extension = ".png"
+                image_format = "PNG"
+        return img, extension, image_format
 
+    # for error reporting
+    obj_as_text = (
+        x_object_obj.indirect_reference.__repr__()  # type: ignore
+        if x_object_obj is None  # pragma: no cover
+        else x_object_obj.__repr__()
+    )
+
+    # Get size and data
     size = (cast(int, x_object_obj[IA.WIDTH]), cast(int, x_object_obj[IA.HEIGHT]))
     data = x_object_obj.get_data()  # type: ignore
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
     if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'
         data = data[:-1]
+
+    # Get color properties
     colors = x_object_obj.get("/Colors", 1)
     color_space: Any = x_object_obj.get("/ColorSpace", NullObject()).get_object()
     if isinstance(color_space, list) and len(color_space) == 1:
         color_space = color_space[0].get_object()
-    if (
-        IA.COLOR_SPACE in x_object_obj
-        and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
-    ):
-        # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: mode_str_type = "RGB"
-    if x_object_obj.get("/BitsPerComponent", 8) < 8:
-        mode, invert_color = _get_imagemode(
-            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
-        )
-    else:
-        mode, invert_color = _get_imagemode(
-            color_space,
-            2
-            if (
-                colors == 1
-                and (
-                    not isinstance(color_space, NullObject)
-                    and "Gray" not in color_space
-                )
-            )
-            else colors,
-            "",
-        )
-    extension = None
-    alpha = None
+
+    mode, invert_color = _get_mode_and_invert_color(x_object_obj, colors, color_space)
+
+    # Get filters
     filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
+
+    extension = None
     if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
         img, image_format, extension, _ = _handle_flate(
             size,
@@ -839,57 +779,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             ".png",
             False,
         )
-    # CMYK image and other colorspaces without decode
-    # requires reverting scale (cf p243,2§ last sentence)
-    decode = x_object_obj.get(
-        IA.DECODE,
-        ([1.0, 0.0] * len(img.getbands()))
-        if (
-            (img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE))
-            or (invert_color and img.mode == "L")
-        )
-        else None,
+
+    img = _apply_decode(img, x_object_obj, lfilters, color_space, invert_color)
+    img, extension, image_format = _apply_alpha(
+        img, x_object_obj, obj_as_text, image_format, extension
     )
-    if (
-        isinstance(color_space, ArrayObject)
-        and color_space[0].get_object() == "/Indexed"
-    ):
-        decode = None  # decode is meanless of Indexed
-    if (
-        isinstance(color_space, ArrayObject)
-        and color_space[0].get_object() == "/Separation"
-    ):
-        decode = [1.0, 0.0] * len(img.getbands())
-    if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
-        lut: List[int] = []
-        for i in range(0, len(decode), 2):
-            dmin = decode[i]
-            dmax = decode[i + 1]
-            lut.extend(
-                round(255.0 * (j / 255.0 * (dmax - dmin) + dmin)) for j in range(256)
-            )
-        img = img.point(lut)
 
-    if IA.S_MASK in x_object_obj:  # add alpha channel
-        alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
-        if img.size != alpha.size:
-            logger_warning(f"image and mask size not matching: {obj_as_text}", __name__)
-        else:
-            # TODO : implement mask
-            if alpha.mode != "L":
-                alpha = alpha.convert("L")
-            if img.mode == "P":
-                img = img.convert("RGB")
-            elif img.mode == "1":
-                img = img.convert("L")
-            img.putalpha(alpha)
-        if "JPEG" in image_format:
-            extension = ".jp2"
-            image_format = "JPEG2000"
-        else:
-            extension = ".png"
-            image_format = "PNG"
-
+    # Save image to bytes
     img_byte_arr = BytesIO()
     try:
         img.save(img_byte_arr, format=image_format)

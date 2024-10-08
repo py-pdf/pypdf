@@ -28,10 +28,16 @@ import binascii
 import codecs
 import hashlib
 import re
+import sys
 from binascii import unhexlify
 from math import log10
 from struct import iter_unpack
 from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Union, cast
+
+if sys.version_info[:2] >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard  # PEP 647
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
@@ -75,6 +81,22 @@ class PdfObject(PdfObjectProtocol):
                 self.hash_func(self.hash_value_data()).hexdigest(),
             )
         ).encode()
+
+    def replicate(
+        self,
+        pdf_dest: PdfWriterProtocol,
+    ) -> "PdfObject":
+        """
+        Clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
+        without ensuring links. This is used in clone_document_from_root with incremental = True.
+
+        Args:
+          pdf_dest: Target to clone to.
+
+        Returns:
+          The cloned PdfObject
+        """
+        return self.clone(pdf_dest)
 
     def clone(
         self,
@@ -214,16 +236,6 @@ class NullObject(PdfObject):
         return "NullObject"
 
 
-def is_null_or_none(x: Any) -> bool:
-    """
-    Returns:
-        True if x is None or NullObject.
-    """
-    return x is None or (
-        isinstance(x, PdfObject) and isinstance(x.get_object(), NullObject)
-    )
-
-
 class BooleanObject(PdfObject):
     def __init__(self, value: Any) -> None:
         self.value = value
@@ -301,6 +313,12 @@ class IndirectObject(PdfObject):
             Hash considering type and value.
         """
         return hash((self.__class__, self.idnum, self.generation, id(self.pdf)))
+
+    def replicate(
+        self,
+        pdf_dest: PdfWriterProtocol,
+    ) -> "PdfObject":
+        return IndirectObject(self.idnum, self.generation, pdf_dest)
 
     def clone(
         self,
@@ -853,3 +871,14 @@ def encode_pdfdocencoding(unicode_string: str) -> bytes:
             -1,
             "does not exist in translation table",
         )
+
+
+def is_null_or_none(x: Any) -> TypeGuard[Union[None, NullObject, IndirectObject]]:
+    """
+    Returns:
+        True if x is None or NullObject.
+    """
+    return x is None or (
+        isinstance(x, PdfObject)
+        and (x.get_object() is None or isinstance(x.get_object(), NullObject))
+    )

@@ -1155,3 +1155,43 @@ def test_is_null_or_none():
     writer = PdfWriter(reader)
     writer.pages[0]["/Contents"].append(writer._add_object(NullObject()))
     assert is_null_or_none(writer.pages[0]["/Contents"][-1])
+
+
+def test_coverage_arrayobject():
+    writer = PdfWriter()
+    a = ArrayObject([1])
+    assert isinstance(a.replicate(writer)[0], int)
+    assert isinstance(a.clone(writer)[0], int)
+    a.indirect_reference = IndirectObject(1, 0, writer)
+    assert isinstance(a.clone(writer)[0], int)
+    r = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    a = ArrayObject([r.pages[0]["/Contents"][0].get_object()])
+    aa = a.clone(writer)
+    assert isinstance(aa[0], IndirectObject)
+    for k, v in aa.items():
+        assert isinstance(k, int)
+        assert isinstance(v, PdfObject)
+
+
+def test_coverage_streamobject():
+    writer = PdfWriter()
+    s = StreamObject()
+    del s.decoded_self
+    s.replicate(writer)
+    s.clone(writer)
+
+    co = ContentStream(None, None)
+    co.replicate(writer)
+    co.clone(writer, False, None)
+    co.indirect_reference = IndirectObject(1, 0, writer)
+    assert co == co.clone(writer)
+
+    r = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    co = r.pages[0].get_contents()
+    co[NameObject("/testkey")] = NameObject("/test")
+    co.decoded_self = None
+    assert "/testkey" in co.replicate(writer)
+    co = r.pages[0].get_contents()
+    co[NameObject("/testkey")] = NameObject("/test")
+    co.decoded_self = DecodedStreamObject()
+    assert "/testkey" in co.replicate(writer)

@@ -1148,8 +1148,9 @@ class PdfDocCommon:
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
             catalog = self.root_object
-            pages = catalog["/Pages"].get_object()  # type: ignore
-            assert isinstance(pages, DictionaryObject)
+            pages = catalog.get("/Pages").get_object()  # type: ignore
+            if not isinstance(pages, DictionaryObject):
+                raise PdfReadError("Invalid object in /Pages")
             self.flattened_pages = []
 
         if PA.TYPE in pages:
