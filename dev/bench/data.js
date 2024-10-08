@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1728299228348,
+  "lastUpdate": 1728400036826,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -59669,6 +59669,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06041782444984057",
             "extra": "mean: 868.1412330000285 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a7d5c8dd9e9685b30e6deb2b59f07eb5d96c85ab",
+          "message": "DEV: Remove .flake8 (#2895)\n\nWe moved from flake8 to ruff quite some time ago. This is a continuation of #2572.",
+          "timestamp": "2024-10-08T17:04:43+02:00",
+          "tree_id": "d8f5b48b01036807b32b8b1881026d5b190d3eb6",
+          "url": "https://github.com/py-pdf/pypdf/commit/a7d5c8dd9e9685b30e6deb2b59f07eb5d96c85ab"
+        },
+        "date": 1728400032846,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.774253312425927,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004317536725905453",
+            "extra": "mean: 360.4573509999909 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.414439525959436,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007759341195783619",
+            "extra": "mean: 74.54653607143362 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23317914834880582,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01674555440973362",
+            "extra": "mean: 4.288548127400008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.585179322979336,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022855363958722685",
+            "extra": "mean: 60.29479576470214 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08927841428312176,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05853098853281334",
+            "extra": "mean: 11.200915787199994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2634072374911165,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023440035479658696",
+            "extra": "mean: 791.5104253999743 msec\nrounds: 5"
           }
         ]
       }
