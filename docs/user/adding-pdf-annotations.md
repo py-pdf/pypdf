@@ -47,6 +47,11 @@ annotation = FreeText(
     border_color="0000ff",
     background_color="cdcdcd",
 )
+
+# Set annotation flags to 4 for printable annotations.
+# See "AnnotationFlag" for other options, e.g. hidden etc.
+annotation.flags = 4
+
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
