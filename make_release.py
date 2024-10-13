@@ -343,7 +343,7 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
     Raises:
         ValueError: The commit line is not well-structured
     """
-    parts = line.split(":::")
+    parts = line.strip().strip('"\\').split(":::")
     if len(parts) != 3:
         raise ValueError(f"Invalid commit line: '{line}'")
     commit_hash, rest, author = parts
@@ -355,7 +355,7 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
 
     # Standardize
     message.strip()
-    commit_hash = commit_hash.strip().strip('"\\')
+    commit_hash = commit_hash.strip()
 
     author_login = authors[commit_hash]
 
