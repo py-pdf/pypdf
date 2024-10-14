@@ -528,7 +528,7 @@ class PdfWriter(PdfDocCommon):
         Returns:
             None
         """
-        # See 12.7.2 and 7.7.2 for more information:
+        # See §12.7.2 and §7.7.2 for more information:
         # https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
         try:
             # get the AcroForm tree
@@ -716,7 +716,7 @@ class PdfWriter(PdfDocCommon):
         Add JavaScript which will launch upon opening this PDF.
 
         Args:
-            javascript: Your Javascript.
+            javascript: Your JavaScript.
 
         >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
         # Example: This will launch the print window when the PDF is opened.
@@ -741,7 +741,7 @@ class PdfWriter(PdfDocCommon):
                 NameObject("/JS"): TextStringObject(f"{javascript}"),
             }
         )
-        # We need a name for parameterized javascript in the pdf file,
+        # We need a name for parameterized JavaScript in the PDF file,
         # but it can be anything.
         js_list.append(create_string_object(str(uuid.uuid4())))
         js_list.append(self._add_object(js))
@@ -1605,7 +1605,7 @@ class PdfWriter(PdfDocCommon):
         remove_orphans: bool = True,
     ) -> None:
         """
-        Parse the PDF file and merge objects that have same hash.
+        Parse the PDF file and merge objects that have the same hash.
         This will make objects common to multiple pages.
         Recommended to be used just before writing output.
 
@@ -3132,7 +3132,7 @@ class PdfWriter(PdfDocCommon):
 
         Page indexes must be given starting from 0.
         Labels must have a style, a prefix or both.
-        If a range is not assigned any page label a decimal label starting from 1 is applied.
+        If a range is not assigned any page label, a decimal label starting from 1 is applied.
 
         Args:
             page_index_from: page index of the beginning of the range starting from 0
@@ -3155,17 +3155,17 @@ class PdfWriter(PdfDocCommon):
                     Default value: 1.
         """
         if style is None and prefix is None:
-            raise ValueError("at least one between style and prefix must be given")
+            raise ValueError("At least one of style and prefix must be given")
         if page_index_from < 0:
-            raise ValueError("page_index_from must be equal or greater then 0")
+            raise ValueError("page_index_from must be greater or equal than 0")
         if page_index_to < page_index_from:
             raise ValueError(
-                "page_index_to must be equal or greater then page_index_from"
+                "page_index_to must be greater or equal than page_index_from"
             )
         if page_index_to >= len(self.pages):
             raise ValueError("page_index_to exceeds number of pages")
         if start is not None and start != 0 and start < 1:
-            raise ValueError("if given, start must be equal or greater than one")
+            raise ValueError("If given, start must be greater or equal than one")
 
         self._set_page_label(page_index_from, page_index_to, style, prefix, start)
 
@@ -3241,8 +3241,8 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject
         to_add = DictionaryObject()
         for key, value in obj.items():
             name_key = NameObject(key)
-            casted_value = _pdf_objectify(value)
-            to_add[name_key] = casted_value
+            cast_value = _pdf_objectify(value)
+            to_add[name_key] = cast_value
         return to_add
     elif isinstance(obj, str):
         if obj.startswith("/"):
