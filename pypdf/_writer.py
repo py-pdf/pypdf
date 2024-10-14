@@ -3234,7 +3234,7 @@ class PdfWriter(PdfDocCommon):
         self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
 
 
-def _pdf_objectify(obj: Union[Dict[str, Any], str, int, float, List[Any]]) -> PdfObject:
+def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
     if isinstance(obj, PdfObject):
         return obj
     if isinstance(obj, dict):
