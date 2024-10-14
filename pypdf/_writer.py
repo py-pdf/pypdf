@@ -3155,7 +3155,7 @@ class PdfWriter(PdfDocCommon):
                     Default value: 1.
         """
         if style is None and prefix is None:
-            raise ValueError("at least one of style and prefix must be given")
+            raise ValueError("At least one of style and prefix must be given")
         if page_index_from < 0:
             raise ValueError("page_index_from must be greater or equal than 0")
         if page_index_to < page_index_from:
@@ -3165,7 +3165,7 @@ class PdfWriter(PdfDocCommon):
         if page_index_to >= len(self.pages):
             raise ValueError("page_index_to exceeds number of pages")
         if start is not None and start != 0 and start < 1:
-            raise ValueError("if given, start must be greater or equal than one")
+            raise ValueError("If given, start must be greater or equal than one")
 
         self._set_page_label(page_index_from, page_index_to, style, prefix, start)
 
