@@ -3241,8 +3241,8 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject
         to_add = DictionaryObject()
         for key, value in obj.items():
             name_key = NameObject(key)
-            casted_value = _pdf_objectify(value)
-            to_add[name_key] = casted_value
+            cast_value = _pdf_objectify(value)
+            to_add[name_key] = cast_value
         return to_add
     elif isinstance(obj, str):
         if obj.startswith("/"):
