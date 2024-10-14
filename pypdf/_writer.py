@@ -677,7 +677,7 @@ class PdfWriter(PdfDocCommon):
             PageSizeNotDefinedError: if width and height are not defined
                 and previous page does not exist.
         """
-        if width is None or height is None and (self.get_num_pages() - 1) >= index:
+        if width is None or height is None and index < self.get_num_pages():
             oldpage = self.pages[index]
             width = oldpage.mediabox.width
             height = oldpage.mediabox.height
@@ -3234,7 +3234,7 @@ class PdfWriter(PdfDocCommon):
         self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
 
 
-def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
+def _pdf_objectify(obj: Union[Dict[str, Any], str, int, float, List[Any]]) -> PdfObject:
     if isinstance(obj, PdfObject):
         return obj
     if isinstance(obj, dict):
@@ -3244,8 +3244,6 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject
             casted_value = _pdf_objectify(value)
             to_add[name_key] = casted_value
         return to_add
-    elif isinstance(obj, list):
-        return ArrayObject(_pdf_objectify(el) for el in obj)
     elif isinstance(obj, str):
         if obj.startswith("/"):
             return NameObject(obj)
@@ -3253,9 +3251,11 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject
             return TextStringObject(obj)
     elif isinstance(obj, (int, float)):
         return FloatObject(obj)
+    elif isinstance(obj, list):
+        return ArrayObject(_pdf_objectify(i) for i in obj)
     else:
         raise NotImplementedError(
-            f"type(obj)={type(obj)} could not be casted to PdfObject"
+            f"{type(obj)=} could not be cast to a PdfObject"
         )
 
 
