@@ -1384,7 +1384,7 @@ class PdfWriter(PdfDocCommon):
         my_file = False
 
         if stream == "":
-            raise ValueError(f"Output(stream={stream}) is empty.")
+            raise ValueError(f"Output({stream=}) is empty.")
 
         if isinstance(stream, (str, Path)):
             stream = FileIO(stream, "wb")
