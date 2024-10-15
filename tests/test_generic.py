@@ -339,7 +339,7 @@ def test_dictionaryobject_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do["foo"] = NameObject("/GoTo")
-    assert exc.value.args[0] == "key must be PdfObject"
+    assert exc.value.args[0] == "Key must be a PdfObject"
 
 
 def test_dictionaryobject_xmp_meta():
