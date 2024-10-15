@@ -193,7 +193,7 @@ def test_name_object(caplog):
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
-    assert exc.value.args[0] == "name read error"
+    assert exc.value.args[0] == "Name read error"
     assert (
         NameObject.read_from_stream(
             BytesIO(b"/A;Name_With-Various***Characters?"), None
