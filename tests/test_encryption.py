@@ -264,7 +264,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
                 owner_password=owner_password,
                 algorithm=alg,
             )
-        assert exc.value.args[0] == "algorithm 'ABCD' NOT supported"
+        assert exc.value.args[0] == "Algorithm 'ABCD' NOT supported"
         return
 
     if requires_aes and not HAS_AES:

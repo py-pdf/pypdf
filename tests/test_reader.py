@@ -793,12 +793,12 @@ def test_pages_attribute():
     with pytest.raises(IndexError) as exc:
         reader.pages[-1000]
 
-    assert exc.value.args[0] == "sequence index out of range"
+    assert exc.value.args[0] == "Sequence index out of range"
 
     with pytest.raises(IndexError):
         reader.pages[1000]
 
-    assert exc.value.args[0] == "sequence index out of range"
+    assert exc.value.args[0] == "Sequence index out of range"
 
 
 def test_convert_to_int():
@@ -808,7 +808,7 @@ def test_convert_to_int():
 def test_convert_to_int_error():
     with pytest.raises(PdfReadError) as exc:
         convert_to_int(b"256", 16)
-    assert exc.value.args[0] == "invalid size in convert_to_int"
+    assert exc.value.args[0] == "Invalid size in convert_to_int"
 
 
 @pytest.mark.enable_socket()
