@@ -351,21 +351,21 @@ def test_dictionaryobject_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do[NameObject("/S")] = "/GoTo"
-    assert exc.value.args[0] == "value must be PdfObject"
+    assert exc.value.args[0] == "Value must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault("foo", NameObject("/GoTo"))
-    assert exc.value.args[0] == "key must be PdfObject"
+    assert exc.value.args[0] == "Key must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
-    assert exc.value.args[0] == "value must be PdfObject"
+    assert exc.value.args[0] == "Value must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_value():
