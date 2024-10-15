@@ -223,7 +223,7 @@ def nums_insert(
         nums: Nums array to modify
     """
     if len(nums) % 2 != 0:
-        raise ValueError("a nums like array must have an even number of elements")
+        raise ValueError("A nums like array must have an even number of elements")
 
     i = len(nums)
     while i != 0 and key <= nums[i - 2]:
@@ -252,7 +252,7 @@ def nums_clear_range(
         nums: Nums array to modify
     """
     if len(nums) % 2 != 0:
-        raise ValueError("a nums like array must have an even number of elements")
+        raise ValueError("A nums like array must have an even number of elements")
     if page_index_to < key:
         raise ValueError("page_index_to must be greater or equal than key")
 
@@ -276,7 +276,7 @@ def nums_next(
         nums: Nums array
     """
     if len(nums) % 2 != 0:
-        raise ValueError("a nums like array must have an even number of elements")
+        raise ValueError("A nums like array must have an even number of elements")
 
     i = nums.index(key) + 2
     if i < len(nums):

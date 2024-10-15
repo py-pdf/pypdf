@@ -453,7 +453,7 @@ class PdfWriter(PdfDocCommon):
     ) -> PdfObject:
         if isinstance(indirect_reference, IndirectObject):
             if indirect_reference.pdf != self:
-                raise ValueError("pdf must be self")
+                raise ValueError("PDF must be self")
             indirect_reference = indirect_reference.idnum
         gen = self._objects[indirect_reference - 1].indirect_reference.generation  # type: ignore
         if (
@@ -1325,7 +1325,7 @@ class PdfWriter(PdfDocCommon):
             try:
                 alg = getattr(EncryptAlgorithm, algorithm.replace("-", "_"))
             except AttributeError:
-                raise ValueError(f"algorithm '{algorithm}' NOT supported")
+                raise ValueError(f"Algorithm '{algorithm}' NOT supported")
         else:
             alg = EncryptAlgorithm.RC4_128
             if not use_128bit:

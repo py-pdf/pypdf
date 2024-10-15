@@ -428,7 +428,7 @@ class PdfReader(PdfDocCommon):
                     idnum != indirect_reference.idnum
                     or generation != indirect_reference.generation
                 ):
-                    raise PdfReadError("not matching, we parse the file for it")
+                    raise PdfReadError("Not matching, we parse the file for it")
             except Exception:
                 if hasattr(self.stream, "getbuffer"):
                     buf = bytes(self.stream.getbuffer())
@@ -972,7 +972,7 @@ class PdfReader(PdfDocCommon):
                 self._rebuild_xref_table(stream)
                 return None
             except Exception:
-                raise PdfReadError("can not rebuild xref")
+                raise PdfReadError("Cannot rebuild xref")
         raise PdfReadError("Could not find xref table at specified location")
 
     def _read_pdf15_xref_stream(

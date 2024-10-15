@@ -832,7 +832,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
         if name != NameObject.surfix:
-            raise PdfReadError("name read error")
+            raise PdfReadError("Name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
             # Name objects should represent irregular characters

@@ -93,7 +93,7 @@ from .xmp import XmpInformation
 
 def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     if size > 8:
-        raise PdfReadError("invalid size in convert_to_int")
+        raise PdfReadError("Invalid size in convert_to_int")
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
     d = d[-8:]
     return struct.unpack(">q", d)[0]
@@ -761,9 +761,9 @@ class PdfDocCommon:
             # to cope with all types
             field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
         except Exception as exc:
-            raise ValueError("field type is invalid") from exc
+            raise ValueError("Field type is invalid") from exc
         if is_null_or_none(_get_inherited(field, "/FT")):
-            raise ValueError("field is not valid")
+            raise ValueError("Field is not valid")
         ret = []
         if field.get("/Subtype", "") == "/Widget":
             if "/P" in field:
@@ -827,7 +827,7 @@ class PdfDocCommon:
 
     @open_destination.setter
     def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
-        raise NotImplementedError("no setter for open_destination")
+        raise NotImplementedError("No setter for open_destination")
 
     @property
     def outline(self) -> OutlineType:
