@@ -982,7 +982,7 @@ def test_write_empty_stream():
 
     with pytest.raises(ValueError) as exc:
         writer.write("")
-    assert exc.value.args[0] == "Output(stream=) is empty."
+    assert exc.value.args[0] == "Output(stream='') is empty."
 
 
 def test_startup_dest():
