@@ -29,7 +29,7 @@ def test_get_imagemode_recursion_depth():
         reader.pages[0].images[0]
 
 
-def test_handle_flate__image_mode_1():
+def test_handle_flate__image_mode_1(caplog):
     data = b"\x00\xe0\x00"
     lookup = DecodedStreamObject()
     expected_data = [
@@ -57,6 +57,7 @@ def test_handle_flate__image_mode_1():
         obj_as_text="dummy",
     )
     assert expected_data == list(result[0].getdata())
+    assert not caplog.text
 
     # Trailing whitespace.
     lookup.set_data(b"\x42\x42\x42\x00\x13\x37  \x0a")
@@ -71,48 +72,51 @@ def test_handle_flate__image_mode_1():
         obj_as_text="dummy",
     )
     assert expected_data == list(result[0].getdata())
+    assert not caplog.text
 
     # Trailing non-whitespace character.
     lookup.set_data(b"\x42\x42\x42\x00\x13\x37\x12")
-    with pytest.raises(
-        PdfReadError, match=r"^Too many lookup values: Expected 6, got 7\.$"
-    ):
-        _handle_flate(
-            size=(3, 3),
-            data=data,
-            mode="1",
-            color_space=ArrayObject(
-                [
-                    NameObject("/Indexed"),
-                    NameObject("/DeviceRGB"),
-                    NumberObject(1),
-                    lookup,
-                ]
-            ),
-            colors=2,
-            obj_as_text="dummy",
-        )
+    result = _handle_flate(
+        size=(3, 3),
+        data=data,
+        mode="1",
+        color_space=ArrayObject(
+            [
+                NameObject("/Indexed"),
+                NameObject("/DeviceRGB"),
+                NumberObject(1),
+                lookup,
+            ]
+        ),
+        colors=2,
+        obj_as_text="dummy",
+    )
+    assert expected_data == list(result[0].getdata())
+    assert "Too many lookup values: Expected 6, got 7." in caplog.text
 
     # Not enough lookup data.
+    # `\xe0` of the original input (the middle part) does not use `0x37 = 55` for the lookup
+    # here, but received a custom padding of `0`.
     lookup.set_data(b"\x42\x42\x42\x00\x13")
-    with pytest.raises(
-        PdfReadError, match=r"^Not enough lookup values: Expected 6, got 5\.$"
-    ):
-        _handle_flate(
-            size=(3, 3),
-            data=data,
-            mode="1",
-            color_space=ArrayObject(
-                [
-                    NameObject("/Indexed"),
-                    NameObject("/DeviceRGB"),
-                    NumberObject(1),
-                    lookup,
-                ]
-            ),
-            colors=2,
-            obj_as_text="dummy",
-        )
+    caplog.clear()
+    expected_short_data = [entry if entry[0] == 66 else (0, 19, 0) for entry in expected_data]
+    result = _handle_flate(
+        size=(3, 3),
+        data=data,
+        mode="1",
+        color_space=ArrayObject(
+            [
+                NameObject("/Indexed"),
+                NameObject("/DeviceRGB"),
+                NumberObject(1),
+                lookup,
+            ]
+        ),
+        colors=2,
+        obj_as_text="dummy",
+    )
+    assert expected_short_data == list(result[0].getdata())
+    assert "Not enough lookup values: Expected 6, got 5." in caplog.text
 
 
 def test_extended_image_frombytes_zero_data():
