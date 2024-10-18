@@ -11,7 +11,7 @@ pip install -r requirements/dev.txt
 
 ## Running Tests
 
-See [testing pypdf with pytest](testing.md)
+See [testing pypdf with pytest](testing.md).
 
 ## The sample-files git submodule
 The reason for having the submodule `sample-files` is that we want to keep

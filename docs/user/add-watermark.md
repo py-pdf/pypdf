@@ -8,7 +8,7 @@ background of the document.
 
 The process of stamping and watermarking is the same, you just need to set `over` parameter to `True` for stamping and `False` for watermarking.
 
-You can use `merge_page()` if you don't need to transform the stamp:
+You can use {func}`~pypdf._page.PageObject.merge_page` if you don't need to transform the stamp:
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -21,7 +21,7 @@ for page in writer.pages:
 writer.write("out.pdf")
 ```
 
-Otherwise use `merge_transformed_page()` with `Transformation()` if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
+Otherwise use {func}`~pypdf._page.PageObject.merge_transformed_page` with {class}`~pypdf.Transformation` if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
 
 ```python
 from pathlib import Path
@@ -56,7 +56,7 @@ stamp("example.pdf", "stamp.pdf", "out.pdf")
 ```
 
 If you are experiencing wrongly rotated watermarks/stamps, try to use
-`transfer_rotation_to_content()` on the corresponding pages beforehand
+{func}`~pypdf._page.PageObject.transfer_rotation_to_content` on the corresponding pages beforehand
 to fix the page boxes.
 
 Example of stamp:
