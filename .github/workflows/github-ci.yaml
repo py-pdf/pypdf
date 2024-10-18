@@ -170,7 +170,7 @@ jobs:
     - name: Test docs build
       run: |
         pip install -r requirements/docs.txt
-        sphinx-build -n -W --keep-going -T -b html docs build/sphinx/html
+        sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback --builder html docs build/sphinx/html
 
   package:
     name: Build & verify package

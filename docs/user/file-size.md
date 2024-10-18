@@ -65,7 +65,7 @@ method. It is a lossless compression, meaning the resulting PDF looks exactly
 the same.
 
 Deflate compression can be applied to a page via
-[`page.compress_content_streams`](https://pypdf.readthedocs.io/en/latest/modules/PageObject.html#pypdf._page.PageObject.compress_content_streams):
+{meth}`page.compress_content_streams <pypdf._page.PageObject.compress_content_streams>`:
 
 ```python
 from pypdf import PdfWriter
