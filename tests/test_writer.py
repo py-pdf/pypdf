@@ -2480,3 +2480,14 @@ def test_append_pdf_with_dest_without_page(caplog):
     writer.append(reader)
     assert "/__WKANCHOR_8" not in writer.named_destinations
     assert len(writer.named_destinations) == 3
+
+
+def test_stream_not_closed():
+    """Tests for #2905"""
+    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    with NamedTemporaryFile() as tmp:
+        with PdfReader(src) as reader, PdfWriter() as writer:
+            for i in range(4):
+                writer.add_page(reader.pages[i])
+            writer.write(tmp)
+        assert not tmp.file.closed
