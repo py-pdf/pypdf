@@ -601,19 +601,78 @@ class PageObject(DictionaryObject):
         if ancest is None:
             ancest = []
         lst: List[Union[str, List[str]]] = []
-        if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
-            DictionaryObject, obj[PG.RESOURCES]
-        ):
-            return [] if self.inline_images is None else list(self.inline_images.keys())
 
-        x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
-        for o in x_object:
-            if not isinstance(x_object[o], StreamObject):
-                continue
-            if x_object[o][IA.SUBTYPE] == "/Image":
-                lst.append(o if len(ancest) == 0 else ancest + [o])
-            else:  # is a form with possible images inside
-                lst.extend(self._get_ids_image(x_object[o], ancest + [o], call_stack))
+        if PG.ANNOTS in obj:
+            for annot in cast(DictionaryObject, obj[PG.ANNOTS]):
+                if (
+                    "/AP" in cast(DictionaryObject, annot.keys())
+                    and "/N" in cast(DictionaryObject, annot["/AP"].keys())
+                    and PG.RESOURCES in annot["/AP"]["/N"].get_object()
+                    and RES.XOBJECT
+                    in cast(DictionaryObject, annot["/AP"]["/N"][PG.RESOURCES])
+                    and "/FRM"
+                    in cast(
+                        DictionaryObject, annot["/AP"]["/N"][PG.RESOURCES][RES.XOBJECT]
+                    )
+                ):
+                    frame = annot["/AP"]["/N"][PG.RESOURCES][RES.XOBJECT]["/FRM"]
+
+                    if PG.RESOURCES in frame.get_object() and RES.XOBJECT in cast(
+                        DictionaryObject, frame[PG.RESOURCES]
+                    ):
+                        x_object = frame[PG.RESOURCES][RES.XOBJECT]
+                        for o in x_object:
+                            if (
+                                isinstance(x_object[o], StreamObject)
+                                and x_object[o][IA.SUBTYPE] == "/Image"
+                            ):
+                                lst.extend(
+                                    [
+                                        (
+                                            f"{PG.ANNOTS}/{annot['/T']}{o}"
+                                            if len(ancest) == 0
+                                            else ancest + [o]
+                                        )
+                                    ]
+                                )
+
+        if PG.RESOURCES in obj:
+            if RES.PATTERN in cast(DictionaryObject, obj[PG.RESOURCES]):
+                for pattern_name, pattern in cast(
+                    DictionaryObject,
+                    cast(DictionaryObject, obj[PG.RESOURCES])[RES.PATTERN],
+                ).items():
+                    if PG.RESOURCES in pattern.get_object() and RES.XOBJECT in cast(
+                        DictionaryObject, pattern[PG.RESOURCES]
+                    ):
+                        x_object = pattern[PG.RESOURCES][RES.XOBJECT].get_object()
+                        for o in x_object:
+                            if (
+                                isinstance(x_object[o], StreamObject)
+                                and x_object[o][IA.SUBTYPE] == "/Image"
+                            ):
+                                lst.extend(
+                                    [
+                                        (
+                                            f"{RES.PATTERN}{pattern_name}{o}"
+                                            if len(ancest) == 0
+                                            else ancest + [o]
+                                        )
+                                    ]
+                                )
+
+            if RES.XOBJECT in cast(DictionaryObject, obj[PG.RESOURCES]):
+                x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
+                for o in x_object:
+                    if not isinstance(x_object[o], StreamObject):
+                        continue
+                    if x_object[o][IA.SUBTYPE] == "/Image":
+                        lst.append(o if len(ancest) == 0 else ancest + [o])
+                    else:  # is a form with possible images inside
+                        lst.extend(
+                            self._get_ids_image(x_object[o], ancest + [o], call_stack)
+                        )
+
         assert self.inline_images is not None
         lst.extend(list(self.inline_images.keys()))
         return lst
@@ -630,9 +689,50 @@ class PageObject(DictionaryObject):
         if isinstance(id, List) and len(id) == 1:
             id = id[0]
         try:
-            xobjs = cast(
-                DictionaryObject, cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT]
-            )
+            if isinstance(id, str) and id.find(RES.PATTERN) == 0:
+                pattern_name = id[len(RES.PATTERN) : id.find("/", len(RES.PATTERN) + 1)]
+
+                patterns = cast(
+                    DictionaryObject,
+                    cast(DictionaryObject, obj[PG.RESOURCES])[RES.PATTERN],
+                )
+
+                xobjs = cast(
+                    DictionaryObject,
+                    cast(
+                        DictionaryObject,
+                        cast(DictionaryObject, patterns[pattern_name])[PG.RESOURCES],
+                    )[RES.XOBJECT],
+                )
+            elif isinstance(id, str) and id.find(PG.ANNOTS) == 0:
+                annot_name = id[len(RES.PATTERN) : id.find("/", len(RES.PATTERN) + 1)]
+                annots = cast(DictionaryObject, obj[PG.ANNOTS])
+
+                for temp_annot in annots:
+                    if temp_annot["/T"] == annot_name:
+                        annot = temp_annot
+                        break
+
+                frame_xobjs = cast(
+                    DictionaryObject,
+                    cast(
+                        DictionaryObject,
+                        cast(DictionaryObject, annot["/AP"]["/N"])[PG.RESOURCES],
+                    )[RES.XOBJECT],
+                )
+
+                xobjs = cast(
+                    DictionaryObject,
+                    cast(
+                        DictionaryObject,
+                        cast(DictionaryObject, frame_xobjs["/FRM"])[PG.RESOURCES],
+                    )[RES.XOBJECT],
+                )
+            else:
+                xobjs = cast(
+                    DictionaryObject,
+                    cast(DictionaryObject, obj[PG.RESOURCES])[RES.XOBJECT],
+                )
         except KeyError:
             if not (id[0] == "~" and id[-1] == "~"):
                 raise
@@ -644,15 +744,25 @@ class PageObject(DictionaryObject):
                     raise KeyError("No inline image can be found")
                 return self.inline_images[id]
 
-            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
-            extension, byte_stream = imgd[:2]
-            f = ImageFile(
-                name=f"{id[1:]}{extension}",
+            if id.find("/Pattern") == 0:
+                image_identifier = id[id.rfind("/") :]
+                image_name = pattern_name[1:] + "_" + image_identifier[1:]
+            elif id.find("/Annot") == 0:
+                image_identifier = id[id.rfind("/") :]
+                image_name = annot_name + "_" + image_identifier[1:]
+            else:
+                image_identifier = str(id)
+                image_name = id[1:]
+
+            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[image_identifier]))
+            image_extension, byte_stream = imgd[:2]
+
+            return ImageFile(
+                name=image_name + str(image_extension),
                 data=byte_stream,
                 image=imgd[2],
-                indirect_reference=xobjs[id].indirect_reference,
+                indirect_reference=xobjs[image_identifier].indirect_reference,
             )
-            return f
         else:  # in a sub object
             ids = id[1:]
             return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))

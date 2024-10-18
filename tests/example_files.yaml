@@ -112,5 +112,7 @@
   url: https://github.com/py-pdf/pypdf/files/12050253/tt.pdf
 - local_filename: Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf
   url: https://www.joinville.sc.gov.br/wp-content/uploads/2023/11/Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf
-- local_filename: iss2138.pdf
-  url: https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf
+- local_filename: iss2613-onlyoffice-standardImages.pdf
+  url: https://github.com/py-pdf/pypdf/files/15355445/iss2613-onlyoffice-standardImages.pdf
+- local_filename: iss2613-onlyoffice-form.pdf
+  url: https://github.com/py-pdf/pypdf/files/15355444/iss2613-onlyoffice-form.pdf

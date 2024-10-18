@@ -215,6 +215,66 @@ def test_image_extraction(src, page_index, image_key, expected):
 
 
 @pytest.mark.enable_socket()
+def test_onlyoffice_standard_images_extraction():
+    reader = PdfReader(
+        BytesIO(get_data_from_url(name="iss2613-onlyoffice-standardImages.pdf"))
+    )
+
+    assert (
+        str(reader.pages[0].images)
+        == "[Image_0=/Pattern/P1/X1, Image_1=/Pattern/P2/X1, Image_2=/Pattern/P3/X1]"
+    )
+
+    url = "https://github.com/py-pdf/pypdf/assets/67143274/cc28b39b-2e96-4bd3-b33c-c545c5cec2d9"
+    name = "iss2613-P1_X1.jpg"
+    P1_X1 = Image.open(BytesIO(get_data_from_url(url, name=name)))
+
+    assert image_similarity(reader.pages[0].images[0].image, P1_X1) >= 0.99
+
+    url = "https://github.com/py-pdf/pypdf/assets/67143274/827c9066-546a-4502-a613-579ec25c598e"
+    name = "iss2613-P2_X1.jpg"
+    P2_X1 = Image.open(BytesIO(get_data_from_url(url, name=name)))
+
+    assert image_similarity(reader.pages[0].images[1].image, P2_X1) >= 0.99
+
+    url = "https://github.com/py-pdf/pypdf/assets/67143274/df9cb9e9-e589-4d2e-a537-ae0fe3240bbd"
+    name = "iss2613-P3_X1.jpg"
+    P3_X1 = Image.open(BytesIO(get_data_from_url(url, name=name)))
+
+    assert image_similarity(reader.pages[0].images[2].image, P3_X1) >= 0.99
+
+
+@pytest.mark.enable_socket()
+def test_onlyoffice_form_images_extraction():
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2613-onlyoffice-form.pdf")))
+
+    assert (
+        str(reader.pages[0].images)
+        == "[Image_0=/Annots/Image2_af_image/Img, Image_1=/Annots/Image3_af_image/Img]"
+    )
+
+    assert str(reader.pages[1].images) == "[Image_0=/Annots/Image4_af_image/Img]"
+
+    url = "https://github.com/py-pdf/pypdf/assets/67143274/cc28b39b-2e96-4bd3-b33c-c545c5cec2d9"
+    name = "iss2613-P1_X1.jpg"
+    P1_X1 = Image.open(BytesIO(get_data_from_url(url, name=name)))
+
+    assert image_similarity(reader.pages[0].images[0].image, P1_X1) >= 0.99
+
+    url = "https://github.com/py-pdf/pypdf/assets/67143274/827c9066-546a-4502-a613-579ec25c598e"
+    name = "iss2613-P2_X1.jpg"
+    P2_X1 = Image.open(BytesIO(get_data_from_url(url, name=name)))
+
+    assert image_similarity(reader.pages[0].images[1].image, P2_X1) >= 0.99
+
+    url = "https://github.com/py-pdf/pypdf/assets/67143274/df9cb9e9-e589-4d2e-a537-ae0fe3240bbd"
+    name = "iss2613-P3_X1.jpg"
+    P3_X1 = Image.open(BytesIO(get_data_from_url(url, name=name)))
+
+    assert image_similarity(reader.pages[1].images[0].image, P3_X1) >= 0.99
+
+
+@pytest.mark.enable_socket()
 @pytest.mark.timeout(30)
 def test_loop_in_image_keys():
     """Cf #2077"""
