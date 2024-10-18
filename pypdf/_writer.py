@@ -249,7 +249,6 @@ class PdfWriter(PdfDocCommon):
         # to prevent overwriting
         self.temp_fileobj = fileobj
         self.fileobj = ""
-        self.with_as_usage = False
         # The root of our page tree node.
         pages = DictionaryObject()
         pages.update(
@@ -356,7 +355,6 @@ class PdfWriter(PdfDocCommon):
         """Store that writer is initialized by 'with'."""
         t = self.temp_fileobj
         self.__init__()  # type: ignore
-        self.with_as_usage = True
         self.fileobj = t  # type: ignore
         return self
 
@@ -369,6 +367,9 @@ class PdfWriter(PdfDocCommon):
         """Write data to the fileobj."""
         if self.fileobj:
             self.write(self.fileobj)
+            close_attr = getattr(self.fileobj, "close", None)
+            if callable(close_attr):
+                self.fileobj.close()
 
     def _repr_mimebundle_(
         self,
@@ -1388,13 +1389,14 @@ class PdfWriter(PdfDocCommon):
 
         if isinstance(stream, (str, Path)):
             stream = FileIO(stream, "wb")
-            self.with_as_usage = True  #
             my_file = True
 
         self.write_stream(stream)
 
-        if self.with_as_usage:
+        if my_file:
             stream.close()
+        else:
+            stream.flush()
 
         return my_file, stream
 
