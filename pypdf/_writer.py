@@ -369,7 +369,7 @@ class PdfWriter(PdfDocCommon):
             self.write(self.fileobj)
             close_attr = getattr(self.fileobj, "close", None)
             if callable(close_attr):
-                self.fileobj.close()
+                self.fileobj.close()  # type: ignore[attr-defined]
 
     def _repr_mimebundle_(
         self,
