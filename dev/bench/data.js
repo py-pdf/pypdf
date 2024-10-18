@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1729271789192,
+  "lastUpdate": 1729272266671,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -60329,6 +60329,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008489972722331198",
             "extra": "mean: 789.8444025999993 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "80c3939ca0d9865a6df9c13229586695232ececb",
+          "message": "ROB: Soft failure for flate encode image mode 1 with wrong LUT size (#2900)\n\nCloses #2889.",
+          "timestamp": "2024-10-18T19:21:51+02:00",
+          "tree_id": "eaea32ae0a693802a49a57d3df89eb508b1e7cef",
+          "url": "https://github.com/py-pdf/pypdf/commit/80c3939ca0d9865a6df9c13229586695232ececb"
+        },
+        "date": 1729272264349,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8069096797375215,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003314657679556892",
+            "extra": "mean: 356.26368999999727 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.494744218827357,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011081543459051152",
+            "extra": "mean: 86.99628116666484 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2265619647901923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04351222616912642",
+            "extra": "mean: 4.4138035302000045 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.54700473079762,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000404255365887907",
+            "extra": "mean: 60.433898235296915 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08967409172490562,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05746616772436741",
+            "extra": "mean: 11.151492931399996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.26379663788478,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007991920629913178",
+            "extra": "mean: 791.2665456000127 msec\nrounds: 5"
           }
         ]
       }
