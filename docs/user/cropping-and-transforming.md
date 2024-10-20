@@ -1,8 +1,10 @@
 # Cropping and Transforming PDFs
 
-> **Notice**: Just because content is no longer visible, it is not gone.
-> Cropping works by adjusting the viewbox. That means content that was cropped
-> away can still be restored.
+```{note}
+Just because content is no longer visible, it is not gone.
+Cropping works by adjusting the viewbox. That means content that was cropped
+away can still be restored.
+```
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -33,8 +35,7 @@ with open("pypdf-output.pdf", "wb") as fp:
 
 The most typical rotation is a clockwise rotation of the page by multiples of
 90 degrees. That is done when the orientation of the page is wrong. You can
-do that with the [`rotate` method](https://pypdf.readthedocs.io/en/latest/modules/PageObject.html#pypdf._page.PageObject.rotate)
-of the `PageObject` class:
+do that with the {func}`~pypdf._page.PageObject.rotate` method:
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -50,8 +51,8 @@ with open("output.pdf", "wb") as fp:
 ```
 
 The rotate method is typically preferred over the `page.add_transformation(Transformation().rotate())`
-method, because `rotate` will ensure that the page is still in the mediabox /
-cropbox. The transformation object operates on the coordinates of the pages
+method, because `rotate` will ensure that the page is still in the mediabox/cropbox.
+The transformation object operates on the coordinates of the pages
 contents and does not change the mediabox or cropbox.
 
 
@@ -193,7 +194,6 @@ writer.write("out-pg-transform.pdf")
 ### pypdf._page.MERGE_CROP_BOX
 
 `pypdf<=3.4.0` used to merge the other page with `trimbox`.
-
 `pypdf>3.4.0` changes this behavior to `cropbox`.
 
 In case anybody has good reasons to use/expect `trimbox`, please let me know via
@@ -210,7 +210,7 @@ We have designed the following business card (A8 format) to advertise our new st
 
 ![](nup-source.png)
 
-We would like to copy this card sixteen times on an A4 page, to print it, cut it, and give it to all our friends. Having learned about the ``merge_page()`` method and the ``Transformation`` class, we run the following code. Notice that we had to tweak the media box of the source page to extend it, which is already a dirty hack (in this case).
+We would like to copy this card sixteen times on an A4 page, to print it, cut it, and give it to all our friends. Having learned about the {func}`~pypdf._page.PageObject.merge_page` method and the {class}`~pypdf.Transformation` class, we run the following code. Notice that we had to tweak the media box of the source page to extend it, which is already a dirty hack (in this case).
 
 ```python
 from pypdf import PaperSize, PdfReader, PdfWriter, Transformation
@@ -248,9 +248,9 @@ And the result is… unexpected.
 
 ![](nup-dest1.png)
 
-The problem is that, having run ``add.transformation()`` several times on the *same* source page, those transformations add up: for instance, the sixteen transformations are applied to the last copy of the source page, so most of the business cards are *outside* the destination page.
+The problem is that, having run ``add_transformation()`` several times on the *same* source page, those transformations add up: for instance, the sixteen transformations are applied to the last copy of the source page, so most of the business cards are *outside* the destination page.
 
-We need a way to merge a transformed page, *without* modifying the source page. Here comes ``merge_transformed_page()``. With this method:
+We need a way to merge a transformed page, *without* modifying the source page. Here comes {func}`~pypdf._page.PageObject.merge_transformed_page`. With this method:
 - we no longer need the media box hack of our first try;
 - transformations are only applied *once*.
 

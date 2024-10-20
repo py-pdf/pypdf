@@ -30,7 +30,7 @@ print(page.extract_text(extraction_mode="layout", layout_mode_scale_weight=1.0))
 print(page.extract_text(extraction_mode="layout", layout_mode_strip_rotated=False))
 ```
 
-Refer to [extract\_text](../modules/PageObject.html#pypdf._page.PageObject.extract_text) for more details.
+Refer to {func}`~pypdf._page.PageObject.extract_text` for more details.
 
 ## Using a visitor
 
@@ -49,7 +49,7 @@ It is recommended to use the user_matrix as it takes into all transformations.
 Notes :
 
  - As indicated in §8.3.3 of the PDF 1.7 or PDF 2.0 specification, the user matrix applies to text space/image space/form space/pattern space.
- - If you want to get the full transformation from text to user space, you can use the `mult` function (available in global import) as follows:
+ - If you want to get the full transformation from text to user space, you can use the {func}`~.pypdf.mult` function as follows:
 `txt2user = mult(tm, cm))`.
 The font size is the raw text size and affected by the `user_matrix`.
 

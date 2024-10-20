@@ -193,7 +193,7 @@ def test_name_object(caplog):
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
-    assert exc.value.args[0] == "name read error"
+    assert exc.value.args[0] == "Name read error"
     assert (
         NameObject.read_from_stream(
             BytesIO(b"/A;Name_With-Various***Characters?"), None
@@ -339,7 +339,7 @@ def test_dictionaryobject_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do["foo"] = NameObject("/GoTo")
-    assert exc.value.args[0] == "key must be PdfObject"
+    assert exc.value.args[0] == "Key must be a PdfObject"
 
 
 def test_dictionaryobject_xmp_meta():
@@ -351,21 +351,21 @@ def test_dictionaryobject_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do[NameObject("/S")] = "/GoTo"
-    assert exc.value.args[0] == "value must be PdfObject"
+    assert exc.value.args[0] == "Value must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault("foo", NameObject("/GoTo"))
-    assert exc.value.args[0] == "key must be PdfObject"
+    assert exc.value.args[0] == "Key must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
-    assert exc.value.args[0] == "value must be PdfObject"
+    assert exc.value.args[0] == "Value must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_value():

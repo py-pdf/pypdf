@@ -29,8 +29,8 @@ pypdf gives you the option to be strict or not.
 
 pypdf has two core objects:
 
-* [`PdfReader`](../modules/PdfReader.md)
-* [`PdfWriter`](../modules/PdfWriter.md)
+* {class}`~pypdf.PdfReader`
+* {class}`~pypdf.PdfWriter`
 
 Only the PdfReader has a `strict` parameter, since presumably you do not want
 to write a non-conforming PDF.

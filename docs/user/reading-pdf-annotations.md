@@ -92,6 +92,6 @@ for page in reader.pages:
         for annotation in page["/Annots"]:
             subtype = annot.get_object()["/Subtype"]
             if subtype == "/FileAttachment":
-                fileobj = annotobj["/FS"]
+                fileobj = annot.get_object()["/FS"]
                 attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].get_data()
 ```

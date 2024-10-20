@@ -3,7 +3,7 @@
 PDF readers vary in the extent they support JavaScript, with some not supporting it at all.
 
 Adobe has documentation on its support here:
-https://opensource.adobe.com/dc-acrobat-sdk-docs/library/jsapiref/index.html
+[https://opensource.adobe.com/dc-acrobat-sdk-docs/library/jsapiref/index.html](https://opensource.adobe.com/dc-acrobat-sdk-docs/library/jsapiref/index.html)
 
 ## Launch print window on opening
 

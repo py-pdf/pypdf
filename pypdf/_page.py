@@ -455,13 +455,13 @@ class VirtualListImages(Sequence[ImageFile]):
         if isinstance(index, (str, list, tuple)):
             return self.get_function(index)
         if not isinstance(index, int):
-            raise TypeError("invalid sequence indices type")
+            raise TypeError("Invalid sequence indices type")
         len_self = len(lst)
         if index < 0:
             # support negative indexes
             index = len_self + index
         if index < 0 or index >= len_self:
-            raise IndexError("sequence index out of range")
+            raise IndexError("Sequence index out of range")
         return self.get_function(lst[index])
 
     def __iter__(self) -> Iterator[ImageFile]:
@@ -641,7 +641,7 @@ class PageObject(DictionaryObject):
                 if self.inline_images is None:
                     self.inline_images = self._get_inline_images()
                 if self.inline_images is None:  # pragma: no cover
-                    raise KeyError("no inline image can be found")
+                    raise KeyError("No inline image can be found")
                 return self.inline_images[id]
 
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
@@ -986,7 +986,7 @@ class PageObject(DictionaryObject):
                     if isinstance(op, NameObject):
                         operands[i] = rename.get(op, op)
             else:
-                raise KeyError(f"type of operands is {type(operands)}")
+                raise KeyError(f"Type of operands is {type(operands)}")
         return stream
 
     @staticmethod
@@ -2498,13 +2498,13 @@ class _VirtualList(Sequence[PageObject]):
             cls = type(self)
             return cls(indices.__len__, lambda idx: self[indices[idx]])
         if not isinstance(index, int):
-            raise TypeError("sequence indices must be integers")
+            raise TypeError("Sequence indices must be integers")
         len_self = len(self)
         if index < 0:
             # support negative indexes
             index = len_self + index
         if index < 0 or index >= len_self:
-            raise IndexError("sequence index out of range")
+            raise IndexError("Sequence index out of range")
         return self.get_function(index)
 
     def __delitem__(self, index: Union[int, slice]) -> None:
@@ -2517,13 +2517,13 @@ class _VirtualList(Sequence[PageObject]):
                 del self[p]  # recursive call
             return
         if not isinstance(index, int):
-            raise TypeError("index must be integers")
+            raise TypeError("Index must be integers")
         len_self = len(self)
         if index < 0:
             # support negative indexes
             index = len_self + index
         if index < 0 or index >= len_self:
-            raise IndexError("index out of range")
+            raise IndexError("Index out of range")
         ind = self[index].indirect_reference
         assert ind is not None
         parent: Optional[PdfObject] = cast(DictionaryObject, ind.get_object()).get(

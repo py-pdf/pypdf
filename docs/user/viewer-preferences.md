@@ -4,12 +4,12 @@ It is possible to set viewer preferences of a PDF file.
 §12.2 of the [PDF 1.7 specification](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf).
 
 Note that the `/ViewerPreferences` dictionary does not exist by default.
-If it is not already present, it must be created by calling the `create_viewer_preferences` method
-of a `PdfWriter` object.
+If it is not already present, it must be created by calling the
+{func}`~pypdf.PdfWriter.create_viewer_preferences` method.
 
-If viewer preferences exist in a PDF file being read with `PdfReader`,
-you can access them as properties of `viewer_preferences`.
-Otherwise, the `viewer_preferences` property will be set to `None`.
+If viewer preferences exist in a PDF file being read with {class}`~pypdf.PdfReader`,
+you can access them as properties of {attr}`~pypdf.PdfReader.viewer_preferences`.
+Otherwise, the {attr}`~pypdf.PdfReader.viewer_preferences` property will be set to `None`.
 
 ## Example
 

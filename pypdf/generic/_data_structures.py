@@ -447,7 +447,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         try:
             if "/Parent" not in self:
                 return default
-            raise KeyError("not present")
+            raise KeyError("Not present")
         except KeyError:
             return cast("DictionaryObject", self["/Parent"].get_object()).get_inherited(
                 key, default
@@ -455,16 +455,16 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
 
     def __setitem__(self, key: Any, value: Any) -> Any:
         if not isinstance(key, PdfObject):
-            raise ValueError("key must be PdfObject")
+            raise ValueError("Key must be a PdfObject")
         if not isinstance(value, PdfObject):
-            raise ValueError("value must be PdfObject")
+            raise ValueError("Value must be a PdfObject")
         return dict.__setitem__(self, key, value)
 
     def setdefault(self, key: Any, value: Optional[Any] = None) -> Any:
         if not isinstance(key, PdfObject):
-            raise ValueError("key must be PdfObject")
+            raise ValueError("Key must be a PdfObject")
         if not isinstance(value, PdfObject):
-            raise ValueError("value must be PdfObject")
+            raise ValueError("Value must be a PdfObject")
         return dict.setdefault(self, key, value)  # type: ignore
 
     def __getitem__(self, key: Any) -> PdfObject:
@@ -1109,7 +1109,7 @@ class EncodedStreamObject(StreamObject):
 
         if self.get(SA.FILTER, "") in (FT.FLATE_DECODE, [FT.FLATE_DECODE]):
             if not isinstance(data, bytes):
-                raise TypeError("data must be bytes")
+                raise TypeError("Data must be bytes")
             if self.decoded_self is None:
                 self.get_data()  # to create self.decoded_self
             assert self.decoded_self is not None, "mypy"
