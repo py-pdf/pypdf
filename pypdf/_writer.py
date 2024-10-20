@@ -172,7 +172,7 @@ class PdfWriter(PdfDocCommon):
     def __init__(
         self,
         *args: Any,
-        fileobj: Union[None, PdfReader, StrByteType, Path] = "",
+        fileobj: Union[None, StrByteType, Path] = "",
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
         incremental: bool = False,
         full: bool = False,
@@ -222,12 +222,13 @@ class PdfWriter(PdfDocCommon):
             manualset_fileobj: bool,
         ) -> Tuple[
             Union[None, PdfReader, str, Path, IO[Any], BytesIO],
-            Union[None, PdfReader, str, Path, IO[Any], BytesIO],
+            Union[None, str, Path, IO[Any], BytesIO],
         ]:
             if manualset_fileobj or (
                 isinstance(fileobj, (str, Path, IO, BytesIO))
                 and (fileobj in ("", None) or clone_from is not None)
             ):
+                assert not isinstance(fileobj, PdfReader), " for mypy"
                 return clone_from, fileobj
             cloning = True
             if isinstance(fileobj, (str, Path)) and (
@@ -244,6 +245,7 @@ class PdfWriter(PdfDocCommon):
                 fileobj.seek(t, 0)
             if cloning:
                 return fileobj, None
+            assert not isinstance(fileobj, PdfReader), " for mypy"
             return clone_from, fileobj
 
         clone_from, fileobj = _get_clone_from(fileobj, clone_from, manualset_fileobj)
@@ -269,7 +271,7 @@ class PdfWriter(PdfDocCommon):
 
         # to prevent overwriting
         self.temp_fileobj = fileobj
-        self.fileobj = ""
+        self.fileobj: Union[None, StrByteType, Path] = ""
         self.with_as_usage = False
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -375,6 +377,7 @@ class PdfWriter(PdfDocCommon):
 
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""
+        self.fileobj = self.temp_fileobj
         self.with_as_usage = True
         return self
 
