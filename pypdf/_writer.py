@@ -245,7 +245,7 @@ class PdfWriter(PdfDocCommon):
                 fileobj.seek(t, 0)
             if cloning:
                 return fileobj, None
-            assert not isinstance(fileobj, PdfReader), " for mypy"
+            assert not isinstance(fileobj, PdfReader), "for mypy"
             return clone_from, fileobj
 
         clone_from, fileobj = _get_clone_from(fileobj, clone_from, manualset_fileobj)
