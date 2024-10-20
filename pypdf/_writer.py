@@ -208,7 +208,7 @@ class PdfWriter(PdfDocCommon):
         self._ID: Union[ArrayObject, None] = None
         self._info_obj: Optional[PdfObject]
 
-        manualset_fileobj = True
+        manual_set_fileobj = True
         if len(args) > 0:
             if fileobj == "":
                 fileobj = args[0]
