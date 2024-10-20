@@ -2482,7 +2482,7 @@ def test_append_pdf_with_dest_without_page(caplog):
     assert len(writer.named_destinations) == 3
 
 
-def test_writer_contextmanager():
+def test_writer_contextmanager(caplog):
     """To test the writer with context manager, cf #2912"""
     pdf_path = str(RESOURCE_ROOT / "crazyones.pdf")
     with PdfWriter(pdf_path) as w:
@@ -2540,3 +2540,10 @@ def test_writer_contextmanager():
         raise e
     finally:
         tmp_file.unlink()
+    caplog.clear()
+    b = BytesIO()
+    with PdfWriter("ignored", fileobj=b, clone_from=pdf_path) as w:
+        pass
+    assert (
+        "unnamed param ignored: fileobj and clone_from already defined" in caplog.text
+    )

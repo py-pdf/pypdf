@@ -215,6 +215,11 @@ class PdfWriter(PdfDocCommon):
                 manualset_fileobj = False
             elif clone_from is None:
                 clone_from = args[0]
+            else:
+                logger_warning(
+                    "unnamed param ignored: fileobj and clone_from already defined",
+                    __name__,
+                )
 
         def _get_clone_from(
             fileobj: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
