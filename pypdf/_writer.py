@@ -153,7 +153,7 @@ class PdfWriter(PdfDocCommon):
 
     Args:
         *: 1st argument is assigned to fileobj or clone_from based on context:
-            assigned to clone_from if str/path to a non empty file or stream or PdfReader
+            assigned to clone_from if str/path to a non empty file or stream or PdfReader,
             else assigned to fileobj.
 
         fileobj: Output file/stream. To be used with context manager only.
