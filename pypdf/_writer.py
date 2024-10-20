@@ -152,11 +152,11 @@ class PdfWriter(PdfDocCommon):
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
 
     Args:
-        * : 1st argument is assigned to fileobj or clone_from based on context:
-            assigned to clone_from if str/path to a non empty file or stream or PdfReader
-            else assigned to fileobj.
+        *: 1st argument is assigned to fileobj or clone_from based on context:
+            assigned to clone_from if str/path to a non empty file or stream or PdfReader,
+            otherwise assigned to fileobj.
 
-        fileobj: output file/stream. To be used with context manager only.
+        fileobj: Output file/stream. To be used with context manager only.
 
         clone_from: identical to fileobj (for compatibility)
 
