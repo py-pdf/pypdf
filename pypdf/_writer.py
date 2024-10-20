@@ -208,11 +208,11 @@ class PdfWriter(PdfDocCommon):
         self._ID: Union[ArrayObject, None] = None
         self._info_obj: Optional[PdfObject]
 
-        manualset_fileobj = True
+        manual_set_fileobj = True
         if len(args) > 0:
             if fileobj == "":
                 fileobj = args[0]
-                manualset_fileobj = False
+                manual_set_fileobj = False
             elif clone_from is None:
                 clone_from = args[0]
             else:
@@ -224,12 +224,12 @@ class PdfWriter(PdfDocCommon):
         def _get_clone_from(
             fileobj: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
             clone_from: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
-            manualset_fileobj: bool,
+            manual_set_fileobj: bool,
         ) -> Tuple[
             Union[None, PdfReader, str, Path, IO[Any], BytesIO],
             Union[None, str, Path, IO[Any], BytesIO],
         ]:
-            if manualset_fileobj or (
+            if manual_set_fileobj or (
                 isinstance(fileobj, (str, Path, IO, BytesIO))
                 and (fileobj in ("", None) or clone_from is not None)
             ):
@@ -253,7 +253,7 @@ class PdfWriter(PdfDocCommon):
             assert not isinstance(fileobj, PdfReader), " for mypy"
             return clone_from, fileobj
 
-        clone_from, fileobj = _get_clone_from(fileobj, clone_from, manualset_fileobj)
+        clone_from, fileobj = _get_clone_from(fileobj, clone_from, manual_set_fileobj)
 
         if self.incremental:
             if isinstance(clone_from, (str, Path)):
