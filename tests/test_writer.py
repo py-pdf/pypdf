@@ -982,7 +982,7 @@ def test_write_empty_stream():
 
     with pytest.raises(ValueError) as exc:
         writer.write("")
-    assert exc.value.args[0] == "Output(stream='') is empty."
+    assert exc.value.args[0] == "Output(stream=) is empty."
 
 
 def test_startup_dest():
@@ -1187,21 +1187,21 @@ def test_set_page_label(pdf_file_path):
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     with pytest.raises(
-        ValueError, match="At least one of style and prefix must be given"
+        ValueError, match="at least one between style and prefix must be given"
     ):
         writer.set_page_label(0, 5, start=2)
     with pytest.raises(
-        ValueError, match="page_index_from must be greater or equal than 0"
+        ValueError, match="page_index_from must be equal or greater then 0"
     ):
         writer.set_page_label(-1, 5, "/r")
     with pytest.raises(
-        ValueError, match="page_index_to must be greater or equal than page_index_from"
+        ValueError, match="page_index_to must be equal or greater then page_index_from"
     ):
         writer.set_page_label(5, 0, "/r")
     with pytest.raises(ValueError, match="page_index_to exceeds number of pages"):
         writer.set_page_label(0, 19, "/r")
     with pytest.raises(
-        ValueError, match="If given, start must be greater or equal than one"
+        ValueError, match="if given, start must be equal or greater than one"
     ):
         writer.set_page_label(0, 5, "/r", start=-1)
 
@@ -2482,7 +2482,7 @@ def test_append_pdf_with_dest_without_page(caplog):
     assert len(writer.named_destinations) == 3
 
 
-def test_writer_contextmanager(caplog):
+def test_writer_contextmanager(tmp_path, caplog):
     """To test the writer with context manager, cf #2912"""
     pdf_path = str(RESOURCE_ROOT / "crazyones.pdf")
     with PdfWriter(pdf_path) as w:
@@ -2495,51 +2495,45 @@ def test_writer_contextmanager(caplog):
         assert len(w.pages) > 0
         assert not w.fileobj
 
-    try:
-        with NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            tmp_file = Path(tmp.name)
-        with PdfWriter(tmp_file) as w:
-            assert len(w.pages) == 0
+    tmp_file = tmp_path / "out.pdf"
+    with PdfWriter(tmp_file) as w:
+        assert len(w.pages) == 0
 
-        with open(tmp_file, "wb") as f1, open(pdf_path, "rb") as f:
-            f1.write(f.read(-1))
-        with PdfWriter(tmp_file) as w:
-            assert len(w.pages) > 0
-        assert tmp_file.stat().st_size > 0
+    with open(tmp_file, "wb") as f1, open(pdf_path, "rb") as f:
+        f1.write(f.read(-1))
+    with PdfWriter(tmp_file) as w:
+        assert len(w.pages) > 0
+    assert tmp_file.stat().st_size > 0
 
-        with PdfWriter(tmp_file, incremental=True) as w:
+    with PdfWriter(tmp_file, incremental=True) as w:
+        assert w._reader
+        assert not w.fileobj
+    assert tmp_file.stat().st_size > 0
+
+    with PdfWriter(clone_from=tmp_file) as w:
+        assert len(w.pages) > 0
+        assert not w.fileobj
+    assert tmp_file.stat().st_size > 0
+
+    with PdfWriter(fileobj=tmp_file) as w:
+        assert len(w.pages) == 0
+    assert 8 <= tmp_file.stat().st_size <= 1024
+
+    b = BytesIO()
+    with PdfWriter(fileobj=b) as w:
+        assert len(w.pages) == 0
+    assert not b.closed
+    assert 8 <= len(b.getbuffer()) <= 1024
+
+    with NamedTemporaryFile(mode="wb", suffix=".pdf", delete=True) as tmp:
+        with PdfWriter(pdf_path, fileobj=tmp, incremental=True) as w:
             assert w._reader
-            assert not w.fileobj
-        assert tmp_file.stat().st_size > 0
+        assert not tmp.closed
+        assert Path(tmp.name).stat().st_size == Path(pdf_path).stat().st_size
 
-        with PdfWriter(clone_from=tmp_file) as w:
-            assert len(w.pages) > 0
-            assert not w.fileobj
-        assert tmp_file.stat().st_size > 0
+    with PdfWriter(tmp_file) as w:
+        assert len(w.pages) == 0
 
-        with PdfWriter(fileobj=tmp_file) as w:
-            assert len(w.pages) == 0
-        assert 8 <= tmp_file.stat().st_size <= 1024
-
-        b = BytesIO()
-        with PdfWriter(fileobj=b) as w:
-            assert len(w.pages) == 0
-        assert not b.closed
-        assert 8 <= len(b.getbuffer()) <= 1024
-
-        with NamedTemporaryFile(mode="wb", suffix=".pdf", delete=True) as tmp:
-            with PdfWriter(pdf_path, fileobj=tmp, incremental=True) as w:
-                assert w._reader
-            assert not tmp.closed
-            assert Path(tmp.name).stat().st_size == Path(pdf_path).stat().st_size
-
-        with PdfWriter(tmp_file) as w:
-            assert len(w.pages) == 0
-
-    except Exception as e:
-        raise e
-    finally:
-        tmp_file.unlink()
     caplog.clear()
     b = BytesIO()
     with PdfWriter("ignored", fileobj=b, clone_from=pdf_path) as w:
