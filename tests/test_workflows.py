@@ -1197,7 +1197,7 @@ def test_get_page_showing_field():
         reader.get_pages_showing_field(None)
     with pytest.raises(ValueError) as exc:
         writer.get_pages_showing_field(None)
-    assert "field type is invalid" in exc.value.args[0]
+    assert "Field type is invalid" in exc.value.args[0]
 
     # Damage Field
     del reader.trailer["/Root"]["/AcroForm"]["/Fields"][1].get_object()["/FT"]
@@ -1208,7 +1208,7 @@ def test_get_page_showing_field():
         )
     with pytest.raises(ValueError) as exc:
         writer.get_pages_showing_field(writer._root_object["/AcroForm"]["/Fields"][1])
-    assert "field is not valid" in exc.value.args[0]
+    assert "Field is not valid" in exc.value.args[0]
 
     # missing Parent in field
     del reader.trailer["/Root"]["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()[

@@ -351,7 +351,7 @@ class RunLengthDecode:
             index += 1
             if length == 128:
                 if index < len(data):
-                    raise PdfStreamError("early EOD in RunLengthDecode")
+                    raise PdfStreamError("Early EOD in RunLengthDecode")
                 else:
                     break
             elif length < 128:

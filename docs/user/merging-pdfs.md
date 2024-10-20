@@ -49,7 +49,7 @@ output.close()
 
 ## append
 
-`append` has been slightly extended in `PdfWriter`. See [PdfWriter.append](../modules/PdfWriter.html#pypdf.PdfWriter.append) for more details.
+`append` has been slightly extended in `PdfWriter`. See {func}`~pypdf.PdfWriter.append` for more details.
 
 ### Examples
 
@@ -136,7 +136,7 @@ new_page = writer.add_page(reader.pages[0], excluded_fields=["/B"])
 
 ### Merging rotated pages
 
-If you are working with rotated pages, you might want to call `transfer_rotation_to_content()` on the page
+If you are working with rotated pages, you might want to call {func}`~pypdf._page.PageObject.transfer_rotation_to_content` on the page
 before merging to avoid wrongly rotated results:
 
 ```python

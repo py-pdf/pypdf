@@ -200,7 +200,7 @@ def test_read_previous_line2():
 def test_get_max_pdf_version_header():
     with pytest.raises(ValueError) as exc:
         _get_max_pdf_version_header(b"", b"PDF-1.2")
-    assert exc.value.args[0] == "neither b'' nor b'PDF-1.2' are proper headers"
+    assert exc.value.args[0] == "Neither b'' nor b'PDF-1.2' are proper headers"
 
 
 def test_read_block_backwards_exception():
