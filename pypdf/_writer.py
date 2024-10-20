@@ -228,7 +228,7 @@ class PdfWriter(PdfDocCommon):
                 isinstance(fileobj, (str, Path, IO, BytesIO))
                 and (fileobj in ("", None) or clone_from is not None)
             ):
-                assert not isinstance(fileobj, PdfReader), " for mypy"
+                assert not isinstance(fileobj, PdfReader), "for mypy"
                 return clone_from, fileobj
             cloning = True
             if isinstance(fileobj, (str, Path)) and (
