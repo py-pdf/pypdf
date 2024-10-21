@@ -2502,10 +2502,9 @@ def test_stream_not_closed():
         assert not fileobj.closed
 
 
-def test_auto_write():
+def test_auto_write(tmp_path):
     """Another test for #2905"""
-    target = Path(_get_write_target(str))
+    target = tmp_path / "out.pdf"
     with PdfWriter(target) as writer:
         writer.add_blank_page(100, 100)
     assert target.stat().st_size > 0
-    target.unlink()
