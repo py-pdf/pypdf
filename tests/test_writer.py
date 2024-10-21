@@ -2504,8 +2504,8 @@ def test_stream_not_closed():
 
 def test_auto_write():
     """Another test for #2905"""
-    with NamedTemporaryFile(suffix=".pdf", delete_on_close=False) as tmp:
-        tmp.close()
-        with PdfWriter(tmp.name) as writer:
-            writer.add_blank_page(100, 100)
-        assert Path(tmp.name).stat().st_size > 0
+    target = Path(_get_write_target(str))
+    with PdfWriter(target) as writer:
+        writer.add_blank_page(100, 100)
+    assert target.stat().st_size > 0
+    target.unlink()
