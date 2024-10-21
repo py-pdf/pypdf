@@ -2485,9 +2485,27 @@ def test_append_pdf_with_dest_without_page(caplog):
 def test_stream_not_closed():
     """Tests for #2905"""
     src = RESOURCE_ROOT / "pdflatex-outline.pdf"
-    with NamedTemporaryFile() as tmp:
+    with NamedTemporaryFile(suffix=".pdf") as tmp:
         with PdfReader(src) as reader, PdfWriter() as writer:
-            for i in range(4):
-                writer.add_page(reader.pages[i])
+            writer.add_page(reader.pages[0])
             writer.write(tmp)
         assert not tmp.file.closed
+
+    with NamedTemporaryFile(suffix=".pdf") as target:
+        with PdfWriter(target.file) as writer:
+            writer.add_blank_page(100, 100)
+        assert not target.file.closed
+
+    with open(src, "rb") as fileobj:
+        with PdfWriter(fileobj) as writer:
+            pass
+        assert not fileobj.closed
+
+
+def test_auto_write():
+    """Another test for #2905"""
+    with NamedTemporaryFile(suffix=".pdf", delete_on_close=False) as tmp:
+        tmp.close()
+        with PdfWriter(tmp.name) as writer:
+            writer.add_blank_page(100, 100)
+        assert Path(tmp.name).stat().st_size > 0

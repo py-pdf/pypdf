@@ -235,9 +235,9 @@ class PdfWriter(PdfDocCommon):
                 or Path(str(fileobj)).stat().st_size == 0
             ):
                 cloning = False
-            if isinstance(fileobj, (IO, BytesIO)):
+            if isinstance(fileobj, (IOBase, BytesIO)):
                 t = fileobj.tell()
-                fileobj.seek(-1, 2)
+                fileobj.seek(0, 2)
                 if fileobj.tell() == 0:
                     cloning = False
                 fileobj.seek(t, 0)
@@ -249,6 +249,7 @@ class PdfWriter(PdfDocCommon):
         # to prevent overwriting
         self.temp_fileobj = fileobj
         self.fileobj = ""
+        self.cloned = False
         # The root of our page tree node.
         pages = DictionaryObject()
         pages.update(
@@ -266,6 +267,7 @@ class PdfWriter(PdfDocCommon):
             if not isinstance(clone_from, PdfReader):
                 clone_from = PdfReader(clone_from)
             self.clone_document_from_reader(clone_from)
+            self.cloned = True
         else:
             self._pages = self._add_object(pages)
             # root object
@@ -352,9 +354,11 @@ class PdfWriter(PdfDocCommon):
         return self.root_object.xmp_metadata  # type: ignore
 
     def __enter__(self) -> "PdfWriter":
-        """Store that writer is initialized by 'with'."""
+        """Store how writer is initialized by 'with'."""
+        c: bool = self.cloned
         t = self.temp_fileobj
         self.__init__()  # type: ignore
+        self.cloned = c
         self.fileobj = t  # type: ignore
         return self
 
@@ -365,11 +369,8 @@ class PdfWriter(PdfDocCommon):
         traceback: Optional[TracebackType],
     ) -> None:
         """Write data to the fileobj."""
-        if self.fileobj:
+        if self.fileobj and not self.cloned:
             self.write(self.fileobj)
-            close_attr = getattr(self.fileobj, "close", None)
-            if callable(close_attr):
-                self.fileobj.close()  # type: ignore[attr-defined]
 
     def _repr_mimebundle_(
         self,
