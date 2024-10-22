@@ -219,3 +219,44 @@ def test_text_leading_height_unit():
     page = reader.pages[0]
     extracted = page.extract_text()
     assert "Something[cited]\n" in extracted
+
+
+def test_layout_mode_space_vertically_font_height_weight():
+    """Tests layout mode with vertical space and font height weight (issue #2915)"""
+    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
+        # Load PDF file from file
+        reader = PdfReader(inputfile)
+        page = reader.pages[0]
+
+        # Normal behaviour
+        with open(RESOURCE_ROOT / "crazyones_layout_vertical_space.txt", "rb") as pdftext_file:
+            pdftext = pdftext_file.read()
+
+        text = page.extract_text(extraction_mode="layout", layout_mode_space_vertically=True).encode("utf-8")
+
+        # Compare the text of the PDF to a known source
+        for expected_line, actual_line in zip(text.splitlines(), pdftext.splitlines()):
+            assert expected_line == actual_line
+
+        pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows
+        assert text == pdftext, (
+            "PDF extracted text differs from expected value.\n\n"
+            "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
+        )
+
+        # Blank lines are added to truly separate paragraphs
+        with open(RESOURCE_ROOT / "crazyones_layout_vertical_space_font_height_weight.txt", "rb") as pdftext_file:
+            pdftext = pdftext_file.read()
+
+        text = page.extract_text(extraction_mode="layout", layout_mode_space_vertically=True,
+                                 layout_mode_font_height_weight=0.85).encode("utf-8")
+
+        # Compare the text of the PDF to a known source
+        for expected_line, actual_line in zip(text.splitlines(), pdftext.splitlines()):
+            assert expected_line == actual_line
+
+        pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows
+        assert text == pdftext, (
+                "PDF extracted text differs from expected value.\n\n"
+                "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
+        )
