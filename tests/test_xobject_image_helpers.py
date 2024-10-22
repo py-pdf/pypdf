@@ -11,7 +11,7 @@ from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberOb
 from . import get_data_from_url
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_get_imagemode_recursion_depth():
     """Avoid infinite recursion for nested color spaces."""
     url = "https://github.com/py-pdf/pypdf/files/12814018/out1.pdf"

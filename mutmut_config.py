@@ -13,6 +13,7 @@ def pre_mutation(context: Context) -> None:
 
     Args:
         context: A mutmut Context object
+
     """
     line = context.current_source_line.strip()
     if (

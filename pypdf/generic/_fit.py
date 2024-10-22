@@ -38,6 +38,7 @@ class Fit:
 
         Returns:
             The created fit object.
+
         """
         return Fit(fit_type="/XYZ", fit_args=(left, top, zoom))
 
@@ -70,6 +71,7 @@ class Fit:
 
         Returns:
             The created fit object.
+
         """
         return Fit(fit_type="/FitH", fit_args=(top,))
 
@@ -106,6 +108,7 @@ class Fit:
 
         Returns:
             The created fit object.
+
         """
         return Fit(fit_type="/FitR", fit_args=(left, bottom, right, top))
 
@@ -138,6 +141,7 @@ class Fit:
 
         Returns:
             The created fit object.
+
         """
         return Fit(fit_type="/FitBH", fit_args=(top,))
 
@@ -157,6 +161,7 @@ class Fit:
 
         Returns:
             The created fit object.
+
         """
         return Fit(fit_type="/FitBV", fit_args=(left,))
 

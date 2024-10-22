@@ -474,6 +474,7 @@ class FieldDictionaryAttributes:
 
         Returns:
             A tuple containing all the attribute constants.
+
         """
         return (
             cls.TM,
@@ -501,6 +502,7 @@ class FieldDictionaryAttributes:
 
         Returns:
             A dictionary containing attribute keys and their names.
+
         """
         return {
             cls.FT: "Field Type",
@@ -531,6 +533,7 @@ class CheckboxRadioButtonAttributes:
 
         Returns:
             A tuple containing all the attribute constants.
+
         """
         return (cls.Opt,)
 
@@ -547,6 +550,7 @@ class CheckboxRadioButtonAttributes:
 
         Returns:
             A dictionary containing attribute keys and their names.
+
         """
         return {
             cls.Opt: "Options",
