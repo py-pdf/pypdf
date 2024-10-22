@@ -971,7 +971,7 @@ class PdfDocCommon:
                 # create a link to first Page
                 tmp = self.pages[0].indirect_reference
                 indirect_reference = NullObject() if tmp is None else tmp
-                return Destination(title, indirect_reference, Fit.fit())  # type: ignore
+                return Destination(title, indirect_reference, Fit.fit())
 
     def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
         dest, title, outline_item = None, None, None
