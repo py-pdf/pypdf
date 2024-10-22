@@ -40,13 +40,14 @@ Changelog = "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html"
 
 [project.optional-dependencies]
 full = [
-    "cryptography; python_version >= '3.7'",
-    "PyCryptodome; python_version == '3.6'",
+    "cryptography",
     "Pillow>=8.0.0",
 ]
 crypto = [
-    "cryptography; python_version >= '3.7'",
-    "PyCryptodome; python_version == '3.6'",
+    "cryptography",
+]
+cryptodome = [
+    "PyCryptodome",
 ]
 image = ["Pillow>=8.0.0"]
 dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "flit", "wheel", "pytest-xdist"]
