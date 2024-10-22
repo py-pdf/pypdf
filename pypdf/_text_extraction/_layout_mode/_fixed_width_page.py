@@ -343,7 +343,7 @@ def fixed_char_width(bt_groups: List[BTGroup], scale_weight: float = 1.25) -> fl
 
 
 def fixed_width_page(
-    ty_groups: Dict[int, List[BTGroup]], char_width: float, space_vertically: bool
+    ty_groups: Dict[int, List[BTGroup]], char_width: float, space_vertically: bool, font_height_weight: float
 ) -> str:
     """
     Generate page text from text operations grouped by rendered y coordinate.
@@ -352,6 +352,7 @@ def fixed_width_page(
         ty_groups: dict of text show ops as returned by y_coordinate_groups()
         char_width: fixed character width
         space_vertically: include blank lines inferred from y distance + font height.
+        font_height_weight: multiplier for font height when calculating blank lines.
 
     Returns:
         str: page text in a fixed width format that closely adheres to the rendered
@@ -363,7 +364,7 @@ def fixed_width_page(
     for y_coord, line_data in ty_groups.items():
         if space_vertically and lines:
             blank_lines = (
-                int(abs(y_coord - last_y_coord) / line_data[0]["font_height"]) - 1
+                int(abs(y_coord - last_y_coord) / (line_data[0]["font_height"] * font_height_weight)) - 1
             )
             lines.extend([""] * blank_lines)
         line = ""
