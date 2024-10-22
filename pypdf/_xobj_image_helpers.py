@@ -229,7 +229,7 @@ def _handle_flate(
                     [
                         b"".join(
                             [
-                                colors_arr[1 if img.getpixel((x, y)) > 127 else 0]  # type: ignore[operator]
+                                colors_arr[1 if img.getpixel((x, y)) > 127 else 0]
                                 for x in range(img.size[0])
                             ]
                         )
@@ -296,7 +296,7 @@ def _handle_jpx(
     # we need to convert to the good mode
     if img1.mode == mode or {img1.mode, mode} == {"L", "P"}:  # compare (unordered) sets
         # L,P are indexed modes which should not be changed.
-        img: Image.Image = img1
+        img = img1
     elif {img1.mode, mode} == {"RGBA", "CMYK"}:
         # RGBA / CMYK are 4bytes encoding where
         # the encoding should be corrected
