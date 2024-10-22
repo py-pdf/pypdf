@@ -278,7 +278,7 @@ for page in reader.pages:
         env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
     except KeyError:
         env["PYTHONPATH"] = "."
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603  # We have the control here.
         [shutil.which("python"), source_file],
         capture_output=True,
         env=env,

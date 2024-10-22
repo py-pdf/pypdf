@@ -1684,7 +1684,7 @@ def test_watermark_rendering(tmp_path):
     writer.write(pdf_path)
 
     # False positive: https://github.com/PyCQA/bandit/issues/333
-    subprocess.run(
+    subprocess.run(  # noqa: S603
         [
             GHOSTSCRIPT_BINARY,
             "-sDEVICE=pngalpha",
@@ -1721,7 +1721,7 @@ def test_watermarking_reportlab_rendering(tmp_path):
 
     writer.write(pdf_path)
     # False positive: https://github.com/PyCQA/bandit/issues/333
-    subprocess.run(
+    subprocess.run(  # noqa: S603
         [
             GHOSTSCRIPT_BINARY,
             "-r120",

@@ -1025,7 +1025,7 @@ def test_inline_images():
 
     _a = {}
     for x, y in reader.pages[2].images[0:-2].items():
-        _a[x] = y
+        _a[x] = y  # noqa: PERF403  # Testing code and easier to read this way.
     with pytest.raises(KeyError) as exc:
         reader.pages[2]._get_image(("test",))
 

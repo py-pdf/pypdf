@@ -106,7 +106,7 @@ class TextStateManager:
             except (UnicodeEncodeError, UnicodeDecodeError):
                 txt = value.decode("utf-8", "replace")
             txt = "".join(
-                self.font.char_map[x] if x in self.font.char_map else x for x in txt
+                self.font.char_map.get(x, x) for x in txt
             )
         else:
             txt = value
