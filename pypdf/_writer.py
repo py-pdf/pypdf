@@ -1912,9 +1912,9 @@ class PdfWriter(PdfDocCommon):
         page_ref: Union[None, NullObject, IndirectObject, NumberObject]
         if isinstance(italic, Fit):  # it means that we are on the old params
             if fit is not None and page_number is None:
-                page_number = fit  # type: ignore
+                page_number = fit
             return self.add_outline_item(
-                title, page_number, parent, None, before, color, bold, italic, is_open=is_open  # type: ignore
+                title, page_number, parent, None, before, color, bold, italic, is_open=is_open
             )
         if page_number is None:
             action_ref = None
