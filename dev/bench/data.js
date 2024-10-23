@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1729703165926,
+  "lastUpdate": 1729704006329,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -60527,6 +60527,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008583089000532755",
             "extra": "mean: 792.8170917999864 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dd18967bafcc193ddfebaef96b37894142498305",
+          "message": "SEC: Bump black from 23.3.0 to 24.3.0 in /requirements (#2921)\n\nBumps [black](https://github.com/psf/black) from 23.3.0 to 24.3.0.\r\n- [Release notes](https://github.com/psf/black/releases)\r\n- [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)\r\n- [Commits](https://github.com/psf/black/compare/23.3.0...24.3.0)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: black\r\n  dependency-type: direct:development\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2024-10-23T19:17:35+02:00",
+          "tree_id": "804ab8d2b47dca9aff8472ad281255ab8d31cb74",
+          "url": "https://github.com/py-pdf/pypdf/commit/dd18967bafcc193ddfebaef96b37894142498305"
+        },
+        "date": 1729704004246,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.80830869738446,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001164247442244383",
+            "extra": "mean: 356.0862097999973 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.61584564316032,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008548947710212466",
+            "extra": "mean: 86.08929825000071 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2306579426376313,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010261979274116423",
+            "extra": "mean: 4.335424085400007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.36781426798155,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008155922776759385",
+            "extra": "mean: 57.57776911764602 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08812896235968898,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0600866773947474",
+            "extra": "mean: 11.347007535600005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2693940498250587,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007999860774621257",
+            "extra": "mean: 787.7774440000053 msec\nrounds: 5"
           }
         ]
       }
