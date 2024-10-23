@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1729631602890,
+  "lastUpdate": 1729703165926,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -60461,6 +60461,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.011190794015990579",
             "extra": "mean: 790.1235610000072 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "59ae169fc4cc8f34c70a727f8a291f20b4224849",
+          "message": "DEV: Update pinned requirements (#2918)\n\n* DEV: Update pinned requirements\r\n\r\n* use new ruff command\r\n\r\n* apply safe ruff fixes\r\n\r\n* fix remaining ruff violations\r\n\r\n* fix mypy issues\r\n\r\n* further mypy fixes\r\n\r\n* revert some mypy changes due to too old types-pillow package\r\n\r\n* update mpypy to version 1.13.0",
+          "timestamp": "2024-10-23T19:03:33+02:00",
+          "tree_id": "86ef03e38f3f135ee3011505305627b506e30afd",
+          "url": "https://github.com/py-pdf/pypdf/commit/59ae169fc4cc8f34c70a727f8a291f20b4224849"
+        },
+        "date": 1729703163795,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8695916606535414,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017554291492940847",
+            "extra": "mean: 348.4816371999955 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.747060611091946,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008258822824305173",
+            "extra": "mean: 85.12767858333585 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23454230404614707,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018379614048768977",
+            "extra": "mean: 4.2636231620000045 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.231169877143174,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012104014297341088",
+            "extra": "mean: 58.03436488235668 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08788482714818008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04650136494657095",
+            "extra": "mean: 11.378528381399997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.261324976899315,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008583089000532755",
+            "extra": "mean: 792.8170917999864 msec\nrounds: 5"
           }
         ]
       }
