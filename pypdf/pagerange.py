@@ -86,6 +86,7 @@ class PageRange:
 
         Returns:
             True, if the ``input`` is a valid PageRange.
+
         """
         return isinstance(input, (slice, PageRange)) or (
             isinstance(input, str) and bool(re.match(PAGE_RANGE_RE, input))
@@ -124,6 +125,7 @@ class PageRange:
 
         Returns:
             Arguments for range().
+
         """
         return self._slice.indices(n)
 
@@ -166,6 +168,7 @@ def parse_filename_page_ranges(
 
     Returns:
         A list of (filename, page_range) pairs.
+
     """
     pairs: List[Tuple[str, PageRange]] = []
     pdf_filename = None

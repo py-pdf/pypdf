@@ -47,6 +47,7 @@ def set_custom_rtl(
     Returns:
         A tuple containing the new values for ``CUSTOM_RTL_MIN``,
         ``CUSTOM_RTL_MAX``, and ``CUSTOM_RTL_SPECIAL_CHARS``.
+
     """
     global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
     if isinstance(_min, int):

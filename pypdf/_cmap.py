@@ -27,6 +27,7 @@ def build_char_map(
     Returns:
         Font sub-type, space_width criteria (50% of width), encoding, map character-map, font-dictionary.
         The font-dictionary itself is suitable for the curious.
+
     """
     ft: DictionaryObject = obj["/Resources"]["/Font"][font_name]  # type: ignore
     font_subtype, font_halfspace, font_encoding, font_map = build_char_map_from_dict(
@@ -49,6 +50,7 @@ def build_char_map_from_dict(
     Returns:
         Font sub-type, space_width criteria(50% of width), encoding, map character-map.
         The font-dictionary itself is suitable for the curious.
+
     """
     font_type = cast(str, ft["/Subtype"].get_object())
     encoding, map_dict = get_encoding(ft)

@@ -19,6 +19,7 @@ class Font:
         encoding (str | Dict[int, str]): font encoding
         char_map (dict): character map
         font_dictionary (dict): font dictionary
+
     """
 
     subtype: str

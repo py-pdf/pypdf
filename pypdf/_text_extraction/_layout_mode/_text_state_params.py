@@ -31,6 +31,7 @@ class TextStateParams:
         font_height (float): effective font height accounting for CTM
         flip_vertical (bool): True if y axis has been inverted (i.e. if self.transform[3] < 0.)
         rotated (bool): True if the text orientation is rotated with respect to the page.
+
     """
 
     txt: str
@@ -109,6 +110,7 @@ class TextStateParams:
             word (str, optional): Defaults to None in which case self.txt displacement is
                 returned.
             TD_offset (float, optional): translation applied by TD operator. Defaults to 0.0.
+
         """
         word = word if word is not None else self.txt
         return [1.0, 0.0, 0.0, 1.0, self.word_tx(word, TD_offset), 0.0]
