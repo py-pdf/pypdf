@@ -21,7 +21,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 @pytest.mark.parametrize(("visitor_text"), [None, lambda a, b, c, d, e: None])
 def test_multi_language(visitor_text):
     reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
@@ -108,7 +108,7 @@ def test_visitor_text_matrices(file_name, constraints):
 
 
 @pytest.mark.xfail(reason="known whitespace issue #2336")
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_issue_2336():
     name = "Pesquisa-de-Precos-Combustiveis-novembro-2023.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(name=name)))
@@ -131,7 +131,7 @@ def test_layout_mode_font_class_to_dict():
     }
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_layout_mode_epic_page_fonts():
     url = "https://github.com/py-pdf/pypdf/files/13836944/Epic.Page.PDF"
     name = "Epic Page.PDF"
@@ -147,7 +147,7 @@ def test_layout_mode_uncommon_operators():
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_layout_mode_type0_font_widths():
     # Cover both the 'int int int' and 'int [int int ...]' formats for Type0
     # /DescendantFonts /W array entries.
@@ -160,7 +160,7 @@ def test_layout_mode_type0_font_widths():
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_layout_mode_indirect_sequence_font_widths():
     # Cover the situation where the sequence for font widths is an IndirectObject
     # ref https://github.com/py-pdf/pypdf/pull/2788
@@ -191,7 +191,7 @@ def test_layout_mode_warnings(mock_logger_warning):
     )
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_space_with_one_unit_smaller_than_font_width():
     """Tests for #1328"""
     url = "https://github.com/py-pdf/pypdf/files/9498481/0004.pdf"
@@ -202,7 +202,7 @@ def test_space_with_one_unit_smaller_than_font_width():
     assert "Reporting crude oil leak.\n" in extracted
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_space_position_calculation():
     """Tests for #1153"""
     url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
