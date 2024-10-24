@@ -236,10 +236,9 @@ class PdfWriter(PdfDocCommon):
                 or Path(str(fileobj)).stat().st_size == 0
             ):
                 cloning = False
-            if isinstance(fileobj, (IO, BytesIO)):
+            if isinstance(fileobj, (IOBase, BytesIO)):
                 t = fileobj.tell()
-                fileobj.seek(-1, 2)
-                if fileobj.tell() == 0:
+                if fileobj.seek(0, 2) == 0:
                     cloning = False
                 fileobj.seek(t, 0)
             if cloning:
@@ -251,6 +250,7 @@ class PdfWriter(PdfDocCommon):
         self.temp_fileobj = fileobj
         self.fileobj = ""
         self.with_as_usage = False
+        self._cloned = False
         # The root of our page tree node.
         pages = DictionaryObject()
         pages.update(
@@ -268,6 +268,7 @@ class PdfWriter(PdfDocCommon):
             if not isinstance(clone_from, PdfReader):
                 clone_from = PdfReader(clone_from)
             self.clone_document_from_reader(clone_from)
+            self._cloned = True
         else:
             self._pages = self._add_object(pages)
             # root object
@@ -356,9 +357,11 @@ class PdfWriter(PdfDocCommon):
         return self.root_object.xmp_metadata  # type: ignore
 
     def __enter__(self) -> "PdfWriter":
-        """Store that writer is initialized by 'with'."""
+        """Store how writer is initialized by 'with'."""
+        c: bool = self._cloned
         t = self.temp_fileobj
         self.__init__()  # type: ignore
+        self._cloned = c
         self.with_as_usage = True
         self.fileobj = t  # type: ignore
         return self
@@ -370,7 +373,7 @@ class PdfWriter(PdfDocCommon):
         traceback: Optional[TracebackType],
     ) -> None:
         """Write data to the fileobj."""
-        if self.fileobj:
+        if self.fileobj and not self._cloned:
             self.write(self.fileobj)
 
     def _repr_mimebundle_(
@@ -1406,13 +1409,14 @@ class PdfWriter(PdfDocCommon):
 
         if isinstance(stream, (str, Path)):
             stream = FileIO(stream, "wb")
-            self.with_as_usage = True
             my_file = True
 
         self.write_stream(stream)
 
-        if self.with_as_usage:
+        if my_file:
             stream.close()
+        else:
+            stream.flush()
 
         return my_file, stream
 
