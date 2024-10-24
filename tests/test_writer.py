@@ -2481,3 +2481,64 @@ def test_append_pdf_with_dest_without_page(caplog):
     writer.append(reader)
     assert "/__WKANCHOR_8" not in writer.named_destinations
     assert len(writer.named_destinations) == 3
+
+
+def test_writer_contextmanager(tmp_path, caplog):
+    """To test the writer with context manager, cf #2912"""
+    pdf_path = str(RESOURCE_ROOT / "crazyones.pdf")
+    with PdfWriter(pdf_path) as w:
+        assert len(w.pages) > 0
+        assert not w.fileobj
+    with open(pdf_path, "rb") as f, PdfWriter(f) as w:
+        assert len(w.pages) > 0
+        assert not w.fileobj
+    with open(pdf_path, "rb") as f, PdfWriter(BytesIO(f.read(-1))) as w:
+        assert len(w.pages) > 0
+        assert not w.fileobj
+
+    tmp_file = tmp_path / "out.pdf"
+    with PdfWriter(tmp_file) as w:
+        assert len(w.pages) == 0
+
+    with open(tmp_file, "wb") as f1, open(pdf_path, "rb") as f:
+        f1.write(f.read(-1))
+    with PdfWriter(tmp_file) as w:
+        assert len(w.pages) > 0
+    assert tmp_file.stat().st_size > 0
+
+    with PdfWriter(tmp_file, incremental=True) as w:
+        assert w._reader
+        assert not w.fileobj
+    assert tmp_file.stat().st_size > 0
+
+    with PdfWriter(clone_from=tmp_file) as w:
+        assert len(w.pages) > 0
+        assert not w.fileobj
+    assert tmp_file.stat().st_size > 0
+
+    with PdfWriter(fileobj=tmp_file) as w:
+        assert len(w.pages) == 0
+    assert 8 <= tmp_file.stat().st_size <= 1024
+
+    b = BytesIO()
+    with PdfWriter(fileobj=b) as w:
+        assert len(w.pages) == 0
+    assert not b.closed
+    assert 8 <= len(b.getbuffer()) <= 1024
+
+    with NamedTemporaryFile(mode="wb", suffix=".pdf", delete=True) as tmp:
+        with PdfWriter(pdf_path, fileobj=tmp, incremental=True) as w:
+            assert w._reader
+        assert not tmp.closed
+        assert Path(tmp.name).stat().st_size == Path(pdf_path).stat().st_size
+
+    with PdfWriter(tmp_file) as w:
+        assert len(w.pages) == 0
+
+    caplog.clear()
+    b = BytesIO()
+    with PdfWriter("ignored", fileobj=b, clone_from=pdf_path) as w:
+        pass
+    assert (
+        "unnamed param ignored: fileobj and clone_from already defined" in caplog.text
+    )
