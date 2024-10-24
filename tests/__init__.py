@@ -24,6 +24,7 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
 
     Returns:
         Read File as bytes
+
     """
     if name is None:
         raise ValueError("A name must always be specified")
@@ -72,6 +73,7 @@ def _strip_position(line: str) -> str:
 
     Returns:
         A line with stripped position
+
     """
     line = ".py".join(line.split(".py:")[1:])
     line = " ".join(line.split(" ")[1:])

@@ -75,7 +75,7 @@ def test_number2uppercase_letter():
         number2uppercase_letter(-1)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_index2label(caplog):
     name = "waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf"
     r = PdfReader(BytesIO(get_data_from_url(name=name)))
@@ -112,7 +112,7 @@ def test_index2label(caplog):
     assert caplog.text != ""
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_index2label_kids():
     url = "https://github.com/py-pdf/pypdf/files/14858124/Terminologie_Epochen.Schwerpunkte.Umsetzungen.pdf"
     r = PdfReader(BytesIO(get_data_from_url(url=url, name="index2label_kids.pdf")))
@@ -143,7 +143,7 @@ def test_index2label_kids():
     assert r.page_labels == expected
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_index2label_kids__recursive(caplog):
     url = "https://github.com/py-pdf/pypdf/files/14842446/tt1.pdf"
     r = PdfReader(

@@ -29,6 +29,7 @@ class TextStateManager:
         Ts (float): text rise
         font (Font): font object
         font_size (int | float): font size
+
     """
 
     def __init__(self) -> None:
@@ -54,6 +55,7 @@ class TextStateManager:
                 for unsupported operators (see supported operators above).
             value (float | List[Any]): new parameter value. If a list,
                 value[0] is used.
+
         """
         if op not in [b"Tc", b"Tz", b"Tw", b"TL", b"Ts"]:
             return
@@ -66,6 +68,7 @@ class TextStateManager:
         Args:
             font (Font): a layout mode Font
             size (float): font size
+
         """
         self.font = font
         self.font_size = size
@@ -83,6 +86,7 @@ class TextStateManager:
 
         Returns:
             TextStateParams: current text state parameters
+
         """
         if not isinstance(self.font, Font):
             raise PdfReadError(
@@ -102,7 +106,7 @@ class TextStateManager:
             except (UnicodeEncodeError, UnicodeDecodeError):
                 txt = value.decode("utf-8", "replace")
             txt = "".join(
-                self.font.char_map[x] if x in self.font.char_map else x for x in txt
+                self.font.char_map.get(x, x) for x in txt
             )
         else:
             txt = value

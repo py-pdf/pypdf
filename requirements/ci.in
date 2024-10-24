@@ -1,8 +1,8 @@
 coverage
-fpdf2==2.4.1
+fpdf2
 mypy
 pillow
-pycryptodome
+cryptography
 pytest
 pytest-benchmark
 pytest-socket

@@ -207,6 +207,7 @@ class XmpInformation(PdfObject):
 
     Raises:
       PdfReadError: if XML is invalid
+
     """
 
     def __init__(self, stream: ContentStream) -> None:
@@ -369,6 +370,7 @@ class XmpInformation(PdfObject):
 
         Returns:
             A dictionary of key/value items for custom metadata properties.
+
         """
         if not hasattr(self, "_custom_properties"):
             self._custom_properties = {}

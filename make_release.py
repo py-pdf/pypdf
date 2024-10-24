@@ -30,6 +30,7 @@ def main(changelog_path: str) -> None:
 
     Args:
         changelog_path: The location of the CHANGELOG file
+
     """
     changelog = get_changelog(changelog_path)
     git_tag = get_most_recent_git_tag()
@@ -66,7 +67,7 @@ def print_instructions(new_version: str) -> None:
     print("=" * 80)
     print(f"☑  {VERSION_FILE_PATH} was adjusted to '{new_version}'")
     print(f"☑  {CHANGELOG_FILE_PATH} was adjusted")
-    print("")
+    print()
     print("Now run:")
     print("  git commit -eF RELEASE_COMMIT_MSG.md")
     print("  git push")
@@ -149,6 +150,7 @@ def version_bump(git_tag: str) -> str:
 
     Returns:
         The new version where the patch version is bumped.
+
     """
     # just assume a patch version change
     major, minor, patch = git_tag.split(".")
@@ -164,6 +166,7 @@ def get_changelog(changelog_path: str) -> str:
 
     Returns:
         Data of the CHANGELOG
+
     """
     with open(changelog_path, encoding="utf-8") as fh:
         changelog = fh.read()
@@ -177,6 +180,7 @@ def write_changelog(new_changelog: str, changelog_path: str) -> None:
     Args:
         new_changelog: Contents of the new CHANGELOG
         changelog_path: Path where the CHANGELOG file is
+
     """
     with open(changelog_path, "w", encoding="utf-8") as fh:
         fh.write(new_changelog)
@@ -191,6 +195,7 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
 
     Returns:
         Changes done since git_tag
+
     """
     commits = get_git_commits_since_tag(git_tag)
 
@@ -266,6 +271,7 @@ def get_most_recent_git_tag() -> str:
 
     Returns:
         Most recently created git tag.
+
     """
     git_tag = str(
         subprocess.check_output(
@@ -285,12 +291,13 @@ def get_author_mapping(line_count: int) -> Dict[str, str]:
 
     Returns:
         A mapping of long commit hashes to author login handles.
+
     """
     per_page = min(line_count, 100)
     page = 1
     mapping: Dict[str, str] = {}
     for _ in range(0, line_count, per_page):
-        with urllib.request.urlopen(  # noqa: S310
+        with urllib.request.urlopen(
             f"https://api.github.com/repos/{GH_ORG}/{GH_PROJECT}/commits?per_page={per_page}&page={page}"
         ) as response:
             commits = json.loads(response.read())
@@ -310,6 +317,7 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
 
     Returns:
         List of all changes since git_tag.
+
     """
     commits = (
         subprocess.check_output(
@@ -342,6 +350,7 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
 
     Raises:
         ValueError: The commit line is not well-structured
+
     """
     parts = line.strip().strip('"\\').split(":::")
     if len(parts) != 3:

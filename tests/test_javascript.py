@@ -12,7 +12,7 @@ PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
-@pytest.fixture()
+@pytest.fixture
 def pdf_file_writer():
     reader = PdfReader(RESOURCE_ROOT / "issue-604.pdf")
     writer = PdfWriter()

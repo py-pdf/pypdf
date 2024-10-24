@@ -105,6 +105,7 @@ class PdfReader(PdfDocCommon):
         password: Decrypt PDF file at initialization. If the
             password is None, the file will not be decrypted.
             Defaults to ``None``.
+
     """
 
     def __init__(
@@ -236,6 +237,7 @@ class PdfReader(PdfDocCommon):
 
         Returns:
             /Info Dictionary; None if the entry does not exist
+
         """
         info = self.trailer.get(TK.INFO, None)
         if is_null_or_none(info):
@@ -255,6 +257,7 @@ class PdfReader(PdfDocCommon):
 
         Returns:
             /ID array; None if the entry does not exist
+
         """
         id = self.trailer.get(TK.ID, None)
         return None if is_null_or_none(id) else cast(ArrayObject, id.get_object())
@@ -324,6 +327,7 @@ class PdfReader(PdfDocCommon):
 
         Returns:
             Page number or None.
+
         """
         if self._page_id2num is None:
             self._page_id2num = {
@@ -598,6 +602,7 @@ class PdfReader(PdfDocCommon):
 
         Args:
             stream: The PDF file stream.
+
         """
         self._basic_validation(stream)
         self._find_eof_marker(stream)
@@ -719,6 +724,7 @@ class PdfReader(PdfDocCommon):
 
         Returns:
             The bytes offset
+
         """
         line = read_previous_line(stream)
         try:
@@ -1026,6 +1032,7 @@ class PdfReader(PdfDocCommon):
 
         Returns:
             0 means no issue, other values represent specific issues.
+
         """
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
@@ -1160,6 +1167,7 @@ class PdfReader(PdfDocCommon):
         Returns:
             An indicator if the document was decrypted and whether it was the
             owner password or the user password.
+
         """
         if not self._encryption:
             raise PdfReadError("Not encrypted file")
@@ -1185,6 +1193,7 @@ class PdfReader(PdfDocCommon):
 
         Returns:
             The created object. ``None`` means no object was created.
+
         """
         catalog = self.root_object
 
@@ -1227,6 +1236,7 @@ class PdfReader(PdfDocCommon):
 
         Returns:
             The modified object. ``None`` means no object was modified.
+
         """
         catalog = self.root_object
 
