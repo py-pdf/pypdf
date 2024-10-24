@@ -237,8 +237,7 @@ class PdfWriter(PdfDocCommon):
                 cloning = False
             if isinstance(fileobj, (IOBase, BytesIO)):
                 t = fileobj.tell()
-                fileobj.seek(0, 2)
-                if fileobj.tell() == 0:
+                if fileobj.seek(0, 2) == 0:
                     cloning = False
                 fileobj.seek(t, 0)
             if cloning:
@@ -249,7 +248,8 @@ class PdfWriter(PdfDocCommon):
         # to prevent overwriting
         self.temp_fileobj = fileobj
         self.fileobj = ""
-        self.cloned = False
+        self.with_as_usage = False
+        self._cloned = False
         # The root of our page tree node.
         pages = DictionaryObject()
         pages.update(
@@ -267,7 +267,7 @@ class PdfWriter(PdfDocCommon):
             if not isinstance(clone_from, PdfReader):
                 clone_from = PdfReader(clone_from)
             self.clone_document_from_reader(clone_from)
-            self.cloned = True
+            self._cloned = True
         else:
             self._pages = self._add_object(pages)
             # root object
@@ -355,10 +355,11 @@ class PdfWriter(PdfDocCommon):
 
     def __enter__(self) -> "PdfWriter":
         """Store how writer is initialized by 'with'."""
-        c: bool = self.cloned
+        c: bool = self._cloned
         t = self.temp_fileobj
         self.__init__()  # type: ignore
-        self.cloned = c
+        self._cloned = c
+        self.with_as_usage = True
         self.fileobj = t  # type: ignore
         return self
 
@@ -369,7 +370,7 @@ class PdfWriter(PdfDocCommon):
         traceback: Optional[TracebackType],
     ) -> None:
         """Write data to the fileobj."""
-        if self.fileobj and not self.cloned:
+        if self.fileobj and not self._cloned:
             self.write(self.fileobj)
 
     def _repr_mimebundle_(
