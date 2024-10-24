@@ -2210,6 +2210,7 @@ class PageObject(DictionaryObject):
         scale_weight: float = 1.25,
         strip_rotated: bool = True,
         debug_path: Optional[Path] = None,
+        font_height_weight: float = 1,
     ) -> str:
         """
         Get text preserving fidelity to source PDF text layout.
@@ -2229,6 +2230,8 @@ class PageObject(DictionaryObject):
                   - bts.json: text render ops left justified and grouped by BT/ET operators
                   - bt_groups.json: BT/ET operations grouped by rendered y-coord (aka lines)
                 Defaults to None.
+            font_height_weight: multiplier for font height when calculating
+                blank lines. Defaults to 1.
 
         Returns:
             str: multiline string containing page text in a fixed width format that
@@ -2260,7 +2263,7 @@ class PageObject(DictionaryObject):
 
         char_width = _layout_mode.fixed_char_width(bt_groups, scale_weight)
 
-        return _layout_mode.fixed_width_page(ty_groups, char_width, space_vertically)
+        return _layout_mode.fixed_width_page(ty_groups, char_width, space_vertically, font_height_weight)
 
     def extract_text(
         self,
@@ -2335,6 +2338,8 @@ class PageObject(DictionaryObject):
                   - tjs.json: individual text render ops with corresponding transform matrices
                   - bts.json: text render ops left justified and grouped by BT/ET operators
                   - bt_groups.json: BT/ET operations grouped by rendered y-coord (aka lines)
+            layout_mode_font_height_weight (float): multiplier for font height when calculating
+                blank lines. Defaults to 1.
 
         Returns:
             The extracted text
@@ -2358,6 +2363,7 @@ class PageObject(DictionaryObject):
                 scale_weight=kwargs.get("layout_mode_scale_weight", 1.25),
                 strip_rotated=kwargs.get("layout_mode_strip_rotated", True),
                 debug_path=kwargs.get("layout_mode_debug_path"),
+                font_height_weight=kwargs.get("layout_mode_font_height_weight", 1)
             )
         if len(args) >= 1:
             if isinstance(args[0], str):
