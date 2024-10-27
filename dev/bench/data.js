@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1729769237328,
+  "lastUpdate": 1730058354577,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -60659,6 +60659,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030013885384930308",
             "extra": "mean: 779.6161793999943 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9f647e696b64f34262a637b77f9a7e89d75a22f4",
+          "message": "REL: 5.1.0\n\n## What's new\r\n\r\n### New Features (ENH)\r\n- Add `layout_mode_font_height_weight` argument to `PageObject.extract_text()` (#2920) by @hpierre001\r\n\r\n### Bug Fixes (BUG)\r\n- Fix font specificier for FreeText annotation (#2893) by @ssjkamei\r\n- Line breaks are not generated due to incorrect calculation of text leading (#2890) by @ssjkamei\r\n- Improve handling of spaces in text extraction (#2882) by @ssjkamei\r\n\r\n### Robustness (ROB)\r\n- Soft failure for flate encode image mode 1 with wrong LUT size (#2900) by @stefan6419846\r\n\r\n### Documentation (DOC)\r\n- Use latest package versions (#2907) by @stefan6419846\r\n- Correct example of reading FileAttachment annotation (#2906) by @j-t-1\r\n\r\n### Developer Experience (DEV)\r\n- Update pinned requirements (#2918) by @stefan6419846\r\n- Make make_release.py compatible with Windows environment (#2894) by @pubpub-zz\r\n\r\n### Maintenance (MAINT)\r\n- Remove references to outdated Python versions (#2919) by @stefan6419846\r\n- Generalize the method of obtaining space_code (#2891) by @ssjkamei\r\n- Unnecessary character mapping process (#2888) by @ssjkamei\r\n- New LZW decoding implementation (#2887) by @MartinThoma\r\n\r\n### Testing (TST)\r\n- Add LzwCodec for encoding (#2883) by @MartinThoma\r\n\r\n### Code Style (STY)\r\n- Capitalize error messages (#2903) by @j-t-1\r\n- Modify error messages in PdfWriter (#2902) by @j-t-1\r\n\r\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.0.1...5.1.0)",
+          "timestamp": "2024-10-27T20:43:21+01:00",
+          "tree_id": "f680297e54b555f706571b5c0322e8cd39b75b0c",
+          "url": "https://github.com/py-pdf/pypdf/commit/9f647e696b64f34262a637b77f9a7e89d75a22f4"
+        },
+        "date": 1730058352434,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.722184025927286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0047914385070487835",
+            "extra": "mean: 367.3520932000031 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.18591013214462,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01506180582548316",
+            "extra": "mean: 89.39817933333198 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22114218563642177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.058725822720015114",
+            "extra": "mean: 4.521977555400002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.79348395525324,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012314207627183431",
+            "extra": "mean: 59.546905374997294 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08867302948012844,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03683535267680659",
+            "extra": "mean: 11.277386211599993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2741057777595248,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005327201547515228",
+            "extra": "mean: 784.8641905999898 msec\nrounds: 5"
           }
         ]
       }
