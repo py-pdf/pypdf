@@ -1,5 +1,41 @@
 # CHANGELOG
 
+## Version 5.1.0, 2024-10-27
+
+### New Features (ENH)
+- Add `layout_mode_font_height_weight` argument to `PageObject.extract_text()` (#2920)
+
+### Bug Fixes (BUG)
+- Fix font specificier for FreeText annotation (#2893)
+- Line breaks are not generated due to incorrect calculation of text leading (#2890)
+- Improve handling of spaces in text extraction (#2882)
+
+### Robustness (ROB)
+- Soft failure for flate encode image mode 1 with wrong LUT size (#2900)
+
+### Documentation (DOC)
+- Use latest package versions (#2907)
+- Correct example of reading FileAttachment annotation (#2906)
+
+### Developer Experience (DEV)
+- Update pinned requirements (#2918)
+- Make make_release.py compatible with Windows environment (#2894)
+
+### Maintenance (MAINT)
+- Remove references to outdated Python versions (#2919)
+- Generalize the method of obtaining space_code (#2891)
+- Unnecessary character mapping process (#2888)
+- New LZW decoding implementation (#2887)
+
+### Testing (TST)
+- Add LzwCodec for encoding (#2883)
+
+### Code Style (STY)
+- Capitalize error messages (#2903)
+- Modify error messages in PdfWriter (#2902)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.0.1...5.1.0)
+
 ## Version 5.0.1, 2024-09-29
 
 ### New Features (ENH)
