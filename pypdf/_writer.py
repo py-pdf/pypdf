@@ -63,6 +63,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     deprecate,
+    deprecate_no_replacement,
     deprecation_with_replacement,
     logger_warning,
 )
@@ -249,7 +250,7 @@ class PdfWriter(PdfDocCommon):
         # to prevent overwriting
         self.temp_fileobj = fileobj
         self.fileobj = ""
-        self.with_as_usage = False
+        self._with_as_usage = False
         self._cloned = False
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -356,13 +357,23 @@ class PdfWriter(PdfDocCommon):
 
         return self.root_object.xmp_metadata  # type: ignore
 
+    @property
+    def with_as_usage(self) -> bool:
+        deprecate_no_replacement("with_as_usage", "6.0")
+        return self._with_as_usage
+
+    @with_as_usage.setter
+    def with_as_usage(self, value: bool) -> None:
+        deprecate_no_replacement("with_as_usage", "6.0")
+        self._with_as_usage = value
+
     def __enter__(self) -> "PdfWriter":
         """Store how writer is initialized by 'with'."""
         c: bool = self._cloned
         t = self.temp_fileobj
         self.__init__()  # type: ignore
         self._cloned = c
-        self.with_as_usage = True
+        self._with_as_usage = True
         self.fileobj = t  # type: ignore
         return self
 
