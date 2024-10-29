@@ -2509,3 +2509,12 @@ def test_auto_write(tmp_path):
     with PdfWriter(target) as writer:
         writer.add_blank_page(100, 100)
     assert target.stat().st_size > 0
+
+
+def test_deprecate_with_as():
+    """Yet another test for #2905"""
+    with PdfWriter() as writer:
+        with pytest.raises(DeprecationWarning):
+            assert writer.with_as_usage
+        with pytest.raises(DeprecationWarning):
+            writer.with_as_usage = True  # old code allowed setting this, so...
