@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from ._base import is_null_or_none
 
@@ -7,10 +7,10 @@ class Fit:
     def __init__(
         self, fit_type: str, fit_args: Tuple[Union[None, float, Any], ...] = ()
     ):
-        from ._base import FloatObject, NameObject, NullObject
+        from ._base import FloatObject, NameObject, NullObject, NumberObject
 
         self.fit_type = NameObject(fit_type)
-        self.fit_args = [
+        self.fit_args: List[Union[NullObject, FloatObject, NumberObject]] = [
             NullObject() if is_null_or_none(a) else FloatObject(a) for a in fit_args
         ]
 
@@ -38,6 +38,7 @@ class Fit:
 
         Returns:
             The created fit object.
+
         """
         return Fit(fit_type="/XYZ", fit_args=(left, top, zoom))
 
@@ -70,6 +71,7 @@ class Fit:
 
         Returns:
             The created fit object.
+
         """
         return Fit(fit_type="/FitH", fit_args=(top,))
 
@@ -106,6 +108,7 @@ class Fit:
 
         Returns:
             The created fit object.
+
         """
         return Fit(fit_type="/FitR", fit_args=(left, bottom, right, top))
 
@@ -138,6 +141,7 @@ class Fit:
 
         Returns:
             The created fit object.
+
         """
         return Fit(fit_type="/FitBH", fit_args=(top,))
 
@@ -157,6 +161,7 @@ class Fit:
 
         Returns:
             The created fit object.
+
         """
         return Fit(fit_type="/FitBV", fit_args=(left,))
 

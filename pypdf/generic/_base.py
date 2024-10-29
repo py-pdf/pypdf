@@ -65,6 +65,7 @@ class PdfObject(PdfObjectProtocol):
 
         Returns:
             Hash considering type and value.
+
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not implement .hash_bin() so far"
@@ -95,6 +96,7 @@ class PdfObject(PdfObjectProtocol):
 
         Returns:
           The cloned PdfObject
+
         """
         return self.clone(pdf_dest)
 
@@ -123,6 +125,7 @@ class PdfObject(PdfObjectProtocol):
 
         Returns:
           The cloned PdfObject
+
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not implement .clone so far"
@@ -143,6 +146,7 @@ class PdfObject(PdfObjectProtocol):
 
         Returns:
           The clone
+
         """
         try:
             if not force_duplicate and clone.indirect_reference.pdf == pdf_dest:
@@ -213,6 +217,7 @@ class NullObject(PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__,))
 
@@ -258,6 +263,7 @@ class BooleanObject(PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self.value))
 
@@ -311,6 +317,7 @@ class IndirectObject(PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self.idnum, self.generation, id(self.pdf)))
 
@@ -484,6 +491,7 @@ class FloatObject(float, PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self.as_numeric))
 
@@ -538,6 +546,7 @@ class NumberObject(int, PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self.as_numeric()))
 
@@ -590,6 +599,7 @@ class ByteStringObject(bytes, PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, bytes(self)))
 
@@ -678,6 +688,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self.original_bytes))
 
@@ -783,6 +794,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self))
 
@@ -832,7 +844,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
         if name != NameObject.surfix:
-            raise PdfReadError("name read error")
+            raise PdfReadError("Name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
             # Name objects should represent irregular characters
@@ -877,6 +889,7 @@ def is_null_or_none(x: Any) -> TypeGuard[Union[None, NullObject, IndirectObject]
     """
     Returns:
         True if x is None or NullObject.
+
     """
     return x is None or (
         isinstance(x, PdfObject)

@@ -15,3 +15,5 @@ The PageObject Class
     :members:
     :inherited-members: File
     :undoc-members:
+
+.. autofunction:: pypdf.mult

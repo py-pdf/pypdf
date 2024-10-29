@@ -169,6 +169,7 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
 
     Returns:
         The label of the page, e.g. "iv" or "4".
+
     """
     root = cast(DictionaryObject, reader.root_object)
     if "/PageLabels" not in root:
@@ -221,9 +222,10 @@ def nums_insert(
         key: number key of the entry
         value: value of the entry
         nums: Nums array to modify
+
     """
     if len(nums) % 2 != 0:
-        raise ValueError("a nums like array must have an even number of elements")
+        raise ValueError("A nums like array must have an even number of elements")
 
     i = len(nums)
     while i != 0 and key <= nums[i - 2]:
@@ -250,9 +252,10 @@ def nums_clear_range(
         key: number key of the entry before the range
         page_index_to: The page index of the upper limit of the range
         nums: Nums array to modify
+
     """
     if len(nums) % 2 != 0:
-        raise ValueError("a nums like array must have an even number of elements")
+        raise ValueError("A nums like array must have an even number of elements")
     if page_index_to < key:
         raise ValueError("page_index_to must be greater or equal than key")
 
@@ -274,9 +277,10 @@ def nums_next(
     Args:
         key: number key of the entry
         nums: Nums array
+
     """
     if len(nums) % 2 != 0:
-        raise ValueError("a nums like array must have an even number of elements")
+        raise ValueError("A nums like array must have an even number of elements")
 
     i = nums.index(key) + 2
     if i < len(nums):

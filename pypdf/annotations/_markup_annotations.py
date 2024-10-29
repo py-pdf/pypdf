@@ -46,6 +46,7 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
     Args:
         title_bar: Text to be displayed in the title bar of the annotation;
             by convention this is the name of the author
+
     """
 
     def __init__(self, *, title_bar: Optional[str] = None):
@@ -63,6 +64,7 @@ class Text(MarkupAnnotation):
         text: The text that is added to the document
         open:
         flags:
+
     """
 
     def __init__(

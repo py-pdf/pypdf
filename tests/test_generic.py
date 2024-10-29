@@ -193,7 +193,7 @@ def test_name_object(caplog):
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
-    assert exc.value.args[0] == "name read error"
+    assert exc.value.args[0] == "Name read error"
     assert (
         NameObject.read_from_stream(
             BytesIO(b"/A;Name_With-Various***Characters?"), None
@@ -339,7 +339,7 @@ def test_dictionaryobject_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do["foo"] = NameObject("/GoTo")
-    assert exc.value.args[0] == "key must be PdfObject"
+    assert exc.value.args[0] == "Key must be a PdfObject"
 
 
 def test_dictionaryobject_xmp_meta():
@@ -351,21 +351,21 @@ def test_dictionaryobject_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do[NameObject("/S")] = "/GoTo"
-    assert exc.value.args[0] == "value must be PdfObject"
+    assert exc.value.args[0] == "Value must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_key_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault("foo", NameObject("/GoTo"))
-    assert exc.value.args[0] == "key must be PdfObject"
+    assert exc.value.args[0] == "Key must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
-    assert exc.value.args[0] == "value must be PdfObject"
+    assert exc.value.args[0] == "Value must be a PdfObject"
 
 
 def test_dictionaryobject_setdefault_value():
@@ -618,7 +618,7 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "caplog_content"),
     [
@@ -666,8 +666,8 @@ def test_extract_text(caplog, url: str, name: str, caplog_content: str):
         assert caplog_content in caplog.text
 
 
-@pytest.mark.slow()
-@pytest.mark.enable_socket()
+@pytest.mark.slow
+@pytest.mark.enable_socket
 def test_text_string_write_to_stream():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
     name = "tika-924562.pdf"
@@ -679,7 +679,7 @@ def test_text_string_write_to_stream():
         page.compress_content_streams()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_bool_repr(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
     name = "tika-932449.pdf"
@@ -699,7 +699,7 @@ def test_bool_repr(tmp_path):
     )
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_issue_997(pdf_file_path):
     url = (
         "https://github.com/py-pdf/pypdf/files/8908874/"
@@ -880,7 +880,7 @@ def test_cloning(caplog):
     assert isinstance(obj21.get("/Test2"), IndirectObject)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_append_with_indirectobject_not_pointing(caplog):
     """
     reported in #1631
@@ -895,7 +895,7 @@ def test_append_with_indirectobject_not_pointing(caplog):
     assert "Object 43 0 not defined." in caplog.text
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss1615_1673():
     """
     test cases where /N is not indicating chains of objects
@@ -921,7 +921,7 @@ def test_iss1615_1673():
     writer.clone_document_from_reader(reader)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_destination_withoutzoom():
     """Cf issue #1832"""
     url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
@@ -972,7 +972,7 @@ def test_encodedstream_set_data():
         aa.set_data(b"toto")
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_set_data_2():
     """
     Modify a stream not yet loaded and
@@ -988,7 +988,7 @@ def test_set_data_2():
     assert writer.root_object["/AcroForm"]["/XFA"][7].get_object().get_data() == b"test"
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_calling_indirect_objects():
     """Cope with cases where attributes/items are called from indirectObject"""
     url = "https://github.com/user-attachments/files/15605648/2021_book_security.pdf"
@@ -1008,7 +1008,7 @@ def test_calling_indirect_objects():
         ind["/Type"]
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_indirect_object_page_dimensions():
     url = "https://github.com/py-pdf/pypdf/files/13302338/Zymeworks_Corporate.Presentation_FINAL1101.pdf.pdf"
     name = "issue2287.pdf"

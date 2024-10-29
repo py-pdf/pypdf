@@ -23,6 +23,7 @@ class Codec(ABC):
 
         Returns:
             Encoded data.
+
         """
 
     @abstractmethod
@@ -35,6 +36,7 @@ class Codec(ABC):
 
         Returns:
             Decoded data.
+
         """
 
 

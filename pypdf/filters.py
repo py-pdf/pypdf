@@ -76,6 +76,7 @@ def decompress(data: bytes) -> bytes:
 
     Returns:
         The decompressed data.
+
     """
     try:
         return zlib.decompress(data)
@@ -115,6 +116,7 @@ class FlateDecode:
 
         Raises:
           PdfReadError:
+
         """
         if isinstance(decode_parms, ArrayObject):
             raise DeprecationError("decode_parms as ArrayObject is deprecated")
@@ -244,6 +246,7 @@ class FlateDecode:
 
         Returns:
             The compressed data.
+
         """
         return zlib.compress(data, level)
 
@@ -275,6 +278,7 @@ class ASCIIHexDecode:
 
         Raises:
           PdfStreamError:
+
         """
         # decode_parms is unused here
 
@@ -336,6 +340,7 @@ class RunLengthDecode:
 
         Raises:
           PdfStreamError:
+
         """
         # decode_parms is unused here
 
@@ -351,7 +356,7 @@ class RunLengthDecode:
             index += 1
             if length == 128:
                 if index < len(data):
-                    raise PdfStreamError("early EOD in RunLengthDecode")
+                    raise PdfStreamError("Early EOD in RunLengthDecode")
                 else:
                     break
             elif length < 128:
@@ -391,6 +396,7 @@ class LZWDecode:
 
         Returns:
           decoded data.
+
         """
         # decode_parms is unused here
         return LZWDecode.Decoder(data).decode()
@@ -410,6 +416,7 @@ class LZWDecode:
 
         Returns:
           decoded data.
+
         """
         # decode_parms is unused here
         deprecate("LZWDecode.decode will return bytes instead of str in pypdf 6.0.0")
@@ -434,6 +441,7 @@ class ASCII85Decode:
 
         Returns:
           decoded data.
+
         """
         if isinstance(data, str):
             data = data.encode()
@@ -601,6 +609,7 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
 
     Raises:
         NotImplementedError: If an unsupported filter type is encountered.
+
     """
     filters = stream.get(SA.FILTER, ())
     if isinstance(filters, IndirectObject):
@@ -656,6 +665,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     Returns:
         Tuple[file extension, bytes, PIL.Image.Image]
+
     """
     from ._xobj_image_helpers import (
         Image,

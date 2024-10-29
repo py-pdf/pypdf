@@ -1,6 +1,6 @@
 # How pypdf parses PDF files
 
-pypdf uses {py:class}`PdfReader <pypdf.PdfReader>` to parse PDF files.
+pypdf uses {class}`~pypdf.PdfReader` to parse PDF files.
 The method {py:meth}`PdfReader.read <pypdf.PdfReader.read>` shows the basic
 structure of parsing:
 
@@ -19,8 +19,8 @@ structure of parsing:
    content streams, which are sequences of PDF operators and operands. pypdf
    decodes these content streams by applying filters (e.g., `FlateDecode`,
    `LZWDecode`) specified in the stream's dictionary. This is only done when the
-   object is requested by {py:meth}`PdfReader.get_object
-   <pypdf.PdfReader.get_object>` which uses the `PdfReader._get_object_from_stream` method.
+   object is requested by {py:meth}`PdfReader.get_object <pypdf.PdfReader.get_object>`
+   which uses the `PdfReader._get_object_from_stream` method.
 
 ## References
 

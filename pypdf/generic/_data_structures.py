@@ -154,6 +154,7 @@ class ArrayObject(List[Any], PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, tuple(x.hash_bin() for x in self)))
 
@@ -191,6 +192,7 @@ class ArrayObject(List[Any], PdfObject):
 
         Returns:
             ArrayObject with all elements
+
         """
         temp = ArrayObject(self)
         temp.extend(self._to_lst(lst))
@@ -206,6 +208,7 @@ class ArrayObject(List[Any], PdfObject):
             if str is passed it will be converted into TextStringObject
             or NameObject (if starting with "/")
             if bytes is passed it will be converted into ByteStringObject
+
         """
         self.extend(self._to_lst(lst))
         return self
@@ -318,6 +321,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             pdf_dest:
             force_duplicate:
             ignore_fields:
+
         """
         # first we remove for the ignore_fields
         # that are for a limited number of levels
@@ -421,6 +425,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash(
             (self.__class__, tuple(((k, v.hash_bin()) for k, v in self.items())))
@@ -441,13 +446,14 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
 
         Returns:
             Current key or inherited one, otherwise default value.
+
         """
         if key in self:
             return self[key]
         try:
             if "/Parent" not in self:
                 return default
-            raise KeyError("not present")
+            raise KeyError("Not present")
         except KeyError:
             return cast("DictionaryObject", self["/Parent"].get_object()).get_inherited(
                 key, default
@@ -455,16 +461,16 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
 
     def __setitem__(self, key: Any, value: Any) -> Any:
         if not isinstance(key, PdfObject):
-            raise ValueError("key must be PdfObject")
+            raise ValueError("Key must be a PdfObject")
         if not isinstance(value, PdfObject):
-            raise ValueError("value must be PdfObject")
+            raise ValueError("Value must be a PdfObject")
         return dict.__setitem__(self, key, value)
 
     def setdefault(self, key: Any, value: Optional[Any] = None) -> Any:
         if not isinstance(key, PdfObject):
-            raise ValueError("key must be PdfObject")
+            raise ValueError("Key must be a PdfObject")
         if not isinstance(value, PdfObject):
-            raise ValueError("value must be PdfObject")
+            raise ValueError("Value must be a PdfObject")
         return dict.setdefault(self, key, value)  # type: ignore
 
     def __getitem__(self, key: Any) -> PdfObject:
@@ -482,6 +488,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
           Returns a :class:`~pypdf.xmp.XmpInformation` instance
           that can be used to access XMP metadata from the document. Can also
           return None if no metadata was found on the document root.
+
         """
         from ..xmp import XmpInformation
 
@@ -797,6 +804,7 @@ class TreeObject(DictionaryObject):
             prev_ref:
             cur:
             last:
+
         """
         next_ref = cur.get(NameObject("/Next"), None)
         if prev is None:
@@ -893,6 +901,7 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
 
     Args:
         child_obj:
+
     """
     del child_obj[NameObject("/Parent")]
     if NameObject("/Next") in child_obj:
@@ -947,6 +956,7 @@ class StreamObject(DictionaryObject):
             pdf_dest:
             force_duplicate:
             ignore_fields:
+
         """
         self._data = cast("StreamObject", src)._data
         try:
@@ -968,6 +978,7 @@ class StreamObject(DictionaryObject):
 
         Returns:
             Hash considering type and value.
+
         """
         # use of _data to prevent errors on non decoded stream such as JBIG2
         return hash((super().hash_bin(), self._data))
@@ -1062,6 +1073,7 @@ class StreamObject(DictionaryObject):
                 errors during decoding will be reported
                 It is recommended to catch exceptions to prevent
                 stops in your program.
+
         """
         from ..filters import _xobj_to_image
 
@@ -1109,7 +1121,7 @@ class EncodedStreamObject(StreamObject):
 
         if self.get(SA.FILTER, "") in (FT.FLATE_DECODE, [FT.FLATE_DECODE]):
             if not isinstance(data, bytes):
-                raise TypeError("data must be bytes")
+                raise TypeError("Data must be bytes")
             if self.decoded_self is None:
                 self.get_data()  # to create self.decoded_self
             assert self.decoded_self is not None, "mypy"
@@ -1220,6 +1232,7 @@ class ContentStream(DecodedStreamObject):
 
         Returns:
             The cloned ContentStream
+
         """
         try:
             if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore
@@ -1255,6 +1268,7 @@ class ContentStream(DecodedStreamObject):
             pdf_dest:
             force_duplicate:
             ignore_fields:
+
         """
         src_cs = cast("ContentStream", src)
         super().set_data(src_cs._data)
@@ -1579,6 +1593,7 @@ class Destination(TreeObject):
 
     Raises:
         PdfReadError: If destination type is invalid.
+
     """
 
     node: Optional[
