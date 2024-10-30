@@ -260,3 +260,11 @@ def test_layout_mode_space_vertically_font_height_weight():
                 "PDF extracted text differs from expected value.\n\n"
                 "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
         )
+
+def test_infinite_loop_arrays():
+    """Tests for #2928"""
+    reader = PdfReader(RESOURCE_ROOT / "arrayabruptending.pdf")
+
+    page = reader.pages[0]
+    extracted = page.extract_text()
+    assert "RNA structure comparison" in extracted
