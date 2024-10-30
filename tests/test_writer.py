@@ -2481,3 +2481,43 @@ def test_append_pdf_with_dest_without_page(caplog):
     writer.append(reader)
     assert "/__WKANCHOR_8" not in writer.named_destinations
     assert len(writer.named_destinations) == 3
+
+
+def test_stream_not_closed():
+    """Tests for #2905"""
+    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    with NamedTemporaryFile(suffix=".pdf") as tmp:
+        with PdfReader(src) as reader, PdfWriter() as writer:
+            writer.add_page(reader.pages[0])
+            writer.write(tmp)
+        assert not tmp.file.closed
+
+    with NamedTemporaryFile(suffix=".pdf") as target:
+        with PdfWriter(target.file) as writer:
+            writer.add_blank_page(100, 100)
+        assert not target.file.closed
+
+    with open(src, "rb") as fileobj:
+        with PdfWriter(fileobj) as writer:
+            pass
+        assert not fileobj.closed
+
+
+def test_auto_write(tmp_path):
+    """Another test for #2905"""
+    target = tmp_path / "out.pdf"
+    with PdfWriter(target) as writer:
+        writer.add_blank_page(100, 100)
+    assert target.stat().st_size > 0
+
+
+def test_deprecate_with_as():
+    """Yet another test for #2905"""
+    with PdfWriter() as writer:
+        with pytest.warns(DeprecationWarning) as w:
+            val = writer.with_as_usage
+        assert "with_as_usage is deprecated" in w[0].message.args[0]
+        assert val
+        with pytest.warns(DeprecationWarning) as w:
+            writer.with_as_usage = val  # old code allowed setting this, so...
+        assert "with_as_usage is deprecated" in w[0].message.args[0]
