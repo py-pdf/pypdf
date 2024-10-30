@@ -251,6 +251,8 @@ class ArrayObject(List[Any], PdfObject):
             tok = stream.read(1)
             while tok.isspace():
                 tok = stream.read(1)
+            if tok == b"":
+                break
             if tok == b"%":
                 stream.seek(-1, 1)
                 skip_over_comment(stream)
