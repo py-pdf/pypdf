@@ -152,10 +152,15 @@ class PdfWriter(PdfDocCommon):
     Typically data is added from a :class:`PdfReader<pypdf.PdfReader>`.
 
     Args:
+        *: 1st argument is assigned to fileobj or clone_from based on context:
+            assigned to clone_from if str/path to a non empty file or stream or PdfReader,
+            otherwise assigned to fileobj.
+
+        fileobj: Output file/stream. To be used with context manager only.
+
         clone_from: identical to fileobj (for compatibility)
 
         incremental: If true, loads the document and set the PdfWriter in incremental mode.
-
 
             When writing incrementally, the original document is written first and new/modified
             content is appended. To be used for signed document/forms to keep signature valid.
@@ -167,7 +172,8 @@ class PdfWriter(PdfDocCommon):
 
     def __init__(
         self,
-        fileobj: Union[None, PdfReader, StrByteType, Path] = "",
+        *args: Any,
+        fileobj: Union[None, StrByteType, Path] = "",
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
         incremental: bool = False,
         full: bool = False,
@@ -203,16 +209,63 @@ class PdfWriter(PdfDocCommon):
         self._ID: Union[ArrayObject, None] = None
         self._info_obj: Optional[PdfObject]
 
+        manual_set_fileobj = True
+        if len(args) > 0:
+            if fileobj == "":
+                fileobj = args[0]
+                manual_set_fileobj = False
+            elif clone_from is None:
+                clone_from = args[0]
+            else:
+                logger_warning(
+                    "unnamed param ignored: fileobj and clone_from already defined",
+                    __name__,
+                )
+
+        def _get_clone_from(
+            fileobj: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
+            clone_from: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
+            manual_set_fileobj: bool,
+        ) -> Tuple[
+            Union[None, PdfReader, str, Path, IO[Any], BytesIO],
+            Union[None, str, Path, IO[Any], BytesIO],
+        ]:
+            if manual_set_fileobj or (
+                isinstance(fileobj, (str, Path, IO, BytesIO))
+                and (fileobj in ("", None) or clone_from is not None)
+            ):
+                assert not isinstance(fileobj, PdfReader), "for mypy"
+                return clone_from, fileobj
+            cloning = True
+            if isinstance(fileobj, (str, Path)) and (
+                not Path(str(fileobj)).exists()
+                or Path(str(fileobj)).stat().st_size == 0
+            ):
+                cloning = False
+
+            if isinstance(fileobj, (IO, BytesIO)):
+                t = fileobj.tell()
+                fileobj.seek(-1, 2)
+                if fileobj.tell() == 0:
+                    cloning = False
+                fileobj.seek(t, 0)
+            if cloning:
+                return fileobj, None
+            assert not isinstance(fileobj, PdfReader), "for mypy"
+            return clone_from, fileobj
+
+        clone_from, fileobj = _get_clone_from(fileobj, clone_from, manual_set_fileobj)
+
         if self.incremental:
-            if isinstance(fileobj, (str, Path)):
-                with open(fileobj, "rb") as f:
-                    fileobj = BytesIO(f.read(-1))
-            if isinstance(fileobj, BytesIO):
-                fileobj = PdfReader(fileobj)
-            if not isinstance(fileobj, PdfReader):
+            if isinstance(clone_from, (str, Path)):
+                with open(clone_from, "rb") as f:
+                    clone_from = BytesIO(f.read(-1))
+            if isinstance(clone_from, (IO, BytesIO)):
+                clone_from = PdfReader(clone_from)
+            if not isinstance(clone_from, PdfReader):
                 raise PyPdfError("Invalid type for incremental mode")
-            self._reader = fileobj  # prev content is in _reader.stream
-            self._header = fileobj.pdf_header.encode()
+            self._reader = clone_from  # prev content is in _reader.stream
+            self._header = clone_from.pdf_header.encode()
             self._readonly = True  # !!!TODO: to be analysed
         else:
             self._header = b"%PDF-1.3"
@@ -222,34 +275,9 @@ class PdfWriter(PdfDocCommon):
                 )
             )
 
-        def _get_clone_from(
-            fileobj: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
-            clone_from: Union[None, PdfReader, str, Path, IO[Any], BytesIO],
-        ) -> Union[None, PdfReader, str, Path, IO[Any], BytesIO]:
-            if isinstance(fileobj, (str, Path, IO, BytesIO)) and (
-                fileobj == "" or clone_from is not None
-            ):
-                return clone_from
-            cloning = True
-            if isinstance(fileobj, (str, Path)) and (
-                not Path(str(fileobj)).exists()
-                or Path(str(fileobj)).stat().st_size == 0
-            ):
-                cloning = False
-            if isinstance(fileobj, (IO, BytesIO)):
-                t = fileobj.tell()
-                fileobj.seek(-1, 2)
-                if fileobj.tell() == 0:
-                    cloning = False
-                fileobj.seek(t, 0)
-            if cloning:
-                clone_from = fileobj
-            return clone_from
-
-        clone_from = _get_clone_from(fileobj, clone_from)
         # to prevent overwriting
         self.temp_fileobj = fileobj
-        self.fileobj = ""
+        self.fileobj: Union[None, StrByteType, Path] = ""
         self.with_as_usage = False
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -357,10 +385,8 @@ class PdfWriter(PdfDocCommon):
 
     def __enter__(self) -> "PdfWriter":
         """Store that writer is initialized by 'with'."""
-        t = self.temp_fileobj
-        self.__init__()  # type: ignore
+        self.fileobj = self.temp_fileobj
         self.with_as_usage = True
-        self.fileobj = t  # type: ignore
         return self
 
     def __exit__(
@@ -1411,7 +1437,7 @@ class PdfWriter(PdfDocCommon):
 
         self.write_stream(stream)
 
-        if self.with_as_usage:
+        if my_file:
             stream.close()
 
         return my_file, stream
