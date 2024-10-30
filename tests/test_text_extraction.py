@@ -261,9 +261,12 @@ def test_layout_mode_space_vertically_font_height_weight():
                 "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
         )
 
+@pytest.mark.enable_socket
 def test_infinite_loop_arrays():
     """Tests for #2928"""
-    reader = PdfReader(RESOURCE_ROOT / "arrayabruptending.pdf")
+    url = "https://github.com/user-attachments/files/17576546/arrayabruptending.pdf"
+    name = "arrayabruptending.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
     page = reader.pages[0]
     extracted = page.extract_text()
