@@ -2514,7 +2514,10 @@ def test_auto_write(tmp_path):
 def test_deprecate_with_as():
     """Yet another test for #2905"""
     with PdfWriter() as writer:
-        with pytest.raises(DeprecationWarning):
-            assert writer.with_as_usage
-        with pytest.raises(DeprecationWarning):
-            writer.with_as_usage = True  # old code allowed setting this, so...
+        with pytest.warns(DeprecationWarning) as w:
+            val = writer.with_as_usage
+        assert "with_as_usage is deprecated" in w[0].message.args[0]
+        assert val
+        with pytest.warns(DeprecationWarning) as w:
+            writer.with_as_usage = val  # old code allowed setting this, so...
+        assert "with_as_usage is deprecated" in w[0].message.args[0]
