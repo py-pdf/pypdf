@@ -261,6 +261,7 @@ def test_layout_mode_space_vertically_font_height_weight():
                 "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
         )
 
+
 @pytest.mark.enable_socket
 def test_infinite_loop_arrays():
     """Tests for #2928"""
