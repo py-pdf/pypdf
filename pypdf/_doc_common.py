@@ -121,6 +121,8 @@ class DocumentInformation(DictionaryObject):
         retval = self.get(key, None)
         if isinstance(retval, TextStringObject):
             return retval
+        if isinstance(retval, ByteStringObject):
+            return str(retval)
         return None
 
     @property
