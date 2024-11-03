@@ -276,7 +276,6 @@ for page in reader.pages:
 """
     )
 
-    env = os.environ.copy()
     try:
         env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
     except KeyError:
