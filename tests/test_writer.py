@@ -14,7 +14,6 @@ from pypdf import (
     ImageType,
     ObjectDeletionFlag,
     PageObject,
-    PdfMerger,
     PdfReader,
     PdfWriter,
     Transformation,
@@ -127,6 +126,7 @@ def writer_operate(writer: PdfWriter) -> None:
 
     Args:
         writer: A PdfWriter object
+
     """
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     pdf_outline_path = RESOURCE_ROOT / "pdflatex-outline.pdf"
@@ -345,7 +345,7 @@ def test_remove_images(pdf_file_path, input_path):
             assert "Lorem ipsum dolor sit amet" in extracted_text
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_remove_images_sub_level():
     """Cf #2035"""
     url = "https://github.com/py-pdf/pypdf/files/12394781/2210.03142-1.pdf"
@@ -832,21 +832,21 @@ def test_append_pages_from_reader_append():
         writer.write(b)
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
+    merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -864,11 +864,6 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_some_appends(pdf_file_path, url, name):
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    # PdfMerger
-    merger = PdfMerger()
-    merger.append(reader)
-    merger.write(pdf_file_path)
-    # PdfWriter
     merger = PdfWriter()
     merger.append(reader)
     merger.write(pdf_file_path)
@@ -959,7 +954,7 @@ def test_add_single_annotation(pdf_file_path):
         writer.write(fp)
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 def test_colors_in_outline_item(pdf_file_path):
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
@@ -980,7 +975,7 @@ def test_colors_in_outline_item(pdf_file_path):
         ]
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 def test_write_empty_stream():
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
@@ -988,7 +983,7 @@ def test_write_empty_stream():
 
     with pytest.raises(ValueError) as exc:
         writer.write("")
-    assert exc.value.args[0] == "Output(stream=) is empty."
+    assert exc.value.args[0] == "Output(stream='') is empty."
 
 
 def test_startup_dest():
@@ -1032,7 +1027,7 @@ def test_startup_dest():
     pdf_file_writer.open_destination = None
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss471():
     url = "https://github.com/py-pdf/pypdf/files/9139245/book.pdf"
     name = "book_471.pdf"
@@ -1045,7 +1040,7 @@ def test_iss471():
     )
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_reset_translation():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -1083,7 +1078,7 @@ def test_threads_empty():
     assert thr == thr2
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_append_without_annots_and_articles():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -1102,7 +1097,7 @@ def test_append_without_annots_and_articles():
     assert len(writer.threads) >= 1
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_append_multiple():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -1117,7 +1112,7 @@ def test_append_multiple():
     assert pages[-1] not in pages[0:-1]  # page not repeated
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 def test_set_page_label(pdf_file_path):
     src = RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf"  # File without labels
     reader = PdfReader(src)
@@ -1146,8 +1141,7 @@ def test_set_page_label(pdf_file_path):
 
     # Tests full length with labels assigned at first and last elements
     # Tests different labels assigned to consecutive ranges
-    writer = PdfWriter()
-    writer.clone_document_from_reader(reader)
+    writer = PdfWriter(reader, full=True)
     writer.set_page_label(0, 1, "/r")
     writer.set_page_label(4, 5, "/A")
     writer.set_page_label(10, 10, "/A")
@@ -1194,21 +1188,21 @@ def test_set_page_label(pdf_file_path):
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     with pytest.raises(
-        ValueError, match="at least one between style and prefix must be given"
+        ValueError, match="At least one of style and prefix must be given"
     ):
         writer.set_page_label(0, 5, start=2)
     with pytest.raises(
-        ValueError, match="page_index_from must be equal or greater then 0"
+        ValueError, match="page_index_from must be greater or equal than 0"
     ):
         writer.set_page_label(-1, 5, "/r")
     with pytest.raises(
-        ValueError, match="page_index_to must be equal or greater then page_index_from"
+        ValueError, match="page_index_to must be greater or equal than page_index_from"
     ):
         writer.set_page_label(5, 0, "/r")
     with pytest.raises(ValueError, match="page_index_to exceeds number of pages"):
         writer.set_page_label(0, 19, "/r")
     with pytest.raises(
-        ValueError, match="if given, start must be equal or greater than one"
+        ValueError, match="If given, start must be greater or equal than one"
     ):
         writer.set_page_label(0, 5, "/r", start=-1)
 
@@ -1253,7 +1247,7 @@ def test_set_page_label(pdf_file_path):
     writer.write(pdf_file_path)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
@@ -1290,7 +1284,7 @@ def test_attachments():
     to_add = [
         ("foobar.txt", b"foobarcontent"),
         ("foobar2.txt", b"foobarcontent2"),
-        ("foobar2.txt", b"2nd_foobarcontent"),
+        ("foobar2.txt", "2nd_foobarcontent"),
     ]
     for name, content in to_add:
         writer.add_attachment(name, content)
@@ -1322,7 +1316,7 @@ def test_attachments():
     assert reader.attachments["foobar2.txt"][1] == b"2nd_foobarcontent"
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss1614():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"
@@ -1337,7 +1331,7 @@ def test_iss1614():
     writer.append(reader)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_new_removes():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10807951/tt.pdf"
@@ -1391,7 +1385,7 @@ def test_new_removes():
     writer.remove_annotations("/Text")
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_late_iss1654():
     url = "https://github.com/py-pdf/pypdf/files/10935632/bid1.pdf"
     name = "bid1.pdf"
@@ -1404,7 +1398,7 @@ def test_late_iss1654():
     writer.write(b)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss1723():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/11015242/inputFile.pdf"
@@ -1414,7 +1408,7 @@ def test_iss1723():
     writer.append(reader, (3, 5))
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss1767():
     # test with a pdf which is buggy because the object 389,0 exists 3 times:
     # twice to define catalog and one as an XObject inducing a loop when
@@ -1425,7 +1419,7 @@ def test_iss1767():
     PdfWriter(clone_from=reader)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_named_dest_page_number():
     """
     Closes iss471
@@ -1522,7 +1516,7 @@ def test_update_form_fields(tmp_path):
     Path(write_data_here).unlink()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_update_form_fields2():
     myFiles = {
         "test1": {
@@ -1603,7 +1597,7 @@ def test_update_form_fields2():
     }
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss1862():
     # The file here has "/B" entry to define the font in a object below the page
     # The excluded field shall be considered only at first level (page) and not
@@ -1630,7 +1624,7 @@ def test_empty_objects_before_cloning():
     assert len(writer._objects) == nb_obj_reader
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_watermark():
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
     name = "bgwatermark.pdf"
@@ -1649,7 +1643,7 @@ def test_watermark():
     assert len(b.getvalue()) < 2.1 * 1024 * 1024
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.timeout(4)
 def test_watermarking_speed():
     url = "https://github.com/py-pdf/pypdf/files/11985889/bg.pdf"
@@ -1666,7 +1660,7 @@ def test_watermarking_speed():
     assert pdf_size_in_mib < 20
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
 def test_watermark_rendering(tmp_path):
     """Ensure the visual appearance of watermarking stays correct."""
@@ -1690,8 +1684,8 @@ def test_watermark_rendering(tmp_path):
     writer.write(pdf_path)
 
     # False positive: https://github.com/PyCQA/bandit/issues/333
-    subprocess.run(
-        [  # noqa: S603
+    subprocess.run(  # noqa: S603
+        [
             GHOSTSCRIPT_BINARY,
             "-sDEVICE=pngalpha",
             "-o",
@@ -1727,8 +1721,8 @@ def test_watermarking_reportlab_rendering(tmp_path):
 
     writer.write(pdf_path)
     # False positive: https://github.com/PyCQA/bandit/issues/333
-    subprocess.run(
-        [  # noqa: S603
+    subprocess.run(  # noqa: S603
+        [
             GHOSTSCRIPT_BINARY,
             "-r120",
             "-sDEVICE=pngalpha",
@@ -1741,7 +1735,7 @@ def test_watermarking_reportlab_rendering(tmp_path):
     assert image_similarity(png_path, target_png_path) >= 0.999
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_da_missing_in_annot():
     url = "https://github.com/py-pdf/pypdf/files/12136285/Building.Division.Permit.Application.pdf"
     name = "BuildingDivisionPermitApplication.pdf"
@@ -1795,9 +1789,36 @@ def test_missing_info():
 
     writer = PdfWriter(clone_from=reader)
     assert len(writer.pages) == len(reader.pages)
+    assert writer.metadata is None
+    b = BytesIO()
+    writer.write(b)
+    assert b"/Info" not in b.getvalue()
+
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    writer.metadata = reader.metadata
+    assert dict(writer._info) == dict(reader._info)
+    assert writer.metadata == reader.metadata
+    b = BytesIO()
+    writer.write(b)
+    assert b"/Info" in b.getvalue()
+
+    writer.metadata = {}
+    writer._info = DictionaryObject()  # for code coverage
+    b = BytesIO()
+    writer.write(b)
+    assert b"/Info" in b.getvalue()
+    assert writer.metadata == {}
+
+    writer.metadata = None
+    writer.metadata = None  # for code coverage
+    assert writer.metadata is None
+    assert PdfWriter().metadata == {"/Producer": "pypdf"}
+    b = BytesIO()
+    writer.write(b)
+    assert b"/Info" not in b.getvalue()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_germanfields():
     """Cf #2035"""
     url = "https://github.com/py-pdf/pypdf/files/12194195/test.pdf"
@@ -1820,7 +1841,7 @@ def test_germanfields():
     )
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_no_t_in_articles():
     """Cf #2078"""
     url = "https://github.com/py-pdf/pypdf/files/12311735/bad.pdf"
@@ -1830,7 +1851,7 @@ def test_no_t_in_articles():
     writer.append(reader)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_no_i_in_articles():
     """Cf #2089"""
     url = "https://github.com/py-pdf/pypdf/files/12352793/kim2002.pdf"
@@ -1840,7 +1861,7 @@ def test_no_i_in_articles():
     writer.append(reader)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_damaged_pdf_length_returning_none():
     """
     Cf #140
@@ -1853,7 +1874,7 @@ def test_damaged_pdf_length_returning_none():
     writer.append(reader)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_viewerpreferences():
     """Add Tests for ViewerPreferences"""
     url = "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf"
@@ -1936,7 +1957,7 @@ def test_extra_spaces_in_da_text(caplog):
     assert b"(abcd)" in t
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_object_contains_indirect_reference_to_self():
     url = "https://github.com/py-pdf/pypdf/files/12389243/testbook.pdf"
     name = "iss2102.pdf"
@@ -1977,7 +1998,7 @@ def test_remove_image_per_type():
     assert len(writer.pages[0]["/Resources"]["/XObject"]) == 0
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_add_outlines_on_empty_dict():
     """Cf #2233"""
 
@@ -2123,7 +2144,7 @@ def test_merging_many_temporary_files(caplog):
     assert "Cannot find page in pages" in caplog.text
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_reattach_fields():
     """
     Test Reattach function
@@ -2188,6 +2209,10 @@ def test_replace_object():
     reader._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
     pg = PageObject.create_blank_page(writer, 1000, 1000)
     reader._replace_object(reader.pages[0].indirect_reference, pg)
+    pg = PageObject.create_blank_page(None, 1000, 1000)
+    pg[NameObject("/Contents")] = writer.pages[0]["/Contents"]
+    writer._add_object(pg)
+    writer.add_page(pg)
 
 
 def test_mime_jupyter():
@@ -2219,7 +2244,7 @@ def test_init_without_named_arg():
     assert len(writer._objects) == nb
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_i_in_choice_fields():
     """Cf #2611"""
     url = "https://github.com/py-pdf/pypdf/files/15176321/FRA.F.6180.150.pdf"
@@ -2255,7 +2280,7 @@ def test_selfont():
     )
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_no_ressource_for_14_std_fonts(caplog):
     """Cf #2670"""
     url = "https://github.com/py-pdf/pypdf/files/15405390/f1040.pdf"
@@ -2271,7 +2296,7 @@ def test_no_ressource_for_14_std_fonts(caplog):
     assert "Font dictionary for /Helvetica not found." in caplog.text
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_field_box_upside_down():
     """Cf #2724"""
     url = "https://github.com/user-attachments/files/15996356/FRA.F.6180.55.pdf"
@@ -2288,7 +2313,7 @@ def test_field_box_upside_down():
     assert box[3] > 0
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_matrix_entry_in_field_annots():
     """Cf #2731"""
     url = "https://github.com/user-attachments/files/16036514/template.pdf"
@@ -2300,3 +2325,199 @@ def test_matrix_entry_in_field_annots():
         auto_regenerate=False,
     )
     assert "/Matrix" in writer.pages[0]["/Annots"][5].get_object()["/AP"]["/N"]
+
+
+@pytest.mark.enable_socket
+def test_compress_identical_objects():
+    """Cf #2728 and #2794"""
+    url = "https://github.com/user-attachments/files/16575458/tt2.pdf"
+    name = "iss2794.pdf"
+    in_bytes = BytesIO(get_data_from_url(url, name=name))
+    writer = PdfWriter(in_bytes)
+    writer.compress_identical_objects(remove_orphans=False)
+    out1 = BytesIO()
+    writer.write(out1)
+    assert 0.5 * len(in_bytes.getvalue()) > len(out1.getvalue())
+    writer.remove_page(
+        1
+    )  # page0 contains fields which keep reference to the deleted page
+    out2 = BytesIO()
+    writer.write(out2)
+    assert len(out1.getvalue()) - 100 < len(out2.getvalue())
+    writer.compress_identical_objects(remove_identicals=False)
+    out3 = BytesIO()
+    writer.write(out3)
+    assert len(out2.getvalue()) > len(out3.getvalue())
+
+
+def test_set_need_appearances_writer():
+    """Minimal test for coverage"""
+    writer = PdfWriter()
+    writer.set_need_appearances_writer()
+
+
+def test_utf16_metadata():
+    """See #2754"""
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    writer.add_metadata(
+        {
+            "/Subject": "Invoice №AI_047",
+        }
+    )
+    b = BytesIO()
+    writer.write(b)
+    b.seek(0)
+    reader = PdfReader(b)
+    assert reader.metadata.subject == "Invoice №AI_047"
+    bb = b.getvalue()
+    i = bb.find(b"/Subject")
+    assert bb[i : i + 100] == (
+        b"/Subject (\\376\\377\\000I\\000n\\000v\\000o\\000i\\000c\\000e"
+        b"\\000 \\041\\026\\000A\\000I\\000\\137\\0000\\0004\\0007)"
+    )
+
+
+@pytest.mark.enable_socket
+def test_increment_writer(caplog):
+    """Tests for #2811"""
+    writer = PdfWriter(
+        RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf",
+        incremental=True,
+    )
+    # Contains JBIG2 not decoded for the moment
+    assert writer.list_objects_in_increment() == []  # no flowdown of properties
+
+    # test writing with empty increment
+    b = BytesIO()
+    writer.write(b)
+    with open(
+        RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf", "rb"
+    ) as f:
+        assert b.getvalue() == f.read(-1)
+    b.seek(0)
+    writer2 = PdfWriter(b, incremental=True)
+    assert len([x for x in writer2._objects if x is not None]) == len(
+        [x for x in writer._objects if x is not None]
+    )
+    writer2.add_metadata({"/Author": "test"})
+    assert len(writer2.list_objects_in_increment()) == 1
+    b = BytesIO()
+    writer2.write(b)
+
+    # modify one object
+    writer.pages[0][NameObject("/MediaBox")] = ArrayObject(
+        [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
+    )
+    assert writer.list_objects_in_increment() == [IndirectObject(4, 0, writer)]
+    b = BytesIO()
+    writer.write(b)
+    writer.pages[5][NameObject("/MediaBox")] = ArrayObject(
+        [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
+    )
+    assert len(writer.list_objects_in_increment()) == 2
+    # modify object IndirectObject(5,0) : for coverage
+    writer.get_object(5)[NameObject("/ForTestOnly")] = NameObject("/ForTestOnly")
+
+    b = BytesIO()
+    writer.write(b)
+    assert b.getvalue().startswith(writer._reader.stream.getvalue())
+    b.seek(0)
+    reader = PdfReader(b)
+    assert reader.pages[0]["/MediaBox"] == ArrayObject(
+        [NumberObject(0), NumberObject(0), NumberObject(864), NumberObject(648)]
+    )
+    assert "/ForTestOnly" in reader.get_object(5)
+    with pytest.raises(PyPdfError):
+        writer = PdfWriter(1, incremental=True)
+    b.seek(0)
+    writer = PdfWriter(b, incremental=True)
+    assert writer.list_objects_in_increment() == []  # no flowdown of properties
+
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    # 1 object is modified: page 0  inherits MediaBox so is changed
+    assert len(writer.list_objects_in_increment()) == 1
+    b = BytesIO()
+    writer.write(b)
+
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=False)
+    # 1 object is modified: page 0  inherits MediaBox so is changed
+    assert len(writer.list_objects_in_increment()) == len(writer._objects)
+
+    # insert pages in a tree
+    url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
+    name = "iss2343b.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    pg = writer.insert_page(reader.pages[0], 4)
+    assert (
+        pg.raw_get("/Parent")
+        == writer.root_object["/Pages"]["/Kids"][0].get_object()["/Kids"][0]
+    )
+    assert pg["/Parent"]["/Count"] == 8
+    assert writer.root_object["/Pages"]["/Count"] == 285
+    assert len(writer.flattened_pages) == 285
+
+    # clone without info
+    writer = PdfWriter(RESOURCE_ROOT / "missing_info.pdf", incremental=True)
+    assert len(writer.list_objects_in_increment()) == 0
+    assert writer.metadata is None
+    writer.metadata = {}
+    assert writer.metadata == {}
+    assert len(writer.list_objects_in_increment()) == 1
+    writer.metadata = None
+    assert len(writer.list_objects_in_increment()) == 0
+    assert writer.metadata is None
+    b = BytesIO()
+    writer.write(b)
+
+
+@pytest.mark.enable_socket
+def test_append_pdf_with_dest_without_page(caplog):
+    """Tests for #2842"""
+    url = "https://github.com/user-attachments/files/16990834/test.pdf"
+    name = "iss2842.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+    assert "/__WKANCHOR_8" not in writer.named_destinations
+    assert len(writer.named_destinations) == 3
+
+
+def test_stream_not_closed():
+    """Tests for #2905"""
+    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    with NamedTemporaryFile(suffix=".pdf") as tmp:
+        with PdfReader(src) as reader, PdfWriter() as writer:
+            writer.add_page(reader.pages[0])
+            writer.write(tmp)
+        assert not tmp.file.closed
+
+    with NamedTemporaryFile(suffix=".pdf") as target:
+        with PdfWriter(target.file) as writer:
+            writer.add_blank_page(100, 100)
+        assert not target.file.closed
+
+    with open(src, "rb") as fileobj:
+        with PdfWriter(fileobj) as writer:
+            pass
+        assert not fileobj.closed
+
+
+def test_auto_write(tmp_path):
+    """Another test for #2905"""
+    target = tmp_path / "out.pdf"
+    with PdfWriter(target) as writer:
+        writer.add_blank_page(100, 100)
+    assert target.stat().st_size > 0
+
+
+def test_deprecate_with_as():
+    """Yet another test for #2905"""
+    with PdfWriter() as writer:
+        with pytest.warns(DeprecationWarning) as w:
+            val = writer.with_as_usage
+        assert "with_as_usage is deprecated" in w[0].message.args[0]
+        assert val
+        with pytest.warns(DeprecationWarning) as w:
+            writer.with_as_usage = val  # old code allowed setting this, so...
+        assert "with_as_usage is deprecated" in w[0].message.args[0]

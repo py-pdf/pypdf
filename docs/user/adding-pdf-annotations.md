@@ -22,7 +22,7 @@ If you want to add text in a box like this
 
 ![](free-text-annotation.png)
 
-you can use the {py:class}`FreeText <pypdf.annotations.FreeText>`:
+you can use {class}`~pypdf.annotations.FreeText`:
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -47,6 +47,11 @@ annotation = FreeText(
     border_color="0000ff",
     background_color="cdcdcd",
 )
+
+# Set annotation flags to 4 for printable annotations.
+# See "AnnotationFlag" for other options, e.g. hidden etc.
+annotation.flags = 4
+
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
@@ -66,7 +71,7 @@ If you want to add a line like this:
 
 ![](annotation-line.png)
 
-you can use  {py:class}`Line <pypdf.annotations.Line>`:
+you can use {class}`~pypdf.annotations.Line`:
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -98,7 +103,7 @@ If you want to add a line like this:
 
 ![](annotation-polyline.png)
 
-you can use  {py:class}`PolyLine <pypdf.annotations.PolyLine>`:
+you can use {class}`~pypdf.annotations.PolyLine`:
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -127,7 +132,7 @@ If you want to add a rectangle like this:
 
 ![](annotation-square.png)
 
-you can use  {py:class}`Rectangle <pypdf.annotations.Rectangle>`:
+you can use {class}`~pypdf.annotations.Rectangle`:
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -161,7 +166,7 @@ If you want to add a circle like this:
 
 ![](annotation-circle.png)
 
-you can use  {py:class}`Ellipse <pypdf.annotations.Ellipse>`:
+you can use {class}`~pypdf.annotations.Ellipse`:
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -190,7 +195,7 @@ If you want to add a polygon like this:
 
 ![](annotation-polygon.png)
 
-you can use  {py:class}`Polygon <pypdf.annotations.Polygon>`:
+you can use {class}`~pypdf.annotations.Polygon`:
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -219,7 +224,7 @@ Manage the Popup windows for markups, looks like this:
 
 ![](annotation-popup.png)
 
-you can use the {py:class}`Popup <pypdf.annotations.Popup>`:
+you can use {py:class}`~pypdf.annotations.Popup`:
 
 ```python
 from pypdf.annotations import Popup, Text
@@ -252,8 +257,7 @@ the parent annotation with which this popup annotation shall be associated.
 
 ## Link
 
-If you want to add a link, you can use
-{py:class}`Link <pypdf.annotations.Link>`:
+If you want to add a link, you can use {class}`~pypdf.annotations.Link`:
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -316,7 +320,7 @@ If you want to highlight text like this:
 
 ![](annotation-highlight.png)
 
-you can use the {py:class}`Highlight <pypdf.annotations.Highlight>`:
+you can use {class}`~pypdf.annotations.Highlight`:
 
 ```python
 from pypdf import PdfReader, PdfWriter

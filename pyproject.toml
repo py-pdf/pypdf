@@ -10,19 +10,19 @@ description = "A pure-python PDF library capable of splitting, merging, cropping
 readme = "README.md"
 dynamic = ["version"]
 license = { file = "LICENSE" }
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
@@ -30,7 +30,6 @@ classifiers = [
 
 dependencies = [
     "typing_extensions >= 4.0; python_version < '3.11'",
-    "dataclasses; python_version < '3.7'",
 ]
 
 [project.urls]
@@ -41,13 +40,14 @@ Changelog = "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html"
 
 [project.optional-dependencies]
 full = [
-    "cryptography; python_version >= '3.7'",
-    "PyCryptodome; python_version == '3.6'",
+    "cryptography",
     "Pillow>=8.0.0",
 ]
 crypto = [
-    "cryptography; python_version >= '3.7'",
-    "PyCryptodome; python_version == '3.6'",
+    "cryptography",
+]
+cryptodome = [
+    "PyCryptodome",
 ]
 image = ["Pillow>=8.0.0"]
 dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "flit", "wheel", "pytest-xdist"]
@@ -62,7 +62,8 @@ tests_dir = "tests/"
 package = "./pypdf"
 
 [tool.flit.sdist]
-exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", "tests/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
+exclude = [".github/*", "docs/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
+include = ["resources/", "tests/"]
 
 [tool.pytest.ini_options]
 addopts = "--disable-socket"
@@ -113,6 +114,8 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
 select = ["ALL"]
 ignore = [
     "D404",  # First word of the docstring should not be "This"
@@ -193,10 +196,10 @@ ignore = [
     "PT014",  # Duplicate of test case at index 1 in `@pytest_mark.parametrize`
 ]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 54  # Recommended: 10
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
 "_encryption.py" = ["S324"]
 "_writer.py" = ["S324"]
@@ -208,7 +211,7 @@ max-complexity = 54  # Recommended: 10
 "tests/*" = ["S101", "ANN001", "ANN201","D104", "S105", "S106", "D103", "B018", "B017"]
 "tests/test_workflows.py" =  ["T201"]
 
-[tool.ruff.pylint]
+[tool.ruff.lint.pylint]
 allow-magic-value-types = ["bytes", "float", "int", "str"]
 max-args = 12  # Recommended: 5
 max-branches = 36  # Recommended: 12

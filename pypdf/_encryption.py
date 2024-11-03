@@ -43,7 +43,7 @@ from pypdf._crypt_providers import (
     rc4_encrypt,
 )
 
-from ._utils import b_, logger_warning
+from ._utils import logger_warning
 from .generic import (
     ArrayObject,
     ByteStringObject,
@@ -78,7 +78,7 @@ class CryptFilter:
         elif isinstance(obj, StreamObject):
             obj2 = StreamObject()
             obj2.update(obj)
-            obj2.set_data(self.stm_crypt.encrypt(b_(obj._data)))
+            obj2.set_data(self.stm_crypt.encrypt(obj._data))
             for key, value in obj.items():  # Dont forget the Stream dict.
                 obj2[key] = self.encrypt_object(value)
             obj = obj2
@@ -96,7 +96,7 @@ class CryptFilter:
             data = self.str_crypt.decrypt(obj.original_bytes)
             obj = create_string_object(data)
         elif isinstance(obj, StreamObject):
-            obj._data = self.stm_crypt.decrypt(b_(obj._data))
+            obj._data = self.stm_crypt.decrypt(obj._data)
             for key, value in obj.items():  # Dont forget the Stream dict.
                 obj[key] = self.decrypt_object(value)
         elif isinstance(obj, DictionaryObject):
@@ -188,6 +188,7 @@ class AlgV4:
 
         Returns:
             The u_hash digest of length key_size
+
         """
         a = _padding(password)
         u_hash = hashlib.md5(a)
@@ -243,6 +244,7 @@ class AlgV4:
 
         Returns:
             The RC4 key
+
         """
         a = _padding(owner_password)
         o_hash_digest = hashlib.md5(a).digest()
@@ -266,6 +268,7 @@ class AlgV4:
 
         Returns:
             The RC4 encrypted
+
         """
         a = _padding(user_password)
         rc4_enc = rc4_encrypt(rc4_key, a)
@@ -297,6 +300,7 @@ class AlgV4:
 
         Returns:
             The value
+
         """
         if rev <= 2:
             value = rc4_encrypt(key, _PADDING)
@@ -381,6 +385,7 @@ class AlgV4:
 
         Returns:
             The key
+
         """
         key = AlgV4.compute_key(
             user_password, rev, key_size, o_entry, P, id1_entry, metadata_encrypted
@@ -443,6 +448,7 @@ class AlgV4:
 
         Returns:
             bytes
+
         """
         rc4_key = AlgV4.compute_O_value_key(owner_password, rev, key_size)
 
@@ -526,6 +532,7 @@ class AlgV5:
 
         Returns:
             The key
+
         """
         password = password[:127]
         if (
@@ -556,6 +563,7 @@ class AlgV5:
 
         Returns:
             bytes
+
         """
         password = password[:127]
         if AlgV5.calculate_hash(R, password, u_value[32:40], b"") != u_value[:32]:
@@ -605,6 +613,7 @@ class AlgV5:
 
         Returns:
             A boolean
+
         """
         b8 = b"T" if metadata_encrypted else b"F"
         p1 = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb"
@@ -658,6 +667,7 @@ class AlgV5:
 
         Returns:
             A tuple (u-value, ue value)
+
         """
         random_bytes = secrets.token_bytes(16)
         val_salt = random_bytes[:8]
@@ -702,6 +712,7 @@ class AlgV5:
 
         Returns:
             A tuple (O value, OE value)
+
         """
         random_bytes = secrets.token_bytes(16)
         val_salt = random_bytes[:8]
@@ -745,6 +756,7 @@ class AlgV5:
 
         Returns:
             The perms value
+
         """
         b8 = b"T" if metadata_encrypted else b"F"
         rr = secrets.token_bytes(4)
@@ -798,6 +810,7 @@ class Encryption:
              encrypting embedded file streams that do not have their own
              crypt filter specifier.
         values: Additional encryption parameters.
+
     """
 
     def __init__(

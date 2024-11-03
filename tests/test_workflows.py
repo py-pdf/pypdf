@@ -14,7 +14,7 @@ import pytest
 from PIL import Image, ImageChops
 from PIL import __version__ as pil_version
 
-from pypdf import PdfMerger, PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning
 from pypdf.generic import (
@@ -191,8 +191,8 @@ def test_rotate_45():
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("enable", "url", "pages"),
     [
@@ -273,7 +273,7 @@ def test_extract_textbench(enable, url, pages, print_result=False):
         pass
 
 
-@pytest.mark.slow()
+@pytest.mark.slow
 def test_orientations():
     p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
     p.extract_text("", "")
@@ -308,8 +308,8 @@ def test_orientations():
         ), f"extract_text({req}) => {rst}"
 
 
-@pytest.mark.samples()
-@pytest.mark.enable_socket()
+@pytest.mark.samples
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("base_path", "overlay_path"),
     [
@@ -341,8 +341,8 @@ def test_overlay(pdf_file_path, base_path, overlay_path):
         writer.write(fp)
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -356,13 +356,13 @@ def test_overlay(pdf_file_path, base_path, overlay_path):
 def test_merge_with_warning(tmp_path, url, name):
     data = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(data)
-    merger = PdfMerger()
+    merger = PdfWriter()
     merger.append(reader)
     # This could actually be a performance bottleneck:
     merger.write(tmp_path / "tmp.merged.pdf")
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -376,12 +376,12 @@ def test_merge_with_warning(tmp_path, url, name):
 def test_merge(tmp_path, url, name):
     data = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(data)
-    merger = PdfMerger()
+    merger = PdfWriter()
     merger.append(reader)
     merger.write(tmp_path / "tmp.merged.pdf")
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "expected_metadata"),
     [
@@ -391,11 +391,11 @@ def test_merge(tmp_path, url, name):
             {
                 "/Author": "Unknown",
                 "/CreationDate": "Thursday, May 06, 1999 3:56:54 PM",
-                "/Creator": "C:DEBÆł8",
+                "/Creator": r"C:\DEB\6338",
                 "/Keywords": "",
                 "/Producer": "Acrobat PDFWriter 3.02 for Windows",
                 "/Subject": "",
-                "/Title": "C:DEBÆł8-6R.PDF",
+                "/Title": r"C:\DEB\6338-6R.PDF",
             },
         )
     ],
@@ -407,12 +407,12 @@ def test_get_metadata(url, name, expected_metadata):
     assert expected_metadata == data
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "strict", "exception"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
+            "https://github.com/user-attachments/files/16624503/tika-938702.pdf",
             "tika-938702.pdf",
             False,
             None,  # iss #1090 is now fixed
@@ -493,7 +493,7 @@ def test_extract_text(url, name, strict, exception):
         assert ex_info.value.args[0] == exc_text
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -529,7 +529,7 @@ def test_compress_raised(url, name):
         page.compress_content_streams()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -554,7 +554,7 @@ def test_get_fields_warns(tmp_path, caplog, url, name):
     ]
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -574,7 +574,7 @@ def test_get_fields_no_warning(tmp_path, url, name):
     assert len(retrieved_fields) == 10
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_scale_rectangle_indirect_object():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/999/999944.pdf"
     name = "tika-999944.pdf"
@@ -585,7 +585,6 @@ def test_scale_rectangle_indirect_object():
         page.scale(sx=2, sy=3)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_output(caplog):
     # Arrange
     base = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf"
@@ -593,10 +592,8 @@ def test_merge_output(caplog):
     expected = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
 
     # Act
-    merger = PdfMerger(strict=True)
+    merger = PdfWriter()
     merger.append(base)
-    msg = "Xref table not zero-indexed. ID numbers for objects will be corrected."
-    assert normalize_warnings(caplog.text) == [msg]
     merger.merge(1, crazy)
     stream = BytesIO()
     merger.write(stream)
@@ -616,7 +613,7 @@ def test_merge_output(caplog):
     merger.close()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -688,7 +685,7 @@ def test_image_extraction(url, name):
                 Path(filepath).unlink()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_image_extraction_strict():
     # Emits log messages
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
@@ -716,7 +713,7 @@ def test_image_extraction_strict():
                 Path(filepath).unlink()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -750,7 +747,7 @@ def test_image_extraction2(url, name):
                 Path(filepath).unlink()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -770,7 +767,7 @@ def test_get_outline(url, name):
     reader.outline
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -790,7 +787,7 @@ def test_get_xfa(url, name):
     reader.xfa
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [
@@ -823,7 +820,7 @@ def test_get_fonts(url, name, strict):
         page._get_fonts()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [
@@ -881,7 +878,7 @@ def test_get_xmp(url, name, strict):
         xmp_info.custom_properties
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_tounicode_is_identity():
     url = "https://github.com/py-pdf/pypdf/files/9998335/FP_Thesis.pdf"
     name = "FP_Thesis.pdf"
@@ -890,7 +887,7 @@ def test_tounicode_is_identity():
     reader.pages[0].extract_text()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_append_forms():
     # from #1538
     writer = PdfWriter()
@@ -915,7 +912,7 @@ def test_append_forms():
     ) + len(reader2.get_form_text_fields())
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_extra_test_iss1541():
     url = "https://github.com/py-pdf/pypdf/files/10418158/tst_iss1541.pdf"
     name = "tst_iss1541.pdf"
@@ -946,7 +943,7 @@ def test_extra_test_iss1541():
     assert exc.value.args[0] == "Unexpected end of stream"
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_fields_returning_stream():
     """This problem was reported in #424"""
     url = "https://github.com/mstamy2/PyPDF2/files/1948267/Simple.form.pdf"
@@ -980,7 +977,7 @@ def test_replace_image(tmp_path):
     # extra tests for coverage
     with pytest.raises(TypeError) as exc:
         reader.pages[0].images[0].replace(img)
-    assert exc.value.args[0] == "Can not update an image not belonging to a PdfWriter"
+    assert exc.value.args[0] == "Cannot update an image not belonging to a PdfWriter."
     i = writer.pages[0].images[0]
     with pytest.raises(TypeError) as exc:
         i.replace(reader.pages[0].images[0])  # missing .image
@@ -988,10 +985,19 @@ def test_replace_image(tmp_path):
     i.indirect_reference = None  # to behave like an inline image
     with pytest.raises(TypeError) as exc:
         i.replace(reader.pages[0].images[0].image)
-    assert exc.value.args[0] == "Can not update an inline image"
+    assert exc.value.args[0] == "Cannot update an inline image."
+
+    import pypdf
+
+    try:
+        pypdf._page.pil_not_imported = True
+        with pytest.raises(ImportError) as exc:
+            i.replace(reader.pages[0].images[0].image)
+    finally:
+        pypdf._page.pil_not_imported = False
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_inline_images():
     """This problem was reported in #424"""
     url = "https://arxiv.org/pdf/2201.00151.pdf"
@@ -1015,11 +1021,11 @@ def test_inline_images():
 
     with pytest.raises(TypeError) as exc:
         reader.pages[0].images[0].replace(img_ref)
-    assert exc.value.args[0] == "Can not update an inline image"
+    assert exc.value.args[0] == "Cannot update an inline image."
 
     _a = {}
     for x, y in reader.pages[2].images[0:-2].items():
-        _a[x] = y
+        _a[x] = y  # noqa: PERF403  # Testing code and easier to read this way.
     with pytest.raises(KeyError) as exc:
         reader.pages[2]._get_image(("test",))
 
@@ -1029,7 +1035,7 @@ def test_inline_images():
     assert len(reader.pages[0].images) == 3
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss():
     url = "https://github.com/py-pdf/pypdf/files/11801077/lv2018tconv.pdf"
     name = "lv2018tconv.pdf"
@@ -1039,7 +1045,7 @@ def test_iss():
         page.extract_text()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_cr_with_cm_operation():
     """Issue #2138"""
     url = "https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf"
@@ -1062,7 +1068,7 @@ def remove_trailing_whitespace(text: str) -> str:
     return "\n".join(line.rstrip() for line in text.splitlines())
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 @pytest.mark.parametrize(
     ("pdf_path", "expected_path"),
     [
@@ -1084,7 +1090,7 @@ def test_text_extraction_layout_mode(pdf_path, expected_path):
     assert remove_trailing_whitespace(actual) == remove_trailing_whitespace(expected)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_layout_mode_space_vertically():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2138.pdf")))
     # remove automatically added final newline
@@ -1096,7 +1102,7 @@ def test_layout_mode_space_vertically():
     )
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("rotation", "strip_rotated"), [(90, True), (180, False), (270, True)]
 )
@@ -1125,7 +1131,7 @@ def test_text_extraction_invalid_mode():
         reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_get_page_showing_field():
     """
     Uses testfile from #2452 in order to get fields on multiple pages,
@@ -1191,7 +1197,7 @@ def test_get_page_showing_field():
         reader.get_pages_showing_field(None)
     with pytest.raises(ValueError) as exc:
         writer.get_pages_showing_field(None)
-    assert "field type is invalid" in exc.value.args[0]
+    assert "Field type is invalid" in exc.value.args[0]
 
     # Damage Field
     del reader.trailer["/Root"]["/AcroForm"]["/Fields"][1].get_object()["/FT"]
@@ -1202,7 +1208,7 @@ def test_get_page_showing_field():
         )
     with pytest.raises(ValueError) as exc:
         writer.get_pages_showing_field(writer._root_object["/AcroForm"]["/Fields"][1])
-    assert "field is not valid" in exc.value.args[0]
+    assert "Field is not valid" in exc.value.args[0]
 
     # missing Parent in field
     del reader.trailer["/Root"]["/AcroForm"]["/Fields"][99]["/Kids"][1].get_object()[
@@ -1282,10 +1288,19 @@ def test_get_page_showing_field():
     ] == []
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_extract_empty_page():
     """Cf #2533"""
     url = "https://github.com/py-pdf/pypdf/files/14718318/test.pdf"
     name = "iss2533.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name)))
     assert reader.pages[1].extract_text(extraction_mode="layout") == ""
+
+
+@pytest.mark.enable_socket
+def test_iss2815():
+    """Cf #2815"""
+    url = "https://github.com/user-attachments/files/16760725/crash-c1920c7a064649e1191d7879952ec252473fc7e6.pdf"
+    name = "iss2815.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name)))
+    assert reader.pages[0].extract_text() == "test command with wrong number of args"

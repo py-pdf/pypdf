@@ -1,16 +1,22 @@
 """Test the pypdf_cmap module."""
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf._cmap import build_char_map
+from pypdf.generic import ArrayObject, IndirectObject, NameObject, NullObject
 
 from . import get_data_from_url
 
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+
+@pytest.mark.enable_socket
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [
@@ -46,7 +52,7 @@ def test_text_extraction_slow(caplog, url: str, name: str, strict: bool):
     assert caplog.text == ""
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [
@@ -83,7 +89,7 @@ def test_text_extraction_fast(caplog, url: str, name: str, strict: bool):
     assert caplog.text == ""
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_parse_encoding_advanced_encoding_not_implemented(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-957144.pdf")))
     for page in reader.pages:
@@ -91,14 +97,14 @@ def test_parse_encoding_advanced_encoding_not_implemented(caplog):
     assert "Advanced encoding /WinAnsEncoding not implemented yet" in caplog.text
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_ascii_charset():
     # Issue #1312
     reader = PdfReader(BytesIO(get_data_from_url(name="ascii charset.pdf")))
     assert "/a" not in reader.pages[0].extract_text()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "page_nb", "within_text"),
     [
@@ -124,14 +130,14 @@ def test_text_extraction_of_specific_pages(
     assert within_text in reader.pages[page_nb].extract_text()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss1533():
     reader = PdfReader(BytesIO(get_data_from_url(name="iss1533.pdf")))
     reader.pages[0].extract_text()  # no error
     assert build_char_map("/F", 200, reader.pages[0])[3]["\x01"] == "Ü"
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "page_index", "within_text", "caplog_text"),
     [
@@ -159,7 +165,7 @@ def test_cmap_encodings(caplog, url, name, page_index, within_text, caplog_text)
     assert caplog_text in caplog.text
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_latex():
     reader = PdfReader(BytesIO(get_data_from_url(name="math_latex.pdf")))
     txt = reader.pages[0].extract_text()  # no error
@@ -168,7 +174,7 @@ def test_latex():
     # actually the ϕ and φ seems to be crossed in latex
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_unixxx_glyphs():
     reader = PdfReader(BytesIO(get_data_from_url(name="unixxx_glyphs.pdf")))
     txt = reader.pages[0].extract_text()  # no error
@@ -176,7 +182,7 @@ def test_unixxx_glyphs():
         assert pat in txt
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_cmap_compute_space_width():
     # issue 2137
     # original file URL:
@@ -187,22 +193,69 @@ def test_cmap_compute_space_width():
     reader.pages[0].extract_text()  # no error
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_tabs_in_cmap():
     """Issue #2173"""
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2173.pdf")))
     reader.pages[0].extract_text()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_ignoring_non_put_entries():
     """Issue #2290"""
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
     reader.pages[0].extract_text()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_eten_b5():
     """Issue #2356"""
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2290.pdf")))
     reader.pages[0].extract_text().startswith("1/7 \n富邦新終身壽險")
+
+
+def test_missing_entries_in_cmap():
+    """
+    Issue #2702: this issue is observed on damaged pdfs
+    use of this file in test has been discarded as too slow/long
+    we will create the same error from crazyones
+    """
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    p = reader.pages[0]
+    p["/Resources"]["/Font"]["/F1"][NameObject("/ToUnicode")] = IndirectObject(
+        99999999, 0, reader
+    )
+    p.extract_text()
+
+
+def test_null_missing_width():
+    """For coverage of #2792"""
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
+    ft = page["/Resources"]["/Font"]["/F1"]
+    ft[NameObject("/Widths")] = ArrayObject()
+    ft["/FontDescriptor"][NameObject("/MissingWidth")] = NullObject()
+    page.extract_text()
+
+
+@pytest.mark.enable_socket
+def test_unigb_utf16():
+    """Cf #2812"""
+    url = (
+        "https://github.com/user-attachments/files/16767536/W020240105322424121296.pdf"
+    )
+    name = "iss2812.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert "《中国能源展望 2060（2024 年版）》编写委员会" in reader.pages[1].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_too_many_differences():
+    """Cf #2836"""
+    url = (
+        "https://github.com/user-attachments/files/16911741/dumb_extract_text_crash.pdf"
+    )
+    name = "iss2836.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert reader.pages[0].extract_text() == ""

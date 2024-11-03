@@ -109,45 +109,11 @@ def test_mark_location():
     Path("pypdf_pdfLocation.txt").unlink()  # cleanup
 
 
-@pytest.mark.parametrize(
-    ("input_str", "expected"),
-    [
-        ("foo", b"foo"),
-        ("😀", "😀".encode()),
-        ("‰", "‰".encode()),
-        ("▷", "▷".encode()),
-        ("世", "世".encode()),
-        # A multi-character string example with non-latin-1 characters:
-        ("😀😃", "😀😃".encode()),
-    ],
-)
-def test_b(input_str: str, expected: bytes):
-    assert pypdf._utils.b_(input_str) == expected
-
-
 def test_deprecate_no_replacement():
     with pytest.warns(DeprecationWarning) as warn:
         pypdf._utils.deprecate_no_replacement("foo", removed_in="3.0.0")
     error_msg = "foo is deprecated and will be removed in pypdf 3.0.0."
     assert warn[0].message.args[0] == error_msg
-
-
-@pytest.mark.parametrize(
-    ("left", "up", "upleft", "expected"),
-    [
-        (0, 0, 0, 0),
-        (1, 0, 0, 1),
-        (0, 1, 0, 1),
-        (0, 0, 1, 0),
-        (1, 2, 3, 1),
-        (2, 1, 3, 1),
-        (1, 3, 2, 2),
-        (3, 1, 2, 2),
-        (3, 2, 1, 3),
-    ],
-)
-def test_paeth_predictor(left, up, upleft, expected):
-    assert pypdf._utils.paeth_predictor(left, up, upleft) == expected
 
 
 @pytest.mark.parametrize(
@@ -234,7 +200,7 @@ def test_read_previous_line2():
 def test_get_max_pdf_version_header():
     with pytest.raises(ValueError) as exc:
         _get_max_pdf_version_header(b"", b"PDF-1.2")
-    assert exc.value.args[0] == "neither b'' nor b'PDF-1.2' are proper headers"
+    assert exc.value.args[0] == "Neither b'' nor b'PDF-1.2' are proper headers"
 
 
 def test_read_block_backwards_exception():

@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 
-from ..constants import AnnotationFlag
 from ..generic._base import (
     BooleanObject,
     NameObject,
@@ -11,8 +10,6 @@ from ..generic._data_structures import ArrayObject, DictionaryObject
 from ..generic._fit import DEFAULT_FIT, Fit
 from ..generic._rectangle import RectangleObject
 from ._base import AnnotationDictionary
-
-DEFAULT_ANNOTATION_FLAG = AnnotationFlag(0)
 
 
 class Link(AnnotationDictionary):
@@ -39,7 +36,7 @@ class Link(AnnotationDictionary):
         if is_external and is_internal:
             raise ValueError(
                 "Either 'url' or 'target_page_index' have to be provided. "
-                f"url={url}, target_page_index={target_page_index}"
+                f"{url=}, {target_page_index=}"
             )
 
         border_arr: BorderArrayType

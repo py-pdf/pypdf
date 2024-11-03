@@ -28,20 +28,25 @@ import binascii
 import codecs
 import hashlib
 import re
+import sys
 from binascii import unhexlify
 from math import log10
+from struct import iter_unpack
 from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Union, cast
+
+if sys.version_info[:2] >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard  # PEP 647
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
-    b_,
     deprecate_no_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
-    str_,
 )
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
 
@@ -54,6 +59,18 @@ class PdfObject(PdfObjectProtocol):
     hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
     indirect_reference: Optional["IndirectObject"]
 
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement .hash_bin() so far"
+        )
+
     def hash_value_data(self) -> bytes:
         return ("%s" % self).encode()
 
@@ -65,6 +82,23 @@ class PdfObject(PdfObjectProtocol):
                 self.hash_func(self.hash_value_data()).hexdigest(),
             )
         ).encode()
+
+    def replicate(
+        self,
+        pdf_dest: PdfWriterProtocol,
+    ) -> "PdfObject":
+        """
+        Clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
+        without ensuring links. This is used in clone_document_from_root with incremental = True.
+
+        Args:
+          pdf_dest: Target to clone to.
+
+        Returns:
+          The cloned PdfObject
+
+        """
+        return self.clone(pdf_dest)
 
     def clone(
         self,
@@ -91,6 +125,7 @@ class PdfObject(PdfObjectProtocol):
 
         Returns:
           The cloned PdfObject
+
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not implement .clone so far"
@@ -111,6 +146,7 @@ class PdfObject(PdfObjectProtocol):
 
         Returns:
           The clone
+
         """
         try:
             if not force_duplicate and clone.indirect_reference.pdf == pdf_dest:
@@ -122,7 +158,15 @@ class PdfObject(PdfObjectProtocol):
             ind = self.indirect_reference
         except AttributeError:
             return clone
-        i = len(pdf_dest._objects) + 1
+        if (
+            pdf_dest.incremental
+            and ind is not None
+            and ind.pdf == pdf_dest._reader
+            and ind.idnum <= len(pdf_dest._objects)
+        ):
+            i = ind.idnum
+        else:
+            i = len(pdf_dest._objects) + 1
         if ind is not None:
             if id(ind.pdf) not in pdf_dest._id_translated:
                 pdf_dest._id_translated[id(ind.pdf)] = {}
@@ -137,7 +181,11 @@ class PdfObject(PdfObjectProtocol):
                 assert obj is not None
                 return obj
             pdf_dest._id_translated[id(ind.pdf)][ind.idnum] = i
-        pdf_dest._objects.append(clone)
+        try:
+            pdf_dest._objects[i - 1] = clone
+        except IndexError:
+            pdf_dest._objects.append(clone)
+            i = len(pdf_dest._objects)
         clone.indirect_reference = IndirectObject(i, 0, pdf_dest)
         return clone
 
@@ -162,6 +210,16 @@ class NullObject(PdfObject):
         return cast(
             "NullObject", self._reference_clone(NullObject(), pdf_dest, force_duplicate)
         )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+
+        """
+        return hash((self.__class__,))
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
@@ -198,6 +256,16 @@ class BooleanObject(PdfObject):
             "BooleanObject",
             self._reference_clone(BooleanObject(self.value), pdf_dest, force_duplicate),
         )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+
+        """
+        return hash((self.__class__, self.value))
 
     def __eq__(self, __o: object) -> bool:
         if isinstance(__o, BooleanObject):
@@ -239,6 +307,25 @@ class IndirectObject(PdfObject):
         self.idnum = idnum
         self.generation = generation
         self.pdf = pdf
+
+    def __hash__(self) -> int:
+        return hash((self.idnum, self.generation, id(self.pdf)))
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+
+        """
+        return hash((self.__class__, self.idnum, self.generation, id(self.pdf)))
+
+    def replicate(
+        self,
+        pdf_dest: PdfWriterProtocol,
+    ) -> "PdfObject":
+        return IndirectObject(self.idnum, self.generation, pdf_dest)
 
     def clone(
         self,
@@ -308,6 +395,10 @@ class IndirectObject(PdfObject):
         # items should be extracted from pointed Object
         return self._get_object_with_check()[key]  # type: ignore
 
+    def __float__(self) -> str:
+        # in this case we are looking for the pointed data
+        return self.get_object().__float__()  # type: ignore
+
     def __str__(self) -> str:
         # in this case we are looking for the pointed data
         return self.get_object().__str__()
@@ -369,10 +460,10 @@ FLOAT_WRITE_PRECISION = 8  # shall be min 5 digits max, allow user adj
 
 class FloatObject(float, PdfObject):
     def __new__(
-        cls, value: Union[str, Any] = "0.0", context: Optional[Any] = None
+        cls, value: Any = "0.0", context: Optional[Any] = None
     ) -> "FloatObject":
         try:
-            value = float(str_(value))
+            value = float(value)
             return float.__new__(cls, value)
         except Exception as e:
             # If this isn't a valid decimal (happens in malformed PDFs)
@@ -393,6 +484,16 @@ class FloatObject(float, PdfObject):
             "FloatObject",
             self._reference_clone(FloatObject(self), pdf_dest, force_duplicate),
         )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+
+        """
+        return hash((self.__class__, self.as_numeric))
 
     def myrepr(self) -> str:
         if self == 0:
@@ -439,6 +540,16 @@ class NumberObject(int, PdfObject):
             self._reference_clone(NumberObject(self), pdf_dest, force_duplicate),
         )
 
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+
+        """
+        return hash((self.__class__, self.as_numeric()))
+
     def as_numeric(self) -> int:
         return int(repr(self).encode("utf8"))
 
@@ -482,6 +593,16 @@ class ByteStringObject(bytes, PdfObject):
             ),
         )
 
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+
+        """
+        return hash((self.__class__, bytes(self)))
+
     @property
     def original_bytes(self) -> bytes:
         """For compatibility with TextStringObject.original_bytes."""
@@ -511,23 +632,38 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
     autodetect_pdfdocencoding: bool
     autodetect_utf16: bool
     utf16_bom: bytes
+    _original_bytes: Optional[bytes] = None
 
     def __new__(cls, value: Any) -> "TextStringObject":
+        org = None
         if isinstance(value, bytes):
+            org = value
             value = value.decode("charmap")
         o = str.__new__(cls, value)
+        o._original_bytes = org
         o.autodetect_utf16 = False
         o.autodetect_pdfdocencoding = False
         o.utf16_bom = b""
         if value.startswith(("\xfe\xff", "\xff\xfe")):
+            assert org is not None  # for mypy
+            try:
+                o = str.__new__(cls, org.decode("utf-16"))
+            except UnicodeDecodeError as exc:
+                logger_warning(
+                    f"{exc!s}\ninitial string:{exc.object!r}",
+                    __name__,
+                )
+                o = str.__new__(cls, exc.object[: exc.start].decode("utf-16"))
+            o._original_bytes = org
             o.autodetect_utf16 = True
-            o.utf16_bom = value[:2].encode("charmap")
+            o.utf16_bom = org[:2]
         else:
             try:
                 encode_pdfdocencoding(o)
                 o.autodetect_pdfdocencoding = True
             except UnicodeEncodeError:
                 o.autodetect_utf16 = True
+                o.utf16_bom = codecs.BOM_UTF16_BE
         return o
 
     def clone(
@@ -538,12 +674,23 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
     ) -> "TextStringObject":
         """Clone object into pdf_dest."""
         obj = TextStringObject(self)
+        obj._original_bytes = self._original_bytes
         obj.autodetect_pdfdocencoding = self.autodetect_pdfdocencoding
         obj.autodetect_utf16 = self.autodetect_utf16
         obj.utf16_bom = self.utf16_bom
         return cast(
             "TextStringObject", self._reference_clone(obj, pdf_dest, force_duplicate)
         )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+
+        """
+        return hash((self.__class__, self.original_bytes))
 
     @property
     def original_bytes(self) -> bytes:
@@ -553,7 +700,10 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         if that occurs, this "original_bytes" property can be used to
         back-calculate what the original encoded bytes were.
         """
-        return self.get_original_bytes()
+        if self._original_bytes is not None:
+            return self._original_bytes
+        else:
+            return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:
         # We're a text string object, but the library is trying to get our raw
@@ -578,6 +728,8 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         # nicer to look at in the PDF file. Sadly, we take a performance hit
         # here for trying...
         try:
+            if self._original_bytes is not None:
+                return self._original_bytes
             if self.autodetect_utf16:
                 raise UnicodeEncodeError("", "forced", -1, -1, "")
             bytearr = encode_pdfdocencoding(self)
@@ -599,15 +751,16 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
             )
         bytearr = self.get_encoded_bytes()
         stream.write(b"(")
-        for c in bytearr:
-            if not chr(c).isalnum() and c != b" ":
+        for c_ in iter_unpack("c", bytearr):
+            c = cast(bytes, c_[0])
+            if not c.isalnum() and c != b" ":
                 # This:
                 #   stream.write(rf"\{c:0>3o}".encode())
                 # gives
                 #   https://github.com/davidhalter/parso/issues/207
-                stream.write(("\\%03o" % c).encode())
+                stream.write(b"\\%03o" % ord(c))
             else:
-                stream.write(b_(chr(c)))
+                stream.write(c)
         stream.write(b")")
 
 
@@ -634,6 +787,16 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
             "NameObject",
             self._reference_clone(NameObject(self), pdf_dest, force_duplicate),
         )
+
+    def hash_bin(self) -> int:
+        """
+        Used to detect modified object.
+
+        Returns:
+            Hash considering type and value.
+
+        """
+        return hash((self.__class__, self))
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
@@ -681,7 +844,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
         if name != NameObject.surfix:
-            raise PdfReadError("name read error")
+            raise PdfReadError("Name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
             # Name objects should represent irregular characters
@@ -710,12 +873,25 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
-    retval = bytearray()
-    for c in unicode_string:
-        try:
-            retval += b_(chr(_pdfdoc_encoding_rev[c]))
-        except KeyError:
-            raise UnicodeEncodeError(
-                "pdfdocencoding", c, -1, -1, "does not exist in translation table"
-            )
-    return bytes(retval)
+    try:
+        return bytes([_pdfdoc_encoding_rev[k] for k in unicode_string])
+    except KeyError:
+        raise UnicodeEncodeError(
+            "pdfdocencoding",
+            unicode_string,
+            -1,
+            -1,
+            "does not exist in translation table",
+        )
+
+
+def is_null_or_none(x: Any) -> TypeGuard[Union[None, NullObject, IndirectObject]]:
+    """
+    Returns:
+        True if x is None or NullObject.
+
+    """
+    return x is None or (
+        isinstance(x, PdfObject)
+        and (x.get_object() is None or isinstance(x.get_object(), NullObject))
+    )

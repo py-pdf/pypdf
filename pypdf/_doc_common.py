@@ -49,7 +49,6 @@ from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
 from ._utils import (
-    b_,
     deprecate_with_replacement,
     logger_warning,
     parse_iso8824_date,
@@ -66,9 +65,7 @@ from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
-from .errors import (
-    PdfReadError,
-)
+from .errors import PdfReadError, PyPdfError
 from .generic import (
     ArrayObject,
     BooleanObject,
@@ -88,6 +85,7 @@ from .generic import (
     TreeObject,
     ViewerPreferences,
     create_string_object,
+    is_null_or_none,
 )
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
@@ -95,7 +93,7 @@ from .xmp import XmpInformation
 
 def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     if size > 8:
-        raise PdfReadError("invalid size in convert_to_int")
+        raise PdfReadError("Invalid size in convert_to_int")
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
     d = d[-8:]
     return struct.unpack(">q", d)[0]
@@ -255,6 +253,8 @@ class PdfDocCommon:
 
     _encryption: Optional[Encryption] = None
 
+    _readonly: bool = False
+
     @property
     @abstractmethod
     def root_object(self) -> DictionaryObject:
@@ -342,6 +342,7 @@ class PdfDocCommon:
         Raises:
             PdfReadError: if file is encrypted and restrictions prevent
                 this action.
+
         """
         # Flattened pages will not work on an encrypted PDF;
         # the PDF file's page count is used in this case. Otherwise,
@@ -350,7 +351,7 @@ class PdfDocCommon:
             return self.root_object["/Pages"]["/Count"]  # type: ignore
         else:
             if self.flattened_pages is None:
-                self._flatten()
+                self._flatten(self._readonly)
             assert self.flattened_pages is not None
             return len(self.flattened_pages)
 
@@ -365,11 +366,51 @@ class PdfDocCommon:
 
         Returns:
             A :class:`PageObject<pypdf._page.PageObject>` instance.
+
         """
         if self.flattened_pages is None:
-            self._flatten()
+            self._flatten(self._readonly)
         assert self.flattened_pages is not None, "hint for mypy"
         return self.flattened_pages[page_number]
+
+    def _get_page_in_node(
+        self,
+        page_number: int,
+    ) -> Tuple[DictionaryObject, int]:
+        """
+        Retrieve the node and position within the /Kids containing the page.
+        If page_number is greater than the number of pages, it returns the top node, -1.
+        """
+        top = cast(DictionaryObject, self.root_object["/Pages"])
+
+        def recursive_call(
+            node: DictionaryObject, mi: int
+        ) -> Tuple[Optional[PdfObject], int]:
+            ma = cast(int, node.get("/Count", 1))  # default 1 for /Page types
+            if node["/Type"] == "/Page":
+                if page_number == mi:
+                    return node, -1
+                # else
+                return None, mi + 1
+            if (page_number - mi) >= ma:  # not in nodes below
+                if node == top:
+                    return top, -1
+                # else
+                return None, mi + ma
+            for idx, kid in enumerate(cast(ArrayObject, node["/Kids"])):
+                kid = cast(DictionaryObject, kid.get_object())
+                n, i = recursive_call(kid, mi)
+                if n is not None:  # page has just been found ...
+                    if i < 0:  # ... just below!
+                        return node, idx
+                    # else:  # ... at lower levels
+                    return n, i
+                mi = i
+            raise PyPdfError("Unexpectedly cannot find the node.")
+
+        node, idx = recursive_call(top, 0)
+        assert isinstance(node, DictionaryObject), "mypy"
+        return node, idx
 
     @property
     def named_destinations(self) -> Dict[str, Any]:
@@ -429,6 +470,7 @@ class PdfDocCommon:
         Returns:
             A dictionary which maps names to
             :class:`Destinations<pypdf.generic.Destination>`.
+
         """
         if retval is None:
             retval = {}
@@ -511,6 +553,7 @@ class PdfDocCommon:
             value is a :class:`Field<pypdf.generic.Field>` object. By
             default, the mapping name is used for keys.
             ``None`` if form data could not be located.
+
         """
         field_attributes = FA.attributes_dict()
         field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
@@ -661,6 +704,7 @@ class PdfDocCommon:
 
             If the document contains multiple form fields with the same name, the
             second and following will get the suffix .2, .3, ...
+
         """
 
         def indexed_key(k: str, fields: Dict[Any, Any]) -> str:
@@ -706,6 +750,7 @@ class PdfDocCommon:
                 - Multi-page list:
                     Field with multiple kids widgets
                     (example: radio buttons, field repeated on multiple pages).
+
         """
 
         def _get_inherited(obj: DictionaryObject, key: str) -> Any:
@@ -722,9 +767,9 @@ class PdfDocCommon:
             # to cope with all types
             field = cast(DictionaryObject, field.indirect_reference.get_object())  # type: ignore
         except Exception as exc:
-            raise ValueError("field type is invalid") from exc
-        if _get_inherited(field, "/FT") is None:
-            raise ValueError("field is not valid")
+            raise ValueError("Field type is invalid") from exc
+        if is_null_or_none(_get_inherited(field, "/FT")):
+            raise ValueError("Field is not valid")
         ret = []
         if field.get("/Subtype", "") == "/Widget":
             if "/P" in field:
@@ -767,6 +812,7 @@ class PdfDocCommon:
 
         Raises:
             Exception: If a destination is invalid.
+
         """
         if "/OpenAction" not in self.root_object:
             return None
@@ -788,7 +834,7 @@ class PdfDocCommon:
 
     @open_destination.setter
     def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
-        raise NotImplementedError("no setter for open_destination")
+        raise NotImplementedError("No setter for open_destination")
 
     @property
     def outline(self) -> OutlineType:
@@ -814,9 +860,9 @@ class PdfDocCommon:
                     return outline
 
                 # §12.3.3 Document outline, entries in the outline dictionary
-                if lines is not None and "/First" in lines:
+                if not is_null_or_none(lines) and "/First" in lines:
                     node = cast(DictionaryObject, lines["/First"])
-            self._namedDests = self._get_named_destinations()
+            self._named_destinations = self._get_named_destinations()
 
         if node is None:
             return outline
@@ -878,6 +924,7 @@ class PdfDocCommon:
 
         Returns:
             The page number or None if page is not found
+
         """
         return self._get_page_number_by_indirect(page.indirect_reference)
 
@@ -890,6 +937,7 @@ class PdfDocCommon:
 
         Returns:
             The page number or None if page is not found
+
         """
         return self._get_page_number_by_indirect(destination.page)
 
@@ -923,7 +971,7 @@ class PdfDocCommon:
                 # create a link to first Page
                 tmp = self.pages[0].indirect_reference
                 indirect_reference = NullObject() if tmp is None else tmp
-                return Destination(title, indirect_reference, Fit.fit())  # type: ignore
+                return Destination(title, indirect_reference, Fit.fit())
 
     def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
         dest, title, outline_item = None, None, None
@@ -957,7 +1005,7 @@ class PdfDocCommon:
             # TODO : keep named destination instead of replacing it ?
             try:
                 outline_item = self._build_destination(
-                    title, self._namedDests[dest].dest_array
+                    title, self._named_destinations[dest].dest_array
                 )
             except KeyError:
                 # named destination not found in Name Dict
@@ -1083,10 +1131,21 @@ class PdfDocCommon:
 
     def _flatten(
         self,
+        list_only: bool = False,
         pages: Union[None, DictionaryObject, PageObject] = None,
         inherit: Optional[Dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
+        """
+        Prepare the document pages to ease searching
+
+        Args:
+            list_only: Will only list the pages within _flatten_pages.
+            pages:
+            inherit:
+            indirect_reference: Used recursively to flatten the /Pages object.
+
+        """
         inheritable_page_attributes = (
             NameObject(PG.RESOURCES),
             NameObject(PG.MEDIABOX),
@@ -1099,8 +1158,9 @@ class PdfDocCommon:
             # Fix issue 327: set flattened_pages attribute only for
             # decrypted file
             catalog = self.root_object
-            pages = catalog["/Pages"].get_object()  # type: ignore
-            assert isinstance(pages, DictionaryObject)
+            pages = catalog.get("/Pages").get_object()  # type: ignore
+            if not isinstance(pages, DictionaryObject):
+                raise PdfReadError("Invalid object in /Pages")
             self.flattened_pages = []
 
         if PA.TYPE in pages:
@@ -1122,7 +1182,12 @@ class PdfDocCommon:
                 obj = page.get_object()
                 if obj:
                     # damaged file may have invalid child in /Pages
-                    self._flatten(obj, inherit, **addt)
+                    try:
+                        self._flatten(list_only, obj, inherit, **addt)
+                    except RecursionError:
+                        raise PdfReadError(
+                            "Maximum recursion depth reached during page flattening."
+                        )
         elif t == "/Page":
             for attr_in, value in list(inherit.items()):
                 # if the page has it's own value, it does not inherit the
@@ -1130,7 +1195,8 @@ class PdfDocCommon:
                 if attr_in not in pages:
                     pages[attr_in] = value
             page_obj = PageObject(self, indirect_reference)
-            page_obj.update(pages)
+            if not list_only:
+                page_obj.update(pages)
 
             # TODO: Could flattened_pages be None at this point?
             self.flattened_pages.append(page_obj)  # type: ignore
@@ -1152,9 +1218,10 @@ class PdfDocCommon:
 
             clean: replace PageObject with NullObject to prevent annotations
                 or destinations to reference a detached page.
+
         """
         if self.flattened_pages is None:
-            self._flatten()
+            self._flatten(self._readonly)
         assert self.flattened_pages is not None
         if isinstance(page, IndirectObject):
             p = page.get_object()
@@ -1190,6 +1257,7 @@ class PdfDocCommon:
 
         Returns:
             A PdfObject
+
         """
         return IndirectObject(num, gen, self).get_object()
 
@@ -1258,7 +1326,7 @@ class PdfDocCommon:
                 if isinstance(f, IndirectObject):
                     field = cast(Optional[EncodedStreamObject], f.get_object())
                     if field:
-                        es = zlib.decompress(b_(field._data))
+                        es = zlib.decompress(field._data)
                         retval[tag] = es
         return retval
 
@@ -1277,6 +1345,7 @@ class PdfDocCommon:
 
         Returns:
             list of filenames
+
         """
         catalog = self.root_object
         # From the catalog get the embedded file names
@@ -1315,6 +1384,7 @@ class PdfDocCommon:
         Returns:
             dictionary of filename -> Union[bytestring or List[ByteString]]
             If the filename exists multiple times a list of the different versions will be provided.
+
         """
         catalog = self.root_object
         # From the catalog get the embedded file names

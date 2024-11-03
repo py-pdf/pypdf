@@ -19,6 +19,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [ediamondscience](https://github.com/ediamondscience)
 * [Ermeson, Felipe](https://github.com/FelipeErmeson)
 * [Freitag, François](https://github.com/francoisfreitag)
+* [Gagnon, William G.](https://github.com/williamgagnon)
 * [Górny, Michał](https://github.com/mgorny)
 * [Grillo, Miguel](https://github.com/Ineffable22)
 * [Gutteridge, David H.](https://github.com/dhgutteridge)

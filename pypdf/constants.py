@@ -11,10 +11,13 @@ https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
 ISO 32000-2:2020 (PDF 2.0)
 """
 
-from enum import IntFlag, auto
+from enum import Enum, IntFlag, auto, unique
 from typing import Dict, Tuple
 
-from ._utils import classproperty, deprecate_with_replacement
+
+class StrEnum(str, Enum):  # Once we are on Python 3.11+: enum.StrEnum
+    def __str__(self) -> str:
+        return str(self.value)
 
 
 class Core:
@@ -33,6 +36,7 @@ class TrailerKeys:
     ID = "/ID"
     INFO = "/Info"
     SIZE = "/Size"
+    PREV = "/Prev"
 
 
 class CatalogAttributes:
@@ -161,46 +165,6 @@ class Ressources:  # deprecated
     .. deprecated:: 5.0.0
     """
 
-    @classproperty
-    def EXT_G_STATE(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/ExtGState"  # dictionary, optional
-
-    @classproperty
-    def COLOR_SPACE(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/ColorSpace"  # dictionary, optional
-
-    @classproperty
-    def PATTERN(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/Pattern"  # dictionary, optional
-
-    @classproperty
-    def SHADING(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/Shading"  # dictionary, optional
-
-    @classproperty
-    def XOBJECT(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/XObject"  # dictionary, optional
-
-    @classproperty
-    def FONT(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/Font"  # dictionary, optional
-
-    @classproperty
-    def PROC_SET(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/ProcSet"  # array, optional
-
-    @classproperty
-    def PROPERTIES(cls) -> str:  # noqa: N805
-        deprecate_with_replacement("Ressources", "Resources", "5.0.0")
-        return "/Properties"  # dictionary, optional
-
 
 class PagesAttributes:
     """§7.7.3.2 of the 1.7 and 2.0 reference."""
@@ -208,8 +172,10 @@ class PagesAttributes:
     TYPE = "/Type"  # name, required; must be /Pages
     PARENT = "/Parent"  # dictionary, required; indirect reference to pages object
     KIDS = "/Kids"  # array, required; List of indirect references
-    COUNT = "/Count"  # integer, required; the number of leaf nodes (page objects)
-                      # that are descendants of this node within the page tree
+
+    COUNT = "/Count"
+    # integer, required; the number of leaf nodes (page objects)
+    # that are descendants of this node within the page tree
 
 
 class PageAttributes:
@@ -217,7 +183,9 @@ class PageAttributes:
 
     TYPE = "/Type"  # name, required; must be /Page
     PARENT = "/Parent"  # dictionary, required; a pages object
-    LAST_MODIFIED = "/LastModified"  # date, optional; date and time of last modification
+    LAST_MODIFIED = (
+        "/LastModified"  # date, optional; date and time of last modification
+    )
     RESOURCES = "/Resources"  # dictionary, required if there are any
     MEDIABOX = "/MediaBox"  # rectangle, required; rectangle specifying page size
     CROPBOX = "/CropBox"  # rectangle, optional
@@ -279,7 +247,8 @@ class StreamAttributes:
     DECODE_PARMS = "/DecodeParms"  # variable, optional -- 'decodeParams is wrong
 
 
-class FilterTypes:
+@unique
+class FilterTypes(StrEnum):
     """§7.4 of the 1.7 and 2.0 references."""
 
     ASCII_HEX_DECODE = "/ASCIIHexDecode"  # abbreviation: AHx
@@ -505,6 +474,7 @@ class FieldDictionaryAttributes:
 
         Returns:
             A tuple containing all the attribute constants.
+
         """
         return (
             cls.TM,
@@ -532,6 +502,7 @@ class FieldDictionaryAttributes:
 
         Returns:
             A dictionary containing attribute keys and their names.
+
         """
         return {
             cls.FT: "Field Type",
@@ -562,6 +533,7 @@ class CheckboxRadioButtonAttributes:
 
         Returns:
             A tuple containing all the attribute constants.
+
         """
         return (cls.Opt,)
 
@@ -578,6 +550,7 @@ class CheckboxRadioButtonAttributes:
 
         Returns:
             A dictionary containing attribute keys and their names.
+
         """
         return {
             cls.Opt: "Options",

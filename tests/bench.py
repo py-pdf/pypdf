@@ -220,7 +220,7 @@ def image_new_property(data):
     assert list(PageObject(None, None).images) == []
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_image_new_property_performance(benchmark):
     url = "https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf"
     name = "pdf_font_garbled.pdf"
@@ -234,7 +234,7 @@ def image_extraction(data):
     list(reader.pages[0].images)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_large_compressed_image_performance(benchmark):
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
     data = BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf"))

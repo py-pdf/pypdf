@@ -12,7 +12,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
 from pypdf.constants import PageAttributes as PG
-from pypdf.errors import PdfReadError, PdfReadWarning
+from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
@@ -46,7 +46,7 @@ def get_all_sample_files():
 all_files_meta = get_all_sample_files()
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 @pytest.mark.parametrize(
     "meta",
     [m for m in all_files_meta["data"] if not m["encrypted"]],
@@ -63,8 +63,8 @@ def test_read(meta):
     assert len(reader.pages) == meta["pages"]
 
 
-@pytest.mark.samples()
-@pytest.mark.enable_socket()
+@pytest.mark.samples
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("pdf_path", "password"),
     [
@@ -253,7 +253,7 @@ def compare_dict_objects(d1, d2):
             assert d1[key] == d2[key]
 
 
-@pytest.mark.slow()
+@pytest.mark.slow
 def test_page_transformations():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -375,7 +375,7 @@ def test_add_transformation_on_page_without_contents():
     assert isinstance(page.get_contents(), ContentStream)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
     url = "https://github.com/py-pdf/pypdf/files/9150656/ST.2019.PDF"
@@ -393,8 +393,8 @@ def test_iss_1142():
     assert txt.find("郑州分公司") > 0
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -439,8 +439,8 @@ def test_extract_text(url, name):
         page.extract_text()
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
@@ -451,8 +451,8 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     assert warn_msgs == [""]  # text extraction recognise no text
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 def test_extract_text_operator_t_star():  # L1266, L1267
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/967/967943.pdf"
     name = "tika-967943.pdf"
@@ -801,7 +801,7 @@ def test_get_fonts(pdf_path, password, embedded, unembedded):
     assert (a, b) == (embedded, unembedded)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_get_fonts2():
     url = "https://github.com/py-pdf/pypdf/files/12618104/WS_T.483.8-2016.pdf"
     name = "WS_T.483.8-2016.pdf"
@@ -887,6 +887,8 @@ def test_annotation_setter(pdf_file_path):
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
+    with pytest.raises(ValueError):
+        writer.add_page(DictionaryObject())
 
     # Act
     page_number = 0
@@ -938,7 +940,7 @@ def test_annotation_setter(pdf_file_path):
         writer.write(fp)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.xfail(reason="#1091")
 def test_text_extraction_issue_1091():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
@@ -950,7 +952,7 @@ def test_text_extraction_issue_1091():
         page.extract_text()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_empyt_password_1088():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
@@ -959,7 +961,7 @@ def test_empyt_password_1088():
     len(reader.pages)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_old_habibi():
     # this habibi has multiple characters associated with the h
     reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
@@ -969,7 +971,7 @@ def test_old_habibi():
     assert "حَبيبي" in txt
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 def test_read_link_annotation():
     reader = PdfReader(SAMPLE_ROOT / "016-libre-office-link/libre-office-link.pdf")
     assert len(reader.pages[0].annotations) == 1
@@ -999,7 +1001,7 @@ def test_read_link_annotation():
     assert annot == expected
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_no_resources():
     url = "https://github.com/py-pdf/pypdf/files/9572045/108.pdf"
     name = "108.pdf"
@@ -1131,9 +1133,9 @@ def test_merge_page_resources_smoke_test():
     # use these keys for some "operations", to validate renaming
     # (the operand name doesn't matter)
     contents1 = page1[NO("/Contents")] = ContentStream(None, None)
-    contents1.operations = [(ArrayObject(props1.keys()), "page1-contents")]
+    contents1.operations = [(ArrayObject(props1.keys()), b"page1-contents")]
     contents2 = page2[NO("/Contents")] = ContentStream(None, None)
-    contents2.operations = [(ArrayObject(props2.keys()), "page2-contents")]
+    contents2.operations = [(ArrayObject(props2.keys()), b"page2-contents")]
 
     expected_properties = {
         "/just1": "/just1-value",
@@ -1172,7 +1174,7 @@ def test_merge_page_resources_smoke_test():
     assert relevant_operations == expected_operations
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_merge_transformed_page_into_blank():
     url = "https://github.com/py-pdf/pypdf/files/10768334/badges_3vjrh_7LXDZ_1-1.pdf"
     name = "badges_3vjrh_7LXDZ_1.pdf"
@@ -1219,7 +1221,7 @@ def test_pages_printing():
         reader.pages[0].images["~1~"]
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_del_pages():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
@@ -1251,12 +1253,22 @@ def test_del_pages():
     del pp["/Parent"].get_object()["/Kids"][i]
     with pytest.raises(PdfReadError):
         del reader.pages[2]
-    # reader is corrupted we have to reload it
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    del reader.pages[:]
-    assert len(reader.pages) == 0
-    assert len(reader.trailer["/Root"]["/Pages"]["/Kids"]) == 0
-    assert len(reader.flattened_pages) == 0
+
+    url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
+    name = "iss2343b.pdf"
+    writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
+    node, idx = writer._get_page_in_node(53)
+    assert (node.indirect_reference.idnum, idx) == (11776, 1)
+    node, idx = writer._get_page_in_node(10000)
+    assert (node.indirect_reference.idnum, idx) == (11769, -1)
+    with pytest.raises(PyPdfError):
+        writer._get_page_in_node(-1)
+
+    del writer.pages[4]  # to propagate among /Pages
+    del writer.pages[:]
+    assert len(writer.pages) == 0
+    assert len(writer.root_object["/Pages"]["/Kids"]) == 0
+    assert len(writer.flattened_pages) == 0
 
 
 def test_pdf_pages_missing_type():
@@ -1268,7 +1280,7 @@ def test_pdf_pages_missing_type():
     writer.pages[0]
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_merge_with_stream_wrapped_in_save_restore():
     """Test for issue #2587"""
     url = "https://github.com/py-pdf/pypdf/files/14895914/blank_portrait.pdf"
@@ -1281,7 +1293,7 @@ def test_merge_with_stream_wrapped_in_save_restore():
     assert b"QQ" not in page_one.get_contents().get_data()
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 def test_compression():
     """Test for issue #1897"""
 
@@ -1340,7 +1352,7 @@ def test_get_contents_from_nullobject():
     page1.merge_page(page2, over=True)
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_pos_text_in_textvisitor():
     """See #2200"""
     url = "https://github.com/py-pdf/pypdf/files/12675974/page_178.pdf"
@@ -1358,7 +1370,7 @@ def test_pos_text_in_textvisitor():
     assert abs(p[1] - 457.4) < 0.1
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_pos_text_in_textvisitor2():
     """See #2075"""
     url = "https://github.com/py-pdf/pypdf/files/12318042/LegIndex-page6.pdf"
@@ -1418,7 +1430,7 @@ def test_pos_text_in_textvisitor2():
     ]
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_missing_basefont_in_type3():
     """Cf #2289"""
     url = "https://github.com/py-pdf/pypdf/files/13307713/missing-base-font.pdf"
@@ -1438,3 +1450,25 @@ def test_negative_index():
     src_abs = RESOURCE_ROOT / "git.pdf"
     reader = PdfReader(src_abs)
     assert reader.pages[0] == reader.pages[-1]
+
+
+def test_get_contents_as_bytes():
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    co = writer.pages[0]["/Contents"][0]
+    expected = co.get_data()
+    assert writer.pages[0]._get_contents_as_bytes() == expected
+    writer.pages[0][NameObject("/Contents")] = writer.pages[0]["/Contents"][0]
+    assert writer.pages[0]._get_contents_as_bytes() == expected
+
+
+def test_recursive_get_page_from_node():
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    writer.root_object["/Pages"].get_object()[
+        NameObject("/Parent")
+    ] = writer.root_object["/Pages"].indirect_reference
+    with pytest.raises(PyPdfError):
+        writer.add_page(writer.pages[0])
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
+    writer.insert_page(writer.pages[0], -1)
+    with pytest.raises(ValueError):
+        writer.insert_page(writer.pages[0], -10)

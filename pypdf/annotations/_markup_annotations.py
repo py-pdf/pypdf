@@ -46,11 +46,12 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
     Args:
         title_bar: Text to be displayed in the title bar of the annotation;
             by convention this is the name of the author
+
     """
 
     def __init__(self, *, title_bar: Optional[str] = None):
         if title_bar is not None:
-            self[NameObject("T")] = TextStringObject(title_bar)
+            self[NameObject("/T")] = TextStringObject(title_bar)
 
 
 class Text(MarkupAnnotation):
@@ -63,6 +64,7 @@ class Text(MarkupAnnotation):
         text: The text that is added to the document
         open:
         flags:
+
     """
 
     def __init__(
@@ -103,12 +105,17 @@ class FreeText(MarkupAnnotation):
         self[NameObject("/Subtype")] = NameObject("/FreeText")
         self[NameObject("/Rect")] = RectangleObject(rect)
 
+        # Table 225 of the 1.7 reference ("CSS2 style attributes used in rich text strings")
         font_str = "font: "
-        if bold is True:
-            font_str = f"{font_str}bold "
-        if italic is True:
+        if italic:
             font_str = f"{font_str}italic "
-        font_str = f"{font_str}{font} {font_size}"
+        else:
+            font_str = f"{font_str}normal "
+        if bold:
+            font_str = f"{font_str}bold "
+        else:
+            font_str = f"{font_str}normal "
+        font_str = f"{font_str}{font_size} {font}"
         font_str = f"{font_str};text-align:left;color:#{font_color}"
 
         default_appearance_string = ""

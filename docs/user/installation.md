@@ -4,7 +4,7 @@ There are several ways to install pypdf. The most common option is to use pip.
 
 ## pip
 
-pypdf requires Python 3.7+ to run.
+pypdf requires Python 3.8+ to run.
 
 Typically Python comes with `pip`, a package installer. Using it you can
 install pypdf:

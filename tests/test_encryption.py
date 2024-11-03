@@ -171,7 +171,7 @@ def test_read_page_from_encrypted_file_aes_256(pdffile, password):
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_merge_encrypted_pdfs(names):
     """Encrypted PDFs can be merged after decryption."""
-    merger = pypdf.PdfMerger()
+    merger = pypdf.PdfWriter()
     files = [RESOURCE_ROOT / "encryption" / x for x in names]
     pdfs = [pypdf.PdfReader(x) for x in files]
     for pdf in pdfs:
@@ -205,7 +205,7 @@ def test_attempt_decrypt_unencrypted_pdf():
     path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(PdfReadError) as exc:
         PdfReader(path, password="nonexistent")
-    assert exc.value.args[0] == "Not encrypted file"
+    assert exc.value.args[0] == "Not an encrypted file"
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
@@ -264,7 +264,7 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
                 owner_password=owner_password,
                 algorithm=alg,
             )
-        assert exc.value.args[0] == "algorithm 'ABCD' NOT supported"
+        assert exc.value.args[0] == "Algorithm 'ABCD' NOT supported"
         return
 
     if requires_aes and not HAS_AES:
@@ -344,7 +344,7 @@ def test_aes_decrypt_corrupted_data():
         aes.decrypt(secrets.token_bytes(num))
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 def test_encrypt_stream_dictionary(pdf_file_path):
     user_password = secrets.token_urlsafe(10)
 

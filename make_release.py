@@ -30,6 +30,7 @@ def main(changelog_path: str) -> None:
 
     Args:
         changelog_path: The location of the CHANGELOG file
+
     """
     changelog = get_changelog(changelog_path)
     git_tag = get_most_recent_git_tag()
@@ -66,7 +67,7 @@ def print_instructions(new_version: str) -> None:
     print("=" * 80)
     print(f"☑  {VERSION_FILE_PATH} was adjusted to '{new_version}'")
     print(f"☑  {CHANGELOG_FILE_PATH} was adjusted")
-    print("")
+    print()
     print("Now run:")
     print("  git commit -eF RELEASE_COMMIT_MSG.md")
     print("  git push")
@@ -149,6 +150,7 @@ def version_bump(git_tag: str) -> str:
 
     Returns:
         The new version where the patch version is bumped.
+
     """
     # just assume a patch version change
     major, minor, patch = git_tag.split(".")
@@ -164,8 +166,9 @@ def get_changelog(changelog_path: str) -> str:
 
     Returns:
         Data of the CHANGELOG
+
     """
-    with open(changelog_path) as fh:
+    with open(changelog_path, encoding="utf-8") as fh:
         changelog = fh.read()
     return changelog
 
@@ -177,8 +180,9 @@ def write_changelog(new_changelog: str, changelog_path: str) -> None:
     Args:
         new_changelog: Contents of the new CHANGELOG
         changelog_path: Path where the CHANGELOG file is
+
     """
-    with open(changelog_path, "w") as fh:
+    with open(changelog_path, "w", encoding="utf-8") as fh:
         fh.write(new_changelog)
 
 
@@ -191,6 +195,7 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
 
     Returns:
         Changes done since git_tag
+
     """
     commits = get_git_commits_since_tag(git_tag)
 
@@ -253,7 +258,9 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
         for prefix in grouped:
             for commit in grouped[prefix]:
                 output += f"- {prefix}: {commit['msg']}\n"
-                output_with_user += f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
+                output_with_user += (
+                    f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
+                )
 
     return output, output_with_user
 
@@ -264,10 +271,11 @@ def get_most_recent_git_tag() -> str:
 
     Returns:
         Most recently created git tag.
+
     """
     git_tag = str(
         subprocess.check_output(
-            ["git", "describe", "--abbrev=0"], stderr=subprocess.STDOUT
+            ["git", "describe", "--tag", "--abbrev=0"], stderr=subprocess.STDOUT
         )
     ).strip("'b\\n")
     return git_tag
@@ -283,12 +291,13 @@ def get_author_mapping(line_count: int) -> Dict[str, str]:
 
     Returns:
         A mapping of long commit hashes to author login handles.
+
     """
     per_page = min(line_count, 100)
     page = 1
     mapping: Dict[str, str] = {}
     for _ in range(0, line_count, per_page):
-        with urllib.request.urlopen(  # noqa: S310
+        with urllib.request.urlopen(
             f"https://api.github.com/repos/{GH_ORG}/{GH_PROJECT}/commits?per_page={per_page}&page={page}"
         ) as response:
             commits = json.loads(response.read())
@@ -308,17 +317,22 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
 
     Returns:
         List of all changes since git_tag.
+
     """
-    commits = subprocess.check_output(
-        [
-            "git",
-            "--no-pager",
-            "log",
-            f"{git_tag}..HEAD",
-            '--pretty=format:"%H:::%s:::%aN"',
-        ],
-        stderr=subprocess.STDOUT,
-    ).decode("UTF-8").strip()
+    commits = (
+        subprocess.check_output(
+            [
+                "git",
+                "--no-pager",
+                "log",
+                f"{git_tag}..HEAD",
+                '--pretty=format:"%H:::%s:::%aN"',
+            ],
+            stderr=subprocess.STDOUT,
+        )
+        .decode("UTF-8")
+        .strip()
+    )
     lines = commits.splitlines()
     authors = get_author_mapping(len(lines))
     return [parse_commit_line(line, authors) for line in lines if line != ""]
@@ -336,8 +350,9 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
 
     Raises:
         ValueError: The commit line is not well-structured
+
     """
-    parts = line.split(":::")
+    parts = line.strip().strip('"\\').split(":::")
     if len(parts) != 3:
         raise ValueError(f"Invalid commit line: '{line}'")
     commit_hash, rest, author = parts
@@ -349,10 +364,8 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
 
     # Standardize
     message.strip()
-    commit_hash = commit_hash.strip('"')
+    commit_hash = commit_hash.strip()
 
-    if author.endswith('"'):
-        author = author[:-1]
     author_login = authors[commit_hash]
 
     prefix = prefix.strip()

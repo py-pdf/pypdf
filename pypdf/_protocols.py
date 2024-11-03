@@ -2,13 +2,7 @@
 
 from abc import abstractmethod
 from pathlib import Path
-from typing import IO, Any, Dict, List, Optional, Tuple, Union
-
-try:
-    # Python 3.8+: https://peps.python.org/pep-0586
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore[assignment]
+from typing import IO, Any, Dict, List, Optional, Protocol, Tuple, Union
 
 from ._utils import StrByteType, StreamType
 
@@ -79,6 +73,9 @@ class PdfReaderProtocol(PdfCommonDocProtocol, Protocol):
 class PdfWriterProtocol(PdfCommonDocProtocol, Protocol):
     _objects: List[Any]
     _id_translated: Dict[int, Dict[int, int]]
+
+    incremental: bool
+    _reader: Any  # PdfReader
 
     @abstractmethod
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO[Any]]:

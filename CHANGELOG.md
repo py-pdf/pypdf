@@ -1,5 +1,101 @@
 # CHANGELOG
 
+## Version 5.1.0, 2024-10-27
+
+### New Features (ENH)
+- Add `layout_mode_font_height_weight` argument to `PageObject.extract_text()` (#2920)
+
+### Bug Fixes (BUG)
+- Fix font specificier for FreeText annotation (#2893)
+- Line breaks are not generated due to incorrect calculation of text leading (#2890)
+- Improve handling of spaces in text extraction (#2882)
+
+### Robustness (ROB)
+- Soft failure for flate encode image mode 1 with wrong LUT size (#2900)
+
+### Documentation (DOC)
+- Use latest package versions (#2907)
+- Correct example of reading FileAttachment annotation (#2906)
+
+### Developer Experience (DEV)
+- Update pinned requirements (#2918)
+- Make make_release.py compatible with Windows environment (#2894)
+
+### Maintenance (MAINT)
+- Remove references to outdated Python versions (#2919)
+- Generalize the method of obtaining space_code (#2891)
+- Unnecessary character mapping process (#2888)
+- New LZW decoding implementation (#2887)
+
+### Testing (TST)
+- Add LzwCodec for encoding (#2883)
+
+### Code Style (STY)
+- Capitalize error messages (#2903)
+- Modify error messages in PdfWriter (#2902)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.0.1...5.1.0)
+
+## Version 5.0.1, 2024-09-29
+
+### New Features (ENH)
+- Add `full` parameter to PdfWriter constructor (#2865)
+
+### Bug Fixes (BUG)
+- Update pyproject.toml with minimum Python version of 3.8 (#2859)
+- Cope with unbalanced delimiters in dictionary object (#2878)
+- Cope with encoding with too many differences (#2873)
+- Missing spaces in extract_text() method (#1328) (#2868)
+- Tolerate truncated files and no warning when jumping startxref (#2855)
+
+### Robustness (ROB)
+- Repair PDF with invalid Root object (#2880)
+- Continue parsing dictionary object when error is detected (#2872)
+- Merge documents with invalid pages in named destinations (#2857)
+- Tolerate comments in arrays (#2856)
+
+### Developer Experience (DEV)
+- Use latest Python version for benchmarking (#2879)
+
+### Maintenance (MAINT)
+- Add tests to source distributions (#2874)
+- Refactor _update_field_annotation (#2862)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.0.0...5.0.1)
+
+## Version 5.0.0, 2024-09-15
+
+This version drops support for Python 3.7 (not maintained since July 2023), PdfMerger (use PdfWriter instead) and AnnotationBuilder (use annotations instead).
+
+
+### Deprecations (DEP)
+- Remove the deprecated PfdMerger and AnnotationBuilder classes and other deprecations cleanup (#2813)
+- Drop Python 3.7 support (#2793)
+
+### New Features (ENH)
+- Add capability to remove /Info from PDF (#2820)
+- Add incremental capability to PdfWriter (#2811)
+- Add UniGB-UTF16 encodings (#2819)
+- Accept utf strings for metadata (#2802)
+- Report PdfReadError instead of RecursionError (#2800)
+- Compress PDF files merging identical objects (#2795)
+
+### Bug Fixes (BUG)
+- Fix sheared image (#2801)
+
+### Robustness (ROB)
+- Robustify .set_data() (#2821)
+- Raise PdfReadError when missing /Root in trailer (#2808)
+- Fix extract_text() issues on damaged PDFs (#2760)
+- Handle images with empty data when processing an image from bytes (#2786)
+
+### Developer Experience (DEV)
+- Fix coverage uploads (#2832)
+- Test against Python 3.13 (#2776)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/4.3.1...5.0.0)
+
 ## Version 4.3.1, 2024-07-21
 
 ### Bug Fixes (BUG)

@@ -7,6 +7,7 @@ import pytest
 
 import pypdf
 from pypdf import PdfMerger, PdfReader, PdfWriter
+from pypdf.errors import DeprecationError
 from pypdf.generic import Destination, Fit
 
 from . import get_data_from_url
@@ -36,7 +37,7 @@ def merger_operate(merger):
             data = fp.read()
         merger.append(data)
     assert exc.value.args[0].startswith(
-        "PdfMerger.merge requires an object that PdfReader can parse. "
+        "Merging requires an object that PdfReader can parse. "
         "Typically, that is a Path"
     )
 
@@ -156,21 +157,6 @@ def check_outline(tmp_path):
 tmp_filename = "dont_commit_merged.pdf"
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_merger_operations_by_traditional_usage(tmp_path):
-    # Arrange
-    merger = PdfMerger()
-    merger_operate(merger)
-    path = tmp_path / tmp_filename
-
-    # Act
-    merger.write(path)
-    merger.close()
-
-    # Assert
-    check_outline(path)
-
-
 def test_merger_operations_by_traditional_usage_with_writer(tmp_path):
     # Arrange
     merger = PdfWriter()
@@ -181,19 +167,6 @@ def test_merger_operations_by_traditional_usage_with_writer(tmp_path):
     merger.write(path)
     merger.close()
     # Assert
-    check_outline(path)
-
-
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_merger_operations_by_semi_traditional_usage(tmp_path):
-    path = tmp_path / tmp_filename
-
-    with PdfMerger() as merger:
-        merger_operate(merger)
-        merger.write(path)  # Act
-
-    # Assert
-    assert Path(path).is_file()
     check_outline(path)
 
 
@@ -209,16 +182,6 @@ def test_merger_operations_by_semi_traditional_usage_with_writer(tmp_path):
     check_outline(path)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_merger_operation_by_new_usage(tmp_path):
-    path = tmp_path / tmp_filename
-    with PdfMerger(fileobj=path) as merger:
-        merger_operate(merger)
-    # Assert
-    assert Path(path).is_file()
-    check_outline(path)
-
-
 def test_merger_operation_by_new_usage_with_writer(tmp_path):
     path = tmp_path / tmp_filename
     with PdfWriter(fileobj=path) as merger:
@@ -227,16 +190,6 @@ def test_merger_operation_by_new_usage_with_writer(tmp_path):
     # Assert
     assert Path(path).is_file()
     check_outline(path)
-
-
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_merge_page_exception():
-    merger = pypdf.PdfMerger()
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    with pytest.raises(TypeError) as exc:
-        merger.merge(0, pdf_path, pages="a:b")
-    assert exc.value.args[0] == '"pages" must be a tuple of (start, stop[, step])'
-    merger.close()
 
 
 def test_merge_page_exception_with_writer():
@@ -251,57 +204,11 @@ def test_merge_page_exception_with_writer():
     merger.close()
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_merge_page_tuple():
-    merger = pypdf.PdfMerger()
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    merger.merge(0, pdf_path, pages=(0, 1))
-    merger.close()
-
-
 def test_merge_page_tuple_with_writer():
     merger = pypdf.PdfWriter()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.merge(0, pdf_path, pages=(0, 1))
     merger.close()
-
-
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_merge_write_closed_fh():
-    merger = pypdf.PdfMerger()
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    merger.append(pdf_path)
-
-    err_closed = "close() was called and thus the writer cannot be used anymore"
-
-    merger.close()
-    with pytest.raises(RuntimeError) as exc:
-        merger.write("test_merge_write_closed_fh.pdf")
-    assert exc.value.args[0] == err_closed
-
-    with pytest.raises(RuntimeError) as exc:
-        merger.add_metadata({"author": "Martin Thoma"})
-    assert exc.value.args[0] == err_closed
-
-    with pytest.raises(RuntimeError) as exc:
-        merger.set_page_layout("/SinglePage")
-    assert exc.value.args[0] == err_closed
-
-    with pytest.raises(RuntimeError) as exc:
-        merger.page_mode = "/UseNone"
-    assert exc.value.args[0] == err_closed
-
-    with pytest.raises(RuntimeError) as exc:
-        merger._write_outline()
-    assert exc.value.args[0] == err_closed
-
-    with pytest.raises(RuntimeError) as exc:
-        merger.add_outline_item("An outline item", 0)
-    assert exc.value.args[0] == err_closed
-
-    with pytest.raises(RuntimeError) as exc:
-        merger._write_dests()
-    assert exc.value.args[0] == err_closed
 
 
 def test_merge_write_closed_fh_with_writer(pdf_file_path):
@@ -317,42 +224,19 @@ def test_merge_write_closed_fh_with_writer(pdf_file_path):
     merger.add_outline_item("An outline item", 0)
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_trim_outline_list(pdf_file_path):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/995/995175.pdf"
-    name = "tika-995175.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
-    merger.append(reader)
-    merger.write(pdf_file_path)
-    merger.close()
-
-
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_trim_outline_list_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/995/995175.pdf"
     name = "tika-995175.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     merger = PdfWriter()
     merger.append(reader)
+    merger.add_outline_item_dict(merger.outline[0])
     merger.write(pdf_file_path)
     merger.close()
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_zoom(pdf_file_path):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/994/994759.pdf"
-    name = "tika-994759.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
-    merger.append(reader)
-    merger.write(pdf_file_path)
-    merger.close()
-
-
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_zoom_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/994/994759.pdf"
     name = "tika-994759.pdf"
@@ -363,19 +247,20 @@ def test_zoom_with_writer(pdf_file_path):
     merger.close()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_zoom_xyz_no_left(pdf_file_path):
+def test_zoom_xyz_no_left_with_add_page(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/933/933322.pdf"
     name = "tika-933322.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
-    merger.append(reader)
+    merger = PdfWriter()
+    for p in reader.pages:
+        merger.add_page(p)
     merger.write(pdf_file_path)
     merger.close()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_zoom_xyz_no_left_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/933/933322.pdf"
     name = "tika-933322.pdf"
@@ -386,20 +271,8 @@ def test_zoom_xyz_no_left_with_writer(pdf_file_path):
     merger.close()
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_outline_item(pdf_file_path):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/997/997511.pdf"
-    name = "tika-997511.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
-    merger.append(reader)
-    merger.write(pdf_file_path)
-    merger.close()
-
-
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 def test_outline_item_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/997/997511.pdf"
     name = "tika-997511.pdf"
@@ -410,21 +283,8 @@ def test_outline_item_with_writer(pdf_file_path):
     merger.close()
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_trim_outline(pdf_file_path):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/982/982336.pdf"
-    name = "tika-982336.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
-    merger.append(reader)
-    merger.write(pdf_file_path)
-    merger.close()
-
-
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 def test_trim_outline_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/982/982336.pdf"
     name = "tika-982336.pdf"
@@ -435,21 +295,8 @@ def test_trim_outline_with_writer(pdf_file_path):
     merger.close()
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test1(pdf_file_path):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923621.pdf"
-    name = "tika-923621.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
-    merger.append(reader)
-    merger.write(pdf_file_path)
-    merger.close()
-
-
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 def test1_with_writer(pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923621.pdf"
     name = "tika-923621.pdf"
@@ -460,25 +307,8 @@ def test1_with_writer(pdf_file_path):
     merger.close()
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_sweep_recursion1(pdf_file_path):
-    # TODO: This test looks like an infinite loop.
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
-    name = "tika-924546.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
-    merger.append(reader)
-    merger.write(pdf_file_path)
-    merger.close()
-
-    reader2 = PdfReader(pdf_file_path)
-    reader2.pages
-
-
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 def test_sweep_recursion1_with_writer(pdf_file_path):
     # TODO: This test looks like an infinite loop.
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
@@ -493,36 +323,8 @@ def test_sweep_recursion1_with_writer(pdf_file_path):
     reader2.pages
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
-@pytest.mark.parametrize(
-    ("url", "name"),
-    [
-        (
-            # TODO: This test looks like an infinite loop.
-            "https://corpora.tika.apache.org/base/docs/govdocs1/924/924794.pdf",
-            "tika-924794.pdf",
-        ),
-        (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf",
-            "tika-924546.pdf",
-        ),
-    ],
-)
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_sweep_recursion2(url, name, pdf_file_path):
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
-    merger.append(reader)
-    merger.write(pdf_file_path)
-    merger.close()
-
-    reader2 = PdfReader(pdf_file_path)
-    reader2.pages
-
-
-@pytest.mark.enable_socket()
-@pytest.mark.slow()
+@pytest.mark.enable_socket
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -548,23 +350,7 @@ def test_sweep_recursion2_with_writer(url, name, pdf_file_path):
     reader2.pages
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_sweep_indirect_list_newobj_is_none(caplog, pdf_file_path):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/906/906769.pdf"
-    name = "tika-906769.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    merger = PdfMerger()
-    merger.append(reader)
-    merger.write(pdf_file_path)
-    merger.close()
-    # used to be: assert "Object 21 0 not defined." in caplog.text
-
-    reader2 = PdfReader(pdf_file_path)
-    reader2.pages
-
-
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_sweep_indirect_list_newobj_is_none_with_writer(caplog, pdf_file_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/906/906769.pdf"
     name = "tika-906769.pdf"
@@ -579,18 +365,7 @@ def test_sweep_indirect_list_newobj_is_none_with_writer(caplog, pdf_file_path):
     reader2.pages
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_iss1145():
-    # issue with FitH destination with null param
-    url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
-    name = "iss1145.pdf"
-    merger = PdfMerger()
-    merger.append(PdfReader(BytesIO(get_data_from_url(url, name=name))))
-    merger.close()
-
-
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss1145_with_writer():
     # issue with FitH destination with null param
     url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
@@ -600,23 +375,7 @@ def test_iss1145_with_writer():
     merger.close()
 
 
-@pytest.mark.enable_socket()
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_iss1344(caplog):
-    url = "https://github.com/py-pdf/pypdf/files/9549001/input.pdf"
-    name = "iss1344.pdf"
-    m = PdfMerger()
-    m.append(PdfReader(BytesIO(get_data_from_url(url, name=name))))
-    b = BytesIO()
-    m.write(b)
-    r = PdfReader(b)
-    p = r.pages[0]
-    assert "/DIJMAC+Arial Black" in p._debug_for_extract()
-    assert "adresse où le malade peut être visité" in p.extract_text()
-    assert r.threads is None
-
-
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_iss1344_with_writer(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9549001/input.pdf"
     name = "iss1344.pdf"
@@ -629,7 +388,7 @@ def test_iss1344_with_writer(caplog):
     assert "adresse où le malade peut être visité" in p.extract_text()
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_articles_with_writer(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "924666.pdf"
@@ -643,5 +402,10 @@ def test_articles_with_writer(caplog):
 
 
 def test_deprecate_pdfmerger():
-    with pytest.warns(DeprecationWarning), PdfMerger() as merger:
+    with pytest.raises(DeprecationError), PdfMerger() as merger:
         merger.append(RESOURCE_ROOT / "crazyones.pdf")
+
+
+def test_get_reference():
+    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    assert writer.get_reference(writer.pages[0]) == writer.pages[0].indirect_reference

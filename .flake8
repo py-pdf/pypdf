@@ -1,8 +1,0 @@
-[flake8]
-# The flake8 config should work well with black,
-# see https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8
-ignore = E203,E501,E741,W503,W604,N817,N814,VNE001,VNE002,VNE003,N802,SIM105,P101
-exclude = build,sample-files,dist,.benchmarks,.git,.github,.mypy_cache,.pytest_cache,.tox
-per-file-ignores =
-    tests/*: ASS001,PT011,B011,T001,T201
-    make_release.py:T001,T201

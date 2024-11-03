@@ -9,8 +9,10 @@ is the latest PDF standard.
 We recommend [`pyca/cryptography`](https://cryptography.io/en/latest/). Alternatively,
 you can use [`pycryptodome`](https://pypi.org/project/pycryptodome/).
 
-> Please see the note in the [installation guide](installation.md)
-> for installing the extra dependencies if interacting with PDFs that use AES.
+```{note}
+Please see the note in the [installation guide](installation.md)
+for installing the extra dependencies if interacting with PDFs that use AES.
+```
 
 ## Encrypt
 
@@ -32,8 +34,10 @@ with open("encrypted-pdf.pdf", "wb") as f:
 The algorithm can be one of `RC4-40`, `RC4-128`, `AES-128`, `AES-256-R5`, `AES-256`.
 We recommend using `AES-256-R5`.
 
-> ⚠️ WARNING ⚠️: pypdf uses `RC4` by default for compatibility if you omit the "algorithm" parameter.
-> Since `RC4` is insecure, you should use `AES` algorithms.
+```{warning}
+pypdf uses `RC4` by default for compatibility if you omit the "algorithm" parameter.
+Since `RC4` is insecure, you should use `AES` algorithms.
+```
 
 ## Decrypt
 

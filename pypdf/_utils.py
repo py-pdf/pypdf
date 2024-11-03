@@ -36,7 +36,7 @@ import sys
 import warnings
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from io import DEFAULT_BUFFER_SIZE, BytesIO
+from io import DEFAULT_BUFFER_SIZE
 from os import SEEK_CUR
 from typing import (
     IO,
@@ -47,7 +47,6 @@ from typing import (
     Pattern,
     Tuple,
     Union,
-    cast,
     overload,
 )
 
@@ -121,7 +120,7 @@ def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     if header2 in versions:
         pdf_header_indices.append(versions.index(header2))
     if len(pdf_header_indices) == 0:
-        raise ValueError(f"neither {header1!r} nor {header2!r} are proper headers")
+        raise ValueError(f"Neither {header1!r} nor {header2!r} are proper headers")
     return versions[max(pdf_header_indices)]
 
 
@@ -137,6 +136,7 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
 
     Returns:
         The data which was read.
+
     """
     txt = b""
     while True:
@@ -158,6 +158,7 @@ def read_non_whitespace(stream: StreamType) -> bytes:
 
     Returns:
         The data which was read.
+
     """
     tok = stream.read(1)
     while tok in WHITESPACES:
@@ -175,6 +176,7 @@ def skip_over_whitespace(stream: StreamType) -> bool:
 
     Returns:
         True if more than one whitespace was skipped, otherwise return False.
+
     """
     tok = WHITESPACES[0]
     cnt = 0
@@ -193,6 +195,7 @@ def check_if_whitespace_only(value: bytes) -> bool:
 
     Returns:
         True if the value only has whitespace characters, otherwise return False.
+
     """
     for index in range(len(value)):
         current = value[index : index + 1]
@@ -207,6 +210,8 @@ def skip_over_comment(stream: StreamType) -> None:
     if tok == b"%":
         while tok not in (b"\n", b"\r"):
             tok = stream.read(1)
+            if tok == b"":
+                raise PdfStreamError("File ended unexpectedly.")
 
 
 def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
@@ -219,6 +224,7 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
 
     Returns:
         The read bytes.
+
     """
     name = b""
     while True:
@@ -247,6 +253,7 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
 
     Returns:
         The data which was read.
+
     """
     if stream.tell() < to_read:
         raise PdfStreamError("Could not read malformed PDF file")
@@ -273,6 +280,7 @@ def read_previous_line(stream: StreamType) -> bytes:
 
     Returns:
         The data which was read.
+
     """
     line_content = []
     found_crlf = False
@@ -336,34 +344,6 @@ def mark_location(stream: StreamType) -> None:
     stream.seek(-radius, 1)
 
 
-B_CACHE: Dict[str, bytes] = {}
-
-
-def b_(s: Union[str, bytes]) -> bytes:
-    if isinstance(s, bytes):
-        return s
-    bc = B_CACHE
-    if s in bc:
-        return bc[s]
-    try:
-        r = s.encode("latin-1")
-        if len(s) < 2:
-            bc[s] = r
-        return r
-    except Exception:
-        r = s.encode("utf-8")
-        if len(s) < 2:
-            bc[s] = r
-        return r
-
-
-def str_(b: Any) -> str:
-    if isinstance(b, bytes):
-        return b.decode("latin-1")
-    else:
-        return str(b)  # will return b.__str__() if defined
-
-
 @overload
 def ord_(b: str) -> int:
     ...
@@ -390,20 +370,6 @@ WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
 WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
 
 
-def paeth_predictor(left: int, up: int, up_left: int) -> int:
-    p = left + up - up_left
-    dist_left = abs(p - left)
-    dist_up = abs(p - up)
-    dist_up_left = abs(p - up_left)
-
-    if dist_left <= dist_up and dist_left <= dist_up_left:
-        return left
-    elif dist_up <= dist_up_left:
-        return up
-    else:
-        return up_left
-
-
 def deprecate(msg: str, stacklevel: int = 3) -> None:
     warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
 
@@ -414,12 +380,17 @@ def deprecation(msg: str) -> None:
 
 def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature will be removed, but has a replacement."""
-    deprecate(f"{old_name} is deprecated and will be removed in pypdf {removed_in}. Use {new_name} instead.", 4)
+    deprecate(
+        f"{old_name} is deprecated and will be removed in pypdf {removed_in}. Use {new_name} instead.",
+        4,
+    )
 
 
 def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed, but has a replacement."""
-    deprecation(f"{old_name} is deprecated and was removed in pypdf {removed_in}. Use {new_name} instead.")
+    deprecation(
+        f"{old_name} is deprecated and was removed in pypdf {removed_in}. Use {new_name} instead."
+    )
 
 
 def deprecate_no_replacement(name: str, removed_in: str) -> None:
@@ -474,6 +445,7 @@ def rename_kwargs(
         kwargs:
         aliases:
         fail:
+
     """
     for old_term, new_term in aliases.items():
         if old_term in kwargs:
@@ -562,76 +534,24 @@ class classproperty:  # noqa: N801
 class File:
     from .generic import IndirectObject
 
-    name: str
-    data: bytes
-    image: Optional[Any] = None  # optional ; direct image access
-    indirect_reference: Optional[IndirectObject] = None  # optional ; link to PdfObject
+    name: str = ""
+    """
+    Filename as identified within the PDF file.
+    """
+    data: bytes = b""
+    """
+    Data as bytes.
+    """
+    indirect_reference: Optional[IndirectObject] = None
+    """
+    Reference to the object storing the stream.
+    """
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
 
     def __repr__(self) -> str:
         return self.__str__()[:-1] + f", hash: {hash(self.data)})"
-
-
-@dataclass
-class ImageFile(File):
-    from .generic import IndirectObject
-
-    image: Optional[Any] = None  # optional ; direct PIL image access
-    indirect_reference: Optional[IndirectObject] = None  # optional ; link to PdfObject
-
-    def replace(self, new_image: Any, **kwargs: Any) -> None:
-        """
-        Replace the Image with a new PIL image.
-
-        Args:
-            new_image (PIL.Image.Image): The new PIL image to replace the existing image.
-            **kwargs: Additional keyword arguments to pass to `Image.Image.save()`.
-
-        Raises:
-            TypeError: If the image is inline or in a PdfReader.
-            TypeError: If the image does not belong to a PdfWriter.
-            TypeError: If `new_image` is not a PIL Image.
-
-        Note:
-            This method replaces the existing image with a new image.
-            It is not allowed for inline images or images within a PdfReader.
-            The `kwargs` parameter allows passing additional parameters
-            to `Image.Image.save()`, such as quality.
-        """
-        from PIL import Image
-
-        from ._reader import PdfReader
-
-        # to prevent circular import
-        from .filters import _xobj_to_image
-        from .generic import DictionaryObject, PdfObject
-
-        if self.indirect_reference is None:
-            raise TypeError("Can not update an inline image")
-        if not hasattr(self.indirect_reference.pdf, "_id_translated"):
-            raise TypeError("Can not update an image not belonging to a PdfWriter")
-        if not isinstance(new_image, Image.Image):
-            raise TypeError("new_image shall be a PIL Image")
-        b = BytesIO()
-        new_image.save(b, "PDF", **kwargs)
-        reader = PdfReader(b)
-        assert reader.pages[0].images[0].indirect_reference is not None
-        self.indirect_reference.pdf._objects[self.indirect_reference.idnum - 1] = (
-            reader.pages[0].images[0].indirect_reference.get_object()
-        )
-        cast(
-            PdfObject, self.indirect_reference.get_object()
-        ).indirect_reference = self.indirect_reference
-        # change the object attributes
-        extension, byte_stream, img = _xobj_to_image(
-            cast(DictionaryObject, self.indirect_reference.get_object())
-        )
-        assert extension is not None
-        self.name = self.name[: self.name.rfind(".")] + extension
-        self.data = byte_stream
-        self.image = img
 
 
 @functools.total_ordering
