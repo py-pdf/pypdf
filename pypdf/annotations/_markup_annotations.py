@@ -39,6 +39,77 @@ def _get_bounding_rectangle(vertices: List[Vertex]) -> RectangleObject:
     return rect
 
 
+class _LineStyle:
+    # Enum is a better choice here
+
+    SOLIDUS = NameObject("/S")
+    DASHED = NameObject("/D")
+    BEVELED = NameObject("/B")
+    INSET = NameObject("/I")
+    UNDERLINE = NameObject("/U")
+
+
+
+class _DashArray(DictionaryObject):
+
+    def __init__(self, dashes: int = None, gaps: int = None, array: list = None):
+
+        self.DASH_ARRAY = NameObject("/D")
+
+        if array is not None:
+            dasharray = array
+        elif dashes > 0:
+            dasharray = [dashes] if gaps is None else [dashes, gaps]
+        else:
+            dasharray = []
+
+        self[self.DASH_ARRAY] = ArrayObject(dasharray)
+
+
+class _BorderStyle(DictionaryObject):
+
+    def __init__(self, style: str = "/S",
+                 dash_array: list = [], width: int = 1) -> DictionaryObject:
+
+        self.BORDER_STYLE = NameObject("/BS")
+        self.LINE_STYLE = NameObject("/S")
+        self.DASH_ARRAY = NameObject("/D")
+        self.LINE_WIDTH = NameObject("/W")
+
+        border_style = {self.LINE_STYLE: TextStringObject(style),
+                        self.DASH_ARRAY: _DashArray(dash_array),
+                        self.LINE_WIDTH: NumberObject(max(0, width))
+                        }
+        border_style = DictionaryObject(border_style)
+
+        self[self.BORDER_STYLE] = border_style
+
+
+class _BorderEffect(DictionaryObject):
+
+    def __init__(self, line_style: str = "/S", intensity: int = 0):
+
+        self.BORDER_EFFECT = NameObject("/BE")
+
+        self.STYLE = NameObject("/S")
+        self.STYLE_NO_EFFECT = NameObject("/S")
+        self.STYLE_CLOUDY_EFFECT = NameObject("/C")
+        self.INTENSITY = NameObject("/I")
+
+        border_effect = {self.STYLE: line_style, self.INTENSITY: intensity}
+        border_effect = DictionaryObject(border_effect)
+
+        self[self.BORDER_EFFECT] = border_effect
+
+
+
+
+
+
+
+
+
+
 class MarkupAnnotation(AnnotationDictionary, ABC):
     """
     Base class for all markup annotations.
@@ -215,6 +286,7 @@ class Rectangle(MarkupAnnotation):
         self,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         *,
+        border_style: Optional[dict] = None,
         interior_color: Optional[str] = None,
         **kwargs: Any,
     ):
@@ -222,6 +294,7 @@ class Rectangle(MarkupAnnotation):
             deprecate_with_replacement("interiour_color", "interior_color", "6.0.0")
             interior_color = kwargs["interiour_color"]
             del kwargs["interiour_color"]
+
         super().__init__(**kwargs)
         self.update(
             {
@@ -230,6 +303,9 @@ class Rectangle(MarkupAnnotation):
                 NameObject("/Rect"): RectangleObject(rect),
             }
         )
+
+        if border_style is not None:
+            self.update(_BorderStyle(border_style))
 
         if interior_color:
             self[NameObject("/IC")] = ArrayObject(
