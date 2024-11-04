@@ -117,3 +117,7 @@ tests/test_xmp.py ...                                   [100%]
 
 ========== 232 passed, 1 xfailed, 1 warning in 4.52s ==========
 ```
+
+# REFERENCES
+
+- [ISO_32000-2](https://developer.adobe.com/document-services/docs/assets/5b15559b96303194340b99820d3a70fa/PDF_ISO_32000-2.pdf)
