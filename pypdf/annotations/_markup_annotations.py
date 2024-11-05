@@ -1,4 +1,5 @@
 import sys
+from enum import Enum
 from abc import ABC
 from typing import Any, List, Optional, Tuple, Union
 
@@ -52,61 +53,60 @@ class _LineStyle:
 
 class _DashArray(DictionaryObject):
 
-    def __init__(self, dashes: int = None, gaps: int = None, array: list = None):
+    def __init__(self, array: list | ArrayObject = None) -> DictionaryObject:
 
+        # dash array key
         self.DASH_ARRAY = NameObject("/D")
 
+        # create and assign the dictionary
         if array is not None:
-            dasharray = array
-        elif dashes > 0:
-            dasharray = [dashes] if gaps is None else [dashes, gaps]
-        else:
-            dasharray = []
-
-        self[self.DASH_ARRAY] = ArrayObject(dasharray)
+            self[self.DASH_ARRAY] = ArrayObject(array)
 
 
 class _BorderStyle(DictionaryObject):
 
-    def __init__(self, style: str = "/S",
-                 dash_array: list = [], width: int = 1) -> DictionaryObject:
+    def __init__(self, style: str | NameObject = "/S",
+                 dash_array: list | ArrayObject = None,
+                 width: int | NumberObject = 1) -> DictionaryObject:
 
+        # border style and its keys
         self.BORDER_STYLE = NameObject("/BS")
         self.LINE_STYLE = NameObject("/S")
         self.DASH_ARRAY = NameObject("/D")
         self.LINE_WIDTH = NameObject("/W")
 
+        # create the dictionary
         border_style = {self.LINE_STYLE: TextStringObject(style),
-                        self.DASH_ARRAY: _DashArray(dash_array),
                         self.LINE_WIDTH: NumberObject(max(0, width))
                         }
+        if dash_array is not None:
+            border_style.update({self.DASH_ARRAY: _DashArray(dash_array)})
         border_style = DictionaryObject(border_style)
 
+        # assign the dictionary
         self[self.BORDER_STYLE] = border_style
 
 
 class _BorderEffect(DictionaryObject):
 
-    def __init__(self, line_style: str = "/S", intensity: int = 0):
+    def __init__(self, line_style: str | NameObject = "/S",
+                 intensity: int | NumberObject = 0) -> DictionaryObject:
 
+        # border effect and its keys
         self.BORDER_EFFECT = NameObject("/BE")
-
         self.STYLE = NameObject("/S")
         self.STYLE_NO_EFFECT = NameObject("/S")
         self.STYLE_CLOUDY_EFFECT = NameObject("/C")
         self.INTENSITY = NameObject("/I")
 
-        border_effect = {self.STYLE: line_style, self.INTENSITY: intensity}
+        # create the dictionary
+        border_effect = {self.STYLE: NameObject(line_style),
+                         self.INTENSITY: NumberObject(intensity)
+                         }
         border_effect = DictionaryObject(border_effect)
 
+        # assign the dictionary
         self[self.BORDER_EFFECT] = border_effect
-
-
-
-
-
-
-
 
 
 
@@ -120,7 +120,15 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
 
     """
 
+    class NAMES(Enum):
+        SUBTYPE = NameObject("/Subtype")
+        RECT = NameObject("/Rect")
+
     def __init__(self, *, title_bar: Optional[str] = None):
+
+        self.subtype = None
+        self.rect = None
+
         if title_bar is not None:
             self[NameObject("/T")] = TextStringObject(title_bar)
 
@@ -137,6 +145,13 @@ class Text(MarkupAnnotation):
         flags:
 
     """
+    # alternative way
+    class NAMES:
+        SUBTYPE = NameObject("/Subtype")
+        RECT = NameObject("/Rect")
+        CONTENTS = NameObject("/Contents")
+        OPEN = NameObject("/Open")
+        FLAG = NameObject("/Flags")
 
     def __init__(
         self,
@@ -148,11 +163,12 @@ class Text(MarkupAnnotation):
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
-        self[NameObject("/Subtype")] = NameObject("/Text")
-        self[NameObject("/Rect")] = RectangleObject(rect)
-        self[NameObject("/Contents")] = TextStringObject(text)
-        self[NameObject("/Open")] = BooleanObject(open)
-        self[NameObject("/Flags")] = NumberObject(flags)
+
+        self[self.NAMES.SUBTYPE] = NameObject("/Text")
+        self[self.NAMES.RECT] = RectangleObject(rect)
+        self[self.NAMES.CONTENTS] = TextStringObject(text)
+        self[self.NAMES.OPEN] = BooleanObject(open)
+        self[self.NAMES.FLAG] = NumberObject(flags)
 
 
 class FreeText(MarkupAnnotation):
@@ -266,6 +282,12 @@ class PolyLine(MarkupAnnotation):
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
+
+        # polyline keys
+        self.SUBTYPE = NameObject("/Subtype")
+        self.VERTICES = NameObject("/Vertices")
+        self.RECT = NameObject("/Rect")
+
         if len(vertices) == 0:
             raise ValueError("A polygon needs at least 1 vertex with two coordinates")
         coord_list = []
@@ -274,9 +296,9 @@ class PolyLine(MarkupAnnotation):
             coord_list.append(NumberObject(y))
         self.update(
             {
-                NameObject("/Subtype"): NameObject("/PolyLine"),
-                NameObject("/Vertices"): ArrayObject(coord_list),
-                NameObject("/Rect"): RectangleObject(_get_bounding_rectangle(vertices)),
+                self.SUBTYPE: NameObject("/PolyLine"),
+                self.VERTICES: ArrayObject(coord_list),
+                self.RECT: RectangleObject(_get_bounding_rectangle(vertices)),
             }
         )
 
@@ -296,21 +318,28 @@ class Rectangle(MarkupAnnotation):
             del kwargs["interiour_color"]
 
         super().__init__(**kwargs)
+
+        # rectangle keys
+        self.TYPE = NameObject("/Type")
+        self.SUBTYPE = NameObject("/Subtype")
+        self.RECT = NameObject("/Rect")
+        self.INTERIOR_COLOR = NameObject("/IC")
+
+        # create the dictionary
         self.update(
             {
-                NameObject("/Type"): NameObject("/Annot"),
-                NameObject("/Subtype"): NameObject("/Square"),
-                NameObject("/Rect"): RectangleObject(rect),
+                self.TYPE: NameObject("/Annot"),
+                self.SUBTYPE: NameObject("/Square"),
+                self.RECT: RectangleObject(rect),
             }
         )
 
+        # adding other parameter
         if border_style is not None:
-            self.update(_BorderStyle(border_style))
-
+            self.update(border_style)
         if interior_color:
-            self[NameObject("/IC")] = ArrayObject(
-                [FloatObject(n) for n in hex_to_rgb(interior_color)]
-            )
+            rgb_color = [FloatObject(n) for n in hex_to_rgb(interior_color)]
+            self[self.INTERIOR_COLOR] = ArrayObject(rgb_color)
 
 
 class Highlight(MarkupAnnotation):
