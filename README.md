@@ -3,6 +3,7 @@
 [![](https://img.shields.io/badge/-documentation-green)](https://pypdf.readthedocs.io/en/stable/)
 [![GitHub last commit](https://img.shields.io/github/last-commit/py-pdf/pypdf)](https://github.com/py-pdf/pypdf)
 [![codecov](https://codecov.io/gh/py-pdf/pypdf/branch/main/graph/badge.svg?token=id42cGNZ5Z)](https://codecov.io/gh/py-pdf/pypdf)
+[![Gurubase](https://img.shields.io/badge/Gurubase-Ask%20pypdf%20Guru-006BFF)](https://gurubase.io/g/pypdf)
 
 # pypdf
 
@@ -35,7 +36,7 @@ pip install pypdf[crypto]
 ```
 
 > **NOTE**: `pypdf` 3.1.0 and above include significant improvements compared to
-> previous versions. Please refer to [the migration
+guide](https://pypdf.readthedocs.io/en/latest/user/migration-1-to-2.html) for
 > guide](https://pypdf.readthedocs.io/en/latest/user/migration-1-to-2.html) for
 > more information.
 
