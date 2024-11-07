@@ -36,7 +36,7 @@ pip install pypdf[crypto]
 ```
 
 > **NOTE**: `pypdf` 3.1.0 and above include significant improvements compared to
-guide](https://pypdf.readthedocs.io/en/latest/user/migration-1-to-2.html) for
+> previous versions. Please refer to [the migration
 > guide](https://pypdf.readthedocs.io/en/latest/user/migration-1-to-2.html) for
 > more information.
 
