@@ -619,6 +619,15 @@ class ByteStringObject(bytes, PdfObject):
         stream.write(binascii.hexlify(self))
         stream.write(b">")
 
+    def __str__(self) -> str:
+        charset_to_try = ["utf-16"] + list(NameObject.CHARSETS)
+        for enc in charset_to_try:
+            try:
+                return self.decode(enc)
+            except UnicodeDecodeError:
+                pass
+        raise PdfReadError("Cannot decode ByteStringObject.")
+
 
 class TextStringObject(str, PdfObject):  # noqa: SLOT000
     """
