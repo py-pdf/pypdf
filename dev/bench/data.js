@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731057621056,
+  "lastUpdate": 1731349624567,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -60989,6 +60989,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003000629369627429",
             "extra": "mean: 780.8016205999934 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jakep@allenai.org",
+            "name": "Jake Poznanski",
+            "username": "jakep-allenai"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c6e43374ab002d76811ec85333fdc2c82c268251",
+          "message": "ROB: Fix infinite loop case when reading null objects within an Array",
+          "timestamp": "2024-11-11T19:24:29+01:00",
+          "tree_id": "cf85fd10ef3475bb5709c908b48229a1816675dd",
+          "url": "https://github.com/py-pdf/pypdf/commit/c6e43374ab002d76811ec85333fdc2c82c268251"
+        },
+        "date": 1731349622199,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7961213857204146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020097528484384116",
+            "extra": "mean: 357.6382646000013 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.3361562006014,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013993157213811724",
+            "extra": "mean: 88.21332225000116 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22692556944001646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01414139201608584",
+            "extra": "mean: 4.406731257600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.887381203197275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009050738993940274",
+            "extra": "mean: 59.21581256249908 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08819778332957795,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04391302276192596",
+            "extra": "mean: 11.338153434799995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.262739505487775,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009047501407256459",
+            "extra": "mean: 791.9289731999925 msec\nrounds: 5"
           }
         ]
       }
