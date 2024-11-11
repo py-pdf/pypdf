@@ -1452,7 +1452,6 @@ def read_object(
     elif tok == b"(":
         return read_string_from_stream(stream, forced_encoding)
     elif tok == b"e" and stream.read(6) == b"endobj":
-        stream.seek(-6, 1)
         return NullObject()
     elif tok == b"n":
         return NullObject.read_from_stream(stream)
