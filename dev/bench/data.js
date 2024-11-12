@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731408751024,
+  "lastUpdate": 1731409989161,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -61121,6 +61121,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002024136571595377",
             "extra": "mean: 782.8116381999962 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "925560+Lucas-C@users.noreply.github.com",
+            "name": "Lucas Cimon",
+            "username": "Lucas-C"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "545a79cbcfddf95ebe0c2976e5b673c53e555967",
+          "message": "ENH: Adding support for reading .metadata.keywords (#2939)\n\nCo-authored-by: Cimon Lucas (LCM) <lucas_cimon@connect-tech.sncf>",
+          "timestamp": "2024-11-12T12:10:35+01:00",
+          "tree_id": "34f71cc8b6ba22d9c19d20e94ddb90c001e6def4",
+          "url": "https://github.com/py-pdf/pypdf/commit/545a79cbcfddf95ebe0c2976e5b673c53e555967"
+        },
+        "date": 1731409986377,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.903664672324817,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000590738069091345",
+            "extra": "mean: 344.39238440000395 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.760861360546599,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007733901904210665",
+            "extra": "mean: 85.02778574999918 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2362092260472744,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01972484903537031",
+            "extra": "mean: 4.233534890799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.300244039888238,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008049713792521524",
+            "extra": "mean: 57.80265282352977 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0884624892106442,
+            "unit": "iter/sec",
+            "range": "stddev: 0.046450654726131316",
+            "extra": "mean: 11.304226332799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2762310600805125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007433863543297377",
+            "extra": "mean: 783.5571717999983 msec\nrounds: 5"
           }
         ]
       }
