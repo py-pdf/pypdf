@@ -107,6 +107,8 @@ def test_read_metadata(pdf_path, expected):
         docinfo.creation_date_raw
         docinfo.modification_date
         docinfo.modification_date_raw
+        docinfo.keywords
+        docinfo.keywords_raw
         if "/Title" in metadict:
             assert isinstance(docinfo.title, str)
             assert metadict["/Title"] == docinfo.title
