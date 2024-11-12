@@ -243,6 +243,21 @@ class DocumentInformation(DictionaryObject):
         """
         return self.get(DI.MOD_DATE)
 
+    @property
+    def keywords(self) -> Optional[str]:
+        """
+        Read-only property accessing the document's keywords.
+
+        Returns a ``TextStringObject`` or ``None`` if keywords are not
+        specified.
+        """
+        return self._get_text(DI.KEYWORDS)
+
+    @property
+    def keywords_raw(self) -> Optional[str]:
+        """The "raw" version of keywords; can return a ``ByteStringObject``."""
+        return self.get(DI.KEYWORDS)
+
 
 class PdfDocCommon:
     """
