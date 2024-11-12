@@ -1697,6 +1697,7 @@ def test_watermark_rendering(tmp_path):
     assert image_similarity(png_path, target_png_path) >= 0.95
 
 
+@pytest.mark.samples
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
 def test_watermarking_reportlab_rendering(tmp_path):
     """
