@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731680696260,
+  "lastUpdate": 1731694909107,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -61583,6 +61583,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012394648470403152",
             "extra": "mean: 788.4590966000019 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "de5d11535037cd6d04677efd1c60fca8029ccf81",
+          "message": "DEP: Correct deprecation of interiour_color (#2947)\n\nWe want this removed in pypdf 6.0.0, updated to do this.",
+          "timestamp": "2024-11-15T19:18:55+01:00",
+          "tree_id": "13ba2e5610e2e4646ab1c83c4575371bc5311894",
+          "url": "https://github.com/py-pdf/pypdf/commit/de5d11535037cd6d04677efd1c60fca8029ccf81"
+        },
+        "date": 1731694906638,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.6382651332439195,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001799012596883602",
+            "extra": "mean: 379.0369616000021 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.749453433050785,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008559045075144992",
+            "extra": "mean: 85.11034199999774 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21540018935117256,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013693140838943128",
+            "extra": "mean: 4.642521452799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.26932938718326,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009132205343606139",
+            "extra": "mean: 57.90612811764236 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08882031614833043,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04148864074001898",
+            "extra": "mean: 11.2586854378 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2761104336924416,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010172361471262178",
+            "extra": "mean: 783.6312387999897 msec\nrounds: 5"
           }
         ]
       }
