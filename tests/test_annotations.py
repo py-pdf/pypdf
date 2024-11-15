@@ -34,7 +34,7 @@ def test_ellipse_annotation(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         ellipse_annotation = Ellipse(
             rect=(50, 550, 500, 650),
             interiour_color="ff0000",
@@ -235,7 +235,7 @@ def test_square(pdf_file_path):
     writer.add_page(page)
 
     # Act
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(DeprecationError):
         square_annotation = Rectangle(
             rect=(50, 550, 200, 650), interiour_color="ff0000"
         )
