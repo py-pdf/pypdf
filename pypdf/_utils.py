@@ -180,15 +180,15 @@ def skip_over_whitespace(stream: StreamType) -> bool:
         stream: The data stream from which was read.
 
     Returns:
-        True if more than one whitespace was skipped, otherwise return False.
+        True if one or more whitespace was skipped, otherwise return False.
 
     """
-    tok = WHITESPACES[0]
+    tok = stream.read(1)
     cnt = 0
     while tok in WHITESPACES:
-        tok = stream.read(1)
         cnt += 1
-    return cnt > 1
+        tok = stream.read(1)
+    return cnt > 0
 
 
 def check_if_whitespace_only(value: bytes) -> bool:
