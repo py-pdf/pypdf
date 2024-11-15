@@ -183,11 +183,11 @@ def skip_over_whitespace(stream: StreamType) -> bool:
         True if more than one whitespace was skipped, otherwise return False.
 
     """
-    tok = WHITESPACES[0]
+    tok = stream.read(1)
     cnt = 0
     while tok in WHITESPACES:
-        tok = stream.read(1)
         cnt += 1
+        tok = stream.read(1)
     return cnt > 1
 
 
