@@ -180,15 +180,15 @@ def skip_over_whitespace(stream: StreamType) -> bool:
         stream: The data stream from which was read.
 
     Returns:
-        True if more than one whitespace was skipped, otherwise return False.
+        True if one or more whitespace was skipped, otherwise return False.
 
     """
-    tok = WHITESPACES[0]
+    tok = stream.read(1)
     cnt = 0
     while tok in WHITESPACES:
-        tok = stream.read(1)
         cnt += 1
-    return cnt > 1
+        tok = stream.read(1)
+    return cnt > 0
 
 
 def check_if_whitespace_only(value: bytes) -> bool:
@@ -379,7 +379,7 @@ def deprecation(msg: str) -> None:
 
 
 def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
-    """Raise an exception that a feature will be removed, but has a replacement."""
+    """Issue a warning that a feature will be removed, but has a replacement."""
     deprecate(
         f"{old_name} is deprecated and will be removed in pypdf {removed_in}. Use {new_name} instead.",
         4,
@@ -394,7 +394,7 @@ def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) 
 
 
 def deprecate_no_replacement(name: str, removed_in: str) -> None:
-    """Raise an exception that a feature will be removed without replacement."""
+    """Issue a warning that a feature will be removed without replacement."""
     deprecate(f"{name} is deprecated and will be removed in pypdf {removed_in}.", 4)
 
 
