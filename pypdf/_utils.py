@@ -379,7 +379,7 @@ def deprecation(msg: str) -> None:
 
 
 def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
-    """Raise an exception that a feature will be removed, but has a replacement."""
+    """Issue a warning that a feature will be removed, but has a replacement."""
     deprecate(
         f"{old_name} is deprecated and will be removed in pypdf {removed_in}. Use {new_name} instead.",
         4,
@@ -394,7 +394,7 @@ def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) 
 
 
 def deprecate_no_replacement(name: str, removed_in: str) -> None:
-    """Raise an exception that a feature will be removed without replacement."""
+    """Issue a warning that a feature will be removed without replacement."""
     deprecate(f"{name} is deprecated and will be removed in pypdf {removed_in}.", 4)
 
 
