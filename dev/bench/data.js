@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731672753759,
+  "lastUpdate": 1731680417823,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -61451,6 +61451,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004628786727117957",
             "extra": "mean: 781.1957736000011 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "65f4680b313ad9066776b53107c074f61c077159",
+          "message": "DOC: Improve two docstrings (#2945)\n\ndeprecate_with_replacement and deprecate_no_replacement are not raising exceptions, but are issuing warnings. Change their docstrings to reflect this.",
+          "timestamp": "2024-11-15T15:17:41+01:00",
+          "tree_id": "fb6e556aecc7b331438a85cfc057407284cf8367",
+          "url": "https://github.com/py-pdf/pypdf/commit/65f4680b313ad9066776b53107c074f61c077159"
+        },
+        "date": 1731680415400,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.7882216614784543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014688738714422015",
+            "extra": "mean: 358.6515426000062 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.638005269406149,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008633600247842812",
+            "extra": "mean: 85.92537783332925 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22864098218251977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03721030337183887",
+            "extra": "mean: 4.3736691054000065 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.145589734908782,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010730664248867184",
+            "extra": "mean: 58.32403641176477 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0882288462689659,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04578908269330366",
+            "extra": "mean: 11.33416158419999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2491549316988486,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03550015553934872",
+            "extra": "mean: 800.5412095999986 msec\nrounds: 5"
           }
         ]
       }
