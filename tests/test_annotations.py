@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.errors import DeprecationError
 from pypdf.annotations import (
     AnnotationDictionary,
     Ellipse,
@@ -19,6 +18,7 @@ from pypdf.annotations import (
     Rectangle,
     Text,
 )
+from pypdf.errors import DeprecationError
 from pypdf.generic import ArrayObject, FloatObject, NumberObject
 
 TESTS_ROOT = Path(__file__).parent.resolve()
