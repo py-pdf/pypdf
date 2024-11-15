@@ -29,4 +29,5 @@ class OutlineItem(Destination):
         stream.write(b" ")
         value = self.dest_array
         value.write_to_stream(stream)
-        stream.write(b"\n>>")
+        stream.write(b"\n")
+        stream.write(b">>")
