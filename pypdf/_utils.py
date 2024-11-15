@@ -124,6 +124,11 @@ def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     return versions[max(pdf_header_indices)]
 
 
+WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
+WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
+WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
+
+
 def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:
     """
     Read non-whitespace characters and return them.
@@ -363,11 +368,6 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
     if isinstance(b, str):
         return ord(b)
     return b
-
-
-WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
-WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
-WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
 
 
 def deprecate(msg: str, stacklevel: int = 3) -> None:
