@@ -18,7 +18,7 @@ import sys
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
 
-import pypdf as py_pkg  # noqa: E402
+import pypdf as py_pkg
 
 shutil.copyfile("../CHANGELOG.md", "meta/CHANGELOG.md")
 shutil.copyfile("../CONTRIBUTORS.md", "meta/CONTRIBUTORS.md")
@@ -42,7 +42,6 @@ release = py_pkg.__version__
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = "4.0.0"
 
-myst_all_links_external = True
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
@@ -91,6 +90,10 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+# Configure MyST extension.
+myst_all_links_external = False
+myst_heading_anchors = 3
+
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -106,7 +109,6 @@ html_theme_options = {
     "canonical_url": "",
     "analytics_id": "",
     "logo_only": True,
-    "display_version": True,
     "prev_next_buttons_location": "bottom",
     "style_external_links": False,
     # Toc options

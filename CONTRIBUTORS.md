@@ -36,6 +36,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [maxbeer99](https://github.com/maxbeer99)
 * [McNeil, Karen](https://github.com/karenlmcneil): Arabic Language Support
 * [Mérino, Antoine](https://github.com/Merinorus)
+* [Murphy, Kevin](https://github.com/kmurphy4)
 * [nalin-udhaar](https://github.com/nalin-udhaar)
 * [Paramonov, Alexey](https://github.com/alexey-v-paramonov)
 * [Paternault, Louis](https://framagit.org/spalax)

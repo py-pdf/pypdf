@@ -65,6 +65,7 @@ class PdfObject(PdfObjectProtocol):
 
         Returns:
             Hash considering type and value.
+
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not implement .hash_bin() so far"
@@ -95,6 +96,7 @@ class PdfObject(PdfObjectProtocol):
 
         Returns:
           The cloned PdfObject
+
         """
         return self.clone(pdf_dest)
 
@@ -123,6 +125,7 @@ class PdfObject(PdfObjectProtocol):
 
         Returns:
           The cloned PdfObject
+
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not implement .clone so far"
@@ -143,6 +146,7 @@ class PdfObject(PdfObjectProtocol):
 
         Returns:
           The clone
+
         """
         try:
             if not force_duplicate and clone.indirect_reference.pdf == pdf_dest:
@@ -213,6 +217,7 @@ class NullObject(PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__,))
 
@@ -258,6 +263,7 @@ class BooleanObject(PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self.value))
 
@@ -311,6 +317,7 @@ class IndirectObject(PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self.idnum, self.generation, id(self.pdf)))
 
@@ -484,6 +491,7 @@ class FloatObject(float, PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self.as_numeric))
 
@@ -538,6 +546,7 @@ class NumberObject(int, PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self.as_numeric()))
 
@@ -590,6 +599,7 @@ class ByteStringObject(bytes, PdfObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, bytes(self)))
 
@@ -608,6 +618,15 @@ class ByteStringObject(bytes, PdfObject):
         stream.write(b"<")
         stream.write(binascii.hexlify(self))
         stream.write(b">")
+
+    def __str__(self) -> str:
+        charset_to_try = ["utf-16"] + list(NameObject.CHARSETS)
+        for enc in charset_to_try:
+            try:
+                return self.decode(enc)
+            except UnicodeDecodeError:
+                pass
+        raise PdfReadError("Cannot decode ByteStringObject.")
 
 
 class TextStringObject(str, PdfObject):  # noqa: SLOT000
@@ -678,6 +697,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self.original_bytes))
 
@@ -783,6 +803,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
 
         Returns:
             Hash considering type and value.
+
         """
         return hash((self.__class__, self))
 
@@ -877,6 +898,7 @@ def is_null_or_none(x: Any) -> TypeGuard[Union[None, NullObject, IndirectObject]
     """
     Returns:
         True if x is None or NullObject.
+
     """
     return x is None or (
         isinstance(x, PdfObject)

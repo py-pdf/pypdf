@@ -121,6 +121,8 @@ class DocumentInformation(DictionaryObject):
         retval = self.get(key, None)
         if isinstance(retval, TextStringObject):
             return retval
+        if isinstance(retval, ByteStringObject):
+            return str(retval)
         return None
 
     @property
@@ -241,6 +243,21 @@ class DocumentInformation(DictionaryObject):
         """
         return self.get(DI.MOD_DATE)
 
+    @property
+    def keywords(self) -> Optional[str]:
+        """
+        Read-only property accessing the document's keywords.
+
+        Returns a ``TextStringObject`` or ``None`` if keywords are not
+        specified.
+        """
+        return self._get_text(DI.KEYWORDS)
+
+    @property
+    def keywords_raw(self) -> Optional[str]:
+        """The "raw" version of keywords; can return a ``ByteStringObject``."""
+        return self.get(DI.KEYWORDS)
+
 
 class PdfDocCommon:
     """
@@ -342,6 +359,7 @@ class PdfDocCommon:
         Raises:
             PdfReadError: if file is encrypted and restrictions prevent
                 this action.
+
         """
         # Flattened pages will not work on an encrypted PDF;
         # the PDF file's page count is used in this case. Otherwise,
@@ -365,6 +383,7 @@ class PdfDocCommon:
 
         Returns:
             A :class:`PageObject<pypdf._page.PageObject>` instance.
+
         """
         if self.flattened_pages is None:
             self._flatten(self._readonly)
@@ -468,6 +487,7 @@ class PdfDocCommon:
         Returns:
             A dictionary which maps names to
             :class:`Destinations<pypdf.generic.Destination>`.
+
         """
         if retval is None:
             retval = {}
@@ -550,6 +570,7 @@ class PdfDocCommon:
             value is a :class:`Field<pypdf.generic.Field>` object. By
             default, the mapping name is used for keys.
             ``None`` if form data could not be located.
+
         """
         field_attributes = FA.attributes_dict()
         field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
@@ -700,6 +721,7 @@ class PdfDocCommon:
 
             If the document contains multiple form fields with the same name, the
             second and following will get the suffix .2, .3, ...
+
         """
 
         def indexed_key(k: str, fields: Dict[Any, Any]) -> str:
@@ -745,6 +767,7 @@ class PdfDocCommon:
                 - Multi-page list:
                     Field with multiple kids widgets
                     (example: radio buttons, field repeated on multiple pages).
+
         """
 
         def _get_inherited(obj: DictionaryObject, key: str) -> Any:
@@ -806,6 +829,7 @@ class PdfDocCommon:
 
         Raises:
             Exception: If a destination is invalid.
+
         """
         if "/OpenAction" not in self.root_object:
             return None
@@ -917,6 +941,7 @@ class PdfDocCommon:
 
         Returns:
             The page number or None if page is not found
+
         """
         return self._get_page_number_by_indirect(page.indirect_reference)
 
@@ -929,6 +954,7 @@ class PdfDocCommon:
 
         Returns:
             The page number or None if page is not found
+
         """
         return self._get_page_number_by_indirect(destination.page)
 
@@ -962,7 +988,7 @@ class PdfDocCommon:
                 # create a link to first Page
                 tmp = self.pages[0].indirect_reference
                 indirect_reference = NullObject() if tmp is None else tmp
-                return Destination(title, indirect_reference, Fit.fit())  # type: ignore
+                return Destination(title, indirect_reference, Fit.fit())
 
     def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
         dest, title, outline_item = None, None, None
@@ -1135,6 +1161,7 @@ class PdfDocCommon:
             pages:
             inherit:
             indirect_reference: Used recursively to flatten the /Pages object.
+
         """
         inheritable_page_attributes = (
             NameObject(PG.RESOURCES),
@@ -1208,6 +1235,7 @@ class PdfDocCommon:
 
             clean: replace PageObject with NullObject to prevent annotations
                 or destinations to reference a detached page.
+
         """
         if self.flattened_pages is None:
             self._flatten(self._readonly)
@@ -1246,6 +1274,7 @@ class PdfDocCommon:
 
         Returns:
             A PdfObject
+
         """
         return IndirectObject(num, gen, self).get_object()
 
@@ -1333,6 +1362,7 @@ class PdfDocCommon:
 
         Returns:
             list of filenames
+
         """
         catalog = self.root_object
         # From the catalog get the embedded file names
@@ -1371,6 +1401,7 @@ class PdfDocCommon:
         Returns:
             dictionary of filename -> Union[bytestring or List[ByteString]]
             If the filename exists multiple times a list of the different versions will be provided.
+
         """
         catalog = self.root_object
         # From the catalog get the embedded file names

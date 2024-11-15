@@ -18,7 +18,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 @pytest.mark.parametrize(
     "src",
     [
@@ -42,6 +42,7 @@ def test_read_xmp_metadata_samples(src):
     }
 
 
+@pytest.mark.samples
 def test_writer_xmp_metadata_samples():
     writer = PdfWriter(SAMPLE_ROOT / "020-xmp/output_with_metadata_pymupdf.pdf")
     xmp = writer.xmp_metadata
@@ -142,7 +143,7 @@ def test_identity_function(x):
     assert pypdf.xmp._identity(x) == x
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "xmpmm_instance_id"),
     [
@@ -162,7 +163,7 @@ def test_xmpmm_instance_id(url, name, xmpmm_instance_id):
     assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_xmp_dc_description_extraction():
     """XMP dc_description is correctly extracted."""
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
@@ -178,7 +179,7 @@ def test_xmp_dc_description_extraction():
     }
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_dc_creator_extraction():
     """XMP dc_creator is correctly extracted."""
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
@@ -190,7 +191,7 @@ def test_dc_creator_extraction():
     assert xmp_metadata.dc_creator == ["U.S. Fish and Wildlife Service"]
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_custom_properties_extraction():
     """XMP custom_properties is correctly extracted."""
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/986/986065.pdf"
@@ -202,7 +203,7 @@ def test_custom_properties_extraction():
     assert xmp_metadata.custom_properties == {"Style": "Searchable Image (Exact)"}
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_dc_subject_extraction():
     """XMP dc_subject is correctly extracted."""
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/959/959519.pdf"
@@ -234,7 +235,7 @@ def test_dc_subject_extraction():
     ]
 
 
-@pytest.mark.enable_socket()
+@pytest.mark.enable_socket
 def test_invalid_xmp_information_handling():
     """
     Invalid XML in xmp_metadata is gracefully handled.

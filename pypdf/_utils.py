@@ -124,6 +124,11 @@ def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     return versions[max(pdf_header_indices)]
 
 
+WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
+WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
+WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
+
+
 def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:
     """
     Read non-whitespace characters and return them.
@@ -136,6 +141,7 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
 
     Returns:
         The data which was read.
+
     """
     txt = b""
     while True:
@@ -157,6 +163,7 @@ def read_non_whitespace(stream: StreamType) -> bytes:
 
     Returns:
         The data which was read.
+
     """
     tok = stream.read(1)
     while tok in WHITESPACES:
@@ -174,6 +181,7 @@ def skip_over_whitespace(stream: StreamType) -> bool:
 
     Returns:
         True if more than one whitespace was skipped, otherwise return False.
+
     """
     tok = WHITESPACES[0]
     cnt = 0
@@ -192,6 +200,7 @@ def check_if_whitespace_only(value: bytes) -> bool:
 
     Returns:
         True if the value only has whitespace characters, otherwise return False.
+
     """
     for index in range(len(value)):
         current = value[index : index + 1]
@@ -220,6 +229,7 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
 
     Returns:
         The read bytes.
+
     """
     name = b""
     while True:
@@ -248,6 +258,7 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
 
     Returns:
         The data which was read.
+
     """
     if stream.tell() < to_read:
         raise PdfStreamError("Could not read malformed PDF file")
@@ -274,6 +285,7 @@ def read_previous_line(stream: StreamType) -> bytes:
 
     Returns:
         The data which was read.
+
     """
     line_content = []
     found_crlf = False
@@ -358,11 +370,6 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
     return b
 
 
-WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
-WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
-WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
-
-
 def deprecate(msg: str, stacklevel: int = 3) -> None:
     warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
 
@@ -438,6 +445,7 @@ def rename_kwargs(
         kwargs:
         aliases:
         fail:
+
     """
     for old_term, new_term in aliases.items():
         if old_term in kwargs:

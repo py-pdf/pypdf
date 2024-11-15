@@ -164,6 +164,7 @@ class Transformation:
         >>> from pypdf import Transformation
         >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
         >>> page.add_transformation(op)
+
     """
 
     # 9.5.4 Coordinate Systems for 3D
@@ -194,6 +195,7 @@ class Transformation:
 
         Returns:
             A tuple representing the transformation matrix as (a, b, c, d, e, f)
+
         """
         return (
             matrix[0][0],
@@ -219,6 +221,7 @@ class Transformation:
             >>> op = Transformation((1, 0, 0, -1, 0, height)) # vertical mirror
             >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, iwidth, 0))) # horizontal mirror
             >>> page.add_transformation(op)
+
         """
         ctm = Transformation.compress(matrix_multiply(self.matrix, m.matrix))
         return Transformation(ctm)
@@ -233,6 +236,7 @@ class Transformation:
 
         Returns:
             A new ``Transformation`` instance
+
         """
         m = self.ctm
         return Transformation(ctm=(m[0], m[1], m[2], m[3], m[4] + tx, m[5] + ty))
@@ -252,6 +256,7 @@ class Transformation:
 
         Returns:
             A new Transformation instance with the scaled matrix.
+
         """
         if sx is None and sy is None:
             raise ValueError("Either sx or sy must be specified")
@@ -274,6 +279,7 @@ class Transformation:
 
         Returns:
             A new ``Transformation`` instance with the rotated matrix.
+
         """
         rotation = math.radians(rotation)
         op: TransformationMatrixType = (
@@ -310,6 +316,7 @@ class Transformation:
 
         Returns:
             A tuple or list representing the transformed point in the form (x', y')
+
         """
         typ = FloatObject if as_object else float
         pt1 = (
@@ -365,6 +372,7 @@ class ImageFile:
             It is not allowed for inline images or images within a PdfReader.
             The `kwargs` parameter allows passing additional parameters
             to `Image.save()`, such as quality.
+
         """
         if pil_not_imported:
             raise ImportError(
@@ -487,6 +495,7 @@ class PageObject(DictionaryObject):
         pdf: PDF file the page belongs to.
         indirect_reference: Stores the original indirect reference to
             this object in its source PDF
+
     """
 
     original_page: "PageObject"  # very local use in writer when appending
@@ -515,6 +524,7 @@ class PageObject(DictionaryObject):
 
         Returns:
             Hash considering type and value.
+
         """
         return hash(
             (DictionaryObject, tuple(((k, v.hash_bin()) for k, v in self.items())))
@@ -561,6 +571,7 @@ class PageObject(DictionaryObject):
         Raises:
             PageSizeNotDefinedError: if ``pdf`` is ``None`` or contains
                 no page
+
         """
         page = PageObject(pdf)
 
@@ -668,7 +679,7 @@ class PageObject(DictionaryObject):
         - An integer
 
         Examples:
-            * `reader.pages[0].images[0]`        # return fist image
+            * `reader.pages[0].images[0]`        # return first image
             * `reader.pages[0].images['/I0']`    # return image '/I0'
             * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' Xobject/Form
             * `for img in reader.pages[0].images:` # loops through all objects
@@ -693,6 +704,7 @@ class PageObject(DictionaryObject):
 
         Inline images are extracted and named ~0~, ~1~, ..., with the
         indirect_reference set to None.
+
         """
         return VirtualListImages(self._get_ids_image, self._get_image)
 
@@ -753,7 +765,7 @@ class PageObject(DictionaryObject):
                 )
             elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
-                    f"{ope} operator met whereas not expected,"
+                    f"{ope!r} operator met whereas not expected,"
                     "please share usecase with pypdf dev team"
                 )
             """backup
@@ -881,6 +893,7 @@ class PageObject(DictionaryObject):
 
         Returns:
             The rotated PageObject
+
         """
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
@@ -916,6 +929,7 @@ class PageObject(DictionaryObject):
                 A tuple (computed key, bool) where the boolean indicates
                 if there is a resource of the given computed_key with the same
                 value.
+
             """
             value = page2res.raw_get(base_key)
             # TODO : possible improvement : in case of writer, the indirect_reference
@@ -1038,6 +1052,7 @@ class PageObject(DictionaryObject):
         Returns:
             The ``/Contents`` object, or ``None`` if it does not exist.
             ``/Contents`` is optional, as described in §7.7.3.3 of the PDF Reference.
+
         """
         if PG.CONTENTS in self:
             try:
@@ -1130,6 +1145,7 @@ class PageObject(DictionaryObject):
             over: set the page2 content over page1 if True (default) else under
             expand: If True, the current page dimensions will be
                 expanded to accommodate the dimensions of the page to be merged.
+
         """
         self._merge_page(page2, over=over, expand=expand)
 
@@ -1445,6 +1461,7 @@ class PageObject(DictionaryObject):
           over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the dimensions
             of the page to be merged.
+
         """
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
@@ -1471,6 +1488,7 @@ class PageObject(DictionaryObject):
           over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
         """
         op = Transformation().scale(scale, scale)
         self.merge_transformed_page(page2, op, over, expand)
@@ -1492,6 +1510,7 @@ class PageObject(DictionaryObject):
           over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
         """
         op = Transformation().rotate(rotation)
         self.merge_transformed_page(page2, op, over, expand)
@@ -1515,6 +1534,7 @@ class PageObject(DictionaryObject):
           over: set the page2 content over page1 if True (default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
         """
         op = Transformation().translate(tx, ty)
         self.merge_transformed_page(page2, op, over, expand)
@@ -1534,6 +1554,7 @@ class PageObject(DictionaryObject):
                 object can be passed.
 
         See :doc:`/user/cropping-and-transforming`.
+
         """
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
@@ -1582,6 +1603,7 @@ class PageObject(DictionaryObject):
         Args:
             sx: The scaling factor on horizontal axis.
             sy: The scaling factor on vertical axis.
+
         """
         self.add_transformation((sx, 0, 0, sy, 0, 0))
         self.cropbox = self.cropbox.scale(sx, sy)
@@ -1631,6 +1653,7 @@ class PageObject(DictionaryObject):
 
         Args:
             factor: The scaling factor (for both X and Y axis).
+
         """
         self.scale(factor, factor)
 
@@ -1642,6 +1665,7 @@ class PageObject(DictionaryObject):
         Args:
             width: The new width.
             height: The new height.
+
         """
         sx = width / float(self.mediabox.width)
         sy = height / float(self.mediabox.height)
@@ -1677,6 +1701,7 @@ class PageObject(DictionaryObject):
 
         Returns:
             int : page number; None if the page is not attached to a PDF.
+
         """
         if self.indirect_reference is None:
             return None
@@ -1815,6 +1840,7 @@ class PageObject(DictionaryObject):
             content_key: indicate the default key where to extract data
                 None = the object; this allow to reuse the function on XObject
                 default = "/Content"
+
         """
         text: str = ""
         output: str = ""
@@ -2148,6 +2174,7 @@ class PageObject(DictionaryObject):
 
         Returns:
             Dict[str, Font]: dictionary of _layout_mode.Font instances keyed by font name
+
         """
         # Font retrieval logic adapted from pypdf.PageObject._extract_text()
         objr: Any = self
@@ -2183,6 +2210,7 @@ class PageObject(DictionaryObject):
         scale_weight: float = 1.25,
         strip_rotated: bool = True,
         debug_path: Optional[Path] = None,
+        font_height_weight: float = 1,
     ) -> str:
         """
         Get text preserving fidelity to source PDF text layout.
@@ -2202,10 +2230,13 @@ class PageObject(DictionaryObject):
                   - bts.json: text render ops left justified and grouped by BT/ET operators
                   - bt_groups.json: BT/ET operations grouped by rendered y-coord (aka lines)
                 Defaults to None.
+            font_height_weight: multiplier for font height when calculating
+                blank lines. Defaults to 1.
 
         Returns:
             str: multiline string containing page text in a fixed width format that
                 closely adheres to the rendered layout in the source pdf.
+
         """
         fonts = self._layout_mode_fonts()
         if debug_path:  # pragma: no cover
@@ -2232,7 +2263,7 @@ class PageObject(DictionaryObject):
 
         char_width = _layout_mode.fixed_char_width(bt_groups, scale_weight)
 
-        return _layout_mode.fixed_width_page(ty_groups, char_width, space_vertically)
+        return _layout_mode.fixed_width_page(ty_groups, char_width, space_vertically, font_height_weight)
 
     def extract_text(
         self,
@@ -2307,9 +2338,12 @@ class PageObject(DictionaryObject):
                   - tjs.json: individual text render ops with corresponding transform matrices
                   - bts.json: text render ops left justified and grouped by BT/ET operators
                   - bt_groups.json: BT/ET operations grouped by rendered y-coord (aka lines)
+            layout_mode_font_height_weight (float): multiplier for font height when calculating
+                blank lines. Defaults to 1.
 
         Returns:
             The extracted text
+
         """
         if extraction_mode not in ["plain", "layout"]:
             raise ValueError(f"Invalid text extraction mode '{extraction_mode}'")
@@ -2328,7 +2362,8 @@ class PageObject(DictionaryObject):
                 space_vertically=kwargs.get("layout_mode_space_vertically", True),
                 scale_weight=kwargs.get("layout_mode_scale_weight", 1.25),
                 strip_rotated=kwargs.get("layout_mode_strip_rotated", True),
-                debug_path=kwargs.get("layout_mode_debug_path", None),
+                debug_path=kwargs.get("layout_mode_debug_path"),
+                font_height_weight=kwargs.get("layout_mode_font_height_weight", 1)
             )
         if len(args) >= 1:
             if isinstance(args[0], str):
@@ -2388,6 +2423,7 @@ class PageObject(DictionaryObject):
 
         Returns:
             The extracted text
+
         """
         return self._extract_text(
             xform,
@@ -2406,6 +2442,7 @@ class PageObject(DictionaryObject):
 
         Returns:
             A tuple (Set of embedded fonts, set of unembedded fonts)
+
         """
         obj = self.get_object()
         assert isinstance(obj, DictionaryObject)
@@ -2585,6 +2622,7 @@ def _get_fonts_walk(
     embedded.
 
     We create and add to two sets, fnt = fonts used and emb = fonts embedded.
+
     """
     fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
 

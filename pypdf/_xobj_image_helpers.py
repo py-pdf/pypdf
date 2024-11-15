@@ -48,6 +48,7 @@ def _get_imagemode(
     Returns
         Image mode not taking into account mask(transparency)
         ColorInversion is required (like for some DeviceCMYK)
+
     """
     if depth > MAX_IMAGE_MODE_NESTING_DEPTH:
         raise PdfReadError(
@@ -209,14 +210,18 @@ def _handle_flate(
             if img.mode == "1":
                 # Two values ("high" and "low").
                 expected_count = 2 * nb
-                if len(lookup) != expected_count:
-                    if len(lookup) < expected_count:
-                        raise PdfReadError(
-                            f"Not enough lookup values: Expected {expected_count}, got {len(lookup)}."
+                actual_count = len(lookup)
+                if actual_count != expected_count:
+                    if actual_count < expected_count:
+                        logger_warning(
+                            f"Not enough lookup values: Expected {expected_count}, got {actual_count}.",
+                            __name__
                         )
-                    if not check_if_whitespace_only(lookup[expected_count:]):
-                        raise PdfReadError(
-                            f"Too many lookup values: Expected {expected_count}, got {len(lookup)}."
+                        lookup += bytes([0] * (expected_count - actual_count))
+                    elif not check_if_whitespace_only(lookup[expected_count:]):
+                        logger_warning(
+                            f"Too many lookup values: Expected {expected_count}, got {actual_count}.",
+                            __name__
                         )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
