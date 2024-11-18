@@ -1047,7 +1047,7 @@ class PdfWriter(PdfDocCommon):
     def update_page_form_field_values(
         self,
         page: Union[PageObject, List[PageObject], None],
-        fields: Dict[str, Any],
+        fields: Dict[str, Union[str, List[str], Tuple[str, str, float]]],
         flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
     ) -> None:
