@@ -202,9 +202,8 @@ def check_if_whitespace_only(value: bytes) -> bool:
         True if the value only has whitespace characters, otherwise return False.
 
     """
-    for index in range(len(value)):
-        current = value[index : index + 1]
-        if current not in WHITESPACES:
+    for b in value:
+        if b not in WHITESPACES:
             return False
     return True
 
