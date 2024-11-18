@@ -202,10 +202,7 @@ def check_if_whitespace_only(value: bytes) -> bool:
         True if the value only has whitespace characters, otherwise return False.
 
     """
-    for b in value:
-        if b not in WHITESPACES:
-            return False
-    return True
+    return all(b in WHITESPACES for b in value)
 
 
 def skip_over_comment(stream: StreamType) -> None:
