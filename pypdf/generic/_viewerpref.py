@@ -39,14 +39,14 @@ f_obj = BooleanObject(False)
 
 
 class ViewerPreferences(DictionaryObject):
-    def _get_bool(self, key: str, deft: Optional[BooleanObject]) -> BooleanObject:
-        return self.get(key, deft)
+    def _get_bool(self, key: str, default: Optional[BooleanObject]) -> BooleanObject:
+        return self.get(key, default)
 
     def _set_bool(self, key: str, v: bool) -> None:
         self[NameObject(key)] = BooleanObject(v is True)
 
-    def _get_name(self, key: str, deft: Optional[NameObject]) -> Optional[NameObject]:
-        return self.get(key, deft)
+    def _get_name(self, key: str, default: Optional[NameObject]) -> Optional[NameObject]:
+        return self.get(key, default)
 
     def _set_name(self, key: str, lst: List[str], v: NameObject) -> None:
         if v[0] != "/":
@@ -55,8 +55,8 @@ class ViewerPreferences(DictionaryObject):
             raise ValueError(f"{v} is an unacceptable value")
         self[NameObject(key)] = NameObject(v)
 
-    def _get_arr(self, key: str, deft: Optional[List[Any]]) -> NumberObject:
-        return self.get(key, None if deft is None else ArrayObject(deft))
+    def _get_arr(self, key: str, default: Optional[List[Any]]) -> NumberObject:
+        return self.get(key, None if default is None else ArrayObject(deft))
 
     def _set_arr(self, key: str, v: Optional[ArrayObject]) -> None:
         if v is None:
@@ -69,8 +69,8 @@ class ViewerPreferences(DictionaryObject):
             raise ValueError("ArrayObject is expected")
         self[NameObject(key)] = v
 
-    def _get_int(self, key: str, deft: Optional[NumberObject]) -> NumberObject:
-        return self.get(key, deft)
+    def _get_int(self, key: str, default: Optional[NumberObject]) -> NumberObject:
+        return self.get(key, default)
 
     def _set_int(self, key: str, v: int) -> None:
         self[NameObject(key)] = NumberObject(v)
@@ -80,46 +80,46 @@ class ViewerPreferences(DictionaryObject):
         return NameObject("/PrintScaling")
 
     def __new__(cls: Any, value: Any = None) -> "ViewerPreferences":
-        def _add_prop_bool(key: str, deft: Optional[BooleanObject]) -> property:
+        def _add_prop_bool(key: str, default: Optional[BooleanObject]) -> property:
             return property(
-                lambda self: self._get_bool(key, deft),
+                lambda self: self._get_bool(key, default),
                 lambda self, v: self._set_bool(key, v),
                 None,
                 f"""
-            Returns/Modify the status of {key}, Returns {deft} if not defined
+            Returns/Modify the status of {key}, Returns {default} if not defined
             """,
             )
 
         def _add_prop_name(
-            key: str, lst: List[str], deft: Optional[NameObject]
+            key: str, lst: List[str], default: Optional[NameObject]
         ) -> property:
             return property(
-                lambda self: self._get_name(key, deft),
+                lambda self: self._get_name(key, default),
                 lambda self, v: self._set_name(key, lst, v),
                 None,
                 f"""
-            Returns/Modify the status of {key}, Returns {deft} if not defined.
+            Returns/Modify the status of {key}, Returns {default} if not defined.
             Acceptable values: {lst}
             """,
             )
 
-        def _add_prop_arr(key: str, deft: Optional[ArrayObject]) -> property:
+        def _add_prop_arr(key: str, default: Optional[ArrayObject]) -> property:
             return property(
-                lambda self: self._get_arr(key, deft),
+                lambda self: self._get_arr(key, default),
                 lambda self, v: self._set_arr(key, v),
                 None,
                 f"""
-            Returns/Modify the status of {key}, Returns {deft} if not defined
+            Returns/Modify the status of {key}, Returns {default} if not defined
             """,
             )
 
-        def _add_prop_int(key: str, deft: Optional[int]) -> property:
+        def _add_prop_int(key: str, default: Optional[int]) -> property:
             return property(
-                lambda self: self._get_int(key, deft),
+                lambda self: self._get_int(key, default),
                 lambda self, v: self._set_int(key, v),
                 None,
                 f"""
-            Returns/Modify the status of {key}, Returns {deft} if not defined
+            Returns/Modify the status of {key}, Returns {default} if not defined
             """,
             )
 
