@@ -29,7 +29,6 @@ import secrets
 
 from cryptography import __version__
 from cryptography.hazmat.decrepit.ciphers.algorithms import ARC4
-
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.ciphers.base import Cipher
