@@ -840,8 +840,7 @@ class PdfDocCommon:
             return create_string_object(oa)
         elif isinstance(oa, ArrayObject):
             try:
-                page, typ = oa[0:2]
-                array = oa[2:]
+                page, typ, *array = oa
                 fit = Fit(typ, tuple(array))
                 return Destination("OpenAction", page, fit)
             except Exception as exc:
