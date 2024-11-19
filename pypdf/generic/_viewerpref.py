@@ -56,7 +56,7 @@ class ViewerPreferences(DictionaryObject):
         self[NameObject(key)] = NameObject(v)
 
     def _get_arr(self, key: str, default: Optional[List[Any]]) -> NumberObject:
-        return self.get(key, None if default is None else ArrayObject(deft))
+        return self.get(key, None if default is None else ArrayObject(default))
 
     def _set_arr(self, key: str, v: Optional[ArrayObject]) -> None:
         if v is None:
