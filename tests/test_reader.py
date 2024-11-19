@@ -14,6 +14,7 @@ from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
 from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
+    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
@@ -745,16 +746,16 @@ def test_decode_permissions():
     print_ = base.copy()
     print_["print"] = True
     with pytest.raises(
-        DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+        DeprecationError,
+        match="decode_permissions is deprecated and was removed in pypdf 6.0.0. Use user_access_permissions instead",
     ):
         assert reader.decode_permissions(4) == print_
 
     modify = base.copy()
     modify["modify"] = True
     with pytest.raises(
-        DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+        DeprecationError,
+        match="decode_permissions is deprecated and was removed in pypdf 6.0.0. Use user_access_permissions instead",
     ):
         assert reader.decode_permissions(8) == modify
 
