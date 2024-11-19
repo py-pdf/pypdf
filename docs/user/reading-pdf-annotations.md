@@ -89,7 +89,7 @@ reader = PdfReader("example.pdf")
 attachments = {}
 for page in reader.pages:
     if "/Annots" in page:
-        for annotation in page["/Annots"]:
+        for annot in page["/Annots"]:
             subtype = annot.get_object()["/Subtype"]
             if subtype == "/FileAttachment":
                 fileobj = annot.get_object()["/FS"]
