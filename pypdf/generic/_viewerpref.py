@@ -50,9 +50,9 @@ class ViewerPreferences(DictionaryObject):
 
     def _set_name(self, key: str, lst: List[str], v: NameObject) -> None:
         if v[0] != "/":
-            raise ValueError(f"{v} is not starting with '/'")
+            raise ValueError(f"{v} does not start with '/'")
         if lst != [] and v not in lst:
-            raise ValueError(f"{v} is not par of acceptable values")
+            raise ValueError(f"{v} is an unacceptable value")
         self[NameObject(key)] = NameObject(v)
 
     def _get_arr(self, key: str, deft: Optional[List[Any]]) -> NumberObject:
