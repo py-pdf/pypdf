@@ -14,6 +14,7 @@ from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
 from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
+    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
@@ -727,6 +728,36 @@ def test_issue604(caplog, strict):
         # oi can be destination or a list:preferred to just print them
         for oi in outline:
             out.append(get_dest_pages(oi))  # noqa: PERF401
+
+
+def test_decode_permissions():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    base = {
+        "accessability": False,  # Do not fix typo, as part of official, but deprecated API.
+        "annotations": False,
+        "assemble": False,
+        "copy": False,
+        "forms": False,
+        "modify": False,
+        "print_high_quality": False,
+        "print": False,
+    }
+
+    print_ = base.copy()
+    print_["print"] = True
+    with pytest.raises(
+        DeprecationError,
+        match="decode_permissions is deprecated and will be removed in pypdf 6.0.0. Use user_access_permissions instead",  # noqa: E501
+    ):
+        assert reader.decode_permissions(4) == print_
+
+    modify = base.copy()
+    modify["modify"] = True
+    with pytest.raises(
+        DeprecationError,
+        match="decode_permissions is deprecated and will be removed in pypdf 6.0.0. Use user_access_permissions instead",  # noqa: E501
+    ):
+        assert reader.decode_permissions(8) == modify
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
