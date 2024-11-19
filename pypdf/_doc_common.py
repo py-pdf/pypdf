@@ -48,11 +48,7 @@ from typing import (
 from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
-from ._utils import (
-    deprecate_with_replacement,
-    logger_warning,
-    parse_iso8824_date,
-)
+from ._utils import logger_warning, parse_iso8824_date
 from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
 from .constants import (
