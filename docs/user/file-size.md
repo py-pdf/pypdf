@@ -108,4 +108,4 @@ the content that is no longer visible will still be present in the PDF.
 
 ## Going Further
 
-The presentation [Putting a Squeeze on Your PDF](https://youtube.com/watch?v=tgOABUhVwFs) has other suggestions. One takeaway is that most of the significant size optimizations usually come from image and font modification. However, font optimization, such as replacing, merging, and subsetting, is not within the functionality of pypdf.
+The presentation [Putting a Squeeze on Your PDF](https://youtube.com/watch?v=tgOABUhVwFs) has other suggestions. One takeaway is that most of the significant size optimizations usually come from image and font modification. However, font optimization, such as replacing, merging, and subsetting, is not within the functionality of pypdf at the moment.
