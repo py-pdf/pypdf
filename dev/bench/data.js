@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732369997733,
+  "lastUpdate": 1732395535005,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -62177,6 +62177,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0070602003339275245",
             "extra": "mean: 789.2029074000106 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5b80cbb47a29e42e3cf8790c2f4440e7a18407ef",
+          "message": "ROB: Skip annotation destination being NullObject in PdfWriter (#2964)\n\n* BUG: Skip annotation destination being NullObject in PdfWriter\r\n\r\n* fix merge",
+          "timestamp": "2024-11-23T21:56:20+01:00",
+          "tree_id": "2bab99844e6ed47a3c90b3344b5460dce03196f3",
+          "url": "https://github.com/py-pdf/pypdf/commit/5b80cbb47a29e42e3cf8790c2f4440e7a18407ef"
+        },
+        "date": 1732395532106,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.863997058368084,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017168116143251135",
+            "extra": "mean: 349.16236979998985 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.555242839870308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008689600810732695",
+            "extra": "mean: 86.54080350000015 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23304932905336156,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011273220907105882",
+            "extra": "mean: 4.290937047799991 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.39709620154896,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007601575358206024",
+            "extra": "mean: 57.480857058832875 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08871810448107996,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03975682680400834",
+            "extra": "mean: 11.271656510800005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2759055808567747,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004546280696952851",
+            "extra": "mean: 783.7570545999938 msec\nrounds: 5"
           }
         ]
       }
