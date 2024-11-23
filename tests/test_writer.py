@@ -2487,7 +2487,7 @@ def test_append_pdf_with_dest_without_page(caplog):
 @pytest.mark.enable_socket
 def test_destination_is_none():
     """Tests for PR#2963"""
-    url = "https://raw.githubusercontent.com/dxsooo/pypdf/refs/heads/main/resources/3.pdf"
+    url = "https://github.com/user-attachments/files/17879461/3.pdf"
     name = "pr2963.pdf"
     source_data = BytesIO(get_data_from_url(url, name=name))
     writer = PdfWriter()
