@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732188310048,
+  "lastUpdate": 1732369997733,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -62111,6 +62111,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006788891351101821",
             "extra": "mean: 781.1001814000178 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "zeohan.dxs@gmail.com",
+            "name": "Jiajie Han",
+            "username": "dxsooo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "72a883886ab83ff130098dd99e6f1110b2b7b264",
+          "message": "ROB: Skip destination page being None in PdfWriter (#2963)\n\nSome PDFs happen `dest[\"/Page\"] is None` which causes \r\n\r\n> AttributeError: 'NoneType' object has no attribute 'indirect_reference'\r\n\r\nwhen merging files.",
+          "timestamp": "2024-11-23T14:49:53+01:00",
+          "tree_id": "600954e14a9a6381a000626cc5e8fad17b86d5ed",
+          "url": "https://github.com/py-pdf/pypdf/commit/72a883886ab83ff130098dd99e6f1110b2b7b264"
+        },
+        "date": 1732369994779,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8686791750399734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020966412851409037",
+            "extra": "mean: 348.5924842000031 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.780915405558703,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007557299236100906",
+            "extra": "mean: 84.88304733333034 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23434007934073503,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025860126285960766",
+            "extra": "mean: 4.267302472600005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.42750202725448,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010270243197310492",
+            "extra": "mean: 57.38056999999899 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08865262834199922,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06741124053856776",
+            "extra": "mean: 11.279981413999991 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.267101262075237,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0070602003339275245",
+            "extra": "mean: 789.2029074000106 msec\nrounds: 5"
           }
         ]
       }
