@@ -2493,7 +2493,7 @@ def test_destination_is_nullobject():
     writer = PdfWriter()
     writer.append(source_data)
 
-    
+
 @pytest.mark.enable_socket
 def test_destination_page_is_none():
     """Tests for #2963"""
