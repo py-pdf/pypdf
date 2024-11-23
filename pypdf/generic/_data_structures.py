@@ -251,6 +251,8 @@ class ArrayObject(List[Any], PdfObject):
             tok = stream.read(1)
             while tok.isspace():
                 tok = stream.read(1)
+            if tok == b"":
+                break
             if tok == b"%":
                 stream.seek(-1, 1)
                 skip_over_comment(stream)
@@ -1399,7 +1401,7 @@ class ContentStream(DecodedStreamObject):
         self._operations = []
 
     @property
-    def operations(self) -> List[Tuple[Any, Any]]:
+    def operations(self) -> List[Tuple[Any, bytes]]:
         if not self._operations and self._data:
             self._parse_content_stream(BytesIO(self._data))
             self._data = b""
@@ -1450,7 +1452,6 @@ def read_object(
     elif tok == b"(":
         return read_string_from_stream(stream, forced_encoding)
     elif tok == b"e" and stream.read(6) == b"endobj":
-        stream.seek(-6, 1)
         return NullObject()
     elif tok == b"n":
         return NullObject.read_from_stream(stream)

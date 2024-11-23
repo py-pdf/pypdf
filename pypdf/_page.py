@@ -679,7 +679,7 @@ class PageObject(DictionaryObject):
         - An integer
 
         Examples:
-            * `reader.pages[0].images[0]`        # return fist image
+            * `reader.pages[0].images[0]`        # return first image
             * `reader.pages[0].images['/I0']`    # return image '/I0'
             * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' Xobject/Form
             * `for img in reader.pages[0].images:` # loops through all objects
@@ -765,7 +765,7 @@ class PageObject(DictionaryObject):
                 )
             elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
-                    f"{ope} operator met whereas not expected,"
+                    f"{ope!r} operator met whereas not expected,"
                     "please share usecase with pypdf dev team"
                 )
             """backup

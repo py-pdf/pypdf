@@ -107,8 +107,19 @@ def test_read_metadata(pdf_path, expected):
         docinfo.creation_date_raw
         docinfo.modification_date
         docinfo.modification_date_raw
+        docinfo.keywords
+        docinfo.keywords_raw
         if "/Title" in metadict:
+            assert isinstance(docinfo.title, str)
             assert metadict["/Title"] == docinfo.title
+
+
+def test_read_metadata_title_is_utf8():
+    with open(RESOURCE_ROOT / "bytes.pdf", "rb") as inputfile:
+        reader = PdfReader(inputfile)
+        title = reader.metadata.title
+        # Should be a str.
+        assert title == "Microsoft Word - トランスバース社買収電話会議英語Final.docx"
 
 
 def test_iss1943():

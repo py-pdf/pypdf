@@ -312,6 +312,15 @@ def test_read_object_empty():
     assert isinstance(read_object(stream, pdf), NullObject)
 
 
+def test_read_object_empty_in_array():
+    stream = BytesIO(b"[endobj")
+    pdf = None
+    result = read_object(stream, pdf)
+    assert isinstance(result, ArrayObject)
+    assert len(result) == 1
+    assert isinstance(result[0], NullObject)
+
+
 def test_read_object_invalid():
     stream = BytesIO(b"hello")
     pdf = None
