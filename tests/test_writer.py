@@ -2486,12 +2486,12 @@ def test_append_pdf_with_dest_without_page(caplog):
 
 @pytest.mark.enable_socket
 def test_destination_page_is_none():
-    """Tests for PR#2963"""
+    """Tests for #2963"""
     url = "https://github.com/user-attachments/files/17879461/3.pdf"
-    name = "pr2963.pdf"
-    source_data = BytesIO(get_data_from_url(url, name=name))
+    name = "iss2963.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
-    writer.append(source_data)
+    writer.append(reader)
 
 
 def test_stream_not_closed():
