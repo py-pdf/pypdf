@@ -2493,6 +2493,16 @@ def test_destination_is_nullobject():
     writer = PdfWriter()
     writer.append(source_data)
 
+    
+@pytest.mark.enable_socket
+def test_destination_page_is_none():
+    """Tests for #2963"""
+    url = "https://github.com/user-attachments/files/17879461/3.pdf"
+    name = "iss2963.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+
 
 def test_stream_not_closed():
     """Tests for #2905"""
