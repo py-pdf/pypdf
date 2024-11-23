@@ -2485,7 +2485,7 @@ def test_append_pdf_with_dest_without_page(caplog):
 
 
 @pytest.mark.enable_socket
-def test_destination_is_none():
+def test_destination_page_is_none():
     """Tests for PR#2963"""
     url = "https://github.com/user-attachments/files/17879461/3.pdf"
     name = "pr2963.pdf"
