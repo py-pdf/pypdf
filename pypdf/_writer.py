@@ -2758,6 +2758,8 @@ class PdfWriter(PdfDocCommon):
             ):
                 # already exists : should not duplicate it
                 pass
+            elif dest["/Page"] is None:
+                pass
             elif isinstance(dest["/Page"], NullObject):
                 pass
             elif isinstance(dest["/Page"], int):
