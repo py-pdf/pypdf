@@ -2485,6 +2485,16 @@ def test_append_pdf_with_dest_without_page(caplog):
 
 
 @pytest.mark.enable_socket
+def test_destination_is_nullobject():
+    """Tests for #2958"""
+    url = "https://github.com/user-attachments/files/17822279/C0.00.-.COVER.SHEET.pdf"
+    name = "iss2958.pdf"
+    source_data = BytesIO(get_data_from_url(url, name=name))
+    writer = PdfWriter()
+    writer.append(source_data)
+
+
+@pytest.mark.enable_socket
 def test_destination_page_is_none():
     """Tests for #2963"""
     url = "https://github.com/user-attachments/files/17879461/3.pdf"

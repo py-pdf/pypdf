@@ -3000,6 +3000,8 @@ class PdfWriter(PdfDocCommon):
                             outlist.append(self._add_object(anc))
             else:
                 d = cast("DictionaryObject", ano["/A"])["/D"]
+                if isinstance(d, NullObject):
+                    continue
                 if isinstance(d, str):
                     # it is a named dest
                     if str(d) in self.get_named_dest_root():
