@@ -528,10 +528,8 @@ class CCITTFaxDecode:
                     columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
                     k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
-        if isinstance(rows, IndirectObject):
-            rows = rows.get_object()  # type: ignore
 
-        return CCITParameters(K=k, columns=columns, rows=cast(int, rows))
+        return CCITParameters(K=k, columns=columns, rows=int(rows))
 
     @staticmethod
     def decode(
