@@ -38,6 +38,7 @@ import math
 import struct
 import zlib
 from base64 import a85decode
+from dataclasses import dataclass
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -471,17 +472,17 @@ class JPXDecode:
         return data
 
 
+@dataclass
 class CCITParameters:
-    """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
+    """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter."""
 
-    def __init__(self, K: int = 0, columns: int = 0, rows: int = 0) -> None:
-        self.K = K
-        self.EndOfBlock = None
-        self.EndOfLine = None
-        self.EncodedByteAlign = None
-        self.columns = columns  # width
-        self.rows = rows  # height
-        self.DamagedRowsBeforeError = None
+    K: int = 0
+    EndOfBlock: Union[int, None] = None
+    EndOfLine: Union[int, None] = None
+    EncodedByteAlign: Union[int, None] = None
+    columns: int = 0
+    rows: int = 0
+    DamagedRowsBeforeError: Union[int, None] = None
 
     @property
     def group(self) -> int:
@@ -507,7 +508,7 @@ class CCITTFaxDecode:
     @staticmethod
     def _get_parameters(
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
-        rows: int,
+        rows: Union[int, IndirectObject],
     ) -> CCITParameters:
         # §7.4.6, optional parameters for the CCITTFaxDecode filter
         k = 0
@@ -519,16 +520,18 @@ class CCITTFaxDecode:
             if isinstance(parameters_unwrapped, ArrayObject):
                 for decode_parm in parameters_unwrapped:
                     if CCITT.COLUMNS in decode_parm:
-                        columns = decode_parm[CCITT.COLUMNS]
+                        columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.K in decode_parm:
-                        k = decode_parm[CCITT.K]
+                        k = decode_parm[CCITT.K].get_object()
             else:
                 if CCITT.COLUMNS in parameters_unwrapped:
-                    columns = parameters_unwrapped[CCITT.COLUMNS]  # type: ignore
+                    columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
-                    k = parameters_unwrapped[CCITT.K]  # type: ignore
+                    k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
+        if isinstance(rows, IndirectObject):
+            rows = rows.get_object()
 
-        return CCITParameters(k, columns, rows)
+        return CCITParameters(K=k, columns=columns, rows=rows)
 
     @staticmethod
     def decode(
