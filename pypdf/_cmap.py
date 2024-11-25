@@ -7,6 +7,7 @@ from ._utils import logger_error, logger_warning
 from .generic import (
     DecodedStreamObject,
     DictionaryObject,
+    IndirectObject,
     StreamObject,
     is_null_or_none,
 )
@@ -472,10 +473,16 @@ def compute_space_width(
         sp_width = font_width_map[space_char]
         if sp_width == 0:
             raise ValueError("Zero width")
+        if isinstance(sp_width, IndirectObject):
+            sp_width = sp_width.get_object()
     except (KeyError, ValueError):
+        # if using default we consider space will be only half size
         sp_width = (
-            font_width_map["default"] / 2.0
-        )  # if using default we consider space will be only half size
+            font_width_map["default"]
+        )
+        if isinstance(sp_width, IndirectObject):
+            sp_width = sp_width.get_object()
+        sp_width = sp_width / 2.0
 
     return sp_width
 
@@ -491,6 +498,8 @@ def compute_font_width(
         char_width = (
             font_width_map["default"]
         )
+    if isinstance(char_width, IndirectObject):
+        char_width = char_width.get_object()
 
     return char_width
 
