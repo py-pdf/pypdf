@@ -531,7 +531,7 @@ class CCITTFaxDecode:
         if isinstance(rows, IndirectObject):
             rows = rows.get_object()  # type: ignore
 
-        return CCITParameters(K=k, columns=columns, rows=rows)
+        return CCITParameters(K=k, columns=columns, rows=cast(int, rows))
 
     @staticmethod
     def decode(
