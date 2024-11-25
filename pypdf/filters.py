@@ -474,7 +474,7 @@ class JPXDecode:
 
 @dataclass
 class CCITParameters:
-    """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter."""
+    """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     K: int = 0
     EndOfBlock: Union[int, None] = None
@@ -529,7 +529,7 @@ class CCITTFaxDecode:
                 if CCITT.K in parameters_unwrapped:
                     k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
         if isinstance(rows, IndirectObject):
-            rows = rows.get_object()
+            rows = rows.get_object()  # type: ignore
 
         return CCITParameters(K=k, columns=columns, rows=rows)
 
