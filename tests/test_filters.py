@@ -206,7 +206,7 @@ def test_ccitt_get_parameters(parameters, expected_k):
 
 def test_ccitt_get_parameters__indirect_object():
     class Pdf:
-        def get_object(self, reference):
+        def get_object(self, reference) -> NumberObject:
             return NumberObject(42)
 
     parameters = CCITTFaxDecode._get_parameters(
