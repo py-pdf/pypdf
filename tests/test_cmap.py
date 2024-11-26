@@ -269,3 +269,15 @@ def test_iss2925():
     name = "iss2925.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert "slicing on the PDG to extract the relevant contextual" in reader.pages[3].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_iss2966():
+    """regression test for issue #2966: indirect objects in fonts"""
+    url = (
+        "https://github.com/user-attachments/files/17904233/repro_out.pdf"
+    )
+    name = "iss2966.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert "Lorem ipsum dolor sit amet" in reader.pages[0].extract_text()
+
