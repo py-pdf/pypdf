@@ -273,7 +273,7 @@ def test_iss2925():
 
 @pytest.mark.enable_socket
 def test_iss2966():
-    """regression test for issue #2966: indirect objects in fonts"""
+    """Regression test for issue #2966: indirect objects in fonts"""
     url = (
         "https://github.com/user-attachments/files/17904233/repro_out.pdf"
     )
