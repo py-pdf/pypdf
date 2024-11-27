@@ -944,12 +944,12 @@ class Encryption:
     ) -> CryptBase:
         if method == "/AESV2":
             return CryptAES(aes128_key)
-        elif method == "/AESV3":
+        if method == "/AESV3":
             return CryptAES(aes256_key)
-        elif method == "/Identity":
+        if method == "/Identity":
             return CryptIdentity()
-        else:
-            return CryptRC4(rc4_key)
+
+        return CryptRC4(rc4_key)
 
     @staticmethod
     def _encode_password(password: Union[bytes, str]) -> bytes:
