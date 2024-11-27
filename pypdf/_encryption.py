@@ -72,7 +72,7 @@ class CryptFilter:
         if isinstance(obj, ByteStringObject):
             data = self.str_crypt.encrypt(obj.original_bytes)
             obj = ByteStringObject(data)
-        if isinstance(obj, TextStringObject):
+        elif isinstance(obj, TextStringObject):
             data = self.str_crypt.encrypt(obj.get_encoded_bytes())
             obj = ByteStringObject(data)
         elif isinstance(obj, StreamObject):
@@ -574,7 +574,7 @@ class AlgV5:
 
     @staticmethod
     def calculate_hash(R: int, password: bytes, salt: bytes, udata: bytes) -> bytes:
-        # from https://github.com/qpdf/qpdf/blob/main/libqpdf/QPDF_encryption.cc
+        # https://github.com/qpdf/qpdf/blob/main/libqpdf/QPDF_encryption.cc
         k = hashlib.sha256(password + salt + udata).digest()
         if R < 6:
             return k
@@ -924,6 +924,7 @@ class Encryption:
         key_data = key[:n] + pack1 + pack2
         key_hash = hashlib.md5(key_data)
         rc4_key = key_hash.digest()[: min(n + 5, 16)]
+
         # for AES-128
         key_hash.update(b"sAlT")
         aes128_key = key_hash.digest()[: min(n + 5, 16)]
@@ -941,10 +942,10 @@ class Encryption:
     def _get_crypt(
         method: str, rc4_key: bytes, aes128_key: bytes, aes256_key: bytes
     ) -> CryptBase:
-        if method == "/AESV3":
-            return CryptAES(aes256_key)
         if method == "/AESV2":
             return CryptAES(aes128_key)
+        elif method == "/AESV3":
+            return CryptAES(aes256_key)
         elif method == "/Identity":
             return CryptIdentity()
         else:
