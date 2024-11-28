@@ -692,7 +692,7 @@ class PdfReader(PdfDocCommon):
         HEADER_SIZE = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
         first = True
-        while line[:5] != b"%%EOF":
+        while not line.startswith(b"%%EOF")
             if line != b"" and first:
                 if any(
                     line.strip().endswith(tr) for tr in (b"%%EO", b"%%E", b"%%", b"%")
@@ -737,7 +737,7 @@ class PdfReader(PdfDocCommon):
             logger_warning("startxref on same line as offset", __name__)
         else:
             line = read_previous_line(stream)
-            if line[:9] != b"startxref":
+            if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found")
         return startxref
 
