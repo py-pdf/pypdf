@@ -799,7 +799,7 @@ class PdfWriter(PdfDocCommon):
         # Hello world!
         # endstream
         # endobj
-    
+
         if isinstance(data, str):
             data = data.encode("latin-1")
         file_entry = DecodedStreamObject()
