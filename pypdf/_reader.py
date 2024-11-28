@@ -692,7 +692,7 @@ class PdfReader(PdfDocCommon):
         HEADER_SIZE = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
         first = True
-        while not line.startswith(b"%%EOF")
+        while not line.startswith(b"%%EOF"):
             if line != b"" and first:
                 if any(
                     line.strip().endswith(tr) for tr in (b"%%EO", b"%%E", b"%%", b"%")
