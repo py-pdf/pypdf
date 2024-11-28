@@ -398,7 +398,7 @@ class PdfWriter(PdfDocCommon):
         This method returns a dictionary that maps a mime-type to its
         representation.
 
-        See https://ipython.readthedocs.io/en/stable/config/integrating.html
+        https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
         pdf_data = BytesIO()
         self.write(pdf_data)
@@ -496,8 +496,8 @@ class PdfWriter(PdfDocCommon):
         page_org = page
         excluded_keys = list(excluded_keys)
         excluded_keys += [PA.PARENT, "/StructParents"]
-        # acrobat does not accept to have two indirect ref pointing on the same
-        # page; therefore in order to add easily multiple copies of the same
+        # Acrobat does not accept two indirect references pointing on the same
+        # page; therefore in order to add multiple copies of the same
         # page, we need to create a new dictionary for the page, however the
         # objects below (including content) are not duplicated:
         try:  # delete an already existing page
@@ -799,6 +799,7 @@ class PdfWriter(PdfDocCommon):
         # Hello world!
         # endstream
         # endobj
+    
         if isinstance(data, str):
             data = data.encode("latin-1")
         file_entry = DecodedStreamObject()
@@ -884,7 +885,6 @@ class PdfWriter(PdfDocCommon):
                 document.
 
         """
-        # Get page count from writer and reader
         reader_num_pages = len(reader.pages)
         # Copy pages from reader to writer
         for reader_page_number in range(reader_num_pages):
@@ -1306,7 +1306,7 @@ class PdfWriter(PdfDocCommon):
         If both identifiers match when a file reference is resolved, it is very
         likely that the correct and unchanged file has been found. If only the first
         identifier matches, a different version of the correct file has been found.
-        see 14.4 "File Identifiers".
+        see §14.4 "File Identifiers".
         """
         if self._ID:
             id1 = self._ID[0]
@@ -1595,7 +1595,7 @@ class PdfWriter(PdfDocCommon):
         Args:
             value: dict with the entries to be set. if None : remove the /Info entry from the pdf.
 
-        Note that some PDF files use (xmp)metadata streams instead of document
+        Note that some PDF files use (XMP) metadata streams instead of document
         information dictionaries, and these metadata streams will not be
         accessed by this function.
 
@@ -1828,7 +1828,7 @@ class PdfWriter(PdfDocCommon):
 
         See §8.3.2 from PDF 1.7 spec.
 
-        Each element is a dictionaries with ``/F`` and ``/I`` keys.
+        Each element is a dictionary with ``/F`` and ``/I`` keys.
         """
         return self.get_threads_root()
 
@@ -2185,7 +2185,7 @@ class PdfWriter(PdfDocCommon):
                         if isinstance(v, IndirectObject):
                             self._objects[v.idnum - 1] = content
                         else:
-                            # should only occur with pdf not respecting pdf spec
+                            # should only occur in a PDF not respecting PDF spec
                             # where streams must be indirected.
                             d[k] = self._add_object(content)  # pragma: no cover
                 except (TypeError, KeyError):
@@ -2756,7 +2756,7 @@ class PdfWriter(PdfDocCommon):
                     cast(DictionaryObject, self._root_object["/Names"])["/Dests"],
                 )["/Names"],
             ):
-                # already exists : should not duplicate it
+                # already exists: should not duplicate it
                 pass
             elif dest["/Page"] is None or isinstance(dest["/Page"], NullObject):
                 pass
@@ -2804,7 +2804,7 @@ class PdfWriter(PdfDocCommon):
             )
             self._insert_filtered_outline(
                 outline, outline_item_typ, None
-            )  # TODO : use before parameter
+            )  # TODO: use before parameter
 
         if "/Annots" not in excluded_fields:
             for pag in srcpages.values():
@@ -3095,7 +3095,7 @@ class PdfWriter(PdfDocCommon):
         before: Union[None, TreeObject, IndirectObject] = None,
     ) -> None:
         for dest in outlines:
-            # TODO  : can be improved to keep A and SE entries (ignored for the moment)
+            # TODO: can be improved to keep A and SE entries (ignored for the moment)
             # with np=self.add_outline_item_destination(dest,parent,before)
             if dest.get("/Type", "") == "/Outlines" or "/Title" not in dest:
                 np = parent
