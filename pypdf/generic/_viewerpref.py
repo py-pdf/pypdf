@@ -47,7 +47,7 @@ class ViewerPreferences(DictionaryObject):
             self.indirect_reference = obj.indirect_reference  # type: ignore
         except AttributeError:
             pass
-    
+
     def _get_bool(self, key: str, default: Optional[BooleanObject]) -> BooleanObject:
         return self.get(key, default)
 
