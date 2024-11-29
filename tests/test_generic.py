@@ -509,7 +509,7 @@ def test_textstringobject_autodetect_utf16():
 
 def test_textstringobject__numbers_as_input():
     _ = TextStringObject(42)
-    _ = TextStringObject(13.37) 
+    _ = TextStringObject(13.37)
 
 
 def test_remove_child_not_in_tree():
