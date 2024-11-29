@@ -405,9 +405,9 @@ def build_font_width_map(
         # Widths for a CIDFont are defined using the DW and W entries.
         # DW2 and W2 are for vertical use. Vertical type is not implemented.
         ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
-        try:
-            font_width_map["default"] = cast(float, ft1["/DW"])
-        except Exception:
+        if "/DW" in ft1:
+            font_width_map["default"] = cast(float, ft1["/DW"].get_object())
+        else:
             font_width_map["default"] = default_font_width
         if "/W" in ft1:
             w = ft1["/W"].get_object()
@@ -419,18 +419,15 @@ def build_font_width_map(
             if isinstance(second, int):
                 # C_first C_last same_W
                 en = second
-                width = w[2]
-                if isinstance(width, IndirectObject):
-                    width = width.get_object()
+                width = w[2].get_object()
                 for c_code in range(st, en + 1):
                     font_width_map[chr(c_code)] = width
                 w = w[3:]
             elif isinstance(second, list):
                 # Starting_C [W1 W2 ... Wn]
                 c_code = st
-                for width in second:
-                    if isinstance(width, IndirectObject):
-                        width = width.get_object()
+                for ww in second:
+                    width = ww.get_object()
                     font_width_map[chr(c_code)] = width
                     c_code += 1
                 w = w[2:]
