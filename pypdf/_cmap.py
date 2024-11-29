@@ -397,7 +397,7 @@ def build_font_width_map(
     st: int = 0
     en: int = 0
     try:
-        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object)] * 2.0
+        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object())] * 2.0
     except KeyError:
         pass
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
