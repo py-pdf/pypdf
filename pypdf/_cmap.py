@@ -419,13 +419,18 @@ def build_font_width_map(
             if isinstance(second, int):
                 # C_first C_last same_W
                 en = second
+                width = w[2]
+                if isinstance(width, IndirectObject):
+                    width = width.get_object()
                 for c_code in range(st, en + 1):
-                    font_width_map[chr(c_code)] = w[2]
+                    font_width_map[chr(c_code)] = width
                 w = w[3:]
             elif isinstance(second, list):
                 # Starting_C [W1 W2 ... Wn]
                 c_code = st
                 for width in second:
+                    if isinstance(width, IndirectObject):
+                        width = width.get_object()
                     font_width_map[chr(c_code)] = width
                     c_code += 1
                 w = w[2:]
@@ -473,16 +478,10 @@ def compute_space_width(
         sp_width = font_width_map[space_char]
         if sp_width == 0:
             raise ValueError("Zero width")
-        if isinstance(sp_width, IndirectObject):
-            sp_width = sp_width.get_object()
     except (KeyError, ValueError):
-        # if using default we consider space will be only half size
         sp_width = (
-            font_width_map["default"]
-        )
-        if isinstance(sp_width, IndirectObject):
-            sp_width = sp_width.get_object()
-        sp_width = sp_width / 2.0
+            font_width_map["default"] / 2.0
+        )  # if using default we consider space will be only half size
 
     return sp_width
 
@@ -498,8 +497,6 @@ def compute_font_width(
         char_width = (
             font_width_map["default"]
         )
-    if isinstance(char_width, IndirectObject):
-        char_width = char_width.get_object()
 
     return char_width
 
