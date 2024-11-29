@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732791566259,
+  "lastUpdate": 1732887331676,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -62441,6 +62441,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01612925201047842",
             "extra": "mean: 793.1955079999966 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nsw42@users.noreply.github.com",
+            "name": "nsw42",
+            "username": "nsw42"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "13832342639bf32a380137555d761e0deb723c14",
+          "message": "BUG: Handle indirect objects in font width calculations (#2967)\n\nCloses #2966.\r\n\r\n---------\r\n\r\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2024-11-29T14:32:50+01:00",
+          "tree_id": "567ec3e0e258e797c2e943545f77778108e270a9",
+          "url": "https://github.com/py-pdf/pypdf/commit/13832342639bf32a380137555d761e0deb723c14"
+        },
+        "date": 1732887329386,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.796200951643274,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015557432128237272",
+            "extra": "mean: 357.62808800001267 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.631388842010052,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009548696850154038",
+            "extra": "mean: 85.97425583333755 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2274091964928631,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016708117921775106",
+            "extra": "mean: 4.397359541400005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.231722659956013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007753297481758623",
+            "extra": "mean: 58.03250317647306 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08897990946755464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026643715420057657",
+            "extra": "mean: 11.238491992000025 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2523566198778486,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017850534789024368",
+            "extra": "mean: 798.4946013999888 msec\nrounds: 5"
           }
         ]
       }
