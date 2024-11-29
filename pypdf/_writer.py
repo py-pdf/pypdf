@@ -398,7 +398,9 @@ class PdfWriter(PdfDocCommon):
         This method returns a dictionary that maps a mime-type to its
         representation.
 
-        See also https://ipython.readthedocs.io/en/stable/config/integrating.html
+        .. seealso::
+        
+           https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
         pdf_data = BytesIO()
         self.write(pdf_data)
