@@ -399,7 +399,7 @@ class PdfWriter(PdfDocCommon):
         representation.
 
         .. seealso::
-        
+
            https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
         pdf_data = BytesIO()
