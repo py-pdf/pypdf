@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732895532284,
+  "lastUpdate": 1732895568584,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -62573,6 +62573,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0022297749016887865",
             "extra": "mean: 780.812956800014 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3d9464c001e99f3ae0c4f04c523b59f50cda8761",
+          "message": "DOC: Add Polygon to a comment (#2972)\n\nThe annotations Polygon and Polyline automatically set /Rect.",
+          "timestamp": "2024-11-29T16:50:17+01:00",
+          "tree_id": "ff174dd408ab2fadbff1e9e81d9ce96744c95594",
+          "url": "https://github.com/py-pdf/pypdf/commit/3d9464c001e99f3ae0c4f04c523b59f50cda8761"
+        },
+        "date": 1732895566051,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8097101666011315,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01355404041655831",
+            "extra": "mean: 355.90859580000256 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.705285469564986,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008364269064171074",
+            "extra": "mean: 85.43149183333536 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23440653472210374,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018731149237191328",
+            "extra": "mean: 4.2660926718000045 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.468697296049093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006332283301431542",
+            "extra": "mean: 60.72125694118527 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08809305926883831,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04934421036686698",
+            "extra": "mean: 11.351632107000011 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2680945061318756,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014925871964413754",
+            "extra": "mean: 788.5847586000068 msec\nrounds: 5"
           }
         ]
       }
