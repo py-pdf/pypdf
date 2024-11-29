@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732895568584,
+  "lastUpdate": 1732909460492,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -62639,6 +62639,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.014925871964413754",
             "extra": "mean: 788.5847586000068 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "5710966+thomas-forte@users.noreply.github.com",
+            "name": "Tommy Forte",
+            "username": "thomas-forte"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a1d5de1f321f614acb1a8f17b7a86abd0451b3cf",
+          "message": "BUG: Fixed reference of value with str.__new__ in TextStringObject (#2952)\n\nCloses #2949.\r\n\r\n---------\r\n\r\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2024-11-29T20:41:46+01:00",
+          "tree_id": "5c972d438a386544139816c23b0c54de809700e7",
+          "url": "https://github.com/py-pdf/pypdf/commit/a1d5de1f321f614acb1a8f17b7a86abd0451b3cf"
+        },
+        "date": 1732909457968,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.802613156058204,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0029497857636986533",
+            "extra": "mean: 356.80985720001104 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.259645085872124,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016226056477194682",
+            "extra": "mean: 88.81274608333219 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2264223913027296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011934072184129249",
+            "extra": "mean: 4.416524329799995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.128576032818536,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001226171101558649",
+            "extra": "mean: 58.38196929411932 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0879530068628084,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09657606990230594",
+            "extra": "mean: 11.36970793459999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2624090753460953,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005182694942151304",
+            "extra": "mean: 792.1362572000248 msec\nrounds: 5"
           }
         ]
       }
