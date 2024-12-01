@@ -76,7 +76,7 @@ class PdfObject(PdfObjectProtocol):
 
     def hash_value(self) -> bytes:
         return (
-            f"{self.__class__.__name__}:
+            f"{self.__class__.__name__}:"
             f"{self.hash_func(self.hash_value_data()).hexdigest()}"
         ).encode()
 
