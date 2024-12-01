@@ -1451,7 +1451,7 @@ class PdfWriter(PdfDocCommon):
                 obj is not None
                 and (
                     i >= len(self._original_hash)
-                    or cast(PdfObject, obj).hash_bin() != self._original_hash[i]
+                    or obj.hash_bin() != self._original_hash[i]
                 )
             )
         ]
