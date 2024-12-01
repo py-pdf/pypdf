@@ -1444,13 +1444,14 @@ class PdfWriter(PdfDocCommon):
             List of new or modified IndirectObjects
 
         """
+        original_hash_count = len(self._original_hash)
         return [
             cast(IndirectObject, obj).indirect_reference
             for i, obj in enumerate(self._objects)
             if (
                 obj is not None
                 and (
-                    i >= len(self._original_hash)
+                    i >= original_hash_count
                     or obj.hash_bin() != self._original_hash[i]
                 )
             )
@@ -1461,9 +1462,10 @@ class PdfWriter(PdfDocCommon):
         object_blocks = []
         current_start = -1
         current_stop = -2
+        original_hash_count = len(self._original_hash)
         for i, obj in enumerate(self._objects):
             if obj is not None and (
-                i >= len(self._original_hash)
+                i >= original_hash_count
                 or obj.hash_bin() != self._original_hash[i]
             ):
                 idnum = i + 1
