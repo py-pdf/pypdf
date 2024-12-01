@@ -1445,7 +1445,7 @@ class PdfWriter(PdfDocCommon):
 
         """
         return [
-            cast(IndirectObject, self._objects[i]).indirect_reference
+            cast(IndirectObject, obj).indirect_reference
             for i, obj in enumerate(self._objects)
             if (
                 obj is not None
