@@ -1462,7 +1462,7 @@ class PdfWriter(PdfDocCommon):
         current_start = -1
         current_stop = -2
         for i, obj in enumerate(self._objects):
-            if self._objects[i] is not None and (
+            if obj is not None and (
                 i >= len(self._original_hash)
                 or cast(PdfObject, obj).hash_bin() != self._original_hash[i]
             ):
