@@ -1464,7 +1464,7 @@ class PdfWriter(PdfDocCommon):
         for i, obj in enumerate(self._objects):
             if obj is not None and (
                 i >= len(self._original_hash)
-                or cast(PdfObject, obj).hash_bin() != self._original_hash[i]
+                or obj.hash_bin() != self._original_hash[i]
             ):
                 idnum = i + 1
                 assert isinstance(obj, PdfObject)  # mypy
