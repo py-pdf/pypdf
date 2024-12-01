@@ -1435,24 +1435,23 @@ class PdfWriter(PdfDocCommon):
 
     def list_objects_in_increment(self) -> List[IndirectObject]:
         """
-        For debugging/analysis.
-        Provides the list of new/modified objects that will be written
+        For analysis or debugging.
+        Provides the list of new or modified objects that will be written
         in the increment.
         Deleted objects will not be freed but will become orphans.
 
         Returns:
-            List of (new / modified) IndirectObjects
+            List of new or modified IndirectObjects
 
         """
         return [
             cast(IndirectObject, self._objects[i]).indirect_reference
-            for i in range(len(self._objects))
+            for i, obj in enumerate(self._objects))
             if (
-                self._objects[i] is not None
+                obj is not None
                 and (
                     i >= len(self._original_hash)
-                    or cast(PdfObject, self._objects[i]).hash_bin()
-                    != self._original_hash[i]
+                    or cast(PdfObject, obj).hash_bin() != self._original_hash[i]
                 )
             )
         ]
@@ -1465,8 +1464,7 @@ class PdfWriter(PdfDocCommon):
         for i, obj in enumerate(self._objects):
             if self._objects[i] is not None and (
                 i >= len(self._original_hash)
-                or cast(PdfObject, self._objects[i]).hash_bin()
-                != self._original_hash[i]
+                or cast(PdfObject, obj).hash_bin() != self._original_hash[i]
             ):
                 idnum = i + 1
                 assert isinstance(obj, PdfObject)  # mypy
