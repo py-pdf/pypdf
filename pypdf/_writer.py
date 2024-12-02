@@ -3300,22 +3300,20 @@ class PdfWriter(PdfDocCommon):
         self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
 
 
-def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
+def _pdf_objectify(obj: Union[Dict[str, Any], str, float, List[Any]]) -> PdfObject:
     if isinstance(obj, PdfObject):
         return obj
     if isinstance(obj, dict):
         to_add = DictionaryObject()
         for key, value in obj.items():
-            name_key = NameObject(key)
-            cast_value = _pdf_objectify(value)
-            to_add[name_key] = cast_value
+            to_add[NameObject(key)] = _pdf_objectify(value)
         return to_add
     elif isinstance(obj, str):
         if obj.startswith("/"):
             return NameObject(obj)
         else:
             return TextStringObject(obj)
-    elif isinstance(obj, (int, float)):
+    elif isinstance(obj, (float, int)):
         return FloatObject(obj)
     elif isinstance(obj, list):
         return ArrayObject(_pdf_objectify(i) for i in obj)
