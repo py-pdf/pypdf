@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733145834563,
+  "lastUpdate": 1733160413203,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -62969,6 +62969,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005726142239223745",
             "extra": "mean: 782.7408654000067 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fa1838cdbaa9ddc2609309b421bda48ad44d365f",
+          "message": "STY: Move `_repr_mimebundle_` (#2978)\n\nPut as the last member of PdfWriter, as is different functionality to the other methods.",
+          "timestamp": "2024-12-02T18:24:18+01:00",
+          "tree_id": "8d91b4f838c7dd1ad2b08d0234a3effd64afd6a8",
+          "url": "https://github.com/py-pdf/pypdf/commit/fa1838cdbaa9ddc2609309b421bda48ad44d365f"
+        },
+        "date": 1733160410792,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.782969292582088,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003110783286733832",
+            "extra": "mean: 359.3284348000054 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.551950873681157,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009823363295289723",
+            "extra": "mean: 86.56546508333089 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23031073143550138,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024092580602515123",
+            "extra": "mean: 4.3419600718 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.977924711246693,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016790410417370921",
+            "extra": "mean: 58.9000138124991 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08824411652823473,
+            "unit": "iter/sec",
+            "range": "stddev: 0.079725776131325",
+            "extra": "mean: 11.332200257000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2757747717803658,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010149844352694814",
+            "extra": "mean: 783.8374155999986 msec\nrounds: 5"
           }
         ]
       }
