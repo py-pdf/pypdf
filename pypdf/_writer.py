@@ -2209,7 +2209,7 @@ class PdfWriter(PdfDocCommon):
         if to_delete & ImageType.INLINE_IMAGES:
             i |= ObjectDeletionFlag.INLINE_IMAGES
 
-        if to_delete & ImageType.DRAWING_IMAGES
+        if to_delete & ImageType.DRAWING_IMAGES:
             i |= ObjectDeletionFlag.DRAWING_IMAGES
 
         for page in self.pages:
