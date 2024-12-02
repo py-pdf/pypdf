@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733129504233,
+  "lastUpdate": 1733145834563,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -62903,6 +62903,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06886168100725665",
             "extra": "mean: 811.8120398000087 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "402cc7fcfef8beae51320e142cbfd8d3126f4957",
+          "message": "STY: Change int to float type hint (#2977)\n\nPEP 484 – Type Hints: when an argument is annotated as having type float, an argument of type int is acceptable.\r\nAlso remove two variables which are used immediately.",
+          "timestamp": "2024-12-02T14:21:23+01:00",
+          "tree_id": "df8f87c5e630849a6c3a43b61ee98b9e0d6e8918",
+          "url": "https://github.com/py-pdf/pypdf/commit/402cc7fcfef8beae51320e142cbfd8d3126f4957"
+        },
+        "date": 1733145832306,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.885278685216364,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031505812221392353",
+            "extra": "mean: 346.58697099999927 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.733088980543396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006377676450365582",
+            "extra": "mean: 85.22904766666883 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23675616403665067,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021288657953987152",
+            "extra": "mean: 4.2237548664 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.90369890050385,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009310676271562878",
+            "extra": "mean: 59.15864958823851 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08839444932563495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06888010643258982",
+            "extra": "mean: 11.3129275382 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2775620185474368,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005726142239223745",
+            "extra": "mean: 782.7408654000067 msec\nrounds: 5"
           }
         ]
       }
