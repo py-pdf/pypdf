@@ -3299,6 +3299,7 @@ class PdfWriter(PdfDocCommon):
 
         return data
 
+
 def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
     if isinstance(obj, PdfObject):
         return obj
