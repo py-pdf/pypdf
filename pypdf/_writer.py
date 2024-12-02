@@ -201,8 +201,13 @@ class PdfWriter(PdfDocCommon):
            dict[id(pdf)][(idnum, generation)]
         """
 
-        self._ID: Union[ArrayObject, None] = None
         self._info_obj: Optional[PdfObject]
+        """The PDF files's document information dictionary,
+        the Info entry in the PDF file's trailer dictionary."""
+
+        self._ID: Union[ArrayObject, None] = None
+        """The PDF file identifier,
+        defined by the ID in the PDF file's trailer dictionary."""
 
         if self.incremental:
             if isinstance(fileobj, (str, Path)):
