@@ -873,16 +873,16 @@ class PdfWriter(PdfDocCommon):
     def _update_field_annotation(
         self,
         field: DictionaryObject,
-        annot: DictionaryObject,
+        annotation: DictionaryObject,
         font_name: str = "",
         font_size: float = -1,
     ) -> None:
         # Calculate rectangle dimensions
-        _rct = cast(RectangleObject, annot[AA.Rect])
+        _rct = cast(RectangleObject, annotation[AA.Rect])
         rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
 
         # Extract font information
-        da = annot.get_inherited(
+        da = annotation.get_inherited(
             AA.DA,
             cast(DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]).get(
                 AA.DA, None
@@ -963,7 +963,7 @@ class PdfWriter(PdfDocCommon):
         # Retrieve field text and selected values
         field_flags = field.get(FA.Ff, 0)
         if field.get(FA.FT, "/Tx") == "/Ch" and field_flags & FA.FfBits.Combo == 0:
-            txt = "\n".join(annot.get_inherited(FA.Opt, []))
+            txt = "\n".join(annotation.get_inherited(FA.Opt, []))
             sel = field.get("/V", [])
             if not isinstance(sel, list):
                 sel = [sel]
@@ -987,7 +987,7 @@ class PdfWriter(PdfDocCommon):
                 "/Length": 0,
             }
         )
-        if AA.AP in annot:
+        if AA.AP in annotation:
             for k, v in cast(DictionaryObject, annot[AA.AP]).get("/N", {}).items():
                 if k not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
                     dct[k] = v
@@ -1006,15 +1006,15 @@ class PdfWriter(PdfDocCommon):
                 }
             )
         if AA.AP not in annot:
-            annot[NameObject(AA.AP)] = DictionaryObject(
+            annotation[NameObject(AA.AP)] = DictionaryObject(
                 {NameObject("/N"): self._add_object(dct)}
             )
-        elif "/N" not in cast(DictionaryObject, annot[AA.AP]):
-            cast(DictionaryObject, annot[NameObject(AA.AP)])[
+        elif "/N" not in cast(DictionaryObject, annotation[AA.AP]):
+            cast(DictionaryObject, annotation[NameObject(AA.AP)])[
                 NameObject("/N")
             ] = self._add_object(dct)
         else:  # [/AP][/N] exists
-            n = annot[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
+            n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
             self._objects[n - 1] = dct
             dct.indirect_reference = IndirectObject(n, 0, self)
 
@@ -1071,14 +1071,14 @@ class PdfWriter(PdfDocCommon):
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
-        for annot in page[PG.ANNOTS]:  # type: ignore
-            annot = cast(DictionaryObject, annot.get_object())
-            if annot.get("/Subtype", "") != "/Widget":
+        for annotation in page[PG.ANNOTS]:  # type: ignore
+            annotation = cast(DictionaryObject, annot.get_object())
+            if annotation.get("/Subtype", "") != "/Widget":
                 continue
-            if "/FT" in annot and "/T" in annot:
-                parent_annot = annot
+            if "/FT" in annotation and "/T" in annotation:
+                parent_annotation = annotation
             else:
-                parent_annot = annot.get(
+                parent_annotation = annotation.get(
                     PG.PARENT, DictionaryObject()
                 ).get_object()
 
@@ -1089,41 +1089,41 @@ class PdfWriter(PdfDocCommon):
                 ):
                     continue
                 if (
-                    parent_annot.get("/FT", None) == "/Ch"
-                    and "/I" in parent_annot
+                    parent_annotation.get("/FT", None) == "/Ch"
+                    and "/I" in parent_annotation
                 ):
-                    del parent_annot["/I"]
+                    del parent_annotation["/I"]
                 if flags:
-                    annot[NameObject(FA.Ff)] = NumberObject(flags)
+                    annotation[NameObject(FA.Ff)] = NumberObject(flags)
                 if isinstance(value, list):
                     lst = ArrayObject(TextStringObject(v) for v in value)
-                    parent_annot[NameObject(FA.V)] = lst
+                    parent_annotation[NameObject(FA.V)] = lst
                 elif isinstance(value, tuple):
-                    annot[NameObject(FA.V)] = TextStringObject(
+                    annotation[NameObject(FA.V)] = TextStringObject(
                         value[0],
                     )
                 else:
-                    parent_annot[NameObject(FA.V)] = TextStringObject(value)
-                if parent_annot.get(FA.FT) in ("/Btn"):
+                    parent_annotation[NameObject(FA.V)] = TextStringObject(value)
+                if parent_annotation.get(FA.FT) in ("/Btn"):
                     # Checkbox button (no /FT found in Radio widgets)
                     v = NameObject(value)
-                    if v not in annot[NameObject(AA.AP)][NameObject("/N")]:
+                    if v not in annotation[NameObject(AA.AP)][NameObject("/N")]:
                         v = NameObject("/Off")
                     # other cases will be updated through the for loop
-                    annot[NameObject(AA.AS)] = v
+                    annotation[NameObject(AA.AS)] = v
                 elif (
-                    parent_annot.get(FA.FT) == "/Tx"
-                    or parent_annot.get(FA.FT) == "/Ch"
+                    parent_annotation.get(FA.FT) == "/Tx"
+                    or parent_annotation.get(FA.FT) == "/Ch"
                 ):
                     # textbox
                     if isinstance(value, tuple):
                         self._update_field_annotation(
-                            parent_annot, annot, value[1], value[2]
+                            parent_annotation, annotation, value[1], value[2]
                         )
                     else:
-                        self._update_field_annotation(parent_annot, annot)
+                        self._update_field_annotation(parent_annotation, annotation)
                 elif (
-                    annot.get(FA.FT) == "/Sig"
+                    annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
 
