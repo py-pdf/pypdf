@@ -1084,7 +1084,7 @@ class PdfWriter(PdfDocCommon):
 
             for field, value in fields.items():
                 if not (
-                    self._get_qualified_field_name(parent_annot) == field
+                    self._get_qualified_field_name(parent_annotation) == field
                     or parent_annotation.get("/T", None) == field
                 ):
                     continue
