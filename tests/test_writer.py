@@ -660,7 +660,7 @@ def test_add_named_destination(pdf_file_path):
     assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
     with pytest.raises(ValueError) as exc:
         writer.get_object(reader.pages[0].indirect_reference)
-    assert exc.value.args[0] == "pdf must be self"
+    assert exc.value.args[0] == "PDF must be self"
 
     # write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
