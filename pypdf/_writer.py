@@ -2203,18 +2203,10 @@ class PdfWriter(PdfDocCommon):
 
         i = ObjectDeletionFlag.NONE
 
-        if to_delete & ImageType.IMAGES:
-            i |= to_delete & ObjectDeletionFlag.IMAGES
-        """
-        if to_delete & ImageType.XOBJECT_IMAGES:
-            i |= ObjectDeletionFlag.XOBJECT_IMAGES
+        for image in ("XOBJECT_IMAGES", "INLINE_IMAGES", "DRAWING_IMAGES"):
+            if to_delete & ImageType[image]:
+                i |= ObjectDeletionFlag[image]
 
-        if to_delete & ImageType.INLINE_IMAGES:
-            i |= ObjectDeletionFlag.INLINE_IMAGES
-
-        if to_delete & ImageType.DRAWING_IMAGES:
-            i |= ObjectDeletionFlag.DRAWING_IMAGES
-        """
         for page in self.pages:
             self.remove_objects_from_page(page, i)
 
