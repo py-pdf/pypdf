@@ -1005,7 +1005,7 @@ class PdfWriter(PdfDocCommon):
                     )
                 }
             )
-        if AA.AP not in annot:
+        if AA.AP not in annotation:
             annotation[NameObject(AA.AP)] = DictionaryObject(
                 {NameObject("/N"): self._add_object(dct)}
             )
