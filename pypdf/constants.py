@@ -1,3 +1,7 @@
+"""
+Various constants, enums and flags to aid readability.
+"""
+
 from enum import Enum, IntFlag, auto, unique
 from typing import Dict, Tuple
 
