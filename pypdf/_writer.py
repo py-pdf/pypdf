@@ -1072,7 +1072,7 @@ class PdfWriter(PdfDocCommon):
             logger_warning("No fields to update on this page", __name__)
             return
         for annotation in page[PG.ANNOTS]:  # type: ignore
-            annotation = cast(DictionaryObject, annot.get_object())
+            annotation = cast(DictionaryObject, annotation.get_object())
             if annotation.get("/Subtype", "") != "/Widget":
                 continue
             if "/FT" in annotation and "/T" in annotation:
@@ -1085,7 +1085,7 @@ class PdfWriter(PdfDocCommon):
             for field, value in fields.items():
                 if not (
                     self._get_qualified_field_name(parent_annot) == field
-                    or parent_annot.get("/T", None) == field
+                    or parent_annotation.get("/T", None) == field
                 ):
                     continue
                 if (
