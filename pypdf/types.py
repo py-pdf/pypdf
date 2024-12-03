@@ -1,7 +1,8 @@
 """Helpers for working with PDF types."""
 
-import sys
 from __future__ import annotations
+
+import sys
 from typing import List, Literal, Union
 
 if sys.version_info[:2] >= (3, 10):
