@@ -1164,7 +1164,7 @@ class PdfWriter(PdfDocCommon):
         annotations = cast(ArrayObject, page["/Annots"])
         for annotation, idx in enumerate(annotations):
             indirect = isinstance(ano, IndirectObject)
-            annotation = cast(DictionaryObject, ano.get_object())
+            annotation = cast(DictionaryObject, annotation.get_object())
             if annotation.get("/Subtype", "") == "/Widget" and "/FT" in annotation:
                 if (
                     "indirect_reference" in annotation.__dict__
