@@ -988,7 +988,7 @@ class PdfWriter(PdfDocCommon):
             }
         )
         if AA.AP in annot:
-            for k, v in cast(DictionaryObject, anno[AA.AP]).get("/N", {}).items():
+            for k, v in cast(DictionaryObject, annot[AA.AP]).get("/N", {}).items():
                 if k not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
                     dct[k] = v
 
@@ -1009,7 +1009,7 @@ class PdfWriter(PdfDocCommon):
             annot[NameObject(AA.AP)] = DictionaryObject(
                 {NameObject("/N"): self._add_object(dct)}
             )
-        elif "/N" not in cast(DictionaryObject, anno[AA.AP]):
+        elif "/N" not in cast(DictionaryObject, annot[AA.AP]):
             cast(DictionaryObject, annot[NameObject(AA.AP)])[
                 NameObject("/N")
             ] = self._add_object(dct)
