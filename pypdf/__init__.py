@@ -21,6 +21,7 @@ from .papersizes import PaperSize
 
 try:
     import PIL
+
     pil_version = PIL.__version__
 except ImportError:
     pil_version = "none"
