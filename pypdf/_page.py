@@ -679,7 +679,7 @@ class PageObject(DictionaryObject):
         - An integer
 
         Examples:
-            * `reader.pages[0].images[0]`        # return fist image
+            * `reader.pages[0].images[0]`        # return first image
             * `reader.pages[0].images['/I0']`    # return image '/I0'
             * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' Xobject/Form
             * `for img in reader.pages[0].images:` # loops through all objects
@@ -765,7 +765,7 @@ class PageObject(DictionaryObject):
                 )
             elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
-                    f"{ope} operator met whereas not expected,"
+                    f"{ope!r} operator met whereas not expected,"
                     "please share usecase with pypdf dev team"
                 )
             """backup
@@ -1750,7 +1750,7 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-    def _get_acutual_font_widths(
+    def _get_actual_font_widths(
         self,
         cmap: Tuple[
             Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
@@ -1817,7 +1817,7 @@ class PageObject(DictionaryObject):
                 rtl_dir,
                 visitor_text)
         font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
-            self._get_acutual_font_widths(cmap, text_operands, font_size, space_width))
+            self._get_actual_font_widths(cmap, text_operands, font_size, space_width))
         actual_str_size["str_widths"] += font_widths
 
         return text, rtl_dir, actual_str_size

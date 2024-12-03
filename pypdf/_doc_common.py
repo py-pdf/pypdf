@@ -121,6 +121,8 @@ class DocumentInformation(DictionaryObject):
         retval = self.get(key, None)
         if isinstance(retval, TextStringObject):
             return retval
+        if isinstance(retval, ByteStringObject):
+            return str(retval)
         return None
 
     @property
@@ -240,6 +242,21 @@ class DocumentInformation(DictionaryObject):
         is the offset from UTC.
         """
         return self.get(DI.MOD_DATE)
+
+    @property
+    def keywords(self) -> Optional[str]:
+        """
+        Read-only property accessing the document's keywords.
+
+        Returns a ``TextStringObject`` or ``None`` if keywords are not
+        specified.
+        """
+        return self._get_text(DI.KEYWORDS)
+
+    @property
+    def keywords_raw(self) -> Optional[str]:
+        """The "raw" version of keywords; can return a ``ByteStringObject``."""
+        return self.get(DI.KEYWORDS)
 
 
 class PdfDocCommon:
@@ -823,8 +840,7 @@ class PdfDocCommon:
             return create_string_object(oa)
         elif isinstance(oa, ArrayObject):
             try:
-                page, typ = oa[0:2]
-                array = oa[2:]
+                page, typ, *array = oa
                 fit = Fit(typ, tuple(array))
                 return Destination("OpenAction", page, fit)
             except Exception as exc:
