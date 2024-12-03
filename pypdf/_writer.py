@@ -2193,29 +2193,19 @@ class PdfWriter(PdfDocCommon):
         Remove images from this output.
 
         Args:
-            to_delete : The type of images to be deleted
+            to_delete: The type of images to be deleted
                 (default = all images types)
 
         """
         if isinstance(to_delete, bool):
             to_delete = ImageType.ALL
-        i = (
-            (
-                ObjectDeletionFlag.XOBJECT_IMAGES
-                if to_delete & ImageType.XOBJECT_IMAGES
-                else ObjectDeletionFlag.NONE
-            )
-            | (
-                ObjectDeletionFlag.INLINE_IMAGES
-                if to_delete & ImageType.INLINE_IMAGES
-                else ObjectDeletionFlag.NONE
-            )
-            | (
-                ObjectDeletionFlag.DRAWING_IMAGES
-                if to_delete & ImageType.DRAWING_IMAGES
-                else ObjectDeletionFlag.NONE
-            )
-        )
+
+        i = ObjectDeletionFlag.NONE
+
+        for image in ("XOBJECT_IMAGES", "INLINE_IMAGES", "DRAWING_IMAGES"):
+            if to_delete & ImageType[image]:
+                i |= ObjectDeletionFlag[image]
+
         for page in self.pages:
             self.remove_objects_from_page(page, i)
 
