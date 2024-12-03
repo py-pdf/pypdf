@@ -497,13 +497,13 @@ class PdfWriter(PdfDocCommon):
         else:
             cast(ArrayObject, node[PA.KIDS]).append(page.indirect_reference)
             self.flattened_pages.append(page)
-        cnt = 1000
+        recurse = 0
         while not is_null_or_none(node):
             node = cast(DictionaryObject, node.get_object())
             node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
             node = node.get(PA.PARENT, None)
-            cnt -= 1
-            if cnt < 0:
+            recurse += 1
+            if recurse > 1000:
                 raise PyPdfError("Too many recursive calls!")
         return page
 
