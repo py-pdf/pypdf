@@ -917,7 +917,7 @@ class PdfWriter(PdfDocCommon):
             DictionaryObject,
             cast(
                 DictionaryObject,
-                annot.get_inherited(
+                annotation.get_inherited(
                     "/DR",
                     cast(
                         DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]
@@ -988,7 +988,7 @@ class PdfWriter(PdfDocCommon):
             }
         )
         if AA.AP in annotation:
-            for k, v in cast(DictionaryObject, annot[AA.AP]).get("/N", {}).items():
+            for k, v in cast(DictionaryObject, annotation[AA.AP]).get("/N", {}).items():
                 if k not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
                     dct[k] = v
 
