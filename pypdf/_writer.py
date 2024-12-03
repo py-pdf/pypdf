@@ -1161,21 +1161,20 @@ class PdfWriter(PdfDocCommon):
 
         if "/Annots" not in page:
             return lst
-        annots = cast(ArrayObject, page["/Annots"])
-        for idx in range(len(annots)):
-            ano = annots[idx]
+        annotations = cast(ArrayObject, page["/Annots"])
+        for annotation, idx in enumerate(annotations):
             indirect = isinstance(ano, IndirectObject)
-            ano = cast(DictionaryObject, ano.get_object())
-            if ano.get("/Subtype", "") == "/Widget" and "/FT" in ano:
+            annotation = cast(DictionaryObject, ano.get_object())
+            if annotation.get("/Subtype", "") == "/Widget" and "/FT" in annotation:
                 if (
-                    "indirect_reference" in ano.__dict__
-                    and ano.indirect_reference in fields
+                    "indirect_reference" in annotation.__dict__
+                    and annotation.indirect_reference in fields
                 ):
                     continue
                 if not indirect:
-                    annots[idx] = self._add_object(ano)
-                fields.append(ano.indirect_reference)
-                lst.append(ano)
+                    annotations[idx] = self._add_object(annotation)
+                fields.append(annotation.indirect_reference)
+                lst.append(annotation)
         return lst
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
