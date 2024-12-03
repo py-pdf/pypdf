@@ -75,6 +75,7 @@ from .constants import (
     GoToActionArguments,
     ImageType,
     InteractiveFormDictEntries,
+    OutlineFontFlag,
     PageLabelStyle,
     TypFitArguments,
     UserAccessPermissions,
@@ -3336,9 +3337,9 @@ def _create_outline_item(
     if italic or bold:
         format_flag = 0
         if italic:
-            format_flag += 1
+            format_flag += OutlineFontFlag.italic
         if bold:
-            format_flag += 2
+            format_flag += OutlineFontFlag.bold
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
 
