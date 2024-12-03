@@ -75,6 +75,7 @@ from .constants import (
     GoToActionArguments,
     ImageType,
     InteractiveFormDictEntries,
+    OutlineFontFlag,
     PageLabelStyle,
     TypFitArguments,
     UserAccessPermissions,
@@ -1161,21 +1162,20 @@ class PdfWriter(PdfDocCommon):
 
         if "/Annots" not in page:
             return lst
-        annots = cast(ArrayObject, page["/Annots"])
-        for idx in range(len(annots)):
-            ano = annots[idx]
-            indirect = isinstance(ano, IndirectObject)
-            ano = cast(DictionaryObject, ano.get_object())
-            if ano.get("/Subtype", "") == "/Widget" and "/FT" in ano:
+        annotations = cast(ArrayObject, page["/Annots"])
+        for idx, annotation in enumerate(annotations):
+            is_indirect = isinstance(annotation, IndirectObject)
+            annotation = cast(DictionaryObject, annotation.get_object())
+            if annotation.get("/Subtype", "") == "/Widget" and "/FT" in annotation:
                 if (
-                    "indirect_reference" in ano.__dict__
-                    and ano.indirect_reference in fields
+                    "indirect_reference" in annotation.__dict__
+                    and annotation.indirect_reference in fields
                 ):
                     continue
-                if not indirect:
-                    annots[idx] = self._add_object(ano)
-                fields.append(ano.indirect_reference)
-                lst.append(ano)
+                if not is_indirect:
+                    annotations[idx] = self._add_object(annotation)
+                fields.append(annotation.indirect_reference)
+                lst.append(annotation)
         return lst
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
@@ -3336,9 +3336,9 @@ def _create_outline_item(
     if italic or bold:
         format_flag = 0
         if italic:
-            format_flag += 1
+            format_flag += OutlineFontFlag.italic
         if bold:
-            format_flag += 2
+            format_flag += OutlineFontFlag.bold
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
 

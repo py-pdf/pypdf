@@ -1,15 +1,4 @@
-"""
-PDF Specification Archive
-https://pdfa.org/resource/pdf-specification-archive/
-
-Portable Document Format Reference Manual, 1993. ISBN 0-201-62628-4
-https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.0.pdf
-
-ISO 32000-1:2008 (PDF 1.7)
-https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
-
-ISO 32000-2:2020 (PDF 2.0)
-"""
+"""Various constants, enums, and flags to aid readability."""
 
 from enum import Enum, IntFlag, auto, unique
 from typing import Dict, Tuple
