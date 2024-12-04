@@ -1055,10 +1055,10 @@ class PdfWriter(PdfDocCommon):
 
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
-            raise PyPdfError("No /AcroForm dictionary in PdfWriter Object")
+            raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
         af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
         if InteractiveFormDictEntries.Fields not in af:
-            raise PyPdfError("No /Fields dictionary in PdfWriter Object")
+            raise PyPdfError("No /Fields dictionary in PDF of PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
         # Iterate through pages, update field values
