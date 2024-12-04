@@ -1773,7 +1773,7 @@ def test_missing_fields(pdf_file_path):
         writer.update_page_form_field_values(
             writer.pages[0], {"foo": "some filled in text"}, flags=1
         )
-    assert exc.value.args[0] == "No /AcroForm dictionary in PdfWriter Object"
+    assert exc.value.args[0] == "No /AcroForm dictionary in PDF of PdfWriter Object"
 
     writer = PdfWriter()
     writer.append(reader, [0])
@@ -1782,7 +1782,7 @@ def test_missing_fields(pdf_file_path):
         writer.update_page_form_field_values(
             writer.pages[0], {"foo": "some filled in text"}, flags=1
         )
-    assert exc.value.args[0] == "No /Fields dictionary in PdfWriter Object"
+    assert exc.value.args[0] == "No /Fields dictionary in PDF of PdfWriter Object"
 
 
 def test_missing_info():
