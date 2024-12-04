@@ -418,7 +418,7 @@ class PdfWriter(PdfDocCommon):
             and obj.indirect_reference.pdf == self  # type: ignore
         ):
             return obj.indirect_reference  # type: ignore
-        # check for /Contents in Pages (/Contents in annotation are strings)
+        # check for /Contents in Pages (/Contents in annotations are strings)
         if isinstance(obj, DictionaryObject) and isinstance(
             obj.get(PG.CONTENTS, None), (ArrayObject, DictionaryObject)
         ):
