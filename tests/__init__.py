@@ -40,7 +40,7 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
                 return fp.read()
         if not cache_path.exists():
             ssl._create_default_https_context = ssl._create_unverified_context
-            cnt = 3
+            cnt = 0
             while cnt < 3:
                 try:
                     with urllib.request.urlopen(  # noqa: S310
