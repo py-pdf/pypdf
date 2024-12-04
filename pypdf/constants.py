@@ -209,14 +209,14 @@ class FileSpecificationDictionaryEntries:
 
     Type = "/Type"
     FS = "/FS"  # The name of the file system to be used to interpret this file specification
-    F = "/F"  # A file specification string of the form described in Section 3.10.1
-    UF = "/UF"  # A unicode string of the file as described in Section 3.10.1
+    F = "/F"  # A file specification string of the form described in §3.10.1
+    UF = "/UF"  # A Unicode string of the file as described in §3.10.1
     DOS = "/DOS"
     Mac = "/Mac"
     Unix = "/Unix"
     ID = "/ID"
     V = "/V"
-    EF = "/EF"  # dictionary, containing a subset of the keys F , UF , DOS , Mac , and Unix
+    EF = "/EF"  # dictionary, containing a subset of the keys F, UF, DOS, Mac, and Unix
     RF = "/RF"  # dictionary, containing arrays of /EmbeddedFile
     DESC = "/Desc"  # description of the file
     Cl = "/Cl"
