@@ -132,8 +132,6 @@ class UserAccessPermissions(IntFlag):
 class Resources:
     """
     Table 3.30 Entries in a resource dictionary.
-    Used to be Ressources (a misspelling).
-
     Table 34 in the 2.0 reference.
     """
 
@@ -161,7 +159,6 @@ class PagesAttributes:
     TYPE = "/Type"  # name, required; must be /Pages
     PARENT = "/Parent"  # dictionary, required; indirect reference to pages object
     KIDS = "/Kids"  # array, required; List of indirect references
-
     COUNT = "/Count"
     # integer, required; the number of leaf nodes (page objects)
     # that are descendants of this node within the page tree
@@ -391,16 +388,16 @@ class FieldDictionaryAttributes:
     V = "/V"  # text string or array, optional
     DV = "/DV"  # text string, optional
     AA = "/AA"  # dictionary, optional
-    Opt = "/Opt"
+    Opt = "/Opt"  # array, optional
 
     class FfBits(IntFlag):
         """
         Ease building /Ff flags
         Some entries may be specific to:
 
-        * Text(Tx) (Table 8.75 PDF 1.7 reference)
-        * Buttons(Btn) (Table 8.77 PDF 1.7 reference)
-        * List(Ch) (Table 8.79 PDF 1.7 reference)
+        * Text (Tx) (Table 8.75 PDF 1.7 reference)
+        * Buttons (Btn) (Table 8.77 PDF 1.7 reference)
+        * Choice (Ch) (Table 8.79 PDF 1.7 reference)
         """
 
         ReadOnly = 1 << 0
