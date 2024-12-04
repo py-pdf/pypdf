@@ -418,7 +418,7 @@ class PdfWriter(PdfDocCommon):
             and obj.indirect_reference.pdf == self  # type: ignore
         ):
             return obj.indirect_reference  # type: ignore
-        # check for /Contents in Pages (/Contents in annotation are strings)
+        # check for /Contents in Pages (/Contents in annotations are strings)
         if isinstance(obj, DictionaryObject) and isinstance(
             obj.get(PG.CONTENTS, None), (ArrayObject, DictionaryObject)
         ):
@@ -434,7 +434,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(indirect_reference, int):
             obj = self._objects[indirect_reference - 1]
         elif indirect_reference.pdf != self:
-            raise ValueError("pdf must be self")
+            raise ValueError("PDF must be self")
         else:
             obj = self._objects[indirect_reference.idnum - 1]
         assert obj is not None  # clarification for mypy
@@ -498,13 +498,13 @@ class PdfWriter(PdfDocCommon):
         else:
             cast(ArrayObject, node[PA.KIDS]).append(page.indirect_reference)
             self.flattened_pages.append(page)
-        cpt = 1000
+        recurse = 0
         while not is_null_or_none(node):
             node = cast(DictionaryObject, node.get_object())
             node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
             node = node.get(PA.PARENT, None)
-            cpt -= 1
-            if cpt < 0:
+            recurse += 1
+            if recurse > 1000:
                 raise PyPdfError("Too many recursive calls!")
         return page
 
@@ -955,8 +955,8 @@ class PdfWriter(PdfDocCommon):
             else:
                 font_full_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
                 font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
-                for kk, v in font_map.items():
-                    font_full_rev[v] = font_encoding_rev.get(kk, kk)
+                for key, value in font_map.items():
+                    font_full_rev[value] = font_encoding_rev.get(key, key)
         else:
             logger_warning(f"Font dictionary for {font_name} not found.", __name__)
             font_full_rev = {}
@@ -1055,10 +1055,10 @@ class PdfWriter(PdfDocCommon):
 
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
-            raise PyPdfError("No /AcroForm dictionary in PdfWriter Object")
+            raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
         af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
         if InteractiveFormDictEntries.Fields not in af:
-            raise PyPdfError("No /Fields dictionary in Pdf in PdfWriter Object")
+            raise PyPdfError("No /Fields dictionary in PDF of PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
         # Iterate through pages, update field values
@@ -1366,7 +1366,7 @@ class PdfWriter(PdfDocCommon):
             self._reader.stream.seek(0)
             stream.write(self._reader.stream.read(-1))
             if len(self.list_objects_in_increment()) > 0:
-                self._write_increment(stream)  # writes objs, Xref stream and startx
+                self._write_increment(stream)  # writes objs, xref stream and startxref
         else:
             object_positions, free_objects = self._write_pdf_structure(stream)
             xref_location = self._write_xref_table(
