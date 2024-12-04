@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733258302924,
+  "lastUpdate": 1733313838327,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -63431,6 +63431,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008193531034351335",
             "extra": "mean: 784.9208102000034 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "01e7c5d9173bff38896ef4817e034743c7b6ebc3",
+          "message": "STY: Put Jupyter functionality at end of class (#2988)\n\nIntegration into Jupyter Notebooks is by method `_repr_mimebundle_`, put at end of class PdfDocCommon, as is functionally different from the other methods.",
+          "timestamp": "2024-12-04T13:01:20+01:00",
+          "tree_id": "455837144eac815a5176a5fab782e92c927c47f2",
+          "url": "https://github.com/py-pdf/pypdf/commit/01e7c5d9173bff38896ef4817e034743c7b6ebc3"
+        },
+        "date": 1733313835269,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.8892708372671216,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002554268147859027",
+            "extra": "mean: 346.1080862000017 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.84563360202474,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006844701101579902",
+            "extra": "mean: 84.41929183332775 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23796694371343824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02692967318601406",
+            "extra": "mean: 4.202264333 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.235440355170457,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009036318783770919",
+            "extra": "mean: 58.01998552941006 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08849325601504517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09491179683645205",
+            "extra": "mean: 11.30029614720002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2782248804745464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005321055728836442",
+            "extra": "mean: 782.3349516000235 msec\nrounds: 5"
           }
         ]
       }
