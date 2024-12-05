@@ -33,10 +33,10 @@ from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
 
 try:
+    # https://cryptography.io/en/latest/changelog/#v43-0-0
     from cryptography.hazmat.decrepit.ciphers.algorithms import ARC4
 except ImportError:
     from cryptography.hazmat.primitives.ciphers.algorithms import ARC4
-    # https://cryptography.io/en/latest/changelog/#v43-0-0
     deprecate_with_replacement(
             "cryptography.hazmat.primitives.ciphers.algorithms",
             "cryptography.hazmat.decrepit.ciphers.algorithms",
