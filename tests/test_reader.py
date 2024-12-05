@@ -290,7 +290,7 @@ def test_get_images(src, expected_images):
             False,
             [
                 "startxref on same line as offset",
-                "incorrect startxref pointer (1)",
+                "incorrect startxref pointer(1)",
                 "parsing for Object Streams",
             ],
         ),  # error on startxref, but no strict => xref rebuilt,no fail
@@ -301,7 +301,7 @@ def test_get_images(src, expected_images):
             False,
             [
                 "startxref on same line as offset",
-                "incorrect startxref pointer (1)",
+                "incorrect startxref pointer(1)",
                 "parsing for Object Streams",
             ],
         ),
@@ -365,7 +365,7 @@ def test_issue297(caplog):
     assert "Broken xref table" in exc.value.args[0]
     reader = PdfReader(path, strict=False)
     assert normalize_warnings(caplog.text) == [
-        "incorrect startxref pointer (1)",
+        "incorrect startxref pointer(1)",
         "parsing for Object Streams",
     ]
     reader.pages[0]
@@ -922,7 +922,7 @@ def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
     msg = [
-        "incorrect startxref pointer (2)",
+        "incorrect startxref pointer(2)",
         "parsing for Object Streams",
     ]
     reader = PdfReader(BytesIO(get_data_from_url(url, name="tika-981961.pdf")))
@@ -937,7 +937,7 @@ def test_extract_text_xref_issue_3(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
     msg = [
-        "incorrect startxref pointer (3)",
+        "incorrect startxref pointer(3)",
     ]
     reader = PdfReader(BytesIO(get_data_from_url(url, name="tika-977774.pdf")))
     for page in reader.pages:
