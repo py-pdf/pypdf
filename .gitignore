@@ -44,3 +44,4 @@ extracted-images/
 RELEASE_COMMIT_MSG.md
 RELEASE_TAG_MSG.md
 .envrc
+/.spyproject
