@@ -36,7 +36,11 @@ try:
     from cryptography.hazmat.decrepit.ciphers.algorithms import ARC4
 except ImportError:
     # https://cryptography.io/en/latest/changelog/#v43-0-0
-    deprecate_with_replacement("cryptography.hazmat.primitives.ciphers.algorithms import ARC4", "cryptography.hazmat.decrepit.ciphers.algorithms", "5.0.0")
+    deprecate_with_replacement(
+            "cryptography.hazmat.primitives.ciphers.algorithms",
+            "cryptography.hazmat.decrepit.ciphers.algorithms",
+            "5.0.0"
+    )
     from cryptography.hazmat.primitives.ciphers.algorithms import ARC4
 from cryptography.hazmat.primitives.ciphers.base import Cipher
 from cryptography.hazmat.primitives.ciphers.modes import CBC, ECB
