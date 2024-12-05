@@ -49,7 +49,7 @@ from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
 from ._utils import (
-    deprecation_with_replacement,
+    deprecate_with_replacement,
     logger_warning,
     parse_iso8824_date,
 )
@@ -314,22 +314,6 @@ class PdfDocCommon:
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
-        ...  # pragma: no cover
-
-    @abstractmethod
-    def _repr_mimebundle_(
-        self,
-        include: Union[None, Iterable[str]] = None,
-        exclude: Union[None, Iterable[str]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to its
-        representation.
-
-        See https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
         ...  # pragma: no cover
 
     @property
@@ -1281,10 +1265,10 @@ class PdfDocCommon:
         self, permissions_code: int
     ) -> Dict[str, bool]:  # pragma: no cover
         """Take the permissions as an integer, return the allowed access."""
-        deprecation_with_replacement(
+        deprecate_with_replacement(
             old_name="decode_permissions",
             new_name="user_access_permissions",
-            removed_in="6.0.0",
+            removed_in="5.0.0",
         )
 
         permissions_mapping = {
@@ -1431,6 +1415,24 @@ class PdfDocCommon:
                 else:
                     attachments[name] = f_data
         return attachments
+
+    @abstractmethod
+    def _repr_mimebundle_(
+        self,
+        include: Union[None, Iterable[str]] = None,
+        exclude: Union[None, Iterable[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Integration into Jupyter Notebooks.
+
+        This method returns a dictionary that maps a mime-type to its
+        representation.
+
+        .. seealso::
+
+            https://ipython.readthedocs.io/en/stable/config/integrating.html
+        """
+        ...  # pragma: no cover
 
 
 class LazyDict(Mapping[Any, Any]):

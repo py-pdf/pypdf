@@ -660,7 +660,7 @@ def test_add_named_destination(pdf_file_path):
     assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
     with pytest.raises(ValueError) as exc:
         writer.get_object(reader.pages[0].indirect_reference)
-    assert exc.value.args[0] == "pdf must be self"
+    assert exc.value.args[0] == "PDF must be self"
 
     # write "output" to pypdf-output.pdf
     with open(pdf_file_path, "wb") as output_stream:
@@ -1773,7 +1773,7 @@ def test_missing_fields(pdf_file_path):
         writer.update_page_form_field_values(
             writer.pages[0], {"foo": "some filled in text"}, flags=1
         )
-    assert exc.value.args[0] == "No /AcroForm dictionary in PdfWriter Object"
+    assert exc.value.args[0] == "No /AcroForm dictionary in PDF of PdfWriter Object"
 
     writer = PdfWriter()
     writer.append(reader, [0])
@@ -1782,7 +1782,7 @@ def test_missing_fields(pdf_file_path):
         writer.update_page_form_field_values(
             writer.pages[0], {"foo": "some filled in text"}, flags=1
         )
-    assert exc.value.args[0] == "No /Fields dictionary in Pdf in PdfWriter Object"
+    assert exc.value.args[0] == "No /Fields dictionary in PDF of PdfWriter Object"
 
 
 def test_missing_info():
@@ -2482,6 +2482,26 @@ def test_append_pdf_with_dest_without_page(caplog):
     writer.append(reader)
     assert "/__WKANCHOR_8" not in writer.named_destinations
     assert len(writer.named_destinations) == 3
+
+
+@pytest.mark.enable_socket
+def test_destination_is_nullobject():
+    """Tests for #2958"""
+    url = "https://github.com/user-attachments/files/17822279/C0.00.-.COVER.SHEET.pdf"
+    name = "iss2958.pdf"
+    source_data = BytesIO(get_data_from_url(url, name=name))
+    writer = PdfWriter()
+    writer.append(source_data)
+
+
+@pytest.mark.enable_socket
+def test_destination_page_is_none():
+    """Tests for #2963"""
+    url = "https://github.com/user-attachments/files/17879461/3.pdf"
+    name = "iss2963.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
 
 
 def test_stream_not_closed():
