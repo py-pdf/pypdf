@@ -116,7 +116,7 @@ class PdfReader(PdfDocCommon):
     ) -> None:
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
-    
+
         # Storage of parsed PDF objects.
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
 
