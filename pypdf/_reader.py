@@ -585,7 +585,7 @@ class PdfReader(PdfDocCommon):
         if xref_issue_nr != 0:
             if self.strict and xref_issue_nr:
                 raise PdfReadError("Broken xref table")
-            logger_warning(f"incorrect startxref pointer ({xref_issue_nr})", __name__)
+            logger_warning(f"incorrect startxref pointer({xref_issue_nr})", __name__)
 
         # read all cross-reference tables and their trailers
         self._read_xref_tables_and_trailers(stream, startxref, xref_issue_nr)
