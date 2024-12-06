@@ -1,5 +1,7 @@
 """Helpers for working with PDF types."""
 
+from __future__ import annotations
+
 import sys
 from typing import List, Literal, Union
 
@@ -14,19 +16,17 @@ from .generic._data_structures import ArrayObject, Destination
 from .generic._outline import OutlineItem
 
 BorderArrayType: TypeAlias = List[Union[NameObject, NumberObject, ArrayObject]]
+
 OutlineItemType: TypeAlias = Union[OutlineItem, Destination]
+
 FitType: TypeAlias = Literal[
     "/XYZ", "/Fit", "/FitH", "/FitV", "/FitR", "/FitB", "/FitBH", "/FitBV"
 ]
-# Those go with the FitType: They specify values for the fit
+# These go with the FitType, they specify values for the fit
 ZoomArgType: TypeAlias = Union[NumberObject, NullObject, float]
 ZoomArgsType: TypeAlias = List[ZoomArgType]
 
-# Recursive types like the following are not yet supported by mypy:
-#    OutlineType = List[Union[Destination, "OutlineType"]]
-# See https://github.com/python/mypy/issues/731
-# Hence use this for the moment:
-OutlineType = List[Union[Destination, List[Union[Destination, List[Destination]]]]]
+OutlineType = List[Union[Destination, "OutlineType"]]
 
 LayoutType: TypeAlias = Literal[
     "/NoLayout",
@@ -37,6 +37,7 @@ LayoutType: TypeAlias = Literal[
     "/TwoPageLeft",
     "/TwoPageRight",
 ]
+
 PagemodeType: TypeAlias = Literal[
     "/UseNone",
     "/UseOutlines",
@@ -45,6 +46,7 @@ PagemodeType: TypeAlias = Literal[
     "/UseOC",
     "/UseAttachments",
 ]
+
 AnnotationSubtype: TypeAlias = Literal[
     "/Text",
     "/Link",
