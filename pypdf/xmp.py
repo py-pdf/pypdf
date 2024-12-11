@@ -7,9 +7,9 @@ https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
 import datetime
 import decimal
 import re
+from collections.abc import Callable
 from typing import (
     Any,
-    Callable,
     Dict,
     Iterator,
     List,
