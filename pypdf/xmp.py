@@ -24,12 +24,12 @@ from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 from ._utils import StreamType, deprecate_no_replacement
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
