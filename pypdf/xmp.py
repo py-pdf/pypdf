@@ -20,12 +20,11 @@ from typing import (
     Union,
     TYPE_CHECKING,
 )
+if TYPE_CHECKING:
+    from collections.abc import Callable
 from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 from ._utils import StreamType, deprecate_no_replacement
 from .errors import PdfReadError
