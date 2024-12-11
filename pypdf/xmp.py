@@ -28,7 +28,7 @@ from ._utils import StreamType, deprecate_no_replacement
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from collections.abc import Callable
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
