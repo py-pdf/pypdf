@@ -10,7 +10,9 @@ from __future__ import annotations
 import datetime
 import decimal
 import re
-from collections.abc import Callable
+from collections.abc import (
+    Callable,
+)
 from typing import (
     Any,
     Dict,
@@ -110,8 +112,8 @@ def _converter_date(value: str) -> datetime.datetime:
 
 def _getter_bag(
     namespace: str, name: str
-) -> Callable[["XmpInformation"], Optional[List[str]]]:
-    def get(self: "XmpInformation") -> Optional[List[str]]:
+) -> Callable[[XmpInformation], Optional[List[str]]]:
+    def get(self: XmpInformation) -> Optional[List[str]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -132,8 +134,8 @@ def _getter_bag(
 
 def _getter_seq(
     namespace: str, name: str, converter: Callable[[Any], Any] = _identity
-) -> Callable[["XmpInformation"], Optional[List[Any]]]:
-    def get(self: "XmpInformation") -> Optional[List[Any]]:
+) -> Callable[[XmpInformation], Optional[List[Any]]]:
+    def get(self: XmpInformation) -> Optional[List[Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -158,8 +160,8 @@ def _getter_seq(
 
 def _getter_langalt(
     namespace: str, name: str
-) -> Callable[["XmpInformation"], Optional[Dict[Any, Any]]]:
-    def get(self: "XmpInformation") -> Optional[Dict[Any, Any]]:
+) -> Callable[[XmpInformation], Optional[Dict[Any, Any]]]:
+    def get(self: XmpInformation) -> Optional[Dict[Any, Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -183,7 +185,7 @@ def _getter_langalt(
 def _getter_single(
     namespace: str, name: str, converter: Callable[[str], Any] = _identity
 ) -> Callable[[XmpInformation], Optional[Any]]:
-    def get(self: "XmpInformation") -> Optional[Any]:
+    def get(self: XmpInformation) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
