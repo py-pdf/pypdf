@@ -18,6 +18,7 @@ from typing import (
     Optional,
     TypeVar,
     Union,
+    TYPE_CHECKING,
 )
 from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
