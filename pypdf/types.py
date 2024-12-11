@@ -24,7 +24,7 @@ FitType: TypeAlias = Literal[
 ZoomArgType: TypeAlias = Union[NumberObject, NullObject, float]
 ZoomArgsType: TypeAlias = List[ZoomArgType]
 
-OutlineType: TypeAlias = List[Union[Destination, "OutlineType"]]
+OutlineType: TypeAlias = List[Union[Destination, OutlineType]]
 
 LayoutType: TypeAlias = Literal[
     "/NoLayout",
