@@ -4,6 +4,9 @@ Anything related to Extensible Metadata Platform (XMP) metadata.
 https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
 """
 
+# Remove once Python 3.8 support is dropped
+from __future__ import annotations
+
 import datetime
 import decimal
 import re
