@@ -1,7 +1,5 @@
 """Helpers for working with PDF types."""
 
-from __future__ import annotations
-
 import sys
 from typing import List, Literal, Union
 
@@ -26,7 +24,7 @@ FitType: TypeAlias = Literal[
 ZoomArgType: TypeAlias = Union[NumberObject, NullObject, float]
 ZoomArgsType: TypeAlias = List[ZoomArgType]
 
-OutlineType = List[Union[Destination, "OutlineType"]]
+OutlineType: TypeAlias = List[Union[Destination, "OutlineType"]]
 
 LayoutType: TypeAlias = Literal[
     "/NoLayout",
