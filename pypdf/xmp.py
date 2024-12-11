@@ -182,7 +182,7 @@ def _getter_langalt(
 
 def _getter_single(
     namespace: str, name: str, converter: Callable[[str], Any] = _identity
-) -> Callable[["XmpInformation"], Optional[Any]]:
+) -> Callable[[XmpInformation], Optional[Any]]:
     def get(self: "XmpInformation") -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
