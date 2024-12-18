@@ -2542,3 +2542,40 @@ def test_deprecate_with_as():
         with pytest.warns(DeprecationWarning) as w:
             writer.with_as_usage = val  # old code allowed setting this, so...
         assert "with_as_usage is deprecated" in w[0].message.args[0]
+
+
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+@pytest.mark.enable_socket
+def test_inline_image_q_operator_handling(tmp_path):
+    """Test for #2927"""
+    pdf_url = "https://github.com/user-attachments/files/17614880/test_clean.pdf"
+    pdf_name = "iss2927.pdf"
+    pdf_data = BytesIO(get_data_from_url(pdf_url, name=pdf_name))
+
+    png_url = "https://github.com/user-attachments/assets/abe16f48-9afa-4179-b1e8-62be27b95c26"
+    png_name = "iss2927.png"
+    expected_png_path = tmp_path / "expected.png"
+    expected_png_path.write_bytes(get_data_from_url(png_url, name=png_name))
+
+    writer = PdfWriter()
+    writer.append(pdf_data)
+    for page in writer.pages:
+        page.transfer_rotation_to_content()
+
+    pdf_path = tmp_path / "out.pdf"
+    png_path = tmp_path / "actual.png"
+
+    writer.write(pdf_path)
+    # False positive: https://github.com/PyCQA/bandit/issues/333
+    subprocess.run(  # noqa: S603
+        [
+            GHOSTSCRIPT_BINARY,
+            "-r120",
+            "-sDEVICE=pngalpha",
+            "-o",
+            png_path,
+            pdf_path,
+        ]
+    )
+    assert png_path.is_file()
+    assert image_similarity(png_path, expected_png_path) >= 0.999999

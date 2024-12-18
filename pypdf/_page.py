@@ -765,7 +765,7 @@ class PageObject(DictionaryObject):
                 )
             elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
-                    f"{ope!r} operator met whereas not expected,"
+                    f"{ope!r} operator met whereas not expected, "
                     "please share usecase with pypdf dev team"
                 )
             """backup

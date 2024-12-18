@@ -224,11 +224,12 @@ def extract_inline_default(stream: StreamType) -> bytes:
             if data_buffered[pos_ei - 1 : pos_ei] not in WHITESPACES and tok3 not in {
                 b"Q",
                 b"E",
-            }:  # for Q ou EMC
+            }:  # for Q or EMC
                 stream.seek(saved_pos, 0)
                 continue
             # Data contains [\s]EI[\s](Q|EMC): 4 chars are sufficients
             # remove E(I) wrongly inserted earlier
+            stream.seek(saved_pos - 1, 0)
             stream_out.truncate(sav_pos_ei)
             break
 
