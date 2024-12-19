@@ -1822,7 +1822,7 @@ class PageObject(DictionaryObject):
 
         return text, rtl_dir, actual_str_size
 
-    def _extract_text(
+    def _extract_text(  # noqa: C901, PLR0915  # TODO: Refactor for less complexity.
         self,
         obj: Any,
         pdf: Any,
