@@ -1343,6 +1343,8 @@ class ContentStream(DecodedStreamObject):
             data = extract_inline_DCT(stream)
         elif filtr == "not set":
             cs = settings.get("/CS", "")
+            if isinstance(cs, list):
+                cs = cs[0]
             if "RGB" in cs:
                 lcs = 3
             elif "CMYK" in cs:
