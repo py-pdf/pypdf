@@ -765,7 +765,7 @@ class PageObject(DictionaryObject):
                 )
             elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
-                    f"{ope!r} operator met whereas not expected,"
+                    f"{ope!r} operator met whereas not expected, "
                     "please share usecase with pypdf dev team"
                 )
             """backup
@@ -1750,7 +1750,7 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-    def _get_acutual_font_widths(
+    def _get_actual_font_widths(
         self,
         cmap: Tuple[
             Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
@@ -1817,7 +1817,7 @@ class PageObject(DictionaryObject):
                 rtl_dir,
                 visitor_text)
         font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
-            self._get_acutual_font_widths(cmap, text_operands, font_size, space_width))
+            self._get_actual_font_widths(cmap, text_operands, font_size, space_width))
         actual_str_size["str_widths"] += font_widths
 
         return text, rtl_dir, actual_str_size

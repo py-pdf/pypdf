@@ -316,22 +316,6 @@ class PdfDocCommon:
     def xmp_metadata(self) -> Optional[XmpInformation]:
         ...  # pragma: no cover
 
-    @abstractmethod
-    def _repr_mimebundle_(
-        self,
-        include: Union[None, Iterable[str]] = None,
-        exclude: Union[None, Iterable[str]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to its
-        representation.
-
-        See https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
-        ...  # pragma: no cover
-
     @property
     def viewer_preferences(self) -> Optional[ViewerPreferences]:
         """Returns the existing ViewerPreferences as an overloaded dictionary."""
@@ -840,8 +824,7 @@ class PdfDocCommon:
             return create_string_object(oa)
         elif isinstance(oa, ArrayObject):
             try:
-                page, typ = oa[0:2]
-                array = oa[2:]
+                page, typ, *array = oa
                 fit = Fit(typ, tuple(array))
                 return Destination("OpenAction", page, fit)
             except Exception as exc:
@@ -1432,6 +1415,24 @@ class PdfDocCommon:
                 else:
                     attachments[name] = f_data
         return attachments
+
+    @abstractmethod
+    def _repr_mimebundle_(
+        self,
+        include: Union[None, Iterable[str]] = None,
+        exclude: Union[None, Iterable[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Integration into Jupyter Notebooks.
+
+        This method returns a dictionary that maps a mime-type to its
+        representation.
+
+        .. seealso::
+
+            https://ipython.readthedocs.io/en/stable/config/integrating.html
+        """
+        ...  # pragma: no cover
 
 
 class LazyDict(Mapping[Any, Any]):
