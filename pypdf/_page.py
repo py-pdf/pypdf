@@ -1822,7 +1822,7 @@ class PageObject(DictionaryObject):
 
         return text, rtl_dir, actual_str_size
 
-    def _extract_text(
+    def _extract_text(  # noqa: C901, PLR0915  # TODO: Refactor for less complexity.
         self,
         obj: Any,
         pdf: Any,
@@ -1980,12 +1980,21 @@ class PageObject(DictionaryObject):
                 memo_tm = tm_matrix.copy()
             # Table 5.2 page 398
             elif operator == b"Tz":
-                char_scale = float(operands[0]) / 100.0
+                if operands:
+                    char_scale = float(operands[0]) / 100.0
+                else:
+                    char_scale = 1.0
             elif operator == b"Tw":
-                space_scale = 1.0 + float(operands[0])
+                if operands:
+                    space_scale = 1.0 + float(operands[0])
+                else:
+                    space_scale = 1.0
             elif operator == b"TL":
-                scale_x = math.sqrt(tm_matrix[0]**2 + tm_matrix[2]**2)
-                TL = float(operands[0]) * font_size * scale_x
+                if operands:
+                    scale_x = math.sqrt(tm_matrix[0]**2 + tm_matrix[2]**2)
+                    TL = float(operands[0]) * font_size * scale_x
+                else:
+                    TL = 0.0
             elif operator == b"Tf":
                 if text != "":
                     output += text  # .translate(cmap)
