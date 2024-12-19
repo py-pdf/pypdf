@@ -30,7 +30,7 @@ jobs:
     - name: Setup Python (3.11+)
       uses: actions/setup-python@v5
       with:
-        python-version: 3.12  # latest stable python
+        python-version: 3.13  # latest stable python
         allow-prereleases: true
     - name: Upgrade pip
       run: |
@@ -54,7 +54,7 @@ jobs:
 
   tests:
     name: "pytest on ${{ matrix.python-version }} (crypto-lib: ${{ matrix.use-crypto-lib }})"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
@@ -139,7 +139,7 @@ jobs:
 
   codestyle:
     name: Check code style issues
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
@@ -228,7 +228,7 @@ jobs:
           python -m coverage combine
           python -m coverage xml
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
