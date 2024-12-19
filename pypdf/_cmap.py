@@ -1,3 +1,4 @@
+import binascii
 from binascii import unhexlify
 from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
@@ -304,7 +305,10 @@ def process_cm_line(
     elif b"endbfchar" in line:
         process_char = False
     elif process_rg:
-        multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
+        try:
+            multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
+        except binascii.Error as error:
+            logger_warning(f"Skipping broken line {line!r}: {error}", __name__)
     elif process_char:
         parse_bfchar(line, map_dict, int_entry)
     return process_rg, process_char, multiline_rg
