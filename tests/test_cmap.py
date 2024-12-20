@@ -259,3 +259,36 @@ def test_too_many_differences():
     name = "iss2836.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.pages[0].extract_text() == ""
+
+
+@pytest.mark.enable_socket
+def test_iss2925():
+    url = (
+        "https://github.com/user-attachments/files/17621508/2305.09315.pdf"
+    )
+    name = "iss2925.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert "slicing on the PDG to extract the relevant contextual" in reader.pages[3].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_iss2966():
+    """Regression test for issue #2966: indirect objects in fonts"""
+    url = (
+        "https://github.com/user-attachments/files/17904233/repro_out.pdf"
+    )
+    name = "iss2966.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert "Lorem ipsum dolor sit amet" in reader.pages[0].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_binascii_odd_length_string(caplog):
+    """Tests for #2216"""
+    url = "https://github.com/user-attachments/files/18199642/iss2216.pdf"
+    name = "iss2216.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    page = reader.pages[0]
+    assert "\n(Many other theorems may\n" in page.extract_text()
+    assert "Skipping broken line b'143f   143f   10300': Odd-length string\n" in caplog.text

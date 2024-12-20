@@ -596,3 +596,29 @@ def test_flate_decode_with_image_mode_1__whitespace_at_end_of_lookup():
     name = "issue2331.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].images[0]
+
+
+@pytest.mark.enable_socket
+def test_ascii85decode__invalid_end__recoverable(caplog):
+    """From #2996"""
+    url = "https://github.com/user-attachments/files/18050808/1af7d56a-5c8c-4914-85b3-b2536a5525cd.pdf"
+    name = "issue2996.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    page = reader.pages[1]
+    assert page.extract_text() == ""
+    assert "Ignoring missing Ascii85 end marker." in caplog.text
+
+
+def test_ascii85decode__non_recoverable(caplog):
+    # Without our custom handling, this would complain about the final `~>` being missing.
+    data = "äöüß"
+    with pytest.raises(ValueError, match="Non-Ascii85 digit found: Ã"):
+        ASCII85Decode.decode(data)
+    assert "Ignoring missing Ascii85 end marker." in caplog.text
+    caplog.clear()
+
+    data += "~>"
+    with pytest.raises(ValueError, match="Non-Ascii85 digit found: Ã"):
+        ASCII85Decode.decode(data)
+    assert caplog.text == ""

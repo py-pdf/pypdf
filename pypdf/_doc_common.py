@@ -121,6 +121,8 @@ class DocumentInformation(DictionaryObject):
         retval = self.get(key, None)
         if isinstance(retval, TextStringObject):
             return retval
+        if isinstance(retval, ByteStringObject):
+            return str(retval)
         return None
 
     @property
@@ -241,6 +243,21 @@ class DocumentInformation(DictionaryObject):
         """
         return self.get(DI.MOD_DATE)
 
+    @property
+    def keywords(self) -> Optional[str]:
+        """
+        Read-only property accessing the document's keywords.
+
+        Returns a ``TextStringObject`` or ``None`` if keywords are not
+        specified.
+        """
+        return self._get_text(DI.KEYWORDS)
+
+    @property
+    def keywords_raw(self) -> Optional[str]:
+        """The "raw" version of keywords; can return a ``ByteStringObject``."""
+        return self.get(DI.KEYWORDS)
+
 
 class PdfDocCommon:
     """
@@ -297,22 +314,6 @@ class PdfDocCommon:
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
-        ...  # pragma: no cover
-
-    @abstractmethod
-    def _repr_mimebundle_(
-        self,
-        include: Union[None, Iterable[str]] = None,
-        exclude: Union[None, Iterable[str]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to its
-        representation.
-
-        See https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
         ...  # pragma: no cover
 
     @property
@@ -823,8 +824,7 @@ class PdfDocCommon:
             return create_string_object(oa)
         elif isinstance(oa, ArrayObject):
             try:
-                page, typ = oa[0:2]
-                array = oa[2:]
+                page, typ, *array = oa
                 fit = Fit(typ, tuple(array))
                 return Destination("OpenAction", page, fit)
             except Exception as exc:
@@ -1415,6 +1415,24 @@ class PdfDocCommon:
                 else:
                     attachments[name] = f_data
         return attachments
+
+    @abstractmethod
+    def _repr_mimebundle_(
+        self,
+        include: Union[None, Iterable[str]] = None,
+        exclude: Union[None, Iterable[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Integration into Jupyter Notebooks.
+
+        This method returns a dictionary that maps a mime-type to its
+        representation.
+
+        .. seealso::
+
+            https://ipython.readthedocs.io/en/stable/config/integrating.html
+        """
+        ...  # pragma: no cover
 
 
 class LazyDict(Mapping[Any, Any]):

@@ -1,3 +1,4 @@
+import binascii
 from binascii import unhexlify
 from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
@@ -304,7 +305,10 @@ def process_cm_line(
     elif b"endbfchar" in line:
         process_char = False
     elif process_rg:
-        multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
+        try:
+            multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
+        except binascii.Error as error:
+            logger_warning(f"Skipping broken line {line!r}: {error}", __name__)
     elif process_char:
         parse_bfchar(line, map_dict, int_entry)
     return process_rg, process_char, multiline_rg
@@ -396,7 +400,7 @@ def build_font_width_map(
     st: int = 0
     en: int = 0
     try:
-        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object)] * 2.0
+        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object())] * 2.0
     except KeyError:
         pass
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
@@ -404,9 +408,9 @@ def build_font_width_map(
         # Widths for a CIDFont are defined using the DW and W entries.
         # DW2 and W2 are for vertical use. Vertical type is not implemented.
         ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
-        try:
-            font_width_map["default"] = cast(float, ft1["/DW"])
-        except Exception:
+        if "/DW" in ft1:
+            font_width_map["default"] = cast(float, ft1["/DW"].get_object())
+        else:
             font_width_map["default"] = default_font_width
         if "/W" in ft1:
             w = ft1["/W"].get_object()
@@ -418,13 +422,15 @@ def build_font_width_map(
             if isinstance(second, int):
                 # C_first C_last same_W
                 en = second
+                width = w[2].get_object()
                 for c_code in range(st, en + 1):
-                    font_width_map[chr(c_code)] = w[2]
+                    font_width_map[chr(c_code)] = width
                 w = w[3:]
             elif isinstance(second, list):
                 # Starting_C [W1 W2 ... Wn]
                 c_code = st
-                for width in second:
+                for ww in second:
+                    width = ww.get_object()
                     font_width_map[chr(c_code)] = width
                     c_code += 1
                 w = w[2:]
@@ -527,6 +533,8 @@ def _type1_alternative(
                         v = chr(int(words[2][4:], 16))
                     except ValueError:  # pragma: no cover
                         continue
+                else:
+                    continue
             map_dict[chr(i)] = v
             int_entry.append(i)
     return map_dict, int_entry

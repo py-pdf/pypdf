@@ -1343,6 +1343,8 @@ class ContentStream(DecodedStreamObject):
             data = extract_inline_DCT(stream)
         elif filtr == "not set":
             cs = settings.get("/CS", "")
+            if isinstance(cs, list):
+                cs = cs[0]
             if "RGB" in cs:
                 lcs = 3
             elif "CMYK" in cs:
@@ -1361,6 +1363,7 @@ class ContentStream(DecodedStreamObject):
                 data = stream.read(
                     ceil(cast(int, settings["/W"]) * lcs) * cast(int, settings["/H"])
                 )
+            # Move to the `EI` if possible.
             ei = read_non_whitespace(stream)
             stream.seek(-1, 1)
         else:
@@ -1369,6 +1372,7 @@ class ContentStream(DecodedStreamObject):
         ei = stream.read(3)
         stream.seek(-1, 1)
         if ei[0:2] != b"EI" or ei[2:3] not in WHITESPACES:
+            # Deal with wrong/missing `EI` tags.
             stream.seek(savpos, 0)
             data = extract_inline_default(stream)
         return {"settings": settings, "data": data}
@@ -1401,7 +1405,7 @@ class ContentStream(DecodedStreamObject):
         self._operations = []
 
     @property
-    def operations(self) -> List[Tuple[Any, Any]]:
+    def operations(self) -> List[Tuple[Any, bytes]]:
         if not self._operations and self._data:
             self._parse_content_stream(BytesIO(self._data))
             self._data = b""
@@ -1452,7 +1456,6 @@ def read_object(
     elif tok == b"(":
         return read_string_from_stream(stream, forced_encoding)
     elif tok == b"e" and stream.read(6) == b"endobj":
-        stream.seek(-6, 1)
         return NullObject()
     elif tok == b"n":
         return NullObject.read_from_stream(stream)

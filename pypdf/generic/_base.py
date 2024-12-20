@@ -72,15 +72,12 @@ class PdfObject(PdfObjectProtocol):
         )
 
     def hash_value_data(self) -> bytes:
-        return ("%s" % self).encode()
+        return f"{self}".encode()
 
     def hash_value(self) -> bytes:
         return (
-            "%s:%s"
-            % (
-                self.__class__.__name__,
-                self.hash_func(self.hash_value_data()).hexdigest(),
-            )
+            f"{self.__class__.__name__}:"
+            f"{self.hash_func(self.hash_value_data()).hexdigest()}"
         ).encode()
 
     def replicate(
@@ -619,6 +616,15 @@ class ByteStringObject(bytes, PdfObject):
         stream.write(binascii.hexlify(self))
         stream.write(b">")
 
+    def __str__(self) -> str:
+        charset_to_try = ["utf-16"] + list(NameObject.CHARSETS)
+        for enc in charset_to_try:
+            try:
+                return self.decode(enc)
+            except UnicodeDecodeError:
+                pass
+        raise PdfReadError("Cannot decode ByteStringObject.")
+
 
 class TextStringObject(str, PdfObject):  # noqa: SLOT000
     """
@@ -644,7 +650,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         o.autodetect_utf16 = False
         o.autodetect_pdfdocencoding = False
         o.utf16_bom = b""
-        if value.startswith(("\xfe\xff", "\xff\xfe")):
+        if o.startswith(("\xfe\xff", "\xff\xfe")):
             assert org is not None  # for mypy
             try:
                 o = str.__new__(cls, org.decode("utf-16"))

@@ -42,6 +42,7 @@ def test_read_xmp_metadata_samples(src):
     }
 
 
+@pytest.mark.samples
 def test_writer_xmp_metadata_samples():
     writer = PdfWriter(SAMPLE_ROOT / "020-xmp/output_with_metadata_pymupdf.pdf")
     xmp = writer.xmp_metadata

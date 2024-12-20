@@ -1,6 +1,6 @@
 from typing import Union
 
-from .._utils import StreamType, deprecate_no_replacement
+from .._utils import StreamType, deprecation_no_replacement
 from ._base import NameObject
 from ._data_structures import Destination
 
@@ -10,7 +10,7 @@ class OutlineItem(Destination):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(b"<<\n")

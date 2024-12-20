@@ -312,6 +312,15 @@ def test_read_object_empty():
     assert isinstance(read_object(stream, pdf), NullObject)
 
 
+def test_read_object_empty_in_array():
+    stream = BytesIO(b"[endobj")
+    pdf = None
+    result = read_object(stream, pdf)
+    assert isinstance(result, ArrayObject)
+    assert len(result) == 1
+    assert isinstance(result[0], NullObject)
+
+
 def test_read_object_invalid():
     stream = BytesIO(b"hello")
     pdf = None
@@ -496,6 +505,11 @@ def test_textstringobject_autodetect_utf16():
     tso.utf16_bom = codecs.BOM_UTF16_LE
     assert tso.get_original_bytes() == b"\xff\xfef\x00o\x00o\x00"
     assert tso.get_encoded_bytes() == b"\xff\xfef\x00o\x00o\x00"
+
+
+def test_textstringobject__numbers_as_input():
+    _ = TextStringObject(42)
+    _ = TextStringObject(13.37)
 
 
 def test_remove_child_not_in_tree():

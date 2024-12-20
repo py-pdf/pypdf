@@ -124,6 +124,11 @@ def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     return versions[max(pdf_header_indices)]
 
 
+WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
+WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
+WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
+
+
 def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:
     """
     Read non-whitespace characters and return them.
@@ -175,15 +180,15 @@ def skip_over_whitespace(stream: StreamType) -> bool:
         stream: The data stream from which was read.
 
     Returns:
-        True if more than one whitespace was skipped, otherwise return False.
+        True if one or more whitespace was skipped, otherwise return False.
 
     """
-    tok = WHITESPACES[0]
+    tok = stream.read(1)
     cnt = 0
     while tok in WHITESPACES:
-        tok = stream.read(1)
         cnt += 1
-    return cnt > 1
+        tok = stream.read(1)
+    return cnt > 0
 
 
 def check_if_whitespace_only(value: bytes) -> bool:
@@ -197,11 +202,7 @@ def check_if_whitespace_only(value: bytes) -> bool:
         True if the value only has whitespace characters, otherwise return False.
 
     """
-    for index in range(len(value)):
-        current = value[index : index + 1]
-        if current not in WHITESPACES:
-            return False
-    return True
+    return all(b in WHITESPACES_AS_BYTES for b in value)
 
 
 def skip_over_comment(stream: StreamType) -> None:
@@ -365,11 +366,6 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
     return b
 
 
-WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
-WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
-WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
-
-
 def deprecate(msg: str, stacklevel: int = 3) -> None:
     warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
 
@@ -379,7 +375,7 @@ def deprecation(msg: str) -> None:
 
 
 def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
-    """Raise an exception that a feature will be removed, but has a replacement."""
+    """Issue a warning that a feature will be removed, but has a replacement."""
     deprecate(
         f"{old_name} is deprecated and will be removed in pypdf {removed_in}. Use {new_name} instead.",
         4,
@@ -394,7 +390,7 @@ def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) 
 
 
 def deprecate_no_replacement(name: str, removed_in: str) -> None:
-    """Raise an exception that a feature will be removed without replacement."""
+    """Issue a warning that a feature will be removed without replacement."""
     deprecate(f"{name} is deprecated and will be removed in pypdf {removed_in}.", 4)
 
 
