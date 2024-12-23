@@ -10,18 +10,22 @@ from __future__ import annotations
 import datetime
 import decimal
 import re
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from collections.abc import Callable
-from typing import (
-    Any,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    TypeVar,
-    Union,
-    TYPE_CHECKING,
-)
+    from typing import (
+        Any,
+        Dict,
+        Iterator,
+        List,
+        Optional,
+        TypeVar,
+        Union,
+    )
 from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
