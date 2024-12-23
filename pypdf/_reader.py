@@ -774,7 +774,6 @@ class PdfReader(PdfDocCommon):
 
                     offset, generation = int(offset_b), int(generation_b)
                 except Exception:
-                    # if something wrong occurred
                     if hasattr(stream, "getbuffer"):
                         buf = bytes(stream.getbuffer())
                     else:
@@ -783,7 +782,7 @@ class PdfReader(PdfDocCommon):
                         buf = stream.read(-1)
                         stream.seek(p)
 
-                    f = re.search(f"{num}\\s+(\\d+)\\s+obj".encode(), buf)
+                    f = re.search(rf"{num}\s+(\d+)\s+obj".encode(), buf)
                     if f is None:
                         logger_warning(
                             f"entry {num} in Xref table invalid; object not found",
