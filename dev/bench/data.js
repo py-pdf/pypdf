@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734780848689,
+  "lastUpdate": 1734940549522,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -64355,6 +64355,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004026553483946341",
             "extra": "mean: 740.0021556000013 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "07f68b468fa235e33c8dc2483f67bbc42f5aa8f8",
+          "message": "ROB: Gracefully handle some text operators when the operands are missing (#3006)\n\n* ROB: Gracefully handle some text operators when the operands are missing\r\n\r\nCloses #2975.\r\n\r\n* ignore complexity issue for now\r\n\r\n* keep coverage for now\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>\r\n\r\n* fix indentation\r\n\r\n* noqa seems to be superfluous now\r\n\r\n---------\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2024-12-23T08:53:23+01:00",
+          "tree_id": "09824655d7c0d7e927afa61f9dce5f3c6609ab73",
+          "url": "https://github.com/py-pdf/pypdf/commit/07f68b468fa235e33c8dc2483f67bbc42f5aa8f8"
+        },
+        "date": 1734940546949,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3934004186289752,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011697291209600087",
+            "extra": "mean: 294.6896554000034 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.705517433276519,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006366163737682426",
+            "extra": "mean: 63.67189137501583 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27644987308200286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012536873966531595",
+            "extra": "mean: 3.617292309999982 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.22310575173767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008646401499486419",
+            "extra": "mean: 49.44838899999695 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08691520342893257,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04248114891694206",
+            "extra": "mean: 11.505466944199975 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.349438142024645,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022134499596727216",
+            "extra": "mean: 741.0491588000014 msec\nrounds: 5"
           }
         ]
       }
