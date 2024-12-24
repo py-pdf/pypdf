@@ -446,7 +446,13 @@ class ASCII85Decode:
         if isinstance(data, str):
             data = data.encode()
         data = data.strip(WHITESPACES_AS_BYTES)
-        return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
+        try:
+            return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
+        except ValueError as error:
+            if error.args[0] == "Ascii85 encoded byte sequences must end with b'~>'":
+                logger_warning("Ignoring missing Ascii85 end marker.", __name__)
+                return a85decode(data, adobe=False, ignorechars=WHITESPACES_AS_BYTES)
+            raise
 
 
 class DCTDecode:

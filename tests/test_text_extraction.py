@@ -297,3 +297,15 @@ def test_content_stream_is_dictionary_object(caplog):
         "Invalid Elementary Object starting with b\\'\\\\x18\\' @3557: b\\'ateDecode/Length 629\\\\x18ck["
         in exception.value.args[0]
     )
+
+
+@pytest.mark.enable_socket
+def test_tz_with_no_operands():
+    """Tests for #2975"""
+    url = "https://github.com/user-attachments/files/17974120/9E5E080E-C8DB-4A6B-822B-9A67DC04E526-120438.pdf"
+    name = "iss2975.pdf"
+    data = get_data_from_url(url, name=name)
+
+    reader = PdfReader(BytesIO(data))
+    page = reader.pages[1]
+    assert "\nThankyouforyourattentiontothismatter.\n" in page.extract_text()

@@ -152,7 +152,7 @@ def _extended_image_frombytes(
         if data_length % nb_pix != 0:
             raise exc
         k = nb_pix * len(mode) / data_length
-        data = b"".join([bytes((x,) * int(k)) for x in data])
+        data = b"".join(bytes((x,) * int(k)) for x in data)
         img = Image.frombytes(mode, size, data)
     return img
 
@@ -226,15 +226,11 @@ def _handle_flate(
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
-                    [
-                        b"".join(
-                            [
-                                colors_arr[1 if img.getpixel((x, y)) > 127 else 0]
-                                for x in range(img.size[0])
-                            ]
-                        )
-                        for y in range(img.size[1])
-                    ]
+                    b"".join(
+                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]
+                        for x in range(img.size[0])
+                    )
+                    for y in range(img.size[1])
                 )
                 img = Image.frombytes(mode, img.size, arr)
             else:

@@ -1980,12 +1980,12 @@ class PageObject(DictionaryObject):
                 memo_tm = tm_matrix.copy()
             # Table 5.2 page 398
             elif operator == b"Tz":
-                char_scale = float(operands[0]) / 100.0
+                char_scale = float(operands[0]) / 100.0 if operands else 1.0
             elif operator == b"Tw":
-                space_scale = 1.0 + float(operands[0])
+                space_scale = 1.0 + float(operands[0] if operands else 0.0)
             elif operator == b"TL":
                 scale_x = math.sqrt(tm_matrix[0]**2 + tm_matrix[2]**2)
-                TL = float(operands[0]) * font_size * scale_x
+                TL = float(operands[0] if operands else 0.0) * font_size * scale_x
             elif operator == b"Tf":
                 if text != "":
                     output += text  # .translate(cmap)
