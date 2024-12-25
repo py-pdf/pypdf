@@ -491,7 +491,7 @@ class CCITTParameters:
     EncodedByteAlign: Union[int, None] = None
     DamagedRowsBeforeError: Union[int, None] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.__class__ is CCITParameters:
             deprecate_with_replacement("CCITParameters", "CCITTParameters", "5.0.0")
 
