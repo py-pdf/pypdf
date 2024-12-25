@@ -16,6 +16,7 @@ from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
     CCITTFaxDecode,
+    CCITParameters,
     CCITTParameters,
     FlateDecode,
 )
