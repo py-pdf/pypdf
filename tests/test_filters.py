@@ -15,7 +15,7 @@ from pypdf.errors import DeprecationError, PdfReadError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
-    CCITParameters,
+    CCITTParameters,
     CCITTFaxDecode,
     FlateDecode,
 )
@@ -187,8 +187,8 @@ def test_ascii85decode_five_zero_bytes():
         assert ASCII85Decode.decode(i + "~>") == expected
 
 
-def test_ccitparameters():
-    params = CCITParameters()
+def test_ccittparameters():
+    params = CCITTParameters()
     assert params.K == 0  # zero is the default according to page 78
     assert params.group == 3
 
