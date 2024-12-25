@@ -479,10 +479,6 @@ class JPXDecode:
         return data
 
 
-# Alias for the deprecate with replacement
-CCITParameters = CCITTParameters
-
-
 @dataclass
 class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
@@ -508,6 +504,10 @@ class CCITTParameters:
             # k > 0: Mixed one- and two-dimensional encoding (Group 3, 2-D)
             CCITTgroup = 3
         return CCITTgroup
+
+
+# Alias for the deprecate with replacement
+CCITParameters = CCITTParameters
 
 
 class CCITTFaxDecode:
