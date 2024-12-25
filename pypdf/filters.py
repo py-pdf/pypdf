@@ -46,8 +46,8 @@ from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
-    deprecation_no_replacement,
     deprecate_with_replacement,
+    deprecation_no_replacement,
     logger_warning,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
