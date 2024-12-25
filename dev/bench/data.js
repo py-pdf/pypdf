@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1735118863802,
+  "lastUpdate": 1735125183446,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -64553,6 +64553,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003239325261094892",
             "extra": "mean: 741.243775199996 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ddc23bbcd7ee09ed1ca107630e05e5c481660b98",
+          "message": "DEV: Record coverage in subprocesses as well (#2556)\n\n* DEV: Record coverage in subprocesses as well\r\n\r\n* attempt to pass env directly\r\n\r\n* use latest coverage package\r\n\r\n* do not copy environment twice\r\n\r\n---------\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2024-12-25T12:10:34+01:00",
+          "tree_id": "bb2c192318a5499a28bd2f3f1e9be7cf878547fe",
+          "url": "https://github.com/py-pdf/pypdf/commit/ddc23bbcd7ee09ed1ca107630e05e5c481660b98"
+        },
+        "date": 1735125181014,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1846032980562065,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011778831539821658",
+            "extra": "mean: 314.01085359999854 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.142159447851068,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009365275770796506",
+            "extra": "mean: 66.04077862500102 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2527074603219701,
+            "unit": "iter/sec",
+            "range": "stddev: 0.049008447178241224",
+            "extra": "mean: 3.957144750399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 19.940125344845487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011315495285126455",
+            "extra": "mean: 50.15013610526272 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08634235096933149,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12964634379384346",
+            "extra": "mean: 11.581801847800005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.347019856099126,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003050586619712926",
+            "extra": "mean: 742.3795539999901 msec\nrounds: 5"
           }
         ]
       }
