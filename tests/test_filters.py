@@ -18,7 +18,7 @@ from pypdf.filters import (
     CCITTFaxDecode,
     FlateDecode,
 )
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject
+from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NumberObject
 
 from . import PILContext, get_data_from_url
 from .test_encryption import HAS_AES
@@ -196,12 +196,23 @@ def test_ccitparameters():
     ("parameters", "expected_k"),
     [
         (None, 0),
-        (ArrayObject([{"/K": 1}, {"/Columns": 13}]), 1),
+        (ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}]), 1),
     ],
 )
 def test_ccitt_get_parameters(parameters, expected_k):
     parameters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
     assert parameters.K == expected_k  # noqa: SIM300
+
+
+def test_ccitt_get_parameters__indirect_object():
+    class Pdf:
+        def get_object(self, reference) -> NumberObject:
+            return NumberObject(42)
+
+    parameters = CCITTFaxDecode._get_parameters(
+        parameters=None, rows=IndirectObject(13, 1, Pdf())
+    )
+    assert parameters.rows == 42
 
 
 def test_ccitt_fax_decode():
