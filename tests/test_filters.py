@@ -17,6 +17,7 @@ from pypdf.filters import (
     ASCIIHexDecode,
     CCITParameters,
     CCITTFaxDecode,
+    CCITTParameters,
     FlateDecode,
 )
 from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NumberObject
@@ -188,7 +189,17 @@ def test_ascii85decode_five_zero_bytes():
 
 
 def test_ccitparameters():
-    params = CCITParameters()
+    with pytest.raises(
+        DeprecationWarning,
+        match="CCITParameters is deprecated and will be removed in pypdf 6.0.0. Use CCITTParameters instead",
+    ):
+        params = CCITParameters()
+        assert params.K == 0  # zero is the default according to page 78
+        assert params.group == 3
+
+
+def test_ccittparameters():
+    params = CCITTParameters()
     assert params.K == 0  # zero is the default according to page 78
     assert params.group == 3
 

@@ -46,6 +46,7 @@ from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
+    deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
 )
@@ -479,7 +480,7 @@ class JPXDecode:
 
 
 @dataclass
-class CCITParameters:
+class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     K: int = 0
@@ -501,6 +502,19 @@ class CCITParameters:
         return CCITTgroup
 
 
+def __create_old_class_instance(
+    K: int = 0,
+    columns: int = 0,
+    rows: int = 0
+) -> CCITTParameters:
+    deprecate_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
+    return CCITTParameters(K, columns, rows)
+
+
+# Create an alias for the old class name
+CCITParameters = __create_old_class_instance
+
+
 class CCITTFaxDecode:
     """
     §7.4.6, CCITTFaxDecode filter (ISO 32000).
@@ -515,7 +529,7 @@ class CCITTFaxDecode:
     def _get_parameters(
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
         rows: Union[int, IndirectObject],
-    ) -> CCITParameters:
+    ) -> CCITTParameters:
         # §7.4.6, optional parameters for the CCITTFaxDecode filter
         k = 0
         columns = 1728
@@ -535,7 +549,7 @@ class CCITTFaxDecode:
                 if CCITT.K in parameters_unwrapped:
                     k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
 
-        return CCITParameters(K=k, columns=columns, rows=int(rows))
+        return CCITTParameters(K=k, columns=columns, rows=int(rows))
 
     @staticmethod
     def decode(
