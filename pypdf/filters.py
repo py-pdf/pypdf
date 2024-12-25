@@ -491,10 +491,6 @@ class CCITTParameters:
     EncodedByteAlign: Union[int, None] = None
     DamagedRowsBeforeError: Union[int, None] = None
 
-    def __post_init__(self) -> None:
-        if self.__class__ is CCITParameters:
-            deprecate_with_replacement("CCITParameters", "CCITTParameters", "5.0.0")
-
     @property
     def group(self) -> int:
         if self.K < 0:
@@ -506,8 +502,17 @@ class CCITTParameters:
         return CCITTgroup
 
 
-# Alias for the deprecate with replacement
-CCITParameters = CCITTParameters
+def create_old_class_instance(
+    K: int = 0,
+    columns: int = 0,
+    rows: int = 0
+) -> CCITTParameters:
+    deprecate_with_replacement("CCITParameters", "CCITTParameters", "5.0.0")
+    return CCITTParameters(K, columns, rows)
+
+
+# Create an alias for the old class name
+CCITParameters = create_old_class_instance
 
 
 class CCITTFaxDecode:
