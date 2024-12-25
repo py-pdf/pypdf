@@ -1,4 +1,5 @@
 """Test the pypdf.filters module."""
+import os
 import shutil
 import string
 import subprocess
@@ -257,11 +258,12 @@ def test_issue_399():
 
 @pytest.mark.enable_socket
 def test_image_without_pillow(tmp_path):
-    import os
+    env = os.environ.copy()
+    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
 
     name = "tika-914102.pdf"
     pdf_path = Path(__file__).parent / "pdf_cache" / name
-    pdf_path_str = str(pdf_path.resolve()).replace("\\", "/")
+    pdf_path_str = pdf_path.resolve().as_posix()
 
     source_file = tmp_path / "script.py"
     source_file.write_text(
@@ -284,7 +286,7 @@ for page in reader.pages:
     ), exc.value.args[0]
 """
     )
-    env = os.environ.copy()
+
     try:
         env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
     except KeyError:
