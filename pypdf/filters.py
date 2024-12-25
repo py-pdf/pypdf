@@ -502,7 +502,7 @@ class CCITTParameters:
         return CCITTgroup
 
 
-def create_old_class_instance(
+def __create_old_class_instance(
     K: int = 0,
     columns: int = 0,
     rows: int = 0
@@ -512,7 +512,7 @@ def create_old_class_instance(
 
 
 # Create an alias for the old class name
-CCITParameters = create_old_class_instance
+CCITParameters = __create_old_class_instance
 
 
 class CCITTFaxDecode:
