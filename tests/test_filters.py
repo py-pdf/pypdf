@@ -187,6 +187,16 @@ def test_ascii85decode_five_zero_bytes():
         assert ASCII85Decode.decode(i + "~>") == expected
 
 
+def test_ccitparameters():
+    params = CCITParameters()
+    with pytest.raises(
+        DeprecationWarning,
+        match="CCITParameters is deprecated and will be removed in pypdf 5.2.0. Use CCITTParameters instead",  # noqa: E501
+    ):
+        assert params.K == 0  # zero is the default according to page 78
+        assert params.group == 3
+
+
 def test_ccittparameters():
     params = CCITTParameters()
     assert params.K == 0  # zero is the default according to page 78
