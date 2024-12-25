@@ -47,6 +47,7 @@ from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
     deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -478,8 +479,12 @@ class JPXDecode:
         return data
 
 
+# Alias for the deprecate with replacement
+CCITParameters = CCITTParameters
+
+
 @dataclass
-class CCITParameters:
+class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     K: int = 0
@@ -489,6 +494,10 @@ class CCITParameters:
     EndOfLine: Union[int, None] = None
     EncodedByteAlign: Union[int, None] = None
     DamagedRowsBeforeError: Union[int, None] = None
+
+    def __post_init__(self):
+        if self.__class__ is CCITParameters:
+            deprecate_with_replacement("CCITParameters", "CCITTParameters", "5.0.0")
 
     @property
     def group(self) -> int:
@@ -515,7 +524,7 @@ class CCITTFaxDecode:
     def _get_parameters(
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
         rows: Union[int, IndirectObject],
-    ) -> CCITParameters:
+    ) -> CCITTParameters:
         # §7.4.6, optional parameters for the CCITTFaxDecode filter
         k = 0
         columns = 1728
@@ -535,7 +544,7 @@ class CCITTFaxDecode:
                 if CCITT.K in parameters_unwrapped:
                     k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
 
-        return CCITParameters(K=k, columns=columns, rows=int(rows))
+        return CCITTParameters(K=k, columns=columns, rows=int(rows))
 
     @staticmethod
     def decode(
