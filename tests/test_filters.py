@@ -191,7 +191,7 @@ def test_ccitparameters():
     params = CCITParameters()
     with pytest.raises(
         DeprecationWarning,
-        match="CCITParameters is deprecated and will be removed in pypdf 5.2.0. Use CCITTParameters instead",  # noqa: E501
+        match="CCITParameters is deprecated and will be removed in pypdf 5.2.0. Use CCITTParameters instead",
     ):
         assert params.K == 0  # zero is the default according to page 78
         assert params.group == 3
