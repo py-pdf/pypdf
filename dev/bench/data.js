@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1735118200788,
+  "lastUpdate": 1735118863802,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -64487,6 +64487,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0019329186454414243",
             "extra": "mean: 739.2105823999998 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6d4e2ec916c07e119a2b029de7f1228aa142a209",
+          "message": "BUG: Handle IndirectObject in CCITTFaxDecode filter (#2965)\n\n* BUG: Handle IndirectObject in CCITTFaxDecode filter\r\n\r\n* fix types\r\n\r\n* further typing fix\r\n\r\n* add test\r\n\r\n* add missing annotation\r\n\r\n* update parameter order to keep backwards compatibility",
+          "timestamp": "2024-12-25T10:25:19+01:00",
+          "tree_id": "ed32b2dffe2ce68f59abf1f1ad8031381675b439",
+          "url": "https://github.com/py-pdf/pypdf/commit/6d4e2ec916c07e119a2b029de7f1228aa142a209"
+        },
+        "date": 1735118861346,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4008883782936685,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004498340387224366",
+            "extra": "mean: 294.0408178000041 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.735324106744745,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006308109921742431",
+            "extra": "mean: 63.55128075000138 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27475608513293304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.042594099699128356",
+            "extra": "mean: 3.6395918202000077 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.610189028029577,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007170008440697992",
+            "extra": "mean: 48.51969084999723 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08741521200848087,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02994659468441768",
+            "extra": "mean: 11.439656519999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3490838418578135,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003239325261094892",
+            "extra": "mean: 741.243775199996 msec\nrounds: 5"
           }
         ]
       }
