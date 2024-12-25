@@ -15,8 +15,8 @@ from pypdf.errors import DeprecationError, PdfReadError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
-    CCITTFaxDecode,
     CCITParameters,
+    CCITTFaxDecode,
     CCITTParameters,
     FlateDecode,
 )
