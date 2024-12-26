@@ -715,7 +715,7 @@ class PdfDocCommon:
                 return (
                     k
                     + "."
-                    + str(sum([1 for kk in fields if kk.startswith(k + ".")]) + 2)
+                    + str(sum(1 for kk in fields if kk.startswith(k + ".")) + 2)
                 )
 
         # Retrieve document form fields

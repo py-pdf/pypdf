@@ -1181,7 +1181,7 @@ class PdfReader(PdfDocCommon):
         interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
         self.cache_indirect_object(
             0,
-            max([i for (g, i) in self.resolved_objects if g == 0]) + 1,
+            max(i for (g, i) in self.resolved_objects if g == 0) + 1,
             interim,
         )
         arr = ArrayObject()
