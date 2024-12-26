@@ -31,19 +31,19 @@ _debug_versions = (
 )
 
 __all__ = [
-    "__version__",
-    "_debug_versions",
+    "DocumentInformation",
     "ImageType",
-    "mult",
+    "ObjectDeletionFlag",
+    "PageObject",
     "PageRange",
     "PaperSize",
-    "DocumentInformation",
-    "ObjectDeletionFlag",
-    "parse_filename_page_ranges",
+    "PasswordType",
     "PdfMerger",
     "PdfReader",
     "PdfWriter",
     "Transformation",
-    "PageObject",
-    "PasswordType",
+    "__version__",
+    "_debug_versions",
+    "mult",
+    "parse_filename_page_ranges",
 ]
