@@ -897,7 +897,7 @@ def test_cloning(caplog):
 @pytest.mark.enable_socket
 def test_append_with_indirectobject_not_pointing(caplog):
     """
-    reported in #1631
+    Reported in #1631
     the object 43 0 is not invalid
     """
     url = "https://github.com/py-pdf/pypdf/files/10729142/document.pdf"
@@ -912,7 +912,7 @@ def test_append_with_indirectobject_not_pointing(caplog):
 @pytest.mark.enable_socket
 def test_iss1615_1673():
     """
-    test cases where /N is not indicating chains of objects
+    Test cases where /N is not indicating chains of objects
     test also where /N,... are not part of chains
     """
     # #1615

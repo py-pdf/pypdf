@@ -72,15 +72,15 @@ except ImportError:
         )
 
 __all__ = [
-    "crypt_provider",
+    "CryptAES",
     "CryptBase",
     "CryptIdentity",
     "CryptRC4",
-    "CryptAES",
-    "rc4_encrypt",
-    "rc4_decrypt",
-    "aes_ecb_encrypt",
-    "aes_ecb_decrypt",
-    "aes_cbc_encrypt",
     "aes_cbc_decrypt",
+    "aes_cbc_encrypt",
+    "aes_ecb_decrypt",
+    "aes_ecb_encrypt",
+    "crypt_provider",
+    "rc4_decrypt",
+    "rc4_encrypt",
 ]

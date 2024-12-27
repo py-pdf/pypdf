@@ -49,13 +49,13 @@ charset_encoding: Dict[str, List[str]] = {
 }
 
 __all__ = [
-    "adobe_glyphs",
-    "_std_encoding",
-    "_symbol_encoding",
-    "_zapfding_encoding",
+    "_mac_encoding",
     "_pdfdoc_encoding",
     "_pdfdoc_encoding_rev",
+    "_std_encoding",
+    "_symbol_encoding",
     "_win_encoding",
-    "_mac_encoding",
+    "_zapfding_encoding",
+    "adobe_glyphs",
     "charset_encoding",
 ]

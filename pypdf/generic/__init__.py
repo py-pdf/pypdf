@@ -198,45 +198,39 @@ class AnnotationBuilder:  # deprecated
 
 
 __all__ = [
-    # Base types
-    "BooleanObject",
-    "FloatObject",
-    "NumberObject",
-    "NameObject",
-    "IndirectObject",
-    "NullObject",
-    "PdfObject",
-    "TextStringObject",
-    "ByteStringObject",
-    # Annotations
-    "AnnotationBuilder",
-    # Fit
-    "Fit",
     "PAGE_FIT",
-    # Data structures
+    "AnnotationBuilder",
     "ArrayObject",
-    "DictionaryObject",
-    "TreeObject",
-    "StreamObject",
-    "DecodedStreamObject",
-    "EncodedStreamObject",
+    "BooleanObject",
+    "ByteStringObject",
     "ContentStream",
-    "RectangleObject",
-    "Field",
+    "DecodedStreamObject",
     "Destination",
-    "ViewerPreferences",
-    # --- More specific stuff
-    # Outline
-    "OutlineItem",
+    "DictionaryObject",
+    "EncodedStreamObject",
+    "Field",
+    "Fit",
+    "FloatObject",
+    "IndirectObject",
+    "NameObject",
+    "NullObject",
+    "NumberObject",
     "OutlineFontFlag",
-    # Data structures core functions
-    "read_object",
+    "OutlineItem",
+    "PdfObject",
+    "RectangleObject",
+    "StreamObject",
+    "TextStringObject",
+    "TreeObject",
+    "ViewerPreferences",
     # Utility functions
     "create_string_object",
-    "encode_pdfdocencoding",
     "decode_pdfdocencoding",
+    "encode_pdfdocencoding",
     "hex_to_rgb",
     "is_null_or_none",
     "read_hex_string_from_stream",
+    # Data structures core functions
+    "read_object",
     "read_string_from_stream",
 ]

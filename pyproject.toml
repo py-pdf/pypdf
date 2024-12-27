@@ -142,8 +142,6 @@ ignore = [
     "N806",  # Variable `NO` in function should be lowercase
     "N814", # Camelcase `PageAttributes` imported as constant `PG`
     "N817",  # CamelCase `PagesAttributes` imported as acronym `PA`
-    "ANN101",  # annotating 'self' seems weird (at least before 3.11)
-    "ANN102",  # Missing type annotation for `cls` in classmethod
     "ANN204", # Missing return type annotation for special method `__init__`
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
     "BLE",  # we want to capture Exception sometimes
