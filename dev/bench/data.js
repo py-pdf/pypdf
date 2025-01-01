@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1735747932410,
+  "lastUpdate": 1735747984022,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -64883,6 +64883,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0022825254826827064",
             "extra": "mean: 739.2860477999989 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c358ca5b1187546dfdaa74c5611e769e19881b79",
+          "message": "DOC: Fix documentation for PdfDocCommon (#3013)\n\n* DOC: Fix documentation for PdfDocCommon\r\n\r\nCloses #1493.\r\n\r\n* use cross-references",
+          "timestamp": "2025-01-01T17:10:31+01:00",
+          "tree_id": "0068b851ac603e1ea46f7c0514a71999b36261c3",
+          "url": "https://github.com/py-pdf/pypdf/commit/c358ca5b1187546dfdaa74c5611e769e19881b79"
+        },
+        "date": 1735747980713,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.037986931477073,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007432566274420119",
+            "extra": "mean: 329.16533959999583 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.535034753419637,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012093561613763808",
+            "extra": "mean: 73.88233707692174 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.274901036358148,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0252563613542763",
+            "extra": "mean: 3.6376727175999974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.06826046209131,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006271862102745019",
+            "extra": "mean: 49.82992930000023 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08531669661717087,
+            "unit": "iter/sec",
+            "range": "stddev: 0.145587314647233",
+            "extra": "mean: 11.72103515080001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2171766012538932,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024068671601752075",
+            "extra": "mean: 821.5734667999982 msec\nrounds: 5"
           }
         ]
       }
