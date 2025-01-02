@@ -38,6 +38,7 @@ import math
 import struct
 import zlib
 from base64 import a85decode
+from dataclasses import dataclass
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -45,6 +46,7 @@ from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
+    deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
 )
@@ -477,17 +479,17 @@ class JPXDecode:
         return data
 
 
-class CCITParameters:
+@dataclass
+class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
-    def __init__(self, K: int = 0, columns: int = 0, rows: int = 0) -> None:
-        self.K = K
-        self.EndOfBlock = None
-        self.EndOfLine = None
-        self.EncodedByteAlign = None
-        self.columns = columns  # width
-        self.rows = rows  # height
-        self.DamagedRowsBeforeError = None
+    K: int = 0
+    columns: int = 0
+    rows: int = 0
+    EndOfBlock: Union[int, None] = None
+    EndOfLine: Union[int, None] = None
+    EncodedByteAlign: Union[int, None] = None
+    DamagedRowsBeforeError: Union[int, None] = None
 
     @property
     def group(self) -> int:
@@ -498,6 +500,19 @@ class CCITParameters:
             # k > 0: Mixed one- and two-dimensional encoding (Group 3, 2-D)
             CCITTgroup = 3
         return CCITTgroup
+
+
+def __create_old_class_instance(
+    K: int = 0,
+    columns: int = 0,
+    rows: int = 0
+) -> CCITTParameters:
+    deprecate_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
+    return CCITTParameters(K, columns, rows)
+
+
+# Create an alias for the old class name
+CCITParameters = __create_old_class_instance
 
 
 class CCITTFaxDecode:
@@ -513,8 +528,8 @@ class CCITTFaxDecode:
     @staticmethod
     def _get_parameters(
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
-        rows: int,
-    ) -> CCITParameters:
+        rows: Union[int, IndirectObject],
+    ) -> CCITTParameters:
         # §7.4.6, optional parameters for the CCITTFaxDecode filter
         k = 0
         columns = 1728
@@ -525,16 +540,16 @@ class CCITTFaxDecode:
             if isinstance(parameters_unwrapped, ArrayObject):
                 for decode_parm in parameters_unwrapped:
                     if CCITT.COLUMNS in decode_parm:
-                        columns = decode_parm[CCITT.COLUMNS]
+                        columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.K in decode_parm:
-                        k = decode_parm[CCITT.K]
+                        k = decode_parm[CCITT.K].get_object()
             else:
                 if CCITT.COLUMNS in parameters_unwrapped:
-                    columns = parameters_unwrapped[CCITT.COLUMNS]  # type: ignore
+                    columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
-                    k = parameters_unwrapped[CCITT.K]  # type: ignore
+                    k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
 
-        return CCITParameters(k, columns, rows)
+        return CCITTParameters(K=k, columns=columns, rows=int(rows))
 
     @staticmethod
     def decode(

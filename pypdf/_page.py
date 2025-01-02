@@ -749,10 +749,7 @@ class PageObject(DictionaryObject):
         return v
 
     def _get_inline_images(self) -> Dict[str, ImageFile]:
-        """
-        get inline_images
-        entries will be identified as ~1~
-        """
+        """Load inline images. Entries will be identified as `~1~`."""
         content = self.get_contents()
         if is_null_or_none(content):
             return {}
@@ -1451,7 +1448,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         """
-        merge_transformed_page is similar to merge_page, but a transformation
+        Similar to :meth:`~pypdf._page.PageObject.merge_page`, but a transformation
         matrix is applied to the merged stream.
 
         Args:
@@ -1479,7 +1476,7 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", scale: float, over: bool = True, expand: bool = False
     ) -> None:
         """
-        merge_scaled_page is similar to merge_page, but the stream to be merged
+        Similar to :meth:`~pypdf._page.PageObject.merge_page`, but the stream to be merged
         is scaled by applying a transformation matrix.
 
         Args:
@@ -1501,7 +1498,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         """
-        merge_rotated_page is similar to merge_page, but the stream to be merged
+        Similar to :meth:`~pypdf._page.PageObject.merge_page`, but the stream to be merged
         is rotated by applying a transformation matrix.
 
         Args:
@@ -1524,7 +1521,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         """
-        mergeTranslatedPage is similar to merge_page, but the stream to be
+        Similar to :meth:`~pypdf._page.PageObject.merge_page`, but the stream to be
         merged is translated by applying a transformation matrix.
 
         Args:

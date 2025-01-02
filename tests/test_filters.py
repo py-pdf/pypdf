@@ -1,4 +1,5 @@
 """Test the pypdf.filters module."""
+import os
 import shutil
 import string
 import subprocess
@@ -16,9 +17,10 @@ from pypdf.filters import (
     ASCIIHexDecode,
     CCITParameters,
     CCITTFaxDecode,
+    CCITTParameters,
     FlateDecode,
 )
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject
+from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NumberObject
 
 from . import PILContext, get_data_from_url
 from .test_encryption import HAS_AES
@@ -187,7 +189,17 @@ def test_ascii85decode_five_zero_bytes():
 
 
 def test_ccitparameters():
-    params = CCITParameters()
+    with pytest.raises(
+        DeprecationWarning,
+        match="CCITParameters is deprecated and will be removed in pypdf 6.0.0. Use CCITTParameters instead",
+    ):
+        params = CCITParameters()
+        assert params.K == 0  # zero is the default according to page 78
+        assert params.group == 3
+
+
+def test_ccittparameters():
+    params = CCITTParameters()
     assert params.K == 0  # zero is the default according to page 78
     assert params.group == 3
 
@@ -196,12 +208,23 @@ def test_ccitparameters():
     ("parameters", "expected_k"),
     [
         (None, 0),
-        (ArrayObject([{"/K": 1}, {"/Columns": 13}]), 1),
+        (ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}]), 1),
     ],
 )
 def test_ccitt_get_parameters(parameters, expected_k):
     parameters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
     assert parameters.K == expected_k  # noqa: SIM300
+
+
+def test_ccitt_get_parameters__indirect_object():
+    class Pdf:
+        def get_object(self, reference) -> NumberObject:
+            return NumberObject(42)
+
+    parameters = CCITTFaxDecode._get_parameters(
+        parameters=None, rows=IndirectObject(13, 1, Pdf())
+    )
+    assert parameters.rows == 42
 
 
 def test_ccitt_fax_decode():
@@ -246,11 +269,12 @@ def test_issue_399():
 
 @pytest.mark.enable_socket
 def test_image_without_pillow(tmp_path):
-    import os
+    env = os.environ.copy()
+    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
 
     name = "tika-914102.pdf"
     pdf_path = Path(__file__).parent / "pdf_cache" / name
-    pdf_path_str = str(pdf_path.resolve()).replace("\\", "/")
+    pdf_path_str = pdf_path.resolve().as_posix()
 
     source_file = tmp_path / "script.py"
     source_file.write_text(
@@ -273,7 +297,7 @@ for page in reader.pages:
     ), exc.value.args[0]
 """
     )
-    env = os.environ.copy()
+
     try:
         env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
     except KeyError:

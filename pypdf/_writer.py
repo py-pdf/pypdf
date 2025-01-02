@@ -677,7 +677,7 @@ class PdfWriter(PdfDocCommon):
                 and previous page does not exist.
 
         """
-        if width is None or height is None and index < self.get_num_pages():
+        if width is None or (height is None and index < self.get_num_pages()):
             oldpage = self.pages[index]
             width = oldpage.mediabox.width
             height = oldpage.mediabox.height
