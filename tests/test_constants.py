@@ -30,7 +30,7 @@ def test_slash_prefix():
                 continue
 
             # There are a few exceptions that may be lowercase
-            if cls == GraphicsStateParameters and attr in ["ca", "op"]:
+            if cls == GraphicsStateParameters and attr in ["/ca", "/op"]:
                 continue
 
             assert constant_value.startswith("/")
