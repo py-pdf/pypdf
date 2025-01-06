@@ -29,13 +29,13 @@ def test_slash_prefix():
             if isinstance(constant_value, Callable):
                 continue
 
-            assert constant_value.startswith("/")
-            assert attr.replace("_", "").casefold() == constant_value[1:].casefold()
-
             # There are a few exceptions that may be lowercase
             if cls == GraphicsStateParameters and attr in ["ca", "op"]:
                 continue
+
+            assert constant_value.startswith("/")
             assert pattern.match(constant_value)
+            assert attr.replace("_", "").casefold() == constant_value[1:].casefold()
 
 
 def test_user_access_permissions__dict_handling():
