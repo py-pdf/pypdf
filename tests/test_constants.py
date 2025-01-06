@@ -32,7 +32,7 @@ def test_slash_prefix():
             assert constant_value.startswith("/")
             assert attr.replace("_", "").casefold() == constant_value[1:].casefold()
 
-            # There are two exceptions that may be lowercase
+            # There are a few exceptions that may be lowercase
             if cls == GraphicsStateParameters and attr in ["ca", "op"]:
                 continue
 
