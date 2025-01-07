@@ -148,7 +148,7 @@ def test_mediabox_expansion_after_rotation(
 
     mediabox = reader.pages[0].mediabox
 
-    # Deviation of upto 2 pixels is acceptable
+    # Deviation of up to 2 pixels is acceptable
     assert math.isclose(mediabox.width, expected_width, abs_tol=2)
     assert math.isclose(mediabox.height, expected_height, abs_tol=2)
 
@@ -507,10 +507,8 @@ def test_extract_text_visitor_callbacks():
 
         def contains(self, x, y) -> bool:
             return (
-                x >= self.x
-                and x <= (self.x + self.w)
-                and y >= self.y
-                and y <= (self.y + self.h)
+                self.x <= x <= (self.x + self.w)
+                and self.y <= y <= (self.y + self.h)
             )
 
     def extract_text_and_rectangles(
