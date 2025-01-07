@@ -581,10 +581,10 @@ class Version:
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Version):
             raise ValueError(f"Version cannot be compared against {type(other)}")
-        min_len = min(len(self.components), len(other.components))
-        for i in range(min_len):
-            self_value, self_suffix = self.components[i]
-            other_value, other_suffix = other.components[i]
+
+        for self_component, other_component in zip(self.components, other.components):
+            self_value, self_suffix = self_component
+            other_value, other_suffix = other_component
 
             if self_value < other_value:
                 return True
