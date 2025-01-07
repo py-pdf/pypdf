@@ -353,22 +353,22 @@ def test_is_sublist():
         ("1", "1", False),
         ("1.0", "1.1", True),
         ("1", "1.1", True),
-        # suffix left
+        # Suffix left
         ("1a", "2", True),
         ("2a", "1", False),
         ("1a", "1", False),
         ("1.0a", "1.1", True),
-        # I'm not sure about that, but seems special enoguht that it
+        # I'm not sure about that, but seems special enough that it
         # probably doesn't matter:
         ("1a", "1.1", False),
-        # suffix right
+        # Suffix right
         ("1", "2a", True),
         ("2", "1a", False),
         ("1", "1a", True),
         ("1.0", "1.1a", True),
         ("1", "1.1a", True),
         ("", "0.0.0", True),
-        # just suffix matters ... hm, I think this is actually wrong:
+        # Just suffix matters ... hm, I think this is actually wrong:
         ("1.0a", "1.0", False),
         ("1.0", "1.0a", True),
     ],
@@ -379,7 +379,7 @@ def test_version_compare(left, right, is_less_than):
 
 def test_version_compare_equal_str():
     a = Version("1.0")
-    assert (a == "1.0") is False
+    assert a != "1.0"
 
 
 def test_version_compare_lt_str():
