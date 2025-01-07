@@ -582,9 +582,9 @@ class Version:
         if not isinstance(other, Version):
             raise ValueError(f"Version cannot be compared against {type(other)}")
 
-        for item in zip(self.components, other.components):
-            self_value, self_suffix = item[0]
-            other_value, other_suffix = item[1]
+        for self_component, other_component in zip(self.components, other.components):
+            self_value, self_suffix = self_component
+            other_value, other_suffix = other_component
 
             if self_value < other_value:
                 return True
