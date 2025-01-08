@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736259857103,
+  "lastUpdate": 1736334433352,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -65147,6 +65147,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00291656644941304",
             "extra": "mean: 741.9010318000005 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "97706c54158bf5cab6010e373bfeb05c8da7332d",
+          "message": "STY: Remove replace function (#3030)\n\nReplacing a whitespace character with the empty string is done by strip() in the next line.",
+          "timestamp": "2025-01-08T12:04:46+01:00",
+          "tree_id": "56a8797f78250b7c17878cffbf2d741296449a01",
+          "url": "https://github.com/py-pdf/pypdf/commit/97706c54158bf5cab6010e373bfeb05c8da7332d"
+        },
+        "date": 1736334430931,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3925958098691416,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011853474089594108",
+            "extra": "mean: 294.75954579999666 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.624513610721664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0073175439267084775",
+            "extra": "mean: 64.00199231250258 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2714899428153288,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021576860863250714",
+            "extra": "mean: 3.6833776958000017 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.166070738438318,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005586745189289712",
+            "extra": "mean: 49.5882421999994 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08681212028809177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09690448535463145",
+            "extra": "mean: 11.519128857599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3468789161430517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0032026702557148754",
+            "extra": "mean: 742.4572379999972 msec\nrounds: 5"
           }
         ]
       }
