@@ -363,7 +363,7 @@ def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
         message = rest
 
     # Standardize
-    message.strip()
+    message = message.strip()
     commit_hash = commit_hash.strip()
 
     author_login = authors[commit_hash]
