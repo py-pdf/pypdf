@@ -168,7 +168,6 @@ def test_text_extraction_encrypted():
     assert (
         reader.pages[0]
         .extract_text()
-        .replace("\n", "")
         .strip()
         .startswith("Lorem ipsum dolor sit amet")
     )
