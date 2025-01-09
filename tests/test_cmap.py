@@ -94,6 +94,7 @@ def test_parse_encoding_advanced_encoding_not_implemented(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-957144.pdf")))
     for page in reader.pages:
         page.extract_text()
+    # The correctly spelled encoding is /WinAnsiEncoding
     assert "Advanced encoding /WinAnsEncoding not implemented yet" in caplog.text
 
 
