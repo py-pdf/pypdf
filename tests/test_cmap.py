@@ -187,7 +187,7 @@ def test_cmap_compute_space_width():
     # issue 2137
     # original file URL:
     # url = "https://arxiv.org/pdf/2005.05909.pdf"
-    # URL from github issue is too long to pass code stype check, use original arxiv URL instead
+    # URL from github issue is too long to pass code type check, use original arxiv URL instead
     # url = "https://github.com/py-pdf/pypdf/files/12489914/Morris.et.al.-.2020.-.TextAttack.A.Framework.for.Adversarial.Attacks.Data.Augmentation.and.Adversarial.Training.in.NLP.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(name="TextAttack_paper.pdf")))
     reader.pages[0].extract_text()  # no error
