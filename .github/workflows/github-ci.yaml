@@ -19,37 +19,37 @@ on:
   workflow_dispatch:
 
 jobs:
-  test_windows:
-    name: pytest on windows
-    runs-on: windows-latest
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
-    - name: Setup Python (3.11+)
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.13  # latest stable python
-        allow-prereleases: true
-    - name: Upgrade pip
-      run: |
-        python -m pip install --upgrade pip
-    - name: Install requirements (Python 3.11+)
-      run: |
-        pip install -r requirements/ci-3.11.txt
-    - name: Install cryptography
-      run: |
-        pip install cryptography
-    - name: Install pypdf
-      run: |
-        pip install .
-    - name: Prepare
-      run: |
-        python -c "from tests import download_test_pdfs; download_test_pdfs()"
-    - name: Test with pytest
-      run: |
-        python -m pytest tests --cov=pypdf --cov-append -n auto -vv
+  # test_windows:
+  #   name: pytest on windows
+  #   runs-on: windows-latest
+  #   steps:
+  #   - name: Checkout Code
+  #     uses: actions/checkout@v4
+  #     with:
+  #       submodules: 'recursive'
+  #   - name: Setup Python (3.11+)
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: 3.13  # latest stable python
+  #       allow-prereleases: true
+  #   - name: Upgrade pip
+  #     run: |
+  #       python -m pip install --upgrade pip
+  #   - name: Install requirements (Python 3.11+)
+  #     run: |
+  #       pip install -r requirements/ci-3.11.txt
+  #   - name: Install cryptography
+  #     run: |
+  #       pip install cryptography
+  #   - name: Install pypdf
+  #     run: |
+  #       pip install .
+  #   - name: Prepare
+  #     run: |
+  #       python -c "from tests import download_test_pdfs; download_test_pdfs()"
+  #   - name: Test with pytest
+  #     run: |
+  #       python -m pytest tests --cov=pypdf --cov-append -n auto -vv
 
 
   tests:
