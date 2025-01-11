@@ -247,12 +247,12 @@ def test_rotate_45():
         (True, "https://github.com/py-pdf/pypdf/files/8884493/998167.pdf", [0]),
         (
             True,
-            "https://corpora.tika.apache.org/base/docs/govdocs1/971/971703.pdf",
+            "https://github.com/user-attachments/files/18382039/971703.pdf",
             [0, 1, 5, 8, 14],
         ),
         (  # faulty PDF, wrongly linearized and with 2 trailer, second with /Root
             True,
-            "https://corpora.tika.apache.org/base/docs/govdocs1/989/989691.pdf",
+            "https://github.com/user-attachments/files/18382034/989691.pdf",
             [0],
         ),
     ],
@@ -317,7 +317,7 @@ def test_orientations():
             "sample-files/013-reportlab-overlay/reportlab-overlay.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "https://github.com/user-attachments/files/18381707/tika-935981.pdf",
             "sample-files/013-reportlab-overlay/reportlab-overlay.pdf",
         ),
     ],
@@ -346,7 +346,7 @@ def test_overlay(pdf_file_path, base_path, overlay_path):
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf",
+            "https://github.com/user-attachments/files/18381697/tika-924546.pdf",
             "tika-924546.pdf",
         )
     ],
@@ -366,7 +366,7 @@ def test_merge_with_warning(tmp_path, url, name):
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/980/980613.pdf",
+            "https://github.com/user-attachments/files/18381757/tika-980613.pdf",
             "tika-980613.pdf",
         )
     ],
@@ -385,7 +385,7 @@ def test_merge(tmp_path, url, name):
     ("url", "name", "expected_metadata"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935996.pdf",
+            "https://github.com/user-attachments/files/18381708/tika-935996.pdf",
             "tika-935996.pdf",
             {
                 "/Author": "Unknown",
@@ -417,61 +417,61 @@ def test_get_metadata(url, name, expected_metadata):
             None,  # iss #1090 is now fixed
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
+            "https://github.com/user-attachments/files/18381715/tika-942358.pdf",
             "tika-942358.pdf",
             False,
             None,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/911/911260.pdf",
+            "https://github.com/user-attachments/files/18381684/tika-911260.pdf",
             "tika-911260.pdf",
             False,
             None,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/992/992472.pdf",
+            "https://github.com/user-attachments/files/18381766/tika-992472.pdf",
             "tika-992472.pdf",
             False,
             None,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/978/978477.pdf",
+            "https://github.com/user-attachments/files/18381756/tika-978477.pdf",
             "tika-978477.pdf",
             False,
             None,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/960/960317.pdf",
+            "https://github.com/user-attachments/files/18381731/tika-960317.pdf",
             "tika-960317.pdf",
             False,
             None,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/930/930513.pdf",
+            "https://github.com/user-attachments/files/18381701/tika-930513.pdf",
             "tika-930513.pdf",
             False,
             None,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/918/918113.pdf",
+            "https://github.com/user-attachments/files/18381691/tika-918113.pdf",
             "tika-918113.pdf",
             True,
             None,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/940/940704.pdf",
+            "https://github.com/user-attachments/files/18381711/tika-940704.pdf",
             "tika-940704.pdf",
             True,
             None,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/976/976488.pdf",
+            "https://github.com/user-attachments/files/18381752/tika-976488.pdf",
             "tika-976488.pdf",
             True,
             None,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/948/948176.pdf",
+            "https://github.com/user-attachments/files/18381716/tika-948176.pdf",
             "tika-948176.pdf",
             True,
             None,
@@ -497,23 +497,23 @@ def test_extract_text(url, name, strict, exception):
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
+            "https://github.com/user-attachments/files/18381710/tika-938702.pdf",
             "tika-938702.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/957/957304.pdf",
+            "https://github.com/user-attachments/files/18381725/tika-957304.pdf",
             "tika-957304.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/915/915194.pdf",
+            "https://github.com/user-attachments/files/18381690/tika-915194.pdf",
             "tika-915194.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/950/950337.pdf",
+            "https://github.com/user-attachments/files/18381717/tika-950337.pdf",
             "tika-950337.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/962/962292.pdf",
+            "https://github.com/user-attachments/files/18381734/tika-962292.pdf",
             "tika-962292.pdf",
         ),
     ],
@@ -533,7 +533,7 @@ def test_compress_raised(url, name):
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf",
+            "https://github.com/user-attachments/files/18381733/tika-961883.pdf",
             "tika-961883.pdf",
         ),
     ],
@@ -558,7 +558,7 @@ def test_get_fields_warns(tmp_path, caplog, url, name):
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf",
+            "https://github.com/user-attachments/files/18381713/tika-942050.pdf",
             "tika-942050.pdf",
         ),
     ],
@@ -575,7 +575,7 @@ def test_get_fields_no_warning(tmp_path, url, name):
 
 @pytest.mark.enable_socket
 def test_scale_rectangle_indirect_object():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/999/999944.pdf"
+    url = "https://github.com/user-attachments/files/18381778/tika-999944.pdf"
     name = "tika-999944.pdf"
     data = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(data)
@@ -617,43 +617,43 @@ def test_merge_output(caplog):
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/994/994636.pdf",
+            "https://github.com/user-attachments/files/18381767/tika-994636.pdf",
             "tika-994636.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/952/952133.pdf",
+            "https://github.com/user-attachments/files/18381719/tika-952133.pdf",
             "tika-952133.pdf",
         ),
         (  # JPXDecode
-            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914568.pdf",
+            "https://github.com/user-attachments/files/18381688/tika-914568.pdf",
             "tika-914568.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/952/952016.pdf",
+            "https://github.com/user-attachments/files/18381718/tika-952016.pdf",
             "tika-952016.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/965/965118.pdf",
-            "tika-952016.pdf",
+            "https://github.com/user-attachments/files/18382223/965118.pdf",
+            "tika-965118.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/959/959184.pdf",
+            "https://github.com/user-attachments/files/18381729/tika-959184.pdf",
             "tika-959184.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/958/958496.pdf",
+            "https://github.com/user-attachments/files/18381727/tika-958496.pdf",
             "tika-958496.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf",
+            "https://github.com/user-attachments/files/18381744/tika-972174.pdf",
             "tika-972174.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972243.pdf",
+            "https://github.com/user-attachments/files/18381745/tika-972243.pdf",
             "tika-972243.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/969/969502.pdf",
+            "https://github.com/user-attachments/files/18381743/tika-969502.pdf",
             "tika-969502.pdf",
         ),
         ("https://arxiv.org/pdf/2201.00214.pdf", "arxiv-2201.00214.pdf"),
@@ -687,7 +687,7 @@ def test_image_extraction(url, name):
 @pytest.mark.enable_socket
 def test_image_extraction_strict():
     # Emits log messages
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
+    url = "https://github.com/user-attachments/files/18381687/tika-914102.pdf"
     name = "tika-914102.pdf"
     data = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(data, strict=True)
@@ -717,7 +717,7 @@ def test_image_extraction_strict():
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/977/977609.pdf",
+            "https://github.com/user-attachments/files/18381754/tika-977609.pdf",
             "tika-977609.pdf",
         ),
     ],
@@ -751,7 +751,7 @@ def test_image_extraction2(url, name):
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/918/918137.pdf",
+            "https://github.com/user-attachments/files/18381692/tika-918137.pdf",
             "tika-918137.pdf",
         ),
         (
@@ -771,11 +771,11 @@ def test_get_outline(url, name):
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "https://github.com/user-attachments/files/18381707/tika-935981.pdf",
             "tika-935981.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/937/937334.pdf",
+            "https://github.com/user-attachments/files/18381709/tika-937334.pdf",
             "tika-937334.pdf",
         ),
     ],
@@ -791,22 +791,22 @@ def test_get_xfa(url, name):
     ("url", "name", "strict"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/988/988698.pdf",
+            "https://github.com/user-attachments/files/18381765/tika-988698.pdf",
             "tika-988698.pdf",
             False,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914133.pdf",
-            "tika-988698.pdf",
+            "https://github.com/user-attachments/files/18382162/914133.pdf",
+            "tika-914133.pdf",
             False,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/912/912552.pdf",
+            "https://github.com/user-attachments/files/18381685/tika-912552.pdf",
             "tika-912552.pdf",
             False,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf",
+            "https://github.com/user-attachments/files/18381687/tika-914102.pdf",
             "tika-914102.pdf",
             True,
         ),
@@ -824,22 +824,22 @@ def test_get_fonts(url, name, strict):
     ("url", "name", "strict"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942303.pdf",
+            "https://github.com/user-attachments/files/18382060/tika-942303.pdf",
             "tika-942303.pdf",
             True,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "https://github.com/user-attachments/files/18381707/tika-935981.pdf",
             "tika-935981.pdf",
             True,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/967/967399.pdf",
+            "https://github.com/user-attachments/files/18381738/tika-967399.pdf",
             "tika-967399.pdf",
             True,
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "https://github.com/user-attachments/files/18381707/tika-935981.pdf",
             "tika-935981.pdf",
             False,
         ),

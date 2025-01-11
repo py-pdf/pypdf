@@ -865,7 +865,7 @@ def test_append_pages_from_reader_append():
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     # TODO: Check this more closely... this looks weird
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     merger = PdfWriter()
@@ -879,11 +879,11 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf",
+            "https://github.com/user-attachments/files/18381699/tika-924666.pdf",
             "test_sweep_indirect_references_nullobject_exception.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf",
+            "https://github.com/user-attachments/files/18381694/tika-922840.pdf",
             "test_write_outline_item_on_page_fitv.pdf",
         ),
         ("https://github.com/py-pdf/pypdf/files/10715624/test.pdf", "iss1627.pdf"),
@@ -1070,7 +1070,7 @@ def test_iss471():
 
 @pytest.mark.enable_socket
 def test_reset_translation():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
@@ -1108,7 +1108,7 @@ def test_threads_empty():
 
 @pytest.mark.enable_socket
 def test_append_without_annots_and_articles():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
@@ -1127,7 +1127,7 @@ def test_append_without_annots_and_articles():
 
 @pytest.mark.enable_socket
 def test_append_multiple():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()

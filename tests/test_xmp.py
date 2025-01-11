@@ -166,7 +166,7 @@ def test_xmpmm_instance_id(url, name, xmpmm_instance_id):
 @pytest.mark.enable_socket
 def test_xmp_dc_description_extraction():
     """XMP dc_description is correctly extracted."""
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
+    url = "https://github.com/user-attachments/files/18381721/tika-953770.pdf"
     name = "tika-953770.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     xmp_metadata = reader.xmp_metadata
@@ -182,7 +182,7 @@ def test_xmp_dc_description_extraction():
 @pytest.mark.enable_socket
 def test_dc_creator_extraction():
     """XMP dc_creator is correctly extracted."""
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
+    url = "https://github.com/user-attachments/files/18381721/tika-953770.pdf"
     name = "tika-953770.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     xmp_metadata = reader.xmp_metadata
@@ -194,7 +194,7 @@ def test_dc_creator_extraction():
 @pytest.mark.enable_socket
 def test_custom_properties_extraction():
     """XMP custom_properties is correctly extracted."""
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/986/986065.pdf"
+    url = "https://github.com/user-attachments/files/18381764/tika-986065.pdf"
     name = "tika-986065.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     xmp_metadata = reader.xmp_metadata
@@ -206,7 +206,7 @@ def test_custom_properties_extraction():
 @pytest.mark.enable_socket
 def test_dc_subject_extraction():
     """XMP dc_subject is correctly extracted."""
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/959/959519.pdf"
+    url = "https://github.com/user-attachments/files/18381730/tika-959519.pdf"
     name = "tika-959519.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     xmp_metadata = reader.xmp_metadata
