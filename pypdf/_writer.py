@@ -1587,8 +1587,7 @@ class PdfWriter(PdfDocCommon):
         else:
             if self._info is not None:
                 self._info.clear()
-            else:
-                self._info = DictionaryObject()
+
             self.add_metadata(value)
 
     def add_metadata(self, infos: Dict[str, Any]) -> None:
@@ -1607,7 +1606,8 @@ class PdfWriter(PdfDocCommon):
             if isinstance(value, PdfObject):
                 value = value.get_object()
             args[NameObject(key)] = create_string_object(str(value))
-        assert isinstance(self._info, DictionaryObject)
+        if self._info is None:
+            self._info = DictionaryObject()
         self._info.update(args)
 
     def compress_identical_objects(
