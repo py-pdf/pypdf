@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736603665098,
+  "lastUpdate": 1736627369555,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -65477,6 +65477,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0037670165255659985",
             "extra": "mean: 748.1617515999005 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0974cd3e5baa4d01824469ab0413ebae574b67d8",
+          "message": "TST: Fix image similarity for upcoming Ubuntu 24.04 (#3039)\n\nTests started to fail on Ubuntu 24.04 due to using a too large threshold.\n\nValid cases now have 0.9999915926764715 and invalid ones 0.9993737673623087.",
+          "timestamp": "2025-01-11T21:26:13+01:00",
+          "tree_id": "2e9e76c77b15d07ee0e63e44b91b7bc374c8ee92",
+          "url": "https://github.com/py-pdf/pypdf/commit/0974cd3e5baa4d01824469ab0413ebae574b67d8"
+        },
+        "date": 1736627366772,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 2.5831687938764247,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0395314615226542",
+            "extra": "mean: 387.1214310000056 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.085797331175234,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013186977904570666",
+            "extra": "mean: 76.41872899999973 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2351465057393684,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17597436259740099",
+            "extra": "mean: 4.252667913800002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.886721138541708,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009678027562271443",
+            "extra": "mean: 84.12748884615311 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.05853556947550595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.5165484794941304",
+            "extra": "mean: 17.0836298162 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.0789104317974976,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0853660136672898",
+            "extra": "mean: 926.8609983999966 msec\nrounds: 5"
           }
         ]
       }
