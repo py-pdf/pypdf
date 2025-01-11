@@ -400,12 +400,12 @@ def test_iss_1142():
     [
         # keyerror_potentially_empty_page
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf",
+            "https://github.com/user-attachments/files/18381736/tika-964029.pdf",
             "tika-964029.pdf",
         ),
         # 1140 / 1141:
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/932/932446.pdf",
+            "https://github.com/user-attachments/files/18381702/tika-932446.pdf",
             "tika-932446.pdf",
         ),
         # iss 1134:
@@ -419,7 +419,7 @@ def test_iss_1142():
             "WFCA.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf",
+            "https://github.com/user-attachments/files/18381736/tika-964029.pdf",
             "tika-964029.pdf",
         ),  # single_quote_op
         (
@@ -442,7 +442,7 @@ def test_extract_text(url, name):
 @pytest.mark.enable_socket
 @pytest.mark.slow
 def test_extract_text_page_pdf_impossible_decode_xform(caplog):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
+    url = "https://github.com/user-attachments/files/18381748/tika-972962.pdf"
     name = "tika-972962.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     for page in reader.pages:
@@ -454,7 +454,7 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
 @pytest.mark.enable_socket
 @pytest.mark.slow
 def test_extract_text_operator_t_star():  # L1266, L1267
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/967/967943.pdf"
+    url = "https://github.com/user-attachments/files/18381740/tika-967943.pdf"
     name = "tika-967943.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     for page in reader.pages:
@@ -941,7 +941,7 @@ def test_annotation_setter(pdf_file_path):
 @pytest.mark.enable_socket
 @pytest.mark.xfail(reason="#1091")
 def test_text_extraction_issue_1091():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
+    url = "https://github.com/user-attachments/files/18381737/tika-966635.pdf"
     name = "tika-966635.pdf"
     stream = BytesIO(get_data_from_url(url, name=name))
     with pytest.warns(PdfReadWarning):
@@ -952,7 +952,7 @@ def test_text_extraction_issue_1091():
 
 @pytest.mark.enable_socket
 def test_empyt_password_1088():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
+    url = "https://github.com/user-attachments/files/18381712/tika-941536.pdf"
     name = "tika-941536.pdf"
     stream = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(stream)
@@ -1221,7 +1221,7 @@ def test_pages_printing():
 
 @pytest.mark.enable_socket
 def test_del_pages():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
+    url = "https://github.com/user-attachments/files/18381712/tika-941536.pdf"
     name = "tika-941536.pdf"
     writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
     ll = len(writer.pages)

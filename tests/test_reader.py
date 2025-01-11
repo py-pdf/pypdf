@@ -920,7 +920,7 @@ def test_form_topname_with_and_without_acroform(caplog):
 @pytest.mark.enable_socket
 def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
+    url = "https://github.com/user-attachments/files/18381758/tika-981961.pdf"
     msg = [
         "incorrect startxref pointer(2)",
         "parsing for Object Streams",
@@ -935,7 +935,7 @@ def test_extract_text_xref_issue_2(caplog):
 @pytest.mark.slow
 def test_extract_text_xref_issue_3(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
+    url = "https://github.com/user-attachments/files/18381755/tika-977774.pdf"
     msg = [
         "incorrect startxref pointer(3)",
     ]
@@ -948,7 +948,7 @@ def test_extract_text_xref_issue_3(caplog):
 @pytest.mark.enable_socket
 def test_extract_text_pdf15():
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976030.pdf"
+    url = "https://github.com/user-attachments/files/18381751/tika-976030.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name="tika-976030.pdf")))
     for page in reader.pages:
         page.extract_text()
@@ -957,7 +957,7 @@ def test_extract_text_pdf15():
 @pytest.mark.enable_socket
 def test_extract_text_xref_table_21_bytes_clrf():
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/956/956939.pdf"
+    url = "https://github.com/user-attachments/files/18381723/tika-956939.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name="tika-956939.pdf")))
     for page in reader.pages:
         page.extract_text()
@@ -965,7 +965,7 @@ def test_extract_text_xref_table_21_bytes_clrf():
 
 @pytest.mark.enable_socket
 def test_get_fields():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972486.pdf"
+    url = "https://github.com/user-attachments/files/18381747/tika-972486.pdf"
     name = "tika-972486.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     fields = reader.get_fields()
@@ -1000,14 +1000,14 @@ def test_get_full_qualified_fields():
 @pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
 def test_get_fields_read_else_block():
     # covers also issue 1089
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/934/934771.pdf"
+    url = "https://github.com/user-attachments/files/18381705/tika-934771.pdf"
     name = "tika-934771.pdf"
     PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
 
 @pytest.mark.enable_socket
 def test_get_fields_read_else_block2():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914902.pdf"
+    url = "https://github.com/user-attachments/files/18381689/tika-914902.pdf"
     name = "tika-914902.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     fields = reader.get_fields()
@@ -1017,14 +1017,14 @@ def test_get_fields_read_else_block2():
 @pytest.mark.enable_socket
 @pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
 def test_get_fields_read_else_block3():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
+    url = "https://github.com/user-attachments/files/18381726/tika-957721.pdf"
     name = "tika-957721.pdf"
     PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
 
 @pytest.mark.enable_socket
 def test_metadata_is_none():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/963/963692.pdf"
+    url = "https://github.com/user-attachments/files/18381735/tika-963692.pdf"
     name = "tika-963692.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.metadata is None
@@ -1032,7 +1032,7 @@ def test_metadata_is_none():
 
 @pytest.mark.enable_socket
 def test_get_fields_read_write_report(txt_file_path):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/909/909655.pdf"
+    url = "https://github.com/user-attachments/files/18381683/tika-909655.pdf"
     name = "tika-909655.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     with open(txt_file_path, "w") as fp:
@@ -1054,7 +1054,7 @@ def test_xfa(src):
 
 @pytest.mark.enable_socket
 def test_xfa_non_empty():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf"
+    url = "https://github.com/user-attachments/files/18381713/tika-942050.pdf"
     name = "tika-942050.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert list(reader.xfa.keys()) == [
@@ -1236,7 +1236,7 @@ def test_named_destination(url, name):
 
 @pytest.mark.enable_socket
 def test_outline_with_missing_named_destination():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
+    url = "https://github.com/user-attachments/files/18381686/tika-913678.pdf"
     name = "tika-913678.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     # outline items in document reference a named destination that is not defined
@@ -1245,7 +1245,7 @@ def test_outline_with_missing_named_destination():
 
 @pytest.mark.enable_socket
 def test_outline_with_empty_action():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    url = "https://github.com/user-attachments/files/18381697/tika-924546.pdf"
     name = "tika-924546.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     # outline items (entitled Tables and Figures) utilize an empty action (/A)
@@ -1336,7 +1336,7 @@ def test_thread():
     name = "UTA_OSHA.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.threads is None
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert isinstance(reader.threads, ArrayObject)
