@@ -78,6 +78,34 @@ def test_writer_clone():
     assert "PageObject" in str(type(writer.pages[0]))
 
 
+def test_clone_metadata():
+    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    reader = PdfReader(src)
+
+    writer = PdfWriter(clone_from=reader)
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {
+        **reader.metadata,
+        "/foo": "bar",
+    }
+
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {
+        **reader.metadata,
+        "/foo": "bar",
+    }
+    writer.metadata = None
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {"/foo": "bar"}
+
+    writer = PdfWriter()
+    writer.clone_reader_document_root(reader)
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {"/foo": "bar"}
+
+
 def test_writer_clone_bookmarks():
     # Arrange
     src = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
