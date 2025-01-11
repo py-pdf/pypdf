@@ -634,7 +634,7 @@ def test_merge_output(caplog):
         ),
         (
             "https://github.com/user-attachments/files/18382223/965118.pdf",
-            "tika-952016.pdf",
+            "tika-965118.pdf",
         ),
         (
             "https://github.com/user-attachments/files/18381729/tika-959184.pdf",
@@ -797,7 +797,7 @@ def test_get_xfa(url, name):
         ),
         (
             "https://github.com/user-attachments/files/18382162/914133.pdf",
-            "tika-988698.pdf",
+            "tika-914133.pdf",
             False,
         ),
         (
