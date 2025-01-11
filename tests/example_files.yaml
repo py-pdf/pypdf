@@ -62,16 +62,12 @@
   url: https://github.com/py-pdf/pypdf/files/11250359/test_img.pdf
 - local_filename: tika-924546.pdf
   url: https://github.com/user-attachments/files/18381697/tika-924546.pdf
-- local_filename: tika-924546.pdf
-  url: https://github.com/user-attachments/files/18381697/tika-924546.pdf
 - local_filename: issue-1801.png
   url: https://user-images.githubusercontent.com/1658117/232842886-9d1b0726-3a5b-430d-8464-595d919c266c.png
 - local_filename: grimm10
   url: https://github.com/py-pdf/pypdf/files/11336817/grimm10.pdf
 - local_filename: labeled-edges-center-image.png
   url: https://user-images.githubusercontent.com/4083478/236685544-a1940b06-fb42-4bb1-b589-1e4ad429d68e.png
-- local_filename: pdf_font_garbled.pdf
-  url: https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf
 - local_filename: watermark1.png
   url: https://user-images.githubusercontent.com/4083478/236793172-09340aef-3440-4c8a-af85-a91cdad27d46.png
 - local_filename: tika-977609.pdf
@@ -104,8 +100,6 @@
   url: https://github.com/py-pdf/pypdf/files/12144094/im1.png.txt
 - local_filename: iss1982_im2.png
   url: https://github.com/py-pdf/pypdf/files/12144093/im2.png.txt
-- local_filename: tika-972174.pdf
-  url: https://github.com/user-attachments/files/18381744/tika-972174.pdf
 - local_filename: usa.png
   url: https://github.com/py-pdf/pypdf/assets/4083478/56c93021-33cd-4387-ae13-5cbe7e673f42
 - local_filename: paid.pdf
