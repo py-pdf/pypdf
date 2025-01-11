@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736603498959,
+  "lastUpdate": 1736603665098,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -65411,6 +65411,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030955027740602803",
             "extra": "mean: 742.5661896000008 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "xmo@odoo.com",
+            "name": "xmo-odoo",
+            "username": "xmo-odoo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3a745af6199c0e4c78fa9cbb1b4d2206a1310b8f",
+          "message": "BUG: Ensure `add_metadata` can deal with `_info = None` (#3040)\n\nThe `assert isinstance` hid the information that `_info` is\n`Optional`, in which case `add_metadata` would raise an assertion\nerror.\n\nProperly initialize `_info` if it's not set.\n\nFixes #3036.",
+          "timestamp": "2025-01-11T14:51:55+01:00",
+          "tree_id": "5d5cd6e467cc9144876c02c0bac388eba1a34aea",
+          "url": "https://github.com/py-pdf/pypdf/commit/3a745af6199c0e4c78fa9cbb1b4d2206a1310b8f"
+        },
+        "date": 1736603662593,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.261015996886137,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015890953502347774",
+            "extra": "mean: 306.652896200103 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.056285415217548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010758662119320484",
+            "extra": "mean: 66.41744443747655 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25532679378978346,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02332494478649776",
+            "extra": "mean: 3.9165493960000277 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 19.71032378240944,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008209321270904587",
+            "extra": "mean: 50.73483373684882 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08586462257425842,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07075195182679289",
+            "extra": "mean: 11.64623997660001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.336609360023495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0037670165255659985",
+            "extra": "mean: 748.1617515999005 msec\nrounds: 5"
           }
         ]
       }
