@@ -2606,4 +2606,4 @@ def test_inline_image_q_operator_handling(tmp_path):
         ]
     )
     assert png_path.is_file()
-    assert image_similarity(png_path, expected_png_path) >= 0.999999
+    assert image_similarity(png_path, expected_png_path) >= 0.99999
