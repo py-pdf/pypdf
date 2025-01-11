@@ -1179,6 +1179,8 @@ class ContentStream(DecodedStreamObject):
                 data = b""
                 for s in stream:
                     s_resolved = s.get_object()
+                    if isinstance(s_resolved, NullObject):
+                        continue
                     if not isinstance(s_resolved, StreamObject):
                         # No need to emit an exception here for now - the PDF structure
                         # seems to already be broken beforehand in these cases.
