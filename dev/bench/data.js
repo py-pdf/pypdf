@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736334489850,
+  "lastUpdate": 1736602544924,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -65279,6 +65279,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0034831986252850744",
             "extra": "mean: 742.2644875999993 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "88a7590037eba436c47dc670106c079c260e98c0",
+          "message": "TST: Replace broken Apache Tika Corpora urls (#3041)\n\n* TST: Replace broken Apache Tika Corpora urls\r\n\r\n* fie filenames\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>\r\n\r\n* remove duplicate entries\r\n\r\n---------\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2025-01-11T14:33:19+01:00",
+          "tree_id": "6db5f56d7a1943fa24e8f259c08e6f88484ecc3d",
+          "url": "https://github.com/py-pdf/pypdf/commit/88a7590037eba436c47dc670106c079c260e98c0"
+        },
+        "date": 1736602542372,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4451848920795953,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014738404363809562",
+            "extra": "mean: 290.2601837999981 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.3188490011593,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00988669414870468",
+            "extra": "mean: 65.27905588235265 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2760230392820507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033787879666088484",
+            "extra": "mean: 3.6228859830000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.321788427443366,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000749802055477409",
+            "extra": "mean: 49.20826745000255 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0877824843643076,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04683679023279383",
+            "extra": "mean: 11.391794242799994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.36353481202604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021389421222131424",
+            "extra": "mean: 733.3879496000009 msec\nrounds: 5"
           }
         ]
       }
