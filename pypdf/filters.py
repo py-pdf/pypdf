@@ -618,9 +618,7 @@ def decode_stream_data(stream: Any) -> bytes:
     Decode the stream data based on the specified filters.
 
     This function decodes the stream data using the filters provided in the
-    stream. It supports the filter types:
-    ASCIIHexDecode, ASCII85Decode, LZWDecode, FlateDecode, RunLengthDecode,
-    CCITTFaxDecode, DCTDecode and JPXDecode.
+    stream.
 
     Args:
         stream: The input stream object containing the data and filters.
@@ -644,7 +642,7 @@ def decode_stream_data(stream: Any) -> bytes:
     data: bytes = stream._data
     # If there is not data to decode we should not try to decode the data.
     if not data:
-        return None
+        return data
     for filter_name, params in zip(filters, decode_parms):
         if isinstance(params, NullObject):
             params = {}
