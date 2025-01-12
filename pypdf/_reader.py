@@ -117,7 +117,7 @@ class PdfReader(PdfDocCommon):
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
 
-        #: Storage of parsed PDF objects.
+        # Storage of parsed PDF objects.
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
 
         self._startxref: int = 0
@@ -127,7 +127,7 @@ class PdfReader(PdfDocCommon):
         self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
 
-        # map page indirect_reference number to page number
+        # Map page indirect_reference number to page number
         self._page_id2num: Optional[Dict[Any, Any]] = None
 
         self._validated_root: Optional[DictionaryObject] = None
