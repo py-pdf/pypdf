@@ -513,9 +513,8 @@ class PdfReader(PdfDocCommon):
         # cross-reference table should put us in the right spot to read the
         # object header. In reality some files have stupid cross-reference
         # tables that are off by whitespace bytes.
-        extra = False
         skip_over_comment(stream)
-        extra |= skip_over_whitespace(stream)
+        extra = skip_over_whitespace(stream)
         stream.seek(-1, 1)
         idnum = read_until_whitespace(stream)
         extra |= skip_over_whitespace(stream)
