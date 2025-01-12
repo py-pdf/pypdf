@@ -173,7 +173,7 @@ def read_non_whitespace(stream: StreamType) -> bytes:
 
 def skip_over_whitespace(stream: StreamType) -> bool:
     """
-    Similar to read_non_whitespace, but return a boolean if more than one
+    Similar to read_non_whitespace, but return a boolean if at least one
     whitespace character was read.
 
     Args:
