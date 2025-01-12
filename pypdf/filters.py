@@ -670,7 +670,7 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
                         "/Crypt filter with /Name or /Type not supported yet"
                     )
             else:
-                raise NotImplementedError(f"Unsupported filter {filter_type}")
+                raise NotImplementedError(f"Unsupported filter {filter_}")
     return data
 
 
