@@ -618,9 +618,9 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
     Decode the stream data based on the specified filters.
 
     This function decodes the stream data using the filters provided in the
-    stream. It supports various filter types, including FlateDecode,
-    ASCIIHexDecode, RunLengthDecode, LZWDecode, ASCII85Decode, DCTDecode, JPXDecode, and
-    CCITTFaxDecode.
+    stream. It supports the filter types:
+    ASCIIHexDecode, ASCII85Decode, LZWDecode, FlateDecode, RunLengthDecode,
+    CCITTFaxDecode, DCTDecode and JPXDecode.
 
     Args:
         stream: The input stream object containing the data and filters.
@@ -636,35 +636,35 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
     if isinstance(filters, IndirectObject):
         filters = cast(ArrayObject, filters.get_object())
     if not isinstance(filters, ArrayObject):
-        # we have a single filter instance
+        # We have a single filter instance
         filters = (filters,)
-    decodparms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
-    if not isinstance(decodparms, (list, tuple)):
-        decodparms = (decodparms,)
+    decode_parms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
+    if not isinstance(decode_parms, (list, tuple)):
+        decode_parms = (decode_parms,)
     data: bytes = stream._data
     # If there is not data to decode we should not try to decode the data.
     if data:
-        for filter_type, params in zip(filters, decodparms):
+        for filter_, params in zip(filters, decode_parms):
             if isinstance(params, NullObject):
                 params = {}
-            if filter_type in (FT.FLATE_DECODE, FTA.FL):
-                data = FlateDecode.decode(data, params)
-            elif filter_type in (FT.ASCII_HEX_DECODE, FTA.AHx):
+            if filter_ in (FT.ASCII_HEX_DECODE, FTA.AHx):
                 data = ASCIIHexDecode.decode(data)
-            elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
-                data = RunLengthDecode.decode(data)
-            elif filter_type in (FT.LZW_DECODE, FTA.LZW):
-                data = LZWDecode._decodeb(data, params)
-            elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
+            elif filter_ in (FT.ASCII_85_DECODE, FTA.A85):
                 data = ASCII85Decode.decode(data)
-            elif filter_type == FT.DCT_DECODE:
-                data = DCTDecode.decode(data)
-            elif filter_type == FT.JPX_DECODE:
-                data = JPXDecode.decode(data)
-            elif filter_type == FT.CCITT_FAX_DECODE:
+            elif filter_ in (FT.LZW_DECODE, FTA.LZW):
+                data = LZWDecode._decodeb(data, params)
+            elif filter_ in (FT.FLATE_DECODE, FTA.FL):
+                data = FlateDecode.decode(data, params)
+            elif filter_ in (FT.RUN_LENGTH_DECODE, FTA.RL):
+                data = RunLengthDecode.decode(data)
+            elif filter_ == FT.CCITT_FAX_DECODE:
                 height = stream.get(IA.HEIGHT, ())
                 data = CCITTFaxDecode.decode(data, params, height)
-            elif filter_type == "/Crypt":
+            elif filter_ == FT.DCT_DECODE:
+                data = DCTDecode.decode(data)
+            elif filter_ == FT.JPX_DECODE:
+                data = JPXDecode.decode(data)
+            elif filter_ == "/Crypt":
                 if "/Name" in params or "/Type" in params:
                     raise NotImplementedError(
                         "/Crypt filter with /Name or /Type not supported yet"
