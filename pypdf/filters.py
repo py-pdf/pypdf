@@ -613,7 +613,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
+def decode_stream_data(stream: Any) -> Optional[bytes]:
     """
     Decode the stream data based on the specified filters.
 
@@ -643,34 +643,35 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
         decode_parms = (decode_parms,)
     data: bytes = stream._data
     # If there is not data to decode we should not try to decode the data.
-    if data:
-        for filter_, params in zip(filters, decode_parms):
-            if isinstance(params, NullObject):
-                params = {}
-            if filter_ in (FT.ASCII_HEX_DECODE, FTA.AHx):
-                data = ASCIIHexDecode.decode(data)
-            elif filter_ in (FT.ASCII_85_DECODE, FTA.A85):
-                data = ASCII85Decode.decode(data)
-            elif filter_ in (FT.LZW_DECODE, FTA.LZW):
-                data = LZWDecode._decodeb(data, params)
-            elif filter_ in (FT.FLATE_DECODE, FTA.FL):
-                data = FlateDecode.decode(data, params)
-            elif filter_ in (FT.RUN_LENGTH_DECODE, FTA.RL):
-                data = RunLengthDecode.decode(data)
-            elif filter_ == FT.CCITT_FAX_DECODE:
-                height = stream.get(IA.HEIGHT, ())
-                data = CCITTFaxDecode.decode(data, params, height)
-            elif filter_ == FT.DCT_DECODE:
-                data = DCTDecode.decode(data)
-            elif filter_ == FT.JPX_DECODE:
-                data = JPXDecode.decode(data)
-            elif filter_ == "/Crypt":
-                if "/Name" in params or "/Type" in params:
-                    raise NotImplementedError(
-                        "/Crypt filter with /Name or /Type not supported yet"
-                    )
-            else:
-                raise NotImplementedError(f"Unsupported filter {filter_}")
+    if not data:
+        return None
+    for filter_, params in zip(filters, decode_parms):
+        if isinstance(params, NullObject):
+            params = {}
+        if filter_ in (FT.ASCII_HEX_DECODE, FTA.AHx):
+            data = ASCIIHexDecode.decode(data)
+        elif filter_ in (FT.ASCII_85_DECODE, FTA.A85):
+            data = ASCII85Decode.decode(data)
+        elif filter_ in (FT.LZW_DECODE, FTA.LZW):
+            data = LZWDecode._decodeb(data, params)
+        elif filter_ in (FT.FLATE_DECODE, FTA.FL):
+            data = FlateDecode.decode(data, params)
+        elif filter_ in (FT.RUN_LENGTH_DECODE, FTA.RL):
+            data = RunLengthDecode.decode(data)
+        elif filter_ == FT.CCITT_FAX_DECODE:
+            height = stream.get(IA.HEIGHT, ())
+            data = CCITTFaxDecode.decode(data, params, height)
+        elif filter_ == FT.DCT_DECODE:
+            data = DCTDecode.decode(data)
+        elif filter_ == FT.JPX_DECODE:
+            data = JPXDecode.decode(data)
+        elif filter_ == "/Crypt":
+            if "/Name" in params or "/Type" in params:
+                raise NotImplementedError(
+                    "/Crypt filter with /Name or /Type not supported yet"
+                )
+        else:
+            raise NotImplementedError(f"Unsupported filter {filter_}")
     return data
 
 
