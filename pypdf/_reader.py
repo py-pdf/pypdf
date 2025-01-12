@@ -120,13 +120,14 @@ class PdfReader(PdfDocCommon):
         #: Storage of parsed PDF objects.
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
 
+        self._startxref: int = 0
         self.xref_index = 0
         self.xref: Dict[int, Dict[Any, Any]] = {}
         self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
         self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
 
-        # map page indirect_reference number to page number
+        # Map page indirect_reference number to page number
         self._page_id2num: Optional[Dict[Any, Any]] = None
 
         self._validated_root: Optional[DictionaryObject] = None
@@ -152,7 +153,6 @@ class PdfReader(PdfDocCommon):
             with open(stream, "rb") as fh:
                 stream = BytesIO(fh.read())
             self._stream_opened = True
-        self._startxref: int = 0
         self.read(stream)
         self.stream = stream
 
