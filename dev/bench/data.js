@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736758353897,
+  "lastUpdate": 1736793549972,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -65873,6 +65873,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0027609494880218416",
             "extra": "mean: 735.7521636000229 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c87f75f860cffd8bf4a8b930e9ea1a548b2e4d20",
+          "message": "DEV: Bump virtualenv from 20.25.0 to 20.26.6 (#3050)\n\nBumps [virtualenv](https://github.com/pypa/virtualenv) from 20.25.0 to 20.26.6.\n- [Release notes](https://github.com/pypa/virtualenv/releases)\n- [Changelog](https://github.com/pypa/virtualenv/blob/main/docs/changelog.rst)\n- [Commits](https://github.com/pypa/virtualenv/compare/20.25.0...20.26.6)\n\n---\nupdated-dependencies:\n- dependency-name: virtualenv\n  dependency-type: indirect\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2025-01-13T19:36:36+01:00",
+          "tree_id": "41fe957d0b0dab677987457d58f607bd8dfd053e",
+          "url": "https://github.com/py-pdf/pypdf/commit/c87f75f860cffd8bf4a8b930e9ea1a548b2e4d20"
+        },
+        "date": 1736793546811,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2029855720362383,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0028884597836124743",
+            "extra": "mean: 312.20871199999465 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.027720941788719,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009678332164233104",
+            "extra": "mean: 66.54368975000224 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2580164212688436,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06650561483774424",
+            "extra": "mean: 3.8757223090000026 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.048035152368634,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009295373269001812",
+            "extra": "mean: 49.88019985000136 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.086795338014392,
+            "unit": "iter/sec",
+            "range": "stddev: 0.050648754206818816",
+            "extra": "mean: 11.521356133599994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3424178645025915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003972218831179822",
+            "extra": "mean: 744.9245324000003 msec\nrounds: 5"
           }
         ]
       }
