@@ -613,14 +613,12 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
+def decode_stream_data(stream: Any) -> bytes:
     """
     Decode the stream data based on the specified filters.
 
     This function decodes the stream data using the filters provided in the
-    stream. It supports various filter types, including FlateDecode,
-    ASCIIHexDecode, RunLengthDecode, LZWDecode, ASCII85Decode, DCTDecode, JPXDecode, and
-    CCITTFaxDecode.
+    stream.
 
     Args:
         stream: The input stream object containing the data and filters.
@@ -636,41 +634,42 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
     if isinstance(filters, IndirectObject):
         filters = cast(ArrayObject, filters.get_object())
     if not isinstance(filters, ArrayObject):
-        # we have a single filter instance
+        # We have a single filter instance
         filters = (filters,)
-    decodparms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
-    if not isinstance(decodparms, (list, tuple)):
-        decodparms = (decodparms,)
+    decode_parms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
+    if not isinstance(decode_parms, (list, tuple)):
+        decode_parms = (decode_parms,)
     data: bytes = stream._data
     # If there is not data to decode we should not try to decode the data.
-    if data:
-        for filter_type, params in zip(filters, decodparms):
-            if isinstance(params, NullObject):
-                params = {}
-            if filter_type in (FT.FLATE_DECODE, FTA.FL):
-                data = FlateDecode.decode(data, params)
-            elif filter_type in (FT.ASCII_HEX_DECODE, FTA.AHx):
-                data = ASCIIHexDecode.decode(data)
-            elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
-                data = RunLengthDecode.decode(data)
-            elif filter_type in (FT.LZW_DECODE, FTA.LZW):
-                data = LZWDecode._decodeb(data, params)
-            elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
-                data = ASCII85Decode.decode(data)
-            elif filter_type == FT.DCT_DECODE:
-                data = DCTDecode.decode(data)
-            elif filter_type == FT.JPX_DECODE:
-                data = JPXDecode.decode(data)
-            elif filter_type == FT.CCITT_FAX_DECODE:
-                height = stream.get(IA.HEIGHT, ())
-                data = CCITTFaxDecode.decode(data, params, height)
-            elif filter_type == "/Crypt":
-                if "/Name" in params or "/Type" in params:
-                    raise NotImplementedError(
-                        "/Crypt filter with /Name or /Type not supported yet"
-                    )
-            else:
-                raise NotImplementedError(f"Unsupported filter {filter_type}")
+    if not data:
+        return data
+    for filter_name, params in zip(filters, decode_parms):
+        if isinstance(params, NullObject):
+            params = {}
+        if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
+            data = ASCIIHexDecode.decode(data)
+        elif filter_name in (FT.ASCII_85_DECODE, FTA.A85):
+            data = ASCII85Decode.decode(data)
+        elif filter_name in (FT.LZW_DECODE, FTA.LZW):
+            data = LZWDecode._decodeb(data, params)
+        elif filter_name in (FT.FLATE_DECODE, FTA.FL):
+            data = FlateDecode.decode(data, params)
+        elif filter_name in (FT.RUN_LENGTH_DECODE, FTA.RL):
+            data = RunLengthDecode.decode(data)
+        elif filter_name == FT.CCITT_FAX_DECODE:
+            height = stream.get(IA.HEIGHT, ())
+            data = CCITTFaxDecode.decode(data, params, height)
+        elif filter_name == FT.DCT_DECODE:
+            data = DCTDecode.decode(data)
+        elif filter_name == FT.JPX_DECODE:
+            data = JPXDecode.decode(data)
+        elif filter_name == "/Crypt":
+            if "/Name" in params or "/Type" in params:
+                raise NotImplementedError(
+                    "/Crypt filter with /Name or /Type not supported yet"
+                )
+        else:
+            raise NotImplementedError(f"Unsupported filter {filter_name}")
     return data
 
 
