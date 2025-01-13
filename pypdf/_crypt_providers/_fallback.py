@@ -52,7 +52,7 @@ class CryptRC4(CryptBase):
             s[i], s[j] = s[j], s[i]
             x = s[(s[i] + s[j]) % 256]
             out[k] = data[k] ^ x
-        return bytes(bytearray(out))
+        return bytes(out)
 
     def decrypt(self, data: bytes) -> bytes:
         return self.encrypt(data)
