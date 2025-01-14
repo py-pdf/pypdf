@@ -216,7 +216,7 @@ def test_ccitt_get_parameters(parameters, expected_k):
     assert parameters.K == expected_k  # noqa: SIM300
 
 
-def test_ccitt_get_parameters__indirect_object():
+def test_ccitt_get_parameters_indirect_object():
     class Pdf:
         def get_object(self, reference) -> NumberObject:
             return NumberObject(42)
@@ -361,7 +361,7 @@ def test_png_transparency_reverse():
     data = reader.pages[0].images[0]
     _img = Image.open(BytesIO(data.data))
     assert ".jp2" in data.name
-    # assert list(img.getdata()) == list(refimg.getdata())
+    assert list(_img.getdata()) == list(_refimg.getdata())
 
 
 @pytest.mark.enable_socket
