@@ -27,7 +27,6 @@ from .test_encryption import HAS_AES
 from .test_images import image_similarity
 
 filter_inputs = (
-    # "", '', """""",
     string.ascii_lowercase,
     string.ascii_uppercase,
     string.ascii_letters,
@@ -76,8 +75,7 @@ def test_flatedecode_unsupported_predictor():
 def test_flate_decode_decompress_with_array_params(params):
     """FlateDecode decode() method works correctly with array parameters."""
     codec = FlateDecode()
-    s = ""
-    s = s.encode()
+    s = "".encode()
     encoded = codec.encode(s)
     with pytest.raises(DeprecationError):
         assert codec.decode(encoded, params) == s
@@ -407,7 +405,7 @@ def test_rgba():
 
 @pytest.mark.enable_socket
 def test_cmyk():
-    """Decode cmyk"""
+    """Decode CMYK"""
     # JPEG compression
     try:
         from Crypto.Cipher import AES  # noqa: F401
