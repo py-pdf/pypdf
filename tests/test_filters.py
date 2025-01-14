@@ -75,7 +75,7 @@ def test_flatedecode_unsupported_predictor():
 def test_flate_decode_decompress_with_array_params(params):
     """FlateDecode decode() method works correctly with array parameters."""
     codec = FlateDecode()
-    s = "".encode()
+    s = b""
     encoded = codec.encode(s)
     with pytest.raises(DeprecationError):
         assert codec.decode(encoded, params) == s
