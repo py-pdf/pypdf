@@ -353,13 +353,13 @@ def test_png_transparency_reverse():
     """Cf issue #1599"""
     pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
     reader = PdfReader(pdf_path)
-    _refimg = Image.open(
+    refimg = Image.open(
         BytesIO(get_data_from_url(name="labeled-edges-center-image.png"))
     )
     data = reader.pages[0].images[0]
-    _img = Image.open(BytesIO(data.data))
+    img = Image.open(BytesIO(data.data))
     assert ".jp2" in data.name
-    assert list(_img.getdata()) == list(_refimg.getdata())
+    assert list(img.getdata()) == list(refimg.getdata())
 
 
 @pytest.mark.enable_socket
