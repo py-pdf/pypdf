@@ -167,7 +167,7 @@ def test_ascii85decode_five_zero_bytes():
     """
     ASCII85Decode handles the special case of five zero bytes correctly.
 
-    From ISO 32000 (2008) §7.4.3:
+    ISO 32000-1:2008 §7.4.3:
 
     «As a special case, if all five bytes are 0, they shall be represented by
     the character with code 122 (z) instead of by five exclamation points
