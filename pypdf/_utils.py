@@ -124,7 +124,7 @@ def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     return versions[max(pdf_header_indices)]
 
 
-WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
+WHITESPACES = (b"\x00", b"\t", b"\n", b"\f", b"\r", b" ")
 WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
 WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
 
