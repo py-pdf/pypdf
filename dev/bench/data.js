@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736793549972,
+  "lastUpdate": 1736942462937,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -65939,6 +65939,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003972218831179822",
             "extra": "mean: 744.9245324000003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c93d282230620f7c3d2e7add85d13d5e933f1384",
+          "message": "STY: Add form feed to WHITESPACES (#3054)\n\nTable 1—White-space characters; ISO 32000-2:2020 (PDF 2.0).",
+          "timestamp": "2025-01-15T12:58:34+01:00",
+          "tree_id": "9d05e279711b449213331ba9e2360543d3b58dac",
+          "url": "https://github.com/py-pdf/pypdf/commit/c93d282230620f7c3d2e7add85d13d5e933f1384"
+        },
+        "date": 1736942459689,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4667968608822353,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003380485282893777",
+            "extra": "mean: 288.4507054000039 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.238314779099857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008518448743290169",
+            "extra": "mean: 65.6240545294124 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2754423418251393,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03268853101330522",
+            "extra": "mean: 3.6305238816000043 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.400965865902837,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008123305564941909",
+            "extra": "mean: 49.01728705263658 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08805777196114889,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07104554819339425",
+            "extra": "mean: 11.3561810358 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3674986572257104,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007353092248973189",
+            "extra": "mean: 731.2621440000044 msec\nrounds: 5"
           }
         ]
       }
