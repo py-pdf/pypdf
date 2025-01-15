@@ -409,3 +409,10 @@ def test_deprecate_pdfmerger():
 def test_get_reference():
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
     assert writer.get_reference(writer.pages[0]) == writer.pages[0].indirect_reference
+
+
+def test_merge_path(tmp_path):
+    merger = PdfWriter()
+    merger.append_list(RESOURCE_ROOT)
+    merger.write(tmp_path / tmp_filename)
+    merger.close()
