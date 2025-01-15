@@ -30,6 +30,7 @@
 import decimal
 import enum
 import hashlib
+import os
 import re
 import struct
 import uuid
@@ -2623,6 +2624,23 @@ class PdfWriter(PdfDocCommon):
                 import_outline,
                 excluded_fields,
             )
+
+    def append_path(
+            self,
+            file_path,
+    ) -> None:
+        for f in os.listdir(file_path):
+            if f.endswith(".pdf"):
+                reader = PdfReader(file_path / f)
+                if reader.is_encrypted:
+                    password = input(f"Please input password of {str(f)} :")
+                    try:
+                        reader.decrypt(password)
+                        self.append(reader)
+                    except Exception as e:
+                        print(f"Error reading PDF: {str(e)}")
+                    continue
+                self.append(file_path / f)
 
     def merge(
         self,
