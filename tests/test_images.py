@@ -473,3 +473,14 @@ def test_4bits_images(caplog):
     name = "iss2411.png"
     img = Image.open(BytesIO(get_data_from_url(url, name=name)))
     assert image_similarity(reader.pages[0].images[1].image, img) == 1.0
+
+
+@pytest.mark.enable_socket
+def test_no_filter_with_colorspace_as_list():
+    """Tests for #2998"""
+    url = "https://github.com/user-attachments/files/18058571/9bf7a2e2-72c8-4ac1-b8ae-164df16c8cef.pdf"
+    name = "iss2998.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    page = reader.pages[0]
+    page.images.items()

@@ -264,11 +264,11 @@ class BooleanObject(PdfObject):
         """
         return hash((self.__class__, self.value))
 
-    def __eq__(self, __o: object) -> bool:
-        if isinstance(__o, BooleanObject):
-            return self.value == __o.value
-        elif isinstance(__o, bool):
-            return self.value == __o
+    def __eq__(self, o: object, /) -> bool:
+        if isinstance(o, BooleanObject):
+            return self.value == o.value
+        elif isinstance(o, bool):
+            return self.value == o
         else:
             return False
 
@@ -395,6 +395,10 @@ class IndirectObject(PdfObject):
     def __float__(self) -> str:
         # in this case we are looking for the pointed data
         return self.get_object().__float__()  # type: ignore
+
+    def __int__(self) -> int:
+        # in this case we are looking for the pointed data
+        return self.get_object().__int__()  # type: ignore
 
     def __str__(self) -> str:
         # in this case we are looking for the pointed data

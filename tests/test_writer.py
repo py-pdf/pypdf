@@ -78,6 +78,34 @@ def test_writer_clone():
     assert "PageObject" in str(type(writer.pages[0]))
 
 
+def test_clone_metadata():
+    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    reader = PdfReader(src)
+
+    writer = PdfWriter(clone_from=reader)
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {
+        **reader.metadata,
+        "/foo": "bar",
+    }
+
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {
+        **reader.metadata,
+        "/foo": "bar",
+    }
+    writer.metadata = None
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {"/foo": "bar"}
+
+    writer = PdfWriter()
+    writer.clone_reader_document_root(reader)
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {"/foo": "bar"}
+
+
 def test_writer_clone_bookmarks():
     # Arrange
     src = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
@@ -837,7 +865,7 @@ def test_append_pages_from_reader_append():
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     # TODO: Check this more closely... this looks weird
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     merger = PdfWriter()
@@ -851,11 +879,11 @@ def test_sweep_indirect_references_nullobject_exception(pdf_file_path):
     ("url", "name"),
     [
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf",
+            "https://github.com/user-attachments/files/18381699/tika-924666.pdf",
             "test_sweep_indirect_references_nullobject_exception.pdf",
         ),
         (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf",
+            "https://github.com/user-attachments/files/18381694/tika-922840.pdf",
             "test_write_outline_item_on_page_fitv.pdf",
         ),
         ("https://github.com/py-pdf/pypdf/files/10715624/test.pdf", "iss1627.pdf"),
@@ -1042,7 +1070,7 @@ def test_iss471():
 
 @pytest.mark.enable_socket
 def test_reset_translation():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
@@ -1080,7 +1108,7 @@ def test_threads_empty():
 
 @pytest.mark.enable_socket
 def test_append_without_annots_and_articles():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
@@ -1099,7 +1127,7 @@ def test_append_without_annots_and_articles():
 
 @pytest.mark.enable_socket
 def test_append_multiple():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    url = "https://github.com/user-attachments/files/18381699/tika-924666.pdf"
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     writer = PdfWriter()
@@ -2542,3 +2570,40 @@ def test_deprecate_with_as():
         with pytest.warns(DeprecationWarning) as w:
             writer.with_as_usage = val  # old code allowed setting this, so...
         assert "with_as_usage is deprecated" in w[0].message.args[0]
+
+
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+@pytest.mark.enable_socket
+def test_inline_image_q_operator_handling(tmp_path):
+    """Test for #2927"""
+    pdf_url = "https://github.com/user-attachments/files/17614880/test_clean.pdf"
+    pdf_name = "iss2927.pdf"
+    pdf_data = BytesIO(get_data_from_url(pdf_url, name=pdf_name))
+
+    png_url = "https://github.com/user-attachments/assets/abe16f48-9afa-4179-b1e8-62be27b95c26"
+    png_name = "iss2927.png"
+    expected_png_path = tmp_path / "expected.png"
+    expected_png_path.write_bytes(get_data_from_url(png_url, name=png_name))
+
+    writer = PdfWriter()
+    writer.append(pdf_data)
+    for page in writer.pages:
+        page.transfer_rotation_to_content()
+
+    pdf_path = tmp_path / "out.pdf"
+    png_path = tmp_path / "actual.png"
+
+    writer.write(pdf_path)
+    # False positive: https://github.com/PyCQA/bandit/issues/333
+    subprocess.run(  # noqa: S603
+        [
+            GHOSTSCRIPT_BINARY,
+            "-r120",
+            "-sDEVICE=pngalpha",
+            "-o",
+            png_path,
+            pdf_path,
+        ]
+    )
+    assert png_path.is_file()
+    assert image_similarity(png_path, expected_png_path) >= 0.99999

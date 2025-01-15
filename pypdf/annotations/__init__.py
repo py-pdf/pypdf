@@ -27,19 +27,16 @@ from ._non_markup_annotations import Link, Popup
 
 __all__ = [
     "NO_FLAGS",
-    # Export abstract base classes so that they are shown in the docs
     "AnnotationDictionary",
-    "MarkupAnnotation",
-    # Markup annotations
     "Ellipse",
     "FreeText",
     "Highlight",
     "Line",
-    "Polygon",
+    "Link",
+    "MarkupAnnotation",
     "PolyLine",
+    "Polygon",
+    "Popup",
     "Rectangle",
     "Text",
-    # Non-markup annotations
-    "Link",
-    "Popup",
 ]

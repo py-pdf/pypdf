@@ -120,13 +120,14 @@ class PdfReader(PdfDocCommon):
         #: Storage of parsed PDF objects.
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
 
+        self._startxref: int = 0
         self.xref_index = 0
         self.xref: Dict[int, Dict[Any, Any]] = {}
         self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
         self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
 
-        # map page indirect_reference number to page number
+        # Map page indirect_reference number to page number
         self._page_id2num: Optional[Dict[Any, Any]] = None
 
         self._validated_root: Optional[DictionaryObject] = None
@@ -152,7 +153,6 @@ class PdfReader(PdfDocCommon):
             with open(stream, "rb") as fh:
                 stream = BytesIO(fh.read())
             self._stream_opened = True
-        self._startxref: int = 0
         self.read(stream)
         self.stream = stream
 
@@ -513,9 +513,8 @@ class PdfReader(PdfDocCommon):
         # cross-reference table should put us in the right spot to read the
         # object header. In reality some files have stupid cross-reference
         # tables that are off by whitespace bytes.
-        extra = False
         skip_over_comment(stream)
-        extra |= skip_over_whitespace(stream)
+        extra = skip_over_whitespace(stream)
         stream.seek(-1, 1)
         idnum = read_until_whitespace(stream)
         extra |= skip_over_whitespace(stream)
@@ -774,7 +773,6 @@ class PdfReader(PdfDocCommon):
 
                     offset, generation = int(offset_b), int(generation_b)
                 except Exception:
-                    # if something wrong occurred
                     if hasattr(stream, "getbuffer"):
                         buf = bytes(stream.getbuffer())
                     else:
@@ -783,7 +781,7 @@ class PdfReader(PdfDocCommon):
                         buf = stream.read(-1)
                         stream.seek(p)
 
-                    f = re.search(f"{num}\\s+(\\d+)\\s+obj".encode(), buf)
+                    f = re.search(rf"{num}\s+(\d+)\s+obj".encode(), buf)
                     if f is None:
                         logger_warning(
                             f"entry {num} in Xref table invalid; object not found",
@@ -1182,7 +1180,7 @@ class PdfReader(PdfDocCommon):
         interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
         self.cache_indirect_object(
             0,
-            max([i for (g, i) in self.resolved_objects if g == 0]) + 1,
+            max(i for (g, i) in self.resolved_objects if g == 0) + 1,
             interim,
         )
         arr = ArrayObject()

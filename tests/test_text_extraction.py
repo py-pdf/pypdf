@@ -272,3 +272,15 @@ def test_infinite_loop_arrays():
     page = reader.pages[0]
     extracted = page.extract_text()
     assert "RNA structure comparison" in extracted
+
+
+@pytest.mark.enable_socket
+def test_tz_with_no_operands():
+    """Tests for #2975"""
+    url = "https://github.com/user-attachments/files/17974120/9E5E080E-C8DB-4A6B-822B-9A67DC04E526-120438.pdf"
+    name = "iss2975.pdf"
+    data = get_data_from_url(url, name=name)
+
+    reader = PdfReader(BytesIO(data))
+    page = reader.pages[1]
+    assert "\nThankyouforyourattentiontothismatter.\n" in page.extract_text()

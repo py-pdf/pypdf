@@ -274,7 +274,7 @@ class AlgV4:
         rc4_enc = rc4_encrypt(rc4_key, a)
         if rev >= 3:
             for i in range(1, 20):
-                key = bytes(bytearray(x ^ i for x in rc4_key))
+                key = bytes(x ^ i for x in rc4_key)
                 rc4_enc = rc4_encrypt(key, rc4_enc)
         return rc4_enc
 
@@ -335,7 +335,7 @@ class AlgV4:
         u_hash.update(id1_entry)
         rc4_enc = rc4_encrypt(key, u_hash.digest())
         for i in range(1, 20):
-            rc4_key = bytes(bytearray(x ^ i for x in key))
+            rc4_key = bytes(x ^ i for x in key)
             rc4_enc = rc4_encrypt(rc4_key, rc4_enc)
         return _padding(rc4_enc)
 
@@ -457,7 +457,7 @@ class AlgV4:
         else:
             user_password = o_entry
             for i in range(19, -1, -1):
-                key = bytes(bytearray(x ^ i for x in rc4_key))
+                key = bytes(x ^ i for x in rc4_key)
                 user_password = rc4_decrypt(key, user_password)
         return AlgV4.verify_user_password(
             user_password,
