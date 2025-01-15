@@ -214,7 +214,7 @@ def test_ccitt_get_parameters(parameters, expected_k):
     assert parameters.K == expected_k  # noqa: SIM300
 
 
-def test_ccitt_get_parameters_indirect_object():
+def test_ccitt_get_parameters__indirect_object():
     class Pdf:
         def get_object(self, reference) -> NumberObject:
             return NumberObject(42)
