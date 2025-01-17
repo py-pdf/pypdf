@@ -46,8 +46,8 @@ def _get_imagemode(
 ) -> Tuple[mode_str_type, bool]:
     """
     Returns
-        Image mode not taking into account mask (transparency)
-        ColorInversion is required (like for some DeviceCMYK)
+        Image mode, not taking into account mask (transparency).
+        ColorInversion is required (like for some DeviceCMYK).
 
     """
     if depth > MAX_IMAGE_MODE_NESTING_DEPTH:
