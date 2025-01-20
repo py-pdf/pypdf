@@ -46,13 +46,13 @@ def _get_imagemode(
 ) -> Tuple[mode_str_type, bool]:
     """
     Returns:
-        Image mode not taking into account mask(transparency)
+        Image mode, not taking into account mask (transparency)
         ColorInversion is required (like for some DeviceCMYK)
 
     """
     if depth > MAX_IMAGE_MODE_NESTING_DEPTH:
         raise PdfReadError(
-            "Color spaces nested too deep. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH."
+            "Color spaces nested too deeply. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH."
         )
     if isinstance(color_space, NullObject):
         return "", False
@@ -60,7 +60,7 @@ def _get_imagemode(
         pass
     elif not isinstance(color_space, list):
         raise PdfReadError(
-            "Cannot interpret colorspace", color_space
+            "Cannot interpret color space", color_space
         )  # pragma: no cover
     elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
         color_space = "/Device" + color_space[0][4:]
@@ -291,7 +291,7 @@ def _handle_jpx(
         mode = "RGBA"
     # we need to convert to the good mode
     if img1.mode == mode or {img1.mode, mode} == {"L", "P"}:  # compare (unordered) sets
-        # L,P are indexed modes which should not be changed.
+        # L and P are indexed modes which should not be changed.
         img = img1
     elif {img1.mode, mode} == {"RGBA", "CMYK"}:
         # RGBA / CMYK are 4bytes encoding where
@@ -315,7 +315,7 @@ def _apply_decode(
     color_space: Union[str, List[Any], Any],
     invert_color: bool,
 ) -> Image.Image:
-    # CMYK image and other colorspaces without decode
+    # CMYK image and other color spaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
     decode = x_object_obj.get(
         IA.DECODE,
@@ -330,7 +330,7 @@ def _apply_decode(
         isinstance(color_space, ArrayObject)
         and color_space[0].get_object() == "/Indexed"
     ):
-        decode = None  # decode is meanless of Indexed
+        decode = None  # decode is meaningless if Indexed
     if (
         isinstance(color_space, ArrayObject)
         and color_space[0].get_object() == "/Separation"
