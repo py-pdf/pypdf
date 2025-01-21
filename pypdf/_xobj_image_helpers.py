@@ -15,6 +15,7 @@ from .generic import (
     EncodedStreamObject,
     IndirectObject,
     NullObject,
+    TextStringObject,
 )
 
 if sys.version_info[:2] >= (3, 10):
@@ -184,8 +185,6 @@ def _handle_flate(
         data = bits2byte(data, size, 4)
     img = _extended_image_frombytes(mode, size, data)
     if color_space == "/Indexed":
-        from .generic import TextStringObject
-
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
         if isinstance(lookup, TextStringObject):
