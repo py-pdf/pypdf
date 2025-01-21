@@ -45,7 +45,7 @@ def _get_imagemode(
     depth: int = 0,
 ) -> Tuple[mode_str_type, bool]:
     """
-    Returns
+    Returns:
         Image mode, not taking into account mask (transparency).
         ColorInversion is required (like for some DeviceCMYK).
 
