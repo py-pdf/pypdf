@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1737452775965,
+  "lastUpdate": 1737480457938,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -66137,6 +66137,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0013140517219548781",
             "extra": "mean: 738.7009970000008 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "23d3f419cdc798bbd37cec400b1306bb5ca422f4",
+          "message": "STY: Import TextStringObject at the top of file (#3065)\n\nEncodedStreamObject and DecodedStreamObject are only used once within the same if statement as TextStringObject. For consistency import TextStringObject with these at the top of the file.",
+          "timestamp": "2025-01-21T18:25:05+01:00",
+          "tree_id": "aa9ecf71d3970bbdccc6a33e6b27055217f1a277",
+          "url": "https://github.com/py-pdf/pypdf/commit/23d3f419cdc798bbd37cec400b1306bb5ca422f4"
+        },
+        "date": 1737480454843,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.283906652260596,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023102000347080213",
+            "extra": "mean: 304.5153550000009 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.325585693574252,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008268805247946515",
+            "extra": "mean: 65.2503610624997 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2657321977661643,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0317841948873513",
+            "extra": "mean: 3.763187180199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.02421562436715,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009914368943831167",
+            "extra": "mean: 49.939534149997655 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08676447797391361,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09506738485518779",
+            "extra": "mean: 11.525454003199991 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3505610825794134,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0029154331406442656",
+            "extra": "mean: 740.4330044000062 msec\nrounds: 5"
           }
         ]
       }
