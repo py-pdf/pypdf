@@ -47,7 +47,7 @@ def _get_imagemode(
     """
     Returns:
         Image mode, not taking into account mask (transparency).
-        ColorInversion is required (like for some DeviceCMYK)
+        ColorInversion is required (like for some DeviceCMYK).
 
     """
     if depth > MAX_IMAGE_MODE_NESTING_DEPTH:
