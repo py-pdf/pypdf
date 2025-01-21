@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1737379068540,
+  "lastUpdate": 1737452775965,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -66071,6 +66071,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00242938397300281",
             "extra": "mean: 742.419051600001 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "861c5c14636ca543c703a85be0ca026d87e3c950",
+          "message": "DEV: Add tool.ruff.lint.pydocstyle to pyproject.toml (#3059)\n\nAppend a colon, as pydocstyle found one section name should end with a colon.",
+          "timestamp": "2025-01-21T10:43:50+01:00",
+          "tree_id": "9c2b664dab9da94396a8d8b5560e952a2161edaf",
+          "url": "https://github.com/py-pdf/pypdf/commit/861c5c14636ca543c703a85be0ca026d87e3c950"
+        },
+        "date": 1737452773473,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4606293973204973,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024828702624070326",
+            "extra": "mean: 288.96477640000455 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.677962023598132,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005900045230702531",
+            "extra": "mean: 63.78380037499909 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2746932632552833,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014953718431839158",
+            "extra": "mean: 3.6404241885999964 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.556876133274958,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006552669994062103",
+            "extra": "mean: 48.64552345000135 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08776611390255792,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06153642253802484",
+            "extra": "mean: 11.393919082600002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3537276977575257,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013140517219548781",
+            "extra": "mean: 738.7009970000008 msec\nrounds: 5"
           }
         ]
       }
