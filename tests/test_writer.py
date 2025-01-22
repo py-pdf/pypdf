@@ -1546,7 +1546,7 @@ def test_update_form_fields(tmp_path):
 
 @pytest.mark.enable_socket
 def test_update_form_fields2():
-    myFiles = {
+    my_files = {
         "test1": {
             "name": "Test1 Form",
             "url": "https://github.com/py-pdf/pypdf/files/14817365/test1.pdf",
@@ -1589,7 +1589,7 @@ def test_update_form_fields2():
     }
     merger = PdfWriter()
 
-    for file in myFiles:
+    for file in my_files:
         reader = PdfReader(
             BytesIO(get_data_from_url(myFiles[file]["url"], name=myFiles[file]["path"]))
         )
@@ -1597,7 +1597,7 @@ def test_update_form_fields2():
         writer = PdfWriter(clone_from=reader)
 
         writer.update_page_form_field_values(
-            None, myFiles[file]["usage"]["fields"], auto_regenerate=True
+            None, my_files[file]["usage"]["fields"], auto_regenerate=True
         )
         merger.append(writer)
     assert merger.get_form_text_fields(True) == {
