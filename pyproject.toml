@@ -186,7 +186,6 @@ ignore = [
     "PTH123", # `open()` should be replaced by `Path.open()`
     "S101",  # Use of `assert` detected
     "SLF001",  # Private member accessed
-    "PD011",  # Use `.to_numpy()` instead of `.values`
     "FA102",  # Missing `from __future__ import annotations`, but uses PEP 604 union
     "PERF203",  # `try`-`except` within a loop incurs performance overhead
     "PYI042",  # Type alias `mode_str_type` should be CamelCase
