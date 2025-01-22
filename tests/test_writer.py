@@ -1591,7 +1591,7 @@ def test_update_form_fields2():
 
     for file in my_files:
         reader = PdfReader(
-            BytesIO(get_data_from_url(myFiles[file]["url"], name=myFiles[file]["path"]))
+            BytesIO(get_data_from_url(my_files[file]["url"], name=my_files[file]["path"]))
         )
         reader.add_form_topname(file)
         writer = PdfWriter(clone_from=reader)
