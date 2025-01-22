@@ -694,7 +694,7 @@ def test_reader_properties():
     [True, False],
 )
 def test_issue604(caplog, strict):
-    """Test with invalid destinations."""  # TODO:
+    """Test with invalid destinations."""
     with open(RESOURCE_ROOT / "issue-604.pdf", "rb") as f:
         pdf = None
         outline = None
