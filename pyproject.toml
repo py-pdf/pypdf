@@ -156,20 +156,20 @@ ignore = [
     "N814",  # Camelcase `PageAttributes` imported as constant `PG`
     "N817",  # CamelCase `PagesAttributes` imported as acronym `PA`
     "PERF203",  # `try`-`except` within a loop incurs performance overhead
-    "PGH", # Use specific error messages
+    "PGH",  # Use specific error messages
     "PLC",
     "PLE",  # Too many arguments for logging
     "PLR1714",  # Consider merging multiple comparisons
     "PLW",  # Global variables
-    "PT011", # `pytest.raises(ValueError)` is too broad, set the `match`
+    "PT011",  # `pytest.raises(ValueError)` is too broad, set the `match`
     "PT012",  # `pytest.raises()` block should contain a single simple statement
     "PT014",  # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
     "PTH123", # `open()` should be replaced by `Path.open()`
-    "PYI042",  # Type alias `mode_str_type` should be CamelCase
+    "PYI042", # Type alias `mode_str_type` should be CamelCase
     "RET",
     "RUF001", "RUF002", "RUF005",  # Introduces bugs
     "S101",  # Use of `assert` detected
-    "S110", # `try`-`except`-`pass` detected, consider logging the exception
+    "S110",  # `try`-`except`-`pass` detected, consider logging the exception
     "SIM105",  # contextlib.suppress
     "SIM108",  # Don't enforce ternary operators
     "SLF001",  # Private member accessed
