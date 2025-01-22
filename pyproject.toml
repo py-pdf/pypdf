@@ -119,11 +119,10 @@ line-length = 120
 select = ["ALL"]
 ignore = [
     "D404",  # First word of the docstring should not be "This"
-    # I would like to have it, but there are a few annoying exceptions:
     "D401", # First line of docstring should be in imperative mood - false positives
     "ERA001",
     "UP031",
-    "D205",  # 1 blank line required between summary line and description
+    "D205",  # One blank line required between summary line and description
     "D400",  # First line should end with a period
     "D415",  # First line should end with a period
     # Introduces bugs
@@ -131,40 +130,37 @@ ignore = [
     "ARG",
     "DTZ001", # The use of `datetime.datetime()` without `tzinfo` is necessary
     "PLC",
-    # Personal preference
     "PLR1714",  # Consider merging multiple comparisons
     "FA100", # Missing `from __future__ import annotations`, but uses `typing.Dict`
     "TD002",  # Authors of TODOs can be found via git
     "FIX002",  # TODOs should typically not be in the code, but sometimes are ok
     "D406", # Section name should end with a newline ("Returns")
     "D212",  # I want multiline-docstrings to start at the second line
-    "D407",  # google-style docstrings don't have dashses
-    "N806",  # Variable `NO` in function should be lowercase
+    "D407",  # Google-style docstrings don't have dashses
+    "N806",  # non-lowercase-variable-in-function
     "N814", # Camelcase `PageAttributes` imported as constant `PG`
     "N817",  # CamelCase `PagesAttributes` imported as acronym `PA`
     "ANN204", # Missing return type annotation for special method `__init__`
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
-    "BLE",  # we want to capture Exception sometimes
-    "COM812",  # yes, they make the diff smaller
+    "BLE",  # We want to capture Exception sometimes
+    "COM812",  # Yes, they make the diff smaller
     "D105",  # Missing docstring in magic method
     "D106",  # Missing docstring in public nested class
     "D107",  # Missing docstring in `__init__`
     "D203", # one-blank-line-before-class
-    "EM",  # exception messages
+    "EM",  # Exception messages
     "G004",  # f-string in logging statement
     "RET",
     "S110", # `try`-`except`-`pass` detected, consider logging the exception
     "SIM105",  # contextlib.suppress
-    "SIM108",  # don't enforce ternary operators
-    "TID252",  # we want relative imports
+    "SIM108",  # Don't enforce ternary operators
+    "TID252",  # We want relative imports
     "TRY", # I don't know what this is about
-    # As long as we are not on Python 3.9+
-    "UP035", # PEP 585
+    "UP035", # PEP 585. As long as we are not on Python 3.9+
     # As long as we are not on Python 3.10+
     "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604
-    # As long as we are not on Python 3.11+
-    "UP006", "UP007",
-    # for the moment, fix it later:
+    "UP006", "UP007", # As long as we are not on Python 3.11+
+    # For the moment, fix it later:
     "TD003", # Missing issue link on the line following this TODO
     "TD004",  # Missing colon in TODO
     "TD005", # Missing issue description after `TODO`
@@ -179,8 +175,8 @@ ignore = [
     "FBT002", # Boolean default value in function definition
     "FBT003", # Boolean positional value in function call
     "PGH", # Use specific error messages
-    "PLE",  # too many arguments for logging
-    "PLW",  # global variables
+    "PLE",  # Too many arguments for logging
+    "PLW",  # Global variables
     "PT011", # `pytest.raises(ValueError)` is too broad, set the `match`
     "PT012",  # `pytest.raises()` block should contain a single simple statement
     "PTH123", # `open()` should be replaced by `Path.open()`
@@ -189,8 +185,7 @@ ignore = [
     "FA102",  # Missing `from __future__ import annotations`, but uses PEP 604 union
     "PERF203",  # `try`-`except` within a loop incurs performance overhead
     "PYI042",  # Type alias `mode_str_type` should be CamelCase
-    # Ruff bug
-    "PT014",  # Duplicate of test case at index 1 in `@pytest_mark.parametrize`
+    "PT014",  # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
 ]
 
 [tool.ruff.lint.mccabe]
