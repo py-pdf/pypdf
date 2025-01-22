@@ -144,7 +144,7 @@ ignore = [
     "D417",  # Missing argument descriptions in the docstring 
     "DTZ001", # The use of `datetime.datetime()` without `tzinfo` is necessary
     "EM",  # Exception messages
-    "ERA001",
+    "ERA001", # Found commented-out code
     "FA100",  # Missing `from __future__ import annotations`, but uses `typing.Dict`
     "FA102",  # Missing `from __future__ import annotations`, but uses PEP 604 union
     "FBT001", # Boolean positional arg in function definition
@@ -167,7 +167,9 @@ ignore = [
     "PTH123", # `open()` should be replaced by `Path.open()`
     "PYI042", # Type alias `mode_str_type` should be CamelCase
     "RET",
-    "RUF001", "RUF002", "RUF005",  # Introduces bugs
+    "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
+    "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
+    "RUF005",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",  # Use of `assert` detected
     "S110",  # `try`-`except`-`pass` detected, consider logging the exception
     "SIM105",  # contextlib.suppress
@@ -178,8 +180,9 @@ ignore = [
     "TD005", # Missing issue description after `TODO`
     "TID252",  # We want relative imports
     "TRY", # I don't know what this is about
-    "UP006", "UP007", # As long as we are not on Python 3.11+
-    "UP031",
+    "UP006", # Non-PEP 585 annotation. As long as we are not on Python 3.11+
+    "UP007", # Non-PEP 604 annotation. As long as we are not on Python 3.11+
+    "UP031",  # Use format specifiers instead of percent format
     "UP035",  # PEP 585. As long as we are not on Python 3.9+
     "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604. While not on Python 3.10+
 ]
