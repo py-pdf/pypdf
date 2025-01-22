@@ -162,7 +162,6 @@ ignore = [
     "UP006", "UP007", # As long as we are not on Python 3.11+
     # For the moment, fix it later:
     "TD003", # Missing issue link on the line following this TODO
-    "TD004",  # Missing colon in TODO
     "TD005", # Missing issue description after `TODO`
     "A",  # Variable is shadowing a built-in
     "B028",  # No explicit `stacklevel` keyword argument found
