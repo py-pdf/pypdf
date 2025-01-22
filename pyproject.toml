@@ -125,8 +125,7 @@ ignore = [
     "D205",  # One blank line required between summary line and description
     "D400",  # First line should end with a period
     "D415",  # First line should end with a period
-    # Introduces bugs
-    "RUF001", "RUF002", "RUF005",
+    "RUF001", "RUF002", "RUF005",  # Introduces bugs
     "ARG",
     "DTZ001", # The use of `datetime.datetime()` without `tzinfo` is necessary
     "PLC",
@@ -157,11 +156,9 @@ ignore = [
     "TID252",  # We want relative imports
     "TRY", # I don't know what this is about
     "UP035", # PEP 585. As long as we are not on Python 3.9+
-    # As long as we are not on Python 3.10+
-    "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604
+    "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604. While not on Python 3.10+
     "UP006", "UP007", # As long as we are not on Python 3.11+
-    # For the moment, fix it later:
-    "TD003", # Missing issue link on the line following this TODO
+    "TD003", # For the moment, fix it later: Missing issue link on the line following this TODO
     "TD005", # Missing issue description after `TODO`
     "A",  # Variable is shadowing a built-in
     "B028",  # No explicit `stacklevel` keyword argument found
