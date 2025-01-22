@@ -135,7 +135,7 @@ class FlateDecode:
         if predictor != 1:
             # /Columns, the number of samples in each row, has a default value of 1;
             # §7.4.4.3, ISO 32000.
-            DEFAULT_BITS_PER_COMPONENT = 8
+            default_bits_per_component = 8
             try:
                 columns = cast(int, decode_parms[LZW.COLUMNS].get_object())  # type: ignore
             except (TypeError, KeyError):
@@ -150,7 +150,7 @@ class FlateDecode:
                     decode_parms[LZW.BITS_PER_COMPONENT].get_object(),  # type: ignore
                 )
             except (TypeError, KeyError):
-                bits_per_component = DEFAULT_BITS_PER_COMPONENT
+                bits_per_component = default_bits_per_component
 
             # PNG predictor can vary by row and so is the lead byte on each row
             rowlength = (
