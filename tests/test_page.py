@@ -479,7 +479,7 @@ def test_extract_text_visitor_callbacks():
         """
 
         def __init__(self, text, x, y, font_dict, font_size) -> None:
-            # TODO \0-replace: Encoding issue in some files?
+            # TODO: \0-replace: Encoding issue in some files?
             self.text = text.replace("\0", "")
             self.x = x
             self.y = y
