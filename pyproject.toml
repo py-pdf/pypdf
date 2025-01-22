@@ -121,7 +121,11 @@ ignore = [
     "A",  # Variable is shadowing a built-in
     "ANN204",  # Missing return type annotation for special method `__init__`
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
-    "ARG",
+    "ARG001" # Unused function argument
+    "ARG002" # Unused method argument
+    "ARG003" # Unused class method argument
+    "ARG004" # Unused static method argument
+    "ARG005" # Unused lambda argument
     "B028",  # No explicit `stacklevel` keyword argument found
     "B904",  # Within an `except` clause, raise exceptions with
     "B905",  # `zip()` without an explicit `strict=` parameter
