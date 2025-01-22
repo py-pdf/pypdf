@@ -161,7 +161,7 @@ ignore = [
     "N817",  # CamelCase `PagesAttributes` imported as acronym `PA`
     "PERF203",  # `try`-`except` within a loop incurs performance overhead
     "PGH",  # Use specific error messages
-    "PLC",
+    "PLC0206" # Extracting value from dictionary without calling `.items()`
     "PLE",  # Too many arguments for logging
     "PLR1714",  # Consider merging multiple comparisons
     "PLW",  # Global variables
