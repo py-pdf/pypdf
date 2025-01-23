@@ -43,6 +43,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
         (io.BytesIO(b"  "), True),
         (io.BytesIO(b"  \n"), True),
         (io.BytesIO(b"    \n"), True),
+        (io.BytesIO(b"\f"), True),
     ],
 )
 def test_skip_over_whitespace(stream, expected):
@@ -60,6 +61,7 @@ def test_skip_over_whitespace(stream, expected):
         (b"  ", True),
         (b"  \n", True),
         (b"    \n", True),
+        (b"\f", True),
     ],
 )
 def test_check_if_whitespace_only(value, expected):

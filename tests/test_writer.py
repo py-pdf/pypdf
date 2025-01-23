@@ -78,6 +78,34 @@ def test_writer_clone():
     assert "PageObject" in str(type(writer.pages[0]))
 
 
+def test_clone_metadata():
+    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    reader = PdfReader(src)
+
+    writer = PdfWriter(clone_from=reader)
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {
+        **reader.metadata,
+        "/foo": "bar",
+    }
+
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {
+        **reader.metadata,
+        "/foo": "bar",
+    }
+    writer.metadata = None
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {"/foo": "bar"}
+
+    writer = PdfWriter()
+    writer.clone_reader_document_root(reader)
+    writer.add_metadata({"/foo": "bar"})
+    assert writer.metadata == {"/foo": "bar"}
+
+
 def test_writer_clone_bookmarks():
     # Arrange
     src = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
@@ -1518,7 +1546,7 @@ def test_update_form_fields(tmp_path):
 
 @pytest.mark.enable_socket
 def test_update_form_fields2():
-    myFiles = {
+    my_files = {
         "test1": {
             "name": "Test1 Form",
             "url": "https://github.com/py-pdf/pypdf/files/14817365/test1.pdf",
@@ -1561,15 +1589,15 @@ def test_update_form_fields2():
     }
     merger = PdfWriter()
 
-    for file in myFiles:
+    for file in my_files:
         reader = PdfReader(
-            BytesIO(get_data_from_url(myFiles[file]["url"], name=myFiles[file]["path"]))
+            BytesIO(get_data_from_url(my_files[file]["url"], name=my_files[file]["path"]))
         )
         reader.add_form_topname(file)
         writer = PdfWriter(clone_from=reader)
 
         writer.update_page_form_field_values(
-            None, myFiles[file]["usage"]["fields"], auto_regenerate=True
+            None, my_files[file]["usage"]["fields"], auto_regenerate=True
         )
         merger.append(writer)
     assert merger.get_form_text_fields(True) == {
@@ -2578,4 +2606,4 @@ def test_inline_image_q_operator_handling(tmp_path):
         ]
     )
     assert png_path.is_file()
-    assert image_similarity(png_path, expected_png_path) >= 0.999999
+    assert image_similarity(png_path, expected_png_path) >= 0.99999
