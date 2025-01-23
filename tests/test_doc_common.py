@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -59,3 +59,13 @@ def test_attachments(tmpdir):
     with PdfReader(str(only_f_path)) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
+
+
+def test_get_attachments__same_attachment_more_than_twice():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    for i in range(5):
+        writer.add_attachment("test.txt", f"content{i}")
+    assert writer._get_attachments("test.txt") == {
+        "test.txt": [b"content0", b"content1", b"content2", b"content3", b"content4"]
+    }
