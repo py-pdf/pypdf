@@ -34,7 +34,7 @@ def test_list_attachments(tmpdir):
     different_path = tmpdir / "different.pdf"
     different_path.write_binary(re.sub(rb" /UF [^/]+ /", b" /UF(my-file.txt) /", attached_path.read_binary()))
     with PdfReader(str(different_path)) as pdf:
-        assert set(pdf._list_attachments()) == {"test.txt", "my-file.txt"}
+        assert pdf._list_attachments() == ["test.txt", "my-file.txt"]
 
     # Only name.
     no_f_path = tmpdir / "no-f.pdf"

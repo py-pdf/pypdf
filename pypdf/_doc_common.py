@@ -1361,7 +1361,7 @@ class PdfDocCommon:
         except KeyError:
             return []
         attachment_names: List[str] = []
-        for name in names:
+        for i, name in enumerate(names):
             if isinstance(name, str):
                 attachment_names.append(name)
             else:
@@ -1370,9 +1370,13 @@ class PdfDocCommon:
                     # PDF 2.0 reference, table 43:
                     #   > A PDF reader shall use the value of the UF key, when present, instead of the F key.
                     if key in name:
-                        attachment_names.append(name[key].get_object())
+                        name = name[key].get_object()
+                        if name == names[i - 1]:
+                            # Avoid duplicates for the same entry.
+                            continue
+                        attachment_names.append(name)
                     break
-        return list(set(attachment_names))
+        return attachment_names
 
     def _get_attachment_list(self, name: str) -> List[bytes]:
         out = self._get_attachments(name)[name]
