@@ -44,13 +44,13 @@ def test_list_attachments(tmpdir):
 
     # UF and F.
     uf_f_path = tmpdir / "uf-f.pdf"
-    uf_f_path.write_binary(re.sub(rb" /UF ", b"/F(file.txt) /UF ", attached_path.read_binary()))
+    uf_f_path.write_binary(attached_path.read_binary().replace(b" /UF ", b"/F(file.txt) /UF "))
     with PdfReader(str(uf_f_path)) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
 
     # Only F.
     only_f_path = tmpdir / "f.pdf"
-    only_f_path.write_binary(re.sub(rb" /UF ", b" /F ", attached_path.read_binary()))
+    only_f_path.write_binary(attached_path.read_binary().replace(b" /UF ", b" /F "))
     with PdfReader(str(only_f_path)) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
 
