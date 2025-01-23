@@ -284,3 +284,14 @@ def test_tz_with_no_operands():
     reader = PdfReader(BytesIO(data))
     page = reader.pages[1]
     assert "\nThankyouforyourattentiontothismatter.\n" in page.extract_text()
+
+
+@pytest.mark.enable_socket
+def test_iss3060():
+    """Test for not throwing 'font not set: is PDF missing a Tf operator'"""
+    url = "https://github.com/user-attachments/files/18482531/test-anon.pdf"
+    name = "iss3060.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    # pypdf.errors.PdfReadError: font not set: is PDF missing a Tf operator?
+    txt = reader.pages[0].extract_text(extraction_mode = "layout")
+    assert txt.startswith(" *******")
