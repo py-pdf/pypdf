@@ -781,7 +781,7 @@ class EncryptAlgorithm(tuple, Enum):  # type: ignore # noqa: SLOT001
 
 
 class EncryptionValues:
-    O: bytes  # noqa
+    O: bytes  # noqa: E741
     U: bytes
     OE: bytes
     UE: bytes
