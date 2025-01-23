@@ -293,5 +293,5 @@ def test_iss3060():
     name = "iss3060.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     # pypdf.errors.PdfReadError: font not set: is PDF missing a Tf operator?
-    txt = reader.pages[0].extract_text(extraction_mode = "layout")
+    txt = reader.pages[0].extract_text(extraction_mode="layout")
     assert txt.startswith(" *******")
