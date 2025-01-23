@@ -735,7 +735,7 @@ class TreeObject(DictionaryObject):
         assert parent is not None, "mypy"
         parent = cast("TreeObject", parent.get_object())
         #  BooleanObject requires comparison with == not is
-        opn = parent.get("/%is_open%", True) == True  # noqa
+        opn = parent.get("/%is_open%", True) == True  # noqa: E712
         c = cast(int, parent.get("/Count", 0))
         if c < 0:
             c = abs(c)
