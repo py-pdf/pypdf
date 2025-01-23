@@ -38,6 +38,7 @@ import math
 import struct
 import zlib
 from base64 import a85decode
+from dataclasses import dataclass
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -45,6 +46,7 @@ from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
+    deprecate_with_replacement,
     deprecation_no_replacement,
     logger_warning,
 )
@@ -446,7 +448,13 @@ class ASCII85Decode:
         if isinstance(data, str):
             data = data.encode()
         data = data.strip(WHITESPACES_AS_BYTES)
-        return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
+        try:
+            return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
+        except ValueError as error:
+            if error.args[0] == "Ascii85 encoded byte sequences must end with b'~>'":
+                logger_warning("Ignoring missing Ascii85 end marker.", __name__)
+                return a85decode(data, adobe=False, ignorechars=WHITESPACES_AS_BYTES)
+            raise
 
 
 class DCTDecode:
@@ -471,17 +479,17 @@ class JPXDecode:
         return data
 
 
-class CCITParameters:
+@dataclass
+class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
-    def __init__(self, K: int = 0, columns: int = 0, rows: int = 0) -> None:
-        self.K = K
-        self.EndOfBlock = None
-        self.EndOfLine = None
-        self.EncodedByteAlign = None
-        self.columns = columns  # width
-        self.rows = rows  # height
-        self.DamagedRowsBeforeError = None
+    K: int = 0
+    columns: int = 0
+    rows: int = 0
+    EndOfBlock: Union[int, None] = None
+    EndOfLine: Union[int, None] = None
+    EncodedByteAlign: Union[int, None] = None
+    DamagedRowsBeforeError: Union[int, None] = None
 
     @property
     def group(self) -> int:
@@ -492,6 +500,19 @@ class CCITParameters:
             # k > 0: Mixed one- and two-dimensional encoding (Group 3, 2-D)
             CCITTgroup = 3
         return CCITTgroup
+
+
+def __create_old_class_instance(
+    K: int = 0,
+    columns: int = 0,
+    rows: int = 0
+) -> CCITTParameters:
+    deprecate_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
+    return CCITTParameters(K, columns, rows)
+
+
+# Create an alias for the old class name
+CCITParameters = __create_old_class_instance
 
 
 class CCITTFaxDecode:
@@ -507,8 +528,8 @@ class CCITTFaxDecode:
     @staticmethod
     def _get_parameters(
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
-        rows: int,
-    ) -> CCITParameters:
+        rows: Union[int, IndirectObject],
+    ) -> CCITTParameters:
         # §7.4.6, optional parameters for the CCITTFaxDecode filter
         k = 0
         columns = 1728
@@ -519,16 +540,16 @@ class CCITTFaxDecode:
             if isinstance(parameters_unwrapped, ArrayObject):
                 for decode_parm in parameters_unwrapped:
                     if CCITT.COLUMNS in decode_parm:
-                        columns = decode_parm[CCITT.COLUMNS]
+                        columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.K in decode_parm:
-                        k = decode_parm[CCITT.K]
+                        k = decode_parm[CCITT.K].get_object()
             else:
                 if CCITT.COLUMNS in parameters_unwrapped:
-                    columns = parameters_unwrapped[CCITT.COLUMNS]  # type: ignore
+                    columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
-                    k = parameters_unwrapped[CCITT.K]  # type: ignore
+                    k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
 
-        return CCITParameters(k, columns, rows)
+        return CCITTParameters(K=k, columns=columns, rows=int(rows))
 
     @staticmethod
     def decode(
@@ -592,14 +613,12 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
+def decode_stream_data(stream: Any) -> bytes:
     """
     Decode the stream data based on the specified filters.
 
     This function decodes the stream data using the filters provided in the
-    stream. It supports various filter types, including FlateDecode,
-    ASCIIHexDecode, RunLengthDecode, LZWDecode, ASCII85Decode, DCTDecode, JPXDecode, and
-    CCITTFaxDecode.
+    stream.
 
     Args:
         stream: The input stream object containing the data and filters.
@@ -615,41 +634,42 @@ def decode_stream_data(stream: Any) -> bytes:  # utils.StreamObject
     if isinstance(filters, IndirectObject):
         filters = cast(ArrayObject, filters.get_object())
     if not isinstance(filters, ArrayObject):
-        # we have a single filter instance
+        # We have a single filter instance
         filters = (filters,)
-    decodparms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
-    if not isinstance(decodparms, (list, tuple)):
-        decodparms = (decodparms,)
+    decode_parms = stream.get(SA.DECODE_PARMS, ({},) * len(filters))
+    if not isinstance(decode_parms, (list, tuple)):
+        decode_parms = (decode_parms,)
     data: bytes = stream._data
     # If there is not data to decode we should not try to decode the data.
-    if data:
-        for filter_type, params in zip(filters, decodparms):
-            if isinstance(params, NullObject):
-                params = {}
-            if filter_type in (FT.FLATE_DECODE, FTA.FL):
-                data = FlateDecode.decode(data, params)
-            elif filter_type in (FT.ASCII_HEX_DECODE, FTA.AHx):
-                data = ASCIIHexDecode.decode(data)
-            elif filter_type in (FT.RUN_LENGTH_DECODE, FTA.RL):
-                data = RunLengthDecode.decode(data)
-            elif filter_type in (FT.LZW_DECODE, FTA.LZW):
-                data = LZWDecode._decodeb(data, params)
-            elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
-                data = ASCII85Decode.decode(data)
-            elif filter_type == FT.DCT_DECODE:
-                data = DCTDecode.decode(data)
-            elif filter_type == FT.JPX_DECODE:
-                data = JPXDecode.decode(data)
-            elif filter_type == FT.CCITT_FAX_DECODE:
-                height = stream.get(IA.HEIGHT, ())
-                data = CCITTFaxDecode.decode(data, params, height)
-            elif filter_type == "/Crypt":
-                if "/Name" in params or "/Type" in params:
-                    raise NotImplementedError(
-                        "/Crypt filter with /Name or /Type not supported yet"
-                    )
-            else:
-                raise NotImplementedError(f"Unsupported filter {filter_type}")
+    if not data:
+        return data
+    for filter_name, params in zip(filters, decode_parms):
+        if isinstance(params, NullObject):
+            params = {}
+        if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
+            data = ASCIIHexDecode.decode(data)
+        elif filter_name in (FT.ASCII_85_DECODE, FTA.A85):
+            data = ASCII85Decode.decode(data)
+        elif filter_name in (FT.LZW_DECODE, FTA.LZW):
+            data = LZWDecode._decodeb(data, params)
+        elif filter_name in (FT.FLATE_DECODE, FTA.FL):
+            data = FlateDecode.decode(data, params)
+        elif filter_name in (FT.RUN_LENGTH_DECODE, FTA.RL):
+            data = RunLengthDecode.decode(data)
+        elif filter_name == FT.CCITT_FAX_DECODE:
+            height = stream.get(IA.HEIGHT, ())
+            data = CCITTFaxDecode.decode(data, params, height)
+        elif filter_name == FT.DCT_DECODE:
+            data = DCTDecode.decode(data)
+        elif filter_name == FT.JPX_DECODE:
+            data = JPXDecode.decode(data)
+        elif filter_name == "/Crypt":
+            if "/Name" in params or "/Type" in params:
+                raise NotImplementedError(
+                    "/Crypt filter with /Name or /Type not supported yet"
+                )
+        else:
+            raise NotImplementedError(f"Unsupported filter {filter_name}")
     return data
 
 

@@ -8,9 +8,9 @@ from ._fixed_width_page import (
 from ._font import Font
 
 __all__ = [
+    "Font",
     "fixed_char_width",
     "fixed_width_page",
     "text_show_operations",
     "y_coordinate_groups",
-    "Font",
 ]

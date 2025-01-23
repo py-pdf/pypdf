@@ -124,7 +124,7 @@ def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     return versions[max(pdf_header_indices)]
 
 
-WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
+WHITESPACES = (b"\x00", b"\t", b"\n", b"\f", b"\r", b" ")
 WHITESPACES_AS_BYTES = b"".join(WHITESPACES)
 WHITESPACES_AS_REGEXP = b"[" + WHITESPACES_AS_BYTES + b"]"
 
@@ -173,7 +173,7 @@ def read_non_whitespace(stream: StreamType) -> bytes:
 
 def skip_over_whitespace(stream: StreamType) -> bool:
     """
-    Similar to read_non_whitespace, but return a boolean if more than one
+    Similar to read_non_whitespace, but return a boolean if at least one
     whitespace character was read.
 
     Args:
@@ -581,10 +581,10 @@ class Version:
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Version):
             raise ValueError(f"Version cannot be compared against {type(other)}")
-        min_len = min(len(self.components), len(other.components))
-        for i in range(min_len):
-            self_value, self_suffix = self.components[i]
-            other_value, other_suffix = other.components[i]
+
+        for self_component, other_component in zip(self.components, other.components):
+            self_value, self_suffix = self_component
+            other_value, other_suffix = other_component
 
             if self_value < other_value:
                 return True

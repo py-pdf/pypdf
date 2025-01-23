@@ -39,6 +39,15 @@ f_obj = BooleanObject(False)
 
 
 class ViewerPreferences(DictionaryObject):
+    def __init__(self, obj: Optional[DictionaryObject] = None) -> None:
+        super().__init__(self)
+        if not is_null_or_none(obj):
+            self.update(obj.items())  # type: ignore
+        try:
+            self.indirect_reference = obj.indirect_reference  # type: ignore
+        except AttributeError:
+            pass
+
     def _get_bool(self, key: str, default: Optional[BooleanObject]) -> BooleanObject:
         return self.get(key, default)
 
@@ -153,12 +162,3 @@ class ViewerPreferences(DictionaryObject):
         cls.enforce = _add_prop_arr("/Enforce", ArrayObject())
 
         return DictionaryObject.__new__(cls)
-
-    def __init__(self, obj: Optional[DictionaryObject] = None) -> None:
-        super().__init__(self)
-        if not is_null_or_none(obj):
-            self.update(obj.items())  # type: ignore
-        try:
-            self.indirect_reference = obj.indirect_reference  # type: ignore
-        except AttributeError:
-            pass

@@ -507,6 +507,11 @@ def test_textstringobject_autodetect_utf16():
     assert tso.get_encoded_bytes() == b"\xff\xfef\x00o\x00o\x00"
 
 
+def test_textstringobject__numbers_as_input():
+    _ = TextStringObject(42)
+    _ = TextStringObject(13.37)
+
+
 def test_remove_child_not_in_tree():
     tree = TreeObject()
     with pytest.raises(ValueError) as exc:
@@ -632,27 +637,27 @@ def test_remove_child_in_tree():
     ("url", "name", "caplog_content"),
     [
         (  # parse_content_stream_peek_percentage
-            "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf",
+            "https://github.com/user-attachments/files/18381763/tika-985770.pdf",
             "tika-985770.pdf",
             "",
         ),
         (  # read_inline_image_no_has_q
-            "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf",
+            "https://github.com/user-attachments/files/18381775/tika-998719.pdf",
             "tika-998719.pdf",
             "",
         ),
         (  # read_inline_image_loc_neg_1
-            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf",
+            "https://github.com/user-attachments/files/18381706/tika-935066.pdf",
             "tika-935066.pdf",
             "",
         ),
         (  # object_read_from_stream_unicode_error
-            "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf",
+            "https://github.com/user-attachments/files/18381750/tika-974966.pdf",
             "tika-974966.pdf",
             "",
         ),
         (  # dict_read_from_stream
-            "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf",
+            "https://github.com/user-attachments/files/18381762/tika-984877.pdf",
             "tika-984877.pdf",
             "Multiple definitions in dictionary at byte 0x1084 for key /Length",
         ),
@@ -678,7 +683,7 @@ def test_extract_text(caplog, url: str, name: str, caplog_content: str):
 @pytest.mark.slow
 @pytest.mark.enable_socket
 def test_text_string_write_to_stream():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
+    url = "https://github.com/user-attachments/files/18381698/tika-924562.pdf"
     name = "tika-924562.pdf"
 
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
@@ -690,7 +695,7 @@ def test_text_string_write_to_stream():
 
 @pytest.mark.enable_socket
 def test_bool_repr(tmp_path):
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
+    url = "https://github.com/user-attachments/files/18381703/tika-932449.pdf"
     name = "tika-932449.pdf"
 
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
@@ -892,7 +897,7 @@ def test_cloning(caplog):
 @pytest.mark.enable_socket
 def test_append_with_indirectobject_not_pointing(caplog):
     """
-    reported in #1631
+    Reported in #1631
     the object 43 0 is not invalid
     """
     url = "https://github.com/py-pdf/pypdf/files/10729142/document.pdf"
@@ -907,7 +912,7 @@ def test_append_with_indirectobject_not_pointing(caplog):
 @pytest.mark.enable_socket
 def test_iss1615_1673():
     """
-    test cases where /N is not indicating chains of objects
+    Test cases where /N is not indicating chains of objects
     test also where /N,... are not part of chains
     """
     # #1615

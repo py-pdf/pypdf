@@ -72,15 +72,12 @@ class PdfObject(PdfObjectProtocol):
         )
 
     def hash_value_data(self) -> bytes:
-        return ("%s" % self).encode()
+        return f"{self}".encode()
 
     def hash_value(self) -> bytes:
         return (
-            "%s:%s"
-            % (
-                self.__class__.__name__,
-                self.hash_func(self.hash_value_data()).hexdigest(),
-            )
+            f"{self.__class__.__name__}:"
+            f"{self.hash_func(self.hash_value_data()).hexdigest()}"
         ).encode()
 
     def replicate(
@@ -267,11 +264,11 @@ class BooleanObject(PdfObject):
         """
         return hash((self.__class__, self.value))
 
-    def __eq__(self, __o: object) -> bool:
-        if isinstance(__o, BooleanObject):
-            return self.value == __o.value
-        elif isinstance(__o, bool):
-            return self.value == __o
+    def __eq__(self, o: object, /) -> bool:
+        if isinstance(o, BooleanObject):
+            return self.value == o.value
+        elif isinstance(o, bool):
+            return self.value == o
         else:
             return False
 
@@ -398,6 +395,10 @@ class IndirectObject(PdfObject):
     def __float__(self) -> str:
         # in this case we are looking for the pointed data
         return self.get_object().__float__()  # type: ignore
+
+    def __int__(self) -> int:
+        # in this case we are looking for the pointed data
+        return self.get_object().__int__()  # type: ignore
 
     def __str__(self) -> str:
         # in this case we are looking for the pointed data
@@ -653,7 +654,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         o.autodetect_utf16 = False
         o.autodetect_pdfdocencoding = False
         o.utf16_bom = b""
-        if value.startswith(("\xfe\xff", "\xff\xfe")):
+        if o.startswith(("\xfe\xff", "\xff\xfe")):
             assert org is not None  # for mypy
             try:
                 o = str.__new__(cls, org.decode("utf-16"))

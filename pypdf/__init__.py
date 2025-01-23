@@ -27,23 +27,23 @@ except ImportError:
     pil_version = "none"
 
 _debug_versions = (
-    f"pypdf=={__version__}, crypt_provider={crypt_provider}, PIL={pil_version}"
+    f"pypdf=={__version__}, {crypt_provider=}, PIL={pil_version}"
 )
 
 __all__ = [
-    "__version__",
-    "_debug_versions",
+    "DocumentInformation",
     "ImageType",
-    "mult",
+    "ObjectDeletionFlag",
+    "PageObject",
     "PageRange",
     "PaperSize",
-    "DocumentInformation",
-    "ObjectDeletionFlag",
-    "parse_filename_page_ranges",
+    "PasswordType",
     "PdfMerger",
     "PdfReader",
     "PdfWriter",
     "Transformation",
-    "PageObject",
-    "PasswordType",
+    "__version__",
+    "_debug_versions",
+    "mult",
+    "parse_filename_page_ranges",
 ]

@@ -72,7 +72,7 @@ class CryptFilter:
         if isinstance(obj, ByteStringObject):
             data = self.str_crypt.encrypt(obj.original_bytes)
             obj = ByteStringObject(data)
-        if isinstance(obj, TextStringObject):
+        elif isinstance(obj, TextStringObject):
             data = self.str_crypt.encrypt(obj.get_encoded_bytes())
             obj = ByteStringObject(data)
         elif isinstance(obj, StreamObject):
@@ -274,7 +274,7 @@ class AlgV4:
         rc4_enc = rc4_encrypt(rc4_key, a)
         if rev >= 3:
             for i in range(1, 20):
-                key = bytes(bytearray(x ^ i for x in rc4_key))
+                key = bytes(x ^ i for x in rc4_key)
                 rc4_enc = rc4_encrypt(key, rc4_enc)
         return rc4_enc
 
@@ -335,7 +335,7 @@ class AlgV4:
         u_hash.update(id1_entry)
         rc4_enc = rc4_encrypt(key, u_hash.digest())
         for i in range(1, 20):
-            rc4_key = bytes(bytearray(x ^ i for x in key))
+            rc4_key = bytes(x ^ i for x in key)
             rc4_enc = rc4_encrypt(rc4_key, rc4_enc)
         return _padding(rc4_enc)
 
@@ -457,7 +457,7 @@ class AlgV4:
         else:
             user_password = o_entry
             for i in range(19, -1, -1):
-                key = bytes(bytearray(x ^ i for x in rc4_key))
+                key = bytes(x ^ i for x in rc4_key)
                 user_password = rc4_decrypt(key, user_password)
         return AlgV4.verify_user_password(
             user_password,
@@ -574,7 +574,7 @@ class AlgV5:
 
     @staticmethod
     def calculate_hash(R: int, password: bytes, salt: bytes, udata: bytes) -> bytes:
-        # from https://github.com/qpdf/qpdf/blob/main/libqpdf/QPDF_encryption.cc
+        # https://github.com/qpdf/qpdf/blob/main/libqpdf/QPDF_encryption.cc
         k = hashlib.sha256(password + salt + udata).digest()
         if R < 6:
             return k
@@ -924,6 +924,7 @@ class Encryption:
         key_data = key[:n] + pack1 + pack2
         key_hash = hashlib.md5(key_data)
         rc4_key = key_hash.digest()[: min(n + 5, 16)]
+
         # for AES-128
         key_hash.update(b"sAlT")
         aes128_key = key_hash.digest()[: min(n + 5, 16)]
@@ -941,14 +942,14 @@ class Encryption:
     def _get_crypt(
         method: str, rc4_key: bytes, aes128_key: bytes, aes256_key: bytes
     ) -> CryptBase:
-        if method == "/AESV3":
-            return CryptAES(aes256_key)
         if method == "/AESV2":
             return CryptAES(aes128_key)
-        elif method == "/Identity":
+        if method == "/AESV3":
+            return CryptAES(aes256_key)
+        if method == "/Identity":
             return CryptIdentity()
-        else:
-            return CryptRC4(rc4_key)
+
+        return CryptRC4(rc4_key)
 
     @staticmethod
     def _encode_password(password: Union[bytes, str]) -> bytes:

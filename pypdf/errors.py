@@ -11,13 +11,13 @@ class DeprecationError(Exception):
 
 class DependencyError(Exception):
     """
-    Raised when a required dependency (a library or module that PyPDF depends on)
+    Raised when a required dependency (a library or module that pypdf depends on)
     is not available or cannot be imported.
     """
 
 
 class PyPdfError(Exception):
-    """Base class for all exceptions raised by PyPDF."""
+    """Base class for all exceptions raised by pypdf."""
 
 
 class PdfReadError(PyPdfError):

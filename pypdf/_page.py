@@ -749,10 +749,7 @@ class PageObject(DictionaryObject):
         return v
 
     def _get_inline_images(self) -> Dict[str, ImageFile]:
-        """
-        get inline_images
-        entries will be identified as ~1~
-        """
+        """Load inline images. Entries will be identified as `~1~`."""
         content = self.get_contents()
         if is_null_or_none(content):
             return {}
@@ -765,7 +762,7 @@ class PageObject(DictionaryObject):
                 )
             elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
-                    f"{ope!r} operator met whereas not expected,"
+                    f"{ope!r} operator met whereas not expected, "
                     "please share usecase with pypdf dev team"
                 )
             """backup
@@ -1451,7 +1448,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         """
-        merge_transformed_page is similar to merge_page, but a transformation
+        Similar to :meth:`~pypdf._page.PageObject.merge_page`, but a transformation
         matrix is applied to the merged stream.
 
         Args:
@@ -1479,7 +1476,7 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", scale: float, over: bool = True, expand: bool = False
     ) -> None:
         """
-        merge_scaled_page is similar to merge_page, but the stream to be merged
+        Similar to :meth:`~pypdf._page.PageObject.merge_page`, but the stream to be merged
         is scaled by applying a transformation matrix.
 
         Args:
@@ -1501,7 +1498,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         """
-        merge_rotated_page is similar to merge_page, but the stream to be merged
+        Similar to :meth:`~pypdf._page.PageObject.merge_page`, but the stream to be merged
         is rotated by applying a transformation matrix.
 
         Args:
@@ -1524,7 +1521,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         """
-        mergeTranslatedPage is similar to merge_page, but the stream to be
+        Similar to :meth:`~pypdf._page.PageObject.merge_page`, but the stream to be
         merged is translated by applying a transformation matrix.
 
         Args:
@@ -1750,7 +1747,7 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-    def _get_acutual_font_widths(
+    def _get_actual_font_widths(
         self,
         cmap: Tuple[
             Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
@@ -1817,7 +1814,7 @@ class PageObject(DictionaryObject):
                 rtl_dir,
                 visitor_text)
         font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
-            self._get_acutual_font_widths(cmap, text_operands, font_size, space_width))
+            self._get_actual_font_widths(cmap, text_operands, font_size, space_width))
         actual_str_size["str_widths"] += font_widths
 
         return text, rtl_dir, actual_str_size
@@ -1980,12 +1977,12 @@ class PageObject(DictionaryObject):
                 memo_tm = tm_matrix.copy()
             # Table 5.2 page 398
             elif operator == b"Tz":
-                char_scale = float(operands[0]) / 100.0
+                char_scale = float(operands[0]) / 100.0 if operands else 1.0
             elif operator == b"Tw":
-                space_scale = 1.0 + float(operands[0])
+                space_scale = 1.0 + float(operands[0] if operands else 0.0)
             elif operator == b"TL":
                 scale_x = math.sqrt(tm_matrix[0]**2 + tm_matrix[2]**2)
-                TL = float(operands[0]) * font_size * scale_x
+                TL = float(operands[0] if operands else 0.0) * font_size * scale_x
             elif operator == b"Tf":
                 if text != "":
                     output += text  # .translate(cmap)

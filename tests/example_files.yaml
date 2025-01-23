@@ -13,17 +13,17 @@
 - local_filename: The%20lean%20times%20in%20the%20Peruvian%20economy.pdf
   url: https://github.com/alexanderquispe/1REI05/raw/main/reports/report_1/The%20lean%20times%20in%20the%20Peruvian%20economy.pdf
 - local_filename: tika-908104.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/908/908104.pdf
+  url: https://github.com/user-attachments/files/18382273/tika-908104.pdf
 - local_filename: tika-923406.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/923/923406.pdf
+  url: https://github.com/user-attachments/files/18382274/tika-923406.pdf
 - local_filename: tika-955562.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/955/955562.pdf
+  url: https://github.com/user-attachments/files/18382288/tika-955562.pdf
 - local_filename: tika-959173.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/959/959173.pdf
+  url: https://github.com/user-attachments/files/18382295/tika-959173.pdf
 - local_filename: waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf
   url: https://github.com/py-pdf/pypdf/files/10773829/waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf
 - local_filename: tika-957144.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/957/957144.pdf
+  url: https://github.com/user-attachments/files/18382302/tika-957144.pdf
 - local_filename: ascii charset.pdf
   url: https://github.com/py-pdf/pypdf/files/9472500/main.pdf
 - local_filename: cmap1370.pdf
@@ -49,37 +49,33 @@
 - local_filename: NewJersey.pdf
   url: https://github.com/py-pdf/pypdf/files/12090692/New.Jersey.Coinbase.staking.securities.charges.2023-0606_Coinbase-Penalty-and-C-D.pdf
 - local_filename: tika-952445.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/952/952445.pdf
+  url: https://github.com/user-attachments/files/18382348/tika-952445.pdf
 - local_filename: tika-921632.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/921/921632.pdf
+  url: https://github.com/user-attachments/files/18382354/tika-921632.pdf
 - local_filename: tika-976970.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/976/976970.pdf
+  url: https://github.com/user-attachments/files/18382397/tika-976970.pdf
 - local_filename: tika-914102.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf
+  url: https://github.com/user-attachments/files/18381687/tika-914102.pdf
 - local_filename: iss1737.pdf
   url: https://github.com/py-pdf/pypdf/files/11068604/tt1.pdf
 - local_filename: issue-1801.pdf
   url: https://github.com/py-pdf/pypdf/files/11250359/test_img.pdf
 - local_filename: tika-924546.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf
-- local_filename: tika-924546.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf
+  url: https://github.com/user-attachments/files/18381697/tika-924546.pdf
 - local_filename: issue-1801.png
   url: https://user-images.githubusercontent.com/1658117/232842886-9d1b0726-3a5b-430d-8464-595d919c266c.png
 - local_filename: grimm10
   url: https://github.com/py-pdf/pypdf/files/11336817/grimm10.pdf
 - local_filename: labeled-edges-center-image.png
   url: https://user-images.githubusercontent.com/4083478/236685544-a1940b06-fb42-4bb1-b589-1e4ad429d68e.png
-- local_filename: pdf_font_garbled.pdf
-  url: https://github.com/py-pdf/pypdf/files/11219022/pdf_font_garbled.pdf
 - local_filename: watermark1.png
   url: https://user-images.githubusercontent.com/4083478/236793172-09340aef-3440-4c8a-af85-a91cdad27d46.png
 - local_filename: tika-977609.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/977/977609.pdf
+  url: https://github.com/user-attachments/files/18381754/tika-977609.pdf
 - local_filename: tifimage.png
   url: https://user-images.githubusercontent.com/4083478/236793166-288b4b59-dee3-49fd-a04e-410aab06199a.png
 - local_filename: tika-972174.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf
+  url: https://github.com/user-attachments/files/18381744/tika-972174.pdf
 - local_filename: tika-972174_p0-im0.png
   url: https://user-images.githubusercontent.com/4083478/238288207-b77dd38c-34b4-4f4f-810a-bf9db7ca0414.png
 - local_filename: Vitocal.pdf
@@ -104,8 +100,6 @@
   url: https://github.com/py-pdf/pypdf/files/12144094/im1.png.txt
 - local_filename: iss1982_im2.png
   url: https://github.com/py-pdf/pypdf/files/12144093/im2.png.txt
-- local_filename: tika-972174.pdf
-  url: https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf
 - local_filename: usa.png
   url: https://github.com/py-pdf/pypdf/assets/4083478/56c93021-33cd-4387-ae13-5cbe7e673f42
 - local_filename: paid.pdf

@@ -94,6 +94,7 @@ def test_parse_encoding_advanced_encoding_not_implemented(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-957144.pdf")))
     for page in reader.pages:
         page.extract_text()
+    # The correctly spelled encoding is /WinAnsiEncoding
     assert "Advanced encoding /WinAnsEncoding not implemented yet" in caplog.text
 
 
@@ -187,7 +188,7 @@ def test_cmap_compute_space_width():
     # issue 2137
     # original file URL:
     # url = "https://arxiv.org/pdf/2005.05909.pdf"
-    # URL from github issue is too long to pass code stype check, use original arxiv URL instead
+    # URL from github issue is too long to pass code type check, use original arxiv URL instead
     # url = "https://github.com/py-pdf/pypdf/files/12489914/Morris.et.al.-.2020.-.TextAttack.A.Framework.for.Adversarial.Attacks.Data.Augmentation.and.Adversarial.Training.in.NLP.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(name="TextAttack_paper.pdf")))
     reader.pages[0].extract_text()  # no error
@@ -269,3 +270,26 @@ def test_iss2925():
     name = "iss2925.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert "slicing on the PDG to extract the relevant contextual" in reader.pages[3].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_iss2966():
+    """Regression test for issue #2966: indirect objects in fonts"""
+    url = (
+        "https://github.com/user-attachments/files/17904233/repro_out.pdf"
+    )
+    name = "iss2966.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert "Lorem ipsum dolor sit amet" in reader.pages[0].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_binascii_odd_length_string(caplog):
+    """Tests for #2216"""
+    url = "https://github.com/user-attachments/files/18199642/iss2216.pdf"
+    name = "iss2216.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    page = reader.pages[0]
+    assert "\n(Many other theorems may\n" in page.extract_text()
+    assert "Skipping broken line b'143f   143f   10300': Odd-length string\n" in caplog.text

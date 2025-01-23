@@ -116,16 +116,18 @@ class PdfReader(PdfDocCommon):
     ) -> None:
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
+
         #: Storage of parsed PDF objects.
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
 
+        self._startxref: int = 0
         self.xref_index = 0
         self.xref: Dict[int, Dict[Any, Any]] = {}
         self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
         self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
 
-        # map page indirect_reference number to page number
+        # Map page indirect_reference number to page number
         self._page_id2num: Optional[Dict[Any, Any]] = None
 
         self._validated_root: Optional[DictionaryObject] = None
@@ -151,7 +153,6 @@ class PdfReader(PdfDocCommon):
             with open(stream, "rb") as fh:
                 stream = BytesIO(fh.read())
             self._stream_opened = True
-        self._startxref: int = 0
         self.read(stream)
         self.stream = stream
 
@@ -261,35 +262,6 @@ class PdfReader(PdfDocCommon):
         """
         id = self.trailer.get(TK.ID, None)
         return None if is_null_or_none(id) else cast(ArrayObject, id.get_object())
-
-    def _repr_mimebundle_(
-        self,
-        include: Union[None, Iterable[str]] = None,
-        exclude: Union[None, Iterable[str]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Integration into Jupyter Notebooks.
-
-        This method returns a dictionary that maps a mime-type to its
-        representation.
-
-        See https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
-        self.stream.seek(0)
-        pdf_data = self.stream.read()
-        data = {
-            "application/pdf": pdf_data,
-        }
-
-        if include is not None:
-            # Filter representations based on include list
-            data = {k: v for k, v in data.items() if k in include}
-
-        if exclude is not None:
-            # Remove representations based on exclude list
-            data = {k: v for k, v in data.items() if k not in exclude}
-
-        return data
 
     @property
     def pdf_header(self) -> str:
@@ -459,7 +431,7 @@ class PdfReader(PdfDocCommon):
                     idnum = -1
                     generation = -1  # exception will be raised below
             if idnum != indirect_reference.idnum and self.xref_index:
-                # Xref table probably had bad indexes due to not being zero-indexed
+                # xref table probably had bad indexes due to not being zero-indexed
                 if self.strict:
                     raise PdfReadError(
                         f"Expected object ID ({indirect_reference.idnum} {indirect_reference.generation}) "
@@ -470,9 +442,8 @@ class PdfReader(PdfDocCommon):
             elif idnum != indirect_reference.idnum and self.strict:
                 # some other problem
                 raise PdfReadError(
-                    f"Expected object ID ({indirect_reference.idnum} "
-                    f"{indirect_reference.generation}) does not match actual "
-                    f"({idnum} {generation})."
+                    f"Expected object ID ({indirect_reference.idnum} {indirect_reference.generation}) "
+                    f"does not match actual ({idnum} {generation})."
                 )
             if self.strict:
                 assert generation == indirect_reference.generation
@@ -540,11 +511,10 @@ class PdfReader(PdfDocCommon):
     def read_object_header(self, stream: StreamType) -> Tuple[int, int]:
         # Should never be necessary to read out whitespace, since the
         # cross-reference table should put us in the right spot to read the
-        # object header. In reality some files have stupid cross reference
+        # object header. In reality some files have stupid cross-reference
         # tables that are off by whitespace bytes.
-        extra = False
         skip_over_comment(stream)
-        extra |= skip_over_whitespace(stream)
+        extra = skip_over_whitespace(stream)
         stream.seek(-1, 1)
         idnum = read_until_whitespace(stream)
         extra |= skip_over_whitespace(stream)
@@ -587,7 +557,7 @@ class PdfReader(PdfDocCommon):
         return obj
 
     def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
-        # function reserved for future dev
+        # function reserved for future development
         if indirect.pdf != self:
             raise ValueError("Cannot update PdfReader with external object")
         if (indirect.generation, indirect.idnum) not in self.resolved_objects:
@@ -609,14 +579,14 @@ class PdfReader(PdfDocCommon):
         startxref = self._find_startxref_pos(stream)
         self._startxref = startxref
 
-        # check and eventually correct the startxref only in not strict
+        # check and eventually correct the startxref only if not strict
         xref_issue_nr = self._get_xref_issues(stream, startxref)
         if xref_issue_nr != 0:
             if self.strict and xref_issue_nr:
                 raise PdfReadError("Broken xref table")
             logger_warning(f"incorrect startxref pointer({xref_issue_nr})", __name__)
 
-        # read all cross reference tables and their trailers
+        # read all cross-reference tables and their trailers
         self._read_xref_tables_and_trailers(stream, startxref, xref_issue_nr)
 
         # if not zero-indexed, verify that the table is correct; change it if necessary
@@ -627,7 +597,7 @@ class PdfReader(PdfDocCommon):
                     continue
                 xref_k = sorted(
                     xref_entry.keys()
-                )  # must ensure ascendant to prevent damage
+                )  # ensure ascending to prevent damage
                 for id in xref_k:
                     stream.seek(xref_entry[id], 0)
                     try:
@@ -692,7 +662,7 @@ class PdfReader(PdfDocCommon):
         HEADER_SIZE = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
         first = True
-        while line[:5] != b"%%EOF":
+        while not line.startswith(b"%%EOF"):
             if line != b"" and first:
                 if any(
                     line.strip().endswith(tr) for tr in (b"%%EO", b"%%E", b"%%", b"%")
@@ -737,7 +707,7 @@ class PdfReader(PdfDocCommon):
             logger_warning("startxref on same line as offset", __name__)
         else:
             line = read_previous_line(stream)
-            if line[:9] != b"startxref":
+            if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found")
         return startxref
 
@@ -803,7 +773,6 @@ class PdfReader(PdfDocCommon):
 
                     offset, generation = int(offset_b), int(generation_b)
                 except Exception:
-                    # if something wrong occurred
                     if hasattr(stream, "getbuffer"):
                         buf = bytes(stream.getbuffer())
                     else:
@@ -812,7 +781,7 @@ class PdfReader(PdfDocCommon):
                         buf = stream.read(-1)
                         stream.seek(p)
 
-                    f = re.search(f"{num}\\s+(\\d+)\\s+obj".encode(), buf)
+                    f = re.search(rf"{num}\s+(\d+)\s+obj".encode(), buf)
                     if f is None:
                         logger_warning(
                             f"entry {num} in Xref table invalid; object not found",
@@ -991,8 +960,8 @@ class PdfReader(PdfDocCommon):
         assert cast(str, xrefstream["/Type"]) == "/XRef"
         self.cache_indirect_object(generation, idnum, xrefstream)
         stream_data = BytesIO(xrefstream.get_data())
-        # Index pairs specify the subsections in the dictionary. If
-        # none create one subsection that spans everything.
+        # Index pairs specify the subsections in the dictionary.
+        # If none, create one subsection that spans everything.
         idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
         entry_sizes = cast(Dict[Any, Any], xrefstream.get("/W"))
         assert len(entry_sizes) >= 3
@@ -1096,7 +1065,7 @@ class PdfReader(PdfDocCommon):
                             f" whereas {o.get('/N')} expected",
                             __name__,
                         )
-                except Exception:  # could be of many cause
+                except Exception:  # could be multiple causes
                     pass
 
         stream.seek(0, 0)
@@ -1203,7 +1172,7 @@ class PdfReader(PdfDocCommon):
             return None
         acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
         if "/Fields" not in acroform:
-            # TODO: :No error returns but may be extended for XFA Forms
+            # TODO: No error but this may be extended for XFA Forms
             return None
 
         interim = DictionaryObject()
@@ -1211,7 +1180,7 @@ class PdfReader(PdfDocCommon):
         interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
         self.cache_indirect_object(
             0,
-            max([i for (g, i) in self.resolved_objects if g == 0]) + 1,
+            max(i for (g, i) in self.resolved_objects if g == 0) + 1,
             interim,
         )
         arr = ArrayObject()
@@ -1254,3 +1223,34 @@ class PdfReader(PdfDocCommon):
         )
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
+
+    def _repr_mimebundle_(
+        self,
+        include: Union[None, Iterable[str]] = None,
+        exclude: Union[None, Iterable[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Integration into Jupyter Notebooks.
+
+        This method returns a dictionary that maps a mime-type to its
+        representation.
+
+        .. seealso::
+
+            https://ipython.readthedocs.io/en/stable/config/integrating.html
+        """
+        self.stream.seek(0)
+        pdf_data = self.stream.read()
+        data = {
+            "application/pdf": pdf_data,
+        }
+
+        if include is not None:
+            # Filter representations based on include list
+            data = {k: v for k, v in data.items() if k in include}
+
+        if exclude is not None:
+            # Remove representations based on exclude list
+            data = {k: v for k, v in data.items() if k not in exclude}
+
+        return data

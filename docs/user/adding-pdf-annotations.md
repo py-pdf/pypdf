@@ -1,5 +1,15 @@
 # Adding PDF Annotations
 
+```{note}
+By default, some annotations might be invisible, for example polylines, as the default color is "transparent".
+
+To circumvent this, make sure to add the `/C` entry to the annotation, being an array and each array value being in the range 0.0 to 1.0:
+
+  * With one element, a grayscale value.
+  * With three elements, a RGB definition.
+  * With four elements, a CMYK definition.
+```
+
 ## Attachments
 
 ```python
@@ -108,6 +118,7 @@ you can use {class}`~pypdf.annotations.PolyLine`:
 ```python
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import PolyLine
+from pypdf.generic import ArrayObject, FloatObject, NameObject
 
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 reader = PdfReader(pdf_path)
@@ -116,8 +127,12 @@ writer = PdfWriter()
 writer.add_page(page)
 
 # Add the polyline
+# By default, the line will be transparent. Set an explicit color.
 annotation = PolyLine(
     vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+)
+annotation[NameObject("/C")] = ArrayObject(
+    [FloatObject(0.9), FloatObject(0.1), FloatObject(0)]
 )
 writer.add_annotation(page_number=0, annotation=annotation)
 

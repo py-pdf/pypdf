@@ -1343,6 +1343,8 @@ class ContentStream(DecodedStreamObject):
             data = extract_inline_DCT(stream)
         elif filtr == "not set":
             cs = settings.get("/CS", "")
+            if isinstance(cs, list):
+                cs = cs[0]
             if "RGB" in cs:
                 lcs = 3
             elif "CMYK" in cs:
@@ -1361,6 +1363,7 @@ class ContentStream(DecodedStreamObject):
                 data = stream.read(
                     ceil(cast(int, settings["/W"]) * lcs) * cast(int, settings["/H"])
                 )
+            # Move to the `EI` if possible.
             ei = read_non_whitespace(stream)
             stream.seek(-1, 1)
         else:
@@ -1369,6 +1372,7 @@ class ContentStream(DecodedStreamObject):
         ei = stream.read(3)
         stream.seek(-1, 1)
         if ei[0:2] != b"EI" or ei[2:3] not in WHITESPACES:
+            # Deal with wrong/missing `EI` tags.
             stream.seek(savpos, 0)
             data = extract_inline_default(stream)
         return {"settings": settings, "data": data}
