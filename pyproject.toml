@@ -161,7 +161,7 @@ ignore = [
     "N814",    # Camelcase `PageAttributes` imported as constant `PG`
     "N817",    # CamelCase `PagesAttributes` imported as acronym `PA`
     "PERF203", # `try`-`except` within a loop incurs performance overhead
-    "PGH003",  #  Use specific rule codes when ignoring type issues
+    "PGH003",  # Use specific rule codes when ignoring type issues
     "PGH004",  # Use specific rule codes when using `noqa`
     "PLC0206", # Extracting value from dictionary without calling `.items()`
     "PLR1714", # Consider merging multiple comparisons
