@@ -21,7 +21,7 @@ COMMITS__VERSION_4_0_1 = DATA_PATH.joinpath("commits__version_4_0_1.json")
 VERSION_3_9_PLUS = sys.version_info[:2] >= (3, 10)
 
 
-@pytest.mark.skipif(VERSION_3_9_PLUS, reason="Function uses method removeprefix added in Python 3.9")
+@pytest.mark.skipif(not VERSION_3_9_PLUS, reason="Function uses method removeprefix added in Python 3.9")
 @pytest.mark.parametrize(
     ("data", "expected"),
     [
