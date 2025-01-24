@@ -293,6 +293,8 @@ def text_show_operations(
                 bt_groups.extend(bts)
                 if debug:  # pragma: no cover
                     tj_debug.extend(tjs)
+            elif op == b"Tf":
+                state_mgr.set_font(fonts[operands[0]], operands[1])
             else:  # set Tc, Tw, Tz, TL, and Ts if required. ignores all other ops
                 state_mgr.set_state_param(op, operands)
     except StopIteration:
