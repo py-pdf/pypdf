@@ -112,30 +112,30 @@ def _get_imagemode(
         "2bit": "2bits",  # 2 bits images
         "4bit": "4bits",  # 4 bits
     }
-    mode: mode_str_type = (
+    mode_: mode_str_type = (
         mode_map.get(color_space)  # type: ignore
         or list(mode_map.values())[color_components]
         or prev_mode
     )
-    return mode, mode == "CMYK"
+    return mode_, mode_ == "CMYK"
 
 
 def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
     mask = (1 << bits) - 1
-    nbuff = bytearray(size[0] * size[1])
-    by = 0
+    buff = bytearray(size[0] * size[1])
+    byt = 0
     bit = 8 - bits
     for y in range(size[1]):
         if bit != 8 - bits:
-            by += 1
+            byt += 1
             bit = 8 - bits
         for x in range(size[0]):
-            nbuff[y * size[0] + x] = (data[by] >> bit) & mask
+            buff[x + y * size[0]] = (data[byt] >> bit) & mask
             bit -= bits
             if bit < 0:
-                by += 1
+                byt += 1
                 bit = 8 - bits
-    return bytes(nbuff)
+    return bytes(buff)
 
 
 def _extended_image_frombytes(
