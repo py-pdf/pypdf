@@ -304,5 +304,5 @@ def test_iss3074():
     name = "iss3074.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     # pypdf.errors.PdfReadError: ZeroDivisionError: float division by zero
-    txt = reader.pages[0].extract_text(extraction_mode = "layout")
+    txt = reader.pages[0].extract_text(extraction_mode="layout")
     assert txt.strip().startswith("AAAAAA")
