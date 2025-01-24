@@ -138,7 +138,7 @@ def write_release_msg_file(
 
 def strip_header(md: str) -> str:
     """Remove the 'CHANGELOG' header."""
-    return md.lstrip("# CHANGELOG").lstrip()  # noqa: B005
+    return md.removeprefix("# CHANGELOG").lstrip()
 
 
 def version_bump(git_tag: str) -> str:
