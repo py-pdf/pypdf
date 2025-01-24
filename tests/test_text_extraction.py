@@ -296,6 +296,7 @@ def test_iss3060():
     txt = reader.pages[0].extract_text(extraction_mode="layout")
     assert txt.startswith(" *******")
 
+
 @pytest.mark.enable_socket
 def test_iss3074():
     """Test for not throwing 'ZeroDivisionError: float division by zero'"""
