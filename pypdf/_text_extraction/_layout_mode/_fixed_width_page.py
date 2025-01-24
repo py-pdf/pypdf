@@ -365,8 +365,9 @@ def fixed_width_page(
     last_y_coord = 0
     for y_coord, line_data in ty_groups.items():
         if space_vertically and lines:
-            blank_lines = (
-                int(abs(y_coord - last_y_coord) / (line_data[0]["font_height"] * font_height_weight)) - 1
+            fh = line_data[0]["font_height"]
+            blank_lines = 0 if fh == 0 else (
+                int(abs(y_coord - last_y_coord) / (fh * font_height_weight)) - 1
             )
             lines.extend([""] * blank_lines)
         line = ""
