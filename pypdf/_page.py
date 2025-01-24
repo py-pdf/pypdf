@@ -2147,9 +2147,9 @@ class PageObject(DictionaryObject):
                                 cmap[3],
                                 font_size,
                             )
-                except Exception:
+                except Exception as exception:
                     logger_warning(
-                        f" impossible to decode XFormObject {operands[0]}",
+                        f"Impossible to decode XFormObject {operands[0]}: {exception}",
                         __name__,
                     )
                 finally:
