@@ -5,6 +5,8 @@ from unittest import mock
 
 import pytest
 
+from make_release import strip_header
+
 DATA_PATH = Path(__file__).parent.resolve() / "data"
 
 # line starting with \ and ending with " have been observed on windows
