@@ -71,20 +71,20 @@ def _get_imagemode(
         color_space = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space = color_space[1].get_object()
-        mode2, invert_color = _get_imagemode(
+        mode, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )
-        if mode2 in ("RGB", "CMYK"):
-            mode2 = "P"
-        return mode2, invert_color
+        if mode in ("RGB", "CMYK"):
+            mode = "P"
+        return mode , invert_color
     elif color_space[0] == "/Separation":
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):
             color_space = color_space.get_object()
-        mode2, invert_color = _get_imagemode(
+        mode, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )
-        return mode2, True
+        return mode, True
     elif color_space[0] == "/DeviceN":
         original_color_space = color_space
         color_components = len(color_space[1])
@@ -98,10 +98,10 @@ def _get_imagemode(
                     __name__,
                 )
             return "L", True
-        mode2, invert_color = _get_imagemode(
+        mode, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )
-        return mode2, invert_color
+        return mode, invert_color
 
     mode_map = {
         "1bit": "1",  # pos [0] will be used for 1 bit
