@@ -295,3 +295,13 @@ def test_iss3060():
     # pypdf.errors.PdfReadError: font not set: is PDF missing a Tf operator?
     txt = reader.pages[0].extract_text(extraction_mode="layout")
     assert txt.startswith(" *******")
+
+@pytest.mark.enable_socket
+def test_iss3074():
+    """Test for not throwing 'ZeroDivisionError: float division by zero'"""
+    url = "https://github.com/user-attachments/files/18533211/test-anon.pdf"
+    name = "iss3074.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    # pypdf.errors.PdfReadError: ZeroDivisionError: float division by zero
+    txt = reader.pages[0].extract_text(extraction_mode = "layout")
+    assert txt.strip().startswith("AAAAAA")
