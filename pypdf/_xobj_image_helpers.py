@@ -103,7 +103,7 @@ def _get_imagemode(
         )
         return mode, invert_color
 
-    mode_map = {
+    mode_map: Dict[str, mode_str_type] = {
         "1bit": "1",  # pos [0] will be used for 1 bit
         "/DeviceGray": "L",  # must be in pos [1]
         "palette": "P",  # must be in pos [2] for color_components align.
@@ -112,30 +112,30 @@ def _get_imagemode(
         "2bit": "2bits",  # 2 bits images
         "4bit": "4bits",  # 4 bits
     }
-    mode_: mode_str_type = (
-        mode_map.get(color_space)  # type: ignore
+    mode = (
+        mode_map.get(color_space)
         or list(mode_map.values())[color_components]
         or prev_mode
     )
-    return mode_, mode_ == "CMYK"
+    return mode, mode == "CMYK"
 
 
 def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
     mask = (1 << bits) - 1
-    buff = bytearray(size[0] * size[1])
-    byt = 0
+    byte_buffer = bytearray(size[0] * size[1])
+    data_index = 0
     bit = 8 - bits
     for y in range(size[1]):
         if bit != 8 - bits:
-            byt += 1
+            data_index += 1
             bit = 8 - bits
         for x in range(size[0]):
-            buff[x + y * size[0]] = (data[byt] >> bit) & mask
+            byte_buffer[x + y * size[0]] = (data[data_index] >> bit) & mask
             bit -= bits
             if bit < 0:
-                byt += 1
+                data_index += 1
                 bit = 8 - bits
-    return bytes(buff)
+    return bytes(byte_buffer)
 
 
 def _extended_image_frombytes(
