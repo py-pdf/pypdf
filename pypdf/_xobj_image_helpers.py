@@ -76,7 +76,7 @@ def _get_imagemode(
         )
         if mode in ("RGB", "CMYK"):
             mode = "P"
-        return mode , invert_color
+        return mode, invert_color
     elif color_space[0] == "/Separation":
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):
