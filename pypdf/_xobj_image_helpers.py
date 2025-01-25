@@ -104,19 +104,21 @@ def _get_imagemode(
         return mode, invert_color
 
     mode_map: Dict[str, mode_str_type] = {
-        "1bit": "1",  # pos [0] will be used for 1 bit
-        "/DeviceGray": "L",  # must be in pos [1]
-        "palette": "P",  # must be in pos [2] for color_components align.
-        "/DeviceRGB": "RGB",  # must be in pos [3]
-        "/DeviceCMYK": "CMYK",  # must be in pos [4]
-        "2bit": "2bits",  # 2 bits images
-        "4bit": "4bits",  # 4 bits
+        "1bit": "1",  # must be zeroth position: color_components may index the values
+        "/DeviceGray": "L",  # must be first position: color_components may index the values
+        "palette": "P",  # must be second position: color_components may index the values
+        "/DeviceRGB": "RGB",  # must be third position: color_components may index the values
+        "/DeviceCMYK": "CMYK",  # must be fourth position: color_components may index the values
+        "2bit": "2bits",
+        "4bit": "4bits",
     }
+
     mode = (
         mode_map.get(color_space)
         or list(mode_map.values())[color_components]
         or prev_mode
     )
+
     return mode, mode == "CMYK"
 
 
