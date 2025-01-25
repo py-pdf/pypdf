@@ -34,7 +34,7 @@ VERSION_3_9_PLUS = sys.version_info[:2] >= (3, 9)
 )
 def test_strip_header(data, expected):
     """Removal of the 'CHANGELOG' header."""
-    make_release = pytest.importorskip("make_release") 
+    make_release = pytest.importorskip("make_release")
     assert make_release.strip_header(data) == expected
 
 
