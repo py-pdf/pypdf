@@ -5,8 +5,6 @@ from unittest import mock
 
 import pytest
 
-from make_release import strip_header
-
 DATA_PATH = Path(__file__).parent.resolve() / "data"
 
 # line starting with \ and ending with " have been observed on windows
@@ -36,7 +34,8 @@ VERSION_3_9_PLUS = sys.version_info[:2] >= (3, 9)
 )
 def test_strip_header(data, expected):
     """Removal of the 'CHANGELOG' header."""
-    assert strip_header(data) == expected
+    make_release = pytest.importorskip("make_release") 
+    assert make_release.strip_header(data) == expected
 
 
 def test_get_git_commits_since_tag():
