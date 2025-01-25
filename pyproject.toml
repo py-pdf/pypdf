@@ -162,7 +162,6 @@ ignore = [
     "N817",    # CamelCase `PagesAttributes` imported as acronym `PA`
     "PERF203", # `try`-`except` within a loop incurs performance overhead
     "PGH003",  # Use specific rule codes when ignoring type issues
-    "PGH004",  # Use specific rule codes when using `noqa`
     "PLC0206", # Extracting value from dictionary without calling `.items()`
     "PLR1714", # Consider merging multiple comparisons
     "PLW0602", # Using global for `CUSTOM_RTL_SPECIAL_CHARS` but no assignment is done
