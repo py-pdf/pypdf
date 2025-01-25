@@ -21,7 +21,7 @@ The resources needed for maintaining pypdf are:
 
 ## When may somebody take ownership?
 
-**No activity in 180 days**: If I don't answer e-mails (info@martin-thoma.de)
+**No activity in 180 days**: If I don't answer e-mails (TODO)
 and don't make any commits / merges for half a year, you can consider pypdf "not
 maintained".
 

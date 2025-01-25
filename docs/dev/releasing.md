@@ -11,7 +11,7 @@ A `pypdf` release contains the following artifacts:
 ## Who does it?
 
 `pypdf` should typically only be released by one of the core maintainers / the
-core maintainer. At the moment, this is either Martin Thoma or pubpub-zz and stefan6419846.
+core maintainer. At the moment, this is either stefan6419846 or pubpub-zz and Martin Thoma.
 
 Any owner of the py-pdf organization also has the technical permissions to
 release.
@@ -60,6 +60,3 @@ The release contains the following steps:
 
 There is no need to wait for anything. If the CI is green (all tests succeeded),
 we can release.
-
-I (Martin Thoma) typically only release once a week, because it costs a little
-bit of time and I don't want to spam users with too many releases.

@@ -6,7 +6,7 @@ Security fixes are applied to the latest version.
 
 ## Reporting a Vulnerability
 
-If you find a potential security issue, please report it to info@martin-thoma.de
+If you find a potential security issue, please report it to TODO
 (the current maintainer).
 
 We will try to find a fix in a timely manner and will then issue a security
