@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1737718196663,
+  "lastUpdate": 1737802075869,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -66797,6 +66797,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004407664369193489",
             "extra": "mean: 744.665098400003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ad97deb2ca2d63d29cff0b56879fa96e38413f76",
+          "message": "DEV: Remove ignoring Ruff rule PGH004 (#3071)\n\nPGH004 is use specific rule codes when using `noqa`.\n\nAdditionally fixes a bug discovered by this.",
+          "timestamp": "2025-01-25T11:45:25+01:00",
+          "tree_id": "5ce0485c5a0a8a789bb298a3e9b23afbe456cd5a",
+          "url": "https://github.com/py-pdf/pypdf/commit/ad97deb2ca2d63d29cff0b56879fa96e38413f76"
+        },
+        "date": 1737802072526,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.418852907429757,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012770282747967768",
+            "extra": "mean: 292.4957660000018 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.615180902812686,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006139013668071831",
+            "extra": "mean: 64.04024431249944 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27082351613208316,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010962931696540877",
+            "extra": "mean: 3.6924415364000027 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.452949843107028,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002222804393563026",
+            "extra": "mean: 48.89270289473751 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08710638532103263,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023176523711524812",
+            "extra": "mean: 11.480214640000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.345091488964033,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0040403362229758785",
+            "extra": "mean: 743.443853600013 msec\nrounds: 5"
           }
         ]
       }
