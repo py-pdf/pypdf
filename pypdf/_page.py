@@ -1894,7 +1894,7 @@ class PageObject(DictionaryObject):
         # Store the position at the beginning of building the text
         memo_cm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         memo_tm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-    
+
         char_scale = 1.0
         space_scale = 1.0
         _space_width: float = 500.0  # will be set correctly at first Tf
