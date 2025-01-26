@@ -1350,7 +1350,8 @@ class PdfDocCommon:
         catalog = self.root_object
         # From the catalog get the embedded file names
         try:
-            filenames = cast(
+            # This is a name tree of the format [name_1, reference_1, name_2, reference_2, ...]
+            names = cast(
                 ArrayObject,
                 cast(
                     DictionaryObject,
@@ -1359,8 +1360,23 @@ class PdfDocCommon:
             )
         except KeyError:
             return []
-        attachments_names = [f for f in filenames if isinstance(f, str)]
-        return attachments_names
+        attachment_names: List[str] = []
+        for i, name in enumerate(names):
+            if isinstance(name, str):
+                attachment_names.append(name)
+            else:
+                name = name.get_object()
+                for key in ["/UF", "/F"]:
+                    # PDF 2.0 reference, table 43:
+                    #   > A PDF reader shall use the value of the UF key, when present, instead of the F key.
+                    if key in name:
+                        name = name[key].get_object()
+                        if name == names[i - 1]:
+                            # Avoid duplicates for the same entry.
+                            continue
+                        attachment_names.append(name)
+                    break
+        return attachment_names
 
     def _get_attachment_list(self, name: str) -> List[bytes]:
         out = self._get_attachments(name)[name]
@@ -1389,7 +1405,8 @@ class PdfDocCommon:
         catalog = self.root_object
         # From the catalog get the embedded file names
         try:
-            filenames = cast(
+            # This is a name tree of the format [name_1, reference_1, name_2, reference_2, ...]
+            names = cast(
                 ArrayObject,
                 cast(
                     DictionaryObject,
@@ -1399,21 +1416,36 @@ class PdfDocCommon:
         except KeyError:
             return {}
         attachments: Dict[str, Union[bytes, List[bytes]]] = {}
+
         # Loop through attachments
-        for i in range(len(filenames)):
-            f = filenames[i]
-            if isinstance(f, str):
-                if filename is not None and f != filename:
-                    continue
-                name = f
-                f_dict = filenames[i + 1].get_object()
-                f_data = f_dict["/EF"]["/F"].get_data()
-                if name in attachments:
-                    if not isinstance(attachments[name], list):
-                        attachments[name] = [attachments[name]]  # type:ignore
-                    attachments[name].append(f_data)  # type:ignore
+        for i, name in enumerate(names):
+            if isinstance(name, str):
+                # Retrieve the corresponding reference.
+                file_dictionary = names[i + 1].get_object()
+            else:
+                # We have the reference, but need to determine the name.
+                file_dictionary = name.get_object()
+                for key in ["/UF", "/F"]:
+                    # PDF 2.0 reference, table 43:
+                    #   > A PDF reader shall use the value of the UF key, when present, instead of the F key.
+                    if key in file_dictionary:
+                        name = file_dictionary[key].get_object()
+                        break
                 else:
-                    attachments[name] = f_data
+                    continue
+                if name == names[i - 1]:
+                    # Avoid extracting the same file twice.
+                    continue
+
+            if filename is not None and name != filename:
+                continue
+            file_data = file_dictionary["/EF"]["/F"].get_data()
+            if name in attachments:
+                if not isinstance(attachments[name], list):
+                    attachments[name] = [attachments[name]]  # type:ignore
+                attachments[name].append(file_data)  # type:ignore
+            else:
+                attachments[name] = file_data
         return attachments
 
     @abstractmethod
