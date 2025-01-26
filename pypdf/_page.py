@@ -1835,7 +1835,7 @@ class PageObject(DictionaryObject):
 
         Args:
             content_key: indicate the default key where to extract data
-                None = the object; this allow to reuse the function on XObject
+                None = the object; this allows reusing the function on an XObject
                 default = "/Content"
 
         """
@@ -1853,11 +1853,11 @@ class PageObject(DictionaryObject):
             while NameObject(PG.RESOURCES) not in objr:
                 # /Resources can be inherited sometimes so we look to parents
                 objr = objr["/Parent"].get_object()
-                # if no parents we will have no /Resources will be available
-                # => an exception will be raised
+                # If no parents then no /Resources will be available,
+                # so an exception will be raised
             resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
         except Exception:
-            # no resources means no text is possible (no font) we consider the
+            # No resources means no text is possible (no font); we consider the
             # file as not damaged, no need to check for TJ or Tj
             return ""
         if "/Font" in resources_dict:
@@ -1870,30 +1870,31 @@ class PageObject(DictionaryObject):
             {},
             "NotInitialized",
             None,
-        )  # (encoding,CMAP,font resource name,dictionary-object of font)
+        )  # (encoding, CMAP, font resource name, font)
         try:
             content = (
                 obj[content_key].get_object() if isinstance(content_key, str) else obj
             )
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, pdf, "bytes")
-        except KeyError:  # it means no content can be extracted(certainly empty page)
+        except KeyError:  # no content can be extracted (certainly empty page)
             return ""
-        # Note: we check all strings are TextStringObjects. ByteStringObjects
+        # We check all strings are TextStringObjects. ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
         cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        cm_stack = []
         tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        cm_stack = []
 
-        # cm/tm_prev stores the last modified matrices can be an intermediate position
+        # Store the last modified matrices; can be an intermediate position
         cm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         tm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
 
-        # memo_cm/tm will be used to store the position at the beginning of building the text
+        # Store the position at the beginning of building the text
         memo_cm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         memo_tm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+    
         char_scale = 1.0
         space_scale = 1.0
         _space_width: float = 500.0  # will be set correctly at first Tf
@@ -1903,10 +1904,10 @@ class PageObject(DictionaryObject):
         font_size = 12.0  # init just in case of
 
         def compute_strwidths(str_widths: float) -> float:
-            return str_widths / 1000.0
+            return str_widths / 1000
 
         def process_operation(operator: bytes, operands: List[Any]) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, memo_cm, memo_tm
+            nonlocal cm_matrix, tm_matrix, cm_stack, cm_prev, tm_prev, memo_cm, memo_tm
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
             nonlocal orientations, rtl_dir, visitor_text, output, text, _actual_str_size
             global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
@@ -1930,8 +1931,8 @@ class PageObject(DictionaryObject):
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
-            # table 4.7 "Graphics state operators", page 219
-            # cm_matrix calculation is a reserved for the moment
+            # Table 4.7 "Graphics state operators", page 219
+            # cm_matrix calculation is a reserved for later
             elif operator == b"q":
                 cm_stack.append(
                     (
@@ -1977,7 +1978,7 @@ class PageObject(DictionaryObject):
                 memo_tm = tm_matrix.copy()
             # Table 5.2 page 398
             elif operator == b"Tz":
-                char_scale = float(operands[0]) / 100.0 if operands else 1.0
+                char_scale = float(operands[0]) / 100 if operands else 1.0
             elif operator == b"Tw":
                 space_scale = 1.0 + float(operands[0] if operands else 0.0)
             elif operator == b"TL":
@@ -2021,7 +2022,7 @@ class PageObject(DictionaryObject):
             elif operator == b"Td":
                 check_crlf_space = True
                 # A special case is a translating only tm:
-                # tm[0..5] = 1 0 0 1 e f,
+                # tm = [1, 0, 0, 1, e, f]
                 # i.e. tm[4] += tx, tm[5] += ty.
                 tx = float(operands[0])
                 ty = float(operands[1])
@@ -2086,7 +2087,7 @@ class PageObject(DictionaryObject):
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
                 visitor_operand_before(operator, operands, cm_matrix, tm_matrix)
-            # multiple operators are defined in here ####
+            # Multiple operators are defined in here
             if operator == b"'":
                 process_operation(b"T*", [])
                 process_operation(b"Tj", operands)
