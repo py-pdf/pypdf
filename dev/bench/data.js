@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1737890641748,
+  "lastUpdate": 1737892062550,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -66929,6 +66929,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00290839680509366",
             "extra": "mean: 740.6881799999951 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "049f71e117917bec36009570717c1f38528b95f3",
+          "message": "REL: 5.2.0\n\n## What's new\n\n### Deprecations (DEP)\n- Deprecate with replacement CCITParameters (#3019) by @j-t-1\n- Correct deprecation of interiour_color (#2947) by @j-t-1\n\n### New Features (ENH)\n- Support alternative (U)F names for embedded file retrieval (#3072) by @stefan6419846\n- Adding support for reading .metadata.keywords (#2939) by @Lucas-C\n\n### Bug Fixes (BUG)\n- Handle further Tf operators in text extraction layout mode (#3073) by @blushingpenguin\n- Ensure `add_metadata` can deal with `_info = None` (#3040) by @xmo-odoo\n- Handle IndirectObject in CCITTFaxDecode filter (#2965) by @stefan6419846\n- Handle chained colorspace for inline images when no filter is set (#3008) by @stefan6419846\n- Avoid extracting inline images twice and dropping other operators (#3002) by @stefan6419846\n- Fixed reference of value with `str.__new__` in TextStringObject (#2952) by @thomas-forte\n- Handle indirect objects in font width calculations (#2967) by @nsw42\n- Title sometimes is bytes and not str (#2930) by @reformy\n- Fix undefined variable for text extraction (regression) (#2934) by @stefan6419846\n- Don't close stream passed to PdfWriter.write() (#2909) by @alexaryn\n\n### Robustness (ROB)\n- Handle zero height fonts when extracting text (#3075) by @blushingpenguin\n- Deal with content streams not containing streams (#3005) by @stefan6419846\n- Gracefully handle some text operators when the operands are missing (#3006) by @stefan6419846\n- Fall back to non-Adobe Ascii85 format for missing end markers (#3007) by @stefan6419846\n- Ignore odd-length strings when processing cmap lines (#3009) by @stefan6419846\n- Skip annotation destination being NullObject in PdfWriter (#2964) by @stefan6419846\n- Skip destination page being None in PdfWriter (#2963) by @dxsooo\n- Fix infinite loop case when reading null objects within an Array by @jakep-allenai\n- Fixing infinite loop in ArrayObject read_from_stream (#2928) by @jakep-allenai\n\n### Documentation (DOC)\n- Add note about default line colors (#3014) by @stefan6419846\n\n### Developer Experience (DEV)\n- Remove ignoring Ruff rule PGH004 (#3071) by @j-t-1\n- Tidy ignore array in tool.ruff.lint (#3069) by @j-t-1\n- Move Windows CI to Python 3.13 (#3003) by @stefan6419846\n- Move to Ubuntu 22.04 (#3004) by @stefan6419846\n\n### Maintenance (MAINT)\n- Fix formatting of warning message and include exception message (#3076) by @stefan6419846\n- Narrow return type for `ContentStream.operations` (#2941) by @kmurphy4\n\n### Testing (TST)\n- Fix image similarity for upcoming Ubuntu 24.04 (#3039) by @stefan6419846\n- Replace broken Apache Tika Corpora urls (#3041) by @stefan6419846\n\n### Code Style (STY)\n- Add form feed to WHITESPACES (#3054) by @j-t-1\n- Lots of small internal changes by @j-t-1\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.1.0...5.2.0)\n\nSigned-off-by: stefan6419846 <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2025-01-26T12:44:42+01:00",
+          "tree_id": "7a6dbbc0ae8ef7464d4a2ac73ad6c855f2b5446a",
+          "url": "https://github.com/py-pdf/pypdf/commit/049f71e117917bec36009570717c1f38528b95f3"
+        },
+        "date": 1737892059991,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3903465628936473,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011691061600307645",
+            "extra": "mean: 294.9550972000054 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.53712476861598,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007083103621423337",
+            "extra": "mean: 64.36197268750377 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27120299205499454,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007276801350976606",
+            "extra": "mean: 3.6872749537999936 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 20.341548740732645,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006962577479408591",
+            "extra": "mean: 49.16046525000155 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08641161343951773,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06548041267399325",
+            "extra": "mean: 11.572518556199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3496859552473808,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010009389055572046",
+            "extra": "mean: 740.9130962000063 msec\nrounds: 5"
           }
         ]
       }
