@@ -1910,7 +1910,6 @@ class PageObject(DictionaryObject):
             nonlocal cm_matrix, tm_matrix, cm_stack, cm_prev, tm_prev, memo_cm, memo_tm
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
             nonlocal orientations, rtl_dir, visitor_text, output, text, _actual_str_size
-            global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
             check_crlf_space: bool = False
             str_widths: float = 0.0
