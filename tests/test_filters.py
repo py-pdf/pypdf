@@ -473,7 +473,7 @@ def test_index_lookup():
     assert data.image.mode == "RGB"
     assert image_similarity(data.image, refimg) > 0.999
     # indexed CMYK images
-    # currently with a TODO as we convert to RGB the palette
+    # currently with a TODO as we convert the palette to RGB
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-972174.pdf")))
     refimg = Image.open(BytesIO(get_data_from_url(name="usa.png")))
     data = reader.pages[0].images["/Im3"]
