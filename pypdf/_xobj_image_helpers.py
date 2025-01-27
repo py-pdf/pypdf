@@ -71,20 +71,20 @@ def _get_imagemode(
         color_space = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space = color_space[1].get_object()
-        mode2, invert_color = _get_imagemode(
+        mode, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )
-        if mode2 in ("RGB", "CMYK"):
-            mode2 = "P"
-        return mode2, invert_color
+        if mode in ("RGB", "CMYK"):
+            mode = "P"
+        return mode, invert_color
     elif color_space[0] == "/Separation":
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):
             color_space = color_space.get_object()
-        mode2, invert_color = _get_imagemode(
+        mode, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )
-        return mode2, True
+        return mode, True
     elif color_space[0] == "/DeviceN":
         original_color_space = color_space
         color_components = len(color_space[1])
@@ -98,44 +98,46 @@ def _get_imagemode(
                     __name__,
                 )
             return "L", True
-        mode2, invert_color = _get_imagemode(
+        mode, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )
-        return mode2, invert_color
+        return mode, invert_color
 
-    mode_map = {
-        "1bit": "1",  # pos [0] will be used for 1 bit
-        "/DeviceGray": "L",  # must be in pos [1]
-        "palette": "P",  # must be in pos [2] for color_components align.
-        "/DeviceRGB": "RGB",  # must be in pos [3]
-        "/DeviceCMYK": "CMYK",  # must be in pos [4]
-        "2bit": "2bits",  # 2 bits images
-        "4bit": "4bits",  # 4 bits
+    mode_map: Dict[str, mode_str_type] = {
+        "1bit": "1",  # must be zeroth position: color_components may index the values
+        "/DeviceGray": "L",  # must be first position: color_components may index the values
+        "palette": "P",  # must be second position: color_components may index the values
+        "/DeviceRGB": "RGB",  # must be third position: color_components may index the values
+        "/DeviceCMYK": "CMYK",  # must be fourth position: color_components may index the values
+        "2bit": "2bits",
+        "4bit": "4bits",
     }
-    mode: mode_str_type = (
-        mode_map.get(color_space)  # type: ignore
+
+    mode = (
+        mode_map.get(color_space)
         or list(mode_map.values())[color_components]
         or prev_mode
     )
+
     return mode, mode == "CMYK"
 
 
 def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
     mask = (1 << bits) - 1
-    nbuff = bytearray(size[0] * size[1])
-    by = 0
+    byte_buffer = bytearray(size[0] * size[1])
+    data_index = 0
     bit = 8 - bits
     for y in range(size[1]):
         if bit != 8 - bits:
-            by += 1
+            data_index += 1
             bit = 8 - bits
         for x in range(size[0]):
-            nbuff[y * size[0] + x] = (data[by] >> bit) & mask
+            byte_buffer[x + y * size[0]] = (data[data_index] >> bit) & mask
             bit -= bits
             if bit < 0:
-                by += 1
+                data_index += 1
                 bit = 8 - bits
-    return bytes(nbuff)
+    return bytes(byte_buffer)
 
 
 def _extended_image_frombytes(
