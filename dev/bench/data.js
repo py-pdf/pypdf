@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1737974045603,
+  "lastUpdate": 1737994043557,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -67325,6 +67325,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004364164000800955",
             "extra": "mean: 744.2483431999904 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47760929+shartzog@users.noreply.github.com",
+            "name": "shartzog",
+            "username": "shartzog"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "633d18815d86c76a07a867dddb092093bf6ba242",
+          "message": "ROB: Prevent excessive layout mode text output from Type3 fonts (#3082)\n\nPartially addresses #3081 by checking for a '/ToUnicode' map in Type3 font dictionaries. If no such map is present, check to see if the font is using standard Adobe glyph names. If not, mark the font as 'uninterpretable' and prevent collection of text content from any text operations associated with the font.",
+          "timestamp": "2025-01-27T17:04:55+01:00",
+          "tree_id": "581ba7af21e87da71bf39e9e343d9d7103141c07",
+          "url": "https://github.com/py-pdf/pypdf/commit/633d18815d86c76a07a867dddb092093bf6ba242"
+        },
+        "date": 1737994040873,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.614400796951849,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006981243386811906",
+            "extra": "mean: 276.67103239998596 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.31095079932471,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006464670054730826",
+            "extra": "mean: 61.30850447059168 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.29067469262962486,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015251534885721686",
+            "extra": "mean: 3.440271978799996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.476060883170682,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008583264183688952",
+            "extra": "mean: 57.22113276470629 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08321364007610489,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025868821441684668",
+            "extra": "mean: 12.017260620799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3261260729396342,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001451019146030244",
+            "extra": "mean: 754.0761171999975 msec\nrounds: 5"
           }
         ]
       }
