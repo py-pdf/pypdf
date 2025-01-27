@@ -128,6 +128,7 @@ def test_layout_mode_font_class_to_dict():
         "space_width": 8,
         "subtype": "foo",
         "width_map": {},
+        "interpretable": True,
     }
 
 
@@ -137,7 +138,8 @@ def test_uninterpretable_type3_font(mock_logger_warning):
     url = "https://github.com/user-attachments/files/18551904/UninterpretableType3Font.pdf"
     name = "UninterpretableType3Font.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    assert reader.pages[0].extract_text(extraction_mode="layout") == ""
+    page = reader.pages[0]
+    assert page.extract_text(extraction_mode="layout") == ""
     mock_logger_warning.assert_called_with(
         "PDF contains an uninterpretable font. Output will be incomplete.", "pypdf._page"
     )
