@@ -110,6 +110,8 @@ def recurs_to_target_op(
                 ):  # ... build text from new Tj operators
                     if strip_rotated and _tj.rotated:
                         continue
+                    if not _tj.font.interpretable:  # generates warning
+                        continue
                     # if the y position of the text is greater than the font height, assume
                     # the text is on a new line and start a new group
                     if abs(_tj.ty - last_ty) > _tj.font_height:
@@ -272,6 +274,7 @@ def text_show_operations(
     tj_debug: List[TextStateParams] = []  # Tj/TJ operator data (debug only)
     try:
         warned_rotation = False
+        warned_uninterpretable_font = False
         while True:
             operands, op = next(ops)
             if op in (b"BT", b"q"):
@@ -290,6 +293,12 @@ def text_show_operations(
                             "Rotated text discovered. Layout will be degraded.",
                             __name__,
                         )
+                if not warned_uninterpretable_font and any(not tj.font.interpretable for tj in tjs):
+                    warned_uninterpretable_font = True
+                    logger_warning(
+                        "PDF contains an uninterpretable font. Output will be incomplete.",
+                        __name__,
+                    )
                 bt_groups.extend(bts)
                 if debug:  # pragma: no cover
                     tj_debug.extend(tjs)
