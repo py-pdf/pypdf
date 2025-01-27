@@ -1007,19 +1007,11 @@ class PageObject(DictionaryObject):
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
         """Add transformation matrix at the beginning of the given contents stream."""
-        a, b, c, d, e, f = ctm
         contents = ContentStream(contents, pdf)
         contents.operations.insert(
             0,
             [
-                [
-                    FloatObject(a),
-                    FloatObject(b),
-                    FloatObject(c),
-                    FloatObject(d),
-                    FloatObject(e),
-                    FloatObject(f),
-                ],
+                [FloatObject(x) for x in ctm],
                 b"cm",
             ],
         )
