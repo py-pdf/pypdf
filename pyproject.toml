@@ -51,7 +51,7 @@ cryptodome = [
 ]
 image = ["Pillow>=8.0.0"]
 dev = ["black", "flit", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "pytest-xdist", "wheel"]
-docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
+docs = ["myst_parser", "sphinx", "sphinx_rtd_theme"]
 
 [tool.mutmut]
 backup = false
