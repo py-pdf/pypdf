@@ -189,7 +189,7 @@ def test_ascii85decode_five_zero_bytes():
 
 
 def test_ccitparameters():
-    with pytest.raises(
+    with pytest.warns(
         DeprecationWarning,
         match="CCITParameters is deprecated and will be removed in pypdf 6.0.0. Use CCITTParameters instead",
     ):
