@@ -234,7 +234,7 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-    with pytest.raises(DeprecationWarning):
+    with pytest.warns(DeprecationWarning):
         NameObject("hello").write_to_stream(b)
 
     caplog.clear()
