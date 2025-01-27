@@ -133,7 +133,7 @@ def test_layout_mode_font_class_to_dict():
 
 
 @pytest.mark.enable_socket
-@patch("pypdf._text_extraction._layout_mode._fixed_width_page")
+@patch("pypdf._text_extraction._layout_mode._fixed_width_page.logger_warning")
 def test_uninterpretable_type3_font(mock_logger_warning):
     url = "https://github.com/user-attachments/files/18551904/UninterpretableType3Font.pdf"
     name = "UninterpretableType3Font.pdf"
