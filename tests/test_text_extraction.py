@@ -133,7 +133,7 @@ def test_layout_mode_font_class_to_dict():
 
 
 @pytest.mark.enable_socket
-@patch("pypdf._page.logger_warning")
+@patch("pypdf._text_extraction._layout_mode._fixed_width_page")
 def test_uninterpretable_type3_font(mock_logger_warning):
     url = "https://github.com/user-attachments/files/18551904/UninterpretableType3Font.pdf"
     name = "UninterpretableType3Font.pdf"
@@ -141,7 +141,8 @@ def test_uninterpretable_type3_font(mock_logger_warning):
     page = reader.pages[0]
     assert page.extract_text(extraction_mode="layout") == ""
     mock_logger_warning.assert_called_with(
-        "PDF contains an uninterpretable font. Output will be incomplete.", "pypdf._page"
+        "PDF contains an uninterpretable font. Output will be incomplete.",
+        "pypdf._text_extraction._layout_mode._fixed_width_page"
     )
 
 
