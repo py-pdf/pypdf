@@ -1996,7 +1996,7 @@ class PageObject(DictionaryObject):
                     # char_map_tuple: font_type,
                     #                 float(sp_width / 2),
                     #                 encoding,
-                    #                 map_dict, 
+                    #                 map_dict,
                     #                 font_dict (describes the font)
                     char_map_tuple = cmaps[operands[0]]
                     # current cmap: encoding,
