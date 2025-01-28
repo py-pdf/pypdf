@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, Sequence, Union, cast
 
+from ..._codecs import adobe_glyphs
 from ...errors import ParseError
 from ...generic import IndirectObject
 from ._font_widths import STANDARD_WIDTHS
@@ -19,6 +20,10 @@ class Font:
         encoding (str | Dict[int, str]): font encoding
         char_map (dict): character map
         font_dictionary (dict): font dictionary
+        width_map (Dict[str, int]): mapping of characters to widths
+        interpretable (bool): Default True. If False, the font glyphs cannot
+            be translated to characters, e.g. Type3 fonts that do not define
+            a '/ToUnicode' mapping.
 
     """
 
@@ -28,8 +33,22 @@ class Font:
     char_map: Dict[Any, Any]
     font_dictionary: Dict[Any, Any]
     width_map: Dict[str, int] = field(default_factory=dict, init=False)
+    interpretable: bool = True
 
     def __post_init__(self) -> None:
+        # Type3 fonts that do not specify a "/ToUnicode" mapping cannot be
+        # reliably converted into character codes unless all named chars
+        # in /CharProcs map to a standard adobe glyph. See § 9.10.2 of the
+        # PDF 1.7 standard.
+        if self.subtype == "/Type3" and "/ToUnicode" not in self.font_dictionary:
+            self.interpretable = all(
+                cname in adobe_glyphs
+                for cname in self.font_dictionary.get("/CharProcs") or []
+            )
+
+        if not self.interpretable:  # save some overhead if font is not interpretable
+            return
+
         # TrueType fonts have a /Widths array mapping character codes to widths
         if isinstance(self.encoding, dict) and "/Widths" in self.font_dictionary:
             first_char = self.font_dictionary.get("/FirstChar", 0)

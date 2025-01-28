@@ -735,7 +735,7 @@ class TreeObject(DictionaryObject):
         assert parent is not None, "mypy"
         parent = cast("TreeObject", parent.get_object())
         #  BooleanObject requires comparison with == not is
-        opn = parent.get("/%is_open%", True) == True  # noqa
+        opn = parent.get("/%is_open%", True) == True  # noqa: E712
         c = cast(int, parent.get("/Count", 0))
         if c < 0:
             c = abs(c)
@@ -1297,7 +1297,7 @@ class ContentStream(DecodedStreamObject):
         operands: List[Union[int, str, PdfObject]] = []
         while True:
             peek = read_non_whitespace(stream)
-            if peek == b"" or peek == 0:
+            if peek in (b"", 0):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek in (b"'", b'"'):
@@ -1462,7 +1462,7 @@ def read_object(
             return read_hex_string_from_stream(stream, forced_encoding)
     elif tok == b"[":
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
-    elif tok == b"t" or tok == b"f":
+    elif tok in (b"t", b"f"):
         return BooleanObject.read_from_stream(stream)
     elif tok == b"(":
         return read_string_from_stream(stream, forced_encoding)
