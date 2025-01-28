@@ -60,3 +60,6 @@ The release contains the following steps:
 
 There is no need to wait for anything. If the CI is green (all tests succeeded),
 we can release.
+
+At the moment, there is no fixed release cycle - except that we usually release
+on Sunday.
