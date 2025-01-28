@@ -53,16 +53,11 @@ image = ["Pillow>=8.0.0"]
 dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "flit", "wheel", "pytest-xdist"]
 docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
 
-[tool.mutmut]
-backup = false
-runner = "./mutmut-test.sh"
-tests_dir = "tests/"
-
 [tool.check-wheel-contents]
 package = "./pypdf"
 
 [tool.flit.sdist]
-exclude = [".github/*", "docs/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
+exclude = [".github/*", "docs/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile"]
 include = ["resources/", "tests/"]
 
 [tool.pytest.ini_options]
