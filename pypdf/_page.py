@@ -2001,7 +2001,7 @@ class PageObject(DictionaryObject):
                     char_map_tuple = cmaps[operands[0]]
                     # current cmap: encoding,
                     #               map_dict,
-                    #               font resource name (internal name, not the real font-name),
+                    #               font resource name (internal name, not the real font name),
                     #               font_dict
                     cmap = (
                         char_map_tuple[2],
