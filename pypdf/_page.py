@@ -1848,6 +1848,7 @@ class PageObject(DictionaryObject):
                 str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject
             ],
         ] = {}
+
         try:
             objr = obj
             while NameObject(PG.RESOURCES) not in objr:
@@ -1860,6 +1861,7 @@ class PageObject(DictionaryObject):
             # No resources means no text is possible (no font); we consider the
             # file as not damaged, no need to check for TJ or Tj
             return ""
+
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = build_char_map(f, space_width, obj)
@@ -1871,6 +1873,7 @@ class PageObject(DictionaryObject):
             "NotInitialized",
             None,
         )  # (encoding, CMAP, font resource name, font)
+
         try:
             content = (
                 obj[content_key].get_object() if isinstance(content_key, str) else obj
@@ -1897,9 +1900,10 @@ class PageObject(DictionaryObject):
 
         char_scale = 1.0
         space_scale = 1.0
-        _space_width: float = 500.0  # will be set correctly at first Tf
+        _space_width: float = 0.0  # will be set correctly at first Tf
         _actual_str_size: Dict[str, float] = {
-            "str_widths": 0.0, "space_width": 0.0, "str_height": 0.0}  # will be set to string length calculation result
+            "str_widths": 0.0, "space_width": 0.0, "str_height": 0.0
+        }  # will be set to string length calculation result
         TL = 0.0
         font_size = 12.0  # init just in case of
 
