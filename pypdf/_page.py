@@ -1886,6 +1886,7 @@ class PageObject(DictionaryObject):
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
+        # CTM and text matrix
         cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         cm_stack = []
@@ -1900,14 +1901,14 @@ class PageObject(DictionaryObject):
 
         char_scale = 1.0
         space_scale = 1.0
-        _space_width: float = 0.0  # will be set correctly at first Tf
+        _space_width: float = 500.0  # will be set correctly at first Tf
         _actual_str_size: Dict[str, float] = {
             "str_widths": 0.0, "space_width": 0.0, "str_height": 0.0
         }  # will be set to string length calculation result
         TL = 0.0
         font_size = 12.0  # init just in case of
 
-        def compute_strwidths(str_widths: float) -> float:
+        def compute_str_widths(str_widths: float) -> float:
             return str_widths / 1000
 
         def process_operation(operator: bytes, operands: List[Any]) -> None:
@@ -2032,7 +2033,7 @@ class PageObject(DictionaryObject):
                 ty = float(operands[1])
                 tm_matrix[4] += tx * tm_matrix[0] + ty * tm_matrix[2]
                 tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
-                str_widths = compute_strwidths(_actual_str_size["str_widths"])
+                str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"Tm":
                 check_crlf_space = True
@@ -2044,7 +2045,7 @@ class PageObject(DictionaryObject):
                     float(operands[4]),
                     float(operands[5]),
                 ]
-                str_widths = compute_strwidths(_actual_str_size["str_widths"])
+                str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"T*":
                 check_crlf_space = True
@@ -2055,8 +2056,7 @@ class PageObject(DictionaryObject):
                     text,
                     operands,
                     cm_matrix,
-                    tm_matrix,  # text matrix
-                    cmap,
+                    tm_matrix,                cmap,
                     orientations,
                     font_size,
                     rtl_dir,
@@ -2079,7 +2079,7 @@ class PageObject(DictionaryObject):
                         font_size,
                         visitor_text,
                         str_widths,
-                        compute_strwidths(_actual_str_size["space_width"]),
+                        compute_str_widths(_actual_str_size["space_width"]),
                         _actual_str_size["str_height"]
                     )
                     if text == "":
