@@ -1878,7 +1878,6 @@ class PageObject(DictionaryObject):
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
-        # CTM and text matrix
         cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         cm_stack = []
