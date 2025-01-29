@@ -2107,9 +2107,9 @@ class PageObject(DictionaryObject):
                         if isinstance(op, (str, bytes)):
                             process_operation(b"Tj", [op])
                         if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                            (abs(float(op)) >= _confirm_space_width)
-                            and (len(text) > 0)
-                            and (text[-1] != " ")
+                            abs(float(op)) >= _confirm_space_width
+                            and text
+                            and text[-1] != " "
                         ):
                             process_operation(b"Tj", [" "])
             elif operator == b"Do":
