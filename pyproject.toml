@@ -33,10 +33,10 @@ dependencies = [
 ]
 
 [project.urls]
+Changelog = "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html"
 Documentation = "https://pypdf.readthedocs.io/en/latest/"
 Source = "https://github.com/py-pdf/pypdf"
 "Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
-Changelog = "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html"
 
 [project.optional-dependencies]
 full = [
@@ -50,19 +50,14 @@ cryptodome = [
     "PyCryptodome",
 ]
 image = ["Pillow>=8.0.0"]
-dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "flit", "wheel", "pytest-xdist"]
-docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
-
-[tool.mutmut]
-backup = false
-runner = "./mutmut-test.sh"
-tests_dir = "tests/"
+dev = ["black", "flit", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "pytest-xdist", "wheel"]
+docs = ["myst_parser", "sphinx", "sphinx_rtd_theme"]
 
 [tool.check-wheel-contents]
 package = "./pypdf"
 
 [tool.flit.sdist]
-exclude = [".github/*", "docs/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
+exclude = [".github/*", "docs/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile"]
 include = ["resources/", "tests/"]
 
 [tool.pytest.ini_options]
@@ -213,12 +208,12 @@ max-complexity = 54  # Recommended: 10
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
 "_encryption.py" = ["S324"]
 "_writer.py" = ["S324"]
-"docs/conf.py" = ["PTH", "INP001"]
+"docs/conf.py" = ["INP001", "PTH100"]
 "json_consistency.py" = ["T201"]
-"make_release.py" = ["T201", "S603", "S607"]
+"make_release.py" = ["S603", "S607", "T201"]
 "pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff:
 "sample-files/*" = ["D100", "INP001"]
-"tests/*" = ["S101", "ANN001", "ANN201","D104", "S105", "S106", "D103", "B018", "B017"]
+"tests/*" = ["ANN001", "ANN201", "B017", "B018", "D103", "D104", "S105", "S106"]
 "tests/test_workflows.py" =  ["T201"]
 
 [tool.ruff.lint.pydocstyle]

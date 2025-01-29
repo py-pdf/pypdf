@@ -12,10 +12,6 @@ __pycache__/
 venv/
 .venv/
 
-#
-.mutmut-cache
-mutmut-results.*
-
 # Code coverage artifacts
 .coverage*
 coverage.xml

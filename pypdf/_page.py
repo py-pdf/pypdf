@@ -1007,19 +1007,11 @@ class PageObject(DictionaryObject):
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
         """Add transformation matrix at the beginning of the given contents stream."""
-        a, b, c, d, e, f = ctm
         contents = ContentStream(contents, pdf)
         contents.operations.insert(
             0,
             [
-                [
-                    FloatObject(a),
-                    FloatObject(b),
-                    FloatObject(c),
-                    FloatObject(d),
-                    FloatObject(e),
-                    FloatObject(f),
-                ],
+                [FloatObject(x) for x in ctm],
                 b"cm",
             ],
         )
@@ -1915,7 +1907,6 @@ class PageObject(DictionaryObject):
             nonlocal cm_matrix, tm_matrix, cm_stack, cm_prev, tm_prev, memo_cm, memo_tm
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
             nonlocal orientations, rtl_dir, visitor_text, output, text, _actual_str_size
-            global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
             check_crlf_space: bool = False
             str_widths: float = 0.0
@@ -1929,7 +1920,7 @@ class PageObject(DictionaryObject):
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
                 return None
-            elif operator == b"ET":
+            if operator == b"ET":
                 output += text
                 if visitor_text is not None:
                     visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
@@ -1937,7 +1928,7 @@ class PageObject(DictionaryObject):
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
             # Table 4.7 "Graphics state operators", page 219
-            # cm_matrix calculation is a reserved for later
+            # cm_matrix calculation is reserved for later
             elif operator == b"q":
                 cm_stack.append(
                     (
@@ -1998,27 +1989,31 @@ class PageObject(DictionaryObject):
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
                 try:
-                    # charMapTuple: font_type, float(sp_width / 2), encoding,
-                    #               map_dict, font-dictionary
-                    charMapTuple = cmaps[operands[0]]
-                    _space_width = charMapTuple[1]
-                    # current cmap: encoding, map_dict, font resource name
-                    #               (internal name, not the real font-name),
-                    # font-dictionary. The font-dictionary describes the font.
+                    # char_map_tuple: font_type,
+                    #                 float(sp_width / 2),
+                    #                 encoding,
+                    #                 map_dict,
+                    #                 font_dict (describes the font)
+                    char_map_tuple = cmaps[operands[0]]
+                    # current cmap: encoding,
+                    #               map_dict,
+                    #               font resource name (internal name, not the real font name),
+                    #               font_dict
                     cmap = (
-                        charMapTuple[2],
-                        charMapTuple[3],
+                        char_map_tuple[2],
+                        char_map_tuple[3],
                         operands[0],
-                        charMapTuple[4],
+                        char_map_tuple[4],
                     )
+                    _space_width = char_map_tuple[1]
                 except KeyError:  # font not found
-                    _space_width = unknown_char_map[1]
                     cmap = (
                         unknown_char_map[2],
                         unknown_char_map[3],
                         f"???{operands[0]}",
                         None,
                     )
+                    _space_width = unknown_char_map[1]
                 try:
                     font_size = float(operands[1])
                 except Exception:
