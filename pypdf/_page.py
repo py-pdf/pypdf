@@ -2095,9 +2095,6 @@ class PageObject(DictionaryObject):
                 process_operation(b"Tc", [operands[1]])
                 process_operation(b"T*", [])
                 process_operation(b"Tj", operands[2:])
-            elif operator == b"TD":
-                process_operation(b"TL", [-operands[1]])
-                process_operation(b"Td", operands)
             elif operator == b"TJ":
                 # The space width may be smaller than the font width, so the width should be 95%.
                 _confirm_space_width = _space_width * 0.95
@@ -2111,6 +2108,9 @@ class PageObject(DictionaryObject):
                             and text[-1] != " "
                         ):
                             process_operation(b"Tj", [" "])
+            elif operator == b"TD":
+                process_operation(b"TL", [-operands[1]])
+                process_operation(b"Td", operands)
             elif operator == b"Do":
                 output += text
                 if visitor_text is not None:
