@@ -2086,7 +2086,7 @@ class PageObject(DictionaryObject):
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
                 visitor_operand_before(operator, operands, cm_matrix, tm_matrix)
-            # Multiple operators are defined in here
+            # Multiple operators are handled here
             if operator == b"'":
                 process_operation(b"T*", [])
                 process_operation(b"Tj", operands)
@@ -2161,7 +2161,7 @@ class PageObject(DictionaryObject):
                 process_operation(operator, operands)
             if visitor_operand_after is not None:
                 visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
-        output += text  # just in case of
+        output += text  # just in case
         if text != "" and visitor_text is not None:
             visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
         return output
