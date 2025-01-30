@@ -1959,15 +1959,8 @@ class PageObject(DictionaryObject):
                     visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
                 cm_matrix = mult(
-                    [
-                        float(operands[0]),
-                        float(operands[1]),
-                        float(operands[2]),
-                        float(operands[3]),
-                        float(operands[4]),
-                        float(operands[5]),
-                    ],
-                    cm_matrix,
+                    [float(operand) for operand in operands[:6]],
+                    cm_matrix
                 )
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
@@ -2031,14 +2024,7 @@ class PageObject(DictionaryObject):
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"Tm":
                 check_crlf_space = True
-                tm_matrix = [
-                    float(operands[0]),
-                    float(operands[1]),
-                    float(operands[2]),
-                    float(operands[3]),
-                    float(operands[4]),
-                    float(operands[5]),
-                ]
+                tm_matrix = [float(operand) for operand in operands[:6]]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"T*":
