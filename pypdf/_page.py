@@ -2047,6 +2047,7 @@ class PageObject(DictionaryObject):
                 )
             else:
                 return None
+
             if check_crlf_space:
                 try:
                     text, output, cm_prev, tm_prev = crlf_space_check(
