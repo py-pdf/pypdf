@@ -169,7 +169,7 @@ class Transformation:
 
     # 9.5.4 Coordinate Systems for 3D
     # 4.2.2 Common Transformations
-    def __init__(self, ctm: CompressedTransformationMatrix = (1, 0, 0, 1, 0, 0)):
+    def __init__(self, ctm: CompressedTransformationMatrix = (1, 0, 0, 1, 0, 0)) -> None:
         self.ctm = ctm
 
     @property
