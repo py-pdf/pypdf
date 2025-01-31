@@ -164,7 +164,6 @@ ignore = [
     "PLW0603", # Using the global statement to update `CUSTOM_RTL_SPECIAL_CHARS` is discouraged
     "PLW1510", # `subprocess.run` without explicit `check` argument
     "PLW2901", # `with` statement variable `img` overwritten by assignment target
-    "PLW3301", # Nested `min` calls can be flattened
     "PT011",   # `pytest.raises(ValueError)` is too broad, set the `match`
     "PT012",   # `pytest.raises()` block should contain a single simple statement
     "PT014",   # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
@@ -213,7 +212,7 @@ max-complexity = 54  # Recommended: 10
 "docs/conf.py" = ["INP001", "PTH100"]
 "json_consistency.py" = ["T201"]
 "make_release.py" = ["S603", "S607", "T201"]
-"pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff:
+"pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff
 "sample-files/*" = ["D100", "INP001"]
 "tests/*" = ["ANN001", "ANN201", "B017", "B018", "D103", "D104", "S105", "S106"]
 "tests/test_workflows.py" =  ["T201"]
