@@ -534,7 +534,9 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             for gen in rem_gens:
                 loc = pdf.xref[gen]
                 try:
-                    out = min(out, min([x for x in loc.values() if p < x <= p1]))
+                    values = [x for x in loc.values() if p < x <= p1]
+                    if values:
+                        out = min(out, *values)
                 except ValueError:
                     pass
             return out
