@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738316306200,
+  "lastUpdate": 1738322132769,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -68051,6 +68051,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004127483784565395",
             "extra": "mean: 750.0695144000019 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c914a626d4fcfaae54d9ba0d3764dc8eb3c8a2f9",
+          "message": "DEV: Remove ignoring Ruff rule PLW3301 (#3093)\n\nPLW3301: nested-min-max. Nested min and max calls can be flattened into a single call to improve readability.",
+          "timestamp": "2025-01-31T12:13:04+01:00",
+          "tree_id": "e49ceffcf2a90577bca1006a73e8f78b6ebe94df",
+          "url": "https://github.com/py-pdf/pypdf/commit/c914a626d4fcfaae54d9ba0d3764dc8eb3c8a2f9"
+        },
+        "date": 1738322130181,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.661434946012968,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00965510314333323",
+            "extra": "mean: 273.1169649999998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.475502062335014,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006473532438955055",
+            "extra": "mean: 60.696177647060644 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.29351422949042083,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011020655559544757",
+            "extra": "mean: 3.4069898475999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.11912031728561,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011925019143895104",
+            "extra": "mean: 58.414216470590176 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0829810469602236,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05848994633150452",
+            "extra": "mean: 12.050944602800001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3397004357803495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024029828732610183",
+            "extra": "mean: 746.4355263999892 msec\nrounds: 5"
           }
         ]
       }
