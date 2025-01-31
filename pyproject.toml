@@ -113,7 +113,9 @@ line-length = 120
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "A",       # Variable is shadowing a built-in
+    "A001",    # Variable is shadowing a Python builtin
+    "A002",    # Function argument is shadowing a Python builtin
+    "A005",    # Module shadows a Python standard-library module
     "ANN204",  # Missing return type annotation for special method `__init__`
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
     "ARG001",  # Unused function argument
