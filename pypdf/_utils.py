@@ -56,6 +56,11 @@ if sys.version_info[:2] >= (3, 10):
 else:
     from typing_extensions import TypeAlias
 
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
+
 from .errors import (
     STREAM_TRUNCATED_PREMATURELY,
     DeprecationError,
@@ -477,6 +482,7 @@ def _human_readable_bytes(bytes: int) -> str:
 
 # The following class has been copied from Django:
 # https://github.com/django/django/blob/adae619426b6f50046b3daaa744db52989c9d6db/django/utils/functional.py#L51-L65
+# It received some modifications to comply with our own coding standards.
 #
 # Original license:
 #
@@ -521,7 +527,7 @@ class classproperty:  # noqa: N801
     def __get__(self, instance, cls=None) -> Any:  # type: ignore  # noqa: ANN001
         return self.fget(cls)
 
-    def getter(self, method):  # type: ignore  # noqa: ANN001, ANN202
+    def getter(self, method) -> Self:  # type: ignore  # noqa: ANN001
         self.fget = method
         return self
 
