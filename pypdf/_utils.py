@@ -482,6 +482,7 @@ def _human_readable_bytes(bytes: int) -> str:
 
 # The following class has been copied from Django:
 # https://github.com/django/django/blob/adae619426b6f50046b3daaa744db52989c9d6db/django/utils/functional.py#L51-L65
+# It received some modifications to comply with our own coding standards.
 #
 # Original license:
 #
