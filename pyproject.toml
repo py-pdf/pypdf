@@ -132,7 +132,6 @@ ignore = [
     "D105",    # Missing docstring in magic method
     "D106",    # Missing docstring in public nested class
     "D107",    # Missing docstring in `__init__`
-    "D203",    # one-blank-line-before-class
     "D205",    # One blank line required between summary line and description
     "D212",    # I want multiline-docstrings to start at the second line
     "D400",    # First line should end with a period
