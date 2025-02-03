@@ -66,7 +66,7 @@ and general project decisions.
 encryption schemes.
 
 
-## pypdf: Back to the Roots (2023-Today)
+## pypdf: Back to the Roots (2023-2024)
 
 In order to make things simpler for beginners, PyPDF2 was merged back into
 pypdf. Now all lowercase, without a number. We hope that the folks who
@@ -79,6 +79,9 @@ Compared to `PyPDF2 >= 3.0.0`, `pypdf >= 3.1.0` now offers:
 * Annotation support
 * Performance Improvements and Bugfixes
 * Page Label support
+
+stefan6419846 made his [first PR for pypdf](https://github.com/py-pdf/pypdf/pull/2022)
+in July 2023 and joined the project.
 
 
   [Mathieu Fenniak]: https://mathieu.fenniak.net/
