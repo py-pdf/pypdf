@@ -138,7 +138,6 @@ ignore = [
     "D401",    # First line of docstring should be in imperative mood - false positives
     "D404",    # First word of the docstring should not be "This"
     "D406",    # Section name should end with a newline ("Returns")
-    "D407",    # Google-style docstrings don't have dashses
     "D415",    # First line should end with a period
     "D417",    # Missing argument descriptions in the docstring 
     "DTZ001",  # The use of `datetime.datetime()` without `tzinfo` is necessary
