@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738524913258,
+  "lastUpdate": 1738784531677,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -68315,6 +68315,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0019098723710300437",
             "extra": "mean: 748.0723673999989 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5a50b577622a732378110a7a041c8d8501514fb8",
+          "message": "DEV: Remove ignore Ruff rule D407 (#3105)\n\nD407: Google-style docstrings don't have dashses.",
+          "timestamp": "2025-02-05T20:39:42+01:00",
+          "tree_id": "e486e5f262173038c0687fb9a441c0a921ae6fa0",
+          "url": "https://github.com/py-pdf/pypdf/commit/5a50b577622a732378110a7a041c8d8501514fb8"
+        },
+        "date": 1738784528991,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.547994496075638,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009909438365601035",
+            "extra": "mean: 281.84936619999803 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.329619352882386,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006799260410529922",
+            "extra": "mean: 61.23841458824251 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28916828869237227,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03072702572616064",
+            "extra": "mean: 3.4581938584 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.563613698804183,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000378980229117908",
+            "extra": "mean: 56.935891277777586 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08206417930955008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09041431208598577",
+            "extra": "mean: 12.185584604799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.334632853241892,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00580321007134044",
+            "extra": "mean: 749.2697317999841 msec\nrounds: 5"
           }
         ]
       }
