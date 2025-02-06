@@ -21,6 +21,7 @@ def test_attachments(tmpdir):
     clean_path = SAMPLE_ROOT / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
     with PdfReader(clean_path) as pdf:
         assert pdf._list_attachments() == []
+        assert list(pdf.attachment_list) == []
 
     # UF = name.
     attached_path = tmpdir / "attached.pdf"
@@ -30,6 +31,8 @@ def test_attachments(tmpdir):
     with PdfReader(str(attached_path)) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
+        assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
+        assert next(pdf.attachment_list).alternative_name == "test.txt"
 
     # UF != name.
     different_path = tmpdir / "different.pdf"
@@ -38,6 +41,8 @@ def test_attachments(tmpdir):
         assert pdf._list_attachments() == ["test.txt", "my-file.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
         assert pdf._get_attachments("my-file.txt") == {"my-file.txt": b"Hello World\n"}
+        assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
+        assert next(pdf.attachment_list).alternative_name == "my-file.txt"
 
     # Only name.
     no_f_path = tmpdir / "no-f.pdf"
@@ -45,6 +50,8 @@ def test_attachments(tmpdir):
     with PdfReader(str(no_f_path)) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
+        assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
+        assert next(pdf.attachment_list).alternative_name is None
 
     # UF and F.
     uf_f_path = tmpdir / "uf-f.pdf"
@@ -52,6 +59,8 @@ def test_attachments(tmpdir):
     with PdfReader(str(uf_f_path)) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
+        assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
+        assert next(pdf.attachment_list).alternative_name == "test.txt"
 
     # Only F.
     only_f_path = tmpdir / "f.pdf"
@@ -59,6 +68,8 @@ def test_attachments(tmpdir):
     with PdfReader(str(only_f_path)) as pdf:
         assert pdf._list_attachments() == ["test.txt"]
         assert pdf._get_attachments("test.txt") == {"test.txt": b"Hello World\n"}
+        assert [(x.name, x.content) for x in pdf.attachment_list] == [("test.txt", b"Hello World\n")]
+        assert next(pdf.attachment_list).alternative_name == "test.txt"
 
 
 def test_get_attachments__same_attachment_more_than_twice():
@@ -69,3 +80,10 @@ def test_get_attachments__same_attachment_more_than_twice():
     assert writer._get_attachments("test.txt") == {
         "test.txt": [b"content0", b"content1", b"content2", b"content3", b"content4"]
     }
+    assert [(x.name, x.content) for x in writer.attachment_list] == [
+        ("test.txt", b"content0"),
+        ("test.txt", b"content1"),
+        ("test.txt", b"content2"),
+        ("test.txt", b"content3"),
+        ("test.txt", b"content4"),
+    ]

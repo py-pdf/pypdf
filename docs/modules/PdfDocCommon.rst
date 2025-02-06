@@ -10,3 +10,9 @@ Where identified in the API, you can use any of the derived class.
     :inherited-members:
     :undoc-members:
     :show-inheritance:
+
+.. autoclass:: pypdf.generic.EmbeddedFile
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
