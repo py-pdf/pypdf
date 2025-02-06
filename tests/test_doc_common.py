@@ -3,10 +3,12 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.generic import EmbeddedFile
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -87,3 +89,20 @@ def test_get_attachments__same_attachment_more_than_twice():
         ("test.txt", b"content3"),
         ("test.txt", b"content4"),
     ]
+
+
+def test_get_attachments__alternative_name_is_none():
+    writer = PdfWriter()
+    attachment = EmbeddedFile(name="test.txt", pdf_object=writer.root_object)
+    assert attachment.alternative_name is None
+    with (
+            mock.patch(
+                "pypdf._writer.PdfWriter.attachment_list",
+                new_callable=mock.PropertyMock(return_value=[attachment])
+            ),
+            mock.patch(
+                "pypdf.generic._files.EmbeddedFile.content",
+                new_callable=mock.PropertyMock(return_value=b"content")
+            ),
+    ):
+        assert writer._get_attachments() == {"test.txt": b"content"}

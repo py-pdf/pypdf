@@ -1396,7 +1396,7 @@ class PdfDocCommon:
                     names.add(name)
                 else:
                     continue
-            elif not filename:
+            else:
                 names = {entry.name, alternative_name}
 
             for name in names:

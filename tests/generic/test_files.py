@@ -101,3 +101,11 @@ def test_embedded_file__kids():
     )
     assert attachment.checksum is None
     assert repr(attachment) == "<EmbeddedFile name='factur-x.xml'>"
+
+    # No /Names in /Kids.
+    del (
+        reader.root_object[NameObject("/Names")][NameObject("/EmbeddedFiles")][NameObject("/Kids")][0]
+        .get_object()[NameObject("/Names")]
+    )
+    attachments = list(EmbeddedFile._load(reader.root_object))
+    assert attachments == []
