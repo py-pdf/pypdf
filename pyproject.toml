@@ -5,7 +5,7 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "pypdf"
 authors = [{ name = "Mathieu Fenniak", email = "biziqe@mathieu.fenniak.net" }]
-maintainers = [{ name = "Martin Thoma", email = "info@martin-thoma.de" }]
+maintainers = [{ name = "stefan6419846" }, { name = "Martin Thoma", email = "info@martin-thoma.de" }]
 description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
 readme = "README.md"
 dynamic = ["version"]
@@ -139,7 +139,7 @@ ignore = [
     "D404",    # First word of the docstring should not be "This"
     "D406",    # Section name should end with a newline ("Returns")
     "D415",    # First line should end with a period
-    "D417",    # Missing argument descriptions in the docstring 
+    "D417",    # Missing argument descriptions in the docstring
     "DTZ001",  # The use of `datetime.datetime()` without `tzinfo` is necessary
     "EM101",   # Exception must not use a string literal, assign to variable first
     "EM102",   # Exception must not use an f-string literal, assign to variable first
@@ -148,7 +148,7 @@ ignore = [
     "FA102",   # Missing `from __future__ import annotations`, but uses PEP 604 union
     "FBT001",  # Boolean positional arg in function definition
     "FBT002",  # Boolean default value in function definition
-    "FBT003",  # Boolean positional value in function call  
+    "FBT003",  # Boolean positional value in function call
     "FIX002",  # TODOs should typically not be in the code, but sometimes are ok
     "G004",    # f-string in logging statement
     "N806",    # non-lowercase-variable-in-function
@@ -169,7 +169,7 @@ ignore = [
     "RET501",  # Do not explicitly `return None` in function if it is the only possible return value
     "RET502",  # Do not implicitly `return None` in function able to return non-`None` value
     "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
-    "RET504",  # Unnecessary assignment to `changelog` before `return` 
+    "RET504",  # Unnecessary assignment to `changelog` before `return`
     "RET505",  # Unnecessary `else` after `return` statement
     "RET506",  # Unnecessary `else` after `raise` statement
     "RET507",  # Unnecessary `else` after `continue` statement
