@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## Version 5.3.0, 2025-02-09
+
+### New Features (ENH)
+- Handle attachments in /Kids and provide object-oriented API (#3108)
+
+### Bug Fixes (BUG)
+- Handle annotations being None on merging (#3111)
+
+### Robustness (ROB)
+- Prevent excessive layout mode text output from Type3 fonts (#3082)
+
+### Documentation (DOC)
+- stefan6419846 becomes BDFL of pypdf (#3078)
+- Tidy the visitor function description (#3086)
+
+### Developer Experience (DEV)
+- Remove ignoring multiple Ruff rules
+- Remove unused mutmut configuration (#3092)
+
+### Testing (TST)
+- Fix warning assertions to use `pytest.warns()` (#3083)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.2.0...5.3.0)
+
 ## Version 5.2.0, 2025-01-26
 
 ### Deprecations (DEP)
