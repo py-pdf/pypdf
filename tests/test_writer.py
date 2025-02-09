@@ -2607,3 +2607,14 @@ def test_inline_image_q_operator_handling(tmp_path):
     )
     assert png_path.is_file()
     assert image_similarity(png_path, expected_png_path) >= 0.99999
+
+
+def test_insert_filtered_annotations__annotations_are_none():
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    stream = BytesIO()
+    writer.write(stream)
+    reader = PdfReader(stream)
+    assert writer._insert_filtered_annotations(
+        annots=None, page=PageObject(), pages={}, reader=reader
+    ) == []

@@ -2932,7 +2932,7 @@ class PdfWriter(PdfDocCommon):
 
     def _insert_filtered_annotations(
         self,
-        annots: Union[IndirectObject, List[DictionaryObject]],
+        annots: Union[IndirectObject, List[DictionaryObject], None],
         page: PageObject,
         pages: Dict[int, PageObject],
         reader: PdfReader,
@@ -2940,6 +2940,8 @@ class PdfWriter(PdfDocCommon):
         outlist = ArrayObject()
         if isinstance(annots, IndirectObject):
             annots = cast("List[Any]", annots.get_object())
+        if annots is None:
+            return outlist
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (
