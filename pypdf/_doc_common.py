@@ -35,6 +35,7 @@ from datetime import datetime
 from typing import (
     Any,
     Dict,
+    Generator,
     Iterable,
     Iterator,
     List,
@@ -87,6 +88,7 @@ from .generic import (
     create_string_object,
     is_null_or_none,
 )
+from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
 
@@ -1332,12 +1334,18 @@ class PdfDocCommon:
 
     @property
     def attachments(self) -> Mapping[str, List[bytes]]:
+        """Mapping of attachment filenames to their content."""
         return LazyDict(
             {
                 name: (self._get_attachment_list, name)
                 for name in self._list_attachments()
             }
         )
+
+    @property
+    def attachment_list(self) -> Generator[EmbeddedFile, None, None]:
+        """Iterable of attachment objects."""
+        yield from EmbeddedFile._load(self.root_object)
 
     def _list_attachments(self) -> List[str]:
         """
@@ -1347,36 +1355,12 @@ class PdfDocCommon:
             list of filenames
 
         """
-        catalog = self.root_object
-        # From the catalog get the embedded file names
-        try:
-            # This is a name tree of the format [name_1, reference_1, name_2, reference_2, ...]
-            names = cast(
-                ArrayObject,
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
-                )["/Names"],
-            )
-        except KeyError:
-            return []
-        attachment_names: List[str] = []
-        for i, name in enumerate(names):
-            if isinstance(name, str):
-                attachment_names.append(name)
-            else:
-                name = name.get_object()
-                for key in ["/UF", "/F"]:
-                    # PDF 2.0 reference, table 43:
-                    #   > A PDF reader shall use the value of the UF key, when present, instead of the F key.
-                    if key in name:
-                        name = name[key].get_object()
-                        if name == names[i - 1]:
-                            # Avoid duplicates for the same entry.
-                            continue
-                        attachment_names.append(name)
-                    break
-        return attachment_names
+        names = []
+        for entry in self.attachment_list:
+            names.append(entry.name)
+            if (name := entry.alternative_name) != entry.name and name:
+                names.append(name)
+        return names
 
     def _get_attachment_list(self, name: str) -> List[bytes]:
         out = self._get_attachments(name)[name]
@@ -1402,50 +1386,28 @@ class PdfDocCommon:
             If the filename exists multiple times a list of the different versions will be provided.
 
         """
-        catalog = self.root_object
-        # From the catalog get the embedded file names
-        try:
-            # This is a name tree of the format [name_1, reference_1, name_2, reference_2, ...]
-            names = cast(
-                ArrayObject,
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
-                )["/Names"],
-            )
-        except KeyError:
-            return {}
         attachments: Dict[str, Union[bytes, List[bytes]]] = {}
-
-        # Loop through attachments
-        for i, name in enumerate(names):
-            if isinstance(name, str):
-                # Retrieve the corresponding reference.
-                file_dictionary = names[i + 1].get_object()
-            else:
-                # We have the reference, but need to determine the name.
-                file_dictionary = name.get_object()
-                for key in ["/UF", "/F"]:
-                    # PDF 2.0 reference, table 43:
-                    #   > A PDF reader shall use the value of the UF key, when present, instead of the F key.
-                    if key in file_dictionary:
-                        name = file_dictionary[key].get_object()
-                        break
+        for entry in self.attachment_list:
+            names = set()
+            alternative_name = entry.alternative_name
+            if filename is not None:
+                if filename in {entry.name, alternative_name}:
+                    name = entry.name if filename == entry.name else alternative_name
+                    names.add(name)
                 else:
                     continue
-                if name == names[i - 1]:
-                    # Avoid extracting the same file twice.
-                    continue
-
-            if filename is not None and name != filename:
-                continue
-            file_data = file_dictionary["/EF"]["/F"].get_data()
-            if name in attachments:
-                if not isinstance(attachments[name], list):
-                    attachments[name] = [attachments[name]]  # type:ignore
-                attachments[name].append(file_data)  # type:ignore
             else:
-                attachments[name] = file_data
+                names = {entry.name, alternative_name}
+
+            for name in names:
+                if name is None:
+                    continue
+                if name in attachments:
+                    if not isinstance(attachments[name], list):
+                        attachments[name] = [attachments[name]]  # type:ignore
+                    attachments[name].append(entry.content)  # type:ignore
+                else:
+                    attachments[name] = entry.content
         return attachments
 
     @abstractmethod
