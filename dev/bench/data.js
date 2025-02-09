@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739092574394,
+  "lastUpdate": 1739110484531,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -68579,6 +68579,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012046472273983054",
             "extra": "mean: 739.1299369999956 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "1c3baab2640016bff4823a3efca6639613f71cfc",
+          "message": "REL: 5.3.0\n\n## What's new\n\n### New Features (ENH)\n- Handle attachments in /Kids and provide object-oriented API (#3108) by @stefan6419846\n\n### Bug Fixes (BUG)\n- Handle annotations being None on merging (#3111) by @stefan6419846\n\n### Robustness (ROB)\n- Prevent excessive layout mode text output from Type3 fonts (#3082) by @shartzog\n\n### Documentation (DOC)\n- stefan6419846 becomes BDFL of pypdf (#3078) by @MartinThoma\n\n### Developer Experience (DEV)\n- Remove ignoring multiple Ruff rules by @j-t-1\n- Remove unused mutmut configuration (#3092) by @stefan6419846\n\n### Testing (TST)\n- Fix warning assertions to use `pytest.warns()` (#3083) by @mgorny\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.2.0...5.3.0)",
+          "timestamp": "2025-02-09T15:11:31+01:00",
+          "tree_id": "b2430477772102238d085b24a3defa9e7d66b08f",
+          "url": "https://github.com/py-pdf/pypdf/commit/1c3baab2640016bff4823a3efca6639613f71cfc"
+        },
+        "date": 1739110481947,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.6329750218471686,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008485499497499792",
+            "extra": "mean: 275.25650299999995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.613918414080672,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005655075426517374",
+            "extra": "mean: 60.190496611111165 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2929308468824605,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017877041790496012",
+            "extra": "mean: 3.4137749937999984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.718972995212823,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010417703676992296",
+            "extra": "mean: 56.436679500001055 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0826677911852109,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08093107160106489",
+            "extra": "mean: 12.09660964280001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3826335077053946,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016703546356837777",
+            "extra": "mean: 723.2574607999993 msec\nrounds: 5"
           }
         ]
       }
