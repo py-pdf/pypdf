@@ -636,7 +636,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             pstart = stream.tell()
             if length > 0:
                 data["__streamdata__"] = stream.read(length)
-            else:
+            elif length < 0:
                 data["__streamdata__"] = read_until_regex(
                     stream, re.compile(b"endstream")
                 )

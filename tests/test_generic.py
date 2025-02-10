@@ -1265,3 +1265,14 @@ def test_build_link__go_to_action_without_destination():
     for page in reader.pages:
         writer.add_page(page)
     assert len(writer.pages) == len(reader.pages)
+
+
+@pytest.mark.enable_socket
+def test_dictionaryobject__length_0_stream():
+    """Test for issue #3052."""
+    url = "https://github.com/user-attachments/files/18734105/correct.pdf"
+    name = "issue3052.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    output = BytesIO()
+    writer.write(output)
+    assert b"\n8 0 obj\n<<\n/Length 0\n>>\nendobj\n" in output.getvalue()
