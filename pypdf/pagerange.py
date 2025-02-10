@@ -7,7 +7,7 @@ see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 """
 
 import re
-from typing import Any, List, Tuple, Union
+from typing import Any, cast, List, Tuple, Union
 
 from .errors import ParseError
 
@@ -180,17 +180,15 @@ def parse_filename_page_ranges(
                     "The first argument must be a filename, not a page range."
                 )
 
-            assert isinstance(pdf_filename, str), pdf_filename
             assert arg is not None
             pairs.append((pdf_filename, PageRange(arg)))
             did_page_range = True
         else:
             # New filename or end of list - use the complete previous file?
             if pdf_filename and not did_page_range:
-                assert isinstance(pdf_filename, str), pdf_filename
                 pairs.append((pdf_filename, PAGE_RANGE_ALL))
 
-            assert isinstance(arg, str), arg
+            assert not isinstance(arg, PageRange), arg
             pdf_filename = arg
             did_page_range = False
     return pairs
