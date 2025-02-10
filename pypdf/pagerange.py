@@ -7,7 +7,7 @@ see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 """
 
 import re
-from typing import Any, cast, List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 from .errors import ParseError
 
