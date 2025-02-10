@@ -171,7 +171,7 @@ def parse_filename_page_ranges(
 
     """
     pairs: List[Tuple[str, PageRange]] = []
-    pdf_filename = None
+    pdf_filename: Union[str, None] = None
     did_page_range = False
     for arg in args + [None]:
         if PageRange.valid(arg):
@@ -180,13 +180,17 @@ def parse_filename_page_ranges(
                     "The first argument must be a filename, not a page range."
                 )
 
+            assert isinstance(pdf_filename, str), pdf_filename
+            assert arg is not None
             pairs.append((pdf_filename, PageRange(arg)))
             did_page_range = True
         else:
-            # New filename or end of list--do all of the previous file?
+            # New filename or end of list - use the complete previous file?
             if pdf_filename and not did_page_range:
+                assert isinstance(pdf_filename, str), pdf_filename
                 pairs.append((pdf_filename, PAGE_RANGE_ALL))
 
+            assert isinstance(arg, str), arg
             pdf_filename = arg
             did_page_range = False
     return pairs
