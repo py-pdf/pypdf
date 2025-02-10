@@ -731,7 +731,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     # for error reporting
     obj_as_text = (
-        x_object_obj.indirect_reference.__repr__()  # type: ignore
+        x_object_obj.indirect_reference.__repr__()
         if x_object_obj is None  # pragma: no cover
         else x_object_obj.__repr__()
     )
