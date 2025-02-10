@@ -1219,3 +1219,14 @@ def test_contentstream_arrayobject_containing_nullobject(caplog):
     content_stream = ContentStream(stream=input_stream, pdf=None)
     assert content_stream.get_data() == b"Hello World!\n"
     assert caplog.text == ""
+
+
+@pytest.mark.enable_socket
+def test_dictionaryobject__length_0_stream():
+    """Test for issue #3052."""
+    url = "https://github.com/user-attachments/files/18734105/correct.pdf"
+    name = "issue3052.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    output = BytesIO()
+    writer.write(output)
+    assert b"\n8 0 obj\n<<\n/Length 0\n>>\nendobj\n" in output.getvalue()
