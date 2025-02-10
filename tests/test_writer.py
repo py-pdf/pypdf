@@ -2633,7 +2633,8 @@ def test_incremental_read():
 
     stream0.seek(0, 0)
     writer = PdfWriter(stream0, incremental=True)
-    assert len(writer._objects) == 4 and writer._objects[-1] is not None
+    assert len(writer._objects) == 4
+    assert writer._objects[-1] is not None
     stream1 = BytesIO()
     writer.write(stream1)
 
@@ -2642,7 +2643,8 @@ def test_incremental_read():
 
     stream0.seek(0, 0)
     writer = PdfWriter(stream0, incremental=True)
-    assert len(writer._objects) == 4 and writer._objects[-1] is not None
+    assert len(writer._objects) == 4
+    assert writer._objects[-1] is not None
     writer.add_blank_page(72, 72)
     assert len(writer._objects) == 5
     stream1 = BytesIO()
