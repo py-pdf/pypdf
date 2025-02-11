@@ -1190,7 +1190,7 @@ class PdfWriter(PdfDocCommon):
         """
         self._info_obj = None
         if self.incremental:
-            self._objects = [None] * cast(int, reader.trailer["/Size"] - 1)
+            self._objects = [None] * (cast(int, reader.trailer["/Size"]) - 1)
             for i in range(len(self._objects)):
                 o = reader.get_object(i + 1)
                 if o is not None:
