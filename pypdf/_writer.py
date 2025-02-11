@@ -1499,7 +1499,7 @@ class PdfWriter(PdfDocCommon):
             )
         )
         xr.write_to_stream(stream)
-        stream.write(f"\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
+        stream.write(f"\nendobj\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
 
     def _write_pdf_structure(self, stream: StreamType) -> Tuple[List[int], List[int]]:
         object_positions = []
