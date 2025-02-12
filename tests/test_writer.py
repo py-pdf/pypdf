@@ -2618,3 +2618,37 @@ def test_insert_filtered_annotations__annotations_are_none():
     assert writer._insert_filtered_annotations(
         annots=None, page=PageObject(), pages={}, reader=reader
     ) == []
+
+
+def test_incremental_read():
+    """Test for #3116"""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    stream0 = BytesIO()
+    writer.write(stream0)
+
+    reader = PdfReader(stream0)
+    # 1 = Catalog, 2 = Pages, 3 = New Page, 4 = Info, Size == 5
+    assert reader.trailer["/Size"] == 5
+
+    stream0.seek(0, 0)
+    writer = PdfWriter(stream0, incremental=True)
+    assert len(writer._objects) == 4
+    assert writer._objects[-1] is not None
+    stream1 = BytesIO()
+    writer.write(stream1)
+
+    # nothing modified, so nothing added = ideal situation
+    assert stream1.getvalue() == stream1.getvalue()
+
+    stream0.seek(0, 0)
+    writer = PdfWriter(stream0, incremental=True)
+    assert len(writer._objects) == 4
+    assert writer._objects[-1] is not None
+    writer.add_blank_page(72, 72)
+    assert len(writer._objects) == 5
+    stream1 = BytesIO()
+    writer.write(stream1)
+    # 2 = Pages, 5 = New Page, 6 = XRef, Size == 7
+    # XRef is created on write and not counted
+    assert len(writer._objects) == 5
