@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739366558644,
+  "lastUpdate": 1739366719896,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -68909,6 +68909,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012922635892462644",
             "extra": "mean: 754.8725993999938 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "be414c1b8ec95ed93a51144a8bd0dd5fb2b48fef",
+          "message": "BUG: Fix stream position on inline image fallback extraction (#3120)\n\nWhen fixing the inline image extraction in #3002, the fallback behavior\nwould break accidentally by leaving the stream before the EI marker.\nWe never saw this due to the tests somehow being not strict enough, thus\nleading to the error\n\n> b'EI' operator met whereas not expected, please share usecase with pypdf dev team",
+          "timestamp": "2025-02-12T14:22:48+01:00",
+          "tree_id": "d2294ee08833b5a791198bb7a1a38b884b13ac81",
+          "url": "https://github.com/py-pdf/pypdf/commit/be414c1b8ec95ed93a51144a8bd0dd5fb2b48fef"
+        },
+        "date": 1739366717247,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.6760514507954647,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009673946440884366",
+            "extra": "mean: 272.0310129999973 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.418016419643024,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0067724036850543715",
+            "extra": "mean: 60.90869776470493 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.29246049552860437,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017804206181843744",
+            "extra": "mean: 3.419265217999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.491387166363065,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004726629084791138",
+            "extra": "mean: 57.17099452941371 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08190093963433528,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05456189242540188",
+            "extra": "mean: 12.209872126800002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3399204953993584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00371206399338574",
+            "extra": "mean: 746.3129367999954 msec\nrounds: 5"
           }
         ]
       }
