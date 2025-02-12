@@ -1385,9 +1385,18 @@ class ContentStream(DecodedStreamObject):
         ei = stream.read(3)
         stream.seek(-1, 1)
         if ei[0:2] != b"EI" or ei[2:3] not in WHITESPACES:
-            # Deal with wrong/missing `EI` tags.
+            # Deal with wrong/missing `EI` tags. Example: Wrong dimensions specified above.
             stream.seek(savpos, 0)
             data = extract_inline_default(stream)
+            ei = stream.read(3)
+            stream.seek(-1, 1)
+            if ei[0:2] != b"EI" or ei[2:3] not in WHITESPACES:  # pragma: no cover
+                # Check the same condition again. This should never fail as
+                # edge cases are covered by `extract_inline_default` above,
+                # but check this ot make sure that we are behind the `EI` afterwards.
+                raise PdfStreamError(
+                    f"Could not extract inline image, even using fallback. Expected 'EI', got {ei!r}"
+                )
         return {"settings": settings, "data": data}
 
     # This overrides the parent method:

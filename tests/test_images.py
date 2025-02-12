@@ -8,13 +8,14 @@ and/or the actual image data with the expected value.
 from io import BytesIO
 from pathlib import Path
 from typing import Union
+from unittest import mock
 from zipfile import ZipFile
 
 import pytest
 from PIL import Image, ImageChops, ImageDraw
 
 from pypdf import PageObject, PdfReader, PdfWriter
-from pypdf.generic import NameObject, NullObject
+from pypdf.generic import ContentStream, NameObject, NullObject
 
 from . import get_data_from_url
 
@@ -484,3 +485,28 @@ def test_no_filter_with_colorspace_as_list():
 
     page = reader.pages[0]
     page.images.items()
+
+
+def test_contentstream__read_inline_image__fallback_is_successful():
+    stream = ContentStream(stream=None, pdf=None)
+    stream.set_data(
+        b"""Q
+q 9.6 0 0 4.8 5523.6 1031 cm
+BI
+/CS /RGB
+/W 2
+/H 1
+/BPC 8
+ID \x8b\x8b\x8b\xfe\xfe\xfe
+EI Q
+/R413 gs
+        """
+    )
+    page = PageObject(pdf=None)
+    with mock.patch.object(page, "get_contents", return_value=stream):
+        images = page._get_inline_images()
+        assert list(images) == ["~0~"]
+        assert images["~0~"].data == (
+            b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x02\x00\x00\x00\x01\x08\x02\x00\x00\x00{@\xe8\xdd\x00\x00\x00\x0f"
+            b"IDATx\x9cc\xe8\xee\xee\xfe\xf7\xef\x1f\x00\x0e \x04\x9cpr_\x96\x00\x00\x00\x00IEND\xaeB`\x82"
+        )
