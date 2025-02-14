@@ -1112,6 +1112,7 @@ class PdfWriter(PdfDocCommon):
                         v = NameObject("/Off")
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
+                    annotation[NameObject(FA.V)] = v
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
