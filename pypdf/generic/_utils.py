@@ -35,7 +35,7 @@ def read_hex_string_from_stream(
     return create_string_object(bytes(arr), forced_encoding)
 
 
-__ESPACE_DICT__ = {
+__ESCAPE_DICT__ = {
     b"n": ord(b"\n"),
     b"r": ord(b"\r"),
     b"t": ord(b"\t"),
@@ -79,7 +79,7 @@ def read_string_from_stream(
         elif tok == b"\\":
             tok = stream.read(1)
             try:
-                txt.append(__ESPACE_DICT__[tok])
+                txt.append(__ESCAPE_DICT__[tok])
                 continue
             except KeyError:
                 if b"0" <= tok <= b"7":
@@ -104,7 +104,7 @@ def read_string_from_stream(
                         txt.append(i)
                     continue
                 elif tok in b"\n\r":
-                    # This case is  hit when a backslash followed by a line
+                    # This case is hit when a backslash followed by a line
                     # break occurs. If it's a multi-char EOL, consume the
                     # second character:
                     tok = stream.read(1)
