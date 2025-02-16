@@ -962,8 +962,7 @@ class PdfDocCommon:
             page = NullObject()
             return Destination(title, page, Fit.fit())
         else:
-            page, typ = array[0:2]  # type: ignore
-            array = array[2:]
+            page, typ, *array = array  # type: ignore
             try:
                 return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
             except PdfReadError:
