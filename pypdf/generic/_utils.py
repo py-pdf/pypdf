@@ -79,7 +79,7 @@ def read_string_from_stream(
         elif tok == b"\\":
             tok = stream.read(1)
             try:
-                txt.append(__ESPACE_DICT__[tok])
+                txt.append(__ESCAPE_DICT__[tok])
                 continue
             except KeyError:
                 if b"0" <= tok <= b"7":
