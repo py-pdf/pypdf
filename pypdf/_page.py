@@ -2520,7 +2520,7 @@ class _VirtualList(Sequence[PageObject]):
             cls = type(self)
             return cls(indices.__len__, lambda idx: self[indices[idx]])
         if not isinstance(index, int):
-            raise TypeError("Sequence indices must be integers")
+            raise TypeError("Sequence index must be a single integer")
         len_self = len(self)
         if index < 0:
             # support negative indexes
