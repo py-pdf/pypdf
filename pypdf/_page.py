@@ -700,7 +700,7 @@ class PageObject(DictionaryObject):
 
         Example usage:
 
-            reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)
+            reader.pages[0].images[0].replace(Image.open("new_image.jpg"), quality=20)
 
         Inline images are extracted and named ~0~, ~1~, ..., with the
         indirect_reference set to None.
