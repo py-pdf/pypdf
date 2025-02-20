@@ -696,10 +696,11 @@ class PageObject(DictionaryObject):
         and the following methods:
             `.replace(new_image: PIL.Image.Image, **kwargs)` :
                 replace the image in the pdf with the new image
+                applying the saving parameters indicated (such as quality)
 
         Example usage:
 
-            reader.pages[0].images[0].replace(Image.open("new_image.jpg"))
+            reader.pages[0].images[0].replace(Image.open("new_image.jpg"), quality=20)
 
         Inline images are extracted and named ~0~, ~1~, ..., with the
         indirect_reference set to None.
