@@ -230,9 +230,11 @@ def extract_inline_default(stream: StreamType) -> bytes:
                 stream.seek(saved_pos, 0)
                 continue
             if is_followed_by_binary_data(stream):
+                # Inline image contains `EI ` sequence usually marking the end of it, but
+                # is followed by binary data which does not make sense for the actual end.
                 stream.seek(saved_pos, 0)
                 continue
-            # Data contains [\s]EI[\s](Q|EMC): 4 chars are sufficients
+            # Data contains [\s]EI[\s](Q|EMC): 4 chars are sufficient
             # remove E(I) wrongly inserted earlier
             stream.seek(saved_pos - 1, 0)
             stream_out.truncate(sav_pos_ei)
