@@ -264,13 +264,11 @@ def is_followed_by_binary_data(stream: IO[bytes], length: int = 10) -> bool:
     operator_start = None
     operator_end = None
 
-    is_whitespace_only = True
     for index, byte in enumerate(data):
         if byte < 32 and byte not in WHITESPACES_AS_BYTES:
             # This covers all characters not being displayable directly.
             return True
         is_whitespace = byte in WHITESPACES_AS_BYTES
-        is_whitespace_only &= is_whitespace
         if operator_start is None and not is_whitespace:
             # Interpret all other non-whitespace characters as the start of an operation.
             operator_start = index
@@ -280,11 +278,9 @@ def is_followed_by_binary_data(stream: IO[bytes], length: int = 10) -> bool:
             operator_end = index
             break
 
-    if is_whitespace_only:
-        # Inline image should not have tons of whitespaces.
-        return False
     if operator_start is None:
-        return True
+        # Inline images should not have tons of whitespaces, which would lead to no operator start.
+        return False
     if operator_end is None:
         # We probably are inside an operation.
         operator_end = length
