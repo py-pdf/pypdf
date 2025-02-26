@@ -144,9 +144,10 @@ class LzwCodec(Codec):
         return bytes(output)
 
     def _initialize_decoding_table(self) -> None:
+        self.max_code_value = (1 << self.MAX_BITS_PER_CODE) - 1
         self.decoding_table = [bytes([i]) for i in range(self.CLEAR_TABLE_MARKER)] + [
             b""
-        ] * (4096 - self.CLEAR_TABLE_MARKER)
+        ] * (self.max_code_value - self.CLEAR_TABLE_MARKER + 1)
         self._table_index = self.EOD_MARKER + 1
         self._bits_to_get = 9
 
@@ -211,7 +212,6 @@ class LzwCodec(Codec):
         self._byte_pointer = 0
         self._next_data = 0
         self._next_bits = 0
-        self.max_code_value = (1 << self.MAX_BITS_PER_CODE) - 1
 
         output_stream = io.BytesIO()
 

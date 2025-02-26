@@ -69,4 +69,5 @@ def test_lzw_decoder_table_overflow(caplog):
     assert codec.decode(path.read_bytes()).startswith(
         b'0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@'
     )
+    assert len(codec.decoding_table) == 4096
     assert "Ignoring too large LZW table index." in caplog.text
