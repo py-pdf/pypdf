@@ -1003,6 +1003,9 @@ class PdfReader(PdfDocCommon):
             0 means no issue, other values represent specific issues.
 
         """
+        if startxref == 0:
+            return 4
+
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
         if line == b"j":
@@ -1011,7 +1014,7 @@ class PdfReader(PdfDocCommon):
             return 1
         line = stream.read(4)
         if line != b"xref":
-            # not an xref so check if it is an XREF object
+            # not a xref so check if it is an XREF object
             line = b""
             while line in b"0123456789 \t":
                 line = stream.read(1)
