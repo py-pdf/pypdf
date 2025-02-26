@@ -266,7 +266,8 @@ def is_followed_by_binary_data(stream: IO[bytes], length: int = 10) -> bool:
 
     for index, byte in enumerate(data):
         if byte < 32 and byte not in WHITESPACES_AS_BYTES:
-            # This covers all characters not being displayable directly.
+            # This covers all characters not being displayable directly, although omitting whitespace
+            # to allow for operator detection.
             return True
         is_whitespace = byte in WHITESPACES_AS_BYTES
         if operator_start is None and not is_whitespace:
