@@ -9,6 +9,8 @@ import io
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
+from pypdf._utils import logger_warning
+
 
 class Codec(ABC):
     """Abstract base class for all codecs."""
@@ -209,6 +211,7 @@ class LzwCodec(Codec):
         self._byte_pointer = 0
         self._next_data = 0
         self._next_bits = 0
+        self.max_code_value = (1 << self.MAX_BITS_PER_CODE) - 1
 
         output_stream = io.BytesIO()
 
@@ -250,6 +253,9 @@ class LzwCodec(Codec):
 
     def _add_entry_decode(self, old_string: bytes, new_char: int) -> None:
         new_string = old_string + bytes([new_char])
+        if self._table_index > self.max_code_value:
+            logger_warning("Ignoring too large LZW table index.", __name__)
+            return
         self.decoding_table[self._table_index] = new_string
         self._table_index += 1
 
