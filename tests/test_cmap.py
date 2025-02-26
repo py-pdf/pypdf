@@ -305,3 +305,15 @@ def test_standard_encoding(caplog):
     page = reader.pages[0]
     assert page.extract_text() == "Lorem ipsum"
     assert "Advanced encoding" not in caplog.text
+
+
+@pytest.mark.enable_socket
+def test_function_in_font_widths(caplog):
+    """Tests for #3153"""
+    url = "https://github.com/user-attachments/files/18945709/Marseille_pypdf_level_0.2._compressed.pdf"
+    name = "issue3153.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    page = reader.pages[455]
+    assert "La vulnérabilité correspond aux conséquences potentielles" in page.extract_text()
+    assert "Expected numeric value for width, got {'/Bounds': [0.25, 0.25]," in caplog.text

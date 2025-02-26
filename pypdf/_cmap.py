@@ -423,6 +423,10 @@ def build_font_width_map(
                 # C_first C_last same_W
                 en = second
                 width = w[2].get_object()
+                if not isinstance(width, (int, float)):
+                    logger_warning(f"Expected numeric value for width, got {width}. Ignoring it.", __name__)
+                    w = w[3:]
+                    continue
                 for c_code in range(st, en + 1):
                     font_width_map[chr(c_code)] = width
                 w = w[3:]
