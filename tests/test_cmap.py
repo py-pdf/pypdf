@@ -293,3 +293,15 @@ def test_binascii_odd_length_string(caplog):
     page = reader.pages[0]
     assert "\n(Many other theorems may\n" in page.extract_text()
     assert "Skipping broken line b'143f   143f   10300': Odd-length string\n" in caplog.text
+
+
+@pytest.mark.enable_socket
+def test_standard_encoding(caplog):
+    """Tests for #3156"""
+    url = "https://github.com/user-attachments/files/18983503/standard-encoding.pdf"
+    name = "issue3156.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    page = reader.pages[0]
+    assert page.extract_text() == "Lorem ipsum"
+    assert "Advanced encoding" not in caplog.text
