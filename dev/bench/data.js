@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740576374520,
+  "lastUpdate": 1740576534045,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -69701,6 +69701,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013519678701035797",
             "extra": "mean: 739.2162518000077 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6003a1e39f2db0537e7c79df3d64bef584666a89",
+          "message": "ROB: Ignore non-numbers for width when building font width map (#3158)\n\nCloses #3153.",
+          "timestamp": "2025-02-26T14:26:25+01:00",
+          "tree_id": "18fe1282026b2825f72f701b5e7c6da6607d531f",
+          "url": "https://github.com/py-pdf/pypdf/commit/6003a1e39f2db0537e7c79df3d64bef584666a89"
+        },
+        "date": 1740576531350,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.488606031642008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016007272170622335",
+            "extra": "mean: 286.6474433999997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.886557375755402,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007753454510448744",
+            "extra": "mean: 62.946299588236016 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2761120001705524,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05997910129892548",
+            "extra": "mean: 3.6217187206000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.39495661644501,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001473289437137862",
+            "extra": "mean: 57.48792722222776 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0822971586633584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023314510178559247",
+            "extra": "mean: 12.151087792600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3401560635644154,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010571742784142213",
+            "extra": "mean: 746.1817524000139 msec\nrounds: 5"
           }
         ]
       }
