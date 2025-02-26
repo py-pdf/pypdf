@@ -1003,6 +1003,9 @@ class PdfReader(PdfDocCommon):
             0 means no issue, other values represent specific issues.
 
         """
+        if startxref == 0:
+            return 1
+
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
         if line == b"j":

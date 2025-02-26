@@ -1787,3 +1787,12 @@ def test_repair_root(caplog):
             'Searching object with "/Catalog" key',
         )
     )
+
+
+@pytest.mark.enable_socket
+def test_issue3151(caplog):
+    """Tests for #3151"""
+    url = "https://github.com/user-attachments/files/18941494/bible.pdf"
+    name = "issue3151.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert len(reader.pages) == 742
