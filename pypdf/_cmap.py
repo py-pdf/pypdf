@@ -177,9 +177,9 @@ def _parse_encoding(
                 f"Advanced encoding {encoding} not implemented yet",
                 __name__,
             )
-            encoding = charset_encoding["/StandardCoding"].copy()
+            encoding = charset_encoding["/StandardEncoding"].copy()
     else:
-        encoding = charset_encoding["/StandardCoding"].copy()
+        encoding = charset_encoding["/StandardEncoding"].copy()
     if "/Differences" in enc:
         x: int = 0
         o: Union[int, str]
