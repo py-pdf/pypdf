@@ -647,10 +647,8 @@ def test_ascii85decode__non_recoverable(caplog):
 
 
 def test_jbig2decode__binary_errors():
-    with (
-            mock.patch("pypdf.filters._JBIG2DEC_BINARY", None),
-            pytest.raises(DependencyError, match="jbig2dec binary is not available.")
-    ):
+    with mock.patch("pypdf.filters._JBIG2DEC_BINARY", None), \
+            pytest.raises(DependencyError, match="jbig2dec binary is not available."):
         JBIG2Decode.decode(b"dummy")
 
     result = subprocess.CompletedProcess(
@@ -661,8 +659,7 @@ def test_jbig2decode__binary_errors():
             b"   or  jbig2dec [options] <global_stream> <page_stream>\n"
         )
     )
-    with (
-            mock.patch("pypdf.filters.subprocess.run", return_value=result),
-            pytest.raises(DependencyError, match="jbig2dec>=0.15 is required.")
-    ):
+    with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
+            mock.patch("pypdf.filters._JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
+            pytest.raises(DependencyError, match="jbig2dec>=0.15 is required."):
         JBIG2Decode.decode(b"dummy")
