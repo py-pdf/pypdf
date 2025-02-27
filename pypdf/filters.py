@@ -35,11 +35,15 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
+import os
+import shutil
 import struct
+import subprocess
 import zlib
 from base64 import a85decode
 from dataclasses import dataclass
 from io import BytesIO
+from tempfile import NamedTemporaryFile
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
@@ -56,7 +60,7 @@ from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
-from .errors import DeprecationError, PdfReadError, PdfStreamError
+from .errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
     DictionaryObject,
@@ -614,6 +618,49 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
+_JBIG2DEC_BINARY = shutil.which("jbig2dec")
+
+
+class JBIG2Decode:
+    @staticmethod
+    def decode(
+        data: bytes,
+        decode_parms: Optional[DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> bytes:
+        # decode_parms is unused here
+        if _JBIG2DEC_BINARY is None:
+            raise DependencyError("jbig2dec binary is not available.")
+
+        with NamedTemporaryFile(suffix=".jbig2") as infile:
+            infile.write(data)
+            infile.seek(0)
+            environment = os.environ.copy()
+            environment["LC_ALL"] = "C"
+            result = subprocess.run(  # noqa: S603
+                [_JBIG2DEC_BINARY, "--embedded", "--format", "png", "--output", "-", infile.name],
+                capture_output=True,
+                env=environment,
+            )
+            if b"unrecognized option '--embedded'" in result.stderr:
+                raise DependencyError("jbig2dec>=0.15 is required.")
+        return result.stdout
+
+    @staticmethod
+    def _is_binary_compatible() -> bool:
+        if not _JBIG2DEC_BINARY:  # pragma: no cover
+            return False
+        result = subprocess.run(  # noqa: S603
+            [_JBIG2DEC_BINARY, "--version"],
+            capture_output=True,
+            text=True,
+        )
+        version = result.stdout.split(" ", maxsplit=1)[1]
+
+        from ._utils import Version
+        return Version(version) >= Version("0.15")
+
+
 def decode_stream_data(stream: Any) -> bytes:
     """
     Decode the stream data based on the specified filters.
@@ -664,6 +711,8 @@ def decode_stream_data(stream: Any) -> bytes:
             data = DCTDecode.decode(data)
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
+        elif filter_name == FT.JBIG2_DECODE:
+            data = JBIG2Decode.decode(data)
         elif filter_name == "/Crypt":
             if "/Name" in params or "/Type" in params:
                 raise NotImplementedError(
@@ -792,6 +841,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             Image.open(BytesIO(data), formats=("TIFF",)),
             "TIFF",
             ".tiff",
+            False,
+        )
+    elif lfilters == FT.JBIG2_DECODE:
+        img, image_format, extension, invert_color = (
+            Image.open(BytesIO(data), formats=("PNG",)),
+            "PNG",
+            ".png",
             False,
         )
     elif mode == "CMYK":
