@@ -1796,3 +1796,13 @@ def test_issue3151(caplog):
     name = "issue3151.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert len(reader.pages) == 742
+
+
+@pytest.mark.enable_socket
+def test_issue2886(caplog):
+    """Tests for #2886"""
+    url = "https://github.com/user-attachments/files/17187711/crash-e8a85d82de01cab5eb44e7993304d8b9d1544970.pdf"
+    name = "issue2886.pdf"
+
+    with pytest.raises(PdfReadError, match="Unexpected empty line in Xref table."):
+        _ = PdfReader(BytesIO(get_data_from_url(url, name=name)))
