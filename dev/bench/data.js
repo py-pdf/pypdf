@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740662905874,
+  "lastUpdate": 1740906195280,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -69899,6 +69899,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003435625656389707",
             "extra": "mean: 748.6453513999948 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "7143554a60626820a38bf76fb31a614b3759e720",
+          "message": "REL: 5.3.1\n\n## What's new\n\n### Bug Fixes (BUG)\n- Use the correct name StandardEncoding for the predefined cmap (#3156) by @stefan6419846\n- Handle inline images containing `EI ` sequences (#3152) by @stefan6419846\n- Fix check box value which should be name object (#3124) by @stefan6419846\n- Fix stream position on inline image fallback extraction (#3120) by @stefan6419846\n- Fix object count for incremental writer (#3117) by @m32\n\n### Robustness (ROB)\n- Avoid index errors on empty lines in xref table (#3162) by @stefan6419846\n- Improve handling of LZW decoder table overflow (#3159) by @stefan6419846\n- Ignore non-numbers for width when building font width map (#3158) by @stefan6419846\n- Avoid negative seek values when reading partially broken files (#3157) by @stefan6419846\n\n### Documentation (DOC)\n- Fixed PageObject.images example usage for replacing image (#3149) by @jutoth\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.3.0...5.3.1)",
+          "timestamp": "2025-03-02T10:00:17+01:00",
+          "tree_id": "96ee2c9a33d634a370a08646b88d0b8f8c2209b7",
+          "url": "https://github.com/py-pdf/pypdf/commit/7143554a60626820a38bf76fb31a614b3759e720"
+        },
+        "date": 1740906192351,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.614515496347504,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0116166984679898",
+            "extra": "mean: 276.6622527999971 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.152957531412895,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007687953936894514",
+            "extra": "mean: 61.90816747058768 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2922114344544474,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013285554325688245",
+            "extra": "mean: 3.422179566199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.322884597489814,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005997581479823518",
+            "extra": "mean: 54.57655942105301 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08203951011026037,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12754677271461726",
+            "extra": "mean: 12.189248798 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3459896119181292,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018246935890957855",
+            "extra": "mean: 742.9477844000075 msec\nrounds: 5"
           }
         ]
       }
