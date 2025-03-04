@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740906195280,
+  "lastUpdate": 1741083420045,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -69965,6 +69965,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018246935890957855",
             "extra": "mean: 742.9477844000075 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "noamkush@users.noreply.github.com",
+            "name": "Noam",
+            "username": "noamkush"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8d16885e42f197ac68d0989653d3bdf012a01e21",
+          "message": "ENH: Add support for `IndirectObject.__contains__` (#3155)\n\nCloses #3154.",
+          "timestamp": "2025-03-04T11:14:25+01:00",
+          "tree_id": "6bc0ab14306728f3b84623b9a747dd901e3a8db4",
+          "url": "https://github.com/py-pdf/pypdf/commit/8d16885e42f197ac68d0989653d3bdf012a01e21"
+        },
+        "date": 1741083416556,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7043812624764847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007862979770781693",
+            "extra": "mean: 269.95061499999906 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.63141234448568,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0059659185222413645",
+            "extra": "mean: 60.12718458823857 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2945233450491486,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01400491257643273",
+            "extra": "mean: 3.3953165913999954 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.090973463160346,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013161940653930225",
+            "extra": "mean: 55.27618522222452 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0821462021263502,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08132634848011387",
+            "extra": "mean: 12.173417323199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3560901593005716,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015550975588014966",
+            "extra": "mean: 737.4140968000006 msec\nrounds: 5"
           }
         ]
       }
