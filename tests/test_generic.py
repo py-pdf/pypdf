@@ -1034,7 +1034,9 @@ def test_indirect_object_page_dimensions():
 
 def test_indirect_object_contains():
     writer = PdfWriter()
-    assert "foo" not in IndirectObject(1, 0, writer)
+    indirect_object = IndirectObject(1, 0, writer)
+    assert "foo" not in indirect_object
+    assert "/Producer" in indirect_object
 
 
 def test_array_operators():
