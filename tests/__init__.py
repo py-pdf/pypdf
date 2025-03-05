@@ -1,9 +1,15 @@
 import concurrent.futures
 import ssl
+import sys
 import urllib.request
 from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.error import HTTPError
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 import yaml
 
@@ -85,7 +91,7 @@ def normalize_warnings(caplog_text: str) -> List[str]:
 
 
 class ReaderDummy:
-    def __init__(self, strict=False):
+    def __init__(self, strict=False) -> None:
         self.strict = strict
 
     def get_object(self, indirect_reference):
@@ -150,17 +156,17 @@ def test_csv_consistency():
 class PILContext:
     """Allow changing the PIL/Pillow configuration for some limited scope."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._saved_load_truncated_images = False
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         # Allow loading incomplete images.
         from PIL import ImageFile
         self._saved_load_truncated_images = ImageFile.LOAD_TRUNCATED_IMAGES
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         return self
 
-    def __exit__(self, type_, value, traceback):
+    def __exit__(self, type_, value, traceback) -> Optional[bool]:
         from PIL import ImageFile
         ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images
         if type_:

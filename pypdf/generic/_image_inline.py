@@ -27,9 +27,11 @@
 
 import logging
 from io import BytesIO
+from typing import IO
 
 from .._utils import (
     WHITESPACES,
+    WHITESPACES_AS_BYTES,
     StreamType,
     read_non_whitespace,
 )
@@ -227,10 +229,64 @@ def extract_inline_default(stream: StreamType) -> bytes:
             }:  # for Q or EMC
                 stream.seek(saved_pos, 0)
                 continue
-            # Data contains [\s]EI[\s](Q|EMC): 4 chars are sufficients
+            if is_followed_by_binary_data(stream):
+                # Inline image contains `EI ` sequence usually marking the end of it, but
+                # is followed by binary data which does not make sense for the actual end.
+                stream.seek(saved_pos, 0)
+                continue
+            # Data contains [\s]EI[\s](Q|EMC): 4 chars are sufficient
             # remove E(I) wrongly inserted earlier
             stream.seek(saved_pos - 1, 0)
             stream_out.truncate(sav_pos_ei)
             break
 
     return stream_out.getvalue()
+
+
+def is_followed_by_binary_data(stream: IO[bytes], length: int = 10) -> bool:
+    """
+    Check if the next bytes of the stream look like binary image data or regular page content.
+
+    This is just some heuristics due to the PDF specification being too imprecise about
+    inline images containing the `EI` marker which would end an image. Starting with PDF 2.0,
+    we finally get a mandatory length field, but with (proper) PDF 2.0 support being very limited
+    everywhere, we should not expect to be able to remove such hacks in the near future - especially
+    considering legacy documents as well.
+
+    The actual implementation draws some inspiration from
+    https://github.com/itext/itext-java/blob/9.1.0/kernel/src/main/java/com/itextpdf/kernel/pdf/canvas/parser/util/InlineImageParsingUtils.java
+    """
+    position = stream.tell()
+    data = stream.read(length)
+    stream.seek(position)
+    if not data:
+        return False
+    operator_start = None
+    operator_end = None
+
+    for index, byte in enumerate(data):
+        if byte < 32 and byte not in WHITESPACES_AS_BYTES:
+            # This covers all characters not being displayable directly, although omitting whitespace
+            # to allow for operator detection.
+            return True
+        is_whitespace = byte in WHITESPACES_AS_BYTES
+        if operator_start is None and not is_whitespace:
+            # Interpret all other non-whitespace characters as the start of an operation.
+            operator_start = index
+        if operator_start is not None and is_whitespace:
+            # A whitespace stops an operation.
+            # Assume that having an inline image with tons of whitespace is rather unlikely.
+            operator_end = index
+            break
+
+    if operator_start is None:
+        # Inline images should not have tons of whitespaces, which would lead to no operator start.
+        return False
+    if operator_end is None:
+        # We probably are inside an operation.
+        operator_end = length
+    if operator_end - operator_start > 3:  # noqa: SIM103
+        # Usually, the operators inside a content stream should not have more than three characters,
+        # especially after an inline image.
+        return True
+    return False

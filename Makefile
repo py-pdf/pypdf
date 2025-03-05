@@ -23,13 +23,6 @@ test:
 testtype:
 	pytest tests --cov --cov-report term-missing -vv --cov-report html --durations=3 --timeout=30 --typeguard-packages=pypdf
 
-mutation-test:
-	mutmut run
-
-mutation-results:
-	mutmut junitxml --suspicious-policy=ignore --untested-policy=ignore > mutmut-results.xml
-	junit2html mutmut-results.xml mutmut-results.html
-
 benchmark:
 	pytest tests/bench.py
 

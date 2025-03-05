@@ -534,7 +534,9 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             for gen in rem_gens:
                 loc = pdf.xref[gen]
                 try:
-                    out = min(out, min([x for x in loc.values() if p < x <= p1]))
+                    values = [x for x in loc.values() if p < x <= p1]
+                    if values:
+                        out = min(out, *values)
                 except ValueError:
                     pass
             return out
@@ -735,7 +737,7 @@ class TreeObject(DictionaryObject):
         assert parent is not None, "mypy"
         parent = cast("TreeObject", parent.get_object())
         #  BooleanObject requires comparison with == not is
-        opn = parent.get("/%is_open%", True) == True  # noqa
+        opn = parent.get("/%is_open%", True) == True  # noqa: E712
         c = cast(int, parent.get("/Count", 0))
         if c < 0:
             c = abs(c)
@@ -1178,7 +1180,18 @@ class ContentStream(DecodedStreamObject):
             if isinstance(stream, ArrayObject):
                 data = b""
                 for s in stream:
-                    data += s.get_object().get_data()
+                    s_resolved = s.get_object()
+                    if isinstance(s_resolved, NullObject):
+                        continue
+                    if not isinstance(s_resolved, StreamObject):
+                        # No need to emit an exception here for now - the PDF structure
+                        # seems to already be broken beforehand in these cases.
+                        logger_warning(
+                            f"Expected StreamObject, got {type(s_resolved).__name__} instead. Data might be wrong.",
+                            __name__
+                        )
+                    else:
+                        data += s_resolved.get_data()
                     if len(data) == 0 or data[-1] != b"\n":
                         data += b"\n"
                 super().set_data(bytes(data))
@@ -1286,7 +1299,7 @@ class ContentStream(DecodedStreamObject):
         operands: List[Union[int, str, PdfObject]] = []
         while True:
             peek = read_non_whitespace(stream)
-            if peek == b"" or peek == 0:
+            if peek in (b"", 0):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek in (b"'", b'"'):
@@ -1372,9 +1385,18 @@ class ContentStream(DecodedStreamObject):
         ei = stream.read(3)
         stream.seek(-1, 1)
         if ei[0:2] != b"EI" or ei[2:3] not in WHITESPACES:
-            # Deal with wrong/missing `EI` tags.
+            # Deal with wrong/missing `EI` tags. Example: Wrong dimensions specified above.
             stream.seek(savpos, 0)
             data = extract_inline_default(stream)
+            ei = stream.read(3)
+            stream.seek(-1, 1)
+            if ei[0:2] != b"EI" or ei[2:3] not in WHITESPACES:  # pragma: no cover
+                # Check the same condition again. This should never fail as
+                # edge cases are covered by `extract_inline_default` above,
+                # but check this ot make sure that we are behind the `EI` afterwards.
+                raise PdfStreamError(
+                    f"Could not extract inline image, even using fallback. Expected 'EI', got {ei!r}"
+                )
         return {"settings": settings, "data": data}
 
     # This overrides the parent method:
@@ -1451,7 +1473,7 @@ def read_object(
             return read_hex_string_from_stream(stream, forced_encoding)
     elif tok == b"[":
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
-    elif tok == b"t" or tok == b"f":
+    elif tok in (b"t", b"f"):
         return BooleanObject.read_from_stream(stream)
     elif tok == b"(":
         return read_string_from_stream(stream, forced_encoding)

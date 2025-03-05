@@ -40,21 +40,21 @@ The function provided in argument visitor_text of function extract_text has five
 * text: the current text (as long as possible, can be up to a full line)
 * user_matrix: current matrix to move from user coordinate space (also known as CTM)
 * tm_matrix: current matrix from text coordinate space
-* font-dictionary: full font dictionary
-* font-size: the size (in text coordinate space)
+* font_dictionary: full font dictionary
+* font_size: the size (in text coordinate space)
 
 The matrix stores six parameters. The first four provide the rotation/scaling matrix and the last two provide the translation (horizontal/vertical).
-It is recommended to use the user_matrix as it takes into all transformations.
+It is recommended to use the user_matrix as it takes into account all transformations.
 
 Notes :
 
  - As indicated in §8.3.3 of the PDF 1.7 or PDF 2.0 specification, the user matrix applies to text space/image space/form space/pattern space.
  - If you want to get the full transformation from text to user space, you can use the {func}`~.pypdf.mult` function as follows:
-`txt2user = mult(tm, cm))`.
+`txt2user = mult(tm, cm)`.
 The font size is the raw text size and affected by the `user_matrix`.
 
 
-The font-dictionary may be None in case of unknown fonts.
+The font_dictionary may be None in case of unknown fonts.
 If not None it could contain something like key "/BaseFont" with value "/Arial,Bold".
 
 **Caveat**: In complicated documents the calculated positions may be difficult to (if you move from multiple forms to page user space for example).

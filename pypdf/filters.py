@@ -69,9 +69,9 @@ def decompress(data: bytes) -> bytes:
     """
     Decompress the given data using zlib.
 
-    This function attempts to decompress the input data using zlib. If the
-    decompression fails due to a zlib error, it falls back to using a
-    decompression object with a larger window size.
+    Attempts to decompress the input data using zlib.
+    If the decompression fails due to a zlib error, it falls back
+    to using a decompression object with a larger window size.
 
     Args:
         data: The input data to be decompressed.
@@ -84,10 +84,10 @@ def decompress(data: bytes) -> bytes:
         return zlib.decompress(data)
     except zlib.error:
         try:
-            # For larger files, use Decompress object to enable buffered reading
+            # For larger files, use decompression object to enable buffered reading
             return zlib.decompressobj().decompress(data)
         except zlib.error:
-            # If still failed, then try with increased window size
+            # If still failing, then try with increased window size
             d = zlib.decompressobj(zlib.MAX_WBITS | 32)
             result_str = b""
             for b in [data[i : i + 1] for i in range(len(data))]:
@@ -294,7 +294,7 @@ class ASCIIHexDecode:
                 logger_warning(
                     "missing EOD in ASCIIHexDecode, check if output is OK", __name__
                 )
-                break  # reach End Of String even if no EOD
+                break  # Reached end of string even if no EOD
             char = data[index : index + 1]
             if char == b">":
                 break
@@ -494,10 +494,11 @@ class CCITTParameters:
     @property
     def group(self) -> int:
         if self.K < 0:
+            # Pure two-dimensional encoding (Group 4)
             CCITTgroup = 4
         else:
-            # k == 0: Pure one-dimensional encoding (Group 3, 1-D)
-            # k > 0: Mixed one- and two-dimensional encoding (Group 3, 2-D)
+            # K == 0: Pure one-dimensional encoding (Group 3, 1-D)
+            # K > 0: Mixed one- and two-dimensional encoding (Group 3, 2-D)
             CCITTgroup = 3
         return CCITTgroup
 
@@ -730,7 +731,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     # for error reporting
     obj_as_text = (
-        x_object_obj.indirect_reference.__repr__()  # type: ignore
+        x_object_obj.indirect_reference.__repr__()
         if x_object_obj is None  # pragma: no cover
         else x_object_obj.__repr__()
     )

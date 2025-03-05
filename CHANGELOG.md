@@ -1,5 +1,105 @@
 # CHANGELOG
 
+## Version 5.3.1, 2025-03-02
+
+### Bug Fixes (BUG)
+- Use the correct name StandardEncoding for the predefined cmap (#3156)
+- Handle inline images containing `EI ` sequences (#3152)
+- Fix check box value which should be name object (#3124)
+- Fix stream position on inline image fallback extraction (#3120)
+- Fix object count for incremental writer (#3117)
+
+### Robustness (ROB)
+- Avoid index errors on empty lines in xref table (#3162)
+- Improve handling of LZW decoder table overflow (#3159)
+- Ignore non-numbers for width when building font width map (#3158)
+- Avoid negative seek values when reading partially broken files (#3157)
+
+### Documentation (DOC)
+- Fixed PageObject.images example usage for replacing image (#3149)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.3.0...5.3.1)
+
+## Version 5.3.0, 2025-02-09
+
+### New Features (ENH)
+- Handle attachments in /Kids and provide object-oriented API (#3108)
+
+### Bug Fixes (BUG)
+- Handle annotations being None on merging (#3111)
+
+### Robustness (ROB)
+- Prevent excessive layout mode text output from Type3 fonts (#3082)
+
+### Documentation (DOC)
+- stefan6419846 becomes BDFL of pypdf (#3078)
+- Tidy the visitor function description (#3086)
+
+### Developer Experience (DEV)
+- Remove ignoring multiple Ruff rules
+- Remove unused mutmut configuration (#3092)
+
+### Testing (TST)
+- Fix warning assertions to use `pytest.warns()` (#3083)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.2.0...5.3.0)
+
+## Version 5.2.0, 2025-01-26
+
+### Deprecations (DEP)
+- Deprecate with replacement CCITParameters (#3019)
+- Correct deprecation of interiour_color (#2947)
+
+### New Features (ENH)
+- Support alternative (U)F names for embedded file retrieval (#3072)
+- Adding support for reading .metadata.keywords (#2939)
+
+### Bug Fixes (BUG)
+- Handle further Tf operators in text extraction layout mode (#3073)
+- Ensure `add_metadata` can deal with `_info = None` (#3040)
+- Handle IndirectObject in CCITTFaxDecode filter (#2965)
+- Handle chained colorspace for inline images when no filter is set (#3008)
+- Avoid extracting inline images twice and dropping other operators (#3002)
+- Fixed reference of value with `str.__new__` in TextStringObject (#2952)
+- Handle indirect objects in font width calculations (#2967)
+- Title sometimes is bytes and not str (#2930)
+- Fix undefined variable for text extraction (regression) (#2934)
+- Don't close stream passed to PdfWriter.write() (#2909)
+
+### Robustness (ROB)
+- Handle zero height fonts when extracting text (#3075)
+- Deal with content streams not containing streams (#3005)
+- Gracefully handle some text operators when the operands are missing (#3006)
+- Fall back to non-Adobe Ascii85 format for missing end markers (#3007)
+- Ignore odd-length strings when processing cmap lines (#3009)
+- Skip annotation destination being NullObject in PdfWriter (#2964)
+- Skip destination page being None in PdfWriter (#2963)
+- Fix infinite loop case when reading null objects within an Array
+- Fixing infinite loop in ArrayObject read_from_stream (#2928)
+
+### Documentation (DOC)
+- Add note about default line colors (#3014)
+
+### Developer Experience (DEV)
+- Remove ignoring Ruff rule PGH004 (#3071)
+- Tidy ignore array in tool.ruff.lint (#3069)
+- Move Windows CI to Python 3.13 (#3003)
+- Move to Ubuntu 22.04 (#3004)
+
+### Maintenance (MAINT)
+- Fix formatting of warning message and include exception message (#3076)
+- Narrow return type for `ContentStream.operations` (#2941)
+
+### Testing (TST)
+- Fix image similarity for upcoming Ubuntu 24.04 (#3039)
+- Replace broken Apache Tika Corpora urls (#3041)
+
+### Code Style (STY)
+- Add form feed to WHITESPACES (#3054)
+- Lots of small internal changes
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.1.0...5.2.0)
+
 ## Version 5.1.0, 2024-10-27
 
 ### New Features (ENH)

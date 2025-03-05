@@ -35,6 +35,7 @@ from datetime import datetime
 from typing import (
     Any,
     Dict,
+    Generator,
     Iterable,
     Iterator,
     List,
@@ -87,6 +88,7 @@ from .generic import (
     create_string_object,
     is_null_or_none,
 )
+from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
 
@@ -960,8 +962,7 @@ class PdfDocCommon:
             page = NullObject()
             return Destination(title, page, Fit.fit())
         else:
-            page, typ = array[0:2]  # type: ignore
-            array = array[2:]
+            page, typ, *array = array  # type: ignore
             try:
                 return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
             except PdfReadError:
@@ -1332,12 +1333,18 @@ class PdfDocCommon:
 
     @property
     def attachments(self) -> Mapping[str, List[bytes]]:
+        """Mapping of attachment filenames to their content."""
         return LazyDict(
             {
                 name: (self._get_attachment_list, name)
                 for name in self._list_attachments()
             }
         )
+
+    @property
+    def attachment_list(self) -> Generator[EmbeddedFile, None, None]:
+        """Iterable of attachment objects."""
+        yield from EmbeddedFile._load(self.root_object)
 
     def _list_attachments(self) -> List[str]:
         """
@@ -1347,20 +1354,12 @@ class PdfDocCommon:
             list of filenames
 
         """
-        catalog = self.root_object
-        # From the catalog get the embedded file names
-        try:
-            filenames = cast(
-                ArrayObject,
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
-                )["/Names"],
-            )
-        except KeyError:
-            return []
-        attachments_names = [f for f in filenames if isinstance(f, str)]
-        return attachments_names
+        names = []
+        for entry in self.attachment_list:
+            names.append(entry.name)
+            if (name := entry.alternative_name) != entry.name and name:
+                names.append(name)
+        return names
 
     def _get_attachment_list(self, name: str) -> List[bytes]:
         out = self._get_attachments(name)[name]
@@ -1386,34 +1385,28 @@ class PdfDocCommon:
             If the filename exists multiple times a list of the different versions will be provided.
 
         """
-        catalog = self.root_object
-        # From the catalog get the embedded file names
-        try:
-            filenames = cast(
-                ArrayObject,
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
-                )["/Names"],
-            )
-        except KeyError:
-            return {}
         attachments: Dict[str, Union[bytes, List[bytes]]] = {}
-        # Loop through attachments
-        for i in range(len(filenames)):
-            f = filenames[i]
-            if isinstance(f, str):
-                if filename is not None and f != filename:
+        for entry in self.attachment_list:
+            names = set()
+            alternative_name = entry.alternative_name
+            if filename is not None:
+                if filename in {entry.name, alternative_name}:
+                    name = entry.name if filename == entry.name else alternative_name
+                    names.add(name)
+                else:
                     continue
-                name = f
-                f_dict = filenames[i + 1].get_object()
-                f_data = f_dict["/EF"]["/F"].get_data()
+            else:
+                names = {entry.name, alternative_name}
+
+            for name in names:
+                if name is None:
+                    continue
                 if name in attachments:
                     if not isinstance(attachments[name], list):
                         attachments[name] = [attachments[name]]  # type:ignore
-                    attachments[name].append(f_data)  # type:ignore
+                    attachments[name].append(entry.content)  # type:ignore
                 else:
-                    attachments[name] = f_data
+                    attachments[name] = entry.content
         return attachments
 
     @abstractmethod

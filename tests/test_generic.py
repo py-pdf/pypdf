@@ -234,7 +234,7 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-    with pytest.raises(DeprecationWarning):
+    with pytest.warns(DeprecationWarning):
         NameObject("hello").write_to_stream(b)
 
     caplog.clear()
@@ -1032,6 +1032,13 @@ def test_indirect_object_page_dimensions():
     assert mediabox == RectangleObject((0, 0, 792, 612))
 
 
+def test_indirect_object_contains():
+    writer = PdfWriter()
+    indirect_object = IndirectObject(1, 0, writer)
+    assert "foo" not in indirect_object
+    assert "/Producer" in indirect_object
+
+
 def test_array_operators():
     a = ArrayObject(
         [
@@ -1209,3 +1216,13 @@ def test_coverage_streamobject():
     co[NameObject("/testkey")] = NameObject("/test")
     co.decoded_self = DecodedStreamObject()
     assert "/testkey" in co.replicate(writer)
+
+
+def test_contentstream_arrayobject_containing_nullobject(caplog):
+    stream_object = DecodedStreamObject()
+    stream_object.set_data(b"Hello World!")
+
+    input_stream = ArrayObject([NullObject(), stream_object])
+    content_stream = ContentStream(stream=input_stream, pdf=None)
+    assert content_stream.get_data() == b"Hello World!\n"
+    assert caplog.text == ""

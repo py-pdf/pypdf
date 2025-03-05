@@ -15,6 +15,7 @@ from .generic import (
     EncodedStreamObject,
     IndirectObject,
     NullObject,
+    TextStringObject,
 )
 
 if sys.version_info[:2] >= (3, 10):
@@ -45,14 +46,14 @@ def _get_imagemode(
     depth: int = 0,
 ) -> Tuple[mode_str_type, bool]:
     """
-    Returns
-        Image mode not taking into account mask(transparency)
-        ColorInversion is required (like for some DeviceCMYK)
+    Returns:
+        Image mode, not taking into account mask (transparency).
+        ColorInversion is required (like for some DeviceCMYK).
 
     """
     if depth > MAX_IMAGE_MODE_NESTING_DEPTH:
         raise PdfReadError(
-            "Color spaces nested too deep. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH."
+            "Color spaces nested too deeply. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH."
         )
     if isinstance(color_space, NullObject):
         return "", False
@@ -60,7 +61,7 @@ def _get_imagemode(
         pass
     elif not isinstance(color_space, list):
         raise PdfReadError(
-            "Cannot interpret colorspace", color_space
+            "Cannot interpret color space", color_space
         )  # pragma: no cover
     elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
         color_space = "/Device" + color_space[0][4:]
@@ -70,20 +71,20 @@ def _get_imagemode(
         color_space = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space = color_space[1].get_object()
-        mode2, invert_color = _get_imagemode(
+        mode, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )
-        if mode2 in ("RGB", "CMYK"):
-            mode2 = "P"
-        return mode2, invert_color
+        if mode in ("RGB", "CMYK"):
+            mode = "P"
+        return mode, invert_color
     elif color_space[0] == "/Separation":
         color_space = color_space[2]
         if isinstance(color_space, IndirectObject):
             color_space = color_space.get_object()
-        mode2, invert_color = _get_imagemode(
+        mode, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )
-        return mode2, True
+        return mode, True
     elif color_space[0] == "/DeviceN":
         original_color_space = color_space
         color_components = len(color_space[1])
@@ -97,44 +98,46 @@ def _get_imagemode(
                     __name__,
                 )
             return "L", True
-        mode2, invert_color = _get_imagemode(
+        mode, invert_color = _get_imagemode(
             color_space, color_components, prev_mode, depth + 1
         )
-        return mode2, invert_color
+        return mode, invert_color
 
-    mode_map = {
-        "1bit": "1",  # pos [0] will be used for 1 bit
-        "/DeviceGray": "L",  # must be in pos [1]
-        "palette": "P",  # must be in pos [2] for color_components align.
-        "/DeviceRGB": "RGB",  # must be in pos [3]
-        "/DeviceCMYK": "CMYK",  # must be in pos [4]
-        "2bit": "2bits",  # 2 bits images
-        "4bit": "4bits",  # 4 bits
+    mode_map: Dict[str, mode_str_type] = {
+        "1bit": "1",  # must be zeroth position: color_components may index the values
+        "/DeviceGray": "L",  # must be first position: color_components may index the values
+        "palette": "P",  # must be second position: color_components may index the values
+        "/DeviceRGB": "RGB",  # must be third position: color_components may index the values
+        "/DeviceCMYK": "CMYK",  # must be fourth position: color_components may index the values
+        "2bit": "2bits",
+        "4bit": "4bits",
     }
-    mode: mode_str_type = (
-        mode_map.get(color_space)  # type: ignore
+
+    mode = (
+        mode_map.get(color_space)
         or list(mode_map.values())[color_components]
         or prev_mode
     )
+
     return mode, mode == "CMYK"
 
 
 def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
     mask = (1 << bits) - 1
-    nbuff = bytearray(size[0] * size[1])
-    by = 0
+    byte_buffer = bytearray(size[0] * size[1])
+    data_index = 0
     bit = 8 - bits
     for y in range(size[1]):
         if bit != 8 - bits:
-            by += 1
+            data_index += 1
             bit = 8 - bits
         for x in range(size[0]):
-            nbuff[y * size[0] + x] = (data[by] >> bit) & mask
+            byte_buffer[x + y * size[0]] = (data[data_index] >> bit) & mask
             bit -= bits
             if bit < 0:
-                by += 1
+                data_index += 1
                 bit = 8 - bits
-    return bytes(nbuff)
+    return bytes(byte_buffer)
 
 
 def _extended_image_frombytes(
@@ -184,8 +187,6 @@ def _handle_flate(
         data = bits2byte(data, size, 4)
     img = _extended_image_frombytes(mode, size, data)
     if color_space == "/Indexed":
-        from .generic import TextStringObject
-
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
         if isinstance(lookup, TextStringObject):
@@ -291,7 +292,7 @@ def _handle_jpx(
         mode = "RGBA"
     # we need to convert to the good mode
     if img1.mode == mode or {img1.mode, mode} == {"L", "P"}:  # compare (unordered) sets
-        # L,P are indexed modes which should not be changed.
+        # L and P are indexed modes which should not be changed.
         img = img1
     elif {img1.mode, mode} == {"RGBA", "CMYK"}:
         # RGBA / CMYK are 4bytes encoding where
@@ -315,7 +316,7 @@ def _apply_decode(
     color_space: Union[str, List[Any], Any],
     invert_color: bool,
 ) -> Image.Image:
-    # CMYK image and other colorspaces without decode
+    # CMYK image and other color spaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
     decode = x_object_obj.get(
         IA.DECODE,
@@ -330,7 +331,7 @@ def _apply_decode(
         isinstance(color_space, ArrayObject)
         and color_space[0].get_object() == "/Indexed"
     ):
-        decode = None  # decode is meanless of Indexed
+        decode = None  # decode is meaningless if Indexed
     if (
         isinstance(color_space, ArrayObject)
         and color_space[0].get_object() == "/Separation"

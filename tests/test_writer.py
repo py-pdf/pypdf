@@ -651,9 +651,9 @@ def test_add_outline_item(pdf_file_path):
         reader = PdfReader(output_stream)
         assert reader.trailer["/Root"]["/Outlines"]["/Count"] == 3
         assert reader.outline[0]["/Count"] == -2
-        assert reader.outline[0]["/%is_open%"] == False  # noqa
+        assert reader.outline[0]["/%is_open%"] == False  # noqa: E712
         assert reader.outline[2]["/Count"] == 2
-        assert reader.outline[2]["/%is_open%"] == True  # noqa
+        assert reader.outline[2]["/%is_open%"] == True  # noqa: E712
         assert reader.outline[1][0]["/Count"] == 0
 
 
@@ -1546,7 +1546,7 @@ def test_update_form_fields(tmp_path):
 
 @pytest.mark.enable_socket
 def test_update_form_fields2():
-    myFiles = {
+    my_files = {
         "test1": {
             "name": "Test1 Form",
             "url": "https://github.com/py-pdf/pypdf/files/14817365/test1.pdf",
@@ -1589,15 +1589,15 @@ def test_update_form_fields2():
     }
     merger = PdfWriter()
 
-    for file in myFiles:
+    for file in my_files:
         reader = PdfReader(
-            BytesIO(get_data_from_url(myFiles[file]["url"], name=myFiles[file]["path"]))
+            BytesIO(get_data_from_url(my_files[file]["url"], name=my_files[file]["path"]))
         )
         reader.add_form_topname(file)
         writer = PdfWriter(clone_from=reader)
 
         writer.update_page_form_field_values(
-            None, myFiles[file]["usage"]["fields"], auto_regenerate=True
+            None, my_files[file]["usage"]["fields"], auto_regenerate=True
         )
         merger.append(writer)
     assert merger.get_form_text_fields(True) == {
@@ -2607,3 +2607,48 @@ def test_inline_image_q_operator_handling(tmp_path):
     )
     assert png_path.is_file()
     assert image_similarity(png_path, expected_png_path) >= 0.99999
+
+
+def test_insert_filtered_annotations__annotations_are_none():
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    stream = BytesIO()
+    writer.write(stream)
+    reader = PdfReader(stream)
+    assert writer._insert_filtered_annotations(
+        annots=None, page=PageObject(), pages={}, reader=reader
+    ) == []
+
+
+def test_incremental_read():
+    """Test for #3116"""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    stream0 = BytesIO()
+    writer.write(stream0)
+
+    reader = PdfReader(stream0)
+    # 1 = Catalog, 2 = Pages, 3 = New Page, 4 = Info, Size == 5
+    assert reader.trailer["/Size"] == 5
+
+    stream0.seek(0, 0)
+    writer = PdfWriter(stream0, incremental=True)
+    assert len(writer._objects) == 4
+    assert writer._objects[-1] is not None
+    stream1 = BytesIO()
+    writer.write(stream1)
+
+    # nothing modified, so nothing added = ideal situation
+    assert stream1.getvalue() == stream1.getvalue()
+
+    stream0.seek(0, 0)
+    writer = PdfWriter(stream0, incremental=True)
+    assert len(writer._objects) == 4
+    assert writer._objects[-1] is not None
+    writer.add_blank_page(72, 72)
+    assert len(writer._objects) == 5
+    stream1 = BytesIO()
+    writer.write(stream1)
+    # 2 = Pages, 5 = New Page, 6 = XRef, Size == 7
+    # XRef is created on write and not counted
+    assert len(writer._objects) == 5

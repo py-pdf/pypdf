@@ -1112,6 +1112,7 @@ class PdfWriter(PdfDocCommon):
                         v = NameObject("/Off")
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
+                    annotation[NameObject(FA.V)] = v
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
@@ -1190,8 +1191,8 @@ class PdfWriter(PdfDocCommon):
         """
         self._info_obj = None
         if self.incremental:
-            self._objects = [None] * cast(int, reader.trailer["/Size"])
-            for i in range(len(self._objects) - 1):
+            self._objects = [None] * (cast(int, reader.trailer["/Size"]) - 1)
+            for i in range(len(self._objects)):
                 o = reader.get_object(i + 1)
                 if o is not None:
                     self._objects[i] = o.replicate(self)
@@ -2932,7 +2933,7 @@ class PdfWriter(PdfDocCommon):
 
     def _insert_filtered_annotations(
         self,
-        annots: Union[IndirectObject, List[DictionaryObject]],
+        annots: Union[IndirectObject, List[DictionaryObject], None],
         page: PageObject,
         pages: Dict[int, PageObject],
         reader: PdfReader,
@@ -2940,6 +2941,8 @@ class PdfWriter(PdfDocCommon):
         outlist = ArrayObject()
         if isinstance(annots, IndirectObject):
             annots = cast("List[Any]", annots.get_object())
+        if annots is None:
+            return outlist
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
             if (

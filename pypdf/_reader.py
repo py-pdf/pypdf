@@ -747,6 +747,8 @@ class PdfReader(PdfDocCommon):
             cnt = 0
             while cnt < size:
                 line = stream.read(20)
+                if not line:
+                    raise PdfReadError("Unexpected empty line in Xref table.")
 
                 # It's very clear in section 3.4.3 of the PDF spec
                 # that all cross-reference table lines are a fixed
@@ -1003,6 +1005,9 @@ class PdfReader(PdfDocCommon):
             0 means no issue, other values represent specific issues.
 
         """
+        if startxref == 0:
+            return 4
+
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
         if line == b"j":
@@ -1011,7 +1016,7 @@ class PdfReader(PdfDocCommon):
             return 1
         line = stream.read(4)
         if line != b"xref":
-            # not an xref so check if it is an XREF object
+            # not a xref so check if it is an XREF object
             line = b""
             while line in b"0123456789 \t":
                 line = stream.read(1)

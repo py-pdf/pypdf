@@ -1035,7 +1035,7 @@ def test_inline_images():
 
 
 @pytest.mark.enable_socket
-def test_iss():
+def test_issue1899():
     url = "https://github.com/py-pdf/pypdf/files/11801077/lv2018tconv.pdf"
     name = "lv2018tconv.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
