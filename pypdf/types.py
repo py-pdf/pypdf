@@ -24,7 +24,10 @@ FitType: TypeAlias = Literal[
 ZoomArgType: TypeAlias = Union[NumberObject, NullObject, float]
 ZoomArgsType: TypeAlias = List[ZoomArgType]
 
-OutlineType: TypeAlias = List[Union[Destination, "OutlineType"]]
+# Recursive types like the following are not yet supported by Sphinx:
+#    OutlineType = List[Union[Destination, "OutlineType"]]
+# Hence use this for the moment:
+OutlineType = List[Union[Destination, List[Union[Destination, List[Destination]]]]]
 
 LayoutType: TypeAlias = Literal[
     "/NoLayout",
