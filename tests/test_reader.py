@@ -1806,3 +1806,15 @@ def test_issue2886(caplog):
 
     with pytest.raises(PdfReadError, match="Unexpected empty line in Xref table."):
         _ = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+
+@pytest.mark.enable_socket
+def test_infinite_loop_for_length_value():
+    """Tests for #3112"""
+    url = "https://github.com/user-attachments/files/19106009/Special.n.15.du.jeudi.22.fevrier.2024.pdf"
+    name = "issue3112.pdf"
+
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    with pytest.raises(PdfReadError, match=r"^Detected loop with self reference for IndirectObject\(165, 0, \d+\)\.$"):
+        writer.add_page(reader.pages[0])
