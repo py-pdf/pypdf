@@ -32,9 +32,19 @@ print(page.extract_text(extraction_mode="layout", layout_mode_strip_rotated=Fals
 
 Refer to {func}`~pypdf._page.PageObject.extract_text` for more details.
 
+```{note}
+Extracting the text of a page requires parsing its whole content stream. This can require quite a lot of memory -
+we have seen 10 GB RAM being required for an uncompressed content stream of about 300 MB (which should not occur
+very often).
+
+To limit the size of the content streams to process (and avoid OOM errors in your application), consider
+checking `len(page.get_contents().get_data())` beforehand.
+```
+
 ## Using a visitor
 
-You can use visitor functions to control which part of a page you want to process and extract. The visitor functions you provide will get called for each operator or for each text fragment.
+You can use visitor functions to control which part of a page you want to process and extract. The visitor functions
+you provide will get called for each operator or for each text fragment.
 
 The function provided in argument visitor_text of function extract_text has five arguments:
 * text: the current text (as long as possible, can be up to a full line)
@@ -110,7 +120,7 @@ def visitor_svg_rect(op, args, cm, tm):
         dwg.add(dwg.rect((x, y), (w, h), stroke="red", fill_opacity=0.05))
 
 
-def visitor_svg_text(text, cm, tm, fontDict, fontSize):
+def visitor_svg_text(text, cm, tm, font_dict, font_size):
     (x, y) = (cm[4], cm[5])
     dwg.add(dwg.text(text, insert=(x, y), fill="blue"))
 
