@@ -40,6 +40,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Set,
     Tuple,
     Type,
     Union,
@@ -133,6 +134,7 @@ class PdfReader(PdfDocCommon):
         self._validated_root: Optional[DictionaryObject] = None
 
         self._initialize_stream(stream)
+        self._known_objects: Set[Tuple[int, int]] = set()
 
         self._override_encryption = False
         self._encryption: Optional[Encryption] = None
@@ -447,7 +449,13 @@ class PdfReader(PdfDocCommon):
                 )
             if self.strict:
                 assert generation == indirect_reference.generation
+
+            current_object = (indirect_reference.idnum, indirect_reference.generation)
+            if current_object in self._known_objects:
+                raise PdfReadError(f"Detected loop with self reference for {indirect_reference!r}.")
+            self._known_objects.add(current_object)
             retval = read_object(self.stream, self)  # type: ignore
+            self._known_objects.remove(current_object)
 
             # override encryption is used for the /Encrypt dictionary
             if not self._override_encryption and self._encryption is not None:
