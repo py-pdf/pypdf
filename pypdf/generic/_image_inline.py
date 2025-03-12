@@ -285,7 +285,15 @@ def is_followed_by_binary_data(stream: IO[bytes], length: int = 10) -> bool:
     if operator_end is None:
         # We probably are inside an operation.
         operator_end = length
-    if operator_end - operator_start > 3:  # noqa: SIM103
+    operator_length = operator_end - operator_start
+    operator = data[operator_start:operator_end]
+    if operator.startswith(b"/") and operator_length > 1:
+        # Name object.
+        return False
+    if operator.replace(b".", b"").isdigit():
+        # Graphics operator, for example a move. A number (integer or float).
+        return False
+    if operator_length > 3:  # noqa: SIM103
         # Usually, the operators inside a content stream should not have more than three characters,
         # especially after an inline image.
         return True
