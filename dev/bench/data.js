@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741345135859,
+  "lastUpdate": 1741773544609,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -70295,6 +70295,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01169991030882467",
             "extra": "mean: 740.3128154000001 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ca9de10ef81f4593847efcede5177e4e71bc3db7",
+          "message": "MAINT: Use latest jinja2 version to resolve Dependabot alerts (#3174)",
+          "timestamp": "2025-03-12T10:56:36+01:00",
+          "tree_id": "8b4fcf53fc1016d2e569e498604848023962b1bd",
+          "url": "https://github.com/py-pdf/pypdf/commit/ca9de10ef81f4593847efcede5177e4e71bc3db7"
+        },
+        "date": 1741773541859,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.6336514419303496,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009915790685627852",
+            "extra": "mean: 275.20526279998876 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.16376364679174,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007619708215434228",
+            "extra": "mean: 61.86677941176681 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.290174083357841,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023683043854619508",
+            "extra": "mean: 3.446207147199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.147566213029705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006244584763769468",
+            "extra": "mean: 55.10380776470256 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08224915527457602,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016838413298987605",
+            "extra": "mean: 12.15817957839999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3513472045415689,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014862066857711536",
+            "extra": "mean: 740.0022708000051 msec\nrounds: 5"
           }
         ]
       }
