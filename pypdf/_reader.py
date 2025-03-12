@@ -869,8 +869,7 @@ class PdfReader(PdfDocCommon):
                             f"Previous trailer cannot be read: {e.args}", __name__
                         )
                         break
-                    else:
-                        raise PdfReadError(f"Trailer cannot be read: {e.args}")
+                    raise PdfReadError(f"Trailer cannot be read: {e.args}")
                 self._process_xref_stream(xrefstream)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
