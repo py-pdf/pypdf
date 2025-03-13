@@ -272,10 +272,8 @@ def get_most_recent_git_tag() -> str:
         Most recently created git tag.
 
     """
-    return str(
-        subprocess.check_output(
-            ["git", "describe", "--tag", "--abbrev=0"], stderr=subprocess.STDOUT
-        )
+    return subprocess.check_output(
+        ["git", "describe", "--tag", "--abbrev=0"], stderr=subprocess.STDOUT, text=True
     ).strip("'b\\n")
 
 
