@@ -876,8 +876,7 @@ class PdfReader(PdfDocCommon):
                             f"Previous trailer cannot be read: {e.args}", __name__
                         )
                         break
-                    else:
-                        raise PdfReadError(f"Trailer cannot be read: {e.args}")
+                    raise PdfReadError(f"Trailer cannot be read: {e!s}")
                 self._process_xref_stream(xrefstream)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
@@ -972,7 +971,8 @@ class PdfReader(PdfDocCommon):
         stream.seek(-1, 1)
         idnum, generation = self.read_object_header(stream)
         xrefstream = cast(ContentStream, read_object(stream, self))
-        assert cast(str, xrefstream["/Type"]) == "/XRef"
+        if cast(str, xrefstream["/Type"]) != "/XRef":
+            raise PdfReadError(f"Unexpected type {xrefstream['/Type']!r}")
         self.cache_indirect_object(generation, idnum, xrefstream)
         stream_data = BytesIO(xrefstream.get_data())
         # Index pairs specify the subsections in the dictionary.
