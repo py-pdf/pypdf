@@ -169,7 +169,6 @@ ignore = [
     "N817",    # CamelCase `PagesAttributes` imported as acronym `PA`
     "PERF203", # `try`-`except` within a loop incurs performance overhead
     "PGH003",  # Use specific rule codes when ignoring type issues
-    "PLC0206", # Extracting value from dictionary without calling `.items()`
     "PLW0603", # Using the global statement to update `CUSTOM_RTL_SPECIAL_CHARS` is discouraged
     "PLW1510", # `subprocess.run` without explicit `check` argument
     "PLW2901", # `with` statement variable `img` overwritten by assignment target
