@@ -103,7 +103,7 @@ def read_string_from_stream(
                     else:
                         txt.append(i)
                     continue
-                elif tok in b"\n\r":
+                if tok in b"\n\r":
                     # This case is hit when a backslash followed by a line
                     # break occurs. If it's a multi-char EOL, consume the
                     # second character:
