@@ -72,7 +72,7 @@ def extract_inline_AHx(stream: StreamType) -> bytes:
         if len(data_buffered) == 2:
             data_out += data_buffered
             raise PdfReadError("Unexpected end of stream")
-        # > nor EI found
+        # Neither > nor EI found
         data_out += data_buffered[:-2]
         stream.seek(-2, 1)
 
