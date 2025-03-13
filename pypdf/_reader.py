@@ -229,7 +229,16 @@ class PdfReader(PdfDocCommon):
                     self._validated_root = o
                     logger_warning(f"Root found at {o.indirect_reference!r}", __name__)
                     break
-            if self._validated_root is None:
+        if self._validated_root is None:
+            if not is_null_or_none(root) and "/Pages" in cast(DictionaryObject, cast(PdfObject, root).get_object()):
+                logger_warning(
+                    f"Possible root found at {cast(PdfObject, root).indirect_reference!r}, but missing /Catalog key",
+                    __name__
+                )
+                self._validated_root = cast(
+                    DictionaryObject, cast(PdfObject, root).get_object()
+                )
+            else:
                 raise PdfReadError("Cannot find Root object in pdf")
         return self._validated_root
 

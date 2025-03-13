@@ -1760,7 +1760,7 @@ def test_repair_root(caplog):
     caplog.clear()
     reader = PdfReader(
         BytesIO(
-            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog/Pages 3 0 R", b"/Catalo ")
         )
     )
     with pytest.raises(PdfReadError):
@@ -1775,9 +1775,9 @@ def test_repair_root(caplog):
 
     # Invalid /Root Entry + error in get_object
     caplog.clear()
-    b = b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
-    b = b[:5124] + b"A" + b[5125:]
-    reader = PdfReader(BytesIO(b))
+    data = b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog/Pages 3 0 R", b"/Catalo ")
+    data = data[:5124] + b"A" + data[5125:]
+    reader = PdfReader(BytesIO(data))
     with pytest.raises(PdfReadError):
         len(reader.pages)
     assert all(
@@ -1785,6 +1785,23 @@ def test_repair_root(caplog):
         for msg in (
             "Invalid Root object in trailer",
             'Searching object with "/Catalog" key',
+        )
+    )
+
+    # Invalid /Root Entry without /Type, but /Pages.
+    caplog.clear()
+    reader = PdfReader(
+        BytesIO(
+            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+        )
+    )
+    assert len(reader.pages) == 1
+    assert all(
+        msg in caplog.text
+        for msg in (
+            "Invalid Root object in trailer",
+            'Searching object with "/Catalog" key',
+            f"Possible root found at IndirectObject(2, 0, {id(reader)}), but missing /Catalog key"
         )
     )
 
