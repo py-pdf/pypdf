@@ -298,7 +298,7 @@ class ASCIIHexDecode:
             char = data[index : index + 1]
             if char == b">":
                 break
-            elif char.isspace():
+            if char.isspace():
                 index += 1
                 continue
             hex_pair += char

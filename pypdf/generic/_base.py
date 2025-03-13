@@ -569,7 +569,7 @@ class NumberObject(int, PdfObject):
     @staticmethod
     def read_from_stream(stream: StreamType) -> Union["NumberObject", "FloatObject"]:
         num = read_until_regex(stream, NumberObject.NumberPattern)
-        if num.find(b".") != -1:
+        if b"." in num:
             return FloatObject(num)
         return NumberObject(num)
 
@@ -624,7 +624,7 @@ class ByteStringObject(bytes, PdfObject):
         stream.write(b">")
 
     def __str__(self) -> str:
-        charset_to_try = ["utf-16"] + list(NameObject.CHARSETS)
+        charset_to_try = ["utf-16", *list(NameObject.CHARSETS)]
         for enc in charset_to_try:
             try:
                 return self.decode(enc)
