@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741852257181,
+  "lastUpdate": 1741869676960,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -70691,6 +70691,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0036096732543280607",
             "extra": "mean: 750.6818882000005 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "07503651a2befe7c7e32ef8242d42cdddb9af1ba",
+          "message": "DEV: Move Ruff rule A005 (#3187)\n\nA005: Module shadows a Python standard-library module. Move from a global ignore in the tool.ruff.lint section, to tool.ruff.lint.per-file-ignores (symbol.py and types.py are the shadowed modules). This will prevent new modules being added that shadow a Python standard-library module.",
+          "timestamp": "2025-03-13T13:38:43+01:00",
+          "tree_id": "b34f8c184dbf25206db0759d53e8b949be6a148d",
+          "url": "https://github.com/py-pdf/pypdf/commit/07503651a2befe7c7e32ef8242d42cdddb9af1ba"
+        },
+        "date": 1741869673391,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5225887986408404,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009345543191605826",
+            "extra": "mean: 283.8821267999947 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.31283483696673,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00797803365353089",
+            "extra": "mean: 65.30469443749887 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27728262751962773,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023239530487705863",
+            "extra": "mean: 3.6064286066000077 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.095484097121044,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007622223205247922",
+            "extra": "mean: 55.262406611111224 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08232278889226176,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08601515587566791",
+            "extra": "mean: 12.147304694799994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3321481190204454,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00506260203452208",
+            "extra": "mean: 750.6672761999766 msec\nrounds: 5"
           }
         ]
       }
