@@ -1835,3 +1835,11 @@ def test_infinite_loop_for_length_value():
     writer = PdfWriter()
     with pytest.raises(PdfReadError, match=r"^Detected loop with self reference for IndirectObject\(165, 0, \d+\)\.$"):
         writer.add_page(reader.pages[0])
+
+
+def test_trailer_cannot_be_read():
+    path = RESOURCE_ROOT / "crazyones.pdf"
+    data = path.read_bytes().replace(b"/Type/XRef", b"/Type/Invalid")
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Unexpected type '/Invalid'$"):
+        reader = PdfReader(BytesIO(data))
+        list(reader.pages)
