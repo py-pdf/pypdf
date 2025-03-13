@@ -173,7 +173,7 @@ def parse_filename_page_ranges(
     pairs: List[Tuple[str, PageRange]] = []
     pdf_filename: Union[str, None] = None
     did_page_range = False
-    for arg in args + [None]:
+    for arg in [*args, None]:
         if PageRange.valid(arg):
             if not pdf_filename:
                 raise ValueError(
