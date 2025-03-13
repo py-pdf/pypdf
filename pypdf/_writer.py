@@ -2909,8 +2909,7 @@ class PdfWriter(PdfDocCommon):
                 thr = a.get_object().get("/T")
                 if thr is None:
                     continue
-                else:
-                    thr = thr.get_object()
+                thr = thr.get_object()
                 if thr.indirect_reference.idnum not in self._id_translated[
                     id(reader)
                 ] and fltr.search((thr.get("/I", {})).get("/Title", "")):
