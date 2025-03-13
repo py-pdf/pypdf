@@ -245,13 +245,12 @@ class PdfReader(PdfDocCommon):
         info = self.trailer.get(TK.INFO, None)
         if is_null_or_none(info):
             return None
-        else:
-            info = info.get_object()
-            if not isinstance(info, DictionaryObject):
-                raise PdfReadError(
-                    "Trailer not found or does not point to document information directory"
-                )
-            return info
+        info = info.get_object()
+        if not isinstance(info, DictionaryObject):
+            raise PdfReadError(
+                "Trailer not found or does not point to document information directory"
+            )
+        return info
 
     @property
     def _ID(self) -> Optional[ArrayObject]:
@@ -316,8 +315,7 @@ class PdfReader(PdfDocCommon):
         else:
             idnum = indirect_reference.idnum
         assert self._page_id2num is not None, "hint for mypy"
-        ret = self._page_id2num.get(idnum, None)
-        return ret
+        return self._page_id2num.get(idnum, None)
 
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
@@ -914,10 +912,8 @@ class PdfReader(PdfDocCommon):
                 )
             stream.seek(p, 0)
         if "/Prev" in new_trailer:
-            startxref = new_trailer["/Prev"]
-            return startxref
-        else:
-            return None
+            return new_trailer["/Prev"]
+        return None
 
     def _read_xref_other_error(
         self, stream: StreamType, startxref: int
@@ -989,8 +985,7 @@ class PdfReader(PdfDocCommon):
             # W array indicates...the default value shall be used
             if i == 0:
                 return 1  # First value defaults to 1
-            else:
-                return 0
+            return 0
 
         def used_before(num: int, generation: Union[int, Tuple[int, ...]]) -> bool:
             # We move backwards through the xrefs, don't replace any.
