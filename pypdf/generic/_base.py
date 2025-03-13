@@ -624,7 +624,7 @@ class ByteStringObject(bytes, PdfObject):
         stream.write(b">")
 
     def __str__(self) -> str:
-        charset_to_try = ["utf-16"] + list(NameObject.CHARSETS)
+        charset_to_try = ["utf-16", *list(NameObject.CHARSETS)]
         for enc in charset_to_try:
             try:
                 return self.decode(enc)
