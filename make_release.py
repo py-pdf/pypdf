@@ -274,7 +274,7 @@ def get_most_recent_git_tag() -> str:
     """
     return subprocess.check_output(
         ["git", "describe", "--tag", "--abbrev=0"], stderr=subprocess.STDOUT, text=True
-    ).strip("'b\\n")
+    ).strip()
 
 
 def get_author_mapping(line_count: int) -> Dict[str, str]:
