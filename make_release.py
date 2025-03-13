@@ -169,8 +169,7 @@ def get_changelog(changelog_path: str) -> str:
 
     """
     with open(changelog_path, encoding="utf-8") as fh:
-        changelog = fh.read()
-    return changelog
+        return fh.read()
 
 
 def write_changelog(new_changelog: str, changelog_path: str) -> None:
@@ -273,12 +272,11 @@ def get_most_recent_git_tag() -> str:
         Most recently created git tag.
 
     """
-    git_tag = str(
+    return str(
         subprocess.check_output(
             ["git", "describe", "--tag", "--abbrev=0"], stderr=subprocess.STDOUT
         )
     ).strip("'b\\n")
-    return git_tag
 
 
 def get_author_mapping(line_count: int) -> Dict[str, str]:
