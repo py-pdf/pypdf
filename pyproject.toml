@@ -169,7 +169,6 @@ ignore = [
     "N817",    # CamelCase `PagesAttributes` imported as acronym `PA`
     "PERF203", # `try`-`except` within a loop incurs performance overhead
     "PGH003",  # Use specific rule codes when ignoring type issues
-    "PLW0603", # Using the global statement to update `CUSTOM_RTL_SPECIAL_CHARS` is discouraged
     "PLW1510", # `subprocess.run` without explicit `check` argument
     "PLW2901", # `with` statement variable `img` overwritten by assignment target
     "PT011",   # `pytest.raises(ValueError)` is too broad, set the `match`
@@ -217,6 +216,7 @@ max-complexity = 54  # Recommended: 10
 "_writer.py" = ["S324"]
 "pypdf/_codecs/symbol.py" = ["A005"]  # Module shadows a Python standard-library module
 "types.py" = ["A005"]  # Module shadows a Python standard-library module
+"pypdf/_text_extraction/__init__.py" = ["PLW0603"]  # Using the global statement to update is discouraged
 "docs/conf.py" = ["INP001", "PTH100"]
 "json_consistency.py" = ["T201"]
 "make_release.py" = ["S603", "S607", "T201"]
