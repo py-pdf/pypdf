@@ -569,7 +569,7 @@ class NumberObject(int, PdfObject):
     @staticmethod
     def read_from_stream(stream: StreamType) -> Union["NumberObject", "FloatObject"]:
         num = read_until_regex(stream, NumberObject.NumberPattern)
-        if num.find(b".") != -1:
+        if b"." in num:
             return FloatObject(num)
         return NumberObject(num)
 
