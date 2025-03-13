@@ -184,7 +184,6 @@ ignore = [
     "RET505",  # Unnecessary `else` after `return` statement
     "RET506",  # Unnecessary `else` after `raise` statement
     "RET507",  # Unnecessary `else` after `continue` statement
-    "RET508",  # Unnecessary `else` after `break` statement
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",    # Use of `assert` detected
