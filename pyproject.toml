@@ -215,10 +215,10 @@ ignore = [
 max-complexity = 54  # Recommended: 10
 
 [tool.ruff.lint.per-file-ignores]
-"_codecs/symbol.py" = ["A005"]  # Module shadows a Python standard-library module
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
 "_encryption.py" = ["S324"]
 "_writer.py" = ["S324"]
+"pypdf/_codecs/symbol.py" = ["A005"]  # Module shadows a Python standard-library module
 "types.py" = ["A005"]  # Module shadows a Python standard-library module
 "docs/conf.py" = ["INP001", "PTH100"]
 "json_consistency.py" = ["T201"]
