@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generator, Optional, cast
+from typing import TYPE_CHECKING, Generator, cast
 
 from pypdf._utils import parse_iso8824_date
 from pypdf.constants import FileSpecificationDictionaryEntries
@@ -29,7 +29,7 @@ class EmbeddedFile:
         self.pdf_object = pdf_object
 
     @property
-    def alternative_name(self) -> Optional[str]:
+    def alternative_name(self) -> str | None:
         """Retrieve the alternative name (file specification)."""
         for key in [FileSpecificationDictionaryEntries.UF, FileSpecificationDictionaryEntries.F]:
             # PDF 2.0 reference, table 43:
@@ -39,7 +39,7 @@ class EmbeddedFile:
         return None
 
     @property
-    def description(self) -> Optional[str]:
+    def description(self) -> str | None:
         """Retrieve the description."""
         return self.pdf_object.get(FileSpecificationDictionaryEntries.DESC)
 
@@ -65,7 +65,7 @@ class EmbeddedFile:
         return self._embedded_file.get("/Params", DictionaryObject()).get_object()
 
     @property
-    def subtype(self) -> Optional[str]:
+    def subtype(self) -> str | None:
         """Retrieve the subtype. This is a MIME media type, prefixed by a slash."""
         return self._embedded_file.get("/Subtype")
 
@@ -75,22 +75,22 @@ class EmbeddedFile:
         return self._embedded_file.get_data()
 
     @property
-    def size(self) -> Optional[int]:
+    def size(self) -> int | None:
         """Retrieve the size of the uncompressed file in bytes."""
         return self._params.get("/Size")
 
     @property
-    def creation_date(self) -> Optional[datetime.datetime]:
+    def creation_date(self) -> datetime.datetime | None:
         """Retrieve the file creation datetime."""
         return parse_iso8824_date(self._params.get("/CreationDate"))
 
     @property
-    def modification_date(self) -> Optional[datetime.datetime]:
+    def modification_date(self) -> datetime.datetime | None:
         """Retrieve the datetime of the last file modification."""
         return parse_iso8824_date(self._params.get("/ModDate"))
 
     @property
-    def checksum(self) -> Optional[bytes]:
+    def checksum(self) -> bytes | None:
         """Retrieve the MD5 checksum of the (uncompressed) file."""
         return self._params.get("/CheckSum")
 
@@ -98,7 +98,7 @@ class EmbeddedFile:
         return f"<{self.__class__.__name__} name={self.name!r}>"
 
     @classmethod
-    def _load_from_names(cls, names: ArrayObject) -> Generator[EmbeddedFile, None, None]:
+    def _load_from_names(cls, names: ArrayObject) -> Generator[EmbeddedFile]:
         """
         Convert the given name tree into class instances.
 
@@ -117,7 +117,7 @@ class EmbeddedFile:
                 yield EmbeddedFile(name=direct_name, pdf_object=file_dictionary)
 
     @classmethod
-    def _load(cls, catalog: DictionaryObject) -> Generator[EmbeddedFile, None, None]:
+    def _load(cls, catalog: DictionaryObject) -> Generator[EmbeddedFile]:
         """
         Load the embedded files for the given document catalog.
 
