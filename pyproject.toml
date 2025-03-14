@@ -192,6 +192,7 @@ ignore = [
     "SIM105",  # contextlib.suppress
     "SIM108",  # Don't enforce ternary operators
     "SLF001",  # Private member accessed
+    "TC006",   # To discuss: Add quotes to type expression in `typing.cast()`
     "TD002",   # Authors of TODOs can be found via git
     "TD003",   # For the moment, fix it later: Missing issue link on the line following this TODO
     "TD005",   # Missing issue description after `TODO`
