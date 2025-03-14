@@ -113,7 +113,7 @@ def read_string_from_stream(
                     # Then don't add anything to the actual string, since this
                     # line break was escaped:
                     continue
-                msg = f"Unexpected escaped string: {tok.decode('utf-8','ignore')}"
+                msg = f"Unexpected escaped string: {tok.decode('utf-8', 'ignore')}"
                 logger_warning(msg, __name__)
                 txt.append(__BACKSLASH_CODE__)
         txt.append(ord(tok))
