@@ -336,8 +336,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                     del ignore_fields[x]
                     del ignore_fields[x]
                     continue
-                else:
-                    ignore_fields[x] -= 1  # type:ignore
+                ignore_fields[x] -= 1  # type:ignore
             x += 1
         #  First check if this is a chain list, we need to loop to prevent recur
         if any(
@@ -567,7 +566,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             tok = read_non_whitespace(stream)
             if tok == b"\x00":
                 continue
-            elif tok == b"%":
+            if tok == b"%":
                 stream.seek(-1, 1)
                 skip_over_comment(stream)
                 continue

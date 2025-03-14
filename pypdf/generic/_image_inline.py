@@ -159,8 +159,7 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
             data_out += c
         if c != b"\xff":
             continue
-        else:
-            notfirst = True
+        notfirst = True
         c = stream.read(1)
         data_out += c
         if c == b"\xff":
