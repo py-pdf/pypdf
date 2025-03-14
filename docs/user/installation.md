@@ -48,6 +48,14 @@ If you plan to use image extraction, you need Pillow:
 pip install pypdf[image]
 ```
 
+For JBIG2 support, you need to install a global OS-level package as well:
+[`jbig2dec`](https://github.com/ArtifexSoftware/jbig2dec) The installation procedure
+depends on our operating system. For Ubuntu, just use the following for example:
+
+```
+sudo apt-get install jbig2dec
+```
+
 ## Python Version Support
 
 Since pypdf 4.0, every release, including point releases, should work with all
