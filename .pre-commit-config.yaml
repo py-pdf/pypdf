@@ -4,13 +4,13 @@ repos:
     rev: v5.0.0
     hooks:
     -   id: check-ast
-    -   id: check-byte-order-marker
     -   id: check-case-conflict
     -   id: check-docstring-first
     -   id: check-yaml
     -   id: debug-statements
     -   id: end-of-file-fixer
         exclude: "resources/.*|docs/make.bat"
+    -   id: fix-byte-order-marker
     -   id: trailing-whitespace
     -   id: mixed-line-ending
         args: ['--fix=lf']
