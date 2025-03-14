@@ -195,9 +195,11 @@ STANDARD_WIDTHS = {
         "~": 469,
     },
 }
+
+# 4 fonts, includes bold, oblique and bold oblique variants
 STANDARD_WIDTHS[
     "Courier"
-] = dict.fromkeys(STANDARD_WIDTHS["Times"], 600)
+] = dict.fromkeys(STANDARD_WIDTHS["Times"], 600)  # fixed width
 STANDARD_WIDTHS["ZapfDingbats"] = dict.fromkeys(STANDARD_WIDTHS["Times"], 1000)  # 1 font
 STANDARD_WIDTHS["Symbol"] = dict.fromkeys(STANDARD_WIDTHS["Times"], 500)  # 1 font
 # add aliases per table H.3 on page 1110 of the PDF 1.7 standard
