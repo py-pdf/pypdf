@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## Version 5.4.0, 2025-03-16
+
+### New Features (ENH)
+- Add support for `IndirectObject.__contains__` (#3155)
+
+### Bug Fixes (BUG)
+- Fix detection of inline images followed by names or numbers (#3173)
+
+### Robustness (ROB)
+- Consider root objects without catalog type as fallback (#3175)
+- Raise proper error on infinite loop when reading objects (#3169)
+
+### Documentation (DOC)
+- Mention memory consumption of text extraction (#3168)
+
+### Developer Experience (DEV)
+- Upgrade to ruff 0.10.0 (#3191)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.3.1...5.4.0)
+
 ## Version 5.3.1, 2025-03-02
 
 ### Bug Fixes (BUG)
