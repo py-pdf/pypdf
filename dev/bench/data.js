@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741945951427,
+  "lastUpdate": 1742118275519,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -71681,6 +71681,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003947980544690832",
             "extra": "mean: 751.7906893999907 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "f20954f2241640feb484800e191373f8fbdfa44b",
+          "message": "REL: 5.4.0\n\n## What's new\n\n### New Features (ENH)\n- Add support for `IndirectObject.__contains__` (#3155) by @noamkush\n\n### Bug Fixes (BUG)\n- Fix detection of inline images followed by names or numbers (#3173) by @stefan6419846\n\n### Robustness (ROB)\n- Consider root objects without catalog type as fallback (#3175) by @stefan6419846\n- Raise proper error on infinite loop when reading objects (#3169) by @stefan6419846\n\n### Documentation (DOC)\n- Mention memory consumption of text extraction (#3168) by @stefan6419846\n\n### Developer Experience (DEV)\n- Upgrade to ruff 0.10.0 (#3191) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.3.1...5.4.0)",
+          "timestamp": "2025-03-16T10:41:31+01:00",
+          "tree_id": "291be0904e532421cbc6e209e5a7875fdd610fb6",
+          "url": "https://github.com/py-pdf/pypdf/commit/f20954f2241640feb484800e191373f8fbdfa44b"
+        },
+        "date": 1742118272685,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.542265225803873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008407489143637007",
+            "extra": "mean: 282.3052301999951 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.471345276773032,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006156321690928186",
+            "extra": "mean: 64.6356203749967 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27945970053599,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007389763101158121",
+            "extra": "mean: 3.5783334701999934 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.936088318560174,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00036084005116212",
+            "extra": "mean: 55.75351672221669 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08171162263257317,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09535846222148198",
+            "extra": "mean: 12.238161081399994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3361280214591098,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003907455918788218",
+            "extra": "mean: 748.4312760000023 msec\nrounds: 5"
           }
         ]
       }
