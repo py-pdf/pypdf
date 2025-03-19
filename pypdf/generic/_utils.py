@@ -103,7 +103,7 @@ def read_string_from_stream(
                     else:
                         txt.append(i)
                     continue
-                elif tok in b"\n\r":
+                if tok in b"\n\r":
                     # This case is hit when a backslash followed by a line
                     # break occurs. If it's a multi-char EOL, consume the
                     # second character:
@@ -113,10 +113,9 @@ def read_string_from_stream(
                     # Then don't add anything to the actual string, since this
                     # line break was escaped:
                     continue
-                else:
-                    msg = f"Unexpected escaped string: {tok.decode('utf-8','ignore')}"
-                    logger_warning(msg, __name__)
-                    txt.append(__BACKSLASH_CODE__)
+                msg = f"Unexpected escaped string: {tok.decode('utf-8', 'ignore')}"
+                logger_warning(msg, __name__)
+                txt.append(__BACKSLASH_CODE__)
         txt.append(ord(tok))
     return create_string_object(bytes(txt), forced_encoding)
 

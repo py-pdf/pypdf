@@ -56,7 +56,7 @@ def extract_inline_AHx(stream: StreamType) -> bytes:
             raise PdfReadError("Unexpected end of stream")
         pos_tok = data_buffered.find(b">")
         if pos_tok >= 0:  # found >
-            data_out += data_buffered[: (pos_tok + 1)]
+            data_out += data_buffered[: pos_tok + 1]
             stream.seek(-len(data_buffered) + pos_tok + 1, 1)
             break
         pos_ei = data_buffered.find(b"EI")
@@ -69,17 +69,17 @@ def extract_inline_AHx(stream: StreamType) -> bytes:
                 pos_ei -= 1
             data_out += data_buffered[:pos_ei]
             break
-        elif len(data_buffered) == 2:
+        if len(data_buffered) == 2:
             data_out += data_buffered
             raise PdfReadError("Unexpected end of stream")
-        else:  # > nor EI found
-            data_out += data_buffered[:-2]
-            stream.seek(-2, 1)
+        # Neither > nor EI found
+        data_out += data_buffered[:-2]
+        stream.seek(-2, 1)
 
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
     stream.seek(-3, 1)
-    if ei_tok[0:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data_out
 
@@ -101,7 +101,7 @@ def extract_inline_A85(stream: StreamType) -> bytes:
             data_out += data_buffered[: pos_tok + 2]
             stream.seek(-len(data_buffered) + pos_tok + 2, 1)
             break
-        elif len(data_buffered) == 2:  # end of buffer
+        if len(data_buffered) == 2:  # end of buffer
             data_out += data_buffered
             raise PdfReadError("Unexpected end of stream")
         data_out += data_buffered[
@@ -112,7 +112,7 @@ def extract_inline_A85(stream: StreamType) -> bytes:
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
     stream.seek(-3, 1)
-    if ei_tok[0:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data_out
 
@@ -139,7 +139,7 @@ def extract_inline_RL(stream: StreamType) -> bytes:
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
     stream.seek(-3, 1)
-    if ei_tok[0:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data_out
 
@@ -159,8 +159,7 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
             data_out += c
         if c != b"\xff":
             continue
-        else:
-            notfirst = True
+        notfirst = True
         c = stream.read(1)
         data_out += c
         if c == b"\xff":
@@ -183,7 +182,7 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
     stream.seek(-3, 1)
-    if ei_tok[0:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data_out
 
@@ -285,7 +284,15 @@ def is_followed_by_binary_data(stream: IO[bytes], length: int = 10) -> bool:
     if operator_end is None:
         # We probably are inside an operation.
         operator_end = length
-    if operator_end - operator_start > 3:  # noqa: SIM103
+    operator_length = operator_end - operator_start
+    operator = data[operator_start:operator_end]
+    if operator.startswith(b"/") and operator_length > 1:
+        # Name object.
+        return False
+    if operator.replace(b".", b"").isdigit():
+        # Graphics operator, for example a move. A number (integer or float).
+        return False
+    if operator_length > 3:  # noqa: SIM103
         # Usually, the operators inside a content stream should not have more than three characters,
         # especially after an inline image.
         return True

@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## Version 5.4.0, 2025-03-16
+
+### New Features (ENH)
+- Add support for `IndirectObject.__contains__` (#3155)
+
+### Bug Fixes (BUG)
+- Fix detection of inline images followed by names or numbers (#3173)
+
+### Robustness (ROB)
+- Consider root objects without catalog type as fallback (#3175)
+- Raise proper error on infinite loop when reading objects (#3169)
+
+### Documentation (DOC)
+- Mention memory consumption of text extraction (#3168)
+
+### Developer Experience (DEV)
+- Upgrade to ruff 0.10.0 (#3191)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.3.1...5.4.0)
+
+## Version 5.3.1, 2025-03-02
+
+### Bug Fixes (BUG)
+- Use the correct name StandardEncoding for the predefined cmap (#3156)
+- Handle inline images containing `EI ` sequences (#3152)
+- Fix check box value which should be name object (#3124)
+- Fix stream position on inline image fallback extraction (#3120)
+- Fix object count for incremental writer (#3117)
+
+### Robustness (ROB)
+- Avoid index errors on empty lines in xref table (#3162)
+- Improve handling of LZW decoder table overflow (#3159)
+- Ignore non-numbers for width when building font width map (#3158)
+- Avoid negative seek values when reading partially broken files (#3157)
+
+### Documentation (DOC)
+- Fixed PageObject.images example usage for replacing image (#3149)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.3.0...5.3.1)
+
 ## Version 5.3.0, 2025-02-09
 
 ### New Features (ENH)

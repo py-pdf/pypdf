@@ -1760,7 +1760,7 @@ def test_repair_root(caplog):
     caplog.clear()
     reader = PdfReader(
         BytesIO(
-            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog/Pages 3 0 R", b"/Catalo ")
         )
     )
     with pytest.raises(PdfReadError):
@@ -1775,9 +1775,9 @@ def test_repair_root(caplog):
 
     # Invalid /Root Entry + error in get_object
     caplog.clear()
-    b = b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
-    b = b[:5124] + b"A" + b[5125:]
-    reader = PdfReader(BytesIO(b))
+    data = b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog/Pages 3 0 R", b"/Catalo ")
+    data = data[:5124] + b"A" + data[5125:]
+    reader = PdfReader(BytesIO(data))
     with pytest.raises(PdfReadError):
         len(reader.pages)
     assert all(
@@ -1785,6 +1785,23 @@ def test_repair_root(caplog):
         for msg in (
             "Invalid Root object in trailer",
             'Searching object with "/Catalog" key',
+        )
+    )
+
+    # Invalid /Root Entry without /Type, but /Pages.
+    caplog.clear()
+    reader = PdfReader(
+        BytesIO(
+            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+        )
+    )
+    assert len(reader.pages) == 1
+    assert all(
+        msg in caplog.text
+        for msg in (
+            "Invalid Root object in trailer",
+            'Searching object with "/Catalog" key',
+            f"Possible root found at IndirectObject(2, 0, {id(reader)}), but missing /Catalog key"
         )
     )
 
@@ -1796,3 +1813,33 @@ def test_issue3151(caplog):
     name = "issue3151.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert len(reader.pages) == 742
+
+
+@pytest.mark.enable_socket
+def test_issue2886(caplog):
+    """Tests for #2886"""
+    url = "https://github.com/user-attachments/files/17187711/crash-e8a85d82de01cab5eb44e7993304d8b9d1544970.pdf"
+    name = "issue2886.pdf"
+
+    with pytest.raises(PdfReadError, match="Unexpected empty line in Xref table."):
+        _ = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+
+@pytest.mark.enable_socket
+def test_infinite_loop_for_length_value():
+    """Tests for #3112"""
+    url = "https://github.com/user-attachments/files/19106009/Special.n.15.du.jeudi.22.fevrier.2024.pdf"
+    name = "issue3112.pdf"
+
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    with pytest.raises(PdfReadError, match=r"^Detected loop with self reference for IndirectObject\(165, 0, \d+\)\.$"):
+        writer.add_page(reader.pages[0])
+
+
+def test_trailer_cannot_be_read():
+    path = RESOURCE_ROOT / "crazyones.pdf"
+    data = path.read_bytes().replace(b"/Type/XRef", b"/Type/Invalid")
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Unexpected type '/Invalid'$"):
+        reader = PdfReader(BytesIO(data))
+        list(reader.pages)

@@ -2074,11 +2074,13 @@ class PdfWriter(PdfDocCommon):
         jump_operators = []
         if to_delete & ObjectDeletionFlag.DRAWING_IMAGES:
             jump_operators = (
-                [b"w", b"J", b"j", b"M", b"d", b"i"]
-                + [b"W", b"W*"]
-                + [b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n"]
-                + [b"m", b"l", b"c", b"v", b"y", b"h", b"re"]
-                + [b"sh"]
+                [
+                    b"w", b"J", b"j", b"M", b"d", b"i",
+                    b"W", b"W*",
+                    b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n",
+                    b"m", b"l", b"c", b"v", b"y", b"h", b"re",
+                    b"sh"
+                ]
             )
         if to_delete & ObjectDeletionFlag.TEXT:
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
@@ -2698,11 +2700,11 @@ class PdfWriter(PdfDocCommon):
                 # numbers in the exclude list identifies that the exclusion is
                 # only applicable to 1st level of cloning
                 srcpages[pg.indirect_reference.idnum] = self.add_page(
-                    pg, list(excluded_fields) + [1, "/B", 1, "/Annots"]  # type: ignore
+                    pg, [*list(excluded_fields), 1, "/B", 1, "/Annots"]  # type: ignore
                 )
             else:
                 srcpages[pg.indirect_reference.idnum] = self.insert_page(
-                    pg, position, list(excluded_fields) + [1, "/B", 1, "/Annots"]  # type: ignore
+                    pg, position, [*list(excluded_fields), 1, "/B", 1, "/Annots"]  # type: ignore
                 )
                 position += 1
             srcpages[pg.indirect_reference.idnum].original_page = pg
@@ -2907,8 +2909,7 @@ class PdfWriter(PdfDocCommon):
                 thr = a.get_object().get("/T")
                 if thr is None:
                     continue
-                else:
-                    thr = thr.get_object()
+                thr = thr.get_object()
                 if thr.indirect_reference.idnum not in self._id_translated[
                     id(reader)
                 ] and fltr.search((thr.get("/I", {})).get("/Title", "")):

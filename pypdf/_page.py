@@ -622,9 +622,9 @@ class PageObject(DictionaryObject):
             if not isinstance(x_object[o], StreamObject):
                 continue
             if x_object[o][IA.SUBTYPE] == "/Image":
-                lst.append(o if len(ancest) == 0 else ancest + [o])
+                lst.append(o if len(ancest) == 0 else [*ancest, o])
             else:  # is a form with possible images inside
-                lst.extend(self._get_ids_image(x_object[o], ancest + [o], call_stack))
+                lst.extend(self._get_ids_image(x_object[o], [*ancest, o], call_stack))
         assert self.inline_images is not None
         lst.extend(list(self.inline_images.keys()))
         return lst

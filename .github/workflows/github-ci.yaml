@@ -184,6 +184,10 @@ jobs:
       run: |
         pip install -r requirements/docs.txt
         sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback --builder html docs build/sphinx/html
+    - name: Check with pre-commit
+      run: |
+        pip install -r requirements/dev.txt
+        pre-commit run --all-files --show-diff-on-failure
 
   package:
     name: Build & verify package

@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageOps
 
 from pypdf import PdfReader
 from pypdf.errors import DependencyError, DeprecationError, PdfReadError
@@ -663,3 +663,17 @@ def test_jbig2decode__binary_errors():
             mock.patch("pypdf.filters._JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
             pytest.raises(DependencyError, match="jbig2dec>=0.15 is required."):
         JBIG2Decode.decode(b"dummy")
+
+
+@pytest.mark.enable_socket
+def test_ccitt_fax_decode__black_is_1():
+    url = "https://github.com/user-attachments/files/19288881/imagemagick-CCITTFaxDecode_BlackIs1-true.pdf"
+    name = "issue3193.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    other_reader = PdfReader(RESOURCE_ROOT / "imagemagick-CCITTFaxDecode.pdf")
+
+    actual_image = reader.pages[0].images[0].image
+    expected_image_inverted = other_reader.pages[0].images[0].image
+    expected_pixels = list(ImageOps.invert(expected_image_inverted).getdata())
+    actual_pixels = list(actual_image.getdata())
+    assert expected_pixels == actual_pixels

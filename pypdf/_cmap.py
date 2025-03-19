@@ -73,7 +73,7 @@ def build_char_map_from_dict(
 unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]] = (
     "Unknown",
     9999,
-    dict(zip(range(256), ["�"] * 256)),
+    dict.fromkeys(range(256), "�"),
     {},
 )
 
