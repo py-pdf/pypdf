@@ -179,7 +179,7 @@ writer.write("out-pg-transform.pdf")
 
 ### Scaling the page only
 
-To scale the page by `sx` in the X direction and `sy` in the Y direction: 
+To scale the page by `sx` in the X direction and `sy` in the Y direction:
 
 ```python
 from pypdf.generic import RectangleObject
