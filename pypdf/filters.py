@@ -59,6 +59,7 @@ from .constants import StreamAttributes as SA
 from .errors import DeprecationError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
+    BooleanObject,
     DictionaryObject,
     IndirectObject,
     NullObject,
@@ -755,6 +756,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     # Get filters
     filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
+    decode_parms = x_object_obj.get(SA.DECODE_PARMS, None)
+    if isinstance(decode_parms, (tuple, list)):
+        decode_parms = decode_parms[0]
+    else:
+        decode_parms = {}
 
     extension = None
     if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
@@ -815,6 +821,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     img, extension, image_format = _apply_alpha(
         img, x_object_obj, obj_as_text, image_format, extension
     )
+
+    if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
+        from PIL import ImageOps
+        img = ImageOps.invert(img)
 
     # Save image to bytes
     img_byte_arr = BytesIO()
