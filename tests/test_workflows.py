@@ -14,7 +14,7 @@ import pytest
 from PIL import Image, ImageChops
 from PIL import __version__ as pil_version
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning
 from pypdf.generic import (
@@ -270,6 +270,24 @@ def test_extract_textbench(enable, url, pages, print_result=False):
                 print(f"{rst}\n*****************************\n")
     except PdfReadWarning:
         pass
+
+
+def test_transform_compress_identical_objects():
+    reader = PdfReader(RESOURCE_ROOT / "two-different-pages.pdf")
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        op = Transformation().scale(sx=0.8, sy=0.8)
+        page.add_transformation(op)
+        writer.add_page(page)
+    writer.compress_identical_objects()
+    bytes_out = BytesIO()
+    writer.write(bytes_out)
+    result_reader = PdfReader(bytes_out)
+    pg1_text = result_reader.pages[0].extract_text()
+    pg2_text = result_reader.pages[1].extract_text()
+    assert(pg1_text.strip() == "1")
+    assert(pg2_text.strip() == "2")
 
 
 @pytest.mark.slow
