@@ -756,7 +756,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     # Get filters
     filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
-    decode_parms = x_object_obj.get(SA.DECODE_PARMS, [{}])
+    decode_parms = x_object_obj.get(SA.DECODE_PARMS, None)
     if isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
     else:
@@ -822,11 +822,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         img, x_object_obj, obj_as_text, image_format, extension
     )
 
-    if (
-            lfilters == FT.CCITT_FAX_DECODE and
-            decode_parms and
-            decode_parms.get("/BlackIs1", BooleanObject(False)).value is True
-    ):
+    if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
         from PIL import ImageOps
         img = ImageOps.invert(img)
 
