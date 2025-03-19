@@ -8,7 +8,7 @@ from itertools import product as cartesian_product
 from pathlib import Path
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageOps
 
 from pypdf import PdfReader
 from pypdf.errors import DeprecationError, PdfReadError
@@ -642,3 +642,17 @@ def test_ascii85decode__non_recoverable(caplog):
     with pytest.raises(ValueError, match="Non-Ascii85 digit found: Ã"):
         ASCII85Decode.decode(data)
     assert caplog.text == ""
+
+
+@pytest.mark.enable_socket
+def test_ccitt_fax_decode__black_is_1():
+    url = "https://github.com/user-attachments/files/19288881/imagemagick-CCITTFaxDecode_BlackIs1-true.pdf"
+    name = "issue3193.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    other_reader = PdfReader(RESOURCE_ROOT / "imagemagick-CCITTFaxDecode.pdf")
+
+    actual_image = reader.pages[0].images[0].image
+    expected_image_inverted = other_reader.pages[0].images[0].image
+    expected_pixels = list(ImageOps.invert(expected_image_inverted).getdata())
+    actual_pixels = list(actual_image.getdata())
+    assert expected_pixels == actual_pixels
