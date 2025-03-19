@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742379913364,
+  "lastUpdate": 1742388832159,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -71879,6 +71879,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004978148911616014",
             "extra": "mean: 752.5746400000116 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a548ca1a9fb1f99ebb849836963cee072c2073f7",
+          "message": "BUG: Consider BlackIs1 parameter for CCITTFaxDecode filter (#3196)\n\nCloses #3193.",
+          "timestamp": "2025-03-19T13:51:07+01:00",
+          "tree_id": "dc6b87a1ee50447ec6b81e1a9fa68023114b5594",
+          "url": "https://github.com/py-pdf/pypdf/commit/a548ca1a9fb1f99ebb849836963cee072c2073f7"
+        },
+        "date": 1742388826327,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.551373962661615,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007478500148230263",
+            "extra": "mean: 281.5811599999847 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.317871515310248,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0076989287927596356",
+            "extra": "mean: 65.2832215625061 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27992019317865396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022578762285870344",
+            "extra": "mean: 3.572446805799996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.058280572387787,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008724987896314331",
+            "extra": "mean: 55.37625777777874 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0824802475125439,
+            "unit": "iter/sec",
+            "range": "stddev: 0.16087394502359667",
+            "extra": "mean: 12.1241149264 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3298751759291516,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005550617649793643",
+            "extra": "mean: 751.9502718000012 msec\nrounds: 5"
           }
         ]
       }
