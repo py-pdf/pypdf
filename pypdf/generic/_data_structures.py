@@ -994,7 +994,7 @@ class StreamObject(DictionaryObject):
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
-        data += self._data
+        data += self.get_data()
         return data
 
     def write_to_stream(
