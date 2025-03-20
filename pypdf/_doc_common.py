@@ -1018,11 +1018,10 @@ class PdfDocCommon:
         else:
             if self.strict:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
-            else:
-                logger_warning(
-                    f"Removed unexpected destination {dest!r} from destination",
-                    __name__,
-                )
+            logger_warning(
+                f"Removed unexpected destination {dest!r} from destination",
+                __name__,
+            )
             outline_item = self._build_destination(title, None)
 
         # if outline item created, add color, format, and child count if present
