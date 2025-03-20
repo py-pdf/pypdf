@@ -360,8 +360,7 @@ class RunLengthDecode:
             if length == 128:
                 if index < len(data):
                     raise PdfStreamError("Early EOD in RunLengthDecode")
-                else:
-                    break
+                break
             elif length < 128:
                 length += 1
                 lst.append(data[index : (index + length)])
