@@ -503,7 +503,7 @@ class FloatObject(float, PdfObject):
         if self == 0:
             return "0.0"
         nb = FLOAT_WRITE_PRECISION - int(log10(abs(self)))
-        return f"{self:.{max(1,nb)}f}".rstrip("0").rstrip(".")
+        return f"{self:.{max(1, nb)}f}".rstrip("0").rstrip(".")
 
     def __repr__(self) -> str:
         return self.myrepr()  # repr(float(self))
