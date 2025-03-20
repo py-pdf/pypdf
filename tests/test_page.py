@@ -39,8 +39,7 @@ def get_all_sample_files():
         return {"data": []}
     with open(meta_file) as fp:
         data = fp.read()
-    meta = json.loads(data)
-    return meta
+    return json.loads(data)
 
 
 all_files_meta = get_all_sample_files()
