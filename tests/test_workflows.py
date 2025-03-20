@@ -286,8 +286,8 @@ def test_transform_compress_identical_objects():
     result_reader = PdfReader(bytes_out)
     pg1_text = result_reader.pages[0].extract_text()
     pg2_text = result_reader.pages[1].extract_text()
-    assert(pg1_text.strip() == "1")
-    assert(pg2_text.strip() == "2")
+    assert pg1_text.strip() == "1"
+    assert pg2_text.strip() == "2"
 
 
 @pytest.mark.slow
