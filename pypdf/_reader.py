@@ -656,13 +656,13 @@ class PdfReader(PdfDocCommon):
             raise UnsupportedOperation("cannot read header")
         if header_byte == b"":
             raise EmptyFileError("Cannot read an empty file")
-        header_byte != b"%PDF-":
-        if self.strict:
-            raise PdfReadError(
-                f"PDF starts with '{header_byte.decode('utf8')}', "
-                "but '%PDF-' expected"
-            )
-        logger_warning(f"invalid pdf header: {header_byte}", __name__)
+        if header_byte != b"%PDF-":
+            if self.strict:
+                raise PdfReadError(
+                    f"PDF starts with '{header_byte.decode('utf8')}', "
+                    "but '%PDF-' expected"
+                )
+            logger_warning(f"invalid pdf header: {header_byte}", __name__)
         stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
