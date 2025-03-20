@@ -177,7 +177,6 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
             data_out += c
             sz = c[0] * 256 + c[1]
             data_out += stream.read(sz - 2)
-        # else: pass
 
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
