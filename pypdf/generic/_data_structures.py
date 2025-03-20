@@ -630,10 +630,9 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             if SA.LENGTH not in data:
                 if pdf is not None and pdf.strict:
                     raise PdfStreamError("Stream length not defined")
-                else:
-                    logger_warning(
-                        f"Stream length not defined @pos={stream.tell()}", __name__
-                    )
+                logger_warning(
+                    f"Stream length not defined @pos={stream.tell()}", __name__
+                )
                 data[NameObject(SA.LENGTH)] = NumberObject(-1)
             length = data[SA.LENGTH]
             if isinstance(length, IndirectObject):
@@ -845,7 +844,7 @@ class TreeObject(DictionaryObject):
 
         if NameObject("/Parent") not in child_obj:
             raise ValueError("Removed child does not appear to be a tree item")
-        elif child_obj[NameObject("/Parent")] != self:
+        if child_obj[NameObject("/Parent")] != self:
             raise ValueError("Removed child is not a member of this tree")
 
         found = False
@@ -880,8 +879,7 @@ class TreeObject(DictionaryObject):
         """Remove the object from the tree it is in."""
         if NameObject("/Parent") not in self:
             raise ValueError("Removed child does not appear to be a tree item")
-        else:
-            cast("TreeObject", self["/Parent"]).remove_child(self)
+        cast("TreeObject", self["/Parent"]).remove_child(self)
 
     def empty_tree(self) -> None:
         for child in self:
