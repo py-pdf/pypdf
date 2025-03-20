@@ -188,9 +188,7 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
 
 
 def extract_inline_default(stream: StreamType) -> bytes:
-    """
-    Legacy method, used by default
-    """
+    """Legacy method, used by default"""
     stream_out = BytesIO()
     # Read the inline image, while checking for EI (End Image) operator.
     while True:
