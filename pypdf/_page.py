@@ -1917,7 +1917,7 @@ class PageObject(DictionaryObject):
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
-                return None
+                return
             if operator == b"ET":
                 output += text
                 if visitor_text is not None:
@@ -2045,7 +2045,7 @@ class PageObject(DictionaryObject):
                     _actual_str_size,
                 )
             else:
-                return None
+                return
 
             if check_crlf_space:
                 try:
@@ -2067,7 +2067,7 @@ class PageObject(DictionaryObject):
                         memo_cm = cm_matrix.copy()
                         memo_tm = tm_matrix.copy()
                 except OrientationNotFoundError:
-                    return None
+                    return
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
