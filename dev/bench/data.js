@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742569694942,
+  "lastUpdate": 1742570004406,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -72539,6 +72539,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001231230313607588",
             "extra": "mean: 754.7069082000007 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e4137f9e83ef686004e45b88268f56f23eaf2580",
+          "message": "DEV: Remove ignore Ruff rule RET501 (#3207)\n\nRET501: Do not explicitly \"return None\" in function if it is the only possible return value.",
+          "timestamp": "2025-03-21T16:09:30+01:00",
+          "tree_id": "5ab43eb818c8edbb6e42ab75a3ee6cd0990a9a4a",
+          "url": "https://github.com/py-pdf/pypdf/commit/e4137f9e83ef686004e45b88268f56f23eaf2580"
+        },
+        "date": 1742570001539,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.562955621189415,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007569532406987736",
+            "extra": "mean: 280.66585899999836 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.491565053416346,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006558705669463115",
+            "extra": "mean: 64.55125718750222 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28176775293922035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016579678824894195",
+            "extra": "mean: 3.549022162999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.374461942927645,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005736400592499918",
+            "extra": "mean: 54.42336233333359 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08253426074283446,
+            "unit": "iter/sec",
+            "range": "stddev: 0.14819563848891928",
+            "extra": "mean: 12.116180492800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3376857536221558,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025594157895622548",
+            "extra": "mean: 747.5597293999897 msec\nrounds: 5"
           }
         ]
       }
