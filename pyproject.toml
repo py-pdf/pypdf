@@ -146,7 +146,6 @@ ignore = [
     "D107",    # Missing docstring in `__init__`
     "D205",    # One blank line required between summary line and description
     "D212",    # I want multiline-docstrings to start at the second line
-    "D400",    # First line should end with a period
     "D401",    # First line of docstring should be in imperative mood - false positives
     "D415",    # First line should end with a period
     "D417",    # Missing argument descriptions in the docstring
@@ -173,7 +172,7 @@ ignore = [
     "PT014",   # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
     "PTH123",  # `open()` should be replaced by `Path.open()`
     "PYI042",  # Type alias `mode_str_type` should be CamelCase
-    "RET501",  # Do not explicitly `return None` in function if it is the only possible return value
+    "RET502",  # Do not implicitly `return None` in function able to return non-`None` value
     "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
     "RET505",  # Unnecessary `else` after `return` statement
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
@@ -196,7 +195,6 @@ ignore = [
     "TRY301",  # Abstract `raise` to an inner function
     "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.11+
     "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.11+
-    "UP031",   # Use format specifiers instead of percent format
     "UP035",   # PEP 585. As long as we are not on Python 3.9+
     "UP038",   # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604. While not on Python 3.10+
 ]

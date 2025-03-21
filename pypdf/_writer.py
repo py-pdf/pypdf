@@ -1068,7 +1068,7 @@ class PdfWriter(PdfDocCommon):
             for p in page:
                 if PG.ANNOTS in p:  # just to prevent warnings
                     self.update_page_form_field_values(p, fields, flags, None)
-            return None
+            return
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
