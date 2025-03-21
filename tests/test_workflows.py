@@ -114,7 +114,7 @@ def test_pdfreader_file_load():
         pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows
         assert text == pdftext, (
             "PDF extracted text differs from expected value.\n\n"
-            f"Expected:\n\n{pdftext}\n\nExtracted:\n\n{text}\n\n"
+            f"Expected:\n\n{pdftext!r}\n\nExtracted:\n\n{text!r}\n\n"
         )
 
 
@@ -140,7 +140,7 @@ def test_pdfreader_jpeg_image():
         # Compare the text of the PDF to a known source
         assert binascii.hexlify(data).decode() == imagetext, (
             "PDF extracted image differs from expected value.\n\n"
-            f"Expected:\n\n{imagetext}\n\nExtracted:\n\n{binascii.hexlify(data).decode()}\n\n"
+            f"Expected:\n\n{imagetext!r}\n\nExtracted:\n\n{binascii.hexlify(data).decode()!r}\n\n"
         )
 
 
