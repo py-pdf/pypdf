@@ -267,10 +267,9 @@ class BooleanObject(PdfObject):
     def __eq__(self, o: object, /) -> bool:
         if isinstance(o, BooleanObject):
             return self.value == o.value
-        elif isinstance(o, bool):
+        if isinstance(o, bool):
             return self.value == o
-        else:
-            return False
+        return False
 
     def __repr__(self) -> str:
         return "True" if self.value else "False"
@@ -292,11 +291,10 @@ class BooleanObject(PdfObject):
         word = stream.read(4)
         if word == b"true":
             return BooleanObject(True)
-        elif word == b"fals":
+        if word == b"fals":
             stream.read(1)
             return BooleanObject(False)
-        else:
-            raise PdfReadError("Could not read Boolean object")
+        raise PdfReadError("Could not read Boolean object")
 
 
 class IndirectObject(PdfObject):
@@ -714,8 +712,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         """
         if self._original_bytes is not None:
             return self._original_bytes
-        else:
-            return self.get_original_bytes()
+        return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:
         # We're a text string object, but the library is trying to get our raw
@@ -726,10 +723,9 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         if self.autodetect_utf16:
             if self.utf16_bom == codecs.BOM_UTF16_LE:
                 return codecs.BOM_UTF16_LE + self.encode("utf-16le")
-            elif self.utf16_bom == codecs.BOM_UTF16_BE:
+            if self.utf16_bom == codecs.BOM_UTF16_BE:
                 return codecs.BOM_UTF16_BE + self.encode("utf-16be")
-            else:
-                return self.encode("utf-16be")
+            return self.encode("utf-16be")
         elif self.autodetect_pdfdocencoding:
             return encode_pdfdocencoding(self)
         else:
