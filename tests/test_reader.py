@@ -715,11 +715,10 @@ def test_issue604(caplog, strict):
         def get_dest_pages(x) -> NestedList:
             if isinstance(x, list):
                 return [get_dest_pages(y) for y in x]
-            else:
-                destination_page_number = pdf.get_destination_page_number(x)
-                if destination_page_number is None:
-                    return destination_page_number
-                return destination_page_number + 1
+            destination_page_number = pdf.get_destination_page_number(x)
+            if destination_page_number is None:
+                return destination_page_number
+            return destination_page_number + 1
 
         out = []
 
