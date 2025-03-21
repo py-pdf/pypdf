@@ -705,13 +705,12 @@ def test_issue604(caplog, strict):
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # outline is not correct
-        else:
-            pdf = PdfReader(f, strict=strict)
-            outline = pdf.outline
-            msg = [
-                "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
-            ]
-            assert normalize_warnings(caplog.text) == msg
+        pdf = PdfReader(f, strict=strict)
+        outline = pdf.outline
+        msg = [
+            "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
+        ]
+        assert normalize_warnings(caplog.text) == msg
 
         def get_dest_pages(x) -> NestedList:
             if isinstance(x, list):
