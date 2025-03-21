@@ -1027,8 +1027,7 @@ class PageObject(DictionaryObject):
             obj = self[PG.CONTENTS].get_object()
             if isinstance(obj, list):
                 return b"".join(x.get_object().get_data() for x in obj)
-            else:
-                return cast(EncodedStreamObject, obj).get_data()
+            return cast(EncodedStreamObject, obj).get_data()
         return None
 
     def get_contents(self) -> Optional[ContentStream]:
@@ -1049,8 +1048,7 @@ class PageObject(DictionaryObject):
             if isinstance(obj, NullObject):
                 return None
             return ContentStream(obj, pdf)
-        else:
-            return None
+        return None
 
     def replace_contents(
         self, content: Union[None, ContentStream, EncodedStreamObject, ArrayObject]
