@@ -211,8 +211,7 @@ def _parse_to_unicode(
     if "/ToUnicode" not in ft:
         if ft.get("/Subtype", "") == "/Type1":
             return _type1_alternative(ft, map_dict, int_entry)
-        else:
-            return {}, []
+        return {}, []
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
