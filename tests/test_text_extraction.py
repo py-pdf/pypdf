@@ -258,7 +258,7 @@ def test_layout_mode_space_vertically_font_height_weight():
         pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows
         assert text == pdftext, (
             "PDF extracted text differs from expected value.\n\n"
-            "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
+            f"Expected:\n\n{pdftext}\n\nExtracted:\n\n{text}\n\n"
         )
 
         # Blank lines are added to truly separate paragraphs
@@ -275,7 +275,7 @@ def test_layout_mode_space_vertically_font_height_weight():
         pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows
         assert text == pdftext, (
                 "PDF extracted text differs from expected value.\n\n"
-                "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
+                f"Expected:\n\n{pdftext}\n\nExtracted:\n\n{text}\n\n"
         )
 
 
