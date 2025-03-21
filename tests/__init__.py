@@ -168,5 +168,5 @@ class PILContext:
         ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images
         if type_:
             # Error.
-            return
+            return None
         return True

@@ -2057,7 +2057,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(to_delete, (list, tuple)):
             for to_d in to_delete:
                 self.remove_objects_from_page(page, to_d)
-            return
+            return None
         assert isinstance(to_delete, ObjectDeletionFlag)
 
         if to_delete & ObjectDeletionFlag.LINKS:
