@@ -1488,15 +1488,14 @@ def read_object(
             assert pdf is not None  # hint for mypy
             return IndirectObject.read_from_stream(stream, pdf)
         return NumberObject.read_from_stream(stream)
-    else:
-        pos = stream.tell()
-        stream.seek(-20, 1)
-        stream_extract = stream.read(80)
-        stream.seek(pos)
-        read_until_whitespace(stream)
-        raise PdfReadError(
-            f"Invalid Elementary Object starting with {tok!r} @{pos}: {stream_extract!r}"
-        )
+    pos = stream.tell()
+    stream.seek(-20, 1)
+    stream_extract = stream.read(80)
+    stream.seek(pos)
+    read_until_whitespace(stream)
+    raise PdfReadError(
+        f"Invalid Elementary Object starting with {tok!r} @{pos}: {stream_extract!r}"
+    )
 
 
 class Field(TreeObject):
