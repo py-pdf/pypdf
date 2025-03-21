@@ -603,8 +603,7 @@ class PageObject(DictionaryObject):
         _i = getattr(obj, "indirect_reference", None)
         if _i in call_stack:
             return []
-        else:
-            call_stack.append(_i)
+        call_stack.append(_i)
         if self.inline_images is None:
             self.inline_images = self._get_inline_images()
         if obj is None:
@@ -663,9 +662,9 @@ class PageObject(DictionaryObject):
                 image=imgd[2],
                 indirect_reference=xobjs[id].indirect_reference,
             )
-        else:  # in a sub object
-            ids = id[1:]
-            return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
+        # in a sub object
+        ids = id[1:]
+        return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
     def images(self) -> VirtualListImages:
@@ -1030,8 +1029,7 @@ class PageObject(DictionaryObject):
                 return b"".join(x.get_object().get_data() for x in obj)
             else:
                 return cast(EncodedStreamObject, obj).get_data()
-        else:
-            return None
+        return None
 
     def get_contents(self) -> Optional[ContentStream]:
         """
@@ -1050,8 +1048,7 @@ class PageObject(DictionaryObject):
             obj = self[PG.CONTENTS].get_object()
             if isinstance(obj, NullObject):
                 return None
-            else:
-                return ContentStream(obj, pdf)
+            return ContentStream(obj, pdf)
         else:
             return None
 
@@ -1081,13 +1078,12 @@ class PageObject(DictionaryObject):
         if is_null_or_none(content):
             if PG.CONTENTS not in self:
                 return
-            else:
-                assert self.indirect_reference is not None
-                assert self[PG.CONTENTS].indirect_reference is not None
-                self.indirect_reference.pdf._objects[
-                    self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
-                ] = NullObject()
-                del self[PG.CONTENTS]
+            assert self.indirect_reference is not None
+            assert self[PG.CONTENTS].indirect_reference is not None
+            self.indirect_reference.pdf._objects[
+                self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
+            ] = NullObject()
+            del self[PG.CONTENTS]
         elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
             try:
                 self[NameObject(PG.CONTENTS)] = self.indirect_reference.pdf._add_object(
@@ -1693,12 +1689,11 @@ class PageObject(DictionaryObject):
         """
         if self.indirect_reference is None:
             return None
-        else:
-            try:
-                lst = self.indirect_reference.pdf.pages
-                return lst.index(self)
-            except ValueError:
-                return None
+        try:
+            lst = self.indirect_reference.pdf.pages
+            return lst.index(self)
+        except ValueError:
+            return None
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
@@ -2472,8 +2467,7 @@ class PageObject(DictionaryObject):
     def annotations(self) -> Optional[ArrayObject]:
         if "/Annots" not in self:
             return None
-        else:
-            return cast(ArrayObject, self["/Annots"])
+        return cast(ArrayObject, self["/Annots"])
 
     @annotations.setter
     def annotations(self, value: Optional[ArrayObject]) -> None:
