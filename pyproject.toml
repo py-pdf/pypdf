@@ -175,7 +175,6 @@ ignore = [
     "PYI042",  # Type alias `mode_str_type` should be CamelCase
     "RET501",  # Do not explicitly `return None` in function if it is the only possible return value
     "RET502",  # Do not implicitly `return None` in function able to return non-`None` value
-    "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
     "RET505",  # Unnecessary `else` after `return` statement
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
