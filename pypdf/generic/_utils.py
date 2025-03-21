@@ -140,7 +140,7 @@ def create_string_object(
     """
     if isinstance(string, str):
         return TextStringObject(string)
-    elif isinstance(string, bytes):
+    if isinstance(string, bytes):
         if isinstance(forced_encoding, (list, dict)):
             out = ""
             for x in string:
@@ -151,7 +151,7 @@ def create_string_object(
             obj = TextStringObject(out)
             obj._original_bytes = string
             return obj
-        elif isinstance(forced_encoding, str):
+        if isinstance(forced_encoding, str):
             if forced_encoding == "bytes":
                 return ByteStringObject(string)
             obj = TextStringObject(string.decode(forced_encoding))
