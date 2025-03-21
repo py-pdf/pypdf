@@ -678,10 +678,9 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             stream.seek(pos, 0)
         if "__streamdata__" in data:
             return StreamObject.initialize_from_dictionary(data)
-        else:
-            retval = DictionaryObject()
-            retval.update(data)
-            return retval
+        retval = DictionaryObject()
+        retval.update(data)
+        return retval
 
 
 class TreeObject(DictionaryObject):
@@ -1465,31 +1464,30 @@ def read_object(
         if peek == b"<<":
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         return read_hex_string_from_stream(stream, forced_encoding)
-    elif tok == b"[":
+    if tok == b"[":
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
-    elif tok in (b"t", b"f"):
+    if tok in (b"t", b"f"):
         return BooleanObject.read_from_stream(stream)
-    elif tok == b"(":
+    if tok == b"(":
         return read_string_from_stream(stream, forced_encoding)
-    elif tok == b"e" and stream.read(6) == b"endobj":
+    if tok == b"e" and stream.read(6) == b"endobj":
         return NullObject()
-    elif tok == b"n":
+    if tok == b"n":
         return NullObject.read_from_stream(stream)
-    elif tok == b"%":
+    if tok == b"%":
         # comment
         skip_over_comment(stream)
         tok = read_non_whitespace(stream)
         stream.seek(-1, 1)
         return read_object(stream, pdf, forced_encoding)
-    elif tok in b"0123456789+-.":
+    if tok in b"0123456789+-.":
         # number object OR indirect reference
         peek = stream.read(20)
         stream.seek(-len(peek), 1)  # reset to start
         if IndirectPattern.match(peek) is not None:
             assert pdf is not None  # hint for mypy
             return IndirectObject.read_from_stream(stream, pdf)
-        else:
-            return NumberObject.read_from_stream(stream)
+        return NumberObject.read_from_stream(stream)
     else:
         pos = stream.tell()
         stream.seek(-20, 1)
