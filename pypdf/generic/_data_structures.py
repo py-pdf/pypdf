@@ -768,8 +768,7 @@ class TreeObject(DictionaryObject):
             if "/Prev" in child_obj:
                 del child_obj["/Prev"]
             return child
-        else:
-            prev = cast("DictionaryObject", self["/Last"])
+        prev = cast("DictionaryObject", self["/Last"])
 
         while prev.indirect_reference != before:
             if "/Next" in prev:
@@ -1105,16 +1104,15 @@ class EncodedStreamObject(StreamObject):
         if self.decoded_self is not None:
             # cached version of decoded object
             return self.decoded_self.get_data()
-        else:
-            # create decoded object
-            decoded = DecodedStreamObject()
+        # create decoded object
+        decoded = DecodedStreamObject()
 
-            decoded.set_data(decode_stream_data(self))
-            for key, value in list(self.items()):
-                if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
-                    decoded[key] = value
-            self.decoded_self = decoded
-            return decoded.get_data()
+        decoded.set_data(decode_stream_data(self))
+        for key, value in list(self.items()):
+            if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
+                decoded[key] = value
+        self.decoded_self = decoded
+        return decoded.get_data()
 
     # This overrides the parent method:
     def set_data(self, data: bytes) -> None:
@@ -1460,14 +1458,13 @@ def read_object(
     stream.seek(-1, 1)  # reset to start
     if tok == b"/":
         return NameObject.read_from_stream(stream, pdf)
-    elif tok == b"<":
+    if tok == b"<":
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
         if peek == b"<<":
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
-        else:
-            return read_hex_string_from_stream(stream, forced_encoding)
+        return read_hex_string_from_stream(stream, forced_encoding)
     elif tok == b"[":
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
     elif tok in (b"t", b"f"):
