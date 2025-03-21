@@ -726,10 +726,9 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
             if self.utf16_bom == codecs.BOM_UTF16_BE:
                 return codecs.BOM_UTF16_BE + self.encode("utf-16be")
             return self.encode("utf-16be")
-        elif self.autodetect_pdfdocencoding:
+        if self.autodetect_pdfdocencoding:
             return encode_pdfdocencoding(self)
-        else:
-            raise Exception("no information about original bytes")  # pragma: no cover
+        raise Exception("no information about original bytes")  # pragma: no cover
 
     def get_encoded_bytes(self) -> bytes:
         # Try to write the string out as a PDFDocEncoding encoded string. It's
@@ -873,11 +872,10 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                     __name__,
                 )
                 return NameObject(name.decode("charmap"))
-            else:
-                raise PdfReadError(
-                    f"Illegal character in NameObject ({name!r}). "
-                    "You may need to adjust NameObject.CHARSETS.",
-                ) from e
+            raise PdfReadError(
+                f"Illegal character in NameObject ({name!r}). "
+                "You may need to adjust NameObject.CHARSETS.",
+            ) from e
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
