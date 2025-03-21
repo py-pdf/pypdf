@@ -599,8 +599,7 @@ class PdfWriter(PdfDocCommon):
             raise ValueError("Invalid index value")
         if index >= len(self.flattened_pages):
             return self.add_page(page, excluded_keys)
-        else:
-            return self._add_page(page, index, excluded_keys)
+        return self._add_page(page, index, excluded_keys)
 
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
@@ -1962,8 +1961,7 @@ class PdfWriter(PdfDocCommon):
                 named_dest.insert(i, destination)
                 named_dest.insert(i, TextStringObject(title))
                 return
-            else:
-                i += 2
+            i += 2
         named_dest.extend([TextStringObject(title), destination])
         return
 
@@ -2923,7 +2921,7 @@ class PdfWriter(PdfDocCommon):
     ) -> Optional[IndirectObject]:
         if isinstance(page, NullObject):
             return None
-        elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
+        if isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference
         elif isinstance(page, IndirectObject):
             _i = page
@@ -3094,7 +3092,7 @@ class PdfWriter(PdfDocCommon):
                 or o.get("/Title", None) == outline_item
             ):
                 return [i]
-            elif "/First" in o:
+            if "/First" in o:
                 res = self.find_outline_item(
                     outline_item, cast(OutlineType, o["/First"])
                 )
@@ -3301,11 +3299,10 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, float, List[Any]]) -> PdfObje
         for key, value in obj.items():
             to_add[NameObject(key)] = _pdf_objectify(value)
         return to_add
-    elif isinstance(obj, str):
+    if isinstance(obj, str):
         if obj.startswith("/"):
             return NameObject(obj)
-        else:
-            return TextStringObject(obj)
+        return TextStringObject(obj)
     elif isinstance(obj, (float, int)):
         return FloatObject(obj)
     elif isinstance(obj, list):
