@@ -592,8 +592,7 @@ class PdfDocCommon:
                 + "."
                 + cast(str, parent.get("/T", ""))
             )
-        else:
-            return cast(str, parent.get("/T", ""))
+        return cast(str, parent.get("/T", ""))
 
     def _build_field(
         self,
@@ -761,8 +760,7 @@ class PdfDocCommon:
                 return _get_inherited(
                     cast(DictionaryObject, obj["/Parent"].get_object()), key
                 )
-            else:
-                return None
+            return None
 
         try:
             # to cope with all types
