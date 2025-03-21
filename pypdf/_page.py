@@ -657,13 +657,12 @@ class PageObject(DictionaryObject):
 
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
-            f = ImageFile(
+            return ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
                 image=imgd[2],
                 indirect_reference=xobjs[id].indirect_reference,
             )
-            return f
         else:  # in a sub object
             ids = id[1:]
             return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))

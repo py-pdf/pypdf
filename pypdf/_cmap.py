@@ -240,8 +240,7 @@ def get_actual_str_key(
         key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char}
     else:
         key_dict = {value: key for key, value in map_dict.items() if value == value_char}
-    key_char = key_dict.get(value_char, value_char)
-    return key_char
+    return key_dict.get(value_char, value_char)
 
 
 def prepare_cm(ft: DictionaryObject) -> bytes:
