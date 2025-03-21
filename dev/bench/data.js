@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742570004406,
+  "lastUpdate": 1742570805659,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -72605,6 +72605,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025594157895622548",
             "extra": "mean: 747.5597293999897 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "76e4ed1f0fa62f72753586a380367da8ae47f301",
+          "message": "DEV: Remove ignore Ruff rule UP031 (#3205)\n\nUP031: Use format specifiers instead of percent format.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2025-03-21T16:24:09+01:00",
+          "tree_id": "ee45226d8d4d0af7a97432e3dd5d39c00283ffb8",
+          "url": "https://github.com/py-pdf/pypdf/commit/76e4ed1f0fa62f72753586a380367da8ae47f301"
+        },
+        "date": 1742570802598,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3505509839029766,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01097957822404046",
+            "extra": "mean: 298.4583743999991 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.932717482180562,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006868651775929401",
+            "extra": "mean: 66.96704743750192 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2642467294493051,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0413394153346773",
+            "extra": "mean: 3.784342012799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.113570410106256,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025092959867145702",
+            "extra": "mean: 62.05949237499908 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0787659376225556,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0302741893515446",
+            "extra": "mean: 12.695843281799995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3285541901784463,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004031970466926776",
+            "extra": "mean: 752.6979384000015 msec\nrounds: 5"
           }
         ]
       }
