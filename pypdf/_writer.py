@@ -3303,14 +3303,13 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, float, List[Any]]) -> PdfObje
         if obj.startswith("/"):
             return NameObject(obj)
         return TextStringObject(obj)
-    elif isinstance(obj, (float, int)):
+    if isinstance(obj, (float, int)):
         return FloatObject(obj)
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         return ArrayObject(_pdf_objectify(i) for i in obj)
-    else:
-        raise NotImplementedError(
-            f"{type(obj)=} could not be cast to a PdfObject"
-        )
+    raise NotImplementedError(
+        f"{type(obj)=} could not be cast to a PdfObject"
+    )
 
 
 def _create_outline_item(
