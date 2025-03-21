@@ -950,7 +950,7 @@ def test_write_dict_stream_object(pdf_file_path):
     objects_hash = [o.hash_value() for o in writer._objects]
     for k, v in writer._idnum_hash.items():
         assert v.pdf == writer
-        assert k in objects_hash, "Missing %s" % v
+        assert k in objects_hash, f"Missing {v}"
 
 
 def test_add_single_annotation(pdf_file_path):
@@ -998,8 +998,8 @@ def test_colors_in_outline_item(pdf_file_path):
     reader2 = PdfReader(pdf_file_path)
     for outline_item in reader2.outline:
         # convert float to string because of mutability
-        assert ["%.5f" % c for c in outline_item.color] == [
-            "%.5f" % p for p in purple_rgb
+        assert [f"{c:.5f}" for c in outline_item.color] == [
+            f"{p:.5f}" for p in purple_rgb
         ]
 
 

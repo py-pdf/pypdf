@@ -195,7 +195,6 @@ ignore = [
     "TRY301",  # Abstract `raise` to an inner function
     "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.11+
     "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.11+
-    "UP031",   # Use format specifiers instead of percent format
     "UP035",   # PEP 585. As long as we are not on Python 3.9+
     "UP038",   # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604. While not on Python 3.10+
 ]
