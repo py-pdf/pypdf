@@ -146,7 +146,6 @@ ignore = [
     "D107",    # Missing docstring in `__init__`
     "D205",    # One blank line required between summary line and description
     "D212",    # I want multiline-docstrings to start at the second line
-    "D400",    # First line should end with a period
     "D401",    # First line of docstring should be in imperative mood - false positives
     "D415",    # First line should end with a period
     "D417",    # Missing argument descriptions in the docstring
