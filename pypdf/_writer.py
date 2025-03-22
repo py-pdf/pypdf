@@ -2042,7 +2042,7 @@ class PdfWriter(PdfDocCommon):
         self,
         page: Union[PageObject, DictionaryObject],
         to_delete: Union[ObjectDeletionFlag, Iterable[ObjectDeletionFlag]],
-        text_filters: DictionaryObject = None,
+        text_filters: Optional[DictionaryObject] = None,
     ) -> None:
         """
         Remove objects specified by ``to_delete`` from the given page.
@@ -2108,7 +2108,7 @@ class PdfWriter(PdfDocCommon):
                     i += 1
             content.get_data()  # this ensures ._data is rebuilt from the .operations
 
-        def clean_text(content: ContentStream, text_filters: DictionaryObject = None) -> None:
+        def clean_text(content: ContentStream, text_filters: Optional[DictionaryObject] = None) -> None:
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
 
             font_ids_to_delete = []
@@ -2209,7 +2209,7 @@ class PdfWriter(PdfDocCommon):
             images, forms = clean_forms(page, [])
 
             if to_delete & ObjectDeletionFlag.TEXT:
-              clean_text(content, text_filters)
+                clean_text(content, text_filters)
 
             clean(content, images, forms)
             page.replace_contents(content)
@@ -2238,7 +2238,7 @@ class PdfWriter(PdfDocCommon):
         for page in self.pages:
             self.remove_objects_from_page(page, i)
 
-    def remove_text(self, font_names: List[str] = None) -> None:
+    def remove_text(self, font_names: Optional[List[str]] = None) -> None:
         """
         Remove text from the PDF.
 
