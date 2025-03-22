@@ -2968,7 +2968,10 @@ class PdfWriter(PdfDocCommon):
                             anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
                             outlist.append(self._add_object(anc))
             else:
-                d = cast("DictionaryObject", ano["/A"])["/D"]
+                annot_obj = cast("DictionaryObject", ano["/A"])
+                if "/D" not in annot_obj:
+                    continue
+                d = annot_obj["/D"]
                 if isinstance(d, NullObject):
                     continue
                 if isinstance(d, str):
