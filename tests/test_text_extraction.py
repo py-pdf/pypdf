@@ -22,7 +22,7 @@ SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 @pytest.mark.samples
-@pytest.mark.parametrize(("visitor_text"), [None, lambda a, b, c, d, e: None])
+@pytest.mark.parametrize(("visitor_text"), [None, lambda _, _, _, _, _: None])
 def test_multi_language(visitor_text):
     reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
     txt = reader.pages[0].extract_text(visitor_text=visitor_text)
