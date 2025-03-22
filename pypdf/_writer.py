@@ -2086,11 +2086,22 @@ class PdfWriter(PdfDocCommon):
                 ]
             )
 
-        def clean(content: ContentStream, images: List[str], forms: List[str]) -> None:
+        if to_delete & ObjectDeletionFlag.TEXT:
+            jump_operators = [b"Tj", b"TJ", b"'", b'"']
+
+        def clean(content: ContentStream, images: List[str], forms: List[str], text_filters: Optional[DictionaryObject] = None) -> None:
             nonlocal jump_operators, to_delete
+
+            font_ids_to_delete = []
+            if text_filters and to_delete & ObjectDeletionFlag.TEXT:
+                font_ids_to_delete = text_filters.get("font_ids", [])
+
             i = 0
+            font_id = None
             while i < len(content.operations):
                 operands, operator = content.operations[i]
+                if operator == b"Tf":
+                    font_id = operands[0]
                 if (
                     (
                         operator == b"INLINE IMAGE"
@@ -2103,29 +2114,13 @@ class PdfWriter(PdfDocCommon):
                         and (operands[0] in images)
                     )
                 ):
-                    del content.operations[i]
-                else:
-                    i += 1
-            content.get_data()  # this ensures ._data is rebuilt from the .operations
-
-        def clean_text(content: ContentStream, text_filters: Optional[DictionaryObject] = None) -> None:
-            jump_operators = [b"Tj", b"TJ", b"'", b'"']
-
-            font_ids_to_delete = []
-            if text_filters:
-                font_ids_to_delete = text_filters.get("font_ids", [])
-
-            i = 0
-            font_id = None
-            while i < len(content.operations):
-                operands, operator = content.operations[i]
-                if operator == b"Tf":
-                    font_id = operands[0]
-                if (
-                    (operator in jump_operators)
-                    and (not font_ids_to_delete or font_id in font_ids_to_delete)
-                ):
-                    del content.operations[i]
+                    if (
+                      to_delete & ObjectDeletionFlag.TEXT
+                      and (not font_ids_to_delete or font_id in font_ids_to_delete)
+                    ):
+                        del content.operations[i]
+                    else:
+                        i += 1
                 else:
                     i += 1
             content.get_data()  # this ensures ._data is rebuilt from the .operations
@@ -2198,7 +2193,7 @@ class PdfWriter(PdfDocCommon):
                     e = ContentStream(elt, self)
                     e.update(elt.items())
                     elt = e
-                clean(elt, images, forms)  # clean the content
+                clean(elt, images, forms, text_filters)  # clean the content
             return images, forms
 
         if not isinstance(page, PageObject):
@@ -2208,10 +2203,7 @@ class PdfWriter(PdfDocCommon):
 
             images, forms = clean_forms(page, [])
 
-            if to_delete & ObjectDeletionFlag.TEXT:
-                clean_text(content, text_filters)
-
-            clean(content, images, forms)
+            clean(content, images, forms, text_filters)
             page.replace_contents(content)
 
     def remove_images(
@@ -2256,10 +2248,11 @@ class PdfWriter(PdfDocCommon):
                 font_name = font_info.get("/BaseFont", "").split("+")[-1]
                 if font_name in font_names:
                     font_ids.append(font_id)
-
-            self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT, text_filters = {
+            
+            text_filters = {
                 "font_ids": font_ids,
-            })
+            }
+            self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT, text_filters = text_filters)
 
     def add_uri(
         self,
