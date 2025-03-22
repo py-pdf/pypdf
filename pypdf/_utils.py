@@ -466,6 +466,7 @@ def rename_kwargs(
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
                 ),
                 category=DeprecationWarning,
+                stacklevel=1,
             )
 
 
