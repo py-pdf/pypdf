@@ -2085,19 +2085,18 @@ class PdfWriter(PdfDocCommon):
                     b"sh"
                 ]
             )
-
         if to_delete & ObjectDeletionFlag.TEXT:
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
 
         def clean(content: ContentStream, images: List[str], forms: List[str], text_filters: Optional[DictionaryObject] = None) -> None:
             nonlocal jump_operators, to_delete
 
+            font_id = None
             font_ids_to_delete = []
             if text_filters and to_delete & ObjectDeletionFlag.TEXT:
                 font_ids_to_delete = text_filters.get("font_ids", [])
 
             i = 0
-            font_id = None
             while i < len(content.operations):
                 operands, operator = content.operations[i]
                 if operator == b"Tf":
@@ -2115,8 +2114,8 @@ class PdfWriter(PdfDocCommon):
                     )
                 ):
                     if (
-                      to_delete & ObjectDeletionFlag.TEXT
-                      and (not font_ids_to_delete or font_id in font_ids_to_delete)
+                      not to_delete & ObjectDeletionFlag.TEXT
+                      or (not font_ids_to_delete or font_id in font_ids_to_delete)
                     ):
                         del content.operations[i]
                     else:
