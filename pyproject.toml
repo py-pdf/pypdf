@@ -173,7 +173,6 @@ ignore = [
     "PTH123",  # `open()` should be replaced by `Path.open()`
     "PYI042",  # Type alias `mode_str_type` should be CamelCase
     "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
-    "RET505",  # Unnecessary `else` after `return` statement
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",    # Use of `assert` detected

@@ -285,5 +285,4 @@ def nums_next(
     i = nums.index(key) + 2
     if i < len(nums):
         return (nums[i], nums[i + 1])
-    else:
-        return (None, None)
+    return (None, None)
