@@ -1248,7 +1248,6 @@ class PageObject(DictionaryObject):
         self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
-        return
 
     def _merge_page_writer(
         self,
