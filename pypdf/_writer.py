@@ -2088,7 +2088,12 @@ class PdfWriter(PdfDocCommon):
         if to_delete & ObjectDeletionFlag.TEXT:
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
 
-        def clean(content: ContentStream, images: List[str], forms: List[str], text_filters: Optional[DictionaryObject] = None) -> None:
+        def clean(
+            content: ContentStream,
+            images: List[str],
+            forms: List[str],
+            text_filters: Optional[DictionaryObject] = None
+        ) -> None:
             nonlocal jump_operators, to_delete
 
             font_id = None
@@ -2247,7 +2252,7 @@ class PdfWriter(PdfDocCommon):
                 font_name = font_info.get("/BaseFont", "").split("+")[-1]
                 if font_name in font_names:
                     font_ids.append(font_id)
-            
+
             text_filters = {
                 "font_ids": font_ids,
             }
