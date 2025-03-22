@@ -133,7 +133,6 @@ ignore = [
     "ARG001",  # Unused function argument
     "ARG002",  # Unused method argument
     "ARG004",  # Unused static method argument
-    "ARG005",  # Unused lambda argument
     "B028",    # No explicit `stacklevel` keyword argument found
     "B904",    # Within an `except` clause, raise exceptions with
     "B905",    # `zip()` without an explicit `strict=` parameter
