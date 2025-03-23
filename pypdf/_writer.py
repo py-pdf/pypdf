@@ -2042,7 +2042,7 @@ class PdfWriter(PdfDocCommon):
         self,
         page: Union[PageObject, DictionaryObject],
         to_delete: Union[ObjectDeletionFlag, Iterable[ObjectDeletionFlag]],
-        text_filters: Optional[dict[str, Any]] = None
+        text_filters: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Remove objects specified by ``to_delete`` from the given page.
@@ -2092,7 +2092,7 @@ class PdfWriter(PdfDocCommon):
             content: ContentStream,
             images: List[str],
             forms: List[str],
-            text_filters: Optional[dict[str, Any]] = None
+            text_filters: Optional[Dict[str, Any]] = None
         ) -> None:
             nonlocal jump_operators, to_delete
 
