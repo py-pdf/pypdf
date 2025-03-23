@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742669632856,
+  "lastUpdate": 1742743293044,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -72803,6 +72803,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0030422663315294515",
             "extra": "mean: 748.9441582000154 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "471658971e971d57ac2d92ffa361e3db81fa3a7d",
+          "message": "DEV: Modify use of ignore Ruff rule ARG005 (#3215)\n\nARG005: Unused lambda argument. If there is a single unused lambda argument, replacing it with an underscore does not trigger the rule.",
+          "timestamp": "2025-03-23T16:19:03+01:00",
+          "tree_id": "76a0232d77c83654a130b91f2cd2dc6c32b7897d",
+          "url": "https://github.com/py-pdf/pypdf/commit/471658971e971d57ac2d92ffa361e3db81fa3a7d"
+        },
+        "date": 1742743287725,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.614747757613108,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008326850937733015",
+            "extra": "mean: 276.6444761999992 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.543194860066299,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006788162378391866",
+            "extra": "mean: 64.33683737499862 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2827226138223325,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017167875356606934",
+            "extra": "mean: 3.537035776799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.169938309082287,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004658824962853528",
+            "extra": "mean: 55.035960111110974 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08215449916286659,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08208129020119624",
+            "extra": "mean: 12.172187892200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.336578379189434,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012219383378851327",
+            "extra": "mean: 748.179093400006 msec\nrounds: 5"
           }
         ]
       }
