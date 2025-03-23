@@ -50,9 +50,9 @@ page = reader.pages[0]
 text = page.extract_text()
 ```
 
-pypdf can do a lot more, e.g. splitting, merging, reading and creating
-annotations, decrypting and encrypting, and more. Check out [the
-documentation](https://pypdf.readthedocs.io/en/stable/) for additional usage
+pypdf can do splitting, merging, reading and creating
+annotations, decrypting and encrypting, and a lot more. Check out the
+[documentation](https://pypdf.readthedocs.io/en/stable/) for additional usage
 examples!
 
 For questions and answers, visit
@@ -67,9 +67,7 @@ See the [CONTRIBUTING.md](https://github.com/py-pdf/pypdf/blob/main/CONTRIBUTING
 
 ### Q&A
 
-The experience pypdf users have covers the whole range from beginners who
-want to make their live easier to experts who developed software before PDF
-existed. You can contribute to the pypdf community by answering questions
+The experience pypdf users have covers the whole range from beginner to expert, all are welcome. You can contribute to the pypdf community by answering questions
 on [StackOverflow](https://stackoverflow.com/questions/tagged/pypdf),
 helping in [discussions](https://github.com/py-pdf/pypdf/discussions),
 and asking users who report issues for [MCVE](https://stackoverflow.com/help/minimal-reproducible-example)'s (Code + example PDF!).
