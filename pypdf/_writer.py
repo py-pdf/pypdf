@@ -2051,10 +2051,10 @@ class PdfWriter(PdfDocCommon):
             page: Page object to clean up.
             to_delete: Objects to be deleted; can be a ``ObjectDeletionFlag``
                 or a list of ObjectDeletionFlag
-            text_filters: Properties of text to be deleted. Optional.
-                If no filters are specified, all text on the page will be deleted.
+            text_filters: Properties of text to be deleted, if applicable. Optional.
                 This is a Python dictionary with the following properties:
-                * font_ids: List of font IDs (such as /F1 or /T1_0) to be deleted. Optional.
+
+                * font_ids: List of font IDs (such as /F1 or /T1_0) to be deleted.
 
         """
         if isinstance(to_delete, (list, tuple)):
@@ -2256,7 +2256,7 @@ class PdfWriter(PdfDocCommon):
             text_filters = {
                 "font_ids": font_ids,
             }
-            self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT, text_filters = text_filters)
+            self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT, text_filters=text_filters)
 
     def add_uri(
         self,

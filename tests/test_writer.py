@@ -1386,6 +1386,16 @@ def test_new_removes():
     assert b"Chap" not in bb
     assert b" TJ" not in bb
 
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.remove_text(font_names=['LiberationSans-Bold'])
+    b = BytesIO()
+    writer.write(b)
+    bb = bytes(b.getbuffer())
+    assert b"/Im0" in bb
+    assert b"Arbeitsschritt" not in bb
+    assert b"Modelltechnik" in bb
+
     url = "https://github.com/py-pdf/pypdf/files/10832029/tt2.pdf"
     name = "GeoBaseWithComments.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
