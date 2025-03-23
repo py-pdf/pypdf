@@ -202,7 +202,7 @@ max-complexity = 54  # Recommended: 10
 [tool.ruff.lint.per-file-ignores]
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
 "_encryption.py" = ["S324"]
-"_writer.py" = ["S324"]
+"_writer.py" = ["ARG005", "S324"]
 "pypdf/_codecs/symbol.py" = ["A005"]  # Module shadows a Python standard-library module
 "types.py" = ["A005"]  # Module shadows a Python standard-library module
 "pypdf/_text_extraction/__init__.py" = ["PLW0603"]  # Using the global statement to update is discouraged
@@ -212,6 +212,7 @@ max-complexity = 54  # Recommended: 10
 "pypdf/*" = ["N802", "N803"]  # We first need to deprecate old stuff
 "sample-files/*" = ["D100", "INP001"]
 "tests/*" = ["ANN001", "ANN201", "B017", "B018", "D103", "D104", "S105", "S106"]
+"tests/test_text_extraction.py" = ["ARG005"]
 "tests/test_workflows.py" =  ["T201"]
 
 [tool.ruff.lint.pydocstyle]
