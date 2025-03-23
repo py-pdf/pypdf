@@ -1144,7 +1144,7 @@ class PageObject(DictionaryObject):
         ctm: Optional[CompressedTransformationMatrix] = None,
         over: bool = True,
         expand: bool = False,
-    ) -> None:
+    ) -> None:  # noqa: RET503
         # First we work on merging the resource dictionaries. This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
