@@ -2187,7 +2187,7 @@ class PdfWriter(PdfDocCommon):
 
             clean(content, images, forms)
             page.replace_contents(content)
-        return
+        return [], [] 
 
     def remove_images(
         self,
