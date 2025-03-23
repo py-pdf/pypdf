@@ -2042,7 +2042,7 @@ class PdfWriter(PdfDocCommon):
         self,
         page: Union[PageObject, DictionaryObject],
         to_delete: Union[ObjectDeletionFlag, Iterable[ObjectDeletionFlag]],
-        text_filters: Optional[DictionaryObject] = None,
+        text_filters: Optional[Dict[str, List(str)]] = None
     ) -> None:
         """
         Remove objects specified by ``to_delete`` from the given page.
