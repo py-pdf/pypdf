@@ -50,8 +50,7 @@ page = reader.pages[0]
 text = page.extract_text()
 ```
 
-pypdf can do splitting, merging, reading and creating
-annotations, decrypting and encrypting, and a lot more. Check out the
+pypdf can do a lot more, e.g. splitting, merging, reading and creating annotations, decrypting and encrypting. Check out the
 [documentation](https://pypdf.readthedocs.io/en/stable/) for additional usage
 examples!
 
