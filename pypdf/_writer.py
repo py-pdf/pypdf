@@ -2042,6 +2042,7 @@ class PdfWriter(PdfDocCommon):
         self,
         page: Union[PageObject, DictionaryObject],
         to_delete: Union[ObjectDeletionFlag, Iterable[ObjectDeletionFlag]],
+        text_filters: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Remove objects specified by ``to_delete`` from the given page.
@@ -2050,6 +2051,10 @@ class PdfWriter(PdfDocCommon):
             page: Page object to clean up.
             to_delete: Objects to be deleted; can be a ``ObjectDeletionFlag``
                 or a list of ObjectDeletionFlag
+            text_filters: Properties of text to be deleted, if applicable. Optional.
+                This is a Python dictionary with the following properties:
+
+                * font_ids: List of font IDs (such as /F1 or /T1_0) to be deleted.
 
         """
         if isinstance(to_delete, (list, tuple)):
@@ -2083,11 +2088,24 @@ class PdfWriter(PdfDocCommon):
         if to_delete & ObjectDeletionFlag.TEXT:
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
 
-        def clean(content: ContentStream, images: List[str], forms: List[str]) -> None:
+        def clean(
+            content: ContentStream,
+            images: List[str],
+            forms: List[str],
+            text_filters: Optional[Dict[str, Any]] = None
+        ) -> None:
             nonlocal jump_operators, to_delete
+
+            font_id = None
+            font_ids_to_delete = []
+            if text_filters and to_delete & ObjectDeletionFlag.TEXT:
+                font_ids_to_delete = text_filters.get("font_ids", [])
+
             i = 0
             while i < len(content.operations):
                 operands, operator = content.operations[i]
+                if operator == b"Tf":
+                    font_id = operands[0]
                 if (
                     (
                         operator == b"INLINE IMAGE"
@@ -2100,7 +2118,13 @@ class PdfWriter(PdfDocCommon):
                         and (operands[0] in images)
                     )
                 ):
-                    del content.operations[i]
+                    if (
+                      not to_delete & ObjectDeletionFlag.TEXT
+                      or (not font_ids_to_delete or font_id in font_ids_to_delete)
+                    ):
+                        del content.operations[i]
+                    else:
+                        i += 1
                 else:
                     i += 1
             content.get_data()  # this ensures ._data is rebuilt from the .operations
@@ -2173,7 +2197,7 @@ class PdfWriter(PdfDocCommon):
                     e = ContentStream(elt, self)
                     e.update(elt.items())
                     elt = e
-                clean(elt, images, forms)  # clean the content
+                clean(elt, images, forms, text_filters)  # clean the content
             return images, forms
 
         if not isinstance(page, PageObject):
@@ -2183,7 +2207,7 @@ class PdfWriter(PdfDocCommon):
 
             images, forms = clean_forms(page, [])
 
-            clean(content, images, forms)
+            clean(content, images, forms, text_filters)
             page.replace_contents(content)
 
     def remove_images(
@@ -2210,10 +2234,29 @@ class PdfWriter(PdfDocCommon):
         for page in self.pages:
             self.remove_objects_from_page(page, i)
 
-    def remove_text(self) -> None:
-        """Remove text from this output."""
+    def remove_text(self, font_names: Optional[List[str]] = None) -> None:
+        """
+        Remove text from the PDF.
+
+        Args:
+            font_names: List of font names to remove, such as "Helvetica-Bold".
+                Optional. If not specified, all text will be removed.
+        """
+        if not font_names:
+            font_names = []
+
         for page in self.pages:
-            self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT)
+            font_ids = []
+            fonts = page.get("/Resources", {}).get("/Font", {})
+            for font_id, font_info in fonts.items():
+                font_name = font_info.get("/BaseFont", "").split("+")[-1]
+                if font_name in font_names:
+                    font_ids.append(font_id)
+
+            text_filters = {
+                "font_ids": font_ids,
+            }
+            self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT, text_filters=text_filters)
 
     def add_uri(
         self,
