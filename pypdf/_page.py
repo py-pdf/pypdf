@@ -1144,7 +1144,7 @@ class PageObject(DictionaryObject):
         ctm: Optional[CompressedTransformationMatrix] = None,
         over: bool = True,
         expand: bool = False,
-    ) -> None:  # noqa: RET503
+    ) -> None:
         # First we work on merging the resource dictionaries. This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
@@ -1153,9 +1153,10 @@ class PageObject(DictionaryObject):
             if hasattr(
                 self.indirect_reference.pdf, "_add_object"
             ):  # ---------- to detect PdfWriter
-                return self._merge_page_writer(
+                self._merge_page_writer(
                     page2, page2transformation, ctm, over, expand
                 )
+                return
         except (AssertionError, AttributeError):
             pass
 
