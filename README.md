@@ -66,7 +66,7 @@ See the [CONTRIBUTING.md](https://github.com/py-pdf/pypdf/blob/main/CONTRIBUTING
 
 ### Q&A
 
-The experience pypdf users have covers the whole range from beginner to expert, all are welcome. You can contribute to the pypdf community by answering questions
+The experience pypdf users have covers the whole range from beginner to expert. You can contribute to the pypdf community by answering questions
 on [StackOverflow](https://stackoverflow.com/questions/tagged/pypdf),
 helping in [discussions](https://github.com/py-pdf/pypdf/discussions),
 and asking users who report issues for [MCVE](https://stackoverflow.com/help/minimal-reproducible-example)'s (Code + example PDF!).
