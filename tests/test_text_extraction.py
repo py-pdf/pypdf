@@ -69,9 +69,9 @@ def test_multi_language(visitor_text):
         (
             "inkscape-abc.pdf",
             {
-                "A": lambda x, y: 0 < x < 94 and 189 < y < 283,  # Upper left
-                "B": lambda x, y: 94 < x < 189 and 94 < y < 189,  # Center
-                "C": lambda x, y: 189 < x < 283 and 0 < y < 94,  # Lower right
+                "A": lambda x, y: 0 < x < 94 and 189 < y < 283,  # In upper left
+                "B": lambda x, y: 94 < x < 189 and 94 < y < 189,  # In the center
+                "C": lambda x, y: 189 < x < 283 and 0 < y < 94,  # In lower right
             },
         )
     ],
