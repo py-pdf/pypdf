@@ -70,7 +70,7 @@ jobs:
         sudo apt-get update
     - name: Install APT dependencies
       run:
-        sudo apt-get install ghostscript poppler-utils
+        sudo apt-get install ghostscript jbig2dec poppler-utils
     - name: Checkout Code
       uses: actions/checkout@v4
       with:
