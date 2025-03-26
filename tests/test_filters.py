@@ -656,3 +656,19 @@ def test_ccitt_fax_decode__black_is_1():
     expected_pixels = list(ImageOps.invert(expected_image_inverted).getdata())
     actual_pixels = list(actual_image.getdata())
     assert expected_pixels == actual_pixels
+
+
+@pytest.mark.enable_socket
+def test_flate_decode__image_is_none_due_to_size_limit(caplog):
+    url = "https://github.com/user-attachments/files/19464256/file.pdf"
+    name = "issue3220.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    images = reader.pages[0].images
+    assert len(images) == 1
+    image = images[0]
+    assert image.name == "Im0.png"
+    assert image.image is None
+    assert (
+        "Failed loading image: Image size (180000000 pixels) exceeds limit of "
+        "178956970 pixels, could be decompression bomb DOS attack."
+    ) in caplog.messages
