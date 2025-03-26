@@ -1456,6 +1456,8 @@ def test_get_contents_as_bytes():
     assert writer.pages[0]._get_contents_as_bytes() == expected
     writer.pages[0][NameObject("/Contents")] = writer.pages[0]["/Contents"][0]
     assert writer.pages[0]._get_contents_as_bytes() == expected
+    del writer.pages[0]["/Contents"]
+    assert writer.pages[0]._get_contents_as_bytes() is None
 
 
 def test_recursive_get_page_from_node():
