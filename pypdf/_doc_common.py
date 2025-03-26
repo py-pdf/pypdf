@@ -352,11 +352,10 @@ class PdfDocCommon:
         # the original method (flattened page count) is used.
         if self.is_encrypted:
             return self.root_object["/Pages"]["/Count"]  # type: ignore
-        else:
-            if self.flattened_pages is None:
-                self._flatten(self._readonly)
-            assert self.flattened_pages is not None
-            return len(self.flattened_pages)
+        if self.flattened_pages is None:
+            self._flatten(self._readonly)
+        assert self.flattened_pages is not None
+        return len(self.flattened_pages)
 
     def get_page(self, page_number: int) -> PageObject:
         """
@@ -585,7 +584,7 @@ class PdfDocCommon:
     def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
         if "/TM" in parent:
             return cast(str, parent["/TM"])
-        elif "/Parent" in parent:
+        if "/Parent" in parent:
             return (
                 self._get_qualified_field_name(
                     cast(DictionaryObject, parent["/Parent"])
@@ -593,8 +592,7 @@ class PdfDocCommon:
                 + "."
                 + cast(str, parent.get("/T", ""))
             )
-        else:
-            return cast(str, parent.get("/T", ""))
+        return cast(str, parent.get("/T", ""))
 
     def _build_field(
         self,
@@ -713,12 +711,11 @@ class PdfDocCommon:
         def indexed_key(k: str, fields: Dict[Any, Any]) -> str:
             if k not in fields:
                 return k
-            else:
-                return (
-                    k
-                    + "."
-                    + str(sum(1 for kk in fields if kk.startswith(k + ".")) + 2)
-                )
+            return (
+                k
+                + "."
+                + str(sum(1 for kk in fields if kk.startswith(k + ".")) + 2)
+            )
 
         # Retrieve document form fields
         formfields = self.get_fields()
@@ -759,12 +756,11 @@ class PdfDocCommon:
         def _get_inherited(obj: DictionaryObject, key: str) -> Any:
             if key in obj:
                 return obj[key]
-            elif "/Parent" in obj:
+            if "/Parent" in obj:
                 return _get_inherited(
                     cast(DictionaryObject, obj["/Parent"].get_object()), key
                 )
-            else:
-                return None
+            return None
 
         try:
             # to cope with all types
@@ -824,7 +820,7 @@ class PdfDocCommon:
             oa = oa.decode()
         if isinstance(oa, str):
             return create_string_object(oa)
-        elif isinstance(oa, ArrayObject):
+        if isinstance(oa, ArrayObject):
             try:
                 page, typ, *array = oa
                 fit = Fit(typ, tuple(array))
@@ -907,8 +903,7 @@ class PdfDocCommon:
         catalog = self.root_object
         if CO.THREADS in catalog:
             return cast("ArrayObject", catalog[CO.THREADS])
-        else:
-            return None
+        return None
 
     @abstractmethod
     def _get_page_number_by_indirect(
@@ -961,18 +956,17 @@ class PdfDocCommon:
         ):
             page = NullObject()
             return Destination(title, page, Fit.fit())
-        else:
-            page, typ, *array = array  # type: ignore
-            try:
-                return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
-            except PdfReadError:
-                logger_warning(f"Unknown destination: {title} {array}", __name__)
-                if self.strict:
-                    raise
-                # create a link to first Page
-                tmp = self.pages[0].indirect_reference
-                indirect_reference = NullObject() if tmp is None else tmp
-                return Destination(title, indirect_reference, Fit.fit())
+        page, typ, *array = array  # type: ignore
+        try:
+            return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
+        except PdfReadError:
+            logger_warning(f"Unknown destination: {title} {array}", __name__)
+            if self.strict:
+                raise
+            # create a link to first Page
+            tmp = self.pages[0].indirect_reference
+            indirect_reference = NullObject() if tmp is None else tmp
+            return Destination(title, indirect_reference, Fit.fit())
 
     def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
         dest, title, outline_item = None, None, None
@@ -1018,11 +1012,10 @@ class PdfDocCommon:
         else:
             if self.strict:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
-            else:
-                logger_warning(
-                    f"Removed unexpected destination {dest!r} from destination",
-                    __name__,
-                )
+            logger_warning(
+                f"Removed unexpected destination {dest!r} from destination",
+                __name__,
+            )
             outline_item = self._build_destination(title, None)
 
         # if outline item created, add color, format, and child count if present

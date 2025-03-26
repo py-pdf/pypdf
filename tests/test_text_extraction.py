@@ -22,7 +22,7 @@ SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 @pytest.mark.samples
-@pytest.mark.parametrize(("visitor_text"), [None, lambda a, b, c, d, e: None])
+@pytest.mark.parametrize(("visitor_text"), [None, lambda a, b, c, d, e: None])  # noqa: ARG005
 def test_multi_language(visitor_text):
     reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
     txt = reader.pages[0].extract_text(visitor_text=visitor_text)
@@ -256,10 +256,7 @@ def test_layout_mode_space_vertically_font_height_weight():
             assert expected_line == actual_line
 
         pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows
-        assert text == pdftext, (
-            "PDF extracted text differs from expected value.\n\n"
-            "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
-        )
+        assert text == pdftext
 
         # Blank lines are added to truly separate paragraphs
         with open(RESOURCE_ROOT / "crazyones_layout_vertical_space_font_height_weight.txt", "rb") as pdftext_file:
@@ -273,10 +270,7 @@ def test_layout_mode_space_vertically_font_height_weight():
             assert expected_line == actual_line
 
         pdftext = pdftext.replace(b"\r\n", b"\n")  # fix for windows
-        assert text == pdftext, (
-                "PDF extracted text differs from expected value.\n\n"
-                "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
-        )
+        assert text == pdftext
 
 
 @pytest.mark.enable_socket

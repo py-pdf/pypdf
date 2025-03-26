@@ -69,7 +69,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 
 Contributors are:
 
-* Anybody who has an commit in `main` - no matter how big/small or how many. Also if it's via *co-authored-by*.
+* Anybody who has a commit in `main` - no matter how small or how many. Also if it's via *co-authored-by*.
 * People who opened helpful issues:
 
   1. Bugs: with complete MCVE

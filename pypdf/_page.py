@@ -603,8 +603,7 @@ class PageObject(DictionaryObject):
         _i = getattr(obj, "indirect_reference", None)
         if _i in call_stack:
             return []
-        else:
-            call_stack.append(_i)
+        call_stack.append(_i)
         if self.inline_images is None:
             self.inline_images = self._get_inline_images()
         if obj is None:
@@ -657,16 +656,15 @@ class PageObject(DictionaryObject):
 
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
-            f = ImageFile(
+            return ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
                 image=imgd[2],
                 indirect_reference=xobjs[id].indirect_reference,
             )
-            return f
-        else:  # in a sub object
-            ids = id[1:]
-            return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
+        # in a sub object
+        ids = id[1:]
+        return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
     def images(self) -> VirtualListImages:
@@ -1029,10 +1027,8 @@ class PageObject(DictionaryObject):
             obj = self[PG.CONTENTS].get_object()
             if isinstance(obj, list):
                 return b"".join(x.get_object().get_data() for x in obj)
-            else:
-                return cast(EncodedStreamObject, obj).get_data()
-        else:
-            return None
+            return cast(EncodedStreamObject, obj).get_data()
+        return None
 
     def get_contents(self) -> Optional[ContentStream]:
         """
@@ -1051,10 +1047,8 @@ class PageObject(DictionaryObject):
             obj = self[PG.CONTENTS].get_object()
             if isinstance(obj, NullObject):
                 return None
-            else:
-                return ContentStream(obj, pdf)
-        else:
-            return None
+            return ContentStream(obj, pdf)
+        return None
 
     def replace_contents(
         self, content: Union[None, ContentStream, EncodedStreamObject, ArrayObject]
@@ -1082,13 +1076,12 @@ class PageObject(DictionaryObject):
         if is_null_or_none(content):
             if PG.CONTENTS not in self:
                 return
-            else:
-                assert self.indirect_reference is not None
-                assert self[PG.CONTENTS].indirect_reference is not None
-                self.indirect_reference.pdf._objects[
-                    self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
-                ] = NullObject()
-                del self[PG.CONTENTS]
+            assert self.indirect_reference is not None
+            assert self[PG.CONTENTS].indirect_reference is not None
+            self.indirect_reference.pdf._objects[
+                self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
+            ] = NullObject()
+            del self[PG.CONTENTS]
         elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
             try:
                 self[NameObject(PG.CONTENTS)] = self.indirect_reference.pdf._add_object(
@@ -1694,12 +1687,11 @@ class PageObject(DictionaryObject):
         """
         if self.indirect_reference is None:
             return None
-        else:
-            try:
-                lst = self.indirect_reference.pdf.pages
-                return lst.index(self)
-            except ValueError:
-                return None
+        try:
+            lst = self.indirect_reference.pdf.pages
+            return lst.index(self)
+        except ValueError:
+            return None
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
@@ -1918,7 +1910,7 @@ class PageObject(DictionaryObject):
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
-                return None
+                return
             if operator == b"ET":
                 output += text
                 if visitor_text is not None:
@@ -2046,7 +2038,7 @@ class PageObject(DictionaryObject):
                     _actual_str_size,
                 )
             else:
-                return None
+                return
 
             if check_crlf_space:
                 try:
@@ -2068,7 +2060,7 @@ class PageObject(DictionaryObject):
                         memo_cm = cm_matrix.copy()
                         memo_tm = tm_matrix.copy()
                 except OrientationNotFoundError:
-                    return None
+                    return
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
@@ -2473,8 +2465,7 @@ class PageObject(DictionaryObject):
     def annotations(self) -> Optional[ArrayObject]:
         if "/Annots" not in self:
             return None
-        else:
-            return cast(ArrayObject, self["/Annots"])
+        return cast(ArrayObject, self["/Annots"])
 
     @annotations.setter
     def annotations(self, value: Optional[ArrayObject]) -> None:

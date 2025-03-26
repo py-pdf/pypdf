@@ -248,8 +248,7 @@ class LzwCodec(Codec):
                 self._add_entry_decode(self.decoding_table[old_code], string[0])
                 old_code = code
 
-        output = output_stream.getvalue()
-        return output
+        return output_stream.getvalue()
 
     def _add_entry_decode(self, old_string: bytes, new_char: int) -> None:
         new_string = old_string + bytes([new_char])

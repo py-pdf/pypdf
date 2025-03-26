@@ -119,8 +119,8 @@ def extract_inline_A85(stream: StreamType) -> bytes:
 
 def extract_inline_RL(stream: StreamType) -> bytes:
     """
-    Extract RL Stream from Inline Image.
-    the stream will be moved onto the EI
+    Extract RL (RunLengthDecode) Stream from Inline Image.
+    The stream will be moved onto the EI
     """
     data_out: bytes = b""
     # Read data up to delimiter ~>
@@ -147,7 +147,7 @@ def extract_inline_RL(stream: StreamType) -> bytes:
 def extract_inline_DCT(stream: StreamType) -> bytes:
     """
     Extract DCT (JPEG) Stream from Inline Image.
-    the stream will be moved onto the EI
+    The stream will be moved onto the EI
     """
     data_out: bytes = b""
     # Read Blocks of data (ID/Size/data) up to ID=FF/D9
@@ -177,7 +177,6 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
             data_out += c
             sz = c[0] * 256 + c[1]
             data_out += stream.read(sz - 2)
-        # else: pass
 
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
@@ -188,10 +187,7 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
 
 
 def extract_inline_default(stream: StreamType) -> bytes:
-    """
-    Legacy method
-    used by default
-    """
+    """Legacy method, used by default"""
     stream_out = BytesIO()
     # Read the inline image, while checking for EI (End Image) operator.
     while True:
