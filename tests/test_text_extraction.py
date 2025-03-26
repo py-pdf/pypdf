@@ -71,8 +71,8 @@ def test_multi_language(visitor_text):
             {
                 "A": lambda x, y: 0 < x < 94 and 189 < y < 283,  # In upper left
                 "B": lambda x, y: 94 < x < 189 and 94 < y < 189,  # In the center
-                "C": lambda x, y: 189 < x < 283 and 0 < y < 94,
-            },  # In lower right
+                "C": lambda x, y: 189 < x < 283 and 0 < y < 94,  # In lower right
+            },
         )
     ],
 )
@@ -89,10 +89,8 @@ def test_visitor_text_matrices(file_name, constraints):
 
     def visitor_text(text, cm, tm, font_dict, font_size) -> None:
         ctm = mult(tm, cm)
-        x = ctm[4]  # used to tm[4] * cm[0] + tm[5] * cm[2] + cm[4]  # mult(tm, cm)[4]
-        y = ctm[
-            5
-        ]  # used to be tm[4] * cm[1] + tm[5] * cm[3] + cm[5]  # mult(tm, cm)[5]
+        x = ctm[4]  # mult(tm, cm)[4]
+        y = ctm[5]  # mult(tm, cm)[5]
         lines.append({"text": text, "x": x, "y": y})
 
     reader.pages[0].extract_text(visitor_text=visitor_text)
@@ -156,7 +154,7 @@ def test_layout_mode_epic_page_fonts():
 
 
 def test_layout_mode_uncommon_operators():
-    # coverage for layout mode Tc, Tz, Ts, ', ", TD, TL, and Tw
+    # Coverage for layout mode Tc, Tz, Ts, ', ", TD, TL, and Tw
     reader = PdfReader(RESOURCE_ROOT / "toy.pdf")
     expected = (RESOURCE_ROOT / "toy.layout.txt").read_text(encoding="utf-8")
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
@@ -178,7 +176,7 @@ def test_layout_mode_type0_font_widths():
 @pytest.mark.enable_socket
 def test_layout_mode_indirect_sequence_font_widths():
     # Cover the situation where the sequence for font widths is an IndirectObject
-    # ref https://github.com/py-pdf/pypdf/pull/2788
+    # https://github.com/py-pdf/pypdf/pull/2788
     url = "https://github.com/user-attachments/files/16491621/2788_example.pdf"
     name = "2788_example.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
@@ -287,7 +285,7 @@ def test_infinite_loop_arrays():
 
 @pytest.mark.enable_socket
 def test_content_stream_is_dictionary_object(caplog):
-    """Tests for #2995."""
+    """Tests for #2995"""
     url = "https://github.com/user-attachments/files/18049322/6fa5fd46-5f98-4a67-800d-5e2362b0164f.pdf"
     name = "iss2995.pdf"
     data = get_data_from_url(url, name=name)
