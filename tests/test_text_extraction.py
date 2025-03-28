@@ -350,6 +350,6 @@ def test_layout_mode_text_state():
     # Get the txt from issue #3212 and normalize line endings
     txt_url = "https://github.com/user-attachments/files/19510731/garbled-font.layout.txt"
     txt_name = "garbled-font.layout.txt"
-    expected = get_data_from_url(txt_url, name=txt_name).decode('utf-8').replace('\r\n', '\n')
+    expected = get_data_from_url(txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
 
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
