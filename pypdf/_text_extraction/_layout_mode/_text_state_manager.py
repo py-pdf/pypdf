@@ -177,7 +177,7 @@ class TextStateManager:
 
     def add_q(self) -> None:
         """Add another level to q_queue"""
-        self.font_stack.append((self.font, self.font_size),)
+        self.font_stack.append((self.font, self.font_size))
         self.q_depth.append(len(self.q_depth))
 
     def add_cm(self, *args: Any) -> TextStateManagerChainMapType:
