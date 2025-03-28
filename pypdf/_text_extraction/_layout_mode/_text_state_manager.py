@@ -43,7 +43,7 @@ class TextStateManager:
         self.Tz: float = 100.0
         self.TL: float = 0.0
         self.Ts: float = 0.0
-        self.font_stack = []
+        self.font_stack: list[tuple[Font | None, float]] = []
         self.font: Union[Font, None] = None
         self.font_size: Union[int, float] = 0
 
