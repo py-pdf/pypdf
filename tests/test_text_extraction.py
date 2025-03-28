@@ -338,3 +338,18 @@ def test_iss3074():
     # pypdf.errors.PdfReadError: ZeroDivisionError: float division by zero
     txt = reader.pages[0].extract_text(extraction_mode="layout")
     assert txt.strip().startswith("AAAAAA")
+
+
+@pytest.mark.enable_socket
+def test_layout_mode_text_state():
+    """Ensure the text state is stored and reset with q/Q operators."""
+    # Get the PDF from issue #3212
+    url = "https://github.com/user-attachments/files/19396790/garbled.pdf"
+    name = "garbled-font.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    # Get the txt from issue #3212 and normalize line endings
+    txt_url = "https://github.com/user-attachments/files/19510731/garbled-font.layout.txt"
+    txt_name = "garbled-font.layout.txt"
+    expected = get_data_from_url(txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
+
+    assert expected == reader.pages[0].extract_text(extraction_mode="layout")

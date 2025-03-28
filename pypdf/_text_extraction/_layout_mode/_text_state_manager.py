@@ -1,7 +1,7 @@
 """manage the PDF transform stack during "layout" mode text extraction"""
 
 from collections import ChainMap, Counter
-from typing import Any, Dict, List, MutableMapping, Union
+from typing import Any, Dict, List, MutableMapping, Tuple, Union
 from typing import ChainMap as ChainMapType
 from typing import Counter as CounterType
 
@@ -43,6 +43,7 @@ class TextStateManager:
         self.Tz: float = 100.0
         self.TL: float = 0.0
         self.Ts: float = 0.0
+        self.font_stack: List[Tuple[Union[Font, None], Union[int, float]]] = []
         self.font: Union[Font, None] = None
         self.font_size: Union[int, float] = 0
 
@@ -167,6 +168,7 @@ class TextStateManager:
 
     def remove_q(self) -> TextStateManagerChainMapType:
         """Rewind to stack prior state after closing a 'q' with internal 'cm' ops"""
+        self.font, self.font_size = self.font_stack.pop(-1)
         self.transform_stack = self.reset_tm()
         self.transform_stack.maps = self.transform_stack.maps[
             self.q_queue.pop(self.q_depth.pop(), 0) :
@@ -175,6 +177,7 @@ class TextStateManager:
 
     def add_q(self) -> None:
         """Add another level to q_queue"""
+        self.font_stack.append((self.font, self.font_size))
         self.q_depth.append(len(self.q_depth))
 
     def add_cm(self, *args: Any) -> TextStateManagerChainMapType:
