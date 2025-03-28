@@ -511,7 +511,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(b"<<\n")
-        for key, value in list(self.items()):
+        for key, value in self.items():
             if len(key) > 2 and key[1] == "%" and key[-1] == "%":
                 continue
             key.write_to_stream(stream, encryption_key)
