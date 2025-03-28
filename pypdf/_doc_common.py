@@ -1183,7 +1183,7 @@ class PdfDocCommon:
                             "Maximum recursion depth reached during page flattening."
                         )
         elif t == "/Page":
-            for attr_in, value in list(inherit.items()):
+            for attr_in, value in inherit.items():
                 # if the page has it's own value, it does not inherit the
                 # parent's value:
                 if attr_in not in pages:
