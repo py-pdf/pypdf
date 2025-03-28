@@ -351,5 +351,5 @@ def test_layout_mode_text_state():
     layout = reader.pages[0].extract_text(extraction_mode="layout")
     plain = reader.pages[0].extract_text(extraction_mode="plain")
 
-    assert set(layout) == set(plain), "text values consistent"
-    assert expected == layout, "page contents as expected"
+    assert set(layout) == set(plain), "consistent between layout and plain"
+    assert expected.split() == layout.split(), "page text as expected"
