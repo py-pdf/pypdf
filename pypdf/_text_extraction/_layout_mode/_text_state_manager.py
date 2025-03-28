@@ -1,7 +1,7 @@
 """manage the PDF transform stack during "layout" mode text extraction"""
 
 from collections import ChainMap, Counter
-from typing import Any, Dict, List, MutableMapping, Union
+from typing import Any, Dict, List, MutableMapping, Tuple, Union
 from typing import ChainMap as ChainMapType
 from typing import Counter as CounterType
 
@@ -43,7 +43,7 @@ class TextStateManager:
         self.Tz: float = 100.0
         self.TL: float = 0.0
         self.Ts: float = 0.0
-        self.font_stack: list[tuple[Font | None, float]] = []
+        self.font_stack: List[Tuple[Union[Font, None], Union[int, float]]] = []
         self.font: Union[Font, None] = None
         self.font_size: Union[int, float] = 0
 
