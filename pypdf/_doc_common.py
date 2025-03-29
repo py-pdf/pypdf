@@ -342,6 +342,9 @@ class PdfDocCommon:
         Returns:
             The number of pages of the parsed PDF file.
 
+        Raises:
+            PdfReadError: if restrictions prevent this action.
+
         """
         # Flattened pages will not work on an encrypted PDF;
         # the PDF file's page count is used in this case. Otherwise,
