@@ -1039,6 +1039,13 @@ def test_indirect_object_contains():
     assert "/Producer" in indirect_object
 
 
+def test_indirect_object_iter():
+    writer = PdfWriter()
+    indirect_object = IndirectObject(1, 0, writer)
+    assert "foo" not in list(indirect_object)
+    assert "/Producer" in list(indirect_object)
+
+
 def test_array_operators():
     a = ArrayObject(
         [

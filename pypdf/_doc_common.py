@@ -343,8 +343,7 @@ class PdfDocCommon:
             The number of pages of the parsed PDF file.
 
         Raises:
-            PdfReadError: if file is encrypted and restrictions prevent
-                this action.
+            PdfReadError: If restrictions prevent this action.
 
         """
         # Flattened pages will not work on an encrypted PDF;
@@ -1183,7 +1182,7 @@ class PdfDocCommon:
                             "Maximum recursion depth reached during page flattening."
                         )
         elif t == "/Page":
-            for attr_in, value in list(inherit.items()):
+            for attr_in, value in inherit.items():
                 # if the page has it's own value, it does not inherit the
                 # parent's value:
                 if attr_in not in pages:

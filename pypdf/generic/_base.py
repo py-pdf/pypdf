@@ -393,6 +393,9 @@ class IndirectObject(PdfObject):
     def __contains__(self, key: Any) -> bool:
         return key in self._get_object_with_check()  # type: ignore
 
+    def __iter__(self) -> Any:
+        return self._get_object_with_check().__iter__()  # type: ignore
+
     def __float__(self) -> str:
         # in this case we are looking for the pointed data
         return self.get_object().__float__()  # type: ignore
