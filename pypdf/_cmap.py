@@ -324,7 +324,7 @@ def parse_bfrange(
         fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]
-        for sq in lst[0:]:
+        for sq in lst:
             if sq == b"]":
                 closure_found = True
                 break
