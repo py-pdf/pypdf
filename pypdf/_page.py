@@ -1044,10 +1044,11 @@ class PageObject(DictionaryObject):
                 pdf = cast(IndirectObject, self.indirect_reference).pdf
             except AttributeError:
                 pdf = None
-            obj = self[PG.CONTENTS].get_object()
-            if isinstance(obj, NullObject):
+            obj = self[PG.CONTENTS]
+            if is_null_or_none(obj):
                 return None
-            return ContentStream(obj, pdf)
+            resolved_object = obj.get_object()
+            return ContentStream(resolved_object, pdf)
         return None
 
     def replace_contents(
@@ -1846,8 +1847,8 @@ class PageObject(DictionaryObject):
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
-        if "/Font" in resources_dict:
-            for f in cast(DictionaryObject, resources_dict["/Font"]):
+        if "/Font" in resources_dict and (font := cast(DictionaryObject, resources_dict["/Font"])):
+            for f in font:
                 cmaps[f] = build_char_map(f, space_width, obj)
         cmap: Tuple[
             Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
@@ -1864,7 +1865,7 @@ class PageObject(DictionaryObject):
             )
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, pdf, "bytes")
-        except KeyError:  # no content can be extracted (certainly empty page)
+        except (AttributeError, KeyError):  # no content can be extracted (certainly empty page)
             return ""
         # We check all strings are TextStringObjects. ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
