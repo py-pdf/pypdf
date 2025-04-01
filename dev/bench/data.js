@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743427181648,
+  "lastUpdate": 1743514690030,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -73397,6 +73397,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0036530164343813645",
             "extra": "mean: 745.3567417999977 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9ee8a5a2f073af5ed3ca24448626b192e6707dfe",
+          "message": "ROB: Handle some None values for broken PDF files (#3230)\n\nThese issues were discovered while trying to extract text and images\nfrom some PDF files which were incomplete, but partially fixed.",
+          "timestamp": "2025-04-01T15:35:33+02:00",
+          "tree_id": "3617d8d7cc18632728b477742f05a06a573f6654",
+          "url": "https://github.com/py-pdf/pypdf/commit/9ee8a5a2f073af5ed3ca24448626b192e6707dfe"
+        },
+        "date": 1743514686732,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3851749313248054,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013992970419743943",
+            "extra": "mean: 295.4057088000013 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.229259470081658,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008991323901039527",
+            "extra": "mean: 70.27772612500272 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2747759488604709,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06563216869993531",
+            "extra": "mean: 3.639328711799999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.410352884388242,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007628361300824118",
+            "extra": "mean: 54.317264111107185 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08229136077332326,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03152636064827038",
+            "extra": "mean: 12.1519439052 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.335227285942981,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004611229446604162",
+            "extra": "mean: 748.936162800004 msec\nrounds: 5"
           }
         ]
       }
