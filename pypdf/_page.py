@@ -1847,8 +1847,8 @@ class PageObject(DictionaryObject):
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
-        if "/Font" in resources_dict and (font := cast(DictionaryObject, resources_dict["/Font"])):
-            for f in font:
+        if "/Font" in resources_dict and (font := resources_dict["/Font"]):
+            for f in cast(DictionaryObject, font):
                 cmaps[f] = build_char_map(f, space_width, obj)
         cmap: Tuple[
             Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
