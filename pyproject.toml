@@ -39,19 +39,29 @@ Source = "https://github.com/py-pdf/pypdf"
 "Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
 
 [project.optional-dependencies]
-full = [
-    "cryptography",
-    "Pillow>=8.0.0",
-]
-crypto = [
-    "cryptography",
-]
-cryptodome = [
-    "PyCryptodome",
-]
+crypto = ["cryptography"]
+cryptodome = ["PyCryptodome"]
 image = ["Pillow>=8.0.0"]
-dev = ["black", "flit", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "pytest-xdist", "wheel"]
-docs = ["myst_parser", "sphinx", "sphinx_rtd_theme"]
+full = [
+    "pypdf[crypto]",
+    "pypdf[image]"
+]
+dev = [
+    "black",
+    "flit",
+    "pip-tools",
+    "pre-commit<2.18.0",
+    "pytest-cov",
+    "pytest-socket",
+    "pytest-timeout",
+    "pytest-xdist",
+    "wheel"
+]
+docs = [
+    "myst_parser",
+    "sphinx",
+    "sphinx_rtd_theme"
+]
 
 [tool.check-wheel-contents]
 package = "./pypdf"
@@ -117,7 +127,6 @@ exclude_lines = [
     "raise NotImplementedError",
 
     # Don't complain if non-runnable code isn't run:
-    "if 0:",
     "if __name__ == .__main__.:",
 ]
 
