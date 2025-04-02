@@ -257,7 +257,7 @@ class PdfReader(PdfDocCommon):
         info = info.get_object()
         if not isinstance(info, DictionaryObject):
             raise PdfReadError(
-                "Trailer not found or does not point to document information directory"
+                "Trailer not found or does not point to a document information dictionary"
             )
         return info
 
