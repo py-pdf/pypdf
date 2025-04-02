@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743514690030,
+  "lastUpdate": 1743579695855,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -73463,6 +73463,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004611229446604162",
             "extra": "mean: 748.936162800004 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "noah.jackowitz@us.af.mil",
+            "name": "Noah Jackowitz",
+            "username": "hackowitz-af"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "499cd9d12b279445fd78bb7dfc0c45d79061138f",
+          "message": "BUG: Add font stack to q/Q operations in layout mode (#3225)\n\nCloses #3212.",
+          "timestamp": "2025-04-02T09:39:00+02:00",
+          "tree_id": "29412ead42cc00c44aa8518114063f2d10e9e249",
+          "url": "https://github.com/py-pdf/pypdf/commit/499cd9d12b279445fd78bb7dfc0c45d79061138f"
+        },
+        "date": 1743579692081,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5913892202732733,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007996952818788892",
+            "extra": "mean: 278.4437827999909 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.511017364635075,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006248897190133644",
+            "extra": "mean: 64.47030368749296 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2820604382263515,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02955345789449057",
+            "extra": "mean: 3.5453394537999943 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.139202763354955,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005335499511390656",
+            "extra": "mean: 55.129214500000664 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08166654934986459,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17815397223971877",
+            "extra": "mean: 12.244915549400009 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3381629396632726,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035040460970101194",
+            "extra": "mean: 747.2931511999832 msec\nrounds: 5"
           }
         ]
       }
