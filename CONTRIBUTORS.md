@@ -25,6 +25,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Gutteridge, David H.](https://github.com/dhgutteridge)
 * [Hale, Joseph](https://github.com/thehale)
 * [harshhes](https://github.com/harshhes)
+* [Jackowitz, Noah](https://github.com/hackowitz-af) | [LinkedIn](https://www.linkedin.com/in/noah-jackowitz/)
 * [JianzhengLuo](https://github.com/JianzhengLuo)
 * [Karvonen, Harry](https://github.com/Hatell/)
 * [King, Hunter](https://github.com/neversphere)
