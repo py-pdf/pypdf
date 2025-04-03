@@ -43,8 +43,8 @@ crypto = ["cryptography"]
 cryptodome = ["PyCryptodome"]
 image = ["Pillow>=8.0.0"]
 full = [
-    "pypdf[crypto]",
-    "pypdf[image]"
+    "cryptography",
+    "Pillow>=8.0.0"
 ]
 dev = [
     "black",
