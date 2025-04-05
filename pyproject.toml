@@ -50,7 +50,6 @@ dev = [
     "black",
     "flit",
     "pip-tools",
-    "pre-commit<2.18.0",
     "pytest-cov",
     "pytest-socket",
     "pytest-timeout",
