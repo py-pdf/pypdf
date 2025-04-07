@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743606759563,
+  "lastUpdate": 1744007742533,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -73595,6 +73595,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001668978233467009",
             "extra": "mean: 749.4165557999963 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b7ae2e5f8406bbfe2f50cc1ee425fa636619fe54",
+          "message": "DEV: Tweak pyproject.toml (#3234)\n\nRemove pre-commit pin from dev dependencies. Remove \"if 0:\" from exclude_lines.",
+          "timestamp": "2025-04-07T08:33:10+02:00",
+          "tree_id": "6ed9d86324cf8d5383e1ba46858ecef15b3ec03c",
+          "url": "https://github.com/py-pdf/pypdf/commit/b7ae2e5f8406bbfe2f50cc1ee425fa636619fe54"
+        },
+        "date": 1744007738385,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5094773864978785,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009003490103189082",
+            "extra": "mean: 284.9427107999986 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.33564267600593,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006855959068491438",
+            "extra": "mean: 65.2075704375008 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2828075217281482,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011040545852844984",
+            "extra": "mean: 3.535973844999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.31912833858418,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005689758716240377",
+            "extra": "mean: 54.58775011111072 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08297928143173093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05581661878324124",
+            "extra": "mean: 12.051201007600003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3306563327618952,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007704503829574572",
+            "extra": "mean: 751.5088422000076 msec\nrounds: 5"
           }
         ]
       }
