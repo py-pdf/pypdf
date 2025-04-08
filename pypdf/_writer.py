@@ -2657,7 +2657,7 @@ class PdfWriter(PdfDocCommon):
                 import_outline,
                 excluded_fields,
             )
-        else:  # if isinstance(outline_item,str):
+        else:  # if isinstance(outline_item, str):
             self.merge(
                 None,
                 fileobj,
