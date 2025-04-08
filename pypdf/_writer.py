@@ -219,7 +219,7 @@ class PdfWriter(PdfDocCommon):
                 raise PyPdfError("Invalid type for incremental mode")
             self._reader = fileobj  # prev content is in _reader.stream
             self._header = fileobj.pdf_header.encode()
-            self._readonly = True  # !!!TODO: to be analysed
+            self._readonly = True  # TODO: to be analysed
         else:
             self._header = b"%PDF-1.3"
             self._info_obj = self._add_object(
