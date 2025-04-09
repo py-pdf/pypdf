@@ -1650,8 +1650,9 @@ class PdfWriter(PdfDocCommon):
         orphans = [True] * len(self._objects)
         # look for similar objects
         for idx, obj in enumerate(self._objects):
-            if obj is None:
+            if is_null_or_none(obj):
                 continue
+            assert obj is not None  # mypy: TypeGuard of `is_null_or_none` does not help here.
             assert isinstance(obj.indirect_reference, IndirectObject)
             h = obj.hash_value()
             if remove_identicals and h in self._idnum_hash:
