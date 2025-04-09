@@ -323,7 +323,7 @@ class XmpInformation(PdfObject):
     """The PDF file version, for example 1.0 or 1.3."""
 
     pdf_producer = property(_getter_single(PDF_NAMESPACE, "Producer"))
-    """The name of the tool that created the PDF document."""
+    """The name of the tool that saved the document as a PDF."""
 
     xmp_create_date = property(
         _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)

@@ -158,12 +158,11 @@ class PdfWriter(PdfDocCommon):
 
         incremental: If true, loads the document and set the PdfWriter in incremental mode.
 
-
             When writing incrementally, the original document is written first and new/modified
             content is appended. To be used for signed document/forms to keep signature valid.
 
         full: If true, loads all the objects (always full if incremental = True).
-            This parameters may allows to load very big PDFs.
+            This parameter may allow loading large PDFs.
 
     """
 
@@ -220,7 +219,7 @@ class PdfWriter(PdfDocCommon):
                 raise PyPdfError("Invalid type for incremental mode")
             self._reader = fileobj  # prev content is in _reader.stream
             self._header = fileobj.pdf_header.encode()
-            self._readonly = True  # !!!TODO: to be analysed
+            self._readonly = True  # TODO: to be analysed
         else:
             self._header = b"%PDF-1.3"
             self._info_obj = self._add_object(
@@ -253,12 +252,12 @@ class PdfWriter(PdfDocCommon):
             return clone_from
 
         clone_from = _get_clone_from(fileobj, clone_from)
-        # to prevent overwriting
+        # To prevent overwriting
         self.temp_fileobj = fileobj
         self.fileobj = ""
         self._with_as_usage = False
         self._cloned = False
-        # The root of our page tree node.
+        # The root of our page tree node
         pages = DictionaryObject()
         pages.update(
             {
@@ -614,7 +613,7 @@ class PdfWriter(PdfDocCommon):
             The page number or None
 
         """
-        # to provide same function as in PdfReader
+        # To provide same function as in PdfReader
         if is_null_or_none(indirect_reference):
             return None
         assert indirect_reference is not None, "mypy"
@@ -1572,7 +1571,7 @@ class PdfWriter(PdfDocCommon):
 
         Note that some PDF files use (XMP) metadata streams instead of document
         information dictionaries, and these metadata streams will not be
-        accessed by this function.
+        accessed by this function, but by :meth:`~xmp_metadata`.
 
         """
         return super().metadata
@@ -2658,7 +2657,7 @@ class PdfWriter(PdfDocCommon):
                 import_outline,
                 excluded_fields,
             )
-        else:  # if isinstance(outline_item,str):
+        else:  # if isinstance(outline_item, str):
             self.merge(
                 None,
                 fileobj,

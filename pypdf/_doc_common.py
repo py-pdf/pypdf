@@ -391,12 +391,10 @@ class PdfDocCommon:
             if node["/Type"] == "/Page":
                 if page_number == mi:
                     return node, -1
-                # else
                 return None, mi + 1
             if (page_number - mi) >= ma:  # not in nodes below
                 if node == top:
                     return top, -1
-                # else
                 return None, mi + ma
             for idx, kid in enumerate(cast(ArrayObject, node["/Kids"])):
                 kid = cast(DictionaryObject, kid.get_object())
@@ -404,7 +402,7 @@ class PdfDocCommon:
                 if n is not None:  # page has just been found ...
                     if i < 0:  # ... just below!
                         return node, idx
-                    # else:  # ... at lower levels
+                    # ... at lower levels
                     return n, i
                 mi = i
             raise PyPdfError("Unexpectedly cannot find the node.")
@@ -429,7 +427,7 @@ class PdfDocCommon:
             names = cast(DictionaryObject, self.root_object[CA.NAMES])
             names_ref = names.indirect_reference
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
-                # 3.6.3 Name Dictionary (PDF spec 1.7)
+                # §3.6.3 Name Dictionary (PDF spec 1.7)
                 dests = cast(DictionaryObject, names[CA.DESTS])
                 dests_ref = dests.indirect_reference
                 if CA.NAMES in dests:
@@ -527,8 +525,8 @@ class PdfDocCommon:
                     retval[k__] = dest
         return retval
 
-    # A select group of relevant field attributes. For the complete list.
-    # See §12.3.2 of the PDF 1.7 or PDF 2.0 specification.
+    # A select group of relevant field attributes. For the complete list,
+    # see §12.3.2 of the PDF 1.7 or PDF 2.0 specification.
 
     def get_fields(
         self,
@@ -669,7 +667,7 @@ class PdfDocCommon:
             attr_name = field_attributes[attr]
             try:
                 if attr == FA.FT:
-                    # Make the field type value more clear
+                    # Make the field type value clearer
                     types = {
                         "/Btn": "Button",
                         "/Tx": "Text",
@@ -971,7 +969,7 @@ class PdfDocCommon:
         dest, title, outline_item = None, None, None
 
         # title required for valid outline
-        # § 12.3.3, entries in an outline item dictionary
+        # §12.3.3, entries in an outline item dictionary
         try:
             title = cast("str", node["/Title"])
         except KeyError:
