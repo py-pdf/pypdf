@@ -238,7 +238,6 @@ class FlateDecode:
                 )  # pragma: no cover
             prev_rowdata = tuple(rowdata)
             output.extend(rowdata[1:])
-        # print(output)
         return bytes(output)
 
     @staticmethod
