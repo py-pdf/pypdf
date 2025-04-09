@@ -1571,7 +1571,7 @@ class PdfWriter(PdfDocCommon):
 
         Note that some PDF files use (XMP) metadata streams instead of document
         information dictionaries, and these metadata streams will not be
-        accessed by this function, but by :meth:`xmp_metadata()<xmp_metadata>`.
+        accessed by this function, but by :meth:`~xmp_metadata`.
 
         """
         return super().metadata
