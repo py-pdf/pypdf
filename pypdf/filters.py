@@ -179,8 +179,10 @@ class FlateDecode:
     @staticmethod
     def _decode_png_prediction(data: bytes, columns: int, rowlength: int) -> bytes:
         # PNG prediction can vary from row to row
-        if len(data) % rowlength != 0:
-            raise PdfReadError("Image data is not rectangular")
+        if (remainder := len(data) % rowlength) != 0:
+            logger_warning("Image data is not rectangular. Adding padding.", __name__)
+            data += b"\x00" * (rowlength - remainder)
+            assert len(data) % rowlength == 0
         output = []
         prev_rowdata = (0,) * rowlength
         bpp = (rowlength - 1) // columns  # recomputed locally to not change params
@@ -236,6 +238,7 @@ class FlateDecode:
                 )  # pragma: no cover
             prev_rowdata = tuple(rowdata)
             output.extend(rowdata[1:])
+        # print(output)
         return bytes(output)
 
     @staticmethod
