@@ -2668,3 +2668,10 @@ def test_incremental_read():
     # 2 = Pages, 5 = New Page, 6 = XRef, Size == 7
     # XRef is created on write and not counted
     assert len(writer._objects) == 5
+
+
+def test_compress_identical_objects__after_remove_images():
+    """Test for #3237"""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "AutoCad_Diagram.pdf")
+    writer.remove_images()
+    writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
