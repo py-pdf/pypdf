@@ -2009,8 +2009,7 @@ class PageObject(DictionaryObject):
                 # A special case is a translating only tm:
                 # tm = [1, 0, 0, 1, e, f]
                 # i.e. tm[4] += tx, tm[5] += ty.
-                tx = float(operands[0])
-                ty = float(operands[1])
+                tx, ty = float(operands[0]), float(operands[1])
                 tm_matrix[4] += tx * tm_matrix[0] + ty * tm_matrix[2]
                 tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
