@@ -356,8 +356,8 @@ def test_layout_mode_text_state():
 
 
 @pytest.mark.enable_socket
-def test_layout_mode_text_state():
-    """Ensure the text state is stored and reset with q/Q operators."""
+def test_rotated_line_wrap():
+    """Ensure correct 2D translation of rotated text after a line wrap."""
     # Get the PDF from issue #3247
     url = "https://github.com/user-attachments/files/19696918/link16-line-wrap.sanitized.pdf"
     name = "link16-line-wrap.sanitized.pdf"
