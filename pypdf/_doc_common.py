@@ -1133,9 +1133,9 @@ class PdfDocCommon:
         Attributes of a page may inherit from ancestor nodes
         in the page tree. Flatten is pypdf jargon for moving
         any inheritance data into descendant nodes,
-        effectively removing the inheritance hierarchy.
+        effectively removing the inheritance dependency.
 
-        Note: It is distinct from another use of the "flattening" applied to PDFs.
+        Note: It is distinct from another use of "flattening" applied to PDFs.
         Flattening a PDF also means combining all the contents into one single layer
         and making the file less editable.
 
