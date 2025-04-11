@@ -2020,6 +2020,12 @@ class PageObject(DictionaryObject):
                 tm_matrix = [float(operand) for operand in operands[:6]]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
+            elif operator == b"T*":
+                check_crlf_space = True
+                tm_matrix[4] -= TL * tm_matrix[2]
+                tm_matrix[5] -= TL * tm_matrix[3]
+                str_widths = compute_str_widths(_actual_str_size["str_widths"])
+                _actual_str_size["str_widths"] = 0.0
             elif operator == b"Tj":
                 check_crlf_space = True
                 text, rtl_dir, _actual_str_size = self._handle_tj(
@@ -2088,8 +2094,6 @@ class PageObject(DictionaryObject):
             elif operator == b"TD":
                 process_operation(b"TL", [-operands[1]])
                 process_operation(b"Td", operands)
-            elif operator == b"T*":
-                process_operation(b"Td", [0, TL])
             elif operator == b"Do":
                 output += text
                 if visitor_text is not None:
