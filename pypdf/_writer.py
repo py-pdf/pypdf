@@ -2246,15 +2246,42 @@ class PdfWriter(PdfDocCommon):
             font_names = []
 
         for page in self.pages:
-            font_ids = []
-            fonts = page.get("/Resources", {}).get("/Font", {})
-            for font_id, font_info in fonts.items():
-                font_name = font_info.get("/BaseFont", "").split("+")[-1]
-                if font_name in font_names:
-                    font_ids.append(font_id)
+            resource_names_to_remove = []
+
+            # Content streams reference fonts and other resources with names like "/F1" or "/T1_0"
+            # Font names need to be converted to resource names for easier removal
+            if font_names:
+                # Recursively loop through the page to gather font info
+                def get_font_info(obj, font_info = {}, key = None):
+                    if isinstance(obj, dict):
+                        if obj.get("/Type") == "/Font":
+                            font_name = obj.get("/BaseFont")
+                            # Normalize font names like "/RRXFFV+Palatino-Bold" to "Palatino-Bold"
+                            normalized_font_name = font_name.lstrip("/").split("+")[-1]
+                            if normalized_font_name not in font_info:
+                                font_info[normalized_font_name] = {
+                                    "normalized_font_name": normalized_font_name,
+                                    "resource_names": [],
+                                }
+                            if key not in font_info[normalized_font_name]["resource_names"]:
+                                font_info[normalized_font_name]["resource_names"].append(key)
+                        for key in obj.keys():
+                            font_info = get_font_info(obj[key], font_info, key)
+                    elif isinstance(obj, list) or isinstance(obj, ArrayObject):
+                        for child_obj in obj:
+                            font_info = get_font_info(child_obj, font_info)
+                    elif isinstance(obj, IndirectObject):
+                        font_info = get_font_info(obj.get_object(), font_info)
+                    return font_info
+
+                # Add relevant resource names for removal
+                font_info = get_font_info(page.get("/Resources"))
+                for font_name in font_names:
+                    if font_name in font_info:
+                        resource_names_to_remove.extend(font_info[font_name]["resource_names"])
 
             text_filters = {
-                "font_ids": font_ids,
+                "font_ids": resource_names_to_remove,
             }
             self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT, text_filters=text_filters)
 
