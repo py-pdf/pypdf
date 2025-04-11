@@ -270,6 +270,8 @@ class PdfDocCommon:
 
     strict: bool = False  # default
 
+    flattened_pages: Optional[List[PageObject]] = None
+
     _encryption: Optional[Encryption] = None
 
     _readonly: bool = False
@@ -332,8 +334,6 @@ class PdfDocCommon:
             else:
                 self.root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
         return o
-
-    flattened_pages: Optional[List[PageObject]] = None
 
     def get_num_pages(self) -> int:
         """
@@ -1128,8 +1128,17 @@ class PdfDocCommon:
         indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
         """
-        Prepare the document pages to ease searching
+        Process the document pages to ease searching
 
+        Attributes of a page may inherit from ancestor nodes
+        in the page tree. Flatten is pypdf jargon for moving 
+        any inheritance data into descendant nodes,
+        effectively removing the inheritance hierarchy.
+        
+        Note: It is distinct from another use of the "flattening" applied to PDFs.
+        Flattening a PDF also means combining all the contents into one single layer
+        and making the file less editable.
+        
         Args:
             list_only: Will only list the pages within _flatten_pages.
             pages:
@@ -1156,7 +1165,7 @@ class PdfDocCommon:
 
         if PA.TYPE in pages:
             t = cast(str, pages[PA.TYPE])
-        # if pdf has no type, considered as a page if /Kids is missing
+        # if the page tree node has no Type key, consider as a page if /Kids is missing
         elif PA.KIDS not in pages:
             t = "/Page"
         else:
@@ -1181,8 +1190,8 @@ class PdfDocCommon:
                         )
         elif t == "/Page":
             for attr_in, value in inherit.items():
-                # if the page has it's own value, it does not inherit the
-                # parent's value:
+                # if the page has its own value, it does not inherit the
+                # parent's value
                 if attr_in not in pages:
                     pages[attr_in] = value
             page_obj = PageObject(self, indirect_reference)
