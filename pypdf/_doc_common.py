@@ -1165,7 +1165,7 @@ class PdfDocCommon:
 
         if PA.TYPE in pages:
             t = cast(str, pages[PA.TYPE])
-        # if the page tree node has no Type key, consider as a page if /Kids is missing
+        # if the page tree node has no /Type, consider as a page if /Kids is also missing
         elif PA.KIDS not in pages:
             t = "/Page"
         else:
