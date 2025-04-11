@@ -1128,17 +1128,17 @@ class PdfDocCommon:
         indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
         """
-        Process the document pages to ease searching
+        Process the document pages to ease searching.
 
         Attributes of a page may inherit from ancestor nodes
-        in the page tree. Flatten is pypdf jargon for moving 
+        in the page tree. Flatten is pypdf jargon for moving
         any inheritance data into descendant nodes,
         effectively removing the inheritance hierarchy.
-        
+
         Note: It is distinct from another use of the "flattening" applied to PDFs.
         Flattening a PDF also means combining all the contents into one single layer
         and making the file less editable.
-        
+
         Args:
             list_only: Will only list the pages within _flatten_pages.
             pages:
