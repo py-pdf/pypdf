@@ -2252,10 +2252,12 @@ class PdfWriter(PdfDocCommon):
             # Font names need to be converted to resource names for easier removal
             if font_names:
                 # Recursively loop through the page to gather font info
-                def get_font_info(obj, font_info = {}, key = None):
+                def get_font_info(obj: Any, font_info: Optional[Dict[str, Any]] = None, key: Optional[str] = None) -> Dict[str, Any]:
+                    if font_info is None:
+                        font_info = {}
                     if isinstance(obj, dict):
                         if obj.get("/Type") == "/Font":
-                            font_name = obj.get("/BaseFont")
+                            font_name = obj.get("/BaseFont", "")
                             # Normalize font names like "/RRXFFV+Palatino-Bold" to "Palatino-Bold"
                             normalized_font_name = font_name.lstrip("/").split("+")[-1]
                             if normalized_font_name not in font_info:
@@ -2265,9 +2267,9 @@ class PdfWriter(PdfDocCommon):
                                 }
                             if key not in font_info[normalized_font_name]["resource_names"]:
                                 font_info[normalized_font_name]["resource_names"].append(key)
-                        for key in obj.keys():
-                            font_info = get_font_info(obj[key], font_info, key)
-                    elif isinstance(obj, list) or isinstance(obj, ArrayObject):
+                        for k, v in obj.items():
+                            font_info = get_font_info(obj[k], font_info, k)
+                    elif isinstance(obj, (list, ArrayObject)):
                         for child_obj in obj:
                             font_info = get_font_info(child_obj, font_info)
                     elif isinstance(obj, IndirectObject):
