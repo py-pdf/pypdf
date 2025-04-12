@@ -2271,7 +2271,7 @@ class PdfWriter(PdfDocCommon):
                                 }
                             if key not in font_info[normalized_font_name]["resource_names"]:
                                 font_info[normalized_font_name]["resource_names"].append(key)
-                        for k in obj.keys():
+                        for k in obj:
                             font_info = get_font_info(obj[k], font_info, k)
                     elif isinstance(obj, (list, ArrayObject)):
                         for child_obj in obj:
