@@ -65,6 +65,11 @@ from .generic import (
     NullObject,
 )
 
+try:
+    import brotli
+except ImportError:
+    brotli = None
+
 
 def decompress(data: bytes) -> bytes:
     """
@@ -481,6 +486,50 @@ class JPXDecode:
         return data
 
 
+class BrotliDecode:
+    """Decodes Brotli-compressed data."""
+    @staticmethod
+    def decode(
+        data: bytes,
+        decode_parms: Optional[DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> bytes:
+        """
+        Decode Brotli-compressed data.
+
+        Args:
+            data: Brotli-compressed data.
+            decode_parms: Optional parameters (unused).
+
+        Returns:
+            Decompressed data.
+
+        Raises:
+            PdfStreamError: If brotli library is not installed.
+        """
+        if brotli is None:
+            raise PdfStreamError("Brotli library not installed. Required for BrotliDecode filter.")
+        return brotli.decompress(data)
+
+    @staticmethod
+    def encode(data: bytes, **kwargs: Any) -> bytes:
+        """
+        Encode data using Brotli compression.
+
+        Args:
+            data: Data to compress.
+
+        Returns:
+            Compressed data.
+
+        Raises:
+            PdfStreamError: If brotli library is not installed.
+        """
+        if brotli is None:
+            raise PdfStreamError("Brotli library not installed. Required for BrotliDecode filter.")
+        return brotli.compress(data)
+
+
 @dataclass
 class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
@@ -666,6 +715,8 @@ def decode_stream_data(stream: Any) -> bytes:
             data = DCTDecode.decode(data)
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
+        elif filter_name == FT.BROTLI_DECODE: # Add BrotliDecode
+            data = BrotliDecode.decode(data)
         elif filter_name == "/Crypt":
             if "/Name" in params or "/Type" in params:
                 raise NotImplementedError(

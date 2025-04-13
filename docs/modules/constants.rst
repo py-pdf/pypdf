@@ -1,6 +1,11 @@
 Constants
 ---------
 
+.. autoclass:: pypdf.constants.StrEnum
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 .. autoclass:: pypdf.constants.AnnotationFlag
     :members:
     :undoc-members:
@@ -26,3 +31,13 @@ Constants
        :undoc-members:
        :exclude-members: FT, Parent, Kids, T, TU, TM, V, DV, AA, Opt, attributes, attributes_dict
        :show-inheritance:
+
+.. autoclass:: pypdf.constants.FilterTypes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: pypdf.constants.FilterTypeAbbreviations
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -7,6 +7,7 @@ from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
 
+import brotli  # noqa: F401
 import pytest
 from PIL import Image, ImageOps
 
@@ -15,6 +16,7 @@ from pypdf.errors import DeprecationError, PdfReadError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
+    BrotliDecode,  # Add BrotliDecode
     CCITParameters,
     CCITTFaxDecode,
     CCITTParameters,
@@ -50,6 +52,29 @@ def test_flate_decode_encode(predictor, s):
     s = s.encode()
     encoded = codec.encode(s)
     assert codec.decode(encoded, DictionaryObject({"/Predictor": predictor})) == s
+
+
+@pytest.mark.parametrize("s", filter_inputs)
+def test_brotli_decode_encode(s):
+    """BrotliDecode encode() and decode() methods work as expected."""
+    codec = BrotliDecode()
+    s_bytes = s.encode()
+    encoded = codec.encode(s_bytes)
+    assert encoded != s_bytes  # Ensure encoding actually happened
+    decoded = codec.decode(encoded)
+    assert decoded == s_bytes
+
+
+def test_brotli_decode_without_brotli_installed(monkeypatch):
+    """Verify BrotliDecode raises PdfReadError if brotli is not installed."""
+    # Simulate brotli not being installed within the filters module
+    monkeypatch.setattr("pypdf.filters.brotli", None)
+
+    codec = BrotliDecode()
+    with pytest.raises(PdfReadError) as exc_info:
+        codec.decode(b"test data")
+
+    assert "Brotli library not installed. Required for BrotliDecode filter." in str(exc_info.value)
 
 
 def test_flatedecode_unsupported_predictor():
