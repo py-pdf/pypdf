@@ -1760,7 +1760,7 @@ class PdfWriter(PdfDocCommon):
 
     def get_outline_root(self) -> TreeObject:
         if CO.OUTLINES in self._root_object:
-            # Table 3.25 Entries in the catalog dictionary
+            # Entries in the catalog dictionary
             outline = cast(TreeObject, self._root_object[CO.OUTLINES])
             if not isinstance(outline, TreeObject):
                 t = TreeObject(outline)
@@ -1784,12 +1784,12 @@ class PdfWriter(PdfDocCommon):
         See §12.4.3 of the PDF 1.7 or PDF 2.0 specification.
 
         Returns:
-            An array (possibly empty) of Dictionaries with ``/F`` and
-            ``/I`` properties.
+            An array (possibly empty) of Dictionaries with an ``/F`` key,
+            and optionally information about the thread in ``/I`` or ``/Metadata`` keys.
 
         """
         if CO.THREADS in self._root_object:
-            # Table 3.25 Entries in the catalog dictionary
+            # Entries in the catalog dictionary
             threads = cast(ArrayObject, self._root_object[CO.THREADS])
         else:
             threads = ArrayObject()
@@ -1801,9 +1801,10 @@ class PdfWriter(PdfDocCommon):
         """
         Read-only property for the list of threads.
 
-        See §8.3.2 from PDF 1.7 spec.
+        See §12.4.3 of the PDF 1.7 or PDF 2.0 specification.
 
-        Each element is a dictionary with ``/F`` and ``/I`` keys.
+        Each element is a dictionary with an ``/F`` key, and optionally
+        information about the thread in ``/I`` or ``/Metadata`` keys.
         """
         return self.get_threads_root()
 
