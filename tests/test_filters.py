@@ -7,7 +7,7 @@ from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
 
-import brotli 
+import brotli
 import pytest
 from PIL import Image, ImageOps
 
@@ -66,7 +66,7 @@ def test_brotli_decode_encode(s):
 
 
 def test_brotli_decode_without_brotli_installed(monkeypatch):
-    """ Verify BrotliDecode raises PdfReadError if brotli is not installed. """
+    """Verify BrotliDecode raises PdfReadError if brotli is not installed."""
     # Simulate brotli not being installed within the filters module
     monkeypatch.setattr("pypdf.filters.brotli", None)
 
@@ -737,9 +737,10 @@ def test_main_decode_brotli():
     # Simulate a stream dictionary indicating BrotliDecode
     stream = DictionaryObject()
     stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+    stream._data = compressed_data  # Set the data on the stream object
 
     # Call the main decode function
     from pypdf import filters
-    decoded_data = filters.decode(data=compressed_data, stream=stream)
+    decoded_data = filters.decode_stream_data(stream)  # Pass only the stream object
 
     assert decoded_data == original_data
