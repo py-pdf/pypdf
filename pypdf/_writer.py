@@ -1502,13 +1502,12 @@ class PdfWriter(PdfDocCommon):
 
     def _write_pdf_structure(self, stream: StreamType) -> Tuple[List[int], List[int]]:
         object_positions = []
-        free_objects = []  # will contain list of all free entries
+        free_objects = []
         stream.write(self.pdf_header.encode() + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
 
-        for i, obj in enumerate(self._objects):
+        for idnum, obj in enumerate(self._objects, start=1):
             if obj is not None:
-                idnum = i + 1
                 object_positions.append(stream.tell())
                 stream.write(f"{idnum} 0 obj\n".encode())
                 if self._encryption and obj != self._encrypt_entry:
@@ -1517,8 +1516,8 @@ class PdfWriter(PdfDocCommon):
                 stream.write(b"\nendobj\n")
             else:
                 object_positions.append(-1)
-                free_objects.append(i + 1)
-        free_objects.append(0)  # add 0 to loop in accordance with PDF spec
+                free_objects.append(idnum)
+        free_objects.append(0)  # add 0 to loop in accordance with specification
         return object_positions, free_objects
 
     def _write_xref_table(
