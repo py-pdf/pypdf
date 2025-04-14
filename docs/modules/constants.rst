@@ -30,7 +30,6 @@ Constants
 .. autoclass:: pypdf.constants.FilterTypes
     :members:
     :undoc-members:
-    :show-inheritance:
 
 .. autoclass:: pypdf.constants.FilterTypeAbbreviations
     :members:
