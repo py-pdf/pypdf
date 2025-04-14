@@ -821,7 +821,7 @@ def test_main_decode_brotli_installed():
         pytest.skip("brotli library not installed")
 
     # Use the prototype PDF provided by PDF Association
-    pdf_path = RESOURCE_ROOT / "brotli-test" / "Brotli-Prototype-PDFs" / "Brotli-Prototype-FileA.pdf"
+    pdf_path = RESOURCE_ROOT / "brotli-test" / "brotli-compressed.pdf"
     if not pdf_path.exists():
         pytest.skip(f"Brotli test PDF not found at {pdf_path}")
 
