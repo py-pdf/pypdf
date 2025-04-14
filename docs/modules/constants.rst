@@ -1,11 +1,6 @@
 Constants
 ---------
 
-.. autoclass:: pypdf.constants.StrEnum
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: pypdf.constants.AnnotationFlag
     :members:
     :undoc-members:

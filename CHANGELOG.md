@@ -1,10 +1,5 @@
 # CHANGELOG
 
-## Unreleased
-
-### New Features (ENH)
-- Add support for BrotliDecode filter (PDF 2.0) (#3223)
-
 ## Version 5.4.0, 2025-03-16
 
 ### New Features (ENH)
@@ -1685,7 +1680,7 @@ e.g. Russian / Chinese / Japanese / Korean / Arabic.
 ### Documentation (DOC)
 -  Notes on annotations (#982)
 -  Who uses PyPDF2
--  inteted \xe2\x9e\x94 in robustness page  (#958)
+-  intendet \xe2\x9e\x94 in robustness page  (#958)
 
 ### Maintenance (MAINT)
 -  pre-commit / requirements.txt updates (#977)
