@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744611912635,
+  "lastUpdate": 1744611972894,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -73925,6 +73925,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012791416775515927",
             "extra": "mean: 735.8382799999731 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1b8e3d1066f7c9b384d13cbae6a0e0d09d165a62",
+          "message": "MAINT: Add to the explanation of _flatten (#3249)\n\nAlso move flattened_pages to the beginning of the class with the other attributes.",
+          "timestamp": "2025-04-14T08:23:41+02:00",
+          "tree_id": "1a06d4416806ccefe759285e0af0d9b99bfdf56b",
+          "url": "https://github.com/py-pdf/pypdf/commit/1b8e3d1066f7c9b384d13cbae6a0e0d09d165a62"
+        },
+        "date": 1744611968907,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.582870499077795,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007442871425773128",
+            "extra": "mean: 279.1058175999922 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.533754582807482,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00755440875388791",
+            "extra": "mean: 64.37593658823376 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28098749741437806,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014859180929233664",
+            "extra": "mean: 3.5588772069999948 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.262781741988928,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006455247283686315",
+            "extra": "mean: 54.75617099999871 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08383545229691966,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06626463073311488",
+            "extra": "mean: 11.928127929199979 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3481144658497408,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013000538075101617",
+            "extra": "mean: 741.7767744000002 msec\nrounds: 5"
           }
         ]
       }
