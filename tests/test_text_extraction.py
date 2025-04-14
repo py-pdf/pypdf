@@ -353,3 +353,18 @@ def test_layout_mode_text_state():
     expected = get_data_from_url(txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
 
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
+
+
+@pytest.mark.enable_socket
+def test_rotated_line_wrap():
+    """Ensure correct 2D translation of rotated text after a line wrap."""
+    # Get the PDF from issue #3247
+    url = "https://github.com/user-attachments/files/19696918/link16-line-wrap.sanitized.pdf"
+    name = "link16-line-wrap.sanitized.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    # Get the txt from issue #3247 and normalize line endings
+    txt_url = "https://github.com/user-attachments/files/19696917/link16-line-wrap.sanitized.expected.txt"
+    txt_name = "link16-line-wrap.sanitized.expected.txt"
+    expected = get_data_from_url(txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
+
+    assert expected == reader.pages[0].extract_text()
