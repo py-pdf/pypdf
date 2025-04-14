@@ -4,8 +4,6 @@
 #
 #    pip-compile --output-file=requirements/ci-3.11.txt requirements/ci.in
 #
-brotli==1.1.0
-    # via -r requirements/ci.in
 cffi==1.17.1
     # via cryptography
 coverage[toml]==7.6.4
@@ -38,13 +36,6 @@ pillow==11.0.0
     #   fpdf2
 pluggy==1.5.0
     # via pytest
-ruff==0.11.0
-    # via -r requirements/ci.in
-tomli==2.0.2
-    # via
-    #   coverage
-    #   mypy
-    #   pytest
 py-cpuinfo==9.0.0
     # via pytest-benchmark
 pycparser==2.22
@@ -69,6 +60,13 @@ pytest-xdist==3.6.1
     # via -r requirements/ci.in
 pyyaml==6.0.2
     # via -r requirements/ci.in
+ruff==0.11.0
+    # via -r requirements/ci.in
+tomli==2.0.2
+    # via
+    #   coverage
+    #   mypy
+    #   pytest
 typeguard==4.3.0
     # via -r requirements/ci.in
 types-pillow==10.2.0.20240822

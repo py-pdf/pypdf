@@ -487,7 +487,7 @@ class JPXDecode:
 
 
 class BrotliDecode:
-    """Decodes Brotli-compressed data."""
+    """Decodes Brotli-compressed data (ISO 32000-2:2020, Section 7.4.11)."""
     @staticmethod
     def decode(
         data: bytes,
@@ -505,10 +505,11 @@ class BrotliDecode:
             Decompressed data.
 
         Raises:
-            PdfStreamError: If brotli library is not installed.
+            ImportError: If brotli library is not installed.
         """
         if brotli is None:
-            raise PdfStreamError("Brotli library not installed. Required for BrotliDecode filter.")
+            # Raise ImportError as the required library is missing
+            raise ImportError("Brotli library not installed. Required for BrotliDecode filter.")
         return brotli.decompress(data)
 
     @staticmethod
@@ -523,10 +524,11 @@ class BrotliDecode:
             Compressed data.
 
         Raises:
-            PdfStreamError: If brotli library is not installed.
+            ImportError: If brotli library is not installed.
         """
         if brotli is None:
-            raise PdfStreamError("Brotli library not installed. Required for BrotliDecode filter.")
+            # Raise ImportError as the required library is missing
+            raise ImportError("Brotli library not installed. Required for BrotliDecode filter.")
         return brotli.compress(data)
 
 
@@ -715,7 +717,7 @@ def decode_stream_data(stream: Any) -> bytes:
             data = DCTDecode.decode(data)
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
-        elif filter_name == FT.BROTLI_DECODE: # Add BrotliDecode
+        elif filter_name == FT.BROTLI_DECODE:
             data = BrotliDecode.decode(data)
         elif filter_name == "/Crypt":
             if "/Name" in params or "/Type" in params:
