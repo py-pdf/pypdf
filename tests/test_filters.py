@@ -8,15 +8,12 @@ import subprocess
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
-from typing import cast
+from unittest.mock import patch
 
 import pytest
 from PIL import Image, ImageOps
 
 from pypdf import PdfReader
-from pypdf.constants import FilterTypeAbbreviations as FTA
-from pypdf.constants import FilterTypes as FT
-from pypdf.constants import StreamAttributes as SA
 from pypdf.errors import DeprecationError, PdfReadError
 from pypdf.filters import (
     ASCII85Decode,
@@ -48,33 +45,6 @@ PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
-# Helper function for subprocess testing without brotli
-def _run_script_without_brotli(tmp_path, script_content) -> None:
-    env = os.environ.copy()
-    env["COVERAGE_PROCESS_START"] = str(PROJECT_ROOT / "pyproject.toml")  # Ensure coverage
-
-    source_file = tmp_path / "script_no_brotli.py"
-    source_file.write_text(script_content)
-
-    try:
-        env["PYTHONPATH"] = str(PROJECT_ROOT) + os.pathsep + env["PYTHONPATH"]
-    except KeyError:
-        env["PYTHONPATH"] = str(PROJECT_ROOT)
-
-    result = subprocess.run(  # noqa: S603
-        [shutil.which("python"), source_file],
-        capture_output=True,
-        env=env,
-        cwd=PROJECT_ROOT,  # Run from project root
-    )
-    # Check stderr for unexpected errors from the subprocess itself
-    if result.stderr:
-        pass  # Print removed for committed code
-    assert result.returncode == 0, f"Subprocess failed with exit code {result.returncode}"
-    # Allow specific stdout messages if needed, otherwise assert empty
-    # assert result.stdout == b"", "Subprocess produced unexpected stdout"
-    # Allow specific stderr messages if needed, otherwise assert empty
-    # assert result.stderr == b"", "Subprocess produced unexpected stderr"
 
 
 @pytest.mark.parametrize(("predictor", "s"), list(cartesian_product([1], filter_inputs)))
@@ -95,54 +65,38 @@ def test_brotli_decode_encode(s):
     assert encoded != s_bytes  # Ensure encoding actually happened
     decoded = codec.decode(encoded)
     assert decoded == s_bytes
+@patch("pypdf.filters.brotli", None)
+def test_brotli_missing_installation_mocked():
+    """Verify BrotliDecode raises ImportError if brotli is not installed (using sys.modules patch)."""
+    from unittest.mock import patch
+
+    with patch.dict("sys.modules", {"brotli": None}):
+        # Import pypdf.filters *after* patching sys.modules
+        import pypdf.filters
+        from pypdf.generic import DictionaryObject, NameObject
+
+        # Test direct decode call
+        codec = pypdf.filters.BrotliDecode()
+        with pytest.raises(ImportError) as exc_info_decode:
+            codec.decode(b"test data")
+        assert "Brotli library not installed" in str(exc_info_decode.value)
+
+        # Test direct encode call
+        with pytest.raises(ImportError) as exc_info_encode:
+            codec.encode(b"test data")
+        assert "Brotli library not installed" in str(exc_info_encode.value)
+
+        # Test call via decode_stream_data
+        stream = DictionaryObject()
+        stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+        stream._data = b"dummy compressed data"
+        with pytest.raises(ImportError) as exc_info_stream:
+            pypdf.filters.decode_stream_data(stream)
+        assert "Brotli library not installed" in str(exc_info_stream.value)
 
 
-def test_brotli_decode_without_brotli_installed_subprocess(tmp_path):
-    """Verify BrotliDecode.decode raises ImportError via subprocess if brotli is not installed."""
-    script = """
-import sys
-import pytest
-from pypdf.filters import BrotliDecode
-
-# Simulate brotli not being installed
-sys.modules["brotli"] = None
-# Need to reload filters to make the None effective inside the module
-import importlib
-import pypdf.filters
-importlib.reload(pypdf.filters)
-
-codec = pypdf.filters.BrotliDecode()
-with pytest.raises(ImportError) as exc_info:
-    codec.decode(b"test data")
-
-assert "Brotli library not installed. Required for BrotliDecode filter." in str(exc_info.value)
-print("Test finished successfully: decode without brotli") # Add print to confirm script completion
-"""
-    _run_script_without_brotli(tmp_path, script)
 
 
-def test_brotli_encode_without_brotli_installed_subprocess(tmp_path):
-    """Verify BrotliDecode.encode raises ImportError via subprocess if brotli is not installed."""
-    script = """
-import sys
-import pytest
-from pypdf.filters import BrotliDecode
-
-# Simulate brotli not being installed
-sys.modules["brotli"] = None
-# Need to reload filters to make the None effective inside the module
-import importlib
-import pypdf.filters
-importlib.reload(pypdf.filters)
-
-codec = pypdf.filters.BrotliDecode()
-with pytest.raises(ImportError) as exc_info:
-    codec.encode(b"test data")
-
-assert "Brotli library not installed. Required for BrotliDecode filter." in str(exc_info.value)
-print("Test finished successfully: encode without brotli") # Add print to confirm script completion
-"""
-    _run_script_without_brotli(tmp_path, script)
 
 
 def test_flatedecode_unsupported_predictor():
@@ -312,7 +266,9 @@ def test_ccitt_get_parameters__indirect_object():
         def get_object(self, reference) -> NumberObject:
             return NumberObject(42)
 
-    parameters = CCITTFaxDecode._get_parameters(parameters=None, rows=IndirectObject(13, 1, Pdf()))
+    parameters = CCITTFaxDecode._get_parameters(
+        parameters=None, rows=IndirectObject(13, 1, Pdf())
+    )
     assert parameters.rows == 42
 
 
@@ -774,94 +730,24 @@ def test_flate_decode__not_rectangular(caplog):
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
 
-def test_main_decode_brotli_without_brotli_installed_subprocess(tmp_path):
-    """Test decode_stream_data raises ImportError via subprocess if brotli is not installed."""
-    original_data = b"some data to be compressed with brotli"
-    # We need brotli here in the main process to create the test data
-    try:
-        import brotli
-
-        compressed_data = brotli.compress(original_data)
-    except ImportError:
-        pytest.skip("brotli library not installed in the main test environment")
-
-    script = f"""
-import sys
-import pytest
-from pypdf import filters
-from pypdf.generic import DictionaryObject, NameObject
-
-# Simulate brotli not being installed
-sys.modules["brotli"] = None
-# Need to reload filters to make the None effective inside the module
-import importlib
-import pypdf.filters
-importlib.reload(pypdf.filters)
-
-# Simulate a stream dictionary indicating BrotliDecode
-stream = DictionaryObject()
-stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
-# Pass compressed data as hex to avoid encoding issues in the script string
-stream._data = bytes.fromhex('{compressed_data.hex()}')
-
-# Call the main decode function and expect an error
-with pytest.raises(ImportError) as exc_info:
-    filters.decode_stream_data(stream)
-
-assert "Brotli library not installed. Required for BrotliDecode filter." in str(exc_info.value)
-print("Test finished successfully: main decode without brotli") # Add print to confirm script completion
-"""
-    _run_script_without_brotli(tmp_path, script)
 
 
-# Renamed from test_main_decode_brotli
 def test_main_decode_brotli_installed():
     """Test the main decode function with Brotli filter using a real PDF."""
     if importlib.util.find_spec("brotli") is None:
         pytest.skip("brotli library not installed")
 
-    # Use the prototype PDF provided by PDF Association
+    # Use the test PDF generated by resources/create_brotli_test_pdf.py
     pdf_path = RESOURCE_ROOT / "brotli-test-pdfs" / "minimal-brotli-compressed.pdf"
-    if not pdf_path.exists():
-        pytest.skip(f"Brotli test PDF not found at {pdf_path}")
 
     reader = PdfReader(pdf_path)
-    # Assuming the first page's content stream uses Brotli
-    # Access the raw stream object. Need to get the indirect object first.
     page = reader.pages[0]
-    content_stream_ref = page[NameObject("/Contents")]
-    # Handle cases where /Contents might be an array
-    if isinstance(content_stream_ref, ArrayObject):
-        # For simplicity, let's assume the first stream in the array uses Brotli
-        # A more robust test might check all streams or find one specifically with /BrotliDecode
-        if not content_stream_ref:
-            pytest.skip("Content stream array is empty.")
-        stream_obj = content_stream_ref[0].get_object()
-    else:
-        stream_obj = content_stream_ref.get_object()
 
-    # Check if the stream actually uses BrotliDecode
-    filters = stream_obj.get(SA.FILTER, ())
-    if isinstance(filters, IndirectObject):
-        filters = cast(ArrayObject, filters.get_object())
-    if not isinstance(filters, (ArrayObject, list)):
-        filters = (filters,)
-
-    if FT.BROTLI_DECODE not in filters and FTA.BR not in filters:
-        pytest.skip("Selected stream does not use BrotliDecode filter.")
-
-    # Call the main decode function directly on the stream object
-    from pypdf import filters
-
+    # Extract text - this will implicitly use the BrotliDecode filter
     try:
-        decoded_data = filters.decode_stream_data(stream_obj)
+        extracted_text = page.extract_text()
     except Exception as e:
-        pytest.fail(f"decode_stream_data failed with error: {e}")
+        pytest.fail(f"page.extract_text() failed with error: {e}")
 
-    # Since we don't know the exact content, assert that decoding succeeded
-    # and returned some non-empty data.
-    assert isinstance(decoded_data, bytes)
-    assert len(decoded_data) > 0
-    # We could add a basic check, e.g., if we expect text content
-    # assert b"some_expected_keyword" in decoded_data
-    # But without knowing the content, checking non-empty is the safest bet.
+    # Verify the expected text content
+    assert extracted_text.strip() == "Hello, Brotli!"

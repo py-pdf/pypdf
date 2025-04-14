@@ -487,7 +487,11 @@ class JPXDecode:
 
 
 class BrotliDecode:
-    """Decodes Brotli-compressed data (ISO 32000-2:2020, Section 7.4.11)."""
+    """
+    Decodes Brotli-compressed data.
+
+    See ISO 32000-2:2020, Section 7.4.11.
+    """
     @staticmethod
     def decode(
         data: bytes,
@@ -499,16 +503,15 @@ class BrotliDecode:
 
         Args:
             data: Brotli-compressed data.
-            decode_parms: Optional parameters (unused).
+            decode_parms: A dictionary of parameter values (unused).
 
         Returns:
-            Decompressed data.
+            The decompressed data.
 
         Raises:
-            ImportError: If brotli library is not installed.
+            ImportError: If the 'brotli' library is not installed.
         """
         if brotli is None:
-            # Raise ImportError as the required library is missing
             raise ImportError("Brotli library not installed. Required for BrotliDecode filter.")
         return brotli.decompress(data)
 
@@ -518,16 +521,16 @@ class BrotliDecode:
         Encode data using Brotli compression.
 
         Args:
-            data: Data to compress.
+            data: The data to be compressed.
+            **kwargs: Additional keyword arguments (unused).
 
         Returns:
-            Compressed data.
+            The compressed data.
 
         Raises:
-            ImportError: If brotli library is not installed.
+            ImportError: If the 'brotli' library is not installed.
         """
         if brotli is None:
-            # Raise ImportError as the required library is missing
             raise ImportError("Brotli library not installed. Required for BrotliDecode filter.")
         return brotli.compress(data)
 
