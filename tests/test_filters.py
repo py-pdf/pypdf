@@ -7,7 +7,7 @@ from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
 
-import brotli  # noqa: F401
+import brotli 
 import pytest
 from PIL import Image, ImageOps
 
@@ -66,13 +66,25 @@ def test_brotli_decode_encode(s):
 
 
 def test_brotli_decode_without_brotli_installed(monkeypatch):
-    """Verify BrotliDecode raises PdfReadError if brotli is not installed."""
+    """ Verify BrotliDecode raises PdfReadError if brotli is not installed. """
     # Simulate brotli not being installed within the filters module
     monkeypatch.setattr("pypdf.filters.brotli", None)
 
     codec = BrotliDecode()
     with pytest.raises(PdfReadError) as exc_info:
         codec.decode(b"test data")
+
+    assert "Brotli library not installed. Required for BrotliDecode filter." in str(exc_info.value)
+
+
+def test_brotli_encode_without_brotli_installed(monkeypatch):
+    """Verify BrotliDecode.encode raises PdfReadError if brotli is not installed."""
+    # Simulate brotli not being installed within the filters module
+    monkeypatch.setattr("pypdf.filters.brotli", None)
+
+    codec = BrotliDecode()
+    with pytest.raises(PdfReadError) as exc_info:
+        codec.encode(b"test data") # Call encode instead of decode
 
     assert "Brotli library not installed. Required for BrotliDecode filter." in str(exc_info.value)
 
@@ -715,3 +727,19 @@ def test_flate_decode__not_rectangular(caplog):
     expected = get_data_from_url(url, name=name)
     assert actual_image.getvalue() == expected
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
+
+
+def test_main_decode_brotli():
+    """Test the main decode function with Brotli filter."""
+    original_data = b"some data to be compressed with brotli"
+    compressed_data = brotli.compress(original_data)
+
+    # Simulate a stream dictionary indicating BrotliDecode
+    stream = DictionaryObject()
+    stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+
+    # Call the main decode function
+    from pypdf import filters
+    decoded_data = filters.decode(data=compressed_data, stream=stream)
+
+    assert decoded_data == original_data
