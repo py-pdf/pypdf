@@ -2252,7 +2252,7 @@ class PdfWriter(PdfDocCommon):
             # Content streams reference fonts and other resources with names like "/F1" or "/T1_0"
             # Font names need to be converted to resource names/IDs for easier removal
             if font_names:
-                # Recursively loop through the page to gather font info
+                # Recursively loop through page objects to gather font info
                 def get_font_info(
                     obj: Any,
                     font_info: Optional[Dict[str, Any]] = None,
@@ -2260,6 +2260,8 @@ class PdfWriter(PdfDocCommon):
                 ) -> Dict[str, Any]:
                     if font_info is None:
                         font_info = {}
+                    if isinstance(obj, IndirectObject):
+                        obj = obj.get_object()
                     if isinstance(obj, dict):
                         if obj.get("/Type") == "/Font":
                             font_name = obj.get("/BaseFont", "")
@@ -2277,8 +2279,6 @@ class PdfWriter(PdfDocCommon):
                     elif isinstance(obj, (list, ArrayObject)):
                         for child_obj in obj:
                             font_info = get_font_info(child_obj, font_info)
-                    elif isinstance(obj, IndirectObject):
-                        font_info = get_font_info(obj.get_object(), font_info)
                     return font_info
 
                 # Add relevant resource names for removal
