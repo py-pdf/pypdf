@@ -488,9 +488,22 @@ class JPXDecode:
 
 class BrotliDecode:
     """
-    Decodes Brotli-compressed data.
+    Decompress the given data using Brotli.
+
+    Decodes data that has been encoded using the Brotli compression algorithm.
+    Brotli is a general-purpose lossless compression algorithm that combines
+    LZ77 and Huffman coding. It typically achieves better compression ratios
+    than Flate encoding, though with slightly slower compression speeds.
 
     See ISO 32000-2:2020, Section 7.4.11.
+
+    Args:
+        data: The input data to be decompressed.
+        decode_parms: Optional decoding parameters (currently unused).
+        **kwargs: Additional keyword arguments (currently unused).
+
+    Returns:
+        The decompressed data.
     """
     @staticmethod
     def decode(

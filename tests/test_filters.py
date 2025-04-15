@@ -67,15 +67,15 @@ def test_brotli_decode_encode(s):
     assert decoded == s_bytes
 
 
+from unittest.mock import patch
+
 @patch("pypdf.filters.brotli", None)
 def test_brotli_missing_installation_mocked():
     """Verify BrotliDecode raises ImportError if brotli is not installed."""
-    # Import pypdf.filters *after* patching sys.modules
-    import pypdf.filters
-    from pypdf.generic import DictionaryObject, NameObject
+    from pypdf.filters import BrotliDecode, decode_stream_data
 
     # Test direct decode call
-    codec = pypdf.filters.BrotliDecode()
+    codec = BrotliDecode()
     with pytest.raises(ImportError) as exc_info_decode:
         codec.decode(b"test data")
     assert "Brotli library not installed" in str(exc_info_decode.value)
@@ -90,7 +90,7 @@ def test_brotli_missing_installation_mocked():
     stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
     stream._data = b"dummy compressed data"
     with pytest.raises(ImportError) as exc_info_stream:
-        pypdf.filters.decode_stream_data(stream)
+        decode_stream_data(stream)
     assert "Brotli library not installed" in str(exc_info_stream.value)
 
 
@@ -347,7 +347,10 @@ for page in reader.pages:
     )
     assert result.returncode == 0
     assert result.stdout == b""
-    assert result.stderr.replace(b"\r", b"") == b"Superfluous whitespace found in object header b'4' b'0'\n"
+    assert (
+        result.stderr.replace(b"\r", b"")
+        == b"Superfluous whitespace found in object header b'4' b'0'\n"
+    )
 
 
 @pytest.mark.enable_socket
@@ -390,7 +393,9 @@ def test_png_transparency_reverse():
     """Cf issue #1599"""
     pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
     reader = PdfReader(pdf_path)
-    refimg = Image.open(BytesIO(get_data_from_url(name="labeled-edges-center-image.png")))
+    refimg = Image.open(
+        BytesIO(get_data_from_url(name="labeled-edges-center-image.png"))
+    )
     data = reader.pages[0].images[0]
     img = Image.open(BytesIO(data.data))
     assert ".jp2" in data.name
@@ -431,7 +436,9 @@ def test_rgba():
         reader = PdfReader(BytesIO(get_data_from_url(name="tika-972174.pdf")))
         data = reader.pages[0].images[0]
         assert ".jp2" in data.name
-        similarity = image_similarity(data.image, BytesIO(get_data_from_url(name="tika-972174_p0-im0.png")))
+        similarity = image_similarity(
+            data.image, BytesIO(get_data_from_url(name="tika-972174_p0-im0.png"))
+        )
         assert similarity > 0.99
 
 
