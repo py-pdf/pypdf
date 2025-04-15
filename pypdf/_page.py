@@ -467,7 +467,7 @@ class VirtualListImages(Sequence[ImageFile]):
         len_self = len(lst)
         if index < 0:
             # support negative indexes
-            index = len_self + index
+            index += len_self
         if index < 0 or index >= len_self:
             raise IndexError("Sequence index out of range")
         return self.get_function(lst[index])
@@ -2518,7 +2518,7 @@ class _VirtualList(Sequence[PageObject]):
         len_self = len(self)
         if index < 0:
             # support negative indexes
-            index = len_self + index
+            index += len_self
         if index < 0 or index >= len_self:
             raise IndexError("Sequence index out of range")
         return self.get_function(index)
@@ -2537,8 +2537,8 @@ class _VirtualList(Sequence[PageObject]):
         len_self = len(self)
         if index < 0:
             # support negative indexes
-            index = len_self + index
-        if index < 0 or index >= len_self:
+            index += len_self
+        if not (0 <= index < len_self):
             raise IndexError("Index out of range")
         ind = self[index].indirect_reference
         assert ind is not None
