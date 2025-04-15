@@ -56,6 +56,11 @@ if sys.version_info[:2] >= (3, 10):
 else:
     from typing_extensions import TypeAlias
 
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
+
 from .errors import (
     STREAM_TRUNCATED_PREMATURELY,
     DeprecationError,
@@ -467,16 +472,16 @@ def rename_kwargs(
 def _human_readable_bytes(bytes: int) -> str:
     if bytes < 10**3:
         return f"{bytes} Byte"
-    elif bytes < 10**6:
+    if bytes < 10**6:
         return f"{bytes / 10**3:.1f} kB"
-    elif bytes < 10**9:
+    if bytes < 10**9:
         return f"{bytes / 10**6:.1f} MB"
-    else:
-        return f"{bytes / 10**9:.1f} GB"
+    return f"{bytes / 10**9:.1f} GB"
 
 
 # The following class has been copied from Django:
 # https://github.com/django/django/blob/adae619426b6f50046b3daaa744db52989c9d6db/django/utils/functional.py#L51-L65
+# It received some modifications to comply with our own coding standards.
 #
 # Original license:
 #
@@ -515,13 +520,13 @@ class classproperty:  # noqa: N801
     that can be accessed directly from the class.
     """
 
-    def __init__(self, method=None):  # type: ignore  # noqa: ANN001
+    def __init__(self, method=None) -> None:  # type: ignore  # noqa: ANN001
         self.fget = method
 
     def __get__(self, instance, cls=None) -> Any:  # type: ignore  # noqa: ANN001
         return self.fget(cls)
 
-    def getter(self, method):  # type: ignore  # noqa: ANN001, ANN202
+    def getter(self, method) -> Self:  # type: ignore  # noqa: ANN001
         self.fget = method
         return self
 
@@ -588,12 +593,12 @@ class Version:
 
             if self_value < other_value:
                 return True
-            elif self_value > other_value:
+            if self_value > other_value:
                 return False
 
             if self_suffix < other_suffix:
                 return True
-            elif self_suffix > other_suffix:
+            if self_suffix > other_suffix:
                 return False
 
         return len(self.components) < len(other.components)

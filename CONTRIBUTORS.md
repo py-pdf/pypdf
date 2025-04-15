@@ -25,6 +25,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Gutteridge, David H.](https://github.com/dhgutteridge)
 * [Hale, Joseph](https://github.com/thehale)
 * [harshhes](https://github.com/harshhes)
+* [Jackowitz, Noah](https://github.com/hackowitz-af) | [LinkedIn](https://www.linkedin.com/in/noah-jackowitz/)
 * [JianzhengLuo](https://github.com/JianzhengLuo)
 * [Karvonen, Harry](https://github.com/Hatell/)
 * [King, Hunter](https://github.com/neversphere)
@@ -69,7 +70,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 
 Contributors are:
 
-* Anybody who has an commit in `main` - no matter how big/small or how many. Also if it's via *co-authored-by*.
+* Anybody who has a commit in `main` - no matter how small or how many. Also if it's via *co-authored-by*.
 * People who opened helpful issues:
 
   1. Bugs: with complete MCVE

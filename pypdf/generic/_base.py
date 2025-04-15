@@ -267,10 +267,9 @@ class BooleanObject(PdfObject):
     def __eq__(self, o: object, /) -> bool:
         if isinstance(o, BooleanObject):
             return self.value == o.value
-        elif isinstance(o, bool):
+        if isinstance(o, bool):
             return self.value == o
-        else:
-            return False
+        return False
 
     def __repr__(self) -> str:
         return "True" if self.value else "False"
@@ -292,11 +291,10 @@ class BooleanObject(PdfObject):
         word = stream.read(4)
         if word == b"true":
             return BooleanObject(True)
-        elif word == b"fals":
+        if word == b"fals":
             stream.read(1)
             return BooleanObject(False)
-        else:
-            raise PdfReadError("Could not read Boolean object")
+        raise PdfReadError("Could not read Boolean object")
 
 
 class IndirectObject(PdfObject):
@@ -391,6 +389,12 @@ class IndirectObject(PdfObject):
     def __getitem__(self, key: Any) -> Any:
         # items should be extracted from pointed Object
         return self._get_object_with_check()[key]  # type: ignore
+
+    def __contains__(self, key: Any) -> bool:
+        return key in self._get_object_with_check()  # type: ignore
+
+    def __iter__(self) -> Any:
+        return self._get_object_with_check().__iter__()  # type: ignore
 
     def __float__(self) -> str:
         # in this case we are looking for the pointed data
@@ -500,8 +504,7 @@ class FloatObject(float, PdfObject):
         if self == 0:
             return "0.0"
         nb = FLOAT_WRITE_PRECISION - int(log10(abs(self)))
-        s = f"{self:.{max(1,nb)}f}".rstrip("0").rstrip(".")
-        return s
+        return f"{self:.{max(1, nb)}f}".rstrip("0").rstrip(".")
 
     def __repr__(self) -> str:
         return self.myrepr()  # repr(float(self))
@@ -566,7 +569,7 @@ class NumberObject(int, PdfObject):
     @staticmethod
     def read_from_stream(stream: StreamType) -> Union["NumberObject", "FloatObject"]:
         num = read_until_regex(stream, NumberObject.NumberPattern)
-        if num.find(b".") != -1:
+        if b"." in num:
             return FloatObject(num)
         return NumberObject(num)
 
@@ -621,7 +624,7 @@ class ByteStringObject(bytes, PdfObject):
         stream.write(b">")
 
     def __str__(self) -> str:
-        charset_to_try = ["utf-16"] + list(NameObject.CHARSETS)
+        charset_to_try = ["utf-16", *list(NameObject.CHARSETS)]
         for enc in charset_to_try:
             try:
                 return self.decode(enc)
@@ -712,8 +715,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         """
         if self._original_bytes is not None:
             return self._original_bytes
-        else:
-            return self.get_original_bytes()
+        return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:
         # We're a text string object, but the library is trying to get our raw
@@ -724,14 +726,12 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         if self.autodetect_utf16:
             if self.utf16_bom == codecs.BOM_UTF16_LE:
                 return codecs.BOM_UTF16_LE + self.encode("utf-16le")
-            elif self.utf16_bom == codecs.BOM_UTF16_BE:
+            if self.utf16_bom == codecs.BOM_UTF16_BE:
                 return codecs.BOM_UTF16_BE + self.encode("utf-16be")
-            else:
-                return self.encode("utf-16be")
-        elif self.autodetect_pdfdocencoding:
+            return self.encode("utf-16be")
+        if self.autodetect_pdfdocencoding:
             return encode_pdfdocencoding(self)
-        else:
-            raise Exception("no information about original bytes")  # pragma: no cover
+        raise Exception("no information about original bytes")  # pragma: no cover
 
     def get_encoded_bytes(self) -> bytes:
         # Try to write the string out as a PDFDocEncoding encoded string. It's
@@ -875,11 +875,10 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                     __name__,
                 )
                 return NameObject(name.decode("charmap"))
-            else:
-                raise PdfReadError(
-                    f"Illegal character in NameObject ({name!r}). "
-                    "You may need to adjust NameObject.CHARSETS.",
-                ) from e
+            raise PdfReadError(
+                f"Illegal character in NameObject ({name!r}). "
+                "You may need to adjust NameObject.CHARSETS.",
+            ) from e
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:

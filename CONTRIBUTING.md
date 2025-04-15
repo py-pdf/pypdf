@@ -10,6 +10,15 @@ GitHub instead.
 
 Please use the templates provided.
 
+Keep in mind that although PDF has an official specification, there are tons of
+variations which might require special handling. Thus, please always provide a
+reproducing example file for us to work with. Otherwise, we have to guess possible
+issues, leading to unnecessary overhead - especially since most of the contributions
+happen during our free time.
+
+If you already know a fix, consider opening a pull request after reporting the issue
+to make life easier for everyone.
+
 ## Creating Pull Requests
 
 We appreciate if people make PRs, but please be aware that pypdf is used by many

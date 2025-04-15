@@ -59,6 +59,7 @@ from .constants import StreamAttributes as SA
 from .errors import DeprecationError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
+    BooleanObject,
     DictionaryObject,
     IndirectObject,
     NullObject,
@@ -178,8 +179,10 @@ class FlateDecode:
     @staticmethod
     def _decode_png_prediction(data: bytes, columns: int, rowlength: int) -> bytes:
         # PNG prediction can vary from row to row
-        if len(data) % rowlength != 0:
-            raise PdfReadError("Image data is not rectangular")
+        if (remainder := len(data) % rowlength) != 0:
+            logger_warning("Image data is not rectangular. Adding padding.", __name__)
+            data += b"\x00" * (rowlength - remainder)
+            assert len(data) % rowlength == 0
         output = []
         prev_rowdata = (0,) * rowlength
         bpp = (rowlength - 1) // columns  # recomputed locally to not change params
@@ -298,7 +301,7 @@ class ASCIIHexDecode:
             char = data[index : index + 1]
             if char == b">":
                 break
-            elif char.isspace():
+            if char.isspace():
                 index += 1
                 continue
             hex_pair += char
@@ -359,9 +362,8 @@ class RunLengthDecode:
             if length == 128:
                 if index < len(data):
                     raise PdfStreamError("Early EOD in RunLengthDecode")
-                else:
-                    break
-            elif length < 128:
+                break
+            if length < 128:
                 length += 1
                 lst.append(data[index : (index + length)])
                 index += length
@@ -731,7 +733,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     # for error reporting
     obj_as_text = (
-        x_object_obj.indirect_reference.__repr__()  # type: ignore
+        x_object_obj.indirect_reference.__repr__()
         if x_object_obj is None  # pragma: no cover
         else x_object_obj.__repr__()
     )
@@ -755,6 +757,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     # Get filters
     filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
+    decode_parms = x_object_obj.get(SA.DECODE_PARMS, None)
+    if isinstance(decode_parms, (tuple, list)):
+        decode_parms = decode_parms[0]
+    else:
+        decode_parms = {}
 
     extension = None
     if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
@@ -816,6 +823,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         img, x_object_obj, obj_as_text, image_format, extension
     )
 
+    if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
+        from PIL import ImageOps
+        img = ImageOps.invert(img)
+
     # Save image to bytes
     img_byte_arr = BytesIO()
     try:
@@ -831,6 +842,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     try:  # temporary try/except until other fixes of images
         img = Image.open(BytesIO(data))
-    except Exception:
+    except Exception as exception:
+        logger_warning(f"Failed loading image: {exception}", __name__)
         img = None  # type: ignore
     return extension, data, img

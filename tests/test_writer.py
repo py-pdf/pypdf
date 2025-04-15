@@ -950,7 +950,7 @@ def test_write_dict_stream_object(pdf_file_path):
     objects_hash = [o.hash_value() for o in writer._objects]
     for k, v in writer._idnum_hash.items():
         assert v.pdf == writer
-        assert k in objects_hash, "Missing %s" % v
+        assert k in objects_hash, f"Missing {v}"
 
 
 def test_add_single_annotation(pdf_file_path):
@@ -998,8 +998,8 @@ def test_colors_in_outline_item(pdf_file_path):
     reader2 = PdfReader(pdf_file_path)
     for outline_item in reader2.outline:
         # convert float to string because of mutability
-        assert ["%.5f" % c for c in outline_item.color] == [
-            "%.5f" % p for p in purple_rgb
+        assert [f"{c:.5f}" for c in outline_item.color] == [
+            f"{p:.5f}" for p in purple_rgb
         ]
 
 
@@ -1385,6 +1385,22 @@ def test_new_removes():
     assert b"/Im0" in bb
     assert b"Chap" not in bb
     assert b" TJ" not in bb
+
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(b)
+    text = reader.pages[0].extract_text()
+    assert "Arbeitsschritt" in text
+    assert "Modelltechnik" in text
+    writer.remove_text(font_names=["LiberationSans-Bold"])
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(b)
+    text = reader.pages[0].extract_text()
+    assert "Arbeitsschritt" not in text
+    assert "Modelltechnik" in text
 
     url = "https://github.com/py-pdf/pypdf/files/10832029/tt2.pdf"
     name = "GeoBaseWithComments.pdf"
@@ -2607,3 +2623,55 @@ def test_inline_image_q_operator_handling(tmp_path):
     )
     assert png_path.is_file()
     assert image_similarity(png_path, expected_png_path) >= 0.99999
+
+
+def test_insert_filtered_annotations__annotations_are_none():
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    stream = BytesIO()
+    writer.write(stream)
+    reader = PdfReader(stream)
+    assert writer._insert_filtered_annotations(
+        annots=None, page=PageObject(), pages={}, reader=reader
+    ) == []
+
+
+def test_incremental_read():
+    """Test for #3116"""
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    stream0 = BytesIO()
+    writer.write(stream0)
+
+    reader = PdfReader(stream0)
+    # 1 = Catalog, 2 = Pages, 3 = New Page, 4 = Info, Size == 5
+    assert reader.trailer["/Size"] == 5
+
+    stream0.seek(0, 0)
+    writer = PdfWriter(stream0, incremental=True)
+    assert len(writer._objects) == 4
+    assert writer._objects[-1] is not None
+    stream1 = BytesIO()
+    writer.write(stream1)
+
+    # nothing modified, so nothing added = ideal situation
+    assert stream1.getvalue() == stream1.getvalue()
+
+    stream0.seek(0, 0)
+    writer = PdfWriter(stream0, incremental=True)
+    assert len(writer._objects) == 4
+    assert writer._objects[-1] is not None
+    writer.add_blank_page(72, 72)
+    assert len(writer._objects) == 5
+    stream1 = BytesIO()
+    writer.write(stream1)
+    # 2 = Pages, 5 = New Page, 6 = XRef, Size == 7
+    # XRef is created on write and not counted
+    assert len(writer._objects) == 5
+
+
+def test_compress_identical_objects__after_remove_images():
+    """Test for #3237"""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "AutoCad_Diagram.pdf")
+    writer.remove_images()
+    writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)

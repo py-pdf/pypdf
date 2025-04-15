@@ -133,7 +133,9 @@ maintainers do their best to fix that in a timely manner - please
 
 ## People
 
-* Martin Thoma is benevolent dictator since April 2022.
+* [stefan6419846](https://github.com/stefan6419846) is the benevolent dictator since January 2025
+* [Martin Thoma](https://github.com/MartinThoma) was the benevolent dictator from April 2022 to January 2025.
+  He still has most of the permissions as a fallback.
 * Maintainers:
     * Matthew Stamy (mstamy2) was the benevolent dictator for a long time.
       He still is around on GitHub once in a while and has permissions on PyPI and GitHub.

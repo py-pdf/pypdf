@@ -73,7 +73,7 @@ def build_char_map_from_dict(
 unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]] = (
     "Unknown",
     9999,
-    dict(zip(range(256), ["�"] * 256)),
+    dict.fromkeys(range(256), "�"),
     {},
 )
 
@@ -177,9 +177,9 @@ def _parse_encoding(
                 f"Advanced encoding {encoding} not implemented yet",
                 __name__,
             )
-            encoding = charset_encoding["/StandardCoding"].copy()
+            encoding = charset_encoding["/StandardEncoding"].copy()
     else:
-        encoding = charset_encoding["/StandardCoding"].copy()
+        encoding = charset_encoding["/StandardEncoding"].copy()
     if "/Differences" in enc:
         x: int = 0
         o: Union[int, str]
@@ -211,8 +211,7 @@ def _parse_to_unicode(
     if "/ToUnicode" not in ft:
         if ft.get("/Subtype", "") == "/Type1":
             return _type1_alternative(ft, map_dict, int_entry)
-        else:
-            return {}, []
+        return {}, []
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
@@ -240,8 +239,7 @@ def get_actual_str_key(
         key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char}
     else:
         key_dict = {value: key for key, value in map_dict.items() if value == value_char}
-    key_char = key_dict.get(value_char, value_char)
-    return key_char
+    return key_dict.get(value_char, value_char)
 
 
 def prepare_cm(ft: DictionaryObject) -> bytes:
@@ -326,7 +324,7 @@ def parse_bfrange(
         fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]
-        for sq in lst[0:]:
+        for sq in lst:
             if sq == b"]":
                 closure_found = True
                 break
@@ -423,6 +421,10 @@ def build_font_width_map(
                 # C_first C_last same_W
                 en = second
                 width = w[2].get_object()
+                if not isinstance(width, (int, float)):
+                    logger_warning(f"Expected numeric value for width, got {width}. Ignoring it.", __name__)
+                    w = w[3:]
+                    continue
                 for c_code in range(st, en + 1):
                     font_width_map[chr(c_code)] = width
                 w = w[3:]
