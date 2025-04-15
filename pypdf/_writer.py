@@ -2054,7 +2054,7 @@ class PdfWriter(PdfDocCommon):
             text_filters: Properties of text to be deleted, if applicable. Optional.
                 This is a Python dictionary with the following properties:
 
-                * font_ids: List of font IDs (such as /F1 or /T1_0) to be deleted.
+                * font_ids: List of font resource IDs (such as /F1 or /T1_0) to be deleted.
 
         """
         if isinstance(to_delete, (list, tuple)):
@@ -2118,10 +2118,9 @@ class PdfWriter(PdfDocCommon):
                         and (operands[0] in images)
                     )
                 ):
-                    if (
-                      not to_delete & ObjectDeletionFlag.TEXT
-                      or (not font_ids_to_delete or font_id in font_ids_to_delete)
-                    ):
+                    if to_delete & ObjectDeletionFlag.TEXT and not text_filters:
+                        del content.operations[i]
+                    elif to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete:
                         del content.operations[i]
                     else:
                         i += 1
@@ -2246,7 +2245,7 @@ class PdfWriter(PdfDocCommon):
             font_names = []
 
         for page in self.pages:
-            resource_names_to_remove = []
+            resource_ids_to_remove = []
 
             # Content streams reference fonts and other resources with names like "/F1" or "/T1_0"
             # Font names need to be converted to resource names for easier removal
@@ -2267,10 +2266,10 @@ class PdfWriter(PdfDocCommon):
                             if normalized_font_name not in font_info:
                                 font_info[normalized_font_name] = {
                                     "normalized_font_name": normalized_font_name,
-                                    "resource_names": [],
+                                    "resource_ids": [],
                                 }
-                            if key not in font_info[normalized_font_name]["resource_names"]:
-                                font_info[normalized_font_name]["resource_names"].append(key)
+                            if key not in font_info[normalized_font_name]["resource_ids"]:
+                                font_info[normalized_font_name]["resource_ids"].append(key)
                         for k in obj:
                             font_info = get_font_info(obj[k], font_info, k)
                     elif isinstance(obj, (list, ArrayObject)):
@@ -2284,11 +2283,11 @@ class PdfWriter(PdfDocCommon):
                 font_info = get_font_info(page.get("/Resources"))
                 for font_name in font_names:
                     if font_name in font_info:
-                        resource_names_to_remove.extend(font_info[font_name]["resource_names"])
+                        resource_ids_to_remove.extend(font_info[font_name]["resource_ids"])
 
-            text_filters = {
-                "font_ids": resource_names_to_remove,
-            }
+            text_filters = {}
+            if font_names:
+                text_filters["font_ids"] = resource_ids_to_remove
             self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT, text_filters=text_filters)
 
     def add_uri(
