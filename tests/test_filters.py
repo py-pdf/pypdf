@@ -725,7 +725,6 @@ def test_flate_decode__not_rectangular(caplog):
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
 
-
 def test_main_decode_brotli_installed():
     """Test the main decode function with Brotli filter using a real PDF."""
     if importlib.util.find_spec("brotli") is None:
