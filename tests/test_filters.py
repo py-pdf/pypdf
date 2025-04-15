@@ -67,7 +67,6 @@ def test_brotli_decode_encode(s):
     assert decoded == s_bytes
 
 
-from unittest.mock import patch
 
 @patch("pypdf.filters.brotli", None)
 def test_brotli_missing_installation_mocked():
