@@ -35,6 +35,7 @@ from datetime import datetime
 from typing import (
     Any,
     Dict,
+    Generator,
     Iterable,
     Iterator,
     List,
@@ -87,6 +88,7 @@ from .generic import (
     create_string_object,
     is_null_or_none,
 )
+from .generic._files import EmbeddedFile
 from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
 
@@ -268,6 +270,8 @@ class PdfDocCommon:
 
     strict: bool = False  # default
 
+    flattened_pages: Optional[List[PageObject]] = None
+
     _encryption: Optional[Encryption] = None
 
     _readonly: bool = False
@@ -331,8 +335,6 @@ class PdfDocCommon:
                 self.root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
         return o
 
-    flattened_pages: Optional[List[PageObject]] = None
-
     def get_num_pages(self) -> int:
         """
         Calculate the number of pages in this PDF file.
@@ -341,8 +343,7 @@ class PdfDocCommon:
             The number of pages of the parsed PDF file.
 
         Raises:
-            PdfReadError: if file is encrypted and restrictions prevent
-                this action.
+            PdfReadError: If restrictions prevent this action.
 
         """
         # Flattened pages will not work on an encrypted PDF;
@@ -350,11 +351,10 @@ class PdfDocCommon:
         # the original method (flattened page count) is used.
         if self.is_encrypted:
             return self.root_object["/Pages"]["/Count"]  # type: ignore
-        else:
-            if self.flattened_pages is None:
-                self._flatten(self._readonly)
-            assert self.flattened_pages is not None
-            return len(self.flattened_pages)
+        if self.flattened_pages is None:
+            self._flatten(self._readonly)
+        assert self.flattened_pages is not None
+        return len(self.flattened_pages)
 
     def get_page(self, page_number: int) -> PageObject:
         """
@@ -391,12 +391,10 @@ class PdfDocCommon:
             if node["/Type"] == "/Page":
                 if page_number == mi:
                     return node, -1
-                # else
                 return None, mi + 1
             if (page_number - mi) >= ma:  # not in nodes below
                 if node == top:
                     return top, -1
-                # else
                 return None, mi + ma
             for idx, kid in enumerate(cast(ArrayObject, node["/Kids"])):
                 kid = cast(DictionaryObject, kid.get_object())
@@ -404,7 +402,7 @@ class PdfDocCommon:
                 if n is not None:  # page has just been found ...
                     if i < 0:  # ... just below!
                         return node, idx
-                    # else:  # ... at lower levels
+                    # ... at lower levels
                     return n, i
                 mi = i
             raise PyPdfError("Unexpectedly cannot find the node.")
@@ -429,7 +427,7 @@ class PdfDocCommon:
             names = cast(DictionaryObject, self.root_object[CA.NAMES])
             names_ref = names.indirect_reference
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
-                # 3.6.3 Name Dictionary (PDF spec 1.7)
+                # §3.6.3 Name Dictionary (PDF spec 1.7)
                 dests = cast(DictionaryObject, names[CA.DESTS])
                 dests_ref = dests.indirect_reference
                 if CA.NAMES in dests:
@@ -527,8 +525,8 @@ class PdfDocCommon:
                     retval[k__] = dest
         return retval
 
-    # A select group of relevant field attributes. For the complete list.
-    # See §12.3.2 of the PDF 1.7 or PDF 2.0 specification.
+    # A select group of relevant field attributes. For the complete list,
+    # see §12.3.2 of the PDF 1.7 or PDF 2.0 specification.
 
     def get_fields(
         self,
@@ -583,7 +581,7 @@ class PdfDocCommon:
     def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
         if "/TM" in parent:
             return cast(str, parent["/TM"])
-        elif "/Parent" in parent:
+        if "/Parent" in parent:
             return (
                 self._get_qualified_field_name(
                     cast(DictionaryObject, parent["/Parent"])
@@ -591,8 +589,7 @@ class PdfDocCommon:
                 + "."
                 + cast(str, parent.get("/T", ""))
             )
-        else:
-            return cast(str, parent.get("/T", ""))
+        return cast(str, parent.get("/T", ""))
 
     def _build_field(
         self,
@@ -670,7 +667,7 @@ class PdfDocCommon:
             attr_name = field_attributes[attr]
             try:
                 if attr == FA.FT:
-                    # Make the field type value more clear
+                    # Make the field type value clearer
                     types = {
                         "/Btn": "Button",
                         "/Tx": "Text",
@@ -711,12 +708,11 @@ class PdfDocCommon:
         def indexed_key(k: str, fields: Dict[Any, Any]) -> str:
             if k not in fields:
                 return k
-            else:
-                return (
-                    k
-                    + "."
-                    + str(sum(1 for kk in fields if kk.startswith(k + ".")) + 2)
-                )
+            return (
+                k
+                + "."
+                + str(sum(1 for kk in fields if kk.startswith(k + ".")) + 2)
+            )
 
         # Retrieve document form fields
         formfields = self.get_fields()
@@ -757,12 +753,11 @@ class PdfDocCommon:
         def _get_inherited(obj: DictionaryObject, key: str) -> Any:
             if key in obj:
                 return obj[key]
-            elif "/Parent" in obj:
+            if "/Parent" in obj:
                 return _get_inherited(
                     cast(DictionaryObject, obj["/Parent"].get_object()), key
                 )
-            else:
-                return None
+            return None
 
         try:
             # to cope with all types
@@ -822,7 +817,7 @@ class PdfDocCommon:
             oa = oa.decode()
         if isinstance(oa, str):
             return create_string_object(oa)
-        elif isinstance(oa, ArrayObject):
+        if isinstance(oa, ArrayObject):
             try:
                 page, typ, *array = oa
                 fit = Fit(typ, tuple(array))
@@ -905,8 +900,7 @@ class PdfDocCommon:
         catalog = self.root_object
         if CO.THREADS in catalog:
             return cast("ArrayObject", catalog[CO.THREADS])
-        else:
-            return None
+        return None
 
     @abstractmethod
     def _get_page_number_by_indirect(
@@ -959,25 +953,23 @@ class PdfDocCommon:
         ):
             page = NullObject()
             return Destination(title, page, Fit.fit())
-        else:
-            page, typ = array[0:2]  # type: ignore
-            array = array[2:]
-            try:
-                return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
-            except PdfReadError:
-                logger_warning(f"Unknown destination: {title} {array}", __name__)
-                if self.strict:
-                    raise
-                # create a link to first Page
-                tmp = self.pages[0].indirect_reference
-                indirect_reference = NullObject() if tmp is None else tmp
-                return Destination(title, indirect_reference, Fit.fit())
+        page, typ, *array = array  # type: ignore
+        try:
+            return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
+        except PdfReadError:
+            logger_warning(f"Unknown destination: {title} {array}", __name__)
+            if self.strict:
+                raise
+            # create a link to first Page
+            tmp = self.pages[0].indirect_reference
+            indirect_reference = NullObject() if tmp is None else tmp
+            return Destination(title, indirect_reference, Fit.fit())
 
     def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
         dest, title, outline_item = None, None, None
 
         # title required for valid outline
-        # § 12.3.3, entries in an outline item dictionary
+        # §12.3.3, entries in an outline item dictionary
         try:
             title = cast("str", node["/Title"])
         except KeyError:
@@ -1017,11 +1009,10 @@ class PdfDocCommon:
         else:
             if self.strict:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
-            else:
-                logger_warning(
-                    f"Removed unexpected destination {dest!r} from destination",
-                    __name__,
-                )
+            logger_warning(
+                f"Removed unexpected destination {dest!r} from destination",
+                __name__,
+            )
             outline_item = self._build_destination(title, None)
 
         # if outline item created, add color, format, and child count if present
@@ -1137,7 +1128,16 @@ class PdfDocCommon:
         indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
         """
-        Prepare the document pages to ease searching
+        Process the document pages to ease searching.
+
+        Attributes of a page may inherit from ancestor nodes
+        in the page tree. Flattening means moving
+        any inheritance data into descendant nodes,
+        effectively removing the inheritance dependency.
+
+        Note: It is distinct from another use of "flattening" applied to PDFs.
+        Flattening a PDF also means combining all the contents into one single layer
+        and making the file less editable.
 
         Args:
             list_only: Will only list the pages within _flatten_pages.
@@ -1165,7 +1165,7 @@ class PdfDocCommon:
 
         if PA.TYPE in pages:
             t = cast(str, pages[PA.TYPE])
-        # if pdf has no type, considered as a page if /Kids is missing
+        # if the page tree node has no /Type, consider as a page if /Kids is also missing
         elif PA.KIDS not in pages:
             t = "/Page"
         else:
@@ -1189,9 +1189,9 @@ class PdfDocCommon:
                             "Maximum recursion depth reached during page flattening."
                         )
         elif t == "/Page":
-            for attr_in, value in list(inherit.items()):
-                # if the page has it's own value, it does not inherit the
-                # parent's value:
+            for attr_in, value in inherit.items():
+                # if the page has its own value, it does not inherit the
+                # parent's value
                 if attr_in not in pages:
                     pages[attr_in] = value
             page_obj = PageObject(self, indirect_reference)
@@ -1332,12 +1332,18 @@ class PdfDocCommon:
 
     @property
     def attachments(self) -> Mapping[str, List[bytes]]:
+        """Mapping of attachment filenames to their content."""
         return LazyDict(
             {
                 name: (self._get_attachment_list, name)
                 for name in self._list_attachments()
             }
         )
+
+    @property
+    def attachment_list(self) -> Generator[EmbeddedFile, None, None]:
+        """Iterable of attachment objects."""
+        yield from EmbeddedFile._load(self.root_object)
 
     def _list_attachments(self) -> List[str]:
         """
@@ -1347,36 +1353,12 @@ class PdfDocCommon:
             list of filenames
 
         """
-        catalog = self.root_object
-        # From the catalog get the embedded file names
-        try:
-            # This is a name tree of the format [name_1, reference_1, name_2, reference_2, ...]
-            names = cast(
-                ArrayObject,
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
-                )["/Names"],
-            )
-        except KeyError:
-            return []
-        attachment_names: List[str] = []
-        for i, name in enumerate(names):
-            if isinstance(name, str):
-                attachment_names.append(name)
-            else:
-                name = name.get_object()
-                for key in ["/UF", "/F"]:
-                    # PDF 2.0 reference, table 43:
-                    #   > A PDF reader shall use the value of the UF key, when present, instead of the F key.
-                    if key in name:
-                        name = name[key].get_object()
-                        if name == names[i - 1]:
-                            # Avoid duplicates for the same entry.
-                            continue
-                        attachment_names.append(name)
-                    break
-        return attachment_names
+        names = []
+        for entry in self.attachment_list:
+            names.append(entry.name)
+            if (name := entry.alternative_name) != entry.name and name:
+                names.append(name)
+        return names
 
     def _get_attachment_list(self, name: str) -> List[bytes]:
         out = self._get_attachments(name)[name]
@@ -1402,50 +1384,28 @@ class PdfDocCommon:
             If the filename exists multiple times a list of the different versions will be provided.
 
         """
-        catalog = self.root_object
-        # From the catalog get the embedded file names
-        try:
-            # This is a name tree of the format [name_1, reference_1, name_2, reference_2, ...]
-            names = cast(
-                ArrayObject,
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
-                )["/Names"],
-            )
-        except KeyError:
-            return {}
         attachments: Dict[str, Union[bytes, List[bytes]]] = {}
-
-        # Loop through attachments
-        for i, name in enumerate(names):
-            if isinstance(name, str):
-                # Retrieve the corresponding reference.
-                file_dictionary = names[i + 1].get_object()
-            else:
-                # We have the reference, but need to determine the name.
-                file_dictionary = name.get_object()
-                for key in ["/UF", "/F"]:
-                    # PDF 2.0 reference, table 43:
-                    #   > A PDF reader shall use the value of the UF key, when present, instead of the F key.
-                    if key in file_dictionary:
-                        name = file_dictionary[key].get_object()
-                        break
+        for entry in self.attachment_list:
+            names = set()
+            alternative_name = entry.alternative_name
+            if filename is not None:
+                if filename in {entry.name, alternative_name}:
+                    name = entry.name if filename == entry.name else alternative_name
+                    names.add(name)
                 else:
                     continue
-                if name == names[i - 1]:
-                    # Avoid extracting the same file twice.
-                    continue
-
-            if filename is not None and name != filename:
-                continue
-            file_data = file_dictionary["/EF"]["/F"].get_data()
-            if name in attachments:
-                if not isinstance(attachments[name], list):
-                    attachments[name] = [attachments[name]]  # type:ignore
-                attachments[name].append(file_data)  # type:ignore
             else:
-                attachments[name] = file_data
+                names = {entry.name, alternative_name}
+
+            for name in names:
+                if name is None:
+                    continue
+                if name in attachments:
+                    if not isinstance(attachments[name], list):
+                        attachments[name] = [attachments[name]]  # type:ignore
+                    attachments[name].append(entry.content)  # type:ignore
+                else:
+                    attachments[name] = entry.content
         return attachments
 
     @abstractmethod

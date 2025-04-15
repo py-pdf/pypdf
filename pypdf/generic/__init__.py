@@ -60,6 +60,7 @@ from ._data_structures import (
     TreeObject,
     read_object,
 )
+from ._files import EmbeddedFile
 from ._fit import Fit
 from ._outline import OutlineItem
 from ._rectangle import RectangleObject
@@ -207,6 +208,7 @@ __all__ = [
     "DecodedStreamObject",
     "Destination",
     "DictionaryObject",
+    "EmbeddedFile",
     "EncodedStreamObject",
     "Field",
     "Fit",

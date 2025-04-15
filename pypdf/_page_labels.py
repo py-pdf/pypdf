@@ -144,7 +144,7 @@ def get_label_from_nums(dictionary_object: DictionaryObject, index: int) -> str:
             break
         i += 2
     m = {
-        None: lambda n: "",
+        None: lambda _: "",
         "/D": lambda n: str(n),
         "/R": number2uppercase_roman_numeral,
         "/r": number2lowercase_roman_numeral,
@@ -285,5 +285,4 @@ def nums_next(
     i = nums.index(key) + 2
     if i < len(nums):
         return (nums[i], nums[i + 1])
-    else:
-        return (None, None)
+    return (None, None)

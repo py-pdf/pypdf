@@ -27,9 +27,11 @@
 
 import logging
 from io import BytesIO
+from typing import IO
 
 from .._utils import (
     WHITESPACES,
+    WHITESPACES_AS_BYTES,
     StreamType,
     read_non_whitespace,
 )
@@ -54,7 +56,7 @@ def extract_inline_AHx(stream: StreamType) -> bytes:
             raise PdfReadError("Unexpected end of stream")
         pos_tok = data_buffered.find(b">")
         if pos_tok >= 0:  # found >
-            data_out += data_buffered[: (pos_tok + 1)]
+            data_out += data_buffered[: pos_tok + 1]
             stream.seek(-len(data_buffered) + pos_tok + 1, 1)
             break
         pos_ei = data_buffered.find(b"EI")
@@ -67,17 +69,17 @@ def extract_inline_AHx(stream: StreamType) -> bytes:
                 pos_ei -= 1
             data_out += data_buffered[:pos_ei]
             break
-        elif len(data_buffered) == 2:
+        if len(data_buffered) == 2:
             data_out += data_buffered
             raise PdfReadError("Unexpected end of stream")
-        else:  # > nor EI found
-            data_out += data_buffered[:-2]
-            stream.seek(-2, 1)
+        # Neither > nor EI found
+        data_out += data_buffered[:-2]
+        stream.seek(-2, 1)
 
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
     stream.seek(-3, 1)
-    if ei_tok[0:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data_out
 
@@ -99,7 +101,7 @@ def extract_inline_A85(stream: StreamType) -> bytes:
             data_out += data_buffered[: pos_tok + 2]
             stream.seek(-len(data_buffered) + pos_tok + 2, 1)
             break
-        elif len(data_buffered) == 2:  # end of buffer
+        if len(data_buffered) == 2:  # end of buffer
             data_out += data_buffered
             raise PdfReadError("Unexpected end of stream")
         data_out += data_buffered[
@@ -110,15 +112,15 @@ def extract_inline_A85(stream: StreamType) -> bytes:
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
     stream.seek(-3, 1)
-    if ei_tok[0:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data_out
 
 
 def extract_inline_RL(stream: StreamType) -> bytes:
     """
-    Extract RL Stream from Inline Image.
-    the stream will be moved onto the EI
+    Extract RL (RunLengthDecode) Stream from Inline Image.
+    The stream will be moved onto the EI
     """
     data_out: bytes = b""
     # Read data up to delimiter ~>
@@ -137,7 +139,7 @@ def extract_inline_RL(stream: StreamType) -> bytes:
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
     stream.seek(-3, 1)
-    if ei_tok[0:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data_out
 
@@ -145,7 +147,7 @@ def extract_inline_RL(stream: StreamType) -> bytes:
 def extract_inline_DCT(stream: StreamType) -> bytes:
     """
     Extract DCT (JPEG) Stream from Inline Image.
-    the stream will be moved onto the EI
+    The stream will be moved onto the EI
     """
     data_out: bytes = b""
     # Read Blocks of data (ID/Size/data) up to ID=FF/D9
@@ -157,8 +159,7 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
             data_out += c
         if c != b"\xff":
             continue
-        else:
-            notfirst = True
+        notfirst = True
         c = stream.read(1)
         data_out += c
         if c == b"\xff":
@@ -176,21 +177,17 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
             data_out += c
             sz = c[0] * 256 + c[1]
             data_out += stream.read(sz - 2)
-        # else: pass
 
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
     stream.seek(-3, 1)
-    if ei_tok[0:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
         raise PdfReadError("EI stream not found")
     return data_out
 
 
 def extract_inline_default(stream: StreamType) -> bytes:
-    """
-    Legacy method
-    used by default
-    """
+    """Legacy method, used by default"""
     stream_out = BytesIO()
     # Read the inline image, while checking for EI (End Image) operator.
     while True:
@@ -227,10 +224,72 @@ def extract_inline_default(stream: StreamType) -> bytes:
             }:  # for Q or EMC
                 stream.seek(saved_pos, 0)
                 continue
-            # Data contains [\s]EI[\s](Q|EMC): 4 chars are sufficients
+            if is_followed_by_binary_data(stream):
+                # Inline image contains `EI ` sequence usually marking the end of it, but
+                # is followed by binary data which does not make sense for the actual end.
+                stream.seek(saved_pos, 0)
+                continue
+            # Data contains [\s]EI[\s](Q|EMC): 4 chars are sufficient
             # remove E(I) wrongly inserted earlier
             stream.seek(saved_pos - 1, 0)
             stream_out.truncate(sav_pos_ei)
             break
 
     return stream_out.getvalue()
+
+
+def is_followed_by_binary_data(stream: IO[bytes], length: int = 10) -> bool:
+    """
+    Check if the next bytes of the stream look like binary image data or regular page content.
+
+    This is just some heuristics due to the PDF specification being too imprecise about
+    inline images containing the `EI` marker which would end an image. Starting with PDF 2.0,
+    we finally get a mandatory length field, but with (proper) PDF 2.0 support being very limited
+    everywhere, we should not expect to be able to remove such hacks in the near future - especially
+    considering legacy documents as well.
+
+    The actual implementation draws some inspiration from
+    https://github.com/itext/itext-java/blob/9.1.0/kernel/src/main/java/com/itextpdf/kernel/pdf/canvas/parser/util/InlineImageParsingUtils.java
+    """
+    position = stream.tell()
+    data = stream.read(length)
+    stream.seek(position)
+    if not data:
+        return False
+    operator_start = None
+    operator_end = None
+
+    for index, byte in enumerate(data):
+        if byte < 32 and byte not in WHITESPACES_AS_BYTES:
+            # This covers all characters not being displayable directly, although omitting whitespace
+            # to allow for operator detection.
+            return True
+        is_whitespace = byte in WHITESPACES_AS_BYTES
+        if operator_start is None and not is_whitespace:
+            # Interpret all other non-whitespace characters as the start of an operation.
+            operator_start = index
+        if operator_start is not None and is_whitespace:
+            # A whitespace stops an operation.
+            # Assume that having an inline image with tons of whitespace is rather unlikely.
+            operator_end = index
+            break
+
+    if operator_start is None:
+        # Inline images should not have tons of whitespaces, which would lead to no operator start.
+        return False
+    if operator_end is None:
+        # We probably are inside an operation.
+        operator_end = length
+    operator_length = operator_end - operator_start
+    operator = data[operator_start:operator_end]
+    if operator.startswith(b"/") and operator_length > 1:
+        # Name object.
+        return False
+    if operator.replace(b".", b"").isdigit():
+        # Graphics operator, for example a move. A number (integer or float).
+        return False
+    if operator_length > 3:  # noqa: SIM103
+        # Usually, the operators inside a content stream should not have more than three characters,
+        # especially after an inline image.
+        return True
+    return False

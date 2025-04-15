@@ -1,9 +1,15 @@
 import concurrent.futures
 import ssl
+import sys
 import urllib.request
 from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.error import HTTPError
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 import yaml
 
@@ -54,8 +60,7 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
                     else:
                         raise e
     with open(cache_path, "rb") as fp:
-        data = fp.read()
-    return data
+        return fp.read()
 
 
 def _strip_position(line: str) -> str:
@@ -76,8 +81,7 @@ def _strip_position(line: str) -> str:
 
     """
     line = ".py".join(line.split(".py:")[1:])
-    line = " ".join(line.split(" ")[1:])
-    return line
+    return " ".join(line.split(" ")[1:])
 
 
 def normalize_warnings(caplog_text: str) -> List[str]:
@@ -85,7 +89,7 @@ def normalize_warnings(caplog_text: str) -> List[str]:
 
 
 class ReaderDummy:
-    def __init__(self, strict=False):
+    def __init__(self, strict=False) -> None:
         self.strict = strict
 
     def get_object(self, indirect_reference):
@@ -118,8 +122,7 @@ def is_sublist(child_list, parent_list):
 
 def read_yaml_to_list_of_dicts(yaml_file: Path) -> List[Dict[str, str]]:
     with open(yaml_file) as yaml_input:
-        data = yaml.safe_load(yaml_input)
-    return data
+        return yaml.safe_load(yaml_input)
 
 
 def download_test_pdfs():
@@ -150,20 +153,20 @@ def test_csv_consistency():
 class PILContext:
     """Allow changing the PIL/Pillow configuration for some limited scope."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._saved_load_truncated_images = False
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         # Allow loading incomplete images.
         from PIL import ImageFile
         self._saved_load_truncated_images = ImageFile.LOAD_TRUNCATED_IMAGES
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         return self
 
-    def __exit__(self, type_, value, traceback):
+    def __exit__(self, type_, value, traceback) -> Optional[bool]:
         from PIL import ImageFile
         ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images
         if type_:
             # Error.
-            return
+            return None
         return True

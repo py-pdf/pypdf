@@ -169,7 +169,7 @@ class Transformation:
 
     # 9.5.4 Coordinate Systems for 3D
     # 4.2.2 Common Transformations
-    def __init__(self, ctm: CompressedTransformationMatrix = (1, 0, 0, 1, 0, 0)):
+    def __init__(self, ctm: CompressedTransformationMatrix = (1, 0, 0, 1, 0, 0)) -> None:
         self.ctm = ctm
 
     @property
@@ -467,7 +467,7 @@ class VirtualListImages(Sequence[ImageFile]):
         len_self = len(lst)
         if index < 0:
             # support negative indexes
-            index = len_self + index
+            index += len_self
         if index < 0 or index >= len_self:
             raise IndexError("Sequence index out of range")
         return self.get_function(lst[index])
@@ -603,8 +603,7 @@ class PageObject(DictionaryObject):
         _i = getattr(obj, "indirect_reference", None)
         if _i in call_stack:
             return []
-        else:
-            call_stack.append(_i)
+        call_stack.append(_i)
         if self.inline_images is None:
             self.inline_images = self._get_inline_images()
         if obj is None:
@@ -622,9 +621,9 @@ class PageObject(DictionaryObject):
             if not isinstance(x_object[o], StreamObject):
                 continue
             if x_object[o][IA.SUBTYPE] == "/Image":
-                lst.append(o if len(ancest) == 0 else ancest + [o])
+                lst.append(o if len(ancest) == 0 else [*ancest, o])
             else:  # is a form with possible images inside
-                lst.extend(self._get_ids_image(x_object[o], ancest + [o], call_stack))
+                lst.extend(self._get_ids_image(x_object[o], [*ancest, o], call_stack))
         assert self.inline_images is not None
         lst.extend(list(self.inline_images.keys()))
         return lst
@@ -657,16 +656,15 @@ class PageObject(DictionaryObject):
 
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
-            f = ImageFile(
+            return ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
                 image=imgd[2],
                 indirect_reference=xobjs[id].indirect_reference,
             )
-            return f
-        else:  # in a sub object
-            ids = id[1:]
-            return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
+        # in a sub object
+        ids = id[1:]
+        return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
     def images(self) -> VirtualListImages:
@@ -700,7 +698,7 @@ class PageObject(DictionaryObject):
 
         Example usage:
 
-            reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)
+            reader.pages[0].images[0].replace(Image.open("new_image.jpg"), quality=20)
 
         Inline images are extracted and named ~0~, ~1~, ..., with the
         indirect_reference set to None.
@@ -1029,10 +1027,8 @@ class PageObject(DictionaryObject):
             obj = self[PG.CONTENTS].get_object()
             if isinstance(obj, list):
                 return b"".join(x.get_object().get_data() for x in obj)
-            else:
-                return cast(EncodedStreamObject, obj).get_data()
-        else:
-            return None
+            return cast(EncodedStreamObject, obj).get_data()
+        return None
 
     def get_contents(self) -> Optional[ContentStream]:
         """
@@ -1048,13 +1044,12 @@ class PageObject(DictionaryObject):
                 pdf = cast(IndirectObject, self.indirect_reference).pdf
             except AttributeError:
                 pdf = None
-            obj = self[PG.CONTENTS].get_object()
-            if isinstance(obj, NullObject):
+            obj = self[PG.CONTENTS]
+            if is_null_or_none(obj):
                 return None
-            else:
-                return ContentStream(obj, pdf)
-        else:
-            return None
+            resolved_object = obj.get_object()
+            return ContentStream(resolved_object, pdf)
+        return None
 
     def replace_contents(
         self, content: Union[None, ContentStream, EncodedStreamObject, ArrayObject]
@@ -1082,13 +1077,12 @@ class PageObject(DictionaryObject):
         if is_null_or_none(content):
             if PG.CONTENTS not in self:
                 return
-            else:
-                assert self.indirect_reference is not None
-                assert self[PG.CONTENTS].indirect_reference is not None
-                self.indirect_reference.pdf._objects[
-                    self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
-                ] = NullObject()
-                del self[PG.CONTENTS]
+            assert self.indirect_reference is not None
+            assert self[PG.CONTENTS].indirect_reference is not None
+            self.indirect_reference.pdf._objects[
+                self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
+            ] = NullObject()
+            del self[PG.CONTENTS]
         elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
             try:
                 self[NameObject(PG.CONTENTS)] = self.indirect_reference.pdf._add_object(
@@ -1694,12 +1688,11 @@ class PageObject(DictionaryObject):
         """
         if self.indirect_reference is None:
             return None
-        else:
-            try:
-                lst = self.indirect_reference.pdf.pages
-                return lst.index(self)
-            except ValueError:
-                return None
+        try:
+            lst = self.indirect_reference.pdf.pages
+            return lst.index(self)
+        except ValueError:
+            return None
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
@@ -1854,8 +1847,8 @@ class PageObject(DictionaryObject):
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
-        if "/Font" in resources_dict:
-            for f in cast(DictionaryObject, resources_dict["/Font"]):
+        if "/Font" in resources_dict and (font := resources_dict["/Font"]):
+            for f in cast(DictionaryObject, font):
                 cmaps[f] = build_char_map(f, space_width, obj)
         cmap: Tuple[
             Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
@@ -1872,7 +1865,7 @@ class PageObject(DictionaryObject):
             )
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, pdf, "bytes")
-        except KeyError:  # no content can be extracted (certainly empty page)
+        except (AttributeError, KeyError):  # no content can be extracted (certainly empty page)
             return ""
         # We check all strings are TextStringObjects. ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
@@ -1918,7 +1911,8 @@ class PageObject(DictionaryObject):
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
-            elif operator == b"ET":
+                return
+            if operator == b"ET":
                 output += text
                 if visitor_text is not None:
                     visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
@@ -2016,8 +2010,7 @@ class PageObject(DictionaryObject):
                 # A special case is a translating only tm:
                 # tm = [1, 0, 0, 1, e, f]
                 # i.e. tm[4] += tx, tm[5] += ty.
-                tx = float(operands[0])
-                ty = float(operands[1])
+                tx, ty = float(operands[0]), float(operands[1])
                 tm_matrix[4] += tx * tm_matrix[0] + ty * tm_matrix[2]
                 tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
@@ -2027,7 +2020,10 @@ class PageObject(DictionaryObject):
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"T*":
-                tm_matrix[5] -= TL
+                tm_matrix[4] -= TL * tm_matrix[2]
+                tm_matrix[5] -= TL * tm_matrix[3]
+                str_widths = compute_str_widths(_actual_str_size["str_widths"])
+                _actual_str_size["str_widths"] = 0.0
             elif operator == b"Tj":
                 text, rtl_dir, _actual_str_size = self._handle_tj(
                     text,
@@ -2043,7 +2039,7 @@ class PageObject(DictionaryObject):
                     _actual_str_size,
                 )
             else:
-                return None
+                return
 
             if operator in ( b"Td", b"Tm", b"T*", b"Tj"):
                 try:
@@ -2065,7 +2061,7 @@ class PageObject(DictionaryObject):
                         memo_cm = cm_matrix.copy()
                         memo_tm = tm_matrix.copy()
                 except OrientationNotFoundError:
-                    return None
+                    return
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
@@ -2470,8 +2466,7 @@ class PageObject(DictionaryObject):
     def annotations(self) -> Optional[ArrayObject]:
         if "/Annots" not in self:
             return None
-        else:
-            return cast(ArrayObject, self["/Annots"])
+        return cast(ArrayObject, self["/Annots"])
 
     @annotations.setter
     def annotations(self, value: Optional[ArrayObject]) -> None:
@@ -2521,7 +2516,7 @@ class _VirtualList(Sequence[PageObject]):
         len_self = len(self)
         if index < 0:
             # support negative indexes
-            index = len_self + index
+            index += len_self
         if index < 0 or index >= len_self:
             raise IndexError("Sequence index out of range")
         return self.get_function(index)
@@ -2540,8 +2535,8 @@ class _VirtualList(Sequence[PageObject]):
         len_self = len(self)
         if index < 0:
             # support negative indexes
-            index = len_self + index
-        if index < 0 or index >= len_self:
+            index += len_self
+        if not (0 <= index < len_self):
             raise IndexError("Index out of range")
         ind = self[index].indirect_reference
         assert ind is not None

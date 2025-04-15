@@ -40,7 +40,7 @@ _pdfdoc_encoding_rev: Dict[str, int] = rev_encoding(_pdfdoc_encoding)
 
 
 charset_encoding: Dict[str, List[str]] = {
-    "/StandardCoding": _std_encoding,
+    "/StandardEncoding": _std_encoding,
     "/WinAnsiEncoding": _win_encoding,
     "/MacRomanEncoding": _mac_encoding,
     "/PDFDocEncoding": _pdfdoc_encoding,

@@ -22,7 +22,7 @@ class Link(AnnotationDictionary):
         target_page_index: Optional[int] = None,
         fit: Fit = DEFAULT_FIT,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         if TYPE_CHECKING:
             from ..types import BorderArrayType
@@ -84,7 +84,7 @@ class Popup(AnnotationDictionary):
         parent: Optional[DictionaryObject] = None,
         open: bool = False,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.update(
             {

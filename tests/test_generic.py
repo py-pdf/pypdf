@@ -1032,6 +1032,20 @@ def test_indirect_object_page_dimensions():
     assert mediabox == RectangleObject((0, 0, 792, 612))
 
 
+def test_indirect_object_contains():
+    writer = PdfWriter()
+    indirect_object = IndirectObject(1, 0, writer)
+    assert "foo" not in indirect_object
+    assert "/Producer" in indirect_object
+
+
+def test_indirect_object_iter():
+    writer = PdfWriter()
+    indirect_object = IndirectObject(1, 0, writer)
+    assert "foo" not in list(indirect_object)
+    assert "/Producer" in list(indirect_object)
+
+
 def test_array_operators():
     a = ArrayObject(
         [

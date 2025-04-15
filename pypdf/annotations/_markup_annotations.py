@@ -35,8 +35,7 @@ def _get_bounding_rectangle(vertices: List[Vertex]) -> RectangleObject:
         y_min = min(y_min, y)
         x_max = max(x_max, x)
         y_max = max(y_max, y)
-    rect = RectangleObject((x_min, y_min, x_max, y_max))
-    return rect
+    return RectangleObject((x_min, y_min, x_max, y_max))
 
 
 class MarkupAnnotation(AnnotationDictionary, ABC):
@@ -49,7 +48,7 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
 
     """
 
-    def __init__(self, *, title_bar: Optional[str] = None):
+    def __init__(self, *, title_bar: Optional[str] = None) -> None:
         if title_bar is not None:
             self[NameObject("/T")] = TextStringObject(title_bar)
 
@@ -75,7 +74,7 @@ class Text(MarkupAnnotation):
         open: bool = False,
         flags: int = NO_FLAGS,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self[NameObject("/Subtype")] = NameObject("/Text")
         self[NameObject("/Rect")] = RectangleObject(rect)
@@ -100,7 +99,7 @@ class FreeText(MarkupAnnotation):
         border_color: Optional[str] = "000000",
         background_color: Optional[str] = "ffffff",
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self[NameObject("/Subtype")] = NameObject("/FreeText")
         self[NameObject("/Rect")] = RectangleObject(rect)
@@ -156,7 +155,7 @@ class Line(MarkupAnnotation):
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         text: str = "",
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.update(
             {
@@ -193,7 +192,7 @@ class PolyLine(MarkupAnnotation):
         self,
         vertices: List[Vertex],
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         if len(vertices) == 0:
             raise ValueError("A polygon needs at least 1 vertex with two coordinates")
@@ -217,7 +216,7 @@ class Rectangle(MarkupAnnotation):
         *,
         interior_color: Optional[str] = None,
         **kwargs: Any,
-    ):
+    ) -> None:
         if "interiour_color" in kwargs:
             deprecation_with_replacement("interiour_color", "interior_color", "5.0.0")
             interior_color = kwargs["interiour_color"]
@@ -246,7 +245,7 @@ class Highlight(MarkupAnnotation):
         highlight_color: str = "ff0000",
         printing: bool = False,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.update(
             {
@@ -269,7 +268,7 @@ class Ellipse(MarkupAnnotation):
         *,
         interior_color: Optional[str] = None,
         **kwargs: Any,
-    ):
+    ) -> None:
         if "interiour_color" in kwargs:
             deprecation_with_replacement("interiour_color", "interior_color", "5.0.0")
             interior_color = kwargs["interiour_color"]
@@ -295,7 +294,7 @@ class Polygon(MarkupAnnotation):
         self,
         vertices: List[Tuple[float, float]],
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         if len(vertices) == 0:
             raise ValueError("A polygon needs at least 1 vertex with two coordinates")
