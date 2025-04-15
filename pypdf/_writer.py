@@ -2054,7 +2054,7 @@ class PdfWriter(PdfDocCommon):
             text_filters: Properties of text to be deleted, if applicable. Optional.
                 This is a Python dictionary with the following properties:
 
-                * font_ids: List of font IDs (such as /F1 or /T1_0) to be deleted.
+                * font_ids: List of font resource IDs (such as /F1 or /T1_0) to be deleted.
 
         """
         if isinstance(to_delete, (list, tuple)):
@@ -2119,8 +2119,9 @@ class PdfWriter(PdfDocCommon):
                     )
                 ):
                     if (
-                      not to_delete & ObjectDeletionFlag.TEXT
-                      or (not font_ids_to_delete or font_id in font_ids_to_delete)
+                        not to_delete & ObjectDeletionFlag.TEXT
+                        or (to_delete & ObjectDeletionFlag.TEXT and not text_filters)
+                        or (to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete)
                     ):
                         del content.operations[i]
                     else:
@@ -2246,16 +2247,49 @@ class PdfWriter(PdfDocCommon):
             font_names = []
 
         for page in self.pages:
-            font_ids = []
-            fonts = page.get("/Resources", {}).get("/Font", {})
-            for font_id, font_info in fonts.items():
-                font_name = font_info.get("/BaseFont", "").split("+")[-1]
-                if font_name in font_names:
-                    font_ids.append(font_id)
+            resource_ids_to_remove = []
 
-            text_filters = {
-                "font_ids": font_ids,
-            }
+            # Content streams reference fonts and other resources with names like "/F1" or "/T1_0"
+            # Font names need to be converted to resource names/IDs for easier removal
+            if font_names:
+                # Recursively loop through page objects to gather font info
+                def get_font_info(
+                    obj: Any,
+                    font_info: Optional[Dict[str, Any]] = None,
+                    key: Optional[str] = None
+                ) -> Dict[str, Any]:
+                    if font_info is None:
+                        font_info = {}
+                    if isinstance(obj, IndirectObject):
+                        obj = obj.get_object()
+                    if isinstance(obj, dict):
+                        if obj.get("/Type") == "/Font":
+                            font_name = obj.get("/BaseFont", "")
+                            # Normalize font names like "/RRXFFV+Palatino-Bold" to "Palatino-Bold"
+                            normalized_font_name = font_name.lstrip("/").split("+")[-1]
+                            if normalized_font_name not in font_info:
+                                font_info[normalized_font_name] = {
+                                    "normalized_font_name": normalized_font_name,
+                                    "resource_ids": [],
+                                }
+                            if key not in font_info[normalized_font_name]["resource_ids"]:
+                                font_info[normalized_font_name]["resource_ids"].append(key)
+                        for k in obj:
+                            font_info = get_font_info(obj[k], font_info, k)
+                    elif isinstance(obj, (list, ArrayObject)):
+                        for child_obj in obj:
+                            font_info = get_font_info(child_obj, font_info)
+                    return font_info
+
+                # Add relevant resource names for removal
+                font_info = get_font_info(page.get("/Resources"))
+                for font_name in font_names:
+                    if font_name in font_info:
+                        resource_ids_to_remove.extend(font_info[font_name]["resource_ids"])
+
+            text_filters = {}
+            if font_names:
+                text_filters["font_ids"] = resource_ids_to_remove
             self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT, text_filters=text_filters)
 
     def add_uri(
