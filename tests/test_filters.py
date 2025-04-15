@@ -5,6 +5,7 @@ import os
 import shutil
 import string
 import subprocess
+import sys
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
@@ -92,6 +93,20 @@ def test_brotli_missing_installation_mocked():
         decode_stream_data(stream)
     assert "Brotli library not installed" in str(exc_info_stream.value)
 
+def test_brotli_import_handling():
+    """Verify the try-except block for brotli import in pypdf.filters."""
+    # Simulate brotli import failure
+    if "brotli" in sys.modules:
+        del sys.modules["brotli"]
+    with patch.dict(sys.modules, {"brotli": None}):
+        import pypdf.filters
+        importlib.reload(pypdf.filters)  # Re-evaluate module-level try-except
+    assert pypdf.filters.brotli is None, "brotli should be None when import fails"
+
+    # Test successful import if brotli is installed
+    if importlib.util.find_spec("brotli"):
+        importlib.reload(pypdf.filters)  # Re-evaluate with brotli available
+        assert pypdf.filters.brotli is not None, "brotli should be imported when available"
 
 def test_flatedecode_unsupported_predictor():
     """
