@@ -2118,9 +2118,11 @@ class PdfWriter(PdfDocCommon):
                         and (operands[0] in images)
                     )
                 ):
-                    if to_delete & ObjectDeletionFlag.TEXT and not text_filters:
-                        del content.operations[i]
-                    elif to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete:
+                    if (
+                        not to_delete & ObjectDeletionFlag.TEXT
+                        or (to_delete & ObjectDeletionFlag.TEXT and not text_filters)
+                        or (to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete)
+                    ):
                         del content.operations[i]
                     else:
                         i += 1
@@ -2248,7 +2250,7 @@ class PdfWriter(PdfDocCommon):
             resource_ids_to_remove = []
 
             # Content streams reference fonts and other resources with names like "/F1" or "/T1_0"
-            # Font names need to be converted to resource names for easier removal
+            # Font names need to be converted to resource names/IDs for easier removal
             if font_names:
                 # Recursively loop through the page to gather font info
                 def get_font_info(
