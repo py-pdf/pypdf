@@ -1391,15 +1391,15 @@ def test_new_removes():
     writer.clone_document_from_reader(reader)
     b = BytesIO()
     writer.write(b)
-    reader = PdfReader(b)
-    text = reader.pages[0].extract_text()
+    temp_reader = PdfReader(b)
+    text = temp_reader.pages[0].extract_text()
     assert "Arbeitsschritt" in text
     assert "Modelltechnik" in text
     writer.remove_text(font_names=["LiberationSans-Bold"])
     b = BytesIO()
     writer.write(b)
-    reader = PdfReader(b)
-    text = reader.pages[0].extract_text()
+    temp_reader = PdfReader(b)
+    text = temp_reader.pages[0].extract_text()
     assert "Arbeitsschritt" not in text
     assert "Modelltechnik" in text
 
@@ -1408,15 +1408,15 @@ def test_new_removes():
     writer.clone_document_from_reader(reader)
     b = BytesIO()
     writer.write(b)
-    reader = PdfReader(b)
-    text = reader.pages[0].extract_text()
+    temp_reader = PdfReader(b)
+    text = temp_reader.pages[0].extract_text()
     assert "Arbeitsschritt" in text
     assert "Modelltechnik" in text
     writer.remove_text(font_names=["ComicSans-Oblique"])
     b = BytesIO()
     writer.write(b)
-    reader = PdfReader(b)
-    text = reader.pages[0].extract_text()
+    temp_reader = PdfReader(b)
+    text = temp_reader.pages[0].extract_text()
     assert "Arbeitsschritt" in text
     assert "Modelltechnik" in text
 
