@@ -66,6 +66,7 @@ def test_brotli_decode_encode(s):
     decoded = codec.decode(encoded)
     assert decoded == s_bytes
 
+
 @patch("pypdf.filters.brotli", None)
 def test_brotli_missing_installation_mocked():
     """Verify BrotliDecode raises ImportError if brotli is not installed."""
