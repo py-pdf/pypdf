@@ -45,9 +45,9 @@ PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
-
-
-@pytest.mark.parametrize(("predictor", "s"), list(cartesian_product([1], filter_inputs)))
+@pytest.mark.parametrize(
+    ("predictor", "s"), list(cartesian_product([1], filter_inputs))
+)
 def test_flate_decode_encode(predictor, s):
     """FlateDecode encode() and decode() methods work as expected."""
     codec = FlateDecode()
@@ -65,38 +65,32 @@ def test_brotli_decode_encode(s):
     assert encoded != s_bytes  # Ensure encoding actually happened
     decoded = codec.decode(encoded)
     assert decoded == s_bytes
+
 @patch("pypdf.filters.brotli", None)
 def test_brotli_missing_installation_mocked():
-    """Verify BrotliDecode raises ImportError if brotli is not installed (using sys.modules patch)."""
-    from unittest.mock import patch
+    """Verify BrotliDecode raises ImportError if brotli is not installed."""
+    # Import pypdf.filters *after* patching sys.modules
+    import pypdf.filters
+    from pypdf.generic import DictionaryObject, NameObject
 
-    with patch.dict("sys.modules", {"brotli": None}):
-        # Import pypdf.filters *after* patching sys.modules
-        import pypdf.filters
-        from pypdf.generic import DictionaryObject, NameObject
+    # Test direct decode call
+    codec = pypdf.filters.BrotliDecode()
+    with pytest.raises(ImportError) as exc_info_decode:
+        codec.decode(b"test data")
+    assert "Brotli library not installed" in str(exc_info_decode.value)
 
-        # Test direct decode call
-        codec = pypdf.filters.BrotliDecode()
-        with pytest.raises(ImportError) as exc_info_decode:
-            codec.decode(b"test data")
-        assert "Brotli library not installed" in str(exc_info_decode.value)
+    # Test direct encode call
+    with pytest.raises(ImportError) as exc_info_encode:
+        codec.encode(b"test data")
+    assert "Brotli library not installed" in str(exc_info_encode.value)
 
-        # Test direct encode call
-        with pytest.raises(ImportError) as exc_info_encode:
-            codec.encode(b"test data")
-        assert "Brotli library not installed" in str(exc_info_encode.value)
-
-        # Test call via decode_stream_data
-        stream = DictionaryObject()
-        stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
-        stream._data = b"dummy compressed data"
-        with pytest.raises(ImportError) as exc_info_stream:
-            pypdf.filters.decode_stream_data(stream)
-        assert "Brotli library not installed" in str(exc_info_stream.value)
-
-
-
-
+    # Test call via decode_stream_data
+    stream = DictionaryObject()
+    stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+    stream._data = b"dummy compressed data"
+    with pytest.raises(ImportError) as exc_info_stream:
+        pypdf.filters.decode_stream_data(stream)
+    assert "Brotli library not installed" in str(exc_info_stream.value)
 
 
 def test_flatedecode_unsupported_predictor():
@@ -731,7 +725,6 @@ def test_flate_decode__not_rectangular(caplog):
 
 
 
-
 def test_main_decode_brotli_installed():
     """Test the main decode function with Brotli filter using a real PDF."""
     if importlib.util.find_spec("brotli") is None:
@@ -744,10 +737,7 @@ def test_main_decode_brotli_installed():
     page = reader.pages[0]
 
     # Extract text - this will implicitly use the BrotliDecode filter
-    try:
-        extracted_text = page.extract_text()
-    except Exception as e:
-        pytest.fail(f"page.extract_text() failed with error: {e}")
+    extracted_text = page.extract_text()
 
     # Verify the expected text content
     assert extracted_text.strip() == "Hello, Brotli!"
