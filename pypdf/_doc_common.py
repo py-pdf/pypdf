@@ -978,13 +978,13 @@ class PdfDocCommon:
             title = ""
 
         if "/A" in node:
-            # Action, PDFv1.7 Section 12.6 (only type GoTo supported)
+            # Action, PDF 1.7 and PDF 2.0 §12.6 (only type GoTo supported)
             action = cast(DictionaryObject, node["/A"])
             action_type = cast(NameObject, action[GoToActionArguments.S])
             if action_type == "/GoTo":
                 dest = action[GoToActionArguments.D]
         elif "/Dest" in node:
-            # Destination, PDFv1.7 Section 12.3.2
+            # Destination, PDF 1.7 and PDF 2.0 §12.3.2
             dest = node["/Dest"]
             # if array was referenced in another object, will be a dict w/ key "/D"
             if isinstance(dest, DictionaryObject) and "/D" in dest:
@@ -994,7 +994,7 @@ class PdfDocCommon:
             outline_item = self._build_destination(title, dest)
         elif isinstance(dest, str):
             # named destination, addresses NameObject Issue #193
-            # TODO : keep named destination instead of replacing it ?
+            # TODO: keep named destination instead of replacing it ?
             try:
                 outline_item = self._build_destination(
                     title, self._named_destinations[dest].dest_array
@@ -1028,7 +1028,7 @@ class PdfDocCommon:
                 # absolute value = num. visible children
                 # with positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
-            #  if count is 0 we will consider it as open ( in order to have always an is_open to simplify
+            #  if count is 0 we will consider it as open (to have an always available an is_open)
             outline_item[NameObject("/%is_open%")] = BooleanObject(
                 node.get("/Count", 0) >= 0
             )
@@ -1428,8 +1428,8 @@ class PdfDocCommon:
 
 
 class LazyDict(Mapping[Any, Any]):
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        self._raw_dict = dict(*args, **kw)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self._raw_dict = dict(*args, **kwargs)
 
     def __getitem__(self, key: str) -> Any:
         func, arg = self._raw_dict.__getitem__(key)
