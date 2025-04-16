@@ -2041,7 +2041,7 @@ class PageObject(DictionaryObject):
             else:
                 return
 
-            if operator in ( b"Td", b"Tm", b"T*", b"Tj"):
+            if operator in {b"Td", b"Tm", b"T*", b"Tj"}:
                 try:
                     text, output, cm_prev, tm_prev = crlf_space_check(
                         text,
