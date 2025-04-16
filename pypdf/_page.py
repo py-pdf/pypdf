@@ -144,7 +144,7 @@ class Transformation:
     Represent a 2D transformation.
 
     The transformation between two coordinate systems is represented by a 3-by-3
-    transformation matrix matrix with the following form::
+    transformation matrix with the following form::
 
         a b 0
         c d 0
@@ -575,7 +575,7 @@ class PageObject(DictionaryObject):
         """
         page = PageObject(pdf)
 
-        # Creates a new page (cf PDF Reference  7.7.3.3)
+        # Creates a new page (cf PDF Reference §7.7.3.3)
         page.__setitem__(NameObject(PG.TYPE), NameObject("/Page"))
         page.__setitem__(NameObject(PG.PARENT), NullObject())
         page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
@@ -907,7 +907,7 @@ class PageObject(DictionaryObject):
             pdf = self.indirect_reference.pdf
             is_pdf_writer = hasattr(
                 pdf, "_add_object"
-            )  # ---------- expect isinstance(pdf,PdfWriter)
+            )  # expect isinstance(pdf, PdfWriter)
         except (AssertionError, AttributeError):
             pdf = None
             is_pdf_writer = False
@@ -927,7 +927,7 @@ class PageObject(DictionaryObject):
 
             """
             value = page2res.raw_get(base_key)
-            # TODO : possible improvement : in case of writer, the indirect_reference
+            # TODO: possible improvement : in case of writer, the indirect_reference
             # can not be found because translated : this may be improved
 
             # try the current key first (e.g. "foo"), but otherwise iterate
@@ -1097,7 +1097,7 @@ class PageObject(DictionaryObject):
             assert content is not None, "mypy"
             content.indirect_reference = self[
                 PG.CONTENTS
-            ].indirect_reference  # TODO: in a future may required generation management
+            ].indirect_reference  # TODO: in the future may require generation management
             try:
                 self.indirect_reference.pdf._objects[
                     content.indirect_reference.idnum - 1  # type: ignore
@@ -1147,7 +1147,7 @@ class PageObject(DictionaryObject):
             assert isinstance(self.indirect_reference, IndirectObject)
             if hasattr(
                 self.indirect_reference.pdf, "_add_object"
-            ):  # ---------- to detect PdfWriter
+            ):  # to detect PdfWriter
                 return self._merge_page_writer(
                     page2, page2transformation, ctm, over, expand
                 )
@@ -1683,7 +1683,7 @@ class PageObject(DictionaryObject):
         Read-only property which returns the page number within the PDF file.
 
         Returns:
-            int : page number; None if the page is not attached to a PDF.
+            int: page number; None if the page is not attached to a PDF.
 
         """
         if self.indirect_reference is None:
@@ -1837,7 +1837,7 @@ class PageObject(DictionaryObject):
         try:
             objr = obj
             while NameObject(PG.RESOURCES) not in objr:
-                # /Resources can be inherited sometimes so we look to parents
+                # /Resources can be inherited so we look to parents
                 objr = objr["/Parent"].get_object()
                 # If no parents then no /Resources will be available,
                 # so an exception will be raised
@@ -2421,7 +2421,7 @@ class PageObject(DictionaryObject):
         Get the names of embedded fonts and unembedded fonts.
 
         Returns:
-            A tuple (Set of embedded fonts, set of unembedded fonts)
+            A tuple (set of embedded fonts, set of unembedded fonts)
 
         """
         obj = self.get_object()
