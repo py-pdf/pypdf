@@ -994,7 +994,7 @@ class PdfDocCommon:
             outline_item = self._build_destination(title, dest)
         elif isinstance(dest, str):
             # named destination, addresses NameObject Issue #193
-            # TODO: keep named destination instead of replacing it ?
+            # TODO: Keep named destination instead of replacing it?
             try:
                 outline_item = self._build_destination(
                     title, self._named_destinations[dest].dest_array
