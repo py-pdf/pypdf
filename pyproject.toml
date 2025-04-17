@@ -42,9 +42,11 @@ Source = "https://github.com/py-pdf/pypdf"
 crypto = ["cryptography"]
 cryptodome = ["PyCryptodome"]
 image = ["Pillow>=8.0.0"]
+brotli = ["brotli"]
 full = [
     "cryptography",
-    "Pillow>=8.0.0"
+    "Pillow>=8.0.0",
+    "brotli",
 ]
 dev = [
     "black",
