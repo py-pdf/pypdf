@@ -2020,7 +2020,6 @@ class PageObject(DictionaryObject):
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"T*":
-                check_crlf_space = True
                 tm_matrix[4] -= TL * tm_matrix[2]
                 tm_matrix[5] -= TL * tm_matrix[3]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
