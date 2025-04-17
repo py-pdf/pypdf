@@ -927,8 +927,8 @@ class PageObject(DictionaryObject):
 
             """
             value = page2res.raw_get(base_key)
-            # TODO: possible improvement : in case of writer, the indirect_reference
-            # can not be found because translated : this may be improved
+            # TODO: a possible improvement for writer, the indirect_reference
+            # cannot be found because translated
 
             # try the current key first (e.g. "foo"), but otherwise iterate
             # through "foo-0", "foo-1", etc. new_res can contain only finitely
