@@ -1683,7 +1683,7 @@ class PageObject(DictionaryObject):
         Read-only property which returns the page number within the PDF file.
 
         Returns:
-            int: page number; None if the page is not attached to a PDF.
+            page number; None if the page is not attached to a PDF.
 
         """
         if self.indirect_reference is None:
