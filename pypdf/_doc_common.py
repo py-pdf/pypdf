@@ -1028,7 +1028,7 @@ class PdfDocCommon:
                 # absolute value = num. visible children
                 # with positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
-            #  if count is 0 we will consider it as open (to have an always available is_open)
+            #  if count is 0 we will consider it as open (to have available is_open)
             outline_item[NameObject("/%is_open%")] = BooleanObject(
                 node.get("/Count", 0) >= 0
             )
