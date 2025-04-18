@@ -274,8 +274,7 @@ class ASCIIHexDecode:
         Args:
           data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
-          decode_parms: a string conversion in base-7 ASCII, where each of its values
-            v is such that 0 <= ord(v) <= 127.
+          decode_parms: unused.
 
         Returns:
           A string conversion in base-7 ASCII, where each of its values
@@ -285,7 +284,6 @@ class ASCIIHexDecode:
           PdfStreamError:
 
         """
-        # decode_parms is unused here
 
         if isinstance(data, str):
             data = data.encode()
@@ -338,7 +336,7 @@ class RunLengthDecode:
 
         Args:
           data: a bytes sequence of length/data
-          decode_parms: ignored.
+          decode_parms: unused.
 
         Returns:
           A bytes decompressed sequence.
@@ -347,7 +345,6 @@ class RunLengthDecode:
           PdfStreamError:
 
         """
-        # decode_parms is unused here
 
         lst = []
         index = 0
@@ -441,7 +438,7 @@ class ASCII85Decode:
 
         Args:
           data: ``bytes`` or ``str`` text to decode.
-          decode_parms: a dictionary of parameter values.
+          decode_parms: unused.
 
         Returns:
           decoded data.
