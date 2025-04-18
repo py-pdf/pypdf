@@ -246,6 +246,30 @@ def test_ccitt_fax_decode():
     )
 
 
+def test_ccitt_fax_decode_and_ccf():
+    data = RESOURCE_ROOT.joinpath("imagemagick-CCITTFaxDecode.pdf").read_bytes()
+    reader = PdfReader(BytesIO(data))
+    image1 = reader.pages[0].images[0].data
+
+    data = data.replace(b"/CCITTFaxDecode", b"/CCF")
+    reader = PdfReader(BytesIO(data))
+    image2 = reader.pages[0].images[0].data
+
+    assert image1 == image2
+
+
+def test_dct_decode_and_dct():
+    data = RESOURCE_ROOT.joinpath("jpeg.pdf").read_bytes()
+    reader = PdfReader(BytesIO(data))
+    image1 = reader.pages[0].images[0].data
+
+    data = data.replace(b"/DCTDecode", b"/DCT")
+    reader = PdfReader(BytesIO(data))
+    image2 = reader.pages[0].images[0].data
+
+    assert image1 == image2
+
+
 @pytest.mark.enable_socket
 def test_decompress_zlib_error(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="tika-952445.pdf")))
