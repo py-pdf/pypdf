@@ -284,7 +284,6 @@ class ASCIIHexDecode:
           PdfStreamError:
 
         """
-
         if isinstance(data, str):
             data = data.encode()
         retval = b""
@@ -345,7 +344,6 @@ class RunLengthDecode:
           PdfStreamError:
 
         """
-
         lst = []
         index = 0
         while True:
