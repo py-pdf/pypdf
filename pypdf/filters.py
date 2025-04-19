@@ -274,7 +274,7 @@ class ASCIIHexDecode:
         Args:
           data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
-          decode_parms: unused.
+          decode_parms: unused, this filter does not use parameters.
 
         Returns:
           A string conversion in base-7 ASCII, where each of its values
@@ -335,7 +335,7 @@ class RunLengthDecode:
 
         Args:
           data: a bytes sequence of length/data
-          decode_parms: unused.
+          decode_parms: unused, this filter does not use parameters.
 
         Returns:
           A bytes decompressed sequence.
@@ -436,7 +436,7 @@ class ASCII85Decode:
 
         Args:
           data: ``bytes`` or ``str`` text to decode.
-          decode_parms: unused.
+          decode_parms: unused, this filter does not use parameters.
 
         Returns:
           decoded data.
@@ -461,7 +461,7 @@ class DCTDecode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        # TODO: Implement this function
         return data
 
 
@@ -472,7 +472,7 @@ class JPXDecode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        # decode_parms: unused, this filter does not use parameters
         return data
 
 
