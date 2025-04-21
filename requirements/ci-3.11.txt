@@ -75,3 +75,5 @@ typing-extensions==4.12.2
     # via
     #   mypy
     #   typeguard
+brotli==1.1.0
+    # via -r requirements/ci.in

@@ -4,3 +4,4 @@ pre-commit
 pytest-cov
 flit
 wheel
+brotli
