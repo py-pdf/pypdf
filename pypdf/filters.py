@@ -461,7 +461,7 @@ class DCTDecode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-      """
+        """
         Decompresses data encoded using a DCT (discrete cosine transform)
         technique based on the JPEG standard (IS0/IEC 10918),
         reproducing image sample data that approximates the original data.
@@ -485,7 +485,7 @@ class JPXDecode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-  """
+        """
         Decompresses data encoded using the wavelet-based JPEG 2000 standard,
         reproducing the original image data.
 
