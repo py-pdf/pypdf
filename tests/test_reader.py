@@ -1243,7 +1243,7 @@ def test_outline_with_missing_named_destination():
 
 @pytest.mark.enable_socket
 def test_byte_encoded_named_destinations():
-    """issue #3259"""
+    """Issue #3259."""
     url = "https://github.com/user-attachments/files/19820164/pypdf_issue.pdf"
     name = "pypdf_issue.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
@@ -1255,14 +1255,12 @@ def test_byte_encoded_named_destinations():
                 if action["/S"] == "/GoTo":
                     named_dest = action["/D"]
                     assert named_dest in reader.named_destinations
-                    
                     # additional check that both encoding work
-                    if isinstance(named_dest, bytes): 
+                    if isinstance(named_dest, bytes):
                         try:
-                            decoded_dest = named_dest.decode('utf-8', errors='replace')
+                            decoded_dest = named_dest.decode("utf-8", errors="replace")
                         except UnicodeDecodeError:
-                            decoded_dest = named_dest.decode('latin-1')
-                        
+                            decoded_dest = named_dest.decode("latin-1")
                         # check that decoded version is accessible
                         assert decoded_dest in reader.named_destinations
 

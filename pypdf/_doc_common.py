@@ -501,8 +501,8 @@ class PdfDocCommon:
                 if isinstance(key, bytes):
                     try:
                         key = key.decode("utf-8", errors="replace")
-                    except UnicodeDecodeError:
-                        key = key.decode("latin-1")
+                    except UnicodeDecodeError: # pragma: no cover
+                        key = key.decode("latin-1") # pragma: no cover
                 elif not isinstance(key, str):
                     continue
                 try:
