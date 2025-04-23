@@ -1247,7 +1247,7 @@ def test_byte_encoded_named_destinations():
     url = "https://github.com/user-attachments/files/19820164/pypdf_issue.pdf"
     name = "pypdf_issue.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
-    
+
     for page in reader.pages:
         for annotation in page.annotations:
             if annotation.get("/Subtype") == "/Link":
