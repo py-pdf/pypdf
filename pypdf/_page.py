@@ -508,7 +508,6 @@ class PageObject(DictionaryObject):
         DictionaryObject.__init__(self)
         self.pdf = pdf
         self.inline_images: Optional[Dict[str, ImageFile]] = None
-        # below Union for mypy but actually Optional[List[str]]
         self.indirect_reference = indirect_reference
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
@@ -1116,11 +1115,11 @@ class PageObject(DictionaryObject):
         """
         Merge the content streams of two pages into one.
 
-        Resource references
-        (i.e. fonts) are maintained from both pages. The mediabox/cropbox/etc
-        of this page are not altered. The parameter page's content stream will
-        be added to the end of this page's content stream, meaning that it will
-        be drawn after, or "on top" of this page.
+        Resource references (e.g. fonts) are maintained from both pages.
+        The mediabox, cropbox, etc of this page are not altered.
+        The parameter page's content stream will
+        be added to the end of this page's content stream,
+        meaning that it will be drawn after, or "on top" of this page.
 
         Args:
             page2: The page to be merged into this one. Should be
@@ -1569,19 +1568,16 @@ class PageObject(DictionaryObject):
                 for i in range(0, 8, 2)
             ]
 
-            lowerleft = (min(new_x), min(new_y))
-            upperright = (max(new_x), max(new_y))
-
-            self.mediabox.lower_left = lowerleft
-            self.mediabox.upper_right = upperright
+            self.mediabox.lower_left = (min(new_x), min(new_y))
+            self.mediabox.upper_right = (max(new_x), max(new_y))
 
     def scale(self, sx: float, sy: float) -> None:
         """
         Scale a page by the given factors by applying a transformation matrix
         to its content and updating the page size.
 
-        This updates the mediabox, the cropbox, and the contents
-        of the page.
+        This updates the various page boundaries (mediabox, cropbox, etc)
+        and the contents of the page.
 
         Args:
             sx: The scaling factor on horizontal axis.
@@ -1589,11 +1585,11 @@ class PageObject(DictionaryObject):
 
         """
         self.add_transformation((sx, 0, 0, sy, 0, 0))
+        self.mediabox = self.mediabox.scale(sx, sy)
         self.cropbox = self.cropbox.scale(sx, sy)
-        self.artbox = self.artbox.scale(sx, sy)
         self.bleedbox = self.bleedbox.scale(sx, sy)
         self.trimbox = self.trimbox.scale(sx, sy)
-        self.mediabox = self.mediabox.scale(sx, sy)
+        self.artbox = self.artbox.scale(sx, sy)
 
         if PG.ANNOTS in self:
             annotations = self[PG.ANNOTS]
