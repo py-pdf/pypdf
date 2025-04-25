@@ -706,7 +706,7 @@ class PageObject(DictionaryObject):
         """
         return VirtualListImages(self._get_ids_image, self._get_image)
 
-    def _translate_value_inlineimage(self, k: str, v: PdfObject) -> PdfObject:
+    def _translate_value_inline_image(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""
         try:
             v = NameObject(
@@ -761,7 +761,7 @@ class PageObject(DictionaryObject):
             elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
                     f"{ope!r} operator met whereas not expected, "
-                    "please share usecase with pypdf dev team"
+                    "please share use case with pypdf dev team"
                 )
             """backup
             elif ope == b"BI":
@@ -790,10 +790,10 @@ class PageObject(DictionaryObject):
                     continue
                 if isinstance(v, list):
                     v = ArrayObject(
-                        [self._translate_value_inlineimage(k, x) for x in v]
+                        [self._translate_value_inline_image(k, x) for x in v]
                     )
                 else:
-                    v = self._translate_value_inlineimage(k, v)
+                    v = self._translate_value_inline_image(k, v)
                 k = NameObject(
                     {
                         "/BPC": "/BitsPerComponent",
