@@ -147,7 +147,7 @@ def recurs_to_target_op(
                 if _text:
                     bt_groups.append(bt_group(tj_ops[bt_idx], _text, last_displaced_tx))
                 text_state_mgr.reset_tm()
-            return bt_groups, tj_ops
+            break
         if op == b"q":
             bts, tjs = recurs_to_target_op(
                 ops, text_state_mgr, b"Q", fonts, strip_rotated
