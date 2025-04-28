@@ -1576,7 +1576,7 @@ class PageObject(DictionaryObject):
         Scale a page by the given factors by applying a transformation matrix
         to its content and updating the page size.
 
-        This updates the various page boundaries (mediabox, cropbox, etc)
+        This updates the various page boundaries (mediabox, cropbox, etc.)
         and the contents of the page.
 
         Args:
