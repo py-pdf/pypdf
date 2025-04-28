@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745607970114,
+  "lastUpdate": 1745846873508,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -74585,6 +74585,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0024412182231876526",
             "extra": "mean: 750.62182879999 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "537dd182773f2201f320f74c153f4c86a947c492",
+          "message": "MAINT: Add structure destination to GoToActionArguments (#3264)\n\nAlso sort some other constants to be the same as their order in tables in the specification.",
+          "timestamp": "2025-04-28T15:25:24+02:00",
+          "tree_id": "65a3227673225ce52e4afd9f5a0a02477bd8184f",
+          "url": "https://github.com/py-pdf/pypdf/commit/537dd182773f2201f320f74c153f4c86a947c492"
+        },
+        "date": 1745846870145,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.504039558420144,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008466154398862977",
+            "extra": "mean: 285.3849059999959 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.241851773915162,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007545559919317262",
+            "extra": "mean: 65.60882593750162 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27688489493567314,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021586262796220085",
+            "extra": "mean: 3.611609077600002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.238679796029857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007053688246931574",
+            "extra": "mean: 58.00908258823303 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08238035742319315,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08843039532920413",
+            "extra": "mean: 12.138815990599994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.331213924328971,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002495038287471164",
+            "extra": "mean: 751.1940655999922 msec\nrounds: 5"
           }
         ]
       }
