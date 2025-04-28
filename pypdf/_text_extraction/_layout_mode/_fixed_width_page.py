@@ -90,11 +90,7 @@ def recurs_to_target_op(
         # add new q level. cm's added at this level will be popped at next b'Q'
         text_state_mgr.add_q()
 
-    while True:
-        try:
-            operands, op = next(ops)
-        except StopIteration:
-            return bt_groups, tj_ops
+    for operands, op in ops:
         if op == end_target:
             if op == b"Q":
                 text_state_mgr.remove_q()
@@ -199,6 +195,8 @@ def recurs_to_target_op(
             text_state_mgr.set_font(fonts[operands[0]], operands[1])
         else:  # handle Tc, Tw, Tz, TL, and Ts operators
             text_state_mgr.set_state_param(op, operands)
+
+    return bt_groups, tj_ops
 
 
 def y_coordinate_groups(
