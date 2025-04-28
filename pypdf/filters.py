@@ -474,7 +474,6 @@ class DCTDecode:
           decoded data.
 
         """
-        # TODO: Implement this function
         return data
 
 
