@@ -270,42 +270,38 @@ def text_show_operations(
     debug = bool(debug_path)
     bt_groups: List[BTGroup] = []  # BT operator dict
     tj_debug: List[TextStateParams] = []  # Tj/TJ operator data (debug only)
-    try:
-        warned_rotation = False
-        warned_uninterpretable_font = False
-        while True:
-            operands, op = next(ops)
-            if op in (b"BT", b"q"):
-                bts, tjs = recurs_to_target_op(
-                    ops, state_mgr, b"ET" if op == b"BT" else b"Q", fonts, strip_rotated
-                )
-                if not warned_rotation and any(tj.rotated for tj in tjs):
-                    warned_rotation = True
-                    if strip_rotated:
-                        logger_warning(
-                            "Rotated text discovered. Output will be incomplete.",
-                            __name__,
-                        )
-                    else:
-                        logger_warning(
-                            "Rotated text discovered. Layout will be degraded.",
-                            __name__,
-                        )
-                if not warned_uninterpretable_font and any(not tj.font.interpretable for tj in tjs):
-                    warned_uninterpretable_font = True
+    warned_rotation = False
+    warned_uninterpretable_font = False
+    for operands, op in ops:
+        if op in (b"BT", b"q"):
+            bts, tjs = recurs_to_target_op(
+                ops, state_mgr, b"ET" if op == b"BT" else b"Q", fonts, strip_rotated
+            )
+            if not warned_rotation and any(tj.rotated for tj in tjs):
+                warned_rotation = True
+                if strip_rotated:
                     logger_warning(
-                        "PDF contains an uninterpretable font. Output will be incomplete.",
+                        "Rotated text discovered. Output will be incomplete.",
                         __name__,
                     )
-                bt_groups.extend(bts)
-                if debug:  # pragma: no cover
-                    tj_debug.extend(tjs)
-            elif op == b"Tf":
-                state_mgr.set_font(fonts[operands[0]], operands[1])
-            else:  # set Tc, Tw, Tz, TL, and Ts if required. ignores all other ops
-                state_mgr.set_state_param(op, operands)
-    except StopIteration:
-        pass
+                else:
+                    logger_warning(
+                        "Rotated text discovered. Layout will be degraded.",
+                        __name__,
+                    )
+            if not warned_uninterpretable_font and any(not tj.font.interpretable for tj in tjs):
+                warned_uninterpretable_font = True
+                logger_warning(
+                    "PDF contains an uninterpretable font. Output will be incomplete.",
+                    __name__,
+                )
+            bt_groups.extend(bts)
+            if debug:  # pragma: no cover
+                tj_debug.extend(tjs)
+        elif op == b"Tf":
+            state_mgr.set_font(fonts[operands[0]], operands[1])
+        else:  # set Tc, Tw, Tz, TL, and Ts if required. ignores all other ops
+            state_mgr.set_state_param(op, operands)
 
     # left align the data, i.e. decrement all tx values by min(tx)
     min_x = min((x["tx"] for x in bt_groups), default=0.0)
