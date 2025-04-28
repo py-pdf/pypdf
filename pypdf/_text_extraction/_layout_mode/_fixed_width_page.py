@@ -90,7 +90,8 @@ def recurs_to_target_op(
         # add new q level. cm's added at this level will be popped at next b'Q'
         text_state_mgr.add_q()
 
-    for operands, op in ops:
+    for operands, op in ops:  # pragma: no branch
+        # The loop is broken by the end target, or exits normally when there are no more ops.
         if op == end_target:
             if op == b"Q":
                 text_state_mgr.remove_q()
