@@ -90,7 +90,7 @@ def recurs_to_target_op(
         # add new q level. cm's added at this level will be popped at next b'Q'
         text_state_mgr.add_q()
 
-    for operands, op in ops:  # pragma: no branch
+    for operands, op in ops:
         # The loop is broken by the end target, or exits normally when there are no more ops.
         if op == end_target:
             if op == b"Q":
@@ -196,7 +196,11 @@ def recurs_to_target_op(
             text_state_mgr.set_font(fonts[operands[0]], operands[1])
         else:  # handle Tc, Tw, Tz, TL, and Ts operators
             text_state_mgr.set_state_param(op, operands)
-
+    else:
+        logger_warning(
+            f"Unbalanced target operations, expected {end_target!r}.",
+            __name__,
+        )
     return bt_groups, tj_ops
 
 
