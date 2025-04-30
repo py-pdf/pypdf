@@ -3,6 +3,8 @@ Testing the text-extraction submodule and ensuring the quality of text extractio
 
 The tested code might be in _page.py.
 """
+
+import re
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -11,7 +13,9 @@ import pytest
 
 from pypdf import PdfReader, mult
 from pypdf._text_extraction import set_custom_rtl
-from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
+from pypdf._text_extraction._layout_mode._fixed_width_page import (
+    text_show_operations,
+)
 from pypdf.errors import ParseError, PdfReadError
 
 from . import get_data_from_url
@@ -383,3 +387,20 @@ def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
     text_show_operations(ops=iter([([], op)]), fonts={})
     assert caplog.records
     assert caplog.records[-1].msg == msg
+
+
+@pytest.mark.enable_socket
+def test_rotated_layout_mode(caplog):
+    """Ensures text extraction of rotated pages."""
+    # Get the PDF from issue #3270
+    url = "https://github.com/user-attachments/files/19981120/rotated-page.pdf"
+    name = "rotated-page.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+
+    page.transfer_rotation_to_content()
+    text = page.extract_text(extraction_mode="layout")
+
+    assert not caplog.records, "No warnings should be issued"
+    assert text, "Text matching the page rotation should be extracted"
+    assert re.search(r"\r?\n +69\r?\n +UNCLASSIFIED$", text), "Contents should be expected layout"
