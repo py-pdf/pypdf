@@ -1502,13 +1502,12 @@ class PdfWriter(PdfDocCommon):
 
     def _write_pdf_structure(self, stream: StreamType) -> Tuple[List[int], List[int]]:
         object_positions = []
-        free_objects = []  # will contain list of all free entries
+        free_objects = []
         stream.write(self.pdf_header.encode() + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
 
-        for i, obj in enumerate(self._objects):
+        for idnum, obj in enumerate(self._objects, start=1):
             if obj is not None:
-                idnum = i + 1
                 object_positions.append(stream.tell())
                 stream.write(f"{idnum} 0 obj\n".encode())
                 if self._encryption and obj != self._encrypt_entry:
@@ -1517,8 +1516,8 @@ class PdfWriter(PdfDocCommon):
                 stream.write(b"\nendobj\n")
             else:
                 object_positions.append(-1)
-                free_objects.append(i + 1)
-        free_objects.append(0)  # add 0 to loop in accordance with PDF spec
+                free_objects.append(idnum)
+        free_objects.append(0)  # add 0 to loop in accordance with specification
         return object_positions, free_objects
 
     def _write_xref_table(
@@ -1760,7 +1759,7 @@ class PdfWriter(PdfDocCommon):
 
     def get_outline_root(self) -> TreeObject:
         if CO.OUTLINES in self._root_object:
-            # Table 3.25 Entries in the catalog dictionary
+            # Entries in the catalog dictionary
             outline = cast(TreeObject, self._root_object[CO.OUTLINES])
             if not isinstance(outline, TreeObject):
                 t = TreeObject(outline)
@@ -1784,12 +1783,12 @@ class PdfWriter(PdfDocCommon):
         See §12.4.3 of the PDF 1.7 or PDF 2.0 specification.
 
         Returns:
-            An array (possibly empty) of Dictionaries with ``/F`` and
-            ``/I`` properties.
+            An array (possibly empty) of Dictionaries with an ``/F`` key,
+            and optionally information about the thread in ``/I`` or ``/Metadata`` keys.
 
         """
         if CO.THREADS in self._root_object:
-            # Table 3.25 Entries in the catalog dictionary
+            # Entries in the catalog dictionary
             threads = cast(ArrayObject, self._root_object[CO.THREADS])
         else:
             threads = ArrayObject()
@@ -1801,9 +1800,10 @@ class PdfWriter(PdfDocCommon):
         """
         Read-only property for the list of threads.
 
-        See §8.3.2 from PDF 1.7 spec.
+        See §12.4.3 of the PDF 1.7 or PDF 2.0 specification.
 
-        Each element is a dictionary with ``/F`` and ``/I`` keys.
+        Each element is a dictionary with an ``/F`` key, and optionally
+        information about the thread in ``/I`` or ``/Metadata`` keys.
         """
         return self.get_threads_root()
 
@@ -2054,7 +2054,7 @@ class PdfWriter(PdfDocCommon):
             text_filters: Properties of text to be deleted, if applicable. Optional.
                 This is a Python dictionary with the following properties:
 
-                * font_ids: List of font IDs (such as /F1 or /T1_0) to be deleted.
+                * font_ids: List of font resource IDs (such as /F1 or /T1_0) to be deleted.
 
         """
         if isinstance(to_delete, (list, tuple)):
@@ -2119,8 +2119,9 @@ class PdfWriter(PdfDocCommon):
                     )
                 ):
                     if (
-                      not to_delete & ObjectDeletionFlag.TEXT
-                      or (not font_ids_to_delete or font_id in font_ids_to_delete)
+                        not to_delete & ObjectDeletionFlag.TEXT
+                        or (to_delete & ObjectDeletionFlag.TEXT and not text_filters)
+                        or (to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete)
                     ):
                         del content.operations[i]
                     else:
@@ -2246,16 +2247,49 @@ class PdfWriter(PdfDocCommon):
             font_names = []
 
         for page in self.pages:
-            font_ids = []
-            fonts = page.get("/Resources", {}).get("/Font", {})
-            for font_id, font_info in fonts.items():
-                font_name = font_info.get("/BaseFont", "").split("+")[-1]
-                if font_name in font_names:
-                    font_ids.append(font_id)
+            resource_ids_to_remove = []
 
-            text_filters = {
-                "font_ids": font_ids,
-            }
+            # Content streams reference fonts and other resources with names like "/F1" or "/T1_0"
+            # Font names need to be converted to resource names/IDs for easier removal
+            if font_names:
+                # Recursively loop through page objects to gather font info
+                def get_font_info(
+                    obj: Any,
+                    font_info: Optional[Dict[str, Any]] = None,
+                    key: Optional[str] = None
+                ) -> Dict[str, Any]:
+                    if font_info is None:
+                        font_info = {}
+                    if isinstance(obj, IndirectObject):
+                        obj = obj.get_object()
+                    if isinstance(obj, dict):
+                        if obj.get("/Type") == "/Font":
+                            font_name = obj.get("/BaseFont", "")
+                            # Normalize font names like "/RRXFFV+Palatino-Bold" to "Palatino-Bold"
+                            normalized_font_name = font_name.lstrip("/").split("+")[-1]
+                            if normalized_font_name not in font_info:
+                                font_info[normalized_font_name] = {
+                                    "normalized_font_name": normalized_font_name,
+                                    "resource_ids": [],
+                                }
+                            if key not in font_info[normalized_font_name]["resource_ids"]:
+                                font_info[normalized_font_name]["resource_ids"].append(key)
+                        for k in obj:
+                            font_info = get_font_info(obj[k], font_info, k)
+                    elif isinstance(obj, (list, ArrayObject)):
+                        for child_obj in obj:
+                            font_info = get_font_info(child_obj, font_info)
+                    return font_info
+
+                # Add relevant resource names for removal
+                font_info = get_font_info(page.get("/Resources"))
+                for font_name in font_names:
+                    if font_name in font_info:
+                        resource_ids_to_remove.extend(font_info[font_name]["resource_ids"])
+
+            text_filters = {}
+            if font_names:
+                text_filters["font_ids"] = resource_ids_to_remove
             self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT, text_filters=text_filters)
 
     def add_uri(

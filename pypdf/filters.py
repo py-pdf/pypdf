@@ -274,8 +274,7 @@ class ASCIIHexDecode:
         Args:
           data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
-          decode_parms: a string conversion in base-7 ASCII, where each of its values
-            v is such that 0 <= ord(v) <= 127.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           A string conversion in base-7 ASCII, where each of its values
@@ -285,8 +284,6 @@ class ASCIIHexDecode:
           PdfStreamError:
 
         """
-        # decode_parms is unused here
-
         if isinstance(data, str):
             data = data.encode()
         retval = b""
@@ -338,7 +335,7 @@ class RunLengthDecode:
 
         Args:
           data: a bytes sequence of length/data
-          decode_parms: ignored.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           A bytes decompressed sequence.
@@ -347,8 +344,6 @@ class RunLengthDecode:
           PdfStreamError:
 
         """
-        # decode_parms is unused here
-
         lst = []
         index = 0
         while True:
@@ -441,7 +436,7 @@ class ASCII85Decode:
 
         Args:
           data: ``bytes`` or ``str`` text to decode.
-          decode_parms: a dictionary of parameter values.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           decoded data.
@@ -466,7 +461,19 @@ class DCTDecode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        """
+        Decompresses data encoded using a DCT (discrete cosine transform)
+        technique based on the JPEG standard (IS0/IEC 10918),
+        reproducing image sample data that approximates the original data.
+
+        Args:
+          data: text to decode.
+          decode_parms: this filter does not use parameters.
+
+        Returns:
+          decoded data.
+
+        """
         return data
 
 
@@ -477,7 +484,19 @@ class JPXDecode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        """
+        Decompresses data encoded using the wavelet-based JPEG 2000 standard,
+        reproducing the original image data.
+
+        Args:
+          data: text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
+
+        """
+        # decode_parms: this filter does not use parameters
         return data
 
 

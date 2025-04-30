@@ -11,6 +11,7 @@ import pytest
 
 from pypdf import PdfReader, mult
 from pypdf._text_extraction import set_custom_rtl
+from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
 from pypdf.errors import ParseError, PdfReadError
 
 from . import get_data_from_url
@@ -368,3 +369,17 @@ def test_rotated_line_wrap():
     expected = get_data_from_url(txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
 
     assert expected == reader.pages[0].extract_text()
+
+
+@pytest.mark.parametrize(
+        ("op", "msg"),
+        [
+            (b"BT", "Unbalanced target operations, expected b'ET'."),
+            (b"q", "Unbalanced target operations, expected b'Q'."),
+        ],
+)
+def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
+    """Ensures that imbalanced q/Q or EB/ET is handled gracefully."""
+    text_show_operations(ops=iter([([], op)]), fonts={})
+    assert caplog.records
+    assert caplog.records[-1].msg == msg

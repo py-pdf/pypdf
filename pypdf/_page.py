@@ -144,7 +144,7 @@ class Transformation:
     Represent a 2D transformation.
 
     The transformation between two coordinate systems is represented by a 3-by-3
-    transformation matrix matrix with the following form::
+    transformation matrix with the following form::
 
         a b 0
         c d 0
@@ -467,7 +467,7 @@ class VirtualListImages(Sequence[ImageFile]):
         len_self = len(lst)
         if index < 0:
             # support negative indexes
-            index = len_self + index
+            index += len_self
         if index < 0 or index >= len_self:
             raise IndexError("Sequence index out of range")
         return self.get_function(lst[index])
@@ -508,7 +508,6 @@ class PageObject(DictionaryObject):
         DictionaryObject.__init__(self)
         self.pdf = pdf
         self.inline_images: Optional[Dict[str, ImageFile]] = None
-        # below Union for mypy but actually Optional[List[str]]
         self.indirect_reference = indirect_reference
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
@@ -575,7 +574,7 @@ class PageObject(DictionaryObject):
         """
         page = PageObject(pdf)
 
-        # Creates a new page (cf PDF Reference  7.7.3.3)
+        # Creates a new page (cf PDF Reference §7.7.3.3)
         page.__setitem__(NameObject(PG.TYPE), NameObject("/Page"))
         page.__setitem__(NameObject(PG.PARENT), NullObject())
         page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
@@ -706,7 +705,7 @@ class PageObject(DictionaryObject):
         """
         return VirtualListImages(self._get_ids_image, self._get_image)
 
-    def _translate_value_inlineimage(self, k: str, v: PdfObject) -> PdfObject:
+    def _translate_value_inline_image(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""
         try:
             v = NameObject(
@@ -761,7 +760,7 @@ class PageObject(DictionaryObject):
             elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
                     f"{ope!r} operator met whereas not expected, "
-                    "please share usecase with pypdf dev team"
+                    "please share use case with pypdf dev team"
                 )
             """backup
             elif ope == b"BI":
@@ -790,10 +789,10 @@ class PageObject(DictionaryObject):
                     continue
                 if isinstance(v, list):
                     v = ArrayObject(
-                        [self._translate_value_inlineimage(k, x) for x in v]
+                        [self._translate_value_inline_image(k, x) for x in v]
                     )
                 else:
-                    v = self._translate_value_inlineimage(k, v)
+                    v = self._translate_value_inline_image(k, v)
                 k = NameObject(
                     {
                         "/BPC": "/BitsPerComponent",
@@ -907,7 +906,7 @@ class PageObject(DictionaryObject):
             pdf = self.indirect_reference.pdf
             is_pdf_writer = hasattr(
                 pdf, "_add_object"
-            )  # ---------- expect isinstance(pdf,PdfWriter)
+            )  # expect isinstance(pdf, PdfWriter)
         except (AssertionError, AttributeError):
             pdf = None
             is_pdf_writer = False
@@ -927,8 +926,8 @@ class PageObject(DictionaryObject):
 
             """
             value = page2res.raw_get(base_key)
-            # TODO : possible improvement : in case of writer, the indirect_reference
-            # can not be found because translated : this may be improved
+            # TODO: a possible improvement for writer, the indirect_reference
+            # cannot be found because translated
 
             # try the current key first (e.g. "foo"), but otherwise iterate
             # through "foo-0", "foo-1", etc. new_res can contain only finitely
@@ -1097,7 +1096,7 @@ class PageObject(DictionaryObject):
             assert content is not None, "mypy"
             content.indirect_reference = self[
                 PG.CONTENTS
-            ].indirect_reference  # TODO: in a future may required generation management
+            ].indirect_reference  # TODO: in the future may require generation management
             try:
                 self.indirect_reference.pdf._objects[
                     content.indirect_reference.idnum - 1  # type: ignore
@@ -1116,11 +1115,11 @@ class PageObject(DictionaryObject):
         """
         Merge the content streams of two pages into one.
 
-        Resource references
-        (i.e. fonts) are maintained from both pages. The mediabox/cropbox/etc
-        of this page are not altered. The parameter page's content stream will
-        be added to the end of this page's content stream, meaning that it will
-        be drawn after, or "on top" of this page.
+        Resource references (e.g. fonts) are maintained from both pages.
+        The mediabox, cropbox, etc of this page are not altered.
+        The parameter page's content stream will
+        be added to the end of this page's content stream,
+        meaning that it will be drawn after, or "on top" of this page.
 
         Args:
             page2: The page to be merged into this one. Should be
@@ -1147,7 +1146,7 @@ class PageObject(DictionaryObject):
             assert isinstance(self.indirect_reference, IndirectObject)
             if hasattr(
                 self.indirect_reference.pdf, "_add_object"
-            ):  # ---------- to detect PdfWriter
+            ):  # to detect PdfWriter
                 return self._merge_page_writer(
                     page2, page2transformation, ctm, over, expand
                 )
@@ -1569,19 +1568,16 @@ class PageObject(DictionaryObject):
                 for i in range(0, 8, 2)
             ]
 
-            lowerleft = (min(new_x), min(new_y))
-            upperright = (max(new_x), max(new_y))
-
-            self.mediabox.lower_left = lowerleft
-            self.mediabox.upper_right = upperright
+            self.mediabox.lower_left = (min(new_x), min(new_y))
+            self.mediabox.upper_right = (max(new_x), max(new_y))
 
     def scale(self, sx: float, sy: float) -> None:
         """
         Scale a page by the given factors by applying a transformation matrix
         to its content and updating the page size.
 
-        This updates the mediabox, the cropbox, and the contents
-        of the page.
+        This updates the various page boundaries (mediabox, cropbox, etc.)
+        and the contents of the page.
 
         Args:
             sx: The scaling factor on horizontal axis.
@@ -1589,11 +1585,11 @@ class PageObject(DictionaryObject):
 
         """
         self.add_transformation((sx, 0, 0, sy, 0, 0))
+        self.mediabox = self.mediabox.scale(sx, sy)
         self.cropbox = self.cropbox.scale(sx, sy)
-        self.artbox = self.artbox.scale(sx, sy)
         self.bleedbox = self.bleedbox.scale(sx, sy)
         self.trimbox = self.trimbox.scale(sx, sy)
-        self.mediabox = self.mediabox.scale(sx, sy)
+        self.artbox = self.artbox.scale(sx, sy)
 
         if PG.ANNOTS in self:
             annotations = self[PG.ANNOTS]
@@ -1683,7 +1679,7 @@ class PageObject(DictionaryObject):
         Read-only property which returns the page number within the PDF file.
 
         Returns:
-            int : page number; None if the page is not attached to a PDF.
+            Page number; None if the page is not attached to a PDF.
 
         """
         if self.indirect_reference is None:
@@ -1837,7 +1833,7 @@ class PageObject(DictionaryObject):
         try:
             objr = obj
             while NameObject(PG.RESOURCES) not in objr:
-                # /Resources can be inherited sometimes so we look to parents
+                # /Resources can be inherited so we look to parents
                 objr = objr["/Parent"].get_object()
                 # If no parents then no /Resources will be available,
                 # so an exception will be raised
@@ -1900,8 +1896,8 @@ class PageObject(DictionaryObject):
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
             nonlocal orientations, rtl_dir, visitor_text, output, text, _actual_str_size
 
-            check_crlf_space: bool = False
             str_widths: float = 0.0
+
             # Table 5.4 page 405
             if operator == b"BT":
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
@@ -1919,6 +1915,7 @@ class PageObject(DictionaryObject):
                 text = ""
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
+
             # Table 4.7 "Graphics state operators", page 219
             # cm_matrix calculation is reserved for later
             elif operator == b"q":
@@ -1957,6 +1954,7 @@ class PageObject(DictionaryObject):
                 )
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
+
             # Table 5.2 page 398
             elif operator == b"Tz":
                 char_scale = float(operands[0]) / 100 if operands else 1.0
@@ -2005,7 +2003,6 @@ class PageObject(DictionaryObject):
                     pass  # keep previous size
             # Table 5.5 page 406
             elif operator == b"Td":
-                check_crlf_space = True
                 # A special case is a translating only tm:
                 # tm = [1, 0, 0, 1, e, f]
                 # i.e. tm[4] += tx, tm[5] += ty.
@@ -2015,18 +2012,15 @@ class PageObject(DictionaryObject):
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"Tm":
-                check_crlf_space = True
                 tm_matrix = [float(operand) for operand in operands[:6]]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"T*":
-                check_crlf_space = True
                 tm_matrix[4] -= TL * tm_matrix[2]
                 tm_matrix[5] -= TL * tm_matrix[3]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
             elif operator == b"Tj":
-                check_crlf_space = True
                 text, rtl_dir, _actual_str_size = self._handle_tj(
                     text,
                     operands,
@@ -2043,7 +2037,7 @@ class PageObject(DictionaryObject):
             else:
                 return
 
-            if check_crlf_space:
+            if operator in {b"Td", b"Tm", b"T*", b"Tj"}:
                 try:
                     text, output, cm_prev, tm_prev = crlf_space_check(
                         text,
@@ -2421,7 +2415,7 @@ class PageObject(DictionaryObject):
         Get the names of embedded fonts and unembedded fonts.
 
         Returns:
-            A tuple (Set of embedded fonts, set of unembedded fonts)
+            A tuple (set of embedded fonts, set of unembedded fonts)
 
         """
         obj = self.get_object()
@@ -2518,7 +2512,7 @@ class _VirtualList(Sequence[PageObject]):
         len_self = len(self)
         if index < 0:
             # support negative indexes
-            index = len_self + index
+            index += len_self
         if index < 0 or index >= len_self:
             raise IndexError("Sequence index out of range")
         return self.get_function(index)
@@ -2537,8 +2531,8 @@ class _VirtualList(Sequence[PageObject]):
         len_self = len(self)
         if index < 0:
             # support negative indexes
-            index = len_self + index
-        if index < 0 or index >= len_self:
+            index += len_self
+        if not (0 <= index < len_self):
             raise IndexError("Index out of range")
         ind = self[index].indirect_reference
         assert ind is not None

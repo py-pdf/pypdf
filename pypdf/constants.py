@@ -20,12 +20,12 @@ class Core:
 
 
 class TrailerKeys:
-    ROOT = "/Root"
-    ENCRYPT = "/Encrypt"
-    ID = "/ID"
-    INFO = "/Info"
     SIZE = "/Size"
     PREV = "/Prev"
+    ROOT = "/Root"
+    ENCRYPT = "/Encrypt"
+    INFO = "/Info"
+    ID = "/ID"
 
 
 class CatalogAttributes:
@@ -240,7 +240,7 @@ class FilterTypes(StrEnum):
     ASCII_HEX_DECODE = "/ASCIIHexDecode"  # abbreviation: AHx
     ASCII_85_DECODE = "/ASCII85Decode"  # abbreviation: A85
     LZW_DECODE = "/LZWDecode"  # abbreviation: LZW
-    FLATE_DECODE = "/FlateDecode"  # abbreviation: Fl, PDF 1.2
+    FLATE_DECODE = "/FlateDecode"  # abbreviation: Fl
     RUN_LENGTH_DECODE = "/RunLengthDecode"  # abbreviation: RL
     CCITT_FAX_DECODE = "/CCITTFaxDecode"  # abbreviation: CCF
     DCT_DECODE = "/DCTDecode"  # abbreviation: DCT
@@ -253,7 +253,7 @@ class FilterTypeAbbreviations:
     AHx = "/AHx"
     A85 = "/A85"
     LZW = "/LZW"
-    FL = "/Fl"  # FlateDecode
+    FL = "/Fl"
     RL = "/RL"
     CCF = "/CCF"
     DCT = "/DCT"
@@ -324,19 +324,20 @@ class TypArguments:
 class TypFitArguments:
     """Table 8.2 of the PDF 1.7 reference."""
 
-    FIT = "/Fit"
-    FIT_V = "/FitV"
-    FIT_BV = "/FitBV"
-    FIT_B = "/FitB"
-    FIT_H = "/FitH"
-    FIT_BH = "/FitBH"
-    FIT_R = "/FitR"
     XYZ = "/XYZ"
+    FIT = "/Fit"
+    FIT_H = "/FitH"
+    FIT_V = "/FitV"
+    FIT_R = "/FitR"
+    FIT_B = "/FitB"
+    FIT_BH = "/FitBH"
+    FIT_BV = "/FitBV"
 
 
 class GoToActionArguments:
     S = "/S"  # name, required: type of action
-    D = "/D"  # name / byte string /array, required: Destination to jump to
+    D = "/D"  # name, byte string, or array, required: destination to jump to
+    SD = "/SD"  # array, optional: structure destination to jump to
 
 
 class AnnotationDictionaryAttributes:

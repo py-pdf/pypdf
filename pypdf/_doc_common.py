@@ -270,6 +270,8 @@ class PdfDocCommon:
 
     strict: bool = False  # default
 
+    flattened_pages: Optional[List[PageObject]] = None
+
     _encryption: Optional[Encryption] = None
 
     _readonly: bool = False
@@ -332,8 +334,6 @@ class PdfDocCommon:
             else:
                 self.root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
         return o
-
-    flattened_pages: Optional[List[PageObject]] = None
 
     def get_num_pages(self) -> int:
         """
@@ -978,13 +978,13 @@ class PdfDocCommon:
             title = ""
 
         if "/A" in node:
-            # Action, PDFv1.7 Section 12.6 (only type GoTo supported)
+            # Action, PDF 1.7 and PDF 2.0 §12.6 (only type GoTo supported)
             action = cast(DictionaryObject, node["/A"])
             action_type = cast(NameObject, action[GoToActionArguments.S])
             if action_type == "/GoTo":
                 dest = action[GoToActionArguments.D]
         elif "/Dest" in node:
-            # Destination, PDFv1.7 Section 12.3.2
+            # Destination, PDF 1.7 and PDF 2.0 §12.3.2
             dest = node["/Dest"]
             # if array was referenced in another object, will be a dict w/ key "/D"
             if isinstance(dest, DictionaryObject) and "/D" in dest:
@@ -994,7 +994,7 @@ class PdfDocCommon:
             outline_item = self._build_destination(title, dest)
         elif isinstance(dest, str):
             # named destination, addresses NameObject Issue #193
-            # TODO : keep named destination instead of replacing it ?
+            # TODO: Keep named destination instead of replacing it?
             try:
                 outline_item = self._build_destination(
                     title, self._named_destinations[dest].dest_array
@@ -1028,7 +1028,7 @@ class PdfDocCommon:
                 # absolute value = num. visible children
                 # with positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
-            #  if count is 0 we will consider it as open ( in order to have always an is_open to simplify
+            #  if count is 0 we will consider it as open (to have available is_open)
             outline_item[NameObject("/%is_open%")] = BooleanObject(
                 node.get("/Count", 0) >= 0
             )
@@ -1128,7 +1128,16 @@ class PdfDocCommon:
         indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
         """
-        Prepare the document pages to ease searching
+        Process the document pages to ease searching.
+
+        Attributes of a page may inherit from ancestor nodes
+        in the page tree. Flattening means moving
+        any inheritance data into descendant nodes,
+        effectively removing the inheritance dependency.
+
+        Note: It is distinct from another use of "flattening" applied to PDFs.
+        Flattening a PDF also means combining all the contents into one single layer
+        and making the file less editable.
 
         Args:
             list_only: Will only list the pages within _flatten_pages.
@@ -1156,7 +1165,7 @@ class PdfDocCommon:
 
         if PA.TYPE in pages:
             t = cast(str, pages[PA.TYPE])
-        # if pdf has no type, considered as a page if /Kids is missing
+        # if the page tree node has no /Type, consider as a page if /Kids is also missing
         elif PA.KIDS not in pages:
             t = "/Page"
         else:
@@ -1181,8 +1190,8 @@ class PdfDocCommon:
                         )
         elif t == "/Page":
             for attr_in, value in inherit.items():
-                # if the page has it's own value, it does not inherit the
-                # parent's value:
+                # if the page has its own value, it does not inherit the
+                # parent's value
                 if attr_in not in pages:
                     pages[attr_in] = value
             page_obj = PageObject(self, indirect_reference)
@@ -1419,8 +1428,8 @@ class PdfDocCommon:
 
 
 class LazyDict(Mapping[Any, Any]):
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        self._raw_dict = dict(*args, **kw)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self._raw_dict = dict(*args, **kwargs)
 
     def __getitem__(self, key: str) -> Any:
         func, arg = self._raw_dict.__getitem__(key)
