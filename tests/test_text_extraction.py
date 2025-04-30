@@ -13,9 +13,7 @@ import pytest
 
 from pypdf import PdfReader, mult
 from pypdf._text_extraction import set_custom_rtl
-from pypdf._text_extraction._layout_mode._fixed_width_page import (
-    text_show_operations,
-)
+from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
 from pypdf.errors import ParseError, PdfReadError
 
 from . import get_data_from_url
