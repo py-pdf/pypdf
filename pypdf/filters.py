@@ -308,7 +308,8 @@ class ASCIIHexDecode:
             index += 1
         # If the filter encounters the EOD marker after reading
         # an odd number of hexadecimal digits,
-        # it shall behave as if a 0 (zero) followed the last digit
+        # it shall behave as if a 0 (zero) followed the last digit.
+        # For every even number of hexadecimal digits, hex_pair is reset to b"".
         if hex_pair != b"":
             hex_pair += b"0"
             retval += bytes((int(hex_pair, base=16),))
