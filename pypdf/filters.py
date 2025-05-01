@@ -306,7 +306,12 @@ class ASCIIHexDecode:
                 retval += bytes((int(hex_pair, base=16),))
                 hex_pair = b""
             index += 1
-        assert hex_pair == b""
+        # If the filter encounters the EOD marker after reading
+        # an odd number of hexadecimal digits
+        # it shall behave as if a 0 (zero) followed the last digit
+        if hex_pair != b"":
+            hex_pair += b"0"
+            retval += bytes((int(hex_pair, base=16),))
         return retval
 
 
