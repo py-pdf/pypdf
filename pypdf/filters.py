@@ -294,7 +294,7 @@ class ASCIIHexDecode:
                 logger_warning(
                     "missing EOD in ASCIIHexDecode, check if output is OK", __name__
                 )
-                break  # Reached end of string even without an EOD
+                break  # Reached end of string without an EOD
             char = data[index : index + 1]
             if char == b">":
                 break
@@ -307,7 +307,7 @@ class ASCIIHexDecode:
                 hex_pair = b""
             index += 1
         # If the filter encounters the EOD marker after reading
-        # an odd number of hexadecimal digits
+        # an odd number of hexadecimal digits,
         # it shall behave as if a 0 (zero) followed the last digit
         if hex_pair != b"":
             hex_pair += b"0"
@@ -356,7 +356,7 @@ class RunLengthDecode:
                 logger_warning(
                     "missing EOD in RunLengthDecode, check if output is OK", __name__
                 )
-                break  # Reached end of string even without an EOD
+                break  # Reached end of string without an EOD
             length = data[index]
             index += 1
             if length == 128:
