@@ -497,7 +497,13 @@ class PdfDocCommon:
             while i < len(names):
                 key = cast(str, names[i].get_object())
                 i += 1
-                if not isinstance(key, str):
+                original_key = key
+                if isinstance(key, bytes):
+                    try:
+                        key = key.decode("utf-8", errors="replace")
+                    except UnicodeDecodeError: # pragma: no cover
+                        key = key.decode("latin-1") # pragma: no cover
+                elif not isinstance(key, str):
                     continue
                 try:
                     value = names[i].get_object()
@@ -512,6 +518,8 @@ class PdfDocCommon:
                 dest = self._build_destination(key, value)  # type: ignore
                 if dest is not None:
                     retval[key] = dest
+                    if isinstance(original_key, bytes):
+                        retval[original_key] = dest
         else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF 1.1)
             for k__, v__ in tree.items():
                 val = v__.get_object()
