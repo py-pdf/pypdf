@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746021785619,
+  "lastUpdate": 1746174209050,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -74849,6 +74849,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002873025116525987",
             "extra": "mean: 748.9383223999766 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5bc9faf270ab6398bf413b7ba95144fdc93ccf1a",
+          "message": "MAINT: Comform ASCIIHexDecode implementation to specification (#3274)\n\nIf the filter encounters the EOD marker after reading an odd number of hexadecimal digits, it shall behave as if a 0 (zero) followed the last digit [PDF 2.0, §7.4.2].",
+          "timestamp": "2025-05-02T10:20:54+02:00",
+          "tree_id": "6b4a5dfda2378cf8be8c44dd53a97f7363d90cdb",
+          "url": "https://github.com/py-pdf/pypdf/commit/5bc9faf270ab6398bf413b7ba95144fdc93ccf1a"
+        },
+        "date": 1746174205146,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.508738007099342,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009663739932536611",
+            "extra": "mean: 285.00275539999507 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.32901455784962,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007141906518201681",
+            "extra": "mean: 65.23576556249822 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27612551830395865,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01708802368726376",
+            "extra": "mean: 3.621541413999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.243779693446626,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005925470679508538",
+            "extra": "mean: 57.99192623529299 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08172667834106136,
+            "unit": "iter/sec",
+            "range": "stddev: 0.15470764192075273",
+            "extra": "mean: 12.2359065644 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3338011521721813,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022825799228690506",
+            "extra": "mean: 749.7369441999922 msec\nrounds: 5"
           }
         ]
       }
