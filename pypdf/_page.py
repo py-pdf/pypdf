@@ -1071,7 +1071,7 @@ class PageObject(DictionaryObject):
                     pass
 
         if isinstance(content, ArrayObject):
-            content = [self.indirect_reference.pdf._add_object(obj) for obj in content]
+            content = ArrayObject([self.indirect_reference.pdf._add_object(obj) for obj in content])
 
         if is_null_or_none(content):
             if PG.CONTENTS not in self:
