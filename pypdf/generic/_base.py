@@ -355,7 +355,7 @@ class IndirectObject(PdfObject):
             )
         assert dup is not None, "mypy"
         assert dup.indirect_reference is not None, "mypy"
-        return dup.indirect_reference, "mypy"
+        return dup.indirect_reference
 
     @property
     def indirect_reference(self) -> "IndirectObject":  # type: ignore[override]
