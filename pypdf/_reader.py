@@ -118,7 +118,7 @@ class PdfReader(PdfDocCommon):
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
 
-        #: Storage of parsed PDF objects.
+        # Storage of parsed PDF objects.
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
 
         self._startxref: int = 0
@@ -352,7 +352,7 @@ class PdfReader(PdfDocCommon):
                 raise PdfReadError("Object is in wrong index.")
             stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
 
-            # to cope with some case where the 'pointer' is on a white space
+            # To cope with case where the 'pointer' is on a white space
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
 
