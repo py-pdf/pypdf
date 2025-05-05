@@ -468,7 +468,7 @@ class VirtualListImages(Sequence[ImageFile]):
         if index < 0:
             # support negative indexes
             index += len_self
-        if index < 0 or index >= len_self:
+        if not (0 <= index < len_self):
             raise IndexError("Sequence index out of range")
         return self.get_function(lst[index])
 
@@ -1062,6 +1062,7 @@ class PageObject(DictionaryObject):
             # the page is not attached : the content is directly attached.
             self[NameObject(PG.CONTENTS)] = content
             return
+
         if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
             for o in self[PG.CONTENTS]:  # type: ignore[attr-defined]
                 try:
@@ -1070,8 +1071,7 @@ class PageObject(DictionaryObject):
                     pass
 
         if isinstance(content, ArrayObject):
-            for i in range(len(content)):
-                content[i] = self.indirect_reference.pdf._add_object(content[i])
+            content = ArrayObject(self.indirect_reference.pdf._add_object(obj) for obj in content)
 
         if is_null_or_none(content):
             if PG.CONTENTS not in self:
@@ -2513,7 +2513,7 @@ class _VirtualList(Sequence[PageObject]):
         if index < 0:
             # support negative indexes
             index += len_self
-        if index < 0 or index >= len_self:
+        if not (0 <= index < len_self):
             raise IndexError("Sequence index out of range")
         return self.get_function(index)
 
