@@ -324,7 +324,6 @@ def text_show_operations(
         )
     return bt_groups
 
-
 def fixed_char_width(bt_groups: List[BTGroup], scale_weight: float = 1.25) -> float:
     """
     Calculate average character width weighted by the length of the rendered
