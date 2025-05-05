@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746434034654,
+  "lastUpdate": 1746434118137,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -74981,6 +74981,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0017987774611295476",
             "extra": "mean: 751.8346800000018 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8f7a258c8e203a4dad29d5d5516d4c75b3750b60",
+          "message": "STY: Standardize mypy assert statements (#3276)\n\nUse \"mypy\" in the second expression of the assert statement, instead of a comment explaining the assert statement is for mypy.",
+          "timestamp": "2025-05-05T10:32:44+02:00",
+          "tree_id": "39c32f0c320d4adaecb8caae18e076a17c6dba89",
+          "url": "https://github.com/py-pdf/pypdf/commit/8f7a258c8e203a4dad29d5d5516d4c75b3750b60"
+        },
+        "date": 1746434114303,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.396888551993028,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009672821832331988",
+            "extra": "mean: 294.3870500000003 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.268397437678663,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0070370127379660325",
+            "extra": "mean: 65.49475831250274 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2690805210884686,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022308094597200904",
+            "extra": "mean: 3.716359682800001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 15.702296648893784,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007251138824131877",
+            "extra": "mean: 63.68495146666646 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08159941592051997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1476259978685363",
+            "extra": "mean: 12.25498968 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3290014386137516,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020416713288561113",
+            "extra": "mean: 752.4446332000025 msec\nrounds: 5"
           }
         ]
       }
