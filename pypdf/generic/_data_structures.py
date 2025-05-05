@@ -636,7 +636,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             length = data[SA.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
-                assert pdf is not None  # hint for mypy
+                assert pdf is not None, "mypy"
                 length = pdf.get_object(length)
                 stream.seek(t, 0)
             if length is None:  # if the PDF is damaged
@@ -1480,7 +1480,7 @@ def read_object(
         peek = stream.read(20)
         stream.seek(-len(peek), 1)  # reset to start
         if IndirectPattern.match(peek) is not None:
-            assert pdf is not None  # hint for mypy
+            assert pdf is not None, "mypy"
             return IndirectObject.read_from_stream(stream, pdf)
         return NumberObject.read_from_stream(stream)
     pos = stream.tell()
