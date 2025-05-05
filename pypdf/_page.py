@@ -1361,9 +1361,6 @@ class PageObject(DictionaryObject):
             self._expand_mediabox(page2, ctm)
 
         self.replace_contents(new_content_array)
-        # self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, pdf)
-        # self[NameObject(PG.RESOURCES)] = new_resources
-        # self[NameObject(PG.ANNOTS)] = new_annots
 
     def _expand_mediabox(
         self, page2: "PageObject", ctm: Optional[CompressedTransformationMatrix]
