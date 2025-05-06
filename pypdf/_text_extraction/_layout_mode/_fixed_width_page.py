@@ -252,7 +252,6 @@ def y_coordinate_groups(
     return ty_groups
 
 
-
 def text_show_operations(
     ops: Iterator[Tuple[List[Any], bytes]],
     fonts: Dict[str, Font],
@@ -323,6 +322,7 @@ def text_show_operations(
             "utf-8",
         )
     return bt_groups
+
 
 def fixed_char_width(bt_groups: List[BTGroup], scale_weight: float = 1.25) -> float:
     """
