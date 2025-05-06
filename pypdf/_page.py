@@ -217,7 +217,7 @@ class Transformation:
         Example:
             >>> from pypdf import Transformation
             >>> op = Transformation((1, 0, 0, -1, 0, height)) # vertical mirror
-            >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, width, 0))) # horizontal mirror
+            >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, width, 0)))  # horizontal mirror
             >>> page.add_transformation(op)
 
         """
