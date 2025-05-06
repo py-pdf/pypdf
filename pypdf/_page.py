@@ -311,7 +311,7 @@ class Transformation:
 
         Args:
             pt: A tuple or list representing the point in the form (x, y).
-            as_object: if True return items of type FloatObject, otherwise of float type.
+            as_object: If True, return items as FloatObject, otherwise as plain floats.
 
         Returns:
             A tuple or list representing the transformed point in the form (x', y')
