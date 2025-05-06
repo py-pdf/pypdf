@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746434118137,
+  "lastUpdate": 1746547068663,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -75047,6 +75047,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0020416713288561113",
             "extra": "mean: 752.4446332000025 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "noah.jackowitz@us.af.mil",
+            "name": "Noah Jackowitz",
+            "username": "hackowitz-af"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c42e3d8f2e89f2abc23e5e1a4bbc550bcd0a0578",
+          "message": "STY: Simplify warnings & debugging in layout mode text extraction (#3271)",
+          "timestamp": "2025-05-06T17:55:16+02:00",
+          "tree_id": "de805122b72bf9234a46bf4fd2cb4c475325b7de",
+          "url": "https://github.com/py-pdf/pypdf/commit/c42e3d8f2e89f2abc23e5e1a4bbc550bcd0a0578"
+        },
+        "date": 1746547064837,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5003839781208486,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0091490530229985",
+            "extra": "mean: 285.68294400000127 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.147288140106479,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007479419488420512",
+            "extra": "mean: 66.01841800000052 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2765790611094052,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011506556436639472",
+            "extra": "mean: 3.6156026996000037 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.407883901391212,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006841100077897433",
+            "extra": "mean: 57.445236058822836 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08194483388792764,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018428147380825287",
+            "extra": "mean: 12.203331833799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3320686666308177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035847742057457453",
+            "extra": "mean: 750.7120503999886 msec\nrounds: 5"
           }
         ]
       }
