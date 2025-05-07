@@ -39,19 +39,29 @@ Source = "https://github.com/py-pdf/pypdf"
 "Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
 
 [project.optional-dependencies]
+crypto = ["cryptography"]
+cryptodome = ["PyCryptodome"]
+image = ["Pillow>=8.0.0"]
 full = [
     "cryptography",
-    "Pillow>=8.0.0",
+    "Pillow>=8.0.0"
 ]
-crypto = [
-    "cryptography",
+dev = [
+    "black",
+    "flit",
+    "pip-tools",
+    "pre-commit",
+    "pytest-cov",
+    "pytest-socket",
+    "pytest-timeout",
+    "pytest-xdist",
+    "wheel"
 ]
-cryptodome = [
-    "PyCryptodome",
+docs = [
+    "myst_parser",
+    "sphinx",
+    "sphinx_rtd_theme"
 ]
-image = ["Pillow>=8.0.0"]
-dev = ["black", "flit", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "pytest-xdist", "wheel"]
-docs = ["myst_parser", "sphinx", "sphinx_rtd_theme"]
 
 [tool.check-wheel-contents]
 package = "./pypdf"
@@ -117,7 +127,6 @@ exclude_lines = [
     "raise NotImplementedError",
 
     # Don't complain if non-runnable code isn't run:
-    "if 0:",
     "if __name__ == .__main__.:",
 ]
 
@@ -132,9 +141,7 @@ ignore = [
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
     "ARG001",  # Unused function argument
     "ARG002",  # Unused method argument
-    "ARG003",  # Unused class method argument
     "ARG004",  # Unused static method argument
-    "ARG005",  # Unused lambda argument
     "B028",    # No explicit `stacklevel` keyword argument found
     "B904",    # Within an `except` clause, raise exceptions with
     "B905",    # `zip()` without an explicit `strict=` parameter
@@ -147,10 +154,7 @@ ignore = [
     "D107",    # Missing docstring in `__init__`
     "D205",    # One blank line required between summary line and description
     "D212",    # I want multiline-docstrings to start at the second line
-    "D400",    # First line should end with a period
     "D401",    # First line of docstring should be in imperative mood - false positives
-    "D404",    # First word of the docstring should not be "This"
-    "D406",    # Section name should end with a newline ("Returns")
     "D415",    # First line should end with a period
     "D417",    # Missing argument descriptions in the docstring
     "DTZ001",  # The use of `datetime.datetime()` without `tzinfo` is necessary
@@ -176,12 +180,7 @@ ignore = [
     "PT014",   # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
     "PTH123",  # `open()` should be replaced by `Path.open()`
     "PYI042",  # Type alias `mode_str_type` should be CamelCase
-    "RET501",  # Do not explicitly `return None` in function if it is the only possible return value
-    "RET502",  # Do not implicitly `return None` in function able to return non-`None` value
     "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
-    "RET504",  # Unnecessary assignment to `changelog` before `return`
-    "RET505",  # Unnecessary `else` after `return` statement
-    "RET506",  # Unnecessary `else` after `raise` statement
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",    # Use of `assert` detected
@@ -202,7 +201,6 @@ ignore = [
     "TRY301",  # Abstract `raise` to an inner function
     "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.11+
     "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.11+
-    "UP031",   # Use format specifiers instead of percent format
     "UP035",   # PEP 585. As long as we are not on Python 3.9+
     "UP038",   # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604. While not on Python 3.10+
 ]

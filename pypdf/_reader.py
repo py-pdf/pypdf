@@ -257,7 +257,7 @@ class PdfReader(PdfDocCommon):
         info = info.get_object()
         if not isinstance(info, DictionaryObject):
             raise PdfReadError(
-                "Trailer not found or does not point to document information directory"
+                "Trailer not found or does not point to a document information dictionary"
             )
         return info
 
@@ -352,7 +352,7 @@ class PdfReader(PdfDocCommon):
                 raise PdfReadError("Object is in wrong index.")
             stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
 
-            # to cope with some case where the 'pointer' is on a white space
+            # To cope with case where the 'pointer' is on a white space
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
 
@@ -656,14 +656,13 @@ class PdfReader(PdfDocCommon):
             raise UnsupportedOperation("cannot read header")
         if header_byte == b"":
             raise EmptyFileError("Cannot read an empty file")
-        elif header_byte != b"%PDF-":
+        if header_byte != b"%PDF-":
             if self.strict:
                 raise PdfReadError(
                     f"PDF starts with '{header_byte.decode('utf8')}', "
                     "but '%PDF-' expected"
                 )
-            else:
-                logger_warning(f"invalid pdf header: {header_byte}", __name__)
+            logger_warning(f"invalid pdf header: {header_byte}", __name__)
         stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
@@ -696,8 +695,7 @@ class PdfReader(PdfDocCommon):
             if stream.tell() < HEADER_SIZE:
                 if self.strict:
                     raise PdfReadError("EOF marker not found")
-                else:
-                    logger_warning("EOF marker not found", __name__)
+                logger_warning("EOF marker not found", __name__)
             line = read_previous_line(stream)
 
     def _find_startxref_pos(self, stream: StreamType) -> int:

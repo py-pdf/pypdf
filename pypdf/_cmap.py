@@ -211,8 +211,7 @@ def _parse_to_unicode(
     if "/ToUnicode" not in ft:
         if ft.get("/Subtype", "") == "/Type1":
             return _type1_alternative(ft, map_dict, int_entry)
-        else:
-            return {}, []
+        return {}, []
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
@@ -240,8 +239,7 @@ def get_actual_str_key(
         key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char}
     else:
         key_dict = {value: key for key, value in map_dict.items() if value == value_char}
-    key_char = key_dict.get(value_char, value_char)
-    return key_char
+    return key_dict.get(value_char, value_char)
 
 
 def prepare_cm(ft: DictionaryObject) -> bytes:
@@ -326,7 +324,7 @@ def parse_bfrange(
         fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]
-        for sq in lst[0:]:
+        for sq in lst:
             if sq == b"]":
                 closure_found = True
                 break

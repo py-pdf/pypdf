@@ -60,8 +60,7 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
                     else:
                         raise e
     with open(cache_path, "rb") as fp:
-        data = fp.read()
-    return data
+        return fp.read()
 
 
 def _strip_position(line: str) -> str:
@@ -82,8 +81,7 @@ def _strip_position(line: str) -> str:
 
     """
     line = ".py".join(line.split(".py:")[1:])
-    line = " ".join(line.split(" ")[1:])
-    return line
+    return " ".join(line.split(" ")[1:])
 
 
 def normalize_warnings(caplog_text: str) -> List[str]:
@@ -124,8 +122,7 @@ def is_sublist(child_list, parent_list):
 
 def read_yaml_to_list_of_dicts(yaml_file: Path) -> List[Dict[str, str]]:
     with open(yaml_file) as yaml_input:
-        data = yaml.safe_load(yaml_input)
-    return data
+        return yaml.safe_load(yaml_input)
 
 
 def download_test_pdfs():
@@ -171,5 +168,5 @@ class PILContext:
         ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images
         if type_:
             # Error.
-            return
+            return None
         return True

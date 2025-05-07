@@ -264,7 +264,7 @@ def _handle_flate(
         # Stream Dictionary
         mode2 = _get_imagemode(color_space, colors, mode)[0]
         if mode != mode2:
-            img = Image.frombytes(mode2, size, data)  # reloaded as mode may have change
+            img = Image.frombytes(mode2, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
         extension = ".tif"
         image_format = "TIFF"

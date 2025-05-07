@@ -98,7 +98,6 @@ else:
     from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
-NumberSigns = b"+-"
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
@@ -263,7 +262,7 @@ class ArrayObject(List[Any], PdfObject):
             if peek_ahead == b"]":
                 break
             stream.seek(-1, 1)
-            # read and append obj
+            # read and append object
             arr.append(read_object(stream, pdf, forced_encoding))
         return arr
 
@@ -511,7 +510,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(b"<<\n")
-        for key, value in list(self.items()):
+        for key, value in self.items():
             if len(key) > 2 and key[1] == "%" and key[-1] == "%":
                 continue
             key.write_to_stream(stream, encryption_key)
@@ -618,7 +617,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         s = read_non_whitespace(stream)
         if s == b"s" and stream.read(5) == b"tream":
             eol = stream.read(1)
-            # odd PDF file output has spaces after 'stream' keyword but before EOL.
+            # Occasional PDF file output has spaces after 'stream' keyword but before EOL.
             # patch provided by Danial Sandler
             while eol == b" ":
                 eol = stream.read(1)
@@ -630,15 +629,14 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             if SA.LENGTH not in data:
                 if pdf is not None and pdf.strict:
                     raise PdfStreamError("Stream length not defined")
-                else:
-                    logger_warning(
-                        f"Stream length not defined @pos={stream.tell()}", __name__
-                    )
+                logger_warning(
+                    f"Stream length not defined @pos={stream.tell()}", __name__
+                )
                 data[NameObject(SA.LENGTH)] = NumberObject(-1)
             length = data[SA.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
-                assert pdf is not None  # hint for mypy
+                assert pdf is not None, "mypy"
                 length = pdf.get_object(length)
                 stream.seek(t, 0)
             if length is None:  # if the PDF is damaged
@@ -653,7 +651,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             e = read_non_whitespace(stream)
             ndstream = stream.read(8)
             if (e + ndstream) != b"endstream":
-                # (sigh) - the odd PDF file has a length that is too long, so
+                # the odd PDF file has a length that is too long, so
                 # we need to read backwards to find the "endstream" ending.
                 # ReportLab (unknown version) generates files with this bug,
                 # and Python users into PDF files tend to be our audience.
@@ -679,10 +677,9 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             stream.seek(pos, 0)
         if "__streamdata__" in data:
             return StreamObject.initialize_from_dictionary(data)
-        else:
-            retval = DictionaryObject()
-            retval.update(data)
-            return retval
+        retval = DictionaryObject()
+        retval.update(data)
+        return retval
 
 
 class TreeObject(DictionaryObject):
@@ -769,8 +766,7 @@ class TreeObject(DictionaryObject):
             if "/Prev" in child_obj:
                 del child_obj["/Prev"]
             return child
-        else:
-            prev = cast("DictionaryObject", self["/Last"])
+        prev = cast("DictionaryObject", self["/Last"])
 
         while prev.indirect_reference != before:
             if "/Next" in prev:
@@ -845,7 +841,7 @@ class TreeObject(DictionaryObject):
 
         if NameObject("/Parent") not in child_obj:
             raise ValueError("Removed child does not appear to be a tree item")
-        elif child_obj[NameObject("/Parent")] != self:
+        if child_obj[NameObject("/Parent")] != self:
             raise ValueError("Removed child is not a member of this tree")
 
         found = False
@@ -880,8 +876,7 @@ class TreeObject(DictionaryObject):
         """Remove the object from the tree it is in."""
         if NameObject("/Parent") not in self:
             raise ValueError("Removed child does not appear to be a tree item")
-        else:
-            cast("TreeObject", self["/Parent"]).remove_child(self)
+        cast("TreeObject", self["/Parent"]).remove_child(self)
 
     def empty_tree(self) -> None:
         for child in self:
@@ -994,7 +989,7 @@ class StreamObject(DictionaryObject):
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
-        data += self._data
+        data += self.get_data()
         return data
 
     def write_to_stream(
@@ -1100,23 +1095,22 @@ class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
         self.decoded_self: Optional[DecodedStreamObject] = None
 
-    # This overrides the parent method:
+    # This overrides the parent method
     def get_data(self) -> bytes:
         from ..filters import decode_stream_data
 
         if self.decoded_self is not None:
             # cached version of decoded object
             return self.decoded_self.get_data()
-        else:
-            # create decoded object
-            decoded = DecodedStreamObject()
+        # create decoded object
+        decoded = DecodedStreamObject()
 
-            decoded.set_data(decode_stream_data(self))
-            for key, value in list(self.items()):
-                if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
-                    decoded[key] = value
-            self.decoded_self = decoded
-            return decoded.get_data()
+        decoded.set_data(decode_stream_data(self))
+        for key, value in list(self.items()):
+            if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
+                decoded[key] = value
+        self.decoded_self = decoded
+        return decoded.get_data()
 
     # This overrides the parent method:
     def set_data(self, data: bytes) -> None:
@@ -1164,14 +1158,10 @@ class ContentStream(DecodedStreamObject):
         forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
     ) -> None:
         self.pdf = pdf
-
-        # The inner list has two elements:
-        #  Element 0: List
-        #  Element 1: str
         self._operations: List[Tuple[Any, bytes]] = []
 
         # stream may be a StreamObject or an ArrayObject containing
-        # multiple StreamObjects to be cat'd together.
+        # StreamObjects to be concatenated together.
         if stream is None:
             super().set_data(b"")
         else:
@@ -1383,13 +1373,13 @@ class ContentStream(DecodedStreamObject):
 
         ei = stream.read(3)
         stream.seek(-1, 1)
-        if ei[0:2] != b"EI" or ei[2:3] not in WHITESPACES:
+        if ei[:2] != b"EI" or ei[2:3] not in WHITESPACES:
             # Deal with wrong/missing `EI` tags. Example: Wrong dimensions specified above.
             stream.seek(savpos, 0)
             data = extract_inline_default(stream)
             ei = stream.read(3)
             stream.seek(-1, 1)
-            if ei[0:2] != b"EI" or ei[2:3] not in WHITESPACES:  # pragma: no cover
+            if ei[:2] != b"EI" or ei[2:3] not in WHITESPACES:  # pragma: no cover
                 # Check the same condition again. This should never fail as
                 # edge cases are covered by `extract_inline_default` above,
                 # but check this ot make sure that we are behind the `EI` afterwards.
@@ -1398,7 +1388,7 @@ class ContentStream(DecodedStreamObject):
                 )
         return {"settings": settings, "data": data}
 
-    # This overrides the parent method:
+    # This overrides the parent method
     def get_data(self) -> bytes:
         if not self._data:
             new_data = BytesIO()
@@ -1420,7 +1410,7 @@ class ContentStream(DecodedStreamObject):
             self._data = new_data.getvalue()
         return self._data
 
-    # This overrides the parent method:
+    # This overrides the parent method
     def set_data(self, data: bytes) -> None:
         super().set_data(data)
         self._operations = []
@@ -1444,7 +1434,7 @@ class ContentStream(DecodedStreamObject):
         elif self._data:
             self._data = b"q\n" + self._data + b"\nQ\n"
 
-    # This overrides the parent method:
+    # This overrides the parent method
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
@@ -1462,48 +1452,45 @@ def read_object(
     stream.seek(-1, 1)  # reset to start
     if tok == b"/":
         return NameObject.read_from_stream(stream, pdf)
-    elif tok == b"<":
+    if tok == b"<":
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
         if peek == b"<<":
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
-        else:
-            return read_hex_string_from_stream(stream, forced_encoding)
-    elif tok == b"[":
+        return read_hex_string_from_stream(stream, forced_encoding)
+    if tok == b"[":
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
-    elif tok in (b"t", b"f"):
+    if tok in (b"t", b"f"):
         return BooleanObject.read_from_stream(stream)
-    elif tok == b"(":
+    if tok == b"(":
         return read_string_from_stream(stream, forced_encoding)
-    elif tok == b"e" and stream.read(6) == b"endobj":
+    if tok == b"e" and stream.read(6) == b"endobj":
         return NullObject()
-    elif tok == b"n":
+    if tok == b"n":
         return NullObject.read_from_stream(stream)
-    elif tok == b"%":
+    if tok == b"%":
         # comment
         skip_over_comment(stream)
         tok = read_non_whitespace(stream)
         stream.seek(-1, 1)
         return read_object(stream, pdf, forced_encoding)
-    elif tok in b"0123456789+-.":
+    if tok in b"0123456789+-.":
         # number object OR indirect reference
         peek = stream.read(20)
         stream.seek(-len(peek), 1)  # reset to start
         if IndirectPattern.match(peek) is not None:
-            assert pdf is not None  # hint for mypy
+            assert pdf is not None, "mypy"
             return IndirectObject.read_from_stream(stream, pdf)
-        else:
-            return NumberObject.read_from_stream(stream)
-    else:
-        pos = stream.tell()
-        stream.seek(-20, 1)
-        stream_extract = stream.read(80)
-        stream.seek(pos)
-        read_until_whitespace(stream)
-        raise PdfReadError(
-            f"Invalid Elementary Object starting with {tok!r} @{pos}: {stream_extract!r}"
-        )
+        return NumberObject.read_from_stream(stream)
+    pos = stream.tell()
+    stream.seek(-20, 1)
+    stream_extract = stream.read(80)
+    stream.seek(pos)
+    read_until_whitespace(stream)
+    raise PdfReadError(
+        f"Invalid Elementary Object starting with {tok!r} @{pos}: {stream_extract!r}"
+    )
 
 
 class Field(TreeObject):
@@ -1665,12 +1652,12 @@ class Destination(TreeObject):
                 self[NameObject(TA.TOP)],
             ) = args
         elif typ in [TF.FIT_H, TF.FIT_BH]:
-            try:  # Preferred to be more robust not only to null parameters
+            try:  # Prefer to be more robust not only to null parameters
                 (self[NameObject(TA.TOP)],) = args
             except Exception:
                 (self[NameObject(TA.TOP)],) = (NullObject(),)
         elif typ in [TF.FIT_V, TF.FIT_BV]:
-            try:  # Preferred to be more robust not only to null parameters
+            try:  # Prefer to be more robust not only to null parameters
                 (self[NameObject(TA.LEFT)],) = args
             except Exception:
                 (self[NameObject(TA.LEFT)],) = (NullObject(),)

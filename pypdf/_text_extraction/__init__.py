@@ -79,12 +79,11 @@ def mult(m: List[float], n: List[float]) -> List[float]:
 def orient(m: List[float]) -> int:
     if m[3] > 1e-6:
         return 0
-    elif m[3] < -1e-6:
+    if m[3] < -1e-6:
         return 180
-    elif m[1] > 0:
+    if m[1] > 0:
         return 90
-    else:
-        return 270
+    return 270
 
 
 def crlf_space_check(

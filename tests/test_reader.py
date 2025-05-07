@@ -155,7 +155,7 @@ def test_broken_meta_data(pdf_path):
     reader = PdfReader(BytesIO(b.replace(b"/Info 2 0 R", b"/Info 2    ")))
     with pytest.raises(PdfReadError) as exc:
         reader.metadata
-    assert "does not point to document information directory" in repr(exc)
+    assert "does not point to a document information dictionary" in repr(exc)
 
 
 @pytest.mark.parametrize(
@@ -705,22 +705,20 @@ def test_issue604(caplog, strict):
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # outline is not correct
-        else:
-            pdf = PdfReader(f, strict=strict)
-            outline = pdf.outline
-            msg = [
-                "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
-            ]
-            assert normalize_warnings(caplog.text) == msg
+        pdf = PdfReader(f, strict=strict)
+        outline = pdf.outline
+        msg = [
+            "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
+        ]
+        assert normalize_warnings(caplog.text) == msg
 
         def get_dest_pages(x) -> NestedList:
             if isinstance(x, list):
                 return [get_dest_pages(y) for y in x]
-            else:
-                destination_page_number = pdf.get_destination_page_number(x)
-                if destination_page_number is None:
-                    return destination_page_number
-                return destination_page_number + 1
+            destination_page_number = pdf.get_destination_page_number(x)
+            if destination_page_number is None:
+                return destination_page_number
+            return destination_page_number + 1
 
         out = []
 

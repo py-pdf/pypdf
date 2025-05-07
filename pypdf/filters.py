@@ -183,8 +183,10 @@ class FlateDecode:
     @staticmethod
     def _decode_png_prediction(data: bytes, columns: int, rowlength: int) -> bytes:
         # PNG prediction can vary from row to row
-        if len(data) % rowlength != 0:
-            raise PdfReadError("Image data is not rectangular")
+        if (remainder := len(data) % rowlength) != 0:
+            logger_warning("Image data is not rectangular. Adding padding.", __name__)
+            data += b"\x00" * (rowlength - remainder)
+            assert len(data) % rowlength == 0
         output = []
         prev_rowdata = (0,) * rowlength
         bpp = (rowlength - 1) // columns  # recomputed locally to not change params
@@ -276,8 +278,7 @@ class ASCIIHexDecode:
         Args:
           data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
-          decode_parms: a string conversion in base-7 ASCII, where each of its values
-            v is such that 0 <= ord(v) <= 127.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           A string conversion in base-7 ASCII, where each of its values
@@ -287,8 +288,6 @@ class ASCIIHexDecode:
           PdfStreamError:
 
         """
-        # decode_parms is unused here
-
         if isinstance(data, str):
             data = data.encode()
         retval = b""
@@ -299,7 +298,7 @@ class ASCIIHexDecode:
                 logger_warning(
                     "missing EOD in ASCIIHexDecode, check if output is OK", __name__
                 )
-                break  # Reached end of string even if no EOD
+                break  # Reached end of string without an EOD
             char = data[index : index + 1]
             if char == b">":
                 break
@@ -311,7 +310,13 @@ class ASCIIHexDecode:
                 retval += bytes((int(hex_pair, base=16),))
                 hex_pair = b""
             index += 1
-        assert hex_pair == b""
+        # If the filter encounters the EOD marker after reading
+        # an odd number of hexadecimal digits,
+        # it shall behave as if a 0 (zero) followed the last digit.
+        # For every even number of hexadecimal digits, hex_pair is reset to b"".
+        if hex_pair != b"":
+            hex_pair += b"0"
+            retval += bytes((int(hex_pair, base=16),))
         return retval
 
 
@@ -340,7 +345,7 @@ class RunLengthDecode:
 
         Args:
           data: a bytes sequence of length/data
-          decode_parms: ignored.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           A bytes decompressed sequence.
@@ -349,8 +354,6 @@ class RunLengthDecode:
           PdfStreamError:
 
         """
-        # decode_parms is unused here
-
         lst = []
         index = 0
         while True:
@@ -358,15 +361,14 @@ class RunLengthDecode:
                 logger_warning(
                     "missing EOD in RunLengthDecode, check if output is OK", __name__
                 )
-                break  # reach End Of String even if no EOD
+                break  # Reached end of string without an EOD
             length = data[index]
             index += 1
             if length == 128:
                 if index < len(data):
                     raise PdfStreamError("Early EOD in RunLengthDecode")
-                else:
-                    break
-            elif length < 128:
+                break
+            if length < 128:
                 length += 1
                 lst.append(data[index : (index + length)])
                 index += length
@@ -444,7 +446,7 @@ class ASCII85Decode:
 
         Args:
           data: ``bytes`` or ``str`` text to decode.
-          decode_parms: a dictionary of parameter values.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           decoded data.
@@ -469,7 +471,19 @@ class DCTDecode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        """
+        Decompresses data encoded using a DCT (discrete cosine transform)
+        technique based on the JPEG standard (IS0/IEC 10918),
+        reproducing image sample data that approximates the original data.
+
+        Args:
+          data: text to decode.
+          decode_parms: this filter does not use parameters.
+
+        Returns:
+          decoded data.
+
+        """
         return data
 
 
@@ -480,7 +494,19 @@ class JPXDecode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        """
+        Decompresses data encoded using the wavelet-based JPEG 2000 standard,
+        reproducing the original image data.
+
+        Args:
+          data: text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
+
+        """
+        # decode_parms: this filter does not use parameters
         return data
 
 
@@ -897,6 +923,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     try:  # temporary try/except until other fixes of images
         img = Image.open(BytesIO(data))
-    except Exception:
+    except Exception as exception:
+        logger_warning(f"Failed loading image: {exception}", __name__)
         img = None  # type: ignore
     return extension, data, img

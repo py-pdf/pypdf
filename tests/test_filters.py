@@ -106,6 +106,8 @@ def test_flate_decode_decompress_with_array_params(params):
         ),  # Same as previous, but whitespaced
         ("30313233343536373839616263646566414243444546>", string.hexdigits.encode()),
         ("20090a0d0b0c>", string.whitespace.encode()),
+        # Odd number of hexadecimal digits behaves as if a 0 (zero) followed the last digit
+        ("3938373635343332313>", string.digits[::-1].encode()),
     ],
     ids=[
         "empty",
@@ -116,16 +118,13 @@ def test_flate_decode_decompress_with_array_params(params):
         "digits_whitespace",
         "hexdigits",
         "whitespace",
+        "odd_number",
     ],
 )
 def test_ascii_hex_decode_method(data, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
     correct output is returned.
-
-    TODO What is decode() supposed to do for such inputs as ">>", ">>>" or
-    any other not terminated by ">"? (For the latter case, an exception
-    is currently raised.)
     """
     assert ASCIIHexDecode.decode(data) == expected
 
@@ -376,9 +375,8 @@ def test_iss1787():
     obj = data.indirect_reference.get_object()
     obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
     obj.decoded_self = None
-    with pytest.raises(PdfReadError) as exc:
-        reader.pages[0].images[0]
-    assert exc.value.args[0] == "Image data is not rectangular"
+    with pytest.raises(expected_exception=PdfReadError, match="^Unsupported PNG filter 244$"):
+        _ = reader.pages[0].images[0]
 
 
 @pytest.mark.enable_socket
@@ -677,3 +675,38 @@ def test_ccitt_fax_decode__black_is_1():
     expected_pixels = list(ImageOps.invert(expected_image_inverted).getdata())
     actual_pixels = list(actual_image.getdata())
     assert expected_pixels == actual_pixels
+
+
+@pytest.mark.enable_socket
+def test_flate_decode__image_is_none_due_to_size_limit(caplog):
+    url = "https://github.com/user-attachments/files/19464256/file.pdf"
+    name = "issue3220.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    images = reader.pages[0].images
+    assert len(images) == 1
+    image = images[0]
+    assert image.name == "Im0.png"
+    assert image.image is None
+    assert (
+        "Failed loading image: Image size (180000000 pixels) exceeds limit of "
+        "178956970 pixels, could be decompression bomb DOS attack."
+    ) in caplog.messages
+
+
+@pytest.mark.enable_socket
+def test_flate_decode__not_rectangular(caplog):
+    url = "https://github.com/user-attachments/files/19663603/issue3241_compressed.txt"
+    name = "issue3241.txt"
+    data = get_data_from_url(url, name=name)
+    decode_parms = DictionaryObject()
+    decode_parms[NameObject("/Predictor")] = NumberObject(15)
+    decode_parms[NameObject("/Columns")] = NumberObject(4881)
+    actual = FlateDecode.decode(data=data, decode_parms=decode_parms)
+    actual_image = BytesIO()
+    Image.frombytes(mode="1", size=(4881, 81), data=actual).save(actual_image, format="png")
+
+    url = "https://github.com/user-attachments/assets/c5695850-c076-4255-ab72-7c86851a4a04"
+    name = "issue3241.png"
+    expected = get_data_from_url(url, name=name)
+    assert actual_image.getvalue() == expected
+    assert caplog.messages == ["Image data is not rectangular. Adding padding."]
