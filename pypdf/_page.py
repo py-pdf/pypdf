@@ -167,8 +167,6 @@ class Transformation:
 
     """
 
-    # 9.5.4 Coordinate Systems for 3D
-    # 4.2.2 Common Transformations
     def __init__(self, ctm: CompressedTransformationMatrix = (1, 0, 0, 1, 0, 0)) -> None:
         self.ctm = ctm
 
@@ -219,7 +217,7 @@ class Transformation:
         Example:
             >>> from pypdf import Transformation
             >>> op = Transformation((1, 0, 0, -1, 0, height)) # vertical mirror
-            >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, iwidth, 0))) # horizontal mirror
+            >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, width, 0)))  # horizontal mirror
             >>> page.add_transformation(op)
 
         """
@@ -312,7 +310,8 @@ class Transformation:
         Apply the transformation matrix on the given point.
 
         Args:
-            pt: A tuple or list representing the point in the form (x, y)
+            pt: A tuple or list representing the point in the form (x, y).
+            as_object: If True, return items as FloatObject, otherwise as plain floats.
 
         Returns:
             A tuple or list representing the transformed point in the form (x', y')
@@ -661,7 +660,7 @@ class PageObject(DictionaryObject):
                 image=imgd[2],
                 indirect_reference=xobjs[id].indirect_reference,
             )
-        # in a sub object
+        # in a subobject
         ids = id[1:]
         return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
@@ -678,7 +677,7 @@ class PageObject(DictionaryObject):
         Examples:
             * `reader.pages[0].images[0]`        # return first image
             * `reader.pages[0].images['/I0']`    # return image '/I0'
-            * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' Xobject/Form
+            * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' XObject form
             * `for img in reader.pages[0].images:` # loops through all objects
 
         images.keys() and images.items() can be used.
@@ -687,7 +686,7 @@ class PageObject(DictionaryObject):
 
             * `.name` : name of the object
             * `.data` : bytes of the object
-            * `.image`  : PIL Image Object
+            * `.image` : PIL Image Object
             * `.indirect_reference` : object reference
 
         and the following methods:
@@ -762,22 +761,6 @@ class PageObject(DictionaryObject):
                     f"{ope!r} operator met whereas not expected, "
                     "please share use case with pypdf dev team"
                 )
-            """backup
-            elif ope == b"BI":
-                img_data["settings"] = {}
-            elif ope == b"EI":
-                imgs_data.append(img_data)
-                img_data = {}
-            elif ope == b"ID":
-                img_data["__streamdata__"] = b""
-            elif "__streamdata__" in img_data:
-                if len(img_data["__streamdata__"]) > 0:
-                    img_data["__streamdata__"] += b"\n"
-                    raise Exception("check append")
-                img_data["__streamdata__"] += param
-            elif "settings" in img_data:
-                img_data["settings"][ope.decode()] = param
-            """
         files = {}
         for num, ii in enumerate(imgs_data):
             init = {
@@ -1378,9 +1361,6 @@ class PageObject(DictionaryObject):
             self._expand_mediabox(page2, ctm)
 
         self.replace_contents(new_content_array)
-        # self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, pdf)
-        # self[NameObject(PG.RESOURCES)] = new_resources
-        # self[NameObject(PG.ANNOTS)] = new_annots
 
     def _expand_mediabox(
         self, page2: "PageObject", ctm: Optional[CompressedTransformationMatrix]
@@ -2556,7 +2536,7 @@ class _VirtualList(Sequence[PageObject]):
                         cast(int, parent["/Count"]) - 1
                     )
                 if len(cast(ArrayObject, parent["/Kids"])) == 0:
-                    # No more objects in this part of this sub tree
+                    # No more objects in this part of this subtree
                     ind = parent.indirect_reference
                 parent = parent.get("/Parent", None)
             except ValueError:  # from index
