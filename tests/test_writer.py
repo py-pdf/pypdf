@@ -2714,3 +2714,33 @@ def test_merge__process_named_dests__no_dests_in_source_file():
         assert writer.named_destinations == {
             "test.pdf": Destination(title="test.pdf", page=writer.pages[1].indirect_reference, fit=Fit("/Fit"))
         }
+
+
+def test_insert_filtered_annotations__link_without_destination():
+    """Test for #3211"""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+
+    annotations = [
+        DictionaryObject({
+            "/A": DictionaryObject({"/S": NameObject("/GoTo"), "/D": None}),
+            "/BS": {"/S": "/S", "/Type": "/Border", "/W": 0},
+            "/Border": [0, 0, 0],
+            "/H": "/I",
+            "/Rect": [68.6001, 653.405, 526.2, 671.054],
+            "/StructParent": 9,
+            "/Subtype": NameObject("/Link"),
+            "/Type": NameObject("/Annot")
+        })
+    ]
+    result = writer._insert_filtered_annotations(
+        annots=annotations, page=writer.pages[0], pages={}, reader=reader
+    )
+    assert result == []
+
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    del annotations[0]["/A"]["/D"]
+    result = writer._insert_filtered_annotations(
+        annots=annotations, page=writer.pages[0], pages={}, reader=reader
+    )
+    assert result == []
