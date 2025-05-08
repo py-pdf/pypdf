@@ -128,7 +128,7 @@ def test_byte_encoded_named_destinations():
             "/Type": "/XYZ",
             "/Left": 133.768,
             "/Top": 667.198,
-            "/Zoom": NullObject
+            "/Zoom": NullObject()
         },
         "楣整搮捡귃㉫㈰爵捡牥汦杩瑨敷杩瑨瑳瑡捩慤慴": {
             "/Title": "楣整搮捡귃㉫㈰爵捡牥汦杩瑨敷杩瑨瑳瑡捩慤慴",
@@ -136,7 +136,7 @@ def test_byte_encoded_named_destinations():
             "/Type": "/XYZ",
             "/Left": 133.768,
             "/Top": 614.424,
-            "/Zoom": NullObject
+            "/Zoom": NullObject()
         },
         "page.1": {
             "/Title": "page.1",
@@ -144,7 +144,7 @@ def test_byte_encoded_named_destinations():
             "/Type": "/XYZ",
             "/Left": 132.768,
             "/Top": 705.06,
-            "/Zoom": NullObject
+            "/Zoom": NullObject()
         },
         "section*.1": {
             "/Title": "section*.1",
@@ -152,6 +152,6 @@ def test_byte_encoded_named_destinations():
             "/Type": "/XYZ",
             "/Left": 133.768,
             "/Top": 642.222,
-            "/Zoom": NullObject
+            "/Zoom": NullObject()
         }
     }
