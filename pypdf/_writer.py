@@ -3043,7 +3043,7 @@ class PdfWriter(PdfDocCommon):
                             anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
                             outlist.append(self._add_object(anc))
             else:
-                d = cast("DictionaryObject", ano["/A"]).get("/D")
+                d = cast("DictionaryObject", ano["/A"]).get("/D", NullObject())
                 if d is None or isinstance(d, NullObject):
                     continue
                 if isinstance(d, str):
