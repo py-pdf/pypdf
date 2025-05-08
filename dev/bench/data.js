@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746712603562,
+  "lastUpdate": 1746715148311,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -75443,6 +75443,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002085685628240224",
             "extra": "mean: 752.2072784000102 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5b2ec0f3610ea84d2a57d399c4af1f14248b08df",
+          "message": "ROB: Deal with insufficient cm matrix during text extraction (#3283)\n\nCloses #3262.",
+          "timestamp": "2025-05-08T16:36:33+02:00",
+          "tree_id": "61967711517b7c04e05cc3c370e869aab10a4f8b",
+          "url": "https://github.com/py-pdf/pypdf/commit/5b2ec0f3610ea84d2a57d399c4af1f14248b08df"
+        },
+        "date": 1746715144164,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4788323201074847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010054365290495734",
+            "extra": "mean: 287.452773800004 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.157973237593662,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007596817098359838",
+            "extra": "mean: 65.97188056249337 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2746005237525975,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01279896349017848",
+            "extra": "mean: 3.641653651400003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.475293709155455,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009203837407444388",
+            "extra": "mean: 60.69694523529446 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08139235568140739,
+            "unit": "iter/sec",
+            "range": "stddev: 0.4213748763555664",
+            "extra": "mean: 12.286166085600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3603292227430688,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033215333042037206",
+            "extra": "mean: 735.11616400001 msec\nrounds: 5"
           }
         ]
       }
