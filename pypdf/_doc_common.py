@@ -413,9 +413,7 @@ class PdfDocCommon:
 
     @property
     def named_destinations(self) -> Dict[str, Destination]:
-        """
-        A read-only dictionary which maps names to destinations.
-        """
+        """A read-only dictionary which maps names to destinations."""
         return self._get_named_destinations()
 
     def get_named_dest_root(self) -> ArrayObject:
