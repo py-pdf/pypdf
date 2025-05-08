@@ -7,6 +7,7 @@ from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
+from unittest import mock
 
 import pytest
 
@@ -23,6 +24,7 @@ from pypdf.errors import PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
+    Destination,
     DictionaryObject,
     Fit,
     IndirectObject,
@@ -2693,3 +2695,22 @@ def test_compress_identical_objects__after_remove_images():
     writer = PdfWriter(clone_from=RESOURCE_ROOT / "AutoCad_Diagram.pdf")
     writer.remove_images()
     writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
+
+
+def test_merge__process_named_dests__no_dests_in_source_file():
+    """Test for #3279"""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    # Hacky solution to avoid attribute errors.
+    names = DictionaryObject()
+    names.indirect_reference = names
+    writer.root_object[NameObject("/Names")] = names
+
+    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+    destination = Destination(title="test.pdf", page=reader.pages[0], fit=Fit("/Fit"))
+    with mock.patch.object(reader, "_get_named_destinations", return_value={"test.pdf": destination}):
+        writer.append(reader)
+        # The page now points to the appended one.
+        assert writer.named_destinations == {
+            "test.pdf": Destination(title="test.pdf", page=writer.pages[1].indirect_reference, fit=Fit("/Fit"))
+        }

@@ -2796,8 +2796,8 @@ class PdfWriter(PdfDocCommon):
                 List[Any],
                 cast(
                     DictionaryObject,
-                    cast(DictionaryObject, self._root_object["/Names"])["/Dests"],
-                )["/Names"],
+                    cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
+                ).get("/Names", DictionaryObject()),
             ):
                 # already exists: should not duplicate it
                 pass
