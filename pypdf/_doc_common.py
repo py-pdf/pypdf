@@ -412,10 +412,9 @@ class PdfDocCommon:
         return node, idx
 
     @property
-    def named_destinations(self) -> Dict[str, Any]:
+    def named_destinations(self) -> Dict[str, Destination]:
         """
-        A read-only dictionary which maps names to
-        :class:`Destinations<pypdf.generic.Destination>`
+        A read-only dictionary which maps names to destinations.
         """
         return self._get_named_destinations()
 
@@ -457,18 +456,17 @@ class PdfDocCommon:
     def _get_named_destinations(
         self,
         tree: Union[TreeObject, None] = None,
-        retval: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+        retval: Optional[Dict[str, Destination]] = None,
+    ) -> Dict[str, Destination]:
         """
         Retrieve the named destinations present in the document.
 
         Args:
-            tree:
-            retval:
+            tree: The current tree.
+            retval: The previously retrieved destinations for nested calls.
 
         Returns:
-            A dictionary which maps names to
-            :class:`Destinations<pypdf.generic.Destination>`.
+            A dictionary which maps names to destinations.
 
         """
         if retval is None:
@@ -495,10 +493,11 @@ class PdfDocCommon:
             names = cast(DictionaryObject, tree[CA.NAMES])
             i = 0
             while i < len(names):
-                key = cast(str, names[i].get_object())
+                original_key = names[i].get_object()
                 i += 1
-                if not isinstance(key, str):
+                if not isinstance(original_key, (bytes, str)):
                     continue
+                key = str(original_key)
                 try:
                     value = names[i].get_object()
                 except IndexError:
@@ -509,7 +508,7 @@ class PdfDocCommon:
                         value = value["/D"]
                     else:
                         continue
-                dest = self._build_destination(key, value)  # type: ignore
+                dest = self._build_destination(key, value)
                 if dest is not None:
                     retval[key] = dest
         else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF 1.1)
