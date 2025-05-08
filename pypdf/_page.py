@@ -1928,10 +1928,13 @@ class PageObject(DictionaryObject):
                 if visitor_text is not None:
                     visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
                 text = ""
-                cm_matrix = mult(
-                    [float(operand) for operand in operands[:6]],
-                    cm_matrix
-                )
+                try:
+                    cm_matrix = mult(
+                        [float(operand) for operand in operands[:6]],
+                        cm_matrix
+                    )
+                except Exception:
+                    cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
 
