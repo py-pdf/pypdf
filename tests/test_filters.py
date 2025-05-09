@@ -9,6 +9,7 @@ from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
 from unittest.mock import patch
+import builtins
 
 import pytest
 from PIL import Image, ImageOps
@@ -749,3 +750,20 @@ def test_main_decode_brotli_installed():
     extracted_text = page.extract_text()
 
     assert extracted_text.strip() == "Hello, Brotli!"
+
+def test_brotli_import_error_with_patch():
+    original_import = builtins.__import__
+
+    def mock_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "brotli":
+            raise ImportError("Simulated brotli import error")
+        return original_import(name, globals, locals, fromlist, level)
+
+    with patch('builtins.__import__', side_effect=mock_import):
+        importlib.reload(importlib.import_module("pypdf.filters"))
+        from pypdf.filters import BrotliDecode
+
+        assert BrotliDecode is not None
+        assert importlib.import_module("pypdf.filters").brotli is None
+
+    importlib.reload(importlib.import_module("pypdf.filters"))
