@@ -5,7 +5,6 @@ import os
 import shutil
 import string
 import subprocess
-import sys
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
