@@ -237,6 +237,9 @@ class NullObject(PdfObject):
     def __repr__(self) -> str:
         return "NullObject"
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, NullObject)
+
 
 class BooleanObject(PdfObject):
     def __init__(self, value: Any) -> None:
@@ -353,9 +356,8 @@ class IndirectObject(PdfObject):
             dup = pdf_dest._add_object(
                 obj.clone(pdf_dest, force_duplicate, ignore_fields)
             )
-        # asserts added to prevent errors in mypy
-        assert dup is not None
-        assert dup.indirect_reference is not None
+        assert dup is not None, "mypy"
+        assert dup.indirect_reference is not None, "mypy"
         return dup.indirect_reference
 
     @property
@@ -658,7 +660,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         o.autodetect_pdfdocencoding = False
         o.utf16_bom = b""
         if o.startswith(("\xfe\xff", "\xff\xfe")):
-            assert org is not None  # for mypy
+            assert org is not None, "mypy"
             try:
                 o = str.__new__(cls, org.decode("utf-16"))
             except UnicodeDecodeError as exc:

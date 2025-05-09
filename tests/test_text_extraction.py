@@ -11,7 +11,9 @@ import pytest
 
 from pypdf import PdfReader, mult
 from pypdf._text_extraction import set_custom_rtl
+from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
 from pypdf.errors import ParseError, PdfReadError
+from pypdf.generic import ContentStream
 
 from . import get_data_from_url
 
@@ -368,3 +370,29 @@ def test_rotated_line_wrap():
     expected = get_data_from_url(txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
 
     assert expected == reader.pages[0].extract_text()
+
+
+@pytest.mark.parametrize(
+        ("op", "msg"),
+        [
+            (b"BT", "Unbalanced target operations, expected b'ET'."),
+            (b"q", "Unbalanced target operations, expected b'Q'."),
+        ],
+)
+def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
+    """Ensures that imbalanced q/Q or EB/ET is handled gracefully."""
+    text_show_operations(ops=iter([([], op)]), fonts={})
+    assert caplog.records
+    assert caplog.records[-1].msg == msg
+
+
+def test_process_operation__cm_multiplication_issue():
+    """Test for #3262."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    content = page.get_contents().get_data()
+    content = content.replace(b" 1 0 0 1 72 720 cm ", b" 0.70278 65.3 163.36 cm ")
+    stream = ContentStream(stream=None, pdf=reader)
+    stream.set_data(content)
+    page.replace_contents(stream)
+    assert page.extract_text().startswith("The Crazy Ones\nOctober 14, 1998\n")

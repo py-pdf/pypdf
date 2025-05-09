@@ -163,6 +163,8 @@ def test_flate_decode_decompress_with_array_params(params):
         ),  # Same as previous, but whitespaced
         ("30313233343536373839616263646566414243444546>", string.hexdigits.encode()),
         ("20090a0d0b0c>", string.whitespace.encode()),
+        # Odd number of hexadecimal digits behaves as if a 0 (zero) followed the last digit
+        ("3938373635343332313>", string.digits[::-1].encode()),
     ],
     ids=[
         "empty",
@@ -173,16 +175,13 @@ def test_flate_decode_decompress_with_array_params(params):
         "digits_whitespace",
         "hexdigits",
         "whitespace",
+        "odd_number",
     ],
 )
 def test_ascii_hex_decode_method(data, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
     correct output is returned.
-
-    TODO What is decode() supposed to do for such inputs as ">>", ">>>" or
-    any other not terminated by ">"? (For the latter case, an exception
-    is currently raised.)
     """
     assert ASCIIHexDecode.decode(data) == expected
 
