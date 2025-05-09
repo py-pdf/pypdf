@@ -1,5 +1,6 @@
 """Test the pypdf.filters module."""
 
+import builtins
 import importlib.util
 import os
 import shutil
@@ -8,10 +9,13 @@ import subprocess
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
-import builtins
 
 import pytest
+
+if TYPE_CHECKING:
+    import types
 from PIL import Image, ImageOps
 
 from pypdf import PdfReader
@@ -754,12 +758,12 @@ def test_main_decode_brotli_installed():
 def test_brotli_import_error_with_patch():
     original_import = builtins.__import__
 
-    def mock_import(name, globals=None, locals=None, fromlist=(), level=0):
+    def mock_import(name, globals=None, locals=None, fromlist=(), level=0) -> "types.ModuleType | ImportError":
         if name == "brotli":
             raise ImportError("Simulated brotli import error")
         return original_import(name, globals, locals, fromlist, level)
 
-    with patch('builtins.__import__', side_effect=mock_import):
+    with patch("builtins.__import__", side_effect=mock_import):
         importlib.reload(importlib.import_module("pypdf.filters"))
         from pypdf.filters import BrotliDecode
 
