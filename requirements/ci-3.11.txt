@@ -4,6 +4,8 @@
 #
 #    pip-compile --output-file=requirements/ci-3.11.txt requirements/ci.in
 #
+brotli==1.1.0
+    # via -r requirements/ci.in
 cffi==1.17.1
     # via cryptography
 coverage[toml]==7.6.4
@@ -75,5 +77,3 @@ typing-extensions==4.12.2
     # via
     #   mypy
     #   typeguard
-brotli==1.1.0
-    # via -r requirements/ci.in

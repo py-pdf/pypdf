@@ -4,6 +4,8 @@
 #
 #    pip-compile requirements/dev.in
 #
+brotli==1.1.0
+    # via -r requirements/ci.in
 build==1.2.2.post1
     # via pip-tools
 certifi==2024.8.30
@@ -86,5 +88,3 @@ zipp==3.20.2
 # The following packages are considered to be unsafe in a requirements file:
 # pip
 # setuptools
-brotli==1.1.0
-    # via -r requirements/ci.in

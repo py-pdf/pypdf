@@ -4,6 +4,8 @@
 #
 #    pip-compile requirements/ci.in
 #
+brotli==1.1.0
+    # via -r requirements/ci.in
 cffi==1.17.1
     # via cryptography
 coverage[toml]==7.6.1
@@ -77,5 +79,3 @@ typing-extensions==4.12.2
     #   typeguard
 zipp==3.20.2
     # via importlib-metadata
-brotli==1.1.0
-    # via -r requirements/ci.in
