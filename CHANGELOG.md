@@ -1,5 +1,43 @@
 # CHANGELOG
 
+## Version 5.5.0, 2025-05-11
+
+### New Features (ENH)
+- Add support for IndirectObject.__iter__ (#3228)
+- Allow filtering by font when removing text (#3216)
+
+### Bug Fixes (BUG)
+- Add missing named destinations being ByteStringObjects (#3282)
+- Get font information more reliably when removing text (#3252)
+- T* 2D Translation consistent with PDF 1.7 Spec (#3250)
+- Add font stack to q/Q operations in layout mode (#3225)
+- Avoid completely hiding image loading issues like exceeding image size limits (#3221)
+- Using compress_identical_objects on transformed content duplicates differing content (#3197)
+- Consider BlackIs1 parameter for CCITTFaxDecode filter (#3196)
+
+### Robustness (ROB)
+- Deal with insufficient cm matrix during text extraction (#3283)
+- Allow merging when annotations miss D entry (#3281)
+- Fix merging documents if there are no Dests (#3280)
+- Fix crash on malformed action in outline (#3278)
+- Fix compression issues for removed images which might be None (#3246)
+- Attempt to deal with non-rectangular FlateDecode streams (#3245)
+- Handle some None values for broken PDF files (#3230)
+
+### Developer Experience (DEV)
+- Multiple style improvements
+- Update ruff to 0.11.0
+
+### Maintenance (MAINT)
+- Conform ASCIIHexDecode implementation to specification (#3274)
+- Modify comments of filters that do not use decode_parms (#3260)
+
+### Code Style (STY)
+- Simplify warnings & debugging in layout mode text extraction (#3271)
+- Standardize mypy assert statements (#3276)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.4.0...5.5.0)
+
 ## Version 5.4.0, 2025-03-16
 
 ### New Features (ENH)
