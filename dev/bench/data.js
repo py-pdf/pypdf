@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746715148311,
+  "lastUpdate": 1746972062821,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -75509,6 +75509,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0033215333042037206",
             "extra": "mean: 735.11616400001 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "be7c870fefd2b479d4243221011c98963045d67c",
+          "message": "REL: 5.5.0\n\n## What's new\n\n### New Features (ENH)\n- Add support for IndirectObject.__iter__ (#3228) by @bryan-brancotte\n- Allow filtering by font when removing text (#3216) by @samuelbradshaw\n\n### Bug Fixes (BUG)\n- Add missing named destinations being ByteStringObjects (#3282) by @stefan6419846\n- Get font information more reliably when removing text (#3252) by @samuelbradshaw\n- T* 2D Translation consistent with PDF 1.7 Spec (#3250) by @hackowitz-af\n- Add font stack to q/Q operations in layout mode (#3225) by @hackowitz-af\n- Avoid completely hiding image loading issues like exceeding image size limits (#3221) by @stefan6419846\n- Using compress_identical_objects on transformed content duplicates differing content (#3197) by @danio\n- Consider BlackIs1 parameter for CCITTFaxDecode filter (#3196) by @stefan6419846\n\n### Robustness (ROB)\n- Deal with insufficient cm matrix during text extraction (#3283) by @stefan6419846\n- Allow merging when annotations miss D entry (#3281) by @stefan6419846\n- Fix merging documents if there are no Dests (#3280) by @stefan6419846\n- Fix crash on malformed action in outline (#3278) by @larsga\n- Fix compression issues for removed images which might be None (#3246) by @stefan6419846\n- Attempt to deal with non-rectangular FlateDecode streams (#3245) by @stefan6419846\n- Handle some None values for broken PDF files (#3230) by @stefan6419846\n\n### Developer Experience (DEV)\n- Multiple style improvements by @j-t-1\n- Update ruff to 0.11.0 by @stefan6419846\n\n### Maintenance (MAINT)\n- Conform ASCIIHexDecode implementation to specification (#3274) by @j-t-1\n- Modify comments of filters that do not use decode_parms (#3260) by @j-t-1\n\n### Code Style (STY)\n- Simplify warnings & debugging in layout mode text extraction (#3271) by @hackowitz-af\n- Standardize mypy assert statements (#3276) by @j-t-1\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.4.0...5.5.0)",
+          "timestamp": "2025-05-11T15:57:53+02:00",
+          "tree_id": "b02602ff50ad78ab79d63d73f358a2ff3208be5c",
+          "url": "https://github.com/py-pdf/pypdf/commit/be7c870fefd2b479d4243221011c98963045d67c"
+        },
+        "date": 1746972058952,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5051328197595986,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009144642066931498",
+            "extra": "mean: 285.2958935999993 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.517369554790225,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006990628055978666",
+            "extra": "mean: 64.44391212499667 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2778112221434918,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01468614996269984",
+            "extra": "mean: 3.599566613199994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.878533934354348,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007575890824589722",
+            "extra": "mean: 59.24685188235531 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08214920924309024,
+            "unit": "iter/sec",
+            "range": "stddev: 0.22147577763721887",
+            "extra": "mean: 12.172971708600011 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.365656298791347,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018955643775823451",
+            "extra": "mean: 732.2486637999873 msec\nrounds: 5"
           }
         ]
       }
