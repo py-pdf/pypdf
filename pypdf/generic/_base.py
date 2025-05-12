@@ -237,6 +237,9 @@ class NullObject(PdfObject):
     def __repr__(self) -> str:
         return "NullObject"
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, NullObject)
+
 
 class BooleanObject(PdfObject):
     def __init__(self, value: Any) -> None:

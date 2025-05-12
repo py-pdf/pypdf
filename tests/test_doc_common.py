@@ -2,13 +2,15 @@
 import re
 import shutil
 import subprocess
+from io import BytesIO
 from pathlib import Path
 from unittest import mock
 
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import EmbeddedFile
+from pypdf.generic import EmbeddedFile, NullObject
+from tests import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -103,3 +105,53 @@ def test_get_attachments__alternative_name_is_none():
             new_callable=mock.PropertyMock(return_value=b"content")
     ):
         assert writer._get_attachments() == {"test.txt": b"content"}
+
+
+@pytest.mark.enable_socket
+def test_byte_encoded_named_destinations():
+    url = "https://github.com/user-attachments/files/19820164/pypdf_issue.pdf"
+    name = "issue3261.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+
+    page = reader.pages[0]
+    for annotation in page.annotations:
+        if annotation.get("/Subtype") == "/Link":
+            action = annotation["/A"]
+            if action["/S"] == "/GoTo":
+                named_dest = action["/D"]
+                assert str(named_dest) in reader.named_destinations
+
+    assert reader.named_destinations == {
+        "Doc-Start": {
+            "/Title": "Doc-Start",
+            "/Page": page.indirect_reference,
+            "/Type": "/XYZ",
+            "/Left": 133.768,
+            "/Top": 667.198,
+            "/Zoom": NullObject()
+        },
+        "楣整搮捡귃㉫㈰爵捡牥汦杩瑨敷杩瑨瑳瑡捩慤慴": {
+            "/Title": "楣整搮捡귃㉫㈰爵捡牥汦杩瑨敷杩瑨瑳瑡捩慤慴",
+            "/Page": page.indirect_reference,
+            "/Type": "/XYZ",
+            "/Left": 133.768,
+            "/Top": 614.424,
+            "/Zoom": NullObject()
+        },
+        "page.1": {
+            "/Title": "page.1",
+            "/Page": page.indirect_reference,
+            "/Type": "/XYZ",
+            "/Left": 132.768,
+            "/Top": 705.06,
+            "/Zoom": NullObject()
+        },
+        "section*.1": {
+            "/Title": "section*.1",
+            "/Page": page.indirect_reference,
+            "/Type": "/XYZ",
+            "/Left": 133.768,
+            "/Top": 642.222,
+            "/Zoom": NullObject()
+        }
+    }
