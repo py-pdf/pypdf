@@ -12,7 +12,7 @@ import pytest
 from PIL import Image, ImageOps
 
 from pypdf import PdfReader
-from pypdf.errors import DependencyError, DeprecationError, PdfReadError
+from pypdf.errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -22,7 +22,15 @@ from pypdf.filters import (
     FlateDecode,
     JBIG2Decode,
 )
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NumberObject
+from pypdf.generic import (
+    ArrayObject,
+    ContentStream,
+    DictionaryObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    NumberObject,
+)
 
 from . import PILContext, get_data_from_url
 from .test_encryption import HAS_AES
@@ -644,25 +652,6 @@ def test_ascii85decode__non_recoverable(caplog):
     assert caplog.text == ""
 
 
-def test_jbig2decode__binary_errors():
-    with mock.patch("pypdf.filters._JBIG2DEC_BINARY", None), \
-            pytest.raises(DependencyError, match="jbig2dec binary is not available."):
-        JBIG2Decode.decode(b"dummy")
-
-    result = subprocess.CompletedProcess(
-        args=["dummy"], returncode=0, stdout=b"",
-        stderr=(
-            b"jbig2dec: unrecognized option '--embedded'\n"
-            b"Usage: jbig2dec [options] <file.jbig2>\n"
-            b"   or  jbig2dec [options] <global_stream> <page_stream>\n"
-        )
-    )
-    with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
-            mock.patch("pypdf.filters._JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
-            pytest.raises(DependencyError, match="jbig2dec>=0.15 is required."):
-        JBIG2Decode.decode(b"dummy")
-
-
 @pytest.mark.enable_socket
 def test_ccitt_fax_decode__black_is_1():
     url = "https://github.com/user-attachments/files/19288881/imagemagick-CCITTFaxDecode_BlackIs1-true.pdf"
@@ -710,3 +699,74 @@ def test_flate_decode__not_rectangular(caplog):
     expected = get_data_from_url(url, name=name)
     assert actual_image.getvalue() == expected
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
+
+
+def test_jbig2decode__binary_errors():
+    with mock.patch("pypdf.filters.JBIG2DEC_BINARY", None), \
+            pytest.raises(DependencyError, match="jbig2dec binary is not available."):
+        JBIG2Decode.decode(b"dummy")
+
+    result = subprocess.CompletedProcess(
+        args=["dummy"], returncode=0, stdout=b"",
+        stderr=(
+            b"jbig2dec: unrecognized option '--embedded'\n"
+            b"Usage: jbig2dec [options] <file.jbig2>\n"
+            b"   or  jbig2dec [options] <global_stream> <page_stream>\n"
+        )
+    )
+    with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
+            mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
+            pytest.raises(DependencyError, match="jbig2dec>=0.15 is required."):
+        JBIG2Decode.decode(b"dummy")
+
+
+@pytest.mark.skipif(condition=not JBIG2Decode._is_binary_compatible(), reason="Requires recent jbig2dec")
+def test_jbig2decode__edge_cases(caplog):
+    image_data = (
+        b'\x00\x00\x00\x010\x00\x01\x00\x00\x00\x13\x00\x00\x00\x05\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x06"'
+        b'\x00\x01\x00\x00\x00\x1c\x00\x00\x00\x05\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x9f\xa8_\xff\xac'
+
+    )
+    jbig2_globals = b"\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x18\x00\x00\x03\xff\xfd\xff\x02\xfe\xfe\xfe\x00\x00\x00\x01\x00\x00\x00\x01R\xd0u7\xff\xac"  # noqa: E501
+
+    # Validation: Is our image data valid?
+    content_stream = ContentStream(stream=None, pdf=None)
+    content_stream.set_data(jbig2_globals)
+    result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": content_stream}))
+    image = Image.open(BytesIO(result), formats=("PNG",))
+    for x in range(5):
+        for y in range(5):
+            assert image.getpixel((x, y)) == (255 if x < 3 else 0), (x, y)
+    assert caplog.messages == []
+
+    # No decode_params. Completely white image.
+    result = JBIG2Decode.decode(image_data)
+    image = Image.open(BytesIO(result), formats=("PNG",))
+    for x in range(5):
+        for y in range(5):
+            assert image.getpixel((x, y)) == 255, (x, y)
+    assert caplog.messages == [
+        "jbig2dec WARNING text region refers to no symbol dictionaries (segment 0x00000002)",
+        "jbig2dec WARNING ignoring out of range symbol ID (0/0) (segment 0x00000002)"
+    ]
+    caplog.clear()
+
+    # JBIG2Globals is NULL. Completely white image.
+    result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": NullObject()}))
+    image = Image.open(BytesIO(result), formats=("PNG",))
+    for x in range(5):
+        for y in range(5):
+            assert image.getpixel((x, y)) == 255, (x, y)
+    assert caplog.messages == [
+        "jbig2dec WARNING text region refers to no symbol dictionaries (segment 0x00000002)",
+        "jbig2dec WARNING ignoring out of range symbol ID (0/0) (segment 0x00000002)"
+    ]
+    caplog.clear()
+
+    # Invalid input.
+    with pytest.raises(PdfStreamError, match="Unable to decode JBIG2 data. Exit code: 1"):
+        JBIG2Decode.decode(b"aaaaaa")
+    assert caplog.messages == [
+        "jbig2dec FATAL ERROR page has no image, cannot be completed",
+        "jbig2dec WARNING unable to complete page"
+    ]

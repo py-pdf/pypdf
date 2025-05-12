@@ -43,7 +43,8 @@ import zlib
 from base64 import a85decode
 from dataclasses import dataclass
 from io import BytesIO
-from tempfile import NamedTemporaryFile
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
@@ -67,6 +68,8 @@ from .generic import (
     DictionaryObject,
     IndirectObject,
     NullObject,
+    StreamObject,
+    is_null_or_none,
 )
 
 
@@ -645,7 +648,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-_JBIG2DEC_BINARY = shutil.which("jbig2dec")
+JBIG2DEC_BINARY = shutil.which("jbig2dec")
 
 
 class JBIG2Decode:
@@ -655,30 +658,48 @@ class JBIG2Decode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
-        if _JBIG2DEC_BINARY is None:
+        if JBIG2DEC_BINARY is None:
             raise DependencyError("jbig2dec binary is not available.")
 
-        with NamedTemporaryFile(suffix=".jbig2") as infile:
-            infile.write(data)
-            infile.seek(0)
+        with TemporaryDirectory() as tempdir:
+            directory = Path(tempdir)
+            paths: List[Path] = []
+
+            if decode_parms and "/JBIG2Globals" in decode_parms:
+                jbig2_globals = decode_parms["/JBIG2Globals"]
+                if not is_null_or_none(jbig2_globals) and not is_null_or_none(pointer := jbig2_globals.get_object()):
+                    assert pointer is not None, "mypy"
+                    if isinstance(pointer, StreamObject):
+                        path = directory.joinpath("globals.jbig2")
+                        path.write_bytes(pointer.get_data())
+                        paths.append(path)
+
+            path = directory.joinpath("image.jbig2")
+            path.write_bytes(data)
+            paths.append(path)
+
             environment = os.environ.copy()
             environment["LC_ALL"] = "C"
             result = subprocess.run(  # noqa: S603
-                [_JBIG2DEC_BINARY, "--embedded", "--format", "png", "--output", "-", infile.name],
+                [JBIG2DEC_BINARY, "--embedded", "--format", "png", "--output", "-", *paths],
                 capture_output=True,
                 env=environment,
             )
             if b"unrecognized option '--embedded'" in result.stderr:
                 raise DependencyError("jbig2dec>=0.15 is required.")
+            if result.stderr:
+                for line in result.stderr.decode("utf-8").splitlines():
+                    logger_warning(line, __name__)
+            if result.returncode != 0:
+                raise PdfStreamError(f"Unable to decode JBIG2 data. Exit code: {result.returncode}")
         return result.stdout
 
     @staticmethod
     def _is_binary_compatible() -> bool:
-        if not _JBIG2DEC_BINARY:  # pragma: no cover
+        if not JBIG2DEC_BINARY:  # pragma: no cover
             return False
         result = subprocess.run(  # noqa: S603
-            [_JBIG2DEC_BINARY, "--version"],
+            [JBIG2DEC_BINARY, "--version"],
             capture_output=True,
             text=True,
         )
@@ -739,7 +760,7 @@ def decode_stream_data(stream: Any) -> bytes:
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
         elif filter_name == FT.JBIG2_DECODE:
-            data = JBIG2Decode.decode(data)
+            data = JBIG2Decode.decode(data, params)
         elif filter_name == "/Crypt":
             if "/Name" in params or "/Type" in params:
                 raise NotImplementedError(
