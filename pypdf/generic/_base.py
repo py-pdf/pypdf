@@ -778,7 +778,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
-    surfix = b"/"
+    prefix = b"/"
     renumber_table: ClassVar[Dict[str, bytes]] = {
         "#": b"#23",
         "(": b"#28",
@@ -855,7 +855,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
-        if name != NameObject.surfix:
+        if name != NameObject.prefix:
             raise PdfReadError("Name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
