@@ -763,6 +763,18 @@ def test_jbig2decode__edge_cases(caplog):
     ]
     caplog.clear()
 
+    # JBIG2Globals is DictionaryObject. Completely white image.
+    result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": DictionaryObject()}))
+    image = Image.open(BytesIO(result), formats=("PNG",))
+    for x in range(5):
+        for y in range(5):
+            assert image.getpixel((x, y)) == 255, (x, y)
+    assert caplog.messages == [
+        "jbig2dec WARNING text region refers to no symbol dictionaries (segment 0x00000002)",
+        "jbig2dec WARNING ignoring out of range symbol ID (0/0) (segment 0x00000002)"
+    ]
+    caplog.clear()
+
     # Invalid input.
     with pytest.raises(PdfStreamError, match="Unable to decode JBIG2 data. Exit code: 1"):
         JBIG2Decode.decode(b"aaaaaa")
