@@ -43,6 +43,7 @@ from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
+    classproperty,
     deprecate_no_replacement,
     deprecate_with_replacement,
     logger_warning,
@@ -779,6 +780,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
+    @classproperty
     deprecate_with_replacement("surfix", "prefix", "6.0.0")
     surfix = b"/"
     prefix = b"/"
