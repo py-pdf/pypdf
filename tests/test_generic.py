@@ -196,10 +196,10 @@ def test_name_object(caplog):
     assert exc.value.args[0] == "Name read error"
 
     assert (
-        NameObject.read_from_stream(BytesIO(b"without_solidus_prefix"), None)
+        (NameObject.surfix = 42)
         == "surfix is deprecated and will be removed in pypdf 6.0.0. Use prefix instead."
     )
-    
+
     assert (
         NameObject.read_from_stream(
             BytesIO(b"/A;Name_With-Various***Characters?"), None
