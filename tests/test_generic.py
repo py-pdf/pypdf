@@ -195,10 +195,11 @@ def test_name_object(caplog):
         NameObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "Name read error"
 
-    assert (
-        (NameObject.surfix = 42)
-        == "surfix is deprecated and will be removed in pypdf 6.0.0. Use prefix instead."
-    )
+    with pytest.warns(
+        DeprecationWarning,
+        match="surfix is deprecated and will be removed in pypdf 6.0.0. Use prefix instead.",
+    ):
+        NameObject.surfix = 42
 
     assert (
         NameObject.read_from_stream(
