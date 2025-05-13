@@ -199,7 +199,7 @@ def test_name_object(caplog):
         DeprecationWarning,
         match="surfix is deprecated and will be removed in pypdf 6.0.0. Use prefix instead.",
     ):
-        NameObject.surfix = 42
+        _ = NameObject.surfix
 
     assert (
         NameObject.read_from_stream(
