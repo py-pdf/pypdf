@@ -781,8 +781,9 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     @classproperty
-    deprecate_with_replacement("surfix", "prefix", "6.0.0")
-    surfix = b"/"
+    def surfix(cls) -> bytes:
+        deprecate_with_replacement("surfix", "prefix", "6.0.0")
+        return b"/"
     prefix = b"/"
     renumber_table: ClassVar[Dict[str, bytes]] = {
         "#": b"#23",
