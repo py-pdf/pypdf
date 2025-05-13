@@ -243,9 +243,16 @@ def test_name_object(caplog):
     assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
     assert caplog.text == ""
 
+    caplog.clear()
     b = BytesIO()
     NameObject("/你好世界 (%)").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
+    assert caplog.text == ""
+
+    caplog.clear()
+    b = BytesIO()
+    NameObject("/{foo}<bar>(baz)[qux]#/%").write_to_stream(b)
+    assert bytes(b.getbuffer()) == b"/#7Bfoo#7D#3Cbar#3E#28baz#29#5Bqux#5D#23#2F#25"
     assert caplog.text == ""
 
 

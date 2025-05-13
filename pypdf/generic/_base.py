@@ -780,11 +780,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     surfix = b"/"
     renumber_table: ClassVar[Dict[str, bytes]] = {
-        "#": b"#23",
-        "(": b"#28",
-        ")": b"#29",
-        "/": b"#2F",
-        "%": b"#25",
+        **{chr(i): f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
 
