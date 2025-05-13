@@ -781,7 +781,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     @classproperty
-    def surfix(cls) -> bytes:
+    def surfix(cls) -> bytes:  # noqa: N805
         deprecate_with_replacement("surfix", "prefix", "6.0.0")
         return b"/"
     prefix = b"/"
