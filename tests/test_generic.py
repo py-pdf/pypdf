@@ -194,16 +194,24 @@ def test_name_object(caplog):
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "Name read error"
+
+    assert (
+        NameObject.read_from_stream(BytesIO(b"without_solidus_prefix"), None)
+        == "surfix is deprecated and will be removed in pypdf 6.0.0. Use prefix instead."
+    )
+    
     assert (
         NameObject.read_from_stream(
             BytesIO(b"/A;Name_With-Various***Characters?"), None
         )
         == "/A;Name_With-Various***Characters?"
     )
+
     assert (
         NameObject.read_from_stream(BytesIO(b"/paired#28#29parentheses"), None)
         == "/paired()parentheses"
     )
+
     assert NameObject.read_from_stream(BytesIO(b"/A#42"), None) == "/AB"
 
     assert (
@@ -222,7 +230,7 @@ def test_name_object(caplog):
         )
     ) == "/你好世界"
 
-    # to test PDFDocEncoding (latin-1)
+    # test PDFDocEncoding (latin-1)
     assert (
         NameObject.read_from_stream(BytesIO(b"/DocuSign\xae"), None)
     ) == "/DocuSign®"
