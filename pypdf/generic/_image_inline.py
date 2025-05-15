@@ -39,6 +39,8 @@ from ..errors import PdfReadError
 
 logger = logging.getLogger(__name__)
 
+# An inline image should be used only for small images (4096 bytes or less),
+# but allow twice this for cases where this has been exceeded.
 BUFFER_SIZE = 8192
 
 
