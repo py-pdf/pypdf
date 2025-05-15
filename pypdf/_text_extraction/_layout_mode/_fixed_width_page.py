@@ -287,11 +287,14 @@ def text_show_operations(
             state_mgr.set_state_param(op, operands)
 
     if any(tj.rotated for tj in tj_ops):
-        logger_warning(
-            "Rotated text discovered. "
-            + ("Output will be incomplete." if strip_rotated else "Layout will be degraded."),
-            __name__
-        )
+        if strip_rotated:
+            logger_warning(
+                "Rotated text discovered. Output will be incomplete.", __name__
+            )
+        else:
+            logger_warning(
+                "Rotated text discovered. Layout will be degraded.", __name__
+            )
     if not all(tj.font.interpretable for tj in tj_ops):
         logger_warning(
             "PDF contains an uninterpretable font. Output will be incomplete.", __name__

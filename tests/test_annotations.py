@@ -1,5 +1,6 @@
 """Test the pypdf.annotations submodule."""
 
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -18,8 +19,10 @@ from pypdf.annotations import (
     Rectangle,
     Text,
 )
-from pypdf.errors import DeprecationError
+from pypdf.errors import DeprecationError, PdfReadError
 from pypdf.generic import ArrayObject, FloatObject, NumberObject
+
+from . import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -398,3 +401,18 @@ def test_popup(caplog):
     target = "annotated-pdf-popup.pdf"
     writer.write(target)
     Path(target).unlink()  # comment this out for manual inspection
+
+
+@pytest.mark.enable_socket
+def test_outline_action_without_d_lenient():
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    assert len(reader.outline) == 2
+
+
+@pytest.mark.enable_socket
+def test_outline_action_without_d_strict(pdf_file_path):
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    reader.strict = True
+    with pytest.raises(PdfReadError) as e:
+        assert len(reader.outline) == 2
+    assert "Outline Action Missing /D" in str(e)

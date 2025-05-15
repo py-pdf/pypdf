@@ -294,7 +294,7 @@ class ASCIIHexDecode:
                 logger_warning(
                     "missing EOD in ASCIIHexDecode, check if output is OK", __name__
                 )
-                break  # Reached end of string even if no EOD
+                break  # Reached end of string without an EOD
             char = data[index : index + 1]
             if char == b">":
                 break
@@ -306,7 +306,13 @@ class ASCIIHexDecode:
                 retval += bytes((int(hex_pair, base=16),))
                 hex_pair = b""
             index += 1
-        assert hex_pair == b""
+        # If the filter encounters the EOD marker after reading
+        # an odd number of hexadecimal digits,
+        # it shall behave as if a 0 (zero) followed the last digit.
+        # For every even number of hexadecimal digits, hex_pair is reset to b"".
+        if hex_pair != b"":
+            hex_pair += b"0"
+            retval += bytes((int(hex_pair, base=16),))
         return retval
 
 
@@ -351,7 +357,7 @@ class RunLengthDecode:
                 logger_warning(
                     "missing EOD in RunLengthDecode, check if output is OK", __name__
                 )
-                break  # reach End Of String even if no EOD
+                break  # Reached end of string without an EOD
             length = data[index]
             index += 1
             if length == 128:
@@ -780,6 +786,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     if isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
     else:
+        decode_parms = {}
+    if not isinstance(decode_parms, dict):
         decode_parms = {}
 
     extension = None

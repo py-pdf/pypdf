@@ -15,6 +15,7 @@ from pypdf import PdfReader, mult
 from pypdf._text_extraction import set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
 from pypdf.errors import ParseError, PdfReadError
+from pypdf.generic import ContentStream
 
 from . import get_data_from_url
 
@@ -387,10 +388,21 @@ def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
     assert caplog.records[-1].msg == msg
 
 
+def test_process_operation__cm_multiplication_issue():
+    """Test for #3262."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    content = page.get_contents().get_data()
+    content = content.replace(b" 1 0 0 1 72 720 cm ", b" 0.70278 65.3 163.36 cm ")
+    stream = ContentStream(stream=None, pdf=reader)
+    stream.set_data(content)
+    page.replace_contents(stream)
+    assert page.extract_text().startswith("The Crazy Ones\nOctober 14, 1998\n")
+
+
 @pytest.mark.enable_socket
 def test_rotated_layout_mode(caplog):
-    """Ensures text extraction of rotated pages."""
-    # Get the PDF from issue #3270
+    """Ensures text extraction of rotated pages, as in issue #3270."""
     url = "https://github.com/user-attachments/files/19981120/rotated-page.pdf"
     name = "rotated-page.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
@@ -401,4 +413,4 @@ def test_rotated_layout_mode(caplog):
 
     assert not caplog.records, "No warnings should be issued"
     assert text, "Text matching the page rotation should be extracted"
-    assert re.search(r"\r?\n +69\r?\n +UNCLASSIFIED$", text), "Contents should be expected layout"
+    assert re.search(r"\r?\n +69\r?\n +UNCLASSIFIED$", text), "Contents should be in expected layout"

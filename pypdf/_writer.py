@@ -436,7 +436,7 @@ class PdfWriter(PdfDocCommon):
             raise ValueError("PDF must be self")
         else:
             obj = self._objects[indirect_reference.idnum - 1]
-        assert obj is not None  # clarification for mypy
+        assert obj is not None, "mypy"
         return obj
 
     def _replace_object(
@@ -457,7 +457,7 @@ class PdfWriter(PdfDocCommon):
         self._objects[indirect_reference - 1] = obj
         obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
 
-        assert isinstance(obj, PdfObject)  # clarification for mypy
+        assert isinstance(obj, PdfObject), "mypy"
         return obj
 
     def _add_page(
@@ -1441,7 +1441,7 @@ class PdfWriter(PdfDocCommon):
                 or obj.hash_bin() != self._original_hash[i]
             ):
                 idnum = i + 1
-                assert isinstance(obj, PdfObject)  # mypy
+                assert isinstance(obj, PdfObject), "mypy"
                 # first write new/modified object
                 object_positions[idnum] = stream.tell()
                 stream.write(f"{idnum} 0 obj\n".encode())
@@ -1651,7 +1651,7 @@ class PdfWriter(PdfDocCommon):
         for idx, obj in enumerate(self._objects):
             if is_null_or_none(obj):
                 continue
-            assert obj is not None  # mypy: TypeGuard of `is_null_or_none` does not help here.
+            assert obj is not None, "mypy"  # mypy: TypeGuard of `is_null_or_none` does not help here.
             assert isinstance(obj.indirect_reference, IndirectObject)
             h = obj.hash_value()
             if remove_identicals and h in self._idnum_hash:
@@ -2796,8 +2796,8 @@ class PdfWriter(PdfDocCommon):
                 List[Any],
                 cast(
                     DictionaryObject,
-                    cast(DictionaryObject, self._root_object["/Names"])["/Dests"],
-                )["/Names"],
+                    cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
+                ).get("/Names", DictionaryObject()),
             ):
                 # already exists: should not duplicate it
                 pass
@@ -3043,8 +3043,8 @@ class PdfWriter(PdfDocCommon):
                             anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
                             outlist.append(self._add_object(anc))
             else:
-                d = cast("DictionaryObject", ano["/A"])["/D"]
-                if isinstance(d, NullObject):
+                d = cast("DictionaryObject", ano["/A"]).get("/D", NullObject())
+                if d is None or isinstance(d, NullObject):
                     continue
                 if isinstance(d, str):
                     # it is a named dest
