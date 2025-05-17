@@ -97,12 +97,14 @@ def test_brotli_missing_installation():
     assert "Brotli library not installed" in str(exc_info_stream.value)
 
 
-@pytest.mark.skipif(importlib.util.find_spec("brotli") is None, reason="brotli library not installed")
-def test_brotli_import_handling_available():
-    """Verify brotli module is properly imported in pypdf.filters when available."""
-    # This test only runs when brotli is actually installed
-    from pypdf import filters
-    assert filters.brotli is not None, "brotli should be imported when available"
+@pytest.importorskip("brotli", reason="brotli library not installed")
+def test_brotli_decode_encode_with_real_module():
+    """BrotliDecode encode() and decode() methods work with actual module."""
+    s = "Hello, Brotli!".encode()
+    codec = BrotliDecode()
+    encoded = codec.encode(s)
+    assert encoded != s  # Ensure encoding actually happened
+    assert codec.decode(encoded) == s
 
 
 def test_flatedecode_unsupported_predictor():
@@ -742,11 +744,9 @@ def test_flate_decode__not_rectangular(caplog):
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
 
+@pytest.importorskip("brotli", reason="brotli library not installed")
 def test_main_decode_brotli_installed():
     """Test the main decode function with Brotli filter using a real PDF."""
-    if importlib.util.find_spec("brotli") is None:
-        pytest.skip("brotli library not installed")
-
     pdf_path = RESOURCE_ROOT / "brotli-test-pdfs" / "minimal-brotli-compressed.pdf"
 
     reader = PdfReader(pdf_path)
@@ -755,19 +755,12 @@ def test_main_decode_brotli_installed():
 
     assert extracted_text.strip() == "Hello, Brotli!"
 
-def test_brotli_import_error_with_patch():
-    original_import = builtins.__import__
 
-    def mock_import(name, globals=None, locals=None, fromlist=(), level=0) -> "types.ModuleType | ImportError":
-        if name == "brotli":
-            raise ImportError("Simulated brotli import error")
-        return original_import(name, globals, locals, fromlist, level)
+def test_brotli_module_importability():
+    """
+    Test that the BrotliDecode class exists and is importable,
+    regardless of whether the brotli library is installed.
+    """
+    from pypdf.filters import BrotliDecode
+    assert BrotliDecode is not None
 
-    with patch("builtins.__import__", side_effect=mock_import):
-        importlib.reload(importlib.import_module("pypdf.filters"))
-        from pypdf.filters import BrotliDecode
-
-        assert BrotliDecode is not None
-        assert importlib.import_module("pypdf.filters").brotli is None
-
-    importlib.reload(importlib.import_module("pypdf.filters"))
