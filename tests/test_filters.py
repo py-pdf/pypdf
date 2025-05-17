@@ -757,7 +757,7 @@ def test_main_decode_brotli_installed():
 
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
-    
+
     # This test specifically exercises the BrotliDecode path in decode_stream_data function
     # when processing a real PDF with BrotliDecode filter
     extracted_text = page.extract_text()
