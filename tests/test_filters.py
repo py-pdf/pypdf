@@ -1,7 +1,5 @@
 """Test the pypdf.filters module."""
 
-import builtins
-import importlib.util
 import os
 import shutil
 import string
@@ -9,13 +7,9 @@ import subprocess
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
-from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-
-if TYPE_CHECKING:
-    import types
 from PIL import Image, ImageOps
 
 from pypdf import PdfReader
@@ -29,7 +23,13 @@ from pypdf.filters import (
     CCITTParameters,
     FlateDecode,
 )
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NumberObject
+from pypdf.generic import (
+    ArrayObject,
+    DictionaryObject,
+    IndirectObject,
+    NameObject,
+    NumberObject,
+)
 
 from . import PILContext, get_data_from_url
 from .test_encryption import HAS_AES
@@ -63,7 +63,8 @@ def test_flate_decode_encode(predictor, s):
 
 @pytest.mark.parametrize("s", filter_inputs)
 def test_brotli_decode_encode(s):
-    """BrotliDecode encode() and decode() methods work as expected."""
+    pytest.importorskip("brotli", reason="brotli library not installed")
+
     codec = BrotliDecode()
     s_bytes = s.encode()
     encoded = codec.encode(s_bytes)
@@ -74,7 +75,6 @@ def test_brotli_decode_encode(s):
 
 @patch("pypdf.filters.brotli", None)
 def test_brotli_missing_installation():
-    """Verify BrotliDecode raises ImportError if brotli is not installed."""
     from pypdf.filters import BrotliDecode, decode_stream_data
 
     # Test direct decode call
@@ -97,10 +97,10 @@ def test_brotli_missing_installation():
     assert "Brotli library not installed" in str(exc_info_stream.value)
 
 
-@pytest.importorskip("brotli", reason="brotli library not installed")
 def test_brotli_decode_encode_with_real_module():
-    """BrotliDecode encode() and decode() methods work with actual module."""
-    s = "Hello, Brotli!".encode()
+    pytest.importorskip("brotli", reason="brotli library not installed")
+
+    s = b"Hello, Brotli!"
     codec = BrotliDecode()
     encoded = codec.encode(s)
     assert encoded != s  # Ensure encoding actually happened
@@ -281,7 +281,9 @@ def test_ccitt_get_parameters__indirect_object():
 
 def test_ccitt_fax_decode():
     data = b""
-    parameters = DictionaryObject({"/K": NumberObject(-1), "/Columns": NumberObject(17)})
+    parameters = DictionaryObject(
+        {"/K": NumberObject(-1), "/Columns": NumberObject(17)}
+    )
 
     # This was just the result pypdf 1.27.9 returned.
     # It would be awesome if we could check if that is actually correct.
@@ -426,7 +428,9 @@ def test_iss1787():
     obj = data.indirect_reference.get_object()
     obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
     obj.decoded_self = None
-    with pytest.raises(expected_exception=PdfReadError, match="^Unsupported PNG filter 244$"):
+    with pytest.raises(
+        expected_exception=PdfReadError, match="^Unsupported PNG filter 244$"
+    ):
         _ = reader.pages[0].images[0]
 
 
@@ -735,7 +739,9 @@ def test_flate_decode__not_rectangular(caplog):
     decode_parms[NameObject("/Columns")] = NumberObject(4881)
     actual = FlateDecode.decode(data=data, decode_parms=decode_parms)
     actual_image = BytesIO()
-    Image.frombytes(mode="1", size=(4881, 81), data=actual).save(actual_image, format="png")
+    Image.frombytes(mode="1", size=(4881, 81), data=actual).save(
+        actual_image, format="png"
+    )
 
     url = "https://github.com/user-attachments/assets/c5695850-c076-4255-ab72-7c86851a4a04"
     name = "issue3241.png"
@@ -744,23 +750,22 @@ def test_flate_decode__not_rectangular(caplog):
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
 
-@pytest.importorskip("brotli", reason="brotli library not installed")
 def test_main_decode_brotli_installed():
-    """Test the main decode function with Brotli filter using a real PDF."""
+    pytest.importorskip("brotli", reason="brotli library not installed")
+
     pdf_path = RESOURCE_ROOT / "brotli-test-pdfs" / "minimal-brotli-compressed.pdf"
 
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
+    
+    # This test specifically exercises the BrotliDecode path in decode_stream_data function
+    # when processing a real PDF with BrotliDecode filter
     extracted_text = page.extract_text()
 
     assert extracted_text.strip() == "Hello, Brotli!"
 
 
 def test_brotli_module_importability():
-    """
-    Test that the BrotliDecode class exists and is importable,
-    regardless of whether the brotli library is installed.
-    """
     from pypdf.filters import BrotliDecode
-    assert BrotliDecode is not None
 
+    assert BrotliDecode is not None
