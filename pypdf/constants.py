@@ -245,6 +245,7 @@ class FilterTypes(StrEnum):
     CCITT_FAX_DECODE = "/CCITTFaxDecode"  # abbreviation: CCF
     DCT_DECODE = "/DCTDecode"  # abbreviation: DCT
     JPX_DECODE = "/JPXDecode"
+    BROTLI_DECODE = "/BrotliDecode"   # abbreviation: Br, PDF 2.0
 
 
 class FilterTypeAbbreviations:
@@ -257,6 +258,7 @@ class FilterTypeAbbreviations:
     RL = "/RL"
     CCF = "/CCF"
     DCT = "/DCT"
+    BR = "/Br"
 
 
 class LzwFilterParameters:
