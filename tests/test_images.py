@@ -15,6 +15,7 @@ import pytest
 from PIL import Image, ImageChops, ImageDraw
 
 from pypdf import PageObject, PdfReader, PdfWriter
+from pypdf.filters import JBIG2Decode
 from pypdf.generic import ContentStream, NameObject, NullObject
 
 from . import get_data_from_url
@@ -530,3 +531,44 @@ EI\nQ\n""".encode("latin1")  # noqa: E501
     output = BytesIO()
     writer.write(output)
     assert expected in output.getvalue()
+
+
+@pytest.mark.enable_socket
+@pytest.mark.skipif(condition=not JBIG2Decode._is_binary_compatible(), reason="Requires recent jbig2dec")
+def test_jbig2decode():
+    url = "https://github.com/py-pdf/pypdf/files/12090692/New.Jersey.Coinbase.staking.securities.charges.2023-0606_Coinbase-Penalty-and-C-D.pdf"
+    name = "jbig2.pdf"
+
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+    image = next(iter(page.images))
+    assert image.image.size == (5138, 6630)
+    assert image.image.mode == "1"
+    assert image.image.format == "PNG"
+
+    url = "https://github.com/user-attachments/assets/d6f88c80-a2e0-4ea9-b1e0-34442041d004"
+    name = "jbig2.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+
+    assert image_similarity(image.image, img) >= 0.999
+
+
+@pytest.mark.enable_socket
+@pytest.mark.skipif(condition=not JBIG2Decode._is_binary_compatible(), reason="Requires recent jbig2dec")
+def test_jbig2decode__jbig2globals():
+    url = "https://github.com/user-attachments/files/20119148/out.pdf"
+    name = "jbig2_globals.pdf"
+
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+    image = next(iter(page.images))
+    assert image.image.size == (1067, 1067)
+    assert image.image.mode == "1"
+    assert image.image.format == "PNG"
+
+    url = "https://github.com/user-attachments/assets/7ac41ee3-9c13-44cf-aa74-8f106287e354"
+    name = "jbig2_globals.png"
+    img = Image.open(BytesIO(get_data_from_url(url, name=name)))
+
+    # Wrong image: 0.9618265964800714
+    assert image_similarity(image.image, img) >= 0.999

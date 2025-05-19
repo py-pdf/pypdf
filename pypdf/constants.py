@@ -245,6 +245,7 @@ class FilterTypes(StrEnum):
     CCITT_FAX_DECODE = "/CCITTFaxDecode"  # abbreviation: CCF
     DCT_DECODE = "/DCTDecode"  # abbreviation: DCT
     JPX_DECODE = "/JPXDecode"
+    JBIG2_DECODE = "/JBIG2Decode"
 
 
 class FilterTypeAbbreviations:
