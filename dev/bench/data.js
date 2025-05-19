@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747650002336,
+  "lastUpdate": 1747653364006,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -75971,6 +75971,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002962457959352799",
             "extra": "mean: 750.9560749999991 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "15c42ffac67f0626836b01f9d60a73e5416b71ad",
+          "message": "ENH: Add basic support for JBIG2 by using jbig2dec (#3163)\n\nCloses #1989.",
+          "timestamp": "2025-05-19T13:13:35+02:00",
+          "tree_id": "4ea4fccf9edc41fdc42701533e3cabe057612478",
+          "url": "https://github.com/py-pdf/pypdf/commit/15c42ffac67f0626836b01f9d60a73e5416b71ad"
+        },
+        "date": 1747653360663,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4764417026406966,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010640663125440049",
+            "extra": "mean: 287.6504441999998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.248465341792848,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007314111776596493",
+            "extra": "mean: 65.58037006250129 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2756840329623275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019819671476468334",
+            "extra": "mean: 3.6273410152000025 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.01366224300007,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002093405902711755",
+            "extra": "mean: 58.776293176469395 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08226826491556948,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12390762296378696",
+            "extra": "mean: 12.155355422000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3306386229935485,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000709053207376232",
+            "extra": "mean: 751.5188442000067 msec\nrounds: 5"
           }
         ]
       }
