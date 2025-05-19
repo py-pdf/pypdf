@@ -3,6 +3,8 @@ Testing the text-extraction submodule and ensuring the quality of text extractio
 
 The tested code might be in _page.py.
 """
+
+import re
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -396,3 +398,19 @@ def test_process_operation__cm_multiplication_issue():
     stream.set_data(content)
     page.replace_contents(stream)
     assert page.extract_text().startswith("The Crazy Ones\nOctober 14, 1998\n")
+
+
+@pytest.mark.enable_socket
+def test_rotated_layout_mode(caplog):
+    """Ensures text extraction of rotated pages, as in issue #3270."""
+    url = "https://github.com/user-attachments/files/19981120/rotated-page.pdf"
+    name = "rotated-page.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+
+    page.transfer_rotation_to_content()
+    text = page.extract_text(extraction_mode="layout")
+
+    assert not caplog.records, "No warnings should be issued"
+    assert text, "Text matching the page rotation should be extracted"
+    assert re.search(r"\r?\n +69\r?\n +UNCLASSIFIED$", text), "Contents should be in expected layout"

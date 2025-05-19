@@ -665,6 +665,14 @@ def test_ccitt_fax_decode__black_is_1():
     actual_pixels = list(actual_image.getdata())
     assert expected_pixels == actual_pixels
 
+    # AttributeError: 'NullObject' object has no attribute 'get'
+    data_modified = get_data_from_url(url, name=name).replace(
+        b"/DecodeParms [ << /K -1 /BlackIs1 true /Columns 16 /Rows 16 >> ]",
+        b"/DecodeParms [ null ]"
+    )
+    reader = PdfReader(BytesIO(data_modified))
+    _ = reader.pages[0].images[0].image
+
 
 @pytest.mark.enable_socket
 def test_flate_decode__image_is_none_due_to_size_limit(caplog):

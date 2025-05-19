@@ -857,6 +857,8 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         decode_parms = decode_parms[0]
     else:
         decode_parms = {}
+    if not isinstance(decode_parms, dict):
+        decode_parms = {}
 
     extension = None
     if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):

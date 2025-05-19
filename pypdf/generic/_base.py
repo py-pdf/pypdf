@@ -43,7 +43,9 @@ from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
+    classproperty,
     deprecate_no_replacement,
+    deprecate_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -778,13 +780,9 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
-    surfix = b"/"
+    prefix = b"/"
     renumber_table: ClassVar[Dict[str, bytes]] = {
-        "#": b"#23",
-        "(": b"#28",
-        ")": b"#29",
-        "/": b"#2F",
-        "%": b"#25",
+        **{chr(i): f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
 
@@ -837,6 +835,11 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                     out += c.encode("utf-8")
         return out
 
+    @classproperty
+    def surfix(cls) -> bytes:  # noqa: N805
+        deprecate_with_replacement("surfix", "prefix", "6.0.0")
+        return b"/"
+
     @staticmethod
     def unnumber(sin: bytes) -> bytes:
         i = sin.find(b"#", 0)
@@ -855,7 +858,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
-        if name != NameObject.surfix:
+        if name != NameObject.prefix:
             raise PdfReadError("Name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
