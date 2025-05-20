@@ -28,8 +28,6 @@
 
 """
 Implementation of stream filters for PDF.
-
-See TABLE H.1 Abbreviations for standard filter names
 """
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
@@ -132,18 +130,17 @@ class FlateDecode:
             raise DeprecationError("decode_parms as ArrayObject is deprecated")
 
         str_data = decompress(data)
-        predictor = 1
 
+        predictor = 1
         if decode_parms:
             try:
                 predictor = decode_parms.get("/Predictor", 1)
             except (AttributeError, TypeError):  # Type Error is NullObject
                 pass  # Usually an array with a null object was read
-        # predictor 1 == no predictor
+        # predictor == 1: no predictor
         if predictor != 1:
             # /Columns, the number of samples in each row, has a default value of 1;
             # §7.4.4.3, ISO 32000.
-            DEFAULT_BITS_PER_COMPONENT = 8
             try:
                 columns = cast(int, decode_parms[LZW.COLUMNS].get_object())  # type: ignore
             except (TypeError, KeyError):
@@ -152,6 +149,7 @@ class FlateDecode:
                 colors = cast(int, decode_parms[LZW.COLORS].get_object())  # type: ignore
             except (TypeError, KeyError):
                 colors = 1
+            DEFAULT_BITS_PER_COMPONENT = 8
             try:
                 bits_per_component = cast(
                     int,
@@ -165,8 +163,8 @@ class FlateDecode:
                 math.ceil(columns * colors * bits_per_component / 8) + 1
             )  # number of bytes
 
-            # TIFF prediction:
             if predictor == 2:
+                # TIFF prediction
                 rowlength -= 1  # remove the predictor byte
                 bpp = rowlength // columns
                 str_data = bytearray(str_data)
@@ -174,8 +172,8 @@ class FlateDecode:
                     if i % rowlength >= bpp:
                         str_data[i] = (str_data[i] + str_data[i - bpp]) % 256
                 str_data = bytes(str_data)
-            # PNG prediction:
             elif 10 <= predictor <= 15:
+                # PNG prediction
                 str_data = FlateDecode._decode_png_prediction(
                     str_data, columns, rowlength
                 )
@@ -198,18 +196,18 @@ class FlateDecode:
             filter_byte = rowdata[0]
 
             if filter_byte == 0:
-                # PNG None Predictor
+                # None Predictor
                 pass
             elif filter_byte == 1:
-                # PNG Sub Predictor
+                # Sub Predictor
                 for i in range(bpp + 1, rowlength):
                     rowdata[i] = (rowdata[i] + rowdata[i - bpp]) % 256
             elif filter_byte == 2:
-                # PNG Up Predictor
+                # Up Predictor
                 for i in range(1, rowlength):
                     rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
             elif filter_byte == 3:
-                # PNG Average Predictor
+                # Average Predictor
                 for i in range(1, bpp + 1):
                     floor = prev_rowdata[i] // 2
                     rowdata[i] = (rowdata[i] + floor) % 256
@@ -218,7 +216,7 @@ class FlateDecode:
                     floor = (left + prev_rowdata[i]) // 2
                     rowdata[i] = (rowdata[i] + floor) % 256
             elif filter_byte == 4:
-                # PNG Paeth Predictor
+                # Paeth Predictor
                 for i in range(1, bpp + 1):
                     rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
                 for i in range(bpp + 1, rowlength):
@@ -755,12 +753,12 @@ def decode_stream_data(stream: Any) -> bytes:
         elif filter_name == FT.CCITT_FAX_DECODE:
             height = stream.get(IA.HEIGHT, ())
             data = CCITTFaxDecode.decode(data, params, height)
+        elif filter_name == FT.JBIG2_DECODE:
+            data = JBIG2Decode.decode(data, params)
         elif filter_name == FT.DCT_DECODE:
             data = DCTDecode.decode(data)
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
-        elif filter_name == FT.JBIG2_DECODE:
-            data = JBIG2Decode.decode(data, params)
         elif filter_name == "/Crypt":
             if "/Name" in params or "/Type" in params:
                 raise NotImplementedError(
@@ -810,7 +808,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                     f"image and mask size not matching: {obj_as_text}", __name__
                 )
             else:
-                # TODO : implement mask
+                # TODO: implement mask
                 if alpha.mode != "L":
                     alpha = alpha.convert("L")
                 if img.mode == "P":
