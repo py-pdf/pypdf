@@ -1141,9 +1141,9 @@ class PageObject(DictionaryObject):
         except KeyError:
             original_resources = DictionaryObject()
         try:
-            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+            page2_resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
         except KeyError:
-            page2resources = DictionaryObject()
+            page2_resources = DictionaryObject()
 
         new_resources = DictionaryObject()
         rename = {}
@@ -1156,12 +1156,12 @@ class PageObject(DictionaryObject):
             RES.SHADING,
             RES.PROPERTIES,
         ):
-            new, newrename = self._merge_resources(
-                original_resources, page2resources, res
+            new, new_rename = self._merge_resources(
+                original_resources, page2_resources, res
             )
             if new:
                 new_resources[NameObject(res)] = new
-                rename.update(newrename)
+                rename.update(new_rename)
 
         # Combine /ProcSet sets, making sure there is a consistent order
         new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
@@ -1169,7 +1169,7 @@ class PageObject(DictionaryObject):
                 set(
                     original_resources.get(RES.PROC_SET, ArrayObject()).get_object()
                 ).union(
-                    set(page2resources.get(RES.PROC_SET, ArrayObject()).get_object())
+                    set(page2_resources.get(RES.PROC_SET, ArrayObject()).get_object())
                 )
             )
         )
@@ -1180,10 +1180,10 @@ class PageObject(DictionaryObject):
             original_content.isolate_graphics_state()
             new_content_array.append(original_content)
 
-        page2content = page2.get_contents()
-        if page2content is not None:
+        page2_content = page2.get_contents()
+        if page2_content is not None:
             rect = getattr(page2, MERGE_CROP_BOX)
-            page2content.operations.insert(
+            page2_content.operations.insert(
                 0,
                 (
                     map(
@@ -1198,18 +1198,18 @@ class PageObject(DictionaryObject):
                     b"re",
                 ),
             )
-            page2content.operations.insert(1, ([], b"W"))
-            page2content.operations.insert(2, ([], b"n"))
+            page2_content.operations.insert(1, ([], b"W"))
+            page2_content.operations.insert(2, ([], b"n"))
             if page2transformation is not None:
-                page2content = page2transformation(page2content)
-            page2content = PageObject._content_stream_rename(
-                page2content, rename, self.pdf
+                page2_content = page2transformation(page2_content)
+            page2_content = PageObject._content_stream_rename(
+                page2_content, rename, self.pdf
             )
-            page2content.isolate_graphics_state()
+            page2_content.isolate_graphics_state()
             if over:
-                new_content_array.append(page2content)
+                new_content_array.append(page2_content)
             else:
-                new_content_array.insert(0, page2content)
+                new_content_array.insert(0, page2_content)
 
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
