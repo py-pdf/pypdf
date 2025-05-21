@@ -1145,6 +1145,7 @@ class PageObject(DictionaryObject):
         except KeyError:
             page2resources = DictionaryObject()
 
+        new_resources = DictionaryObject()
         rename = {}
         for res in (
             RES.EXT_G_STATE,
@@ -1163,7 +1164,6 @@ class PageObject(DictionaryObject):
                 rename.update(newrename)
 
         # Combine /ProcSet sets, making sure there is a consistent order
-        new_resources = DictionaryObject()
         new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
             sorted(
                 set(
