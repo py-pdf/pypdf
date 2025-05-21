@@ -1122,9 +1122,6 @@ class PageObject(DictionaryObject):
         over: bool = True,
         expand: bool = False,
     ) -> None:
-        # First we work on merging the resource dictionaries. This allows us
-        # to find out what symbols in the content streams we might need to
-        # rename.
         try:
             assert isinstance(self.indirect_reference, IndirectObject)
             if hasattr(
@@ -1136,8 +1133,9 @@ class PageObject(DictionaryObject):
         except (AssertionError, AttributeError):
             pass
 
-        new_resources = DictionaryObject()
-        rename = {}
+        # First we work on merging the resource dictionaries. This allows us
+        # to find out what symbols in the content streams we might need to
+        # rename.
         try:
             original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
         except KeyError:
@@ -1146,14 +1144,8 @@ class PageObject(DictionaryObject):
             page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
         except KeyError:
             page2resources = DictionaryObject()
-        new_annots = ArrayObject()
 
-        for page in (self, page2):
-            if PG.ANNOTS in page:
-                annots = page[PG.ANNOTS]
-                if isinstance(annots, ArrayObject):
-                    new_annots.extend(annots)
-
+        rename = {}
         for res in (
             RES.EXT_G_STATE,
             RES.FONT,
@@ -1170,7 +1162,8 @@ class PageObject(DictionaryObject):
                 new_resources[NameObject(res)] = new
                 rename.update(newrename)
 
-        # Combine /ProcSet sets, making sure there's a consistent order
+        # Combine /ProcSet sets, making sure there is a consistent order
+        new_resources = DictionaryObject()
         new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
             sorted(
                 set(
@@ -1222,8 +1215,15 @@ class PageObject(DictionaryObject):
         if expand:
             self._expand_mediabox(page2, ctm)
 
-        self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
+        self.replace_contents(ContentStream(new_content_array, self.pdf))
+
+        new_annots = ArrayObject()
+        for page in (self, page2):
+            if PG.ANNOTS in page:
+                annots = page[PG.ANNOTS]
+                if isinstance(annots, ArrayObject):
+                    new_annots.extend(annots)
         self[NameObject(PG.ANNOTS)] = new_annots
 
     def _merge_page_writer(
@@ -1240,7 +1240,6 @@ class PageObject(DictionaryObject):
         assert isinstance(self.indirect_reference, IndirectObject)
         pdf = self.indirect_reference.pdf
 
-        rename = {}
         if PG.RESOURCES not in self:
             self[NameObject(PG.RESOURCES)] = DictionaryObject()
         original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
@@ -1249,6 +1248,7 @@ class PageObject(DictionaryObject):
         else:
             page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
 
+        rename = {}
         for res in (
             RES.EXT_G_STATE,
             RES.FONT,
@@ -1265,7 +1265,7 @@ class PageObject(DictionaryObject):
                     original_resources, page2resources, res, False
                 )
                 rename.update(newrename)
-        # Combine /ProcSet sets.
+        # Combine /ProcSet sets
         if RES.PROC_SET in page2resources:
             if RES.PROC_SET not in original_resources:
                 original_resources[NameObject(RES.PROC_SET)] = ArrayObject()
