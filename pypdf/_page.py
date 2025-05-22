@@ -1149,11 +1149,11 @@ class PageObject(DictionaryObject):
         rename = {}
         for res in (
             RES.EXT_G_STATE,
-            RES.FONT,
-            RES.XOBJECT,
             RES.COLOR_SPACE,
             RES.PATTERN,
             RES.SHADING,
+            RES.XOBJECT,
+            RES.FONT,
             RES.PROPERTIES,
         ):
             new, new_rename = self._merge_resources(
@@ -1251,11 +1251,11 @@ class PageObject(DictionaryObject):
         rename = {}
         for res in (
             RES.EXT_G_STATE,
-            RES.FONT,
-            RES.XOBJECT,
             RES.COLOR_SPACE,
             RES.PATTERN,
             RES.SHADING,
+            RES.XOBJECT,
+            RES.FONT,
             RES.PROPERTIES,
         ):
             if res in page2resources:
