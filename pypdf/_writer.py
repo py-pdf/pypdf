@@ -94,15 +94,18 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    DirectRefLink,
     EmbeddedFile,
     Fit,
     FloatObject,
     IndirectObject,
+    NamedRefLink,
     NameObject,
     NullObject,
     NumberObject,
     PdfObject,
     RectangleObject,
+    RefLink,
     StreamObject,
     TextStringObject,
     TreeObject,
@@ -208,6 +211,11 @@ class PdfWriter(PdfDocCommon):
         self._ID: Union[ArrayObject, None] = None
         """The PDF file identifier,
         defined by the ID in the PDF file's trailer dictionary."""
+
+        self._unresolved_links: list[tuple[RefLink,RefLink]] = []
+        "Tracks links in pages added to the writer for resolving later."
+        self._merged_in_pages: Dict[Optional[IndirectObject],Optional[IndirectObject]] = {}
+        "Tracks pages added to the writer and what page they turned into."
 
         if self.incremental:
             if isinstance(fileobj, (str, Path)):
@@ -479,12 +487,47 @@ class PdfWriter(PdfDocCommon):
             ]
         except Exception:
             pass
+
+        def _extract_links(new_page: PageObject, old_page: PageObject) -> List[Tuple[RefLink,RefLink]]:
+            new_links = [_build_link(link, new_page) for link in new_page.get("/Annots", [])]
+            old_links = [_build_link(link, old_page) for link in old_page.get("/Annots", [])]
+
+            return [(new_link, old_link) for (new_link, old_link)
+                    in zip(new_links, old_links)
+                    if new_link and old_link]
+
+        def _build_link(indir_obj: IndirectObject, page: PageObject) -> Optional[RefLink]:
+            src = cast(PdfReader, page.pdf)
+            link = cast(DictionaryObject, indir_obj.get_object())
+            if link.get("/Subtype") != "/Link":
+                return None
+
+            if "/A" in link:
+                action = cast(DictionaryObject, link["/A"])
+                if action.get("/S") != "/GoTo":
+                    return None
+
+                return _create_link(action["/D"], src)
+
+            if "/Dest" in link:
+                return _create_link(link["/Dest"], src)
+
+            return None # nothing we need to do
+
+        def _create_link(ref: PdfObject, src: PdfReader)-> Optional[RefLink]:
+            if isinstance(ref, TextStringObject):
+                return NamedRefLink(ref, src)
+            if isinstance(ref, ArrayObject):
+                return DirectRefLink(ref)
+            return None
+
         page = cast(
             "PageObject", page_org.clone(self, False, excluded_keys).get_object()
         )
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
+
         node, idx = self._get_page_in_node(index)
         page[NameObject(PA.PARENT)] = node.indirect_reference
 
@@ -502,6 +545,15 @@ class PdfWriter(PdfDocCommon):
             recurse += 1
             if recurse > 1000:
                 raise PyPdfError("Too many recursive calls!")
+
+        if page_org.pdf is not None:
+            # the page may contain links to other pages, and those other
+            # pages may or may not already be added.  we store the
+            # information we need, so that we can resolve the references
+            # later.
+            self._unresolved_links.extend(_extract_links(page, page_org))
+            self._merged_in_pages[page_org.indirect_reference] = page.indirect_reference
+
         return page
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
@@ -1379,6 +1431,19 @@ class PdfWriter(PdfDocCommon):
             self._add_object(entry)
         self._encrypt_entry = entry
 
+    def _resolve_links(self) -> None:
+        """Patch up links that were added to the document earlier, to
+        make sure they still point to the same pages.
+        """
+        for (new_link, old_link) in self._unresolved_links:
+            old_page = old_link.find_referenced_page()
+            if not old_page:
+                continue
+            new_page = self._merged_in_pages.get(old_page)
+            if new_page is None:
+                continue
+            new_link.patch_reference(self, new_page)
+
     def write_stream(self, stream: StreamType) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
@@ -1390,6 +1455,7 @@ class PdfWriter(PdfDocCommon):
         # if not self._root:
         #   self._root = self._add_object(self._root_object)
         # self._sweep_indirect_references(self._root)
+        self._resolve_links()
 
         if self.incremental:
             self._reader.stream.seek(0)
