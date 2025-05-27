@@ -505,11 +505,11 @@ def test_named_ref_to_page_that_is_gone(pdf_file_path):
     source = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
     buf = BytesIO()
     tmp = PdfWriter()
-    tmp.add_page(source.pages[2])  # we add only the page with the reference
+    tmp.add_page(source.pages[2]) # we add only the page with the reference
     tmp.write(buf)
 
     source = PdfReader(buf)
 
     writer = PdfWriter()
-    writer.add_page(source.pages[0])  # now references to non-existent page
-    writer.write(pdf_file_path)  # don't crash
+    writer.add_page(source.pages[0]) # now references to non-existent page
+    writer.write(pdf_file_path) # don't crash
