@@ -210,7 +210,7 @@ def test_line(pdf_file_path):
         writer.write(fp)
 
 
-def test_square(pdf_file_path):
+def test_rectangle(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
