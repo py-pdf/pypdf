@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747912042498,
+  "lastUpdate": 1748439222836,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -76103,6 +76103,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003284168491543725",
             "extra": "mean: 750.0511463999942 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fdae3cce06a8db857d0ee94176b6d709a2733fd2",
+          "message": "STY: Remove test_rectangle_annotation (#3297)\n\nThe tests test_rectangle_annotation and test_square duplicate one another: having two names for the same test is confusing. Also make annotation tests have consistent naming.",
+          "timestamp": "2025-05-28T15:31:02+02:00",
+          "tree_id": "4b82efff18605e499a8e495aa910a0e8720a0f96",
+          "url": "https://github.com/py-pdf/pypdf/commit/fdae3cce06a8db857d0ee94176b6d709a2733fd2"
+        },
+        "date": 1748439219331,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3811111889111993,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00844359495297214",
+            "extra": "mean: 295.76075560000277 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.102278348966536,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00782128369324639",
+            "extra": "mean: 66.2151747500026 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2603293869144395,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010092207889239712",
+            "extra": "mean: 3.841287423799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.937727411969142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005917759272896348",
+            "extra": "mean: 59.0397977058802 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08112130297702431,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09965747818322772",
+            "extra": "mean: 12.327218169599991 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.327574604640699,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002956270023079885",
+            "extra": "mean: 753.2533361999981 msec\nrounds: 5"
           }
         ]
       }
