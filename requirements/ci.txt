@@ -26,7 +26,7 @@ importlib-metadata==8.5.0
     # via typeguard
 iniconfig==2.0.0
     # via pytest
-mypy==1.16.0
+mypy==1.13.0
     # via -r requirements/ci.in
 mypy-extensions==1.0.0
     # via mypy
