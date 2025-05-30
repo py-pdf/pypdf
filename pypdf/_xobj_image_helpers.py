@@ -13,7 +13,6 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     EncodedStreamObject,
-    IndirectObject,
     NullObject,
     TextStringObject,
 )
@@ -57,41 +56,38 @@ def _get_imagemode(
         )
     if isinstance(color_space, NullObject):
         return "", False
+    color_space_str: str = ""
     if isinstance(color_space, str):
-        pass
+        color_space_str = color_space
     elif not isinstance(color_space, list):
         raise PdfReadError(
             "Cannot interpret color space", color_space
         )  # pragma: no cover
     elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
-        color_space = "/Device" + color_space[0][4:]
+        color_space_str = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
         color_components = cast(int, icc_profile["/N"])
-        color_space = icc_profile.get("/Alternate", "")
+        color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
-        color_space = color_space[1].get_object()
+        color_space_str = color_space[1].get_object()
         mode, invert_color = _get_imagemode(
-            color_space, color_components, prev_mode, depth + 1
+            color_space_str, color_components, prev_mode, depth + 1
         )
         if mode in ("RGB", "CMYK"):
             mode = "P"
         return mode, invert_color
     elif color_space[0] == "/Separation":
-        color_space = color_space[2]
-        if isinstance(color_space, IndirectObject):
-            color_space = color_space.get_object()
+        color_space_str = color_space[2].get_object()
         mode, invert_color = _get_imagemode(
-            color_space, color_components, prev_mode, depth + 1
+            color_space_str, color_components, prev_mode, depth + 1
         )
         return mode, True
     elif color_space[0] == "/DeviceN":
         original_color_space = color_space
         color_components = len(color_space[1])
-        color_space = color_space[2]
-        if isinstance(color_space, IndirectObject):  # pragma: no cover
-            color_space = color_space.get_object()
-        if color_space == "/DeviceCMYK" and color_components == 1:
+        color_space_str = color_space[2].get_object()
+        if color_space_str == "/DeviceCMYK" and color_components == 1:
             if original_color_space[1][0] != "/Black":
                 logger_warning(
                     f"Color {original_color_space[1][0]} converted to Gray. Please share PDF with pypdf dev team",
@@ -99,7 +95,7 @@ def _get_imagemode(
                 )
             return "L", True
         mode, invert_color = _get_imagemode(
-            color_space, color_components, prev_mode, depth + 1
+            color_space_str, color_components, prev_mode, depth + 1
         )
         return mode, invert_color
 
@@ -114,7 +110,7 @@ def _get_imagemode(
     }
 
     mode = (
-        mode_map.get(color_space)
+        mode_map.get(color_space_str)
         or list(mode_map.values())[color_components]
         or prev_mode
     )
