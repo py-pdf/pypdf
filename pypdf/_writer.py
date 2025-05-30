@@ -501,7 +501,7 @@ class PdfWriter(PdfDocCommon):
         while not is_null_or_none(node):
             node = cast(DictionaryObject, node.get_object())
             node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
-            node = node.get(PA.PARENT, None)
+            node = node.get(PA.PARENT, None)  # type: ignore[assignment]  # TODO: Fix.
             recurse += 1
             if recurse > 1000:
                 raise PyPdfError("Too many recursive calls!")
@@ -1103,10 +1103,11 @@ class PdfWriter(PdfDocCommon):
                     )
                 else:
                     parent_annotation[NameObject(FA.V)] = TextStringObject(value)
-                if parent_annotation.get(FA.FT) in ("/Btn"):
+                if parent_annotation.get(FA.FT) == "/Btn":
                     # Checkbox button (no /FT found in Radio widgets)
                     v = NameObject(value)
-                    if v not in annotation[NameObject(AA.AP)][NameObject("/N")]:
+                    ap = cast(DictionaryObject, annotation[NameObject(AA.AP)])
+                    if v not in cast(ArrayObject, ap[NameObject("/N")]):
                         v = NameObject("/Off")
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
