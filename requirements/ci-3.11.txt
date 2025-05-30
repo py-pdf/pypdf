@@ -24,7 +24,7 @@ fpdf2==2.8.1
     # via -r requirements/ci.in
 iniconfig==2.0.0
     # via pytest
-mypy==1.15.0
+mypy==1.16.0
     # via -r requirements/ci.in
 mypy-extensions==1.0.0
     # via mypy
