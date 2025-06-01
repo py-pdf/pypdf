@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748779520575,
+  "lastUpdate": 1748780118078,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -76235,6 +76235,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012013233422531713",
             "extra": "mean: 737.7110248000008 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "40752eba72fc2116812b032d4e28025249417870",
+          "message": "REL: 5.6.0\n\n## What's new\n\n### New Features (ENH)\n- Add basic support for JBIG2 by using jbig2dec (#3163) by @stefan6419846\n\n### Bug Fixes (BUG)\n- Fix crashes by removing unnecessary line (#3293) by @larsga\n- Add delimiters to NameObject.renumber_table (#3286) by @ztravis\n\n### Robustness (ROB)\n- Handle DecodeParms being a NullObject (#3285) by @stefan6419846\n\n### Code Style (STY)\n- Update to mypy 1.16.0 (#3300) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.5.0...5.6.0)",
+          "timestamp": "2025-06-01T14:12:14+02:00",
+          "tree_id": "69fed07ca4692d885ecd0b8d9aa5524f6aff963f",
+          "url": "https://github.com/py-pdf/pypdf/commit/40752eba72fc2116812b032d4e28025249417870"
+        },
+        "date": 1748780114540,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5074249604949235,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008357263494330493",
+            "extra": "mean: 285.10944959999733 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.37847929744118,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007490844224932059",
+            "extra": "mean: 65.025935312498 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2759259162282544,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01633889980468095",
+            "extra": "mean: 3.624161201199996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.753579946322965,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010200430331936557",
+            "extra": "mean: 59.6887353750013 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08258185747233507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08309750254735608",
+            "extra": "mean: 12.109197232999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3319927586341664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004712075763766572",
+            "extra": "mean: 750.7548321999934 msec\nrounds: 5"
           }
         ]
       }
