@@ -329,7 +329,7 @@ class PdfDocCommon:
         o = o.get_object()
         if not isinstance(o, ViewerPreferences):
             o = ViewerPreferences(o)
-            if hasattr(o, "indirect_reference"):
+            if hasattr(o, "indirect_reference") and o.indirect_reference is not None:
                 self._replace_object(o.indirect_reference, o)
             else:
                 self.root_object[NameObject(CD.VIEWER_PREFERENCES)] = o

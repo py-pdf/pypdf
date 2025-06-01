@@ -411,7 +411,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                         v.indirect_reference = None
                     vv = v.clone(pdf_dest, force_duplicate, ignore_fields)
                     assert vv.indirect_reference is not None
-                    self[k.clone(pdf_dest)] = vv.indirect_reference  # type: ignore[attr-defined]
+                    self[k.clone(pdf_dest)] = vv.indirect_reference
                 elif k not in self:
                     self[NameObject(k)] = (
                         v.clone(pdf_dest, force_duplicate, ignore_fields)
@@ -495,6 +495,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         metadata = self.get("/Metadata", None)
         if is_null_or_none(metadata):
             return None
+        assert metadata is not None, "mypy"
         metadata = metadata.get_object()
 
         if not isinstance(metadata, XmpInformation):

@@ -21,6 +21,7 @@ from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
 
+from ._protocols import XmpInformationProtocol
 from ._utils import StreamType, deprecate_no_replacement
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
@@ -200,7 +201,7 @@ def _getter_single(
     return get
 
 
-class XmpInformation(PdfObject):
+class XmpInformation(XmpInformationProtocol, PdfObject):
     """
     An object that represents Extensible Metadata Platform (XMP) metadata.
     Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`.
@@ -244,7 +245,7 @@ class XmpInformation(PdfObject):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 for i in range(desc.attributes.length):
                     attr = desc.attributes.item(i)
-                    if attr.namespaceURI == namespace:
+                    if attr and attr.namespaceURI == namespace:
                         yield attr
                 for child in desc.childNodes:
                     if child.namespaceURI == namespace:
