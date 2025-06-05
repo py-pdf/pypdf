@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749121216330,
+  "lastUpdate": 1749122466993,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -76367,6 +76367,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004130422541176993",
             "extra": "mean: 746.183890400016 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1c9eacd8e766585c87a601601df81a0e7e10dde5",
+          "message": "MAINT: Use mypy recursive type support (#2898)\n\nRecursive types like the following are now supported by mypy:\n\nOutlineType = List[Union[Destination, \"OutlineType\"]]\n\nHowever, this recursuve type does not work with the Sphinx documentation generator; update comment to reflect this.",
+          "timestamp": "2025-06-05T13:18:32+02:00",
+          "tree_id": "b44f8cd3d4cb5261ac9c2d223116056c7144fb4a",
+          "url": "https://github.com/py-pdf/pypdf/commit/1c9eacd8e766585c87a601601df81a0e7e10dde5"
+        },
+        "date": 1749122463545,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5253919162505736,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008146863869763252",
+            "extra": "mean: 283.6564057999965 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.38533565502236,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007340999978422958",
+            "extra": "mean: 64.99695699999641 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2768474474034742,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015226004741306257",
+            "extra": "mean: 3.6120975988000055 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.448107621611104,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008397120918996058",
+            "extra": "mean: 57.31280558823508 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08245293658546635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.046045125332860336",
+            "extra": "mean: 12.128130803 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3365341947995613,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0045152032303509325",
+            "extra": "mean: 748.2038273999933 msec\nrounds: 5"
           }
         ]
       }
