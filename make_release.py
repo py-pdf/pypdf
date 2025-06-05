@@ -169,8 +169,7 @@ def get_changelog(changelog_path: str) -> str:
 
     """
     with open(changelog_path, encoding="utf-8") as fh:
-        changelog = fh.read()
-    return changelog
+        return fh.read()
 
 
 def write_changelog(new_changelog: str, changelog_path: str) -> None:
@@ -255,8 +254,8 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
     if grouped:
         output += "\n### Other\n"
         output_with_user += "\n### Other\n"
-        for prefix in grouped:
-            for commit in grouped[prefix]:
+        for prefix, commits in grouped.items():
+            for commit in commits:
                 output += f"- {prefix}: {commit['msg']}\n"
                 output_with_user += (
                     f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
@@ -273,12 +272,9 @@ def get_most_recent_git_tag() -> str:
         Most recently created git tag.
 
     """
-    git_tag = str(
-        subprocess.check_output(
-            ["git", "describe", "--tag", "--abbrev=0"], stderr=subprocess.STDOUT
-        )
-    ).strip("'b\\n")
-    return git_tag
+    return subprocess.check_output(
+        ["git", "describe", "--tag", "--abbrev=0"], stderr=subprocess.STDOUT, text=True
+    ).strip()
 
 
 def get_author_mapping(line_count: int) -> Dict[str, str]:

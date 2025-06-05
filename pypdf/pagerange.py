@@ -68,7 +68,7 @@ class PageRange:
         m = isinstance(arg, str) and re.match(PAGE_RANGE_RE, arg)
         if not m:
             raise ParseError(arg)
-        elif m.group(2):
+        if m.group(2):
             # Special case: just an int means a range of one page.
             start = int(m.group(2))
             stop = start + 1 if start != -1 else None
@@ -173,7 +173,7 @@ def parse_filename_page_ranges(
     pairs: List[Tuple[str, PageRange]] = []
     pdf_filename: Union[str, None] = None
     did_page_range = False
-    for arg in args + [None]:
+    for arg in [*args, None]:
         if PageRange.valid(arg):
             if not pdf_filename:
                 raise ValueError(

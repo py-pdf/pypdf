@@ -25,6 +25,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Gutteridge, David H.](https://github.com/dhgutteridge)
 * [Hale, Joseph](https://github.com/thehale)
 * [harshhes](https://github.com/harshhes)
+* [Jackowitz, Noah](https://github.com/hackowitz-af) | [LinkedIn](https://www.linkedin.com/in/noah-jackowitz/)
 * [JianzhengLuo](https://github.com/JianzhengLuo)
 * [Karvonen, Harry](https://github.com/Hatell/)
 * [King, Hunter](https://github.com/neversphere)
@@ -54,11 +55,11 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Rogmann, Sascha](https://github.com/srogmann)
 * [Röthenbacher, Thomas](https://github.com/troethe)
 * [shartzog](https://github.com/shartzog)
-* [stefan6419846](https://github.com/stefan6419846)
+* [stefan6419846](https://github.com/stefan6419846): Maintainer of pypdf since January 2025
 * [sietzeberends](https://github.com/sietzeberends)
 * [Stober, Marc](https://github.com/marcstober)
 * [Stüber, Timo](https://github.com/omit66)
-* [Thoma, Martin](https://github.com/MartinThoma): Maintainer of pypdf since April 2022. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
+* [Thoma, Martin](https://github.com/MartinThoma): Maintainer of pypdf from April 2022 to January 2025. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
 * [Thomas, Reuben](https://github.com/rrthomas)
 * [Tobeabellwether](https://github.com/Tobeabellwether)
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
@@ -69,7 +70,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 
 Contributors are:
 
-* Anybody who has an commit in `main` - no matter how big/small or how many. Also if it's via *co-authored-by*.
+* Anybody who has a commit in `main` - no matter how small or how many. Also if it's via *co-authored-by*.
 * People who opened helpful issues:
 
   1. Bugs: with complete MCVE

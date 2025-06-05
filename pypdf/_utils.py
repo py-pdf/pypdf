@@ -466,18 +466,18 @@ def rename_kwargs(
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
                 ),
                 category=DeprecationWarning,
+                stacklevel=3,
             )
 
 
 def _human_readable_bytes(bytes: int) -> str:
     if bytes < 10**3:
         return f"{bytes} Byte"
-    elif bytes < 10**6:
+    if bytes < 10**6:
         return f"{bytes / 10**3:.1f} kB"
-    elif bytes < 10**9:
+    if bytes < 10**9:
         return f"{bytes / 10**6:.1f} MB"
-    else:
-        return f"{bytes / 10**9:.1f} GB"
+    return f"{bytes / 10**9:.1f} GB"
 
 
 # The following class has been copied from Django:
@@ -594,12 +594,12 @@ class Version:
 
             if self_value < other_value:
                 return True
-            elif self_value > other_value:
+            if self_value > other_value:
                 return False
 
             if self_suffix < other_suffix:
                 return True
-            elif self_suffix > other_suffix:
+            if self_suffix > other_suffix:
                 return False
 
         return len(self.components) < len(other.components)

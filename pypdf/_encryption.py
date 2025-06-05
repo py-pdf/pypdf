@@ -253,8 +253,7 @@ class AlgV4:
             for _ in range(50):
                 o_hash_digest = hashlib.md5(o_hash_digest).digest()
 
-        rc4_key = o_hash_digest[: key_size // 8]
-        return rc4_key
+        return o_hash_digest[: key_size // 8]
 
     @staticmethod
     def compute_O_value(rc4_key: bytes, user_password: bytes, rev: int) -> bytes:
@@ -303,8 +302,7 @@ class AlgV4:
 
         """
         if rev <= 2:
-            value = rc4_encrypt(key, _PADDING)
-            return value
+            return rc4_encrypt(key, _PADDING)
 
         """
         Algorithm 5: Computing the encryption dictionary’s U (user password) value.
@@ -542,8 +540,7 @@ class AlgV5:
             return b""
         iv = bytes(0 for _ in range(16))
         tmp_key = AlgV5.calculate_hash(R, password, o_value[40:48], u_value[:48])
-        key = aes_cbc_decrypt(tmp_key, iv, oe_value)
-        return key
+        return aes_cbc_decrypt(tmp_key, iv, oe_value)
 
     @staticmethod
     def verify_user_password(
@@ -761,8 +758,7 @@ class AlgV5:
         b8 = b"T" if metadata_encrypted else b"F"
         rr = secrets.token_bytes(4)
         data = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb" + rr
-        perms = aes_ecb_encrypt(key, data)
-        return perms
+        return aes_ecb_encrypt(key, data)
 
 
 class PasswordType(IntEnum):

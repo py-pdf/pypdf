@@ -70,7 +70,7 @@ jobs:
         sudo apt-get update
     - name: Install APT dependencies
       run:
-        sudo apt-get install ghostscript poppler-utils
+        sudo apt-get install ghostscript jbig2dec poppler-utils
     - name: Checkout Code
       uses: actions/checkout@v4
       with:
@@ -184,6 +184,10 @@ jobs:
       run: |
         pip install -r requirements/docs.txt
         sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback --builder html docs build/sphinx/html
+    - name: Check with pre-commit
+      run: |
+        pip install -r requirements/dev.txt
+        pre-commit run --all-files --show-diff-on-failure
 
   package:
     name: Build & verify package

@@ -48,3 +48,14 @@ def test_is_followed_by_binary_data():
     # No `operator_start`.
     stream = BytesIO(b"ABCDEFG")
     assert is_followed_by_binary_data(stream)
+
+    # Name object.
+    stream = BytesIO(b"/R10 gs\n/R12 cs\n")
+    assert not is_followed_by_binary_data(stream)
+
+    # Numbers.
+    stream = BytesIO(b"1337 42 m\n")
+    assert not is_followed_by_binary_data(stream)
+
+    stream = BytesIO(b"1234.56 42 13 37 10 20 c\n")
+    assert not is_followed_by_binary_data(stream)

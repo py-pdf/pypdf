@@ -35,8 +35,7 @@ def _get_bounding_rectangle(vertices: List[Vertex]) -> RectangleObject:
         y_min = min(y_min, y)
         x_max = max(x_max, x)
         y_max = max(y_max, y)
-    rect = RectangleObject((x_min, y_min, x_max, y_max))
-    return rect
+    return RectangleObject((x_min, y_min, x_max, y_max))
 
 
 class MarkupAnnotation(AnnotationDictionary, ABC):

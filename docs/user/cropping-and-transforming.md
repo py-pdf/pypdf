@@ -131,12 +131,13 @@ op = Transformation().rotate(45).translate(tx=50)
 
 ## Scaling
 
-pypdf offers two ways to scale: The page itself and the contents on a page.
+In pypdf, the content and the page can either be scaled together or separately.
+Content scaling scales the contents on a page, and page scaling scales just the page size (the canvas).
 Typically, you want to combine both.
 
 ![](scaling.png)
 
-### Scaling a Page (the Canvas)
+### Scaling both the Page and contents together
 
 ```python
 from pypdf import PdfReader, PdfWriter
@@ -154,25 +155,10 @@ writer.add_page(page)
 writer.write("out.pdf")
 ```
 
-If you wish to have more control, you can adjust the various page boxes
-directly:
+### Scaling the content only
 
-```python
-from pypdf.generic import RectangleObject
-
-mb = page.mediabox
-
-page.mediabox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
-page.cropbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
-page.trimbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
-page.bleedbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
-page.artbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
-```
-
-### Scaling the content
-
-The content is scaled towards the origin of the coordinate system. Typically,
-that is the lower-left corner.
+The content is scaled around the origin of the coordinate system.
+Typically, that is the lower-left corner.
 
 ```python
 from pypdf import PdfReader, PdfWriter, Transformation
@@ -189,6 +175,32 @@ page.add_transformation(op)
 writer = PdfWriter()
 writer.add_page(page)
 writer.write("out-pg-transform.pdf")
+```
+
+### Scaling the page only
+
+To scale the page by `sx` in the X direction and `sy` in the Y direction:
+
+```python
+from pypdf.generic import RectangleObject
+
+mb = page.mediabox
+
+page.mediabox = self.mediabox.scale(sx, sy)
+```
+
+If you wish to have more control, you can adjust the various page boxes directly:
+
+```python
+from pypdf.generic import RectangleObject
+
+mb = page.mediabox
+
+page.mediabox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
+page.cropbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
+page.trimbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
+page.bleedbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
+page.artbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
 ```
 
 ### pypdf._page.MERGE_CROP_BOX
