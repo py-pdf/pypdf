@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
 from .generic import (
+    ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
     StreamObject,
@@ -324,7 +325,7 @@ def parse_bfrange(
         fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]
-        for sq in lst[0:]:
+        for sq in lst:
             if sq == b"]":
                 closure_found = True
                 break
@@ -443,7 +444,7 @@ def build_font_width_map(
                 )
                 break
     elif "/Widths" in ft:
-        w = ft["/Widths"].get_object()
+        w = cast(ArrayObject, ft["/Widths"].get_object())
         if "/FontDescriptor" in ft and "/MissingWidth" in cast(
             DictionaryObject, ft["/FontDescriptor"]
         ):

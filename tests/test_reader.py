@@ -155,7 +155,7 @@ def test_broken_meta_data(pdf_path):
     reader = PdfReader(BytesIO(b.replace(b"/Info 2 0 R", b"/Info 2    ")))
     with pytest.raises(PdfReadError) as exc:
         reader.metadata
-    assert "does not point to document information directory" in repr(exc)
+    assert "does not point to a document information dictionary" in repr(exc)
 
 
 @pytest.mark.parametrize(

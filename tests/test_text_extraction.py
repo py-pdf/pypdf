@@ -3,6 +3,8 @@ Testing the text-extraction submodule and ensuring the quality of text extractio
 
 The tested code might be in _page.py.
 """
+
+import re
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -11,7 +13,9 @@ import pytest
 
 from pypdf import PdfReader, mult
 from pypdf._text_extraction import set_custom_rtl
+from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
 from pypdf.errors import ParseError, PdfReadError
+from pypdf.generic import ContentStream
 
 from . import get_data_from_url
 
@@ -338,3 +342,75 @@ def test_iss3074():
     # pypdf.errors.PdfReadError: ZeroDivisionError: float division by zero
     txt = reader.pages[0].extract_text(extraction_mode="layout")
     assert txt.strip().startswith("AAAAAA")
+
+
+@pytest.mark.enable_socket
+def test_layout_mode_text_state():
+    """Ensure the text state is stored and reset with q/Q operators."""
+    # Get the PDF from issue #3212
+    url = "https://github.com/user-attachments/files/19396790/garbled.pdf"
+    name = "garbled-font.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    # Get the txt from issue #3212 and normalize line endings
+    txt_url = "https://github.com/user-attachments/files/19510731/garbled-font.layout.txt"
+    txt_name = "garbled-font.layout.txt"
+    expected = get_data_from_url(txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
+
+    assert expected == reader.pages[0].extract_text(extraction_mode="layout")
+
+
+@pytest.mark.enable_socket
+def test_rotated_line_wrap():
+    """Ensure correct 2D translation of rotated text after a line wrap."""
+    # Get the PDF from issue #3247
+    url = "https://github.com/user-attachments/files/19696918/link16-line-wrap.sanitized.pdf"
+    name = "link16-line-wrap.sanitized.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    # Get the txt from issue #3247 and normalize line endings
+    txt_url = "https://github.com/user-attachments/files/19696917/link16-line-wrap.sanitized.expected.txt"
+    txt_name = "link16-line-wrap.sanitized.expected.txt"
+    expected = get_data_from_url(txt_url, name=txt_name).decode("utf-8").replace("\r\n", "\n")
+
+    assert expected == reader.pages[0].extract_text()
+
+
+@pytest.mark.parametrize(
+        ("op", "msg"),
+        [
+            (b"BT", "Unbalanced target operations, expected b'ET'."),
+            (b"q", "Unbalanced target operations, expected b'Q'."),
+        ],
+)
+def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
+    """Ensures that imbalanced q/Q or EB/ET is handled gracefully."""
+    text_show_operations(ops=iter([([], op)]), fonts={})
+    assert caplog.records
+    assert caplog.records[-1].msg == msg
+
+
+def test_process_operation__cm_multiplication_issue():
+    """Test for #3262."""
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    page = reader.pages[0]
+    content = page.get_contents().get_data()
+    content = content.replace(b" 1 0 0 1 72 720 cm ", b" 0.70278 65.3 163.36 cm ")
+    stream = ContentStream(stream=None, pdf=reader)
+    stream.set_data(content)
+    page.replace_contents(stream)
+    assert page.extract_text().startswith("The Crazy Ones\nOctober 14, 1998\n")
+
+
+@pytest.mark.enable_socket
+def test_rotated_layout_mode(caplog):
+    """Ensures text extraction of rotated pages, as in issue #3270."""
+    url = "https://github.com/user-attachments/files/19981120/rotated-page.pdf"
+    name = "rotated-page.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+
+    page.transfer_rotation_to_content()
+    text = page.extract_text(extraction_mode="layout")
+
+    assert not caplog.records, "No warnings should be issued"
+    assert text, "Text matching the page rotation should be extracted"
+    assert re.search(r"\r?\n +69\r?\n +UNCLASSIFIED$", text), "Contents should be in expected layout"

@@ -31,7 +31,7 @@ repos:
         args: [--py38-plus]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.15.0'
+    rev: 'v1.16.0'
     hooks:
       - id: mypy
         additional_dependencies: [types-Pillow==10.2.0.20240822]
