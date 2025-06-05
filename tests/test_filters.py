@@ -7,8 +7,8 @@ import subprocess
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
-from unittest.mock import patch
 from unittest import mock
+from unittest.mock import patch
 
 import pytest
 from PIL import Image, ImageOps
@@ -37,6 +37,12 @@ from pypdf.generic import (
 
 from . import PILContext, get_data_from_url
 from .test_encryption import HAS_AES
+
+try:
+    import brotli  # noqa: F401
+    HAS_BROTLI = True
+except ImportError:
+    HAS_BROTLI = False
 from .test_images import image_similarity
 
 filter_inputs = (
@@ -66,8 +72,8 @@ def test_flate_decode_encode(predictor, s):
 
 
 @pytest.mark.parametrize("s", filter_inputs)
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli library not installed")
 def test_brotli_decode_encode(s):
-    pytest.importorskip("brotli", reason="brotli library not installed")
 
     codec = BrotliDecode()
     s_bytes = s.encode()
@@ -101,8 +107,8 @@ def test_brotli_missing_installation():
     assert "Brotli library not installed" in str(exc_info_stream.value)
 
 
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli library not installed")
 def test_brotli_decode_encode_with_real_module():
-    pytest.importorskip("brotli", reason="brotli library not installed")
 
     s = b"Hello, Brotli!"
     codec = BrotliDecode()
@@ -762,8 +768,8 @@ def test_flate_decode__not_rectangular(caplog):
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
 
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli library not installed")
 def test_main_decode_brotli_installed():
-    pytest.importorskip("brotli", reason="brotli library not installed")
 
     pdf_path = RESOURCE_ROOT / "brotli-test-pdfs" / "minimal-brotli-compressed.pdf"
 
