@@ -9,12 +9,13 @@ from unittest import mock
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import EmbeddedFile, NullObject
+from pypdf.generic import EmbeddedFile, NullObject, ViewerPreferences
 from tests import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+RESOURCES_ROOT = PROJECT_ROOT / "resources"
 
 PDFATTACH_BINARY = shutil.which("pdfattach")
 
@@ -155,3 +156,15 @@ def test_byte_encoded_named_destinations():
             "/Zoom": NullObject()
         }
     }
+
+
+def test_viewer_preferences__indirect_reference():
+    input_path = RESOURCES_ROOT / "git.pdf"
+    reader = PdfReader(input_path)
+    assert (0, 24) not in reader.resolved_objects
+    viewer_preferences = reader.viewer_preferences
+    assert isinstance(viewer_preferences, ViewerPreferences)
+    assert viewer_preferences == {"/DisplayDocTitle": True}
+    assert (0, 24) in reader.resolved_objects
+    assert id(viewer_preferences) == id(reader.viewer_preferences)
+    assert id(viewer_preferences) == id(reader.resolved_objects[(0, 24)])

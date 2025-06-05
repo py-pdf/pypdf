@@ -329,7 +329,7 @@ class PdfDocCommon:
         o = o.get_object()
         if not isinstance(o, ViewerPreferences):
             o = ViewerPreferences(o)
-            if hasattr(o, "indirect_reference"):
+            if hasattr(o, "indirect_reference") and o.indirect_reference is not None:
                 self._replace_object(o.indirect_reference, o)
             else:
                 self.root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
@@ -422,7 +422,6 @@ class PdfDocCommon:
             self.root_object[CA.NAMES], DictionaryObject
         ):
             names = cast(DictionaryObject, self.root_object[CA.NAMES])
-            names_ref = names.indirect_reference
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
                 # §3.6.3 Name Dictionary (PDF spec 1.7)
                 dests = cast(DictionaryObject, names[CA.DESTS])

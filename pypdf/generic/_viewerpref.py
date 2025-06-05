@@ -48,7 +48,7 @@ class ViewerPreferences(DictionaryObject):
         except AttributeError:
             pass
 
-    def _get_bool(self, key: str, default: Optional[BooleanObject]) -> BooleanObject:
+    def _get_bool(self, key: str, default: Optional[BooleanObject]) -> Optional[BooleanObject]:
         return self.get(key, default)
 
     def _set_bool(self, key: str, v: bool) -> None:
@@ -64,7 +64,7 @@ class ViewerPreferences(DictionaryObject):
             raise ValueError(f"{v} is an unacceptable value")
         self[NameObject(key)] = NameObject(v)
 
-    def _get_arr(self, key: str, default: Optional[List[Any]]) -> NumberObject:
+    def _get_arr(self, key: str, default: Optional[List[Any]]) -> Optional[ArrayObject]:
         return self.get(key, None if default is None else ArrayObject(default))
 
     def _set_arr(self, key: str, v: Optional[ArrayObject]) -> None:
@@ -78,7 +78,7 @@ class ViewerPreferences(DictionaryObject):
             raise ValueError("ArrayObject is expected")
         self[NameObject(key)] = v
 
-    def _get_int(self, key: str, default: Optional[NumberObject]) -> NumberObject:
+    def _get_int(self, key: str, default: Optional[NumberObject]) -> Optional[NumberObject]:
         return self.get(key, default)
 
     def _set_int(self, key: str, v: int) -> None:

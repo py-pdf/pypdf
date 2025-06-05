@@ -39,17 +39,18 @@ from ..errors import PdfReadError
 
 logger = logging.getLogger(__name__)
 
+# An inline image should be used only for small images (4096 bytes or less),
+# but allow twice this for cases where this has been exceeded.
 BUFFER_SIZE = 8192
 
 
 def extract_inline_AHx(stream: StreamType) -> bytes:
     """
-    Extract HexEncoded Stream from Inline Image.
-    the stream will be moved onto the EI
+    Extract HexEncoded stream from inline image.
+    The stream will be moved onto the EI.
     """
     data_out: bytes = b""
-    # Read data until delimiter > and EI as backup
-    # ignoring backup.
+    # Read data until delimiter > and EI as backup.
     while True:
         data_buffered = read_non_whitespace(stream) + stream.read(BUFFER_SIZE)
         if not data_buffered:
@@ -86,12 +87,11 @@ def extract_inline_AHx(stream: StreamType) -> bytes:
 
 def extract_inline_A85(stream: StreamType) -> bytes:
     """
-    Extract A85 Stream from Inline Image.
-    the stream will be moved onto the EI
+    Extract A85 stream from inline image.
+    The stream will be moved onto the EI.
     """
     data_out: bytes = b""
-    # Read data up to delimiter ~>
-    # see §3.3.2 from PDF ref 1.7
+    # Read data until delimiter ~>
     while True:
         data_buffered = read_non_whitespace(stream) + stream.read(BUFFER_SIZE)
         if not data_buffered:
@@ -119,12 +119,11 @@ def extract_inline_A85(stream: StreamType) -> bytes:
 
 def extract_inline_RL(stream: StreamType) -> bytes:
     """
-    Extract RL (RunLengthDecode) Stream from Inline Image.
-    The stream will be moved onto the EI
+    Extract RL (RunLengthDecode) stream from inline image.
+    The stream will be moved onto the EI.
     """
     data_out: bytes = b""
-    # Read data up to delimiter ~>
-    # see §3.3.4 from PDF ref 1.7
+    # Read data until delimiter 128
     while True:
         data_buffered = stream.read(BUFFER_SIZE)
         if not data_buffered:
@@ -146,12 +145,12 @@ def extract_inline_RL(stream: StreamType) -> bytes:
 
 def extract_inline_DCT(stream: StreamType) -> bytes:
     """
-    Extract DCT (JPEG) Stream from Inline Image.
-    The stream will be moved onto the EI
+    Extract DCT (JPEG) stream from inline image.
+    The stream will be moved onto the EI.
     """
     data_out: bytes = b""
     # Read Blocks of data (ID/Size/data) up to ID=FF/D9
-    # see https://www.digicamsoft.com/itu/itu-t81-36.html
+    # https://www.digicamsoft.com/itu/itu-t81-36.html
     notfirst = False
     while True:
         c = stream.read(1)
@@ -196,15 +195,15 @@ def extract_inline_default(stream: StreamType) -> bytes:
             raise PdfReadError("Unexpected end of stream")
         pos_ei = data_buffered.find(
             b"E"
-        )  # we can not look straight for "EI" because it may not have been loaded in the buffer
+        )  # We can not look straight for "EI" because it may not have been loaded in the buffer
 
         if pos_ei == -1:
             stream_out.write(data_buffered)
         else:
-            # Write out everything including E (the one from EI to be removed).
+            # Write out everything including E (the one from EI to be removed)
             stream_out.write(data_buffered[0 : pos_ei + 1])
             sav_pos_ei = stream_out.tell() - 1
-            # Seek back in the stream to read the E next.
+            # Seek back in the stream to read the E next
             stream.seek(pos_ei + 1 - len(data_buffered), 1)
             saved_pos = stream.tell()
             # Check for End Image
