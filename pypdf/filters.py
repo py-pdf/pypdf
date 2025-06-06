@@ -147,14 +147,13 @@ class FlateDecode:
                 colors = cast(int, decode_parms[LZW.COLORS].get_object())  # type: ignore
             except (TypeError, KeyError):
                 colors = 1
-            DEFAULT_BITS_PER_COMPONENT = 8
             try:
                 bits_per_component = cast(
                     int,
                     decode_parms[LZW.BITS_PER_COMPONENT].get_object(),  # type: ignore
                 )
             except (TypeError, KeyError):
-                bits_per_component = DEFAULT_BITS_PER_COMPONENT
+                bits_per_component = 8
 
             # PNG predictor can vary by row and so is the lead byte on each row
             rowlength = (
