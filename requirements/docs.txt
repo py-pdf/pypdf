@@ -43,7 +43,7 @@ pygments==2.18.0
     # via sphinx
 pyyaml==6.0.2
     # via myst-parser
-requests==2.32.3
+requests==2.32.4
     # via sphinx
 snowballstemmer==2.2.0
     # via sphinx
