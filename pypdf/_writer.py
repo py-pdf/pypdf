@@ -1632,7 +1632,8 @@ class PdfWriter(PdfDocCommon):
             new_name="remove_unreferenced",
             removed_in="6.0.0",
         )
-        if not remove_orphans: remove_unreferenced = remove_orphans
+        if not remove_orphans:
+            remove_unreferenced = remove_orphans
 
         def replace_in_obj(
             obj: PdfObject, crossref: Dict[IndirectObject, IndirectObject]
