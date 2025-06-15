@@ -1163,7 +1163,7 @@ class PdfWriter(PdfDocCommon):
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
 
-    def extract_formatting_from_annotation(self, annotation):
+    def extract_formatting_from_annotation(self, annotation: DictionaryObject) -> Dict[str, Any]:
         """
         Tries to extract as much specific formatting from an
         annotation as possible, such as:
@@ -1211,7 +1211,7 @@ class PdfWriter(PdfDocCommon):
             formatting["font_size"] = float(font_ops.groups()[1])
         else: # Default options
             formatting["font_name"] = NameObject("/Helvetica")
-            formatting["font_size"] = float(12.0)
+            formatting["font_size"] = 12.0
 
         if "/Q" in annotation:
             formatting["alignment"] = annotation["/Q"] # This is a NumberObject
@@ -1221,7 +1221,7 @@ class PdfWriter(PdfDocCommon):
         return formatting
 
 
-    def base14_font_object(self, font):
+    def base14_font_object(self, font: NameObject) -> DictionaryObject:
         """
         Creates a font object for one of the base 14 pdf fonts.
         Takes a NameObject.
@@ -1242,7 +1242,7 @@ class PdfWriter(PdfDocCommon):
         return standard_font_obj
 
 
-    def calculate_text_width(self, font_name, font_size, text):
+    def calculate_text_width(self, font_name: NameObject, font_size: float, text: str) -> float:
         """
         Calculates the display width of a given text string in PDF user space units
         by instantiating a PDFType1Font object from pdfminer.six for Base 14 fonts.
@@ -1297,7 +1297,7 @@ class PdfWriter(PdfDocCommon):
         text: str,
         min_font_size: float = 4.0,       # Minimum font size to attempt
         font_size_step: float = 0.5       # How much to decrease font size by each step
-    ):
+    ) -> Tuple[List[str], float]:
         """
         Takes a piece of text and adds newlines to wrap it
         into a rect of given size, given font_name and
@@ -1389,7 +1389,7 @@ class PdfWriter(PdfDocCommon):
         return self._add_object(new_stream)
 
 
-    def add_text_field_value(self, page, annotation, rect):
+    def add_text_field_value(self, page: PageObject, annotation: DictionaryObject, rect) -> bool:
         """
         Adds the value of a text field to the page content. Returns
         True if successful, and False otherwise.
@@ -1482,10 +1482,10 @@ class PdfWriter(PdfDocCommon):
             return True
 
         # No need to add or flatten text annotations that have no content.
-        return True
+        return False
 
 
-    def add_button_field_value(self, page, annotation, rect):
+    def add_button_field_value(self, page: PageObject, annotation: DictionaryObject, rect) -> bool:
         """
         Flattens the appearance of a button field to the page content.
         This function handles various button types (push buttons, checkboxes, radio buttons)
@@ -1517,13 +1517,13 @@ class PdfWriter(PdfDocCommon):
         # Search for an appearance dictionary. If not found, assume nothing needs to be flattened.
         ap_dict = annotation.get("/AP")
         if not ap_dict:
-            return True
+            return False
 
         # Try to get Normal appearance state, and get a specific one for the current state, if available.
         appearance_stream_ref = ap_dict.get("/N")
         # If no real appearance stream is found, then still assume nothing needs to be flattened.
         if not appearance_stream_ref:
-            return True
+            return False
         if current_state_name in appearance_stream_ref:
             appearance_stream_ref = appearance_stream_ref.get(current_state_name)
 
@@ -1534,7 +1534,7 @@ class PdfWriter(PdfDocCommon):
             # This probably means that the appearance_stream_obj is not for current_state_name, and that no
             # appearance_stream_obj exists for current_state_name
             print(f"      - Resolved appearance object for button '{field_name}' is not a StreamObject ({type(appearance_stream_obj)}).")
-            return True
+            return False
 
         # Ensure the appearance stream is correctly identified as a Form XObject
         if appearance_stream_obj.get("/Subtype") != "/Form":
@@ -1607,7 +1607,7 @@ Q
         return True
 
 
-    def annotation_print(self, annotation, recurse = False, depth = 0):
+    def annotation_print(self, annotation: DictionaryObject, recurse: bool = False, depth: Otional[int] = 0) -> None:
         if depth == 0:
             print ("\n\n\nRecursively printing annotation....")
         for key, val in annotation.items():
@@ -1626,7 +1626,7 @@ Q
             print ("Finished recursively printing annotation....\n\n\n")
 
 
-    def flatten(self):
+    def flatten(self) -> None:
         """
         Function to flatten annotations. Goes through all annotations page by page
         and flattens annotation content if there is any content to flatten. Use
