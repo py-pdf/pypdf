@@ -979,7 +979,6 @@ class StreamObject(DictionaryObject):
             Hash considering type and value.
 
         """
-        # Use _data because pypdf currently does not implement all standard filters
         return hash((super().hash_bin(), self._data))
 
     def get_data(self) -> bytes:
