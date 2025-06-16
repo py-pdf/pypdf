@@ -374,7 +374,6 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     def pdf_a_conformance(self) -> Optional[str]:
         """
         The PDF/A conformance level as a combined string.
-        
         Returns the PDF/A conformance information in the format "partconformance"
         (e.g., "1B", "2A", "3B") if both part and conformance are available,
         otherwise None.
