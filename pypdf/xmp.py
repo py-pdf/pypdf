@@ -51,6 +51,7 @@ XMPMM_NAMESPACE = "http://ns.adobe.com/xap/1.0/mm/"
 # suggested by Adobe's own documentation on XMP under "Extensibility of
 # Schemas".
 PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"
+PDFAID_NAMESPACE = "http://www.aiim.org/pdfa/ns/id/"
 
 iso8601 = re.compile(
     """
@@ -362,6 +363,27 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     xmpmm_instance_id = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
     """An identifier for a specific incarnation of a document, updated each
     time a file is saved."""
+
+    pdfaid_part = property(_getter_single(PDFAID_NAMESPACE, "part"))
+    """The part of the PDF/A standard that the document conforms to (e.g., 1, 2, 3)."""
+
+    pdfaid_conformance = property(_getter_single(PDFAID_NAMESPACE, "conformance"))
+    """The conformance level within the PDF/A standard (e.g., 'A', 'B', 'U')."""
+
+    @property
+    def pdf_a_conformance(self) -> Optional[str]:
+        """
+        The PDF/A conformance level as a combined string.
+        
+        Returns the PDF/A conformance information in the format "partconformance"
+        (e.g., "1B", "2A", "3B") if both part and conformance are available,
+        otherwise None.
+        """
+        part = self.pdfaid_part
+        conformance = self.pdfaid_conformance
+        if part is not None and conformance is not None:
+            return f"{part}{conformance}"
+        return None
 
     @property
     def custom_properties(self) -> Dict[Any, Any]:

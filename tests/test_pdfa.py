@@ -56,3 +56,36 @@ def test_pdfa(src: Path, diagnostic_write_name: Optional[str]):
         with open(diagnostic_write_name, "wb") as fp:
             stream.seek(0)
             fp.write(stream.read())
+
+
+def test_pdfa_xmp_metadata():
+    """Test PDF/A XMP metadata access using available test files."""
+    test_files = [
+        "tests/pdf_cache/index2label_kids.pdf",
+        "tests/pdf_cache/2021_book_security.pdf", 
+        "tests/pdf_cache/iss2290.pdf",
+        "tests/pdf_cache/embedded_files_kids.pdf"
+    ]
+    
+    for pdf_path in test_files:
+        file_path = Path(pdf_path)
+        if file_path.exists():
+            reader = PdfReader(file_path)
+            xmp = reader.xmp_metadata
+            
+            if xmp is not None:
+                part = xmp.pdfaid_part
+                conformance = xmp.pdfaid_conformance
+                combined = xmp.pdf_a_conformance
+                
+                if part is not None and conformance is not None:
+                    assert isinstance(part, str)
+                    assert isinstance(conformance, str)
+                    assert combined == f"{part}{conformance}"
+                    
+                    assert part in ["1", "2", "3"]
+                    assert conformance in ["A", "B", "U"]
+                elif part is not None or conformance is not None:
+                    pass
+                else:
+                    assert combined is None
