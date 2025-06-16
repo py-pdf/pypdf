@@ -89,3 +89,127 @@ def test_pdfa_xmp_metadata():
                     pass
                 else:
                     assert combined is None
+
+
+
+
+
+def test_pdfa_xmp_no_metadata():
+    """Test XMP with no PDF/A metadata returns None values."""
+    from pypdf.xmp import XmpInformation
+    from pypdf.generic import ContentStream
+    
+    xmp_no_pdfa = """<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+                     xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <dc:title>Test Document</dc:title>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>"""
+    
+    stream = ContentStream(None, None)
+    stream.set_data(xmp_no_pdfa.encode())
+    xmp_info = XmpInformation(stream)
+    
+    assert xmp_info.pdfaid_part is None
+    assert xmp_info.pdfaid_conformance is None
+    assert xmp_info.pdf_a_conformance is None
+
+
+def test_pdfa_xmp_part_only():
+    """Test XMP with only PDF/A part (no conformance) returns None for combined."""
+    from pypdf.xmp import XmpInformation
+    from pypdf.generic import ContentStream
+    
+    xmp_part_only = """<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+                     xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">
+      <pdfaid:part>2</pdfaid:part>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>"""
+    
+    stream = ContentStream(None, None)
+    stream.set_data(xmp_part_only.encode())
+    xmp_info = XmpInformation(stream)
+    
+    assert xmp_info.pdfaid_part == "2"
+    assert xmp_info.pdfaid_conformance is None
+    assert xmp_info.pdf_a_conformance is None
+
+
+def test_pdfa_xmp_conformance_only():
+    """Test XMP with only PDF/A conformance (no part) returns None for combined."""
+    from pypdf.xmp import XmpInformation
+    from pypdf.generic import ContentStream
+    
+    xmp_conformance_only = """<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+                     xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">
+      <pdfaid:conformance>A</pdfaid:conformance>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>"""
+    
+    stream = ContentStream(None, None)
+    stream.set_data(xmp_conformance_only.encode())
+    xmp_info = XmpInformation(stream)
+    
+    assert xmp_info.pdfaid_part is None
+    assert xmp_info.pdfaid_conformance == "A"
+    assert xmp_info.pdf_a_conformance is None
+
+
+def test_pdfa_xmp_complete_metadata():
+    """Test XMP with complete PDF/A metadata combines part and conformance."""
+    from pypdf.xmp import XmpInformation
+    from pypdf.generic import ContentStream
+    
+    xmp_complete = """<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+                     xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">
+      <pdfaid:part>3</pdfaid:part>
+      <pdfaid:conformance>B</pdfaid:conformance>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>"""
+    
+    stream = ContentStream(None, None)
+    stream.set_data(xmp_complete.encode())
+    xmp_info = XmpInformation(stream)
+    
+    assert xmp_info.pdfaid_part == "3"
+    assert xmp_info.pdfaid_conformance == "B"
+    assert xmp_info.pdf_a_conformance == "3B"
+
+
+def test_pdfa_xmp_attribute_style():
+    """Test XMP with attribute-style PDF/A metadata (as mentioned in issue #3313)."""
+    from pypdf.xmp import XmpInformation
+    from pypdf.generic import ContentStream
+    
+    xmp_attribute_style = """<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about="" 
+                     xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"
+                     pdfaid:part="1" 
+                     pdfaid:conformance="B" />
+  </rdf:RDF>
+</x:xmpmeta>"""
+    
+    stream = ContentStream(None, None)
+    stream.set_data(xmp_attribute_style.encode())
+    xmp_info = XmpInformation(stream)
+    
+    assert xmp_info.pdfaid_part == "1"
+    assert xmp_info.pdfaid_conformance == "B"
+    assert xmp_info.pdf_a_conformance == "1B"
