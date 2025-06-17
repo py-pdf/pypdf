@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749553678710,
+  "lastUpdate": 1750148614299,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -76499,6 +76499,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0035706957506540238",
             "extra": "mean: 749.9403766 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4fbc38db01ce84823900eaaa12c7e1775b8cab4d",
+          "message": "MAINT: Update comment (#3311)\n\nJBIG2Decode is now implemented, so comment was outdated.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2025-06-17T10:20:57+02:00",
+          "tree_id": "f5c97895840a1aab686a9c2feaf72a218d001cac",
+          "url": "https://github.com/py-pdf/pypdf/commit/4fbc38db01ce84823900eaaa12c7e1775b8cab4d"
+        },
+        "date": 1750148610910,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3751257491694955,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01248610176255795",
+            "extra": "mean: 296.28525699999955 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.087734440243155,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007080453221217437",
+            "extra": "mean: 66.27900324999914 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27063543223688197,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02004261439328425",
+            "extra": "mean: 3.6950076777999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.524583963154146,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0029987446244283586",
+            "extra": "mean: 57.062695588238995 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0785488046272704,
+            "unit": "iter/sec",
+            "range": "stddev: 1.2789200745417797",
+            "extra": "mean: 12.730938487800007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3698493767542275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004129678077032965",
+            "extra": "mean: 730.0072672000169 msec\nrounds: 5"
           }
         ]
       }
