@@ -1183,6 +1183,8 @@ class PdfWriter(PdfDocCommon):
                         )
                     else:
                         self._update_field_annotation(parent_annotation, annotation, flatten=flatten)
+                    if flatten:
+                        self.add_text_field_value(page, annotation)
                 elif (
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
@@ -1638,7 +1640,6 @@ Q
 
         return True
 
-
     def annotation_print(self, annotation: DictionaryObject, recurse: bool = False, depth: Optional[int] = 0) -> None:
         if depth == 0:
             print ("\n\n\nRecursively printing annotation....")
@@ -1656,74 +1657,6 @@ Q
                 self.annotation_print(val, True, depth + 1)
         if depth == 0:
             print ("Finished recursively printing annotation....\n\n\n")
-
-
-    def flatten(self, page: Union[PageObject, List[PageObject], None],) -> None:
-        """
-        Function to flatten annotations. Goes through all annotations page by page
-        and flattens annotation content if there is any content to flatten. Use
-        writer.remove_annotations(subtypes=None) to remove any remaining annotations.
-        """
-        if CatalogDictionary.ACRO_FORM not in self._root_object:
-            raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
-        af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
-        if InteractiveFormDictEntries.Fields not in af:
-            raise PyPdfError("No /Fields dictionary in PDF of PdfWriter Object")
-        # Iterate through pages, update field values
-        if page is None:
-            page = list(self.pages)
-        if isinstance(page, list):
-            for p in page:
-                if PG.ANNOTS in p:  # just to prevent warnings
-                    self.flatten(p)
-            return
-        if PG.ANNOTS not in page:
-            logger_warning("No fields to update on this page", __name__)
-            return
-
-        num_annots_on_page = len(page["/Annots"])
-        print(f"Found {num_annots_on_page} annotations on page.")
-
-        for annotation in page[PG.ANNOTS]:  # type: ignore
-            annotation = cast(DictionaryObject, annotation.get_object())
-            if annotation.get("/Subtype", "") != "/Widget":
-                continue
-            if "/FT" in annotation and "/T" in annotation:
-                parent_annotation = annotation
-            else:
-                parent_annotation = annotation.get(
-                    PG.PARENT, DictionaryObject()
-                ).get_object()
-
-            # Check if we are dealing with a form field widget:
-            if "/FT" in annotation or "/FT" in parent_annotation or "/AP" in annotation or "/AP" in parent_annotation or "/Ff" in annotation or "/Ff" in parent_annotation:
-                field_type = annotation.get("/FT")
-                if not field_type:
-                    field_type = parent_annotation.get("/FT")
-
-                rect = annotation.get("/Rect")
-                if not rect:
-                    print(f"    - WARNING: Form field widget has NO /Rect (bounding box)! Skipping flattening for this field.")
-                    self.annotation_print(annotation)
-                    continue
-
-                # Now decide field type and call an associated helper function to deal with the work
-                if field_type == "/Tx": # Text field
-                    if not self.add_text_field_value(page, annotation):
-                        continue
-                elif field_type == "/Btn": # Button field
-                    if not self.add_button_field_value(page, annotation):
-                        continue
-                else: # For other types of widgets (e.g., /Ch - Choice, /Sig - Signature)
-                    # We don't know how to deal with these, so do not flatten.
-                    print(f"    - WARNING: Unhandled form field type '{field_type}'. Skipping flattening for this field.")
-                    self.annotation_print(annotation)
-                    continue
-            else:
-                # Not a recognized form field widget (e.g., Link, Stamp, Highlight, Widget)
-                print(f"    - NOT A RECOGNIZED FORM FIELD WIDGET. Subtype: {annotation.get('/Subtype', 'N/A')}. Skipping flattening for this field.")
-                self.annotation_print(annotation)
-                continue
 
     def reattach_fields(
         self, page: Optional[PageObject] = None
