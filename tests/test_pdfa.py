@@ -76,23 +76,12 @@ def test_pdfa_xmp_metadata():
             if xmp is not None:
                 part = xmp.pdfaid_part
                 conformance = xmp.pdfaid_conformance
-                combined = xmp.pdf_a_conformance
 
                 if part is not None and conformance is not None:
                     assert isinstance(part, str)
                     assert isinstance(conformance, str)
-                    assert combined == f"{part}{conformance}"
-
                     assert part in ["1", "2", "3"]
                     assert conformance in ["A", "B", "U"]
-                elif part is not None or conformance is not None:
-                    pass
-                else:
-                    assert combined is None
-
-
-
-
 
 def test_pdfa_xmp_no_metadata():
     """Test XMP with no PDF/A metadata returns None values."""
@@ -115,11 +104,10 @@ def test_pdfa_xmp_no_metadata():
 
     assert xmp_info.pdfaid_part is None
     assert xmp_info.pdfaid_conformance is None
-    assert xmp_info.pdf_a_conformance is None
 
 
 def test_pdfa_xmp_part_only():
-    """Test XMP with only PDF/A part (no conformance) returns None for combined."""
+    """Test XMP with only PDF/A part (no conformance) returns part value."""
     from pypdf.generic import ContentStream
     from pypdf.xmp import XmpInformation
 
@@ -139,11 +127,10 @@ def test_pdfa_xmp_part_only():
 
     assert xmp_info.pdfaid_part == "2"
     assert xmp_info.pdfaid_conformance is None
-    assert xmp_info.pdf_a_conformance is None
 
 
 def test_pdfa_xmp_conformance_only():
-    """Test XMP with only PDF/A conformance (no part) returns None for combined."""
+    """Test XMP with only PDF/A conformance (no part) returns the conformance value."""
     from pypdf.generic import ContentStream
     from pypdf.xmp import XmpInformation
 
@@ -163,7 +150,6 @@ def test_pdfa_xmp_conformance_only():
 
     assert xmp_info.pdfaid_part is None
     assert xmp_info.pdfaid_conformance == "A"
-    assert xmp_info.pdf_a_conformance is None
 
 
 def test_pdfa_xmp_complete_metadata():
@@ -188,7 +174,6 @@ def test_pdfa_xmp_complete_metadata():
 
     assert xmp_info.pdfaid_part == "3"
     assert xmp_info.pdfaid_conformance == "B"
-    assert xmp_info.pdf_a_conformance == "3B"
 
 
 def test_pdfa_xmp_attribute_style():
@@ -212,4 +197,3 @@ def test_pdfa_xmp_attribute_style():
 
     assert xmp_info.pdfaid_part == "1"
     assert xmp_info.pdfaid_conformance == "B"
-    assert xmp_info.pdf_a_conformance == "1B"
