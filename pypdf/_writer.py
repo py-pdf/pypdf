@@ -911,11 +911,20 @@ class PdfWriter(PdfDocCommon):
         font_name: str = "",
         font_size: float = -1,
     ) -> None:
-        # Calculate rectangle dimensions
+        # This method updates an annotation in several steps:
+        # 1: Get the annotation's rectangle shape.
+        # 2: Get the annotation's font information from the default appearance stream
+        # 3: Get detailed font information from the page's DR
+        # 4: Retrieve field text and selected values
+        # 5: Create an appearance stream
+        # 6: Create an appearance dictionary
+
+        # Step 1 - Calculate rectangle dimensions. _rct represents the exact rectangle and location,
+        # whereas rct only represents the rectangle size, anchored to the bottom-left page corner.
         _rct = cast(RectangleObject, annotation[AA.Rect])
         rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
 
-        # Extract font information
+        # Step 2 - Extract font information from / set font information to default appearance
         da = annotation.get_inherited(
             AA.DA,
             cast(DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]).get(
@@ -928,25 +937,34 @@ class PdfWriter(PdfDocCommon):
             da = da.get_object()
         font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
         font_properties = [x for x in font_properties if x != ""]
+        # If font name was given when calling this method, then add it to
+        # the font properties, otherwise read it from the default appearance
         if font_name:
             font_properties[font_properties.index("Tf") - 2] = font_name
         else:
             font_name = font_properties[font_properties.index("Tf") - 2]
+        # If font size was given when calling this method, then add it to
+        # the font properties, otherwise read it from the default appearance
         font_height = (
             font_size
             if font_size >= 0
             else float(font_properties[font_properties.index("Tf") - 1])
         )
-        if font_height == 0:
+        # Only when there is no default appearance (which should not be the case
+        # for a text annotation) set font height to either multiline or field height - 2.
+        # I wonder if this case would ever present itself. ... It would, if this method
+        # is called with font_size = 0
+        if font_height == 0: # I don't get what this does.
             if field.get(FA.Ff, 0) & FA.FfBits.Multiline:
-                font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE
+                font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE # This is just 12, as it stands.
             else:
                 font_height = rct.height - 2
         font_properties[font_properties.index("Tf") - 1] = str(font_height)
-        da = " ".join(font_properties)
-        y_offset = rct.height - 1 - font_height
 
-        # Retrieve font information from local DR ...
+        da = " ".join(font_properties)
+        y_offset = rct.height - 1 - font_height # Why add 1 point?
+
+        # Step 3 - Retrieve font information from DR ...
         dr: Any = cast(
             DictionaryObject,
             cast(
@@ -994,7 +1012,7 @@ class PdfWriter(PdfDocCommon):
             logger_warning(f"Font dictionary for {font_name} not found.", __name__)
             font_full_rev = {}
 
-        # Retrieve field text and selected values
+        # Step 4 - Retrieve field text and selected values
         field_flags = field.get(FA.Ff, 0)
         if field.get(FA.FT, "/Tx") == "/Ch" and field_flags & FA.FfBits.Combo == 0:
             txt = "\n".join(annotation.get_inherited(FA.Opt, []))
@@ -1006,12 +1024,13 @@ class PdfWriter(PdfDocCommon):
             sel = []
         # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
         txt = txt.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
-        # Generate appearance stream
+
+        # Step 5 - Generate appearance stream
         ap_stream = generate_appearance_stream(
             txt, sel, da, font_full_rev, rct, font_height, y_offset
         )
 
-        # Create appearance dictionary
+        # Step 6: Create appearance dictionary
         dct = DecodedStreamObject.initialize_from_dictionary(
             {
                 NameObject("/Type"): NameObject("/XObject"),
@@ -1021,6 +1040,7 @@ class PdfWriter(PdfDocCommon):
                 "/Length": 0,
             }
         )
+
         if AA.AP in annotation:
             for k, v in cast(DictionaryObject, annotation[AA.AP]).get("/N", {}).items():
                 if k not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
