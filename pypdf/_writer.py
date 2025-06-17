@@ -963,6 +963,7 @@ class PdfWriter(PdfDocCommon):
 
         da = " ".join(font_properties)
         y_offset = rct.height - 1 - font_height # Why add 1 point?
+        align = field.get("/Q", 0)
 
         # Step 3 - Retrieve font information from DR ...
         dr: Any = cast(
@@ -1380,7 +1381,6 @@ class PdfWriter(PdfDocCommon):
         else:
             return wrapped_lines, font_size
 
-
     def merge_content_streams(self, existing_content, new_content_data):
         """
         Combines existing content stream(s) with new content (as bytes),
@@ -1406,15 +1406,22 @@ class PdfWriter(PdfDocCommon):
         new_stream._data = merged_data
         return self._add_object(new_stream)
 
-
-    def add_text_field_value(self, page: PageObject, annotation: DictionaryObject, rect) -> bool:
+    def add_text_field_value(
+        self,
+        page: PageObject,
+        annotation: DictionaryObject
+    ) -> bool:
         """
         Adds the value of a text field to the page content. Returns
         True if successful, and False otherwise.
         """
         field_value = annotation.get("/V", "") # Get the text value
         field_name = annotation.get("/T", "Unnamed Field")
-        x_min, y_min, x_max, y_max = [float(f) for f in rect]
+
+        # Calculate rectangle dimensions
+        _rct = cast(RectangleObject, annotation[AA.Rect])
+        rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
+        x_min, y_min, x_max, y_max = [float(f) for f in _rct]
 
         font_name, font_size, alignment = self.extract_formatting_from_annotation(annotation).values()
 
@@ -1480,7 +1487,7 @@ class PdfWriter(PdfDocCommon):
             appearance_stream_obj.update({
                 NameObject("/Type"): NameObject("/XObject"),
                 NameObject("/Subtype"): NameObject("/Form"),
-                NameObject("/BBox"): rect,
+                NameObject("/BBox"): _rct,
                 NameObject("/Resources"): DictionaryObject({
                     NameObject("/Font"): DictionaryObject({
                         NameObject(font_name): page["/Resources"]["/Font"][NameObject(font_name)], # Reference the font added to the page
@@ -1625,7 +1632,7 @@ Q
         return True
 
 
-    def annotation_print(self, annotation: DictionaryObject, recurse: bool = False, depth: Otional[int] = 0) -> None:
+    def annotation_print(self, annotation: DictionaryObject, recurse: bool = False, depth: Optional[int] = 0) -> None:
         if depth == 0:
             print ("\n\n\nRecursively printing annotation....")
         for key, val in annotation.items():
@@ -1661,7 +1668,7 @@ Q
         if isinstance(page, list):
             for p in page:
                 if PG.ANNOTS in p:  # just to prevent warnings
-                    self.flatten(p, fields, flags, None)
+                    self.flatten(p)
             return
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
@@ -1691,34 +1698,25 @@ Q
                 if not rect:
                     print(f"    - WARNING: Form field widget has NO /Rect (bounding box)! Skipping flattening for this field.")
                     self.annotation_print(annotation)
-                    current_page_annots_to_keep.append(annot_ref)
                     continue
 
                 # Now decide field type and call an associated helper function to deal with the work
                 if field_type == "/Tx": # Text field
-                    if not self.add_text_field_value(page, annotation, rect):
-                        current_page_annots_to_keep.append(annot_ref)
+                    if not self.add_text_field_value(page, annotation):
                         continue
                 elif field_type == "/Btn": # Button field
                     if not self.add_button_field_value(page, annotation, rect):
-                        current_page_annots_to_keep.append(annot_ref)
                         continue
                 else: # For other types of widgets (e.g., /Ch - Choice, /Sig - Signature)
                     # We don't know how to deal with these, so do not flatten.
                     print(f"    - WARNING: Unhandled form field type '{field_type}'. Skipping flattening for this field.")
                     self.annotation_print(annotation)
-                    current_page_annots_to_keep.append(annot_ref)
                     continue
             else:
                 # Not a recognized form field widget (e.g., Link, Stamp, Highlight, Widget)
                 print(f"    - NOT A RECOGNIZED FORM FIELD WIDGET. Subtype: {annotation.get('/Subtype', 'N/A')}. Skipping flattening for this field.")
                 self.annotation_print(annotation)
-                current_page_annots_to_keep.append(annot_ref)
                 continue
-
-        # Update annotations list on the page
-        if len(current_page_annots_to_keep) > 0:
-            page[NameObject("/Annots")] = current_page_annots_to_keep
 
     def reattach_fields(
         self, page: Optional[PageObject] = None
