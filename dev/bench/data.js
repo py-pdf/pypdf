@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750148614299,
+  "lastUpdate": 1750161957633,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -76565,6 +76565,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004129678077032965",
             "extra": "mean: 730.0072672000169 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "67d1ba14e192d813fb1119534f9e029e80a2ad80",
+          "message": "MAINT: Improve benchmarking code (#3315)\n\nThis commit updates some outdated references in the benchmarking job and fixes compatibility with the latest *pytest* versions. With our settings and the benchmarking and xdist plugins enabled, running the tests on `pytest>=8.4.0` would break/fail otherwise.",
+          "timestamp": "2025-06-17T14:03:17+02:00",
+          "tree_id": "ef598826f9e7549b0ea5fb120646d0b98ebff007",
+          "url": "https://github.com/py-pdf/pypdf/commit/67d1ba14e192d813fb1119534f9e029e80a2ad80"
+        },
+        "date": 1750161954519,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.2889521970382214,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008935583359827247",
+            "extra": "mean: 304.0482013999849 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.904811029864273,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006628646888616887",
+            "extra": "mean: 67.09243062500647 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.266329250332688,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04107619247205197",
+            "extra": "mean: 3.754750928599992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.894048712335106,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007360404403365805",
+            "extra": "mean: 55.8845019411766 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08201641027392094,
+            "unit": "iter/sec",
+            "range": "stddev: 0.16697118890724819",
+            "extra": "mean: 12.192681887200001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.369368667482823,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008489914017040632",
+            "extra": "mean: 730.2635321999901 msec\nrounds: 5"
           }
         ]
       }
