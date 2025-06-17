@@ -910,6 +910,7 @@ class PdfWriter(PdfDocCommon):
         annotation: DictionaryObject,
         font_name: str = "",
         font_size: float = -1,
+        flatten: bool = False,
     ) -> None:
         # This method updates an annotation in several steps:
         # 1: Get the annotation's rectangle shape.
@@ -1081,6 +1082,7 @@ class PdfWriter(PdfDocCommon):
         fields: Dict[str, Union[str, List[str], Tuple[str, str, float]]],
         flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
+        flatten: Optional[bool] = False,
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -1121,7 +1123,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(page, list):
             for p in page:
                 if PG.ANNOTS in p:  # just to prevent warnings
-                    self.update_page_form_field_values(p, fields, flags, None)
+                    self.update_page_form_field_values(p, fields, flags, None, flatten=flatten)
             return
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
@@ -1168,6 +1170,8 @@ class PdfWriter(PdfDocCommon):
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
+                    if flatten:
+                        self.add_button_field_value(page, annotation)
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
@@ -1175,10 +1179,10 @@ class PdfWriter(PdfDocCommon):
                     # textbox
                     if isinstance(value, tuple):
                         self._update_field_annotation(
-                            parent_annotation, annotation, value[1], value[2]
+                            parent_annotation, annotation, value[1], value[2], flatten=flatten
                         )
                     else:
-                        self._update_field_annotation(parent_annotation, annotation)
+                        self._update_field_annotation(parent_annotation, annotation, flatten=flatten)
                 elif (
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
@@ -1510,7 +1514,7 @@ class PdfWriter(PdfDocCommon):
         return False
 
 
-    def add_button_field_value(self, page: PageObject, annotation: DictionaryObject, rect) -> bool:
+    def add_button_field_value(self, page: PageObject, annotation: DictionaryObject) -> bool:
         """
         Flattens the appearance of a button field to the page content.
         This function handles various button types (push buttons, checkboxes, radio buttons)
@@ -1523,7 +1527,10 @@ class PdfWriter(PdfDocCommon):
         if not field_name:
             field_name = parent.get("/T", "Unnamed Button Field")
 
-        x_min, y_min, x_max, y_max = [float(f) for f in rect]
+        # Calculate rectangle dimensions
+        _rct = cast(RectangleObject, annotation[AA.Rect])
+        rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
+        x_min, y_min, x_max, y_max = [float(f) for f in _rct]
         width = x_max - x_min
         height = y_max - y_min
 
@@ -1705,7 +1712,7 @@ Q
                     if not self.add_text_field_value(page, annotation):
                         continue
                 elif field_type == "/Btn": # Button field
-                    if not self.add_button_field_value(page, annotation, rect):
+                    if not self.add_button_field_value(page, annotation):
                         continue
                 else: # For other types of widgets (e.g., /Ch - Choice, /Sig - Signature)
                     # We don't know how to deal with these, so do not flatten.
