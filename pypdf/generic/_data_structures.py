@@ -979,7 +979,7 @@ class StreamObject(DictionaryObject):
             Hash considering type and value.
 
         """
-        # use of _data to prevent errors on non decoded stream such as JBIG2
+        # Use _data to prevent errors on non-decoded streams.
         return hash((super().hash_bin(), self._data))
 
     def get_data(self) -> bytes:
