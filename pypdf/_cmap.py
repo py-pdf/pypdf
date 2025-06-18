@@ -9,7 +9,8 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
-    NullObject, StreamObject,
+    NullObject,
+    StreamObject,
     is_null_or_none,
 )
 
