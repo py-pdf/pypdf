@@ -86,7 +86,7 @@ class AnnotationBuilder:  # deprecated
     its usage combined with PdfWriter.
     """
 
-    from ..generic._rectangle import RectangleObject
+    from ..generic._rectangle import RectangleObject  # noqa: PLC0415
 
     @staticmethod
     def text(
@@ -183,7 +183,7 @@ class AnnotationBuilder:  # deprecated
             "AnnotationBuilder.polygon", "pypdf.annotations.Polygon", "5.0.0"
         )
 
-    from ._fit import DEFAULT_FIT
+    from ._fit import DEFAULT_FIT  # noqa: PLC0415
 
     @staticmethod
     def link(

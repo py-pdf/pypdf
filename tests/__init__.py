@@ -158,13 +158,13 @@ class PILContext:
 
     def __enter__(self) -> Self:
         # Allow loading incomplete images.
-        from PIL import ImageFile
+        from PIL import ImageFile  # noqa: PLC0415
         self._saved_load_truncated_images = ImageFile.LOAD_TRUNCATED_IMAGES
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         return self
 
     def __exit__(self, type_, value, traceback) -> Optional[bool]:
-        from PIL import ImageFile
+        from PIL import ImageFile  # noqa: PLC0415
         ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images
         if type_:
             # Error.

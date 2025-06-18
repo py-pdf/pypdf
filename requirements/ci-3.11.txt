@@ -60,7 +60,7 @@ pytest-xdist==3.6.1
     # via -r requirements/ci.in
 pyyaml==6.0.2
     # via -r requirements/ci.in
-ruff==0.11.0
+ruff==0.12.0
     # via -r requirements/ci.in
 tomli==2.0.2
     # via

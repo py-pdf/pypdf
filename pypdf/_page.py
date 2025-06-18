@@ -379,11 +379,11 @@ class ImageFile:
                 "It can be installed via 'pip install pypdf[image]'"
             )
 
-        from ._reader import PdfReader
+        from ._reader import PdfReader  # noqa: PLC0415
 
         # to prevent circular import
-        from .filters import _xobj_to_image
-        from .generic import DictionaryObject, PdfObject
+        from .filters import _xobj_to_image  # noqa: PLC0415
+        from .generic import DictionaryObject, PdfObject  # noqa: PLC0415
 
         if self.indirect_reference is None:
             raise TypeError("Cannot update an inline image.")
@@ -2197,7 +2197,7 @@ class PageObject(DictionaryObject):
         """
         fonts = self._layout_mode_fonts()
         if debug_path:  # pragma: no cover
-            import json
+            import json  # noqa: PLC0415
 
             debug_path.joinpath("fonts.json").write_text(
                 json.dumps(

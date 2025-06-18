@@ -3041,7 +3041,7 @@ class PdfWriter(PdfDocCommon):
                         p = self._get_cloned_page(d[0], pages, reader)
                         if p is not None:
                             anc = ano.clone(self, ignore_fields=("/Dest",))
-                            anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
+                            anc[NameObject("/Dest")] = ArrayObject([p, *d[1:]])
                             outlist.append(self._add_object(anc))
             else:
                 d = cast("DictionaryObject", ano["/A"]).get("/D", NullObject())
@@ -3058,7 +3058,7 @@ class PdfWriter(PdfDocCommon):
                         anc = ano.clone(self, ignore_fields=("/D",))
                         cast("DictionaryObject", anc["/A"])[
                             NameObject("/D")
-                        ] = ArrayObject([p] + d[1:])
+                        ] = ArrayObject([p, *d[1:]])
                         outlist.append(self._add_object(anc))
         return outlist
 

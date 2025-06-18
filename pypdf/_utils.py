@@ -534,7 +534,7 @@ class classproperty:  # noqa: N801
 
 @dataclass
 class File:
-    from .generic import IndirectObject
+    from .generic import IndirectObject  # noqa: PLC0415
 
     name: str = ""
     """
@@ -583,6 +583,10 @@ class Version:
         if not isinstance(other, Version):
             return False
         return self.components == other.components
+
+    def __hash__(self) -> int:
+        # Convert to tuple as lists cannot be hashed.
+        return hash((self.__class__, tuple(self.components)))
 
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Version):

@@ -705,7 +705,7 @@ class JBIG2Decode:
         )
         version = result.stdout.split(" ", maxsplit=1)[1]
 
-        from ._utils import Version
+        from ._utils import Version  # noqa: PLC0415
         return Version(version) >= Version("0.15")
 
 
@@ -785,7 +785,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
-    from ._xobj_image_helpers import (
+    from ._xobj_image_helpers import (  # noqa: PLC0415
         Image,
         UnidentifiedImageError,
         _apply_decode,
@@ -928,7 +928,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     )
 
     if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
-        from PIL import ImageOps
+        from PIL import ImageOps  # noqa: PLC0415
         img = ImageOps.invert(img)
 
     # Save image to bytes
