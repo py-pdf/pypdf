@@ -99,18 +99,18 @@ from .generic import (
     Fit,
     FloatObject,
     IndirectObject,
-    NamedRefLink,
     NameObject,
     NullObject,
     NumberObject,
     PdfObject,
     RectangleObject,
-    RefLink,
+    ReferenceLink,
     StreamObject,
     TextStringObject,
     TreeObject,
     ViewerPreferences,
     create_string_object,
+    extract_links,
     hex_to_rgb,
     is_null_or_none,
 )
@@ -212,9 +212,9 @@ class PdfWriter(PdfDocCommon):
         """The PDF file identifier,
         defined by the ID in the PDF file's trailer dictionary."""
 
-        self._unresolved_links: list[tuple[RefLink,RefLink]] = []
+        self._unresolved_links: list[tuple[ReferenceLink, ReferenceLink]] = []
         "Tracks links in pages added to the writer for resolving later."
-        self._merged_in_pages: Dict[Optional[IndirectObject],Optional[IndirectObject]] = {}
+        self._merged_in_pages: Dict[Optional[IndirectObject], Optional[IndirectObject]] = {}
         "Tracks pages added to the writer and what page they turned into."
 
         if self.incremental:
@@ -488,39 +488,6 @@ class PdfWriter(PdfDocCommon):
         except Exception:
             pass
 
-        def _extract_links(new_page: PageObject, old_page: PageObject) -> List[Tuple[RefLink,RefLink]]:
-            new_links = [_build_link(link, new_page) for link in new_page.get("/Annots", [])]
-            old_links = [_build_link(link, old_page) for link in old_page.get("/Annots", [])]
-
-            return [(new_link, old_link) for (new_link, old_link)
-                    in zip(new_links, old_links)
-                    if new_link and old_link]
-
-        def _build_link(indir_obj: IndirectObject, page: PageObject) -> Optional[RefLink]:
-            src = cast(PdfReader, page.pdf)
-            link = cast(DictionaryObject, indir_obj.get_object())
-            if link.get("/Subtype") != "/Link":
-                return None
-
-            if "/A" in link:
-                action = cast(DictionaryObject, link["/A"])
-                if action.get("/S") != "/GoTo":
-                    return None
-
-                return _create_link(action["/D"], src)
-
-            if "/Dest" in link:
-                return _create_link(link["/Dest"], src)
-
-            return None # nothing we need to do
-
-        def _create_link(ref: PdfObject, src: PdfReader)-> Optional[RefLink]:
-            if isinstance(ref, TextStringObject):
-                return NamedRefLink(ref, src)
-            if isinstance(ref, ArrayObject):
-                return DirectRefLink(ref)
-            return None
-
         page = cast(
             "PageObject", page_org.clone(self, False, excluded_keys).get_object()
         )
@@ -551,7 +518,7 @@ class PdfWriter(PdfDocCommon):
             # pages may or may not already be added.  we store the
             # information we need, so that we can resolve the references
             # later.
-            self._unresolved_links.extend(_extract_links(page, page_org))
+            self._unresolved_links.extend(extract_links(page, page_org))
             self._merged_in_pages[page_org.indirect_reference] = page.indirect_reference
 
         return page

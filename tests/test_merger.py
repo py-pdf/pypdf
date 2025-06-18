@@ -501,7 +501,7 @@ def test_named_reference_preserved(pdf_file_path):
 
 
 @pytest.mark.enable_socket
-def test_named_ref_to_page_thats_gone(pdf_file_path):
+def test_named_ref_to_page_that_is_gone(pdf_file_path):
     source = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
     buf = BytesIO()
     tmp = PdfWriter()
