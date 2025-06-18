@@ -99,7 +99,6 @@ from .generic import (
     Fit,
     FloatObject,
     IndirectObject,
-    NamedReferenceLink,
     NameObject,
     NullObject,
     NumberObject,

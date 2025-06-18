@@ -25,8 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-# This module contains classes used by _writer.py to track links in
-# pages being added to the writer until the links can be resolved.
+# This module contains code used by _writer.py to track links in pages
+# being added to the writer until the links can be resolved.
 
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union, cast
 
@@ -48,7 +48,7 @@ class NamedReferenceLink:
 
     def find_referenced_page(self) -> Union[IndirectObject, None]:
         destination = self._source_pdf.named_destinations.get(str(self._reference))
-        return destination.page if destinatino else None
+        return destination.page if destinatinon else None
 
     def patch_reference(self, target_pdf: "PdfWriter", new_page: IndirectObject) -> None:
         """target_pdf: PdfWriter which the new link went into"""
@@ -92,7 +92,7 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> List[Tuple[
 def _build_link(indirect_object: IndirectObject, page: "PageObject") -> Optional[ReferenceLink]:
     src = cast("PdfReader", page.pdf)
     link = cast(DictionaryObject, indirect_object.get_object())
-    if link.get("/Subtype") != "/Link":
+    if (not isinstance(link, DictionaryObject)) or link.get("/Subtype") != "/Link":
         return None
 
     if "/A" in link:
