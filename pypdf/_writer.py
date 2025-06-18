@@ -1190,84 +1190,6 @@ class PdfWriter(PdfDocCommon):
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
 
-    def extract_formatting_from_annotation(self, annotation: DictionaryObject) -> Dict[str, Any]:
-        """
-        Tries to extract as much specific formatting from an
-        annotation as possible, such as:
-
-        - Alignment       - V
-        - Font name       - V
-        - Font size       - V
-        - Font colour
-        - Line distance
-        - ...
-
-        I wonder whether it should also extract just the rest of the annotation...
-
-        Returns a dictionary.
-
-        """
-        formatting = {}
-
-        # First try to get information from the default appearance stream.
-        # This holds a required normal appearance stream and _can_ hold
-        # additional appearance streams associated with mouse rollover
-        # and click, but these need not be used for flattening.
-        if "/AP" in annotation:
-            ap_dict = annotation["/AP"]
-            normal_appearance_stream_ref = ap_dict["/N"]
-            if isinstance(normal_appearance_stream_ref, IndirectObject):
-                normal_appearance_stream = normal_appearance_stream_ref.get_object()
-            else:
-                normal_appearance_stream = normal_appearance_stream_ref
-
-            if isinstance(normal_appearance_stream, StreamObject):
-                content_stream_data = normal_appearance_stream.get_data()
-
-                # Match font name and size. The subgroup is necessary because sometimes font
-                # sizes are in integers and sometimes in floats, and in rare cases an integer
-                # is followed by a period.
-                font_ops = re.search(rb'(/[^/\s]+)\s*(\d+(\.\d+)?)\s*Tf', content_stream_data)
-                formatting["font_name"] = NameObject(font_ops.groups()[0].decode())
-                formatting["font_size"] = float(font_ops.groups()[1].decode())
-
-        elif "/DA" in annotation: # /DA is required for text streams, but still not always set
-            da = annotation["/DA"]
-            font_ops = re.search(r'(/[^/\s]+)\s*(\d+(\.\d+)?)\s*Tf', da)
-            formatting["font_name"] = NameObject(font_ops.groups()[0])
-            formatting["font_size"] = float(font_ops.groups()[1])
-        else: # Default options
-            formatting["font_name"] = NameObject("/Helvetica")
-            formatting["font_size"] = 12.0
-
-        if "/Q" in annotation:
-            formatting["alignment"] = annotation["/Q"] # This is a NumberObject
-        else:
-            formatting["alignment"] = NumberObject(0)
-
-        return formatting
-
-
-    def base14_font_object(self, font: NameObject) -> DictionaryObject:
-        """
-        Creates a font object for one of the base 14 pdf fonts.
-        Takes a NameObject.
-        """
-        if font in self.font_name_map.keys():
-            fontname = NameObject("/" + self.font_name_map[font])
-        else:
-            fontname = font
-
-        standard_font_obj = DictionaryObject({
-            NameObject("/Type"): NameObject("/Font"),
-            NameObject("/Subtype"): NameObject("/Type1"),
-            NameObject("/Name"): font,
-            NameObject("/BaseFont"): fontname,
-            NameObject("/Encoding"): NameObject("/WinAnsiEncoding") # Should not be necessary
-        })
-
-        return standard_font_obj
-
     def calculate_text_width(self, font_name: NameObject, font_size: float, text: str) -> float:
         """
         Calculates the display width of a given text string in PDF user space units
@@ -1415,7 +1337,9 @@ class PdfWriter(PdfDocCommon):
     def add_text_field_value(
         self,
         page: PageObject,
-        annotation: DictionaryObject
+        annotation: DictionaryObject,
+        font_name: str = "",
+        font_size: float = -1,
     ) -> bool:
         """
         Adds the value of a text field to the page content. Returns
@@ -1429,7 +1353,72 @@ class PdfWriter(PdfDocCommon):
         rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
         x_min, y_min, x_max, y_max = [float(f) for f in _rct]
 
-        font_name, font_size, alignment = self.extract_formatting_from_annotation(annotation).values()
+        # Step 2 - Extract font information from / set font information to default appearance
+        da = annotation.get_inherited(
+            AA.DA,
+            cast(DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]).get(
+                AA.DA, None
+            ),
+        )
+        if da is None:
+            da = TextStringObject("/Helv 0 Tf 0 g")
+        else:
+            da = da.get_object()
+        font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
+        font_properties = [x for x in font_properties if x != ""]
+        # If font name was given when calling this method, then add it to
+        # the font properties, otherwise read it from the default appearance
+        if font_name:
+            font_properties[font_properties.index("Tf") - 2] = font_name
+        else:
+            font_name = font_properties[font_properties.index("Tf") - 2]
+        # If font size was given when calling this method, then add it to
+        # the font properties, otherwise read it from the default appearance
+        font_height = (
+            font_size
+            if font_size >= 0
+            else float(font_properties[font_properties.index("Tf") - 1])
+        )
+        # Only when there is no default appearance (which should not be the case
+        # for a text annotation) set font height to either multiline or field height - 2.
+        # I wonder if this case would ever present itself. ... It would, if this method
+        # is called with font_size = 0
+        if font_height == 0: # I don't get what this does.
+            if annotation.get(FA.Ff, 0) & FA.FfBits.Multiline:
+                font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE # This is just 12, as it stands.
+            else:
+                font_height = rct.height - 2
+        font_properties[font_properties.index("Tf") - 1] = str(font_height)
+
+        da = " ".join(font_properties)
+        y_offset = rct.height - 1 - font_height # Why add 1 point?
+        align = annotation.get("/Q", 0)
+
+        # Step 3 - Retrieve font information from DR ...
+        dr: Any = cast(
+            DictionaryObject,
+            cast(
+                DictionaryObject,
+                annotation.get_inherited(
+                    "/DR",
+                    cast(
+                        DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]
+                    ).get("/DR", DictionaryObject()),
+                ),
+            ).get_object(),
+        )
+        dr = dr.get("/Font", DictionaryObject()).get_object()
+        # _default_fonts_space_width keys is the list of Standard fonts
+        if font_name not in dr and font_name not in _default_fonts_space_width:
+            # ...or AcroForm dictionary
+            dr = cast(
+                Dict[Any, Any],
+                cast(
+                    DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]
+                ).get("/DR", {}),
+            )
+            dr = dr.get_object().get("/Font", DictionaryObject()).get_object()
+        font_res = dr.get(font_name, None)
 
         # Add font if not already there, but only if it's one of the base 14 ones
         # Need to check if the font dictionary itself exists before checking its contents
@@ -1438,13 +1427,7 @@ class PdfWriter(PdfDocCommon):
         if "/Font" not in page["/Resources"]:
             page["/Resources"][NameObject("/Font")] = DictionaryObject()
         if font_name not in page["/Resources"]["/Font"]:
-            if self.font_name_map.get(font_name):
-                # Ensure the font object is added to the writer and its indirect reference is used
-                font_obj = self.base14_font_object(font_name)
-                font_ref = self._add_object(font_obj) # Add font object as an indirect object
-                page["/Resources"]["/Font"][font_name] = font_ref
-            else:
-                print(f"  - Font '{font_name}' is missing and not a recognized Base 14 font. Trouble ahead...")
+                page["/Resources"]["/Font"][NameObject(font_name)] = font_res
 
         # Check if there's any content to flatten.
         if field_value and isinstance(field_value, str) and field_value.strip():
@@ -1454,7 +1437,7 @@ class PdfWriter(PdfDocCommon):
 
             lines, final_font_size = self.wrap_text(
                 font_name,
-                font_size,
+                font_height,
                 field_width,
                 field_height,
                 field_value
@@ -1466,15 +1449,15 @@ class PdfWriter(PdfDocCommon):
 
             text_commands = b"q\n" # Save graphics state
             text_commands += b"BT\n" # Begin Text Object
-            text_commands += b"0 g\n" # Set fill color to black (grayscale) TODO: get colour from annotation appearance
+            text_commands += b"0 g\n" # Set font color to black (grayscale) TODO: get colour from annotation appearance
             text_commands += f"{font_name} {final_font_size} Tf \n".encode('ascii')
 
             for i, line in enumerate(lines):
                 current_text_x = x_min # Default to left alignment
-                if alignment == 1: # Center
+                if align == 1: # Center
                     line_text_width = self.calculate_text_width(font_name, final_font_size, line)
                     current_text_x = x_min + (field_width - line_text_width) / 2
-                elif alignment == 2: # Right
+                elif align == 2: # Right
                     line_text_width = self.calculate_text_width(font_name, final_font_size, line)
                     current_text_x = x_max - line_text_width
 
