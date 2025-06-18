@@ -5,8 +5,9 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf._cmap import build_char_map
-from pypdf.generic import ArrayObject, IndirectObject, NameObject, NullObject
+from pypdf._cmap import build_char_map, get_encoding
+from pypdf._codecs import charset_encoding
+from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject
 
 from . import get_data_from_url
 
@@ -317,3 +318,12 @@ def test_function_in_font_widths(caplog):
     page = reader.pages[455]
     assert "La vulnérabilité correspond aux conséquences potentielles" in page.extract_text()
     assert "Expected numeric value for width, got {'/Bounds': [0.25, 0.25]," in caplog.text
+
+
+def test_get_encoding__encoding_value_is_none():
+    ft = DictionaryObject()
+    ft[NameObject("/Encoding")] = NullObject()
+    assert get_encoding(ft) == (
+        dict(zip(range(256), charset_encoding["/StandardEncoding"])),
+        {}
+    )
