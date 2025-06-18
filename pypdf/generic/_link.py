@@ -25,50 +25,90 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-# This module contains classes used by _writer.py to track links in
-# pages being added to the writer until the links can be resolved.
+# This module contains code used by _writer.py to track links in pages
+# being added to the writer until the links can be resolved.
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union, cast
 
-from . import ArrayObject, IndirectObject, TextStringObject
+from . import ArrayObject, DictionaryObject, IndirectObject, PdfObject, TextStringObject
 
 if TYPE_CHECKING:
+    from .._page import PageObject
     from .._reader import PdfReader
     from .._writer import PdfWriter
 
 
-class NamedRefLink:
+class NamedReferenceLink:
     """Named reference link being preserved until we can resolve it correctly."""
 
-    def __init__(self, ref: TextStringObject, source_pdf: "PdfReader") -> None:
-        """ref: TextStringObject with named reference"""
-        self._ref = ref
+    def __init__(self, reference: TextStringObject, source_pdf: "PdfReader") -> None:
+        """reference: TextStringObject with named reference"""
+        self._reference = reference
         self._source_pdf = source_pdf
 
-    def find_referenced_page(self) -> Union[IndirectObject,None]:
-        dest = self._source_pdf.named_destinations.get(str(self._ref))
+    def find_referenced_page(self) -> Union[IndirectObject, None]:
+        dest = self._source_pdf.named_destinations.get(str(self._reference))
         return dest.page if dest else None
 
     def patch_reference(self, target_pdf: "PdfWriter", new_page: IndirectObject) -> None:
         """target_pdf: PdfWriter which the new link went into"""
         # point named destination in new PDF to the new page
-        if str(self._ref) not in target_pdf.named_destinations:
-            target_pdf.add_named_destination(str(self._ref), new_page.page_number)
+        if str(self._reference) not in target_pdf.named_destinations:
+            target_pdf.add_named_destination(str(self._reference), new_page.page_number)
 
 
-class DirectRefLink:
+class DirectReferenceLink:
     """Direct reference link being preserved until we can resolve it correctly."""
 
-    def __init__(self, ref: ArrayObject) -> None:
-        """ref: an ArrayObject whose first element is the Page indir obj"""
-        self._ref = ref
+    def __init__(self, reference: ArrayObject) -> None:
+        """reference: an ArrayObject whose first element is the Page indir obj"""
+        self._reference = reference
 
     def find_referenced_page(self) -> IndirectObject:
-        return self._ref[0]
+        return self._reference[0]
 
     def patch_reference(self, target_pdf: "PdfWriter", new_page: IndirectObject) -> None:
         """target_pdf: PdfWriter which the new link went into"""
-        self._ref[0] = new_page
+        self._reference[0] = new_page
 
 
-RefLink = Union[NamedRefLink,DirectRefLink]
+ReferenceLink = Union[NamedReferenceLink, DirectReferenceLink]
+
+
+def extract_links(new_page: "PageObject", old_page: "PageObject") -> List[Tuple[ReferenceLink, ReferenceLink]]:
+    """Extracts links from two pages on the assumption that the two pages are
+    the same. Produces one list of (new link, old link) tuples.
+    """
+    new_links = [_build_link(link, new_page) for link in new_page.get("/Annots", [])]
+    old_links = [_build_link(link, old_page) for link in old_page.get("/Annots", [])]
+
+    return [(new_link, old_link) for (new_link, old_link)
+            in zip(new_links, old_links)
+            if new_link and old_link]
+
+
+def _build_link(indir_obj: IndirectObject, page: "PageObject") -> Optional[ReferenceLink]:
+    src = cast("PdfReader", page.pdf)
+    link = cast(DictionaryObject, indir_obj.get_object())
+    if link.get("/Subtype") != "/Link":
+        return None
+
+    if "/A" in link:
+        action = cast(DictionaryObject, link["/A"])
+        if action.get("/S") != "/GoTo":
+            return None
+
+        return _create_link(action["/D"], src)
+
+    if "/Dest" in link:
+        return _create_link(link["/Dest"], src)
+
+    return None # nothing we need to do
+
+
+def _create_link(ref: PdfObject, src: "PdfReader")-> Optional[ReferenceLink]:
+    if isinstance(ref, TextStringObject):
+        return NamedReferenceLink(ref, src)
+    if isinstance(ref, ArrayObject):
+        return DirectReferenceLink(ref)
+    return None
