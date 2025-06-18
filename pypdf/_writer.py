@@ -1182,9 +1182,9 @@ class PdfWriter(PdfDocCommon):
                             parent_annotation, annotation, value[1], value[2], flatten=flatten
                         )
                     else:
-                        self._update_field_annotation(parent_annotation, annotation, flatten=flatten)
-                    if flatten:
-                        self.add_text_field_value(page, annotation)
+                        #self._update_field_annotation(parent_annotation, annotation, flatten=flatten)
+                        #if flatten:
+                        self.add_text_field_value(page, annotation, flatten=flatten)
                 elif (
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
@@ -1338,6 +1338,7 @@ class PdfWriter(PdfDocCommon):
         self,
         page: PageObject,
         annotation: DictionaryObject,
+        flatten: bool = False,
         font_name: str = "",
         font_size: float = -1,
     ) -> bool:
@@ -1502,31 +1503,37 @@ class PdfWriter(PdfDocCommon):
                         )
                     }
                 )
-            if AA.AP not in annotation:
-                annotation[NameObject(AA.AP)] = DictionaryObject(
-                    {NameObject("/N"): self._add_object(dct)}
-                )
-            elif "/N" not in cast(DictionaryObject, annotation[AA.AP]):
-                cast(DictionaryObject, annotation[NameObject(AA.AP)])[
-                    NameObject("/N")
-                ] = self._add_object(dct)
-            else:  # [/AP][/N] exists
-                n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
-                self._objects[n - 1] = dct
-                dct.indirect_reference = IndirectObject(n, 0, self)
 
-            # Step 7: The real flattening
-            # Add font to page resources if not already there. This is needed for flattening.
-            # Need to check if the font dictionary itself exists before checking its contents
-            if "/Resources" not in page:
-                page[NameObject("/Resources")] = DictionaryObject()
-            if "/Font" not in page["/Resources"]:
-                page["/Resources"][NameObject("/Font")] = DictionaryObject()
-            if font_name not in page["/Resources"]["/Font"]:
+
+
+            if flatten:
+                # Step 7: The real flattening
+                # Add font to page resources if not already there. This is needed for flattening.
+                # Need to check if the font dictionary itself exists before checking its contents
+                if "/Resources" not in page:
+                    page[NameObject("/Resources")] = DictionaryObject()
+                if "/Font" not in page["/Resources"]:
+                    page["/Resources"][NameObject("/Font")] = DictionaryObject()
+                if font_name not in page["/Resources"]["/Font"]:
                     page["/Resources"]["/Font"][NameObject(font_name)] = font_res
 
-            new_content_ref = self.merge_content_streams(page.get("/Contents"), dct.get_data())
-            page[NameObject("/Contents")] = new_content_ref
+                new_content_ref = self.merge_content_streams(page.get("/Contents"), dct.get_data())
+                page[NameObject("/Contents")] = new_content_ref
+
+            else:
+                # I don't think that this is part of the flattening process
+                if AA.AP not in annotation:
+                    annotation[NameObject(AA.AP)] = DictionaryObject(
+                        {NameObject("/N"): self._add_object(dct)}
+                    )
+                elif "/N" not in cast(DictionaryObject, annotation[AA.AP]):
+                    cast(DictionaryObject, annotation[NameObject(AA.AP)])[
+                        NameObject("/N")
+                    ] = self._add_object(dct)
+                else:  # [/AP][/N] exists
+                    n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
+                    self._objects[n - 1] = dct
+                    dct.indirect_reference = IndirectObject(n, 0, self)
 
             return True
 
