@@ -1348,10 +1348,18 @@ class PdfWriter(PdfDocCommon):
         field_value = annotation.get("/V", "") # Get the text value
         field_name = annotation.get("/T", "Unnamed Field")
 
-        # Calculate rectangle dimensions
+        # This method updates an annotation in several steps:
+        # 1: Get the annotation's rectangle shape.
+        # 2: Get the annotation's font information from the default appearance stream
+        # 3: Get detailed font information from the page's DR
+        # 4: Retrieve field text and selected values
+        # 5: Create an appearance stream
+        # 6: Create an appearance dictionary
+
+        # Step 1 - Calculate rectangle dimensions. _rct represents the exact rectangle and location,
+        # whereas rct only represents the rectangle size, anchored to the bottom-left page corner.
         _rct = cast(RectangleObject, annotation[AA.Rect])
         rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
-        x_min, y_min, x_max, y_max = [float(f) for f in _rct]
 
         # Step 2 - Extract font information from / set font information to default appearance
         da = annotation.get_inherited(
@@ -1420,18 +1428,11 @@ class PdfWriter(PdfDocCommon):
             dr = dr.get_object().get("/Font", DictionaryObject()).get_object()
         font_res = dr.get(font_name, None)
 
-        # Add font if not already there, but only if it's one of the base 14 ones
-        # Need to check if the font dictionary itself exists before checking its contents
-        if "/Resources" not in page:
-            page[NameObject("/Resources")] = DictionaryObject()
-        if "/Font" not in page["/Resources"]:
-            page["/Resources"][NameObject("/Font")] = DictionaryObject()
-        if font_name not in page["/Resources"]["/Font"]:
-                page["/Resources"]["/Font"][NameObject(font_name)] = font_res
-
+        # Step 4
         # Check if there's any content to flatten.
         if field_value and isinstance(field_value, str) and field_value.strip():
             # Approximate text size and position
+            x_min, y_min, x_max, y_max = [float(f) for f in _rct]
             field_width = x_max - x_min
             field_height = y_max - y_min
 
@@ -1470,27 +1471,61 @@ class PdfWriter(PdfDocCommon):
             text_commands += b"ET\n" # End Text Object
             text_commands += b"Q\n" # Restore graphics state
 
-            # Create a StreamObject to hold the appearance stream
-            appearance_stream_obj = StreamObject()
-            appearance_stream_obj._data = text_commands
-            appearance_stream_obj.update({
-                NameObject("/Type"): NameObject("/XObject"),
-                NameObject("/Subtype"): NameObject("/Form"),
-                NameObject("/BBox"): _rct,
-                NameObject("/Resources"): DictionaryObject({
-                    NameObject("/Font"): DictionaryObject({
-                        NameObject(font_name): page["/Resources"]["/Font"][NameObject(font_name)], # Reference the font added to the page
-                    }),
-                    # /ProcSet is often found but not strictly necessary for simple text,
-                    # but can be added if needed: NameObject("/ProcSet"): ArrayObject([NameObject("/PDF"), NameObject("/Text")])
-                })
-            })
+            ap_stream = text_commands
 
-            # IMPORTANT: Add the appearance stream as an indirect object to the PDF writer
-            # and then use its indirect reference in the page content.
-            appearance_stream_ref = self._add_object(appearance_stream_obj)
+            # Step 6: Create appearance dictionary
+            dct = DecodedStreamObject.initialize_from_dictionary(
+                {
+                    NameObject("/Type"): NameObject("/XObject"),
+                    NameObject("/Subtype"): NameObject("/Form"),
+                    NameObject("/BBox"): rct,
+                    "__streamdata__": ByteStringObject(ap_stream),
+                    "/Length": 0,
+                }
+            )
 
-            new_content_ref = self.merge_content_streams(page.get("/Contents"), appearance_stream_obj.get_data())
+            if AA.AP in annotation:
+                for k, v in cast(DictionaryObject, annotation[AA.AP]).get("/N", {}).items():
+                    if k not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
+                        dct[k] = v
+
+            # Update Resources with font information if necessary
+            if font_res is not None:
+                dct[NameObject("/Resources")] = DictionaryObject(
+                    {
+                        NameObject("/Font"): DictionaryObject(
+                            {
+                                NameObject(font_name): getattr(
+                                    font_res, "indirect_reference", font_res
+                                )
+                            }
+                        )
+                    }
+                )
+            if AA.AP not in annotation:
+                annotation[NameObject(AA.AP)] = DictionaryObject(
+                    {NameObject("/N"): self._add_object(dct)}
+                )
+            elif "/N" not in cast(DictionaryObject, annotation[AA.AP]):
+                cast(DictionaryObject, annotation[NameObject(AA.AP)])[
+                    NameObject("/N")
+                ] = self._add_object(dct)
+            else:  # [/AP][/N] exists
+                n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
+                self._objects[n - 1] = dct
+                dct.indirect_reference = IndirectObject(n, 0, self)
+
+            # Step 7: The real flattening
+            # Add font to page resources if not already there. This is needed for flattening.
+            # Need to check if the font dictionary itself exists before checking its contents
+            if "/Resources" not in page:
+                page[NameObject("/Resources")] = DictionaryObject()
+            if "/Font" not in page["/Resources"]:
+                page["/Resources"][NameObject("/Font")] = DictionaryObject()
+            if font_name not in page["/Resources"]["/Font"]:
+                    page["/Resources"]["/Font"][NameObject(font_name)] = font_res
+
+            new_content_ref = self.merge_content_streams(page.get("/Contents"), dct.get_data())
             page[NameObject("/Contents")] = new_content_ref
 
             return True
