@@ -1,5 +1,7 @@
 """Test the pypdf._utils module."""
 import io
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -274,6 +276,41 @@ def test_rename_kwargs():
         match="old_param is deprecated as an argument. Use new_param instead",
     ):
         foo(old_param=12)
+
+
+def test_rename_kwargs__stacklevel(tmp_path: Path) -> None:
+    script = tmp_path / "script.py"
+    script.write_text("""
+import functools
+import warnings
+
+from pypdf._utils import rename_kwargs
+
+def deprecation(**aliases: str):
+    def decoration(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            rename_kwargs(func.__name__, kwargs, aliases, fail=False)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decoration
+
+@deprecation(old_param="new_param")
+def foo(old_param: int = 1, baz: int = 2, new_param: int = 1) -> None:
+    pass
+
+warnings.simplefilter("always")
+foo(old_param=12)
+    """)
+
+    result = subprocess.run([sys.executable, script], capture_output=True, text=True)  # noqa: S603
+    assert result.returncode == 0
+    assert result.stderr == (
+        f"{script}:23: DeprecationWarning: old_param is deprecated as an argument. "
+        f"Use new_param instead\n  foo(old_param=12)\n"
+    )
 
 
 @pytest.mark.parametrize(

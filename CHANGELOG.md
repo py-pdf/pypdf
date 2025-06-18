@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## Version 5.6.0, 2025-06-01
+
+### New Features (ENH)
+- Add basic support for JBIG2 by using jbig2dec (#3163)
+
+### Bug Fixes (BUG)
+- Fix crashes by removing unnecessary line (#3293)
+- Add delimiters to NameObject.renumber_table (#3286)
+
+### Robustness (ROB)
+- Handle DecodeParms being a NullObject (#3285)
+
+### Code Style (STY)
+- Update to mypy 1.16.0 (#3300)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.5.0...5.6.0)
+
 ## Version 5.5.0, 2025-05-11
 
 ### New Features (ENH)

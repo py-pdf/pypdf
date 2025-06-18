@@ -1430,7 +1430,7 @@ class PageObject(DictionaryObject):
         self._merge_page(
             page2,
             lambda page2Content: PageObject._add_transformation_matrix(
-                page2Content, page2.pdf, cast(CompressedTransformationMatrix, ctm)
+                page2Content, page2.pdf, ctm
             ),
             ctm,
             over,

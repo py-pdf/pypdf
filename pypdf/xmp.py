@@ -21,6 +21,7 @@ from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
 
+from ._protocols import XmpInformationProtocol
 from ._utils import StreamType, deprecate_no_replacement
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
@@ -50,6 +51,9 @@ XMPMM_NAMESPACE = "http://ns.adobe.com/xap/1.0/mm/"
 # suggested by Adobe's own documentation on XMP under "Extensibility of
 # Schemas".
 PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"
+
+# PDF/A
+PDFAID_NAMESPACE = "http://www.aiim.org/pdfa/ns/id/"
 
 iso8601 = re.compile(
     """
@@ -200,7 +204,7 @@ def _getter_single(
     return get
 
 
-class XmpInformation(PdfObject):
+class XmpInformation(XmpInformationProtocol, PdfObject):
     """
     An object that represents Extensible Metadata Platform (XMP) metadata.
     Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`.
@@ -244,7 +248,7 @@ class XmpInformation(PdfObject):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 for i in range(desc.attributes.length):
                     attr = desc.attributes.item(i)
-                    if attr.namespaceURI == namespace:
+                    if attr and attr.namespaceURI == namespace:
                         yield attr
                 for child in desc.childNodes:
                     if child.namespaceURI == namespace:
@@ -361,6 +365,12 @@ class XmpInformation(PdfObject):
     xmpmm_instance_id = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
     """An identifier for a specific incarnation of a document, updated each
     time a file is saved."""
+
+    pdfaid_part = property(_getter_single(PDFAID_NAMESPACE, "part"))
+    """The part of the PDF/A standard that the document conforms to (e.g., 1, 2, 3)."""
+
+    pdfaid_conformance = property(_getter_single(PDFAID_NAMESPACE, "conformance"))
+    """The conformance level within the PDF/A standard (e.g., 'A', 'B', 'U')."""
 
     @property
     def custom_properties(self) -> Dict[Any, Any]:

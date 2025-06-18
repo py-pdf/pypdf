@@ -272,3 +272,25 @@ def test_xmp_getter_bag_function():
 
     assert xmp_info is not None
     f(xmp_info)
+
+
+@pytest.mark.samples
+def test_pdfa_xmp_metadata_with_values():
+    """Test PDF/A XMP metadata extraction from a file with PDF/A metadata."""
+    reader = PdfReader(SAMPLE_ROOT / "021-pdfa" / "crazyones-pdfa.pdf")
+    xmp = reader.xmp_metadata
+
+    assert xmp is not None
+    assert xmp.pdfaid_part == "1"
+    assert xmp.pdfaid_conformance == "B"
+
+
+@pytest.mark.samples
+def test_pdfa_xmp_metadata_without_values():
+    """Test PDF/A XMP metadata extraction from a file without PDF/A metadata."""
+    reader = PdfReader(SAMPLE_ROOT / "020-xmp" / "output_with_metadata_pymupdf.pdf")
+    xmp = reader.xmp_metadata
+
+    assert xmp is not None
+    assert xmp.pdfaid_part is None
+    assert xmp.pdfaid_conformance is None
