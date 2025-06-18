@@ -134,6 +134,9 @@ class PageRange:
             return False
         return self._slice == other._slice
 
+    def __hash__(self) -> int:
+        return hash((self.__class__, (self._slice.start, self._slice.stop, self._slice.step)))
+
     def __add__(self, other: "PageRange") -> "PageRange":
         if not isinstance(other, PageRange):
             raise TypeError(f"Can't add PageRange and {type(other)}")

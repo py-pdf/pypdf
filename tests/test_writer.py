@@ -2144,14 +2144,14 @@ REFERENCES 76"""
 
 
 def test_merging_many_temporary_files(caplog):
-    def create_number_pdf(n) -> BytesIO:
+    def create_number_pdf(_n) -> BytesIO:
         pytest.importorskip("fpdf")
-        from fpdf import FPDF
+        from fpdf import FPDF  # noqa: PLC0415
 
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("helvetica", "B", 16)
-        pdf.cell(40, 10, str(n))
+        pdf.cell(40, 10, str(_n))
         byte_string = pdf.output()
         return BytesIO(byte_string)
 
@@ -2599,13 +2599,17 @@ def test_auto_write(tmp_path):
 def test_deprecate_with_as():
     """Yet another test for #2905"""
     with PdfWriter() as writer:
-        with pytest.warns(DeprecationWarning) as w:
+        with pytest.warns(
+                expected_warning=DeprecationWarning,
+                match="with_as_usage is deprecated and will be removed in pypdf 6.0"
+        ):
             val = writer.with_as_usage
-        assert "with_as_usage is deprecated" in w[0].message.args[0]
         assert val
-        with pytest.warns(DeprecationWarning) as w:
+        with pytest.warns(
+                expected_warning=DeprecationWarning,
+                match="with_as_usage is deprecated and will be removed in pypdf 6.0"
+        ):
             writer.with_as_usage = val  # old code allowed setting this, so...
-        assert "with_as_usage is deprecated" in w[0].message.args[0]
 
 
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")

@@ -231,7 +231,7 @@ def test_get_outline(src, outline_elements):
     ],
 )
 def test_get_images(src, expected_images):
-    from PIL import Image
+    from PIL import Image  # noqa: PLC0415
 
     src_abs = RESOURCE_ROOT / src
     reader = PdfReader(src_abs)

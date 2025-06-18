@@ -1,8 +1,11 @@
 """Test the pypdf._utils module."""
+import functools
 import io
+import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, Callable
 
 import pytest
 
@@ -89,8 +92,6 @@ def test_skip_over_comment(stream, remainder):
 
 
 def test_read_until_regex_premature_ending_name():
-    import re
-
     stream = io.BytesIO(b"")
     assert read_until_regex(stream, re.compile(b".")) == b""
 
@@ -114,10 +115,11 @@ def test_mark_location():
 
 
 def test_deprecate_no_replacement():
-    with pytest.warns(DeprecationWarning) as warn:
+    with pytest.warns(
+            expected_warning=DeprecationWarning,
+            match="foo is deprecated and will be removed in pypdf 3.0.0."
+    ):
         pypdf._utils.deprecate_no_replacement("foo", removed_in="3.0.0")
-    error_msg = "foo is deprecated and will be removed in pypdf 3.0.0."
-    assert warn[0].message.args[0] == error_msg
 
 
 @pytest.mark.parametrize(
@@ -238,9 +240,6 @@ def test_deprecation_no_replacement():
 
 
 def test_rename_kwargs():
-    import functools
-    from typing import Any, Callable
-
     def deprecation_bookmark_nofail(**aliases: str) -> Callable:
         """
         Decorator for deprecated term "bookmark".
@@ -430,6 +429,16 @@ def test_version_compare_lt_str():
 
 def test_bad_version():
     assert Version("a").components == [(0, "a")]
+
+
+def test_version_eq_hash():
+    version1 = Version("1.0")
+    version2 = Version("1.0")
+    version3 = Version("1.1")
+    assert version1 == version2
+    assert version1 != version3
+    assert hash(version1) == hash(version2)
+    assert hash(version1) != hash(version3)
 
 
 def test_classproperty():

@@ -201,8 +201,8 @@ def test_ccitparameters():
         match="CCITParameters is deprecated and will be removed in pypdf 6.0.0. Use CCITTParameters instead",
     ):
         params = CCITParameters()
-        assert params.K == 0  # zero is the default according to page 78
-        assert params.group == 3
+    assert params.K == 0  # zero is the default according to page 78
+    assert params.group == 3
 
 
 def test_ccittparameters():
@@ -416,7 +416,7 @@ def test_cmyk():
     """Decode CMYK"""
     # JPEG compression
     try:
-        from Crypto.Cipher import AES  # noqa: F401
+        from Crypto.Cipher import AES  # noqa: F401, PLC0415
     except ImportError:
         return  # the file is encrypted
     reader = PdfReader(BytesIO(get_data_from_url(name="Vitocal.pdf")))

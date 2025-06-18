@@ -490,7 +490,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
           return None if no metadata was found on the document root.
 
         """
-        from ..xmp import XmpInformation
+        from ..xmp import XmpInformation  # noqa: PLC0415
 
         metadata = self.get("/Metadata", None)
         if is_null_or_none(metadata):
@@ -1030,7 +1030,7 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flate_encode(self, level: int = -1) -> "EncodedStreamObject":
-        from ..filters import FlateDecode
+        from ..filters import FlateDecode  # noqa: PLC0415
 
         if SA.FILTER in self:
             f = self[SA.FILTER]
@@ -1074,7 +1074,7 @@ class StreamObject(DictionaryObject):
                 stops in your program.
 
         """
-        from ..filters import _xobj_to_image
+        from ..filters import _xobj_to_image  # noqa: PLC0415
 
         if self.get("/Subtype", "") != "/Image":
             try:
@@ -1098,7 +1098,7 @@ class EncodedStreamObject(StreamObject):
 
     # This overrides the parent method
     def get_data(self) -> bytes:
-        from ..filters import decode_stream_data
+        from ..filters import decode_stream_data  # noqa: PLC0415
 
         if self.decoded_self is not None:
             # cached version of decoded object
@@ -1115,7 +1115,7 @@ class EncodedStreamObject(StreamObject):
 
     # This overrides the parent method:
     def set_data(self, data: bytes) -> None:
-        from ..filters import FlateDecode
+        from ..filters import FlateDecode  # noqa: PLC0415
 
         if self.get(SA.FILTER, "") in (FT.FLATE_DECODE, [FT.FLATE_DECODE]):
             if not isinstance(data, bytes):

@@ -242,6 +242,9 @@ class NullObject(PdfObject):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, NullObject)
 
+    def __hash__(self) -> int:
+        return self.hash_bin()
+
 
 class BooleanObject(PdfObject):
     def __init__(self, value: Any) -> None:
@@ -275,6 +278,9 @@ class BooleanObject(PdfObject):
         if isinstance(o, bool):
             return self.value == o
         return False
+
+    def __hash__(self) -> int:
+        return self.hash_bin()
 
     def __repr__(self) -> str:
         return "True" if self.value else "False"
