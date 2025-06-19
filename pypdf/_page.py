@@ -1800,6 +1800,17 @@ class PageObject(DictionaryObject):
                 default = "/Content"
 
         """
+
+        def _flush_text() -> None:
+            nonlocal text, output, memo_cm, memo_tm
+            if text:
+                output += text
+                if visitor_text is not None:
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                text = ""
+                memo_cm = cm_matrix.copy()
+                memo_tm = tm_matrix.copy()
+
         text: str = ""
         output: str = ""
         rtl_dir: bool = False  # right-to-left
@@ -1871,7 +1882,7 @@ class PageObject(DictionaryObject):
         def compute_str_widths(str_widths: float) -> float:
             return str_widths / 1000
 
-        def process_operation(operator: bytes, operands: List[Any]) -> None:
+        def process_operator(operator: bytes, operands: List[Any]) -> None:
             nonlocal cm_matrix, tm_matrix, cm_stack, cm_prev, tm_prev, memo_cm, memo_tm
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
             nonlocal orientations, rtl_dir, visitor_text, output, text, _actual_str_size
@@ -1879,26 +1890,16 @@ class PageObject(DictionaryObject):
             str_widths: float = 0.0
 
             # Table 5.4 page 405
-            if operator == b"BT":
+            if operator == b"BT":  # Begin Text
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
+                _flush_text()
                 return
-            if operator == b"ET":
-                output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
+            if operator == b"ET":  # End Text
+                _flush_text()
 
             # Table 4.7 "Graphics state operators", page 219
             # cm_matrix calculation is reserved for later
-            elif operator == b"q":
+            elif operator == b"q":  # save graphics state
                 cm_stack.append(
                     (
                         cm_matrix,
@@ -1910,7 +1911,7 @@ class PageObject(DictionaryObject):
                         TL,
                     )
                 )
-            elif operator == b"Q":
+            elif operator == b"Q":  # restore graphics state
                 try:
                     (
                         cm_matrix,
@@ -1923,7 +1924,7 @@ class PageObject(DictionaryObject):
                     ) = cm_stack.pop()
                 except Exception:
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-            elif operator == b"cm":
+            elif operator == b"cm":  # modify current matrix
                 output += text
                 if visitor_text is not None:
                     visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
@@ -1939,14 +1940,14 @@ class PageObject(DictionaryObject):
                 memo_tm = tm_matrix.copy()
 
             # Table 5.2 page 398
-            elif operator == b"Tz":
+            elif operator == b"Tz":  # Set horizontal text scaling
                 char_scale = float(operands[0]) / 100 if operands else 1.0
-            elif operator == b"Tw":
+            elif operator == b"Tw":  # Set word spacing
                 space_scale = 1.0 + float(operands[0] if operands else 0.0)
-            elif operator == b"TL":
+            elif operator == b"TL":  # Set Text Leading
                 scale_x = math.sqrt(tm_matrix[0]**2 + tm_matrix[2]**2)
                 TL = float(operands[0] if operands else 0.0) * font_size * scale_x
-            elif operator == b"Tf":
+            elif operator == b"Tf":  # Set font size
                 if text != "":
                     output += text  # .translate(cmap)
                     if visitor_text is not None:
@@ -1985,7 +1986,7 @@ class PageObject(DictionaryObject):
                 except Exception:
                     pass  # keep previous size
             # Table 5.5 page 406
-            elif operator == b"Td":
+            elif operator == b"Td":  # Move text position
                 # A special case is a translating only tm:
                 # tm = [1, 0, 0, 1, e, f]
                 # i.e. tm[4] += tx, tm[5] += ty.
@@ -1994,16 +1995,16 @@ class PageObject(DictionaryObject):
                 tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
-            elif operator == b"Tm":
+            elif operator == b"Tm":  # Set text matrix
                 tm_matrix = [float(operand) for operand in operands[:6]]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
-            elif operator == b"T*":
+            elif operator == b"T*":  # Move to next line
                 tm_matrix[4] -= TL * tm_matrix[2]
                 tm_matrix[5] -= TL * tm_matrix[3]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
-            elif operator == b"Tj":
+            elif operator == b"Tj":  # Show text
                 text, rtl_dir, _actual_str_size = self._handle_tj(
                     text,
                     operands,
@@ -2047,29 +2048,29 @@ class PageObject(DictionaryObject):
                 visitor_operand_before(operator, operands, cm_matrix, tm_matrix)
             # Multiple operators are handled here
             if operator == b"'":
-                process_operation(b"T*", [])
-                process_operation(b"Tj", operands)
+                process_operator(b"T*", [])
+                process_operator(b"Tj", operands)
             elif operator == b'"':
-                process_operation(b"Tw", [operands[0]])
-                process_operation(b"Tc", [operands[1]])
-                process_operation(b"T*", [])
-                process_operation(b"Tj", operands[2:])
+                process_operator(b"Tw", [operands[0]])
+                process_operator(b"Tc", [operands[1]])
+                process_operator(b"T*", [])
+                process_operator(b"Tj", operands[2:])
             elif operator == b"TJ":
                 # The space width may be smaller than the font width, so the width should be 95%.
                 _confirm_space_width = _space_width * 0.95
                 if operands:
                     for op in operands[0]:
                         if isinstance(op, (str, bytes)):
-                            process_operation(b"Tj", [op])
+                            process_operator(b"Tj", [op])
                         if isinstance(op, (int, float, NumberObject, FloatObject)) and (
                             abs(float(op)) >= _confirm_space_width
                             and text
                             and text[-1] != " "
                         ):
-                            process_operation(b"Tj", [" "])
+                            process_operator(b"Tj", [" "])
             elif operator == b"TD":
-                process_operation(b"TL", [-operands[1]])
-                process_operation(b"Td", operands)
+                process_operator(b"TL", [-operands[1]])
+                process_operator(b"Td", operands)
             elif operator == b"Do":
                 output += text
                 if visitor_text is not None:
@@ -2117,7 +2118,7 @@ class PageObject(DictionaryObject):
                     memo_cm = cm_matrix.copy()
                     memo_tm = tm_matrix.copy()
             else:
-                process_operation(operator, operands)
+                process_operator(operator, operands)
             if visitor_operand_after is not None:
                 visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
         output += text  # just in case
