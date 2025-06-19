@@ -1182,13 +1182,15 @@ class PdfWriter(PdfDocCommon):
                     # Checkbox button (no /FT found in Radio widgets)
                     v = NameObject(value)
                     ap = cast(DictionaryObject, annotation[NameObject(AA.AP)])
-                    if v not in cast(ArrayObject, ap[NameObject("/N")]):
+                    normal_ap = cast(DictionaryObject, ap["/N"])
+                    if v not in normal_ap:
                         v = NameObject("/Off")
+                    appearance_stream_obj = normal_ap.get(v)
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
-                    if flatten:
-                        self.add_button_field_value(page, annotation)
+                    if flatten and not appearance_stream_obj == None:
+                        self.add_button_field_value(page, annotation, appearance_stream_obj, field)
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
@@ -1349,64 +1351,19 @@ class PdfWriter(PdfDocCommon):
         new_stream._data = merged_data
         return self._add_object(new_stream)
 
-    def add_button_field_value(self, page: PageObject, annotation: DictionaryObject) -> bool:
+    def add_button_field_value(self, page: PageObject, annotation: DictionaryObject, appearance_stream_obj: StreamObject, field: str) -> bool:
         """
         Flattens the appearance of a button field to the page content.
         This function handles various button types (push buttons, checkboxes, radio buttons)
         by embedding their current appearance stream directly onto the page's content.
         Returns True if successful, and False otherwise.
         """
-        if "/Parent" in annotation:
-            parent = annotation.get("/Parent")
-        field_name = annotation.get("/T")
-        if not field_name:
-            field_name = parent.get("/T", "Unnamed Button Field")
-
         # Calculate rectangle dimensions
         _rct = cast(RectangleObject, annotation[AA.Rect])
         rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
         x_min, y_min, x_max, y_max = [float(f) for f in _rct]
         width = x_max - x_min
         height = y_max - y_min
-
-        current_state_name = None
-        field_flags = annotation.get("/Ff", NumberObject(0))
-
-        # Bitwise checks for Radio and Pushbutton flags
-        is_radio_button = (field_flags & (1 << 15)) != 0
-        is_push_button = (field_flags & (1 << 16)) != 0
-
-        if is_radio_button:
-            current_state_name = annotation.get("/V", NameObject("/Off"))
-        elif not is_push_button: # Checkbox
-            current_state_name = annotation.get("/AS", NameObject("/Off"))
-
-        # Search for an appearance dictionary. If not found, assume nothing needs to be flattened.
-        ap_dict = annotation.get("/AP")
-        if not ap_dict:
-            return False
-
-        # Try to get Normal appearance state, and get a specific one for the current state, if available.
-        appearance_stream_ref = ap_dict.get("/N")
-        # If no real appearance stream is found, then still assume nothing needs to be flattened.
-        if not appearance_stream_ref:
-            return False
-        if current_state_name in appearance_stream_ref:
-            appearance_stream_ref = appearance_stream_ref.get(current_state_name)
-
-        # Resolve the actual StreamObject that represents the appearance
-        appearance_stream_obj = appearance_stream_ref.get_object()
-
-        if not isinstance(appearance_stream_obj, StreamObject):
-            # This probably means that the appearance_stream_obj is not for current_state_name, and that no
-            # appearance_stream_obj exists for current_state_name
-            print(f"      - Resolved appearance object for button '{field_name}' is not a StreamObject ({type(appearance_stream_obj)}).")
-            return False
-
-        # Ensure the appearance stream is correctly identified as a Form XObject
-        if appearance_stream_obj.get("/Subtype") != "/Form":
-            print(f"      - WARNING: Appearance stream for button '{field_name}' is not a Form XObject ({appearance_stream_obj.get('/Subtype')}). Skipping flattening.")
-            return False
 
         # Prepare XObject resource dictionary on the page
         if "/Resources" not in page:
@@ -1421,7 +1378,7 @@ class PdfWriter(PdfDocCommon):
         # Create a name for the XObject. TODO Is this sufficiently unique?
         # Sanitize the original field name to be a valid PDF name part (alphanumeric, underscore, hyphen)
         # Replacing spaces with underscores, then removing any other non-alphanumeric/non-underscore/non-hyphen
-        sanitized_name = field_name.replace(" ", "_")
+        sanitized_name = field.replace(" ", "_")
         sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', sanitized_name)
         xobject_name = NameObject(f"/Fm_{sanitized_name}")
 
