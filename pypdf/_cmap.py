@@ -9,6 +9,7 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    NullObject,
     StreamObject,
     is_null_or_none,
 )
@@ -133,7 +134,7 @@ def get_encoding(
     # Apply rule from PDF ref 1.7 §5.9.1, 1st bullet:
     #   if cmap not empty encoding should be discarded
     #   (here transformed into identity for those characters)
-    # If encoding is a string it is expected to be an identity translation.
+    # If encoding is a string, it is expected to be an identity translation.
     if isinstance(encoding, dict):
         for x in int_entry:
             if x <= 255:
@@ -154,7 +155,9 @@ def _parse_encoding(
         else:
             encoding = "charmap"
         return encoding
-    enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
+    enc: Union[str, DictionaryObject, NullObject] = cast(
+        Union[str, DictionaryObject, NullObject], ft["/Encoding"].get_object()
+    )
     if isinstance(enc, str):
         try:
             # already done : enc = NameObject.unnumber(enc.encode()).decode()
@@ -181,13 +184,13 @@ def _parse_encoding(
             encoding = charset_encoding["/StandardEncoding"].copy()
     else:
         encoding = charset_encoding["/StandardEncoding"].copy()
-    if "/Differences" in enc:
+    if isinstance(enc, DictionaryObject) and "/Differences" in enc:
         x: int = 0
         o: Union[int, str]
-        for o in cast(DictionaryObject, cast(DictionaryObject, enc)["/Differences"]):
+        for o in cast(DictionaryObject, enc["/Differences"]):
             if isinstance(o, int):
                 x = o
-            else:  # isinstance(o,str):
+            else:  # isinstance(o, str):
                 try:
                     if x < len(encoding):
                         encoding[x] = adobe_glyphs[o]  # type: ignore
