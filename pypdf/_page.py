@@ -1800,17 +1800,6 @@ class PageObject(DictionaryObject):
                 default = "/Content"
 
         """
-
-        def _flush_text() -> None:
-            nonlocal text, output, memo_cm, memo_tm
-            if text:
-                output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
-
         text: str = ""
         output: str = ""
         rtl_dir: bool = False  # right-to-left
@@ -1882,7 +1871,7 @@ class PageObject(DictionaryObject):
         def compute_str_widths(str_widths: float) -> float:
             return str_widths / 1000
 
-        def process_operator(operator: bytes, operands: List[Any]) -> None:
+        def process_operation(operator: bytes, operands: List[Any]) -> None:
             nonlocal cm_matrix, tm_matrix, cm_stack, cm_prev, tm_prev, memo_cm, memo_tm
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
             nonlocal orientations, rtl_dir, visitor_text, output, text, _actual_str_size
@@ -1892,10 +1881,22 @@ class PageObject(DictionaryObject):
             # Table 5.4 page 405
             if operator == b"BT":  # Begin Text
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                _flush_text()
+                # Flush text:
+                output += text
+                if visitor_text is not None:
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                text = ""
+                memo_cm = cm_matrix.copy()
+                memo_tm = tm_matrix.copy()
                 return
-            if operator == b"ET":  # End Text
-                _flush_text()
+            if operator in (b"BT", b"ET"):  # End Text
+                # Flush text:
+                output += text
+                if visitor_text is not None:
+                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                text = ""
+                memo_cm = cm_matrix.copy()
+                memo_tm = tm_matrix.copy()
 
             # Table 4.7 "Graphics state operators", page 219
             # cm_matrix calculation is reserved for later
@@ -2048,29 +2049,29 @@ class PageObject(DictionaryObject):
                 visitor_operand_before(operator, operands, cm_matrix, tm_matrix)
             # Multiple operators are handled here
             if operator == b"'":
-                process_operator(b"T*", [])
-                process_operator(b"Tj", operands)
+                process_operation(b"T*", [])
+                process_operation(b"Tj", operands)
             elif operator == b'"':
-                process_operator(b"Tw", [operands[0]])
-                process_operator(b"Tc", [operands[1]])
-                process_operator(b"T*", [])
-                process_operator(b"Tj", operands[2:])
+                process_operation(b"Tw", [operands[0]])
+                process_operation(b"Tc", [operands[1]])
+                process_operation(b"T*", [])
+                process_operation(b"Tj", operands[2:])
             elif operator == b"TJ":
                 # The space width may be smaller than the font width, so the width should be 95%.
                 _confirm_space_width = _space_width * 0.95
                 if operands:
                     for op in operands[0]:
                         if isinstance(op, (str, bytes)):
-                            process_operator(b"Tj", [op])
+                            process_operation(b"Tj", [op])
                         if isinstance(op, (int, float, NumberObject, FloatObject)) and (
                             abs(float(op)) >= _confirm_space_width
                             and text
                             and text[-1] != " "
                         ):
-                            process_operator(b"Tj", [" "])
+                            process_operation(b"Tj", [" "])
             elif operator == b"TD":
-                process_operator(b"TL", [-operands[1]])
-                process_operator(b"Td", operands)
+                process_operation(b"TL", [-operands[1]])
+                process_operation(b"Td", operands)
             elif operator == b"Do":
                 output += text
                 if visitor_text is not None:
@@ -2118,7 +2119,7 @@ class PageObject(DictionaryObject):
                     memo_cm = cm_matrix.copy()
                     memo_tm = tm_matrix.copy()
             else:
-                process_operator(operator, operands)
+                process_operation(operator, operands)
             if visitor_operand_after is not None:
                 visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
         output += text  # just in case
