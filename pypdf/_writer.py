@@ -2853,7 +2853,7 @@ class PdfWriter(PdfDocCommon):
         if "/Annots" not in excluded_fields:
             for pag in srcpages.values():
                 lst = self._insert_filtered_annotations(
-                    pag.original_page.get("/Annots", ()), pag, srcpages, reader
+                    pag.original_page.get("/Annots", []), pag, srcpages, reader
                 )
                 if len(lst) > 0:
                     pag[NameObject("/Annots")] = lst
@@ -3019,6 +3019,9 @@ class PdfWriter(PdfDocCommon):
         if isinstance(annots, IndirectObject):
             annots = cast("List[Any]", annots.get_object())
         if annots is None:
+            return outlist
+        if not isinstance(annots, list):
+            logger_warning(f"Expected list of annotations, got {annots} of type {annots.__class__.__name__}.", __name__)
             return outlist
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
