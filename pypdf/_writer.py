@@ -3853,7 +3853,13 @@ def generate_appearance_stream(
     font_height: float,
     y_offset: float,
 ) -> bytes:
-    ap_stream = f"q\n/Tx BMC \nq\n{rct.left + 1} {rct.bottom +1} {rct.width - 1} {rct.height - 1} re\n0 g\nW\nBT\n{da}\n".encode()
+    ap_stream = b"q\n"              # Save graphics state
+    ap_stream += b"/Tx BMC \n"      # Don't know what this is
+    ap_stream += b"q\n"             # Save graphics state again?
+    ap_stream += f"{rct.left + 1} {rct.bottom +1} {rct.width - 1} {rct.height - 1} re\n".encode() # Draw a rectangle?
+    ap_stream += b"W\n"             # Don't know what this is
+    ap_stream += b"BT\n"            # Begin Text Object
+    ap_stream += f"{da}\n".encode() # Set font name and size
     for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
         if line in sel:
             # may be improved but cannot find how to get fill working => replaced with lined box
@@ -3873,6 +3879,10 @@ def generate_appearance_stream(
             ap_stream += b"<" + (b"".join(enc_line)).hex().encode() + b"> Tj\n"
         else:
             ap_stream += b"(" + b"".join(enc_line) + b") Tj\n"
-    ap_stream += b"ET\nQ\nEMC\nQ\n"
+    ap_stream += b"ET\n"            # End Text Object
+    ap_stream += b"Q\n"             # Restore graphics state
+    ap_stream += b"EMC\n"           # Don't know what this is
+    ap_stream += b"Q\n"             # Restore graphics state again?
+
     return ap_stream
 
