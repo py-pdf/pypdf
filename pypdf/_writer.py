@@ -892,6 +892,7 @@ class PdfWriter(PdfDocCommon):
         # entry in the widget annotation dictionary). PDF 32000-1:2008, p. 435.
         _rct = cast(RectangleObject, annotation[AA.Rect])
         rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
+
         # Step 2 - Extract font information from / set font information to default appearance
         da = annotation.get_inherited(
             AA.DA,
@@ -920,11 +921,9 @@ class PdfWriter(PdfDocCommon):
         )
         # Only when there is no default appearance (which should not be the case
         # for a text annotation) set font height to either multiline or field height - 2.
-        # I wonder if this case would ever present itself. ... It would, if this method
-        # is called with font_size = 0
-        if font_height == 0: # I don't get what this does.
+        if font_height == 0:
             if field.get(FA.Ff, 0) & FA.FfBits.Multiline:
-                font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE # This is just 12, as it stands.
+                font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE # This is just 12.
             else:
                 font_height = rct.height - 2
 
@@ -996,7 +995,7 @@ class PdfWriter(PdfDocCommon):
 
         # Step 5 - Generate appearance stream
         ap_stream = generate_appearance_stream(
-            txt, sel, font_properties, font_full_rev, rct, font_height, y_offset
+            txt, sel, font_properties, font_full_rev, rct, font_height, y_offset, align
         )
 
         # Step 6: Create appearance dictionary
@@ -1031,10 +1030,26 @@ class PdfWriter(PdfDocCommon):
                 }
             )
 
-        if flatten:
+            if AA.AP not in annotation:
+                annotation[NameObject(AA.AP)] = DictionaryObject(
+                    {NameObject("/N"): self._add_object(dct)}
+                )
+            elif "/N" not in cast(DictionaryObject, annotation[AA.AP]):
+                cast(DictionaryObject, annotation[NameObject(AA.AP)])[
+                    NameObject("/N")
+                ] = self._add_object(dct)
+            else:  # [/AP][/N] exists
+                n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
+                self._objects[n - 1] = dct
+                dct.indirect_reference = IndirectObject(n, 0, self)
+
+        self.add_apstream_object(page, annotation, dct, field, font_res)
+
+        if False: #flatten:
             # Step 7: The real flattening
             # Add font to page resources if not already there. This is needed for flattening.
             # Need to check if the font dictionary itself exists before checking its contents
+            font_name = font_res["/Name"]
             if "/Resources" not in page:
                 page[NameObject("/Resources")] = DictionaryObject()
             if "/Font" not in page["/Resources"]:
@@ -1042,9 +1057,10 @@ class PdfWriter(PdfDocCommon):
             if font_name not in page["/Resources"]["/Font"]:
                 page["/Resources"]["/Font"][NameObject(font_name)] = font_res
 
+            print (font_name)
+            print (font_res)
+
             # Prepare XObject resource dictionary on the page
-            if "/Resources" not in page:
-                page[NameObject("/Resources")] = DictionaryObject()
             if "/XObject" not in page["/Resources"]:
                 page[NameObject("/Resources")][NameObject("/XObject")] = DictionaryObject()
 
@@ -1063,7 +1079,6 @@ class PdfWriter(PdfDocCommon):
                 page["/Resources"]["/XObject"][xobject_name] = xobject_ref
             else:
                 print(f"      - XObject '{xobject_name}' already added to page resources. This might be an issue.")
-
 
             # Get the bounding box of the appearance stream itself
             ap_bbox = dct.get("/BBox")
@@ -1104,20 +1119,6 @@ Q
             # Merge these commands into the page's existing content stream
             new_content_ref = self.merge_content_streams(page.get("/Contents"), xobject_drawing_commands)
             page[NameObject("/Contents")] = new_content_ref
-
-        else:
-            if AA.AP not in annotation:
-                annotation[NameObject(AA.AP)] = DictionaryObject(
-                    {NameObject("/N"): self._add_object(dct)}
-                )
-            elif "/N" not in cast(DictionaryObject, annotation[AA.AP]):
-                cast(DictionaryObject, annotation[NameObject(AA.AP)])[
-                    NameObject("/N")
-                ] = self._add_object(dct)
-            else:  # [/AP][/N] exists
-                n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
-                self._objects[n - 1] = dct
-                dct.indirect_reference = IndirectObject(n, 0, self)
 
     FFBITS_NUL = FA.FfBits(0)
 
@@ -1197,7 +1198,9 @@ Q
                     del parent_annotation["/I"]
                 if flags:
                     annotation[NameObject(FA.Ff)] = NumberObject(flags)
-                if isinstance(value, list):
+                if value == None and flatten: # Useful to flatten filled-out forms without changing their contents
+                    continue
+                elif isinstance(value, list):
                     lst = ArrayObject(TextStringObject(v) for v in value)
                     parent_annotation[NameObject(FA.V)] = lst
                 elif isinstance(value, tuple):
@@ -1218,7 +1221,7 @@ Q
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
                     if flatten and not appearance_stream_obj == None:
-                        self.add_button_field_value(page, annotation, appearance_stream_obj, field)
+                        self.add_apstream_object(page, annotation, appearance_stream_obj, field)
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
@@ -1260,7 +1263,14 @@ Q
         new_stream._data = merged_data
         return self._add_object(new_stream)
 
-    def add_button_field_value(self, page: PageObject, annotation: DictionaryObject, appearance_stream_obj: StreamObject, field: str) -> bool:
+    def add_apstream_object(
+            self,
+            page: PageObject,
+            annotation: DictionaryObject,
+            appearance_stream_obj: StreamObject,
+            field: str,
+            font_res: Optional[DictionaryObject] = None
+        ) -> bool:
         """
         Flattens the appearance of a button field to the page content.
         This function handles various button types (push buttons, checkboxes, radio buttons)
@@ -1280,6 +1290,13 @@ Q
         if "/XObject" not in page["/Resources"]:
             page[NameObject("/Resources")][NameObject("/XObject")] = DictionaryObject()
 
+        if not font_res == None:
+            font_name = font_res["/Name"]
+            if "/Font" not in page["/Resources"]:
+                page["/Resources"][NameObject("/Font")] = DictionaryObject()
+            if font_name not in page["/Resources"]["/Font"]:
+                page["/Resources"]["/Font"][NameObject(font_name)] = font_res
+
         # Always add the resolved stream object to the writer to get a new IndirectObject.
         # This ensures we have a valid IndirectObject managed by *this* writer.
         xobject_ref = self._add_object(appearance_stream_obj)
@@ -1287,7 +1304,7 @@ Q
         # Create a name for the XObject. TODO Is this sufficiently unique?
         # Sanitize the original field name to be a valid PDF name part (alphanumeric, underscore, hyphen)
         # Replacing spaces with underscores, then removing any other non-alphanumeric/non-underscore/non-hyphen
-        sanitized_name = field.replace(" ", "_")
+        sanitized_name = str(field).replace(" ", "_")
         sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', sanitized_name)
         xobject_name = NameObject(f"/Fm_{sanitized_name}")
 
@@ -1324,7 +1341,7 @@ Q
         f = y_min - (ap_y_min * scale_y)  # Translate XObject's scaled origin to annotation's Y_min
 
         # Construct the PDF content stream commands to draw the XObject
-        button_drawing_commands = f"""
+        xobject_drawing_commands = f"""
 q
 {a:.4f} {b:.4f} {c:.4f} {d:.4f} {e:.4f} {f:.4f} cm
 {xobject_name} Do
@@ -1332,7 +1349,7 @@ Q
 """.encode('ascii')
 
         # Merge these commands into the page's existing content stream
-        new_content_ref = self.merge_content_streams(page.get("/Contents"), button_drawing_commands)
+        new_content_ref = self.merge_content_streams(page.get("/Contents"), xobject_drawing_commands)
         page[NameObject("/Contents")] = new_content_ref
 
         return True
@@ -3611,7 +3628,6 @@ Q
     ) -> bytes:
 
         font_ops = re.search(r'(/[^/\s]+)\s*(\d+(\.\d+)?)\s*Tf', da)
-        print (da)
         font_name = NameObject("/Helv")
 
         # Approximate text size and position
@@ -3675,7 +3691,6 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, float, List[Any]]) -> PdfObje
     raise NotImplementedError(
         f"{type(obj)=} could not be cast to a PdfObject"
     )
-
 
 def _create_outline_item(
     action_ref: Union[None, IndirectObject],
@@ -3748,7 +3763,7 @@ def calculate_text_width(font_name: NameObject, font_size: float, txt: str) -> f
     canonical_font_name = font_name_map.get(font_name)
 
     total_font_units_width = 0
-    default_width_fallback = _default_fonts_space_width["/" + canonical_font_name] # A general fallback if get_width has issues
+    default_width_fallback = _default_fonts_space_width["/" + canonical_font_name] # A general fallback
 
     for char in txt:
         char_width = default_width_fallback * 1.7 # Just a gamble
@@ -3774,24 +3789,20 @@ def wrap_text(
     Returns (wrapped_lines, font_size).
     """
     orig_txt = txt
-    txt = re.sub(r"\r", "\n", txt)
-
-    if field_width <= 0 or field_height <= 0 or font_size <= 0:
-        print(f"Warning: Field dimensions or font size invalid ({field_width}, {field_height}, {font_size}). Returning empty lines.")
-        return [], font_size
+    txt = re.sub(r"\n", "\r", txt)
 
     wrapped_lines = []
     current_line_words = []
     current_line_width = 0
 
-    paragraphs = txt.split('\n')
+    paragraphs = txt.split("\r")
 
     for paragraph in paragraphs:
         if not paragraph.strip():
             wrapped_lines.append("")
             continue
 
-        words = paragraph.split(' ')
+        words = paragraph.split(" ")
         for i, word in enumerate(words):
             word_width = calculate_text_width(font_name, font_size, word)
             space_width = calculate_text_width(font_name, font_size, " ") if i > 0 else 0
@@ -3839,6 +3850,7 @@ def generate_appearance_stream(
     rct: RectangleObject,
     font_height: float,
     y_offset: float,
+    align: int,
 ) -> bytes:
 
     lines, final_font_height = wrap_text(
@@ -3862,7 +3874,8 @@ def generate_appearance_stream(
                                     # clipping path." PDF 32000-1:2008, p. 138.
     ap_stream += b"BT\n"            # Begin Text Object
     ap_stream += f"{da}\n".encode() # Set font name and size
-    for line_number, line in enumerate(lines): # This is now broken.
+
+    for line_number, line in enumerate(lines): # This is probably broken, because wrap_text has added line breaks..
         if line in sel:
             # may be improved but cannot find how to get fill working => replaced with lined box
             ap_stream += (
