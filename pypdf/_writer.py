@@ -36,8 +36,6 @@ import uuid
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
 from pathlib import Path
-from pdfminer.pdffont import PDFType1Font
-from pdfminer.pdfinterp import PDFResourceManager
 from types import TracebackType
 from typing import (
     IO,
@@ -3749,38 +3747,11 @@ def calculate_text_width(font_name: NameObject, font_size: float, txt: str) -> f
     """
     canonical_font_name = font_name_map.get(font_name)
 
-    if not canonical_font_name:
-        print(f"Warning: Unknown Base 14 font name '{font_name}'. Cannot accurately calculate text width. Using rough estimate.")
-        return len(text) * font_size * 0.6
-
-    # Instantiate a dummy PDFResourceManager
-    rsrcmgr = PDFResourceManager()
-
-    # Create a minimal font specification dictionary for PDFType1Font
-    # PDFType1Font will use 'BaseFont' to look up widths internally.
-    font_spec = {
-        'Type': NameObject("/Font"),
-        'Subtype': NameObject("/Type1"),
-        'BaseFont': NameObject(canonical_font_name),
-        'Encoding': NameObject("/WinAnsiEncoding"), # Most common for Base 14 fonts
-        # We don't need to explicitly add 'Widths' here; PDFType1Font retrieves them internally
-    }
-
-    pdffont_obj = None
-    try:
-        pdffont_obj = PDFType1Font(rsrcmgr, font_spec)
-    except Exception as e:
-        print(f"Error creating PDFType1Font object for '{canonical_font_name}': {e}. Falling back to rough estimate.")
-        return len(text) * font_size * 0.6
-
     total_font_units_width = 0
-    default_width_fallback = 500 # A general fallback if get_width has issues
+    default_width_fallback = _default_fonts_space_width["/" + canonical_font_name] # A general fallback if get_width has issues
 
     for char in txt:
-        # PDFFont.get_width() returns the width in font units (typically 1000 per em)
-        char_width = pdffont_obj.widths[char]
-        if char_width is None:
-            char_width = pdffont_obj.default_width if hasattr(pdffont_obj, 'default_width') else default_width_fallback
+        char_width = default_width_fallback * 1.7 # Just a gamble
 
         total_font_units_width += char_width
 
@@ -3820,7 +3791,7 @@ def wrap_text(
             wrapped_lines.append("")
             continue
 
-        words = paragraph.split(" ")
+        words = paragraph.split(' ')
         for i, word in enumerate(words):
             word_width = calculate_text_width(font_name, font_size, word)
             space_width = calculate_text_width(font_name, font_size, " ") if i > 0 else 0
