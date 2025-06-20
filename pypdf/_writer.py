@@ -932,7 +932,6 @@ class PdfWriter(PdfDocCommon):
 
         font_properties[font_properties.index("Tf") - 1] = str(font_height)
 
-        da = " ".join(font_properties)
         y_offset = rct.height - 1 - font_height # Why add 1 point?
         align = field.get("/Q", 0)
 
@@ -999,7 +998,7 @@ class PdfWriter(PdfDocCommon):
 
         # Step 5 - Generate appearance stream
         ap_stream = generate_appearance_stream(
-            txt, sel, da, font_full_rev, rct, font_height, y_offset
+            txt, sel, font_properties, font_full_rev, rct, font_height, y_offset
         )
 
         # Step 6: Create appearance dictionary
@@ -3864,20 +3863,28 @@ def wrap_text(
 def generate_appearance_stream(
     txt: str,
     sel: List[str],
-    da: str,
+    font_properties: List[str],
     font_full_rev: Dict[str, bytes],
     rct: RectangleObject,
     font_height: float,
     y_offset: float,
 ) -> bytes:
 
-    lines, font_height = wrap_text(
-        da.split(" ")[0],
+    print (f"Original size: {font_height}")
+
+    lines, final_font_height = wrap_text(
+        font_properties[0],
         font_height,
         rct.width - 2,
         rct.height - 2,
         txt,
     )
+
+    print (f"Final size: {final_font_height}")
+
+    font_properties[1] = str(final_font_height)
+
+    da = " ".join(font_properties)
 
     ap_stream = b"q\n"              # Save graphics state
     ap_stream += b"/Tx BMC \n"      # Begin Marked Content
@@ -3902,14 +3909,14 @@ def generate_appearance_stream(
                 # (x + width) (y + height) l
                 # x (y + height) l
                 # h" PDF 32000-1:2008, p. 133.
-                f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
+                f"1 {y_offset - (line_number * final_font_height * 1.4) - 1} {rct.width - 2} {final_font_height + 2} re\n"
                 f"0.5 0.5 0.5 rg s\n{da}\n"
             ).encode()
         if line_number == 0:
             ap_stream += f"2 {y_offset} Td\n".encode() # Move to where the text starts
         else:
            # Td is a relative translation
-            ap_stream += f"0 {- font_height * 1.4} Td\n".encode() # Move down one line (font_height * 1.4)
+            ap_stream += f"0 {- final_font_height * 1.2} Td\n".encode() # Move down one line (font_height * 1.2)
         enc_line: List[bytes] = [
             font_full_rev.get(c, c.encode("utf-16-be")) for c in line
         ]
