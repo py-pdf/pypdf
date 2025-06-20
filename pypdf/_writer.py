@@ -921,11 +921,12 @@ class PdfWriter(PdfDocCommon):
         # 5: Create an appearance stream
         # 6: Create an appearance dictionary
 
-        # Step 1 - Calculate rectangle dimensions. _rct represents the exact rectangle and location,
-        # whereas rct only represents the rectangle size, anchored to the bottom-left page corner.
+        # Step 1 - Calculate rectangle dimensions.
+        # The lower-left corner of the bounding box (BBox) is set to coordinates (0, 0) in the form coordinate system.
+        # The box’s top and right coordinates are taken from the dimensions of the annotation rectangle (the Rect
+        # entry in the widget annotation dictionary). PDF 32000-1:2008, p. 435.
         _rct = cast(RectangleObject, annotation[AA.Rect])
-        abs_rct = RectangleObject(_rct)
-        rel_rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
+        rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
         # Step 2 - Extract font information from / set font information to default appearance
         da = annotation.get_inherited(
             AA.DA,
@@ -960,12 +961,12 @@ class PdfWriter(PdfDocCommon):
             if field.get(FA.Ff, 0) & FA.FfBits.Multiline:
                 font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE # This is just 12, as it stands.
             else:
-                font_height = rel_rct.height - 2
+                font_height = rct.height - 2
 
         font_properties[font_properties.index("Tf") - 1] = str(font_height)
 
         da = " ".join(font_properties)
-        y_offset = abs_rct.top - 1 - font_height # Why add 1 point?
+        y_offset = rct.height - 1 - font_height # Why add 1 point?
         align = field.get("/Q", 0)
 
         # Step 3 - Retrieve font information from DR ...
@@ -1031,15 +1032,17 @@ class PdfWriter(PdfDocCommon):
 
         # Step 5 - Generate appearance stream
         ap_stream = generate_appearance_stream(
-            txt, sel, da, font_full_rev, abs_rct, font_height, y_offset
+            txt, sel, da, font_full_rev, rct, font_height, y_offset
         )
 
         # Step 6: Create appearance dictionary
+
+
         dct = DecodedStreamObject.initialize_from_dictionary(
             {
                 NameObject("/Type"): NameObject("/XObject"),
                 NameObject("/Subtype"): NameObject("/Form"),
-                NameObject("/BBox"): abs_rct,
+                NameObject("/BBox"): rct,
                 "__streamdata__": ByteStringObject(ap_stream),
                 "/Length": 0,
             }
@@ -1063,6 +1066,7 @@ class PdfWriter(PdfDocCommon):
                     )
                 }
             )
+
         if flatten:
             # Step 7: The real flattening
             # Add font to page resources if not already there. This is needed for flattening.
@@ -1074,7 +1078,67 @@ class PdfWriter(PdfDocCommon):
             if font_name not in page["/Resources"]["/Font"]:
                 page["/Resources"]["/Font"][NameObject(font_name)] = font_res
 
-            new_content_ref = self.merge_content_streams(page.get("/Contents"), dct.get_data())
+            # Prepare XObject resource dictionary on the page
+            if "/Resources" not in page:
+                page[NameObject("/Resources")] = DictionaryObject()
+            if "/XObject" not in page["/Resources"]:
+                page[NameObject("/Resources")][NameObject("/XObject")] = DictionaryObject()
+
+            # Always add the resolved stream object to the writer to get a new IndirectObject.
+            # This ensures we have a valid IndirectObject managed by *this* writer.
+            xobject_ref = self._add_object(dct)
+
+            # Create a name for the XObject. TODO Is this sufficiently unique?
+            # Sanitize the original field name to be a valid PDF name part (alphanumeric, underscore, hyphen)
+            # Replacing spaces with underscores, then removing any other non-alphanumeric/non-underscore/non-hyphen
+            sanitized_name = str(field).replace(" ", "_")
+            sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', sanitized_name)
+            xobject_name = NameObject(f"/Fm_{sanitized_name}")
+
+            if xobject_name not in page["/Resources"]["/XObject"]:
+                page["/Resources"]["/XObject"][xobject_name] = xobject_ref
+            else:
+                print(f"      - XObject '{xobject_name}' already added to page resources. This might be an issue.")
+
+
+            # Get the bounding box of the appearance stream itself
+            ap_bbox = dct.get("/BBox")
+
+            if not ap_bbox or len(ap_bbox) != 4:
+                print(f"      - WARNING: Appearance stream for button '{field}' has no valid /BBox. Assuming it draws to fill the annotation Rect.")
+                # If no BBox, assume the XObject's content is defined to directly fit the annotation rect.
+                ap_x_min, ap_y_min, ap_x_max, ap_y_max = 0, 0, rct.width, rct.height
+            else:
+                ap_x_min, ap_y_min, ap_x_max, ap_y_max = [float(f) for f in ap_bbox]
+
+            # Calculate scale and translation to fit the appearance stream's BBox into the annotation's Rect
+            ap_content_width = ap_x_max - ap_x_min
+            ap_content_height = ap_y_max - ap_y_min
+
+            # Avoid division by zero
+            scale_x = rct.width / ap_content_width if ap_content_width != 0 else 1.0
+            scale_y = rct.height / ap_content_height if ap_content_height != 0 else 1.0
+
+            # Transformation matrix (a b c d e f) for 'a b c d e f cm'
+            # This matrix scales and translates the XObject from its internal coordinate system
+            # (where its BBox is defined relative to its origin) to the target annotation rectangle.
+            a = scale_x
+            b = 0.0
+            c = 0.0
+            d = scale_y
+            e = _rct[0] - (ap_x_min * scale_x)  # Translate XObject's scaled origin to annotation's X_min
+            f = _rct[1] - (ap_y_min * scale_y)  # Translate XObject's scaled origin to annotation's Y_min
+
+            # Construct the PDF content stream commands to draw the XObject
+            xobject_drawing_commands = f"""
+q
+{a:.4f} {b:.4f} {c:.4f} {d:.4f} {e:.4f} {f:.4f} cm
+{xobject_name} Do
+Q
+""".encode('ascii')
+
+            # Merge these commands into the page's existing content stream
+            new_content_ref = self.merge_content_streams(page.get("/Contents"), xobject_drawing_commands)
             page[NameObject("/Contents")] = new_content_ref
 
         else:
@@ -1387,12 +1451,10 @@ class PdfWriter(PdfDocCommon):
         else:
             print(f"      - XObject '{xobject_name}' already added to page resources. This might be an issue.")
 
-
         # Get the bounding box of the appearance stream itself
         ap_bbox = appearance_stream_obj.get("/BBox")
-
         if not ap_bbox or len(ap_bbox) != 4:
-            print(f"      - WARNING: Appearance stream for button '{field_name}' has no valid /BBox. Assuming it draws to fill the annotation Rect.")
+            print(f"      - WARNING: Appearance stream for button '{field}' has no valid /BBox. Assuming it draws to fill the annotation Rect.")
             # If no BBox, assume the XObject's content is defined to directly fit the annotation rect.
             ap_x_min, ap_y_min, ap_x_max, ap_y_max = 0, 0, width, height
         else:
