@@ -3873,24 +3873,36 @@ def generate_appearance_stream(
     y_offset: float,
 ) -> bytes:
     ap_stream = b"q\n"              # Save graphics state
-    ap_stream += b"/Tx BMC \n"      # Don't know what this is
+    ap_stream += b"/Tx BMC \n"      # Begin Marked Content
     ap_stream += b"q\n"             # Save graphics state again?
-    ap_stream += f"{rct.left + 1} {rct.bottom +1} {rct.width - 1} {rct.height - 1} re\n".encode() # Draw a rectangle?
-    ap_stream += b"W\n"             # Don't know what this is
+    ap_stream += f"1 1 {rct.width - 1} {rct.height - 1} re\n".encode() # Draw a rectangle?
+    ap_stream += b"W\n"             # "Modify the current clipping path by intersecting it with the current path, using
+                                    # the nonzero winding number rule to determine which regions lie inside the
+                                    # clipping path." PDF 32000-1:2008, p. 138.
     ap_stream += b"BT\n"            # Begin Text Object
     ap_stream += f"{da}\n".encode() # Set font name and size
     for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
         if line in sel:
             # may be improved but cannot find how to get fill working => replaced with lined box
             ap_stream += (
+                # re: "Append a rectangle to the current path as a complete
+                # subpath, with lower-left corner (x, y) and dimensions width
+                # and height in user space. The operation
+                # x y width height re
+                # is equivalent to
+                # x y m
+                # (x + width) y l
+                # (x + width) (y + height) l
+                # x (y + height) l
+                # h" PDF 32000-1:2008, p. 133.
                 f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
                 f"0.5 0.5 0.5 rg s\n{da}\n"
             ).encode()
         if line_number == 0:
-            ap_stream += f"{rct.left +1} {y_offset} Td\n".encode()
+            ap_stream += f"2 {y_offset} Td\n".encode() # Move to where the text starts
         else:
-            # Td is a relative translation
-            ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
+           # Td is a relative translation
+            ap_stream += f"0 {- font_height * 1.4} Td\n".encode() # Move down one line (font_height * 1.4)
         enc_line: List[bytes] = [
             font_full_rev.get(c, c.encode("utf-16-be")) for c in line
         ]
@@ -3900,7 +3912,7 @@ def generate_appearance_stream(
             ap_stream += b"(" + b"".join(enc_line) + b") Tj\n"
     ap_stream += b"ET\n"            # End Text Object
     ap_stream += b"Q\n"             # Restore graphics state
-    ap_stream += b"EMC\n"           # Don't know what this is
+    ap_stream += b"EMC\n"           # End Marked Content
     ap_stream += b"Q\n"             # Restore graphics state again?
 
     return ap_stream
