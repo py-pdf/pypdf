@@ -999,8 +999,6 @@ class PdfWriter(PdfDocCommon):
         )
 
         # Step 6: Create appearance dictionary
-
-
         dct = DecodedStreamObject.initialize_from_dictionary(
             {
                 NameObject("/Type"): NameObject("/XObject"),
@@ -1030,95 +1028,21 @@ class PdfWriter(PdfDocCommon):
                 }
             )
 
-            if AA.AP not in annotation:
-                annotation[NameObject(AA.AP)] = DictionaryObject(
-                    {NameObject("/N"): self._add_object(dct)}
-                )
-            elif "/N" not in cast(DictionaryObject, annotation[AA.AP]):
-                cast(DictionaryObject, annotation[NameObject(AA.AP)])[
-                    NameObject("/N")
-                ] = self._add_object(dct)
-            else:  # [/AP][/N] exists
-                n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
-                self._objects[n - 1] = dct
-                dct.indirect_reference = IndirectObject(n, 0, self)
+        if AA.AP not in annotation:
+            annotation[NameObject(AA.AP)] = DictionaryObject(
+                {NameObject("/N"): self._add_object(dct)}
+            )
+        elif "/N" not in cast(DictionaryObject, annotation[AA.AP]):
+            cast(DictionaryObject, annotation[NameObject(AA.AP)])[
+                NameObject("/N")
+            ] = self._add_object(dct)
+        else:  # [/AP][/N] exists
+            n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
+            self._objects[n - 1] = dct
+            dct.indirect_reference = IndirectObject(n, 0, self)
 
-        self.add_apstream_object(page, annotation, dct, field, font_res)
-
-        if False: #flatten:
-            # Step 7: The real flattening
-            # Add font to page resources if not already there. This is needed for flattening.
-            # Need to check if the font dictionary itself exists before checking its contents
-            font_name = font_res["/Name"]
-            if "/Resources" not in page:
-                page[NameObject("/Resources")] = DictionaryObject()
-            if "/Font" not in page["/Resources"]:
-                page["/Resources"][NameObject("/Font")] = DictionaryObject()
-            if font_name not in page["/Resources"]["/Font"]:
-                page["/Resources"]["/Font"][NameObject(font_name)] = font_res
-
-            print (font_name)
-            print (font_res)
-
-            # Prepare XObject resource dictionary on the page
-            if "/XObject" not in page["/Resources"]:
-                page[NameObject("/Resources")][NameObject("/XObject")] = DictionaryObject()
-
-            # Always add the resolved stream object to the writer to get a new IndirectObject.
-            # This ensures we have a valid IndirectObject managed by *this* writer.
-            xobject_ref = self._add_object(dct)
-
-            # Create a name for the XObject. TODO Is this sufficiently unique?
-            # Sanitize the original field name to be a valid PDF name part (alphanumeric, underscore, hyphen)
-            # Replacing spaces with underscores, then removing any other non-alphanumeric/non-underscore/non-hyphen
-            sanitized_name = str(field).replace(" ", "_")
-            sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', sanitized_name)
-            xobject_name = NameObject(f"/Fm_{sanitized_name}")
-
-            if xobject_name not in page["/Resources"]["/XObject"]:
-                page["/Resources"]["/XObject"][xobject_name] = xobject_ref
-            else:
-                print(f"      - XObject '{xobject_name}' already added to page resources. This might be an issue.")
-
-            # Get the bounding box of the appearance stream itself
-            ap_bbox = dct.get("/BBox")
-
-            if not ap_bbox or len(ap_bbox) != 4:
-                print(f"      - WARNING: Appearance stream for button '{field}' has no valid /BBox. Assuming it draws to fill the annotation Rect.")
-                # If no BBox, assume the XObject's content is defined to directly fit the annotation rect.
-                ap_x_min, ap_y_min, ap_x_max, ap_y_max = 0, 0, rct.width, rct.height
-            else:
-                ap_x_min, ap_y_min, ap_x_max, ap_y_max = [float(f) for f in ap_bbox]
-
-            # Calculate scale and translation to fit the appearance stream's BBox into the annotation's Rect
-            ap_content_width = ap_x_max - ap_x_min
-            ap_content_height = ap_y_max - ap_y_min
-
-            # Avoid division by zero
-            scale_x = rct.width / ap_content_width if ap_content_width != 0 else 1.0
-            scale_y = rct.height / ap_content_height if ap_content_height != 0 else 1.0
-
-            # Transformation matrix (a b c d e f) for 'a b c d e f cm'
-            # This matrix scales and translates the XObject from its internal coordinate system
-            # (where its BBox is defined relative to its origin) to the target annotation rectangle.
-            a = scale_x
-            b = 0.0
-            c = 0.0
-            d = scale_y
-            e = _rct[0] - (ap_x_min * scale_x)  # Translate XObject's scaled origin to annotation's X_min
-            f = _rct[1] - (ap_y_min * scale_y)  # Translate XObject's scaled origin to annotation's Y_min
-
-            # Construct the PDF content stream commands to draw the XObject
-            xobject_drawing_commands = f"""
-q
-{a:.4f} {b:.4f} {c:.4f} {d:.4f} {e:.4f} {f:.4f} cm
-{xobject_name} Do
-Q
-""".encode('ascii')
-
-            # Merge these commands into the page's existing content stream
-            new_content_ref = self.merge_content_streams(page.get("/Contents"), xobject_drawing_commands)
-            page[NameObject("/Contents")] = new_content_ref
+        if flatten:
+            self.add_apstream_object(page, annotation, dct, field, font_res)
 
     FFBITS_NUL = FA.FfBits(0)
 
@@ -1311,12 +1235,13 @@ Q
         if xobject_name not in page["/Resources"]["/XObject"]:
             page["/Resources"]["/XObject"][xobject_name] = xobject_ref
         else:
-            print(f"      - XObject '{xobject_name}' already added to page resources. This might be an issue.")
+            logger_warning(f"XObject '{xobject_name}' already added to page resources. This might be an issue.",
+                           __name__)
 
         # Get the bounding box of the appearance stream itself
         ap_bbox = appearance_stream_obj.get("/BBox")
         if not ap_bbox or len(ap_bbox) != 4:
-            print(f"      - WARNING: Appearance stream for button '{field}' has no valid /BBox. Assuming it draws to fill the annotation Rect.")
+            logger_warning(f"Appearance stream for '{field}' has no valid /BBox.", __name__)
             # If no BBox, assume the XObject's content is defined to directly fit the annotation rect.
             ap_x_min, ap_y_min, ap_x_max, ap_y_max = 0, 0, width, height
         else:
@@ -1341,12 +1266,9 @@ Q
         f = y_min - (ap_y_min * scale_y)  # Translate XObject's scaled origin to annotation's Y_min
 
         # Construct the PDF content stream commands to draw the XObject
-        xobject_drawing_commands = f"""
-q
-{a:.4f} {b:.4f} {c:.4f} {d:.4f} {e:.4f} {f:.4f} cm
-{xobject_name} Do
-Q
-""".encode('ascii')
+        xobject_drawing_commands = (
+            f"q\n{a:.4f} {b:.4f} {c:.4f} {d:.4f} {e:.4f} {f:.4f} cm\n{xobject_name} Do\nQ".encode()
+        )
 
         # Merge these commands into the page's existing content stream
         new_content_ref = self.merge_content_streams(page.get("/Contents"), xobject_drawing_commands)
@@ -1354,23 +1276,22 @@ Q
 
         return True
 
-    def annotation_print(self, annotation: DictionaryObject, recurse: bool = False, depth: Optional[int] = 0) -> None:
+    def dictobject_print(self, dictobject: DictionaryObject, recurse: bool = False, depth: Optional[int] = 0) -> None:
         if depth == 0:
-            print ("\n\n\nRecursively printing annotation....")
-        for key, val in annotation.items():
+            logger_warning("\nRecursively printing DictionaryObject....")
+        for key, val in dictobject.items():
             if key == "/P":
-                print (f"Key: {key}. Skipping; this is an indirect reference to the page object")
+                logger_warning(f"Key: {key}. Skipping; this is an indirect reference to the page object", __name__)
                 continue
             if isinstance(val, IndirectObject):
-                #print (f"{depth * '        '}Value {val} is an IndirectObject")
                 val = val.get_object()
             if not isinstance(val, dict):
-                print(f"{depth * '        '}Key: {key}; Value: {val}")
+                logger_warning(f"{depth * '        '}Key: {key}; Value: {val}", __name__)
             else:
-                print (f"{depth * '        '}Key: {key}; Dictionary. Depth: {depth + 1}")
-                self.annotation_print(val, True, depth + 1)
+                logger_warning(f"{depth * '        '}Key: {key}; Dictionary. Depth: {depth + 1}", __name__)
+                self.dictobject_print(val, True, depth + 1)
         if depth == 0:
-            print ("Finished recursively printing annotation....\n\n\n")
+            logger_warning("Finished recursively printing DictionaryObject....\n", __name__)
 
     def reattach_fields(
         self, page: Optional[PageObject] = None
@@ -3614,63 +3535,6 @@ Q
             data = {k: v for k, v in data.items() if k not in exclude}
 
         return data
-
-
-    def alt_generate_appearance_stream(
-        self,
-        txt: str,
-        sel: List[str],
-        da: str,
-        font_full_rev: Dict[str, bytes],
-        rct: RectangleObject,
-        font_height: float,
-        y_offset: float,
-    ) -> bytes:
-
-        font_ops = re.search(r'(/[^/\s]+)\s*(\d+(\.\d+)?)\s*Tf', da)
-        font_name = NameObject("/Helv")
-
-        # Approximate text size and position
-        x_min, y_min, x_max, y_max = [float(f) for f in rct]
-        field_width = x_max - x_min
-        field_height = y_max - y_min
-
-        lines, final_font_size = self.wrap_text(
-            font_name,
-            font_height,
-            field_width,
-            field_height,
-            txt,
-        )
-
-        # Positioning based on alignment
-        text_x = x_min
-        text_y_start = y_max - final_font_size # Top of the first line
-
-        text_commands = b"q\n" # Save graphics state
-        text_commands += b"BT\n" # Begin Text Object
-        text_commands += b"0 g\n" # Set font color to black (grayscale) TODO: get colour from annotation appearance
-        text_commands += f"{font_name} {final_font_size} Tf \n".encode('ascii')
-
-        for i, line in enumerate(lines):
-            current_text_x = x_min # Default to left alignment
-            #if align == 1: # Center
-            #    line_text_width = self.calculate_text_width(font_name, final_font_size, line)
-            #    current_text_x = x_min + (field_width - line_text_width) / 2
-            #elif align == 2: # Right
-            #    line_text_width = self.calculate_text_width(font_name, final_font_size, line)
-            #    current_text_x = x_max - line_text_width
-
-            # Calculate current line's Y position
-            current_text_y = text_y_start - (i * final_font_size * 1.2) # TODO: Get real line spacing and add it here...
-
-            text_commands += (f"1 0 0 1 {current_text_x} {current_text_y} Tm \n".encode("ascii")) # Set Text Matrix (absolute position)
-            text_commands += b"(" + line.encode('pdfdoc') + b") Tj\n" # Show text (encoded for PDF)
-
-        text_commands += b"ET\n" # End Text Object
-        text_commands += b"Q\n" # Restore graphics state
-
-        return text_commands
 
 def _pdf_objectify(obj: Union[Dict[str, Any], str, float, List[Any]]) -> PdfObject:
     if isinstance(obj, PdfObject):
