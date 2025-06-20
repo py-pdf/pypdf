@@ -296,39 +296,6 @@ class PdfWriter(PdfDocCommon):
             if isinstance(self._ID[1], TextStringObject):
                 self._ID[1] = ByteStringObject(self._ID[1].get_original_bytes())
 
-    font_name_map = {
-        # Map common font names/abbreviations to their canonical PostScript names
-        "/Cour": "Courier",
-        "/Courier": "Courier",
-        "/CoBo": "Courier-Bold",
-        "/Courier-Bold": "Courier-Bold",
-        "/CoOb": "Courier-Oblique",
-        "/Courier-Oblique": "Courier-Oblique",
-        "/CoBO": "Courier-BoldOblique",
-        "/Courier-BoldOblique": "Courier-BoldOblique",
-        "/Helv": "Helvetica",
-        "/Helvetica": "Helvetica",
-        "/HeBo": "Helvetica-Bold",
-        "/Helvetica-Bold": "Helvetica-Bold",
-        "/HeOb": "Helvetica-Oblique",
-        "/Helvetica-Oblique": "Helvetica-Oblique",
-        "/HeBO": "Helvetica-BoldOblique",
-        "/Helvetica-BoldOblique": "Helvetica-BoldOblique",
-        "/TiRo": "Times-Roman",
-        "/Times": "Times-Roman",
-        "/Times-Roman": "Times-Roman",
-        "/TiBo": "Times-Bold",
-        "/Times-Bold": "Times-Bold",
-        "/TiIt": "Times-Italic",
-        "/Times-Italic": "Times-Italic",
-        "/TiBI": "Times-BoldItalic",
-        "/Times-BoldItalic": "Times-BoldItalic",
-        "/Sym": "Symbol",
-        "/Symbol": "Symbol",
-        "/ZaDb": "ZapfDingbats",
-        "/ZapfDingbats": "ZapfDingbats",
-    }
-
     # for commonality
     @property
     def is_encrypted(self) -> bool:
@@ -1270,125 +1237,6 @@ Q
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
-
-    def calculate_text_width(self, font_name: NameObject, font_size: float, text: str) -> float:
-        """
-        Calculates the display width of a given text string in PDF user space units
-        by instantiating a PDFType1Font object from pdfminer.six for Base 14 fonts.
-        """
-        canonical_font_name = self.font_name_map.get(font_name)
-
-        if not canonical_font_name:
-            print(f"Warning: Unknown Base 14 font name '{font_name}'. Cannot accurately calculate text width. Using rough estimate.")
-            return len(text) * font_size * 0.6
-
-        # Instantiate a dummy PDFResourceManager
-        rsrcmgr = PDFResourceManager()
-
-        # Create a minimal font specification dictionary for PDFType1Font
-        # PDFType1Font will use 'BaseFont' to look up widths internally.
-        font_spec = {
-            'Type': NameObject("/Font"),
-            'Subtype': NameObject("/Type1"),
-            'BaseFont': NameObject(canonical_font_name),
-            'Encoding': NameObject("/WinAnsiEncoding"), # Most common for Base 14 fonts
-            # We don't need to explicitly add 'Widths' here; PDFType1Font retrieves them internally
-        }
-
-        pdffont_obj = None
-        try:
-            pdffont_obj = PDFType1Font(rsrcmgr, font_spec)
-        except Exception as e:
-            print(f"Error creating PDFType1Font object for '{canonical_font_name}': {e}. Falling back to rough estimate.")
-            return len(text) * font_size * 0.6
-
-        total_font_units_width = 0
-        default_width_fallback = 500 # A general fallback if get_width has issues
-
-        for char in text:
-            # PDFFont.get_width() returns the width in font units (typically 1000 per em)
-            char_width = pdffont_obj.widths[char]
-            if char_width is None:
-                char_width = pdffont_obj.default_width if hasattr(pdffont_obj, 'default_width') else default_width_fallback
-
-            total_font_units_width += char_width
-
-        text_width_in_points = (total_font_units_width * font_size) / 1000.0
-        return text_width_in_points
-
-    def wrap_text(
-        self,
-        font_name: str,
-        font_size: float,
-        field_width: float,
-        field_height: float,
-        text: str,
-        min_font_size: float = 4.0,       # Minimum font size to attempt
-        font_size_step: float = 0.5       # How much to decrease font size by each step
-    ) -> Tuple[List[str], float]:
-        """
-        Takes a piece of text and adds newlines to wrap it
-        into a rect of given size, given font_name and
-        font_size. Recursively reduces font_size if text exceeds field_height.
-        Returns (wrapped_lines, font_size).
-        """
-        orig_text = text
-        text = re.sub(r"\r", "\n", text)
-
-        if field_width <= 0 or field_height <= 0 or font_size <= 0:
-            print(f"Warning: Field dimensions or font size invalid ({field_width}, {field_height}, {font_size}). Returning empty lines.")
-            return [], font_size
-
-        wrapped_lines = []
-        current_line_words = []
-        current_line_width = 0
-
-        paragraphs = text.split('\n')
-
-        for paragraph in paragraphs:
-            if not paragraph.strip():
-                wrapped_lines.append("")
-                continue
-
-            words = paragraph.split(' ')
-            for i, word in enumerate(words):
-                word_width = self.calculate_text_width(font_name, font_size, word)
-                space_width = self.calculate_text_width(font_name, font_size, " ") if i > 0 else 0
-
-                test_width = current_line_width + space_width + word_width
-
-                if test_width > field_width and current_line_words:
-                    wrapped_lines.append(" ".join(current_line_words))
-                    current_line_words = [word]
-                    current_line_width = word_width
-                elif not current_line_words and word_width > field_width:
-                    wrapped_lines.append(word)
-                    current_line_words = []
-                    current_line_width = 0
-                else:
-                    if current_line_words:
-                        current_line_width += space_width
-                    current_line_words.append(word)
-                    current_line_width += word_width
-
-            if current_line_words:
-                wrapped_lines.append(" ".join(current_line_words))
-                current_line_words = []
-                current_line_width = 0
-
-        line_height_estimate = font_size * 1.2 # TODO: Add real line spacing here.
-        estimated_total_height = len(wrapped_lines) * line_height_estimate
-
-        if estimated_total_height > field_height:
-            new_font_size = font_size - font_size_step
-            if new_font_size >= min_font_size:
-                # Text overflows height; Retry with smaller font size.
-                return self.wrap_text(font_name, new_font_size, field_width, field_height, orig_text, min_font_size, font_size_step)
-            else:
-                # Font size lower than set minimum font size, give up.
-                return wrapped_lines, font_size
-        else:
-            return wrapped_lines, font_size
 
     def merge_content_streams(self, existing_content, new_content_data):
         """
@@ -3862,6 +3710,156 @@ def _create_outline_item(
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
 
+font_name_map = {
+    # Map common font names/abbreviations to their canonical PostScript names
+    "/Cour": "Courier",
+    "/Courier": "Courier",
+    "/CoBo": "Courier-Bold",
+    "/Courier-Bold": "Courier-Bold",
+    "/CoOb": "Courier-Oblique",
+    "/Courier-Oblique": "Courier-Oblique",
+    "/CoBO": "Courier-BoldOblique",
+    "/Courier-BoldOblique": "Courier-BoldOblique",
+    "/Helv": "Helvetica",
+    "/Helvetica": "Helvetica",
+    "/HeBo": "Helvetica-Bold",
+    "/Helvetica-Bold": "Helvetica-Bold",
+    "/HeOb": "Helvetica-Oblique",
+    "/Helvetica-Oblique": "Helvetica-Oblique",
+    "/HeBO": "Helvetica-BoldOblique",
+    "/Helvetica-BoldOblique": "Helvetica-BoldOblique",
+    "/TiRo": "Times-Roman",
+    "/Times": "Times-Roman",
+    "/Times-Roman": "Times-Roman",
+    "/TiBo": "Times-Bold",
+    "/Times-Bold": "Times-Bold",
+    "/TiIt": "Times-Italic",
+    "/Times-Italic": "Times-Italic",
+    "/TiBI": "Times-BoldItalic",
+    "/Times-BoldItalic": "Times-BoldItalic",
+    "/Sym": "Symbol",
+    "/Symbol": "Symbol",
+    "/ZaDb": "ZapfDingbats",
+    "/ZapfDingbats": "ZapfDingbats",
+}
+
+def calculate_text_width(font_name: NameObject, font_size: float, txt: str) -> float:
+    """
+    Calculates the display width of a given text string in PDF user space units
+    by instantiating a PDFType1Font object from pdfminer.six for Base 14 fonts.
+    """
+    canonical_font_name = font_name_map.get(font_name)
+
+    if not canonical_font_name:
+        print(f"Warning: Unknown Base 14 font name '{font_name}'. Cannot accurately calculate text width. Using rough estimate.")
+        return len(text) * font_size * 0.6
+
+    # Instantiate a dummy PDFResourceManager
+    rsrcmgr = PDFResourceManager()
+
+    # Create a minimal font specification dictionary for PDFType1Font
+    # PDFType1Font will use 'BaseFont' to look up widths internally.
+    font_spec = {
+        'Type': NameObject("/Font"),
+        'Subtype': NameObject("/Type1"),
+        'BaseFont': NameObject(canonical_font_name),
+        'Encoding': NameObject("/WinAnsiEncoding"), # Most common for Base 14 fonts
+        # We don't need to explicitly add 'Widths' here; PDFType1Font retrieves them internally
+    }
+
+    pdffont_obj = None
+    try:
+        pdffont_obj = PDFType1Font(rsrcmgr, font_spec)
+    except Exception as e:
+        print(f"Error creating PDFType1Font object for '{canonical_font_name}': {e}. Falling back to rough estimate.")
+        return len(text) * font_size * 0.6
+
+    total_font_units_width = 0
+    default_width_fallback = 500 # A general fallback if get_width has issues
+
+    for char in txt:
+        # PDFFont.get_width() returns the width in font units (typically 1000 per em)
+        char_width = pdffont_obj.widths[char]
+        if char_width is None:
+            char_width = pdffont_obj.default_width if hasattr(pdffont_obj, 'default_width') else default_width_fallback
+
+        total_font_units_width += char_width
+
+    text_width_in_points = (total_font_units_width * font_size) / 1000.0
+    return text_width_in_points
+
+def wrap_text(
+    font_name: str,
+    font_size: float,
+    field_width: float,
+    field_height: float,
+    txt: str,
+    min_font_size: float = 4.0,       # Minimum font size to attempt
+    font_size_step: float = 0.5       # How much to decrease font size by each step
+) -> Tuple[List[str], float]:
+    """
+    Takes a piece of text and adds newlines to wrap it
+    into a rect of given size, given font_name and
+    font_size. Recursively reduces font_size if text exceeds field_height.
+    Returns (wrapped_lines, font_size).
+    """
+    orig_txt = txt
+    txt = re.sub(r"\r", "\n", txt)
+
+    if field_width <= 0 or field_height <= 0 or font_size <= 0:
+        print(f"Warning: Field dimensions or font size invalid ({field_width}, {field_height}, {font_size}). Returning empty lines.")
+        return [], font_size
+
+    wrapped_lines = []
+    current_line_words = []
+    current_line_width = 0
+
+    paragraphs = txt.split('\n')
+
+    for paragraph in paragraphs:
+        if not paragraph.strip():
+            wrapped_lines.append("")
+            continue
+
+        words = paragraph.split(' ')
+        for i, word in enumerate(words):
+            word_width = calculate_text_width(font_name, font_size, word)
+            space_width = calculate_text_width(font_name, font_size, " ") if i > 0 else 0
+
+            test_width = current_line_width + space_width + word_width
+
+            if test_width > field_width and current_line_words:
+                wrapped_lines.append(" ".join(current_line_words))
+                current_line_words = [word]
+                current_line_width = word_width
+            elif not current_line_words and word_width > field_width:
+                wrapped_lines.append(word)
+                current_line_words = []
+                current_line_width = 0
+            else:
+                if current_line_words:
+                    current_line_width += space_width
+                current_line_words.append(word)
+                current_line_width += word_width
+
+        if current_line_words:
+            wrapped_lines.append(" ".join(current_line_words))
+            current_line_words = []
+            current_line_width = 0
+
+    line_height_estimate = font_size * 1.2 # TODO: Add real line spacing here.
+    estimated_total_height = len(wrapped_lines) * line_height_estimate
+
+    if estimated_total_height > field_height:
+        new_font_size = font_size - font_size_step
+        if new_font_size >= min_font_size:
+            # Text overflows height; Retry with smaller font size.
+            return wrap_text(font_name, new_font_size, field_width, field_height, orig_txt, min_font_size, font_size_step)
+        else:
+            # Font size lower than set minimum font size, give up.
+            return wrapped_lines, font_size
+    else:
+        return wrapped_lines, font_size
 
 def generate_appearance_stream(
     txt: str,
@@ -3872,6 +3870,15 @@ def generate_appearance_stream(
     font_height: float,
     y_offset: float,
 ) -> bytes:
+
+    lines, font_height = wrap_text(
+        da.split(" ")[0],
+        font_height,
+        rct.width - 2,
+        rct.height - 2,
+        txt,
+    )
+
     ap_stream = b"q\n"              # Save graphics state
     ap_stream += b"/Tx BMC \n"      # Begin Marked Content
     ap_stream += b"q\n"             # Save graphics state again?
@@ -3881,7 +3888,7 @@ def generate_appearance_stream(
                                     # clipping path." PDF 32000-1:2008, p. 138.
     ap_stream += b"BT\n"            # Begin Text Object
     ap_stream += f"{da}\n".encode() # Set font name and size
-    for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
+    for line_number, line in enumerate(lines):
         if line in sel:
             # may be improved but cannot find how to get fill working => replaced with lined box
             ap_stream += (
