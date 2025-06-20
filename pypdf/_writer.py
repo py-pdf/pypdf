@@ -36,6 +36,8 @@ import uuid
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
 from pathlib import Path
+from pdfminer.pdffont import PDFType1Font
+from pdfminer.pdfinterp import PDFResourceManager
 from types import TracebackType
 from typing import (
     IO,
@@ -930,7 +932,7 @@ class PdfWriter(PdfDocCommon):
 
         font_properties[font_properties.index("Tf") - 1] = str(font_height)
 
-        y_offset = rct.height - 1 - font_height # Why add 1 point?
+        y_offset = rct.height - font_height
         align = field.get("/Q", 0)
 
         # Step 3 - Retrieve font information from DR ...
@@ -3749,13 +3751,36 @@ def calculate_text_width(font_name: NameObject, font_size: float, txt: str) -> f
 
     if not canonical_font_name:
         print(f"Warning: Unknown Base 14 font name '{font_name}'. Cannot accurately calculate text width. Using rough estimate.")
-        return len(text) * font_size * 0.5
+        return len(text) * font_size * 0.6
+
+    # Instantiate a dummy PDFResourceManager
+    rsrcmgr = PDFResourceManager()
+
+    # Create a minimal font specification dictionary for PDFType1Font
+    # PDFType1Font will use 'BaseFont' to look up widths internally.
+    font_spec = {
+        'Type': NameObject("/Font"),
+        'Subtype': NameObject("/Type1"),
+        'BaseFont': NameObject(canonical_font_name),
+        'Encoding': NameObject("/WinAnsiEncoding"), # Most common for Base 14 fonts
+        # We don't need to explicitly add 'Widths' here; PDFType1Font retrieves them internally
+    }
+
+    pdffont_obj = None
+    try:
+        pdffont_obj = PDFType1Font(rsrcmgr, font_spec)
+    except Exception as e:
+        print(f"Error creating PDFType1Font object for '{canonical_font_name}': {e}. Falling back to rough estimate.")
+        return len(text) * font_size * 0.6
 
     total_font_units_width = 0
-    default_width_fallback = _default_fonts_space_width["/" + canonical_font_name] # A general fallback if get_width has issues
+    default_width_fallback = 500 # A general fallback if get_width has issues
 
     for char in txt:
-        char_width = default_width_fallback
+        # PDFFont.get_width() returns the width in font units (typically 1000 per em)
+        char_width = pdffont_obj.widths[char]
+        if char_width is None:
+            char_width = pdffont_obj.default_width if hasattr(pdffont_obj, 'default_width') else default_width_fallback
 
         total_font_units_width += char_width
 
@@ -3797,7 +3822,7 @@ def wrap_text(
 
         words = paragraph.split(" ")
         for i, word in enumerate(words):
-            word_width = calculate_text_width(font_name, font_size, word) * 1.1
+            word_width = calculate_text_width(font_name, font_size, word)
             space_width = calculate_text_width(font_name, font_size, " ") if i > 0 else 0
 
             test_width = current_line_width + space_width + word_width
@@ -3821,7 +3846,7 @@ def wrap_text(
             current_line_words = []
             current_line_width = 0
 
-    line_height_estimate = font_size * 1.2 # TODO: Add real line spacing here.
+    line_height_estimate = font_size * 1.4 # TODO: Add real line spacing here.
     estimated_total_height = len(wrapped_lines) * line_height_estimate
 
     if estimated_total_height > field_height:
@@ -3845,8 +3870,6 @@ def generate_appearance_stream(
     y_offset: float,
 ) -> bytes:
 
-    print (f"Original size: {font_height}")
-
     lines, final_font_height = wrap_text(
         font_properties[0],
         font_height,
@@ -3854,8 +3877,6 @@ def generate_appearance_stream(
         rct.height - 2,
         txt,
     )
-
-    print (f"Final size: {final_font_height}")
 
     font_properties[1] = str(final_font_height)
 
@@ -3870,7 +3891,7 @@ def generate_appearance_stream(
                                     # clipping path." PDF 32000-1:2008, p. 138.
     ap_stream += b"BT\n"            # Begin Text Object
     ap_stream += f"{da}\n".encode() # Set font name and size
-    for line_number, line in enumerate(lines):
+    for line_number, line in enumerate(lines): # This is now broken.
         if line in sel:
             # may be improved but cannot find how to get fill working => replaced with lined box
             ap_stream += (
@@ -3891,7 +3912,8 @@ def generate_appearance_stream(
             ap_stream += f"2 {y_offset} Td\n".encode() # Move to where the text starts
         else:
            # Td is a relative translation
-            ap_stream += f"0 {- final_font_height * 1.2} Td\n".encode() # Move down one line (font_height * 1.2)
+            ap_stream += f"0 {- final_font_height * 1.4} Td\n".encode() # Move down one line (font_height * 1.4)
+                                                                        # TODO: Add real line spacing here.
         enc_line: List[bytes] = [
             font_full_rev.get(c, c.encode("utf-16-be")) for c in line
         ]
