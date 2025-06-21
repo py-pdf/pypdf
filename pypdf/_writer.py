@@ -954,6 +954,10 @@ class PdfWriter(PdfDocCommon):
             )
             dr = dr.get_object().get("/Font", DictionaryObject()).get_object()
         font_res = dr.get(font_name, None)
+        if font_res:
+            base_font = font_res.get("/BaseFont", None)
+        else:
+            base_font = None
         if not is_null_or_none(font_res):
             font_res = cast(DictionaryObject, font_res.get_object())
             font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
@@ -995,7 +999,7 @@ class PdfWriter(PdfDocCommon):
 
         # Step 5 - Generate appearance stream
         ap_stream = generate_appearance_stream(
-            txt, sel, font_properties, font_full_rev, rct, font_height, align
+            txt, sel, font_properties, base_font, font_full_rev, rct, font_height, align
         )
 
         # Step 6: Create appearance dictionary
@@ -3589,55 +3593,21 @@ def _create_outline_item(
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
 
-font_name_map = {
-    # Map common font names/abbreviations to their canonical PostScript names
-    "/Cour": "Courier",
-    "/Courier": "Courier",
-    "/CoBo": "Courier-Bold",
-    "/Courier-Bold": "Courier-Bold",
-    "/CoOb": "Courier-Oblique",
-    "/Courier-Oblique": "Courier-Oblique",
-    "/CoBO": "Courier-BoldOblique",
-    "/Courier-BoldOblique": "Courier-BoldOblique",
-    "/Helv": "Helvetica",
-    "/Helvetica": "Helvetica",
-    "/HeBo": "Helvetica-Bold",
-    "/Helvetica-Bold": "Helvetica-Bold",
-    "/HeOb": "Helvetica-Oblique",
-    "/Helvetica-Oblique": "Helvetica-Oblique",
-    "/HeBO": "Helvetica-BoldOblique",
-    "/Helvetica-BoldOblique": "Helvetica-BoldOblique",
-    "/TiRo": "Times-Roman",
-    "/Times": "Times-Roman",
-    "/Times-Roman": "Times-Roman",
-    "/TiBo": "Times-Bold",
-    "/Times-Bold": "Times-Bold",
-    "/TiIt": "Times-Italic",
-    "/Times-Italic": "Times-Italic",
-    "/TiBI": "Times-BoldItalic",
-    "/Times-BoldItalic": "Times-BoldItalic",
-    "/Sym": "Symbol",
-    "/Symbol": "Symbol",
-    "/ZaDb": "ZapfDingbats",
-    "/ZapfDingbats": "ZapfDingbats",
-}
-
-def calculate_text_width(font_name: NameObject, font_size: float, txt: str) -> float:
+def calculate_text_width(base_font: NameObject, font_size: float, txt: str) -> float:
     """
     Calculates the display width of a given text string in PDF user space units
     by instantiating a PDFType1Font object from pdfminer.six for Base 14 fonts.
     """
-    canonical_font_name = font_name_map.get(font_name)
 
-    if not canonical_font_name:
+    total_font_units_width = 0
+    try:
+        default_width_fallback = _default_fonts_space_width[base_font] # A general fallback
+    except KeyError:
         logger_warning(
-            f"Warning: Unknown font '{font_name}'. Cannot accurately calculate text width. Using rough estimate.",
+            f"Warning: Unknown font '{base_font}'. Cannot accurately calculate text width. Using rough estimate.",
             __name__
         )
         return len(txt) * font_size * 0.5
-
-    total_font_units_width = 0
-    default_width_fallback = _default_fonts_space_width["/" + canonical_font_name] # A general fallback
 
     for _char in txt: # TODO: Get real character widths
         char_width = default_width_fallback * 1.7 # Just a gamble
@@ -3718,6 +3688,7 @@ def generate_appearance_stream(
     txt: str,
     sel: List[str],
     font_properties: List[str],
+    base_font: Union[NameObject, None],
     font_full_rev: Dict[str, bytes],
     rct: RectangleObject,
     font_height: float,
@@ -3726,8 +3697,10 @@ def generate_appearance_stream(
 
     # Only wrap text for non-choice fields, otherwise we break matching sel and line later on.
     if sel == []:
+        if not base_font:
+            base_font = font_properties[0]
         lines, font_height = wrap_text(
-            font_properties[0],
+            base_font,
             font_height,
             rct.width - 2,
             rct.height - 2,
