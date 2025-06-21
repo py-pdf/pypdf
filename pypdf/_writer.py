@@ -729,7 +729,7 @@ class PdfWriter(PdfDocCommon):
                 {NameObject("/Names"): ArrayObject()}
             )
         js_list = cast(
-            ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
+            #ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
         )
 
         js = DictionaryObject()
@@ -1281,23 +1281,6 @@ class PdfWriter(PdfDocCommon):
         # Merge these commands into the page's existing content stream
         new_content_ref = self.merge_content_streams(page.get("/Contents"), xobject_drawing_commands)
         page[NameObject("/Contents")] = new_content_ref
-
-    def dictobject_print(self, dictobject: DictionaryObject, recurse: bool = False, depth: Optional[int] = 0) -> None:
-        if depth == 0:
-            logger_warning("\nRecursively printing DictionaryObject....")
-        for key, val in dictobject.items():
-            if key == "/P":
-                logger_warning(f"Key: {key}. Skipping; this is an indirect reference to the page object", __name__)
-                continue
-            if isinstance(val, IndirectObject):
-                val = val.get_object()
-            if not isinstance(val, dict):
-                logger_warning(f"{depth * '        '}Key: {key}; Value: {val}", __name__)
-            else:
-                logger_warning(f"{depth * '        '}Key: {key}; Dictionary. Depth: {depth + 1}", __name__)
-                self.dictobject_print(val, True, depth + 1)
-        if depth == 0:
-            logger_warning("Finished recursively printing DictionaryObject....\n", __name__)
 
     def reattach_fields(
         self, page: Optional[PageObject] = None
