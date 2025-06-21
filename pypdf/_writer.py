@@ -888,7 +888,7 @@ class PdfWriter(PdfDocCommon):
 
         # Step 1 - Calculate rectangle dimensions.
         # The lower-left corner of the bounding box (BBox) is set to coordinates (0, 0) in the form coordinate system.
-        # The box’s top and right coordinates are taken from the dimensions of the annotation rectangle (the Rect
+        # The box's top and right coordinates are taken from the dimensions of the annotation rectangle (the Rect
         # entry in the widget annotation dictionary). PDF 32000-1:2008, p. 435.
         _rct = cast(RectangleObject, annotation[AA.Rect])
         rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
@@ -1143,7 +1143,7 @@ class PdfWriter(PdfDocCommon):
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
-                    if flatten and not appearance_stream_obj is None:
+                    if flatten and appearance_stream_obj is not None:
                         # TODO: Should we add font resources to a flattened /Btn annotation?
                         self.add_apstream_object(page, annotation, appearance_stream_obj, field)
                 elif (
@@ -1217,7 +1217,7 @@ class PdfWriter(PdfDocCommon):
         if "/XObject" not in page["/Resources"]:
             page[NameObject("/Resources")][NameObject("/XObject")] = DictionaryObject()
 
-        if not font_res == None:
+        if not font_res is None:
             font_name = font_res["/Name"]
             if "/Font" not in page["/Resources"]:
                 page["/Resources"][NameObject("/Font")] = DictionaryObject()
@@ -3710,9 +3710,8 @@ def wrap_text(
             return wrap_text(
                 font_name, new_font_size, field_width, field_height, orig_txt, min_font_size, font_size_step
             )
-        else:
-            # Font size lower than set minimum font size, give up.
-            return wrapped_lines, font_size
+        # Font size lower than set minimum font size, give up.
+        return wrapped_lines, font_size
     return wrapped_lines, font_size
 
 def generate_appearance_stream(
