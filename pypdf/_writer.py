@@ -1046,7 +1046,8 @@ class PdfWriter(PdfDocCommon):
             dct.indirect_reference = IndirectObject(n, 0, self)
 
         if flatten:
-            self.add_apstream_object(page, annotation, dct, field, font_res)
+            field_name = self._get_qualified_field_name(annotation)
+            self.add_apstream_object(page, annotation, dct, field_name, font_res)
 
     FFBITS_NUL = FA.FfBits(0)
 
@@ -1236,7 +1237,7 @@ class PdfWriter(PdfDocCommon):
         # Sanitize the original field name to be a valid PDF name part (alphanumeric, underscore, hyphen)
         # Replacing spaces with underscores, then removing any other non-alphanumeric/non-underscore/non-hyphen
         sanitized_name = str(field).replace(" ", "_")
-        sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "", sanitized_name)
+        sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "_", sanitized_name)
         xobject_name = NameObject(f"/Fm_{sanitized_name}")
 
         if xobject_name not in page["/Resources"]["/XObject"]:
