@@ -729,7 +729,7 @@ class PdfWriter(PdfDocCommon):
                 {NameObject("/Names"): ArrayObject()}
             )
         js_list = cast(
-            #ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
+            ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
         )
 
         js = DictionaryObject()
