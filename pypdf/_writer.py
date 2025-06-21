@@ -1217,7 +1217,7 @@ class PdfWriter(PdfDocCommon):
         if "/XObject" not in page["/Resources"]:
             page[NameObject("/Resources")][NameObject("/XObject")] = DictionaryObject()
 
-        if not font_res is None:
+        if font_res is not None:
             font_name = font_res["/Name"]
             if "/Font" not in page["/Resources"]:
                 page["/Resources"][NameObject("/Font")] = DictionaryObject()
