@@ -3597,7 +3597,6 @@ def calculate_text_width(base_font: NameObject, font_size: float, txt: str) -> f
     Calculates the display width of a given text string in PDF user space units
     by instantiating a PDFType1Font object from pdfminer.six for Base 14 fonts.
     """
-
     total_font_units_width = 0
     try:
         default_width_fallback = _default_fonts_space_width[base_font] # A general fallback
