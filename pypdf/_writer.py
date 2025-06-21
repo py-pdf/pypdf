@@ -1203,7 +1203,7 @@ class PdfWriter(PdfDocCommon):
             appearance_stream_obj: StreamObject,
             field: str,
             font_res: Optional[DictionaryObject] = None
-        ) -> bool:
+        ) -> None:
         """
         Flattens the appearance of a button field to the page content.
         This function handles various button types (push buttons, checkboxes, radio buttons)
@@ -1281,8 +1281,6 @@ class PdfWriter(PdfDocCommon):
         # Merge these commands into the page's existing content stream
         new_content_ref = self.merge_content_streams(page.get("/Contents"), xobject_drawing_commands)
         page[NameObject("/Contents")] = new_content_ref
-
-        return True
 
     def dictobject_print(self, dictobject: DictionaryObject, recurse: bool = False, depth: Optional[int] = 0) -> None:
         if depth == 0:
