@@ -2748,3 +2748,24 @@ def test_insert_filtered_annotations__link_without_destination():
         annots=annotations, page=writer.pages[0], pages={}, reader=reader
     )
     assert result == []
+
+
+@pytest.mark.enable_socket
+def test_insert_filtered_annotations__annotations_are_no_list(caplog):
+    """Tests for #3320"""
+    url = "https://github.com/user-attachments/files/20818089/bugpdf.pdf"
+    name = "issue3320.pdf"
+    source_data = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(source_data)
+    writer = PdfWriter()
+    writer.append(reader)
+    font_file2 = reader.get_object(36).indirect_reference
+    assert caplog.messages == [
+        (
+            f"Expected list of annotations, got {{'/FontFile2': {font_file2!r}, "
+            "'/Descent': -269, '/CapHeight': 714, '/FontWeight': 300, '/FontName': '/JQJGLF+OpenSans-Light', "
+            "'/ItalicAngle': 0, '/StemV': 48, '/Type': '/FontDescriptor', '/FontBBox': [-521, -269, 1140, 1048], "
+            "'/FontFamily': 'Open Sans Light', '/Flags': 32, '/XHeight': 531, '/Ascent': 1048, '/FontStretch': "
+            "'/Normal'} of type DictionaryObject."
+        )
+    ]
