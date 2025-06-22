@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750339416388,
+  "lastUpdate": 1750590372439,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -76895,6 +76895,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001774004148229949",
             "extra": "mean: 722.1702306000452 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "c721d1f01725fecf285fc7a44292195426270f87",
+          "message": "REL: 5.6.1\n\n## What's new\n\n### New Features (ENH)\n- Add PDF/A XMP metadata support (#3314) by @Arya-A-Nair\n\n### Robustness (ROB)\n- Deal with annotations not being lists on merge (#3321) by @stefan6419846\n- Handle NullObject for cmap encoding Differences entry (#3317) by @stefan6419846\n\n### Developer Experience (DEV)\n- Update ruff to 0.12.0 (#3316) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.6.0...5.6.1)",
+          "timestamp": "2025-06-22T13:03:20+02:00",
+          "tree_id": "d60abd33ce1fab5a65ccbf80b6f382dea453146d",
+          "url": "https://github.com/py-pdf/pypdf/commit/c721d1f01725fecf285fc7a44292195426270f87"
+        },
+        "date": 1750590368681,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5112806770346623,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00910339224042415",
+            "extra": "mean: 284.79637260001596 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.490619451109408,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00635771659298828",
+            "extra": "mean: 64.55519762499762 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2763958837652783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028272261373502083",
+            "extra": "mean: 3.6179988876000153 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.90840776242052,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005745397653853571",
+            "extra": "mean: 55.83969347059578 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08145006391569214,
+            "unit": "iter/sec",
+            "range": "stddev: 0.17008574554495723",
+            "extra": "mean: 12.277461206599991 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3763246634225648,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0029603419590355966",
+            "extra": "mean: 726.5727532000028 msec\nrounds: 5"
           }
         ]
       }
