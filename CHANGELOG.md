@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 5.6.1, 2025-06-22
+
+### New Features (ENH)
+- Add PDF/A XMP metadata support (#3314)
+
+### Robustness (ROB)
+- Deal with annotations not being lists on merge (#3321)
+- Handle NullObject for cmap encoding Differences entry (#3317)
+
+### Developer Experience (DEV)
+- Update ruff to 0.12.0 (#3316)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.6.0...5.6.1)
+
 ## Version 5.6.0, 2025-06-01
 
 ### New Features (ENH)
