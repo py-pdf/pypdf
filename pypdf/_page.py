@@ -1889,7 +1889,7 @@ class PageObject(DictionaryObject):
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
                 return
-            if operator in (b"BT", b"ET"):  # End Text
+            if operator == b"ET":  # End Text
                 # Flush text:
                 output += text
                 if visitor_text is not None:
@@ -1900,7 +1900,7 @@ class PageObject(DictionaryObject):
 
             # Table 4.7 "Graphics state operators", page 219
             # cm_matrix calculation is reserved for later
-            elif operator == b"q":  # save graphics state
+            elif operator == b"q":  # Save graphics state
                 cm_stack.append(
                     (
                         cm_matrix,
@@ -1912,7 +1912,7 @@ class PageObject(DictionaryObject):
                         TL,
                     )
                 )
-            elif operator == b"Q":  # restore graphics state
+            elif operator == b"Q":  # Restore graphics state
                 try:
                     (
                         cm_matrix,
@@ -1925,7 +1925,7 @@ class PageObject(DictionaryObject):
                     ) = cm_stack.pop()
                 except Exception:
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-            elif operator == b"cm":  # modify current matrix
+            elif operator == b"cm":  # Modify current matrix
                 output += text
                 if visitor_text is not None:
                     visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
