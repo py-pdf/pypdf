@@ -1057,7 +1057,7 @@ class PdfWriter(PdfDocCommon):
         fields: Dict[str, Union[str, List[str], Tuple[str, str, float]]],
         flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
-        flatten: Optional[bool] = False,
+        flatten: bool = False,
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -1169,9 +1169,9 @@ class PdfWriter(PdfDocCommon):
 
     def merge_content_streams(
         self,
-        existing_content: Union[IndirectObject, ArrayObject, StreamObject],
+        existing_content: Optional[Any],
         new_content_data: bytes,
-    ) -> StreamObject:
+    ) -> IndirectObject:
         """
         Combines existing content stream(s) with new content (as bytes),
         and returns a new single StreamObject.
@@ -1217,18 +1217,28 @@ class PdfWriter(PdfDocCommon):
         height = y_max - y_min
 
         # Prepare XObject resource dictionary on the page
-        if "/Resources" not in page:
-            page[NameObject("/Resources")] = DictionaryObject()
-        if "/XObject" not in page["/Resources"]:
-            page[NameObject("/Resources")][NameObject("/XObject")] = DictionaryObject()
+        if "/XObject" not in cast(
+                DictionaryObject, page[PG.RESOURCES]
+            ):
+            cast(
+                DictionaryObject, page[PG.RESOURCES]
+            )[NameObject("/XObject")] = DictionaryObject()
+
 
         if font_res is not None:
             font_name = font_res["/Name"]
-            if "/Font" not in page["/Resources"]:
-                page["/Resources"][NameObject("/Font")] = DictionaryObject()
-            if font_name not in page["/Resources"]["/Font"]:
-                page["/Resources"]["/Font"][NameObject(font_name)] = font_res
-
+            if "/Font" not in cast(
+                DictionaryObject, page[PG.RESOURCES]
+                ):
+                cast(
+                    DictionaryObject, page[PG.RESOURCES]
+                )[NameObject("/Font")] = DictionaryObject()
+            if font_name not in cast(
+                    DictionaryObject, cast(DictionaryObject, page[PG.RESOURCES])[NameObject("/Font")]
+                ):
+                cast(
+                    DictionaryObject, cast(DictionaryObject, page[PG.RESOURCES])["/Font"]
+                )[NameObject(font_name)] = font_res
         # Always add the resolved stream object to the writer to get a new IndirectObject.
         # This ensures we have a valid IndirectObject managed by *this* writer.
         xobject_ref = self._add_object(appearance_stream_obj)
@@ -1240,8 +1250,12 @@ class PdfWriter(PdfDocCommon):
         sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "_", sanitized_name)
         xobject_name = NameObject(f"/Fm_{sanitized_name}")
 
-        if xobject_name not in page["/Resources"]["/XObject"]:
-            page["/Resources"]["/XObject"][xobject_name] = xobject_ref
+        if xobject_name not in cast(
+                DictionaryObject, cast(DictionaryObject, page[PG.RESOURCES])["/XObject"]
+            ):
+            cast(
+                DictionaryObject, cast(DictionaryObject, page[PG.RESOURCES])["/XObject"]
+            )[NameObject(xobject_name)] = xobject_ref
         else:
             logger_warning(f"XObject '{xobject_name}' already added to page resources. This might be an issue.",
                            __name__)
@@ -3575,12 +3589,12 @@ def _create_outline_item(
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
 
-def calculate_text_width(base_font: NameObject, font_size: float, txt: str) -> float:
+def calculate_text_width(base_font: str, font_size: float, txt: str) -> float:
     """
     Calculates the display width of a given text string in PDF user space units
     by instantiating a PDFType1Font object from pdfminer.six for Base 14 fonts.
     """
-    total_font_units_width = 0
+    total_font_units_width: float = 0
     try:
         default_width_fallback = _default_fonts_space_width[base_font] # A general fallback
     except KeyError:
@@ -3615,8 +3629,8 @@ def wrap_text(
     txt = re.sub(r"\n", "\r", txt)
 
     wrapped_lines = []
-    current_line_words = []
-    current_line_width = 0
+    current_line_words: List[str] = []
+    current_line_width: float = 0
 
     paragraphs = txt.split("\r")
 
@@ -3669,7 +3683,7 @@ def generate_appearance_stream(
     txt: str,
     sel: List[str],
     font_properties: List[str],
-    base_font: Union[NameObject, None],
+    base_font: Union[str, None],
     font_full_rev: Dict[str, bytes],
     rct: RectangleObject,
     font_height: float,
