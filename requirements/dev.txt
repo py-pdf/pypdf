@@ -72,7 +72,7 @@ tomli==2.0.2
     #   pytest
 tomli-w==1.0.0
     # via flit
-urllib3==2.2.3
+urllib3==2.5.0
     # via requests
 virtualenv==20.27.0
     # via pre-commit
