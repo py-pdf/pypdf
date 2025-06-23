@@ -722,3 +722,52 @@ class ImageType(IntFlag):
     DRAWING_IMAGES = auto()
     ALL = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
     IMAGES = ALL  # for consistency with ObjectDeletionFlag
+
+
+_INLINE_IMAGE_VALUE_MAPPING = {
+    "/G": "/DeviceGray",
+    "/RGB": "/DeviceRGB",
+    "/CMYK": "/DeviceCMYK",
+    "/I": "/Indexed",
+    "/AHx": "/ASCIIHexDecode",
+    "/A85": "/ASCII85Decode",
+    "/LZW": "/LZWDecode",
+    "/Fl": "/FlateDecode",
+    "/RL": "/RunLengthDecode",
+    "/CCF": "/CCITTFaxDecode",
+    "/DCT": "/DCTDecode",
+    "/DeviceGray": "/DeviceGray",
+    "/DeviceRGB": "/DeviceRGB",
+    "/DeviceCMYK": "/DeviceCMYK",
+    "/Indexed": "/Indexed",
+    "/ASCIIHexDecode": "/ASCIIHexDecode",
+    "/ASCII85Decode": "/ASCII85Decode",
+    "/LZWDecode": "/LZWDecode",
+    "/FlateDecode": "/FlateDecode",
+    "/RunLengthDecode": "/RunLengthDecode",
+    "/CCITTFaxDecode": "/CCITTFaxDecode",
+    "/DCTDecode": "/DCTDecode",
+    "/RelativeColorimetric": "/RelativeColorimetric",
+}
+
+_INLINE_IMAGE_KEY_MAPPING = {
+    "/BPC": "/BitsPerComponent",
+    "/CS": "/ColorSpace",
+    "/D": "/Decode",
+    "/DP": "/DecodeParms",
+    "/F": "/Filter",
+    "/H": "/Height",
+    "/W": "/Width",
+    "/I": "/Interpolate",
+    "/Intent": "/Intent",
+    "/IM": "/ImageMask",
+    "/BitsPerComponent": "/BitsPerComponent",
+    "/ColorSpace": "/ColorSpace",
+    "/Decode": "/Decode",
+    "/DecodeParms": "/DecodeParms",
+    "/Filter": "/Filter",
+    "/Height": "/Height",
+    "/Width": "/Width",
+    "/Interpolate": "/Interpolate",
+    "/ImageMask": "/ImageMask",
+}
