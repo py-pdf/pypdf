@@ -1208,7 +1208,6 @@ class PdfWriter(PdfDocCommon):
         Flattens the appearance of a button field to the page content.
         This function handles various button types (push buttons, checkboxes, radio buttons)
         by embedding their current appearance stream directly onto the page's content.
-        Returns True if successful, and False otherwise.
         """
         # Calculate rectangle dimensions
         rct = cast(RectangleObject, annotation[AA.Rect])
