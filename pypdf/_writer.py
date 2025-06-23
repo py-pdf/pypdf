@@ -1211,10 +1211,7 @@ class PdfWriter(PdfDocCommon):
         Returns True if successful, and False otherwise.
         """
         # Calculate rectangle dimensions
-        _rct = cast(RectangleObject, annotation[AA.Rect])
-        x_min, y_min, x_max, y_max = [float(f) for f in _rct]
-        width = x_max - x_min
-        height = y_max - y_min
+        rct = cast(RectangleObject, annotation[AA.Rect])
 
         # Prepare XObject resource dictionary on the page
         if "/XObject" not in cast(
@@ -1260,32 +1257,16 @@ class PdfWriter(PdfDocCommon):
             logger_warning(f"XObject '{xobject_name}' already added to page resources. This might be an issue.",
                            __name__)
 
-        # Get the bounding box of the appearance stream itself
-        ap_bbox = appearance_stream_obj.get("/BBox")
-        if not ap_bbox or len(ap_bbox) != 4:
-            logger_warning(f"Appearance stream for '{field}' has no valid /BBox.", __name__)
-            # If no BBox, assume the XObject's content is defined to directly fit the annotation rect.
-            ap_x_min, ap_y_min, ap_x_max, ap_y_max = 0, 0, width, height
-        else:
-            ap_x_min, ap_y_min, ap_x_max, ap_y_max = [float(f) for f in ap_bbox]
-
-        # Calculate scale and translation to fit the appearance stream's BBox into the annotation's Rect
-        ap_content_width = ap_x_max - ap_x_min
-        ap_content_height = ap_y_max - ap_y_min
-
-        # Avoid division by zero
-        scale_x = width / ap_content_width if ap_content_width != 0 else 1.0
-        scale_y = height / ap_content_height if ap_content_height != 0 else 1.0
-
         # Transformation matrix (a b c d e f) for 'a b c d e f cm'
-        # This matrix scales and translates the XObject from its internal coordinate system
+        # This matrix translates the XObject from its internal coordinate system
         # (where its BBox is defined relative to its origin) to the target annotation rectangle.
-        a = scale_x
+        # TODO: This code does not deal with scaling.
+        a = 1
         b = 0.0
         c = 0.0
-        d = scale_y
-        e = x_min - (ap_x_min * scale_x)  # Translate XObject's scaled origin to annotation's X_min
-        f = y_min - (ap_y_min * scale_y)  # Translate XObject's scaled origin to annotation's Y_min
+        d = 1
+        e = rct[0]  # Translate XObject's scaled origin to annotation's origin
+        f = rct[1]  # Translate XObject's scaled origin to annotation's origin
 
         # Construct the PDF content stream commands to draw the XObject
         xobject_drawing_commands = (
