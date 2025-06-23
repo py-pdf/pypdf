@@ -1833,8 +1833,9 @@ class PageObject(DictionaryObject):
             str_widths: float = 0.0
 
             # Table 5.4 page 405
-            if operator == b"BT":
+            if operator == b"BT":  # Begin Text
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+                # Flush text:
                 output += text
                 if visitor_text is not None:
                     visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
@@ -1842,7 +1843,8 @@ class PageObject(DictionaryObject):
                 memo_cm = cm_matrix.copy()
                 memo_tm = tm_matrix.copy()
                 return
-            if operator == b"ET":
+            if operator == b"ET":  # End Text
+                # Flush text:
                 output += text
                 if visitor_text is not None:
                     visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
@@ -1852,7 +1854,7 @@ class PageObject(DictionaryObject):
 
             # Table 4.7 "Graphics state operators", page 219
             # cm_matrix calculation is reserved for later
-            elif operator == b"q":
+            elif operator == b"q":  # Save graphics state
                 cm_stack.append(
                     (
                         cm_matrix,
@@ -1864,7 +1866,7 @@ class PageObject(DictionaryObject):
                         TL,
                     )
                 )
-            elif operator == b"Q":
+            elif operator == b"Q":  # Restore graphics state
                 try:
                     (
                         cm_matrix,
@@ -1877,7 +1879,7 @@ class PageObject(DictionaryObject):
                     ) = cm_stack.pop()
                 except Exception:
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-            elif operator == b"cm":
+            elif operator == b"cm":  # Modify current matrix
                 output += text
                 if visitor_text is not None:
                     visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
@@ -1893,14 +1895,14 @@ class PageObject(DictionaryObject):
                 memo_tm = tm_matrix.copy()
 
             # Table 5.2 page 398
-            elif operator == b"Tz":
+            elif operator == b"Tz":  # Set horizontal text scaling
                 char_scale = float(operands[0]) / 100 if operands else 1.0
-            elif operator == b"Tw":
+            elif operator == b"Tw":  # Set word spacing
                 space_scale = 1.0 + float(operands[0] if operands else 0.0)
-            elif operator == b"TL":
+            elif operator == b"TL":  # Set Text Leading
                 scale_x = math.sqrt(tm_matrix[0]**2 + tm_matrix[2]**2)
                 TL = float(operands[0] if operands else 0.0) * font_size * scale_x
-            elif operator == b"Tf":
+            elif operator == b"Tf":  # Set font size
                 if text != "":
                     output += text  # .translate(cmap)
                     if visitor_text is not None:
@@ -1939,7 +1941,7 @@ class PageObject(DictionaryObject):
                 except Exception:
                     pass  # keep previous size
             # Table 5.5 page 406
-            elif operator == b"Td":
+            elif operator == b"Td":  # Move text position
                 # A special case is a translating only tm:
                 # tm = [1, 0, 0, 1, e, f]
                 # i.e. tm[4] += tx, tm[5] += ty.
@@ -1948,16 +1950,16 @@ class PageObject(DictionaryObject):
                 tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
-            elif operator == b"Tm":
+            elif operator == b"Tm":  # Set text matrix
                 tm_matrix = [float(operand) for operand in operands[:6]]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
-            elif operator == b"T*":
+            elif operator == b"T*":  # Move to next line
                 tm_matrix[4] -= TL * tm_matrix[2]
                 tm_matrix[5] -= TL * tm_matrix[3]
                 str_widths = compute_str_widths(_actual_str_size["str_widths"])
                 _actual_str_size["str_widths"] = 0.0
-            elif operator == b"Tj":
+            elif operator == b"Tj":  # Show text
                 text, rtl_dir, _actual_str_size = self._handle_tj(
                     text,
                     operands,
