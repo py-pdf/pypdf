@@ -49,7 +49,7 @@ jobs:
         python -c "from tests import download_test_pdfs; download_test_pdfs()"
     - name: Test with pytest
       run: |
-        python -m pytest tests --cov=pypdf --cov-append -n auto -vv
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
 
 
   tests:
@@ -137,7 +137,7 @@ jobs:
         echo "    pass" >> $SITECUSTOMIZE_PATH
     - name: Test with pytest
       run: |
-        python -m pytest tests --cov=pypdf --cov-append -n auto -vv
+        python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
       env:
         COVERAGE_PROCESS_START: 'pyproject.toml'
     - name: Rename coverage data file
@@ -197,7 +197,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{env.PYTHON_LATEST}}
+          python-version: ${{ env.PYTHON_LATEST }}
 
       - run: python -m pip install flit check-wheel-contents
       - run: flit build
@@ -221,7 +221,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           # Use latest Python, so it understands all syntax.
-          python-version: ${{env.PYTHON_LATEST}}
+          python-version: ${{ env.PYTHON_LATEST }}
 
       - run: python -m pip install --upgrade coverage[toml]
 

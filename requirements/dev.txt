@@ -64,7 +64,7 @@ pytest-cov==5.0.0
     # via -r requirements/dev.in
 pyyaml==6.0.2
     # via pre-commit
-requests==2.32.3
+requests==2.32.4
     # via flit
 tomli==2.0.2
     # via
@@ -74,7 +74,7 @@ tomli==2.0.2
     #   pytest
 tomli-w==1.0.0
     # via flit
-urllib3==2.2.3
+urllib3==2.5.0
     # via requests
 virtualenv==20.27.0
     # via pre-commit

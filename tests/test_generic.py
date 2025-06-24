@@ -107,11 +107,14 @@ def test_boolean_eq():
     assert (boolobj == True) is True  # noqa: E712
     assert (boolobj == False) is False  # noqa: E712
     assert (boolobj == "True") is False
+    hash1 = hash(boolobj)
+    assert hash1 == hash(boolobj)
 
     boolobj = BooleanObject(False)
     assert (boolobj == True) is False  # noqa: E712
     assert (boolobj == False) is True  # noqa: E712
     assert (boolobj == "True") is False
+    assert hash1 != hash(boolobj)
 
 
 def test_boolean_object_exception():
@@ -243,7 +246,10 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(
+            expected_warning=DeprecationWarning,
+            match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and will"
+    ):
         NameObject("hello").write_to_stream(b)
 
     caplog.clear()
@@ -1182,6 +1188,7 @@ Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
 
 def test_missing_hashbin():
     assert NullObject().hash_bin() == hash((NullObject,))
+    assert hash(NullObject()) == NullObject().hash_bin()
     t = ByteStringObject(b"123")
     assert t.hash_bin() == hash((ByteStringObject, b"123"))
 

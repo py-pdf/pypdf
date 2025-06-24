@@ -81,7 +81,7 @@ def adjust_version_py(version: str) -> None:
 
 def get_version_interactive(new_version: str, changes: str) -> str:
     """Get the new __version__ interactively."""
-    from rich.prompt import Prompt
+    from rich.prompt import Prompt  # noqa: PLC0415
 
     print("The changes are:")
     print(changes)

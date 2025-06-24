@@ -2144,14 +2144,14 @@ REFERENCES 76"""
 
 
 def test_merging_many_temporary_files(caplog):
-    def create_number_pdf(n) -> BytesIO:
+    def create_number_pdf(_n) -> BytesIO:
         pytest.importorskip("fpdf")
-        from fpdf import FPDF
+        from fpdf import FPDF  # noqa: PLC0415
 
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("helvetica", "B", 16)
-        pdf.cell(40, 10, str(n))
+        pdf.cell(40, 10, str(_n))
         byte_string = pdf.output()
         return BytesIO(byte_string)
 
@@ -2599,13 +2599,17 @@ def test_auto_write(tmp_path):
 def test_deprecate_with_as():
     """Yet another test for #2905"""
     with PdfWriter() as writer:
-        with pytest.warns(DeprecationWarning) as w:
+        with pytest.warns(
+                expected_warning=DeprecationWarning,
+                match="with_as_usage is deprecated and will be removed in pypdf 6.0"
+        ):
             val = writer.with_as_usage
-        assert "with_as_usage is deprecated" in w[0].message.args[0]
         assert val
-        with pytest.warns(DeprecationWarning) as w:
+        with pytest.warns(
+                expected_warning=DeprecationWarning,
+                match="with_as_usage is deprecated and will be removed in pypdf 6.0"
+        ):
             writer.with_as_usage = val  # old code allowed setting this, so...
-        assert "with_as_usage is deprecated" in w[0].message.args[0]
 
 
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
@@ -2744,3 +2748,24 @@ def test_insert_filtered_annotations__link_without_destination():
         annots=annotations, page=writer.pages[0], pages={}, reader=reader
     )
     assert result == []
+
+
+@pytest.mark.enable_socket
+def test_insert_filtered_annotations__annotations_are_no_list(caplog):
+    """Tests for #3320"""
+    url = "https://github.com/user-attachments/files/20818089/bugpdf.pdf"
+    name = "issue3320.pdf"
+    source_data = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(source_data)
+    writer = PdfWriter()
+    writer.append(reader)
+    font_file2 = reader.get_object(36).indirect_reference
+    assert caplog.messages == [
+        (
+            f"Expected list of annotations, got {{'/FontFile2': {font_file2!r}, "
+            "'/Descent': -269, '/CapHeight': 714, '/FontWeight': 300, '/FontName': '/JQJGLF+OpenSans-Light', "
+            "'/ItalicAngle': 0, '/StemV': 48, '/Type': '/FontDescriptor', '/FontBBox': [-521, -269, 1140, 1048], "
+            "'/FontFamily': 'Open Sans Light', '/Flags': 32, '/XHeight': 531, '/Ascent': 1048, '/FontStretch': "
+            "'/Normal'} of type DictionaryObject."
+        )
+    ]

@@ -1,5 +1,6 @@
 """Test the pypdf._page module."""
 import json
+import logging
 import math
 from copy import deepcopy
 from io import BytesIO
@@ -469,8 +470,6 @@ def test_extract_text_visitor_callbacks():
     It extracts the labels of package-boxes in Figure 2.
     It extracts the texts in table "REVISION HISTORY".
     """
-    import logging
-
     class PositionedText:
         """
         Specify a text with coordinates, font-dictionary and font-size.
@@ -1297,7 +1296,7 @@ def test_compression():
 
     def create_stamp_pdf() -> BytesIO:
         pytest.importorskip("fpdf")
-        from fpdf import FPDF
+        from fpdf import FPDF  # noqa: PLC0415
 
         pdf = FPDF()
         pdf.add_page()

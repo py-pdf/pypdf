@@ -120,7 +120,7 @@ def test_issue_2336():
 
 
 def test_layout_mode_font_class_to_dict():
-    from pypdf._text_extraction._layout_mode._font import Font
+    from pypdf._text_extraction._layout_mode._font import Font  # noqa: PLC0415
 
     font = Font("foo", space_width=8, encoding="utf-8", char_map={}, font_dictionary={})
     assert Font.to_dict(font) == {
