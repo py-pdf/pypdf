@@ -478,8 +478,9 @@ class PdfDocCommon:
                 if CA.DESTS in names:
                     tree = cast(TreeObject, names[CA.DESTS])
 
-        if tree is None:
+        if is_null_or_none(tree):
             return retval
+        assert tree is not None, "mypy"
 
         if PA.KIDS in tree:
             # recurse down the tree
