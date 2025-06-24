@@ -72,6 +72,7 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
+from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING
 from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
@@ -707,32 +708,7 @@ class PageObject(DictionaryObject):
     def _translate_value_inline_image(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""
         try:
-            v = NameObject(
-                {
-                    "/G": "/DeviceGray",
-                    "/RGB": "/DeviceRGB",
-                    "/CMYK": "/DeviceCMYK",
-                    "/I": "/Indexed",
-                    "/AHx": "/ASCIIHexDecode",
-                    "/A85": "/ASCII85Decode",
-                    "/LZW": "/LZWDecode",
-                    "/Fl": "/FlateDecode",
-                    "/RL": "/RunLengthDecode",
-                    "/CCF": "/CCITTFaxDecode",
-                    "/DCT": "/DCTDecode",
-                    "/DeviceGray": "/DeviceGray",
-                    "/DeviceRGB": "/DeviceRGB",
-                    "/DeviceCMYK": "/DeviceCMYK",
-                    "/Indexed": "/Indexed",
-                    "/ASCIIHexDecode": "/ASCIIHexDecode",
-                    "/ASCII85Decode": "/ASCII85Decode",
-                    "/LZWDecode": "/LZWDecode",
-                    "/FlateDecode": "/FlateDecode",
-                    "/RunLengthDecode": "/RunLengthDecode",
-                    "/CCITTFaxDecode": "/CCITTFaxDecode",
-                    "/DCTDecode": "/DCTDecode",
-                }[cast(str, v)]
-            )
+            v = NameObject(_INLINE_IMAGE_VALUE_MAPPING[cast(str, v)])
         except (TypeError, KeyError):
             if isinstance(v, NameObject):
                 # It is a custom name, thus we have to look in resources.
@@ -776,29 +752,7 @@ class PageObject(DictionaryObject):
                     )
                 else:
                     v = self._translate_value_inline_image(k, v)
-                k = NameObject(
-                    {
-                        "/BPC": "/BitsPerComponent",
-                        "/CS": "/ColorSpace",
-                        "/D": "/Decode",
-                        "/DP": "/DecodeParms",
-                        "/F": "/Filter",
-                        "/H": "/Height",
-                        "/W": "/Width",
-                        "/I": "/Interpolate",
-                        "/Intent": "/Intent",
-                        "/IM": "/ImageMask",
-                        "/BitsPerComponent": "/BitsPerComponent",
-                        "/ColorSpace": "/ColorSpace",
-                        "/Decode": "/Decode",
-                        "/DecodeParms": "/DecodeParms",
-                        "/Filter": "/Filter",
-                        "/Height": "/Height",
-                        "/Width": "/Width",
-                        "/Interpolate": "/Interpolate",
-                        "/ImageMask": "/ImageMask",
-                    }[k]
-                )
+                k = NameObject(_INLINE_IMAGE_KEY_MAPPING[k])
                 if k not in init:
                     init[k] = v
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
