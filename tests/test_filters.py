@@ -85,7 +85,7 @@ def test_brotli_decode_encode(s):
 
 @patch("pypdf.filters.brotli", None)
 def test_brotli_missing_installation():
-    from pypdf.filters import BrotliDecode, decode_stream_data
+    from pypdf.filters import BrotliDecode, decode_stream_data  # noqa: PLC0415
 
     # Test direct decode call
     codec = BrotliDecode()
@@ -784,8 +784,6 @@ def test_main_decode_brotli_installed():
 
 
 def test_brotli_module_importability():
-    from pypdf.filters import BrotliDecode
-
     assert BrotliDecode is not None
 def test_jbig2decode__binary_errors():
     with mock.patch("pypdf.filters.JBIG2DEC_BINARY", None), \
