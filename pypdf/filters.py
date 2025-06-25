@@ -92,6 +92,9 @@ def decompress(data: bytes) -> bytes:
         return zlib.decompress(data)
     except zlib.error:
         try:
+            # For larger files, use decompression object to enable buffered reading
+            return zlib.decompressobj().decompress(data)
+        except zlib.error:
             # First quick approach for known issue with faulty added bytes to the
             # tail of the encoded stream from early Adobe Distiller or Pitstop versions
             # with CR char as the default line separator (assumed by reverse engeneering)
@@ -109,9 +112,6 @@ def decompress(data: bytes) -> bytes:
                     return zlib.decompressobj().decompress(data[:-i])
                 except zlib.error:
                     pass
-            # For larger files, use decompression object to enable buffered reading
-            return zlib.decompressobj().decompress(data)
-        except zlib.error:
             # If still failing, then try with increased window size
             d = zlib.decompressobj(zlib.MAX_WBITS | 32)
             result_str = b""
