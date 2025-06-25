@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 import pytest
+
 from pypdf._codecs._codecs import LzwCodec
 
 TESTS_ROOT = Path(__file__).parent.resolve()
