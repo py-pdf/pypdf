@@ -1,13 +1,10 @@
 """Test LZW-related code."""
+
+import time
 from pathlib import Path
 
 import pytest
-
 from pypdf._codecs._codecs import LzwCodec
-
-import time
-
-
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
