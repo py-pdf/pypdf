@@ -109,6 +109,21 @@ def _converter_date(value: str) -> datetime.datetime:
     return dt
 
 
+def _generic_get(
+        element: XmlElement, self: "XmpInformation", list_type: str, converter: Callable[[Any], Any] = _identity
+) -> Optional[List[str]]:
+    containers = element.getElementsByTagNameNS(RDF_NAMESPACE, list_type)
+    retval: List[Any] = []
+    if len(containers):
+        for container in containers:
+            for item in container.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
+                value = self._get_text(item)
+                value = converter(value)
+                retval.append(value)
+        return retval
+    return None
+
+
 def _getter_bag(
     namespace: str, name: str
 ) -> Callable[["XmpInformation"], Optional[List[str]]]:
@@ -116,14 +131,13 @@ def _getter_bag(
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
-        retval = []
+        retval: List[str] = []
         for element in self.get_element("", namespace, name):
-            bags = element.getElementsByTagNameNS(RDF_NAMESPACE, "Bag")
-            if len(bags):
-                for bag in bags:
-                    for item in bag.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._get_text(item)
-                        retval.append(value)
+            if (bags := _generic_get(element, self, list_type="Bag")) is not None:
+                retval.extend(bags)
+            else:
+                value = self._get_text(element)
+                retval.append(value)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
         return retval
@@ -140,13 +154,17 @@ def _getter_seq(
             return cached
         retval = []
         for element in self.get_element("", namespace, name):
-            seqs = element.getElementsByTagNameNS(RDF_NAMESPACE, "Seq")
-            if len(seqs):
-                for seq in seqs:
-                    for item in seq.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._get_text(item)
-                        value = converter(value)
-                        retval.append(value)
+            if (seqs := _generic_get(element, self, list_type="Seq", converter=converter)) is not None:
+                retval.extend(seqs)
+            elif (bags := _generic_get(element, self, list_type="Bag")) is not None:
+                # See issue at https://github.com/py-pdf/pypdf/issues/3324
+                # Some applications violate the XMP metadata standard regarding `dc:creator` which should
+                # be an "ordered array" and thus a sequence, but use an unordered array (bag) instead.
+                # This seems to stem from the fact that the original Dublin Core specification does indeed
+                # use bags or direct values, while PDFs are expected to follow the XMP standard and ignore
+                # the plain Dublin Core variant. For this reason, add a fallback here to deal with such
+                # issues accordingly.
+                retval.extend(bags)
             else:
                 value = converter(self._get_text(element))
                 retval.append(value)
@@ -219,7 +237,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         try:
             data = self.stream.get_data()
             doc_root: Document = parseString(data)  # noqa: S318
-        except ExpatError as e:
+        except (AttributeError, ExpatError) as e:
             raise PdfReadError(f"XML in XmpInformation was invalid: {e}")
         self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
             RDF_NAMESPACE, "RDF"
