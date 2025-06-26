@@ -110,3 +110,5 @@
   url: https://github.com/py-pdf/pypdf/files/12483807/AEO.1172.pdf
 - local_filename: iss3268.pdf
   url: https://github.com/user-attachments/files/20060394/broken.pdf
+- local_filename: large_lzw_example_encoded.dat
+  url: https://github.com/user-attachments/files/20923310/large_lzw_example_encoded.dat.txt

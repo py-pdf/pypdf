@@ -156,7 +156,7 @@ class LzwCodec(Codec):
         try:
             while self._next_bits < self._bits_to_get:
                 self._next_data = (self._next_data << 8) | (
-                    data[self._byte_pointer] & 0xFF
+                    data[self._byte_pointer]
                 )
                 self._byte_pointer += 1
                 self._next_bits += 8
@@ -165,6 +165,10 @@ class LzwCodec(Codec):
                 self._next_data >> (self._next_bits - self._bits_to_get)
             ) & self._and_table[self._bits_to_get - 9]
             self._next_bits -= self._bits_to_get
+
+            # Reduce data to get rid of the overhead,
+            # which increases performance on large streams significantly.
+            self._next_data = self._next_data & 0xFFFFF
 
             return code
         except IndexError:
