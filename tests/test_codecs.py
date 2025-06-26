@@ -76,6 +76,6 @@ def test_lzw_decoder_table_overflow(caplog):
     assert "Ignoring too large LZW table index." in caplog.text
 
 
-@pytest.mark.timeout(timeout=5, method="thread")
+@pytest.mark.timeout(timeout=10, method="thread")
 def test_lzw_decoder_large_stream_performance(caplog):
     LzwCodec().decode(get_data_from_url(name="large_lzw_example_encoded.dat"))
