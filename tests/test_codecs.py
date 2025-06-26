@@ -1,11 +1,12 @@
 """Test LZW-related code."""
 
-import time
 from pathlib import Path
 
 import pytest
 
 from pypdf._codecs._codecs import LzwCodec
+
+from . import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -75,10 +76,6 @@ def test_lzw_decoder_table_overflow(caplog):
     assert "Ignoring too large LZW table index." in caplog.text
 
 
-@pytest.mark.timeout(timeout=10, method="thread")
+@pytest.mark.timeout(timeout=1, method="thread")
 def test_lzw_decoder_large_stream_performance(caplog):
-    path = RESOURCE_ROOT / "large_lzw_example_encoded.dat"
-    t1 = time.time()
-    LzwCodec().decode(path.read_bytes())
-    t2 = time.time()
-    assert t2-t1 < 1
+    LzwCodec().decode(get_data_from_url(name="large_lzw_example_encoded.dat"))
