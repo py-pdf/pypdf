@@ -166,8 +166,8 @@ class LzwCodec(Codec):
             ) & self._and_table[self._bits_to_get - 9]
             self._next_bits -= self._bits_to_get
 
-            # reduce data to get rid of the overhead,
-            # what increases performace on large streams significantly
+            # Reduce data to get rid of the overhead,
+            # which increases performance on large streams significantly.
             self._next_data = self._next_data & 0xFFFFF
 
             return code
