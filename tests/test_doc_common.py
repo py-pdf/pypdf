@@ -168,3 +168,12 @@ def test_viewer_preferences__indirect_reference():
     assert (0, 24) in reader.resolved_objects
     assert id(viewer_preferences) == id(reader.viewer_preferences)
     assert id(viewer_preferences) == id(reader.resolved_objects[(0, 24)])
+
+
+@pytest.mark.enable_socket
+def test_named_destinations__tree_is_null_object():
+    url = "https://github.com/user-attachments/files/20885216/test.pdf"
+    name = "issue3330.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
+
+    assert reader.named_destinations == {}
