@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750775479290,
+  "lastUpdate": 1750940223784,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -77225,6 +77225,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02276512872714264",
             "extra": "mean: 733.7058334000062 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "henning.koertel@gmgcolor.com",
+            "name": "Henning Körtel",
+            "username": "henningkoertelgmg"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "245058006d42ecc940b9e6615b4960550fd43061",
+          "message": "PI: Performance optimization for LZW decoding (#3329)\n\nThere builds up a large data overhead in an int variable for large LZW encoded streams during decoding that causes very poor performance while decoding. Getting rid of the overhead increases performance a lot!!!",
+          "timestamp": "2025-06-26T14:14:33+02:00",
+          "tree_id": "426eaf501266d3a82a769543774afeebeebc9a49",
+          "url": "https://github.com/py-pdf/pypdf/commit/245058006d42ecc940b9e6615b4960550fd43061"
+        },
+        "date": 1750940219897,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.482612419827629,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010835957675851169",
+            "extra": "mean: 287.1407666000039 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.374365250954655,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008012767738071342",
+            "extra": "mean: 65.04333568749487 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27766222709940247,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009595956883302403",
+            "extra": "mean: 3.60149816 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.253585246539334,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00048564401038867416",
+            "extra": "mean: 54.783758176470464 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08178640853424657,
+            "unit": "iter/sec",
+            "range": "stddev: 0.2164884249373082",
+            "extra": "mean: 12.226970445599994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3805854768058776,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003895764343819817",
+            "extra": "mean: 724.330377800004 msec\nrounds: 5"
           }
         ]
       }
