@@ -135,6 +135,9 @@ def _getter_bag(
         for element in self.get_element("", namespace, name):
             if (bags := _generic_get(element, self, list_type="Bag")) is not None:
                 retval.extend(bags)
+            else:
+                value = self._get_text(element)
+                retval.append(value)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
         return retval

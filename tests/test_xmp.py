@@ -317,3 +317,11 @@ def test_dc_creator__bag_instead_of_seq():
 
     assert reader.xmp_metadata is not None
     assert reader.xmp_metadata.dc_creator == ["William J. Hussar"]
+
+
+@pytest.mark.enable_socket
+def test_dc_language__no_bag_container():
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2138.pdf")))
+
+    assert reader.xmp_metadata is not None
+    assert reader.xmp_metadata.dc_language == ["x-unknown"]
