@@ -801,5 +801,5 @@ def test_jbig2decode__edge_cases(caplog):
 @pytest.mark.timeout(timeout=10, method="thread")
 def test_flate_decode_stream_with_faulty_tail_bytes(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(name="faulty_stream_tail_example.1.pdf")))
-    obj = reader.get_object(IndirectObject(182,0,reader))
+    obj = reader.get_object(IndirectObject(182, 0, reader))
     assert cast(StreamObject, obj).get_data() == get_data_from_url(name="faulty_stream_tail_example.1.decoded.dat")
