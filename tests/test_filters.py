@@ -6,6 +6,7 @@ import subprocess
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -30,6 +31,7 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    StreamObject,
 )
 
 from . import PILContext, get_data_from_url
@@ -790,3 +792,14 @@ def test_jbig2decode__edge_cases(caplog):
         "jbig2dec FATAL ERROR page has no image, cannot be completed",
         "jbig2dec WARNING unable to complete page"
     ]
+
+# Test for PR 'ROB: Flate decoding for streams with faulty tail bytes #3332'
+# The test ensures two things:
+#   1. stream can be decoded at all
+#   2. decoding doesn't falls through to last fallback in try-except blocks
+#      that is too slow and takes ages for this stream
+@pytest.mark.timeout(timeout=10, method="thread")
+def test_flate_decode_stream_with_faulty_tail_bytes(caplog):
+    reader = PdfReader(BytesIO(get_data_from_url(name="faulty_stream_tail_example.1.pdf")))
+    obj = reader.get_object(IndirectObject(182,0,reader))
+    assert cast(StreamObject, obj).get_data() == get_data_from_url(name="faulty_stream_tail_example.1.decoded.dat")

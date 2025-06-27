@@ -112,3 +112,7 @@
   url: https://github.com/user-attachments/files/20060394/broken.pdf
 - local_filename: large_lzw_example_encoded.dat
   url: https://github.com/user-attachments/files/20923310/large_lzw_example_encoded.dat.txt
+- local_filename: faulty_stream_tail_example.1.pdf
+  url: https://github.com/user-attachments/files/20901522/faulty_stream_tail_example.1.pdf
+- local_filename: faulty_stream_tail_example.1.decoded.dat
+  url: https://github.com/user-attachments/files/20941717/decoded.dat.txt  
