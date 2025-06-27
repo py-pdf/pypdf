@@ -806,7 +806,7 @@ def test_flate_decode_stream_with_faulty_tail_bytes():
            that is too slow and takes ages for this stream
     """
     data = get_data_from_url(
-        url= "https://github.com/user-attachments/files/20901522/faulty_stream_tail_example.1.pdf",
+        url="https://github.com/user-attachments/files/20901522/faulty_stream_tail_example.1.pdf",
         name="faulty_stream_tail_example.1.pdf"
     )
     expected = get_data_from_url(
