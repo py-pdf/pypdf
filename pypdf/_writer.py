@@ -258,8 +258,7 @@ class PdfWriter(PdfDocCommon):
         self._with_as_usage = False
         self._cloned = False
         # The root of our page tree node
-        pages = DictionaryObject()
-        pages.update(
+        pages = DictionaryObject(
             {
                 NameObject(PA.TYPE): NameObject("/Pages"),
                 NameObject(PA.COUNT): NumberObject(0),
@@ -277,9 +276,7 @@ class PdfWriter(PdfDocCommon):
             self._cloned = True
         else:
             self._pages = self._add_object(pages)
-            # root object
-            self._root_object = DictionaryObject()
-            self._root_object.update(
+            self._root_object = DictionaryObject(
                 {
                     NameObject(PA.TYPE): NameObject(CO.CATALOG),
                     NameObject(CO.PAGES): self._pages,
@@ -731,18 +728,17 @@ class PdfWriter(PdfDocCommon):
         js_list = cast(
             ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
         )
+        # We need a name for parameterized JavaScript in the PDF file,
+        # but it can be anything.
+        js_list.append(create_string_object(str(uuid.uuid4())))
 
-        js = DictionaryObject()
-        js.update(
+        js = DictionaryObject(
             {
                 NameObject(PA.TYPE): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
                 NameObject("/JS"): TextStringObject(f"{javascript}"),
             }
         )
-        # We need a name for parameterized JavaScript in the PDF file,
-        # but it can be anything.
-        js_list.append(create_string_object(str(uuid.uuid4())))
         js_list.append(self._add_object(js))
 
     def add_attachment(self, filename: str, data: Union[str, bytes]) -> None:
