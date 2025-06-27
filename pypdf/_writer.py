@@ -52,7 +52,7 @@ from typing import (
     cast,
 )
 
-from ._cmap import _default_fonts_space_width, build_char_map_from_dict
+from ._cmap import _default_fonts_space_width, build_char_map_from_dict, build_font_width_map
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject
@@ -954,15 +954,12 @@ class PdfWriter(PdfDocCommon):
             )
             dr = dr.get_object().get("/Font", DictionaryObject()).get_object()
         font_res = dr.get(font_name, None)
-        if font_res:
-            base_font = font_res.get("/BaseFont", None)
-        else:
-            base_font = None
         if not is_null_or_none(font_res):
             font_res = cast(DictionaryObject, font_res.get_object())
-            font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
+            font_subtype, half_space_width, font_encoding, font_map = build_char_map_from_dict(
                 200, font_res
             )
+            font_width_map = build_font_width_map(font_res, half_space_width)
             try:  # remove width stored in -1 key
                 del font_map[-1]
             except KeyError:
@@ -980,6 +977,7 @@ class PdfWriter(PdfDocCommon):
         else:
             logger_warning(f"Font dictionary for {font_name} not found.", __name__)
             font_full_rev = {}
+            font_width_map = {"default": 400}
 
         # Step 4 - Retrieve field text and selected values
         field_flags = field.get(FA.Ff, 0)
@@ -999,7 +997,7 @@ class PdfWriter(PdfDocCommon):
 
         # Step 5 - Generate appearance stream
         ap_stream = generate_appearance_stream(
-            txt, sel, font_properties, base_font, font_full_rev, rct, font_height, align
+            txt, sel, font_properties, font_full_rev, font_width_map, rct, font_height, align
         )
 
         # Step 6: Create appearance dictionary
@@ -3569,29 +3567,21 @@ def _create_outline_item(
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
 
-def calculate_text_width(base_font: str, font_size: float, txt: str) -> float:
-    """
-    Calculates the display width of a given text string in PDF user space units
-    by instantiating a PDFType1Font object from pdfminer.six for Base 14 fonts.
-    """
+def calculate_text_width(font_width_map: Dict[str, float], font_size: float, txt: str) -> float:
+    # Calculates the display width of a given text string in PDF user space units.
     total_font_units_width: float = 0
-    try:
-        default_width_fallback = _default_fonts_space_width[base_font] # A general fallback
-    except KeyError:
-        logger_warning(
-            f"Warning: Unknown font '{base_font}'. Cannot accurately calculate text width. Using rough estimate.",
-            __name__
-        )
-        return len(txt) * font_size * 0.5
 
-    for _char in txt: # TODO: Get real character widths
-        char_width = default_width_fallback * 1.7 # Just a gamble
+    for char in txt:
+        try:
+            char_width = font_width_map[char]
+        except KeyError:
+            char_width = font_width_map["default"]
         total_font_units_width += char_width
 
     return (total_font_units_width * font_size) / 1000.0
 
 def wrap_text(
-    font_name: str,
+    font_width_map: Dict[str, float],
     font_size: float,
     field_width: float,
     field_height: float,
@@ -3621,8 +3611,8 @@ def wrap_text(
 
         words = paragraph.split(" ")
         for i, word in enumerate(words):
-            word_width = calculate_text_width(font_name, font_size, word)
-            space_width = calculate_text_width(font_name, font_size, " ") if i > 0 else 0
+            word_width = calculate_text_width(font_width_map, font_size, word)
+            space_width = calculate_text_width(font_width_map, font_size, " ") if i > 0 else 0
 
             test_width = current_line_width + space_width + word_width
 
@@ -3653,7 +3643,7 @@ def wrap_text(
         if new_font_size >= min_font_size:
             # Text overflows height; Retry with smaller font size.
             return wrap_text(
-                font_name, new_font_size, field_width, field_height, orig_txt, min_font_size, font_size_step
+                font_width_map, new_font_size, field_width, field_height, orig_txt, min_font_size, font_size_step
             )
         # Font size lower than set minimum font size, give up.
         return wrapped_lines, font_size
@@ -3663,19 +3653,16 @@ def generate_appearance_stream(
     txt: str,
     sel: List[str],
     font_properties: List[str],
-    base_font: Union[str, None],
     font_full_rev: Dict[str, bytes],
+    font_width_map: Dict[str, float],
     rct: RectangleObject,
     font_height: float,
     align: int,
 ) -> bytes:
-
     # Only wrap text for non-choice fields, otherwise we break matching sel and line later on.
     if sel == []:
-        if not base_font:
-            base_font = font_properties[0]
         lines, font_height = wrap_text(
-            base_font,
+            font_width_map,
             font_height,
             rct.width - 2,
             rct.height - 2,
