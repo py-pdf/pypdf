@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751017813038,
+  "lastUpdate": 1751022898038,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -77555,6 +77555,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004380914878365638",
             "extra": "mean: 725.5334523999977 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "henning.koertel@gmgcolor.com",
+            "name": "Henning Körtel",
+            "username": "henningkoertelgmg"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ed645ca0a6b336c99dfac0c1c7b1d46abfc21f47",
+          "message": "ROB: Flate decoding for streams with faulty tail bytes (#3332)\n\nSome FLATE encoded streams of early Adobe Distiller / Pitstop versions are written with additionally added CR bytes to the PDF and calculate the faulty tail bytes into Length value of stream dict. Later then decoding fails. Solved with removing step by step tail bytes until decoding is successful.",
+          "timestamp": "2025-06-27T13:12:25+02:00",
+          "tree_id": "9baf6702e1955764a9b08016233ca2e316409fdd",
+          "url": "https://github.com/py-pdf/pypdf/commit/ed645ca0a6b336c99dfac0c1c7b1d46abfc21f47"
+        },
+        "date": 1751022894183,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.458111307775092,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009419192312171571",
+            "extra": "mean: 289.17519160000325 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.344919641504823,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005682434034201912",
+            "extra": "mean: 65.16814837499751 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2755201329905442,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013806058158676767",
+            "extra": "mean: 3.6294988287999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.744191757178882,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000700276292908716",
+            "extra": "mean: 56.35646941176814 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0795621675524814,
+            "unit": "iter/sec",
+            "range": "stddev: 1.2296819751211618",
+            "extra": "mean: 12.568787788999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3797689670909683,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036100797966084727",
+            "extra": "mean: 724.7590167999988 msec\nrounds: 5"
           }
         ]
       }
