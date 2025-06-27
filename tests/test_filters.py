@@ -810,7 +810,7 @@ def test_flate_decode_stream_with_faulty_tail_bytes():
         name="faulty_stream_tail_example.1.pdf"
     )
     expected = get_data_from_url(
-        url= "https://github.com/user-attachments/files/20941717/decoded.dat.txt",
+        url="https://github.com/user-attachments/files/20941717/decoded.dat.txt",
         name="faulty_stream_tail_example.1.decoded.dat"
     )
     reader = PdfReader(BytesIO(data))
