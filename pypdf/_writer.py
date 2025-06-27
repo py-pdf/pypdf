@@ -1043,7 +1043,7 @@ class PdfWriter(PdfDocCommon):
 
         if flatten:
             field_name = self._get_qualified_field_name(annotation)
-            self.add_apstream_object(page, annotation, dct, field_name, font_res)
+            self.add_apstream_object(page, dct, field_name, _rct[0], _rct[1], font_res)
 
     FFBITS_NUL = FA.FfBits(0)
 
@@ -1146,7 +1146,8 @@ class PdfWriter(PdfDocCommon):
                     annotation[NameObject(FA.V)] = v
                     if flatten and appearance_stream_obj is not None:
                         # TODO: Should we add font resources to a flattened /Btn annotation?
-                        self.add_apstream_object(page, annotation, appearance_stream_obj, field)
+                        rct = cast(RectangleObject, annotation[AA.Rect])
+                        self.add_apstream_object(page, appearance_stream_obj, field, rct[0], rct[1])
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
@@ -1206,25 +1207,24 @@ class PdfWriter(PdfDocCommon):
     def add_apstream_object(
             self,
             page: PageObject,
-            annotation: DictionaryObject,
             appearance_stream_obj: StreamObject,
-            field: str,
+            object_name: str,
+            x_offset: float,
+            y_offset: float,
             font_res: Optional[DictionaryObject] = None
         ) -> None:
         """
-        Flattens the appearance of an annotation to the page content by embedding
-        its current appearance stream directly into the page's content.
+        Adds an appearance stream to the page content in the form of
+        an XObject.
 
         Args:
-            page: The page to which to add the appearance stream
-            annotation: The annotation to flatten
-            appearance_stream_obj: Tha annotation's appearance stream
-            field: The name of the annotation.
-            font_res:The annotation's font resource.
+            page: The page to which to add the appearance stream.
+            appearance_stream_obj: The appearance stream.
+            object_name: The name of the appearance stream.
+            x_offset: The horizontal offset for the appearance stream.
+            y_offset: The vertical offset for the appearance stream.
+            font_res:The annotation's font resource (if given).
         """
-        # Calculate rectangle dimensions
-        rct = cast(RectangleObject, annotation[AA.Rect])
-
         # Prepare XObject resource dictionary on the page
         if "/XObject" not in cast(
                 DictionaryObject, page[PG.RESOURCES]
@@ -1251,9 +1251,9 @@ class PdfWriter(PdfDocCommon):
         xobject_ref = self._add_object(appearance_stream_obj)
 
         # Create a name for the XObject. TODO Is this sufficiently unique?
-        # Sanitize the original field name to be a valid PDF name part (alphanumeric, underscore, hyphen)
+        # Sanitize the proposed object name to be a valid PDF name part (alphanumeric, underscore, hyphen)
         # Replacing spaces with underscores, then removing any other non-alphanumeric/non-underscore/non-hyphen
-        sanitized_name = str(field).replace(" ", "_")
+        sanitized_name = str(object_name).replace(" ", "_")
         sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "_", sanitized_name)
         xobject_name = NameObject(f"/Fm_{sanitized_name}")
 
@@ -1269,14 +1269,14 @@ class PdfWriter(PdfDocCommon):
 
         # Transformation matrix (a b c d e f) for 'a b c d e f cm'
         # This matrix translates the XObject from its internal coordinate system
-        # (where its BBox is defined relative to its origin) to the target annotation rectangle.
+        # (where its BBox is defined relative to its origin) to the target offset.
         # TODO: This code does not deal with scaling.
         a = 1
         b = 0.0
         c = 0.0
         d = 1
-        e = rct[0]  # Translate XObject's scaled origin to annotation's origin
-        f = rct[1]  # Translate XObject's scaled origin to annotation's origin
+        e = x_offset
+        f = y_offset
 
         # Construct the PDF content stream commands to draw the XObject
         xobject_drawing_commands = (
