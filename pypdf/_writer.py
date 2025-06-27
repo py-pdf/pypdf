@@ -1010,7 +1010,6 @@ class PdfWriter(PdfDocCommon):
                 "/Length": 0,
             }
         )
-
         if AA.AP in annotation:
             for k, v in cast(DictionaryObject, annotation[AA.AP]).get("/N", {}).items():
                 if k not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
@@ -1029,7 +1028,6 @@ class PdfWriter(PdfDocCommon):
                     )
                 }
             )
-
         if AA.AP not in annotation:
             annotation[NameObject(AA.AP)] = DictionaryObject(
                 {NameObject("/N"): self._add_object(dct)}
@@ -1173,6 +1171,17 @@ class PdfWriter(PdfDocCommon):
         """
         Combines existing content stream(s) with new content (as bytes),
         and returns a new single StreamObject.
+
+        Args:
+            existing_content: This is existing content to which to add the new
+                content_data. For the content of an existing page, this would,
+                for instance, be page.get("/Contents"). This can be a
+                StreamObject, an ArrayObject, or an IndirectObject.
+            new_content_data: A binary-encoded new content stream, for
+                instance the commands toto draw an XObject.
+
+        Returns:
+            The merged content, in the form of one StreamObject.
         """
         merged_data = b""
 
@@ -1203,9 +1212,15 @@ class PdfWriter(PdfDocCommon):
             font_res: Optional[DictionaryObject] = None
         ) -> None:
         """
-        Flattens the appearance of a button field to the page content.
-        This function handles various button types (push buttons, checkboxes, radio buttons)
-        by embedding their current appearance stream directly onto the page's content.
+        Flattens the appearance of an annotation to the page content by embedding
+        its current appearance stream directly into the page's content.
+
+        Args:
+            page: The page to which to add the appearance stream
+            annotation: The annotation to flatten
+            appearance_stream_obj: Tha annotation's appearance stream
+            field: The name of the annotation.
+            font_res:The annotation's font resource.
         """
         # Calculate rectangle dimensions
         rct = cast(RectangleObject, annotation[AA.Rect])
@@ -1217,8 +1232,6 @@ class PdfWriter(PdfDocCommon):
             cast(
                 DictionaryObject, page[PG.RESOURCES]
             )[NameObject("/XObject")] = DictionaryObject()
-
-
         if font_res is not None:
             font_name = font_res["/Name"]
             if "/Font" not in cast(
@@ -3517,6 +3530,7 @@ class PdfWriter(PdfDocCommon):
 
         return data
 
+
 def _pdf_objectify(obj: Union[Dict[str, Any], str, float, List[Any]]) -> PdfObject:
     if isinstance(obj, PdfObject):
         return obj
@@ -3536,6 +3550,7 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, float, List[Any]]) -> PdfObje
     raise NotImplementedError(
         f"{type(obj)=} could not be cast to a PdfObject"
     )
+
 
 def _create_outline_item(
     action_ref: Union[None, IndirectObject],
@@ -3589,12 +3604,10 @@ def wrap_text(
     min_font_size: float = 4.0,       # Minimum font size to attempt
     font_size_step: float = 0.5       # How much to decrease font size by each step
 ) -> Tuple[List[str], float]:
-    """
-    Takes a piece of text and adds newlines to wrap it
-    into a rect of given size, given font_name and
-    font_size. Recursively reduces font_size if text exceeds field_height.
-    Returns (wrapped_lines, font_size).
-    """
+    # Takes a piece of text and adds newlines to wrap it
+    # into a rect of given size, given font_name and
+    # font_size. Recursively reduces font_size if text exceeds field_height.
+    # Returns (wrapped_lines, font_size).
     orig_txt = txt
     txt = re.sub(r"\n", "\r", txt)
 
