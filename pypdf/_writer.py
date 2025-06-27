@@ -3635,8 +3635,11 @@ def wrap_text(
             current_line_words = []
             current_line_width = 0
 
-    line_height_estimate = font_size * 1.4 # TODO: Add real line spacing here.
-    estimated_total_height = len(wrapped_lines) * line_height_estimate
+    # Estimate total height. For the first line, take into account y_offset, which is:
+    # rct.height - 1 - font_height, which here means font_size + 1. For all other lines,
+    # it's line distance times number of lines - 1.
+    # TODO: Add real line spacing instead of 1.4
+    estimated_total_height = font_size + 1 + (len(wrapped_lines) - 1) * 1.4 * font_size
 
     if estimated_total_height > field_height:
         new_font_size = font_size - font_size_step

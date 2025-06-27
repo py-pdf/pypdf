@@ -2370,7 +2370,7 @@ def test_field_box_upside_down():
     writer.update_page_form_field_values(None, {"FreightTrainMiles": "0"})
     assert writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"].get_data() == (
         b"q\n/Tx BMC \nq\n1 1 105.29520000000001 10.835000000000036 re\n"
-        b"W\nBT\n/Arial 7.0 Tf 0 g\n2 3.8350000000000364 Td\n(0) Tj\nET\n"
+        b"W\nBT\n/Arial 8.0 Tf 0 g\n2 2.8350000000000364 Td\n(0) Tj\nET\n"
         b"Q\nEMC\nQ\n"
     )
     box = writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"]["/BBox"]
