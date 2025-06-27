@@ -95,6 +95,23 @@ def decompress(data: bytes) -> bytes:
             # For larger files, use decompression object to enable buffered reading
             return zlib.decompressobj().decompress(data)
         except zlib.error:
+            # First quick approach for known issue with faulty added bytes to the
+            # tail of the encoded stream from early Adobe Distiller or Pitstop versions
+            # with CR char as the default line separator (assumed by reverse engeneering)
+            # that breaks the decoding process in the end.
+            #
+            # Try first to cut off some of the tail byte by byte, however limited to not
+            # iterate through too many loops and kill the performance for large streams,
+            # to then allow the final fallback to run. Added this intermediate attempt,
+            # because starting from the head of the stream byte by byte kills completely
+            # the performace for large streams (e.g. 6 MB) with the tail-byte-issue
+            # and takes ages. This solution is really fast:
+            max_tail_cut_off_bytes: int = 8
+            for i in range(1, min(max_tail_cut_off_bytes + 1, len(data))):
+                try:
+                    return zlib.decompressobj().decompress(data[:-i])
+                except zlib.error:
+                    pass
             # If still failing, then try with increased window size
             d = zlib.decompressobj(zlib.MAX_WBITS | 32)
             result_str = b""
