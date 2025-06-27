@@ -1164,7 +1164,7 @@ class PdfWriter(PdfDocCommon):
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
 
-    def merge_content_streams(
+    def add_new_content_stream(
         self,
         existing_content: Optional[Any],
         new_content_data: bytes,
@@ -1179,30 +1179,32 @@ class PdfWriter(PdfDocCommon):
                 for instance, be page.get("/Contents"). This can be a
                 StreamObject, an ArrayObject, or an IndirectObject.
             new_content_data: A binary-encoded new content stream, for
-                instance the commands toto draw an XObject.
+                instance the commands to draw an XObject.
 
         Returns:
-            The merged content, in the form of one StreamObject.
+            The merged content, in the form of a StreamObject or an ArrayObject.
         """
-        merged_data = b""
-
         # First deal with the case where existing_content is an IndirectObject
         if isinstance(existing_content, IndirectObject):
             existing_content = existing_content.get_object()
 
         if isinstance(existing_content, ArrayObject):
-            for obj in existing_content:
-                stream = obj.get_object()
-                if isinstance(stream, StreamObject):
-                    merged_data += stream.get_data() + b"\n"
-        elif isinstance(existing_content, StreamObject):
-            merged_data += existing_content.get_data() + b"\n"
-
-        merged_data += new_content_data
-
+            # Create a new StreamObject for the new_content_data
+            new_stream_obj = StreamObject()
+            new_stream_obj._data = new_content_data
+            existing_content.append(self._add_object(new_stream_obj))
+            return self._add_object(existing_content)  # Return the updated ArrayObject
+        if isinstance(existing_content, StreamObject):
+            # Merge new content to existing StreamObject
+            merged_data = existing_content.get_data() + b"\n" + new_content_data
+            new_stream = StreamObject()
+            new_stream._data = merged_data
+            return self._add_object(new_stream)
+        # If no existing content, create a new StreamObject
         new_stream = StreamObject()
-        new_stream._data = merged_data
+        new_stream._data = new_content_data
         return self._add_object(new_stream)
+
 
     def add_apstream_object(
             self,
@@ -1284,7 +1286,7 @@ class PdfWriter(PdfDocCommon):
         )
 
         # Merge these commands into the page's existing content stream
-        new_content_ref = self.merge_content_streams(page.get("/Contents"), xobject_drawing_commands)
+        new_content_ref = self.add_new_content_stream(page.get("/Contents"), xobject_drawing_commands)
         page[NameObject("/Contents")] = new_content_ref
 
     def reattach_fields(
