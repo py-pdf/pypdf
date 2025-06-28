@@ -237,9 +237,9 @@ def writer_operate(writer: PdfWriter) -> None:
     assert writer._get_page_mode() == "/UseOC"
     writer.insert_blank_page(width=100, height=100)
     page = writer.insert_blank_page(width=100)
-    assert page.mediabox.height = 100
+    assert page.mediabox.height == 100
     page = writer.insert_blank_page(height=100)
-    assert page.mediabox.width = 100
+    assert page.mediabox.width == 100
     writer.insert_blank_page()  # without parameters
 
     writer.remove_images()
