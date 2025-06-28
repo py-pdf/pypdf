@@ -352,7 +352,7 @@ class PdfWriter(PdfDocCommon):
     def xmp_metadata(self, value: Optional[XmpInformation]) -> None:
         """XMP (Extensible Metadata Platform) data."""
         if value is None and "/Metadata" in self.root_object:
-                del self.root_object["/Metadata"]
+            del self.root_object["/Metadata"]
         else:
             self.root_object[NameObject("/Metadata")] = value
 
