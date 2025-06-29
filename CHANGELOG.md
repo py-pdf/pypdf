@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## Version 5.7.0, 2025-06-29
+
+### Performance Improvements (PI)
+- Performance optimization for LZW decoding (#3329)
+
+### Robustness (ROB)
+- Flate decoding for streams with faulty tail bytes (#3332)
+- dc_creator could be a Bag as well (#3333)
+- Handle tree being NullObject when retrieving named destinations (#3331)
+
+### Maintenance (MAINT)
+- Move inline-image mappings to constants (#3328)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.6.1...5.7.0)
+
 ## Version 5.6.1, 2025-06-22
 
 ### New Features (ENH)
