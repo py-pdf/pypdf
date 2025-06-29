@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751022898038,
+  "lastUpdate": 1751187037394,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -77621,6 +77621,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0036100797966084727",
             "extra": "mean: 724.7590167999988 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "323e64993cad74870aca7635e869925ed1656712",
+          "message": "REL: 5.7.0\n\n## What's new\n\n### Performance Improvements (PI)\n- Performance optimization for LZW decoding (#3329) by @henningkoertelgmg\n\n### Robustness (ROB)\n- Flate decoding for streams with faulty tail bytes (#3332) by @henningkoertelgmg\n- dc_creator could be a Bag as well (#3333) by @stefan6419846\n- Handle tree being NullObject when retrieving named destinations (#3331) by @stefan6419846\n\n### Maintenance (MAINT)\n- Move inline-image mappings to constants (#3328) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.6.1...5.7.0)",
+          "timestamp": "2025-06-29T10:47:39+02:00",
+          "tree_id": "737751ebd84109aa65c0c4f743d1d7e9121013b3",
+          "url": "https://github.com/py-pdf/pypdf/commit/323e64993cad74870aca7635e869925ed1656712"
+        },
+        "date": 1751187034020,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4024926113750533,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008734974137524469",
+            "extra": "mean: 293.90218119999645 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.056991678090126,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006182870961777215",
+            "extra": "mean: 66.41432906249989 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27236891692841386,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00831727562969931",
+            "extra": "mean: 3.671490900199996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.032034576610332,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00046711832502806526",
+            "extra": "mean: 55.456859055556464 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08185622874555537,
+            "unit": "iter/sec",
+            "range": "stddev: 0.15177102822652272",
+            "extra": "mean: 12.216541310599997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3789608263790802,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004012997302372554",
+            "extra": "mean: 725.1837621999982 msec\nrounds: 5"
           }
         ]
       }
