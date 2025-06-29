@@ -11,8 +11,9 @@ from ._crypt_providers import crypt_provider
 from ._doc_common import DocumentInformation
 from ._encryption import PasswordType
 from ._merger import PdfMerger
-from ._page import PageObject, Transformation, mult
+from ._page import PageObject, Transformation
 from ._reader import PdfReader
+from ._text_extraction import mult
 from ._version import __version__
 from ._writer import ObjectDeletionFlag, PdfWriter
 from .constants import ImageType
