@@ -56,7 +56,7 @@ from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     _layout_mode,
 )
-from ._text_extractor import TextExtraction
+from ._text_extraction._text_extractor import TextExtraction
 from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,

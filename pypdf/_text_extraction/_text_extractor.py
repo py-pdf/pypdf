@@ -30,29 +30,29 @@
 import math
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
-from ._cmap import (
+from .._cmap import (
     build_char_map,
     build_font_width_map,
     compute_font_width,
     get_actual_str_key,
     unknown_char_map,
 )
-from ._text_extraction import (
-    OrientationNotFoundError,
-    crlf_space_check,
-    get_display_str,
-    get_text_operands,
-    mult,
-)
-from ._utils import logger_warning
-from .constants import PageAttributes as PG
-from .generic import (
+from .._utils import logger_warning
+from ..constants import PageAttributes as PG
+from ..generic import (
     ContentStream,
     DictionaryObject,
     FloatObject,
     NameObject,
     NumberObject,
     TextStringObject,
+)
+from . import (
+    OrientationNotFoundError,
+    crlf_space_check,
+    get_display_str,
+    get_text_operands,
+    mult,
 )
 
 
@@ -511,7 +511,10 @@ class TextExtraction:
             )
 
         font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = self._get_actual_font_widths(
-            cmap, text_operands, font_size, space_width,
+            cmap,
+            text_operands,
+            font_size,
+            space_width,
         )
         actual_str_size["str_widths"] += font_widths
 
