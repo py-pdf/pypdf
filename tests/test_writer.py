@@ -23,7 +23,9 @@ from pypdf.annotations import Link
 from pypdf.errors import PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
+    ByteStringObject,
     ContentStream,
+    DecodedStreamObject,
     Destination,
     DictionaryObject,
     Fit,
@@ -1578,6 +1580,33 @@ def test_update_form_fields(tmp_path):
     )
 
     Path(write_data_here).unlink()
+
+
+def test_add_apstream_object():
+    writer = PdfWriter()
+    page = writer.add_blank_page(1000, 1000)
+    assert NameObject("/Contents") not in page
+    apstream_object = DecodedStreamObject.initialize_from_dictionary(
+        {
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Form"),
+            NameObject("/BBox"): RectangleObject([0.0, 0.0, 10.5, 10.5]),
+            "__streamdata__": ByteStringObject(b"BT /F1 12 Tf (Hello World) Tj ET")
+        }
+    )
+    writer._add_object(apstream_object)
+    object_name = "AA2342!@#$% ^^##aa:-)"
+    x_offset = 200
+    y_offset = 200
+    writer._add_apstream_object(page, apstream_object, object_name, x_offset, y_offset)
+    assert NameObject("/XObject") in page[NameObject("/Resources")]
+    assert "/Fm_AA2342__________aa_-_" in page[NameObject("/Resources")][NameObject("/XObject")]
+    assert NameObject("/Contents") in page
+    contents_obj = page[NameObject("/Contents")]
+    stream = contents_obj.get_object()
+    assert isinstance(stream, StreamObject)
+    expect = b"q\n1.0000 0.0000 0.0000 1.0000 200.0000 200.0000 cm\n/Fm_AA2342__________aa_-_ Do\nQ"
+    assert expect == stream._data
 
 
 def test_merge_content_stream_to_page():
