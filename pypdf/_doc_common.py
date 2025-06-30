@@ -270,6 +270,8 @@ class PdfDocCommon:
 
     strict: bool = False  # default
 
+    flattened_pages: Optional[List[PageObject]] = None
+
     _encryption: Optional[Encryption] = None
 
     _readonly: bool = False
@@ -327,13 +329,11 @@ class PdfDocCommon:
         o = o.get_object()
         if not isinstance(o, ViewerPreferences):
             o = ViewerPreferences(o)
-            if hasattr(o, "indirect_reference"):
+            if hasattr(o, "indirect_reference") and o.indirect_reference is not None:
                 self._replace_object(o.indirect_reference, o)
             else:
                 self.root_object[NameObject(CD.VIEWER_PREFERENCES)] = o
         return o
-
-    flattened_pages: Optional[List[PageObject]] = None
 
     def get_num_pages(self) -> int:
         """
@@ -343,8 +343,7 @@ class PdfDocCommon:
             The number of pages of the parsed PDF file.
 
         Raises:
-            PdfReadError: if file is encrypted and restrictions prevent
-                this action.
+            PdfReadError: If restrictions prevent this action.
 
         """
         # Flattened pages will not work on an encrypted PDF;
@@ -352,11 +351,10 @@ class PdfDocCommon:
         # the original method (flattened page count) is used.
         if self.is_encrypted:
             return self.root_object["/Pages"]["/Count"]  # type: ignore
-        else:
-            if self.flattened_pages is None:
-                self._flatten(self._readonly)
-            assert self.flattened_pages is not None
-            return len(self.flattened_pages)
+        if self.flattened_pages is None:
+            self._flatten(self._readonly)
+        assert self.flattened_pages is not None
+        return len(self.flattened_pages)
 
     def get_page(self, page_number: int) -> PageObject:
         """
@@ -393,12 +391,10 @@ class PdfDocCommon:
             if node["/Type"] == "/Page":
                 if page_number == mi:
                     return node, -1
-                # else
                 return None, mi + 1
             if (page_number - mi) >= ma:  # not in nodes below
                 if node == top:
                     return top, -1
-                # else
                 return None, mi + ma
             for idx, kid in enumerate(cast(ArrayObject, node["/Kids"])):
                 kid = cast(DictionaryObject, kid.get_object())
@@ -406,7 +402,7 @@ class PdfDocCommon:
                 if n is not None:  # page has just been found ...
                     if i < 0:  # ... just below!
                         return node, idx
-                    # else:  # ... at lower levels
+                    # ... at lower levels
                     return n, i
                 mi = i
             raise PyPdfError("Unexpectedly cannot find the node.")
@@ -416,11 +412,8 @@ class PdfDocCommon:
         return node, idx
 
     @property
-    def named_destinations(self) -> Dict[str, Any]:
-        """
-        A read-only dictionary which maps names to
-        :class:`Destinations<pypdf.generic.Destination>`
-        """
+    def named_destinations(self) -> Dict[str, Destination]:
+        """A read-only dictionary which maps names to destinations."""
         return self._get_named_destinations()
 
     def get_named_dest_root(self) -> ArrayObject:
@@ -429,9 +422,8 @@ class PdfDocCommon:
             self.root_object[CA.NAMES], DictionaryObject
         ):
             names = cast(DictionaryObject, self.root_object[CA.NAMES])
-            names_ref = names.indirect_reference
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
-                # 3.6.3 Name Dictionary (PDF spec 1.7)
+                # §3.6.3 Name Dictionary (PDF spec 1.7)
                 dests = cast(DictionaryObject, names[CA.DESTS])
                 dests_ref = dests.indirect_reference
                 if CA.NAMES in dests:
@@ -461,18 +453,17 @@ class PdfDocCommon:
     def _get_named_destinations(
         self,
         tree: Union[TreeObject, None] = None,
-        retval: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+        retval: Optional[Dict[str, Destination]] = None,
+    ) -> Dict[str, Destination]:
         """
         Retrieve the named destinations present in the document.
 
         Args:
-            tree:
-            retval:
+            tree: The current tree.
+            retval: The previously retrieved destinations for nested calls.
 
         Returns:
-            A dictionary which maps names to
-            :class:`Destinations<pypdf.generic.Destination>`.
+            A dictionary which maps names to destinations.
 
         """
         if retval is None:
@@ -487,8 +478,9 @@ class PdfDocCommon:
                 if CA.DESTS in names:
                     tree = cast(TreeObject, names[CA.DESTS])
 
-        if tree is None:
+        if is_null_or_none(tree):
             return retval
+        assert tree is not None, "mypy"
 
         if PA.KIDS in tree:
             # recurse down the tree
@@ -499,10 +491,11 @@ class PdfDocCommon:
             names = cast(DictionaryObject, tree[CA.NAMES])
             i = 0
             while i < len(names):
-                key = cast(str, names[i].get_object())
+                original_key = names[i].get_object()
                 i += 1
-                if not isinstance(key, str):
+                if not isinstance(original_key, (bytes, str)):
                     continue
+                key = str(original_key)
                 try:
                     value = names[i].get_object()
                 except IndexError:
@@ -513,7 +506,7 @@ class PdfDocCommon:
                         value = value["/D"]
                     else:
                         continue
-                dest = self._build_destination(key, value)  # type: ignore
+                dest = self._build_destination(key, value)
                 if dest is not None:
                     retval[key] = dest
         else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF 1.1)
@@ -529,8 +522,8 @@ class PdfDocCommon:
                     retval[k__] = dest
         return retval
 
-    # A select group of relevant field attributes. For the complete list.
-    # See §12.3.2 of the PDF 1.7 or PDF 2.0 specification.
+    # A select group of relevant field attributes. For the complete list,
+    # see §12.3.2 of the PDF 1.7 or PDF 2.0 specification.
 
     def get_fields(
         self,
@@ -585,7 +578,7 @@ class PdfDocCommon:
     def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
         if "/TM" in parent:
             return cast(str, parent["/TM"])
-        elif "/Parent" in parent:
+        if "/Parent" in parent:
             return (
                 self._get_qualified_field_name(
                     cast(DictionaryObject, parent["/Parent"])
@@ -593,8 +586,7 @@ class PdfDocCommon:
                 + "."
                 + cast(str, parent.get("/T", ""))
             )
-        else:
-            return cast(str, parent.get("/T", ""))
+        return cast(str, parent.get("/T", ""))
 
     def _build_field(
         self,
@@ -672,7 +664,7 @@ class PdfDocCommon:
             attr_name = field_attributes[attr]
             try:
                 if attr == FA.FT:
-                    # Make the field type value more clear
+                    # Make the field type value clearer
                     types = {
                         "/Btn": "Button",
                         "/Tx": "Text",
@@ -713,12 +705,11 @@ class PdfDocCommon:
         def indexed_key(k: str, fields: Dict[Any, Any]) -> str:
             if k not in fields:
                 return k
-            else:
-                return (
-                    k
-                    + "."
-                    + str(sum(1 for kk in fields if kk.startswith(k + ".")) + 2)
-                )
+            return (
+                k
+                + "."
+                + str(sum(1 for kk in fields if kk.startswith(k + ".")) + 2)
+            )
 
         # Retrieve document form fields
         formfields = self.get_fields()
@@ -759,12 +750,11 @@ class PdfDocCommon:
         def _get_inherited(obj: DictionaryObject, key: str) -> Any:
             if key in obj:
                 return obj[key]
-            elif "/Parent" in obj:
+            if "/Parent" in obj:
                 return _get_inherited(
                     cast(DictionaryObject, obj["/Parent"].get_object()), key
                 )
-            else:
-                return None
+            return None
 
         try:
             # to cope with all types
@@ -824,7 +814,7 @@ class PdfDocCommon:
             oa = oa.decode()
         if isinstance(oa, str):
             return create_string_object(oa)
-        elif isinstance(oa, ArrayObject):
+        if isinstance(oa, ArrayObject):
             try:
                 page, typ, *array = oa
                 fit = Fit(typ, tuple(array))
@@ -907,8 +897,7 @@ class PdfDocCommon:
         catalog = self.root_object
         if CO.THREADS in catalog:
             return cast("ArrayObject", catalog[CO.THREADS])
-        else:
-            return None
+        return None
 
     @abstractmethod
     def _get_page_number_by_indirect(
@@ -961,25 +950,23 @@ class PdfDocCommon:
         ):
             page = NullObject()
             return Destination(title, page, Fit.fit())
-        else:
-            page, typ = array[0:2]  # type: ignore
-            array = array[2:]
-            try:
-                return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
-            except PdfReadError:
-                logger_warning(f"Unknown destination: {title} {array}", __name__)
-                if self.strict:
-                    raise
-                # create a link to first Page
-                tmp = self.pages[0].indirect_reference
-                indirect_reference = NullObject() if tmp is None else tmp
-                return Destination(title, indirect_reference, Fit.fit())
+        page, typ, *array = array  # type: ignore
+        try:
+            return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
+        except PdfReadError:
+            logger_warning(f"Unknown destination: {title} {array}", __name__)
+            if self.strict:
+                raise
+            # create a link to first Page
+            tmp = self.pages[0].indirect_reference
+            indirect_reference = NullObject() if tmp is None else tmp
+            return Destination(title, indirect_reference, Fit.fit())
 
     def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
         dest, title, outline_item = None, None, None
 
         # title required for valid outline
-        # § 12.3.3, entries in an outline item dictionary
+        # §12.3.3, entries in an outline item dictionary
         try:
             title = cast("str", node["/Title"])
         except KeyError:
@@ -988,13 +975,16 @@ class PdfDocCommon:
             title = ""
 
         if "/A" in node:
-            # Action, PDFv1.7 Section 12.6 (only type GoTo supported)
+            # Action, PDF 1.7 and PDF 2.0 §12.6 (only type GoTo supported)
             action = cast(DictionaryObject, node["/A"])
             action_type = cast(NameObject, action[GoToActionArguments.S])
             if action_type == "/GoTo":
-                dest = action[GoToActionArguments.D]
+                if GoToActionArguments.D in action:
+                    dest = action[GoToActionArguments.D]
+                elif self.strict:
+                    raise PdfReadError(f"Outline Action Missing /D attribute: {node!r}")
         elif "/Dest" in node:
-            # Destination, PDFv1.7 Section 12.3.2
+            # Destination, PDF 1.7 and PDF 2.0 §12.3.2
             dest = node["/Dest"]
             # if array was referenced in another object, will be a dict w/ key "/D"
             if isinstance(dest, DictionaryObject) and "/D" in dest:
@@ -1004,7 +994,7 @@ class PdfDocCommon:
             outline_item = self._build_destination(title, dest)
         elif isinstance(dest, str):
             # named destination, addresses NameObject Issue #193
-            # TODO : keep named destination instead of replacing it ?
+            # TODO: Keep named destination instead of replacing it?
             try:
                 outline_item = self._build_destination(
                     title, self._named_destinations[dest].dest_array
@@ -1019,11 +1009,10 @@ class PdfDocCommon:
         else:
             if self.strict:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
-            else:
-                logger_warning(
-                    f"Removed unexpected destination {dest!r} from destination",
-                    __name__,
-                )
+            logger_warning(
+                f"Removed unexpected destination {dest!r} from destination",
+                __name__,
+            )
             outline_item = self._build_destination(title, None)
 
         # if outline item created, add color, format, and child count if present
@@ -1039,7 +1028,7 @@ class PdfDocCommon:
                 # absolute value = num. visible children
                 # with positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
-            #  if count is 0 we will consider it as open ( in order to have always an is_open to simplify
+            #  if count is 0 we will consider it as open (to have available is_open)
             outline_item[NameObject("/%is_open%")] = BooleanObject(
                 node.get("/Count", 0) >= 0
             )
@@ -1139,7 +1128,16 @@ class PdfDocCommon:
         indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
         """
-        Prepare the document pages to ease searching
+        Process the document pages to ease searching.
+
+        Attributes of a page may inherit from ancestor nodes
+        in the page tree. Flattening means moving
+        any inheritance data into descendant nodes,
+        effectively removing the inheritance dependency.
+
+        Note: It is distinct from another use of "flattening" applied to PDFs.
+        Flattening a PDF also means combining all the contents into one single layer
+        and making the file less editable.
 
         Args:
             list_only: Will only list the pages within _flatten_pages.
@@ -1167,7 +1165,7 @@ class PdfDocCommon:
 
         if PA.TYPE in pages:
             t = cast(str, pages[PA.TYPE])
-        # if pdf has no type, considered as a page if /Kids is missing
+        # if the page tree node has no /Type, consider as a page if /Kids is also missing
         elif PA.KIDS not in pages:
             t = "/Page"
         else:
@@ -1191,9 +1189,9 @@ class PdfDocCommon:
                             "Maximum recursion depth reached during page flattening."
                         )
         elif t == "/Page":
-            for attr_in, value in list(inherit.items()):
-                # if the page has it's own value, it does not inherit the
-                # parent's value:
+            for attr_in, value in inherit.items():
+                # if the page has its own value, it does not inherit the
+                # parent's value
                 if attr_in not in pages:
                     pages[attr_in] = value
             page_obj = PageObject(self, indirect_reference)
@@ -1430,8 +1428,8 @@ class PdfDocCommon:
 
 
 class LazyDict(Mapping[Any, Any]):
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        self._raw_dict = dict(*args, **kw)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self._raw_dict = dict(*args, **kwargs)
 
     def __getitem__(self, key: str) -> Any:
         func, arg = self._raw_dict.__getitem__(key)

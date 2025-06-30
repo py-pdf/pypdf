@@ -68,7 +68,7 @@ class PageRange:
         m = isinstance(arg, str) and re.match(PAGE_RANGE_RE, arg)
         if not m:
             raise ParseError(arg)
-        elif m.group(2):
+        if m.group(2):
             # Special case: just an int means a range of one page.
             start = int(m.group(2))
             stop = start + 1 if start != -1 else None
@@ -134,6 +134,9 @@ class PageRange:
             return False
         return self._slice == other._slice
 
+    def __hash__(self) -> int:
+        return hash((self.__class__, (self._slice.start, self._slice.stop, self._slice.step)))
+
     def __add__(self, other: "PageRange") -> "PageRange":
         if not isinstance(other, PageRange):
             raise TypeError(f"Can't add PageRange and {type(other)}")
@@ -173,7 +176,7 @@ def parse_filename_page_ranges(
     pairs: List[Tuple[str, PageRange]] = []
     pdf_filename: Union[str, None] = None
     did_page_range = False
-    for arg in args + [None]:
+    for arg in [*args, None]:
         if PageRange.valid(arg):
             if not pdf_filename:
                 raise ValueError(

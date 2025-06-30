@@ -1,11 +1,13 @@
 """Test the pypdf._page module."""
 import json
+import logging
 import math
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from random import shuffle
-from typing import List, Tuple
+from typing import Any, List, Tuple
+from unittest import mock
 
 import pytest
 
@@ -39,8 +41,7 @@ def get_all_sample_files():
         return {"data": []}
     with open(meta_file) as fp:
         data = fp.read()
-    meta = json.loads(data)
-    return meta
+    return json.loads(data)
 
 
 all_files_meta = get_all_sample_files()
@@ -469,8 +470,6 @@ def test_extract_text_visitor_callbacks():
     It extracts the labels of package-boxes in Figure 2.
     It extracts the texts in table "REVISION HISTORY".
     """
-    import logging
-
     class PositionedText:
         """
         Specify a text with coordinates, font-dictionary and font-size.
@@ -1297,7 +1296,7 @@ def test_compression():
 
     def create_stamp_pdf() -> BytesIO:
         pytest.importorskip("fpdf")
-        from fpdf import FPDF
+        from fpdf import FPDF  # noqa: PLC0415
 
         pdf = FPDF()
         pdf.add_page()
@@ -1457,6 +1456,8 @@ def test_get_contents_as_bytes():
     assert writer.pages[0]._get_contents_as_bytes() == expected
     writer.pages[0][NameObject("/Contents")] = writer.pages[0]["/Contents"][0]
     assert writer.pages[0]._get_contents_as_bytes() == expected
+    del writer.pages[0]["/Contents"]
+    assert writer.pages[0]._get_contents_as_bytes() is None
 
 
 def test_recursive_get_page_from_node():
@@ -1470,3 +1471,36 @@ def test_recursive_get_page_from_node():
     writer.insert_page(writer.pages[0], -1)
     with pytest.raises(ValueError):
         writer.insert_page(writer.pages[0], -10)
+
+
+def test_get_contents__none_type():
+    # We can observe this in reality as well, but these documents might be
+    # confidential. Thus use a more complex dummy implementation here while
+    # assigning a value of `None` is not possible from code, but from PDFs
+    # itself.
+    class MyPage(PageObject):
+        def __contains__(self, item) -> bool:
+            assert item == "/Contents"
+            return True
+
+        def __getitem__(self, item) -> Any:
+            assert item == "/Contents"
+
+    page = MyPage()
+    assert page.get_contents() is None
+
+
+def test_extract_text__none_type():
+    class MyPage(PageObject):
+        def __getitem__(self, item) -> Any:
+            if item == "/Contents":
+                return None
+            return super().__getitem__(item)
+
+    page = MyPage()
+    resources = DictionaryObject()
+    none_reference = IndirectObject(1, 0, None)
+    resources[NameObject("/Font")] = none_reference
+    page[NameObject("/Resources")] = resources
+    with mock.patch.object(none_reference, "get_object", return_value=None):
+        assert page.extract_text() == ""

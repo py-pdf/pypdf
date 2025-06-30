@@ -40,6 +40,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Set,
     Tuple,
     Type,
     Union,
@@ -133,6 +134,7 @@ class PdfReader(PdfDocCommon):
         self._validated_root: Optional[DictionaryObject] = None
 
         self._initialize_stream(stream)
+        self._known_objects: Set[Tuple[int, int]] = set()
 
         self._override_encryption = False
         self._encryption: Optional[Encryption] = None
@@ -227,7 +229,16 @@ class PdfReader(PdfDocCommon):
                     self._validated_root = o
                     logger_warning(f"Root found at {o.indirect_reference!r}", __name__)
                     break
-            if self._validated_root is None:
+        if self._validated_root is None:
+            if not is_null_or_none(root) and "/Pages" in cast(DictionaryObject, cast(PdfObject, root).get_object()):
+                logger_warning(
+                    f"Possible root found at {cast(PdfObject, root).indirect_reference!r}, but missing /Catalog key",
+                    __name__
+                )
+                self._validated_root = cast(
+                    DictionaryObject, cast(PdfObject, root).get_object()
+                )
+            else:
                 raise PdfReadError("Cannot find Root object in pdf")
         return self._validated_root
 
@@ -243,13 +254,13 @@ class PdfReader(PdfDocCommon):
         info = self.trailer.get(TK.INFO, None)
         if is_null_or_none(info):
             return None
-        else:
-            info = info.get_object()
-            if not isinstance(info, DictionaryObject):
-                raise PdfReadError(
-                    "Trailer not found or does not point to document information directory"
-                )
-            return info
+        assert info is not None, "mypy"
+        info = info.get_object()
+        if not isinstance(info, DictionaryObject):
+            raise PdfReadError(
+                "Trailer not found or does not point to a document information dictionary"
+            )
+        return info
 
     @property
     def _ID(self) -> Optional[ArrayObject]:
@@ -261,7 +272,10 @@ class PdfReader(PdfDocCommon):
 
         """
         id = self.trailer.get(TK.ID, None)
-        return None if is_null_or_none(id) else cast(ArrayObject, id.get_object())
+        if is_null_or_none(id):
+            return None
+        assert id is not None, "mypy"
+        return cast(ArrayObject, id.get_object())
 
     @property
     def pdf_header(self) -> str:
@@ -314,8 +328,7 @@ class PdfReader(PdfDocCommon):
         else:
             idnum = indirect_reference.idnum
         assert self._page_id2num is not None, "hint for mypy"
-        ret = self._page_id2num.get(idnum, None)
-        return ret
+        return self._page_id2num.get(idnum, None)
 
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
@@ -343,7 +356,7 @@ class PdfReader(PdfDocCommon):
                 raise PdfReadError("Object is in wrong index.")
             stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
 
-            # to cope with some case where the 'pointer' is on a white space
+            # To cope with case where the 'pointer' is on a white space
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
 
@@ -447,7 +460,13 @@ class PdfReader(PdfDocCommon):
                 )
             if self.strict:
                 assert generation == indirect_reference.generation
+
+            current_object = (indirect_reference.idnum, indirect_reference.generation)
+            if current_object in self._known_objects:
+                raise PdfReadError(f"Detected loop with self reference for {indirect_reference!r}.")
+            self._known_objects.add(current_object)
             retval = read_object(self.stream, self)  # type: ignore
+            self._known_objects.remove(current_object)
 
             # override encryption is used for the /Encrypt dictionary
             if not self._override_encryption and self._encryption is not None:
@@ -641,14 +660,13 @@ class PdfReader(PdfDocCommon):
             raise UnsupportedOperation("cannot read header")
         if header_byte == b"":
             raise EmptyFileError("Cannot read an empty file")
-        elif header_byte != b"%PDF-":
+        if header_byte != b"%PDF-":
             if self.strict:
                 raise PdfReadError(
                     f"PDF starts with '{header_byte.decode('utf8')}', "
                     "but '%PDF-' expected"
                 )
-            else:
-                logger_warning(f"invalid pdf header: {header_byte}", __name__)
+            logger_warning(f"invalid pdf header: {header_byte}", __name__)
         stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
@@ -681,8 +699,7 @@ class PdfReader(PdfDocCommon):
             if stream.tell() < HEADER_SIZE:
                 if self.strict:
                     raise PdfReadError("EOF marker not found")
-                else:
-                    logger_warning("EOF marker not found", __name__)
+                logger_warning("EOF marker not found", __name__)
             line = read_previous_line(stream)
 
     def _find_startxref_pos(self, stream: StreamType) -> int:
@@ -747,6 +764,8 @@ class PdfReader(PdfDocCommon):
             cnt = 0
             while cnt < size:
                 line = stream.read(20)
+                if not line:
+                    raise PdfReadError("Unexpected empty line in Xref table.")
 
                 # It's very clear in section 3.4.3 of the PDF spec
                 # that all cross-reference table lines are a fixed
@@ -859,8 +878,7 @@ class PdfReader(PdfDocCommon):
                             f"Previous trailer cannot be read: {e.args}", __name__
                         )
                         break
-                    else:
-                        raise PdfReadError(f"Trailer cannot be read: {e.args}")
+                    raise PdfReadError(f"Trailer cannot be read: {e!s}")
                 self._process_xref_stream(xrefstream)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
@@ -904,10 +922,8 @@ class PdfReader(PdfDocCommon):
                 )
             stream.seek(p, 0)
         if "/Prev" in new_trailer:
-            startxref = new_trailer["/Prev"]
-            return startxref
-        else:
-            return None
+            return new_trailer["/Prev"]
+        return None
 
     def _read_xref_other_error(
         self, stream: StreamType, startxref: int
@@ -957,7 +973,8 @@ class PdfReader(PdfDocCommon):
         stream.seek(-1, 1)
         idnum, generation = self.read_object_header(stream)
         xrefstream = cast(ContentStream, read_object(stream, self))
-        assert cast(str, xrefstream["/Type"]) == "/XRef"
+        if cast(str, xrefstream["/Type"]) != "/XRef":
+            raise PdfReadError(f"Unexpected type {xrefstream['/Type']!r}")
         self.cache_indirect_object(generation, idnum, xrefstream)
         stream_data = BytesIO(xrefstream.get_data())
         # Index pairs specify the subsections in the dictionary.
@@ -979,8 +996,7 @@ class PdfReader(PdfDocCommon):
             # W array indicates...the default value shall be used
             if i == 0:
                 return 1  # First value defaults to 1
-            else:
-                return 0
+            return 0
 
         def used_before(num: int, generation: Union[int, Tuple[int, ...]]) -> bool:
             # We move backwards through the xrefs, don't replace any.
@@ -1003,6 +1019,9 @@ class PdfReader(PdfDocCommon):
             0 means no issue, other values represent specific issues.
 
         """
+        if startxref == 0:
+            return 4
+
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
         if line == b"j":
@@ -1011,7 +1030,7 @@ class PdfReader(PdfDocCommon):
             return 1
         line = stream.read(4)
         if line != b"xref":
-            # not an xref so check if it is an XREF object
+            # not a xref so check if it is an XREF object
             line = b""
             while line in b"0123456789 \t":
                 line = stream.read(1)

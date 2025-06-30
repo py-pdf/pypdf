@@ -39,25 +39,49 @@ Source = "https://github.com/py-pdf/pypdf"
 "Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
 
 [project.optional-dependencies]
+crypto = ["cryptography"]
+cryptodome = ["PyCryptodome"]
+image = ["Pillow>=8.0.0"]
 full = [
     "cryptography",
-    "Pillow>=8.0.0",
+    "Pillow>=8.0.0"
 ]
-crypto = [
-    "cryptography",
+dev = [
+    "black",
+    "flit",
+    "pip-tools",
+    "pre-commit",
+    "pytest-cov",
+    "pytest-socket",
+    "pytest-timeout",
+    "pytest-xdist",
+    "wheel"
 ]
-cryptodome = [
-    "PyCryptodome",
+docs = [
+    "myst_parser",
+    "sphinx",
+    "sphinx_rtd_theme"
 ]
-image = ["Pillow>=8.0.0"]
-dev = ["black", "flit", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "pytest-socket", "pytest-timeout", "pytest-xdist", "wheel"]
-docs = ["myst_parser", "sphinx", "sphinx_rtd_theme"]
 
 [tool.check-wheel-contents]
 package = "./pypdf"
 
 [tool.flit.sdist]
-exclude = [".github/*", "docs/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_release.py", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile"]
+exclude = [
+    ".gitblame-ignore-revs",
+    ".github/*",
+    ".gitignore",
+    ".gitmodules",
+    ".pre-commit-config.yaml",
+    "docs/*",
+    "make_release.py",
+    "Makefile",
+    "requirements/*",
+    "sample-files/.github/*",
+    "sample-files/.gitignore",
+    "sample-files/.pre-commit-config.yaml",
+    "tests/pdf_cache/*",
+]
 include = ["resources/", "tests/"]
 
 [tool.pytest.ini_options]
@@ -103,7 +127,6 @@ exclude_lines = [
     "raise NotImplementedError",
 
     # Don't complain if non-runnable code isn't run:
-    "if 0:",
     "if __name__ == .__main__.:",
 ]
 
@@ -115,14 +138,10 @@ select = ["ALL"]
 ignore = [
     "A001",    # Variable is shadowing a Python builtin
     "A002",    # Function argument is shadowing a Python builtin
-    "A005",    # Module shadows a Python standard-library module
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
     "ARG001",  # Unused function argument
     "ARG002",  # Unused method argument
-    "ARG003",  # Unused class method argument
     "ARG004",  # Unused static method argument
-    "ARG005",  # Unused lambda argument
-    "B028",    # No explicit `stacklevel` keyword argument found
     "B904",    # Within an `except` clause, raise exceptions with
     "B905",    # `zip()` without an explicit `strict=` parameter
     "BLE001",  # Do not catch blind exception: `Exception`
@@ -134,10 +153,7 @@ ignore = [
     "D107",    # Missing docstring in `__init__`
     "D205",    # One blank line required between summary line and description
     "D212",    # I want multiline-docstrings to start at the second line
-    "D400",    # First line should end with a period
     "D401",    # First line of docstring should be in imperative mood - false positives
-    "D404",    # First word of the docstring should not be "This"
-    "D406",    # Section name should end with a newline ("Returns")
     "D415",    # First line should end with a period
     "D417",    # Missing argument descriptions in the docstring
     "DTZ001",  # The use of `datetime.datetime()` without `tzinfo` is necessary
@@ -156,9 +172,6 @@ ignore = [
     "N817",    # CamelCase `PagesAttributes` imported as acronym `PA`
     "PERF203", # `try`-`except` within a loop incurs performance overhead
     "PGH003",  # Use specific rule codes when ignoring type issues
-    "PLC0206", # Extracting value from dictionary without calling `.items()`
-    "PLW0602", # Using global for `CUSTOM_RTL_SPECIAL_CHARS` but no assignment is done
-    "PLW0603", # Using the global statement to update `CUSTOM_RTL_SPECIAL_CHARS` is discouraged
     "PLW1510", # `subprocess.run` without explicit `check` argument
     "PLW2901", # `with` statement variable `img` overwritten by assignment target
     "PT011",   # `pytest.raises(ValueError)` is too broad, set the `match`
@@ -166,22 +179,15 @@ ignore = [
     "PT014",   # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
     "PTH123",  # `open()` should be replaced by `Path.open()`
     "PYI042",  # Type alias `mode_str_type` should be CamelCase
-    "RET501",  # Do not explicitly `return None` in function if it is the only possible return value
-    "RET502",  # Do not implicitly `return None` in function able to return non-`None` value
     "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
-    "RET504",  # Unnecessary assignment to `changelog` before `return`
-    "RET505",  # Unnecessary `else` after `return` statement
-    "RET506",  # Unnecessary `else` after `raise` statement
-    "RET507",  # Unnecessary `else` after `continue` statement
-    "RET508",  # Unnecessary `else` after `break` statement
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
-    "RUF005",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",    # Use of `assert` detected
     "S110",    # `try`-`except`-`pass` detected, consider logging the exception
     "SIM105",  # contextlib.suppress
     "SIM108",  # Don't enforce ternary operators
     "SLF001",  # Private member accessed
+    "TC006",   # To discuss: Add quotes to type expression in `typing.cast()`
     "TD002",   # Authors of TODOs can be found via git
     "TD003",   # For the moment, fix it later: Missing issue link on the line following this TODO
     "TD005",   # Missing issue description after `TODO`
@@ -194,7 +200,6 @@ ignore = [
     "TRY301",  # Abstract `raise` to an inner function
     "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.11+
     "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.11+
-    "UP031",   # Use format specifiers instead of percent format
     "UP035",   # PEP 585. As long as we are not on Python 3.9+
     "UP038",   # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604. While not on Python 3.10+
 ]
@@ -206,6 +211,9 @@ max-complexity = 54  # Recommended: 10
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
 "_encryption.py" = ["S324"]
 "_writer.py" = ["S324"]
+"pypdf/_codecs/symbol.py" = ["A005"]  # Module shadows a Python standard-library module
+"types.py" = ["A005"]  # Module shadows a Python standard-library module
+"pypdf/_text_extraction/__init__.py" = ["PLW0603"]  # Using the global statement to update is discouraged
 "docs/conf.py" = ["INP001", "PTH100"]
 "json_consistency.py" = ["T201"]
 "make_release.py" = ["S603", "S607", "T201"]

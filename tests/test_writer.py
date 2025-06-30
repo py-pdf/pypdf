@@ -7,6 +7,7 @@ from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
+from unittest import mock
 
 import pytest
 
@@ -23,6 +24,7 @@ from pypdf.errors import PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
+    Destination,
     DictionaryObject,
     Fit,
     IndirectObject,
@@ -950,7 +952,7 @@ def test_write_dict_stream_object(pdf_file_path):
     objects_hash = [o.hash_value() for o in writer._objects]
     for k, v in writer._idnum_hash.items():
         assert v.pdf == writer
-        assert k in objects_hash, "Missing %s" % v
+        assert k in objects_hash, f"Missing {v}"
 
 
 def test_add_single_annotation(pdf_file_path):
@@ -998,8 +1000,8 @@ def test_colors_in_outline_item(pdf_file_path):
     reader2 = PdfReader(pdf_file_path)
     for outline_item in reader2.outline:
         # convert float to string because of mutability
-        assert ["%.5f" % c for c in outline_item.color] == [
-            "%.5f" % p for p in purple_rgb
+        assert [f"{c:.5f}" for c in outline_item.color] == [
+            f"{p:.5f}" for p in purple_rgb
         ]
 
 
@@ -1385,6 +1387,40 @@ def test_new_removes():
     assert b"/Im0" in bb
     assert b"Chap" not in bb
     assert b" TJ" not in bb
+
+    # Test removing text in a specified font
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    b = BytesIO()
+    writer.write(b)
+    temp_reader = PdfReader(b)
+    text = temp_reader.pages[0].extract_text()
+    assert "Arbeitsschritt" in text
+    assert "Modelltechnik" in text
+    writer.remove_text(font_names=["LiberationSans-Bold"])
+    b = BytesIO()
+    writer.write(b)
+    temp_reader = PdfReader(b)
+    text = temp_reader.pages[0].extract_text()
+    assert "Arbeitsschritt" not in text
+    assert "Modelltechnik" in text
+
+    # Test removing text in a specified font that doesn't exist (nothing should happen)
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    b = BytesIO()
+    writer.write(b)
+    temp_reader = PdfReader(b)
+    text = temp_reader.pages[0].extract_text()
+    assert "Arbeitsschritt" in text
+    assert "Modelltechnik" in text
+    writer.remove_text(font_names=["ComicSans-Oblique"])
+    b = BytesIO()
+    writer.write(b)
+    temp_reader = PdfReader(b)
+    text = temp_reader.pages[0].extract_text()
+    assert "Arbeitsschritt" in text
+    assert "Modelltechnik" in text
 
     url = "https://github.com/py-pdf/pypdf/files/10832029/tt2.pdf"
     name = "GeoBaseWithComments.pdf"
@@ -2108,14 +2144,14 @@ REFERENCES 76"""
 
 
 def test_merging_many_temporary_files(caplog):
-    def create_number_pdf(n) -> BytesIO:
+    def create_number_pdf(_n) -> BytesIO:
         pytest.importorskip("fpdf")
-        from fpdf import FPDF
+        from fpdf import FPDF  # noqa: PLC0415
 
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("helvetica", "B", 16)
-        pdf.cell(40, 10, str(n))
+        pdf.cell(40, 10, str(_n))
         byte_string = pdf.output()
         return BytesIO(byte_string)
 
@@ -2563,13 +2599,17 @@ def test_auto_write(tmp_path):
 def test_deprecate_with_as():
     """Yet another test for #2905"""
     with PdfWriter() as writer:
-        with pytest.warns(DeprecationWarning) as w:
+        with pytest.warns(
+                expected_warning=DeprecationWarning,
+                match="with_as_usage is deprecated and will be removed in pypdf 6.0"
+        ):
             val = writer.with_as_usage
-        assert "with_as_usage is deprecated" in w[0].message.args[0]
         assert val
-        with pytest.warns(DeprecationWarning) as w:
+        with pytest.warns(
+                expected_warning=DeprecationWarning,
+                match="with_as_usage is deprecated and will be removed in pypdf 6.0"
+        ):
             writer.with_as_usage = val  # old code allowed setting this, so...
-        assert "with_as_usage is deprecated" in w[0].message.args[0]
 
 
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
@@ -2652,3 +2692,80 @@ def test_incremental_read():
     # 2 = Pages, 5 = New Page, 6 = XRef, Size == 7
     # XRef is created on write and not counted
     assert len(writer._objects) == 5
+
+
+def test_compress_identical_objects__after_remove_images():
+    """Test for #3237"""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "AutoCad_Diagram.pdf")
+    writer.remove_images()
+    writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
+
+
+def test_merge__process_named_dests__no_dests_in_source_file():
+    """Test for #3279"""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    # Hacky solution to avoid attribute errors.
+    names = DictionaryObject()
+    names.indirect_reference = names
+    writer.root_object[NameObject("/Names")] = names
+
+    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+    destination = Destination(title="test.pdf", page=reader.pages[0], fit=Fit("/Fit"))
+    with mock.patch.object(reader, "_get_named_destinations", return_value={"test.pdf": destination}):
+        writer.append(reader)
+        # The page now points to the appended one.
+        assert writer.named_destinations == {
+            "test.pdf": Destination(title="test.pdf", page=writer.pages[1].indirect_reference, fit=Fit("/Fit"))
+        }
+
+
+def test_insert_filtered_annotations__link_without_destination():
+    """Test for #3211"""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+
+    annotations = [
+        DictionaryObject({
+            "/A": DictionaryObject({"/S": NameObject("/GoTo"), "/D": None}),
+            "/BS": {"/S": "/S", "/Type": "/Border", "/W": 0},
+            "/Border": [0, 0, 0],
+            "/H": "/I",
+            "/Rect": [68.6001, 653.405, 526.2, 671.054],
+            "/StructParent": 9,
+            "/Subtype": NameObject("/Link"),
+            "/Type": NameObject("/Annot")
+        })
+    ]
+    result = writer._insert_filtered_annotations(
+        annots=annotations, page=writer.pages[0], pages={}, reader=reader
+    )
+    assert result == []
+
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    del annotations[0]["/A"]["/D"]
+    result = writer._insert_filtered_annotations(
+        annots=annotations, page=writer.pages[0], pages={}, reader=reader
+    )
+    assert result == []
+
+
+@pytest.mark.enable_socket
+def test_insert_filtered_annotations__annotations_are_no_list(caplog):
+    """Tests for #3320"""
+    url = "https://github.com/user-attachments/files/20818089/bugpdf.pdf"
+    name = "issue3320.pdf"
+    source_data = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(source_data)
+    writer = PdfWriter()
+    writer.append(reader)
+    font_file2 = reader.get_object(36).indirect_reference
+    assert caplog.messages == [
+        (
+            f"Expected list of annotations, got {{'/FontFile2': {font_file2!r}, "
+            "'/Descent': -269, '/CapHeight': 714, '/FontWeight': 300, '/FontName': '/JQJGLF+OpenSans-Light', "
+            "'/ItalicAngle': 0, '/StemV': 48, '/Type': '/FontDescriptor', '/FontBBox': [-521, -269, 1140, 1048], "
+            "'/FontFamily': 'Open Sans Light', '/Flags': 32, '/XHeight': 531, '/Ascent': 1048, '/FontStretch': "
+            "'/Normal'} of type DictionaryObject."
+        )
+    ]

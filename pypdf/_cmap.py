@@ -6,8 +6,10 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
 from .generic import (
+    ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    NullObject,
     StreamObject,
     is_null_or_none,
 )
@@ -73,7 +75,7 @@ def build_char_map_from_dict(
 unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]] = (
     "Unknown",
     9999,
-    dict(zip(range(256), ["�"] * 256)),
+    dict.fromkeys(range(256), "�"),
     {},
 )
 
@@ -132,7 +134,7 @@ def get_encoding(
     # Apply rule from PDF ref 1.7 §5.9.1, 1st bullet:
     #   if cmap not empty encoding should be discarded
     #   (here transformed into identity for those characters)
-    # If encoding is a string it is expected to be an identity translation.
+    # If encoding is a string, it is expected to be an identity translation.
     if isinstance(encoding, dict):
         for x in int_entry:
             if x <= 255:
@@ -153,7 +155,9 @@ def _parse_encoding(
         else:
             encoding = "charmap"
         return encoding
-    enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
+    enc: Union[str, DictionaryObject, NullObject] = cast(
+        Union[str, DictionaryObject, NullObject], ft["/Encoding"].get_object()
+    )
     if isinstance(enc, str):
         try:
             # already done : enc = NameObject.unnumber(enc.encode()).decode()
@@ -177,16 +181,16 @@ def _parse_encoding(
                 f"Advanced encoding {encoding} not implemented yet",
                 __name__,
             )
-            encoding = charset_encoding["/StandardCoding"].copy()
+            encoding = charset_encoding["/StandardEncoding"].copy()
     else:
-        encoding = charset_encoding["/StandardCoding"].copy()
-    if "/Differences" in enc:
+        encoding = charset_encoding["/StandardEncoding"].copy()
+    if isinstance(enc, DictionaryObject) and "/Differences" in enc:
         x: int = 0
         o: Union[int, str]
-        for o in cast(DictionaryObject, cast(DictionaryObject, enc)["/Differences"]):
+        for o in cast(DictionaryObject, enc["/Differences"]):
             if isinstance(o, int):
                 x = o
-            else:  # isinstance(o,str):
+            else:  # isinstance(o, str):
                 try:
                     if x < len(encoding):
                         encoding[x] = adobe_glyphs[o]  # type: ignore
@@ -211,8 +215,7 @@ def _parse_to_unicode(
     if "/ToUnicode" not in ft:
         if ft.get("/Subtype", "") == "/Type1":
             return _type1_alternative(ft, map_dict, int_entry)
-        else:
-            return {}, []
+        return {}, []
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
@@ -240,8 +243,7 @@ def get_actual_str_key(
         key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char}
     else:
         key_dict = {value: key for key, value in map_dict.items() if value == value_char}
-    key_char = key_dict.get(value_char, value_char)
-    return key_char
+    return key_dict.get(value_char, value_char)
 
 
 def prepare_cm(ft: DictionaryObject) -> bytes:
@@ -326,7 +328,7 @@ def parse_bfrange(
         fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]
-        for sq in lst[0:]:
+        for sq in lst:
             if sq == b"]":
                 closure_found = True
                 break
@@ -423,6 +425,10 @@ def build_font_width_map(
                 # C_first C_last same_W
                 en = second
                 width = w[2].get_object()
+                if not isinstance(width, (int, float)):
+                    logger_warning(f"Expected numeric value for width, got {width}. Ignoring it.", __name__)
+                    w = w[3:]
+                    continue
                 for c_code in range(st, en + 1):
                     font_width_map[chr(c_code)] = width
                 w = w[3:]
@@ -441,7 +447,7 @@ def build_font_width_map(
                 )
                 break
     elif "/Widths" in ft:
-        w = ft["/Widths"].get_object()
+        w = cast(ArrayObject, ft["/Widths"].get_object())
         if "/FontDescriptor" in ft and "/MissingWidth" in cast(
             DictionaryObject, ft["/FontDescriptor"]
         ):

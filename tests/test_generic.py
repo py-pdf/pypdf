@@ -107,11 +107,14 @@ def test_boolean_eq():
     assert (boolobj == True) is True  # noqa: E712
     assert (boolobj == False) is False  # noqa: E712
     assert (boolobj == "True") is False
+    hash1 = hash(boolobj)
+    assert hash1 == hash(boolobj)
 
     boolobj = BooleanObject(False)
     assert (boolobj == True) is False  # noqa: E712
     assert (boolobj == False) is True  # noqa: E712
     assert (boolobj == "True") is False
+    assert hash1 != hash(boolobj)
 
 
 def test_boolean_object_exception():
@@ -194,16 +197,25 @@ def test_name_object(caplog):
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "Name read error"
+
+    with pytest.warns(
+        DeprecationWarning,
+        match="surfix is deprecated and will be removed in pypdf 6.0.0. Use prefix instead.",
+    ):
+        _ = NameObject.surfix
+
     assert (
         NameObject.read_from_stream(
             BytesIO(b"/A;Name_With-Various***Characters?"), None
         )
         == "/A;Name_With-Various***Characters?"
     )
+
     assert (
         NameObject.read_from_stream(BytesIO(b"/paired#28#29parentheses"), None)
         == "/paired()parentheses"
     )
+
     assert NameObject.read_from_stream(BytesIO(b"/A#42"), None) == "/AB"
 
     assert (
@@ -222,7 +234,7 @@ def test_name_object(caplog):
         )
     ) == "/你好世界"
 
-    # to test PDFDocEncoding (latin-1)
+    # test PDFDocEncoding (latin-1)
     assert (
         NameObject.read_from_stream(BytesIO(b"/DocuSign\xae"), None)
     ) == "/DocuSign®"
@@ -234,7 +246,10 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(
+            expected_warning=DeprecationWarning,
+            match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and will"
+    ):
         NameObject("hello").write_to_stream(b)
 
     caplog.clear()
@@ -243,9 +258,16 @@ def test_name_object(caplog):
     assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
     assert caplog.text == ""
 
+    caplog.clear()
     b = BytesIO()
     NameObject("/你好世界 (%)").write_to_stream(b)
     assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C#20#28#25#29"
+    assert caplog.text == ""
+
+    caplog.clear()
+    b = BytesIO()
+    NameObject("/{foo}<bar>(baz)[qux]#/%").write_to_stream(b)
+    assert bytes(b.getbuffer()) == b"/#7Bfoo#7D#3Cbar#3E#28baz#29#5Bqux#5D#23#2F#25"
     assert caplog.text == ""
 
 
@@ -1032,6 +1054,20 @@ def test_indirect_object_page_dimensions():
     assert mediabox == RectangleObject((0, 0, 792, 612))
 
 
+def test_indirect_object_contains():
+    writer = PdfWriter()
+    indirect_object = IndirectObject(1, 0, writer)
+    assert "foo" not in indirect_object
+    assert "/Producer" in indirect_object
+
+
+def test_indirect_object_iter():
+    writer = PdfWriter()
+    indirect_object = IndirectObject(1, 0, writer)
+    assert "foo" not in list(indirect_object)
+    assert "/Producer" in list(indirect_object)
+
+
 def test_array_operators():
     a = ArrayObject(
         [
@@ -1152,6 +1188,7 @@ Q\nQ\nBT 1 0 0 1 200 100 Tm (Test) Tj T* ET\n \n"""
 
 def test_missing_hashbin():
     assert NullObject().hash_bin() == hash((NullObject,))
+    assert hash(NullObject()) == NullObject().hash_bin()
     t = ByteStringObject(b"123")
     assert t.hash_bin() == hash((ByteStringObject, b"123"))
 

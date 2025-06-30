@@ -38,7 +38,7 @@ class Font:
     def __post_init__(self) -> None:
         # Type3 fonts that do not specify a "/ToUnicode" mapping cannot be
         # reliably converted into character codes unless all named chars
-        # in /CharProcs map to a standard adobe glyph. See § 9.10.2 of the
+        # in /CharProcs map to a standard adobe glyph. See §9.10.2 of the
         # PDF 1.7 standard.
         if self.subtype == "/Type3" and "/ToUnicode" not in self.font_dictionary:
             self.interpretable = all(

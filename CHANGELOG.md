@@ -1,5 +1,129 @@
 # CHANGELOG
 
+## Version 5.7.0, 2025-06-29
+
+### Performance Improvements (PI)
+- Performance optimization for LZW decoding (#3329)
+
+### Robustness (ROB)
+- Flate decoding for streams with faulty tail bytes (#3332)
+- dc_creator could be a Bag as well (#3333)
+- Handle tree being NullObject when retrieving named destinations (#3331)
+
+### Maintenance (MAINT)
+- Move inline-image mappings to constants (#3328)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.6.1...5.7.0)
+
+## Version 5.6.1, 2025-06-22
+
+### New Features (ENH)
+- Add PDF/A XMP metadata support (#3314)
+
+### Robustness (ROB)
+- Deal with annotations not being lists on merge (#3321)
+- Handle NullObject for cmap encoding Differences entry (#3317)
+
+### Developer Experience (DEV)
+- Update ruff to 0.12.0 (#3316)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.6.0...5.6.1)
+
+## Version 5.6.0, 2025-06-01
+
+### New Features (ENH)
+- Add basic support for JBIG2 by using jbig2dec (#3163)
+
+### Bug Fixes (BUG)
+- Fix crashes by removing unnecessary line (#3293)
+- Add delimiters to NameObject.renumber_table (#3286)
+
+### Robustness (ROB)
+- Handle DecodeParms being a NullObject (#3285)
+
+### Code Style (STY)
+- Update to mypy 1.16.0 (#3300)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.5.0...5.6.0)
+
+## Version 5.5.0, 2025-05-11
+
+### New Features (ENH)
+- Add support for IndirectObject.__iter__ (#3228)
+- Allow filtering by font when removing text (#3216)
+
+### Bug Fixes (BUG)
+- Add missing named destinations being ByteStringObjects (#3282)
+- Get font information more reliably when removing text (#3252)
+- T* 2D Translation consistent with PDF 1.7 Spec (#3250)
+- Add font stack to q/Q operations in layout mode (#3225)
+- Avoid completely hiding image loading issues like exceeding image size limits (#3221)
+- Using compress_identical_objects on transformed content duplicates differing content (#3197)
+- Consider BlackIs1 parameter for CCITTFaxDecode filter (#3196)
+
+### Robustness (ROB)
+- Deal with insufficient cm matrix during text extraction (#3283)
+- Allow merging when annotations miss D entry (#3281)
+- Fix merging documents if there are no Dests (#3280)
+- Fix crash on malformed action in outline (#3278)
+- Fix compression issues for removed images which might be None (#3246)
+- Attempt to deal with non-rectangular FlateDecode streams (#3245)
+- Handle some None values for broken PDF files (#3230)
+
+### Developer Experience (DEV)
+- Multiple style improvements
+- Update ruff to 0.11.0
+
+### Maintenance (MAINT)
+- Conform ASCIIHexDecode implementation to specification (#3274)
+- Modify comments of filters that do not use decode_parms (#3260)
+
+### Code Style (STY)
+- Simplify warnings & debugging in layout mode text extraction (#3271)
+- Standardize mypy assert statements (#3276)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.4.0...5.5.0)
+
+## Version 5.4.0, 2025-03-16
+
+### New Features (ENH)
+- Add support for `IndirectObject.__contains__` (#3155)
+
+### Bug Fixes (BUG)
+- Fix detection of inline images followed by names or numbers (#3173)
+
+### Robustness (ROB)
+- Consider root objects without catalog type as fallback (#3175)
+- Raise proper error on infinite loop when reading objects (#3169)
+
+### Documentation (DOC)
+- Mention memory consumption of text extraction (#3168)
+
+### Developer Experience (DEV)
+- Upgrade to ruff 0.10.0 (#3191)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.3.1...5.4.0)
+
+## Version 5.3.1, 2025-03-02
+
+### Bug Fixes (BUG)
+- Use the correct name StandardEncoding for the predefined cmap (#3156)
+- Handle inline images containing `EI ` sequences (#3152)
+- Fix check box value which should be name object (#3124)
+- Fix stream position on inline image fallback extraction (#3120)
+- Fix object count for incremental writer (#3117)
+
+### Robustness (ROB)
+- Avoid index errors on empty lines in xref table (#3162)
+- Improve handling of LZW decoder table overflow (#3159)
+- Ignore non-numbers for width when building font width map (#3158)
+- Avoid negative seek values when reading partially broken files (#3157)
+
+### Documentation (DOC)
+- Fixed PageObject.images example usage for replacing image (#3149)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.3.0...5.3.1)
+
 ## Version 5.3.0, 2025-02-09
 
 ### New Features (ENH)

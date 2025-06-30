@@ -4,13 +4,13 @@ repos:
     rev: v5.0.0
     hooks:
     -   id: check-ast
-    -   id: check-byte-order-marker
     -   id: check-case-conflict
     -   id: check-docstring-first
     -   id: check-yaml
     -   id: debug-statements
     -   id: end-of-file-fixer
         exclude: "resources/.*|docs/make.bat"
+    -   id: fix-byte-order-marker
     -   id: trailing-whitespace
     -   id: mixed-line-ending
         args: ['--fix=lf']
@@ -19,19 +19,19 @@ repos:
         args: ['--maxkb=1000']
 
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.7.0
+    rev: v0.12.0
     hooks:
     -   id: ruff
         args: ['--fix']
 
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.0
+    rev: v3.19.1
     hooks:
     -   id: pyupgrade
         args: [--py38-plus]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.13.0'
+    rev: 'v1.16.0'
     hooks:
       - id: mypy
         additional_dependencies: [types-Pillow==10.2.0.20240822]

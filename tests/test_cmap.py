@@ -5,8 +5,9 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf._cmap import build_char_map
-from pypdf.generic import ArrayObject, IndirectObject, NameObject, NullObject
+from pypdf._cmap import build_char_map, get_encoding
+from pypdf._codecs import charset_encoding
+from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject
 
 from . import get_data_from_url
 
@@ -293,3 +294,36 @@ def test_binascii_odd_length_string(caplog):
     page = reader.pages[0]
     assert "\n(Many other theorems may\n" in page.extract_text()
     assert "Skipping broken line b'143f   143f   10300': Odd-length string\n" in caplog.text
+
+
+@pytest.mark.enable_socket
+def test_standard_encoding(caplog):
+    """Tests for #3156"""
+    url = "https://github.com/user-attachments/files/18983503/standard-encoding.pdf"
+    name = "issue3156.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    page = reader.pages[0]
+    assert page.extract_text() == "Lorem ipsum"
+    assert "Advanced encoding" not in caplog.text
+
+
+@pytest.mark.enable_socket
+def test_function_in_font_widths(caplog):
+    """Tests for #3153"""
+    url = "https://github.com/user-attachments/files/18945709/Marseille_pypdf_level_0.2._compressed.pdf"
+    name = "issue3153.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    page = reader.pages[455]
+    assert "La vulnérabilité correspond aux conséquences potentielles" in page.extract_text()
+    assert "Expected numeric value for width, got {'/Bounds': [0.25, 0.25]," in caplog.text
+
+
+def test_get_encoding__encoding_value_is_none():
+    ft = DictionaryObject()
+    ft[NameObject("/Encoding")] = NullObject()
+    assert get_encoding(ft) == (
+        dict(zip(range(256), charset_encoding["/StandardEncoding"])),
+        {}
+    )

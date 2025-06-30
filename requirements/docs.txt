@@ -21,7 +21,7 @@ idna==3.10
     # via requests
 imagesize==1.4.1
     # via sphinx
-jinja2==3.1.5
+jinja2==3.1.6
     # via
     #   myst-parser
     #   sphinx
@@ -43,7 +43,7 @@ pygments==2.18.0
     # via sphinx
 pyyaml==6.0.2
     # via myst-parser
-requests==2.32.3
+requests==2.32.4
     # via sphinx
 snowballstemmer==2.2.0
     # via sphinx
@@ -71,5 +71,5 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 tomli==2.0.2
     # via sphinx
-urllib3==2.2.3
+urllib3==2.5.0
     # via requests

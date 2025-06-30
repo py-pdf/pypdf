@@ -158,12 +158,11 @@ class PdfWriter(PdfDocCommon):
 
         incremental: If true, loads the document and set the PdfWriter in incremental mode.
 
-
             When writing incrementally, the original document is written first and new/modified
             content is appended. To be used for signed document/forms to keep signature valid.
 
         full: If true, loads all the objects (always full if incremental = True).
-            This parameters may allows to load very big PDFs.
+            This parameter may allow loading large PDFs.
 
     """
 
@@ -220,7 +219,7 @@ class PdfWriter(PdfDocCommon):
                 raise PyPdfError("Invalid type for incremental mode")
             self._reader = fileobj  # prev content is in _reader.stream
             self._header = fileobj.pdf_header.encode()
-            self._readonly = True  # !!!TODO: to be analysed
+            self._readonly = True  # TODO: to be analysed
         else:
             self._header = b"%PDF-1.3"
             self._info_obj = self._add_object(
@@ -253,14 +252,13 @@ class PdfWriter(PdfDocCommon):
             return clone_from
 
         clone_from = _get_clone_from(fileobj, clone_from)
-        # to prevent overwriting
+        # To prevent overwriting
         self.temp_fileobj = fileobj
         self.fileobj = ""
         self._with_as_usage = False
         self._cloned = False
-        # The root of our page tree node.
-        pages = DictionaryObject()
-        pages.update(
+        # The root of our page tree node
+        pages = DictionaryObject(
             {
                 NameObject(PA.TYPE): NameObject("/Pages"),
                 NameObject(PA.COUNT): NumberObject(0),
@@ -278,9 +276,7 @@ class PdfWriter(PdfDocCommon):
             self._cloned = True
         else:
             self._pages = self._add_object(pages)
-            # root object
-            self._root_object = DictionaryObject()
-            self._root_object.update(
+            self._root_object = DictionaryObject(
                 {
                     NameObject(PA.TYPE): NameObject(CO.CATALOG),
                     NameObject(CO.PAGES): self._pages,
@@ -437,7 +433,7 @@ class PdfWriter(PdfDocCommon):
             raise ValueError("PDF must be self")
         else:
             obj = self._objects[indirect_reference.idnum - 1]
-        assert obj is not None  # clarification for mypy
+        assert obj is not None, "mypy"
         return obj
 
     def _replace_object(
@@ -458,7 +454,7 @@ class PdfWriter(PdfDocCommon):
         self._objects[indirect_reference - 1] = obj
         obj.indirect_reference = IndirectObject(indirect_reference, gen, self)
 
-        assert isinstance(obj, PdfObject)  # clarification for mypy
+        assert isinstance(obj, PdfObject), "mypy"
         return obj
 
     def _add_page(
@@ -502,7 +498,7 @@ class PdfWriter(PdfDocCommon):
         while not is_null_or_none(node):
             node = cast(DictionaryObject, node.get_object())
             node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
-            node = node.get(PA.PARENT, None)
+            node = node.get(PA.PARENT, None)  # type: ignore[assignment]  # TODO: Fix.
             recurse += 1
             if recurse > 1000:
                 raise PyPdfError("Too many recursive calls!")
@@ -599,8 +595,7 @@ class PdfWriter(PdfDocCommon):
             raise ValueError("Invalid index value")
         if index >= len(self.flattened_pages):
             return self.add_page(page, excluded_keys)
-        else:
-            return self._add_page(page, index, excluded_keys)
+        return self._add_page(page, index, excluded_keys)
 
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
@@ -615,7 +610,7 @@ class PdfWriter(PdfDocCommon):
             The page number or None
 
         """
-        # to provide same function as in PdfReader
+        # To provide same function as in PdfReader
         if is_null_or_none(indirect_reference):
             return None
         assert indirect_reference is not None, "mypy"
@@ -733,18 +728,17 @@ class PdfWriter(PdfDocCommon):
         js_list = cast(
             ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
         )
+        # We need a name for parameterized JavaScript in the PDF file,
+        # but it can be anything.
+        js_list.append(create_string_object(str(uuid.uuid4())))
 
-        js = DictionaryObject()
-        js.update(
+        js = DictionaryObject(
             {
                 NameObject(PA.TYPE): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
                 NameObject("/JS"): TextStringObject(f"{javascript}"),
             }
         )
-        # We need a name for parameterized JavaScript in the PDF file,
-        # but it can be anything.
-        js_list.append(create_string_object(str(uuid.uuid4())))
         js_list.append(self._add_object(js))
 
     def add_attachment(self, filename: str, data: Union[str, bytes]) -> None:
@@ -1068,7 +1062,7 @@ class PdfWriter(PdfDocCommon):
             for p in page:
                 if PG.ANNOTS in p:  # just to prevent warnings
                     self.update_page_form_field_values(p, fields, flags, None)
-            return None
+            return
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
@@ -1105,13 +1099,15 @@ class PdfWriter(PdfDocCommon):
                     )
                 else:
                     parent_annotation[NameObject(FA.V)] = TextStringObject(value)
-                if parent_annotation.get(FA.FT) in ("/Btn"):
+                if parent_annotation.get(FA.FT) == "/Btn":
                     # Checkbox button (no /FT found in Radio widgets)
                     v = NameObject(value)
-                    if v not in annotation[NameObject(AA.AP)][NameObject("/N")]:
+                    ap = cast(DictionaryObject, annotation[NameObject(AA.AP)])
+                    if v not in cast(ArrayObject, ap[NameObject("/N")]):
                         v = NameObject("/Off")
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
+                    annotation[NameObject(FA.V)] = v
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
@@ -1442,7 +1438,7 @@ class PdfWriter(PdfDocCommon):
                 or obj.hash_bin() != self._original_hash[i]
             ):
                 idnum = i + 1
-                assert isinstance(obj, PdfObject)  # mypy
+                assert isinstance(obj, PdfObject), "mypy"
                 # first write new/modified object
                 object_positions[idnum] = stream.tell()
                 stream.write(f"{idnum} 0 obj\n".encode())
@@ -1503,13 +1499,12 @@ class PdfWriter(PdfDocCommon):
 
     def _write_pdf_structure(self, stream: StreamType) -> Tuple[List[int], List[int]]:
         object_positions = []
-        free_objects = []  # will contain list of all free entries
+        free_objects = []
         stream.write(self.pdf_header.encode() + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
 
-        for i, obj in enumerate(self._objects):
+        for idnum, obj in enumerate(self._objects, start=1):
             if obj is not None:
-                idnum = i + 1
                 object_positions.append(stream.tell())
                 stream.write(f"{idnum} 0 obj\n".encode())
                 if self._encryption and obj != self._encrypt_entry:
@@ -1518,8 +1513,8 @@ class PdfWriter(PdfDocCommon):
                 stream.write(b"\nendobj\n")
             else:
                 object_positions.append(-1)
-                free_objects.append(i + 1)
-        free_objects.append(0)  # add 0 to loop in accordance with PDF spec
+                free_objects.append(idnum)
+        free_objects.append(0)  # add 0 to loop in accordance with specification
         return object_positions, free_objects
 
     def _write_xref_table(
@@ -1572,7 +1567,7 @@ class PdfWriter(PdfDocCommon):
 
         Note that some PDF files use (XMP) metadata streams instead of document
         information dictionaries, and these metadata streams will not be
-        accessed by this function.
+        accessed by this function, but by :meth:`~xmp_metadata`.
 
         """
         return super().metadata
@@ -1651,8 +1646,9 @@ class PdfWriter(PdfDocCommon):
         orphans = [True] * len(self._objects)
         # look for similar objects
         for idx, obj in enumerate(self._objects):
-            if obj is None:
+            if is_null_or_none(obj):
                 continue
+            assert obj is not None, "mypy"  # mypy: TypeGuard of `is_null_or_none` does not help here.
             assert isinstance(obj.indirect_reference, IndirectObject)
             h = obj.hash_value()
             if remove_identicals and h in self._idnum_hash:
@@ -1760,7 +1756,7 @@ class PdfWriter(PdfDocCommon):
 
     def get_outline_root(self) -> TreeObject:
         if CO.OUTLINES in self._root_object:
-            # Table 3.25 Entries in the catalog dictionary
+            # Entries in the catalog dictionary
             outline = cast(TreeObject, self._root_object[CO.OUTLINES])
             if not isinstance(outline, TreeObject):
                 t = TreeObject(outline)
@@ -1784,12 +1780,12 @@ class PdfWriter(PdfDocCommon):
         See §12.4.3 of the PDF 1.7 or PDF 2.0 specification.
 
         Returns:
-            An array (possibly empty) of Dictionaries with ``/F`` and
-            ``/I`` properties.
+            An array (possibly empty) of Dictionaries with an ``/F`` key,
+            and optionally information about the thread in ``/I`` or ``/Metadata`` keys.
 
         """
         if CO.THREADS in self._root_object:
-            # Table 3.25 Entries in the catalog dictionary
+            # Entries in the catalog dictionary
             threads = cast(ArrayObject, self._root_object[CO.THREADS])
         else:
             threads = ArrayObject()
@@ -1801,9 +1797,10 @@ class PdfWriter(PdfDocCommon):
         """
         Read-only property for the list of threads.
 
-        See §8.3.2 from PDF 1.7 spec.
+        See §12.4.3 of the PDF 1.7 or PDF 2.0 specification.
 
-        Each element is a dictionary with ``/F`` and ``/I`` keys.
+        Each element is a dictionary with an ``/F`` key, and optionally
+        information about the thread in ``/I`` or ``/Metadata`` keys.
         """
         return self.get_threads_root()
 
@@ -1838,7 +1835,7 @@ class PdfWriter(PdfDocCommon):
             self,
             page_destination.inc_parent_counter_outline
             if is_open
-            else (lambda x, y: 0),
+            else (lambda x, y: 0),  # noqa: ARG005
         )
         if "/Count" not in page_destination:
             page_destination[NameObject("/Count")] = NumberObject(0)
@@ -1961,8 +1958,7 @@ class PdfWriter(PdfDocCommon):
                 named_dest.insert(i, destination)
                 named_dest.insert(i, TextStringObject(title))
                 return
-            else:
-                i += 2
+            i += 2
         named_dest.extend([TextStringObject(title), destination])
         return
 
@@ -2043,6 +2039,7 @@ class PdfWriter(PdfDocCommon):
         self,
         page: Union[PageObject, DictionaryObject],
         to_delete: Union[ObjectDeletionFlag, Iterable[ObjectDeletionFlag]],
+        text_filters: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Remove objects specified by ``to_delete`` from the given page.
@@ -2051,12 +2048,16 @@ class PdfWriter(PdfDocCommon):
             page: Page object to clean up.
             to_delete: Objects to be deleted; can be a ``ObjectDeletionFlag``
                 or a list of ObjectDeletionFlag
+            text_filters: Properties of text to be deleted, if applicable. Optional.
+                This is a Python dictionary with the following properties:
+
+                * font_ids: List of font resource IDs (such as /F1 or /T1_0) to be deleted.
 
         """
         if isinstance(to_delete, (list, tuple)):
             for to_d in to_delete:
                 self.remove_objects_from_page(page, to_d)
-            return
+            return None
         assert isinstance(to_delete, ObjectDeletionFlag)
 
         if to_delete & ObjectDeletionFlag.LINKS:
@@ -2073,20 +2074,35 @@ class PdfWriter(PdfDocCommon):
         jump_operators = []
         if to_delete & ObjectDeletionFlag.DRAWING_IMAGES:
             jump_operators = (
-                [b"w", b"J", b"j", b"M", b"d", b"i"]
-                + [b"W", b"W*"]
-                + [b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n"]
-                + [b"m", b"l", b"c", b"v", b"y", b"h", b"re"]
-                + [b"sh"]
+                [
+                    b"w", b"J", b"j", b"M", b"d", b"i",
+                    b"W", b"W*",
+                    b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n",
+                    b"m", b"l", b"c", b"v", b"y", b"h", b"re",
+                    b"sh"
+                ]
             )
         if to_delete & ObjectDeletionFlag.TEXT:
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
 
-        def clean(content: ContentStream, images: List[str], forms: List[str]) -> None:
+        def clean(
+            content: ContentStream,
+            images: List[str],
+            forms: List[str],
+            text_filters: Optional[Dict[str, Any]] = None
+        ) -> None:
             nonlocal jump_operators, to_delete
+
+            font_id = None
+            font_ids_to_delete = []
+            if text_filters and to_delete & ObjectDeletionFlag.TEXT:
+                font_ids_to_delete = text_filters.get("font_ids", [])
+
             i = 0
             while i < len(content.operations):
                 operands, operator = content.operations[i]
+                if operator == b"Tf":
+                    font_id = operands[0]
                 if (
                     (
                         operator == b"INLINE IMAGE"
@@ -2099,7 +2115,14 @@ class PdfWriter(PdfDocCommon):
                         and (operands[0] in images)
                     )
                 ):
-                    del content.operations[i]
+                    if (
+                        not to_delete & ObjectDeletionFlag.TEXT
+                        or (to_delete & ObjectDeletionFlag.TEXT and not text_filters)
+                        or (to_delete & ObjectDeletionFlag.TEXT and font_id in font_ids_to_delete)
+                    ):
+                        del content.operations[i]
+                    else:
+                        i += 1
                 else:
                     i += 1
             content.get_data()  # this ensures ._data is rebuilt from the .operations
@@ -2172,7 +2195,7 @@ class PdfWriter(PdfDocCommon):
                     e = ContentStream(elt, self)
                     e.update(elt.items())
                     elt = e
-                clean(elt, images, forms)  # clean the content
+                clean(elt, images, forms, text_filters)  # clean the content
             return images, forms
 
         if not isinstance(page, PageObject):
@@ -2182,7 +2205,7 @@ class PdfWriter(PdfDocCommon):
 
             images, forms = clean_forms(page, [])
 
-            clean(content, images, forms)
+            clean(content, images, forms, text_filters)
             page.replace_contents(content)
 
     def remove_images(
@@ -2209,10 +2232,62 @@ class PdfWriter(PdfDocCommon):
         for page in self.pages:
             self.remove_objects_from_page(page, i)
 
-    def remove_text(self) -> None:
-        """Remove text from this output."""
+    def remove_text(self, font_names: Optional[List[str]] = None) -> None:
+        """
+        Remove text from the PDF.
+
+        Args:
+            font_names: List of font names to remove, such as "Helvetica-Bold".
+                Optional. If not specified, all text will be removed.
+        """
+        if not font_names:
+            font_names = []
+
         for page in self.pages:
-            self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT)
+            resource_ids_to_remove = []
+
+            # Content streams reference fonts and other resources with names like "/F1" or "/T1_0"
+            # Font names need to be converted to resource names/IDs for easier removal
+            if font_names:
+                # Recursively loop through page objects to gather font info
+                def get_font_info(
+                    obj: Any,
+                    font_info: Optional[Dict[str, Any]] = None,
+                    key: Optional[str] = None
+                ) -> Dict[str, Any]:
+                    if font_info is None:
+                        font_info = {}
+                    if isinstance(obj, IndirectObject):
+                        obj = obj.get_object()
+                    if isinstance(obj, dict):
+                        if obj.get("/Type") == "/Font":
+                            font_name = obj.get("/BaseFont", "")
+                            # Normalize font names like "/RRXFFV+Palatino-Bold" to "Palatino-Bold"
+                            normalized_font_name = font_name.lstrip("/").split("+")[-1]
+                            if normalized_font_name not in font_info:
+                                font_info[normalized_font_name] = {
+                                    "normalized_font_name": normalized_font_name,
+                                    "resource_ids": [],
+                                }
+                            if key not in font_info[normalized_font_name]["resource_ids"]:
+                                font_info[normalized_font_name]["resource_ids"].append(key)
+                        for k in obj:
+                            font_info = get_font_info(obj[k], font_info, k)
+                    elif isinstance(obj, (list, ArrayObject)):
+                        for child_obj in obj:
+                            font_info = get_font_info(child_obj, font_info)
+                    return font_info
+
+                # Add relevant resource names for removal
+                font_info = get_font_info(page.get("/Resources"))
+                for font_name in font_names:
+                    if font_name in font_info:
+                        resource_ids_to_remove.extend(font_info[font_name]["resource_ids"])
+
+            text_filters = {}
+            if font_names:
+                text_filters["font_ids"] = resource_ids_to_remove
+            self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT, text_filters=text_filters)
 
     def add_uri(
         self,
@@ -2614,7 +2689,7 @@ class PdfWriter(PdfDocCommon):
                 import_outline,
                 excluded_fields,
             )
-        else:  # if isinstance(outline_item,str):
+        else:  # if isinstance(outline_item, str):
             self.merge(
                 None,
                 fileobj,
@@ -2697,11 +2772,11 @@ class PdfWriter(PdfDocCommon):
                 # numbers in the exclude list identifies that the exclusion is
                 # only applicable to 1st level of cloning
                 srcpages[pg.indirect_reference.idnum] = self.add_page(
-                    pg, list(excluded_fields) + [1, "/B", 1, "/Annots"]  # type: ignore
+                    pg, [*list(excluded_fields), 1, "/B", 1, "/Annots"]  # type: ignore
                 )
             else:
                 srcpages[pg.indirect_reference.idnum] = self.insert_page(
-                    pg, position, list(excluded_fields) + [1, "/B", 1, "/Annots"]  # type: ignore
+                    pg, position, [*list(excluded_fields), 1, "/B", 1, "/Annots"]  # type: ignore
                 )
                 position += 1
             srcpages[pg.indirect_reference.idnum].original_page = pg
@@ -2718,8 +2793,8 @@ class PdfWriter(PdfDocCommon):
                 List[Any],
                 cast(
                     DictionaryObject,
-                    cast(DictionaryObject, self._root_object["/Names"])["/Dests"],
-                )["/Names"],
+                    cast(DictionaryObject, self._root_object["/Names"]).get("/Dests", DictionaryObject()),
+                ).get("/Names", DictionaryObject()),
             ):
                 # already exists: should not duplicate it
                 pass
@@ -2774,7 +2849,7 @@ class PdfWriter(PdfDocCommon):
         if "/Annots" not in excluded_fields:
             for pag in srcpages.values():
                 lst = self._insert_filtered_annotations(
-                    pag.original_page.get("/Annots", ()), pag, srcpages, reader
+                    pag.original_page.get("/Annots", []), pag, srcpages, reader
                 )
                 if len(lst) > 0:
                     pag[NameObject("/Annots")] = lst
@@ -2906,8 +2981,7 @@ class PdfWriter(PdfDocCommon):
                 thr = a.get_object().get("/T")
                 if thr is None:
                     continue
-                else:
-                    thr = thr.get_object()
+                thr = thr.get_object()
                 if thr.indirect_reference.idnum not in self._id_translated[
                     id(reader)
                 ] and fltr.search((thr.get("/I", {})).get("/Title", "")):
@@ -2921,7 +2995,7 @@ class PdfWriter(PdfDocCommon):
     ) -> Optional[IndirectObject]:
         if isinstance(page, NullObject):
             return None
-        elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
+        if isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference
         elif isinstance(page, IndirectObject):
             _i = page
@@ -2941,6 +3015,9 @@ class PdfWriter(PdfDocCommon):
         if isinstance(annots, IndirectObject):
             annots = cast("List[Any]", annots.get_object())
         if annots is None:
+            return outlist
+        if not isinstance(annots, list):
+            logger_warning(f"Expected list of annotations, got {annots} of type {annots.__class__.__name__}.", __name__)
             return outlist
         for an in annots:
             ano = cast("DictionaryObject", an.get_object())
@@ -2963,11 +3040,11 @@ class PdfWriter(PdfDocCommon):
                         p = self._get_cloned_page(d[0], pages, reader)
                         if p is not None:
                             anc = ano.clone(self, ignore_fields=("/Dest",))
-                            anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
+                            anc[NameObject("/Dest")] = ArrayObject([p, *d[1:]])
                             outlist.append(self._add_object(anc))
             else:
-                d = cast("DictionaryObject", ano["/A"])["/D"]
-                if isinstance(d, NullObject):
+                d = cast("DictionaryObject", ano["/A"]).get("/D", NullObject())
+                if d is None or isinstance(d, NullObject):
                     continue
                 if isinstance(d, str):
                     # it is a named dest
@@ -2980,7 +3057,7 @@ class PdfWriter(PdfDocCommon):
                         anc = ano.clone(self, ignore_fields=("/D",))
                         cast("DictionaryObject", anc["/A"])[
                             NameObject("/D")
-                        ] = ArrayObject([p] + d[1:])
+                        ] = ArrayObject([p, *d[1:]])
                         outlist.append(self._add_object(anc))
         return outlist
 
@@ -3092,7 +3169,7 @@ class PdfWriter(PdfDocCommon):
                 or o.get("/Title", None) == outline_item
             ):
                 return [i]
-            elif "/First" in o:
+            if "/First" in o:
                 res = self.find_outline_item(
                     outline_item, cast(OutlineType, o["/First"])
                 )
@@ -3299,19 +3376,17 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, float, List[Any]]) -> PdfObje
         for key, value in obj.items():
             to_add[NameObject(key)] = _pdf_objectify(value)
         return to_add
-    elif isinstance(obj, str):
+    if isinstance(obj, str):
         if obj.startswith("/"):
             return NameObject(obj)
-        else:
-            return TextStringObject(obj)
-    elif isinstance(obj, (float, int)):
+        return TextStringObject(obj)
+    if isinstance(obj, (float, int)):
         return FloatObject(obj)
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         return ArrayObject(_pdf_objectify(i) for i in obj)
-    else:
-        raise NotImplementedError(
-            f"{type(obj)=} could not be cast to a PdfObject"
-        )
+    raise NotImplementedError(
+        f"{type(obj)=} could not be cast to a PdfObject"
+    )
 
 
 def _create_outline_item(

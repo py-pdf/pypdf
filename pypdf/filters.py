@@ -35,11 +35,16 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
+import os
+import shutil
 import struct
+import subprocess
 import zlib
 from base64 import a85decode
 from dataclasses import dataclass
 from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
@@ -56,12 +61,15 @@ from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
-from .errors import DeprecationError, PdfReadError, PdfStreamError
+from .errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
+    BooleanObject,
     DictionaryObject,
     IndirectObject,
     NullObject,
+    StreamObject,
+    is_null_or_none,
 )
 
 
@@ -87,6 +95,23 @@ def decompress(data: bytes) -> bytes:
             # For larger files, use decompression object to enable buffered reading
             return zlib.decompressobj().decompress(data)
         except zlib.error:
+            # First quick approach for known issue with faulty added bytes to the
+            # tail of the encoded stream from early Adobe Distiller or Pitstop versions
+            # with CR char as the default line separator (assumed by reverse engeneering)
+            # that breaks the decoding process in the end.
+            #
+            # Try first to cut off some of the tail byte by byte, however limited to not
+            # iterate through too many loops and kill the performance for large streams,
+            # to then allow the final fallback to run. Added this intermediate attempt,
+            # because starting from the head of the stream byte by byte kills completely
+            # the performace for large streams (e.g. 6 MB) with the tail-byte-issue
+            # and takes ages. This solution is really fast:
+            max_tail_cut_off_bytes: int = 8
+            for i in range(1, min(max_tail_cut_off_bytes + 1, len(data))):
+                try:
+                    return zlib.decompressobj().decompress(data[:-i])
+                except zlib.error:
+                    pass
             # If still failing, then try with increased window size
             d = zlib.decompressobj(zlib.MAX_WBITS | 32)
             result_str = b""
@@ -178,8 +203,10 @@ class FlateDecode:
     @staticmethod
     def _decode_png_prediction(data: bytes, columns: int, rowlength: int) -> bytes:
         # PNG prediction can vary from row to row
-        if len(data) % rowlength != 0:
-            raise PdfReadError("Image data is not rectangular")
+        if (remainder := len(data) % rowlength) != 0:
+            logger_warning("Image data is not rectangular. Adding padding.", __name__)
+            data += b"\x00" * (rowlength - remainder)
+            assert len(data) % rowlength == 0
         output = []
         prev_rowdata = (0,) * rowlength
         bpp = (rowlength - 1) // columns  # recomputed locally to not change params
@@ -271,8 +298,7 @@ class ASCIIHexDecode:
         Args:
           data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
-          decode_parms: a string conversion in base-7 ASCII, where each of its values
-            v is such that 0 <= ord(v) <= 127.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           A string conversion in base-7 ASCII, where each of its values
@@ -282,8 +308,6 @@ class ASCIIHexDecode:
           PdfStreamError:
 
         """
-        # decode_parms is unused here
-
         if isinstance(data, str):
             data = data.encode()
         retval = b""
@@ -294,11 +318,11 @@ class ASCIIHexDecode:
                 logger_warning(
                     "missing EOD in ASCIIHexDecode, check if output is OK", __name__
                 )
-                break  # Reached end of string even if no EOD
+                break  # Reached end of string without an EOD
             char = data[index : index + 1]
             if char == b">":
                 break
-            elif char.isspace():
+            if char.isspace():
                 index += 1
                 continue
             hex_pair += char
@@ -306,7 +330,13 @@ class ASCIIHexDecode:
                 retval += bytes((int(hex_pair, base=16),))
                 hex_pair = b""
             index += 1
-        assert hex_pair == b""
+        # If the filter encounters the EOD marker after reading
+        # an odd number of hexadecimal digits,
+        # it shall behave as if a 0 (zero) followed the last digit.
+        # For every even number of hexadecimal digits, hex_pair is reset to b"".
+        if hex_pair != b"":
+            hex_pair += b"0"
+            retval += bytes((int(hex_pair, base=16),))
         return retval
 
 
@@ -335,7 +365,7 @@ class RunLengthDecode:
 
         Args:
           data: a bytes sequence of length/data
-          decode_parms: ignored.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           A bytes decompressed sequence.
@@ -344,8 +374,6 @@ class RunLengthDecode:
           PdfStreamError:
 
         """
-        # decode_parms is unused here
-
         lst = []
         index = 0
         while True:
@@ -353,15 +381,14 @@ class RunLengthDecode:
                 logger_warning(
                     "missing EOD in RunLengthDecode, check if output is OK", __name__
                 )
-                break  # reach End Of String even if no EOD
+                break  # Reached end of string without an EOD
             length = data[index]
             index += 1
             if length == 128:
                 if index < len(data):
                     raise PdfStreamError("Early EOD in RunLengthDecode")
-                else:
-                    break
-            elif length < 128:
+                break
+            if length < 128:
                 length += 1
                 lst.append(data[index : (index + length)])
                 index += length
@@ -439,7 +466,7 @@ class ASCII85Decode:
 
         Args:
           data: ``bytes`` or ``str`` text to decode.
-          decode_parms: a dictionary of parameter values.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           decoded data.
@@ -464,7 +491,19 @@ class DCTDecode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        """
+        Decompresses data encoded using a DCT (discrete cosine transform)
+        technique based on the JPEG standard (IS0/IEC 10918),
+        reproducing image sample data that approximates the original data.
+
+        Args:
+          data: text to decode.
+          decode_parms: this filter does not use parameters.
+
+        Returns:
+          decoded data.
+
+        """
         return data
 
 
@@ -475,7 +514,19 @@ class JPXDecode:
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
+        """
+        Decompresses data encoded using the wavelet-based JPEG 2000 standard,
+        reproducing the original image data.
+
+        Args:
+          data: text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
+
+        """
+        # decode_parms: this filter does not use parameters
         return data
 
 
@@ -614,6 +665,67 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
+JBIG2DEC_BINARY = shutil.which("jbig2dec")
+
+
+class JBIG2Decode:
+    @staticmethod
+    def decode(
+        data: bytes,
+        decode_parms: Optional[DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> bytes:
+        if JBIG2DEC_BINARY is None:
+            raise DependencyError("jbig2dec binary is not available.")
+
+        with TemporaryDirectory() as tempdir:
+            directory = Path(tempdir)
+            paths: List[Path] = []
+
+            if decode_parms and "/JBIG2Globals" in decode_parms:
+                jbig2_globals = decode_parms["/JBIG2Globals"]
+                if not is_null_or_none(jbig2_globals) and not is_null_or_none(pointer := jbig2_globals.get_object()):
+                    assert pointer is not None, "mypy"
+                    if isinstance(pointer, StreamObject):
+                        path = directory.joinpath("globals.jbig2")
+                        path.write_bytes(pointer.get_data())
+                        paths.append(path)
+
+            path = directory.joinpath("image.jbig2")
+            path.write_bytes(data)
+            paths.append(path)
+
+            environment = os.environ.copy()
+            environment["LC_ALL"] = "C"
+            result = subprocess.run(  # noqa: S603
+                [JBIG2DEC_BINARY, "--embedded", "--format", "png", "--output", "-", *paths],
+                capture_output=True,
+                env=environment,
+            )
+            if b"unrecognized option '--embedded'" in result.stderr:
+                raise DependencyError("jbig2dec>=0.15 is required.")
+            if result.stderr:
+                for line in result.stderr.decode("utf-8").splitlines():
+                    logger_warning(line, __name__)
+            if result.returncode != 0:
+                raise PdfStreamError(f"Unable to decode JBIG2 data. Exit code: {result.returncode}")
+        return result.stdout
+
+    @staticmethod
+    def _is_binary_compatible() -> bool:
+        if not JBIG2DEC_BINARY:  # pragma: no cover
+            return False
+        result = subprocess.run(  # noqa: S603
+            [JBIG2DEC_BINARY, "--version"],
+            capture_output=True,
+            text=True,
+        )
+        version = result.stdout.split(" ", maxsplit=1)[1]
+
+        from ._utils import Version  # noqa: PLC0415
+        return Version(version) >= Version("0.15")
+
+
 def decode_stream_data(stream: Any) -> bytes:
     """
     Decode the stream data based on the specified filters.
@@ -664,6 +776,8 @@ def decode_stream_data(stream: Any) -> bytes:
             data = DCTDecode.decode(data)
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
+        elif filter_name == FT.JBIG2_DECODE:
+            data = JBIG2Decode.decode(data, params)
         elif filter_name == "/Crypt":
             if "/Name" in params or "/Type" in params:
                 raise NotImplementedError(
@@ -688,7 +802,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
-    from ._xobj_image_helpers import (
+    from ._xobj_image_helpers import (  # noqa: PLC0415
         Image,
         UnidentifiedImageError,
         _apply_decode,
@@ -755,6 +869,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     # Get filters
     filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
+    decode_parms = x_object_obj.get(SA.DECODE_PARMS, None)
+    if isinstance(decode_parms, (tuple, list)):
+        decode_parms = decode_parms[0]
+    else:
+        decode_parms = {}
+    if not isinstance(decode_parms, dict):
+        decode_parms = {}
 
     extension = None
     if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
@@ -794,6 +915,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             ".tiff",
             False,
         )
+    elif lfilters == FT.JBIG2_DECODE:
+        img, image_format, extension, invert_color = (
+            Image.open(BytesIO(data), formats=("PNG",)),
+            "PNG",
+            ".png",
+            False,
+        )
     elif mode == "CMYK":
         img, image_format, extension, invert_color = (
             _extended_image_frombytes(mode, size, data),
@@ -816,6 +944,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         img, x_object_obj, obj_as_text, image_format, extension
     )
 
+    if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
+        from PIL import ImageOps  # noqa: PLC0415
+        img = ImageOps.invert(img)
+
     # Save image to bytes
     img_byte_arr = BytesIO()
     try:
@@ -831,6 +963,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     try:  # temporary try/except until other fixes of images
         img = Image.open(BytesIO(data))
-    except Exception:
+    except Exception as exception:
+        logger_warning(f"Failed loading image: {exception}", __name__)
         img = None  # type: ignore
     return extension, data, img

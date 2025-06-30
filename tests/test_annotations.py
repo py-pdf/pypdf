@@ -1,5 +1,6 @@
 """Test the pypdf.annotations submodule."""
 
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -18,15 +19,17 @@ from pypdf.annotations import (
     Rectangle,
     Text,
 )
-from pypdf.errors import DeprecationError
+from pypdf.errors import DeprecationError, PdfReadError
 from pypdf.generic import ArrayObject, FloatObject, NumberObject
+
+from . import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
-def test_ellipse_annotation(pdf_file_path):
+def test_ellipse(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -52,27 +55,7 @@ def test_ellipse_annotation(pdf_file_path):
         writer.write(fp)
 
 
-def test_rectangle_annotation(pdf_file_path):
-    # Arrange
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
-    writer = PdfWriter()
-    writer.add_page(page)
-
-    # Act
-    rectangle_annotation = Rectangle(
-        rect=(50, 550, 500, 650),
-        interior_color="ff0000",
-    )
-    writer.add_annotation(0, rectangle_annotation)
-
-    # Assert: You need to inspect the file manually
-    with open(pdf_file_path, "wb") as fp:
-        writer.write(fp)
-
-
-def test_text_annotation(pdf_file_path):
+def test_text(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
@@ -93,7 +76,7 @@ def test_text_annotation(pdf_file_path):
         writer.write(fp)
 
 
-def test_free_text_annotation(pdf_file_path):
+def test_free_text(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -133,7 +116,7 @@ def test_free_text_annotation(pdf_file_path):
         writer.write(fp)
 
 
-def test_free_text_annotation__font_specifier():
+def test_free_text__font_specifier():
     free_text_annotation = FreeText(
         text="Hello World",
         rect=(0, 0, 0, 0),
@@ -153,7 +136,7 @@ def test_free_text_annotation__font_specifier():
     assert free_text_annotation["/DS"] == "font: italic bold 20pt Arial;text-align:left;color:#00ff00"
 
 
-def test_annotationdictionary():
+def test_annotation_dictionary():
     a = AnnotationDictionary()
     a.flags = 123
     assert a.flags == 123
@@ -227,7 +210,7 @@ def test_line(pdf_file_path):
         writer.write(fp)
 
 
-def test_square(pdf_file_path):
+def test_rectangle(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -241,12 +224,12 @@ def test_square(pdf_file_path):
             rect=(50, 550, 200, 650), interiour_color="ff0000"
         )
 
-    square_annotation = Rectangle(rect=(50, 550, 200, 650), interior_color="ff0000")
+    square_annotation = Rectangle(
+        rect=(50, 550, 200, 650), interior_color="ff0000"
+    )
     writer.add_annotation(0, square_annotation)
 
-    square_annotation = Rectangle(
-        rect=(40, 400, 150, 450),
-    )
+    square_annotation = Rectangle(rect=(40, 400, 150, 450))
     writer.add_annotation(0, square_annotation)
 
     # Assert: You need to inspect the file manually
@@ -398,3 +381,18 @@ def test_popup(caplog):
     target = "annotated-pdf-popup.pdf"
     writer.write(target)
     Path(target).unlink()  # comment this out for manual inspection
+
+
+@pytest.mark.enable_socket
+def test_outline_action_without_d_lenient():
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    assert len(reader.outline) == 2
+
+
+@pytest.mark.enable_socket
+def test_outline_action_without_d_strict(pdf_file_path):
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    reader.strict = True
+    with pytest.raises(PdfReadError) as e:
+        assert len(reader.outline) == 2
+    assert "Outline Action Missing /D" in str(e)
