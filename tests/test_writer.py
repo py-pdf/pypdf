@@ -1580,6 +1580,37 @@ def test_update_form_fields(tmp_path):
     Path(write_data_here).unlink()
 
 
+def test_merge_content_stream_to_page():
+    """Test that new content data is correctly added to page contents
+    in the form of an ArrayObject or StreamObject. The
+    test_add_apstream_object code already correctly checks that
+    _merge_content_stream_to_page works for an emtpy page.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    new_content = b"BT /F1 12 Tf (Hello World) Tj ET"
+    # Call the method under test
+    writer._merge_content_stream_to_page(page, new_content)
+    more_content = b"BT /F1 12 Tf (Hello Again, World) Tj ET"
+    writer._merge_content_stream_to_page(page, more_content)
+    contents_obj = page[NameObject("/Contents")]
+    stream = contents_obj.get_object()
+    assert isinstance(stream, StreamObject)
+    assert stream.get_data() == b"BT /F1 12 Tf (Hello World) Tj ET\nBT /F1 12 Tf (Hello Again, World) Tj ET"
+    new_stream_obj = StreamObject()
+    new_stream_obj.set_data(new_content)
+    content = ArrayObject()
+    content.append(new_stream_obj)
+    page[NameObject("/Contents")] = writer._add_object(content)
+    writer._merge_content_stream_to_page(page, more_content)
+    contents_obj = page[NameObject("/Contents")]
+    array = contents_obj.get_object()
+    assert isinstance(array, ArrayObject)
+    contents = page[NameObject("/Contents")].get_object()
+    assert contents[0].get_object().get_data() == new_content
+    assert contents[1].get_object().get_data() == more_content
+
+
 @pytest.mark.enable_socket
 def test_update_form_fields2():
     my_files = {

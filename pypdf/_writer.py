@@ -865,6 +865,46 @@ class PdfWriter(PdfDocCommon):
             if callable(after_page_append):
                 after_page_append(writer_page)
 
+    def _merge_content_stream_to_page(
+        self,
+        page: PageObject,
+        new_content_data: bytes,
+    ) -> None:
+        """
+        Combines existing content stream(s) with new content (as bytes),
+        and returns a new single StreamObject.
+
+        Args:
+            page: The page to which the new content data will be added.
+            new_content_data: A binary-encoded new content stream, for
+                instance the commands to draw an XObject.
+        """
+        # First resolve the existing page content. This always is an IndirectObject:
+        # PDF Explained by John Whitington
+        # https://www.oreilly.com/library/view/pdf-explained/9781449321581/ch04.html
+        if NameObject("/Contents") in page:
+            existing_content_ref = page[NameObject("/Contents")]
+            existing_content = existing_content_ref.get_object()
+
+            if isinstance(existing_content, ArrayObject):
+                # Create a new StreamObject for the new_content_data
+                new_stream_obj = StreamObject()
+                new_stream_obj.set_data(new_content_data)
+                existing_content.append(self._add_object(new_stream_obj))
+                page[NameObject("/Contents")] = self._add_object(existing_content)
+            if isinstance(existing_content, StreamObject):
+                # Merge new content to existing StreamObject
+                merged_data = existing_content.get_data() + b"\n" + new_content_data
+                new_stream = StreamObject()
+                new_stream.set_data(merged_data)
+                page[NameObject("/Contents")] = self._add_object(new_stream)
+        else:
+            # If no existing content, then we have an empty page.
+            # Create a new StreamObject in a new /Contents entry.
+            new_stream = StreamObject()
+            new_stream.set_data(new_content_data)
+            page[NameObject("/Contents")] = self._add_object(new_stream)
+
     def _update_field_annotation(
         self,
         field: DictionaryObject,
