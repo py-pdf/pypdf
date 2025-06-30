@@ -2781,4 +2781,4 @@ def test_unterminated_object__with_incremental_writer():
     fi = BytesIO()
     writer.write(fi)
     b = fi.getvalue()
-    assert b[-39:] == b'\nendstream\nendobj\nstartxref\n1270\n%%EOF\n'
+    assert b[-39:] == b"\nendstream\nendobj\nstartxref\n1270\n%%EOF\n"
