@@ -55,7 +55,7 @@ from typing import (
 from ._cmap import _default_fonts_space_width, build_char_map_from_dict
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
-from ._page import PageObject
+from ._page import PageObject, Transformation
 from ._page_labels import nums_clear_range, nums_insert, nums_next
 from ._reader import PdfReader
 from ._utils import (
@@ -905,6 +905,65 @@ class PdfWriter(PdfDocCommon):
             new_stream = StreamObject()
             new_stream.set_data(new_content_data)
             page[NameObject("/Contents")] = self._add_object(new_stream)
+
+
+    def _add_apstream_object(
+            self,
+            page: PageObject,
+            appearance_stream_obj: StreamObject,
+            object_name: str,
+            x_offset: float,
+            y_offset: float,
+            font_res: Optional[DictionaryObject] = None
+        ) -> None:
+        """
+        Adds an appearance stream to the page content in the form of
+        an XObject.
+
+        Args:
+            page: The page to which to add the appearance stream.
+            appearance_stream_obj: The appearance stream.
+            object_name: The name of the appearance stream.
+            x_offset: The horizontal offset for the appearance stream.
+            y_offset: The vertical offset for the appearance stream.
+            font_res:The appearance stream's font resource (if given).
+        """
+        # Prepare XObject resource dictionary on the page
+        pg_res = cast(DictionaryObject, page[PG.RESOURCES])
+        if "/XObject" not in pg_res:
+            pg_res[NameObject("/XObject")] = DictionaryObject()
+        if font_res is not None:
+            font_name = font_res["/BaseFont"]  # [/"Name"] often also exists, but is deprecated
+            if "/Font" not in pg_res:
+                pg_res[NameObject("/Font")] = DictionaryObject()
+            if font_name not in cast(
+                    DictionaryObject, pg_res[NameObject("/Font")]
+                ):
+                cast(
+                    DictionaryObject, pg_res["/Font"]
+                )[NameObject(font_name)] = font_res
+        # Always add the resolved stream object to the writer to get a new IndirectObject.
+        # This ensures we have a valid IndirectObject managed by *this* writer.
+        xobject_ref = self._add_object(appearance_stream_obj)
+        # Create a name for the XObject. Note: Is this sufficiently unique?
+        # Sanitize the proposed object name to be a valid PDF name part (alphanumeric, underscore, hyphen)
+        # Replacing spaces with underscores, then removing any other non-alphanumeric/non-underscore/non-hyphen
+        xobject_name = NameObject(f"/Fm_{object_name}")._sanitize()
+        if xobject_name not in cast(
+                DictionaryObject, pg_res["/XObject"]
+            ):
+            cast(
+                DictionaryObject, pg_res["/XObject"]
+            )[NameObject(xobject_name)] = xobject_ref
+        else:
+            logger_warning(f"XObject '{xobject_name}' already added to page resources. This might be an issue.",
+                           __name__)
+        # Transformation matrix (a b c d e f) for 'a b c d e f cm'
+        xobject_cm = Transformation().translate(x_offset, y_offset)
+        # Construct the PDF content stream commands to draw the XObject
+        xobject_drawing_commands = f"q\n{xobject_cm._to_cm()}\n{xobject_name} Do\nQ".encode()
+        # Merge these commands into the page's existing content stream
+        self._merge_content_stream_to_page(page, xobject_drawing_commands)
 
 
     def _update_field_annotation(
