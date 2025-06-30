@@ -953,10 +953,12 @@ class PdfWriter(PdfDocCommon):
 
     def _update_field_annotation(
         self,
+        page: PageObject,
         field: DictionaryObject,
         annotation: DictionaryObject,
         font_name: str = "",
         font_size: float = -1,
+        flatten: bool = False,
     ) -> None:
         # Calculate rectangle dimensions
         _rct = cast(RectangleObject, annotation[AA.Rect])
@@ -1099,6 +1101,10 @@ class PdfWriter(PdfDocCommon):
             self._objects[n - 1] = dct
             dct.indirect_reference = IndirectObject(n, 0, self)
 
+        if flatten:
+            field_name = self._get_qualified_field_name(annotation)
+            self._add_apstream_object(page, dct, field_name, _rct[0], _rct[1], font_res)
+
     FFBITS_NUL = FA.FfBits(0)
 
     def update_page_form_field_values(
@@ -1107,6 +1113,7 @@ class PdfWriter(PdfDocCommon):
         fields: Dict[str, Union[str, List[str], Tuple[str, str, float]]],
         flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
+        flatten: bool = False,
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -1133,6 +1140,10 @@ class PdfWriter(PdfDocCommon):
             auto_regenerate: Set/unset the need_appearances flag;
                 the flag is unchanged if auto_regenerate is None.
 
+            flatten: Whether or not to flatten the annotation. If True, this adds the annotation's
+                appearance stream to the page contents. Note that this option does not remove the
+                annotation itself.
+
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
             raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
@@ -1147,7 +1158,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(page, list):
             for p in page:
                 if PG.ANNOTS in p:  # just to prevent warnings
-                    self.update_page_form_field_values(p, fields, flags, None)
+                    self.update_page_form_field_values(p, fields, flags, None, flatten=flatten)
             return
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
@@ -1176,24 +1187,32 @@ class PdfWriter(PdfDocCommon):
                     del parent_annotation["/I"]
                 if flags:
                     annotation[NameObject(FA.Ff)] = NumberObject(flags)
-                if isinstance(value, list):
-                    lst = ArrayObject(TextStringObject(v) for v in value)
-                    parent_annotation[NameObject(FA.V)] = lst
-                elif isinstance(value, tuple):
-                    annotation[NameObject(FA.V)] = TextStringObject(
-                        value[0],
-                    )
-                else:
-                    parent_annotation[NameObject(FA.V)] = TextStringObject(value)
+                if not (value is None and flatten):  # Only change values if given by user and not flattening.
+                    if isinstance(value, list):
+                        lst = ArrayObject(TextStringObject(v) for v in value)
+                        parent_annotation[NameObject(FA.V)] = lst
+                    elif isinstance(value, tuple):
+                        annotation[NameObject(FA.V)] = TextStringObject(
+                            value[0],
+                        )
+                    else:
+                        parent_annotation[NameObject(FA.V)] = TextStringObject(value)
                 if parent_annotation.get(FA.FT) == "/Btn":
                     # Checkbox button (no /FT found in Radio widgets)
                     v = NameObject(value)
                     ap = cast(DictionaryObject, annotation[NameObject(AA.AP)])
-                    if v not in cast(ArrayObject, ap[NameObject("/N")]):
+                    normal_ap = cast(DictionaryObject, ap["/N"])
+                    if v not in normal_ap:
                         v = NameObject("/Off")
+                    appearance_stream_obj = normal_ap.get(v)
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
+                    if flatten and appearance_stream_obj is not None:
+                        # We basically copy the entire appearance stream, which should be an XObject that
+                        # is already registered. No need to add font resources.
+                        rct = cast(RectangleObject, annotation[AA.Rect])
+                        self._add_apstream_object(page, appearance_stream_obj, field, rct[0], rct[1])
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
@@ -1201,10 +1220,10 @@ class PdfWriter(PdfDocCommon):
                     # textbox
                     if isinstance(value, tuple):
                         self._update_field_annotation(
-                            parent_annotation, annotation, value[1], value[2]
+                            page, parent_annotation, annotation, value[1], value[2], flatten=flatten
                         )
                     else:
-                        self._update_field_annotation(parent_annotation, annotation)
+                        self._update_field_annotation(page, parent_annotation, annotation, flatten=flatten)
                 elif (
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
