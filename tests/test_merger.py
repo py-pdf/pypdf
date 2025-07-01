@@ -471,7 +471,7 @@ def test_direct_link_page_missing(pdf_file_path):
     writer.add_page(merger.pages[0])
     # but we're not adding page 2
 
-    writer.write(pdf_file_path) # verify nothing crashes
+    writer.write(pdf_file_path)  # verify nothing crashes
 
 
 @pytest.mark.enable_socket
