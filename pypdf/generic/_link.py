@@ -47,8 +47,8 @@ class NamedReferenceLink:
         self._source_pdf = source_pdf
 
     def find_referenced_page(self) -> Union[IndirectObject, None]:
-        dest = self._source_pdf.named_destinations.get(str(self._reference))
-        return dest.page if dest else None
+        destination = self._source_pdf.named_destinations.get(str(self._reference))
+        return destination.page if destinatino else None
 
     def patch_reference(self, target_pdf: "PdfWriter", new_page: IndirectObject) -> None:
         """target_pdf: PdfWriter which the new link went into"""
@@ -61,7 +61,7 @@ class DirectReferenceLink:
     """Direct reference link being preserved until we can resolve it correctly."""
 
     def __init__(self, reference: ArrayObject) -> None:
-        """reference: an ArrayObject whose first element is the Page indir obj"""
+        """reference: an ArrayObject whose first element is the Page indirect object"""
         self._reference = reference
 
     def find_referenced_page(self) -> IndirectObject:
