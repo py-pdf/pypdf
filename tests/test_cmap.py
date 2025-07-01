@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf._cmap import build_char_map, get_encoding
+from pypdf._cmap import build_char_map, get_encoding, parse_bfchar
 from pypdf._codecs import charset_encoding
 from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject
 
@@ -327,3 +327,14 @@ def test_get_encoding__encoding_value_is_none():
         dict(zip(range(256), charset_encoding["/StandardEncoding"])),
         {}
     )
+
+
+def test_parse_bfchar(caplog):
+    map_dict = {}
+    int_entry = []
+    parse_bfchar(line=b"057e   1337", map_dict=map_dict, int_entry=int_entry)
+    parse_bfchar(line=b"056e   1f310", map_dict=map_dict, int_entry=int_entry)
+
+    assert map_dict == {-1: 2, "ծ": "", "վ": "ጷ"}
+    assert int_entry == [1406, 1390]
+    assert caplog.messages == ["Got invalid hex string: Odd-length string (b'1f310')"]
