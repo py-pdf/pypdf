@@ -82,14 +82,16 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> List[Tuple[
     new_links = [_build_link(link, new_page) for link in new_page.get("/Annots", [])]
     old_links = [_build_link(link, old_page) for link in old_page.get("/Annots", [])]
 
-    return [(new_link, old_link) for (new_link, old_link)
-            in zip(new_links, old_links)
-            if new_link and old_link]
+    return [
+        (new_link, old_link) for (new_link, old_link)
+        in zip(new_links, old_links)
+        if new_link and old_link
+    ]
 
 
-def _build_link(indir_obj: IndirectObject, page: "PageObject") -> Optional[ReferenceLink]:
+def _build_link(indirect_object: IndirectObject, page: "PageObject") -> Optional[ReferenceLink]:
     src = cast("PdfReader", page.pdf)
-    link = cast(DictionaryObject, indir_obj.get_object())
+    link = cast(DictionaryObject, indirect_object.get_object())
     if link.get("/Subtype") != "/Link":
         return None
 
@@ -103,12 +105,12 @@ def _build_link(indir_obj: IndirectObject, page: "PageObject") -> Optional[Refer
     if "/Dest" in link:
         return _create_link(link["/Dest"], src)
 
-    return None # nothing we need to do
+    return None  # Nothing to do here
 
 
-def _create_link(ref: PdfObject, src: "PdfReader")-> Optional[ReferenceLink]:
-    if isinstance(ref, TextStringObject):
-        return NamedReferenceLink(ref, src)
-    if isinstance(ref, ArrayObject):
-        return DirectReferenceLink(ref)
+def _create_link(reference: PdfObject, source_pdf: "PdfReader")-> Optional[ReferenceLink]:
+    if isinstance(reference, TextStringObject):
+        return NamedReferenceLink(reference, source_pdf)
+    if isinstance(reference, ArrayObject):
+        return DirectReferenceLink(reference)
     return None
