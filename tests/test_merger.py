@@ -428,7 +428,7 @@ def test_direct_link_preserved(pdf_file_path):
     page3 = check.pages[2]
     link = page3["/Annots"][0].get_object()
     assert link["/Subtype"] == "/Link"
-    dest = link["/Dest"][0] # indirect ref of page referred to
+    dest = link["/Dest"][0]  # indirect reference of page referred to
 
     page4 = check.flattened_pages[3]
     assert dest == page4.indirect_reference, "Link from page 3 to page 4 is broken"
@@ -454,7 +454,7 @@ def test_direct_link_preserved_reordering(pdf_file_path):
     page3 = check.pages[2]
     link = page3["/Annots"][0].get_object()
     assert link["/Subtype"] == "/Link"
-    dest = link["/Dest"][0] # indirect ref of page referred to
+    dest = link["/Dest"][0]  # indirect reference of page referred to
 
     page5 = check.flattened_pages[4] # it moved one out
     assert dest == page5.indirect_reference, "Link from page 3 to page 5 is broken"
@@ -505,11 +505,11 @@ def test_named_ref_to_page_that_is_gone(pdf_file_path):
     source = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
     buf = BytesIO()
     tmp = PdfWriter()
-    tmp.add_page(source.pages[2]) # we add only the page with the reference
+    tmp.add_page(source.pages[2])  # we add only the page with the reference
     tmp.write(buf)
 
     source = PdfReader(buf)
 
     writer = PdfWriter()
-    writer.add_page(source.pages[0]) # now references to non-existent page
-    writer.write(pdf_file_path) # don't crash
+    writer.add_page(source.pages[0])  # now references to non-existent page
+    writer.write(pdf_file_path)  # don't crash
