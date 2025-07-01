@@ -1671,7 +1671,8 @@ class PdfWriter(PdfDocCommon):
         # remove orphans (if applicable)
         orphans[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
 
-        orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
+        if self._info is not None:
+            orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
 
         try:
             orphans[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
