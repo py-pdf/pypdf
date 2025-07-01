@@ -2769,3 +2769,16 @@ def test_insert_filtered_annotations__annotations_are_no_list(caplog):
             "'/Normal'} of type DictionaryObject."
         )
     ]
+
+
+def test_unterminated_object__with_incremental_writer():
+    """Test for #3118"""
+    reader = PdfReader(RESOURCE_ROOT / "bytes.pdf")
+    writer = PdfWriter(reader, incremental=True)
+
+    writer.add_blank_page(72, 72)
+
+    fi = BytesIO()
+    writer.write(fi)
+    b = fi.getvalue()
+    assert b[-39:] == b"\nendstream\nendobj\nstartxref\n1240\n%%EOF\n"
