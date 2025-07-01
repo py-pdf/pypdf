@@ -456,7 +456,7 @@ def test_direct_link_preserved_reordering(pdf_file_path):
     assert link["/Subtype"] == "/Link"
     dest = link["/Dest"][0]  # indirect reference of page referred to
 
-    page5 = check.flattened_pages[4] # it moved one out
+    page5 = check.flattened_pages[4]  # it moved one out
     assert dest == page5.indirect_reference, "Link from page 3 to page 5 is broken"
 
 
