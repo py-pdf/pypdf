@@ -1673,7 +1673,6 @@ class PageObject(DictionaryObject):
                 default = "/Content"
 
         """
-        # Use the new TextExtraction class
         extractor = TextExtraction(
             self,  # Pass the page object for font width maps
             obj,

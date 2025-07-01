@@ -558,3 +558,4 @@ class TextExtraction:
                 font_widths += compute_font_width(font_width_map, char)
 
         return (font_widths * font_size, space_width * font_size, font_size)
+
