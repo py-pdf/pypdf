@@ -2773,7 +2773,7 @@ def test_insert_filtered_annotations__annotations_are_no_list(caplog):
 
 def test_unterminated_object__with_incremental_writer():
     """Test for #3118"""
-    reader = PdfReader(RESOURCE_ROOT / "toy.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "bytes.pdf")
     writer = PdfWriter(reader, incremental=True)
 
     writer.add_blank_page(72, 72)
@@ -2781,4 +2781,4 @@ def test_unterminated_object__with_incremental_writer():
     fi = BytesIO()
     writer.write(fi)
     b = fi.getvalue()
-    assert b[-39:] == b"\nendstream\nendobj\nstartxref\n1270\n%%EOF\n"
+    assert b[-39:] == b"\nendstream\nendobj\nstartxref\n1240\n%%EOF\n"
