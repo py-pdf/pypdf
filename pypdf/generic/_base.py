@@ -841,6 +841,14 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                     out += c.encode("utf-8")
         return out
 
+    def _sanitize(self) -> "NameObject":
+        # Sanitize the proposed object name to be a valid PDF name part (alphanumeric, underscore, hyphen)
+        # Replacing spaces with underscores, then removing any other non-alphanumeric/non-underscore/non-hyphen
+        name = str(self)[1:]  # Remove leading forward slash
+        name = re.sub(r"\ ", "_", name)
+        name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
+        return NameObject("/" + name)
+
     @classproperty
     def surfix(cls) -> bytes:  # noqa: N805
         deprecate_with_replacement("surfix", "prefix", "6.0.0")
