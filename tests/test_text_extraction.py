@@ -436,7 +436,7 @@ def test_extract_text__with_visitor_text():
     name = "tika-952016.pdf"
     stream = BytesIO(get_data_from_url(url, name=name))
     reader = PdfReader(stream)
-    page = reader.pages[1]
+    page = reader.pages[0]
     page.extract_text(visitor_text=visitor_text)
 
     reader = PdfReader(BytesIO(get_data_from_url(name="TextAttack_paper.pdf")))
