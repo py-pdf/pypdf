@@ -1653,7 +1653,7 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-    def _extract_text(  # noqa: C901, PLR0915  # Will be fixed soon.
+    def _extract_text(
         self,
         obj: Any,
         pdf: Any,
@@ -1700,14 +1700,6 @@ class PageObject(DictionaryObject):
                     cmaps[f] = build_char_map(f, space_width, obj)
                 except TypeError:
                     pass
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
-        ] = (
-            "charmap",
-            {},
-            "NotInitialized",
-            None,
-        )  # (encoding, CMAP, font resource name, font)
 
         try:
             content = (
