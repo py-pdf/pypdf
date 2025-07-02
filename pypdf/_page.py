@@ -1657,10 +1657,7 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-
-
-
-    def _extract_text(
+    def _extract_text(  # noqa: C901, PLR0915  # Will be fixed soon.
         self,
         obj: Any,
         pdf: Any,
@@ -1704,9 +1701,12 @@ class PageObject(DictionaryObject):
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
-        if "/Font" in resources_dict and (font := resources_dict["/Font"]):
+        if not is_null_or_none(resources_dict) and "/Font" in resources_dict and (font := resources_dict["/Font"]):
             for f in cast(DictionaryObject, font):
-                cmaps[f] = build_char_map(f, space_width, obj)
+                try:
+                    cmaps[f] = build_char_map(f, space_width, obj)
+                except TypeError:
+                    pass
         cmap: Tuple[
             Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
         ] = (
