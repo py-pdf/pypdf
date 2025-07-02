@@ -414,3 +414,31 @@ def test_rotated_layout_mode(caplog):
     assert not caplog.records, "No warnings should be issued"
     assert text, "Text matching the page rotation should be extracted"
     assert re.search(r"\r?\n +69\r?\n +UNCLASSIFIED$", text), "Contents should be in expected layout"
+
+
+@pytest.mark.enable_socket
+@pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
+def test_extract_text__none_objects():
+    url = "https://github.com/user-attachments/files/18381726/tika-957721.pdf"
+    name = "tika-957721.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    reader.pages[0].extract_text()
+    reader.pages[8].extract_text()
+
+
+@pytest.mark.enable_socket
+def test_extract_text__with_visitor_text():
+    def visitor_text(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
+        pass
+
+    url = "https://github.com/user-attachments/files/18381718/tika-952016.pdf"
+    name = "tika-952016.pdf"
+    stream = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(stream)
+    page = reader.pages[0]
+    page.extract_text(visitor_text=visitor_text)
+
+    reader = PdfReader(BytesIO(get_data_from_url(name="TextAttack_paper.pdf")))
+    page = reader.pages[0]
+    page.extract_text()
