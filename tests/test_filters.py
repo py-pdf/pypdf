@@ -820,6 +820,8 @@ def test_flate_decode_stream_with_faulty_tail_bytes():
 @pytest.mark.enable_socket
 def test_rle_decode_with_faulty_tail_byte_in_multi_encoded_stream(caplog):
     """
+    Test for #3355
+
     The test ensures that the inner RLE encoded stream can be decoded,
     because this stream contains an extra faulty newline byte in the
     end that can be ignored during decoding.
@@ -835,9 +837,3 @@ def test_rle_decode_with_faulty_tail_byte_in_multi_encoded_stream(caplog):
                 if isinstance(obj, StreamObject):
                     cast(StreamObject, obj).get_data()
     assert "Found trailing newline in stream data, check if output is OK" in caplog.messages
-
-
-
-
-
-
