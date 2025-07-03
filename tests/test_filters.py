@@ -816,3 +816,29 @@ def test_flate_decode_stream_with_faulty_tail_bytes():
     reader = PdfReader(BytesIO(data))
     obj = reader.get_object(IndirectObject(182, 0, reader))
     assert cast(StreamObject, obj).get_data() == expected
+
+@pytest.mark.enable_socket
+def test_rle_decode_with_faulty_tail_byte_in_multi_encoded_stream(caplog):
+    """
+    The test ensures that the inner RLE encoded stream can be decoded,
+    because this stream contains an extra faulty newline byte in the
+    end that can be ignored during decoding.
+    """
+    # data = get_data_from_url(
+    #     url="https://.../multi_decoding_example_with_faulty_tail_byte.pdf",
+    #     name="multi_decoding_example_with_faulty_tail_byte.pdf"
+    # )
+    data = get_data_from_url(name="multi_decoding_example_with_faulty_tail_byte.pdf")
+    reader = PdfReader(BytesIO(data))
+    for gen, obj_pointer in reader.xref.items():
+            for num in obj_pointer:
+                obj = reader.get_object(IndirectObject(num, gen, reader))
+                if isinstance(obj, StreamObject):
+                    cast(StreamObject, obj).get_data()
+    assert "Found trailing newline in stream data, check if output is OK" in caplog.messages
+
+
+
+
+
+
