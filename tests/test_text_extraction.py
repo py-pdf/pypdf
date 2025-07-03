@@ -441,4 +441,18 @@ def test_extract_text__with_visitor_text():
 
     reader = PdfReader(BytesIO(get_data_from_url(name="TextAttack_paper.pdf")))
     page = reader.pages[0]
-    page.extract_text()
+    page.extract_text(visitor_text=visitor_text)
+
+
+@pytest.mark.enable_socket
+def test_extract_text__restore_cm_stack_pop_error():
+    url = "https://github.com/user-attachments/files/18381737/tika-966635.pdf"
+    name = "tika-966635.pdf"
+    stream = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(stream)
+    page = reader.pages[10]
+
+    # There is a previous error we already omit ("pop from empty list"), thus
+    # check for the message explicitly here.
+    with pytest.raises(IndexError, match="list index out of range"):
+        page.extract_text()
