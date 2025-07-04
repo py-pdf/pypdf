@@ -95,6 +95,22 @@ class TextExtraction:
         self.visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None
         self.cmaps: Dict[str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject]] = {}
 
+        self.operation_handlers = {
+            b"BT": self._handle_bt,
+            b"ET": self._handle_et,
+            b"q": self._handle_q,
+            b"Q": self._handle_Q,
+            b"cm": self._handle_cm,
+            b"Tz": self._handle_tz,
+            b"Tw": self._handle_tw,
+            b"TL": self._handle_tl,
+            b"Tf": self._handle_tf,
+            b"Td": self._handle_td,
+            b"Tm": self._handle_tm,
+            b"T*": self._handle_t_star,
+            b"Tj": self._handle_tj_operation,
+        }
+
     def initialize_extraction(
         self,
         orientations: Tuple[int, ...] = (0, 90, 180, 270),
@@ -117,173 +133,36 @@ class TextExtraction:
         return str_widths / 1000
 
     def process_operation(self, operator: bytes, operands: List[Any]) -> None:
-        str_widths: float = 0.0
+        if operator in self.operation_handlers:
+            handler = self.operation_handlers[operator]
+            str_widths = handler(operands)
 
-        # Table 5.4 page 405
-        if operator == b"BT":  # Begin Text
-            self.tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-            # Flush text:
-            self.output += self.text
-            if self.visitor_text is not None:
-                self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
-            self.text = ""
-            self.memo_cm = self.cm_matrix.copy()
-            self.memo_tm = self.tm_matrix.copy()
-            return
-        if operator == b"ET":  # End Text
-            # Flush text:
-            self.output += self.text
-            if self.visitor_text is not None:
-                self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
-            self.text = ""
-            self.memo_cm = self.cm_matrix.copy()
-            self.memo_tm = self.tm_matrix.copy()
+            # Post-process operations that affect text positioning
+            if operator in {b"Td", b"Tm", b"T*", b"Tj"}:
+                self._post_process_text_operation(str_widths or 0.0)
 
-        # Table 4.7 "Graphics state operators", page 219
-        # cm_matrix calculation is reserved for later
-        elif operator == b"q":  # Save graphics state
-            self.cm_stack.append(
-                (
-                    self.cm_matrix,
-                    self.cmap,
-                    self.font_size,
-                    self.char_scale,
-                    self.space_scale,
-                    self._space_width,
-                    self.TL,
-                )
-            )
-        elif operator == b"Q":  # Restore graphics state
-            try:
-                (
-                    self.cm_matrix,
-                    self.cmap,
-                    self.font_size,
-                    self.char_scale,
-                    self.space_scale,
-                    self._space_width,
-                    self.TL,
-                ) = self.cm_stack.pop()
-            except Exception:
-                self.cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        elif operator == b"cm":  # Modify current matrix
-            self.output += self.text
-            if self.visitor_text is not None:
-                self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
-            self.text = ""
-            try:
-                self.cm_matrix = mult([float(operand) for operand in operands[:6]], self.cm_matrix)
-            except Exception:
-                self.cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-            self.memo_cm = self.cm_matrix.copy()
-            self.memo_tm = self.tm_matrix.copy()
-
-        # Table 5.2 page 398
-        elif operator == b"Tz":  # Set horizontal text scaling
-            self.char_scale = float(operands[0]) / 100 if operands else 1.0
-        elif operator == b"Tw":  # Set word spacing
-            self.space_scale = 1.0 + float(operands[0] if operands else 0.0)
-        elif operator == b"TL":  # Set Text Leading
-            scale_x = math.sqrt(self.tm_matrix[0] ** 2 + self.tm_matrix[2] ** 2)
-            self.TL = float(operands[0] if operands else 0.0) * self.font_size * scale_x
-        elif operator == b"Tf":  # Set font size
-            if self.text != "":
-                self.output += self.text  # .translate(cmap)
-                if self.visitor_text is not None:
-                    self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
-            self.text = ""
-            self.memo_cm = self.cm_matrix.copy()
-            self.memo_tm = self.tm_matrix.copy()
-            try:
-                # Import here to avoid circular imports
-                from .._cmap import unknown_char_map  # noqa: PLC0415
-
-                # char_map_tuple: font_type,
-                #                 float(sp_width / 2),
-                #                 encoding,
-                #                 map_dict,
-                #                 font_dict (describes the font)
-                char_map_tuple = self.cmaps[operands[0]]
-                # current cmap: encoding,
-                #               map_dict,
-                #               font resource name (internal name, not the real font name),
-                #               font_dict
-                self.cmap = (
-                    char_map_tuple[2],
-                    char_map_tuple[3],
-                    operands[0],
-                    char_map_tuple[4],
-                )
-                self._space_width = char_map_tuple[1]
-            except KeyError:  # font not found
-                self.cmap = (
-                    unknown_char_map[2],
-                    unknown_char_map[3],
-                    f"???{operands[0]}",
-                    None,
-                )
-                self._space_width = unknown_char_map[1]
-            try:
-                self.font_size = float(operands[1])
-            except Exception:
-                pass  # keep previous size
-        # Table 5.5 page 406
-        elif operator == b"Td":  # Move text position
-            # A special case is a translating only tm:
-            # tm = [1, 0, 0, 1, e, f]
-            # i.e. tm[4] += tx, tm[5] += ty.
-            tx, ty = float(operands[0]), float(operands[1])
-            self.tm_matrix[4] += tx * self.tm_matrix[0] + ty * self.tm_matrix[2]
-            self.tm_matrix[5] += tx * self.tm_matrix[1] + ty * self.tm_matrix[3]
-            str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
-            self._actual_str_size["str_widths"] = 0.0
-        elif operator == b"Tm":  # Set text matrix
-            self.tm_matrix = [float(operand) for operand in operands[:6]]
-            str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
-            self._actual_str_size["str_widths"] = 0.0
-        elif operator == b"T*":  # Move to next line
-            self.tm_matrix[4] -= self.TL * self.tm_matrix[2]
-            self.tm_matrix[5] -= self.TL * self.tm_matrix[3]
-            str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
-            self._actual_str_size["str_widths"] = 0.0
-        elif operator == b"Tj":  # Show text
-            self.text, self.rtl_dir, self._actual_str_size = self._handle_tj(
+    def _post_process_text_operation(self, str_widths: float) -> None:
+        """Handle common post-processing for text positioning operations."""
+        try:
+            self.text, self.output, self.cm_prev, self.tm_prev = crlf_space_check(
                 self.text,
-                operands,
-                self.cm_matrix,
-                self.tm_matrix,
+                (self.cm_prev, self.tm_prev),
+                (self.cm_matrix, self.tm_matrix),
+                (self.memo_cm, self.memo_tm),
                 self.cmap,
                 self.orientations,
+                self.output,
                 self.font_size,
-                self.rtl_dir,
                 self.visitor_text,
-                self._space_width,
-                self._actual_str_size,
+                str_widths,
+                self.compute_str_widths(self._actual_str_size["space_width"]),
+                self._actual_str_size["str_height"],
             )
-        else:
-            return
-
-        if operator in {b"Td", b"Tm", b"T*", b"Tj"}:
-            try:
-                self.text, self.output, self.cm_prev, self.tm_prev = crlf_space_check(
-                    self.text,
-                    (self.cm_prev, self.tm_prev),
-                    (self.cm_matrix, self.tm_matrix),
-                    (self.memo_cm, self.memo_tm),
-                    self.cmap,
-                    self.orientations,
-                    self.output,
-                    self.font_size,
-                    self.visitor_text,
-                    str_widths,
-                    self.compute_str_widths(self._actual_str_size["space_width"]),
-                    self._actual_str_size["str_height"],
-                )
-                if self.text == "":
-                    self.memo_cm = self.cm_matrix.copy()
-                    self.memo_tm = self.tm_matrix.copy()
-            except OrientationNotFoundError:
-                return
+            if self.text == "":
+                self.memo_cm = self.cm_matrix.copy()
+                self.memo_tm = self.tm_matrix.copy()
+        except OrientationNotFoundError:
+            pass
 
     def _get_actual_font_widths(
         self,
@@ -357,3 +236,168 @@ class TextExtraction:
         actual_str_size["str_widths"] += font_widths
 
         return text, rtl_dir, actual_str_size
+
+    # Operation handlers
+
+    def _handle_bt(self, operands: List[Any]) -> None:
+        """Handle BT (Begin Text) operation - Table 5.4 page 405."""
+        self.tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        # Flush text:
+        self.output += self.text
+        if self.visitor_text is not None:
+            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+        self.text = ""
+        self.memo_cm = self.cm_matrix.copy()
+        self.memo_tm = self.tm_matrix.copy()
+
+    def _handle_et(self, operands: List[Any]) -> None:
+        """Handle ET (End Text) operation - Table 5.4 page 405."""
+        # Flush text:
+        self.output += self.text
+        if self.visitor_text is not None:
+            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+        self.text = ""
+        self.memo_cm = self.cm_matrix.copy()
+        self.memo_tm = self.tm_matrix.copy()
+
+    def _handle_q(self, operands: List[Any]) -> None:
+        """Handle q (Save graphics state) operation - Table 4.7 page 219."""
+        self.cm_stack.append(
+            (
+                self.cm_matrix,
+                self.cmap,
+                self.font_size,
+                self.char_scale,
+                self.space_scale,
+                self._space_width,
+                self.TL,
+            )
+        )
+
+    def _handle_Q(self, operands: List[Any]) -> None:
+        """Handle Q (Restore graphics state) operation - Table 4.7 page 219."""
+        try:
+            (
+                self.cm_matrix,
+                self.cmap,
+                self.font_size,
+                self.char_scale,
+                self.space_scale,
+                self._space_width,
+                self.TL,
+            ) = self.cm_stack.pop()
+        except Exception:
+            self.cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+
+    def _handle_cm(self, operands: List[Any]) -> None:
+        """Handle cm (Modify current matrix) operation - Table 4.7 page 219."""
+        self.output += self.text
+        if self.visitor_text is not None:
+            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+        self.text = ""
+        try:
+            self.cm_matrix = mult([float(operand) for operand in operands[:6]], self.cm_matrix)
+        except Exception:
+            self.cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.memo_cm = self.cm_matrix.copy()
+        self.memo_tm = self.tm_matrix.copy()
+
+    def _handle_tz(self, operands: List[Any]) -> None:
+        """Handle Tz (Set horizontal text scaling) operation - Table 5.2 page 398."""
+        self.char_scale = float(operands[0]) / 100 if operands else 1.0
+
+    def _handle_tw(self, operands: List[Any]) -> None:
+        """Handle Tw (Set word spacing) operation - Table 5.2 page 398."""
+        self.space_scale = 1.0 + float(operands[0] if operands else 0.0)
+
+    def _handle_tl(self, operands: List[Any]) -> None:
+        """Handle TL (Set Text Leading) operation - Table 5.2 page 398."""
+        scale_x = math.sqrt(self.tm_matrix[0] ** 2 + self.tm_matrix[2] ** 2)
+        self.TL = float(operands[0] if operands else 0.0) * self.font_size * scale_x
+
+    def _handle_tf(self, operands: List[Any]) -> None:
+        """Handle Tf (Set font size) operation - Table 5.2 page 398."""
+        if self.text != "":
+            self.output += self.text  # .translate(cmap)
+            if self.visitor_text is not None:
+                self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+        self.text = ""
+        self.memo_cm = self.cm_matrix.copy()
+        self.memo_tm = self.tm_matrix.copy()
+        try:
+            # Import here to avoid circular imports
+            from .._cmap import unknown_char_map  # noqa: PLC0415
+
+            # char_map_tuple: font_type,
+            #                 float(sp_width / 2),
+            #                 encoding,
+            #                 map_dict,
+            #                 font_dict (describes the font)
+            char_map_tuple = self.cmaps[operands[0]]
+            # current cmap: encoding,
+            #               map_dict,
+            #               font resource name (internal name, not the real font name),
+            #               font_dict
+            self.cmap = (
+                char_map_tuple[2],
+                char_map_tuple[3],
+                operands[0],
+                char_map_tuple[4],
+            )
+            self._space_width = char_map_tuple[1]
+        except KeyError:  # font not found
+            self.cmap = (
+                unknown_char_map[2],
+                unknown_char_map[3],
+                f"???{operands[0]}",
+                None,
+            )
+            self._space_width = unknown_char_map[1]
+        try:
+            self.font_size = float(operands[1])
+        except Exception:
+            pass  # keep previous size
+
+    def _handle_td(self, operands: List[Any]) -> float:
+        """Handle Td (Move text position) operation - Table 5.5 page 406."""
+        # A special case is a translating only tm:
+        # tm = [1, 0, 0, 1, e, f]
+        # i.e. tm[4] += tx, tm[5] += ty.
+        tx, ty = float(operands[0]), float(operands[1])
+        self.tm_matrix[4] += tx * self.tm_matrix[0] + ty * self.tm_matrix[2]
+        self.tm_matrix[5] += tx * self.tm_matrix[1] + ty * self.tm_matrix[3]
+        str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
+        self._actual_str_size["str_widths"] = 0.0
+        return str_widths
+
+    def _handle_tm(self, operands: List[Any]) -> float:
+        """Handle Tm (Set text matrix) operation - Table 5.5 page 406."""
+        self.tm_matrix = [float(operand) for operand in operands[:6]]
+        str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
+        self._actual_str_size["str_widths"] = 0.0
+        return str_widths
+
+    def _handle_t_star(self, operands: List[Any]) -> float:
+        """Handle T* (Move to next line) operation - Table 5.5 page 406."""
+        self.tm_matrix[4] -= self.TL * self.tm_matrix[2]
+        self.tm_matrix[5] -= self.TL * self.tm_matrix[3]
+        str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
+        self._actual_str_size["str_widths"] = 0.0
+        return str_widths
+
+    def _handle_tj_operation(self, operands: List[Any]) -> float:
+        """Handle Tj (Show text) operation - Table 5.5 page 406."""
+        self.text, self.rtl_dir, self._actual_str_size = self._handle_tj(
+            self.text,
+            operands,
+            self.cm_matrix,
+            self.tm_matrix,
+            self.cmap,
+            self.orientations,
+            self.font_size,
+            self.rtl_dir,
+            self.visitor_text,
+            self._space_width,
+            self._actual_str_size,
+        )
+        return 0.0  # str_widths will be handled in post-processing
