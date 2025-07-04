@@ -1673,143 +1673,18 @@ class PageObject(DictionaryObject):
                 default = "/Content"
 
         """
-        extractor = TextExtraction()
-        cmaps: Dict[
-            str,
-            Tuple[
-                str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject
-            ],
-        ] = {}
-
-        try:
-            objr = obj
-            while NameObject(PG.RESOURCES) not in objr:
-                # /Resources can be inherited so we look to parents
-                objr = objr["/Parent"].get_object()
-                # If no parents then no /Resources will be available,
-                # so an exception will be raised
-            resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
-        except Exception:
-            # No resources means no text is possible (no font); we consider the
-            # file as not damaged, no need to check for TJ or Tj
-            return ""
-
-        if not is_null_or_none(resources_dict) and "/Font" in resources_dict and (font := resources_dict["/Font"]):
-            for f in cast(DictionaryObject, font):
-                try:
-                    cmaps[f] = build_char_map(f, space_width, obj)
-                except TypeError:
-                    pass
-
-        try:
-            content = (
-                obj[content_key].get_object() if isinstance(content_key, str) else obj
-            )
-            if not isinstance(content, ContentStream):
-                content = ContentStream(content, pdf, "bytes")
-        except (AttributeError, KeyError):  # no content can be extracted (certainly empty page)
-            return ""
-        # We check all strings are TextStringObjects. ByteStringObjects
-        # are strings where the byte->string encoding was unknown, so adding
-        # them to the text here would be gibberish.
-
-        # Initialize the extractor with the necessary parameters
-        extractor.initialize_extraction(orientations, visitor_text, cmaps)
-
-        for operands, operator in content.operations:
-            if visitor_operand_before is not None:
-                visitor_operand_before(operator, operands, extractor.cm_matrix, extractor.tm_matrix)
-            # Multiple operators are handled here
-            if operator == b"'":
-                extractor.process_operation(b"T*", [])
-                extractor.process_operation(b"Tj", operands)
-            elif operator == b'"':
-                extractor.process_operation(b"Tw", [operands[0]])
-                extractor.process_operation(b"Tc", [operands[1]])
-                extractor.process_operation(b"T*", [])
-                extractor.process_operation(b"Tj", operands[2:])
-            elif operator == b"TJ":
-                # The space width may be smaller than the font width, so the width should be 95%.
-                _confirm_space_width = extractor._space_width * 0.95
-                if operands:
-                    for op in operands[0]:
-                        if isinstance(op, (str, bytes)):
-                            extractor.process_operation(b"Tj", [op])
-                        if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                            abs(float(op)) >= _confirm_space_width
-                            and extractor.text
-                            and extractor.text[-1] != " "
-                        ):
-                            extractor.process_operation(b"Tj", [" "])
-            elif operator == b"TD":
-                extractor.process_operation(b"TL", [-operands[1]])
-                extractor.process_operation(b"Td", operands)
-            elif operator == b"Do":
-                extractor.output += extractor.text
-                if visitor_text is not None:
-                    visitor_text(
-                        extractor.text,
-                        extractor.memo_cm,
-                        extractor.memo_tm,
-                        extractor.cmap[3],
-                        extractor.font_size,
-                    )
-                try:
-                    if extractor.output[-1] != "\n":
-                        extractor.output += "\n"
-                        if visitor_text is not None:
-                            visitor_text(
-                                "\n",
-                                extractor.memo_cm,
-                                extractor.memo_tm,
-                                extractor.cmap[3],
-                                extractor.font_size,
-                            )
-                except IndexError:
-                    pass
-                try:
-                    xobj = resources_dict["/XObject"]
-                    if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
-                        text = self.extract_xform_text(
-                            xobj[operands[0]],  # type: ignore
-                            orientations,
-                            space_width,
-                            visitor_operand_before,
-                            visitor_operand_after,
-                            visitor_text,
-                        )
-                        extractor.output += text
-                        if visitor_text is not None:
-                            visitor_text(
-                                text,
-                                extractor.memo_cm,
-                                extractor.memo_tm,
-                                extractor.cmap[3],
-                                extractor.font_size,
-                            )
-                except Exception as exception:
-                    logger_warning(
-                        f"Impossible to decode XFormObject {operands[0]}: {exception}",
-                        __name__,
-                    )
-                finally:
-                    extractor.text = ""
-                    extractor.memo_cm = extractor.cm_matrix.copy()
-                    extractor.memo_tm = extractor.tm_matrix.copy()
-            else:
-                extractor.process_operation(operator, operands)
-            if visitor_operand_after is not None:
-                visitor_operand_after(operator, operands, extractor.cm_matrix, extractor.tm_matrix)
-        extractor.output += extractor.text  # just in case
-        if extractor.text != "" and visitor_text is not None:
-            visitor_text(
-                extractor.text,
-                extractor.memo_cm,
-                extractor.memo_tm,
-                extractor.cmap[3],
-                extractor.font_size,
-            )
-        return extractor.output
+        extractor = TextExtraction(
+            self,  # Pass the page object for font width maps
+            obj,
+            pdf,
+            orientations,
+            space_width,
+            content_key,
+            visitor_operand_before,
+            visitor_operand_after,
+            visitor_text,
+        )
+        return extractor.extract_text()
 
     def _layout_mode_fonts(self) -> Dict[str, _layout_mode.Font]:
         """
