@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751615552935,
+  "lastUpdate": 1751620120466,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -78083,6 +78083,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003443399448031094",
             "extra": "mean: 751.2007617999984 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "henning.koertel@gmgcolor.com",
+            "name": "Henning Körtel",
+            "username": "henningkoertelgmg"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "442e8d501db4e8bf09cfd41a41fc0747b468c1ec",
+          "message": "ROB: ignore faulty trailing newline during RLE decoding (#3355)\n\nFound PDFs from Dalim software with multi-encoded streams: inner stream is RLE, outer stream is FLATE. The inner stream contains a trailing newline char that breaks the RLE decoding. It seems that there was in some Dalim version a systematíc error that included the bytes of the inner stream just from raw PDF bytes with the trailing newline before \"endstream\".\nThis is fixed with the changes by ignoring the trailing newline and raising a warning instead of an exception.",
+          "timestamp": "2025-07-04T11:05:48+02:00",
+          "tree_id": "8a2e2d68b8b2e68c8f91ee45d837387af707eda8",
+          "url": "https://github.com/py-pdf/pypdf/commit/442e8d501db4e8bf09cfd41a41fc0747b468c1ec"
+        },
+        "date": 1751620116633,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.433719854724418,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008958312326759395",
+            "extra": "mean: 291.2293496000004 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.543875655754057,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006728516931753233",
+            "extra": "mean: 64.33401952940987 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2585967140659217,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10729105165408431",
+            "extra": "mean: 3.8670251616 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.52321760620812,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008716924005454585",
+            "extra": "mean: 57.067144999998185 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08169942669760974,
+            "unit": "iter/sec",
+            "range": "stddev: 0.16599798536591037",
+            "extra": "mean: 12.239987970800005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3104098282154462,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0072601524508330096",
+            "extra": "mean: 763.1200395999997 msec\nrounds: 5"
           }
         ]
       }
