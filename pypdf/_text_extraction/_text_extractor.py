@@ -237,28 +237,25 @@ class TextExtraction:
 
         return text, rtl_dir, actual_str_size
 
+    def _flush_text(self) -> None:
+        """Flush accumulated text to output and call visitor if present."""
+        self.output += self.text
+        if self.visitor_text is not None:
+            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+        self.text = ""
+        self.memo_cm = self.cm_matrix.copy()
+        self.memo_tm = self.tm_matrix.copy()
+
     # Operation handlers
 
     def _handle_bt(self, operands: List[Any]) -> None:
         """Handle BT (Begin Text) operation - Table 5.4 page 405."""
         self.tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        # Flush text:
-        self.output += self.text
-        if self.visitor_text is not None:
-            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
-        self.text = ""
-        self.memo_cm = self.cm_matrix.copy()
-        self.memo_tm = self.tm_matrix.copy()
+        self._flush_text()
 
     def _handle_et(self, operands: List[Any]) -> None:
         """Handle ET (End Text) operation - Table 5.4 page 405."""
-        # Flush text:
-        self.output += self.text
-        if self.visitor_text is not None:
-            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
-        self.text = ""
-        self.memo_cm = self.cm_matrix.copy()
-        self.memo_tm = self.tm_matrix.copy()
+        self._flush_text()
 
     def _handle_q(self, operands: List[Any]) -> None:
         """Handle q (Save graphics state) operation - Table 4.7 page 219."""
