@@ -385,11 +385,12 @@ class RunLengthDecode:
             length = data[index]
             index += 1
             if length == 128:
-                if index < len(data):
+                data_length = len(data)
+                if index < data_length:
                     # We should first check, if we have an inner stream from a multi-encoded
                     # stream with a faulty trailing newline that we can decode properly.
                     # We will just ignore the last byte and raise a warning ...
-                    if (index == len(data) - 1) and (data[index] == ord("\n")):
+                    if (index == data_length - 1) and (data[index : index+1] == b"\n"):
                         logger_warning(
                             "Found trailing newline in stream data, check if output is OK", __name__
                         )
