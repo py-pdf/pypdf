@@ -196,6 +196,13 @@ class Transformation:
             matrix[2][1],
         )
 
+    def _to_cm(self) -> str:
+        # Returns the cm operation string for the given transformation matrix
+        return (
+            f"{self.ctm[0]:.4f} {self.ctm[1]:.4f} {self.ctm[2]:.4f} "
+            f"{self.ctm[3]:.4f} {self.ctm[4]:.4f} {self.ctm[5]:.4f} cm"
+        )
+
     def transform(self, m: "Transformation") -> "Transformation":
         """
         Apply one transformation to another.
