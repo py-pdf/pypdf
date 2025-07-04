@@ -1,4 +1,5 @@
 """Test the pypdf.filters module."""
+
 import os
 import shutil
 import string
@@ -8,6 +9,7 @@ from itertools import product as cartesian_product
 from pathlib import Path
 from typing import cast
 from unittest import mock
+from unittest.mock import patch
 
 import pytest
 from PIL import Image, ImageOps
@@ -17,6 +19,7 @@ from pypdf.errors import DependencyError, DeprecationError, PdfReadError, PdfStr
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
+    BrotliDecode,
     CCITParameters,
     CCITTFaxDecode,
     CCITTParameters,
@@ -37,6 +40,12 @@ from pypdf.generic import (
 
 from . import PILContext, get_data_from_url
 from .test_encryption import HAS_AES
+
+try:
+    import brotli  # noqa: F401
+    HAS_BROTLI = True
+except ImportError:
+    HAS_BROTLI = False
 from .test_images import image_similarity
 
 filter_inputs = (
@@ -63,6 +72,52 @@ def test_flate_decode_encode(predictor, s):
     s = s.encode()
     encoded = codec.encode(s)
     assert codec.decode(encoded, DictionaryObject({"/Predictor": predictor})) == s
+
+
+@pytest.mark.parametrize("s", filter_inputs)
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli library not installed")
+def test_brotli_decode_encode(s):
+
+    codec = BrotliDecode()
+    s_bytes = s.encode()
+    encoded = codec.encode(s_bytes)
+    assert encoded != s_bytes  # Ensure encoding actually happened
+    decoded = codec.decode(encoded)
+    assert decoded == s_bytes
+
+
+@patch("pypdf.filters.brotli", None)
+def test_brotli_missing_installation():
+    from pypdf.filters import BrotliDecode, decode_stream_data  # noqa: PLC0415
+
+    # Test direct decode call
+    codec = BrotliDecode()
+    with pytest.raises(ImportError) as exc_info_decode:
+        codec.decode(b"test data")
+    assert "Brotli library not installed" in str(exc_info_decode.value)
+
+    # Test direct encode call
+    with pytest.raises(ImportError) as exc_info_encode:
+        codec.encode(b"test data")
+    assert "Brotli library not installed" in str(exc_info_encode.value)
+
+    # Test call via decode_stream_data
+    stream = DictionaryObject()
+    stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
+    stream._data = b"dummy compressed data"
+    with pytest.raises(ImportError) as exc_info_stream:
+        decode_stream_data(stream)
+    assert "Brotli library not installed" in str(exc_info_stream.value)
+
+
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli library not installed")
+def test_brotli_decode_encode_with_real_module():
+
+    s = b"Hello, Brotli!"
+    codec = BrotliDecode()
+    encoded = codec.encode(s)
+    assert encoded != s  # Ensure encoding actually happened
+    assert codec.decode(encoded) == s
 
 
 def test_flatedecode_unsupported_predictor():
@@ -386,7 +441,9 @@ def test_iss1787():
     obj = data.indirect_reference.get_object()
     obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
     obj.decoded_self = None
-    with pytest.raises(expected_exception=PdfReadError, match="^Unsupported PNG filter 244$"):
+    with pytest.raises(
+        expected_exception=PdfReadError, match="^Unsupported PNG filter 244$"
+    ):
         _ = reader.pages[0].images[0]
 
 
@@ -703,7 +760,9 @@ def test_flate_decode__not_rectangular(caplog):
     decode_parms[NameObject("/Columns")] = NumberObject(4881)
     actual = FlateDecode.decode(data=data, decode_parms=decode_parms)
     actual_image = BytesIO()
-    Image.frombytes(mode="1", size=(4881, 81), data=actual).save(actual_image, format="png")
+    Image.frombytes(mode="1", size=(4881, 81), data=actual).save(
+        actual_image, format="png"
+    )
 
     url = "https://github.com/user-attachments/assets/c5695850-c076-4255-ab72-7c86851a4a04"
     name = "issue3241.png"
@@ -712,6 +771,23 @@ def test_flate_decode__not_rectangular(caplog):
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
 
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli library not installed")
+def test_main_decode_brotli_installed():
+
+    pdf_path = RESOURCE_ROOT / "brotli-test-pdfs" / "minimal-brotli-compressed.pdf"
+
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+
+    # This test specifically exercises the BrotliDecode path in decode_stream_data function
+    # when processing a real PDF with BrotliDecode filter
+    extracted_text = page.extract_text()
+
+    assert extracted_text.strip() == "Hello, Brotli!"
+
+
+def test_brotli_module_importability():
+    assert BrotliDecode is not None
 def test_jbig2decode__binary_errors():
     with mock.patch("pypdf.filters.JBIG2DEC_BINARY", None), \
             pytest.raises(DependencyError, match="jbig2dec binary is not available."):
