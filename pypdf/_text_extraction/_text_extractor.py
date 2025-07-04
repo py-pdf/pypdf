@@ -480,46 +480,6 @@ class TextExtraction:
         except OrientationNotFoundError:
             return
 
-    def _handle_tj(
-        self,
-        text: str,
-        operands: List[Union[str, TextStringObject]],
-        cm_matrix: List[float],
-        tm_matrix: List[float],
-        cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]],
-        orientations: Tuple[int, ...],
-        font_size: float,
-        rtl_dir: bool,
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
-        space_width: float,
-        actual_str_size: Dict[str, float],
-    ) -> Tuple[str, bool, Dict[str, float]]:
-        """Handle text showing operations."""
-        text_operands, is_str_operands = get_text_operands(operands, cm_matrix, tm_matrix, cmap, orientations)
-        if is_str_operands:
-            text += text_operands
-        else:
-            text, rtl_dir = get_display_str(
-                text,
-                cm_matrix,
-                tm_matrix,  # text matrix
-                cmap,
-                text_operands,
-                font_size,
-                rtl_dir,
-                visitor_text,
-            )
-
-        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = self._get_actual_font_widths(
-            cmap,
-            text_operands,
-            font_size,
-            space_width,
-        )
-        actual_str_size["str_widths"] += font_widths
-
-        return text, rtl_dir, actual_str_size
-
     def _get_actual_font_widths(
         self,
         cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]],
@@ -559,3 +519,44 @@ class TextExtraction:
 
         return (font_widths * font_size, space_width * font_size, font_size)
 
+
+
+    def _handle_tj(
+        self,
+        text: str,
+        operands: List[Union[str, TextStringObject]],
+        cm_matrix: List[float],
+        tm_matrix: List[float],
+        cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]],
+        orientations: Tuple[int, ...],
+        font_size: float,
+        rtl_dir: bool,
+        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
+        space_width: float,
+        actual_str_size: Dict[str, float],
+    ) -> Tuple[str, bool, Dict[str, float]]:
+        """Handle text showing operations."""
+        text_operands, is_str_operands = get_text_operands(operands, cm_matrix, tm_matrix, cmap, orientations)
+        if is_str_operands:
+            text += text_operands
+        else:
+            text, rtl_dir = get_display_str(
+                text,
+                cm_matrix,
+                tm_matrix,  # text matrix
+                cmap,
+                text_operands,
+                font_size,
+                rtl_dir,
+                visitor_text,
+            )
+
+        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = self._get_actual_font_widths(
+            cmap,
+            text_operands,
+            font_size,
+            space_width,
+        )
+        actual_str_size["str_widths"] += font_widths
+
+        return text, rtl_dir, actual_str_size
