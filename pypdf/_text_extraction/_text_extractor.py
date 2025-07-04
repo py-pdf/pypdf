@@ -81,54 +81,59 @@ class TextExtraction:
         self.page_obj = page_obj  # Reference to the PageObject for font width maps
         self.obj = obj
         self.pdf = pdf
-        self.orientations = orientations
+
         self.space_width = space_width
         self.content_key = content_key
         self.visitor_operand_before = visitor_operand_before
         self.visitor_operand_after = visitor_operand_after
-        self.visitor_text = visitor_text
+
+        # Matrix state
+        self.cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.cm_stack: List[
+            Tuple[
+                List[float],
+                Tuple[Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]],
+                float,
+                float,
+                float,
+                float,
+                float,
+            ]
+        ] = []
+
+        # Store the last modified matrices; can be an intermediate position
+        self.cm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.tm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+
+        # Store the position at the beginning of building the text
+        self.memo_cm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.memo_tm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+
+        # Font and text scaling state
+        self.char_scale = 1.0
+        self.space_scale = 1.0
+        self._space_width: float = 500.0  # will be set correctly at first Tf
+        self.TL = 0.0
+        self.font_size = 12.0  # init just in case
 
         # Text state
         self.text: str = ""
         self.output: str = ""
         self.rtl_dir: bool = False  # right-to-left
 
-        # Matrix state
-        self.cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        self.tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        self.cm_stack: List[Tuple[Any, ...]] = []
-
-        # Previous matrices for tracking changes
-        self.cm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        self.tm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-
-        # Memo matrices for visitor callbacks
-        self.memo_cm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        self.memo_tm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-
-        # Font and text scaling state
-        self.char_scale: float = 1.0
-        self.space_scale: float = 1.0
-        self._space_width: float = 500.0  # will be set correctly at first Tf
-        self.TL: float = 0.0
-        self.font_size: float = 12.0  # init just in case
-
-        # Character map state
         self.cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]] = (
             "charmap",
             {},
             "NotInitialized",
             None,
         )  # (encoding, CMAP, font resource name, font)
+        self.orientations: Tuple[int, ...] = orientations
+        self.visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None
+        self.cmaps: Dict[str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject]] = {}
 
         # Actual string size tracking
         self._actual_str_size: Dict[str, float] = {"str_widths": 0.0, "space_width": 0.0, "str_height": 0.0}
-
-        # Character maps for fonts
-        self.cmaps: Dict[
-            str,
-            Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject],
-        ] = {}
 
         # Resources dictionary
         self.resources_dict: Optional[DictionaryObject] = None
@@ -231,8 +236,7 @@ class TextExtraction:
         if self.visitor_operand_after is not None:
             self.visitor_operand_after(operator, operands, self.cm_matrix, self.tm_matrix)
 
-    def _compute_str_widths(self, str_widths: float) -> float:
-        """Compute string widths."""
+    def compute_str_widths(self, str_widths: float) -> float:
         return str_widths / 1000
 
     def _flush_text(self) -> None:
@@ -355,14 +359,14 @@ class TextExtraction:
         tx, ty = float(operands[0]), float(operands[1])
         self.tm_matrix[4] += tx * self.tm_matrix[0] + ty * self.tm_matrix[2]
         self.tm_matrix[5] += tx * self.tm_matrix[1] + ty * self.tm_matrix[3]
-        str_widths = self._compute_str_widths(self._actual_str_size["str_widths"])
+        str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
         self._actual_str_size["str_widths"] = 0.0
         self._handle_position_change(str_widths)
 
     def _handle_operation_set_text_matrix(self, operands: List[Any]) -> None:
         """Handle Tm (Set text matrix) operation."""
         self.tm_matrix = [float(operand) for operand in operands[:6]]
-        str_widths = self._compute_str_widths(self._actual_str_size["str_widths"])
+        str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
         self._actual_str_size["str_widths"] = 0.0
         self._handle_position_change(str_widths)
 
@@ -370,7 +374,7 @@ class TextExtraction:
         """Handle T* (Move to next line) operation."""
         self.tm_matrix[4] -= self.TL * self.tm_matrix[2]
         self.tm_matrix[5] -= self.TL * self.tm_matrix[3]
-        str_widths = self._compute_str_widths(self._actual_str_size["str_widths"])
+        str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
         self._actual_str_size["str_widths"] = 0.0
         self._handle_position_change(str_widths)
 
@@ -389,7 +393,7 @@ class TextExtraction:
             self._space_width,
             self._actual_str_size,
         )
-        str_widths = self._compute_str_widths(self._actual_str_size["str_widths"])
+        str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
         self._handle_position_change(str_widths)
 
     def _handle_operation_show_text_with_positioning(self, operands: List[Any]) -> None:
@@ -471,7 +475,7 @@ class TextExtraction:
                 self.font_size,
                 self.visitor_text,
                 str_widths,
-                self._compute_str_widths(self._actual_str_size["space_width"]),
+                self.compute_str_widths(self._actual_str_size["space_width"]),
                 self._actual_str_size["str_height"],
             )
             if self.text == "":
@@ -482,16 +486,15 @@ class TextExtraction:
 
     def _get_actual_font_widths(
         self,
-        cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]],
+        cmap: Tuple[
+            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+        ],
         text_operands: str,
         font_size: float,
         space_width: float,
     ) -> Tuple[float, float, float]:
-        """Get actual font widths for text operands."""
         font_widths: float = 0
         font_name: str = cmap[2]
-
-        # Use the page object's font width maps
         if font_name not in self.page_obj._font_width_maps:
             if cmap[3] is None:
                 font_width_map: Dict[Any, float] = {}
@@ -505,7 +508,6 @@ class TextExtraction:
             if actual_space_width == 0:
                 actual_space_width = space_width
             self.page_obj._font_width_maps[font_name] = (font_width_map, space_char, actual_space_width)
-
         font_width_map = self.page_obj._font_width_maps[font_name][0]
         space_char = self.page_obj._font_width_maps[font_name][1]
         actual_space_width = self.page_obj._font_width_maps[font_name][2]
@@ -516,10 +518,7 @@ class TextExtraction:
                     font_widths += actual_space_width
                     continue
                 font_widths += compute_font_width(font_width_map, char)
-
         return (font_widths * font_size, space_width * font_size, font_size)
-
-
 
     def _handle_tj(
         self,
@@ -527,7 +526,9 @@ class TextExtraction:
         operands: List[Union[str, TextStringObject]],
         cm_matrix: List[float],
         tm_matrix: List[float],
-        cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]],
+        cmap: Tuple[
+            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+        ],
         orientations: Tuple[int, ...],
         font_size: float,
         rtl_dir: bool,
@@ -535,8 +536,8 @@ class TextExtraction:
         space_width: float,
         actual_str_size: Dict[str, float],
     ) -> Tuple[str, bool, Dict[str, float]]:
-        """Handle text showing operations."""
-        text_operands, is_str_operands = get_text_operands(operands, cm_matrix, tm_matrix, cmap, orientations)
+        text_operands, is_str_operands = get_text_operands(
+            operands, cm_matrix, tm_matrix, cmap, orientations)
         if is_str_operands:
             text += text_operands
         else:
@@ -550,13 +551,8 @@ class TextExtraction:
                 rtl_dir,
                 visitor_text,
             )
-
-        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = self._get_actual_font_widths(
-            cmap,
-            text_operands,
-            font_size,
-            space_width,
-        )
+        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
+            self._get_actual_font_widths(cmap, text_operands, font_size, space_width))
         actual_str_size["str_widths"] += font_widths
 
         return text, rtl_dir, actual_str_size
