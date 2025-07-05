@@ -98,8 +98,8 @@ class TextExtraction:
         self.operation_handlers = {
             b"BT": self._handle_bt,
             b"ET": self._handle_et,
-            b"q": self._handle_q,
-            b"Q": self._handle_Q,
+            b"q": self._handle_save_graphics_state,
+            b"Q": self._handle_restore_graphics_state,
             b"cm": self._handle_cm,
             b"Tz": self._handle_tz,
             b"Tw": self._handle_tw,
@@ -257,7 +257,7 @@ class TextExtraction:
         """Handle ET (End Text) operation - Table 5.4 page 405."""
         self._flush_text()
 
-    def _handle_q(self, operands: List[Any]) -> None:
+    def _handle_save_graphics_state(self, operands: List[Any]) -> None:
         """Handle q (Save graphics state) operation - Table 4.7 page 219."""
         self.cm_stack.append(
             (
@@ -271,7 +271,7 @@ class TextExtraction:
             )
         )
 
-    def _handle_Q(self, operands: List[Any]) -> None:
+    def _handle_restore_graphics_state(self, operands: List[Any]) -> None:
         """Handle Q (Restore graphics state) operation - Table 4.7 page 219."""
         try:
             (
