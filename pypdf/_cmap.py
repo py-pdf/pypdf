@@ -5,6 +5,7 @@ from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
+from ._codecs.core_fontmetrics import FONT_METRICS
 from ._utils import logger_error, logger_warning
 from .generic import (
     ArrayObject,
@@ -476,6 +477,10 @@ def build_font_width_map(
                 # The PDF structure is invalid. The array is too small
                 # for the specified font width.
                 pass
+    else:
+        font_name = str(ft["/BaseFont"])[1:]
+        if font_name in FONT_METRICS:
+            font_width_map = cast(Dict[str, float], FONT_METRICS[font_name][1])
     if is_null_or_none(font_width_map.get("default")):
         font_width_map["default"] = default_font_width if default_font_width else 0.0
     return font_width_map
