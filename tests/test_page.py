@@ -344,10 +344,10 @@ def test_page_rotation():
     # test transfer_rotate_to_content
     page.rotation -= 90
     page.transfer_rotation_to_content()
-    assert math.isclose(float(page.mediabox.left), 0, abs_tol=0.1)
-    assert math.isclose(float(page.mediabox.bottom), 0, abs_tol=0.1)
-    assert math.isclose(float(page.mediabox.right), 792, abs_tol=0.1)
-    assert math.isclose(float(page.mediabox.top), 612, abs_tol=0.1)
+    assert math.isclose(page.mediabox.left, 0, abs_tol=0.1)
+    assert math.isclose(page.mediabox.bottom, 0, abs_tol=0.1)
+    assert math.isclose(page.mediabox.right, 792, abs_tol=0.1)
+    assert math.isclose(page.mediabox.top, 612, abs_tol=0.1)
 
 
 def test_page_indirect_rotation():
