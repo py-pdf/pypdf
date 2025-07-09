@@ -205,7 +205,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 54  # Recommended: 10
+max-complexity = 37  # Recommended: 10
 
 [tool.ruff.lint.per-file-ignores]
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
