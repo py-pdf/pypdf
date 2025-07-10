@@ -572,3 +572,12 @@ def test_jbig2decode__jbig2globals():
 
     # Wrong image: 0.9618265964800714
     assert image_similarity(image.image, img) >= 0.999
+
+
+@pytest.mark.enable_socket
+def test_get_ids_image__resources_is_none():
+    url = "https://github.com/user-attachments/files/18381726/tika-957721.pdf"
+    name = "tika-957721.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[2]
+    assert list(page.images.items()) == []
