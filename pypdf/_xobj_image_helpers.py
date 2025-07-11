@@ -15,6 +15,7 @@ from .generic import (
     EncodedStreamObject,
     NullObject,
     TextStringObject,
+    is_null_or_none,
 )
 
 if sys.version_info[:2] >= (3, 10):
@@ -54,7 +55,7 @@ def _get_imagemode(
         raise PdfReadError(
             "Color spaces nested too deeply. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH."
         )
-    if isinstance(color_space, NullObject):
+    if is_null_or_none(color_space):
         return "", False
     color_space_str: str = ""
     if isinstance(color_space, str):
@@ -156,6 +157,24 @@ def _extended_image_frombytes(
     return img
 
 
+def __handle_flate__indexed(color_space: ArrayObject) -> Tuple[Any, Any, Any, Any]:
+    count = len(color_space)
+    if count == 4:
+        color_space, base, hival, lookup = (value.get_object() for value in color_space)
+        return color_space, base, hival, lookup
+
+    # Deal with strange AutoDesk files where `base` and `hival` look like this:
+    #   /DeviceRGB\x00255
+    element1 = color_space[1]
+    element1 = element1 if isinstance(element1, str) else element1.get_object()
+    if count == 3 and "\x00" in element1:
+        color_space, lookup = color_space[0].get_object(), color_space[2].get_object()
+        base, hival = element1.split("\x00")
+        hival = int(hival)
+        return color_space, base, hival, lookup
+    raise PdfReadError(f"Expected color space with 4 values, got {count}: {color_space}")
+
+
 def _handle_flate(
     size: Tuple[int, int],
     data: bytes,
@@ -174,7 +193,7 @@ def _handle_flate(
     base: Any
     hival: Any
     if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
-        color_space, base, hival, lookup = (value.get_object() for value in color_space)
+        color_space, base, hival, lookup = __handle_flate__indexed(color_space)
     if mode == "2bits":
         mode = "P"
         data = bits2byte(data, size, 2)
@@ -365,7 +384,7 @@ def _get_mode_and_invert_color(
             if (
                 colors == 1
                 and (
-                    not isinstance(color_space, NullObject)
+                    not is_null_or_none(color_space)
                     and "Gray" not in color_space
                 )
             )
