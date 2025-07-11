@@ -1614,8 +1614,9 @@ def test_add_apstream_object():
     contents_obj = page[NameObject("/Contents")]
     stream = contents_obj.get_object()
     assert isinstance(stream, StreamObject)
-    expect = b"q\n1.0000 0.0000 0.0000 1.0000 200.0000 200.0000 cm\n/Fm_AA2342__________aa_-_ Do\nQ"
-    assert expect == stream._data
+    assert stream.get_data() == (
+        b"q\n1.0000 0.0000 0.0000 1.0000 200.0000 200.0000 cm\n/Fm_AA2342__________aa_-_ Do\nQ"
+    )
 
 
 def test_merge_content_stream_to_page():
