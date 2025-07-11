@@ -924,7 +924,7 @@ class PdfWriter(PdfDocCommon):
             object_name: The name of the appearance stream.
             x_offset: The horizontal offset for the appearance stream.
             y_offset: The vertical offset for the appearance stream.
-            font_res:The appearance stream's font resource (if given).
+            font_res: The appearance stream's font resource (if given).
         """
         # Prepare XObject resource dictionary on the page
         pg_res = cast(DictionaryObject, page[PG.RESOURCES])
