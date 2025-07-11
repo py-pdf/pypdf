@@ -608,12 +608,14 @@ class PageObject(DictionaryObject):
         if ancest is None:
             ancest = []
         lst: List[Union[str, List[str]]] = []
-        if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
-            DictionaryObject, obj[PG.RESOURCES]
+        if (
+                PG.RESOURCES not in obj or
+                is_null_or_none(resources := obj[PG.RESOURCES]) or
+                RES.XOBJECT not in cast(DictionaryObject, resources)
         ):
             return [] if self.inline_images is None else list(self.inline_images.keys())
 
-        x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
+        x_object = resources[RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
             if not isinstance(x_object[o], StreamObject):
                 continue
