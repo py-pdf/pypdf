@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752226222641,
+  "lastUpdate": 1752227945222,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -78479,6 +78479,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005078852009916156",
             "extra": "mean: 726.7502598000078 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d76976b7d7981e8200f6eb5875775888579cea85",
+          "message": "ENH: Implement flattening for writer (#3312)\n\nCloses #232.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2025-07-11T11:56:39+02:00",
+          "tree_id": "5152cb0b1c3b809c879beef369b937a70fcf0c41",
+          "url": "https://github.com/py-pdf/pypdf/commit/d76976b7d7981e8200f6eb5875775888579cea85"
+        },
+        "date": 1752227941709,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5031278377525186,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009390267130228223",
+            "extra": "mean: 285.459179999998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.680914231539838,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01709908219170514",
+            "extra": "mean: 73.0945303124999 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27488331787695514,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01184089781538814",
+            "extra": "mean: 3.637907195399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.366620465072522,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006638653376391708",
+            "extra": "mean: 54.44659794117717 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08313722880156575,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03975156354436709",
+            "extra": "mean: 12.028305663000001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3826832482304074,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0022137840023945783",
+            "extra": "mean: 723.2314424000037 msec\nrounds: 5"
           }
         ]
       }
