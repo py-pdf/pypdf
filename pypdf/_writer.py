@@ -945,8 +945,10 @@ class PdfWriter(PdfDocCommon):
         if xobject_name not in pg_xo_res:
             pg_xo_res[xobject_name] = xobject_ref
         else:
-            logger_warning(f"XObject {xobject_name!r} already added to page resources. This might be an issue.",
-                           __name__)
+            logger_warning(
+                f"XObject {xobject_name!r} already added to page resources. This might be an issue.",
+                __name__
+            )
         xobject_cm = Transformation().translate(x_offset, y_offset)
         xobject_drawing_commands = f"q\n{xobject_cm._to_cm()}\n{xobject_name} Do\nQ".encode()
         self._merge_content_stream_to_page(page, xobject_drawing_commands)
