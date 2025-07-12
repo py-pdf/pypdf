@@ -1101,13 +1101,13 @@ class EncodedStreamObject(StreamObject):
         from ..filters import decode_stream_data  # noqa: PLC0415
 
         if self.decoded_self is not None:
-            # cached version of decoded object
+            # Cached version of decoded object
             return self.decoded_self.get_data()
-        # create decoded object
-        decoded = DecodedStreamObject()
 
+        # Create decoded object
+        decoded = DecodedStreamObject()
         decoded.set_data(decode_stream_data(self))
-        for key, value in list(self.items()):
+        for key, value in self.items():
             if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                 decoded[key] = value
         self.decoded_self = decoded
