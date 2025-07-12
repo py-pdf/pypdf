@@ -4427,3 +4427,17 @@ FONT_METRICS: Dict[str, Font] = {
     ),
 }
 
+
+# Add aliases per table H.3 on pp. 1109-1110 of the PDF 1.7 reference
+FONT_METRICS["Arial"] = FONT_METRICS["Helvetica"]
+FONT_METRICS["Arial,Italic"] = FONT_METRICS["Helvetica-Oblique"]
+FONT_METRICS["Arial,Bold"] = FONT_METRICS["Helvetica-Bold"]
+FONT_METRICS["Arial,BoldItalic"] = FONT_METRICS["Helvetica-BoldOblique"]
+FONT_METRICS["CourierNew"] = FONT_METRICS["Courier"]
+FONT_METRICS["CourierNew,Italic"] = FONT_METRICS["Courier-Oblique"]
+FONT_METRICS["CourierNew,Bold"] = FONT_METRICS["Courier-Bold"]
+FONT_METRICS["CourierNew,BoldItalic"] = FONT_METRICS["Courier-BoldOblique"]
+FONT_METRICS["TimesNewRoman"] = FONT_METRICS["Times-Roman"]
+FONT_METRICS["TimesNewRoman,Italic"] = FONT_METRICS["Times-Italic"]
+FONT_METRICS["TimesNewRoman,Bold"] = FONT_METRICS["Times-Bold"]
+FONT_METRICS["TimesNewRoman,BoldItalic"] = FONT_METRICS["Times-BoldItalic"]
