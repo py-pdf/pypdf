@@ -86,6 +86,17 @@ def test_embedded_file_size_setter():
     assert embedded_file.size == 2048
 
 
+def test_embedded_file_size_getter():
+    writer = PdfWriter()
+    embedded_file = writer.add_attachment("test.txt", b"content")
+
+    embedded_file._ensure_params()[NameObject("/Size")] = NullObject()
+    assert embedded_file.size is None
+
+    embedded_file._ensure_params()[NameObject("/Size")] = NumberObject(4096)
+    retrieved_size = embedded_file.size
+    assert retrieved_size == 4096
+
 def test_embedded_file_creation_date_setter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")

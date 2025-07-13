@@ -19,6 +19,7 @@ from pypdf._utils import (
     classproperty,
     deprecate_with_replacement,
     deprecation_no_replacement,
+    format_datetime_to_pdf,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -364,6 +365,26 @@ def test_parse_datetime_err():
     assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
     assert parse_iso8824_date("D:20210408054711").tzinfo is None
 
+
+def test_format_datetime_to_pdf():
+    """Test format_datetime_to_pdf function with timezone handling."""
+    from datetime import datetime, timedelta, timezone
+
+    dt_naive = datetime(2021, 3, 18, 12, 7, 56)
+    result = format_datetime_to_pdf(dt_naive)
+    assert result == "D:20210318120756"
+
+    dt_utc = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone.utc)
+    result = format_datetime_to_pdf(dt_utc)
+    assert result == "D:20210318120756+00'00'"
+
+    dt_positive = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30)))
+    result = format_datetime_to_pdf(dt_positive)
+    assert result == "D:20210318120756+02'30'"
+
+    dt_negative = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30)))
+    result = format_datetime_to_pdf(dt_negative)
+    assert result == "D:20210318120756-05'30'"
 
 def test_is_sublist():
     # Basic checks:
