@@ -7,8 +7,11 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import (
+    ByteStringObject,
     NameObject,
     NullObject,
+    NumberObject,
+    TextStringObject,
     create_string_object,
 )
 
@@ -48,6 +51,10 @@ def test_embedded_file_description_setter():
     embedded_file.description = None
     assert embedded_file.pdf_object[NameObject("/Desc")] == NullObject()
 
+    pdf_string = TextStringObject("PDF Description")
+    embedded_file.description = pdf_string
+    assert embedded_file.description == "PDF Description"
+
 
 def test_embedded_file_subtype_setter():
     writer = PdfWriter()
@@ -59,6 +66,10 @@ def test_embedded_file_subtype_setter():
     embedded_file.subtype = None
     assert embedded_file._embedded_file[NameObject("/Subtype")] == NullObject()
 
+    name_obj = NameObject("/application#2Fjson")
+    embedded_file.subtype = name_obj
+    assert embedded_file.subtype == "/application#2Fjson"
+
 
 def test_embedded_file_size_setter():
     writer = PdfWriter()
@@ -69,6 +80,10 @@ def test_embedded_file_size_setter():
 
     embedded_file.size = None
     assert embedded_file._ensure_params()[NameObject("/Size")] == NullObject()
+
+    num_obj = NumberObject(2048)
+    embedded_file.size = num_obj
+    assert embedded_file.size == 2048
 
 
 def test_embedded_file_creation_date_setter():
@@ -82,6 +97,10 @@ def test_embedded_file_creation_date_setter():
     embedded_file.creation_date = None
     assert embedded_file._ensure_params()[NameObject("/CreationDate")] == NullObject()
 
+    date_string = TextStringObject("D:20230101120000")
+    embedded_file.creation_date = date_string
+    assert embedded_file.creation_date is not None
+
 
 def test_embedded_file_modification_date_setter():
     writer = PdfWriter()
@@ -94,6 +113,10 @@ def test_embedded_file_modification_date_setter():
     embedded_file.modification_date = None
     assert embedded_file._ensure_params()[NameObject("/ModDate")] == NullObject()
 
+    date_string = TextStringObject("D:20230102120000")
+    embedded_file.modification_date = date_string
+    assert embedded_file.modification_date is not None
+
 
 def test_embedded_file_checksum_setter():
     writer = PdfWriter()
@@ -105,6 +128,10 @@ def test_embedded_file_checksum_setter():
 
     embedded_file.checksum = None
     assert embedded_file._ensure_params()[NameObject("/CheckSum")] == NullObject()
+
+    byte_string = ByteStringObject(b"pdf_checksum")
+    embedded_file.checksum = byte_string
+    assert embedded_file.checksum == b"pdf_checksum"
 
 
 def test_embedded_file_associated_file_relationship_setter():
