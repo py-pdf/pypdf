@@ -123,7 +123,6 @@ def format_datetime_to_pdf(dt: datetime) -> str:
     Returns:
         A date string in PDF format.
     """
-    # Convert datetime to PDF date string format
     date_str = dt.strftime("D:%Y%m%d%H%M%S")
     if dt.tzinfo is not None:
         offset = dt.utcoffset()
