@@ -18,6 +18,7 @@ from pypdf.generic import (
     PdfObject,
     StreamObject,
     TextStringObject,
+    is_null_or_none,
 )
 
 if TYPE_CHECKING:
@@ -112,7 +113,9 @@ class EmbeddedFile:
             # PDF 2.0 reference, table 43:
             #   > A PDF reader shall use the value of the UF key, when present, instead of the F key.
             if key in self.pdf_object:
-                return cast(str, self.pdf_object[key].get_object())
+                value = self.pdf_object[key].get_object()
+                if not is_null_or_none(value):
+                    return cast(str, value)
         return None
 
     @alternative_name.setter
@@ -130,7 +133,10 @@ class EmbeddedFile:
     @property
     def description(self) -> str | None:
         """Retrieve the description."""
-        return self.pdf_object.get(FileSpecificationDictionaryEntries.DESC)
+        value = self.pdf_object.get(FileSpecificationDictionaryEntries.DESC)
+        if is_null_or_none(value):
+            return None
+        return value
 
     @description.setter
     def description(self, value: str | TextStringObject | None) -> None:
@@ -200,7 +206,10 @@ class EmbeddedFile:
     @property
     def size(self) -> int | None:
         """Retrieve the size of the uncompressed file in bytes."""
-        return self._params.get("/Size")
+        value = self._params.get("/Size")
+        if is_null_or_none(value):
+            return None
+        return value
 
     @size.setter
     def size(self, value: int | NumberObject | None) -> None:
