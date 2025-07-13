@@ -744,7 +744,7 @@ class PdfWriter(PdfDocCommon):
         )
         js_list.append(self._add_object(js))
 
-    def add_attachment(self, name: str, content: Union[str, bytes]) -> "EmbeddedFile":
+    def add_attachment(self, filename: str, data: Union[str, bytes]) -> "EmbeddedFile":
         """
         Embed a file inside the PDF.
 
@@ -753,15 +753,15 @@ class PdfWriter(PdfDocCommon):
         Section 7.11.3
 
         Args:
-            name: The filename to display.
-            content: The data in the file.
+            filename: The filename to display.
+            data: The data in the file.
 
         Returns:
             EmbeddedFile instance for the newly created embedded file.
 
         """
         from pypdf.generic import EmbeddedFile
-        return EmbeddedFile.create_new(self, name, content)
+        return EmbeddedFile.create_new(self, filename, data)
 
     def append_pages_from_reader(
         self,
