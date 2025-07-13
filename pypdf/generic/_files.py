@@ -2,10 +2,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generator, Union, cast
 
-from pypdf._utils import parse_iso8824_date
+from pypdf._utils import format_datetime_to_pdf, parse_iso8824_date
+from pypdf.constants import CatalogAttributes as CA
 from pypdf.constants import FileSpecificationDictionaryEntries
+from pypdf.constants import PageAttributes as PA
 from pypdf.errors import PdfReadError
-from pypdf.generic import ArrayObject, DictionaryObject, StreamObject
+from pypdf.generic import (
+    ArrayObject,
+    ByteStringObject,
+    DecodedStreamObject,
+    DictionaryObject,
+    NameObject,
+    NumberObject,
+    StreamObject,
+    TextStringObject,
+    create_string_object,
+)
 
 if TYPE_CHECKING:
     import datetime
@@ -43,10 +55,6 @@ class EmbeddedFile:
         Returns:
             EmbeddedFile instance for the newly created embedded file.
         """
-        from pypdf.constants import CatalogAttributes as CA
-        from pypdf.constants import PageAttributes as PA
-        from pypdf.generic import DecodedStreamObject, NameObject, create_string_object
-
         # Convert string content to bytes if needed
         if isinstance(content, str):
             content = content.encode("latin-1")
@@ -103,8 +111,6 @@ class EmbeddedFile:
     @alternative_name.setter
     def alternative_name(self, value: Union[str, None]) -> None:
         """Set the alternative name (file specification)."""
-        from pypdf.generic import NameObject, create_string_object
-
         if value is None:
             # Remove UF key if it exists
             if FileSpecificationDictionaryEntries.UF in self.pdf_object:
@@ -121,8 +127,6 @@ class EmbeddedFile:
     @description.setter
     def description(self, value: Union[str, None]) -> None:
         """Set the description."""
-        from pypdf.generic import NameObject, create_string_object
-
         if value is None:
             if FileSpecificationDictionaryEntries.DESC in self.pdf_object:
                 del self.pdf_object[FileSpecificationDictionaryEntries.DESC]
@@ -137,8 +141,6 @@ class EmbeddedFile:
     @associated_file_relationship.setter
     def associated_file_relationship(self, value: str) -> None:
         """Set the relationship of the referring document to this embedded file."""
-        from pypdf.generic import NameObject
-
         self.pdf_object[NameObject("/AFRelationship")] = NameObject(value)
 
     @property
@@ -159,8 +161,6 @@ class EmbeddedFile:
 
     def _ensure_params(self) -> DictionaryObject:
         """Ensure the /Params dictionary exists and return it."""
-        from pypdf.generic import NameObject
-
         embedded_file = self._embedded_file
         if "/Params" not in embedded_file:
             embedded_file[NameObject("/Params")] = DictionaryObject()
@@ -174,8 +174,6 @@ class EmbeddedFile:
     @subtype.setter
     def subtype(self, value: Union[str, None]) -> None:
         """Set the subtype. This should be a MIME media type, prefixed by a slash."""
-        from pypdf.generic import NameObject
-
         embedded_file = self._embedded_file
         if value is None:
             if "/Subtype" in embedded_file:
@@ -196,8 +194,6 @@ class EmbeddedFile:
     @size.setter
     def size(self, value: Union[int, None]) -> None:
         """Set the size of the uncompressed file in bytes."""
-        from pypdf.generic import NameObject, NumberObject
-
         params = self._ensure_params()
         if value is None:
             if "/Size" in params:
@@ -213,23 +209,12 @@ class EmbeddedFile:
     @creation_date.setter
     def creation_date(self, value: Union[datetime.datetime, None]) -> None:
         """Set the file creation datetime."""
-        from pypdf.generic import NameObject, TextStringObject
-
         params = self._ensure_params()
         if value is None:
             if "/CreationDate" in params:
                 del params["/CreationDate"]
         else:
-            # Convert datetime to PDF date string format
-            date_str = value.strftime("D:%Y%m%d%H%M%S")
-            if value.tzinfo is not None:
-                offset = value.utcoffset()
-                if offset is not None:
-                    total_seconds = int(offset.total_seconds())
-                    hours, remainder = divmod(abs(total_seconds), 3600)
-                    minutes = remainder // 60
-                    sign = "+" if total_seconds >= 0 else "-"
-                    date_str += f"{sign}{hours:02d}'{minutes:02d}'"
+            date_str = format_datetime_to_pdf(value)
             params[NameObject("/CreationDate")] = TextStringObject(date_str)
 
     @property
@@ -240,23 +225,12 @@ class EmbeddedFile:
     @modification_date.setter
     def modification_date(self, value: Union[datetime.datetime, None]) -> None:
         """Set the datetime of the last file modification."""
-        from pypdf.generic import NameObject, TextStringObject
-
         params = self._ensure_params()
         if value is None:
             if "/ModDate" in params:
                 del params["/ModDate"]
         else:
-            # Convert datetime to PDF date string format
-            date_str = value.strftime("D:%Y%m%d%H%M%S")
-            if value.tzinfo is not None:
-                offset = value.utcoffset()
-                if offset is not None:
-                    total_seconds = int(offset.total_seconds())
-                    hours, remainder = divmod(abs(total_seconds), 3600)
-                    minutes = remainder // 60
-                    sign = "+" if total_seconds >= 0 else "-"
-                    date_str += f"{sign}{hours:02d}'{minutes:02d}'"
+            date_str = format_datetime_to_pdf(value)
             params[NameObject("/ModDate")] = TextStringObject(date_str)
 
     @property
@@ -267,8 +241,6 @@ class EmbeddedFile:
     @checksum.setter
     def checksum(self, value: Union[bytes, None]) -> None:
         """Set the MD5 checksum of the (uncompressed) file."""
-        from pypdf.generic import ByteStringObject, NameObject
-
         params = self._ensure_params()
         if value is None:
             if "/CheckSum" in params:
