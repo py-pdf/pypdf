@@ -41,8 +41,13 @@ class EmbeddedFile:
             name: The (primary) name as provided in the name tree.
             pdf_object: The corresponding PDF object to allow retrieving further data.
         """
-        self.name = name
+        self._name = name
         self.pdf_object = pdf_object
+
+    @property
+    def name(self) -> str:
+        """The (primary) name of the embedded file as provided in the name tree."""
+        return self._name
 
     @classmethod
     def _create_new(cls, writer: PdfWriter, name: str, content: Union[str, bytes]) -> EmbeddedFile:
