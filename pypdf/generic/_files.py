@@ -9,6 +9,7 @@ from pypdf.generic import ArrayObject, DictionaryObject, StreamObject
 
 if TYPE_CHECKING:
     import datetime
+
     from pypdf._writer import PdfWriter
 
 
@@ -30,7 +31,7 @@ class EmbeddedFile:
         self.pdf_object = pdf_object
 
     @classmethod
-    def create_new(cls, writer: "PdfWriter", name: str, content: Union[str, bytes]) -> "EmbeddedFile":
+    def create_new(cls, writer: PdfWriter, name: str, content: Union[str, bytes]) -> EmbeddedFile:
         """
         Create a new embedded file and add it to the PdfWriter.
 
@@ -42,22 +43,23 @@ class EmbeddedFile:
         Returns:
             EmbeddedFile instance for the newly created embedded file.
         """
+        from pypdf.constants import CatalogAttributes as CA
+        from pypdf.constants import PageAttributes as PA
         from pypdf.generic import DecodedStreamObject, NameObject, create_string_object
-        from pypdf.constants import PageAttributes as PA, CatalogAttributes as CA
-        
+
         # Convert string content to bytes if needed
         if isinstance(content, str):
             content = content.encode("latin-1")
-        
+
         # Create the file entry (the actual embedded file stream)
         file_entry = DecodedStreamObject()
         file_entry.set_data(content)
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
-        
+
         # Create the /EF entry
         ef_entry = DictionaryObject()
         ef_entry.update({NameObject("/F"): writer._add_object(file_entry)})
-        
+
         # Create the filespec dictionary
         filespec = DictionaryObject()
         filespec.update(
@@ -67,11 +69,11 @@ class EmbeddedFile:
                 NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
             }
         )
-        
+
         # Add to the catalog's names tree
         if CA.NAMES not in writer._root_object:
             writer._root_object[NameObject(CA.NAMES)] = writer._add_object(DictionaryObject())
-        
+
         names_dict = cast(DictionaryObject, writer._root_object[CA.NAMES])
         if "/EmbeddedFiles" not in names_dict:
             embedded_files_names_dictionary = DictionaryObject(
@@ -80,11 +82,11 @@ class EmbeddedFile:
             names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
         else:
             embedded_files_names_dictionary = cast(DictionaryObject, names_dict["/EmbeddedFiles"])
-        
+
         # Add the name and filespec to the names array
         names_array = cast(ArrayObject, embedded_files_names_dictionary[CA.NAMES])
         names_array.extend([create_string_object(name), filespec])
-        
+
         # Return an EmbeddedFile instance
         return cls(name=name, pdf_object=filespec)
 
@@ -101,8 +103,8 @@ class EmbeddedFile:
     @alternative_name.setter
     def alternative_name(self, value: Union[str, None]) -> None:
         """Set the alternative name (file specification)."""
-        from pypdf.generic import create_string_object, NameObject
-        
+        from pypdf.generic import NameObject, create_string_object
+
         if value is None:
             # Remove UF key if it exists
             if FileSpecificationDictionaryEntries.UF in self.pdf_object:
@@ -119,8 +121,8 @@ class EmbeddedFile:
     @description.setter
     def description(self, value: Union[str, None]) -> None:
         """Set the description."""
-        from pypdf.generic import create_string_object, NameObject
-        
+        from pypdf.generic import NameObject, create_string_object
+
         if value is None:
             if FileSpecificationDictionaryEntries.DESC in self.pdf_object:
                 del self.pdf_object[FileSpecificationDictionaryEntries.DESC]
@@ -136,7 +138,7 @@ class EmbeddedFile:
     def associated_file_relationship(self, value: str) -> None:
         """Set the relationship of the referring document to this embedded file."""
         from pypdf.generic import NameObject
-        
+
         self.pdf_object[NameObject("/AFRelationship")] = NameObject(value)
 
     @property
@@ -158,7 +160,7 @@ class EmbeddedFile:
     def _ensure_params(self) -> DictionaryObject:
         """Ensure the /Params dictionary exists and return it."""
         from pypdf.generic import NameObject
-        
+
         embedded_file = self._embedded_file
         if "/Params" not in embedded_file:
             embedded_file[NameObject("/Params")] = DictionaryObject()
@@ -173,7 +175,7 @@ class EmbeddedFile:
     def subtype(self, value: Union[str, None]) -> None:
         """Set the subtype. This should be a MIME media type, prefixed by a slash."""
         from pypdf.generic import NameObject
-        
+
         embedded_file = self._embedded_file
         if value is None:
             if "/Subtype" in embedded_file:
@@ -195,7 +197,7 @@ class EmbeddedFile:
     def size(self, value: Union[int, None]) -> None:
         """Set the size of the uncompressed file in bytes."""
         from pypdf.generic import NameObject, NumberObject
-        
+
         params = self._ensure_params()
         if value is None:
             if "/Size" in params:
@@ -209,10 +211,10 @@ class EmbeddedFile:
         return parse_iso8824_date(self._params.get("/CreationDate"))
 
     @creation_date.setter
-    def creation_date(self, value: Union["datetime.datetime", None]) -> None:
+    def creation_date(self, value: Union[datetime.datetime, None]) -> None:
         """Set the file creation datetime."""
         from pypdf.generic import NameObject, TextStringObject
-        
+
         params = self._ensure_params()
         if value is None:
             if "/CreationDate" in params:
@@ -226,7 +228,7 @@ class EmbeddedFile:
                     total_seconds = int(offset.total_seconds())
                     hours, remainder = divmod(abs(total_seconds), 3600)
                     minutes = remainder // 60
-                    sign = '+' if total_seconds >= 0 else '-'
+                    sign = "+" if total_seconds >= 0 else "-"
                     date_str += f"{sign}{hours:02d}'{minutes:02d}'"
             params[NameObject("/CreationDate")] = TextStringObject(date_str)
 
@@ -236,10 +238,10 @@ class EmbeddedFile:
         return parse_iso8824_date(self._params.get("/ModDate"))
 
     @modification_date.setter
-    def modification_date(self, value: Union["datetime.datetime", None]) -> None:
+    def modification_date(self, value: Union[datetime.datetime, None]) -> None:
         """Set the datetime of the last file modification."""
         from pypdf.generic import NameObject, TextStringObject
-        
+
         params = self._ensure_params()
         if value is None:
             if "/ModDate" in params:
@@ -253,7 +255,7 @@ class EmbeddedFile:
                     total_seconds = int(offset.total_seconds())
                     hours, remainder = divmod(abs(total_seconds), 3600)
                     minutes = remainder // 60
-                    sign = '+' if total_seconds >= 0 else '-'
+                    sign = "+" if total_seconds >= 0 else "-"
                     date_str += f"{sign}{hours:02d}'{minutes:02d}'"
             params[NameObject("/ModDate")] = TextStringObject(date_str)
 
@@ -265,8 +267,8 @@ class EmbeddedFile:
     @checksum.setter
     def checksum(self, value: Union[bytes, None]) -> None:
         """Set the MD5 checksum of the (uncompressed) file."""
-        from pypdf.generic import NameObject, ByteStringObject
-        
+        from pypdf.generic import ByteStringObject, NameObject
+
         params = self._ensure_params()
         if value is None:
             if "/CheckSum" in params:
