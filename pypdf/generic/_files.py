@@ -45,7 +45,7 @@ class EmbeddedFile:
         self.pdf_object = pdf_object
 
     @classmethod
-    def create_new(cls, writer: PdfWriter, name: str, content: Union[str, bytes]) -> EmbeddedFile:
+    def _create_new(cls, writer: PdfWriter, name: str, content: Union[str, bytes]) -> EmbeddedFile:
         """
         Create a new embedded file and add it to the PdfWriter.
 

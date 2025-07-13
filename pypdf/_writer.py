@@ -761,7 +761,7 @@ class PdfWriter(PdfDocCommon):
 
         """
         from pypdf.generic import EmbeddedFile
-        return EmbeddedFile.create_new(self, filename, data)
+        return EmbeddedFile._create_new(self, filename, data)
 
     def append_pages_from_reader(
         self,
