@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## Version 5.8.0, 2025-07-13
+
+### New Features (ENH)
+- Implement flattening for writer (#3312)
+
+### Bug Fixes (BUG)
+- Unterminated object when using PdfWriter with incremental=True (#3345)
+
+### Robustness (ROB)
+- Resolve some image extraction edge cases (#3371)
+- Ignore faulty trailing newline during RLE decoding (#3355)
+- Gracefully handle odd-length strings in parse_bfchar (#3348)
+
+### Developer Experience (DEV)
+- Modernize license specifiers (#3338)
+
+### Maintenance (MAINT)
+- Reduce max-complexity of tool.ruff.lint.mccabe (#3365)
+- Refactor text extraction code
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.7.0...5.8.0)
+
 ## Version 5.7.0, 2025-06-29
 
 ### Performance Improvements (PI)
