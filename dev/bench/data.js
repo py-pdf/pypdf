@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752399509124,
+  "lastUpdate": 1752411173942,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -78611,6 +78611,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0010886169769664306",
             "extra": "mean: 725.0133526000127 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "76759bde453509ae8d6c744777679037810fc3bf",
+          "message": "REL: 5.8.0\n\n## What's new\n\n### New Features (ENH)\n- Implement flattening for writer (#3312) by @PJBrs\n\n### Bug Fixes (BUG)\n- Unterminated object when using PdfWriter with incremental=True (#3345) by @m32\n\n### Robustness (ROB)\n- Resolve some image extraction edge cases (#3371) by @stefan6419846\n- Ignore faulty trailing newline during RLE decoding (#3355) by @henningkoertelgmg\n- Gracefully handle odd-length strings in parse_bfchar (#3348) by @stefan6419846\n\n### Developer Experience (DEV)\n- Modernize license specifiers (#3338) by @stefan6419846\n\n### Maintenance (MAINT)\n- Reduce max-complexity of tool.ruff.lint.mccabe (#3365) by @j-t-1\n- Refactor text extraction code by @MartinThoma\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.7.0...5.8.0)",
+          "timestamp": "2025-07-13T14:49:56+02:00",
+          "tree_id": "81e8bec5cf982f68db0ef37ef74ab9e130cb070b",
+          "url": "https://github.com/py-pdf/pypdf/commit/76759bde453509ae8d6c744777679037810fc3bf"
+        },
+        "date": 1752411170330,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5242426328220575,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008312453641937738",
+            "extra": "mean: 283.7489083999998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.479426529776681,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00672311616872705",
+            "extra": "mean: 64.60187643750048 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.274097942562301,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012812071082853758",
+            "extra": "mean: 3.6483309238000032 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.27843999006834,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007861525413512818",
+            "extra": "mean: 54.709264058823074 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08292739438499079,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13510585255498084",
+            "extra": "mean: 12.058741353400006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3323053602690824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0041399580115623605",
+            "extra": "mean: 750.5786810000018 msec\nrounds: 5"
           }
         ]
       }
