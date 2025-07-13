@@ -4,6 +4,7 @@ import io
 import re
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -368,8 +369,6 @@ def test_parse_datetime_err():
 
 def test_format_datetime_to_pdf():
     """Test format_datetime_to_pdf function with timezone handling."""
-    from datetime import datetime, timedelta, timezone
-
     dt_naive = datetime(2021, 3, 18, 12, 7, 56)
     result = format_datetime_to_pdf(dt_naive)
     assert result == "D:20210318120756"
