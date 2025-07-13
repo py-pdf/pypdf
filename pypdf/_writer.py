@@ -72,7 +72,6 @@ from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
 from .constants import (
     CatalogDictionary,
-    FileSpecificationDictionaryEntries,
     GoToActionArguments,
     ImageType,
     InteractiveFormDictEntries,
@@ -745,7 +744,7 @@ class PdfWriter(PdfDocCommon):
         )
         js_list.append(self._add_object(js))
 
-    def add_attachment(self, filename: str, data: Union[str, bytes]) -> "EmbeddedFile":
+    def add_attachment(self, name: str, content: Union[str, bytes]) -> "EmbeddedFile":
         """
         Embed a file inside the PDF.
 
@@ -754,15 +753,15 @@ class PdfWriter(PdfDocCommon):
         Section 7.11.3
 
         Args:
-            filename: The filename to display.
-            data: The data in the file.
+            name: The filename to display.
+            content: The data in the file.
 
         Returns:
             EmbeddedFile instance for the newly created embedded file.
 
         """
         from pypdf.generic import EmbeddedFile
-        return EmbeddedFile.create_new(self, filename, data)
+        return EmbeddedFile.create_new(self, name, content)
 
     def append_pages_from_reader(
         self,
