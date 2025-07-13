@@ -75,7 +75,7 @@ class EmbeddedFile:
         ef_entry.update({NameObject("/F"): writer._add_object(file_entry)})
 
         # Create the filespec dictionary
-        from pypdf.generic import create_string_object
+        from pypdf.generic import create_string_object  # noqa: PLC0415
         filespec = DictionaryObject()
         filespec.update(
             {
@@ -124,7 +124,7 @@ class EmbeddedFile:
         elif isinstance(value, PdfObject):
             self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = value
         else:
-            from pypdf.generic import create_string_object
+            from pypdf.generic import create_string_object  # noqa: PLC0415
             self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = create_string_object(value)
 
     @property
@@ -140,7 +140,7 @@ class EmbeddedFile:
         elif isinstance(value, PdfObject):
             self.pdf_object[NameObject(FileSpecificationDictionaryEntries.DESC)] = value
         else:
-            from pypdf.generic import create_string_object
+            from pypdf.generic import create_string_object  # noqa: PLC0415
             self.pdf_object[NameObject(FileSpecificationDictionaryEntries.DESC)] = create_string_object(value)
 
     @property

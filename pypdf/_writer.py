@@ -39,7 +39,6 @@ from pathlib import Path
 from types import TracebackType
 from typing import (
     IO,
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -52,6 +51,8 @@ from typing import (
     Union,
     cast,
 )
+
+from pypdf.generic import EmbeddedFile
 
 from ._cmap import _default_fonts_space_width, build_char_map_from_dict
 from ._doc_common import DocumentInformation, PdfDocCommon
@@ -121,9 +122,6 @@ from .types import (
     PagemodeType,
 )
 from .xmp import XmpInformation
-
-if TYPE_CHECKING:
-    from .generic import EmbeddedFile
 
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions.all()
 DEFAULT_FONT_HEIGHT_IN_MULTILINE = 12
@@ -760,7 +758,6 @@ class PdfWriter(PdfDocCommon):
             EmbeddedFile instance for the newly created embedded file.
 
         """
-        from pypdf.generic import EmbeddedFile
         return EmbeddedFile._create_new(self, filename, data)
 
     def append_pages_from_reader(
