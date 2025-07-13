@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generator, Union, cast
+from typing import TYPE_CHECKING, Generator, cast
 
 from pypdf._utils import format_datetime_to_pdf, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
@@ -49,7 +49,7 @@ class EmbeddedFile:
         return self._name
 
     @classmethod
-    def _create_new(cls, writer: PdfWriter, name: str, content: Union[str, bytes]) -> EmbeddedFile:
+    def _create_new(cls, writer: PdfWriter, name: str, content: str | bytes) -> EmbeddedFile:
         """
         Create a new embedded file and add it to the PdfWriter.
 
@@ -116,7 +116,7 @@ class EmbeddedFile:
         return None
 
     @alternative_name.setter
-    def alternative_name(self, value: Union[str, TextStringObject, None]) -> None:
+    def alternative_name(self, value: str | TextStringObject | None) -> None:
         """Set the alternative name (file specification)."""
         if value is None:
             # Set UF key to null
@@ -133,7 +133,7 @@ class EmbeddedFile:
         return self.pdf_object.get(FileSpecificationDictionaryEntries.DESC)
 
     @description.setter
-    def description(self, value: Union[str, TextStringObject, None]) -> None:
+    def description(self, value: str | TextStringObject | None) -> None:
         """Set the description."""
         if value is None:
             self.pdf_object[NameObject(FileSpecificationDictionaryEntries.DESC)] = NullObject()
@@ -182,7 +182,7 @@ class EmbeddedFile:
         return self._embedded_file.get("/Subtype")
 
     @subtype.setter
-    def subtype(self, value: Union[str, NameObject, None]) -> None:
+    def subtype(self, value: str | NameObject | None) -> None:
         """Set the subtype. This should be a MIME media type, prefixed by a slash."""
         embedded_file = self._embedded_file
         if value is None:
@@ -203,7 +203,7 @@ class EmbeddedFile:
         return self._params.get("/Size")
 
     @size.setter
-    def size(self, value: Union[int, NumberObject, None]) -> None:
+    def size(self, value: int | NumberObject | None) -> None:
         """Set the size of the uncompressed file in bytes."""
         params = self._ensure_params()
         if value is None:
@@ -219,7 +219,7 @@ class EmbeddedFile:
         return parse_iso8824_date(self._params.get("/CreationDate"))
 
     @creation_date.setter
-    def creation_date(self, value: Union[datetime.datetime, TextStringObject, None]) -> None:
+    def creation_date(self, value: datetime.datetime | TextStringObject | None) -> None:
         """Set the file creation datetime."""
         params = self._ensure_params()
         if value is None:
@@ -236,7 +236,7 @@ class EmbeddedFile:
         return parse_iso8824_date(self._params.get("/ModDate"))
 
     @modification_date.setter
-    def modification_date(self, value: Union[datetime.datetime, TextStringObject, None]) -> None:
+    def modification_date(self, value: datetime.datetime | TextStringObject | None) -> None:
         """Set the datetime of the last file modification."""
         params = self._ensure_params()
         if value is None:
@@ -253,7 +253,7 @@ class EmbeddedFile:
         return self._params.get("/CheckSum")
 
     @checksum.setter
-    def checksum(self, value: Union[bytes, ByteStringObject, None]) -> None:
+    def checksum(self, value: bytes | ByteStringObject | None) -> None:
         """Set the MD5 checksum of the (uncompressed) file."""
         params = self._ensure_params()
         if value is None:
