@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 from functools import cached_property
 from typing import TYPE_CHECKING, Generator, cast
 
@@ -23,6 +22,7 @@ from pypdf.generic import (
 )
 
 if TYPE_CHECKING:
+    import datetime
 
     from pypdf._writer import PdfWriter
 
@@ -227,16 +227,14 @@ class EmbeddedFile:
         return parse_iso8824_date(self._params.get("/CreationDate"))
 
     @creation_date.setter
-    def creation_date(self, value: datetime.datetime | TextStringObject | None) -> None:
+    def creation_date(self, value: datetime.datetime | None) -> None:
         """Set the file creation datetime."""
         params = self._ensure_params
         if value is None:
             params[NameObject("/CreationDate")] = NullObject()
-        elif isinstance(value, datetime.datetime):
+        else:
             date_str = format_iso8824_date(value)
             params[NameObject("/CreationDate")] = TextStringObject(date_str)
-        else:
-            params[NameObject("/CreationDate")] = value
 
     @property
     def modification_date(self) -> datetime.datetime | None:
@@ -244,16 +242,14 @@ class EmbeddedFile:
         return parse_iso8824_date(self._params.get("/ModDate"))
 
     @modification_date.setter
-    def modification_date(self, value: datetime.datetime | TextStringObject | None) -> None:
+    def modification_date(self, value: datetime.datetime | None) -> None:
         """Set the datetime of the last file modification."""
         params = self._ensure_params
         if value is None:
             params[NameObject("/ModDate")] = NullObject()
-        elif isinstance(value, datetime.datetime):
+        else:
             date_str = format_iso8824_date(value)
             params[NameObject("/ModDate")] = TextStringObject(date_str)
-        else:
-            params[NameObject("/ModDate")] = value
 
     @property
     def checksum(self) -> bytes | None:

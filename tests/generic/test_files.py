@@ -274,10 +274,6 @@ def test_embedded_file_creation_date_setter():
     embedded_file.creation_date = None
     assert embedded_file._ensure_params[NameObject("/CreationDate")] == NullObject()
 
-    date_string = TextStringObject("D:20230101120000")
-    embedded_file.creation_date = date_string
-    assert embedded_file.creation_date is not None
-
 
 def test_embedded_file_modification_date_setter():
     writer = PdfWriter()
@@ -289,10 +285,6 @@ def test_embedded_file_modification_date_setter():
 
     embedded_file.modification_date = None
     assert embedded_file._ensure_params[NameObject("/ModDate")] == NullObject()
-
-    date_string = TextStringObject("D:20230102120000")
-    embedded_file.modification_date = date_string
-    assert embedded_file.modification_date is not None
 
 
 def test_embedded_file_checksum_setter():
