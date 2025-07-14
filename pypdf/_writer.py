@@ -52,8 +52,6 @@ from typing import (
     cast,
 )
 
-from pypdf.generic import EmbeddedFile
-
 from ._cmap import _default_fonts_space_width, build_char_map_from_dict
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
@@ -96,6 +94,7 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    EmbeddedFile,
     Fit,
     FloatObject,
     IndirectObject,

@@ -101,7 +101,7 @@ def test_embedded_file_size_setter():
     assert embedded_file.size == 1024
 
     embedded_file.size = None
-    assert embedded_file._ensure_params()[NameObject("/Size")] == NullObject()
+    assert embedded_file._ensure_params[NameObject("/Size")] == NullObject()
 
     num_obj = NumberObject(2048)
     embedded_file.size = num_obj
@@ -113,10 +113,10 @@ def test_embedded_file_size_getter():
     embedded_file = writer.add_attachment("test.txt", b"content")
 
     # Test null case
-    embedded_file._ensure_params()[NameObject("/Size")] = NullObject()
+    embedded_file._ensure_params[NameObject("/Size")] = NullObject()
     assert embedded_file.size is None
 
-    embedded_file._ensure_params()[NameObject("/Size")] = NumberObject(4096)
+    embedded_file._ensure_params[NameObject("/Size")] = NumberObject(4096)
     retrieved_size = embedded_file.size
     assert retrieved_size == 4096
 
@@ -131,7 +131,7 @@ def test_embedded_file_creation_date_setter():
     assert embedded_file.creation_date == test_date
 
     embedded_file.creation_date = None
-    assert embedded_file._ensure_params()[NameObject("/CreationDate")] == NullObject()
+    assert embedded_file._ensure_params[NameObject("/CreationDate")] == NullObject()
 
     # Test with TextStringObject
     date_string = TextStringObject("D:20230101120000")
@@ -149,7 +149,7 @@ def test_embedded_file_modification_date_setter():
     assert embedded_file.modification_date == test_date
 
     embedded_file.modification_date = None
-    assert embedded_file._ensure_params()[NameObject("/ModDate")] == NullObject()
+    assert embedded_file._ensure_params[NameObject("/ModDate")] == NullObject()
 
     # Test with TextStringObject
     date_string = TextStringObject("D:20230102120000")
@@ -166,7 +166,7 @@ def test_embedded_file_checksum_setter():
     assert embedded_file.checksum == b"checksum_value"
 
     embedded_file.checksum = None
-    assert embedded_file._ensure_params()[NameObject("/CheckSum")] == NullObject()
+    assert embedded_file._ensure_params[NameObject("/CheckSum")] == NullObject()
 
     byte_string = ByteStringObject(b"pdf_checksum")
     embedded_file.checksum = byte_string

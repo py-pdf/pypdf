@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+from functools import cached_property
 from typing import TYPE_CHECKING, Generator, cast
 
 from pypdf._utils import format_iso8824_date, parse_iso8824_date
@@ -173,6 +174,7 @@ class EmbeddedFile:
         """Retrieve the file-specific parameters."""
         return self._embedded_file.get("/Params", DictionaryObject()).get_object()
 
+    @cached_property
     def _ensure_params(self) -> DictionaryObject:
         """Ensure the /Params dictionary exists and return it."""
         embedded_file = self._embedded_file
@@ -213,7 +215,7 @@ class EmbeddedFile:
     @size.setter
     def size(self, value: NumberObject | None) -> None:
         """Set the size of the uncompressed file in bytes."""
-        params = self._ensure_params()
+        params = self._ensure_params
         if value is None:
             params[NameObject("/Size")] = NullObject()
         else:
@@ -227,7 +229,7 @@ class EmbeddedFile:
     @creation_date.setter
     def creation_date(self, value: datetime.datetime | TextStringObject | None) -> None:
         """Set the file creation datetime."""
-        params = self._ensure_params()
+        params = self._ensure_params
         if value is None:
             params[NameObject("/CreationDate")] = NullObject()
         elif isinstance(value, datetime.datetime):
@@ -244,7 +246,7 @@ class EmbeddedFile:
     @modification_date.setter
     def modification_date(self, value: datetime.datetime | TextStringObject | None) -> None:
         """Set the datetime of the last file modification."""
-        params = self._ensure_params()
+        params = self._ensure_params
         if value is None:
             params[NameObject("/ModDate")] = NullObject()
         elif isinstance(value, datetime.datetime):
@@ -264,7 +266,7 @@ class EmbeddedFile:
     @checksum.setter
     def checksum(self, value: ByteStringObject | None) -> None:
         """Set the MD5 checksum of the (uncompressed) file."""
-        params = self._ensure_params()
+        params = self._ensure_params
         if value is None:
             params[NameObject("/CheckSum")] = NullObject()
         else:
