@@ -38,6 +38,7 @@ def test_embedded_file_alternative_name_setter():
         assert embedded_file.pdf_object[NameObject("/UF")] == NullObject()
     if NameObject("/F") in embedded_file.pdf_object:
         assert embedded_file.pdf_object[NameObject("/F")] == NullObject()
+    assert embedded_file.alternative_name is None
 
     pdf_string = create_string_object("PDF String")
     embedded_file.alternative_name = pdf_string
