@@ -407,6 +407,7 @@ def test_format_iso8824_date_roundtrip():
     parsed = parse_iso8824_date(formatted)
     assert parsed == dt_negative
 
+
 def test_is_sublist():
     # Basic checks:
     assert is_sublist([0, 1], [0, 1, 2]) is True
