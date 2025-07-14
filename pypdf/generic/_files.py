@@ -183,7 +183,10 @@ class EmbeddedFile:
     @property
     def subtype(self) -> str | None:
         """Retrieve the subtype. This is a MIME media type, prefixed by a slash."""
-        return self._embedded_file.get("/Subtype")
+        value = self._embedded_file.get("/Subtype")
+        if is_null_or_none(value):
+            return None
+        return value
 
     @subtype.setter
     def subtype(self, value: NameObject | None) -> None:
@@ -253,7 +256,10 @@ class EmbeddedFile:
     @property
     def checksum(self) -> bytes | None:
         """Retrieve the MD5 checksum of the (uncompressed) file."""
-        return self._params.get("/CheckSum")
+        value = self._params.get("/CheckSum")
+        if is_null_or_none(value):
+            return None
+        return value
 
     @checksum.setter
     def checksum(self, value: ByteStringObject | None) -> None:
