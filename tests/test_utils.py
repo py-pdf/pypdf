@@ -385,6 +385,28 @@ def test_format_iso8824_date():
     result = format_iso8824_date(dt_negative)
     assert result == "D:20210318120756-05'30'"
 
+
+def test_format_iso8824_date_roundtrip():
+    dt_naive = datetime(2021, 3, 18, 12, 7, 56)
+    formatted = format_iso8824_date(dt_naive)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_naive
+
+    dt_utc = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone.utc)
+    formatted = format_iso8824_date(dt_utc)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_utc
+
+    dt_positive = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30)))
+    formatted = format_iso8824_date(dt_positive)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_positive
+
+    dt_negative = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30)))
+    formatted = format_iso8824_date(dt_negative)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_negative
+
 def test_is_sublist():
     # Basic checks:
     assert is_sublist([0, 1], [0, 1, 2]) is True
