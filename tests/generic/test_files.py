@@ -149,6 +149,45 @@ def test_embedded_file_alternative_name_setter():
     assert embedded_file.alternative_name == "PDF String"
 
 
+def test_embedded_file_alternative_name_only_uf_key():
+    writer = PdfWriter()
+    embedded_file = writer.add_attachment("test.txt", b"content")
+
+    embedded_file.pdf_object[NameObject("/UF")] = create_string_object("original_uf")
+    del embedded_file.pdf_object[NameObject("/F")]
+
+    assert NameObject("/UF") in embedded_file.pdf_object
+    assert NameObject("/F") not in embedded_file.pdf_object
+
+    embedded_file.alternative_name = None
+    assert embedded_file.pdf_object[NameObject("/UF")] == NullObject()
+    assert NameObject("/F") not in embedded_file.pdf_object
+
+    embedded_file.alternative_name = TextStringObject("new_uf")
+    assert embedded_file.pdf_object[NameObject("/UF")] == create_string_object("new_uf")
+    assert NameObject("/F") not in embedded_file.pdf_object
+
+
+def test_embedded_file_alternative_name_only_f_key():
+    writer = PdfWriter()
+    embedded_file = writer.add_attachment("test.txt", b"content")
+
+    embedded_file.pdf_object[NameObject("/F")] = create_string_object("original_f")
+    if NameObject("/UF") in embedded_file.pdf_object:
+        del embedded_file.pdf_object[NameObject("/UF")]
+
+    assert NameObject("/F") in embedded_file.pdf_object
+    assert NameObject("/UF") not in embedded_file.pdf_object
+
+    embedded_file.alternative_name = None
+    assert embedded_file.pdf_object[NameObject("/F")] == NullObject()
+    assert NameObject("/UF") not in embedded_file.pdf_object
+
+    embedded_file.alternative_name = TextStringObject("new_f")
+    assert embedded_file.pdf_object[NameObject("/F")] == create_string_object("new_f")
+    assert NameObject("/UF") not in embedded_file.pdf_object
+
+
 def test_embedded_file_alternative_name_both_f_and_uf():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
@@ -216,7 +255,6 @@ def test_embedded_file_size_getter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
-    # Test null case
     embedded_file._ensure_params[NameObject("/Size")] = NullObject()
     assert embedded_file.size is None
 
@@ -229,7 +267,6 @@ def test_embedded_file_creation_date_setter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
-    # Test with datetime object
     test_date = datetime.datetime(2023, 1, 1, 12, 0, 0)
     embedded_file.creation_date = test_date
     assert embedded_file.creation_date == test_date
@@ -237,7 +274,6 @@ def test_embedded_file_creation_date_setter():
     embedded_file.creation_date = None
     assert embedded_file._ensure_params[NameObject("/CreationDate")] == NullObject()
 
-    # Test with TextStringObject
     date_string = TextStringObject("D:20230101120000")
     embedded_file.creation_date = date_string
     assert embedded_file.creation_date is not None
@@ -247,7 +283,6 @@ def test_embedded_file_modification_date_setter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
-    # Test with datetime object
     test_date = datetime.datetime(2023, 1, 2, 12, 0, 0)
     embedded_file.modification_date = test_date
     assert embedded_file.modification_date == test_date
@@ -255,7 +290,6 @@ def test_embedded_file_modification_date_setter():
     embedded_file.modification_date = None
     assert embedded_file._ensure_params[NameObject("/ModDate")] == NullObject()
 
-    # Test with TextStringObject
     date_string = TextStringObject("D:20230102120000")
     embedded_file.modification_date = date_string
     assert embedded_file.modification_date is not None
