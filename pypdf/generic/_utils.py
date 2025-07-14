@@ -225,7 +225,7 @@ def create_number_object(value: float) -> Union[NumberObject, FloatObject]:
         ValueError: If value is infinite or NaN
     """
     if not isinstance(value, (int, float)):
-        raise TypeError("create_number_object expects int or float")
+        raise TypeError("create_number_object expects float")
 
     if (math.isnan(value) or math.isinf(value)):
         raise ValueError("create_number_object does not accept NaN or infinite values")
