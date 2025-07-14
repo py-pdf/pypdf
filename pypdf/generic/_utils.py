@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, Union
 from .._codecs import _pdfdoc_encoding
 from .._utils import StreamType, format_iso8824_date, logger_warning, read_non_whitespace
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
-from ._base import ByteStringObject, NameObject, NumberObject, TextStringObject
+from ._base import ByteStringObject, FloatObject, NameObject, NumberObject, TextStringObject
 
 
 def hex_to_rgb(value: str) -> Tuple[float, float, float]:
@@ -210,15 +210,15 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
     return retval
 
 
-def create_number_object(value: float) -> NumberObject:
+def create_number_object(value: float) -> Union[NumberObject, FloatObject]:
     """
-    Create a NumberObject from an int or float value.
+    Create a NumberObject or FloatObject from an int or float value.
 
     Args:
         value: The numeric value (int or float)
 
     Returns:
-        A NumberObject
+        A NumberObject for integers, FloatObject for floats
 
     Raises:
         TypeError: If value is not int or float
@@ -230,7 +230,10 @@ def create_number_object(value: float) -> NumberObject:
     if (math.isnan(value) or math.isinf(value)):
         raise ValueError("create_number_object does not accept NaN or infinite values")
 
-    return NumberObject(value)
+    # Return appropriate type based on input
+    if isinstance(value, int):
+        return NumberObject(value)
+    return FloatObject(value)
 
 
 def create_name_object(value: str) -> NameObject:
