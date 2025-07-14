@@ -7,11 +7,12 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import (
-    ByteStringObject,
     NameObject,
     NullObject,
-    NumberObject,
-    TextStringObject,
+    create_byte_string_object,
+    create_date_string_object,
+    create_name_object,
+    create_number_object,
     create_string_object,
 )
 
@@ -30,7 +31,7 @@ def test_embedded_file_alternative_name_setter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
-    embedded_file.alternative_name = "Alternative Name"
+    embedded_file.alternative_name = create_string_object("Alternative Name")
     assert embedded_file.alternative_name == "Alternative Name"
 
     embedded_file.alternative_name = None
@@ -52,7 +53,7 @@ def test_embedded_file_alternative_name_both_f_and_uf():
     embedded_file.pdf_object[NameObject("/F")] = create_string_object("original_f")
     embedded_file.pdf_object[NameObject("/UF")] = create_string_object("original_uf")
 
-    embedded_file.alternative_name = "new_name"
+    embedded_file.alternative_name = create_string_object("new_name")
     assert embedded_file.pdf_object[NameObject("/F")] == create_string_object("new_name")
     assert embedded_file.pdf_object[NameObject("/UF")] == create_string_object("new_name")
     assert embedded_file.alternative_name == "new_name"
@@ -66,13 +67,13 @@ def test_embedded_file_description_setter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
-    embedded_file.description = "Test Description"
+    embedded_file.description = create_string_object("Test Description")
     assert embedded_file.description == "Test Description"
 
     embedded_file.description = None
     assert embedded_file.pdf_object[NameObject("/Desc")] == NullObject()
 
-    pdf_string = TextStringObject("PDF Description")
+    pdf_string = create_string_object("PDF Description")
     embedded_file.description = pdf_string
     assert embedded_file.description == "PDF Description"
 
@@ -81,13 +82,13 @@ def test_embedded_file_subtype_setter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
-    embedded_file.subtype = "/text/plain"
+    embedded_file.subtype = create_name_object("text/plain")
     assert embedded_file.subtype == "/text/plain"
 
     embedded_file.subtype = None
     assert embedded_file._embedded_file[NameObject("/Subtype")] == NullObject()
 
-    name_obj = NameObject("/application#2Fjson")
+    name_obj = create_name_object("application#2Fjson")
     embedded_file.subtype = name_obj
     assert embedded_file.subtype == "/application#2Fjson"
 
@@ -96,13 +97,13 @@ def test_embedded_file_size_setter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
-    embedded_file.size = 1024
+    embedded_file.size = create_number_object(1024)
     assert embedded_file.size == 1024
 
     embedded_file.size = None
     assert embedded_file._ensure_params()[NameObject("/Size")] == NullObject()
 
-    num_obj = NumberObject(2048)
+    num_obj = create_number_object(2048)
     embedded_file.size = num_obj
     assert embedded_file.size == 2048
 
@@ -114,7 +115,7 @@ def test_embedded_file_size_getter():
     embedded_file._ensure_params()[NameObject("/Size")] = NullObject()
     assert embedded_file.size is None
 
-    embedded_file._ensure_params()[NameObject("/Size")] = NumberObject(4096)
+    embedded_file._ensure_params()[NameObject("/Size")] = create_number_object(4096)
     retrieved_size = embedded_file.size
     assert retrieved_size == 4096
 
@@ -123,13 +124,14 @@ def test_embedded_file_creation_date_setter():
     embedded_file = writer.add_attachment("test.txt", b"content")
 
     test_date = datetime(2023, 1, 1, 12, 0, 0)
-    embedded_file.creation_date = test_date
+    date_string = create_date_string_object(test_date)
+    embedded_file.creation_date = date_string
     assert embedded_file.creation_date == test_date
 
     embedded_file.creation_date = None
     assert embedded_file._ensure_params()[NameObject("/CreationDate")] == NullObject()
 
-    date_string = TextStringObject("D:20230101120000")
+    date_string = create_string_object("D:20230101120000")
     embedded_file.creation_date = date_string
     assert embedded_file.creation_date is not None
 
@@ -139,13 +141,14 @@ def test_embedded_file_modification_date_setter():
     embedded_file = writer.add_attachment("test.txt", b"content")
 
     test_date = datetime(2023, 1, 2, 12, 0, 0)
-    embedded_file.modification_date = test_date
+    date_string = create_date_string_object(test_date)
+    embedded_file.modification_date = date_string
     assert embedded_file.modification_date == test_date
 
     embedded_file.modification_date = None
     assert embedded_file._ensure_params()[NameObject("/ModDate")] == NullObject()
 
-    date_string = TextStringObject("D:20230102120000")
+    date_string = create_string_object("D:20230102120000")
     embedded_file.modification_date = date_string
     assert embedded_file.modification_date is not None
 
@@ -154,14 +157,14 @@ def test_embedded_file_checksum_setter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
-    checksum_bytes = b"checksum_value"
+    checksum_bytes = create_byte_string_object(b"checksum_value")
     embedded_file.checksum = checksum_bytes
-    assert embedded_file.checksum == checksum_bytes
+    assert embedded_file.checksum == b"checksum_value"
 
     embedded_file.checksum = None
     assert embedded_file._ensure_params()[NameObject("/CheckSum")] == NullObject()
 
-    byte_string = ByteStringObject(b"pdf_checksum")
+    byte_string = create_byte_string_object(b"pdf_checksum")
     embedded_file.checksum = byte_string
     assert embedded_file.checksum == b"pdf_checksum"
 
@@ -170,7 +173,7 @@ def test_embedded_file_associated_file_relationship_setter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
-    embedded_file.associated_file_relationship = "/Data"
+    embedded_file.associated_file_relationship = create_name_object("Data")
     assert embedded_file.associated_file_relationship == "/Data"
 
 
@@ -179,14 +182,16 @@ def test_embedded_file_setters_integration():
     writer.add_blank_page(100, 100)
 
     embedded_file = writer.add_attachment("test.txt", b"Hello, World!")
-    embedded_file.alternative_name = "Alternative Name"
-    embedded_file.description = "Test Description"
-    embedded_file.subtype = "/text/plain"
-    embedded_file.size = 13
-    embedded_file.creation_date = datetime(2023, 1, 1, 12, 0, 0)
-    embedded_file.modification_date = datetime(2023, 1, 2, 12, 0, 0)
-    embedded_file.checksum = b"checksum123"
-    embedded_file.associated_file_relationship = "/Data"
+    embedded_file.alternative_name = create_string_object("Alternative Name")
+    embedded_file.description = create_string_object("Test Description")
+    embedded_file.subtype = create_name_object("text/plain")
+    embedded_file.size = create_number_object(13)
+    creation_date = datetime(2023, 1, 1, 12, 0, 0)
+    embedded_file.creation_date = create_date_string_object(creation_date)
+    modification_date = datetime(2023, 1, 2, 12, 0, 0)
+    embedded_file.modification_date = create_date_string_object(modification_date)
+    embedded_file.checksum = create_byte_string_object(b"checksum123")
+    embedded_file.associated_file_relationship = create_name_object("Data")
 
     pdf_bytes = BytesIO()
     writer.write(pdf_bytes)
@@ -201,11 +206,11 @@ def test_embedded_file_null_object_handling():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
 
-    embedded_file.alternative_name = "Name"
-    embedded_file.description = "Description"
-    embedded_file.subtype = "/text/plain"
-    embedded_file.size = 1024
-    embedded_file.checksum = b"checksum"
+    embedded_file.alternative_name = create_string_object("Name")
+    embedded_file.description = create_string_object("Description")
+    embedded_file.subtype = create_name_object("text/plain")
+    embedded_file.size = create_number_object(1024)
+    embedded_file.checksum = create_byte_string_object(b"checksum")
 
     embedded_file.alternative_name = None
     embedded_file.description = None

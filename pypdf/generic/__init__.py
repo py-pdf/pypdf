@@ -65,6 +65,10 @@ from ._fit import Fit
 from ._outline import OutlineItem
 from ._rectangle import RectangleObject
 from ._utils import (
+    create_byte_string_object,
+    create_date_string_object,
+    create_name_object,
+    create_number_object,
     create_string_object,
     decode_pdfdocencoding,
     hex_to_rgb,
@@ -226,6 +230,10 @@ __all__ = [
     "TreeObject",
     "ViewerPreferences",
     # Utility functions
+    "create_byte_string_object",
+    "create_date_string_object",
+    "create_name_object",
+    "create_number_object",
     "create_string_object",
     "decode_pdfdocencoding",
     "encode_pdfdocencoding",

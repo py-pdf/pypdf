@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generator, Union, cast
+from typing import TYPE_CHECKING, Generator, cast
 
-from pypdf._utils import format_iso8824_date, parse_iso8824_date
+from pypdf._utils import parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
 from pypdf.constants import FileSpecificationDictionaryEntries
 from pypdf.constants import PageAttributes as PA
@@ -15,7 +15,6 @@ from pypdf.generic import (
     NameObject,
     NullObject,
     NumberObject,
-    PdfObject,
     StreamObject,
     TextStringObject,
     is_null_or_none,
@@ -119,7 +118,7 @@ class EmbeddedFile:
         return None
 
     @alternative_name.setter
-    def alternative_name(self, value: str | TextStringObject | None) -> None:
+    def alternative_name(self, value: TextStringObject | None) -> None:
         """Set the alternative name (file specification)."""
         if value is None:
             if FileSpecificationDictionaryEntries.UF in self.pdf_object:
@@ -127,16 +126,10 @@ class EmbeddedFile:
             if FileSpecificationDictionaryEntries.F in self.pdf_object:
                 self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = NullObject()
         else:
-            if isinstance(value, PdfObject):
-                string_obj = cast(Union[TextStringObject, ByteStringObject], value)
-            else:
-                from pypdf.generic import create_string_object  # noqa: PLC0415
-                string_obj = create_string_object(value)
-
             if FileSpecificationDictionaryEntries.UF in self.pdf_object:
-                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = string_obj
+                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = value
             if FileSpecificationDictionaryEntries.F in self.pdf_object:
-                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = string_obj
+                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = value
 
     @property
     def description(self) -> str | None:
@@ -147,15 +140,12 @@ class EmbeddedFile:
         return value
 
     @description.setter
-    def description(self, value: str | TextStringObject | None) -> None:
+    def description(self, value: TextStringObject | None) -> None:
         """Set the description."""
         if value is None:
             self.pdf_object[NameObject(FileSpecificationDictionaryEntries.DESC)] = NullObject()
-        elif isinstance(value, PdfObject):
-            self.pdf_object[NameObject(FileSpecificationDictionaryEntries.DESC)] = value
         else:
-            from pypdf.generic import create_string_object  # noqa: PLC0415
-            self.pdf_object[NameObject(FileSpecificationDictionaryEntries.DESC)] = create_string_object(value)
+            self.pdf_object[NameObject(FileSpecificationDictionaryEntries.DESC)] = value
 
     @property
     def associated_file_relationship(self) -> str:
@@ -163,9 +153,9 @@ class EmbeddedFile:
         return self.pdf_object.get("/AFRelationship", "/Unspecified")
 
     @associated_file_relationship.setter
-    def associated_file_relationship(self, value: str) -> None:
+    def associated_file_relationship(self, value: NameObject) -> None:
         """Set the relationship of the referring document to this embedded file."""
-        self.pdf_object[NameObject("/AFRelationship")] = NameObject(value)
+        self.pdf_object[NameObject("/AFRelationship")] = value
 
     @property
     def _embedded_file(self) -> StreamObject:
@@ -196,15 +186,13 @@ class EmbeddedFile:
         return self._embedded_file.get("/Subtype")
 
     @subtype.setter
-    def subtype(self, value: str | NameObject | None) -> None:
+    def subtype(self, value: NameObject | None) -> None:
         """Set the subtype. This should be a MIME media type, prefixed by a slash."""
         embedded_file = self._embedded_file
         if value is None:
             embedded_file[NameObject("/Subtype")] = NullObject()
-        elif isinstance(value, PdfObject):
-            embedded_file[NameObject("/Subtype")] = value
         else:
-            embedded_file[NameObject("/Subtype")] = NameObject(value)
+            embedded_file[NameObject("/Subtype")] = value
 
     @property
     def content(self) -> bytes:
@@ -220,15 +208,13 @@ class EmbeddedFile:
         return value
 
     @size.setter
-    def size(self, value: int | NumberObject | None) -> None:
+    def size(self, value: NumberObject | None) -> None:
         """Set the size of the uncompressed file in bytes."""
         params = self._ensure_params()
         if value is None:
             params[NameObject("/Size")] = NullObject()
-        elif isinstance(value, PdfObject):
-            params[NameObject("/Size")] = value
         else:
-            params[NameObject("/Size")] = NumberObject(value)
+            params[NameObject("/Size")] = value
 
     @property
     def creation_date(self) -> datetime.datetime | None:
@@ -236,16 +222,13 @@ class EmbeddedFile:
         return parse_iso8824_date(self._params.get("/CreationDate"))
 
     @creation_date.setter
-    def creation_date(self, value: datetime.datetime | TextStringObject | None) -> None:
+    def creation_date(self, value: TextStringObject | None) -> None:
         """Set the file creation datetime."""
         params = self._ensure_params()
         if value is None:
             params[NameObject("/CreationDate")] = NullObject()
-        elif isinstance(value, PdfObject):
-            params[NameObject("/CreationDate")] = value
         else:
-            date_str = format_iso8824_date(value)
-            params[NameObject("/CreationDate")] = TextStringObject(date_str)
+            params[NameObject("/CreationDate")] = value
 
     @property
     def modification_date(self) -> datetime.datetime | None:
@@ -253,16 +236,13 @@ class EmbeddedFile:
         return parse_iso8824_date(self._params.get("/ModDate"))
 
     @modification_date.setter
-    def modification_date(self, value: datetime.datetime | TextStringObject | None) -> None:
+    def modification_date(self, value: TextStringObject | None) -> None:
         """Set the datetime of the last file modification."""
         params = self._ensure_params()
         if value is None:
             params[NameObject("/ModDate")] = NullObject()
-        elif isinstance(value, PdfObject):
-            params[NameObject("/ModDate")] = value
         else:
-            date_str = format_iso8824_date(value)
-            params[NameObject("/ModDate")] = TextStringObject(date_str)
+            params[NameObject("/ModDate")] = value
 
     @property
     def checksum(self) -> bytes | None:
@@ -270,15 +250,13 @@ class EmbeddedFile:
         return self._params.get("/CheckSum")
 
     @checksum.setter
-    def checksum(self, value: bytes | ByteStringObject | None) -> None:
+    def checksum(self, value: ByteStringObject | None) -> None:
         """Set the MD5 checksum of the (uncompressed) file."""
         params = self._ensure_params()
         if value is None:
             params[NameObject("/CheckSum")] = NullObject()
-        elif isinstance(value, PdfObject):
-            params[NameObject("/CheckSum")] = value
         else:
-            params[NameObject("/CheckSum")] = ByteStringObject(value)
+            params[NameObject("/CheckSum")] = value
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} name={self.name!r}>"

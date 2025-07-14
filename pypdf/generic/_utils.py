@@ -1,10 +1,12 @@
 import codecs
+import math
+from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
 from .._codecs import _pdfdoc_encoding
-from .._utils import StreamType, logger_warning, read_non_whitespace
+from .._utils import StreamType, format_iso8824_date, logger_warning, read_non_whitespace
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
-from ._base import ByteStringObject, TextStringObject
+from ._base import ByteStringObject, NameObject, NumberObject, TextStringObject
 
 
 def hex_to_rgb(value: str) -> Tuple[float, float, float]:
@@ -206,3 +208,87 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
             )
         retval += c
     return retval
+
+
+def create_number_object(value: float) -> NumberObject:
+    """
+    Create a NumberObject from an int or float value.
+
+    Args:
+        value: The numeric value (int or float)
+
+    Returns:
+        A NumberObject
+
+    Raises:
+        TypeError: If value is not int or float
+        ValueError: If value is infinite or NaN
+    """
+    if not isinstance(value, (int, float)):
+        raise TypeError("create_number_object expects int or float")
+
+    if (math.isnan(value) or math.isinf(value)):
+        raise ValueError("create_number_object does not accept NaN or infinite values")
+
+    return NumberObject(value)
+
+
+def create_name_object(value: str) -> NameObject:
+    """
+    Create a NameObject from a string value.
+
+    Args:
+        value: The name string (should start with '/' for PDF names)
+
+    Returns:
+        A NameObject
+
+    Raises:
+        TypeError: If value is not a string
+    """
+    if not isinstance(value, str):
+        raise TypeError("create_name_object expects str")
+
+    if not value.startswith("/"):
+        value = "/" + value
+
+    return NameObject(value)
+
+
+def create_byte_string_object(value: bytes) -> ByteStringObject:
+    """
+    Create a ByteStringObject from bytes value.
+
+    Args:
+        value: The bytes data
+
+    Returns:
+        A ByteStringObject
+
+    Raises:
+        TypeError: If value is not bytes
+    """
+    if not isinstance(value, bytes):
+        raise TypeError("create_byte_string_object expects bytes")
+
+    return ByteStringObject(value)
+
+
+def create_date_string_object(value: datetime) -> TextStringObject:
+    """
+    Create a TextStringObject containing a PDF date string from a datetime.
+
+    Args:
+        value: The datetime object
+
+    Returns:
+        A TextStringObject containing the formatted PDF date
+
+    Raises:
+        TypeError: If value is not a datetime
+    """
+    if not isinstance(value, datetime):
+        raise TypeError("create_date_string_object expects datetime")
+
+    date_str = format_iso8824_date(value)
+    return TextStringObject(date_str)
