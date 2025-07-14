@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generator, cast
+from typing import TYPE_CHECKING, Generator, Union, cast
 
 from pypdf._utils import format_iso8824_date, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
@@ -122,13 +122,21 @@ class EmbeddedFile:
     def alternative_name(self, value: str | TextStringObject | None) -> None:
         """Set the alternative name (file specification)."""
         if value is None:
-            # Set UF key to null
-            self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = NullObject()
-        elif isinstance(value, PdfObject):
-            self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = value
+            if FileSpecificationDictionaryEntries.UF in self.pdf_object:
+                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = NullObject()
+            if FileSpecificationDictionaryEntries.F in self.pdf_object:
+                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = NullObject()
         else:
-            from pypdf.generic import create_string_object  # noqa: PLC0415
-            self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = create_string_object(value)
+            if isinstance(value, PdfObject):
+                string_obj = cast(Union[TextStringObject, ByteStringObject], value)
+            else:
+                from pypdf.generic import create_string_object  # noqa: PLC0415
+                string_obj = create_string_object(value)
+
+            if FileSpecificationDictionaryEntries.UF in self.pdf_object:
+                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = string_obj
+            if FileSpecificationDictionaryEntries.F in self.pdf_object:
+                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = string_obj
 
     @property
     def description(self) -> str | None:

@@ -34,11 +34,31 @@ def test_embedded_file_alternative_name_setter():
     assert embedded_file.alternative_name == "Alternative Name"
 
     embedded_file.alternative_name = None
-    assert embedded_file.pdf_object[NameObject("/UF")] == NullObject()
+    if NameObject("/UF") in embedded_file.pdf_object:
+        assert embedded_file.pdf_object[NameObject("/UF")] == NullObject()
+    if NameObject("/F") in embedded_file.pdf_object:
+        assert embedded_file.pdf_object[NameObject("/F")] == NullObject()
 
     pdf_string = create_string_object("PDF String")
     embedded_file.alternative_name = pdf_string
     assert embedded_file.alternative_name == "PDF String"
+
+
+def test_embedded_file_alternative_name_both_f_and_uf():
+    writer = PdfWriter()
+    embedded_file = writer.add_attachment("test.txt", b"content")
+
+    embedded_file.pdf_object[NameObject("/F")] = create_string_object("original_f")
+    embedded_file.pdf_object[NameObject("/UF")] = create_string_object("original_uf")
+
+    embedded_file.alternative_name = "new_name"
+    assert embedded_file.pdf_object[NameObject("/F")] == create_string_object("new_name")
+    assert embedded_file.pdf_object[NameObject("/UF")] == create_string_object("new_name")
+    assert embedded_file.alternative_name == "new_name"
+
+    embedded_file.alternative_name = None
+    assert embedded_file.pdf_object[NameObject("/F")] == NullObject()
+    assert embedded_file.pdf_object[NameObject("/UF")] == NullObject()
 
 
 def test_embedded_file_description_setter():
@@ -192,7 +212,11 @@ def test_embedded_file_null_object_handling():
     embedded_file.size = None
     embedded_file.checksum = None
 
-    assert embedded_file.pdf_object[NameObject("/UF")] == NullObject()
+    # Check that keys that were set get nullified
+    if NameObject("/UF") in embedded_file.pdf_object:
+        assert embedded_file.pdf_object[NameObject("/UF")] == NullObject()
+    if NameObject("/F") in embedded_file.pdf_object:
+        assert embedded_file.pdf_object[NameObject("/F")] == NullObject()
     assert embedded_file.pdf_object[NameObject("/Desc")] == NullObject()
     assert embedded_file._embedded_file[NameObject("/Subtype")] == NullObject()
     assert embedded_file._ensure_params()[NameObject("/Size")] == NullObject()
