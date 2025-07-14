@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import datetime
 from typing import TYPE_CHECKING, Generator, cast
 
-from pypdf._utils import parse_iso8824_date
+from pypdf._utils import format_iso8824_date, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
 from pypdf.constants import FileSpecificationDictionaryEntries
 from pypdf.constants import PageAttributes as PA
@@ -21,7 +22,6 @@ from pypdf.generic import (
 )
 
 if TYPE_CHECKING:
-    import datetime
 
     from pypdf._writer import PdfWriter
 
@@ -222,11 +222,14 @@ class EmbeddedFile:
         return parse_iso8824_date(self._params.get("/CreationDate"))
 
     @creation_date.setter
-    def creation_date(self, value: TextStringObject | None) -> None:
+    def creation_date(self, value: datetime.datetime | TextStringObject | None) -> None:
         """Set the file creation datetime."""
         params = self._ensure_params()
         if value is None:
             params[NameObject("/CreationDate")] = NullObject()
+        elif isinstance(value, datetime.datetime):
+            date_str = format_iso8824_date(value)
+            params[NameObject("/CreationDate")] = TextStringObject(date_str)
         else:
             params[NameObject("/CreationDate")] = value
 
@@ -236,11 +239,14 @@ class EmbeddedFile:
         return parse_iso8824_date(self._params.get("/ModDate"))
 
     @modification_date.setter
-    def modification_date(self, value: TextStringObject | None) -> None:
+    def modification_date(self, value: datetime.datetime | TextStringObject | None) -> None:
         """Set the datetime of the last file modification."""
         params = self._ensure_params()
         if value is None:
             params[NameObject("/ModDate")] = NullObject()
+        elif isinstance(value, datetime.datetime):
+            date_str = format_iso8824_date(value)
+            params[NameObject("/ModDate")] = TextStringObject(date_str)
         else:
             params[NameObject("/ModDate")] = value
 
