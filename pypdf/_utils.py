@@ -110,7 +110,7 @@ def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
     raise ValueError(f"Can not convert date: {orgtext}")
 
 
-def format_datetime_to_pdf(dt: datetime) -> str:
+def format_iso8824_date(dt: datetime) -> str:
     """
     Convert a datetime object to PDF date string format.
 

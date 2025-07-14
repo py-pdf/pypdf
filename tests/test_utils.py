@@ -20,7 +20,7 @@ from pypdf._utils import (
     classproperty,
     deprecate_with_replacement,
     deprecation_no_replacement,
-    format_datetime_to_pdf,
+    format_iso8824_date,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -367,22 +367,22 @@ def test_parse_datetime_err():
     assert parse_iso8824_date("D:20210408054711").tzinfo is None
 
 
-def test_format_datetime_to_pdf():
-    """Test format_datetime_to_pdf function with timezone handling."""
+def test_format_iso8824_date():
+    """Test format_iso8824_date function with timezone handling."""
     dt_naive = datetime(2021, 3, 18, 12, 7, 56)
-    result = format_datetime_to_pdf(dt_naive)
+    result = format_iso8824_date(dt_naive)
     assert result == "D:20210318120756"
 
     dt_utc = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone.utc)
-    result = format_datetime_to_pdf(dt_utc)
+    result = format_iso8824_date(dt_utc)
     assert result == "D:20210318120756+00'00'"
 
     dt_positive = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30)))
-    result = format_datetime_to_pdf(dt_positive)
+    result = format_iso8824_date(dt_positive)
     assert result == "D:20210318120756+02'30'"
 
     dt_negative = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30)))
-    result = format_datetime_to_pdf(dt_negative)
+    result = format_iso8824_date(dt_negative)
     assert result == "D:20210318120756-05'30'"
 
 def test_is_sublist():

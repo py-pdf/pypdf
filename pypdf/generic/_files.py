@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generator, cast
 
-from pypdf._utils import format_datetime_to_pdf, parse_iso8824_date
+from pypdf._utils import format_iso8824_date, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
 from pypdf.constants import FileSpecificationDictionaryEntries
 from pypdf.constants import PageAttributes as PA
@@ -236,7 +236,7 @@ class EmbeddedFile:
         elif isinstance(value, PdfObject):
             params[NameObject("/CreationDate")] = value
         else:
-            date_str = format_datetime_to_pdf(value)
+            date_str = format_iso8824_date(value)
             params[NameObject("/CreationDate")] = TextStringObject(date_str)
 
     @property
@@ -253,7 +253,7 @@ class EmbeddedFile:
         elif isinstance(value, PdfObject):
             params[NameObject("/ModDate")] = value
         else:
-            date_str = format_datetime_to_pdf(value)
+            date_str = format_iso8824_date(value)
             params[NameObject("/ModDate")] = TextStringObject(date_str)
 
     @property
