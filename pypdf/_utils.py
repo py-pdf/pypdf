@@ -126,12 +126,12 @@ def format_iso8824_date(dt: datetime) -> str:
     date_str = dt.strftime("D:%Y%m%d%H%M%S")
     if dt.tzinfo is not None:
         offset = dt.utcoffset()
-        if offset is not None:
-            total_seconds = int(offset.total_seconds())
-            hours, remainder = divmod(abs(total_seconds), 3600)
-            minutes = remainder // 60
-            sign = "+" if total_seconds >= 0 else "-"
-            date_str += f"{sign}{hours:02d}'{minutes:02d}'"
+        assert offset is not None
+        total_seconds = int(offset.total_seconds())
+        hours, remainder = divmod(abs(total_seconds), 3600)
+        minutes = remainder // 60
+        sign = "+" if total_seconds >= 0 else "-"
+        date_str += f"{sign}{hours:02d}'{minutes:02d}'"
     return date_str
 
 
