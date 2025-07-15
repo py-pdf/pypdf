@@ -75,7 +75,7 @@ The `PREFIX` can be:
 * `DOC`: A documentation change.
 * `TST`: Adding or adjusting tests.
 * `DEV`: Developer experience improvements, e.g., pre-commit or setting up CI.
-* `MAINT`: Quite a lot of different stuff. Performance improvements are, for sure, 
+* `MAINT`: Quite a lot of different stuff. Performance improvements are, for sure,
            the most interesting changes in here. Refactorings as well.
 * `STY`: A style change. Something that makes pypdf code more consistent.
          Typically, a small change. It could also be better error messages for
