@@ -31,6 +31,7 @@ writer.encrypt("my-secret-password", algorithm="AES-256")
 with open("encrypted-pdf.pdf", "wb") as f:
     writer.write(f)
 ```
+
 The algorithm can be one of `RC4-40`, `RC4-128`, `AES-128`, `AES-256-R5`, `AES-256`.
 We recommend using `AES-256-R5`.
 
