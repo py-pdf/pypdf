@@ -9,7 +9,7 @@ reader = PdfReader("example.pdf")
 
 meta = reader.metadata
 
-# All of the following could be None!
+# All the following could be None!
 print(meta.title)
 print(meta.author)
 print(meta.subject)

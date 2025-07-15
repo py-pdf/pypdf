@@ -255,7 +255,7 @@ large PDF files (#808) 🎉
 ### Maintenance (MAINT)
 -  Validate PDF magic byte in strict mode (#814)
 -  Make PdfFileMerger.addBookmark() behave life PdfFileWriters' (#339)
--  Quadratic runtime while parsing reduced to linear  (#808)
+-  Quadratic runtime while parsing reduced to linear (#808)
 
 ### Testing (TST)
 -  Newlines in text extraction (#807)
@@ -403,7 +403,7 @@ large PDF files (#808) 🎉
 - BUG: Error in Chinese character encoding (#463)
 - BUG: Code duplication in Scripts/2-up.py
 - ROBUST: Guard 'obj.writeToStream' with 'if obj is not None'
-- ROBUST: Ignore a /Prev entry with the value 0 in the trailer
+- ROBUST: Ignore a /Prev entry with value 0 in the trailer
 - MAINT: Remove Sample_Code (#726)
 - TST: Close file handle in test_writer (#722)
 - TST: Fix test_get_images (#730)
@@ -449,15 +449,14 @@ Features:
 
 ### Tests and Test setup (TST)
 
- - Add Github Action which automatically run unit tests via pytest and
+ - Add GitHub Action which automatically runs unit tests via pytest and
    static code analysis with Flake8 (#660)
  - Add several unit tests (#661, #663)
  - Add .coveragerc to create coverage reports
 
 ### Developer Experience Improvements (DEV)
 
- - Pre commit: Developers can now `pre-commit install` to avoid tiny issues
-               like trailing whitespaces
+ - Pre commit: Developers can now `pre-commit install` to avoid tiny issues like trailing whitespaces
 
 ### Miscellaneous
 

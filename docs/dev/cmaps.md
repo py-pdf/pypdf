@@ -29,7 +29,7 @@ CMapName currentdict /CMap defineresource pop
 
 ## codespacerange
 
-A codespacerange maps a complete sequence of bytes to a range of unicode glyphs.
+A codespacerange maps a complete sequence of bytes to a range of Unicode glyphs.
 It defines a starting point:
 
 ```text
@@ -37,7 +37,7 @@ It defines a starting point:
 <1B> <FB00>
 ```
 
-That means that `1B` (Hex for 27) maps to the unicode character [`FB00`](https://unicode-table.com/en/FB00/) - the ligature ﬀ (two lowercase f's).
+That means that `1B` (Hex for 27) maps to the Unicode character [`FB00`](https://unicode-table.com/en/FB00/) - the ligature ﬀ (two lowercase f's).
 
 The two numbers in `begincodespacerange` mean that it starts with an offset of
 0 (hence from `1B ➜ FB00`) up to an offset of FF (dec: 255), hence 1B+FF = 282
@@ -49,4 +49,4 @@ Within the text stream, there is
 (The)-342(mis\034ts.)
 ```
 
-`\034 ` is octal for 28 decimal.
+`\034 ` is octal for the decimal value 28.

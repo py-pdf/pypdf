@@ -6,7 +6,7 @@ A `pypdf` release contains the following artifacts:
 * A [release commit](https://github.com/py-pdf/pypdf/commit/91391b18bb8ec9e6e561e2795d988e8634a01a50)
     * Containing a changelog update
     * A new [git tag](https://github.com/py-pdf/pypdf/tags)
-        * A [Github release](https://github.com/py-pdf/pypdf/releases/tag/3.15.0)
+        * A [GitHub release](https://github.com/py-pdf/pypdf/releases/tag/3.15.0)
 
 ## Who does it?
 
@@ -47,7 +47,7 @@ The release contains the following steps:
 4. Wait for the approval of another eligible maintainer.
 5. Merge the pull request with the name being the PR title and the body being
    the content of `RELEASE_COMMIT_MSG.md`.
-7. CI now builds a source and a wheels package which it pushes to PyPI. It also
+6. CI now builds a source and a wheels package which it pushes to PyPI. It also
    creates the corresponding tag and a GitHub release.
 
 ### The Release Tag
