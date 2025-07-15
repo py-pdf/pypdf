@@ -120,6 +120,33 @@ def test_embedded_file__kids():
     assert attachments == []
 
 
+@pytest.mark.enable_socket
+def test_embedded_file_ensure_params_existing_params():
+    url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
+    name = "embedded_files_kids.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    attachments = list(EmbeddedFile._load(reader.root_object))
+    assert len(attachments) == 1
+    attachment = attachments[0]
+
+    assert "/Params" in attachment._embedded_file
+    params_dict = attachment._ensure_params
+
+    assert isinstance(params_dict, DictionaryObject)
+
+    assert NameObject("/ModDate") in params_dict
+
+    original_mod_date = params_dict.get(NameObject("/ModDate"))
+    params_dict[NameObject("/TestParam")] = TextStringObject("test_value")
+
+    assert params_dict[NameObject("/TestParam")] == TextStringObject("test_value")
+    assert params_dict[NameObject("/ModDate")] == original_mod_date
+
+    params_dict2 = attachment._ensure_params
+    assert params_dict is params_dict2
+    assert params_dict2[NameObject("/TestParam")] == TextStringObject("test_value")
+
+
 def test_embedded_file_name_is_read_only():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")
