@@ -71,7 +71,6 @@ from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
 from .constants import (
     CatalogDictionary,
-    FileSpecificationDictionaryEntries,
     GoToActionArguments,
     ImageType,
     InteractiveFormDictEntries,
@@ -95,6 +94,7 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    EmbeddedFile,
     Fit,
     FloatObject,
     IndirectObject,
@@ -741,7 +741,7 @@ class PdfWriter(PdfDocCommon):
         )
         js_list.append(self._add_object(js))
 
-    def add_attachment(self, filename: str, data: Union[str, bytes]) -> None:
+    def add_attachment(self, filename: str, data: Union[str, bytes]) -> "EmbeddedFile":
         """
         Embed a file inside the PDF.
 
@@ -753,85 +753,11 @@ class PdfWriter(PdfDocCommon):
             filename: The filename to display.
             data: The data in the file.
 
+        Returns:
+            EmbeddedFile instance for the newly created embedded file.
+
         """
-        # We need three entries:
-        # * The file's data
-        # * The /Filespec entry
-        # * The file's name, which goes in the Catalog
-
-        # The entry for the file
-        # Sample:
-        # 8 0 obj
-        # <<
-        #  /Length 12
-        #  /Type /EmbeddedFile
-        # >>
-        # stream
-        # Hello world!
-        # endstream
-        # endobj
-
-        if isinstance(data, str):
-            data = data.encode("latin-1")
-        file_entry = DecodedStreamObject()
-        file_entry.set_data(data)
-        file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
-
-        # The Filespec entry
-        # Sample:
-        # 7 0 obj
-        # <<
-        #  /Type /Filespec
-        #  /F (hello.txt)
-        #  /EF << /F 8 0 R >>
-        # >>
-        # endobj
-
-        ef_entry = DictionaryObject()
-        ef_entry.update({NameObject("/F"): self._add_object(file_entry)})
-
-        filespec = DictionaryObject()
-        filespec.update(
-            {
-                NameObject(PA.TYPE): NameObject("/Filespec"),
-                NameObject(FileSpecificationDictionaryEntries.F): create_string_object(
-                    filename
-                ),  # Perhaps also try TextStringObject
-                NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
-            }
-        )
-
-        # Then create the entry for the root, as it needs
-        # a reference to the Filespec
-        # Sample:
-        # 1 0 obj
-        # <<
-        #  /Type /Catalog
-        #  /Outlines 2 0 R
-        #  /Pages 3 0 R
-        #  /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
-        # >>
-        # endobj
-
-        if CA.NAMES not in self._root_object:
-            self._root_object[NameObject(CA.NAMES)] = self._add_object(
-                DictionaryObject()
-            )
-        if "/EmbeddedFiles" not in cast(DictionaryObject, self._root_object[CA.NAMES]):
-            embedded_files_names_dictionary = DictionaryObject(
-                {NameObject(CA.NAMES): ArrayObject()}
-            )
-            cast(DictionaryObject, self._root_object[CA.NAMES])[
-                NameObject("/EmbeddedFiles")
-            ] = self._add_object(embedded_files_names_dictionary)
-        else:
-            embedded_files_names_dictionary = cast(
-                DictionaryObject,
-                cast(DictionaryObject, self._root_object[CA.NAMES])["/EmbeddedFiles"],
-            )
-        cast(ArrayObject, embedded_files_names_dictionary[CA.NAMES]).extend(
-            [create_string_object(filename), filespec]
-        )
+        return EmbeddedFile._create_new(self, filename, data)
 
     def append_pages_from_reader(
         self,

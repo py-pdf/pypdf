@@ -110,6 +110,31 @@ def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
     raise ValueError(f"Can not convert date: {orgtext}")
 
 
+def format_iso8824_date(dt: datetime) -> str:
+    """
+    Convert a datetime object to PDF date string format.
+
+    Converts datetime to the PDF date format D:YYYYMMDDHHmmSSOHH'mm
+    as specified in the PDF Reference.
+
+    Args:
+        dt: A datetime object to convert.
+
+    Returns:
+        A date string in PDF format.
+    """
+    date_str = dt.strftime("D:%Y%m%d%H%M%S")
+    if dt.tzinfo is not None:
+        offset = dt.utcoffset()
+        assert offset is not None
+        total_seconds = int(offset.total_seconds())
+        hours, remainder = divmod(abs(total_seconds), 3600)
+        minutes = remainder // 60
+        sign = "+" if total_seconds >= 0 else "-"
+        date_str += f"{sign}{hours:02d}'{minutes:02d}'"
+    return date_str
+
+
 def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     versions = (
         "%PDF-1.3",
