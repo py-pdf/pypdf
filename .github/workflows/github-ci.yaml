@@ -220,7 +220,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          # Use latest Python, so it understands all syntax.
+          # Use the latest Python, so it understands all syntax.
           python-version: ${{ env.PYTHON_LATEST }}
 
       - run: python -m pip install --upgrade coverage[toml]

@@ -5,7 +5,7 @@ In order to use the following code you need to install optional
 dependencies, see [installation guide](installation.md).
 ```
 
-Every page of a PDF document can contain an arbitrary amount of images.
+Every page of a PDF document can contain an arbitrary number of images.
 The names of the files may not be unique.
 
 ```python

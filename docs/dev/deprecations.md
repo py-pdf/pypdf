@@ -2,7 +2,7 @@
 
 pypdf strives to be an excellent library for its current users and for new
 ones. We are careful with introducing potentially breaking changes, but we
-will do them if they provide value for the community on the long run.
+will do them if they provide value for the community in the long run.
 
 We hope and think that deprecations will not happen frequently. If they do,
 users can rely on the following procedure.
@@ -20,8 +20,8 @@ If you are using [Poetry](https://pypi.org/project/poetry/) it is done with the
 
 ## How pypdf deprecates features
 
-Assume the current version of pypdf is `x.y.z`. After a discussion (e.g. via
-GitHub issues) we decided to remove a class / function / method. This is how
+Assume the current version of pypdf is `x.y.z`. After a discussion (e.g., via
+GitHub issues), we decided to remove a class / function / method. This is how
 we do it:
 
 1. `x.y.(z+1)`: Add a DeprecationWarning. If there is a replacement,
@@ -35,7 +35,7 @@ we do it:
    The CHANGELOG informs about it.
 3. `(x+2).0.0`: The DeprecationErrors are removed.
 
-This means the users have 3 warnings in the CHANGELOG, a DeprecationWarning
+This means the users have three warnings in the CHANGELOG, a DeprecationWarning
 until the next major release and a DeprecationError until the major release
 after that.
 
