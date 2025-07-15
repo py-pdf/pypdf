@@ -263,6 +263,18 @@ def test_embedded_file_subtype_setter():
     assert embedded_file.subtype == "/application#2Fjson"
 
 
+def test_embedded_file_content_setter():
+    writer = PdfWriter()
+    embedded_file = writer.add_attachment("test.txt", b"content")
+    assert embedded_file.content == b"content"
+
+    embedded_file.content = b"Hello World!"
+    assert embedded_file.content == b"Hello World!"
+
+    embedded_file.content = "Lorem ipsum dolor sit amet"
+    assert embedded_file.content == b"Lorem ipsum dolor sit amet"
+
+
 def test_embedded_file_size_setter():
     writer = PdfWriter()
     embedded_file = writer.add_attachment("test.txt", b"content")

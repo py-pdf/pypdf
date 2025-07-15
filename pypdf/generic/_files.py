@@ -204,6 +204,13 @@ class EmbeddedFile:
         """Retrieve the actual file content."""
         return self._embedded_file.get_data()
 
+    @content.setter
+    def content(self, value: str | bytes) -> None:
+        """Set the file content."""
+        if isinstance(value, str):
+            value = value.encode("latin-1")
+        self._embedded_file.set_data(value)
+
     @property
     def size(self) -> int | None:
         """Retrieve the size of the uncompressed file in bytes."""
