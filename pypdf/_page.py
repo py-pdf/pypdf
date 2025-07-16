@@ -2157,9 +2157,9 @@ class PageObject(DictionaryObject):
             del self[NameObject("/Annots")]
         else:
             self[NameObject("/Annots")] = value
- 
+
     def add_js(self, javascript: str, /, *, open_action: bool = True) -> None:
-        """
+        r"""
         Add JavaScript which will launch on the open or close action of this
         page.
 
@@ -2174,11 +2174,10 @@ class PageObject(DictionaryObject):
         Note that this will replace any existing open or close action on this page.
         Currently only an open or close action can be added, not both.
         """
-
-        open_or_close = NameObject('/O') if open_action else NameObject('/C')
+        open_or_close = NameObject("/O") if open_action else NameObject("/C")
 
         action = DictionaryObject()
-        self[NameObject('/AA')] = action
+        self[NameObject("/AA")] = action
         action[open_or_close] = DictionaryObject(
             {
                 NameObject("/Type"): NameObject("/Action"),
