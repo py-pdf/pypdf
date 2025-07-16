@@ -2175,8 +2175,8 @@ class PageObject(DictionaryObject):
         Note that this will replace any existing open or close action on this page.
         Currently only an open or close action can be added, not both.
         """
-        if action_type not in {"open", "close"}:
-            raise ValueError("action_type must be 'open' or 'close'")
+        if action_type not in {"/O", "/C"}:
+            raise ValueError('action_type must be "/O" or "/C"')
 
         action = DictionaryObject()
         self[NameObject("/AA")] = action

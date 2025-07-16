@@ -55,6 +55,12 @@ def test_added_js(pdf_file_writer):
 def test_page_add_js(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
+    with pytest.raises(ValueError) as exc:
+        page.add_js('app.alert("This is page " + this.pageNum);', "/xyzzy")
+    assert (
+        exc.value.args[0] == 'action_type must be "/O" or "/C"'
+    )
+
     page.add_js('app.alert("This is page " + this.pageNum);', "/O")
     expected = {"/O": {"/Type": "/Action", "/S": "/JavaScript", "/JS": 'app.alert("This is page " + this.pageNum);'}}
     assert page[NameObject("/AA")] == expected
