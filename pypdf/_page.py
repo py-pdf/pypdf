@@ -2158,27 +2158,29 @@ class PageObject(DictionaryObject):
         else:
             self[NameObject("/Annots")] = value
 
-    def add_js(self, javascript: str, /, action_type: NameObject = NameObject("/O")) -> None:
+    def add_js(self, javascript: str, /, action_type: str = "O") -> None:
         r"""
         Add JavaScript which will launch on the open or close action of this
         page.
 
         Args:
             javascript: Your JavaScript.
-            action_type: NameObject("/O") or NameObject("/C"), for open or close
-                action respectively.
+            action_type: "/O" or "/C", for open or close action respectively.
 
-        >>> output.add_js("app.alert(\"This is page \" + this.pageNum);", NameObject("/O"))
+        >>> output.add_js('app.alert("This is page " + this.pageNum);', "/O")
         # Example: This will display the page number when the page is opened.
-        >>> output.add_js("app.alert(\"This is page \" + this.pageNum);", NameObject("/C"))
+        >>> output.add_js('app.alert("This is page " + this.pageNum);', "/C")
         # Example: This will display the page number when the page is closed.
 
         Note that this will replace any existing open or close action on this page.
         Currently only an open or close action can be added, not both.
         """
+        if action_type not in {"open", "close"}:
+            raise ValueError("action_type must be 'open' or 'close'")
+
         action = DictionaryObject()
         self[NameObject("/AA")] = action
-        action[action_type] = DictionaryObject(
+        action[NameObject(action_type)] = DictionaryObject(
             {
                 NameObject("/Type"): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
