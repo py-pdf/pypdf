@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.generic import NameObject
 
 # Configure path environment
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -49,3 +50,13 @@ def test_added_js(pdf_file_writer):
     assert (
         first_js != second_js
     ), "add_js should add to the previous script in the catalog."
+
+
+def test_page_add_js(pdf_file_writer):
+    page = pdf_file_writer.pages[0]
+
+    page.add_js("app.alert(\"This is page \" + this.pageNum);", open_action = True)
+    assert page[NameObject('/AA')] == {'/O': {'/Type': '/Action', '/S': '/JavaScript', '/JS': 'app.alert("This is page " + this.pageNum);'}}
+
+    page.add_js("app.alert(\"This is page \" + this.pageNum);", open_action = False)
+    assert page[NameObject('/AA')] == {'/C': {'/Type': '/Action', '/S': '/JavaScript', '/JS': 'app.alert("This is page " + this.pageNum);'}}
