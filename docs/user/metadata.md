@@ -1,5 +1,7 @@
 # Metadata
 
+PDF files can have two types of metadata: "Regular" and XMP ones. They can both exist at the same time.
+
 ## Reading metadata
 
 ```python
@@ -104,3 +106,60 @@ writer.metadata = None
 with open("meta-pdf.pdf", "wb") as f:
     writer.write(f)
 ```
+
+## Reading XMP metadata
+
+```python
+from pypdf import PdfReader
+
+reader = PdfReader("example.pdf")
+
+meta = reader.xmp_metadata
+if meta:
+    print(meta.dc_title)
+    print(meta.dc_description)
+    print(meta.xmp_create_date)
+```
+
+## Modifying XMP metadata
+
+Modifying XMP metadata is a bit more complicated.
+
+As an example, we want to add the following PDF/UA identifier section to the XMP metadata:
+
+```xml
+<rdf:Description rdf:about="" xmlns:pdfuaid="http://www.aiim.org/pdfua/ns/id/">
+    <pdfuaid:part>1</pdfuaid:part>
+</rdf:Description>
+```
+
+This could be written like this:
+
+```python
+from pypdf import PdfWriter
+
+writer = PdfWriter(clone_from="example.pdf")
+
+metadata = writer.xmp_metadata
+assert metadata  # Ensure that it is not `None`.
+rdf_root = metadata.rdf_root
+xmp_meta = rdf_root.parentNode
+xmp_document = xmp_meta.parentNode
+
+# Please note that without a text node, the corresponding elements might
+# be omitted completely.
+pdfuaid_description = xmp_document.createElement("rdf:Description")
+pdfuaid_description.setAttribute("rdf:about", "")
+pdfuaid_description.setAttribute("xmlns:pdfuaid", "http://www.aiim.org/pdfua/ns/id/")
+pdfuaid_part = xmp_document.createElement("pdfuaid:part")
+pdfuaid_part_text = xmp_document.createTextNode("1")
+pdfuaid_part.appendChild(pdfuaid_part_text)
+pdfuaid_description.appendChild(pdfuaid_part)
+rdf_root.appendChild(pdfuaid_description)
+
+metadata.stream.set_data(xmp_document.toxml().encode("utf-8"))
+
+writer.write("output.pdf")
+```
+
+For further details on modifying the structure, please refer to {py:mod}`xml.dom.minidom`.
