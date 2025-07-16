@@ -2187,7 +2187,7 @@ class PageObject(DictionaryObject):
         )
 
         javascript_object = DecodedStreamObject()
-        javascript_object.set_data(javascript)
+        javascript_object.set_data(javascript.encode())
 
 
 class _VirtualList(Sequence[PageObject]):
