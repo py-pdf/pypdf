@@ -2157,7 +2157,7 @@ class PageObject(DictionaryObject):
             del self[NameObject("/Annots")]
         else:
             self[NameObject("/Annots")] = value
-    
+ 
     def add_js(self, javascript: str, /, *, open_action: bool = True) -> None:
         """
         Add JavaScript which will launch on the open or close action of this
@@ -2185,6 +2185,7 @@ class PageObject(DictionaryObject):
                 NameObject("/S"): NameObject("/JavaScript"),
                 NameObject("/JS"): TextStringObject(f"{javascript}"),
             }
+        )
 
         javascript_object = DecodedStreamObject()
         javascript_object.set_data(javascript)

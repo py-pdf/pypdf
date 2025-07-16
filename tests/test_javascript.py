@@ -56,7 +56,9 @@ def test_page_add_js(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
     page.add_js("app.alert(\"This is page \" + this.pageNum);", open_action = True)
-    assert page[NameObject('/AA')] == {'/O': {'/Type': '/Action', '/S': '/JavaScript', '/JS': 'app.alert("This is page " + this.pageNum);'}}
+    expected = {"/O": {"/Type": "/Action", "/S": "/JavaScript", "/JS": "app.alert(\"This is page \" + this.pageNum);"}}
+    assert page[NameObject('/AA')] == expected
 
     page.add_js("app.alert(\"This is page \" + this.pageNum);", open_action = False)
-    assert page[NameObject('/AA')] == {'/C': {'/Type': '/Action', '/S': '/JavaScript', '/JS': 'app.alert("This is page " + this.pageNum);'}}
+    expected = {"/C": {"/Type": "/Action", "/S": "/JavaScript", "/JS": "app.alert(\"This is page \" + this.pageNum);"}}
+    assert page[NameObject('/AA')] == expected
