@@ -10,8 +10,8 @@ page = reader.pages[0]
 print(page.extract_text())
 ```
 
-```{tip}
-# If `page.extract_text()` returns `None`, the page might be a scanned image with no text layer. You can verify this using:
+```{note}
+If `page.extract_text()` returns `None`, the page might be a scanned image with no text layer. You can verify this using:
 ```
 
 ```python
