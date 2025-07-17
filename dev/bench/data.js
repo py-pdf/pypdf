@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752668075793,
+  "lastUpdate": 1752751928068,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -79007,6 +79007,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0034469618286159104",
             "extra": "mean: 724.3444686000032 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bfe7178e23244bf5aa875d226b074a75df8ebccc",
+          "message": "ROB: Deal with DecodeParms being empty list (#3388)",
+          "timestamp": "2025-07-17T13:29:37+02:00",
+          "tree_id": "910c758dce9c3086ca20274f3a7654993c41c37f",
+          "url": "https://github.com/py-pdf/pypdf/commit/bfe7178e23244bf5aa875d226b074a75df8ebccc"
+        },
+        "date": 1752751924776,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.415136941793519,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009111198009911885",
+            "extra": "mean: 292.8140268000007 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.217260156789449,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006900433120849367",
+            "extra": "mean: 65.71485206250038 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2699499212969346,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03196887093212211",
+            "extra": "mean: 3.7043907817999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.23109168453088,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008029773224577762",
+            "extra": "mean: 58.034628235293106 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0825234548034093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09575931108952818",
+            "extra": "mean: 12.117767032200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3381913193207235,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026353010532740966",
+            "extra": "mean: 747.2773029999985 msec\nrounds: 5"
           }
         ]
       }
