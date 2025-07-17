@@ -879,7 +879,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
     decode_parms = x_object_obj.get(SA.DECODE_PARMS, None)
-    if isinstance(decode_parms, (tuple, list)):
+    if decode_parms and isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
     else:
         decode_parms = {}
