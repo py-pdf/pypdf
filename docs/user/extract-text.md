@@ -8,7 +8,18 @@ from pypdf import PdfReader
 reader = PdfReader("example.pdf")
 page = reader.pages[0]
 print(page.extract_text())
+```
 
+```{tip}
+# If `page.extract_text()` returns `None`, the page might be a scanned image with no text layer. You can verify this using:
+```
+
+```python
+if not page.extract_text():
+    print("Likely a scanned image — consider using OCR (e.g., pytesseract)")
+```
+
+```python
 # extract only text oriented up
 print(page.extract_text(0))
 
