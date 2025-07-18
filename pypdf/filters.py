@@ -385,7 +385,16 @@ class RunLengthDecode:
             length = data[index]
             index += 1
             if length == 128:
-                if index < len(data):
+                data_length = len(data)
+                if index < data_length:
+                    # We should first check, if we have an inner stream from a multi-encoded
+                    # stream with a faulty trailing newline that we can decode properly.
+                    # We will just ignore the last byte and raise a warning ...
+                    if (index == data_length - 1) and (data[index : index+1] == b"\n"):
+                        logger_warning(
+                            "Found trailing newline in stream data, check if output is OK", __name__
+                        )
+                        break
                     raise PdfStreamError("Early EOD in RunLengthDecode")
                 break
             if length < 128:
@@ -870,7 +879,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
     decode_parms = x_object_obj.get(SA.DECODE_PARMS, None)
-    if isinstance(decode_parms, (tuple, list)):
+    if decode_parms and isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
     else:
         decode_parms = {}

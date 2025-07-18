@@ -1,8 +1,8 @@
 # This action assumes that there is a REL-commit which already has a
-# Markdown-formatted git tag. Hence the CHANGELOG is already adjusted
+# Markdown-formatted git tag. Hence, the CHANGELOG is already adjusted,
 # and it's decided what should be in the release.
 # This action only ensures the release is done with the proper contents
-# and that it's announced with a Github release.
+# and that it's announced with a GitHub release.
 name: Create git tag
 on:
   push:

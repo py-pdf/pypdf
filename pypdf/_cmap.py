@@ -1,4 +1,5 @@
 import binascii
+from binascii import Error as BinasciiError
 from binascii import unhexlify
 from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
@@ -383,9 +384,12 @@ def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) ->
         map_to = ""
         # placeholder (see above) means empty string
         if lst[1] != b".":
-            map_to = unhexlify(lst[1]).decode(
-                "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
-            )  # join is here as some cases where the code was split
+            try:
+                map_to = unhexlify(lst[1]).decode(
+                    "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
+                )  # join is here as some cases where the code was split
+            except BinasciiError as exception:
+                logger_warning(f"Got invalid hex string: {exception!s} ({lst[1]!r})", __name__)
         map_dict[
             unhexlify(lst[0]).decode(
                 "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"

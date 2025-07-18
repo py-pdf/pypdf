@@ -6,14 +6,14 @@ There are several ways to install pypdf. The most common option is to use pip.
 
 pypdf requires Python 3.8+ to run.
 
-Typically Python comes with `pip`, a package installer. Using it you can
+Typically, Python comes with `pip`, a package installer. Using it, you can
 install pypdf:
 
 ```bash
 pip install pypdf
 ```
 
-If you are not a super-user (a system administrator / root), you can also just
+If you are not a superuser (a system administrator / root), you can also just
 install pypdf for your current user:
 
 ```bash
@@ -22,7 +22,7 @@ pip install --user pypdf
 
 ### Optional dependencies
 
-pypdf tries to be as self-contained as possible, but for some tasks the amount
+pypdf tries to be as self-contained as possible, but for some tasks, the amount
 of work to properly maintain the code would be too high. This is especially the
 case for cryptography and image formats.
 
@@ -50,7 +50,7 @@ pip install pypdf[image]
 
 For JBIG2 support, you need to install a global OS-level package as well:
 [`jbig2dec`](https://github.com/ArtifexSoftware/jbig2dec) The installation procedure
-depends on our operating system. For Ubuntu, just use the following for example:
+depends on our operating system. For Ubuntu, use the following, for example:
 
 ```
 sudo apt-get install jbig2dec
@@ -59,18 +59,18 @@ sudo apt-get install jbig2dec
 ## Python Version Support
 
 Since pypdf 4.0, every release, including point releases, should work with all
-supported versions of [Python](https://devguide.python.org/versions/). Thus
+supported versions of [Python](https://devguide.python.org/versions/). Thus,
 every point release is designed to work with all existing Python versions,
 excluding end-of-life versions.
 
 Previous versions of pypdf support the following versions of Python:
 
 | Python                 | 3.11 | 3.10 | 3.9 | 3.8 | 3.7 | 3.6 | 2.7 |
-| ---------------------- |:----:|:----:|:---:|:---:|:---:|:---:|:---:|
-| pypdf 3.x              | ✅   | ✅  | ✅ | ✅  | ✅  | ✅ | ❌ |
-| PyPDF2 >= 2.0          | ✅   | ✅  | ✅ | ✅  | ✅  | ✅ | ❌ |
-| PyPDF2 1.20.0 - 1.28.4 | ❌   | ✅  | ✅ | ✅  | ✅  | ✅ | ✅ |
-| PyPDF2 1.15.0 - 1.20.0 | ❌   | ❌  | ❌ | ❌  | ❌  | ❌ | ✅ |
+|------------------------|:----:|:----:|:---:|:---:|:---:|:---:|:---:|
+| pypdf 3.x              |  ✅   |  ✅   |  ✅  |  ✅  |  ✅  |  ✅  |  ❌  |
+| PyPDF2 >= 2.0          |  ✅   |  ✅   |  ✅  |  ✅  |  ✅  |  ✅  |  ❌  |
+| PyPDF2 1.20.0 - 1.28.4 |  ❌   |  ✅   |  ✅  |  ✅  |  ✅  |  ✅  |  ✅  |
+| PyPDF2 1.15.0 - 1.20.0 |  ❌   |  ❌   |  ❌  |  ❌  |  ❌  |  ❌  |  ✅  |
 
 
 ## Anaconda

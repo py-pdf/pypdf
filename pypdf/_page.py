@@ -51,20 +51,12 @@ from typing import (
 
 from ._cmap import (
     build_char_map,
-    build_font_width_map,
-    compute_font_width,
-    get_actual_str_key,
-    unknown_char_map,
 )
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
-    OrientationNotFoundError,
     _layout_mode,
-    crlf_space_check,
-    get_display_str,
-    get_text_operands,
-    mult,
 )
+from ._text_extraction._text_extractor import TextExtraction
 from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
@@ -92,7 +84,6 @@ from .generic import (
     PdfObject,
     RectangleObject,
     StreamObject,
-    TextStringObject,
     is_null_or_none,
 )
 
@@ -203,6 +194,13 @@ class Transformation:
             matrix[1][1],
             matrix[2][0],
             matrix[2][1],
+        )
+
+    def _to_cm(self) -> str:
+        # Returns the cm operation string for the given transformation matrix
+        return (
+            f"{self.ctm[0]:.4f} {self.ctm[1]:.4f} {self.ctm[2]:.4f} "
+            f"{self.ctm[3]:.4f} {self.ctm[4]:.4f} {self.ctm[5]:.4f} cm"
         )
 
     def transform(self, m: "Transformation") -> "Transformation":
@@ -610,12 +608,14 @@ class PageObject(DictionaryObject):
         if ancest is None:
             ancest = []
         lst: List[Union[str, List[str]]] = []
-        if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
-            DictionaryObject, obj[PG.RESOURCES]
+        if (
+                PG.RESOURCES not in obj or
+                is_null_or_none(resources := obj[PG.RESOURCES]) or
+                RES.XOBJECT not in cast(DictionaryObject, resources)
         ):
             return [] if self.inline_images is None else list(self.inline_images.keys())
 
-        x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
+        x_object = resources[RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
             if not isinstance(x_object[o], StreamObject):
                 continue
@@ -1662,78 +1662,6 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-    def _get_actual_font_widths(
-        self,
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
-        ],
-        text_operands: str,
-        font_size: float,
-        space_width: float
-    ) -> Tuple[float, float, float]:
-        font_widths: float = 0
-        font_name: str = cmap[2]
-        if font_name not in self._font_width_maps:
-            if cmap[3] is None:
-                font_width_map: Dict[Any, float] = {}
-                space_char = " "
-                actual_space_width: float = space_width
-                font_width_map["default"] = actual_space_width * 2
-            else:
-                space_char = get_actual_str_key(" ", cmap[0], cmap[1])
-                font_width_map = build_font_width_map(cmap[3], space_width * 2)
-                actual_space_width = compute_font_width(font_width_map, space_char)
-            if actual_space_width == 0:
-                actual_space_width = space_width
-            self._font_width_maps[font_name] = (font_width_map, space_char, actual_space_width)
-        font_width_map = self._font_width_maps[font_name][0]
-        space_char = self._font_width_maps[font_name][1]
-        actual_space_width = self._font_width_maps[font_name][2]
-
-        if text_operands:
-            for char in text_operands:
-                if char == space_char:
-                    font_widths += actual_space_width
-                    continue
-                font_widths += compute_font_width(font_width_map, char)
-        return (font_widths * font_size, space_width * font_size, font_size)
-
-    def _handle_tj(
-        self,
-        text: str,
-        operands: List[Union[str, TextStringObject]],
-        cm_matrix: List[float],
-        tm_matrix: List[float],
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
-        ],
-        orientations: Tuple[int, ...],
-        font_size: float,
-        rtl_dir: bool,
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
-        space_width: float,
-        actual_str_size: Dict[str, float]
-    ) -> Tuple[str, bool, Dict[str, float]]:
-        text_operands, is_str_operands = get_text_operands(
-            operands, cm_matrix, tm_matrix, cmap, orientations)
-        if is_str_operands:
-            text += text_operands
-        else:
-            text, rtl_dir = get_display_str(
-                text,
-                cm_matrix,
-                tm_matrix,  # text matrix
-                cmap,
-                text_operands,
-                font_size,
-                rtl_dir,
-                visitor_text)
-        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
-            self._get_actual_font_widths(cmap, text_operands, font_size, space_width))
-        actual_str_size["str_widths"] += font_widths
-
-        return text, rtl_dir, actual_str_size
-
     def _extract_text(
         self,
         obj: Any,
@@ -1754,9 +1682,7 @@ class PageObject(DictionaryObject):
                 default = "/Content"
 
         """
-        text: str = ""
-        output: str = ""
-        rtl_dir: bool = False  # right-to-left
+        extractor = TextExtraction()
         cmaps: Dict[
             str,
             Tuple[
@@ -1777,17 +1703,12 @@ class PageObject(DictionaryObject):
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
-        if "/Font" in resources_dict and (font := resources_dict["/Font"]):
+        if not is_null_or_none(resources_dict) and "/Font" in resources_dict and (font := resources_dict["/Font"]):
             for f in cast(DictionaryObject, font):
-                cmaps[f] = build_char_map(f, space_width, obj)
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
-        ] = (
-            "charmap",
-            {},
-            "NotInitialized",
-            None,
-        )  # (encoding, CMAP, font resource name, font)
+                try:
+                    cmaps[f] = build_char_map(f, space_width, obj)
+                except TypeError:
+                    pass
 
         try:
             content = (
@@ -1801,245 +1722,57 @@ class PageObject(DictionaryObject):
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
-        cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        cm_stack = []
-
-        # Store the last modified matrices; can be an intermediate position
-        cm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        tm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-
-        # Store the position at the beginning of building the text
-        memo_cm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        memo_tm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-
-        char_scale = 1.0
-        space_scale = 1.0
-        _space_width: float = 500.0  # will be set correctly at first Tf
-        _actual_str_size: Dict[str, float] = {
-            "str_widths": 0.0, "space_width": 0.0, "str_height": 0.0
-        }  # will be set to string length calculation result
-        TL = 0.0
-        font_size = 12.0  # init just in case of
-
-        def compute_str_widths(str_widths: float) -> float:
-            return str_widths / 1000
-
-        def process_operation(operator: bytes, operands: List[Any]) -> None:
-            nonlocal cm_matrix, tm_matrix, cm_stack, cm_prev, tm_prev, memo_cm, memo_tm
-            nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
-            nonlocal orientations, rtl_dir, visitor_text, output, text, _actual_str_size
-
-            str_widths: float = 0.0
-
-            # Table 5.4 page 405
-            if operator == b"BT":  # Begin Text
-                tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                # Flush text:
-                output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
-                return
-            if operator == b"ET":  # End Text
-                # Flush text:
-                output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
-
-            # Table 4.7 "Graphics state operators", page 219
-            # cm_matrix calculation is reserved for later
-            elif operator == b"q":  # Save graphics state
-                cm_stack.append(
-                    (
-                        cm_matrix,
-                        cmap,
-                        font_size,
-                        char_scale,
-                        space_scale,
-                        _space_width,
-                        TL,
-                    )
-                )
-            elif operator == b"Q":  # Restore graphics state
-                try:
-                    (
-                        cm_matrix,
-                        cmap,
-                        font_size,
-                        char_scale,
-                        space_scale,
-                        _space_width,
-                        TL,
-                    ) = cm_stack.pop()
-                except Exception:
-                    cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-            elif operator == b"cm":  # Modify current matrix
-                output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                try:
-                    cm_matrix = mult(
-                        [float(operand) for operand in operands[:6]],
-                        cm_matrix
-                    )
-                except Exception:
-                    cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
-
-            # Table 5.2 page 398
-            elif operator == b"Tz":  # Set horizontal text scaling
-                char_scale = float(operands[0]) / 100 if operands else 1.0
-            elif operator == b"Tw":  # Set word spacing
-                space_scale = 1.0 + float(operands[0] if operands else 0.0)
-            elif operator == b"TL":  # Set Text Leading
-                scale_x = math.sqrt(tm_matrix[0]**2 + tm_matrix[2]**2)
-                TL = float(operands[0] if operands else 0.0) * font_size * scale_x
-            elif operator == b"Tf":  # Set font size
-                if text != "":
-                    output += text  # .translate(cmap)
-                    if visitor_text is not None:
-                        visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
-                try:
-                    # char_map_tuple: font_type,
-                    #                 float(sp_width / 2),
-                    #                 encoding,
-                    #                 map_dict,
-                    #                 font_dict (describes the font)
-                    char_map_tuple = cmaps[operands[0]]
-                    # current cmap: encoding,
-                    #               map_dict,
-                    #               font resource name (internal name, not the real font name),
-                    #               font_dict
-                    cmap = (
-                        char_map_tuple[2],
-                        char_map_tuple[3],
-                        operands[0],
-                        char_map_tuple[4],
-                    )
-                    _space_width = char_map_tuple[1]
-                except KeyError:  # font not found
-                    cmap = (
-                        unknown_char_map[2],
-                        unknown_char_map[3],
-                        f"???{operands[0]}",
-                        None,
-                    )
-                    _space_width = unknown_char_map[1]
-                try:
-                    font_size = float(operands[1])
-                except Exception:
-                    pass  # keep previous size
-            # Table 5.5 page 406
-            elif operator == b"Td":  # Move text position
-                # A special case is a translating only tm:
-                # tm = [1, 0, 0, 1, e, f]
-                # i.e. tm[4] += tx, tm[5] += ty.
-                tx, ty = float(operands[0]), float(operands[1])
-                tm_matrix[4] += tx * tm_matrix[0] + ty * tm_matrix[2]
-                tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
-                str_widths = compute_str_widths(_actual_str_size["str_widths"])
-                _actual_str_size["str_widths"] = 0.0
-            elif operator == b"Tm":  # Set text matrix
-                tm_matrix = [float(operand) for operand in operands[:6]]
-                str_widths = compute_str_widths(_actual_str_size["str_widths"])
-                _actual_str_size["str_widths"] = 0.0
-            elif operator == b"T*":  # Move to next line
-                tm_matrix[4] -= TL * tm_matrix[2]
-                tm_matrix[5] -= TL * tm_matrix[3]
-                str_widths = compute_str_widths(_actual_str_size["str_widths"])
-                _actual_str_size["str_widths"] = 0.0
-            elif operator == b"Tj":  # Show text
-                text, rtl_dir, _actual_str_size = self._handle_tj(
-                    text,
-                    operands,
-                    cm_matrix,
-                    tm_matrix,
-                    cmap,
-                    orientations,
-                    font_size,
-                    rtl_dir,
-                    visitor_text,
-                    _space_width,
-                    _actual_str_size,
-                )
-            else:
-                return
-
-            if operator in {b"Td", b"Tm", b"T*", b"Tj"}:
-                try:
-                    text, output, cm_prev, tm_prev = crlf_space_check(
-                        text,
-                        (cm_prev, tm_prev),
-                        (cm_matrix, tm_matrix),
-                        (memo_cm, memo_tm),
-                        cmap,
-                        orientations,
-                        output,
-                        font_size,
-                        visitor_text,
-                        str_widths,
-                        compute_str_widths(_actual_str_size["space_width"]),
-                        _actual_str_size["str_height"]
-                    )
-                    if text == "":
-                        memo_cm = cm_matrix.copy()
-                        memo_tm = tm_matrix.copy()
-                except OrientationNotFoundError:
-                    return
+        # Initialize the extractor with the necessary parameters
+        extractor.initialize_extraction(orientations, visitor_text, cmaps)
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
-                visitor_operand_before(operator, operands, cm_matrix, tm_matrix)
+                visitor_operand_before(operator, operands, extractor.cm_matrix, extractor.tm_matrix)
             # Multiple operators are handled here
             if operator == b"'":
-                process_operation(b"T*", [])
-                process_operation(b"Tj", operands)
+                extractor.process_operation(b"T*", [])
+                extractor.process_operation(b"Tj", operands)
             elif operator == b'"':
-                process_operation(b"Tw", [operands[0]])
-                process_operation(b"Tc", [operands[1]])
-                process_operation(b"T*", [])
-                process_operation(b"Tj", operands[2:])
+                extractor.process_operation(b"Tw", [operands[0]])
+                extractor.process_operation(b"Tc", [operands[1]])
+                extractor.process_operation(b"T*", [])
+                extractor.process_operation(b"Tj", operands[2:])
             elif operator == b"TJ":
                 # The space width may be smaller than the font width, so the width should be 95%.
-                _confirm_space_width = _space_width * 0.95
+                _confirm_space_width = extractor._space_width * 0.95
                 if operands:
                     for op in operands[0]:
                         if isinstance(op, (str, bytes)):
-                            process_operation(b"Tj", [op])
+                            extractor.process_operation(b"Tj", [op])
                         if isinstance(op, (int, float, NumberObject, FloatObject)) and (
                             abs(float(op)) >= _confirm_space_width
-                            and text
-                            and text[-1] != " "
+                            and extractor.text
+                            and extractor.text[-1] != " "
                         ):
-                            process_operation(b"Tj", [" "])
+                            extractor.process_operation(b"Tj", [" "])
             elif operator == b"TD":
-                process_operation(b"TL", [-operands[1]])
-                process_operation(b"Td", operands)
+                extractor.process_operation(b"TL", [-operands[1]])
+                extractor.process_operation(b"Td", operands)
             elif operator == b"Do":
-                output += text
+                extractor.output += extractor.text
                 if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                    visitor_text(
+                        extractor.text,
+                        extractor.memo_cm,
+                        extractor.memo_tm,
+                        extractor.cmap[3],
+                        extractor.font_size,
+                    )
                 try:
-                    if output[-1] != "\n":
-                        output += "\n"
+                    if extractor.output[-1] != "\n":
+                        extractor.output += "\n"
                         if visitor_text is not None:
                             visitor_text(
                                 "\n",
-                                memo_cm,
-                                memo_tm,
-                                cmap[3],
-                                font_size,
+                                extractor.memo_cm,
+                                extractor.memo_tm,
+                                extractor.cmap[3],
+                                extractor.font_size,
                             )
                 except IndexError:
                     pass
@@ -2054,14 +1787,14 @@ class PageObject(DictionaryObject):
                             visitor_operand_after,
                             visitor_text,
                         )
-                        output += text
+                        extractor.output += text
                         if visitor_text is not None:
                             visitor_text(
                                 text,
-                                memo_cm,
-                                memo_tm,
-                                cmap[3],
-                                font_size,
+                                extractor.memo_cm,
+                                extractor.memo_tm,
+                                extractor.cmap[3],
+                                extractor.font_size,
                             )
                 except Exception as exception:
                     logger_warning(
@@ -2069,17 +1802,23 @@ class PageObject(DictionaryObject):
                         __name__,
                     )
                 finally:
-                    text = ""
-                    memo_cm = cm_matrix.copy()
-                    memo_tm = tm_matrix.copy()
+                    extractor.text = ""
+                    extractor.memo_cm = extractor.cm_matrix.copy()
+                    extractor.memo_tm = extractor.tm_matrix.copy()
             else:
-                process_operation(operator, operands)
+                extractor.process_operation(operator, operands)
             if visitor_operand_after is not None:
-                visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
-        output += text  # just in case
-        if text != "" and visitor_text is not None:
-            visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-        return output
+                visitor_operand_after(operator, operands, extractor.cm_matrix, extractor.tm_matrix)
+        extractor.output += extractor.text  # just in case
+        if extractor.text != "" and visitor_text is not None:
+            visitor_text(
+                extractor.text,
+                extractor.memo_cm,
+                extractor.memo_tm,
+                extractor.cmap[3],
+                extractor.font_size,
+            )
+        return extractor.output
 
     def _layout_mode_fonts(self) -> Dict[str, _layout_mode.Font]:
         """

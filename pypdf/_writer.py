@@ -55,7 +55,7 @@ from typing import (
 from ._cmap import _default_fonts_space_width, build_char_map_from_dict
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
-from ._page import PageObject
+from ._page import PageObject, Transformation
 from ._page_labels import nums_clear_range, nums_insert, nums_next
 from ._reader import PdfReader
 from ._utils import (
@@ -71,7 +71,6 @@ from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
 from .constants import (
     CatalogDictionary,
-    FileSpecificationDictionaryEntries,
     GoToActionArguments,
     ImageType,
     InteractiveFormDictEntries,
@@ -95,6 +94,7 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    EmbeddedFile,
     Fit,
     FloatObject,
     IndirectObject,
@@ -743,7 +743,7 @@ class PdfWriter(PdfDocCommon):
         )
         js_list.append(self._add_object(js))
 
-    def add_attachment(self, filename: str, data: Union[str, bytes]) -> None:
+    def add_attachment(self, filename: str, data: Union[str, bytes]) -> "EmbeddedFile":
         """
         Embed a file inside the PDF.
 
@@ -755,85 +755,11 @@ class PdfWriter(PdfDocCommon):
             filename: The filename to display.
             data: The data in the file.
 
+        Returns:
+            EmbeddedFile instance for the newly created embedded file.
+
         """
-        # We need three entries:
-        # * The file's data
-        # * The /Filespec entry
-        # * The file's name, which goes in the Catalog
-
-        # The entry for the file
-        # Sample:
-        # 8 0 obj
-        # <<
-        #  /Length 12
-        #  /Type /EmbeddedFile
-        # >>
-        # stream
-        # Hello world!
-        # endstream
-        # endobj
-
-        if isinstance(data, str):
-            data = data.encode("latin-1")
-        file_entry = DecodedStreamObject()
-        file_entry.set_data(data)
-        file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
-
-        # The Filespec entry
-        # Sample:
-        # 7 0 obj
-        # <<
-        #  /Type /Filespec
-        #  /F (hello.txt)
-        #  /EF << /F 8 0 R >>
-        # >>
-        # endobj
-
-        ef_entry = DictionaryObject()
-        ef_entry.update({NameObject("/F"): self._add_object(file_entry)})
-
-        filespec = DictionaryObject()
-        filespec.update(
-            {
-                NameObject(PA.TYPE): NameObject("/Filespec"),
-                NameObject(FileSpecificationDictionaryEntries.F): create_string_object(
-                    filename
-                ),  # Perhaps also try TextStringObject
-                NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
-            }
-        )
-
-        # Then create the entry for the root, as it needs
-        # a reference to the Filespec
-        # Sample:
-        # 1 0 obj
-        # <<
-        #  /Type /Catalog
-        #  /Outlines 2 0 R
-        #  /Pages 3 0 R
-        #  /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
-        # >>
-        # endobj
-
-        if CA.NAMES not in self._root_object:
-            self._root_object[NameObject(CA.NAMES)] = self._add_object(
-                DictionaryObject()
-            )
-        if "/EmbeddedFiles" not in cast(DictionaryObject, self._root_object[CA.NAMES]):
-            embedded_files_names_dictionary = DictionaryObject(
-                {NameObject(CA.NAMES): ArrayObject()}
-            )
-            cast(DictionaryObject, self._root_object[CA.NAMES])[
-                NameObject("/EmbeddedFiles")
-            ] = self._add_object(embedded_files_names_dictionary)
-        else:
-            embedded_files_names_dictionary = cast(
-                DictionaryObject,
-                cast(DictionaryObject, self._root_object[CA.NAMES])["/EmbeddedFiles"],
-            )
-        cast(ArrayObject, embedded_files_names_dictionary[CA.NAMES]).extend(
-            [create_string_object(filename), filespec]
-        )
+        return EmbeddedFile._create_new(self, filename, data)
 
     def append_pages_from_reader(
         self,
@@ -867,12 +793,102 @@ class PdfWriter(PdfDocCommon):
             if callable(after_page_append):
                 after_page_append(writer_page)
 
+    def _merge_content_stream_to_page(
+        self,
+        page: PageObject,
+        new_content_data: bytes,
+    ) -> None:
+        """
+        Combines existing content stream(s) with new content (as bytes),
+        and returns a new single StreamObject.
+
+        Args:
+            page: The page to which the new content data will be added.
+            new_content_data: A binary-encoded new content stream, for
+                instance the commands to draw an XObject.
+        """
+        # First resolve the existing page content. This always is an IndirectObject:
+        # PDF Explained by John Whitington
+        # https://www.oreilly.com/library/view/pdf-explained/9781449321581/ch04.html
+        if NameObject("/Contents") in page:
+            existing_content_ref = page[NameObject("/Contents")]
+            existing_content = existing_content_ref.get_object()
+
+            if isinstance(existing_content, ArrayObject):
+                # Create a new StreamObject for the new_content_data
+                new_stream_obj = StreamObject()
+                new_stream_obj.set_data(new_content_data)
+                existing_content.append(self._add_object(new_stream_obj))
+                page[NameObject("/Contents")] = self._add_object(existing_content)
+            if isinstance(existing_content, StreamObject):
+                # Merge new content to existing StreamObject
+                merged_data = existing_content.get_data() + b"\n" + new_content_data
+                new_stream = StreamObject()
+                new_stream.set_data(merged_data)
+                page[NameObject("/Contents")] = self._add_object(new_stream)
+        else:
+            # If no existing content, then we have an empty page.
+            # Create a new StreamObject in a new /Contents entry.
+            new_stream = StreamObject()
+            new_stream.set_data(new_content_data)
+            page[NameObject("/Contents")] = self._add_object(new_stream)
+
+    def _add_apstream_object(
+            self,
+            page: PageObject,
+            appearance_stream_obj: StreamObject,
+            object_name: str,
+            x_offset: float,
+            y_offset: float,
+            font_res: Optional[DictionaryObject] = None
+        ) -> None:
+        """
+        Adds an appearance stream to the page content in the form of
+        an XObject.
+
+        Args:
+            page: The page to which to add the appearance stream.
+            appearance_stream_obj: The appearance stream.
+            object_name: The name of the appearance stream.
+            x_offset: The horizontal offset for the appearance stream.
+            y_offset: The vertical offset for the appearance stream.
+            font_res: The appearance stream's font resource (if given).
+        """
+        # Prepare XObject resource dictionary on the page
+        pg_res = cast(DictionaryObject, page[PG.RESOURCES])
+        if font_res is not None:
+            font_name = font_res["/BaseFont"]  # [/"Name"] often also exists, but is deprecated
+            if "/Font" not in pg_res:
+                pg_res[NameObject("/Font")] = DictionaryObject()
+            pg_ft_res = cast(DictionaryObject, pg_res[NameObject("/Font")])
+            if font_name not in pg_ft_res:
+                pg_ft_res[NameObject(font_name)] = font_res
+        # Always add the resolved stream object to the writer to get a new IndirectObject.
+        # This ensures we have a valid IndirectObject managed by *this* writer.
+        xobject_ref = self._add_object(appearance_stream_obj)
+        xobject_name = NameObject(f"/Fm_{object_name}")._sanitize()
+        if "/XObject" not in pg_res:
+            pg_res[NameObject("/XObject")] = DictionaryObject()
+        pg_xo_res  = cast(DictionaryObject, pg_res["/XObject"])
+        if xobject_name not in pg_xo_res:
+            pg_xo_res[xobject_name] = xobject_ref
+        else:
+            logger_warning(
+                f"XObject {xobject_name!r} already added to page resources. This might be an issue.",
+                __name__
+            )
+        xobject_cm = Transformation().translate(x_offset, y_offset)
+        xobject_drawing_commands = f"q\n{xobject_cm._to_cm()}\n{xobject_name} Do\nQ".encode()
+        self._merge_content_stream_to_page(page, xobject_drawing_commands)
+
     def _update_field_annotation(
         self,
+        page: PageObject,
         field: DictionaryObject,
         annotation: DictionaryObject,
         font_name: str = "",
         font_size: float = -1,
+        flatten: bool = False,
     ) -> None:
         # Calculate rectangle dimensions
         _rct = cast(RectangleObject, annotation[AA.Rect])
@@ -1015,6 +1031,10 @@ class PdfWriter(PdfDocCommon):
             self._objects[n - 1] = dct
             dct.indirect_reference = IndirectObject(n, 0, self)
 
+        if flatten:
+            field_name = self._get_qualified_field_name(annotation)
+            self._add_apstream_object(page, dct, field_name, _rct[0], _rct[1], font_res)
+
     FFBITS_NUL = FA.FfBits(0)
 
     def update_page_form_field_values(
@@ -1023,6 +1043,7 @@ class PdfWriter(PdfDocCommon):
         fields: Dict[str, Union[str, List[str], Tuple[str, str, float]]],
         flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
+        flatten: bool = False,
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -1049,6 +1070,10 @@ class PdfWriter(PdfDocCommon):
             auto_regenerate: Set/unset the need_appearances flag;
                 the flag is unchanged if auto_regenerate is None.
 
+            flatten: Whether or not to flatten the annotation. If True, this adds the annotation's
+                appearance stream to the page contents. Note that this option does not remove the
+                annotation itself.
+
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
             raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
@@ -1063,7 +1088,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(page, list):
             for p in page:
                 if PG.ANNOTS in p:  # just to prevent warnings
-                    self.update_page_form_field_values(p, fields, flags, None)
+                    self.update_page_form_field_values(p, fields, flags, None, flatten=flatten)
             return
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
@@ -1092,24 +1117,32 @@ class PdfWriter(PdfDocCommon):
                     del parent_annotation["/I"]
                 if flags:
                     annotation[NameObject(FA.Ff)] = NumberObject(flags)
-                if isinstance(value, list):
-                    lst = ArrayObject(TextStringObject(v) for v in value)
-                    parent_annotation[NameObject(FA.V)] = lst
-                elif isinstance(value, tuple):
-                    annotation[NameObject(FA.V)] = TextStringObject(
-                        value[0],
-                    )
-                else:
-                    parent_annotation[NameObject(FA.V)] = TextStringObject(value)
+                if not (value is None and flatten):  # Only change values if given by user and not flattening.
+                    if isinstance(value, list):
+                        lst = ArrayObject(TextStringObject(v) for v in value)
+                        parent_annotation[NameObject(FA.V)] = lst
+                    elif isinstance(value, tuple):
+                        annotation[NameObject(FA.V)] = TextStringObject(
+                            value[0],
+                        )
+                    else:
+                        parent_annotation[NameObject(FA.V)] = TextStringObject(value)
                 if parent_annotation.get(FA.FT) == "/Btn":
                     # Checkbox button (no /FT found in Radio widgets)
                     v = NameObject(value)
                     ap = cast(DictionaryObject, annotation[NameObject(AA.AP)])
-                    if v not in cast(ArrayObject, ap[NameObject("/N")]):
+                    normal_ap = cast(DictionaryObject, ap["/N"])
+                    if v not in normal_ap:
                         v = NameObject("/Off")
+                    appearance_stream_obj = normal_ap.get(v)
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
+                    if flatten and appearance_stream_obj is not None:
+                        # We basically copy the entire appearance stream, which should be an XObject that
+                        # is already registered. No need to add font resources.
+                        rct = cast(RectangleObject, annotation[AA.Rect])
+                        self._add_apstream_object(page, appearance_stream_obj, field, rct[0], rct[1])
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
@@ -1117,10 +1150,10 @@ class PdfWriter(PdfDocCommon):
                     # textbox
                     if isinstance(value, tuple):
                         self._update_field_annotation(
-                            parent_annotation, annotation, value[1], value[2]
+                            page, parent_annotation, annotation, value[1], value[2], flatten=flatten
                         )
                     else:
-                        self._update_field_annotation(parent_annotation, annotation)
+                        self._update_field_annotation(page, parent_annotation, annotation, flatten=flatten)
                 elif (
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
@@ -1497,7 +1530,7 @@ class PdfWriter(PdfDocCommon):
             )
         )
         xr.write_to_stream(stream)
-        stream.write(f"\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
+        stream.write(f"\nendobj\nstartxref\n{xref_location}\n%%EOF\n".encode())  # eof
 
     def _write_pdf_structure(self, stream: StreamType) -> Tuple[List[int], List[int]]:
         object_positions = []

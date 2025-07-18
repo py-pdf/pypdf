@@ -22,6 +22,7 @@ from pypdf.filters import (
     CCITTParameters,
     FlateDecode,
     JBIG2Decode,
+    RunLengthDecode,
 )
 from pypdf.generic import (
     ArrayObject,
@@ -816,3 +817,38 @@ def test_flate_decode_stream_with_faulty_tail_bytes():
     reader = PdfReader(BytesIO(data))
     obj = reader.get_object(IndirectObject(182, 0, reader))
     assert cast(StreamObject, obj).get_data() == expected
+
+
+@pytest.mark.enable_socket
+def test_rle_decode_with_faulty_tail_byte_in_multi_encoded_stream(caplog):
+    """
+    Test for #3355
+
+    The test ensures that the inner RLE encoded stream can be decoded,
+    because this stream contains an extra faulty newline byte in the
+    end that can be ignored during decoding.
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/21038398/test_data_rle.txt",
+        name="multi_decoding_example_with_faulty_tail_byte.pdf"
+    )
+    reader = PdfReader(BytesIO(data))
+    obj = reader.get_object(IndirectObject(60, 0, reader))
+    cast(StreamObject, obj).get_data()
+    assert "Found trailing newline in stream data, check if output is OK" in caplog.messages
+
+
+@pytest.mark.enable_socket
+def test_rle_decode_exception_with_corrupted_stream():
+    """
+    Additional Test to #3355
+
+    This test must raise the EOD exception during RLE decoding and ensures
+    that we do not fail during code coverage analyses in the git PR pipeline.
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/21052626/rle_stream_with_error.txt",
+        name="rle_stream_with_error.txt"
+    )
+    with pytest.raises(PdfStreamError, match="Early EOD in RunLengthDecode"):
+        RunLengthDecode.decode(data)

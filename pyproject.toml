@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.9,<4"]
+requires = ["flit_core >=3.11,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -9,12 +9,12 @@ maintainers = [{ name = "stefan6419846" }, { name = "Martin Thoma", email = "inf
 description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
 readme = "README.md"
 dynamic = ["version"]
-license = { file = "LICENSE" }
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
@@ -205,7 +205,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 54  # Recommended: 10
+max-complexity = 37  # Recommended: 10
 
 [tool.ruff.lint.per-file-ignores]
 "_cryptography.py" = ["S304", "S305"]  # Use of insecure cipher / modes, aka RC4 and AES-ECB
