@@ -3214,7 +3214,7 @@ class PdfWriter(PdfDocCommon):
                 o = cast(TreeObject, o["/Next"])
             else:
                 return None
-        return None
+        return
 
     def find_bookmark(
         self,
