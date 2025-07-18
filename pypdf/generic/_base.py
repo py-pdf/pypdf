@@ -43,7 +43,9 @@ from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
+    classproperty,
     deprecate_no_replacement,
+    deprecate_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -237,6 +239,12 @@ class NullObject(PdfObject):
     def __repr__(self) -> str:
         return "NullObject"
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, NullObject)
+
+    def __hash__(self) -> int:
+        return self.hash_bin()
+
 
 class BooleanObject(PdfObject):
     def __init__(self, value: Any) -> None:
@@ -267,10 +275,12 @@ class BooleanObject(PdfObject):
     def __eq__(self, o: object, /) -> bool:
         if isinstance(o, BooleanObject):
             return self.value == o.value
-        elif isinstance(o, bool):
+        if isinstance(o, bool):
             return self.value == o
-        else:
-            return False
+        return False
+
+    def __hash__(self) -> int:
+        return self.hash_bin()
 
     def __repr__(self) -> str:
         return "True" if self.value else "False"
@@ -292,11 +302,10 @@ class BooleanObject(PdfObject):
         word = stream.read(4)
         if word == b"true":
             return BooleanObject(True)
-        elif word == b"fals":
+        if word == b"fals":
             stream.read(1)
             return BooleanObject(False)
-        else:
-            raise PdfReadError("Could not read Boolean object")
+        raise PdfReadError("Could not read Boolean object")
 
 
 class IndirectObject(PdfObject):
@@ -355,9 +364,8 @@ class IndirectObject(PdfObject):
             dup = pdf_dest._add_object(
                 obj.clone(pdf_dest, force_duplicate, ignore_fields)
             )
-        # asserts added to prevent errors in mypy
-        assert dup is not None
-        assert dup.indirect_reference is not None
+        assert dup is not None, "mypy"
+        assert dup.indirect_reference is not None, "mypy"
         return dup.indirect_reference
 
     @property
@@ -394,6 +402,9 @@ class IndirectObject(PdfObject):
 
     def __contains__(self, key: Any) -> bool:
         return key in self._get_object_with_check()  # type: ignore
+
+    def __iter__(self) -> Any:
+        return self._get_object_with_check().__iter__()  # type: ignore
 
     def __float__(self) -> str:
         # in this case we are looking for the pointed data
@@ -657,7 +668,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         o.autodetect_pdfdocencoding = False
         o.utf16_bom = b""
         if o.startswith(("\xfe\xff", "\xff\xfe")):
-            assert org is not None  # for mypy
+            assert org is not None, "mypy"
             try:
                 o = str.__new__(cls, org.decode("utf-16"))
             except UnicodeDecodeError as exc:
@@ -714,8 +725,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         """
         if self._original_bytes is not None:
             return self._original_bytes
-        else:
-            return self.get_original_bytes()
+        return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:
         # We're a text string object, but the library is trying to get our raw
@@ -726,14 +736,12 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         if self.autodetect_utf16:
             if self.utf16_bom == codecs.BOM_UTF16_LE:
                 return codecs.BOM_UTF16_LE + self.encode("utf-16le")
-            elif self.utf16_bom == codecs.BOM_UTF16_BE:
+            if self.utf16_bom == codecs.BOM_UTF16_BE:
                 return codecs.BOM_UTF16_BE + self.encode("utf-16be")
-            else:
-                return self.encode("utf-16be")
-        elif self.autodetect_pdfdocencoding:
+            return self.encode("utf-16be")
+        if self.autodetect_pdfdocencoding:
             return encode_pdfdocencoding(self)
-        else:
-            raise Exception("no information about original bytes")  # pragma: no cover
+        raise Exception("no information about original bytes")  # pragma: no cover
 
     def get_encoded_bytes(self) -> bytes:
         # Try to write the string out as a PDFDocEncoding encoded string. It's
@@ -778,13 +786,9 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
-    surfix = b"/"
+    prefix = b"/"
     renumber_table: ClassVar[Dict[str, bytes]] = {
-        "#": b"#23",
-        "(": b"#28",
-        ")": b"#29",
-        "/": b"#2F",
-        "%": b"#25",
+        **{chr(i): f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
 
@@ -837,6 +841,26 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                     out += c.encode("utf-8")
         return out
 
+    def _sanitize(self) -> "NameObject":
+        """
+        Sanitize the NameObject's name to be a valid PDF name part
+        (alphanumeric, underscore, hyphen). The _sanitize method replaces
+        spaces and any non-alphanumeric/non-underscore/non-hyphen with
+        underscores.
+
+        Returns:
+            NameObject with sanitized name.
+        """
+        name = str(self)[1:]  # Remove leading forward slash
+        name = re.sub(r"\ ", "_", name)
+        name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
+        return NameObject("/" + name)
+
+    @classproperty
+    def surfix(cls) -> bytes:  # noqa: N805
+        deprecate_with_replacement("surfix", "prefix", "6.0.0")
+        return b"/"
+
     @staticmethod
     def unnumber(sin: bytes) -> bytes:
         i = sin.find(b"#", 0)
@@ -855,7 +879,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
-        if name != NameObject.surfix:
+        if name != NameObject.prefix:
             raise PdfReadError("Name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
@@ -877,11 +901,10 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                     __name__,
                 )
                 return NameObject(name.decode("charmap"))
-            else:
-                raise PdfReadError(
-                    f"Illegal character in NameObject ({name!r}). "
-                    "You may need to adjust NameObject.CHARSETS.",
-                ) from e
+            raise PdfReadError(
+                f"Illegal character in NameObject ({name!r}). "
+                "You may need to adjust NameObject.CHARSETS.",
+            ) from e
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:

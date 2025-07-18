@@ -254,10 +254,11 @@ class PdfReader(PdfDocCommon):
         info = self.trailer.get(TK.INFO, None)
         if is_null_or_none(info):
             return None
+        assert info is not None, "mypy"
         info = info.get_object()
         if not isinstance(info, DictionaryObject):
             raise PdfReadError(
-                "Trailer not found or does not point to document information directory"
+                "Trailer not found or does not point to a document information dictionary"
             )
         return info
 
@@ -271,7 +272,10 @@ class PdfReader(PdfDocCommon):
 
         """
         id = self.trailer.get(TK.ID, None)
-        return None if is_null_or_none(id) else cast(ArrayObject, id.get_object())
+        if is_null_or_none(id):
+            return None
+        assert id is not None, "mypy"
+        return cast(ArrayObject, id.get_object())
 
     @property
     def pdf_header(self) -> str:
@@ -352,7 +356,7 @@ class PdfReader(PdfDocCommon):
                 raise PdfReadError("Object is in wrong index.")
             stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
 
-            # to cope with some case where the 'pointer' is on a white space
+            # To cope with case where the 'pointer' is on a white space
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
 

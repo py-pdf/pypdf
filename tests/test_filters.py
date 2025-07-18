@@ -6,12 +6,14 @@ import subprocess
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
+from typing import cast
+from unittest import mock
 
 import pytest
 from PIL import Image, ImageOps
 
 from pypdf import PdfReader
-from pypdf.errors import DeprecationError, PdfReadError
+from pypdf.errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -19,8 +21,19 @@ from pypdf.filters import (
     CCITTFaxDecode,
     CCITTParameters,
     FlateDecode,
+    JBIG2Decode,
+    RunLengthDecode,
 )
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NumberObject
+from pypdf.generic import (
+    ArrayObject,
+    ContentStream,
+    DictionaryObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    NumberObject,
+    StreamObject,
+)
 
 from . import PILContext, get_data_from_url
 from .test_encryption import HAS_AES
@@ -104,6 +117,8 @@ def test_flate_decode_decompress_with_array_params(params):
         ),  # Same as previous, but whitespaced
         ("30313233343536373839616263646566414243444546>", string.hexdigits.encode()),
         ("20090a0d0b0c>", string.whitespace.encode()),
+        # Odd number of hexadecimal digits behaves as if a 0 (zero) followed the last digit
+        ("3938373635343332313>", string.digits[::-1].encode()),
     ],
     ids=[
         "empty",
@@ -114,16 +129,13 @@ def test_flate_decode_decompress_with_array_params(params):
         "digits_whitespace",
         "hexdigits",
         "whitespace",
+        "odd_number",
     ],
 )
 def test_ascii_hex_decode_method(data, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
     correct output is returned.
-
-    TODO What is decode() supposed to do for such inputs as ">>", ">>>" or
-    any other not terminated by ">"? (For the latter case, an exception
-    is currently raised.)
     """
     assert ASCIIHexDecode.decode(data) == expected
 
@@ -192,8 +204,8 @@ def test_ccitparameters():
         match="CCITParameters is deprecated and will be removed in pypdf 6.0.0. Use CCITTParameters instead",
     ):
         params = CCITParameters()
-        assert params.K == 0  # zero is the default according to page 78
-        assert params.group == 3
+    assert params.K == 0  # zero is the default according to page 78
+    assert params.group == 3
 
 
 def test_ccittparameters():
@@ -374,9 +386,8 @@ def test_iss1787():
     obj = data.indirect_reference.get_object()
     obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
     obj.decoded_self = None
-    with pytest.raises(PdfReadError) as exc:
-        reader.pages[0].images[0]
-    assert exc.value.args[0] == "Image data is not rectangular"
+    with pytest.raises(expected_exception=PdfReadError, match="^Unsupported PNG filter 244$"):
+        _ = reader.pages[0].images[0]
 
 
 @pytest.mark.enable_socket
@@ -408,7 +419,7 @@ def test_cmyk():
     """Decode CMYK"""
     # JPEG compression
     try:
-        from Crypto.Cipher import AES  # noqa: F401
+        from Crypto.Cipher import AES  # noqa: F401, PLC0415
     except ImportError:
         return  # the file is encrypted
     reader = PdfReader(BytesIO(get_data_from_url(name="Vitocal.pdf")))
@@ -656,3 +667,188 @@ def test_ccitt_fax_decode__black_is_1():
     expected_pixels = list(ImageOps.invert(expected_image_inverted).getdata())
     actual_pixels = list(actual_image.getdata())
     assert expected_pixels == actual_pixels
+
+    # AttributeError: 'NullObject' object has no attribute 'get'
+    data_modified = get_data_from_url(url, name=name).replace(
+        b"/DecodeParms [ << /K -1 /BlackIs1 true /Columns 16 /Rows 16 >> ]",
+        b"/DecodeParms [ null ]"
+    )
+    reader = PdfReader(BytesIO(data_modified))
+    _ = reader.pages[0].images[0].image
+
+
+@pytest.mark.enable_socket
+def test_flate_decode__image_is_none_due_to_size_limit(caplog):
+    url = "https://github.com/user-attachments/files/19464256/file.pdf"
+    name = "issue3220.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    images = reader.pages[0].images
+    assert len(images) == 1
+    image = images[0]
+    assert image.name == "Im0.png"
+    assert image.image is None
+    assert (
+        "Failed loading image: Image size (180000000 pixels) exceeds limit of "
+        "178956970 pixels, could be decompression bomb DOS attack."
+    ) in caplog.messages
+
+
+@pytest.mark.enable_socket
+def test_flate_decode__not_rectangular(caplog):
+    url = "https://github.com/user-attachments/files/19663603/issue3241_compressed.txt"
+    name = "issue3241.txt"
+    data = get_data_from_url(url, name=name)
+    decode_parms = DictionaryObject()
+    decode_parms[NameObject("/Predictor")] = NumberObject(15)
+    decode_parms[NameObject("/Columns")] = NumberObject(4881)
+    actual = FlateDecode.decode(data=data, decode_parms=decode_parms)
+    actual_image = BytesIO()
+    Image.frombytes(mode="1", size=(4881, 81), data=actual).save(actual_image, format="png")
+
+    url = "https://github.com/user-attachments/assets/c5695850-c076-4255-ab72-7c86851a4a04"
+    name = "issue3241.png"
+    expected = get_data_from_url(url, name=name)
+    assert actual_image.getvalue() == expected
+    assert caplog.messages == ["Image data is not rectangular. Adding padding."]
+
+
+def test_jbig2decode__binary_errors():
+    with mock.patch("pypdf.filters.JBIG2DEC_BINARY", None), \
+            pytest.raises(DependencyError, match="jbig2dec binary is not available."):
+        JBIG2Decode.decode(b"dummy")
+
+    result = subprocess.CompletedProcess(
+        args=["dummy"], returncode=0, stdout=b"",
+        stderr=(
+            b"jbig2dec: unrecognized option '--embedded'\n"
+            b"Usage: jbig2dec [options] <file.jbig2>\n"
+            b"   or  jbig2dec [options] <global_stream> <page_stream>\n"
+        )
+    )
+    with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
+            mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
+            pytest.raises(DependencyError, match="jbig2dec>=0.15 is required."):
+        JBIG2Decode.decode(b"dummy")
+
+
+@pytest.mark.skipif(condition=not JBIG2Decode._is_binary_compatible(), reason="Requires recent jbig2dec")
+def test_jbig2decode__edge_cases(caplog):
+    image_data = (
+        b'\x00\x00\x00\x010\x00\x01\x00\x00\x00\x13\x00\x00\x00\x05\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x06"'
+        b'\x00\x01\x00\x00\x00\x1c\x00\x00\x00\x05\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x9f\xa8_\xff\xac'
+
+    )
+    jbig2_globals = b"\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x18\x00\x00\x03\xff\xfd\xff\x02\xfe\xfe\xfe\x00\x00\x00\x01\x00\x00\x00\x01R\xd0u7\xff\xac"  # noqa: E501
+
+    # Validation: Is our image data valid?
+    content_stream = ContentStream(stream=None, pdf=None)
+    content_stream.set_data(jbig2_globals)
+    result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": content_stream}))
+    image = Image.open(BytesIO(result), formats=("PNG",))
+    for x in range(5):
+        for y in range(5):
+            assert image.getpixel((x, y)) == (255 if x < 3 else 0), (x, y)
+    assert caplog.messages == []
+
+    # No decode_params. Completely white image.
+    result = JBIG2Decode.decode(image_data)
+    image = Image.open(BytesIO(result), formats=("PNG",))
+    for x in range(5):
+        for y in range(5):
+            assert image.getpixel((x, y)) == 255, (x, y)
+    assert caplog.messages == [
+        "jbig2dec WARNING text region refers to no symbol dictionaries (segment 0x00000002)",
+        "jbig2dec WARNING ignoring out of range symbol ID (0/0) (segment 0x00000002)"
+    ]
+    caplog.clear()
+
+    # JBIG2Globals is NULL. Completely white image.
+    result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": NullObject()}))
+    image = Image.open(BytesIO(result), formats=("PNG",))
+    for x in range(5):
+        for y in range(5):
+            assert image.getpixel((x, y)) == 255, (x, y)
+    assert caplog.messages == [
+        "jbig2dec WARNING text region refers to no symbol dictionaries (segment 0x00000002)",
+        "jbig2dec WARNING ignoring out of range symbol ID (0/0) (segment 0x00000002)"
+    ]
+    caplog.clear()
+
+    # JBIG2Globals is DictionaryObject. Completely white image.
+    result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": DictionaryObject()}))
+    image = Image.open(BytesIO(result), formats=("PNG",))
+    for x in range(5):
+        for y in range(5):
+            assert image.getpixel((x, y)) == 255, (x, y)
+    assert caplog.messages == [
+        "jbig2dec WARNING text region refers to no symbol dictionaries (segment 0x00000002)",
+        "jbig2dec WARNING ignoring out of range symbol ID (0/0) (segment 0x00000002)"
+    ]
+    caplog.clear()
+
+    # Invalid input.
+    with pytest.raises(PdfStreamError, match="Unable to decode JBIG2 data. Exit code: 1"):
+        JBIG2Decode.decode(b"aaaaaa")
+    assert caplog.messages == [
+        "jbig2dec FATAL ERROR page has no image, cannot be completed",
+        "jbig2dec WARNING unable to complete page"
+    ]
+
+
+@pytest.mark.timeout(timeout=30, method="thread")
+@pytest.mark.enable_socket
+def test_flate_decode_stream_with_faulty_tail_bytes():
+    """
+    Test for #3332
+
+    The test ensures two things:
+        1. stream can be decoded at all
+        2. decoding doesn't falls through to last fallback in try-except blocks
+           that is too slow and takes ages for this stream
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/20901522/faulty_stream_tail_example.1.pdf",
+        name="faulty_stream_tail_example.1.pdf"
+    )
+    expected = get_data_from_url(
+        url="https://github.com/user-attachments/files/20941717/decoded.dat.txt",
+        name="faulty_stream_tail_example.1.decoded.dat"
+    )
+    reader = PdfReader(BytesIO(data))
+    obj = reader.get_object(IndirectObject(182, 0, reader))
+    assert cast(StreamObject, obj).get_data() == expected
+
+
+@pytest.mark.enable_socket
+def test_rle_decode_with_faulty_tail_byte_in_multi_encoded_stream(caplog):
+    """
+    Test for #3355
+
+    The test ensures that the inner RLE encoded stream can be decoded,
+    because this stream contains an extra faulty newline byte in the
+    end that can be ignored during decoding.
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/21038398/test_data_rle.txt",
+        name="multi_decoding_example_with_faulty_tail_byte.pdf"
+    )
+    reader = PdfReader(BytesIO(data))
+    obj = reader.get_object(IndirectObject(60, 0, reader))
+    cast(StreamObject, obj).get_data()
+    assert "Found trailing newline in stream data, check if output is OK" in caplog.messages
+
+
+@pytest.mark.enable_socket
+def test_rle_decode_exception_with_corrupted_stream():
+    """
+    Additional Test to #3355
+
+    This test must raise the EOD exception during RLE decoding and ensures
+    that we do not fail during code coverage analyses in the git PR pipeline.
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/21052626/rle_stream_with_error.txt",
+        name="rle_stream_with_error.txt"
+    )
+    with pytest.raises(PdfStreamError, match="Early EOD in RunLengthDecode"):
+        RunLengthDecode.decode(data)

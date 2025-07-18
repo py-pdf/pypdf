@@ -61,10 +61,10 @@ writer.append("source.pdf", (0, 10))
 writer.append(reader, "page 1 and 10", [0, 9])
 ```
 
-During merging, the relevant named destination will also imported.
+During merging, the relevant named destination will also be imported.
 
 If you want to insert pages in the middle of the destination, use `merge` (which provides an insertion position).
-You can insert the same page multiple times, if necessary even using a list-based syntax:
+You can insert the same page multiple times, if necessary, even using a list-based syntax:
 
 ```python
 # Insert pages 2 and 3, with page 1 before, between, and after
@@ -101,10 +101,10 @@ To reset, call  `writer.reset_translation(reader)`.
 
 ## Advanced cloning
 
-In order to prevent side effects between pages/objects and all objects linked cloning is done during the merge.
+To prevent side effects between pages/objects and all objects linked cloning is done during the merge.
 
 This process will be automatically applied if you use `PdfWriter.append/merge/add_page/insert_page`.
-If you want to clone an object before attaching it "manually", use the `clone` method of any *PdfObject*:
+If you want to clone an object before attaching it "manually," use the `clone` method of any *PdfObject*:
 
 ```python
 cloned_object = object.clone(writer)
@@ -128,7 +128,7 @@ includes some articles (`"/B"`), not only the first article, but also all the ch
 and the pages where those articles can be read will be copied.
 This means that you may copy lots of objects which will be saved in the output PDF as well.
 
-In order to prevent this, you can provide the list of fields in the dictionaries to be ignored:
+To prevent this, you can provide the list of fields in the dictionaries to be ignored:
 
 ```python
 new_page = writer.add_page(reader.pages[0], excluded_fields=["/B"])

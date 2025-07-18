@@ -110,6 +110,31 @@ def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
     raise ValueError(f"Can not convert date: {orgtext}")
 
 
+def format_iso8824_date(dt: datetime) -> str:
+    """
+    Convert a datetime object to PDF date string format.
+
+    Converts datetime to the PDF date format D:YYYYMMDDHHmmSSOHH'mm
+    as specified in the PDF Reference.
+
+    Args:
+        dt: A datetime object to convert.
+
+    Returns:
+        A date string in PDF format.
+    """
+    date_str = dt.strftime("D:%Y%m%d%H%M%S")
+    if dt.tzinfo is not None:
+        offset = dt.utcoffset()
+        assert offset is not None
+        total_seconds = int(offset.total_seconds())
+        hours, remainder = divmod(abs(total_seconds), 3600)
+        minutes = remainder // 60
+        sign = "+" if total_seconds >= 0 else "-"
+        date_str += f"{sign}{hours:02d}'{minutes:02d}'"
+    return date_str
+
+
 def _get_max_pdf_version_header(header1: str, header2: str) -> str:
     versions = (
         "%PDF-1.3",
@@ -466,18 +491,18 @@ def rename_kwargs(
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
                 ),
                 category=DeprecationWarning,
+                stacklevel=3,
             )
 
 
 def _human_readable_bytes(bytes: int) -> str:
     if bytes < 10**3:
         return f"{bytes} Byte"
-    elif bytes < 10**6:
+    if bytes < 10**6:
         return f"{bytes / 10**3:.1f} kB"
-    elif bytes < 10**9:
+    if bytes < 10**9:
         return f"{bytes / 10**6:.1f} MB"
-    else:
-        return f"{bytes / 10**9:.1f} GB"
+    return f"{bytes / 10**9:.1f} GB"
 
 
 # The following class has been copied from Django:
@@ -534,7 +559,7 @@ class classproperty:  # noqa: N801
 
 @dataclass
 class File:
-    from .generic import IndirectObject
+    from .generic import IndirectObject  # noqa: PLC0415
 
     name: str = ""
     """
@@ -584,6 +609,10 @@ class Version:
             return False
         return self.components == other.components
 
+    def __hash__(self) -> int:
+        # Convert to tuple as lists cannot be hashed.
+        return hash((self.__class__, tuple(self.components)))
+
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Version):
             raise ValueError(f"Version cannot be compared against {type(other)}")
@@ -594,12 +623,12 @@ class Version:
 
             if self_value < other_value:
                 return True
-            elif self_value > other_value:
+            if self_value > other_value:
                 return False
 
             if self_suffix < other_suffix:
                 return True
-            elif self_suffix > other_suffix:
+            if self_suffix > other_suffix:
                 return False
 
         return len(self.components) < len(other.components)

@@ -1,6 +1,12 @@
 """Test the pypdf._utils module."""
+import functools
 import io
+import re
+import subprocess
+import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any, Callable
 
 import pytest
 
@@ -14,6 +20,7 @@ from pypdf._utils import (
     classproperty,
     deprecate_with_replacement,
     deprecation_no_replacement,
+    format_iso8824_date,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -87,8 +94,6 @@ def test_skip_over_comment(stream, remainder):
 
 
 def test_read_until_regex_premature_ending_name():
-    import re
-
     stream = io.BytesIO(b"")
     assert read_until_regex(stream, re.compile(b".")) == b""
 
@@ -112,10 +117,11 @@ def test_mark_location():
 
 
 def test_deprecate_no_replacement():
-    with pytest.warns(DeprecationWarning) as warn:
+    with pytest.warns(
+            expected_warning=DeprecationWarning,
+            match="foo is deprecated and will be removed in pypdf 3.0.0."
+    ):
         pypdf._utils.deprecate_no_replacement("foo", removed_in="3.0.0")
-    error_msg = "foo is deprecated and will be removed in pypdf 3.0.0."
-    assert warn[0].message.args[0] == error_msg
 
 
 @pytest.mark.parametrize(
@@ -236,9 +242,6 @@ def test_deprecation_no_replacement():
 
 
 def test_rename_kwargs():
-    import functools
-    from typing import Any, Callable
-
     def deprecation_bookmark_nofail(**aliases: str) -> Callable:
         """
         Decorator for deprecated term "bookmark".
@@ -274,6 +277,41 @@ def test_rename_kwargs():
         match="old_param is deprecated as an argument. Use new_param instead",
     ):
         foo(old_param=12)
+
+
+def test_rename_kwargs__stacklevel(tmp_path: Path) -> None:
+    script = tmp_path / "script.py"
+    script.write_text("""
+import functools
+import warnings
+
+from pypdf._utils import rename_kwargs
+
+def deprecation(**aliases: str):
+    def decoration(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            rename_kwargs(func.__name__, kwargs, aliases, fail=False)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decoration
+
+@deprecation(old_param="new_param")
+def foo(old_param: int = 1, baz: int = 2, new_param: int = 1) -> None:
+    pass
+
+warnings.simplefilter("always")
+foo(old_param=12)
+    """)
+
+    result = subprocess.run([sys.executable, script], capture_output=True, text=True)  # noqa: S603
+    assert result.returncode == 0
+    assert result.stderr == (
+        f"{script}:23: DeprecationWarning: old_param is deprecated as an argument. "
+        f"Use new_param instead\n  foo(old_param=12)\n"
+    )
 
 
 @pytest.mark.parametrize(
@@ -327,6 +365,47 @@ def test_parse_datetime_err():
         parse_iso8824_date("D:20210408T054711Z")
     assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
     assert parse_iso8824_date("D:20210408054711").tzinfo is None
+
+
+def test_format_iso8824_date():
+    """Test format_iso8824_date function with timezone handling."""
+    dt_naive = datetime(2021, 3, 18, 12, 7, 56)
+    result = format_iso8824_date(dt_naive)
+    assert result == "D:20210318120756"
+
+    dt_utc = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone.utc)
+    result = format_iso8824_date(dt_utc)
+    assert result == "D:20210318120756+00'00'"
+
+    dt_positive = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30)))
+    result = format_iso8824_date(dt_positive)
+    assert result == "D:20210318120756+02'30'"
+
+    dt_negative = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30)))
+    result = format_iso8824_date(dt_negative)
+    assert result == "D:20210318120756-05'30'"
+
+
+def test_format_iso8824_date_roundtrip():
+    dt_naive = datetime(2021, 3, 18, 12, 7, 56)
+    formatted = format_iso8824_date(dt_naive)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_naive
+
+    dt_utc = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone.utc)
+    formatted = format_iso8824_date(dt_utc)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_utc
+
+    dt_positive = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30)))
+    formatted = format_iso8824_date(dt_positive)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_positive
+
+    dt_negative = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30)))
+    formatted = format_iso8824_date(dt_negative)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_negative
 
 
 def test_is_sublist():
@@ -393,6 +472,16 @@ def test_version_compare_lt_str():
 
 def test_bad_version():
     assert Version("a").components == [(0, "a")]
+
+
+def test_version_eq_hash():
+    version1 = Version("1.0")
+    version2 = Version("1.0")
+    version3 = Version("1.1")
+    assert version1 == version2
+    assert version1 != version3
+    assert hash(version1) == hash(version2)
+    assert hash(version1) != hash(version3)
 
 
 def test_classproperty():

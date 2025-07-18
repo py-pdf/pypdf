@@ -1,4 +1,5 @@
 import binascii
+from binascii import Error as BinasciiError
 from binascii import unhexlify
 from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
@@ -6,8 +7,10 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
 from .generic import (
+    ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    NullObject,
     StreamObject,
     is_null_or_none,
 )
@@ -132,7 +135,7 @@ def get_encoding(
     # Apply rule from PDF ref 1.7 §5.9.1, 1st bullet:
     #   if cmap not empty encoding should be discarded
     #   (here transformed into identity for those characters)
-    # If encoding is a string it is expected to be an identity translation.
+    # If encoding is a string, it is expected to be an identity translation.
     if isinstance(encoding, dict):
         for x in int_entry:
             if x <= 255:
@@ -153,7 +156,9 @@ def _parse_encoding(
         else:
             encoding = "charmap"
         return encoding
-    enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
+    enc: Union[str, DictionaryObject, NullObject] = cast(
+        Union[str, DictionaryObject, NullObject], ft["/Encoding"].get_object()
+    )
     if isinstance(enc, str):
         try:
             # already done : enc = NameObject.unnumber(enc.encode()).decode()
@@ -180,13 +185,13 @@ def _parse_encoding(
             encoding = charset_encoding["/StandardEncoding"].copy()
     else:
         encoding = charset_encoding["/StandardEncoding"].copy()
-    if "/Differences" in enc:
+    if isinstance(enc, DictionaryObject) and "/Differences" in enc:
         x: int = 0
         o: Union[int, str]
-        for o in cast(DictionaryObject, cast(DictionaryObject, enc)["/Differences"]):
+        for o in cast(DictionaryObject, enc["/Differences"]):
             if isinstance(o, int):
                 x = o
-            else:  # isinstance(o,str):
+            else:  # isinstance(o, str):
                 try:
                     if x < len(encoding):
                         encoding[x] = adobe_glyphs[o]  # type: ignore
@@ -211,8 +216,7 @@ def _parse_to_unicode(
     if "/ToUnicode" not in ft:
         if ft.get("/Subtype", "") == "/Type1":
             return _type1_alternative(ft, map_dict, int_entry)
-        else:
-            return {}, []
+        return {}, []
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
@@ -325,7 +329,7 @@ def parse_bfrange(
         fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]
-        for sq in lst[0:]:
+        for sq in lst:
             if sq == b"]":
                 closure_found = True
                 break
@@ -380,9 +384,12 @@ def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) ->
         map_to = ""
         # placeholder (see above) means empty string
         if lst[1] != b".":
-            map_to = unhexlify(lst[1]).decode(
-                "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
-            )  # join is here as some cases where the code was split
+            try:
+                map_to = unhexlify(lst[1]).decode(
+                    "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
+                )  # join is here as some cases where the code was split
+            except BinasciiError as exception:
+                logger_warning(f"Got invalid hex string: {exception!s} ({lst[1]!r})", __name__)
         map_dict[
             unhexlify(lst[0]).decode(
                 "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
@@ -444,7 +451,7 @@ def build_font_width_map(
                 )
                 break
     elif "/Widths" in ft:
-        w = ft["/Widths"].get_object()
+        w = cast(ArrayObject, ft["/Widths"].get_object())
         if "/FontDescriptor" in ft and "/MissingWidth" in cast(
             DictionaryObject, ft["/FontDescriptor"]
         ):

@@ -7,6 +7,17 @@ It is recommended to look in the PDF specification for details and clarification
 * [ISO 32000-1:2008 (PDF 1.7)](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf)
 * ISO 32000-2:2020 (PDF 2.0)
 
+```{note}
+We currently generate files with a header for PDF 1.3 by default. At the same time, we strive
+to support the PDF 1.7 specification.
+
+Features specific to PDF 2.0 might be available, but we always ensure that older versions do
+not break due to the rather limited general PDF 2.0 support in the wild and to not break for
+old PDF files. For this reason, some historical aspects (like insecure encryption algorithms)
+are required to be supported, although PDF 2.0 deprecates most of them and allows more secure
+variants.
+```
+
 Below is only intended to give a very rough overview of the format.
 
 ## Overall Structure

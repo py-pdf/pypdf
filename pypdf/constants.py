@@ -20,12 +20,12 @@ class Core:
 
 
 class TrailerKeys:
-    ROOT = "/Root"
-    ENCRYPT = "/Encrypt"
-    ID = "/ID"
-    INFO = "/Info"
     SIZE = "/Size"
     PREV = "/Prev"
+    ROOT = "/Root"
+    ENCRYPT = "/Encrypt"
+    INFO = "/Info"
+    ID = "/ID"
 
 
 class CatalogAttributes:
@@ -240,11 +240,12 @@ class FilterTypes(StrEnum):
     ASCII_HEX_DECODE = "/ASCIIHexDecode"  # abbreviation: AHx
     ASCII_85_DECODE = "/ASCII85Decode"  # abbreviation: A85
     LZW_DECODE = "/LZWDecode"  # abbreviation: LZW
-    FLATE_DECODE = "/FlateDecode"  # abbreviation: Fl, PDF 1.2
+    FLATE_DECODE = "/FlateDecode"  # abbreviation: Fl
     RUN_LENGTH_DECODE = "/RunLengthDecode"  # abbreviation: RL
     CCITT_FAX_DECODE = "/CCITTFaxDecode"  # abbreviation: CCF
     DCT_DECODE = "/DCTDecode"  # abbreviation: DCT
     JPX_DECODE = "/JPXDecode"
+    JBIG2_DECODE = "/JBIG2Decode"
 
 
 class FilterTypeAbbreviations:
@@ -253,7 +254,7 @@ class FilterTypeAbbreviations:
     AHx = "/AHx"
     A85 = "/A85"
     LZW = "/LZW"
-    FL = "/Fl"  # FlateDecode
+    FL = "/Fl"
     RL = "/RL"
     CCF = "/CCF"
     DCT = "/DCT"
@@ -324,19 +325,20 @@ class TypArguments:
 class TypFitArguments:
     """Table 8.2 of the PDF 1.7 reference."""
 
-    FIT = "/Fit"
-    FIT_V = "/FitV"
-    FIT_BV = "/FitBV"
-    FIT_B = "/FitB"
-    FIT_H = "/FitH"
-    FIT_BH = "/FitBH"
-    FIT_R = "/FitR"
     XYZ = "/XYZ"
+    FIT = "/Fit"
+    FIT_H = "/FitH"
+    FIT_V = "/FitV"
+    FIT_R = "/FitR"
+    FIT_B = "/FitB"
+    FIT_BH = "/FitBH"
+    FIT_BV = "/FitBV"
 
 
 class GoToActionArguments:
     S = "/S"  # name, required: type of action
-    D = "/D"  # name / byte string /array, required: Destination to jump to
+    D = "/D"  # name, byte string, or array, required: destination to jump to
+    SD = "/SD"  # array, optional: structure destination to jump to
 
 
 class AnnotationDictionaryAttributes:
@@ -720,3 +722,52 @@ class ImageType(IntFlag):
     DRAWING_IMAGES = auto()
     ALL = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
     IMAGES = ALL  # for consistency with ObjectDeletionFlag
+
+
+_INLINE_IMAGE_VALUE_MAPPING = {
+    "/G": "/DeviceGray",
+    "/RGB": "/DeviceRGB",
+    "/CMYK": "/DeviceCMYK",
+    "/I": "/Indexed",
+    "/AHx": "/ASCIIHexDecode",
+    "/A85": "/ASCII85Decode",
+    "/LZW": "/LZWDecode",
+    "/Fl": "/FlateDecode",
+    "/RL": "/RunLengthDecode",
+    "/CCF": "/CCITTFaxDecode",
+    "/DCT": "/DCTDecode",
+    "/DeviceGray": "/DeviceGray",
+    "/DeviceRGB": "/DeviceRGB",
+    "/DeviceCMYK": "/DeviceCMYK",
+    "/Indexed": "/Indexed",
+    "/ASCIIHexDecode": "/ASCIIHexDecode",
+    "/ASCII85Decode": "/ASCII85Decode",
+    "/LZWDecode": "/LZWDecode",
+    "/FlateDecode": "/FlateDecode",
+    "/RunLengthDecode": "/RunLengthDecode",
+    "/CCITTFaxDecode": "/CCITTFaxDecode",
+    "/DCTDecode": "/DCTDecode",
+    "/RelativeColorimetric": "/RelativeColorimetric",
+}
+
+_INLINE_IMAGE_KEY_MAPPING = {
+    "/BPC": "/BitsPerComponent",
+    "/CS": "/ColorSpace",
+    "/D": "/Decode",
+    "/DP": "/DecodeParms",
+    "/F": "/Filter",
+    "/H": "/Height",
+    "/W": "/Width",
+    "/I": "/Interpolate",
+    "/Intent": "/Intent",
+    "/IM": "/ImageMask",
+    "/BitsPerComponent": "/BitsPerComponent",
+    "/ColorSpace": "/ColorSpace",
+    "/Decode": "/Decode",
+    "/DecodeParms": "/DecodeParms",
+    "/Filter": "/Filter",
+    "/Height": "/Height",
+    "/Width": "/Width",
+    "/Interpolate": "/Interpolate",
+    "/ImageMask": "/ImageMask",
+}

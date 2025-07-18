@@ -13,9 +13,9 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     EncodedStreamObject,
-    IndirectObject,
     NullObject,
     TextStringObject,
+    is_null_or_none,
 )
 
 if sys.version_info[:2] >= (3, 10):
@@ -55,43 +55,40 @@ def _get_imagemode(
         raise PdfReadError(
             "Color spaces nested too deeply. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH."
         )
-    if isinstance(color_space, NullObject):
+    if is_null_or_none(color_space):
         return "", False
+    color_space_str: str = ""
     if isinstance(color_space, str):
-        pass
+        color_space_str = color_space
     elif not isinstance(color_space, list):
         raise PdfReadError(
             "Cannot interpret color space", color_space
         )  # pragma: no cover
     elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
-        color_space = "/Device" + color_space[0][4:]
+        color_space_str = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
         color_components = cast(int, icc_profile["/N"])
-        color_space = icc_profile.get("/Alternate", "")
+        color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
-        color_space = color_space[1].get_object()
+        color_space_str = color_space[1].get_object()
         mode, invert_color = _get_imagemode(
-            color_space, color_components, prev_mode, depth + 1
+            color_space_str, color_components, prev_mode, depth + 1
         )
         if mode in ("RGB", "CMYK"):
             mode = "P"
         return mode, invert_color
     elif color_space[0] == "/Separation":
-        color_space = color_space[2]
-        if isinstance(color_space, IndirectObject):
-            color_space = color_space.get_object()
+        color_space_str = color_space[2].get_object()
         mode, invert_color = _get_imagemode(
-            color_space, color_components, prev_mode, depth + 1
+            color_space_str, color_components, prev_mode, depth + 1
         )
         return mode, True
     elif color_space[0] == "/DeviceN":
         original_color_space = color_space
         color_components = len(color_space[1])
-        color_space = color_space[2]
-        if isinstance(color_space, IndirectObject):  # pragma: no cover
-            color_space = color_space.get_object()
-        if color_space == "/DeviceCMYK" and color_components == 1:
+        color_space_str = color_space[2].get_object()
+        if color_space_str == "/DeviceCMYK" and color_components == 1:
             if original_color_space[1][0] != "/Black":
                 logger_warning(
                     f"Color {original_color_space[1][0]} converted to Gray. Please share PDF with pypdf dev team",
@@ -99,7 +96,7 @@ def _get_imagemode(
                 )
             return "L", True
         mode, invert_color = _get_imagemode(
-            color_space, color_components, prev_mode, depth + 1
+            color_space_str, color_components, prev_mode, depth + 1
         )
         return mode, invert_color
 
@@ -114,7 +111,7 @@ def _get_imagemode(
     }
 
     mode = (
-        mode_map.get(color_space)
+        mode_map.get(color_space_str)
         or list(mode_map.values())[color_components]
         or prev_mode
     )
@@ -160,6 +157,24 @@ def _extended_image_frombytes(
     return img
 
 
+def __handle_flate__indexed(color_space: ArrayObject) -> Tuple[Any, Any, Any, Any]:
+    count = len(color_space)
+    if count == 4:
+        color_space, base, hival, lookup = (value.get_object() for value in color_space)
+        return color_space, base, hival, lookup
+
+    # Deal with strange AutoDesk files where `base` and `hival` look like this:
+    #   /DeviceRGB\x00255
+    element1 = color_space[1]
+    element1 = element1 if isinstance(element1, str) else element1.get_object()
+    if count == 3 and "\x00" in element1:
+        color_space, lookup = color_space[0].get_object(), color_space[2].get_object()
+        base, hival = element1.split("\x00")
+        hival = int(hival)
+        return color_space, base, hival, lookup
+    raise PdfReadError(f"Expected color space with 4 values, got {count}: {color_space}")
+
+
 def _handle_flate(
     size: Tuple[int, int],
     data: bytes,
@@ -178,7 +193,7 @@ def _handle_flate(
     base: Any
     hival: Any
     if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
-        color_space, base, hival, lookup = (value.get_object() for value in color_space)
+        color_space, base, hival, lookup = __handle_flate__indexed(color_space)
     if mode == "2bits":
         mode = "P"
         data = bits2byte(data, size, 2)
@@ -264,7 +279,7 @@ def _handle_flate(
         # Stream Dictionary
         mode2 = _get_imagemode(color_space, colors, mode)[0]
         if mode != mode2:
-            img = Image.frombytes(mode2, size, data)  # reloaded as mode may have change
+            img = Image.frombytes(mode2, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
         extension = ".tif"
         image_format = "TIFF"
@@ -369,7 +384,7 @@ def _get_mode_and_invert_color(
             if (
                 colors == 1
                 and (
-                    not isinstance(color_space, NullObject)
+                    not is_null_or_none(color_space)
                     and "Gray" not in color_space
                 )
             )

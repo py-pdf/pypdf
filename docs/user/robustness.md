@@ -21,7 +21,7 @@ def function(foo, bar):
 function = (foo, bar)
 ```
 
-Writing a parser you can go two paths: Either you try to be forgiving and try
+Writing a parser, you can go two paths: Either you try to be forgiving and try
 to figure out what the user intended, or you are strict and just tell the user
 that they should fix their stuff.
 

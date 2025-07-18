@@ -25,7 +25,7 @@ class Link(AnnotationDictionary):
     ) -> None:
         super().__init__(**kwargs)
         if TYPE_CHECKING:
-            from ..types import BorderArrayType
+            from ..types import BorderArrayType  # noqa: PLC0415
 
         is_external = url is not None
         is_internal = target_page_index is not None
@@ -98,7 +98,7 @@ class Popup(AnnotationDictionary):
             try:
                 self[NameObject("/Parent")] = parent.indirect_reference
             except AttributeError:
-                from .._utils import logger_warning
+                from .._utils import logger_warning  # noqa: PLC0415
 
                 logger_warning(
                     "Unregistered Parent object : No Parent field set",
