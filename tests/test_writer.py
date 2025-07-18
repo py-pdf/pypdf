@@ -257,6 +257,25 @@ def writer_operate(writer: PdfWriter) -> None:
         assert k in objects_hash, f"Missing {v}"
 
 
+def test_insert_blank_page():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(index=0)
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=50, index=0)
+    assert page.mediabox.width == 50
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=10, height=20, index=0)
+    assert page.mediabox.width == 10
+    assert page.mediabox.height == 20
+
+
 @pytest.mark.parametrize(
     ("convert", "needs_cleanup"),
     [
