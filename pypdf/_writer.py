@@ -2240,7 +2240,7 @@ class PdfWriter(PdfDocCommon):
 
             clean(content, images, forms, text_filters)
             page.replace_contents(content)
-        return [], [] 
+        return [], []
 
     def remove_images(
         self,
@@ -3214,7 +3214,7 @@ class PdfWriter(PdfDocCommon):
                 o = cast(TreeObject, o["/Next"])
             else:
                 return None
-        return
+        return None
 
     def find_bookmark(
         self,
