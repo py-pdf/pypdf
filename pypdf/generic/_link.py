@@ -48,7 +48,7 @@ class NamedReferenceLink:
 
     def find_referenced_page(self) -> Union[IndirectObject, None]:
         destination = self._source_pdf.named_destinations.get(str(self._reference))
-        return destination.page if destinatinon else None
+        return destination.page if destination else None
 
     def patch_reference(self, target_pdf: "PdfWriter", new_page: IndirectObject) -> None:
         """target_pdf: PdfWriter which the new link went into"""

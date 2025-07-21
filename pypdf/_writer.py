@@ -94,7 +94,6 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
-    DirectReferenceLink,
     EmbeddedFile,
     Fit,
     FloatObject,
