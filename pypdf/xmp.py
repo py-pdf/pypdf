@@ -22,7 +22,7 @@ from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
 
 from ._protocols import XmpInformationProtocol
-from ._utils import StreamType, deprecate_no_replacement
+from ._utils import StreamType, deprecate_no_replacement, deprecate_with_replacement
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
 
@@ -247,6 +247,11 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        deprecate_with_replacement(
+            "XmpInformation.write_to_stream",
+            "PdfWriter.xmp_metadata",
+            "6.0.0"
+        )
         if encryption_key is not None:  # deprecated
             deprecate_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"

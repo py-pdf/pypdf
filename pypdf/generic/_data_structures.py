@@ -479,7 +479,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
     @property
     def xmp_metadata(self) -> Optional[XmpInformationProtocol]:
         """
-        Retrieve XMP (Extensible Metadata Platform) data relevant to the this
+        Retrieve XMP (Extensible Metadata Platform) data relevant to this
         object, if available.
 
         See Table 347 — Additional entries in a metadata stream dictionary.
@@ -497,11 +497,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             return None
         assert metadata is not None, "mypy"
         metadata = metadata.get_object()
-
-        if not isinstance(metadata, XmpInformation):
-            metadata = XmpInformation(metadata)
-            self[NameObject("/Metadata")] = metadata
-        return metadata
+        return XmpInformation(metadata)
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None

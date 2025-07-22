@@ -361,10 +361,23 @@ class PdfWriter(PdfDocCommon):
         if value is None:
             if "/Metadata" in self.root_object:
                 del self.root_object["/Metadata"]
-        else:
-            self.root_object[NameObject("/Metadata")] = value
+            return
 
-        return self.root_object.xmp_metadata  # type: ignore
+        metadata = self.root_object.get("/Metadata", None)
+        if not isinstance(metadata, IndirectObject):
+            if metadata is not None:
+                del self.root_object["/Metadata"]
+            metadata_stream = StreamObject()
+            stream_reference = self._add_object(metadata_stream)
+            self.root_object[NameObject("/Metadata")] = stream_reference
+        else:
+            metadata_stream = cast(StreamObject, metadata.get_object())
+
+        if isinstance(value, XmpInformation):
+            bytes_data = value.stream.get_data()
+        else:
+            bytes_data = value
+        metadata_stream.set_data(bytes_data)
 
     @property
     def with_as_usage(self) -> bool:
