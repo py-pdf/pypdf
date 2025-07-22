@@ -415,7 +415,7 @@ def test_get_reference():
 def test_direct_link_preserved(pdf_file_path):
     # this could be any PDF -- we don't care which
     reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
-    writer = PdfWriter(clone_from = reader)
+    writer = PdfWriter(clone_from=reader)
 
     # this PDF has a direct link from p1 to p2
     merger = PdfReader(BytesIO(get_data_from_url(name="direct-link.pdf")))
@@ -438,7 +438,7 @@ def test_direct_link_preserved(pdf_file_path):
 def test_direct_link_preserved_reordering(pdf_file_path):
     # this could be any PDF -- we don't care which
     reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
-    writer = PdfWriter(clone_from = reader)
+    writer = PdfWriter(clone_from=reader)
 
     # this PDF has a direct link from p1 to p2
     merger = PdfReader(BytesIO(get_data_from_url(name="direct-link.pdf")))
@@ -464,7 +464,7 @@ def test_direct_link_preserved_reordering(pdf_file_path):
 def test_direct_link_page_missing(pdf_file_path):
     # this could be any PDF -- we don't care which
     reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
-    writer = PdfWriter(clone_from = reader)
+    writer = PdfWriter(clone_from=reader)
 
     # this PDF has a direct link from p1 to p2
     merger = PdfReader(BytesIO(get_data_from_url(name="direct-link.pdf")))
@@ -478,7 +478,7 @@ def test_direct_link_page_missing(pdf_file_path):
 def test_named_reference_preserved(pdf_file_path):
     # this could be any PDF -- we don't care which
     reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
-    writer = PdfWriter(clone_from = reader)
+    writer = PdfWriter(clone_from=reader)
 
     # this PDF has a named reference from from p3 to p5
     merger = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
