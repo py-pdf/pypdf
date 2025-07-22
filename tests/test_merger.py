@@ -409,3 +409,107 @@ def test_deprecate_pdfmerger():
 def test_get_reference():
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
     assert writer.get_reference(writer.pages[0]) == writer.pages[0].indirect_reference
+
+
+@pytest.mark.enable_socket
+def test_direct_link_preserved(pdf_file_path):
+    # this could be any PDF -- we don't care which
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    writer = PdfWriter(clone_from=reader)
+
+    # this PDF has a direct link from p1 to p2
+    merger = PdfReader(BytesIO(get_data_from_url(name="direct-link.pdf")))
+    for p in merger.pages:
+        writer.add_page(p)
+
+    writer.write(pdf_file_path)
+
+    check = PdfReader(pdf_file_path)
+    page3 = check.pages[2]
+    link = page3["/Annots"][0].get_object()
+    assert link["/Subtype"] == "/Link"
+    dest = link["/Dest"][0]  # indirect reference of page referred to
+
+    page4 = check.flattened_pages[3]
+    assert dest == page4.indirect_reference, "Link from page 3 to page 4 is broken"
+
+
+@pytest.mark.enable_socket
+def test_direct_link_preserved_reordering(pdf_file_path):
+    # this could be any PDF -- we don't care which
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    writer = PdfWriter(clone_from=reader)
+
+    # this PDF has a direct link from p1 to p2
+    merger = PdfReader(BytesIO(get_data_from_url(name="direct-link.pdf")))
+    for p in merger.pages:
+        writer.add_page(p)
+
+    # let's insert a page to mess up the page order
+    writer.insert_page(reader.pages[0], 3)
+
+    writer.write(pdf_file_path)
+
+    check = PdfReader(pdf_file_path)
+    page3 = check.pages[2]
+    link = page3["/Annots"][0].get_object()
+    assert link["/Subtype"] == "/Link"
+    dest = link["/Dest"][0]  # indirect reference of page referred to
+
+    page5 = check.flattened_pages[4]  # it moved one out
+    assert dest == page5.indirect_reference, "Link from page 3 to page 5 is broken"
+
+
+@pytest.mark.enable_socket
+def test_direct_link_page_missing(pdf_file_path):
+    # this could be any PDF -- we don't care which
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    writer = PdfWriter(clone_from=reader)
+
+    # this PDF has a direct link from p1 to p2
+    merger = PdfReader(BytesIO(get_data_from_url(name="direct-link.pdf")))
+    writer.add_page(merger.pages[0])
+    # but we're not adding page 2
+
+    writer.write(pdf_file_path)  # verify nothing crashes
+
+
+@pytest.mark.enable_socket
+def test_named_reference_preserved(pdf_file_path):
+    # this could be any PDF -- we don't care which
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss3268.pdf")))
+    writer = PdfWriter(clone_from=reader)
+
+    # this PDF has a named reference from from p3 to p5
+    merger = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
+    for p in merger.pages:
+        writer.add_page(p)
+
+    writer.write(pdf_file_path)
+
+    check = PdfReader(pdf_file_path)
+    page5 = check.pages[4]
+    page7 = check.flattened_pages[6]
+    for link in page5["/Annots"]:
+        action = link["/A"]
+        assert action.get("/S") == "/GoTo"
+        dest = str(action["/D"])
+        assert dest in check.named_destinations
+        pref = check.named_destinations[dest].page
+
+        assert pref == page7.indirect_reference, "Link from page 5 to page 7 is broken"
+
+
+@pytest.mark.enable_socket
+def test_named_ref_to_page_that_is_gone(pdf_file_path):
+    source = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
+    buf = BytesIO()
+    tmp = PdfWriter()
+    tmp.add_page(source.pages[2]) # we add only the page with the reference
+    tmp.write(buf)
+
+    source = PdfReader(buf)
+
+    writer = PdfWriter()
+    writer.add_page(source.pages[0]) # now references to non-existent page
+    writer.write(pdf_file_path) # don't crash

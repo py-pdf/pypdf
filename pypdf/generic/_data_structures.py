@@ -1707,8 +1707,8 @@ class Destination(TreeObject):
         return self.get("/Title")
 
     @property
-    def page(self) -> Optional[int]:
-        """Read-only property accessing the destination page number."""
+    def page(self) -> Optional[IndirectObject]:
+        """Read-only property accessing the IndirectObject of the destination page."""
         return self.get("/Page")
 
     @property
