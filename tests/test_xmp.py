@@ -9,7 +9,7 @@ import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
-from pypdf.generic import StreamObject
+from pypdf.generic import NameObject, StreamObject
 from pypdf.xmp import XmpInformation
 
 from . import get_data_from_url
@@ -358,3 +358,60 @@ def test_xmp_information__write_to_stream():
         xmp.write_to_stream(output)
     output_bytes = output.getvalue()
     assert output_bytes.startswith(b"<<\n/Type /Metadata\n/Subtype /XML\n/Length 2786\n>>\nstream\n<?xpacket begin")
+
+
+def test_pdf_writer__xmp_metadata_setter():
+    # Clear existing metadata.
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    assert writer.xmp_metadata is not None
+    original_metadata = writer.xmp_metadata.stream.get_data()
+    writer.xmp_metadata = None
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    reader = PdfReader(BytesIO(output_bytes))
+    assert reader.xmp_metadata is None
+
+    # Attempt to clear again.
+    writer = PdfWriter(clone_from=reader)
+    assert writer.xmp_metadata is None
+    writer.xmp_metadata = None
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    reader = PdfReader(BytesIO(output_bytes))
+    assert reader.xmp_metadata is None
+
+    # Set new metadata from bytes.
+    writer = PdfWriter(clone_from=reader)
+    assert writer.xmp_metadata is None
+    writer.xmp_metadata = original_metadata
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    reader = PdfReader(BytesIO(output_bytes))
+    assert get_all_tiff(reader.xmp_metadata) == {"tiff:Artist": ["me"]}
+
+    # Set metadata from XmpInformation.
+    writer = PdfWriter(clone_from=reader)
+    xmp_metadata = writer.xmp_metadata
+    assert get_all_tiff(xmp_metadata) == {"tiff:Artist": ["me"]}
+    new_metadata = original_metadata.replace(b"<tiff:Artist>me</tiff:Artist>", b"<tiff:Artist>Foo Bar</tiff:Artist>")
+    xmp_metadata.stream.set_data(new_metadata)
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    reader = PdfReader(BytesIO(output_bytes))
+    assert get_all_tiff(reader.xmp_metadata) == {"tiff:Artist": ["Foo Bar"]}
+
+    # Fix metadata not being an IndirectObject before.
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    writer.root_object[NameObject("/Metadata")] = writer.root_object["/Metadata"].get_object()
+    assert "/XML" in str(writer.root_object)
+    writer.xmp_metadata = new_metadata
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    reader = PdfReader(BytesIO(output_bytes))
+    assert get_all_tiff(reader.xmp_metadata) == {"tiff:Artist": ["Foo Bar"]}
+    assert "/XML" not in str(writer.root_object)

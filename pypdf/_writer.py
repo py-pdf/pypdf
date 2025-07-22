@@ -369,7 +369,7 @@ class PdfWriter(PdfDocCommon):
                 del self.root_object["/Metadata"]
             metadata_stream = StreamObject()
             stream_reference = self._add_object(metadata_stream)
-            self.root_object["/Metadata"] = stream_reference
+            self.root_object[NameObject("/Metadata")] = stream_reference
         else:
             metadata_stream = cast(StreamObject, metadata.get_object())
 
