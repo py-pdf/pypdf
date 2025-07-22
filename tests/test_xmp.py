@@ -9,6 +9,8 @@ import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
+from pypdf.generic import StreamObject
+from pypdf.xmp import XmpInformation
 
 from . import get_data_from_url
 
@@ -325,3 +327,34 @@ def test_dc_language__no_bag_container():
 
     assert reader.xmp_metadata is not None
     assert reader.xmp_metadata.dc_language == ["x-unknown"]
+
+
+def test_reading_does_not_destroy_root_object():
+    """Test for #3391."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    xmp = writer.xmp_metadata
+    assert xmp is not None
+    assert not isinstance(writer.root_object["/Metadata"], XmpInformation)
+    assert isinstance(writer.root_object["/Metadata"].get_object(), StreamObject)
+
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    assert b"\n/Metadata 27 0 R\n" in output_bytes
+
+
+def test_xmp_information__write_to_stream():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    xmp = writer.xmp_metadata
+
+    output = BytesIO()
+    with pytest.warns(
+            DeprecationWarning,
+            match=(
+                r"^XmpInformation\.write_to_stream is deprecated and will be removed in pypdf 6\.0\.0\. "
+                r"Use PdfWriter\.xmp_metadata instead\.$"
+            )
+    ):
+        xmp.write_to_stream(output)
+    output_bytes = output.getvalue()
+    assert output_bytes.startswith(b"<<\n/Type /Metadata\n/Subtype /XML\n/Length 2786\n>>\nstream\n<?xpacket begin")
