@@ -41,6 +41,11 @@ To limit the size of the content streams to process (and avoid OOM errors in you
 checking `len(page.get_contents().get_data())` beforehand.
 ```
 
+```{note}
+If a PDF page appears to contain only an image (e.g., a scanned document), the extracted text may be minimal or visually empty.
+In such cases, consider using OCR software such as [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) to extract text from images.
+```
+
 ## Using a visitor
 
 You can use visitor functions to control which part of a page you want to process and extract. The visitor functions

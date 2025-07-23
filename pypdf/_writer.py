@@ -103,11 +103,13 @@ from .generic import (
     NumberObject,
     PdfObject,
     RectangleObject,
+    ReferenceLink,
     StreamObject,
     TextStringObject,
     TreeObject,
     ViewerPreferences,
     create_string_object,
+    extract_links,
     hex_to_rgb,
     is_null_or_none,
 )
@@ -208,6 +210,11 @@ class PdfWriter(PdfDocCommon):
         self._ID: Union[ArrayObject, None] = None
         """The PDF file identifier,
         defined by the ID in the PDF file's trailer dictionary."""
+
+        self._unresolved_links: list[tuple[ReferenceLink, ReferenceLink]] = []
+        "Tracks links in pages added to the writer for resolving later."
+        self._merged_in_pages: Dict[Optional[IndirectObject], Optional[IndirectObject]] = {}
+        "Tracks pages added to the writer and what page they turned into."
 
         if self.incremental:
             if isinstance(fileobj, (str, Path)):
@@ -354,10 +361,23 @@ class PdfWriter(PdfDocCommon):
         if value is None:
             if "/Metadata" in self.root_object:
                 del self.root_object["/Metadata"]
-        else:
-            self.root_object[NameObject("/Metadata")] = value
+            return
 
-        return self.root_object.xmp_metadata  # type: ignore
+        metadata = self.root_object.get("/Metadata", None)
+        if not isinstance(metadata, IndirectObject):
+            if metadata is not None:
+                del self.root_object["/Metadata"]
+            metadata_stream = StreamObject()
+            stream_reference = self._add_object(metadata_stream)
+            self.root_object[NameObject("/Metadata")] = stream_reference
+        else:
+            metadata_stream = cast(StreamObject, metadata.get_object())
+
+        if isinstance(value, XmpInformation):
+            bytes_data = value.stream.get_data()
+        else:
+            bytes_data = value
+        metadata_stream.set_data(bytes_data)
 
     @property
     def with_as_usage(self) -> bool:
@@ -479,12 +499,14 @@ class PdfWriter(PdfDocCommon):
             ]
         except Exception:
             pass
+
         page = cast(
             "PageObject", page_org.clone(self, False, excluded_keys).get_object()
         )
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
+
         node, idx = self._get_page_in_node(index)
         page[NameObject(PA.PARENT)] = node.indirect_reference
 
@@ -502,6 +524,15 @@ class PdfWriter(PdfDocCommon):
             recurse += 1
             if recurse > 1000:
                 raise PyPdfError("Too many recursive calls!")
+
+        if page_org.pdf is not None:
+            # the page may contain links to other pages, and those other
+            # pages may or may not already be added.  we store the
+            # information we need, so that we can resolve the references
+            # later.
+            self._unresolved_links.extend(extract_links(page, page_org))
+            self._merged_in_pages[page_org.indirect_reference] = page.indirect_reference
+
         return page
 
     def set_need_appearances_writer(self, state: bool = True) -> None:
@@ -1379,6 +1410,19 @@ class PdfWriter(PdfDocCommon):
             self._add_object(entry)
         self._encrypt_entry = entry
 
+    def _resolve_links(self) -> None:
+        """Patch up links that were added to the document earlier, to
+        make sure they still point to the same pages.
+        """
+        for (new_link, old_link) in self._unresolved_links:
+            old_page = old_link.find_referenced_page()
+            if not old_page:
+                continue
+            new_page = self._merged_in_pages.get(old_page)
+            if new_page is None:
+                continue
+            new_link.patch_reference(self, new_page)
+
     def write_stream(self, stream: StreamType) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
@@ -1390,6 +1434,7 @@ class PdfWriter(PdfDocCommon):
         # if not self._root:
         #   self._root = self._add_object(self._root_object)
         # self._sweep_indirect_references(self._root)
+        self._resolve_links()
 
         if self.incremental:
             self._reader.stream.seek(0)
