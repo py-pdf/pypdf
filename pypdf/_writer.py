@@ -1384,6 +1384,8 @@ class PdfWriter(PdfDocCommon):
                 `use_128bit` will be ignored.
 
         """
+        permissions_flag.check()
+
         if owner_password is None:
             owner_password = user_password
 
