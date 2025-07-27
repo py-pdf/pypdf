@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## Version 5.9.0, 2025-07-27
+
+### New Features (ENH)
+- Automatically preserve links in added pages (#3298)
+- Allow writing/updating all properties of an embedded file (#3374)
+
+### Bug Fixes (BUG)
+- Fix XMP handling dropping indirect references (#3392)
+
+### Robustness (ROB)
+- Deal with DecodeParms being empty list (#3388)
+
+### Documentation (DOC)
+- Document how to read and modify XMP metadata (#3383)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.8.0...5.9.0)
+
 ## Version 5.8.0, 2025-07-13
 
 ### New Features (ENH)
