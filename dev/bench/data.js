@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753272393663,
+  "lastUpdate": 1753625157611,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -79271,6 +79271,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00278710911443383",
             "extra": "mean: 749.7878134000985 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "2a91bd4d0b5bda90f2eae741e383813b6cda9721",
+          "message": "REL: 5.9.0\n\n## What's new\n\n### New Features (ENH)\n- Automatically preserve links in added pages (#3298) by @larsga\n- Allow writing/updating all properties of an embedded file (#3374) by @Arya-A-Nair\n\n### Bug Fixes (BUG)\n- Fix XMP handling dropping indirect references (#3392) by @stefan6419846\n\n### Robustness (ROB)\n- Deal with DecodeParms being empty list (#3388) by @stefan6419846\n\n### Documentation (DOC)\n- Document how to read and modify XMP metadata (#3383) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.8.0...5.9.0)",
+          "timestamp": "2025-07-27T16:02:53+02:00",
+          "tree_id": "79a552e976805669e6018b906b40ff07c893f754",
+          "url": "https://github.com/py-pdf/pypdf/commit/2a91bd4d0b5bda90f2eae741e383813b6cda9721"
+        },
+        "date": 1753625153677,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.413062491333883,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013116134922041597",
+            "extra": "mean: 292.99199840000085 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.410456438128476,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007626024464199971",
+            "extra": "mean: 64.89100462500286 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27244562845761877,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03044232570760854",
+            "extra": "mean: 3.6704571318000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.953450508961495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012101525019376901",
+            "extra": "mean: 55.69959933333419 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08252700144734713,
+            "unit": "iter/sec",
+            "range": "stddev: 0.15832683759677646",
+            "extra": "mean: 12.117246264399995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3292618086670127,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00597873089549325",
+            "extra": "mean: 752.2972476000064 msec\nrounds: 5"
           }
         ]
       }
