@@ -85,7 +85,7 @@ exclude = [
 include = ["resources/", "tests/"]
 
 [tool.pytest.ini_options]
-addopts = "--disable-socket"
+#addopts = "--disable-socket"
 filterwarnings = ["error"]
 markers = [
     "slow: Test which require more than a second",

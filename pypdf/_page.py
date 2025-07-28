@@ -511,6 +511,7 @@ class PageObject(DictionaryObject):
             assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
         self._font_width_maps: Dict[str, Tuple[Dict[str, float], str, float]] = {}
+        self._merged_in_pages: List[IndirectObject] = []
 
     def hash_bin(self) -> int:
         """
@@ -1076,6 +1077,10 @@ class PageObject(DictionaryObject):
         over: bool = True,
         expand: bool = False,
     ) -> None:
+        # Track merged-in pages so we can do link rewriting correctly
+        if page2.indirect_reference:
+            self._merged_in_pages.append(page2.indirect_reference)
+
         # First we work on merging the resource dictionaries. This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
