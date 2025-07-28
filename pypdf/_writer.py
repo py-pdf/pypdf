@@ -102,17 +102,16 @@ from .generic import (
     NumberObject,
     PdfObject,
     RectangleObject,
-    ReferenceLink,
     StreamObject,
     TextStringObject,
     TreeObject,
     ViewerPreferences,
     create_string_object,
-    extract_links,
     hex_to_rgb,
     is_null_or_none,
 )
 from .generic._appearance_stream import TextStreamAppearance
+from .generic._link import ReferenceLink, extract_links
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
     AnnotationSubtype,
@@ -559,6 +558,11 @@ class PdfWriter(PdfDocCommon):
             # later.
             self._unresolved_links.extend(extract_links(page, page_org))
             self._merged_in_pages[page_org.indirect_reference] = page.indirect_reference
+            # the original page may have been created by merging the link
+            # target page into it, so we need to also track the merged-in
+            # pages that formed this page
+            for merged_in in page_org._merged_in_pages:
+                self._merged_in_pages[merged_in] = page.indirect_reference
 
         return page
 
