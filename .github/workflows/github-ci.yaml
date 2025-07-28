@@ -73,6 +73,9 @@ jobs:
     - name: Install cryptography
       run: |
         pip install cryptography
+    - name: Install OS dependencies
+      run:
+        brew install ghostscript jbig2dec poppler
     - name: Install pypdf
       run: |
         pip install .
