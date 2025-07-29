@@ -1087,6 +1087,7 @@ class PageObject(DictionaryObject):
                 return self._merge_page_writer(
                     page2, page2transformation, ctm, over, expand
                 )
+                return None
         except (AssertionError, AttributeError):
             pass
 
@@ -1179,6 +1180,7 @@ class PageObject(DictionaryObject):
         self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
+        return None
 
     def _merge_page_writer(
         self,
