@@ -544,11 +544,11 @@ class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     K: int = 0
+    EndOfLine: Union[bool, None] = None
+    EncodedByteAlign: Union[bool, None] = None
     columns: int = 0
     rows: int = 0
-    EndOfBlock: Union[int, None] = None
-    EndOfLine: Union[int, None] = None
-    EncodedByteAlign: Union[int, None] = None
+    EndOfBlock: Union[bool, None] = None
     DamagedRowsBeforeError: Union[int, None] = None
 
     @property
