@@ -52,7 +52,6 @@ from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
     deprecate_with_replacement,
-    deprecation_no_replacement,
     logger_warning,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
