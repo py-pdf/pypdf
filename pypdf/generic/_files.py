@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Generator, cast
 from pypdf._utils import format_iso8824_date, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
 from pypdf.constants import FileSpecificationDictionaryEntries
-from pypdf.constants import PageAttributes as PA
+from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError
 from pypdf.generic import (
     ArrayObject,
@@ -69,7 +69,7 @@ class EmbeddedFile:
         # Create the file entry (the actual embedded file stream)
         file_entry = DecodedStreamObject()
         file_entry.set_data(content)
-        file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
+        file_entry.update({NameObject(PG.TYPE): NameObject("/EmbeddedFile")})
 
         # Create the /EF entry
         ef_entry = DictionaryObject()
@@ -80,7 +80,7 @@ class EmbeddedFile:
         filespec = DictionaryObject()
         filespec.update(
             {
-                NameObject(PA.TYPE): NameObject("/Filespec"),
+                NameObject(PG.TYPE): NameObject("/Filespec"),
                 NameObject(FileSpecificationDictionaryEntries.F): create_string_object(name),
                 NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
             }
