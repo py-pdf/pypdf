@@ -544,10 +544,10 @@ class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     K: int = 0
-    EndOfLine: Union[bool, None] = None
-    EncodedByteAlign: Union[bool, None] = None
     columns: int = 0
     rows: int = 0
+    EndOfLine: Union[bool, None] = None
+    EncodedByteAlign: Union[bool, None] = None
     EndOfBlock: Union[bool, None] = None
     DamagedRowsBeforeError: Union[int, None] = None
 
@@ -569,7 +569,7 @@ def __create_old_class_instance(
     rows: int = 0
 ) -> CCITTParameters:
     deprecate_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
-    return CCITTParameters(K, columns=columns, rows=rows)
+    return CCITTParameters(K, columns, rows)
 
 
 # Create an alias for the old class name
