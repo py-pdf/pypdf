@@ -13,3 +13,4 @@ pytest-cov
 typeguard
 types-Pillow
 pyyaml
+brotli
