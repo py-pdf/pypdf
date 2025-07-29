@@ -619,11 +619,7 @@ class CCITTFaxDecode:
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
-        if isinstance(decode_parms, ArrayObject):  # deprecated
-            deprecation_no_replacement(
-                "decode_parms being an ArrayObject", removed_in="3.15.5"
-            )
+        # decode_parms is unused in function signature, parameters obtained below
         params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
