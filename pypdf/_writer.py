@@ -75,8 +75,8 @@ from .constants import (
     ImageType,
     InteractiveFormDictEntries,
     OutlineFontFlag,
-    PagesAttributes,
     PageLabelStyle,
+    PagesAttributes,
     TypFitArguments,
     UserAccessPermissions,
 )
