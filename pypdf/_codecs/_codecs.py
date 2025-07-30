@@ -59,10 +59,7 @@ class LzwCodec(Codec):
     def _increase_next_code(self) -> None:
         """Update bits_per_code and max_code_value if necessary."""
         self.next_code += 1
-        if (
-            self.next_code > self.max_code_value
-            and self.bits_per_code < self.MAX_BITS_PER_CODE
-        ):
+        if self.next_code > self.max_code_value and self.bits_per_code < self.MAX_BITS_PER_CODE:
             self.bits_per_code += 1
             self.max_code_value = (1 << self.bits_per_code) - 1
 
@@ -144,9 +141,9 @@ class LzwCodec(Codec):
 
     def _initialize_decoding_table(self) -> None:
         self.max_code_value = (1 << self.MAX_BITS_PER_CODE) - 1
-        self.decoding_table = [bytes([i]) for i in range(self.CLEAR_TABLE_MARKER)] + [
-            b""
-        ] * (self.max_code_value - self.CLEAR_TABLE_MARKER + 1)
+        self.decoding_table = [bytes([i]) for i in range(self.CLEAR_TABLE_MARKER)] + [b""] * (
+            self.max_code_value - self.CLEAR_TABLE_MARKER + 1
+        )
         self._table_index = self.EOD_MARKER + 1
         self._bits_to_get = 9
 
@@ -154,15 +151,11 @@ class LzwCodec(Codec):
         self._next_data: int
         try:
             while self._next_bits < self._bits_to_get:
-                self._next_data = (self._next_data << 8) | (
-                    data[self._byte_pointer]
-                )
+                self._next_data = (self._next_data << 8) | (data[self._byte_pointer])
                 self._byte_pointer += 1
                 self._next_bits += 8
 
-            code = (
-                self._next_data >> (self._next_bits - self._bits_to_get)
-            ) & self._and_table[self._bits_to_get - 9]
+            code = (self._next_data >> (self._next_bits - self._bits_to_get)) & self._and_table[self._bits_to_get - 9]
             self._next_bits -= self._bits_to_get
 
             # Reduce data to get rid of the overhead,
@@ -244,9 +237,7 @@ class LzwCodec(Codec):
                 old_code = code
             else:
                 # The code is not in the table and not one of the special codes
-                string = (
-                    self.decoding_table[old_code] + self.decoding_table[old_code][:1]
-                )
+                string = self.decoding_table[old_code] + self.decoding_table[old_code][:1]
                 output_stream.write(string)
                 self._add_entry_decode(self.decoding_table[old_code], string[0])
                 old_code = code

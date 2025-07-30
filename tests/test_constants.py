@@ -1,4 +1,5 @@
 """Test the pypdf.constants module."""
+
 import re
 from typing import Callable
 
@@ -95,10 +96,7 @@ def test_user_access_permissions__dict_handling():
         "key1": False,
         "key2": True,
     }
-    with pytest.raises(
-        ValueError,
-        match=f"Unknown dictionary keys: {unknown!r}"
-    ):
+    with pytest.raises(ValueError, match=f"Unknown dictionary keys: {unknown!r}"):
         UserAccessPermissions.from_dict(data)
 
 

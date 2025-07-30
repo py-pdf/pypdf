@@ -142,9 +142,7 @@ class FreeText(MarkupAnnotation):
                 }
             )
         if background_color is not None:
-            self[NameObject("/C")] = ArrayObject(
-                [FloatObject(n) for n in hex_to_rgb(background_color)]
-            )
+            self[NameObject("/C")] = ArrayObject([FloatObject(n) for n in hex_to_rgb(background_color)])
 
 
 class Line(MarkupAnnotation):
@@ -231,9 +229,7 @@ class Rectangle(MarkupAnnotation):
         )
 
         if interior_color:
-            self[NameObject("/IC")] = ArrayObject(
-                [FloatObject(n) for n in hex_to_rgb(interior_color)]
-            )
+            self[NameObject("/IC")] = ArrayObject([FloatObject(n) for n in hex_to_rgb(interior_color)])
 
 
 class Highlight(MarkupAnnotation):
@@ -252,9 +248,7 @@ class Highlight(MarkupAnnotation):
                 NameObject("/Subtype"): NameObject("/Highlight"),
                 NameObject("/Rect"): RectangleObject(rect),
                 NameObject("/QuadPoints"): quad_points,
-                NameObject("/C"): ArrayObject(
-                    [FloatObject(n) for n in hex_to_rgb(highlight_color)]
-                ),
+                NameObject("/C"): ArrayObject([FloatObject(n) for n in hex_to_rgb(highlight_color)]),
             }
         )
         if printing:
@@ -284,9 +278,7 @@ class Ellipse(MarkupAnnotation):
         )
 
         if interior_color:
-            self[NameObject("/IC")] = ArrayObject(
-                [FloatObject(n) for n in hex_to_rgb(interior_color)]
-            )
+            self[NameObject("/IC")] = ArrayObject([FloatObject(n) for n in hex_to_rgb(interior_color)])
 
 
 class Polygon(MarkupAnnotation):

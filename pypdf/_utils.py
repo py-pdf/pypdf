@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """Utility functions for PDF library."""
+
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -67,9 +68,7 @@ from .errors import (
 TransformationMatrixType: TypeAlias = tuple[
     tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]
 ]
-CompressedTransformationMatrix: TypeAlias = tuple[
-    float, float, float, float, float, float
-]
+CompressedTransformationMatrix: TypeAlias = tuple[float, float, float, float, float, float]
 
 StreamType = IO[Any]
 StrByteType = Union[str, StreamType]
@@ -351,12 +350,9 @@ def read_previous_line(stream: StreamType) -> bytes:
     return b"".join(line_content[::-1])
 
 
-def matrix_multiply(
-    a: TransformationMatrixType, b: TransformationMatrixType
-) -> TransformationMatrixType:
+def matrix_multiply(a: TransformationMatrixType, b: TransformationMatrixType) -> TransformationMatrixType:
     return tuple(  # type: ignore[return-value]
-        tuple(sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b))
-        for row in a
+        tuple(sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b)) for row in a
     )
 
 
@@ -373,18 +369,15 @@ def mark_location(stream: StreamType) -> None:
 
 
 @overload
-def ord_(b: str) -> int:
-    ...
+def ord_(b: str) -> int: ...
 
 
 @overload
-def ord_(b: bytes) -> bytes:
-    ...
+def ord_(b: bytes) -> bytes: ...
 
 
 @overload
-def ord_(b: int) -> int:
-    ...
+def ord_(b: int) -> int: ...
 
 
 def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
@@ -411,9 +404,7 @@ def deprecate_with_replacement(old_name: str, new_name: str, removed_in: str) ->
 
 def deprecation_with_replacement(old_name: str, new_name: str, removed_in: str) -> None:
     """Raise an exception that a feature was already removed, but has a replacement."""
-    deprecation(
-        f"{old_name} is deprecated and was removed in pypdf {removed_in}. Use {new_name} instead."
-    )
+    deprecation(f"{old_name} is deprecated and was removed in pypdf {removed_in}. Use {new_name} instead.")
 
 
 def deprecate_no_replacement(name: str, removed_in: str) -> None:
@@ -457,9 +448,7 @@ def logger_warning(msg: str, src: str) -> None:
     logging.getLogger(src).warning(msg)
 
 
-def rename_kwargs(
-    func_name: str, kwargs: dict[str, Any], aliases: dict[str, str], fail: bool = False
-) -> None:
+def rename_kwargs(func_name: str, kwargs: dict[str, Any], aliases: dict[str, str], fail: bool = False) -> None:
     """
     Helper function to deprecate arguments.
 
@@ -473,9 +462,7 @@ def rename_kwargs(
     for old_term, new_term in aliases.items():
         if old_term in kwargs:
             if fail:
-                raise DeprecationError(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                )
+                raise DeprecationError(f"{old_term} is deprecated as an argument. Use {new_term} instead")
             if new_term in kwargs:
                 raise TypeError(
                     f"{func_name} received both {old_term} and {new_term} as "
@@ -484,9 +471,7 @@ def rename_kwargs(
                 )
             kwargs[new_term] = kwargs.pop(old_term)
             warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                ),
+                message=(f"{old_term} is deprecated as an argument. Use {new_term} instead"),
                 category=DeprecationWarning,
                 stacklevel=3,
             )

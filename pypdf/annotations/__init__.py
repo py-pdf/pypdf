@@ -10,7 +10,6 @@ At their core, all annotation types are DictionaryObjects. That means if pypdf
 does not implement a feature, users can easily extend the given functionality.
 """
 
-
 from ._base import NO_FLAGS, AnnotationDictionary
 from ._markup_annotations import (
     Ellipse,

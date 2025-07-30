@@ -1,4 +1,5 @@
 """Test the pypdf._doc_common module."""
+
 import re
 import shutil
 import subprocess
@@ -98,12 +99,13 @@ def test_get_attachments__alternative_name_is_none():
     writer = PdfWriter()
     attachment = EmbeddedFile(name="test.txt", pdf_object=writer.root_object)
     assert attachment.alternative_name is None
-    with mock.patch(
-            "pypdf._writer.PdfWriter.attachment_list",
-            new_callable=mock.PropertyMock(return_value=[attachment])
-    ), mock.patch(
-            "pypdf.generic._files.EmbeddedFile.content",
-            new_callable=mock.PropertyMock(return_value=b"content")
+    with (
+        mock.patch(
+            "pypdf._writer.PdfWriter.attachment_list", new_callable=mock.PropertyMock(return_value=[attachment])
+        ),
+        mock.patch(
+            "pypdf.generic._files.EmbeddedFile.content", new_callable=mock.PropertyMock(return_value=b"content")
+        ),
     ):
         assert writer._get_attachments() == {"test.txt": b"content"}
 
@@ -129,7 +131,7 @@ def test_byte_encoded_named_destinations():
             "/Type": "/XYZ",
             "/Left": 133.768,
             "/Top": 667.198,
-            "/Zoom": NullObject()
+            "/Zoom": NullObject(),
         },
         "楣整搮捡귃㉫㈰爵捡牥汦杩瑨敷杩瑨瑳瑡捩慤慴": {
             "/Title": "楣整搮捡귃㉫㈰爵捡牥汦杩瑨敷杩瑨瑳瑡捩慤慴",
@@ -137,7 +139,7 @@ def test_byte_encoded_named_destinations():
             "/Type": "/XYZ",
             "/Left": 133.768,
             "/Top": 614.424,
-            "/Zoom": NullObject()
+            "/Zoom": NullObject(),
         },
         "page.1": {
             "/Title": "page.1",
@@ -145,7 +147,7 @@ def test_byte_encoded_named_destinations():
             "/Type": "/XYZ",
             "/Left": 132.768,
             "/Top": 705.06,
-            "/Zoom": NullObject()
+            "/Zoom": NullObject(),
         },
         "section*.1": {
             "/Title": "section*.1",
@@ -153,8 +155,8 @@ def test_byte_encoded_named_destinations():
             "/Type": "/XYZ",
             "/Left": 133.768,
             "/Top": 642.222,
-            "/Zoom": NullObject()
-        }
+            "/Zoom": NullObject(),
+        },
     }
 
 

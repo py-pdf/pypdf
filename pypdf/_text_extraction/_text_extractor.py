@@ -166,9 +166,7 @@ class TextExtraction:
 
     def _get_actual_font_widths(
         self,
-        cmap: tuple[
-            Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-        ],
+        cmap: tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]],
         text_operands: str,
         font_size: float,
         space_width: float,
@@ -206,9 +204,7 @@ class TextExtraction:
         operands: list[Union[str, TextStringObject]],
         cm_matrix: list[float],
         tm_matrix: list[float],
-        cmap: tuple[
-            Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-        ],
+        cmap: tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]],
         orientations: tuple[int, ...],
         font_size: float,
         rtl_dir: bool,
@@ -216,8 +212,7 @@ class TextExtraction:
         space_width: float,
         actual_str_size: dict[str, float],
     ) -> tuple[str, bool, dict[str, float]]:
-        text_operands, is_str_operands = get_text_operands(
-            operands, cm_matrix, tm_matrix, cmap, orientations)
+        text_operands, is_str_operands = get_text_operands(operands, cm_matrix, tm_matrix, cmap, orientations)
         if is_str_operands:
             text += text_operands
         else:
@@ -231,8 +226,9 @@ class TextExtraction:
                 rtl_dir,
                 visitor_text,
             )
-        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
-            self._get_actual_font_widths(cmap, text_operands, font_size, space_width))
+        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = self._get_actual_font_widths(
+            cmap, text_operands, font_size, space_width
+        )
         actual_str_size["str_widths"] += font_widths
 
         return text, rtl_dir, actual_str_size

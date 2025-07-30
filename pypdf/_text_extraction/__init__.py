@@ -91,9 +91,7 @@ def crlf_space_check(
     cmtm_prev: tuple[list[float], list[float]],
     cmtm_matrix: tuple[list[float], list[float]],
     memo_cmtm: tuple[list[float], list[float]],
-    cmap: tuple[
-        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-    ],
+    cmap: tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]],
     orientations: tuple[int, ...],
     output: str,
     font_size: float,
@@ -115,9 +113,9 @@ def crlf_space_check(
     delta_x = m[4] - m_prev[4]
     delta_y = m[5] - m_prev[5]
     # Table 108 of the 1.7 reference ("Text positioning operators")
-    scale_prev_x = math.sqrt(tm_prev[0]**2 + tm_prev[1]**2)
-    scale_prev_y = math.sqrt(tm_prev[2]**2 + tm_prev[3]**2)
-    scale_y = math.sqrt(tm_matrix[2]**2 + tm_matrix[3]**2)
+    scale_prev_x = math.sqrt(tm_prev[0] ** 2 + tm_prev[1] ** 2)
+    scale_prev_y = math.sqrt(tm_prev[2] ** 2 + tm_prev[3] ** 2)
+    scale_y = math.sqrt(tm_matrix[2] ** 2 + tm_matrix[3] ** 2)
     cm_prev = m
 
     if orientation not in orientations:
@@ -141,10 +139,7 @@ def crlf_space_check(
                         font_size,
                     )
                 text = ""
-        elif (
-            (moved_width >= (spacewidth + str_widths) * scale_prev_x)
-            and (output + text)[-1] != " "
-        ):
+        elif (moved_width >= (spacewidth + str_widths) * scale_prev_x) and (output + text)[-1] != " ":
             text += " "
     except Exception:
         pass
@@ -157,10 +152,8 @@ def get_text_operands(
     operands: list[Union[str, TextStringObject]],
     cm_matrix: list[float],
     tm_matrix: list[float],
-    cmap: tuple[
-        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-    ],
-    orientations: tuple[int, ...]
+    cmap: tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]],
+    orientations: tuple[int, ...],
 ) -> tuple[str, bool]:
     t: str = ""
     is_str_operands = False
@@ -172,11 +165,7 @@ def get_text_operands(
             is_str_operands = True
         else:
             t = ""
-            tt: bytes = (
-                encode_pdfdocencoding(operands[0])
-                if isinstance(operands[0], str)
-                else operands[0]
-            )
+            tt: bytes = encode_pdfdocencoding(operands[0]) if isinstance(operands[0], str) else operands[0]
             if isinstance(cmap[0], str):
                 try:
                     t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
@@ -189,9 +178,7 @@ def get_text_operands(
                         "surrogatepass",
                     )  # apply str encoding
             else:  # apply dict encoding
-                t = "".join(
-                    [cmap[0][x] if x in cmap[0] else bytes((x,)).decode() for x in tt]
-                )
+                t = "".join([cmap[0][x] if x in cmap[0] else bytes((x,)).decode() for x in tt])
     return (t, is_str_operands)
 
 
@@ -199,13 +186,11 @@ def get_display_str(
     text: str,
     cm_matrix: list[float],
     tm_matrix: list[float],
-    cmap: tuple[
-        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-    ],
+    cmap: tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]],
     text_operands: str,
     font_size: float,
     rtl_dir: bool,
-    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
+    visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
 ) -> tuple[str, bool]:
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
     for x in [cmap[1].get(x, x) for x in text_operands]:

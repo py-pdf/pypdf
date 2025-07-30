@@ -1,4 +1,5 @@
 """Test the pypdf._merger module."""
+
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -37,8 +38,7 @@ def merger_operate(merger):
             data = fp.read()
         merger.append(data)
     assert exc.value.args[0].startswith(
-        "Merging requires an object that PdfReader can parse. "
-        "Typically, that is a Path"
+        "Merging requires an object that PdfReader can parse. Typically, that is a Path"
     )
 
     # Merging an encrypted file
@@ -58,12 +58,8 @@ def merger_operate(merger):
     # at end of the list
     merger.write(BytesIO())
     outline_item = merger.add_outline_item("An outline item", 0)
-    oi2 = merger.add_outline_item(
-        "deeper", 0, parent=outline_item, italic=True, bold=True
-    )
-    merger.add_outline_item(
-        "Let's see", 2, oi2, (255, 255, 0), True, True, Fit.fit_box_vertically(left=12)
-    )
+    oi2 = merger.add_outline_item("deeper", 0, parent=outline_item, italic=True, bold=True)
+    merger.add_outline_item("Let's see", 2, oi2, (255, 255, 0), True, True, Fit.fit_box_vertically(left=12))
     merger.add_outline_item(
         "The XYZ fit",
         0,
@@ -100,9 +96,7 @@ def merger_operate(merger):
         True,
         Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
     )
-    merger.add_outline_item(
-        "The FitB fit", 0, outline_item, (255, 0, 15), True, True, Fit.fit_box()
-    )
+    merger.add_outline_item("The FitB fit", 0, outline_item, (255, 0, 15), True, True, Fit.fit_box())
     merger.add_outline_item(
         "The FitBH fit",
         0,
@@ -197,10 +191,7 @@ def test_merge_page_exception_with_writer():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(TypeError) as exc:
         merger.merge(0, pdf_path, pages="a:b")
-    assert (
-        exc.value.args[0]
-        == '"pages" must be a tuple of (start, stop[, step]) or a list'
-    )
+    assert exc.value.args[0] == '"pages" must be a tuple of (start, stop[, step]) or a list'
     merger.close()
 
 
@@ -505,11 +496,11 @@ def test_named_ref_to_page_that_is_gone(pdf_file_path):
     source = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
     buf = BytesIO()
     tmp = PdfWriter()
-    tmp.add_page(source.pages[2]) # we add only the page with the reference
+    tmp.add_page(source.pages[2])  # we add only the page with the reference
     tmp.write(buf)
 
     source = PdfReader(buf)
 
     writer = PdfWriter()
-    writer.add_page(source.pages[0]) # now references to non-existent page
-    writer.write(pdf_file_path) # don't crash
+    writer.add_page(source.pages[0])  # now references to non-existent page
+    writer.write(pdf_file_path)  # don't crash

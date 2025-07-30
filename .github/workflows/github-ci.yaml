@@ -177,6 +177,7 @@ jobs:
       run: |
         echo `ruff --version`
         ruff check .
+        ruff format .
     - name: Test with mypy
       run : |
         mypy pypdf

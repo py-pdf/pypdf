@@ -31,6 +31,7 @@ Implementation of stream filters for PDF.
 
 See TABLE H.1 Abbreviations for standard filter names
 """
+
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -178,9 +179,7 @@ class FlateDecode:
                 bits_per_component = DEFAULT_BITS_PER_COMPONENT
 
             # PNG predictor can vary by row and so is the lead byte on each row
-            rowlength = (
-                math.ceil(columns * colors * bits_per_component / 8) + 1
-            )  # number of bytes
+            rowlength = math.ceil(columns * colors * bits_per_component / 8) + 1  # number of bytes
 
             # TIFF prediction:
             if predictor == 2:
@@ -193,9 +192,7 @@ class FlateDecode:
                 str_data = bytes(str_data)
             # PNG prediction:
             elif 10 <= predictor <= 15:
-                str_data = FlateDecode._decode_png_prediction(
-                    str_data, columns, rowlength
-                )
+                str_data = FlateDecode._decode_png_prediction(str_data, columns, rowlength)
             else:
                 raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
         return str_data
@@ -257,9 +254,7 @@ class FlateDecode:
 
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
-                raise PdfReadError(
-                    f"Unsupported PNG filter {filter_byte!r}"
-                )  # pragma: no cover
+                raise PdfReadError(f"Unsupported PNG filter {filter_byte!r}")  # pragma: no cover
             prev_rowdata = tuple(rowdata)
             output.extend(rowdata[1:])
         return bytes(output)
@@ -315,9 +310,7 @@ class ASCIIHexDecode:
         index = 0
         while True:
             if index >= len(data):
-                logger_warning(
-                    "missing EOD in ASCIIHexDecode, check if output is OK", __name__
-                )
+                logger_warning("missing EOD in ASCIIHexDecode, check if output is OK", __name__)
                 break  # Reached end of string without an EOD
             char = data[index : index + 1]
             if char == b">":
@@ -378,9 +371,7 @@ class RunLengthDecode:
         index = 0
         while True:
             if index >= len(data):
-                logger_warning(
-                    "missing EOD in RunLengthDecode, check if output is OK", __name__
-                )
+                logger_warning("missing EOD in RunLengthDecode, check if output is OK", __name__)
                 break  # Reached end of string without an EOD
             length = data[index]
             index += 1
@@ -390,10 +381,8 @@ class RunLengthDecode:
                     # We should first check, if we have an inner stream from a multi-encoded
                     # stream with a faulty trailing newline that we can decode properly.
                     # We will just ignore the last byte and raise a warning ...
-                    if (index == data_length - 1) and (data[index : index+1] == b"\n"):
-                        logger_warning(
-                            "Found trailing newline in stream data, check if output is OK", __name__
-                        )
+                    if (index == data_length - 1) and (data[index : index + 1] == b"\n"):
+                        logger_warning("Found trailing newline in stream data, check if output is OK", __name__)
                         break
                     raise PdfStreamError("Early EOD in RunLengthDecode")
                 break
@@ -563,11 +552,7 @@ class CCITTParameters:
         return CCITTgroup
 
 
-def __create_old_class_instance(
-    K: int = 0,
-    columns: int = 0,
-    rows: int = 0
-) -> CCITTParameters:
+def __create_old_class_instance(K: int = 0, columns: int = 0, rows: int = 0) -> CCITTParameters:
     deprecate_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
     return CCITTParameters(K, columns, rows)
 
@@ -595,9 +580,7 @@ class CCITTFaxDecode:
         k = 0
         columns = 1728
         if parameters:
-            parameters_unwrapped = cast(
-                Union[ArrayObject, DictionaryObject], parameters.get_object()
-            )
+            parameters_unwrapped = cast(Union[ArrayObject, DictionaryObject], parameters.get_object())
             if isinstance(parameters_unwrapped, ArrayObject):
                 for decode_parm in parameters_unwrapped:
                     if CCITT.COLUMNS in decode_parm:
@@ -621,9 +604,7 @@ class CCITTFaxDecode:
     ) -> bytes:
         # decode_parms is unused here
         if isinstance(decode_parms, ArrayObject):  # deprecated
-            deprecation_no_replacement(
-                "decode_parms being an ArrayObject", removed_in="3.15.5"
-            )
+            deprecation_no_replacement("decode_parms being an ArrayObject", removed_in="3.15.5")
         params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
@@ -657,9 +638,7 @@ class CCITTFaxDecode:
             273,
             4,
             1,
-            struct.calcsize(
-                tiff_header_struct
-            ),  # StripOffsets, LONG, 1, length of header
+            struct.calcsize(tiff_header_struct),  # StripOffsets, LONG, 1, length of header
             278,
             4,
             1,
@@ -732,6 +711,7 @@ class JBIG2Decode:
         version = result.stdout.split(" ", maxsplit=1)[1]
 
         from ._utils import Version  # noqa: PLC0415
+
         return Version(version) >= Version("0.15")
 
 
@@ -789,9 +769,7 @@ def decode_stream_data(stream: Any) -> bytes:
             data = JBIG2Decode.decode(data, params)
         elif filter_name == "/Crypt":
             if "/Name" in params or "/Type" in params:
-                raise NotImplementedError(
-                    "/Crypt filter with /Name or /Type not supported yet"
-                )
+                raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
         else:
             raise NotImplementedError(f"Unsupported filter {filter_name}")
     return data
@@ -832,9 +810,7 @@ def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, 
         if IA.S_MASK in x_object_obj:  # add alpha channel
             alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
             if img.size != alpha.size:
-                logger_warning(
-                    f"image and mask size not matching: {obj_as_text}", __name__
-                )
+                logger_warning(f"image and mask size not matching: {obj_as_text}", __name__)
             else:
                 # TODO : implement mask
                 if alpha.mode != "L":
@@ -914,9 +890,7 @@ def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, 
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged
     elif lfilters == FT.JPX_DECODE:
-        img, image_format, extension, invert_color = _handle_jpx(
-            size, data, mode, color_space, colors
-        )
+        img, image_format, extension, invert_color = _handle_jpx(size, data, mode, color_space, colors)
     elif lfilters == FT.CCITT_FAX_DECODE:
         img, image_format, extension, invert_color = (
             Image.open(BytesIO(data), formats=("TIFF",)),
@@ -949,12 +923,11 @@ def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, 
         )
 
     img = _apply_decode(img, x_object_obj, lfilters, color_space, invert_color)
-    img, extension, image_format = _apply_alpha(
-        img, x_object_obj, obj_as_text, image_format, extension
-    )
+    img, extension, image_format = _apply_alpha(img, x_object_obj, obj_as_text, image_format, extension)
 
     if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
         from PIL import ImageOps  # noqa: PLC0415
+
         img = ImageOps.invert(img)
 
     # Save image to bytes

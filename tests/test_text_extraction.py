@@ -39,21 +39,13 @@ def test_multi_language(visitor_text):
     assert "こんにちは世界" in txt, "Japanese not correctly extracted"
     # check customizations
     set_custom_rtl(None, None, "Russian:")
-    assert ":naissuR" in reader.pages[0].extract_text(
-        visitor_text=visitor_text
-    ), "(1) CUSTOM_RTL_SPECIAL_CHARS failed"
+    assert ":naissuR" in reader.pages[0].extract_text(visitor_text=visitor_text), "(1) CUSTOM_RTL_SPECIAL_CHARS failed"
     set_custom_rtl(None, None, [ord(x) for x in "Russian:"])
-    assert ":naissuR" in reader.pages[0].extract_text(
-        visitor_text=visitor_text
-    ), "(2) CUSTOM_RTL_SPECIAL_CHARS failed"
+    assert ":naissuR" in reader.pages[0].extract_text(visitor_text=visitor_text), "(2) CUSTOM_RTL_SPECIAL_CHARS failed"
     set_custom_rtl(0, 255, None)
-    assert ":hsilgnE" in reader.pages[0].extract_text(
-        visitor_text=visitor_text
-    ), "CUSTOM_RTL_MIN/MAX failed"
+    assert ":hsilgnE" in reader.pages[0].extract_text(visitor_text=visitor_text), "CUSTOM_RTL_MIN/MAX failed"
     set_custom_rtl("A", "z", [])
-    assert ":hsilgnE" in reader.pages[0].extract_text(
-        visitor_text=visitor_text
-    ), "CUSTOM_RTL_MIN/MAX failed"
+    assert ":hsilgnE" in reader.pages[0].extract_text(visitor_text=visitor_text), "CUSTOM_RTL_MIN/MAX failed"
     set_custom_rtl(-1, -1, [])  # to prevent further errors
 
     reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi-rotated.pdf")
@@ -144,7 +136,7 @@ def test_uninterpretable_type3_font(mock_logger_warning):
     assert page.extract_text(extraction_mode="layout") == ""
     mock_logger_warning.assert_called_with(
         "PDF contains an uninterpretable font. Output will be incomplete.",
-        "pypdf._text_extraction._layout_mode._fixed_width_page"
+        "pypdf._text_extraction._layout_mode._fixed_width_page",
     )
 
 
@@ -171,9 +163,7 @@ def test_layout_mode_type0_font_widths():
     url = "https://github.com/py-pdf/pypdf/files/13533204/Claim.Maker.Alerts.Guide_pg2.PDF"
     name = "Claim Maker Alerts Guide_pg2.PDF"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    expected = (RESOURCE_ROOT / "Claim Maker Alerts Guide_pg2.layout.txt").read_text(
-        encoding="utf-8"
-    )
+    expected = (RESOURCE_ROOT / "Claim Maker Alerts Guide_pg2.layout.txt").read_text(encoding="utf-8")
     assert expected == reader.pages[0].extract_text(extraction_mode="layout")
 
 
@@ -205,9 +195,7 @@ def test_layout_mode_warnings(mock_logger_warning):
     page.extract_text(extraction_mode="plain", visitor_text=dummy_visitor_text)
     mock_logger_warning.assert_not_called()
     page.extract_text(extraction_mode="layout", visitor_text=dummy_visitor_text)
-    mock_logger_warning.assert_called_with(
-        "Argument visitor_text is ignored in layout mode", "pypdf._page"
-    )
+    mock_logger_warning.assert_called_with("Argument visitor_text is ignored in layout mode", "pypdf._page")
 
 
 @pytest.mark.enable_socket
@@ -264,8 +252,9 @@ def test_layout_mode_space_vertically_font_height_weight():
         with open(RESOURCE_ROOT / "crazyones_layout_vertical_space_font_height_weight.txt", "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
-        text = page.extract_text(extraction_mode="layout", layout_mode_space_vertically=True,
-                                 layout_mode_font_height_weight=0.85).encode("utf-8")
+        text = page.extract_text(
+            extraction_mode="layout", layout_mode_space_vertically=True, layout_mode_font_height_weight=0.85
+        ).encode("utf-8")
 
         # Compare the text of the PDF to a known source
         for expected_line, actual_line in zip(text.splitlines(), pdftext.splitlines()):
@@ -375,11 +364,11 @@ def test_rotated_line_wrap():
 
 
 @pytest.mark.parametrize(
-        ("op", "msg"),
-        [
-            (b"BT", "Unbalanced target operations, expected b'ET'."),
-            (b"q", "Unbalanced target operations, expected b'Q'."),
-        ],
+    ("op", "msg"),
+    [
+        (b"BT", "Unbalanced target operations, expected b'ET'."),
+        (b"q", "Unbalanced target operations, expected b'Q'."),
+    ],
 )
 def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
     """Ensures that imbalanced q/Q or EB/ET is handled gracefully."""

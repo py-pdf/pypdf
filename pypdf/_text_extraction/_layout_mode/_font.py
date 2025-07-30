@@ -42,10 +42,7 @@ class Font:
         # in /CharProcs map to a standard adobe glyph. See §9.10.2 of the
         # PDF 1.7 standard.
         if self.subtype == "/Type3" and "/ToUnicode" not in self.font_dictionary:
-            self.interpretable = all(
-                cname in adobe_glyphs
-                for cname in self.font_dictionary.get("/CharProcs") or []
-            )
+            self.interpretable = all(cname in adobe_glyphs for cname in self.font_dictionary.get("/CharProcs") or [])
 
         if not self.interpretable:  # save some overhead if font is not interpretable
             return
@@ -61,9 +58,7 @@ class Font:
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
         if "/DescendantFonts" in self.font_dictionary:
             d_font: dict[Any, Any]
-            for d_font_idx, d_font in enumerate(
-                self.font_dictionary["/DescendantFonts"]
-            ):
+            for d_font_idx, d_font in enumerate(self.font_dictionary["/DescendantFonts"]):
                 while isinstance(d_font, IndirectObject):
                     d_font = d_font.get_object()
                 self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font
@@ -108,9 +103,7 @@ class Font:
                         )
                         skip_count = 1
                     # check for format (2): `int int int`
-                    elif isinstance(w_next_entry, (int, float)) and isinstance(
-                        _w[idx + 2].get_object(), (int, float)
-                    ):
+                    elif isinstance(w_next_entry, (int, float)) and isinstance(_w[idx + 2].get_object(), (int, float)):
                         start_idx, stop_idx, const_width = (
                             w_entry,
                             w_next_entry,
@@ -119,9 +112,7 @@ class Font:
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: const_width
-                                for _cidx in range(
-                                    cast(int, start_idx), cast(int, stop_idx + 1), 1
-                                )
+                                for _cidx in range(cast(int, start_idx), cast(int, stop_idx + 1), 1)
                                 if _cidx in ord_map
                             }
                         )
@@ -141,13 +132,9 @@ class Font:
 
     def word_width(self, word: str) -> float:
         """Sum of character widths specified in PDF font for the supplied word"""
-        return sum(
-            [self.width_map.get(char, self.space_width * 2) for char in word], 0.0
-        )
+        return sum([self.width_map.get(char, self.space_width * 2) for char in word], 0.0)
 
     @staticmethod
     def to_dict(font_instance: "Font") -> dict[str, Any]:
         """Dataclass to dict for json.dumps serialization."""
-        return {
-            k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__
-        }
+        return {k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__}

@@ -1,4 +1,5 @@
 """Test the pypdf._protocols module."""
+
 from pypdf._protocols import PdfObjectProtocol
 
 

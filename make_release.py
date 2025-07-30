@@ -119,9 +119,7 @@ def write_commit_msg_file(new_version: str, commit_changes: str) -> None:
         fp.write(commit_changes)
 
 
-def write_release_msg_file(
-    new_version: str, commit_changes: str, today: datetime
-) -> None:
+def write_release_msg_file(new_version: str, commit_changes: str, today: datetime) -> None:
     """
     Write a file that can be used as a git tag message.
 
@@ -202,9 +200,7 @@ def get_formatted_changes(git_tag: str) -> tuple[str, str]:
     for commit in commits:
         if commit.prefix not in grouped:
             grouped[commit.prefix] = []
-        grouped[commit.prefix].append(
-            {"msg": commit.message, "author": commit.author_login}
-        )
+        grouped[commit.prefix].append({"msg": commit.message, "author": commit.author_login})
 
     # Order prefixes
     order = [
@@ -256,9 +252,7 @@ def get_formatted_changes(git_tag: str) -> tuple[str, str]:
         for prefix, commits in grouped.items():
             for commit in commits:
                 output += f"- {prefix}: {commit['msg']}\n"
-                output_with_user += (
-                    f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
-                )
+                output_with_user += f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
 
     return output, output_with_user
 

@@ -1,4 +1,5 @@
 """Test the pypdf.papersizes module."""
+
 import pytest
 
 from pypdf import papersizes

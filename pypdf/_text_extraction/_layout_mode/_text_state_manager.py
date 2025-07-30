@@ -34,9 +34,7 @@ class TextStateManager:
     """
 
     def __init__(self) -> None:
-        self.transform_stack: TextStateManagerChainMapType = ChainMap(
-            self.new_transform()
-        )
+        self.transform_stack: TextStateManagerChainMapType = ChainMap(self.new_transform())
         self.q_queue: CounterType[int] = Counter()
         self.q_depth = [0]
         self.Tc: float = 0.0
@@ -91,25 +89,18 @@ class TextStateManager:
 
         """
         if not isinstance(self.font, Font):
-            raise PdfReadError(
-                "font not set: is PDF missing a Tf operator?"
-            )  # pragma: no cover
+            raise PdfReadError("font not set: is PDF missing a Tf operator?")  # pragma: no cover
         if isinstance(value, bytes):
             try:
                 if isinstance(self.font.encoding, str):
                     txt = value.decode(self.font.encoding, "surrogatepass")
                 else:
                     txt = "".join(
-                        self.font.encoding[x]
-                        if x in self.font.encoding
-                        else bytes((x,)).decode()
-                        for x in value
+                        self.font.encoding[x] if x in self.font.encoding else bytes((x,)).decode() for x in value
                     )
             except (UnicodeEncodeError, UnicodeDecodeError):
                 txt = value.decode("utf-8", "replace")
-            txt = "".join(
-                self.font.char_map.get(x, x) for x in txt
-            )
+            txt = "".join(self.font.char_map.get(x, x) for x in txt)
         else:
             txt = value
         return TextStateParams(
@@ -154,10 +145,7 @@ class TextStateManager:
 
     def reset_tm(self) -> TextStateManagerChainMapType:
         """Clear all transforms from chainmap having is_text==True or is_render==True"""
-        while (
-            self.transform_stack.maps[0]["is_text"]
-            or self.transform_stack.maps[0]["is_render"]
-        ):
+        while self.transform_stack.maps[0]["is_text"] or self.transform_stack.maps[0]["is_render"]:
             self.transform_stack = self.transform_stack.parents
         return self.transform_stack
 
@@ -171,9 +159,7 @@ class TextStateManager:
         """Rewind to stack prior state after closing a 'q' with internal 'cm' ops"""
         self.font, self.font_size = self.font_stack.pop(-1)
         self.transform_stack = self.reset_tm()
-        self.transform_stack.maps = self.transform_stack.maps[
-            self.q_queue.pop(self.q_depth.pop(), 0) :
-        ]
+        self.transform_stack.maps = self.transform_stack.maps[self.q_queue.pop(self.q_depth.pop(), 0) :]
         return self.transform_stack
 
     def add_q(self) -> None:
@@ -198,7 +184,8 @@ class TextStateManager:
         """Append a text transform matrix"""
         self.transform_stack = self.transform_stack.new_child(
             self.new_transform(  # type: ignore[misc]
-                *self._complete_matrix(operands), is_text=True  # type: ignore[arg-type]
+                *self._complete_matrix(operands),  # type: ignore[arg-type]
+                is_text=True,
             )
         )
         return self.transform_stack
@@ -207,7 +194,9 @@ class TextStateManager:
         """Append a text rendering transform matrix"""
         self.transform_stack = self.transform_stack.new_child(
             self.new_transform(  # type: ignore[misc]
-                *self._complete_matrix(operands), is_text=True, is_render=True  # type: ignore[arg-type]
+                *self._complete_matrix(operands),  # type: ignore[arg-type]
+                is_text=True,
+                is_render=True,
             )
         )
         return self.transform_stack

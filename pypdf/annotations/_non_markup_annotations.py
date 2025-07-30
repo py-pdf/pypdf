@@ -30,14 +30,9 @@ class Link(AnnotationDictionary):
         is_external = url is not None
         is_internal = target_page_index is not None
         if not is_external and not is_internal:
-            raise ValueError(
-                "Either 'url' or 'target_page_index' have to be provided. Both were None."
-            )
+            raise ValueError("Either 'url' or 'target_page_index' have to be provided. Both were None.")
         if is_external and is_internal:
-            raise ValueError(
-                "Either 'url' or 'target_page_index' have to be provided. "
-                f"{url=}, {target_page_index=}"
-            )
+            raise ValueError(f"Either 'url' or 'target_page_index' have to be provided. {url=}, {target_page_index=}")
 
         border_arr: BorderArrayType
         if border is not None:

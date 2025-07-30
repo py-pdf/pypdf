@@ -158,9 +158,7 @@ class PageRange:
 PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
 
 
-def parse_filename_page_ranges(
-    args: list[Union[str, PageRange, None]]
-) -> list[tuple[str, PageRange]]:
+def parse_filename_page_ranges(args: list[Union[str, PageRange, None]]) -> list[tuple[str, PageRange]]:
     """
     Given a list of filenames and page ranges, return a list of (filename, page_range) pairs.
 
@@ -179,9 +177,7 @@ def parse_filename_page_ranges(
     for arg in [*args, None]:
         if PageRange.valid(arg):
             if not pdf_filename:
-                raise ValueError(
-                    "The first argument must be a filename, not a page range."
-                )
+                raise ValueError("The first argument must be a filename, not a page range.")
 
             assert arg is not None
             pairs.append((pdf_filename, PageRange(arg)))

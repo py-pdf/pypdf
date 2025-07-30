@@ -4,9 +4,7 @@ from ._base import is_null_or_none
 
 
 class Fit:
-    def __init__(
-        self, fit_type: str, fit_args: tuple[Union[None, float, Any], ...] = ()
-    ) -> None:
+    def __init__(self, fit_type: str, fit_args: tuple[Union[None, float, Any], ...] = ()) -> None:
         from ._base import FloatObject, NameObject, NullObject, NumberObject  # noqa: PLC0415
 
         self.fit_type = NameObject(fit_type)

@@ -168,9 +168,7 @@ class PageAttributes:
 
     TYPE = "/Type"  # name, required; must be /Page
     PARENT = "/Parent"  # dictionary, required; a pages object
-    LAST_MODIFIED = (
-        "/LastModified"  # date, optional; date and time of last modification
-    )
+    LAST_MODIFIED = "/LastModified"  # date, optional; date and time of last modification
     RESOURCES = "/Resources"  # dictionary, required if there are any
     MEDIABOX = "/MediaBox"  # rectangle, required; rectangle specifying page size
     CROPBOX = "/CropBox"  # rectangle, optional

@@ -98,9 +98,7 @@ class ViewerPreferences(DictionaryObject):
             """,
             )
 
-        def _add_prop_name(
-            key: str, lst: list[str], default: Optional[NameObject]
-        ) -> property:
+        def _add_prop_name(key: str, lst: list[str], default: Optional[NameObject]) -> property:
             return property(
                 lambda self: self._get_name(key, default),
                 lambda self, v: self._set_name(key, lst, v),
@@ -143,17 +141,13 @@ class ViewerPreferences(DictionaryObject):
             ["/UseNone", "/UseOutlines", "/UseThumbs", "/UseOC"],
             NameObject("/UseNone"),
         )
-        cls.direction = _add_prop_name(
-            "/Direction", ["/L2R", "/R2L"], NameObject("/L2R")
-        )
+        cls.direction = _add_prop_name("/Direction", ["/L2R", "/R2L"], NameObject("/L2R"))
         cls.view_area = _add_prop_name("/ViewArea", [], None)
         cls.view_clip = _add_prop_name("/ViewClip", [], None)
         cls.print_area = _add_prop_name("/PrintArea", [], None)
         cls.print_clip = _add_prop_name("/PrintClip", [], None)
         cls.print_scaling = _add_prop_name("/PrintScaling", [], None)
-        cls.duplex = _add_prop_name(
-            "/Duplex", ["/Simplex", "/DuplexFlipShortEdge", "/DuplexFlipLongEdge"], None
-        )
+        cls.duplex = _add_prop_name("/Duplex", ["/Simplex", "/DuplexFlipShortEdge", "/DuplexFlipLongEdge"], None)
         cls.pick_tray_by_pdfsize = _add_prop_bool("/PickTrayByPDFSize", None)
         cls.print_pagerange = _add_prop_arr("/PrintPageRange", None)
         cls.num_copies = _add_prop_int("/NumCopies", None)

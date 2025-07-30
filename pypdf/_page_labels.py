@@ -192,9 +192,7 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
                         # Recursive definition.
                         level += 1
                         if level == 100:  # pragma: no cover
-                            raise NotImplementedError(
-                                "Too deep nesting is not supported."
-                            )
+                            raise NotImplementedError("Too deep nesting is not supported.")
                         number_tree = kid
                         # Exit the inner `for` loop and continue at the next level with the
                         # next iteration of the `while` loop.

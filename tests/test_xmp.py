@@ -1,4 +1,5 @@
 """Test the pypdf.xmp module."""
+
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
@@ -61,11 +62,7 @@ def test_writer_xmp_metadata_samples():
         "⏰": "time",
     }
     co = pypdf.generic.ContentStream(None, None)
-    co.set_data(
-        xmp.stream.get_data().replace(
-            b'dc:source="Martin Thoma"', b'dc:source="Pubpub-Zz"'
-        )
-    )
+    co.set_data(xmp.stream.get_data().replace(b'dc:source="Martin Thoma"', b'dc:source="Pubpub-Zz"'))
     writer.xmp_metadata = pypdf.xmp.XmpInformation(co)
     b = BytesIO()
     writer.write(b)
@@ -87,9 +84,7 @@ def test_read_xmp_metadata(src, has_xmp):
     xmp = reader.xmp_metadata
     assert (xmp is None) == (not has_xmp)
     if has_xmp:
-        for _ in xmp.get_element(
-            about_uri="", namespace=pypdf.xmp.RDF_NAMESPACE, name="Artist"
-        ):
+        for _ in xmp.get_element(about_uri="", namespace=pypdf.xmp.RDF_NAMESPACE, name="Artist"):
             pass
 
         assert get_all_tiff(xmp) == {"tiff:Artist": ["me"]}
@@ -99,9 +94,7 @@ def test_read_xmp_metadata(src, has_xmp):
 def get_all_tiff(xmp: pypdf.xmp.XmpInformation):
     """Return all TIFF metadata as a dictionary."""
     data = {}
-    tiff_ns = xmp.get_nodes_in_namespace(
-        about_uri="", namespace="http://ns.adobe.com/tiff/1.0/"
-    )
+    tiff_ns = xmp.get_nodes_in_namespace(about_uri="", namespace="http://ns.adobe.com/tiff/1.0/")
     for tag in tiff_ns:
         contents = [content.data for content in tag.childNodes]
         data[tag.tagName] = contents
@@ -172,13 +165,9 @@ def test_xmp_dc_description_extraction():
     name = "tika-953770.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     xmp_metadata = reader.xmp_metadata
-    assert xmp_metadata.dc_description == {
-        "x-default": "U.S. Title 50 Certification Form"
-    }
+    assert xmp_metadata.dc_description == {"x-default": "U.S. Title 50 Certification Form"}
     # cache hit:
-    assert xmp_metadata.dc_description == {
-        "x-default": "U.S. Title 50 Certification Form"
-    }
+    assert xmp_metadata.dc_description == {"x-default": "U.S. Title 50 Certification Form"}
 
 
 @pytest.mark.enable_socket
@@ -305,8 +294,7 @@ def test_xmp_metadata__content_stream_is_dictionary_object():
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
     with pytest.raises(
-            PdfReadError,
-            match="XML in XmpInformation was invalid: 'DictionaryObject' object has no attribute 'get_data'"
+        PdfReadError, match="XML in XmpInformation was invalid: 'DictionaryObject' object has no attribute 'get_data'"
     ):
         assert reader.xmp_metadata is not None
 
@@ -349,11 +337,11 @@ def test_xmp_information__write_to_stream():
 
     output = BytesIO()
     with pytest.warns(
-            DeprecationWarning,
-            match=(
-                r"^XmpInformation\.write_to_stream is deprecated and will be removed in pypdf 6\.0\.0\. "
-                r"Use PdfWriter\.xmp_metadata instead\.$"
-            )
+        DeprecationWarning,
+        match=(
+            r"^XmpInformation\.write_to_stream is deprecated and will be removed in pypdf 6\.0\.0\. "
+            r"Use PdfWriter\.xmp_metadata instead\.$"
+        ),
     ):
         xmp.write_to_stream(output)
     output_bytes = output.getvalue()

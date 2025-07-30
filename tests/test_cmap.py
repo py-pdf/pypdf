@@ -1,4 +1,5 @@
 """Test the pypdf_cmap module."""
+
 from io import BytesIO
 from pathlib import Path
 
@@ -125,9 +126,7 @@ def test_ascii_charset():
     ],
     ids=["iss1370", "iss1379"],
 )
-def test_text_extraction_of_specific_pages(
-    url: str, name: str, page_nb: int, within_text
-):
+def test_text_extraction_of_specific_pages(url: str, name: str, page_nb: int, within_text):
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert within_text in reader.pages[page_nb].extract_text()
 
@@ -225,9 +224,7 @@ def test_missing_entries_in_cmap():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     p = reader.pages[0]
-    p["/Resources"]["/Font"]["/F1"][NameObject("/ToUnicode")] = IndirectObject(
-        99999999, 0, reader
-    )
+    p["/Resources"]["/Font"]["/F1"][NameObject("/ToUnicode")] = IndirectObject(99999999, 0, reader)
     p.extract_text()
 
 
@@ -244,9 +241,7 @@ def test_null_missing_width():
 @pytest.mark.enable_socket
 def test_unigb_utf16():
     """Cf #2812"""
-    url = (
-        "https://github.com/user-attachments/files/16767536/W020240105322424121296.pdf"
-    )
+    url = "https://github.com/user-attachments/files/16767536/W020240105322424121296.pdf"
     name = "iss2812.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert "《中国能源展望 2060（2024 年版）》编写委员会" in reader.pages[1].extract_text()
@@ -255,9 +250,7 @@ def test_unigb_utf16():
 @pytest.mark.enable_socket
 def test_too_many_differences():
     """Cf #2836"""
-    url = (
-        "https://github.com/user-attachments/files/16911741/dumb_extract_text_crash.pdf"
-    )
+    url = "https://github.com/user-attachments/files/16911741/dumb_extract_text_crash.pdf"
     name = "iss2836.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.pages[0].extract_text() == ""
@@ -265,9 +258,7 @@ def test_too_many_differences():
 
 @pytest.mark.enable_socket
 def test_iss2925():
-    url = (
-        "https://github.com/user-attachments/files/17621508/2305.09315.pdf"
-    )
+    url = "https://github.com/user-attachments/files/17621508/2305.09315.pdf"
     name = "iss2925.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert "slicing on the PDG to extract the relevant contextual" in reader.pages[3].extract_text()
@@ -276,9 +267,7 @@ def test_iss2925():
 @pytest.mark.enable_socket
 def test_iss2966():
     """Regression test for issue #2966: indirect objects in fonts"""
-    url = (
-        "https://github.com/user-attachments/files/17904233/repro_out.pdf"
-    )
+    url = "https://github.com/user-attachments/files/17904233/repro_out.pdf"
     name = "iss2966.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert "Lorem ipsum dolor sit amet" in reader.pages[0].extract_text()
@@ -323,10 +312,7 @@ def test_function_in_font_widths(caplog):
 def test_get_encoding__encoding_value_is_none():
     ft = DictionaryObject()
     ft[NameObject("/Encoding")] = NullObject()
-    assert get_encoding(ft) == (
-        dict(zip(range(256), charset_encoding["/StandardEncoding"])),
-        {}
-    )
+    assert get_encoding(ft) == (dict(zip(range(256), charset_encoding["/StandardEncoding"])), {})
 
 
 def test_parse_bfchar(caplog):

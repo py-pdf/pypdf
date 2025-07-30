@@ -4,6 +4,7 @@ Benchmark the speed of pypdf.
 The results are on https://py-pdf.github.io/pypdf/dev/bench/
 Please keep in mind that the variance is high.
 """
+
 from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -106,9 +107,7 @@ def merge():
 
         # Check if outline is correct
         reader = PdfReader(write_path)
-        assert [
-            el.title for el in reader._get_outline() if isinstance(el, Destination)
-        ] == [
+        assert [el.title for el in reader._get_outline() if isinstance(el, Destination)] == [
             "Foo",
             "Bar",
             "Baz",

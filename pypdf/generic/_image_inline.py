@@ -104,9 +104,7 @@ def extract_inline_A85(stream: StreamType) -> bytes:
         if len(data_buffered) == 2:  # end of buffer
             data_out += data_buffered
             raise PdfReadError("Unexpected end of stream")
-        data_out += data_buffered[
-            :-2
-        ]  # back by one char in case of in the middle of ~>
+        data_out += data_buffered[:-2]  # back by one char in case of in the middle of ~>
         stream.seek(-2, 1)
 
     ei_tok = read_non_whitespace(stream)

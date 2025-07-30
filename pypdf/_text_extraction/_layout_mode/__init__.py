@@ -1,4 +1,5 @@
 """Layout mode text extraction extension for pypdf"""
+
 from ._fixed_width_page import (
     fixed_char_width,
     fixed_width_page,

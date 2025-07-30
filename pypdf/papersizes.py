@@ -27,9 +27,7 @@ class PaperSize:
     A1 = Dimensions(1684, 2384)
     A2 = Dimensions(1191, 1684)
     A3 = Dimensions(842, 1191)
-    A4 = Dimensions(
-        595, 842
-    )  # Printer paper, documents - this is by far the most common
+    A4 = Dimensions(595, 842)  # Printer paper, documents - this is by far the most common
     A5 = Dimensions(420, 595)  # Paperback books
     A6 = Dimensions(298, 420)  # Postcards
     A7 = Dimensions(210, 298)

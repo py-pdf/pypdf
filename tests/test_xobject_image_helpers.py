@@ -1,4 +1,5 @@
 """Test the pypdf._xobj_image_helpers module."""
+
 from io import BytesIO
 from pathlib import Path
 
@@ -55,9 +56,7 @@ def test_handle_flate__image_mode_1(caplog):
         size=(3, 3),
         data=data,
         mode="1",
-        color_space=ArrayObject(
-            [NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup]
-        ),
+        color_space=ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup]),
         colors=2,
         obj_as_text="dummy",
     )
@@ -70,9 +69,7 @@ def test_handle_flate__image_mode_1(caplog):
         size=(3, 3),
         data=data,
         mode="1",
-        color_space=ArrayObject(
-            [NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup]
-        ),
+        color_space=ArrayObject([NameObject("/Indexed"), NameObject("/DeviceRGB"), NumberObject(1), lookup]),
         colors=2,
         obj_as_text="dummy",
     )
@@ -145,8 +142,8 @@ def test_handle_flate__autodesk_indexed():
     reader = PdfReader(BytesIO(data))
     page = reader.pages[0]
     with pytest.raises(
-            PdfReadError,
-            match=r"^Expected color space with 4 values, got 3: \['/Indexed', '/DeviceRGB', '\\x00\\x80\\x00\\x80\\x80耀"  # noqa: E501
+        PdfReadError,
+        match=r"^Expected color space with 4 values, got 3: \['/Indexed', '/DeviceRGB', '\\x00\\x80\\x00\\x80\\x80耀",
     ):
         for name, _image in page.images.items():  # noqa: PERF102
             assert name.startswith("/")

@@ -1,4 +1,5 @@
 """Test the pypdf.generic._files module."""
+
 import datetime
 import shutil
 import subprocess
@@ -112,10 +113,9 @@ def test_embedded_file__kids():
     assert repr(attachment) == "<EmbeddedFile name='factur-x.xml'>"
 
     # No /Names in /Kids.
-    del (
-        reader.root_object[NameObject("/Names")][NameObject("/EmbeddedFiles")][NameObject("/Kids")][0]
-        .get_object()[NameObject("/Names")]
-    )
+    del reader.root_object[NameObject("/Names")][NameObject("/EmbeddedFiles")][NameObject("/Kids")][0].get_object()[
+        NameObject("/Names")
+    ]
     attachments = list(EmbeddedFile._load(reader.root_object))
     assert attachments == []
 

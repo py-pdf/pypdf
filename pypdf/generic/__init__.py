@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """Implementation of generic PDF objects (dictionary, number, string, ...)."""
+
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -96,9 +97,7 @@ class AnnotationBuilder:  # deprecated
         open: bool = False,
         flags: int = 0,
     ) -> None:
-        deprecation_with_replacement(
-            "AnnotationBuilder.text", "pypdf.annotations.Text", "5.0.0"
-        )
+        deprecation_with_replacement("AnnotationBuilder.text", "pypdf.annotations.Text", "5.0.0")
 
     @staticmethod
     def free_text(
@@ -112,9 +111,7 @@ class AnnotationBuilder:  # deprecated
         border_color: Optional[str] = "000000",
         background_color: Optional[str] = "ffffff",
     ) -> None:
-        deprecation_with_replacement(
-            "AnnotationBuilder.free_text", "pypdf.annotations.FreeText", "5.0.0"
-        )
+        deprecation_with_replacement("AnnotationBuilder.free_text", "pypdf.annotations.FreeText", "5.0.0")
 
     @staticmethod
     def popup(
@@ -124,9 +121,7 @@ class AnnotationBuilder:  # deprecated
         parent: Optional[DictionaryObject] = None,
         open: bool = False,
     ) -> None:
-        deprecation_with_replacement(
-            "AnnotationBuilder.popup", "pypdf.annotations.Popup", "5.0.0"
-        )
+        deprecation_with_replacement("AnnotationBuilder.popup", "pypdf.annotations.Popup", "5.0.0")
 
     @staticmethod
     def line(
@@ -136,26 +131,20 @@ class AnnotationBuilder:  # deprecated
         text: str = "",
         title_bar: Optional[str] = None,
     ) -> None:
-        deprecation_with_replacement(
-            "AnnotationBuilder.line", "pypdf.annotations.Line", "5.0.0"
-        )
+        deprecation_with_replacement("AnnotationBuilder.line", "pypdf.annotations.Line", "5.0.0")
 
     @staticmethod
     def polyline(
         vertices: list[tuple[float, float]],
     ) -> None:
-        deprecation_with_replacement(
-            "AnnotationBuilder.polyline", "pypdf.annotations.PolyLine", "5.0.0"
-        )
+        deprecation_with_replacement("AnnotationBuilder.polyline", "pypdf.annotations.PolyLine", "5.0.0")
 
     @staticmethod
     def rectangle(
         rect: Union[RectangleObject, tuple[float, float, float, float]],
         interiour_color: Optional[str] = None,
     ) -> None:
-        deprecation_with_replacement(
-            "AnnotationBuilder.rectangle", "pypdf.annotations.Rectangle", "5.0.0"
-        )
+        deprecation_with_replacement("AnnotationBuilder.rectangle", "pypdf.annotations.Rectangle", "5.0.0")
 
     @staticmethod
     def highlight(
@@ -165,24 +154,18 @@ class AnnotationBuilder:  # deprecated
         highlight_color: str = "ff0000",
         printing: bool = False,
     ) -> None:
-        deprecation_with_replacement(
-            "AnnotationBuilder.highlight", "pypdf.annotations.Highlight", "5.0.0"
-        )
+        deprecation_with_replacement("AnnotationBuilder.highlight", "pypdf.annotations.Highlight", "5.0.0")
 
     @staticmethod
     def ellipse(
         rect: Union[RectangleObject, tuple[float, float, float, float]],
         interiour_color: Optional[str] = None,
     ) -> None:
-        deprecation_with_replacement(
-            "AnnotationBuilder.ellipse", "pypdf.annotations.Ellipse", "5.0.0"
-        )
+        deprecation_with_replacement("AnnotationBuilder.ellipse", "pypdf.annotations.Ellipse", "5.0.0")
 
     @staticmethod
     def polygon(vertices: list[tuple[float, float]]) -> None:
-        deprecation_with_replacement(
-            "AnnotationBuilder.polygon", "pypdf.annotations.Polygon", "5.0.0"
-        )
+        deprecation_with_replacement("AnnotationBuilder.polygon", "pypdf.annotations.Polygon", "5.0.0")
 
     from ._fit import DEFAULT_FIT  # noqa: PLC0415
 
@@ -194,9 +177,7 @@ class AnnotationBuilder:  # deprecated
         target_page_index: Optional[int] = None,
         fit: Fit = DEFAULT_FIT,
     ) -> None:
-        deprecation_with_replacement(
-            "AnnotationBuilder.link", "pypdf.annotations.Link", "5.0.0"
-        )
+        deprecation_with_replacement("AnnotationBuilder.link", "pypdf.annotations.Link", "5.0.0")
 
 
 __all__ = [

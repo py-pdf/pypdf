@@ -49,9 +49,12 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
             attempts = 0
             while attempts < 3:
                 try:
-                    with urllib.request.urlopen(  # noqa: S310
-                        url
-                    ) as response, cache_path.open("wb") as out_file:
+                    with (
+                        urllib.request.urlopen(  # noqa: S310
+                            url
+                        ) as response,
+                        cache_path.open("wb") as out_file,
+                    ):
                         out_file.write(response.read())
                     break
                 except HTTPError as e:
@@ -134,10 +137,7 @@ def download_test_pdfs():
     pdfs = read_yaml_to_list_of_dicts(Path(__file__).parent / "example_files.yaml")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        futures = [
-            executor.submit(get_data_from_url, pdf["url"], name=pdf["local_filename"])
-            for pdf in pdfs
-        ]
+        futures = [executor.submit(get_data_from_url, pdf["url"], name=pdf["local_filename"]) for pdf in pdfs]
         concurrent.futures.wait(futures)
 
 
@@ -159,12 +159,14 @@ class PILContext:
     def __enter__(self) -> Self:
         # Allow loading incomplete images.
         from PIL import ImageFile  # noqa: PLC0415
+
         self._saved_load_truncated_images = ImageFile.LOAD_TRUNCATED_IMAGES
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         return self
 
     def __exit__(self, type_, value, traceback) -> Optional[bool]:
         from PIL import ImageFile  # noqa: PLC0415
+
         ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images
         if type_:
             # Error.
