@@ -466,7 +466,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             raise ValueError("Key must be a PdfObject")
         if not isinstance(value, PdfObject):
             raise ValueError("Value must be a PdfObject")
-        return dict.setdefault(self, key, value)  # type: ignore
+        return dict.setdefault(self, key, value)
 
     def __getitem__(self, key: Any) -> PdfObject:
         return dict.__getitem__(self, key).get_object()

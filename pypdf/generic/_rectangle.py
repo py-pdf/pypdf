@@ -23,7 +23,7 @@ class RectangleObject(ArrayObject):
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
-        ArrayObject.__init__(self, [self._ensure_is_number(x) for x in arr])  # type: ignore
+        ArrayObject.__init__(self, [self._ensure_is_number(x) for x in arr])
 
     def _ensure_is_number(self, value: Any) -> Union[FloatObject, NumberObject]:
         if not isinstance(value, (FloatObject, NumberObject)):
