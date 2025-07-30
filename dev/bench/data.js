@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753625157611,
+  "lastUpdate": 1753878635313,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -79337,6 +79337,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00597873089549325",
             "extra": "mean: 752.2972476000064 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f395e096600b85baee49b337cce48b1c6b2b3a79",
+          "message": "DEV: Stop testing on Python 3.8 and start testing on Python 3.14 (#3411)\n\nRelated to #3051 and #3408.\n\nThis updates some of the binary dependencies as well to avoid side effects on Python 3.14.\nNevertheless, Pillow 11.1.0 would indeed introduce a side effect, which required us to change\nthe tests to check pixel data instead of byte data for the PNG file comparison.",
+          "timestamp": "2025-07-30T14:27:50+02:00",
+          "tree_id": "e38cc245d8749549bfe3a5468290987f12ad93ec",
+          "url": "https://github.com/py-pdf/pypdf/commit/f395e096600b85baee49b337cce48b1c6b2b3a79"
+        },
+        "date": 1753878631568,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4019634647141324,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010786564247500801",
+            "extra": "mean: 293.9478951999945 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.129257506507749,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007888332884986233",
+            "extra": "mean: 66.09709693749721 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26994036042629543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016638934580436183",
+            "extra": "mean: 3.704521985600002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.899094141059923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000697864527588628",
+            "extra": "mean: 55.86874911764576 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0835790002815788,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08910485933572511",
+            "extra": "mean: 11.964727941599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3531984214805017,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015212729015827628",
+            "extra": "mean: 738.9899250000042 msec\nrounds: 5"
           }
         ]
       }
