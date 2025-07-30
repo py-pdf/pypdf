@@ -75,7 +75,7 @@ class DirectReferenceLink:
 ReferenceLink = Union[NamedReferenceLink, DirectReferenceLink]
 
 
-def extract_links(new_page: "PageObject", old_page: "PageObject") -> List[Tuple[ReferenceLink, ReferenceLink]]:
+def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[ReferenceLink, ReferenceLink]]:
     """Extracts links from two pages on the assumption that the two pages are
     the same. Produces one list of (new link, old link) tuples.
     """

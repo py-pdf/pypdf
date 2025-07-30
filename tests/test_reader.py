@@ -38,7 +38,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
-NestedList = Union[int, None, List["NestedList"]]
+NestedList = Union[int, None, list["NestedList"]]
 
 
 @pytest.mark.parametrize(

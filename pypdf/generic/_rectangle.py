@@ -18,7 +18,7 @@ class RectangleObject(ArrayObject):
     """
 
     def __init__(
-        self, arr: Union["RectangleObject", Tuple[float, float, float, float]]
+        self, arr: Union["RectangleObject", tuple[float, float, float, float]]
     ) -> None:
         # must have four points
         assert len(arr) == 4
@@ -76,7 +76,7 @@ class RectangleObject(ArrayObject):
         self[3] = FloatObject(f)
 
     @property
-    def lower_left(self) -> Tuple[float, float]:
+    def lower_left(self) -> tuple[float, float]:
         """
         Property to read and modify the lower left coordinate of this box
         in (x,y) form.
@@ -84,11 +84,11 @@ class RectangleObject(ArrayObject):
         return self.left, self.bottom
 
     @lower_left.setter
-    def lower_left(self, value: Tuple[float, float]) -> None:
+    def lower_left(self, value: tuple[float, float]) -> None:
         self[0], self[1] = (self._ensure_is_number(x) for x in value)
 
     @property
-    def lower_right(self) -> Tuple[float, float]:
+    def lower_right(self) -> tuple[float, float]:
         """
         Property to read and modify the lower right coordinate of this box
         in (x,y) form.
@@ -96,11 +96,11 @@ class RectangleObject(ArrayObject):
         return self.right, self.bottom
 
     @lower_right.setter
-    def lower_right(self, value: Tuple[float, float]) -> None:
+    def lower_right(self, value: tuple[float, float]) -> None:
         self[2], self[1] = (self._ensure_is_number(x) for x in value)
 
     @property
-    def upper_left(self) -> Tuple[float, float]:
+    def upper_left(self) -> tuple[float, float]:
         """
         Property to read and modify the upper left coordinate of this box
         in (x,y) form.
@@ -108,11 +108,11 @@ class RectangleObject(ArrayObject):
         return self.left, self.top
 
     @upper_left.setter
-    def upper_left(self, value: Tuple[float, float]) -> None:
+    def upper_left(self, value: tuple[float, float]) -> None:
         self[0], self[3] = (self._ensure_is_number(x) for x in value)
 
     @property
-    def upper_right(self) -> Tuple[float, float]:
+    def upper_right(self) -> tuple[float, float]:
         """
         Property to read and modify the upper right coordinate of this box
         in (x,y) form.
@@ -120,7 +120,7 @@ class RectangleObject(ArrayObject):
         return self.right, self.top
 
     @upper_right.setter
-    def upper_right(self, value: Tuple[float, float]) -> None:
+    def upper_right(self, value: tuple[float, float]) -> None:
         self[2], self[3] = (self._ensure_is_number(x) for x in value)
 
     @property

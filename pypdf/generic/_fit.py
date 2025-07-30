@@ -5,12 +5,12 @@ from ._base import is_null_or_none
 
 class Fit:
     def __init__(
-        self, fit_type: str, fit_args: Tuple[Union[None, float, Any], ...] = ()
+        self, fit_type: str, fit_args: tuple[Union[None, float, Any], ...] = ()
     ) -> None:
         from ._base import FloatObject, NameObject, NullObject, NumberObject  # noqa: PLC0415
 
         self.fit_type = NameObject(fit_type)
-        self.fit_args: List[Union[NullObject, FloatObject, NumberObject]] = [
+        self.fit_args: list[Union[NullObject, FloatObject, NumberObject]] = [
             NullObject() if is_null_or_none(a) else FloatObject(a) for a in fit_args
         ]
 

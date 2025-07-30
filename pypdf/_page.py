@@ -36,18 +36,16 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Iterable,
-    Iterator,
     List,
     Literal,
     Optional,
-    Sequence,
     Set,
     Tuple,
     Union,
     cast,
     overload,
 )
+from collections.abc import Iterable, Iterator, Sequence
 
 from ._cmap import (
     build_char_map,
@@ -291,20 +289,20 @@ class Transformation:
         return f"Transformation(ctm={self.ctm})"
 
     @overload
-    def apply_on(self, pt: List[float], as_object: bool = False) -> List[float]:
+    def apply_on(self, pt: list[float], as_object: bool = False) -> list[float]:
         ...
 
     @overload
     def apply_on(
-        self, pt: Tuple[float, float], as_object: bool = False
-    ) -> Tuple[float, float]:
+        self, pt: tuple[float, float], as_object: bool = False
+    ) -> tuple[float, float]:
         ...
 
     def apply_on(
         self,
-        pt: Union[Tuple[float, float], List[float]],
+        pt: Union[tuple[float, float], list[float]],
         as_object: bool = False,
-    ) -> Union[Tuple[float, float], List[float]]:
+    ) -> Union[tuple[float, float], list[float]]:
         """
         Apply the transformation matrix on the given point.
 
@@ -425,8 +423,8 @@ class VirtualListImages(Sequence[ImageFile]):
 
     def __init__(
         self,
-        ids_function: Callable[[], List[Union[str, List[str]]]],
-        get_function: Callable[[Union[str, List[str], Tuple[str]]], ImageFile],
+        ids_function: Callable[[], list[Union[str, list[str]]]],
+        get_function: Callable[[Union[str, list[str], tuple[str]]], ImageFile],
     ) -> None:
         self.ids_function = ids_function
         self.get_function = get_function
@@ -435,14 +433,14 @@ class VirtualListImages(Sequence[ImageFile]):
     def __len__(self) -> int:
         return len(self.ids_function())
 
-    def keys(self) -> List[Union[str, List[str]]]:
+    def keys(self) -> list[Union[str, list[str]]]:
         return self.ids_function()
 
-    def items(self) -> List[Tuple[Union[str, List[str]], ImageFile]]:
+    def items(self) -> list[tuple[Union[str, list[str]], ImageFile]]:
         return [(x, self[x]) for x in self.ids_function()]
 
     @overload
-    def __getitem__(self, index: Union[int, str, List[str]]) -> ImageFile:
+    def __getitem__(self, index: Union[int, str, list[str]]) -> ImageFile:
         ...
 
     @overload
@@ -450,7 +448,7 @@ class VirtualListImages(Sequence[ImageFile]):
         ...
 
     def __getitem__(
-        self, index: Union[int, slice, str, List[str], Tuple[str]]
+        self, index: Union[int, slice, str, list[str], tuple[str]]
     ) -> Union[ImageFile, Sequence[ImageFile]]:
         lst = self.ids_function()
         if isinstance(index, slice):
@@ -505,12 +503,12 @@ class PageObject(DictionaryObject):
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf = pdf
-        self.inline_images: Optional[Dict[str, ImageFile]] = None
+        self.inline_images: Optional[dict[str, ImageFile]] = None
         self.indirect_reference = indirect_reference
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
-        self._font_width_maps: Dict[str, Tuple[Dict[str, float], str, float]] = {}
+        self._font_width_maps: dict[str, tuple[dict[str, float], str, float]] = {}
 
     def hash_bin(self) -> int:
         """
@@ -592,9 +590,9 @@ class PageObject(DictionaryObject):
     def _get_ids_image(
         self,
         obj: Optional[DictionaryObject] = None,
-        ancest: Optional[List[str]] = None,
-        call_stack: Optional[List[Any]] = None,
-    ) -> List[Union[str, List[str]]]:
+        ancest: Optional[list[str]] = None,
+        call_stack: Optional[list[Any]] = None,
+    ) -> list[Union[str, list[str]]]:
         if call_stack is None:
             call_stack = []
         _i = getattr(obj, "indirect_reference", None)
@@ -607,7 +605,7 @@ class PageObject(DictionaryObject):
             obj = self
         if ancest is None:
             ancest = []
-        lst: List[Union[str, List[str]]] = []
+        lst: list[Union[str, list[str]]] = []
         if (
                 PG.RESOURCES not in obj or
                 is_null_or_none(resources := obj[PG.RESOURCES]) or
@@ -629,14 +627,14 @@ class PageObject(DictionaryObject):
 
     def _get_image(
         self,
-        id: Union[str, List[str], Tuple[str]],
+        id: Union[str, list[str], tuple[str]],
         obj: Optional[DictionaryObject] = None,
     ) -> ImageFile:
         if obj is None:
             obj = cast(DictionaryObject, self)
         if isinstance(id, tuple):
             id = list(id)
-        if isinstance(id, List) and len(id) == 1:
+        if isinstance(id, list) and len(id) == 1:
             id = id[0]
         try:
             xobjs = cast(
@@ -720,7 +718,7 @@ class PageObject(DictionaryObject):
                     raise PdfReadError(f"Cannot find resource entry {v} for {k}")
         return v
 
-    def _get_inline_images(self) -> Dict[str, ImageFile]:
+    def _get_inline_images(self) -> dict[str, ImageFile]:
         """Load inline images. Entries will be identified as `~1~`."""
         content = self.get_contents()
         if is_null_or_none(content):
@@ -837,7 +835,7 @@ class PageObject(DictionaryObject):
         res2: DictionaryObject,
         resource: Any,
         new_res1: bool = True,
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         try:
             assert isinstance(self.indirect_reference, IndirectObject)
             pdf = self.indirect_reference.pdf
@@ -848,7 +846,7 @@ class PageObject(DictionaryObject):
             pdf = None
             is_pdf_writer = False
 
-        def compute_unique_key(base_key: str) -> Tuple[str, bool]:
+        def compute_unique_key(base_key: str) -> tuple[str, bool]:
             """
             Find a key that either doesn't already exist or has the same value
             (indicated by the bool)
@@ -915,7 +913,7 @@ class PageObject(DictionaryObject):
     @staticmethod
     def _content_stream_rename(
         stream: ContentStream,
-        rename: Dict[Any, Any],
+        rename: dict[Any, Any],
         pdf: Optional[PdfCommonDocProtocol],
     ) -> ContentStream:
         if not rename:
@@ -1666,7 +1664,7 @@ class PageObject(DictionaryObject):
         self,
         obj: Any,
         pdf: Any,
-        orientations: Tuple[int, ...] = (0, 90, 180, 270),
+        orientations: tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
         content_key: Optional[str] = PG.CONTENTS,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
@@ -1683,10 +1681,10 @@ class PageObject(DictionaryObject):
 
         """
         extractor = TextExtraction()
-        cmaps: Dict[
+        cmaps: dict[
             str,
-            Tuple[
-                str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject
+            tuple[
+                str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject
             ],
         ] = {}
 
@@ -1820,7 +1818,7 @@ class PageObject(DictionaryObject):
             )
         return extractor.output
 
-    def _layout_mode_fonts(self) -> Dict[str, _layout_mode.Font]:
+    def _layout_mode_fonts(self) -> dict[str, _layout_mode.Font]:
         """
         Get fonts formatted for "layout" mode text extraction.
 
@@ -1830,7 +1828,7 @@ class PageObject(DictionaryObject):
         """
         # Font retrieval logic adapted from pypdf.PageObject._extract_text()
         objr: Any = self
-        fonts: Dict[str, _layout_mode.Font] = {}
+        fonts: dict[str, _layout_mode.Font] = {}
         while objr is not None:
             try:
                 resources_dict: Any = objr[PG.RESOURCES]
@@ -1920,7 +1918,7 @@ class PageObject(DictionaryObject):
     def extract_text(
         self,
         *args: Any,
-        orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
+        orientations: Union[int, tuple[int, ...]] = (0, 90, 180, 270),
         space_width: float = 200.0,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
@@ -2056,7 +2054,7 @@ class PageObject(DictionaryObject):
     def extract_xform_text(
         self,
         xform: EncodedStreamObject,
-        orientations: Tuple[int, ...] = (0, 90, 270, 360),
+        orientations: tuple[int, ...] = (0, 90, 270, 360),
         space_width: float = 200.0,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
@@ -2088,7 +2086,7 @@ class PageObject(DictionaryObject):
             visitor_text,
         )
 
-    def _get_fonts(self) -> Tuple[Set[str], Set[str]]:
+    def _get_fonts(self) -> tuple[set[str], set[str]]:
         """
         Get the names of embedded fonts and unembedded fonts.
 
@@ -2098,8 +2096,8 @@ class PageObject(DictionaryObject):
         """
         obj = self.get_object()
         assert isinstance(obj, DictionaryObject)
-        fonts: Set[str] = set()
-        embedded: Set[str] = set()
+        fonts: set[str] = set()
+        embedded: set[str] = set()
         fonts, embedded = _get_fonts_walk(obj, fonts, embedded)
         unembedded = fonts - embedded
         return embedded, unembedded
@@ -2253,9 +2251,9 @@ class _VirtualList(Sequence[PageObject]):
 
 def _get_fonts_walk(
     obj: DictionaryObject,
-    fnt: Set[str],
-    emb: Set[str],
-) -> Tuple[Set[str], Set[str]]:
+    fnt: set[str],
+    emb: set[str],
+) -> tuple[set[str], set[str]]:
     """
     Get the set of all fonts and all embedded fonts.
 

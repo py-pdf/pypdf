@@ -44,11 +44,11 @@ from typing import (
     Dict,
     List,
     Optional,
-    Pattern,
     Tuple,
     Union,
     overload,
 )
+from re import Pattern
 
 if sys.version_info[:2] >= (3, 10):
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
@@ -67,10 +67,10 @@ from .errors import (
     PdfStreamError,
 )
 
-TransformationMatrixType: TypeAlias = Tuple[
-    Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]
+TransformationMatrixType: TypeAlias = tuple[
+    tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]
 ]
-CompressedTransformationMatrix: TypeAlias = Tuple[
+CompressedTransformationMatrix: TypeAlias = tuple[
     float, float, float, float, float, float
 ]
 
@@ -461,7 +461,7 @@ def logger_warning(msg: str, src: str) -> None:
 
 
 def rename_kwargs(
-    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str], fail: bool = False
+    func_name: str, kwargs: dict[str, Any], aliases: dict[str, str], fail: bool = False
 ) -> None:
     """
     Helper function to deprecate arguments.
@@ -589,7 +589,7 @@ class Version:
         self.version_str = version_str
         self.components = self._parse_version(version_str)
 
-    def _parse_version(self, version_str: str) -> List[Tuple[int, str]]:
+    def _parse_version(self, version_str: str) -> list[tuple[int, str]]:
         components = version_str.split(".")
         parsed_components = []
         for component in components:

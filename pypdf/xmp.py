@@ -11,12 +11,12 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Iterator,
     List,
     Optional,
     TypeVar,
     Union,
 )
+from collections.abc import Iterator
 from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
@@ -111,9 +111,9 @@ def _converter_date(value: str) -> datetime.datetime:
 
 def _generic_get(
         element: XmlElement, self: "XmpInformation", list_type: str, converter: Callable[[Any], Any] = _identity
-) -> Optional[List[str]]:
+) -> Optional[list[str]]:
     containers = element.getElementsByTagNameNS(RDF_NAMESPACE, list_type)
-    retval: List[Any] = []
+    retval: list[Any] = []
     if len(containers):
         for container in containers:
             for item in container.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
@@ -126,12 +126,12 @@ def _generic_get(
 
 def _getter_bag(
     namespace: str, name: str
-) -> Callable[["XmpInformation"], Optional[List[str]]]:
-    def get(self: "XmpInformation") -> Optional[List[str]]:
+) -> Callable[["XmpInformation"], Optional[list[str]]]:
+    def get(self: "XmpInformation") -> Optional[list[str]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
-        retval: List[str] = []
+        retval: list[str] = []
         for element in self.get_element("", namespace, name):
             if (bags := _generic_get(element, self, list_type="Bag")) is not None:
                 retval.extend(bags)
@@ -147,8 +147,8 @@ def _getter_bag(
 
 def _getter_seq(
     namespace: str, name: str, converter: Callable[[Any], Any] = _identity
-) -> Callable[["XmpInformation"], Optional[List[Any]]]:
-    def get(self: "XmpInformation") -> Optional[List[Any]]:
+) -> Callable[["XmpInformation"], Optional[list[Any]]]:
+    def get(self: "XmpInformation") -> Optional[list[Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -177,8 +177,8 @@ def _getter_seq(
 
 def _getter_langalt(
     namespace: str, name: str
-) -> Callable[["XmpInformation"], Optional[Dict[Any, Any]]]:
-    def get(self: "XmpInformation") -> Optional[Dict[Any, Any]]:
+) -> Callable[["XmpInformation"], Optional[dict[Any, Any]]]:
+    def get(self: "XmpInformation") -> Optional[dict[Any, Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -242,7 +242,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
             RDF_NAMESPACE, "RDF"
         )[0]
-        self.cache: Dict[Any, Any] = {}
+        self.cache: dict[Any, Any] = {}
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
@@ -396,7 +396,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     """The conformance level within the PDF/A standard (e.g., 'A', 'B', 'U')."""
 
     @property
-    def custom_properties(self) -> Dict[Any, Any]:
+    def custom_properties(self) -> dict[Any, Any]:
         """
         Retrieve custom metadata properties defined in the undocumented pdfx
         metadata schema.

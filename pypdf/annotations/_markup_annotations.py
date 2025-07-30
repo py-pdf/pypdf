@@ -24,10 +24,10 @@ else:
     from typing_extensions import TypeAlias
 
 
-Vertex: TypeAlias = Tuple[float, float]
+Vertex: TypeAlias = tuple[float, float]
 
 
-def _get_bounding_rectangle(vertices: List[Vertex]) -> RectangleObject:
+def _get_bounding_rectangle(vertices: list[Vertex]) -> RectangleObject:
     x_min, y_min = vertices[0][0], vertices[0][1]
     x_max, y_max = vertices[0][0], vertices[0][1]
     for x, y in vertices:
@@ -69,7 +69,7 @@ class Text(MarkupAnnotation):
     def __init__(
         self,
         *,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         text: str,
         open: bool = False,
         flags: int = NO_FLAGS,
@@ -90,7 +90,7 @@ class FreeText(MarkupAnnotation):
         self,
         *,
         text: str,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         font: str = "Helvetica",
         bold: bool = False,
         italic: bool = False,
@@ -152,7 +152,7 @@ class Line(MarkupAnnotation):
         self,
         p1: Vertex,
         p2: Vertex,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         text: str = "",
         **kwargs: Any,
     ) -> None:
@@ -190,7 +190,7 @@ class Line(MarkupAnnotation):
 class PolyLine(MarkupAnnotation):
     def __init__(
         self,
-        vertices: List[Vertex],
+        vertices: list[Vertex],
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -212,7 +212,7 @@ class PolyLine(MarkupAnnotation):
 class Rectangle(MarkupAnnotation):
     def __init__(
         self,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         *,
         interior_color: Optional[str] = None,
         **kwargs: Any,
@@ -240,7 +240,7 @@ class Highlight(MarkupAnnotation):
     def __init__(
         self,
         *,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         quad_points: ArrayObject,
         highlight_color: str = "ff0000",
         printing: bool = False,
@@ -264,7 +264,7 @@ class Highlight(MarkupAnnotation):
 class Ellipse(MarkupAnnotation):
     def __init__(
         self,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         *,
         interior_color: Optional[str] = None,
         **kwargs: Any,
@@ -292,7 +292,7 @@ class Ellipse(MarkupAnnotation):
 class Polygon(MarkupAnnotation):
     def __init__(
         self,
-        vertices: List[Tuple[float, float]],
+        vertices: list[tuple[float, float]],
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
