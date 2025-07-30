@@ -23,7 +23,6 @@ repos:
     hooks:
     -   id: ruff-check
         args: ['--fix']
-    -   id: ruff-format
 
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.20.0
