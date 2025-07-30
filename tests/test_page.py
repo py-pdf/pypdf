@@ -1,5 +1,4 @@
 """Test the pypdf._page module."""
-
 import json
 import logging
 import math
@@ -106,7 +105,13 @@ def test_page_operations(pdf_path, password):
     assert abs(t.ctm[4] + 100) < 0.01
     assert abs(t.ctm[5] - 50) < 0.01
 
-    transformation = Transformation().rotate(90).scale(1).translate(1, 1).transform(Transformation((1, 0, 0, -1, 0, 0)))
+    transformation = (
+        Transformation()
+        .rotate(90)
+        .scale(1)
+        .translate(1, 1)
+        .transform(Transformation((1, 0, 0, -1, 0, 0)))
+    )
     page.add_transformation(transformation, expand=True)
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
@@ -127,7 +132,9 @@ def test_page_operations(pdf_path, password):
         (-80, 888, 742),
     ],
 )
-def test_mediabox_expansion_after_rotation(angle: float, expected_width: int, expected_height: int):
+def test_mediabox_expansion_after_rotation(
+    angle: float, expected_width: int, expected_height: int
+):
     """
     Mediabox dimensions after rotation at a non-right angle with expansion are correct.
 
@@ -176,7 +183,9 @@ def test_transformation_equivalence():
     assert page_base1.mediabox == page_base2.mediabox
     assert page_base1.trimbox == page_base2.trimbox
     assert page_base1[NameObject(PG.ANNOTS)] == page_base2[NameObject(PG.ANNOTS)]
-    compare_dict_objects(page_base1[NameObject(PG.RESOURCES)], page_base2[NameObject(PG.RESOURCES)])
+    compare_dict_objects(
+        page_base1[NameObject(PG.RESOURCES)], page_base2[NameObject(PG.RESOURCES)]
+    )
 
 
 def test_transformation_equivalence2():
@@ -188,7 +197,9 @@ def test_transformation_equivalence2():
 
     writer = PdfWriter()
     writer.append(reader_base)
-    writer.pages[0].merge_transformed_page(reader_add.pages[0], Transformation().scale(2).rotate(-45), False, False)
+    writer.pages[0].merge_transformed_page(
+        reader_add.pages[0], Transformation().scale(2).rotate(-45), False, False
+    )
     writer.pages[0].merge_transformed_page(
         reader_add.pages[0], Transformation().scale(2).translate(100, 100), True, False
     )
@@ -196,7 +207,9 @@ def test_transformation_equivalence2():
 
     writer = PdfWriter()
     writer.append(reader_add)
-    writer.pages[0].merge_transformed_page(reader_base.pages[0], Transformation(), True, True)
+    writer.pages[0].merge_transformed_page(
+        reader_base.pages[0], Transformation(), True, True
+    )
     # No special assert: Visual check the page has been  increased and all is visible (box+graph)
 
     writer = PdfWriter()
@@ -215,9 +228,13 @@ def test_transformation_equivalence2():
 
     writer = PdfWriter()
     writer.append(reader_base)
-    writer.pages[0].merge_transformed_page(reader_comments.pages[0], Transformation().rotate(-15), True, True)
+    writer.pages[0].merge_transformed_page(
+        reader_comments.pages[0], Transformation().rotate(-15), True, True
+    )
     nb_annots1 = len(writer.pages[0]["/Annots"])
-    writer.pages[0].merge_transformed_page(reader_comments.pages[0], Transformation().rotate(-30), True, True)
+    writer.pages[0].merge_transformed_page(
+        reader_comments.pages[0], Transformation().rotate(-30), True, True
+    )
     assert len(writer.pages[0]["/Annots"]) == 2 * nb_annots1
     # No special assert: Visual check the overlay has its comments at the good position
 
@@ -453,7 +470,6 @@ def test_extract_text_visitor_callbacks():
     It extracts the labels of package-boxes in Figure 2.
     It extracts the texts in table "REVISION HISTORY".
     """
-
     class PositionedText:
         """
         Specify a text with coordinates, font-dictionary and font-size.
@@ -489,9 +505,14 @@ def test_extract_text_visitor_callbacks():
             self.h = h.as_numeric()
 
         def contains(self, x, y) -> bool:
-            return self.x <= x <= (self.x + self.w) and self.y <= y <= (self.y + self.h)
+            return (
+                self.x <= x <= (self.x + self.w)
+                and self.y <= y <= (self.y + self.h)
+            )
 
-    def extract_text_and_rectangles(page: PageObject, rect_filter=None) -> tuple[list[PositionedText], list[Rectangle]]:
+    def extract_text_and_rectangles(
+        page: PageObject, rect_filter=None
+    ) -> tuple[list[PositionedText], list[Rectangle]]:
         """
         Extracts texts and rectangles of a page of type pypdf._page.PageObject.
 
@@ -524,16 +545,24 @@ def test_extract_text_visitor_callbacks():
             if text.strip() != "":
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug(f"at {cm_matrix}, {tm_matrix}, font size={font_size}")
-                texts.append(PositionedText(text, tm_matrix[4], tm_matrix[5], font_dict, font_size))
+                texts.append(
+                    PositionedText(
+                        text, tm_matrix[4], tm_matrix[5], font_dict, font_size
+                    )
+                )
 
         visitor_before = print_op_b
         visitor_text = print_visi
 
-        page.extract_text(visitor_operand_before=visitor_before, visitor_text=visitor_text)
+        page.extract_text(
+            visitor_operand_before=visitor_before, visitor_text=visitor_text
+        )
 
         return (texts, rectangles)
 
-    def extract_table(texts: list[PositionedText], rectangles: list[Rectangle]) -> list[list[list[PositionedText]]]:
+    def extract_table(
+        texts: list[PositionedText], rectangles: list[Rectangle]
+    ) -> list[list[list[PositionedText]]]:
         """
         Extracts a table containing text.
 
@@ -624,7 +653,9 @@ def test_extract_text_visitor_callbacks():
     def ignore_large_rectangles(r) -> bool:
         return r.w < 400 and r.h < 400
 
-    (texts, rectangles) = extract_text_and_rectangles(page_lrs_model, rect_filter=ignore_large_rectangles)
+    (texts, rectangles) = extract_text_and_rectangles(
+        page_lrs_model, rect_filter=ignore_large_rectangles
+    )
 
     # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles
     # (including some invisible ones).
@@ -652,7 +683,9 @@ def test_extract_text_visitor_callbacks():
     def filter_first_table(r) -> bool:
         return r.w > 1 and r.h > 1 and r.w < 400 and r.h < 400 and r.y > 350
 
-    (texts, rectangles) = extract_text_and_rectangles(page_revisions, rect_filter=filter_first_table)
+    (texts, rectangles) = extract_text_and_rectangles(
+        page_revisions, rect_filter=filter_first_table
+    )
     rows = extract_table(texts, rectangles)
 
     assert len(rows) == 9
@@ -662,7 +695,10 @@ def test_extract_text_visitor_callbacks():
     assert extract_cell_text(rows[1][0]) == "September 2002"
     # The line break between "English review;"
     # and "Remove" is not detected.
-    assert extract_cell_text(rows[6][2]) == "English review;Remove the UML model for the Segmented view."
+    assert (
+        extract_cell_text(rows[6][2])
+        == "English review;Remove the UML model for the Segmented view."
+    )
     assert extract_cell_text(rows[7][2]) == "Update from the March Workshop comments."
 
     # Check the fonts. We check: /F2 9.96 Tf [...] [(Dat)-2(e)] TJ
@@ -1001,7 +1037,9 @@ def test_merge_page_reproducible_with_proc_set():
             {},
             id="no overlap",
         ),
-        pytest.param({"/x": "/v"}, {"/x": "/v"}, {"/x": "/v"}, {}, id="overlap, matching values"),
+        pytest.param(
+            {"/x": "/v"}, {"/x": "/v"}, {"/x": "/v"}, {}, id="overlap, matching values"
+        ),
         pytest.param(
             {"/x": "/v1"},
             {"/x": "/v2"},
@@ -1126,7 +1164,9 @@ def test_merge_page_resources_smoke_test():
     assert page1[NO("/Resources")][NO("/Properties")] == expected_properties
 
     relevant_operations = [
-        (op, name) for op, name in page1.get_contents().operations if name in (b"page1-contents", b"page2-contents")
+        (op, name)
+        for op, name in page1.get_contents().operations
+        if name in (b"page1-contents", b"page2-contents")
     ]
     assert relevant_operations == expected_operations
 
@@ -1284,7 +1324,9 @@ def test_compression():
     contents = writer.pages[0]["/Contents"]
     writer.pages[0].replace_contents(None)
     writer.pages[0].replace_contents(None)
-    assert isinstance(writer._objects[contents.indirect_reference.idnum - 1], NullObject)
+    assert isinstance(
+        writer._objects[contents.indirect_reference.idnum - 1], NullObject
+    )
 
 
 def test_merge_with_no_resources():
@@ -1420,7 +1462,9 @@ def test_get_contents_as_bytes():
 
 def test_recursive_get_page_from_node():
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)
-    writer.root_object["/Pages"].get_object()[NameObject("/Parent")] = writer.root_object["/Pages"].indirect_reference
+    writer.root_object["/Pages"].get_object()[
+        NameObject("/Parent")
+    ] = writer.root_object["/Pages"].indirect_reference
     with pytest.raises(PyPdfError):
         writer.add_page(writer.pages[0])
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf", incremental=True)

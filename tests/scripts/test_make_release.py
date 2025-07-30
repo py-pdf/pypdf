@@ -1,5 +1,4 @@
 """Test the `make_release.py` script."""
-
 import sys
 from pathlib import Path
 from unittest import mock
@@ -31,7 +30,7 @@ VERSION_3_9_PLUS = sys.version_info[:2] >= (3, 9)
         ("## CHANGELOG", "## CHANGELOG"),
         ("CHANGELOG", "CHANGELOG"),
         ("# CHANGELOG #", "#"),
-    ],
+    ]
 )
 def test_strip_header(data, expected):
     """Removal of the 'CHANGELOG' header."""
@@ -42,11 +41,9 @@ def test_strip_header(data, expected):
 def test_get_git_commits_since_tag():
     make_release = pytest.importorskip("make_release")
 
-    with (
-        open(COMMITS__VERSION_4_0_1, mode="rb") as commits,
-        mock.patch("urllib.request.urlopen", side_effect=lambda _: commits),
-        mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1),
-    ):
+    with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, mock.patch(
+        "urllib.request.urlopen", side_effect=lambda _: commits
+    ), mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1):
         commits = make_release.get_git_commits_since_tag("4.0.1")
     assert commits == [
         make_release.Change(
@@ -90,11 +87,9 @@ def test_get_git_commits_since_tag():
 def test_get_formatted_changes():
     make_release = pytest.importorskip("make_release")
 
-    with (
-        open(COMMITS__VERSION_4_0_1, mode="rb") as commits,
-        mock.patch("urllib.request.urlopen", side_effect=lambda _: commits),
-        mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1),
-    ):
+    with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, mock.patch(
+        "urllib.request.urlopen", side_effect=lambda _: commits
+    ), mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1):
         output, output_with_user = make_release.get_formatted_changes("4.0.1")
 
     assert (
@@ -159,7 +154,9 @@ def test_get_formatted_changes__other():
             author_login="pubpub-zz",
         ),
     ]
-    with mock.patch.object(make_release, "get_git_commits_since_tag", return_value=changes):
+    with mock.patch.object(
+        make_release, "get_git_commits_since_tag", return_value=changes
+    ):
         output, output_with_user = make_release.get_formatted_changes("dummy")
 
     assert (

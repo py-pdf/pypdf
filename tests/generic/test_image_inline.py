@@ -1,5 +1,4 @@
 """Test the pypdf.generic._image_inline module."""
-
 from io import BytesIO
 
 from pypdf.generic._image_inline import is_followed_by_binary_data

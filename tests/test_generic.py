@@ -78,11 +78,14 @@ def test_create_string_object_exception():
     assert (  # typeguard is not running
         exc.value.args[0] == "create_string_object should have str or unicode arg"
     ) or (  # typeguard is enabled
-        'type of argument "string" must be one of (str, bytes); got int instead' in exc.value.args[0]
+        'type of argument "string" must be one of (str, bytes); got int instead'
+        in exc.value.args[0]
     )
 
 
-@pytest.mark.parametrize(("value", "expected", "tell"), [(b"true", b"true", 4), (b"false", b"false", 5)])
+@pytest.mark.parametrize(
+    ("value", "expected", "tell"), [(b"true", b"true", 4), (b"false", b"false", 5)]
+)
 def test_boolean_object(value, expected, tell):
     stream = BytesIO(value)
     assert BooleanObject.read_from_stream(stream).value == (expected == b"true")
@@ -202,11 +205,16 @@ def test_name_object(caplog):
         _ = NameObject.surfix
 
     assert (
-        NameObject.read_from_stream(BytesIO(b"/A;Name_With-Various***Characters?"), None)
+        NameObject.read_from_stream(
+            BytesIO(b"/A;Name_With-Various***Characters?"), None
+        )
         == "/A;Name_With-Various***Characters?"
     )
 
-    assert NameObject.read_from_stream(BytesIO(b"/paired#28#29parentheses"), None) == "/paired()parentheses"
+    assert (
+        NameObject.read_from_stream(BytesIO(b"/paired#28#29parentheses"), None)
+        == "/paired()parentheses"
+    )
 
     assert NameObject.read_from_stream(BytesIO(b"/A#42"), None) == "/AB"
 
@@ -220,10 +228,16 @@ def test_name_object(caplog):
 
     assert (NameObject.read_from_stream(BytesIO(b"/#JA#231f"), None)) == "/#JA#1f"
 
-    assert (NameObject.read_from_stream(BytesIO(b"/#e4#bd#a0#e5#a5#bd#e4#b8#96#e7#95#8c"), None)) == "/你好世界"
+    assert (
+        NameObject.read_from_stream(
+            BytesIO(b"/#e4#bd#a0#e5#a5#bd#e4#b8#96#e7#95#8c"), None
+        )
+    ) == "/你好世界"
 
     # test PDFDocEncoding (latin-1)
-    assert (NameObject.read_from_stream(BytesIO(b"/DocuSign\xae"), None)) == "/DocuSign®"
+    assert (
+        NameObject.read_from_stream(BytesIO(b"/DocuSign\xae"), None)
+    ) == "/DocuSign®"
 
     # test write
     b = BytesIO()
@@ -233,8 +247,8 @@ def test_name_object(caplog):
     caplog.clear()
     b = BytesIO()
     with pytest.warns(
-        expected_warning=DeprecationWarning,
-        match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and will",
+            expected_warning=DeprecationWarning,
+            match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and will"
     ):
         NameObject("hello").write_to_stream(b)
 
@@ -258,7 +272,9 @@ def test_name_object(caplog):
 
 
 def test_destination_fit_r():
-    d = Destination(TextStringObject("title"), NullObject(), Fit.fit_rectangle(0, 0, 0, 0))
+    d = Destination(
+        TextStringObject("title"), NullObject(), Fit.fit_rectangle(0, 0, 0, 0)
+    )
     assert d.title == NameObject("title")
     assert d.typ == "/FitR"
     assert d.zoom is None
@@ -400,7 +416,10 @@ def test_dictionaryobject_read_from_stream_broken():
     pdf = None
     with pytest.raises(PdfReadError) as exc:
         DictionaryObject.read_from_stream(stream, pdf)
-    assert exc.value.args[0] == "Dictionary read error at byte 0x2: stream must begin with '<<'"
+    assert (
+        exc.value.args[0]
+        == "Dictionary read error at byte 0x2: stream must begin with '<<'"
+    )
 
 
 def test_dictionaryobject_read_from_stream_unexpected_end():
@@ -448,7 +467,9 @@ def test_dictionaryobject_read_from_stream_stream_no_stream_length(strict, caplo
         (False, 10, False),
     ],
 )
-def test_dictionaryobject_read_from_stream_stream_stream_valid(strict, length, should_fail):
+def test_dictionaryobject_read_from_stream_stream_stream_valid(
+    strict, length, should_fail
+):
     stream = BytesIO(b"<< /S /GoTo /Length %d >>stream\nBT /F1\nendstream\n" % length)
 
     class Tst:  # to replace pdf
@@ -716,7 +737,10 @@ def test_bool_repr(tmp_path):
 
 @pytest.mark.enable_socket
 def test_issue_997(pdf_file_path):
-    url = "https://github.com/py-pdf/pypdf/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
+    url = (
+        "https://github.com/py-pdf/pypdf/files/8908874/"
+        "Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
+    )
     name = "gh-issue-997.pdf"
 
     merger = PdfWriter()
@@ -763,30 +787,45 @@ def test_indirect_object_invalid_read():
 
 def test_create_string_object_utf16_bom():
     # utf16-be
-    result = create_string_object(b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00")
+    result = create_string_object(
+        b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
+    )
     assert result == "PaperPort 14\x00"
     assert result.autodetect_utf16 is True
     assert result.utf16_bom == b"\xfe\xff"
-    assert result.get_encoded_bytes() == b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
+    assert (
+        result.get_encoded_bytes()
+        == b"\xfe\xff\x00P\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00"
+    )
 
     # utf16-le
-    result = create_string_object(b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00")
+    result = create_string_object(
+        b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
     assert result == "PaperPort 14\x00"
     assert result.autodetect_utf16 is True
     assert result.utf16_bom == b"\xff\xfe"
-    assert result.get_encoded_bytes() == b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
-    result = TextStringObject(b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00")
+    assert (
+        result.get_encoded_bytes()
+        == b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
+    result = TextStringObject(
+        b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
     assert result == "PaperPort 14\x00"
     assert result.autodetect_utf16 is True
     assert result.utf16_bom == b"\xff\xfe"
-    assert result.get_encoded_bytes() == b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    assert (
+        result.get_encoded_bytes()
+        == b"\xff\xfeP\x00a\x00p\x00e\x00r\x00P\x00o\x00r\x00t\x00 \x001\x004\x00\x00\x00"
+    )
 
     # utf16-be without bom
     result = TextStringObject("ÿ")
     result.autodetect_utf16 = True
     result.utf16_bom = b""
-    assert result.get_encoded_bytes() == b"\x00\xff"
-    assert result.original_bytes == b"\x00\xff"
+    assert result.get_encoded_bytes() == b"\x00\xFF"
+    assert result.original_bytes == b"\x00\xFF"
 
 
 def test_create_string_object_force():
@@ -849,7 +888,10 @@ def test_cloning(caplog):
     obj3 = obj2.indirect_reference.clone(writer)
     assert len(writer._objects) == n + 1
     assert obj2.indirect_reference == obj3.indirect_reference
-    assert obj2.indirect_reference == obj2._reference_clone(obj2, writer).indirect_reference
+    assert (
+        obj2.indirect_reference
+        == obj2._reference_clone(obj2, writer).indirect_reference
+    )
     assert len(writer._objects) == n + 1
     assert obj2.indirect_reference == obj3.indirect_reference
 
@@ -866,7 +908,9 @@ def test_cloning(caplog):
     obj11 = obj10.clone(writer)
     assert arr1[0] == obj11
 
-    obj20 = DictionaryObject({NameObject("/Test"): NumberObject(1), NameObject("/Test2"): StreamObject()})
+    obj20 = DictionaryObject(
+        {NameObject("/Test"): NumberObject(1), NameObject("/Test2"): StreamObject()}
+    )
     obj21 = obj20.clone(writer, ignore_fields=None)
     assert "/Test" in obj21
     assert isinstance(obj21.get("/Test2"), IndirectObject)
@@ -901,7 +945,9 @@ def test_iss1615_1673():
     writer.append(reader)
     assert (
         "/N"
-        in writer.pages[0]["/Annots"][0].get_object()["/AP"]["/N"]["/Resources"]["/ColorSpace"]["/Cs1"][1].get_object()
+        in writer.pages[0]["/Annots"][0]
+        .get_object()["/AP"]["/N"]["/Resources"]["/ColorSpace"]["/Cs1"][1]
+        .get_object()
     )
     # #1673
     url = "https://github.com/py-pdf/pypdf/files/10848750/budgeting-loan-form-sf500.pdf"
@@ -972,7 +1018,9 @@ def test_set_data_2():
     name = "iss2780.pdf"
     writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
     writer.root_object["/AcroForm"]["/XFA"][7].set_data(b"test")
-    assert writer.root_object["/AcroForm"]["/XFA"][7].get_object()["/Filter"] == ["/FlateDecode"]
+    assert writer.root_object["/AcroForm"]["/XFA"][7].get_object()["/Filter"] == [
+        "/FlateDecode"
+    ]
     assert writer.root_object["/AcroForm"]["/XFA"][7].get_object().get_data() == b"test"
 
 
@@ -1069,7 +1117,7 @@ def test_unitary_extract_inline_buffer_invalid():
     with pytest.raises(PdfReadError):
         extract_inline_RL(BytesIO(b"\x01\x01\x80"))
     with pytest.raises(PdfReadError):
-        extract_inline_DCT(BytesIO(b"\xff\xd9"))
+        extract_inline_DCT(BytesIO(b"\xFF\xD9"))
 
 
 def test_unitary_extract_inline():
@@ -1079,7 +1127,7 @@ def test_unitary_extract_inline():
     with pytest.raises(PdfReadError):
         extract_inline_AHx(BytesIO(b + b"> "))
     # RL
-    b = 8200 * b"\x00\xab" + b"\x80"
+    b = 8200 * b"\x00\xAB" + b"\x80"
     assert len(extract_inline_RL(BytesIO(b + b" EI"))) == len(b)
 
     # default

@@ -1,5 +1,4 @@
 """Test the pypdf._page_labels module."""
-
 from io import BytesIO
 from pathlib import Path
 
@@ -88,12 +87,16 @@ def test_index2label(caplog):
     assert index2label(r, 9) == "10"
 
     with pytest.raises(ValueError):
-        nums_clear_range(NumberObject(10), 8, r.trailer["/Root"]["/PageLabels"]["/Nums"])
+        nums_clear_range(
+            NumberObject(10), 8, r.trailer["/Root"]["/PageLabels"]["/Nums"]
+        )
     r.trailer["/Root"]["/PageLabels"]["/Nums"].append(8)
     with pytest.raises(ValueError):
         nums_next(NumberObject(10), r.trailer["/Root"]["/PageLabels"]["/Nums"])
     with pytest.raises(ValueError):
-        nums_clear_range(NumberObject(10), 8, r.trailer["/Root"]["/PageLabels"]["/Nums"])
+        nums_clear_range(
+            NumberObject(10), 8, r.trailer["/Root"]["/PageLabels"]["/Nums"]
+        )
     with pytest.raises(ValueError):
         nums_insert(
             NumberObject(10),
@@ -132,7 +135,7 @@ def test_index2label_kids():
         "XV",
         "XVI",
         "XVII",
-        *list(map(str, range(1, 284))),
+        *list(map(str, range(1, 284)))
     ]
     for x in ["20", "44", "58", "82", "94", "116", "154", "166", "192", "224", "250"]:
         # Some page labels are unused. Removing them is still easier than copying the
@@ -144,7 +147,9 @@ def test_index2label_kids():
 @pytest.mark.enable_socket
 def test_index2label_kids__recursive(caplog):
     url = "https://github.com/py-pdf/pypdf/files/14842446/tt1.pdf"
-    r = PdfReader(BytesIO(get_data_from_url(url=url, name="index2label_kids_recursive.pdf")))
+    r = PdfReader(
+        BytesIO(get_data_from_url(url=url, name="index2label_kids_recursive.pdf"))
+    )
     expected = [
         "A",
         "B",

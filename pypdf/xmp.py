@@ -108,7 +108,7 @@ def _converter_date(value: str) -> datetime.datetime:
 
 
 def _generic_get(
-    element: XmlElement, self: "XmpInformation", list_type: str, converter: Callable[[Any], Any] = _identity
+        element: XmlElement, self: "XmpInformation", list_type: str, converter: Callable[[Any], Any] = _identity
 ) -> Optional[list[str]]:
     containers = element.getElementsByTagNameNS(RDF_NAMESPACE, list_type)
     retval: list[Any] = []
@@ -122,7 +122,9 @@ def _generic_get(
     return None
 
 
-def _getter_bag(namespace: str, name: str) -> Callable[["XmpInformation"], Optional[list[str]]]:
+def _getter_bag(
+    namespace: str, name: str
+) -> Callable[["XmpInformation"], Optional[list[str]]]:
     def get(self: "XmpInformation") -> Optional[list[str]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
@@ -171,7 +173,9 @@ def _getter_seq(
     return get
 
 
-def _getter_langalt(namespace: str, name: str) -> Callable[["XmpInformation"], Optional[dict[Any, Any]]]:
+def _getter_langalt(
+    namespace: str, name: str
+) -> Callable[["XmpInformation"], Optional[dict[Any, Any]]]:
     def get(self: "XmpInformation") -> Optional[dict[Any, Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
@@ -233,13 +237,23 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
             doc_root: Document = parseString(data)  # noqa: S318
         except (AttributeError, ExpatError) as e:
             raise PdfReadError(f"XML in XmpInformation was invalid: {e}")
-        self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")[0]
+        self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
+            RDF_NAMESPACE, "RDF"
+        )[0]
         self.cache: dict[Any, Any] = {}
 
-    def write_to_stream(self, stream: StreamType, encryption_key: Union[None, str, bytes] = None) -> None:
-        deprecate_with_replacement("XmpInformation.write_to_stream", "PdfWriter.xmp_metadata", "6.0.0")
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
+    ) -> None:
+        deprecate_with_replacement(
+            "XmpInformation.write_to_stream",
+            "PdfWriter.xmp_metadata",
+            "6.0.0"
+        )
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement("the encryption_key parameter of write_to_stream", "5.0.0")
+            deprecate_no_replacement(
+                "the encryption_key parameter of write_to_stream", "5.0.0"
+            )
         self.stream.write_to_stream(stream)
 
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
@@ -336,21 +350,27 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     pdf_producer = property(_getter_single(PDF_NAMESPACE, "Producer"))
     """The name of the tool that saved the document as a PDF."""
 
-    xmp_create_date = property(_getter_single(XMP_NAMESPACE, "CreateDate", _converter_date))
+    xmp_create_date = property(
+        _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)
+    )
     """
     The date and time the resource was originally created.
 
     The date and time are returned as a UTC datetime.datetime object.
     """
 
-    xmp_modify_date = property(_getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date))
+    xmp_modify_date = property(
+        _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
+    )
     """
     The date and time the resource was last modified.
 
     The date and time are returned as a UTC datetime.datetime object.
     """
 
-    xmp_metadata_date = property(_getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date))
+    xmp_metadata_date = property(
+        _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)
+    )
     """
     The date and time that any metadata for this resource was last changed.
 
@@ -392,7 +412,11 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
                     idx = key.find("\u2182")
                     if idx == -1:
                         break
-                    key = key[:idx] + chr(int(key[idx + 1 : idx + 5], base=16)) + key[idx + 5 :]
+                    key = (
+                        key[:idx]
+                        + chr(int(key[idx + 1 : idx + 5], base=16))
+                        + key[idx + 5 :]
+                    )
                 if node.nodeType == node.ATTRIBUTE_NODE:
                     value = node.nodeValue
                 else:

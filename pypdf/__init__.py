@@ -27,7 +27,9 @@ try:
 except ImportError:
     pil_version = "none"
 
-_debug_versions = f"pypdf=={__version__}, {crypt_provider=}, PIL={pil_version}"
+_debug_versions = (
+    f"pypdf=={__version__}, {crypt_provider=}, PIL={pil_version}"
+)
 
 __all__ = [
     "DocumentInformation",

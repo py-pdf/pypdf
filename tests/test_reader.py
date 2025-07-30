@@ -1,5 +1,4 @@
 """Test the pypdf._reader module."""
-
 import io
 import time
 from io import BytesIO
@@ -78,7 +77,9 @@ def test_get_num_pages(src, num_pages):
                 "/Title": "The Title",
                 "/Trapped": "/False",
                 "/PTEX.Fullbanner": (
-                    "This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021) kpathsea version 6.3.3"
+                    "This is pdfTeX, Version "
+                    "3.141592653-2.6-1.40.23 (TeX Live 2021) "
+                    "kpathsea version 6.3.3"
                 ),
             },
         ),
@@ -126,7 +127,9 @@ def test_iss1943():
         docinfo = reader.metadata
         docinfo.update(
             {
-                NameObject("/CreationDate"): TextStringObject("D:20230705005151Z00'00'"),
+                NameObject("/CreationDate"): TextStringObject(
+                    "D:20230705005151Z00'00'"
+                ),
                 NameObject("/ModDate"): TextStringObject("D:20230705005151Z00'00'"),
             }
         )
@@ -139,7 +142,9 @@ def test_iss1943():
 
 
 @pytest.mark.samples
-@pytest.mark.parametrize("pdf_path", [SAMPLE_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"])
+@pytest.mark.parametrize(
+    "pdf_path", [SAMPLE_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
+)
 def test_broken_meta_data(pdf_path):
     with open(pdf_path, "rb") as f:
         reader = PdfReader(f)
@@ -236,7 +241,10 @@ def test_get_images(src, expected_images):
     assert len(images_extracted) == len(expected_images)
     for image, expected_image in zip(images_extracted, expected_images):
         assert image.name == expected_image
-        assert image.name.split(".")[-1].upper() == Image.open(io.BytesIO(image.data)).format
+        assert (
+            image.name.split(".")[-1].upper()
+            == Image.open(io.BytesIO(image.data)).format
+        )
 
 
 @pytest.mark.parametrize(
@@ -249,7 +257,8 @@ def test_get_images(src, expected_images):
             False,
             [
                 "startxref on same line as offset",
-                "Xref table not zero-indexed. ID numbers for objects will be corrected.",
+                "Xref table not zero-indexed. "
+                "ID numbers for objects will be corrected.",
             ],
         ),  # all nominal => no fail
         (True, True, -1, True, ""),  # Prev=0 => fail expected
@@ -298,7 +307,9 @@ def test_get_images(src, expected_images):
         ),
     ],
 )
-def test_get_images_raw(caplog, strict, with_prev_0, startx_correction, should_fail, warning_msgs):
+def test_get_images_raw(
+    caplog, strict, with_prev_0, startx_correction, should_fail, warning_msgs
+):
     pdf_data = (
         b"%%PDF-1.7\n"
         b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
@@ -337,7 +348,10 @@ def test_get_images_raw(caplog, strict, with_prev_0, startx_correction, should_f
             PdfReader(pdf_stream, strict=strict)
         assert exc.type == PdfReadError
         if startx_correction == -1:
-            assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
+            assert (
+                exc.value.args[0]
+                == "/Prev=0 in the trailer (try opening with strict=False)"
+            )
     else:
         PdfReader(pdf_stream, strict=strict)
         assert normalize_warnings(caplog.text) == warning_msgs
@@ -492,7 +506,9 @@ def test_read_malformed_header(caplog):
 def test_read_malformed_body():
     with pytest.raises(PdfReadError) as exc:
         PdfReader(io.BytesIO(b"%PDF-"), strict=True)
-    assert exc.value.args[0] == "EOF marker not found"  # used to be:STREAM_TRUNCATED_PREMATURELY
+    assert (
+        exc.value.args[0] == "EOF marker not found"
+    )  # used to be:STREAM_TRUNCATED_PREMATURELY
 
 
 def test_read_prev_0_trailer():
@@ -691,7 +707,9 @@ def test_issue604(caplog, strict):
             return  # outline is not correct
         pdf = PdfReader(f, strict=strict)
         outline = pdf.outline
-        msg = ["Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"]
+        msg = [
+            "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
+        ]
         assert normalize_warnings(caplog.text) == msg
 
         def get_dest_pages(x) -> NestedList:
@@ -849,7 +867,10 @@ def test_read_path():
 
 def test_read_not_binary_mode(caplog):
     with open(RESOURCE_ROOT / "crazyones.pdf") as f:
-        msg = "PdfReader stream/file object is not in binary mode. It may not be read correctly."
+        msg = (
+            "PdfReader stream/file object is not in binary mode. "
+            "It may not be read correctly."
+        )
         with pytest.raises(io.UnsupportedOperation):
             PdfReader(f)
     assert normalize_warnings(caplog.text) == [msg]
@@ -858,7 +879,9 @@ def test_read_not_binary_mode(caplog):
 @pytest.mark.enable_socket
 @pytest.mark.skipif(not HAS_AES, reason="No AES algorithm available")
 def test_read_form_416():
-    url = "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
+    url = (
+        "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
+    )
     reader = PdfReader(BytesIO(get_data_from_url(url, name="issue_416.pdf")))
     fields = reader.get_form_text_fields()
     assert len(fields) > 0
@@ -885,7 +908,9 @@ def test_form_topname_with_and_without_acroform(caplog):
     assert "renamed.foo" in flds
 
     r = PdfReader(RESOURCE_ROOT / "form.pdf")
-    r.get_fields()["foo"].indirect_reference.get_object()[NameObject("/Parent")] = DictionaryObject()
+    r.get_fields()["foo"].indirect_reference.get_object()[
+        NameObject("/Parent")
+    ] = DictionaryObject()
     r.add_form_topname("top")
     assert "have a non-expected parent" in caplog.text
 
@@ -944,7 +969,9 @@ def test_get_fields():
     fields = reader.get_fields()
     assert fields is not None
     assert "c1-1" in fields
-    assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1", "/_States_": ["/On", "/Off"]})
+    assert dict(fields["c1-1"]) == (
+        {"/FT": "/Btn", "/T": "c1-1", "/_States_": ["/On", "/Off"]}
+    )
 
 
 @pytest.mark.enable_socket
@@ -1195,7 +1222,7 @@ def test_outline_missing_title(caplog):
         (
             "https://github.com/py-pdf/pypdf/files/11714214/PDF32000_2008.pdf",
             "PDF32000_2008.pdf",
-        ),
+        )
         # 3rd case : Dests with Name tree (TODO: Add this case)
     ],
     ids=["stored_directly", "dest_below_names_with_kids"],
@@ -1238,7 +1265,9 @@ def test_pdfreader_multiple_definitions(caplog):
     name = "multipledefs.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[0].extract_text()
-    assert normalize_warnings(caplog.text) == ["Multiple definitions in dictionary at byte 0xb5 for key /Group"]
+    assert normalize_warnings(caplog.text) == [
+        "Multiple definitions in dictionary at byte 0xb5 for key /Group"
+    ]
 
 
 def test_wrong_password_error():
@@ -1287,7 +1316,10 @@ def test_reader(caplog):
 @pytest.mark.enable_socket
 def test_zeroing_xref():
     # iss #328
-    url = "https://github.com/py-pdf/pypdf/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    url = (
+        "https://github.com/py-pdf/pypdf/files/9066120/"
+        "UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    )
     name = "UTA_OSHA.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     len(reader.pages)
@@ -1295,7 +1327,10 @@ def test_zeroing_xref():
 
 @pytest.mark.enable_socket
 def test_thread():
-    url = "https://github.com/py-pdf/pypdf/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    url = (
+        "https://github.com/py-pdf/pypdf/files/9066120/"
+        "UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    )
     name = "UTA_OSHA.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     assert reader.threads is None
@@ -1505,7 +1540,9 @@ def test_damaged_pdf():
     strict_reader = PdfReader(BytesIO(get_data_from_url(url, name=name)), strict=True)
     with pytest.raises(PdfReadError) as exc:
         len(strict_reader.pages)
-    assert exc.value.args[0] == "Expected object ID (21 0) does not match actual (-1 -1)."
+    assert (
+        exc.value.args[0] == "Expected object ID (21 0) does not match actual (-1 -1)."
+    )
 
 
 @pytest.mark.enable_socket
@@ -1586,7 +1623,10 @@ def test_iss2817():
     url = "https://github.com/user-attachments/files/16764070/crash-7e1356f1179b4198337f282304cb611aea26a199.pdf"
     name = "iss2817.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    assert reader.pages[0]["/Annots"][0].get_object()["/Contents"] == "A\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0 B"
+    assert (
+        reader.pages[0]["/Annots"][0].get_object()["/Contents"]
+        == "A\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0 B"
+    )
 
 
 @pytest.mark.enable_socket
@@ -1658,7 +1698,10 @@ def test_space_in_names_to_continue_processing(caplog):
     b = b[:264] + b"(Inv) /d " + b[273:]
     reader = PdfReader(BytesIO(b))
     obj = reader.get_object(70)
-    assert all(x in obj for x in ["/DescendantFonts", "/Encoding", "/Subtype", "/ToUnicode", "/Type"])
+    assert all(
+        x in obj
+        for x in ["/DescendantFonts", "/Encoding", "/Subtype", "/ToUnicode", "/Type"]
+    )
     assert all(
         x in caplog.text
         for x in (
@@ -1713,7 +1756,11 @@ def test_repair_root(caplog):
 
     # Invalid /Root Entry
     caplog.clear()
-    reader = PdfReader(BytesIO(b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog/Pages 3 0 R", b"/Catalo ")))
+    reader = PdfReader(
+        BytesIO(
+            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog/Pages 3 0 R", b"/Catalo ")
+        )
+    )
     with pytest.raises(PdfReadError):
         len(reader.pages)
     assert all(
@@ -1741,14 +1788,18 @@ def test_repair_root(caplog):
 
     # Invalid /Root Entry without /Type, but /Pages.
     caplog.clear()
-    reader = PdfReader(BytesIO(b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")))
+    reader = PdfReader(
+        BytesIO(
+            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+        )
+    )
     assert len(reader.pages) == 1
     assert all(
         msg in caplog.text
         for msg in (
             "Invalid Root object in trailer",
             'Searching object with "/Catalog" key',
-            f"Possible root found at IndirectObject(2, 0, {id(reader)}), but missing /Catalog key",
+            f"Possible root found at IndirectObject(2, 0, {id(reader)}), but missing /Catalog key"
         )
     )
 

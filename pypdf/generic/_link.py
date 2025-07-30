@@ -82,7 +82,11 @@ def extract_links(new_page: "PageObject", old_page: "PageObject") -> list[tuple[
     new_links = [_build_link(link, new_page) for link in new_page.get("/Annots", [])]
     old_links = [_build_link(link, old_page) for link in old_page.get("/Annots", [])]
 
-    return [(new_link, old_link) for (new_link, old_link) in zip(new_links, old_links) if new_link and old_link]
+    return [
+        (new_link, old_link) for (new_link, old_link)
+        in zip(new_links, old_links)
+        if new_link and old_link
+    ]
 
 
 def _build_link(indirect_object: IndirectObject, page: "PageObject") -> Optional[ReferenceLink]:
@@ -104,7 +108,7 @@ def _build_link(indirect_object: IndirectObject, page: "PageObject") -> Optional
     return None  # Nothing to do here
 
 
-def _create_link(reference: PdfObject, source_pdf: "PdfReader") -> Optional[ReferenceLink]:
+def _create_link(reference: PdfObject, source_pdf: "PdfReader")-> Optional[ReferenceLink]:
     if isinstance(reference, TextStringObject):
         return NamedReferenceLink(reference, source_pdf)
     if isinstance(reference, ArrayObject):

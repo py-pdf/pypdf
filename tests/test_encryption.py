@@ -1,5 +1,4 @@
 """Test the pypdf._encryption module."""
-
 import secrets
 from pathlib import Path
 
@@ -279,7 +278,9 @@ def test_pdf_encrypt(pdf_file_path, alg, requires_aes):
         assert exc.value.args[0] == _DEPENDENCY_ERROR_STR
         return
 
-    writer.encrypt(user_password=user_password, owner_password=owner_password, algorithm=alg)
+    writer.encrypt(
+        user_password=user_password, owner_password=owner_password, algorithm=alg
+    )
     with open(pdf_file_path, "wb") as output_stream:
         writer.write(output_stream)
 

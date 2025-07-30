@@ -1,5 +1,4 @@
 """Test the pypdf._utils module."""
-
 import functools
 import io
 import re
@@ -119,7 +118,8 @@ def test_mark_location():
 
 def test_deprecate_no_replacement():
     with pytest.warns(
-        expected_warning=DeprecationWarning, match="foo is deprecated and will be removed in pypdf 3.0.0."
+            expected_warning=DeprecationWarning,
+            match="foo is deprecated and will be removed in pypdf 3.0.0."
     ):
         pypdf._utils.deprecate_no_replacement("foo", removed_in="3.0.0")
 
@@ -196,7 +196,9 @@ def test_read_previous_line2():
     )
     # Both
     test_read_previous_line(
-        b"abcxyz" + b"\n" * (2 * io.DEFAULT_BUFFER_SIZE) + b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+        b"abcxyz"
+        + b"\n" * (2 * io.DEFAULT_BUFFER_SIZE)
+        + b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
         4 * io.DEFAULT_BUFFER_SIZE + 6,
         b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
         6,
@@ -264,7 +266,8 @@ def test_rename_kwargs():
         pass
 
     expected_msg = (
-        "foo received both old_param and new_param as an argument. old_param is deprecated. Use new_param instead."
+        "foo received both old_param and new_param as an argument. "
+        "old_param is deprecated. Use new_param instead."
     )
     with pytest.raises(TypeError, match=expected_msg):
         foo(old_param=12, new_param=13)

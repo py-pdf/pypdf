@@ -34,7 +34,9 @@ def build_char_map(
 
     """
     ft: DictionaryObject = obj["/Resources"]["/Font"][font_name]  # type: ignore
-    font_subtype, font_halfspace, font_encoding, font_map = build_char_map_from_dict(space_width, ft)
+    font_subtype, font_halfspace, font_encoding, font_map = build_char_map_from_dict(
+        space_width, ft
+    )
     return font_subtype, font_halfspace, font_encoding, font_map, ft
 
 
@@ -66,7 +68,7 @@ def build_char_map_from_dict(
         half_space_width,
         encoding,
         # https://github.com/python/mypy/issues/4374
-        map_dict,
+        map_dict
     )
 
 
@@ -124,7 +126,9 @@ _default_fonts_space_width: dict[str, int] = {
 }
 
 
-def get_encoding(ft: DictionaryObject) -> tuple[Union[str, dict[int, str]], dict[Any, Any]]:
+def get_encoding(
+    ft: DictionaryObject
+) -> tuple[Union[str, dict[int, str]], dict[Any, Any]]:
     encoding = _parse_encoding(ft)
     map_dict, int_entry = _parse_to_unicode(ft)
 
@@ -140,11 +144,15 @@ def get_encoding(ft: DictionaryObject) -> tuple[Union[str, dict[int, str]], dict
     return encoding, map_dict
 
 
-def _parse_encoding(ft: DictionaryObject) -> Union[str, dict[int, str]]:
+def _parse_encoding(
+    ft: DictionaryObject
+) -> Union[str, dict[int, str]]:
     encoding: Union[str, list[str], dict[int, str]] = []
     if "/Encoding" not in ft:
         if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
-            encoding = dict(zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])]))
+            encoding = dict(
+                zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
+            )
         else:
             encoding = "charmap"
         return encoding
@@ -195,7 +203,9 @@ def _parse_encoding(ft: DictionaryObject) -> Union[str, dict[int, str]]:
     return encoding
 
 
-def _parse_to_unicode(ft: DictionaryObject) -> tuple[dict[Any, Any], list[int]]:
+def _parse_to_unicode(
+    ft: DictionaryObject
+) -> tuple[dict[Any, Any], list[int]]:
     # will store all translation code
     # and map_dict[-1] we will have the number of bytes to convert
     map_dict: dict[Any, Any] = {}
@@ -209,9 +219,9 @@ def _parse_to_unicode(ft: DictionaryObject) -> tuple[dict[Any, Any], list[int]]:
         return {}, []
     process_rg: bool = False
     process_char: bool = False
-    multiline_rg: Union[None, tuple[int, int]] = (
-        None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
-    )
+    multiline_rg: Union[
+        None, tuple[int, int]
+    ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
@@ -226,7 +236,9 @@ def _parse_to_unicode(ft: DictionaryObject) -> tuple[dict[Any, Any], list[int]]:
     return map_dict, int_entry
 
 
-def get_actual_str_key(value_char: str, encoding: Union[str, dict[int, str]], map_dict: dict[Any, Any]) -> str:
+def get_actual_str_key(
+    value_char: str, encoding: Union[str, dict[int, str]], map_dict: dict[Any, Any]
+) -> str:
     key_dict = {}
     if isinstance(encoding, dict):
         key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char}
@@ -267,7 +279,12 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
             else:
                 content = ll[i][:j].replace(b" ", b"")
             ll[i] = content + b" " + ll[i][j + 1 :]
-    cm = (b" ".join(ll)).replace(b"[", b" [ ").replace(b"]", b" ]\n ").replace(b"\r", b"\n")
+    cm = (
+        (b" ".join(ll))
+        .replace(b"[", b" [ ")
+        .replace(b"]", b" ]\n ")
+        .replace(b"\r", b"\n")
+    )
     return cm
 
 
@@ -373,12 +390,18 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
                 )  # join is here as some cases where the code was split
             except BinasciiError as exception:
                 logger_warning(f"Got invalid hex string: {exception!s} ({lst[1]!r})", __name__)
-        map_dict[unhexlify(lst[0]).decode("charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass")] = map_to
+        map_dict[
+            unhexlify(lst[0]).decode(
+                "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
+            )
+        ] = map_to
         int_entry.append(int(lst[0], 16))
         lst = lst[2:]
 
 
-def build_font_width_map(ft: DictionaryObject, default_font_width: float) -> dict[Any, float]:
+def build_font_width_map(
+    ft: DictionaryObject, default_font_width: float
+) -> dict[Any, float]:
     font_width_map: dict[Any, float] = {}
     st: int = 0
     en: int = 0
@@ -429,7 +452,9 @@ def build_font_width_map(ft: DictionaryObject, default_font_width: float) -> dic
                 break
     elif "/Widths" in ft:
         w = cast(ArrayObject, ft["/Widths"].get_object())
-        if "/FontDescriptor" in ft and "/MissingWidth" in cast(DictionaryObject, ft["/FontDescriptor"]):
+        if "/FontDescriptor" in ft and "/MissingWidth" in cast(
+            DictionaryObject, ft["/FontDescriptor"]
+        ):
             font_width_map["default"] = ft["/FontDescriptor"]["/MissingWidth"].get_object()  # type: ignore
         else:
             # will consider width of char as avg(width)
@@ -456,23 +481,32 @@ def build_font_width_map(ft: DictionaryObject, default_font_width: float) -> dic
     return font_width_map
 
 
-def compute_space_width(font_width_map: dict[Any, float], space_char: str) -> float:
+def compute_space_width(
+    font_width_map: dict[Any, float], space_char: str
+) -> float:
     try:
         sp_width = font_width_map[space_char]
         if sp_width == 0:
             raise ValueError("Zero width")
     except (KeyError, ValueError):
-        sp_width = font_width_map["default"] / 2.0  # if using default we consider space will be only half size
+        sp_width = (
+            font_width_map["default"] / 2.0
+        )  # if using default we consider space will be only half size
 
     return sp_width
 
 
-def compute_font_width(font_width_map: dict[Any, float], char: str) -> float:
+def compute_font_width(
+    font_width_map: dict[Any, float],
+    char: str
+) -> float:
     char_width: float = 0.0
     try:
         char_width = font_width_map[char]
     except KeyError:
-        char_width = font_width_map["default"]
+        char_width = (
+            font_width_map["default"]
+        )
 
     return char_width
 

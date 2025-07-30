@@ -33,11 +33,15 @@ def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
         if isinstance(path, Path):
             assert path.exists()
         with Image.open(path) as img:
-            img = img.copy()  # Opened image should be copied to avoid issues with file closing
+            img = (
+                img.copy()
+            )  # Opened image should be copied to avoid issues with file closing
     return img
 
 
-def image_similarity(path1: Union[Path, Image.Image, BytesIO], path2: Union[Path, Image.Image, BytesIO]) -> float:
+def image_similarity(
+    path1: Union[Path, Image.Image, BytesIO], path2: Union[Path, Image.Image, BytesIO]
+) -> float:
     """
     Check image similarity.
 
@@ -63,7 +67,9 @@ def image_similarity(path1: Union[Path, Image.Image, BytesIO], path2: Union[Path
     pixels = list(diff.getdata())
 
     if isinstance(pixels[0], tuple):
-        mse = sum(sum((c / 255.0) ** 2 for c in p) for p in pixels) / (len(pixels) * len(pixels[0]))
+        mse = sum(sum((c / 255.0) ** 2 for c in p) for p in pixels) / (
+            len(pixels) * len(pixels[0])
+        )
     else:
         mse = sum((p / 255.0) ** 2 for p in pixels) / len(pixels)
 
@@ -151,7 +157,10 @@ def test_image_new_property():
     expected_image_url = "https://github.com/user-attachments/assets/3bf25760-2113-4e25-b4c2-fc1d3a84a263"
     expected_image_name = "pdf_font_garbled_image30.png"
     expected_image_data = BytesIO(get_data_from_url(url=expected_image_url, name=expected_image_name))
-    assert image_similarity(expected_image_data, reader.pages[0].images[-1].image) == 1
+    assert image_similarity(
+        expected_image_data,
+        reader.pages[0].images[-1].image
+    ) == 1
 
     assert reader.pages[0].images["/TPL1", "/Image5"].image.format == "JPEG"
     assert (
@@ -290,9 +299,7 @@ def test_data_with_lf():
 @pytest.mark.enable_socket
 def test_oserror():
     """Cf #2265"""
-    url = (
-        "https://github.com/py-pdf/pypdf/files/13127130/Binance.discovery.responses.2.gov.uscourts.dcd.256060.140.1.pdf"
-    )
+    url = "https://github.com/py-pdf/pypdf/files/13127130/Binance.discovery.responses.2.gov.uscourts.dcd.256060.140.1.pdf"
     name = "iss2265.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
     reader.pages[2].images[1]
@@ -355,7 +362,9 @@ def test_corrupted_jpeg_iss2266(pdf, pdf_name, images, images_name, filtr):
 @pytest.mark.timeout(30)
 def test_large_compressed_image():
     url = "https://github.com/py-pdf/pypdf/files/15306199/file_with_large_compressed_image.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf")))
+    reader = PdfReader(
+        BytesIO(get_data_from_url(url, name="file_with_large_compressed_image.pdf"))
+    )
     list(reader.pages[0].images)
 
 
@@ -449,7 +458,9 @@ def test_extract_image_from_object(caplog):
     url = "https://github.com/py-pdf/pypdf/files/15176076/B2.pdf"
     name = "iss2613.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    image = reader.pages[0]["/Resources"]["/Pattern"]["/P1"]["/Resources"]["/XObject"]["/X1"].decode_as_image()
+    image = reader.pages[0]["/Resources"]["/Pattern"]["/P1"]["/Resources"]["/XObject"][
+        "/X1"
+    ].decode_as_image()
     assert isinstance(image, Image.Image)
     with pytest.raises(Exception):
         co = reader.pages[0].get_contents()

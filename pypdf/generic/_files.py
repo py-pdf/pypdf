@@ -36,7 +36,6 @@ class EmbeddedFile:
 
     Further information on embedded files can be found in section 7.11 of the PDF 2.0 specification.
     """
-
     def __init__(self, name: str, pdf_object: DictionaryObject) -> None:
         """
         Args:
@@ -79,7 +78,6 @@ class EmbeddedFile:
 
         # Create the filespec dictionary
         from pypdf.generic import create_string_object  # noqa: PLC0415
-
         filespec = DictionaryObject()
         filespec.update(
             {
@@ -95,7 +93,9 @@ class EmbeddedFile:
 
         names_dict = cast(DictionaryObject, writer._root_object[CA.NAMES])
         if "/EmbeddedFiles" not in names_dict:
-            embedded_files_names_dictionary = DictionaryObject({NameObject(CA.NAMES): ArrayObject()})
+            embedded_files_names_dictionary = DictionaryObject(
+                {NameObject(CA.NAMES): ArrayObject()}
+            )
             names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
         else:
             embedded_files_names_dictionary = cast(DictionaryObject, names_dict["/EmbeddedFiles"])

@@ -17,7 +17,9 @@ BorderArrayType: TypeAlias = list[Union[NameObject, NumberObject, ArrayObject]]
 
 OutlineItemType: TypeAlias = Union[OutlineItem, Destination]
 
-FitType: TypeAlias = Literal["/XYZ", "/Fit", "/FitH", "/FitV", "/FitR", "/FitB", "/FitBH", "/FitBV"]
+FitType: TypeAlias = Literal[
+    "/XYZ", "/Fit", "/FitH", "/FitV", "/FitR", "/FitB", "/FitBH", "/FitBV"
+]
 # These go with the FitType, they specify values for the fit
 ZoomArgType: TypeAlias = Union[NumberObject, NullObject, float]
 ZoomArgsType: TypeAlias = list[ZoomArgType]

@@ -1,5 +1,4 @@
 """Test topics around the usage of JavaScript in PDF documents."""
-
 from pathlib import Path
 from typing import Any
 
@@ -24,10 +23,12 @@ def pdf_file_writer():
 def test_add_js(pdf_file_writer):
     pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
-    assert "/Names" in pdf_file_writer._root_object, "add_js should add a name catalog in the root object."
-    assert "/JavaScript" in pdf_file_writer._root_object["/Names"], (
-        "add_js should add a JavaScript name tree under the name catalog."
-    )
+    assert (
+        "/Names" in pdf_file_writer._root_object
+    ), "add_js should add a name catalog in the root object."
+    assert (
+        "/JavaScript" in pdf_file_writer._root_object["/Names"]
+    ), "add_js should add a JavaScript name tree under the name catalog."
 
 
 def test_added_js(pdf_file_writer):
@@ -45,4 +46,6 @@ def test_added_js(pdf_file_writer):
     pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
     second_js = get_javascript_name()
 
-    assert first_js != second_js, "add_js should add to the previous script in the catalog."
+    assert (
+        first_js != second_js
+    ), "add_js should add to the previous script in the catalog."

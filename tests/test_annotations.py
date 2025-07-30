@@ -220,9 +220,13 @@ def test_rectangle(pdf_file_path):
 
     # Act
     with pytest.raises(DeprecationError):
-        square_annotation = Rectangle(rect=(50, 550, 200, 650), interiour_color="ff0000")
+        square_annotation = Rectangle(
+            rect=(50, 550, 200, 650), interiour_color="ff0000"
+        )
 
-    square_annotation = Rectangle(rect=(50, 550, 200, 650), interior_color="ff0000")
+    square_annotation = Rectangle(
+        rect=(50, 550, 200, 650), interior_color="ff0000"
+    )
     writer.add_annotation(0, square_annotation)
 
     square_annotation = Rectangle(rect=(40, 400, 150, 450))

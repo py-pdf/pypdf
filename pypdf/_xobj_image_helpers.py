@@ -27,9 +27,14 @@ else:
 try:
     from PIL import Image, UnidentifiedImageError  # noqa: F401
 except ImportError:
-    raise ImportError("pillow is required to do image extraction. It can be installed via 'pip install pypdf[image]'")
+    raise ImportError(
+        "pillow is required to do image extraction. "
+        "It can be installed via 'pip install pypdf[image]'"
+    )
 
-mode_str_type: TypeAlias = Literal["", "1", "RGB", "2bits", "4bits", "P", "L", "RGBA", "CMYK"]
+mode_str_type: TypeAlias = Literal[
+    "", "1", "RGB", "2bits", "4bits", "P", "L", "RGBA", "CMYK"
+]
 
 MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
 
@@ -56,7 +61,9 @@ def _get_imagemode(
     if isinstance(color_space, str):
         color_space_str = color_space
     elif not isinstance(color_space, list):
-        raise PdfReadError("Cannot interpret color space", color_space)  # pragma: no cover
+        raise PdfReadError(
+            "Cannot interpret color space", color_space
+        )  # pragma: no cover
     elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
         color_space_str = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":
@@ -65,13 +72,17 @@ def _get_imagemode(
         color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space_str = color_space[1].get_object()
-        mode, invert_color = _get_imagemode(color_space_str, color_components, prev_mode, depth + 1)
+        mode, invert_color = _get_imagemode(
+            color_space_str, color_components, prev_mode, depth + 1
+        )
         if mode in ("RGB", "CMYK"):
             mode = "P"
         return mode, invert_color
     elif color_space[0] == "/Separation":
         color_space_str = color_space[2].get_object()
-        mode, invert_color = _get_imagemode(color_space_str, color_components, prev_mode, depth + 1)
+        mode, invert_color = _get_imagemode(
+            color_space_str, color_components, prev_mode, depth + 1
+        )
         return mode, True
     elif color_space[0] == "/DeviceN":
         original_color_space = color_space
@@ -84,7 +95,9 @@ def _get_imagemode(
                     __name__,
                 )
             return "L", True
-        mode, invert_color = _get_imagemode(color_space_str, color_components, prev_mode, depth + 1)
+        mode, invert_color = _get_imagemode(
+            color_space_str, color_components, prev_mode, depth + 1
+        )
         return mode, invert_color
 
     mode_map: dict[str, mode_str_type] = {
@@ -97,7 +110,11 @@ def _get_imagemode(
         "4bit": "4bits",
     }
 
-    mode = mode_map.get(color_space_str) or list(mode_map.values())[color_components] or prev_mode
+    mode = (
+        mode_map.get(color_space_str)
+        or list(mode_map.values())[color_components]
+        or prev_mode
+    )
 
     return mode, mode == "CMYK"
 
@@ -120,14 +137,18 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
     return bytes(byte_buffer)
 
 
-def _extended_image_frombytes(mode: str, size: tuple[int, int], data: bytes) -> Image.Image:
+def _extended_image_frombytes(
+    mode: str, size: tuple[int, int], data: bytes
+) -> Image.Image:
     try:
         img = Image.frombytes(mode, size, data)
     except ValueError as exc:
         nb_pix = size[0] * size[1]
         data_length = len(data)
         if data_length == 0:
-            raise EmptyImageDataError("Data is 0 bytes, cannot process an image from empty data.") from exc
+            raise EmptyImageDataError(
+                "Data is 0 bytes, cannot process an image from empty data."
+            ) from exc
         if data_length % nb_pix != 0:
             raise exc
         k = nb_pix * len(mode) / data_length
@@ -209,17 +230,22 @@ def _handle_flate(
                 if actual_count != expected_count:
                     if actual_count < expected_count:
                         logger_warning(
-                            f"Not enough lookup values: Expected {expected_count}, got {actual_count}.", __name__
+                            f"Not enough lookup values: Expected {expected_count}, got {actual_count}.",
+                            __name__
                         )
                         lookup += bytes([0] * (expected_count - actual_count))
                     elif not check_if_whitespace_only(lookup[expected_count:]):
                         logger_warning(
-                            f"Too many lookup values: Expected {expected_count}, got {actual_count}.", __name__
+                            f"Too many lookup values: Expected {expected_count}, got {actual_count}.",
+                            __name__
                         )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
-                    b"".join(colors_arr[1 if img.getpixel((x, y)) > 127 else 0] for x in range(img.size[0]))
+                    b"".join(
+                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]
+                        for x in range(img.size[0])
+                    )
                     for y in range(img.size[1])
                 )
                 img = Image.frombytes(mode, img.size, arr)
@@ -236,7 +262,9 @@ def _handle_flate(
                 # this is a work around until PIL is able to process CMYK images
                 elif mode == "CMYK":
                     _rgb = []
-                    for _c, _m, _y, _k in (lookup[n : n + 4] for n in range(0, 4 * (len(lookup) // 4), 4)):
+                    for _c, _m, _y, _k in (
+                        lookup[n : n + 4] for n in range(0, 4 * (len(lookup) // 4), 4)
+                    ):
                         _r = int(255 * (1 - _c / 255) * (1 - _k / 255))
                         _g = int(255 * (1 - _m / 255) * (1 - _k / 255))
                         _b = int(255 * (1 - _y / 255) * (1 - _k / 255))
@@ -308,19 +336,30 @@ def _apply_decode(
     decode = x_object_obj.get(
         IA.DECODE,
         ([1.0, 0.0] * len(img.getbands()))
-        if ((img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE)) or (invert_color and img.mode == "L"))
+        if (
+            (img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE))
+            or (invert_color and img.mode == "L")
+        )
         else None,
     )
-    if isinstance(color_space, ArrayObject) and color_space[0].get_object() == "/Indexed":
+    if (
+        isinstance(color_space, ArrayObject)
+        and color_space[0].get_object() == "/Indexed"
+    ):
         decode = None  # decode is meaningless if Indexed
-    if isinstance(color_space, ArrayObject) and color_space[0].get_object() == "/Separation":
+    if (
+        isinstance(color_space, ArrayObject)
+        and color_space[0].get_object() == "/Separation"
+    ):
         decode = [1.0, 0.0] * len(img.getbands())
     if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
         lut: list[int] = []
         for i in range(0, len(decode), 2):
             dmin = decode[i]
             dmax = decode[i + 1]
-            lut.extend(round(255.0 * (j / 255.0 * (dmax - dmin) + dmin)) for j in range(256))
+            lut.extend(
+                round(255.0 * (j / 255.0 * (dmax - dmin) + dmin)) for j in range(256)
+            )
         img = img.point(lut)
     return img
 
@@ -328,15 +367,28 @@ def _apply_decode(
 def _get_mode_and_invert_color(
     x_object_obj: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
-    if IA.COLOR_SPACE in x_object_obj and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB:
+    if (
+        IA.COLOR_SPACE in x_object_obj
+        and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
+    ):
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: mode_str_type = "RGB"
     if x_object_obj.get("/BitsPerComponent", 8) < 8:
-        mode, invert_color = _get_imagemode(f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, "")
+        mode, invert_color = _get_imagemode(
+            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
+        )
     else:
         mode, invert_color = _get_imagemode(
             color_space,
-            2 if (colors == 1 and (not is_null_or_none(color_space) and "Gray" not in color_space)) else colors,
+            2
+            if (
+                colors == 1
+                and (
+                    not is_null_or_none(color_space)
+                    and "Gray" not in color_space
+                )
+            )
+            else colors,
             "",
         )
     return mode, invert_color

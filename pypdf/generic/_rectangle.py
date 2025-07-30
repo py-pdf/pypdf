@@ -17,7 +17,9 @@ class RectangleObject(ArrayObject):
     * :attr:`trimbox <pypdf._page.PageObject.trimbox>`
     """
 
-    def __init__(self, arr: Union["RectangleObject", tuple[float, float, float, float]]) -> None:
+    def __init__(
+        self, arr: Union["RectangleObject", tuple[float, float, float, float]]
+    ) -> None:
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
