@@ -421,12 +421,10 @@ def test_xmp_information_create():
     """Test XmpInformation.create() classmethod creates minimal valid XMP structure."""
     xmp = XmpInformation.create()
 
-    # Verify basic structure
     assert xmp is not None
     assert xmp.rdf_root is not None
     assert xmp.cache == {}
 
-    # Verify the XMP structure is valid and minimal
     xmp_data = xmp.stream.get_data()
     assert b"<?xpacket begin=" in xmp_data
     assert b"<x:xmpmeta" in xmp_data
@@ -436,7 +434,6 @@ def test_xmp_information_create():
     assert b"</x:xmpmeta>" in xmp_data
     assert b'<?xpacket end="w"?>' in xmp_data
 
-    # Verify all default properties return empty values (minimal structure)
     assert xmp.dc_contributor == []
     assert xmp.dc_coverage is None
     assert xmp.dc_creator == []
@@ -468,26 +465,21 @@ def test_xmp_information_create():
 
 def test_xmp_information_create_with_writer():
     """Test using XmpInformation.create() with PdfWriter following the user's example."""
-    # Create a simple PDF first
     writer = PdfWriter()
     page = PageObject.create_blank_page(width=612, height=792)
     writer.add_page(page)
 
-    # Test the user's example code pattern
     xmp_information = XmpInformation.create()
     writer.xmp_metadata = xmp_information
 
-    # Write to BytesIO and verify it works
     output = BytesIO()
     writer.write(output)
     output_bytes = output.getvalue()
 
-    # Verify the PDF has XMP metadata
     assert len(output_bytes) > 0
     reader = PdfReader(BytesIO(output_bytes))
     assert reader.xmp_metadata is not None
 
-    # Verify the metadata structure is correct
     xmp = reader.xmp_metadata
     assert xmp.dc_contributor == []
     assert xmp.dc_creator == []
@@ -496,7 +488,6 @@ def test_xmp_information_create_with_writer():
 
 def test_xmp_information_create_clone_from_file():
     """Test using XmpInformation.create() with PdfWriter clone_from pattern."""
-    # Create a temporary file
     writer = PdfWriter()
     page = PageObject.create_blank_page(width=612, height=792)
     writer.add_page(page)
@@ -505,17 +496,14 @@ def test_xmp_information_create_clone_from_file():
     writer.write(temp_file)
     temp_file.seek(0)
 
-    # Now clone from it and add XMP metadata
     writer2 = PdfWriter(clone_from=temp_file)
     xmp_information = XmpInformation.create()
     writer2.xmp_metadata = xmp_information
 
-    # Write final output
     output = BytesIO()
     writer2.write(output)
     output_bytes = output.getvalue()
 
-    # Verify
     reader = PdfReader(BytesIO(output_bytes))
     assert reader.xmp_metadata is not None
     assert reader.xmp_metadata.dc_contributor == []
