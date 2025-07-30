@@ -244,6 +244,28 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         )[0]
         self.cache: Dict[Any, Any] = {}
 
+    @classmethod
+    def create(cls) -> "XmpInformation":
+        """
+        Create a new XmpInformation object with minimal XMP structure.
+
+        Returns:
+            A new XmpInformation instance with empty RDF metadata structure.
+        """
+        minimal_xmp = (
+            b'<?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n'
+            b'<x:xmpmeta xmlns:x="adobe:ns:meta/">\n'
+            b'<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n'
+            b'<rdf:Description rdf:about=""/>\n'
+            b'</rdf:RDF>\n'
+            b'</x:xmpmeta>\n'
+            b'<?xpacket end="w"?>'
+        )
+
+        content_stream = ContentStream(None, None)
+        content_stream.set_data(minimal_xmp)
+        return cls(content_stream)
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:

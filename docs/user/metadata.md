@@ -121,6 +121,20 @@ if meta:
     print(meta.xmp_create_date)
 ```
 
+## Creating XMP metadata
+
+Creating XMP metadata from scratch can be simplified using the `XmpInformation.create()` classmethod:
+
+```python
+from pypdf import PdfReader, PdfWriter
+from pypdf.xmp import XmpInformation
+
+xmp_information = XmpInformation.create()
+writer = PdfWriter(clone_from="file.pdf")
+writer.xmp_metadata = xmp_information
+writer.write("output.pdf")
+```
+
 ## Modifying XMP metadata
 
 Modifying XMP metadata is a bit more complicated.

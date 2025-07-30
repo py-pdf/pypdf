@@ -7,7 +7,7 @@ import pytest
 
 import pypdf.generic
 import pypdf.xmp
-from pypdf import PdfReader, PdfWriter
+from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
 from pypdf.generic import NameObject, StreamObject
 from pypdf.xmp import XmpInformation
@@ -415,3 +415,107 @@ def test_pdf_writer__xmp_metadata_setter():
     reader = PdfReader(BytesIO(output_bytes))
     assert get_all_tiff(reader.xmp_metadata) == {"tiff:Artist": ["Foo Bar"]}
     assert "/XML" not in str(writer.root_object)
+
+
+def test_xmp_information_create():
+    """Test XmpInformation.create() classmethod creates minimal valid XMP structure."""
+    xmp = XmpInformation.create()
+
+    # Verify basic structure
+    assert xmp is not None
+    assert xmp.rdf_root is not None
+    assert xmp.cache == {}
+
+    # Verify the XMP structure is valid and minimal
+    xmp_data = xmp.stream.get_data()
+    assert b"<?xpacket begin=" in xmp_data
+    assert b"<x:xmpmeta" in xmp_data
+    assert b"<rdf:RDF" in xmp_data
+    assert b'<rdf:Description rdf:about=""' in xmp_data
+    assert b"</rdf:RDF>" in xmp_data
+    assert b"</x:xmpmeta>" in xmp_data
+    assert b'<?xpacket end="w"?>' in xmp_data
+
+    # Verify all default properties return empty values (minimal structure)
+    assert xmp.dc_contributor == []
+    assert xmp.dc_coverage is None
+    assert xmp.dc_creator == []
+    assert xmp.dc_date == []
+    assert xmp.dc_description == {}
+    assert xmp.dc_format is None
+    assert xmp.dc_identifier is None
+    assert xmp.dc_language == []
+    assert xmp.dc_publisher == []
+    assert xmp.dc_relation == []
+    assert xmp.dc_rights == {}
+    assert xmp.dc_source is None
+    assert xmp.dc_subject == []
+    assert xmp.dc_title == {}
+    assert xmp.dc_type == []
+    assert xmp.pdf_keywords is None
+    assert xmp.pdf_pdfversion is None
+    assert xmp.pdf_producer is None
+    assert xmp.xmp_create_date is None
+    assert xmp.xmp_modify_date is None
+    assert xmp.xmp_metadata_date is None
+    assert xmp.xmp_creator_tool is None
+    assert xmp.xmpmm_document_id is None
+    assert xmp.xmpmm_instance_id is None
+    assert xmp.pdfaid_part is None
+    assert xmp.pdfaid_conformance is None
+    assert xmp.custom_properties == {}
+
+
+def test_xmp_information_create_with_writer():
+    """Test using XmpInformation.create() with PdfWriter following the user's example."""
+    # Create a simple PDF first
+    writer = PdfWriter()
+    page = PageObject.create_blank_page(width=612, height=792)
+    writer.add_page(page)
+
+    # Test the user's example code pattern
+    xmp_information = XmpInformation.create()
+    writer.xmp_metadata = xmp_information
+
+    # Write to BytesIO and verify it works
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+
+    # Verify the PDF has XMP metadata
+    assert len(output_bytes) > 0
+    reader = PdfReader(BytesIO(output_bytes))
+    assert reader.xmp_metadata is not None
+
+    # Verify the metadata structure is correct
+    xmp = reader.xmp_metadata
+    assert xmp.dc_contributor == []
+    assert xmp.dc_creator == []
+    assert xmp.custom_properties == {}
+
+
+def test_xmp_information_create_clone_from_file():
+    """Test using XmpInformation.create() with PdfWriter clone_from pattern."""
+    # Create a temporary file
+    writer = PdfWriter()
+    page = PageObject.create_blank_page(width=612, height=792)
+    writer.add_page(page)
+
+    temp_file = BytesIO()
+    writer.write(temp_file)
+    temp_file.seek(0)
+
+    # Now clone from it and add XMP metadata
+    writer2 = PdfWriter(clone_from=temp_file)
+    xmp_information = XmpInformation.create()
+    writer2.xmp_metadata = xmp_information
+
+    # Write final output
+    output = BytesIO()
+    writer2.write(output)
+    output_bytes = output.getvalue()
+
+    # Verify
+    reader = PdfReader(BytesIO(output_bytes))
+    assert reader.xmp_metadata is not None
+    assert reader.xmp_metadata.dc_contributor == []
