@@ -348,8 +348,8 @@ def test_pa_image_extraction():
     assert images[0].name == "Im1.png"
 
     # Ensure visual appearance
-    data = get_data_from_url(name="issue-1801.png")
-    assert data == images[0].data
+    expected_data = BytesIO(get_data_from_url(name="issue-1801.png"))
+    assert image_similarity(expected_data, images[0].image) == 1
 
 
 @pytest.mark.enable_socket
@@ -702,13 +702,12 @@ def test_flate_decode__not_rectangular(caplog):
     decode_parms[NameObject("/Predictor")] = NumberObject(15)
     decode_parms[NameObject("/Columns")] = NumberObject(4881)
     actual = FlateDecode.decode(data=data, decode_parms=decode_parms)
-    actual_image = BytesIO()
-    Image.frombytes(mode="1", size=(4881, 81), data=actual).save(actual_image, format="png")
+    actual_image = Image.frombytes(mode="1", size=(4881, 81), data=actual)
 
     url = "https://github.com/user-attachments/assets/c5695850-c076-4255-ab72-7c86851a4a04"
     name = "issue3241.png"
-    expected = get_data_from_url(url, name=name)
-    assert actual_image.getvalue() == expected
+    expected_data = BytesIO(get_data_from_url(url, name=name))
+    assert image_similarity(expected_data, actual_image) == 1
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
 
