@@ -415,3 +415,274 @@ def test_pdf_writer__xmp_metadata_setter():
     reader = PdfReader(BytesIO(output_bytes))
     assert get_all_tiff(reader.xmp_metadata) == {"tiff:Artist": ["Foo Bar"]}
     assert "/XML" not in str(writer.root_object)
+
+
+def test_xmp_information_create():
+    """Test XmpInformation.create() classmethod."""
+    xmp = XmpInformation.create()
+    assert xmp is not None
+    assert xmp.dc_title is None or xmp.dc_title == {}
+    assert xmp.dc_creator is None or xmp.dc_creator == []
+    assert xmp.dc_description is None or xmp.dc_description == {}
+    assert xmp.xmp_create_date is None
+    assert xmp.pdf_producer is None
+
+
+def test_xmp_information_set_dc_title():
+    """Test setting dc:title metadata."""
+    xmp = XmpInformation.create()
+
+    title_values = {"x-default": "Test Title", "en": "Test Title EN"}
+    xmp.set_dc_title(title_values)
+    assert xmp.dc_title == title_values
+
+    xmp.set_dc_title(None)
+    assert xmp.dc_title is None or xmp.dc_title == {}
+
+
+def test_xmp_information_set_dc_creator():
+    """Test setting dc:creator metadata."""
+    xmp = XmpInformation.create()
+
+    creators = ["Author One", "Author Two"]
+    xmp.set_dc_creator(creators)
+    assert xmp.dc_creator == creators
+
+    xmp.set_dc_creator(None)
+    assert xmp.dc_creator is None or xmp.dc_creator == []
+
+
+def test_xmp_information_set_dc_description():
+    """Test setting dc:description metadata."""
+    xmp = XmpInformation.create()
+
+    description_values = {"x-default": "Test Description", "en": "Test Description EN"}
+    xmp.set_dc_description(description_values)
+    assert xmp.dc_description == description_values
+
+    xmp.set_dc_description(None)
+    assert xmp.dc_description is None or xmp.dc_description == {}
+
+
+def test_xmp_information_set_dc_subject():
+    """Test setting dc:subject metadata."""
+    xmp = XmpInformation.create()
+
+    subjects = ["keyword1", "keyword2", "keyword3"]
+    xmp.set_dc_subject(subjects)
+    assert xmp.dc_subject == subjects
+
+    xmp.set_dc_subject(None)
+    assert xmp.dc_subject is None or xmp.dc_subject == []
+
+
+def test_xmp_information_set_dc_date():
+    """Test setting dc:date metadata."""
+    xmp = XmpInformation.create()
+
+    test_date = datetime(2023, 12, 25, 10, 30, 45)
+    xmp.set_dc_date([test_date])
+    stored_dates = xmp.dc_date
+    assert len(stored_dates) == 1
+
+    date_string = "2023-12-25T10:30:45.000000Z"
+    xmp.set_dc_date([date_string])
+    stored_dates = xmp.dc_date
+    assert len(stored_dates) == 1
+
+    xmp.set_dc_date(None)
+    assert xmp.dc_date is None or xmp.dc_date == []
+
+
+def test_xmp_information_set_single_fields():
+    """Test setting single-value metadata fields."""
+    xmp = XmpInformation.create()
+
+    xmp.set_dc_coverage("Global coverage")
+    assert xmp.dc_coverage == "Global coverage"
+    xmp.set_dc_coverage(None)
+    assert xmp.dc_coverage is None
+
+    xmp.set_dc_format("application/pdf")
+    assert xmp.dc_format == "application/pdf"
+    xmp.set_dc_format(None)
+    assert xmp.dc_format is None
+
+    xmp.set_dc_identifier("unique-id-123")
+    assert xmp.dc_identifier == "unique-id-123"
+    xmp.set_dc_identifier(None)
+    assert xmp.dc_identifier is None
+
+    xmp.set_dc_source("Original Source")
+    assert xmp.dc_source == "Original Source"
+    xmp.set_dc_source(None)
+    assert xmp.dc_source is None
+
+
+def test_xmp_information_set_bag_fields():
+    """Test setting bag (unordered array) metadata fields."""
+    xmp = XmpInformation.create()
+
+    contributors = ["Contributor One", "Contributor Two"]
+    xmp.set_dc_contributor(contributors)
+    assert xmp.dc_contributor == contributors
+    xmp.set_dc_contributor(None)
+    assert xmp.dc_contributor is None or xmp.dc_contributor == []
+
+    languages = ["en", "fr", "de"]
+    xmp.set_dc_language(languages)
+    assert xmp.dc_language == languages
+    xmp.set_dc_language(None)
+    assert xmp.dc_language is None or xmp.dc_language == []
+
+    publishers = ["Publisher One", "Publisher Two"]
+    xmp.set_dc_publisher(publishers)
+    assert xmp.dc_publisher == publishers
+    xmp.set_dc_publisher(None)
+    assert xmp.dc_publisher is None or xmp.dc_publisher == []
+
+    relations = ["Related Doc 1", "Related Doc 2"]
+    xmp.set_dc_relation(relations)
+    assert xmp.dc_relation == relations
+    xmp.set_dc_relation(None)
+    assert xmp.dc_relation is None or xmp.dc_relation == []
+
+    types = ["Document", "Text"]
+    xmp.set_dc_type(types)
+    assert xmp.dc_type == types
+    xmp.set_dc_type(None)
+    assert xmp.dc_type is None or xmp.dc_type == []
+
+
+def test_xmp_information_set_dc_rights():
+    """Test setting dc:rights metadata."""
+    xmp = XmpInformation.create()
+
+    rights_values = {"x-default": "All rights reserved", "en": "All rights reserved EN"}
+    xmp.set_dc_rights(rights_values)
+    assert xmp.dc_rights == rights_values
+
+    xmp.set_dc_rights(None)
+    assert xmp.dc_rights is None or xmp.dc_rights == {}
+
+
+def test_xmp_information_set_pdf_fields():
+    """Test setting PDF namespace metadata fields."""
+    xmp = XmpInformation.create()
+
+    xmp.set_pdf_keywords("keyword1, keyword2, keyword3")
+    assert xmp.pdf_keywords == "keyword1, keyword2, keyword3"
+    xmp.set_pdf_keywords(None)
+    assert xmp.pdf_keywords is None
+
+    xmp.set_pdf_pdfversion("1.4")
+    assert xmp.pdf_pdfversion == "1.4"
+    xmp.set_pdf_pdfversion(None)
+    assert xmp.pdf_pdfversion is None
+
+    xmp.set_pdf_producer("pypdf")
+    assert xmp.pdf_producer == "pypdf"
+    xmp.set_pdf_producer(None)
+    assert xmp.pdf_producer is None
+
+
+def test_xmp_information_set_xmp_date_fields():
+    """Test setting XMP date metadata fields."""
+    xmp = XmpInformation.create()
+    test_date = datetime(2023, 12, 25, 10, 30, 45)
+
+    xmp.set_xmp_create_date(test_date)
+    stored_date = xmp.xmp_create_date
+    assert isinstance(stored_date, datetime)
+    xmp.set_xmp_create_date(None)
+    assert xmp.xmp_create_date is None
+
+    xmp.set_xmp_modify_date(test_date)
+    stored_date = xmp.xmp_modify_date
+    assert isinstance(stored_date, datetime)
+    xmp.set_xmp_modify_date(None)
+    assert xmp.xmp_modify_date is None
+
+    xmp.set_xmp_metadata_date(test_date)
+    stored_date = xmp.xmp_metadata_date
+    assert isinstance(stored_date, datetime)
+    xmp.set_xmp_metadata_date(None)
+    assert xmp.xmp_metadata_date is None
+
+
+def test_xmp_information_set_xmp_creator_tool():
+    """Test setting xmp:CreatorTool metadata."""
+    xmp = XmpInformation.create()
+
+    xmp.set_xmp_creator_tool("pypdf")
+    assert xmp.xmp_creator_tool == "pypdf"
+    xmp.set_xmp_creator_tool(None)
+    assert xmp.xmp_creator_tool is None
+
+
+def test_xmp_information_set_xmpmm_fields():
+    """Test setting XMPMM namespace metadata fields."""
+    xmp = XmpInformation.create()
+
+    doc_id = "uuid:12345678-1234-1234-1234-123456789abc"
+    xmp.set_xmpmm_document_id(doc_id)
+    assert xmp.xmpmm_document_id == doc_id
+    xmp.set_xmpmm_document_id(None)
+    assert xmp.xmpmm_document_id is None
+
+    instance_id = "uuid:87654321-4321-4321-4321-cba987654321"
+    xmp.set_xmpmm_instance_id(instance_id)
+    assert xmp.xmpmm_instance_id == instance_id
+    xmp.set_xmpmm_instance_id(None)
+    assert xmp.xmpmm_instance_id is None
+
+
+def test_xmp_information_set_pdfaid_fields():
+    """Test setting PDF/A ID namespace metadata fields."""
+    xmp = XmpInformation.create()
+
+    xmp.set_pdfaid_part("1")
+    assert xmp.pdfaid_part == "1"
+    xmp.set_pdfaid_part(None)
+    assert xmp.pdfaid_part is None
+
+    xmp.set_pdfaid_conformance("B")
+    assert xmp.pdfaid_conformance == "B"
+    xmp.set_pdfaid_conformance(None)
+    assert xmp.pdfaid_conformance is None
+
+
+def test_xmp_information_create_with_writer():
+    """Test using XmpInformation.create() with PdfWriter."""
+    xmp = XmpInformation.create()
+    xmp.set_dc_title({"x-default": "Created with pypdf"})
+    xmp.set_dc_creator(["pypdf user"])
+    xmp.set_pdf_producer("pypdf library")
+
+    writer = PdfWriter()
+    writer.add_blank_page(612, 792)
+    writer.xmp_metadata = xmp
+
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+
+    reader = PdfReader(BytesIO(output_bytes))
+    xmp_read = reader.xmp_metadata
+    assert xmp_read is not None
+    assert xmp_read.dc_title == {"x-default": "Created with pypdf"}
+    assert xmp_read.dc_creator == ["pypdf user"]
+    assert xmp_read.pdf_producer == "pypdf library"
+
+
+def test_xmp_information_namespace_prefix():
+    """Test _get_namespace_prefix method."""
+    xmp = XmpInformation.create()
+
+    assert xmp._get_namespace_prefix(pypdf.xmp.DC_NAMESPACE) == "dc"
+    assert xmp._get_namespace_prefix(pypdf.xmp.XMP_NAMESPACE) == "xmp"
+    assert xmp._get_namespace_prefix(pypdf.xmp.PDF_NAMESPACE) == "pdf"
+    assert xmp._get_namespace_prefix(pypdf.xmp.XMPMM_NAMESPACE) == "xmpMM"
+    assert xmp._get_namespace_prefix(pypdf.xmp.PDFAID_NAMESPACE) == "pdfaid"
+    assert xmp._get_namespace_prefix(pypdf.xmp.PDFX_NAMESPACE) == "pdfx"
+    assert xmp._get_namespace_prefix("unknown://namespace") == "unknown"

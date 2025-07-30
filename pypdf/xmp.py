@@ -244,6 +244,32 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         )[0]
         self.cache: Dict[Any, Any] = {}
 
+    @classmethod
+    def create(cls) -> "XmpInformation":
+        """
+        Create a new XmpInformation object with minimal structure.
+
+        Returns:
+            A new XmpInformation instance with empty metadata fields.
+        """
+        minimal_xmp = f"""<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="pypdf">
+    <rdf:RDF xmlns:rdf="{RDF_NAMESPACE}">
+        <rdf:Description rdf:about=""
+            xmlns:dc="{DC_NAMESPACE}"
+            xmlns:xmp="{XMP_NAMESPACE}"
+            xmlns:pdf="{PDF_NAMESPACE}"
+            xmlns:xmpMM="{XMPMM_NAMESPACE}"
+            xmlns:pdfaid="{PDFAID_NAMESPACE}"
+            xmlns:pdfx="{PDFX_NAMESPACE}">
+        </rdf:Description>
+    </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>"""
+        stream = ContentStream(None, None)
+        stream.set_data(minimal_xmp.encode("utf-8"))
+        return cls(stream)
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
@@ -425,3 +451,270 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
                     value = self._get_text(node)
                 self._custom_properties[key] = value
         return self._custom_properties
+
+    def _get_or_create_description(self, about_uri: str = "") -> XmlElement:
+        """Get or create an rdf:Description element with the given about URI."""
+        for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
+            if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
+                return desc
+
+        doc = self.rdf_root.ownerDocument
+        if doc is None:
+            raise RuntimeError("XMP Document is None")
+        desc = doc.createElementNS(RDF_NAMESPACE, "rdf:Description")
+        desc.setAttributeNS(RDF_NAMESPACE, "rdf:about", about_uri)
+        self.rdf_root.appendChild(desc)
+        return desc
+
+    def _set_single_value(self, namespace: str, name: str, value: Optional[str]) -> None:
+        """Set or remove a single metadata value."""
+        if namespace in self.cache and name in self.cache[namespace]:
+            del self.cache[namespace][name]
+        desc = self._get_or_create_description()
+
+        existing_elements = list(desc.getElementsByTagNameNS(namespace, name))
+        for elem in existing_elements:
+            desc.removeChild(elem)
+
+        existing_attr = desc.getAttributeNodeNS(namespace, name)
+        if existing_attr:
+            desc.removeAttributeNode(existing_attr)
+
+        if value is not None:
+            doc = self.rdf_root.ownerDocument
+            if doc is None:
+                raise RuntimeError("XMP Document is None")
+            prefix = self._get_namespace_prefix(namespace)
+            elem = doc.createElementNS(namespace, f"{prefix}:{name}")
+            text_node = doc.createTextNode(str(value))
+            elem.appendChild(text_node)
+            desc.appendChild(elem)
+
+        self._update_stream()
+
+    def _set_bag_values(self, namespace: str, name: str, values: Optional[List[str]]) -> None:
+        """Set or remove bag values (unordered array)."""
+        if namespace in self.cache and name in self.cache[namespace]:
+            del self.cache[namespace][name]
+        desc = self._get_or_create_description()
+
+        existing_elements = list(desc.getElementsByTagNameNS(namespace, name))
+        for elem in existing_elements:
+            desc.removeChild(elem)
+
+        if values:
+            doc = self.rdf_root.ownerDocument
+            if doc is None:
+                raise RuntimeError("XMP Document is None")
+            prefix = self._get_namespace_prefix(namespace)
+            elem = doc.createElementNS(namespace, f"{prefix}:{name}")
+            bag = doc.createElementNS(RDF_NAMESPACE, "rdf:Bag")
+
+            for value in values:
+                li = doc.createElementNS(RDF_NAMESPACE, "rdf:li")
+                text_node = doc.createTextNode(str(value))
+                li.appendChild(text_node)
+                bag.appendChild(li)
+
+            elem.appendChild(bag)
+            desc.appendChild(elem)
+
+        self._update_stream()
+
+    def _set_seq_values(self, namespace: str, name: str, values: Optional[List[str]]) -> None:
+        """Set or remove sequence values (ordered array)."""
+        if namespace in self.cache and name in self.cache[namespace]:
+            del self.cache[namespace][name]
+        desc = self._get_or_create_description()
+
+        existing_elements = list(desc.getElementsByTagNameNS(namespace, name))
+        for elem in existing_elements:
+            desc.removeChild(elem)
+
+        if values:
+            doc = self.rdf_root.ownerDocument
+            if doc is None:
+                raise RuntimeError("XMP Document is None")
+            prefix = self._get_namespace_prefix(namespace)
+            elem = doc.createElementNS(namespace, f"{prefix}:{name}")
+            seq = doc.createElementNS(RDF_NAMESPACE, "rdf:Seq")
+
+            for value in values:
+                li = doc.createElementNS(RDF_NAMESPACE, "rdf:li")
+                text_node = doc.createTextNode(str(value))
+                li.appendChild(text_node)
+                seq.appendChild(li)
+
+            elem.appendChild(seq)
+            desc.appendChild(elem)
+
+        self._update_stream()
+
+    def _set_langalt_values(self, namespace: str, name: str, values: Optional[Dict[str, str]]) -> None:
+        """Set or remove language alternative values."""
+        if namespace in self.cache and name in self.cache[namespace]:
+            del self.cache[namespace][name]
+        desc = self._get_or_create_description()
+
+        existing_elements = list(desc.getElementsByTagNameNS(namespace, name))
+        for elem in existing_elements:
+            desc.removeChild(elem)
+
+        if values:
+            doc = self.rdf_root.ownerDocument
+            if doc is None:
+                raise RuntimeError("XMP Document is None")
+            prefix = self._get_namespace_prefix(namespace)
+            elem = doc.createElementNS(namespace, f"{prefix}:{name}")
+            alt = doc.createElementNS(RDF_NAMESPACE, "rdf:Alt")
+
+            for lang, value in values.items():
+                li = doc.createElementNS(RDF_NAMESPACE, "rdf:li")
+                li.setAttribute("xml:lang", lang)
+                text_node = doc.createTextNode(str(value))
+                li.appendChild(text_node)
+                alt.appendChild(li)
+
+            elem.appendChild(alt)
+            desc.appendChild(elem)
+
+        self._update_stream()
+
+    def _get_namespace_prefix(self, namespace: str) -> str:
+        """Get the appropriate namespace prefix for a given namespace URI."""
+        namespace_map = {
+            DC_NAMESPACE: "dc",
+            XMP_NAMESPACE: "xmp",
+            PDF_NAMESPACE: "pdf",
+            XMPMM_NAMESPACE: "xmpMM",
+            PDFAID_NAMESPACE: "pdfaid",
+            PDFX_NAMESPACE: "pdfx",
+        }
+        return namespace_map.get(namespace, "unknown")
+
+    def _update_stream(self) -> None:
+        """Update the stream with the current XML content."""
+        doc = self.rdf_root.ownerDocument
+        if doc is None:
+            raise RuntimeError("XMP Document is None")
+        xml_data = doc.toxml(encoding="utf-8")
+        self.stream.set_data(xml_data)
+
+    def set_dc_contributor(self, values: Optional[List[str]]) -> None:
+        """Set contributors to the resource (other than the authors)."""
+        self._set_bag_values(DC_NAMESPACE, "contributor", values)
+
+    def set_dc_coverage(self, value: Optional[str]) -> None:
+        """Set text describing the extent or scope of the resource."""
+        self._set_single_value(DC_NAMESPACE, "coverage", value)
+
+    def set_dc_creator(self, values: Optional[List[str]]) -> None:
+        """Set authors of the resource, listed in order of precedence."""
+        self._set_seq_values(DC_NAMESPACE, "creator", values)
+
+    def set_dc_date(self, values: Optional[List[Union[str, datetime.datetime]]]) -> None:
+        """Set dates of significance to the resource."""
+        if values is None:
+            date_strings = None
+        else:
+            date_strings = []
+            for value in values:
+                if isinstance(value, datetime.datetime):
+                    date_strings.append(value.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+                else:
+                    date_strings.append(str(value))
+        self._set_seq_values(DC_NAMESPACE, "date", date_strings)
+
+    def set_dc_description(self, values: Optional[Dict[str, str]]) -> None:
+        """Set language-keyed descriptions of the content of the resource."""
+        self._set_langalt_values(DC_NAMESPACE, "description", values)
+
+    def set_dc_format(self, value: Optional[str]) -> None:
+        """Set the mime-type of the resource."""
+        self._set_single_value(DC_NAMESPACE, "format", value)
+
+    def set_dc_identifier(self, value: Optional[str]) -> None:
+        """Set unique identifier of the resource."""
+        self._set_single_value(DC_NAMESPACE, "identifier", value)
+
+    def set_dc_language(self, values: Optional[List[str]]) -> None:
+        """Set languages used in the resource."""
+        self._set_bag_values(DC_NAMESPACE, "language", values)
+
+    def set_dc_publisher(self, values: Optional[List[str]]) -> None:
+        """Set publisher names."""
+        self._set_bag_values(DC_NAMESPACE, "publisher", values)
+
+    def set_dc_relation(self, values: Optional[List[str]]) -> None:
+        """Set text descriptions of relationships to other documents."""
+        self._set_bag_values(DC_NAMESPACE, "relation", values)
+
+    def set_dc_rights(self, values: Optional[Dict[str, str]]) -> None:
+        """Set language-keyed descriptions of the rights the user has to this resource."""
+        self._set_langalt_values(DC_NAMESPACE, "rights", values)
+
+    def set_dc_source(self, value: Optional[str]) -> None:
+        """Set unique identifier of the work from which this resource was derived."""
+        self._set_single_value(DC_NAMESPACE, "source", value)
+
+    def set_dc_subject(self, values: Optional[List[str]]) -> None:
+        """Set descriptive phrases or keywords that specify the topic of the content."""
+        self._set_bag_values(DC_NAMESPACE, "subject", values)
+
+    def set_dc_title(self, values: Optional[Dict[str, str]]) -> None:
+        """Set language-keyed title of the resource."""
+        self._set_langalt_values(DC_NAMESPACE, "title", values)
+
+    def set_dc_type(self, values: Optional[List[str]]) -> None:
+        """Set textual descriptions of the document type."""
+        self._set_bag_values(DC_NAMESPACE, "type", values)
+
+    def set_pdf_keywords(self, value: Optional[str]) -> None:
+        """Set document keywords."""
+        self._set_single_value(PDF_NAMESPACE, "Keywords", value)
+
+    def set_pdf_pdfversion(self, value: Optional[str]) -> None:
+        """Set the PDF file version."""
+        self._set_single_value(PDF_NAMESPACE, "PDFVersion", value)
+
+    def set_pdf_producer(self, value: Optional[str]) -> None:
+        """Set the name of the tool that saved the document as a PDF."""
+        self._set_single_value(PDF_NAMESPACE, "Producer", value)
+
+    def set_xmp_create_date(self, value: Optional[Union[str, datetime.datetime]]) -> None:
+        """Set the date and time the resource was originally created."""
+        if isinstance(value, datetime.datetime):
+            value = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        self._set_single_value(XMP_NAMESPACE, "CreateDate", value)
+
+    def set_xmp_modify_date(self, value: Optional[Union[str, datetime.datetime]]) -> None:
+        """Set the date and time the resource was last modified."""
+        if isinstance(value, datetime.datetime):
+            value = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        self._set_single_value(XMP_NAMESPACE, "ModifyDate", value)
+
+    def set_xmp_metadata_date(self, value: Optional[Union[str, datetime.datetime]]) -> None:
+        """Set the date and time that any metadata for this resource was last changed."""
+        if isinstance(value, datetime.datetime):
+            value = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        self._set_single_value(XMP_NAMESPACE, "MetadataDate", value)
+
+    def set_xmp_creator_tool(self, value: Optional[str]) -> None:
+        """Set the name of the first known tool used to create the resource."""
+        self._set_single_value(XMP_NAMESPACE, "CreatorTool", value)
+
+    def set_xmpmm_document_id(self, value: Optional[str]) -> None:
+        """Set the common identifier for all versions and renditions of this resource."""
+        self._set_single_value(XMPMM_NAMESPACE, "DocumentID", value)
+
+    def set_xmpmm_instance_id(self, value: Optional[str]) -> None:
+        """Set an identifier for a specific incarnation of a document."""
+        self._set_single_value(XMPMM_NAMESPACE, "InstanceID", value)
+
+    def set_pdfaid_part(self, value: Optional[str]) -> None:
+        """Set the part of the PDF/A standard that the document conforms to."""
+        self._set_single_value(PDFAID_NAMESPACE, "part", value)
+
+    def set_pdfaid_conformance(self, value: Optional[str]) -> None:
+        """Set the conformance level within the PDF/A standard."""
+        self._set_single_value(PDFAID_NAMESPACE, "conformance", value)

@@ -121,6 +121,113 @@ if meta:
     print(meta.xmp_create_date)
 ```
 
+## Creating XMP metadata
+
+You can create XMP metadata easily using the `XmpInformation.create()` method:
+
+```python
+from pypdf import PdfWriter
+from pypdf.xmp import XmpInformation
+
+# Create a new XMP metadata object
+xmp = XmpInformation.create()
+
+# Set metadata fields
+xmp.set_dc_title({"x-default": "My Document Title"})
+xmp.set_dc_creator(["Author One", "Author Two"])
+xmp.set_dc_description({"x-default": "Document description"})
+xmp.set_dc_subject(["keyword1", "keyword2", "keyword3"])
+xmp.set_pdf_producer("pypdf")
+
+# Create a writer and add the metadata
+writer = PdfWriter()
+writer.add_blank_page(612, 792)  # Add a page
+writer.xmp_metadata = xmp
+writer.write("output.pdf")
+```
+
+## Setting XMP metadata fields
+
+The `XmpInformation` class provides setter methods for all supported metadata fields:
+
+### Dublin Core fields
+
+```python
+from datetime import datetime
+from pypdf.xmp import XmpInformation
+
+xmp = XmpInformation.create()
+
+# Single value fields
+xmp.set_dc_coverage("Global coverage")
+xmp.set_dc_format("application/pdf")
+xmp.set_dc_identifier("unique-id-123")
+xmp.set_dc_source("Original Source")
+
+# Array fields (bags - unordered)
+xmp.set_dc_contributor(["Contributor One", "Contributor Two"])
+xmp.set_dc_language(["en", "fr", "de"])
+xmp.set_dc_publisher(["Publisher One"])
+xmp.set_dc_relation(["Related Doc 1", "Related Doc 2"])
+xmp.set_dc_subject(["keyword1", "keyword2"])
+xmp.set_dc_type(["Document", "Text"])
+
+# Sequence fields (ordered arrays)
+xmp.set_dc_creator(["Primary Author", "Secondary Author"])
+xmp.set_dc_date([datetime.now()])
+
+# Language alternative fields
+xmp.set_dc_title({"x-default": "Title", "en": "English Title", "fr": "Titre français"})
+xmp.set_dc_description({"x-default": "Description", "en": "English Description"})
+xmp.set_dc_rights({"x-default": "All rights reserved"})
+```
+
+### XMP fields
+
+```python
+from datetime import datetime
+
+# Date fields accept both datetime objects and strings
+xmp.set_xmp_create_date(datetime.now())
+xmp.set_xmp_modify_date("2023-12-25T10:30:45Z")
+xmp.set_xmp_metadata_date(datetime.now())
+
+# Text field
+xmp.set_xmp_creator_tool("pypdf")
+```
+
+### PDF fields
+
+```python
+xmp.set_pdf_keywords("keyword1, keyword2, keyword3")
+xmp.set_pdf_pdfversion("1.4")
+xmp.set_pdf_producer("pypdf")
+```
+
+### XMP Media Management fields
+
+```python
+xmp.set_xmpmm_document_id("uuid:12345678-1234-1234-1234-123456789abc")
+xmp.set_xmpmm_instance_id("uuid:87654321-4321-4321-4321-cba987654321")
+```
+
+### PDF/A fields
+
+```python
+xmp.set_pdfaid_part("1")
+xmp.set_pdfaid_conformance("B")
+```
+
+### Clearing metadata fields
+
+You can clear any field by passing `None`:
+
+```python
+xmp.set_dc_title(None)
+xmp.set_dc_creator(None)
+xmp.set_pdf_producer(None)
+```
+
 ## Modifying XMP metadata
 
 Modifying XMP metadata is a bit more complicated.
