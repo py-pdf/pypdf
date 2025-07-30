@@ -1,10 +1,10 @@
 """Extract PDF text preserving the layout of the source PDF"""
 
+from collections.abc import Iterator
 from itertools import groupby
 from math import ceil
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict
-from collections.abc import Iterator
+from typing import Any, Literal, Optional, TypedDict
 
 from ..._utils import logger_warning
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS

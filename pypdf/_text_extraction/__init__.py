@@ -5,7 +5,7 @@ Some parts are still in _page.py. In doubt, they will stay there.
 """
 
 import math
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
 

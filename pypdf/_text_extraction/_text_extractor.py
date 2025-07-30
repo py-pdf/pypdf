@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 from .._cmap import build_font_width_map, compute_font_width, get_actual_str_key
 from ..generic import DictionaryObject, TextStringObject

@@ -1,8 +1,8 @@
 """Font constants and classes for "layout" mode text operations"""
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, Union, cast
 from collections.abc import Sequence
+from dataclasses import dataclass, field
+from typing import Any, Union, cast
 
 from ..._codecs import adobe_glyphs
 from ...errors import ParseError

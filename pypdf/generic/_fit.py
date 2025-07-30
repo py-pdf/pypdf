@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 from ._base import is_null_or_none
 

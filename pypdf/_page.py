@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
@@ -35,17 +36,12 @@ from pathlib import Path
 from typing import (
     Any,
     Callable,
-    Dict,
-    List,
     Literal,
     Optional,
-    Set,
-    Tuple,
     Union,
     cast,
     overload,
 )
-from collections.abc import Iterable, Iterator, Sequence
 
 from ._cmap import (
     build_char_map,

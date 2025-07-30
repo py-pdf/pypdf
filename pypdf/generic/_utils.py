@@ -1,5 +1,5 @@
 import codecs
-from typing import Dict, List, Tuple, Union
+from typing import Union
 
 from .._codecs import _pdfdoc_encoding
 from .._utils import StreamType, logger_warning, read_non_whitespace

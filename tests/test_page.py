@@ -6,7 +6,7 @@ from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from random import shuffle
-from typing import Any, List, Tuple
+from typing import Any
 from unittest import mock
 
 import pytest

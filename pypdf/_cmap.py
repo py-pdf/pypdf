@@ -2,7 +2,7 @@ import binascii
 from binascii import Error as BinasciiError
 from binascii import unhexlify
 from math import ceil
-from typing import Any, Dict, List, Tuple, Union, cast
+from typing import Any, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning

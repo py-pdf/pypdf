@@ -31,17 +31,14 @@
 import struct
 import zlib
 from abc import abstractmethod
+from collections.abc import Generator, Iterable, Iterator, Mapping
 from datetime import datetime
 from typing import (
     Any,
-    Dict,
-    List,
     Optional,
-    Tuple,
     Union,
     cast,
 )
-from collections.abc import Generator, Iterable, Iterator, Mapping
 
 from ._encryption import Encryption
 from ._page import PageObject, _VirtualList

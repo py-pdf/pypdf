@@ -2,7 +2,7 @@
 
 import sys
 from io import BytesIO
-from typing import Any, Dict, List, Literal, Tuple, Union, cast
+from typing import Any, Literal, Union, cast
 
 from ._utils import check_if_whitespace_only, logger_warning
 from .constants import ColorSpaces

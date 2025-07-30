@@ -38,17 +38,14 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import DEFAULT_BUFFER_SIZE
 from os import SEEK_CUR
+from re import Pattern
 from typing import (
     IO,
     Any,
-    Dict,
-    List,
     Optional,
-    Tuple,
     Union,
     overload,
 )
-from re import Pattern
 
 if sys.version_info[:2] >= (3, 10):
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/

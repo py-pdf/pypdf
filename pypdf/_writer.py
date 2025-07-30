@@ -33,24 +33,21 @@ import hashlib
 import re
 import struct
 import uuid
+from collections.abc import Iterable
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
 from pathlib import Path
+from re import Pattern
 from types import TracebackType
 from typing import (
     IO,
     Any,
     Callable,
-    Dict,
     List,
     Optional,
-    Tuple,
-    Type,
     Union,
     cast,
 )
-from collections.abc import Iterable
-from re import Pattern
 
 from ._cmap import _default_fonts_space_width, build_char_map_from_dict
 from ._doc_common import DocumentInformation, PdfDocCommon

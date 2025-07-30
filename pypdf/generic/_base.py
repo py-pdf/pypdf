@@ -30,10 +30,10 @@ import hashlib
 import re
 import sys
 from binascii import unhexlify
+from collections.abc import Sequence
 from math import log10
 from struct import iter_unpack
-from typing import Any, Callable, ClassVar, Dict, Optional, Union, cast
-from collections.abc import Sequence
+from typing import Any, Callable, ClassVar, Optional, Union, cast
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeGuard

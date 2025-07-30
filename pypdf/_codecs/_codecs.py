@@ -7,7 +7,6 @@ the module should not do any PDF parsing.
 
 import io
 from abc import ABC, abstractmethod
-from typing import Dict, List
 
 from pypdf._utils import logger_warning
 

@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 from pathlib import Path
-from typing import IO, Any, Dict, List, Optional, Protocol, Tuple, Union
+from typing import IO, Any, Optional, Protocol, Union
 
 from ._utils import StrByteType, StreamType
 

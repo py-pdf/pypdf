@@ -1,7 +1,6 @@
 """Various constants, enums, and flags to aid readability."""
 
 from enum import Enum, IntFlag, auto, unique
-from typing import Dict, Tuple
 
 
 class StrEnum(str, Enum):  # Once we are on Python 3.11+: enum.StrEnum

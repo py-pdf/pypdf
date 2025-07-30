@@ -1,6 +1,6 @@
 import sys
 from abc import ABC
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 from .._utils import deprecation_with_replacement
 from ..constants import AnnotationFlag

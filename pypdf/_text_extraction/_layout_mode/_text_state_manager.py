@@ -1,10 +1,10 @@
 """manage the PDF transform stack during "layout" mode text extraction"""
 
 from collections import ChainMap, Counter
-from typing import Any, Dict, List, Tuple, Union
-from collections.abc import MutableMapping
 from collections import ChainMap as ChainMapType
 from collections import Counter as CounterType
+from collections.abc import MutableMapping
+from typing import Any, Union
 
 from ...errors import PdfReadError
 from .. import mult

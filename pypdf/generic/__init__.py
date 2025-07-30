@@ -29,7 +29,7 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 from .._utils import (
     deprecation_with_replacement,

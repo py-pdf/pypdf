@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Union
+from typing import Any, Union
 
 from .. import mult, orient
 from ._font import Font

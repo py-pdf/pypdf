@@ -29,6 +29,7 @@
 
 import os
 import re
+from collections.abc import Iterable
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
 from types import TracebackType
@@ -36,16 +37,10 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    List,
     Optional,
-    Set,
-    Tuple,
-    Type,
     Union,
     cast,
 )
-from collections.abc import Iterable
 
 from ._doc_common import PdfDocCommon, convert_to_int
 from ._encryption import Encryption, PasswordType

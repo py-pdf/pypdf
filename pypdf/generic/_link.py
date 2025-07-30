@@ -28,7 +28,7 @@
 # This module contains code used by _writer.py to track links in pages
 # being added to the writer until the links can be resolved.
 
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, Optional, Union, cast
 
 from . import ArrayObject, DictionaryObject, IndirectObject, PdfObject, TextStringObject
 

@@ -32,20 +32,16 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import logging
 import re
 import sys
+from collections.abc import Iterable, Sequence
 from io import BytesIO
 from math import ceil
 from typing import (
     Any,
     Callable,
-    Dict,
-    List,
     Optional,
-    Set,
-    Tuple,
     Union,
     cast,
 )
-from collections.abc import Iterable, Sequence
 
 from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationProtocol
 from .._utils import (

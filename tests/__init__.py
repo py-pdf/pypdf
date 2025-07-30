@@ -3,7 +3,7 @@ import ssl
 import sys
 import urllib.request
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 from urllib.error import HTTPError
 
 if sys.version_info >= (3, 11):

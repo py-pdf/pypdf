@@ -7,16 +7,14 @@ https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
 import datetime
 import decimal
 import re
+from collections.abc import Iterator
 from typing import (
     Any,
     Callable,
-    Dict,
-    List,
     Optional,
     TypeVar,
     Union,
 )
-from collections.abc import Iterator
 from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError

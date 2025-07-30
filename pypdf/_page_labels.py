@@ -58,8 +58,8 @@ a       Lowercase letters (a to z for the first 26 pages,
                            aa to zz for the next 26, and so on)
 """
 
-from typing import List, Optional, Tuple, cast
 from collections.abc import Iterator
+from typing import Optional, cast
 
 from ._protocols import PdfCommonDocProtocol
 from ._utils import logger_warning

@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from .adobe_glyphs import adobe_glyphs
 from .pdfdoc import _pdfdoc_encoding
 from .std import _std_encoding

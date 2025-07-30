@@ -5,7 +5,6 @@ import subprocess
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Dict, List, Tuple
 
 GH_ORG = "py-pdf"
 GH_PROJECT = "pypdf"
