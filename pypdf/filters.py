@@ -45,7 +45,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Optional, Union, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
@@ -211,7 +211,7 @@ class FlateDecode:
         prev_rowdata = (0,) * rowlength
         bpp = (rowlength - 1) // columns  # recomputed locally to not change params
         for row in range(0, len(data), rowlength):
-            rowdata: List[int] = list(data[row : row + rowlength])
+            rowdata: list[int] = list(data[row : row + rowlength])
             filter_byte = rowdata[0]
 
             if filter_byte == 0:
@@ -689,7 +689,7 @@ class JBIG2Decode:
 
         with TemporaryDirectory() as tempdir:
             directory = Path(tempdir)
-            paths: List[Path] = []
+            paths: list[Path] = []
 
             if decode_parms and "/JBIG2Globals" in decode_parms:
                 jbig2_globals = decode_parms["/JBIG2Globals"]
@@ -797,7 +797,7 @@ def decode_stream_data(stream: Any) -> bytes:
     return data
 
 
-def _xobj_to_image(x_object: Dict[str, Any]) -> Tuple[Optional[str], bytes, Any]:
+def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
 
@@ -823,11 +823,11 @@ def _xobj_to_image(x_object: Dict[str, Any]) -> Tuple[Optional[str], bytes, Any]
 
     def _apply_alpha(
         img: Image.Image,
-        x_object: Dict[str, Any],
+        x_object_obj: dict[str, Any],
         obj_as_text: str,
         image_format: str,
         extension: str,
-    ) -> Tuple[Image.Image, str, str]:
+    ) -> tuple[Image.Image, str, str]:
         alpha = None
         if IA.S_MASK in x_object:  # add alpha channel
             alpha = _xobj_to_image(x_object[IA.S_MASK])[2]
