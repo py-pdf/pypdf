@@ -592,7 +592,7 @@ class CCITTFaxDecode:
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
         # §7.4.6, optional parameters for the CCITTFaxDecode filter
-        k = 0
+        K = 0
         columns = 1728
         if parameters:
             parameters_unwrapped = cast(
@@ -603,14 +603,14 @@ class CCITTFaxDecode:
                     if CCITT.COLUMNS in decode_parm:
                         columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.K in decode_parm:
-                        k = decode_parm[CCITT.K].get_object()
+                        K = decode_parm[CCITT.K].get_object()
             else:
                 if CCITT.COLUMNS in parameters_unwrapped:
                     columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
-                    k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
+                    K = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
 
-        return CCITTParameters(K=k, columns=columns, rows=int(rows))
+        return CCITTParameters(K=K, columns=columns, rows=int(rows))
 
     @staticmethod
     def decode(
