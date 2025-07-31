@@ -490,7 +490,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
         self._update_stream()
 
-    def _set_bag_values(self, namespace: str, name: str, values: Optional[List[str]]) -> None:
+    def _set_bag_values(self, namespace: str, name: str, values: Optional[list[str]]) -> None:
         """Set or remove bag values (unordered array)."""
         if namespace in self.cache and name in self.cache[namespace]:
             del self.cache[namespace][name]
@@ -519,7 +519,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
         self._update_stream()
 
-    def _set_seq_values(self, namespace: str, name: str, values: Optional[List[str]]) -> None:
+    def _set_seq_values(self, namespace: str, name: str, values: Optional[list[str]]) -> None:
         """Set or remove sequence values (ordered array)."""
         if namespace in self.cache and name in self.cache[namespace]:
             del self.cache[namespace][name]
@@ -548,7 +548,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
         self._update_stream()
 
-    def _set_langalt_values(self, namespace: str, name: str, values: Optional[Dict[str, str]]) -> None:
+    def _set_langalt_values(self, namespace: str, name: str, values: Optional[dict[str, str]]) -> None:
         """Set or remove language alternative values."""
         if namespace in self.cache and name in self.cache[namespace]:
             del self.cache[namespace][name]
@@ -598,7 +598,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         xml_data = doc.toxml(encoding="utf-8")
         self.stream.set_data(xml_data)
 
-    def set_dc_contributor(self, values: Optional[List[str]]) -> None:
+    def set_dc_contributor(self, values: Optional[list[str]]) -> None:
         """Set contributors to the resource (other than the authors)."""
         self._set_bag_values(DC_NAMESPACE, "contributor", values)
 
@@ -606,11 +606,11 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         """Set text describing the extent or scope of the resource."""
         self._set_single_value(DC_NAMESPACE, "coverage", value)
 
-    def set_dc_creator(self, values: Optional[List[str]]) -> None:
+    def set_dc_creator(self, values: Optional[list[str]]) -> None:
         """Set authors of the resource, listed in order of precedence."""
         self._set_seq_values(DC_NAMESPACE, "creator", values)
 
-    def set_dc_date(self, values: Optional[List[Union[str, datetime.datetime]]]) -> None:
+    def set_dc_date(self, values: Optional[list[Union[str, datetime.datetime]]]) -> None:
         """Set dates of significance to the resource."""
         if values is None:
             date_strings = None
@@ -623,7 +623,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
                     date_strings.append(str(value))
         self._set_seq_values(DC_NAMESPACE, "date", date_strings)
 
-    def set_dc_description(self, values: Optional[Dict[str, str]]) -> None:
+    def set_dc_description(self, values: Optional[dict[str, str]]) -> None:
         """Set language-keyed descriptions of the content of the resource."""
         self._set_langalt_values(DC_NAMESPACE, "description", values)
 
@@ -635,19 +635,19 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         """Set unique identifier of the resource."""
         self._set_single_value(DC_NAMESPACE, "identifier", value)
 
-    def set_dc_language(self, values: Optional[List[str]]) -> None:
+    def set_dc_language(self, values: Optional[list[str]]) -> None:
         """Set languages used in the resource."""
         self._set_bag_values(DC_NAMESPACE, "language", values)
 
-    def set_dc_publisher(self, values: Optional[List[str]]) -> None:
+    def set_dc_publisher(self, values: Optional[list[str]]) -> None:
         """Set publisher names."""
         self._set_bag_values(DC_NAMESPACE, "publisher", values)
 
-    def set_dc_relation(self, values: Optional[List[str]]) -> None:
+    def set_dc_relation(self, values: Optional[list[str]]) -> None:
         """Set text descriptions of relationships to other documents."""
         self._set_bag_values(DC_NAMESPACE, "relation", values)
 
-    def set_dc_rights(self, values: Optional[Dict[str, str]]) -> None:
+    def set_dc_rights(self, values: Optional[dict[str, str]]) -> None:
         """Set language-keyed descriptions of the rights the user has to this resource."""
         self._set_langalt_values(DC_NAMESPACE, "rights", values)
 
@@ -655,15 +655,15 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         """Set unique identifier of the work from which this resource was derived."""
         self._set_single_value(DC_NAMESPACE, "source", value)
 
-    def set_dc_subject(self, values: Optional[List[str]]) -> None:
+    def set_dc_subject(self, values: Optional[list[str]]) -> None:
         """Set descriptive phrases or keywords that specify the topic of the content."""
         self._set_bag_values(DC_NAMESPACE, "subject", values)
 
-    def set_dc_title(self, values: Optional[Dict[str, str]]) -> None:
+    def set_dc_title(self, values: Optional[dict[str, str]]) -> None:
         """Set language-keyed title of the resource."""
         self._set_langalt_values(DC_NAMESPACE, "title", values)
 
-    def set_dc_type(self, values: Optional[List[str]]) -> None:
+    def set_dc_type(self, values: Optional[list[str]]) -> None:
         """Set textual descriptions of the document type."""
         self._set_bag_values(DC_NAMESPACE, "type", values)
 
