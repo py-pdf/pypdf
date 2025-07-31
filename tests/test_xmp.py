@@ -686,3 +686,196 @@ def test_xmp_information_namespace_prefix():
     assert xmp._get_namespace_prefix(pypdf.xmp.PDFAID_NAMESPACE) == "pdfaid"
     assert xmp._get_namespace_prefix(pypdf.xmp.PDFX_NAMESPACE) == "pdfx"
     assert xmp._get_namespace_prefix("unknown://namespace") == "unknown"
+
+
+def test_xmp_information_owner_document_none_errors():
+    """Test error handling when ownerDocument is None."""
+    xmp = XmpInformation.create()
+
+    # Save original owner document
+    original_owner = xmp.rdf_root.ownerDocument
+
+    try:
+        # Remove existing descriptions to force creation of new one
+        for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
+            xmp.rdf_root.removeChild(desc)
+
+        # Set ownerDocument to None to trigger error conditions
+        xmp.rdf_root.ownerDocument = None
+
+        # Test _get_or_create_description error (lines 459-465)
+        with pytest.raises(RuntimeError, match="XMP Document is None"):
+            xmp._get_or_create_description()
+
+        # Test _update_stream error (line 597)
+        with pytest.raises(RuntimeError, match="XMP Document is None"):
+            xmp._update_stream()
+
+        # Restore owner document for other tests (but clear the descriptions again)
+        xmp.rdf_root.ownerDocument = original_owner
+        for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
+            xmp.rdf_root.removeChild(desc)
+        xmp.rdf_root.ownerDocument = None
+
+        # Test _set_single_value error (line 484) - this will try to create description
+        with pytest.raises(RuntimeError, match="XMP Document is None"):
+            xmp.set_dc_coverage("test coverage")
+
+        # Restore and clear again for bag values test
+        xmp.rdf_root.ownerDocument = original_owner
+        for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
+            xmp.rdf_root.removeChild(desc)
+        xmp.rdf_root.ownerDocument = None
+
+        # Test _set_bag_values error (line 506)
+        with pytest.raises(RuntimeError, match="XMP Document is None"):
+            xmp.set_dc_contributor(["contributor"])
+
+        # Restore and clear again for seq values test
+        xmp.rdf_root.ownerDocument = original_owner
+        for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
+            xmp.rdf_root.removeChild(desc)
+        xmp.rdf_root.ownerDocument = None
+
+        # Test _set_seq_values error (line 535)
+        with pytest.raises(RuntimeError, match="XMP Document is None"):
+            xmp.set_dc_creator(["creator"])
+
+        # Restore and clear again for langalt values test
+        xmp.rdf_root.ownerDocument = original_owner
+        for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
+            xmp.rdf_root.removeChild(desc)
+        xmp.rdf_root.ownerDocument = None
+
+        # Test _set_langalt_values error (line 564)
+        with pytest.raises(RuntimeError, match="XMP Document is None"):
+            xmp.set_dc_title({"x-default": "title"})
+
+    finally:
+        # Restore original owner document
+        xmp.rdf_root.ownerDocument = original_owner
+
+
+def test_xmp_information_remove_existing_attribute():
+    """Test removing existing attribute node (line 479)."""
+    xmp = XmpInformation.create()
+
+    # Set a single value first to create an attribute
+    xmp.set_dc_coverage("initial coverage")
+    assert xmp.dc_coverage == "initial coverage"
+
+    # Set a different value to trigger attribute removal and replacement
+    xmp.set_dc_coverage("updated coverage")
+    assert xmp.dc_coverage == "updated coverage"
+
+    # Set to None to remove the attribute entirely
+    xmp.set_dc_coverage(None)
+    assert xmp.dc_coverage is None
+
+
+def test_xmp_information_edge_case_coverage():
+    """Test additional edge cases for complete coverage."""
+    xmp = XmpInformation.create()
+
+    # Test setting empty values
+    xmp.set_dc_contributor([])
+    assert xmp.dc_contributor == []
+
+    xmp.set_dc_creator([])
+    assert xmp.dc_creator == []
+
+    xmp.set_dc_title({})
+    assert xmp.dc_title == {}
+
+    # Test setting None values
+    xmp.set_dc_contributor(None)
+    assert xmp.dc_contributor == []
+
+    xmp.set_dc_creator(None)
+    assert xmp.dc_creator == []
+
+    xmp.set_dc_title(None)
+    assert xmp.dc_title == {}
+
+
+def test_xmp_information_create_new_description():
+    """Test creating new description elements (lines 462-465)."""
+    xmp = XmpInformation.create()
+
+    # Remove all existing descriptions
+    for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
+        xmp.rdf_root.removeChild(desc)
+
+    # Create a new description with specific about URI (covers lines 462-465)
+    desc = xmp._get_or_create_description("test-uri")
+    assert desc.getAttributeNS(pypdf.xmp.RDF_NAMESPACE, "about") == "test-uri"
+
+    # Test that it creates the element with proper namespace
+    assert desc.tagName == "rdf:Description"
+    assert desc.namespaceURI == pypdf.xmp.RDF_NAMESPACE
+
+
+def test_xmp_information_attribute_handling():
+    """Test attribute node removal and creation (line 479, 484, 506, 535, 564)."""
+    xmp = XmpInformation.create()
+
+    # Remove all existing descriptions first
+    for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
+        xmp.rdf_root.removeChild(desc)
+
+    # Test _set_single_value with new description creation (covers line 484 path where doc is not None)
+    xmp.set_dc_coverage("test coverage")
+    assert xmp.dc_coverage == "test coverage"
+
+    # Test _set_bag_values with new description creation (covers line 506 path where doc is not None)
+    xmp.set_dc_contributor(["contributor1", "contributor2"])
+    assert xmp.dc_contributor == ["contributor1", "contributor2"]
+
+    # Test _set_seq_values with new description creation (covers line 535 path where doc is not None)
+    xmp.set_dc_creator(["creator1", "creator2"])
+    assert xmp.dc_creator == ["creator1", "creator2"]
+
+    # Test _set_langalt_values with new description creation (covers line 564 path where doc is not None)
+    xmp.set_dc_title({"x-default": "Test Title", "en": "Test Title EN"})
+    assert xmp.dc_title == {"x-default": "Test Title", "en": "Test Title EN"}
+
+    # Test attribute node removal (line 479) by setting an attribute first, then changing it
+    xmp.set_dc_format("application/pdf")
+    assert xmp.dc_format == "application/pdf"
+
+    # Change the value - this should trigger attribute node removal
+    xmp.set_dc_format("text/plain")
+    assert xmp.dc_format == "text/plain"
+
+
+def test_xmp_information_complete_coverage():
+    """Test remaining uncovered lines for complete coverage."""
+    xmp = XmpInformation.create()
+
+    # Test scenario where ownerDocument is available for all setter error paths
+    # First remove all descriptions to force new creation
+    for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
+        xmp.rdf_root.removeChild(desc)
+
+    # Test scenario where ownerDocument is available
+
+    # Test the case where ownerDocument is not None in _set_single_value (covers line 484 success path)
+    desc = xmp._get_or_create_description()
+    desc.setAttribute("test", "value")
+    # Now modify an existing attribute to test attribute removal (line 479)
+    xmp.set_dc_source("original")
+    xmp.set_dc_source("modified")  # This should trigger existing attribute removal
+    assert xmp.dc_source == "modified"
+
+    # Force recreate and test non-None document paths in other setters
+    for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
+        xmp.rdf_root.removeChild(desc)
+
+    # Test success paths (non-None document) for all setter types
+    xmp.set_dc_contributor(["test1"])  # covers line 506 success path
+    xmp.set_dc_creator(["test2"])      # covers line 535 success path
+    xmp.set_dc_title({"x-default": "test3"})  # covers line 564 success path
+
+    assert xmp.dc_contributor == ["test1"]
+    assert xmp.dc_creator == ["test2"]
+    assert xmp.dc_title == {"x-default": "test3"}
