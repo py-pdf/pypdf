@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import TYPE_CHECKING, Generator, cast
+from typing import TYPE_CHECKING, cast
 
 from pypdf._utils import format_iso8824_date, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
@@ -23,6 +23,7 @@ from pypdf.generic import (
 
 if TYPE_CHECKING:
     import datetime
+    from collections.abc import Generator
 
     from pypdf._writer import PdfWriter
 
