@@ -29,7 +29,7 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 from .._utils import (
     deprecation_with_replacement,
@@ -62,6 +62,7 @@ from ._data_structures import (
 )
 from ._files import EmbeddedFile
 from ._fit import Fit
+from ._link import DirectReferenceLink, NamedReferenceLink, ReferenceLink, extract_links
 from ._outline import OutlineItem
 from ._rectangle import RectangleObject
 from ._utils import (
@@ -90,7 +91,7 @@ class AnnotationBuilder:  # deprecated
 
     @staticmethod
     def text(
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         text: str,
         open: bool = False,
         flags: int = 0,
@@ -102,7 +103,7 @@ class AnnotationBuilder:  # deprecated
     @staticmethod
     def free_text(
         text: str,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         font: str = "Helvetica",
         bold: bool = False,
         italic: bool = False,
@@ -118,7 +119,7 @@ class AnnotationBuilder:  # deprecated
     @staticmethod
     def popup(
         *,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         flags: int = 0,
         parent: Optional[DictionaryObject] = None,
         open: bool = False,
@@ -129,9 +130,9 @@ class AnnotationBuilder:  # deprecated
 
     @staticmethod
     def line(
-        p1: Tuple[float, float],
-        p2: Tuple[float, float],
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        p1: tuple[float, float],
+        p2: tuple[float, float],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         text: str = "",
         title_bar: Optional[str] = None,
     ) -> None:
@@ -141,7 +142,7 @@ class AnnotationBuilder:  # deprecated
 
     @staticmethod
     def polyline(
-        vertices: List[Tuple[float, float]],
+        vertices: list[tuple[float, float]],
     ) -> None:
         deprecation_with_replacement(
             "AnnotationBuilder.polyline", "pypdf.annotations.PolyLine", "5.0.0"
@@ -149,7 +150,7 @@ class AnnotationBuilder:  # deprecated
 
     @staticmethod
     def rectangle(
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         interiour_color: Optional[str] = None,
     ) -> None:
         deprecation_with_replacement(
@@ -159,7 +160,7 @@ class AnnotationBuilder:  # deprecated
     @staticmethod
     def highlight(
         *,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         quad_points: ArrayObject,
         highlight_color: str = "ff0000",
         printing: bool = False,
@@ -170,7 +171,7 @@ class AnnotationBuilder:  # deprecated
 
     @staticmethod
     def ellipse(
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         interiour_color: Optional[str] = None,
     ) -> None:
         deprecation_with_replacement(
@@ -178,7 +179,7 @@ class AnnotationBuilder:  # deprecated
         )
 
     @staticmethod
-    def polygon(vertices: List[Tuple[float, float]]) -> None:
+    def polygon(vertices: list[tuple[float, float]]) -> None:
         deprecation_with_replacement(
             "AnnotationBuilder.polygon", "pypdf.annotations.Polygon", "5.0.0"
         )
@@ -187,7 +188,7 @@ class AnnotationBuilder:  # deprecated
 
     @staticmethod
     def link(
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         border: Optional[ArrayObject] = None,
         url: Optional[str] = None,
         target_page_index: Optional[int] = None,
@@ -208,6 +209,7 @@ __all__ = [
     "DecodedStreamObject",
     "Destination",
     "DictionaryObject",
+    "DirectReferenceLink",
     "EmbeddedFile",
     "EncodedStreamObject",
     "Field",
@@ -215,12 +217,14 @@ __all__ = [
     "FloatObject",
     "IndirectObject",
     "NameObject",
+    "NamedReferenceLink",
     "NullObject",
     "NumberObject",
     "OutlineFontFlag",
     "OutlineItem",
     "PdfObject",
     "RectangleObject",
+    "ReferenceLink",
     "StreamObject",
     "TextStringObject",
     "TreeObject",
@@ -229,6 +233,7 @@ __all__ = [
     "create_string_object",
     "decode_pdfdocencoding",
     "encode_pdfdocencoding",
+    "extract_links",
     "hex_to_rgb",
     "is_null_or_none",
     "read_hex_string_from_stream",

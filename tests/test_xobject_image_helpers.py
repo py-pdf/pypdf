@@ -1,5 +1,6 @@
 """Test the pypdf._xobj_image_helpers module."""
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -9,6 +10,10 @@ from pypdf.errors import EmptyImageDataError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject
 
 from . import get_data_from_url
+
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.enable_socket
@@ -126,3 +131,32 @@ def test_extended_image_frombytes_zero_data():
 
     with pytest.raises(EmptyImageDataError, match="Data is 0 bytes, cannot process an image from empty data."):
         _extended_image_frombytes(mode, size, data)
+
+
+def test_handle_flate__autodesk_indexed():
+    reader = PdfReader(RESOURCE_ROOT / "AutoCad_Diagram.pdf")
+    page = reader.pages[0]
+    for name, image in page.images.items():
+        assert name.startswith("/")
+        image.image.load()
+
+    data = RESOURCE_ROOT.joinpath("AutoCad_Diagram.pdf").read_bytes()
+    data = data.replace(b"/DeviceRGB\x00255", b"/DeviceRGB")
+    reader = PdfReader(BytesIO(data))
+    page = reader.pages[0]
+    with pytest.raises(
+            PdfReadError,
+            match=r"^Expected color space with 4 values, got 3: \['/Indexed', '/DeviceRGB', '\\x00\\x80\\x00\\x80\\x80耀"  # noqa: E501
+    ):
+        for name, _image in page.images.items():  # noqa: PERF102
+            assert name.startswith("/")
+
+
+@pytest.mark.enable_socket
+def test_get_mode_and_invert_color():
+    url = "https://github.com/user-attachments/files/18381726/tika-957721.pdf"
+    name = "tika-957721.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[12]
+    for _name, image in page.images.items():  # noqa: PERF102
+        image.image.load()

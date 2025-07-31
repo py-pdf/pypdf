@@ -4,6 +4,7 @@ import io
 import re
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -19,6 +20,7 @@ from pypdf._utils import (
     classproperty,
     deprecate_with_replacement,
     deprecation_no_replacement,
+    format_iso8824_date,
     mark_location,
     matrix_multiply,
     parse_iso8824_date,
@@ -363,6 +365,47 @@ def test_parse_datetime_err():
         parse_iso8824_date("D:20210408T054711Z")
     assert ex.value.args[0] == "Can not convert date: D:20210408T054711Z"
     assert parse_iso8824_date("D:20210408054711").tzinfo is None
+
+
+def test_format_iso8824_date():
+    """Test format_iso8824_date function with timezone handling."""
+    dt_naive = datetime(2021, 3, 18, 12, 7, 56)
+    result = format_iso8824_date(dt_naive)
+    assert result == "D:20210318120756"
+
+    dt_utc = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone.utc)
+    result = format_iso8824_date(dt_utc)
+    assert result == "D:20210318120756+00'00'"
+
+    dt_positive = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30)))
+    result = format_iso8824_date(dt_positive)
+    assert result == "D:20210318120756+02'30'"
+
+    dt_negative = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30)))
+    result = format_iso8824_date(dt_negative)
+    assert result == "D:20210318120756-05'30'"
+
+
+def test_format_iso8824_date_roundtrip():
+    dt_naive = datetime(2021, 3, 18, 12, 7, 56)
+    formatted = format_iso8824_date(dt_naive)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_naive
+
+    dt_utc = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone.utc)
+    formatted = format_iso8824_date(dt_utc)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_utc
+
+    dt_positive = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=2, minutes=30)))
+    formatted = format_iso8824_date(dt_positive)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_positive
+
+    dt_negative = datetime(2021, 3, 18, 12, 7, 56, tzinfo=timezone(timedelta(hours=-5, minutes=-30)))
+    formatted = format_iso8824_date(dt_negative)
+    parsed = parse_iso8824_date(formatted)
+    assert parsed == dt_negative
 
 
 def test_is_sublist():

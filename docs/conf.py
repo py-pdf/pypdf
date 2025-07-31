@@ -64,7 +64,7 @@ intersphinx_mapping = {
 }
 
 nitpick_ignore_regex = [
-    # For reasons unclear at this stage the io module prefixes everything with _io
+    # For reasons unclear at this stage, the io module prefixes everything with _io
     # and this confuses sphinx
     (
         r"py:class",
@@ -131,4 +131,4 @@ html_static_path = ["_static"]
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False  # Explicitly prefer Google style docstring
 napoleon_use_param = True  # for type hint support
-napoleon_use_rtype = False  # False so the return type is inline with the description.
+napoleon_use_rtype = False  # False, so the return type is inline with the description.

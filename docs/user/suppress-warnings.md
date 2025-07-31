@@ -10,7 +10,7 @@ pypdf makes use of three mechanisms to show if something went wrong:
   functions / parameters. Another example is missing capabilities of pypdf.
   In those cases, pypdf users should adjust their code. Warnings
   are issued by the `warnings` module - those are different from the log-level
-  "warning".
+  "warning."
 * **Log messages** are informative messages that can be used for post-mortem
   analysis. Most of the time, users can ignore them. They come in different
   *levels*, such as info / warning / error indicating the severity.
@@ -23,7 +23,7 @@ pypdf makes use of three mechanisms to show if something went wrong:
 Exceptions need to be caught if you want to handle them. For example, you could
 want to read the text from a PDF as a part of a search function.
 
-Most PDF files do not follow the specification. In this case pypdf needs to
+Most PDF files do not follow the specification. In this case, pypdf needs to
 guess which kinds of mistakes were potentially done when the PDF file was created.
 See [the robustness page](robustness.md) for the related issues.
 

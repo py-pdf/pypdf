@@ -30,9 +30,10 @@ import hashlib
 import re
 import sys
 from binascii import unhexlify
+from collections.abc import Sequence
 from math import log10
 from struct import iter_unpack
-from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Union, cast
+from typing import Any, Callable, ClassVar, Optional, Union, cast
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeGuard
@@ -787,7 +788,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     prefix = b"/"
-    renumber_table: ClassVar[Dict[str, bytes]] = {
+    renumber_table: ClassVar[dict[str, bytes]] = {
         **{chr(i): f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
@@ -840,6 +841,21 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 except KeyError:
                     out += c.encode("utf-8")
         return out
+
+    def _sanitize(self) -> "NameObject":
+        """
+        Sanitize the NameObject's name to be a valid PDF name part
+        (alphanumeric, underscore, hyphen). The _sanitize method replaces
+        spaces and any non-alphanumeric/non-underscore/non-hyphen with
+        underscores.
+
+        Returns:
+            NameObject with sanitized name.
+        """
+        name = str(self)[1:]  # Remove leading forward slash
+        name = re.sub(r"\ ", "_", name)
+        name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
+        return NameObject("/" + name)
 
     @classproperty
     def surfix(cls) -> bytes:  # noqa: N805
