@@ -1,7 +1,8 @@
 """Font constants and classes for "layout" mode text operations"""
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Dict, Sequence, Union, cast
+from typing import Any, Union, cast
 
 from ..._codecs import adobe_glyphs
 from ...errors import ParseError
@@ -29,10 +30,10 @@ class Font:
 
     subtype: str
     space_width: Union[int, float]
-    encoding: Union[str, Dict[int, str]]
-    char_map: Dict[Any, Any]
-    font_dictionary: Dict[Any, Any]
-    width_map: Dict[str, int] = field(default_factory=dict, init=False)
+    encoding: Union[str, dict[int, str]]
+    char_map: dict[Any, Any]
+    font_dictionary: dict[Any, Any]
+    width_map: dict[str, int] = field(default_factory=dict, init=False)
     interpretable: bool = True
 
     def __post_init__(self) -> None:
@@ -59,7 +60,7 @@ class Font:
 
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
         if "/DescendantFonts" in self.font_dictionary:
-            d_font: Dict[Any, Any]
+            d_font: dict[Any, Any]
             for d_font_idx, d_font in enumerate(
                 self.font_dictionary["/DescendantFonts"]
             ):
@@ -145,7 +146,7 @@ class Font:
         )
 
     @staticmethod
-    def to_dict(font_instance: "Font") -> Dict[str, Any]:
+    def to_dict(font_instance: "Font") -> dict[str, Any]:
         """Dataclass to dict for json.dumps serialization."""
         return {
             k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__

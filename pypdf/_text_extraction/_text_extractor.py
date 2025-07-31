@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 from .._cmap import build_font_width_map, compute_font_width, get_actual_str_key
 from ..generic import DictionaryObject, TextStringObject
@@ -45,15 +45,15 @@ class TextExtraction:
     """
 
     def __init__(self) -> None:
-        self._font_width_maps: Dict[str, Tuple[Dict[Any, float], str, float]] = {}
+        self._font_width_maps: dict[str, tuple[dict[Any, float], str, float]] = {}
 
         # Text extraction state variables
-        self.cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        self.tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        self.cm_stack: List[
-            Tuple[
-                List[float],
-                Tuple[Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]],
+        self.cm_matrix: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.tm_matrix: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.cm_stack: list[
+            tuple[
+                list[float],
+                tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]],
                 float,
                 float,
                 float,
@@ -63,17 +63,17 @@ class TextExtraction:
         ] = []
 
         # Store the last modified matrices; can be an intermediate position
-        self.cm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        self.tm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.cm_prev: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.tm_prev: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
 
         # Store the position at the beginning of building the text
-        self.memo_cm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        self.memo_tm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.memo_cm: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        self.memo_tm: list[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
 
         self.char_scale = 1.0
         self.space_scale = 1.0
         self._space_width: float = 500.0  # will be set correctly at first Tf
-        self._actual_str_size: Dict[str, float] = {
+        self._actual_str_size: dict[str, float] = {
             "str_widths": 0.0,
             "space_width": 0.0,
             "str_height": 0.0,
@@ -85,15 +85,15 @@ class TextExtraction:
         self.text: str = ""
         self.output: str = ""
         self.rtl_dir: bool = False  # right-to-left
-        self.cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]] = (
+        self.cmap: tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]] = (
             "charmap",
             {},
             "NotInitialized",
             None,
         )  # (encoding, CMAP, font resource name, font)
-        self.orientations: Tuple[int, ...] = (0, 90, 180, 270)
+        self.orientations: tuple[int, ...] = (0, 90, 180, 270)
         self.visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None
-        self.cmaps: Dict[str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject]] = {}
+        self.cmaps: dict[str, tuple[str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject]] = {}
 
         self.operation_handlers = {
             b"BT": self._handle_bt,
@@ -113,10 +113,10 @@ class TextExtraction:
 
     def initialize_extraction(
         self,
-        orientations: Tuple[int, ...] = (0, 90, 180, 270),
+        orientations: tuple[int, ...] = (0, 90, 180, 270),
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
         cmaps: Optional[
-            Dict[str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject]]
+            dict[str, tuple[str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject]]
         ] = None,
     ) -> None:
         """Initialize the extractor with extraction parameters."""
@@ -132,7 +132,7 @@ class TextExtraction:
     def compute_str_widths(self, str_widths: float) -> float:
         return str_widths / 1000
 
-    def process_operation(self, operator: bytes, operands: List[Any]) -> None:
+    def process_operation(self, operator: bytes, operands: list[Any]) -> None:
         if operator in self.operation_handlers:
             handler = self.operation_handlers[operator]
             str_widths = handler(operands)
@@ -166,18 +166,18 @@ class TextExtraction:
 
     def _get_actual_font_widths(
         self,
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+        cmap: tuple[
+            Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
         ],
         text_operands: str,
         font_size: float,
         space_width: float,
-    ) -> Tuple[float, float, float]:
+    ) -> tuple[float, float, float]:
         font_widths: float = 0
         font_name: str = cmap[2]
         if font_name not in self._font_width_maps:
             if cmap[3] is None:
-                font_width_map: Dict[Any, float] = {}
+                font_width_map: dict[Any, float] = {}
                 space_char = " "
                 actual_space_width: float = space_width
                 font_width_map["default"] = actual_space_width * 2
@@ -203,19 +203,19 @@ class TextExtraction:
     def _handle_tj(
         self,
         text: str,
-        operands: List[Union[str, TextStringObject]],
-        cm_matrix: List[float],
-        tm_matrix: List[float],
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+        operands: list[Union[str, TextStringObject]],
+        cm_matrix: list[float],
+        tm_matrix: list[float],
+        cmap: tuple[
+            Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
         ],
-        orientations: Tuple[int, ...],
+        orientations: tuple[int, ...],
         font_size: float,
         rtl_dir: bool,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
         space_width: float,
-        actual_str_size: Dict[str, float],
-    ) -> Tuple[str, bool, Dict[str, float]]:
+        actual_str_size: dict[str, float],
+    ) -> tuple[str, bool, dict[str, float]]:
         text_operands, is_str_operands = get_text_operands(
             operands, cm_matrix, tm_matrix, cmap, orientations)
         if is_str_operands:
@@ -248,16 +248,16 @@ class TextExtraction:
 
     # Operation handlers
 
-    def _handle_bt(self, operands: List[Any]) -> None:
+    def _handle_bt(self, operands: list[Any]) -> None:
         """Handle BT (Begin Text) operation - Table 5.4 page 405."""
         self.tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         self._flush_text()
 
-    def _handle_et(self, operands: List[Any]) -> None:
+    def _handle_et(self, operands: list[Any]) -> None:
         """Handle ET (End Text) operation - Table 5.4 page 405."""
         self._flush_text()
 
-    def _handle_save_graphics_state(self, operands: List[Any]) -> None:
+    def _handle_save_graphics_state(self, operands: list[Any]) -> None:
         """Handle q (Save graphics state) operation - Table 4.7 page 219."""
         self.cm_stack.append(
             (
@@ -271,7 +271,7 @@ class TextExtraction:
             )
         )
 
-    def _handle_restore_graphics_state(self, operands: List[Any]) -> None:
+    def _handle_restore_graphics_state(self, operands: list[Any]) -> None:
         """Handle Q (Restore graphics state) operation - Table 4.7 page 219."""
         try:
             (
@@ -286,7 +286,7 @@ class TextExtraction:
         except Exception:
             self.cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
 
-    def _handle_cm(self, operands: List[Any]) -> None:
+    def _handle_cm(self, operands: list[Any]) -> None:
         """Handle cm (Modify current matrix) operation - Table 4.7 page 219."""
         self.output += self.text
         if self.visitor_text is not None:
@@ -299,20 +299,20 @@ class TextExtraction:
         self.memo_cm = self.cm_matrix.copy()
         self.memo_tm = self.tm_matrix.copy()
 
-    def _handle_tz(self, operands: List[Any]) -> None:
+    def _handle_tz(self, operands: list[Any]) -> None:
         """Handle Tz (Set horizontal text scaling) operation - Table 5.2 page 398."""
         self.char_scale = float(operands[0]) / 100 if operands else 1.0
 
-    def _handle_tw(self, operands: List[Any]) -> None:
+    def _handle_tw(self, operands: list[Any]) -> None:
         """Handle Tw (Set word spacing) operation - Table 5.2 page 398."""
         self.space_scale = 1.0 + float(operands[0] if operands else 0.0)
 
-    def _handle_tl(self, operands: List[Any]) -> None:
+    def _handle_tl(self, operands: list[Any]) -> None:
         """Handle TL (Set Text Leading) operation - Table 5.2 page 398."""
         scale_x = math.sqrt(self.tm_matrix[0] ** 2 + self.tm_matrix[2] ** 2)
         self.TL = float(operands[0] if operands else 0.0) * self.font_size * scale_x
 
-    def _handle_tf(self, operands: List[Any]) -> None:
+    def _handle_tf(self, operands: list[Any]) -> None:
         """Handle Tf (Set font size) operation - Table 5.2 page 398."""
         if self.text != "":
             self.output += self.text  # .translate(cmap)
@@ -355,7 +355,7 @@ class TextExtraction:
         except Exception:
             pass  # keep previous size
 
-    def _handle_td(self, operands: List[Any]) -> float:
+    def _handle_td(self, operands: list[Any]) -> float:
         """Handle Td (Move text position) operation - Table 5.5 page 406."""
         # A special case is a translating only tm:
         # tm = [1, 0, 0, 1, e, f]
@@ -367,14 +367,14 @@ class TextExtraction:
         self._actual_str_size["str_widths"] = 0.0
         return str_widths
 
-    def _handle_tm(self, operands: List[Any]) -> float:
+    def _handle_tm(self, operands: list[Any]) -> float:
         """Handle Tm (Set text matrix) operation - Table 5.5 page 406."""
         self.tm_matrix = [float(operand) for operand in operands[:6]]
         str_widths = self.compute_str_widths(self._actual_str_size["str_widths"])
         self._actual_str_size["str_widths"] = 0.0
         return str_widths
 
-    def _handle_t_star(self, operands: List[Any]) -> float:
+    def _handle_t_star(self, operands: list[Any]) -> float:
         """Handle T* (Move to next line) operation - Table 5.5 page 406."""
         self.tm_matrix[4] -= self.TL * self.tm_matrix[2]
         self.tm_matrix[5] -= self.TL * self.tm_matrix[3]
@@ -382,7 +382,7 @@ class TextExtraction:
         self._actual_str_size["str_widths"] = 0.0
         return str_widths
 
-    def _handle_tj_operation(self, operands: List[Any]) -> float:
+    def _handle_tj_operation(self, operands: list[Any]) -> float:
         """Handle Tj (Show text) operation - Table 5.5 page 406."""
         self.text, self.rtl_dir, self._actual_str_size = self._handle_tj(
             self.text,
