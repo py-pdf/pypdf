@@ -836,7 +836,7 @@ def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]
                     f"image and mask size not matching: {obj_as_text}", __name__
                 )
             else:
-                # TODO : implement mask
+                # TODO: implement mask
                 if alpha.mode != "L":
                     alpha = alpha.convert("L")
                 if img.mode == "P":
@@ -845,22 +845,23 @@ def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]
                     img = img.convert("L")
                 img.putalpha(alpha)
             if "JPEG" in image_format:
-                extension = ".jp2"
                 image_format = "JPEG2000"
+                extension = ".jp2"
             else:
-                extension = ".png"
                 image_format = "PNG"
+                extension = ".png"
         return img, extension, image_format
 
-    # for error reporting
+    # For error reporting
     obj_as_text = (
         x_object.indirect_reference.__repr__()
         if x_object is None  # pragma: no cover
         else x_object.__repr__()
     )
 
-    # Get size and data
     size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
+
+    # Get data
     data = x_object.get_data()  # type: ignore
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
