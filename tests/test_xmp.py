@@ -433,10 +433,10 @@ def test_xmp_information_set_dc_title():
     xmp = XmpInformation.create()
 
     title_values = {"x-default": "Test Title", "en": "Test Title EN"}
-    xmp.set_dc_title(title_values)
+    xmp.dc_title = title_values
     assert xmp.dc_title == title_values
 
-    xmp.set_dc_title(None)
+    xmp.dc_title = None
     assert xmp.dc_title is None or xmp.dc_title == {}
 
 
@@ -445,10 +445,10 @@ def test_xmp_information_set_dc_creator():
     xmp = XmpInformation.create()
 
     creators = ["Author One", "Author Two"]
-    xmp.set_dc_creator(creators)
+    xmp.dc_creator = creators
     assert xmp.dc_creator == creators
 
-    xmp.set_dc_creator(None)
+    xmp.dc_creator = None
     assert xmp.dc_creator is None or xmp.dc_creator == []
 
 
@@ -457,10 +457,10 @@ def test_xmp_information_set_dc_description():
     xmp = XmpInformation.create()
 
     description_values = {"x-default": "Test Description", "en": "Test Description EN"}
-    xmp.set_dc_description(description_values)
+    xmp.dc_description = description_values
     assert xmp.dc_description == description_values
 
-    xmp.set_dc_description(None)
+    xmp.dc_description = None
     assert xmp.dc_description is None or xmp.dc_description == {}
 
 
@@ -469,10 +469,10 @@ def test_xmp_information_set_dc_subject():
     xmp = XmpInformation.create()
 
     subjects = ["keyword1", "keyword2", "keyword3"]
-    xmp.set_dc_subject(subjects)
+    xmp.dc_subject = subjects
     assert xmp.dc_subject == subjects
 
-    xmp.set_dc_subject(None)
+    xmp.dc_subject = None
     assert xmp.dc_subject is None or xmp.dc_subject == []
 
 
@@ -481,16 +481,16 @@ def test_xmp_information_set_dc_date():
     xmp = XmpInformation.create()
 
     test_date = datetime(2023, 12, 25, 10, 30, 45)
-    xmp.set_dc_date([test_date])
+    xmp.dc_date = [test_date]
     stored_dates = xmp.dc_date
     assert len(stored_dates) == 1
 
     date_string = "2023-12-25T10:30:45.000000Z"
-    xmp.set_dc_date([date_string])
+    xmp.dc_date = [date_string]
     stored_dates = xmp.dc_date
     assert len(stored_dates) == 1
 
-    xmp.set_dc_date(None)
+    xmp.dc_date = None
     assert xmp.dc_date is None or xmp.dc_date == []
 
 
@@ -498,24 +498,24 @@ def test_xmp_information_set_single_fields():
     """Test setting single-value metadata fields."""
     xmp = XmpInformation.create()
 
-    xmp.set_dc_coverage("Global coverage")
+    xmp.dc_coverage = "Global coverage"
     assert xmp.dc_coverage == "Global coverage"
-    xmp.set_dc_coverage(None)
+    xmp.dc_coverage = None
     assert xmp.dc_coverage is None
 
-    xmp.set_dc_format("application/pdf")
+    xmp.dc_format = "application/pdf"
     assert xmp.dc_format == "application/pdf"
-    xmp.set_dc_format(None)
+    xmp.dc_format = None
     assert xmp.dc_format is None
 
-    xmp.set_dc_identifier("unique-id-123")
+    xmp.dc_identifier = "unique-id-123"
     assert xmp.dc_identifier == "unique-id-123"
-    xmp.set_dc_identifier(None)
+    xmp.dc_identifier = None
     assert xmp.dc_identifier is None
 
-    xmp.set_dc_source("Original Source")
+    xmp.dc_source = "Original Source"
     assert xmp.dc_source == "Original Source"
-    xmp.set_dc_source(None)
+    xmp.dc_source = None
     assert xmp.dc_source is None
 
 
@@ -524,33 +524,33 @@ def test_xmp_information_set_bag_fields():
     xmp = XmpInformation.create()
 
     contributors = ["Contributor One", "Contributor Two"]
-    xmp.set_dc_contributor(contributors)
+    xmp.dc_contributor = contributors
     assert xmp.dc_contributor == contributors
-    xmp.set_dc_contributor(None)
+    xmp.dc_contributor = None
     assert xmp.dc_contributor is None or xmp.dc_contributor == []
 
     languages = ["en", "fr", "de"]
-    xmp.set_dc_language(languages)
+    xmp.dc_language = languages
     assert xmp.dc_language == languages
-    xmp.set_dc_language(None)
+    xmp.dc_language = None
     assert xmp.dc_language is None or xmp.dc_language == []
 
     publishers = ["Publisher One", "Publisher Two"]
-    xmp.set_dc_publisher(publishers)
+    xmp.dc_publisher = publishers
     assert xmp.dc_publisher == publishers
-    xmp.set_dc_publisher(None)
+    xmp.dc_publisher = None
     assert xmp.dc_publisher is None or xmp.dc_publisher == []
 
     relations = ["Related Doc 1", "Related Doc 2"]
-    xmp.set_dc_relation(relations)
+    xmp.dc_relation = relations
     assert xmp.dc_relation == relations
-    xmp.set_dc_relation(None)
+    xmp.dc_relation = None
     assert xmp.dc_relation is None or xmp.dc_relation == []
 
     types = ["Document", "Text"]
-    xmp.set_dc_type(types)
+    xmp.dc_type = types
     assert xmp.dc_type == types
-    xmp.set_dc_type(None)
+    xmp.dc_type = None
     assert xmp.dc_type is None or xmp.dc_type == []
 
 
@@ -559,10 +559,10 @@ def test_xmp_information_set_dc_rights():
     xmp = XmpInformation.create()
 
     rights_values = {"x-default": "All rights reserved", "en": "All rights reserved EN"}
-    xmp.set_dc_rights(rights_values)
+    xmp.dc_rights = rights_values
     assert xmp.dc_rights == rights_values
 
-    xmp.set_dc_rights(None)
+    xmp.dc_rights = None
     assert xmp.dc_rights is None or xmp.dc_rights == {}
 
 
@@ -570,19 +570,19 @@ def test_xmp_information_set_pdf_fields():
     """Test setting PDF namespace metadata fields."""
     xmp = XmpInformation.create()
 
-    xmp.set_pdf_keywords("keyword1, keyword2, keyword3")
+    xmp.pdf_keywords = "keyword1, keyword2, keyword3"
     assert xmp.pdf_keywords == "keyword1, keyword2, keyword3"
-    xmp.set_pdf_keywords(None)
+    xmp.pdf_keywords = None
     assert xmp.pdf_keywords is None
 
-    xmp.set_pdf_pdfversion("1.4")
+    xmp.pdf_pdfversion = "1.4"
     assert xmp.pdf_pdfversion == "1.4"
-    xmp.set_pdf_pdfversion(None)
+    xmp.pdf_pdfversion = None
     assert xmp.pdf_pdfversion is None
 
-    xmp.set_pdf_producer("pypdf")
+    xmp.pdf_producer = "pypdf"
     assert xmp.pdf_producer == "pypdf"
-    xmp.set_pdf_producer(None)
+    xmp.pdf_producer = None
     assert xmp.pdf_producer is None
 
 
@@ -591,22 +591,22 @@ def test_xmp_information_set_xmp_date_fields():
     xmp = XmpInformation.create()
     test_date = datetime(2023, 12, 25, 10, 30, 45)
 
-    xmp.set_xmp_create_date(test_date)
+    xmp.xmp_create_date = test_date
     stored_date = xmp.xmp_create_date
     assert isinstance(stored_date, datetime)
-    xmp.set_xmp_create_date(None)
+    xmp.xmp_create_date = None
     assert xmp.xmp_create_date is None
 
-    xmp.set_xmp_modify_date(test_date)
+    xmp.xmp_modify_date = test_date
     stored_date = xmp.xmp_modify_date
     assert isinstance(stored_date, datetime)
-    xmp.set_xmp_modify_date(None)
+    xmp.xmp_modify_date = None
     assert xmp.xmp_modify_date is None
 
-    xmp.set_xmp_metadata_date(test_date)
+    xmp.xmp_metadata_date = test_date
     stored_date = xmp.xmp_metadata_date
     assert isinstance(stored_date, datetime)
-    xmp.set_xmp_metadata_date(None)
+    xmp.xmp_metadata_date = None
     assert xmp.xmp_metadata_date is None
 
 
@@ -614,9 +614,9 @@ def test_xmp_information_set_xmp_creator_tool():
     """Test setting xmp:CreatorTool metadata."""
     xmp = XmpInformation.create()
 
-    xmp.set_xmp_creator_tool("pypdf")
+    xmp.xmp_creator_tool = "pypdf"
     assert xmp.xmp_creator_tool == "pypdf"
-    xmp.set_xmp_creator_tool(None)
+    xmp.xmp_creator_tool = None
     assert xmp.xmp_creator_tool is None
 
 
@@ -625,15 +625,15 @@ def test_xmp_information_set_xmpmm_fields():
     xmp = XmpInformation.create()
 
     doc_id = "uuid:12345678-1234-1234-1234-123456789abc"
-    xmp.set_xmpmm_document_id(doc_id)
+    xmp.xmpmm_document_id = doc_id
     assert xmp.xmpmm_document_id == doc_id
-    xmp.set_xmpmm_document_id(None)
+    xmp.xmpmm_document_id = None
     assert xmp.xmpmm_document_id is None
 
     instance_id = "uuid:87654321-4321-4321-4321-cba987654321"
-    xmp.set_xmpmm_instance_id(instance_id)
+    xmp.xmpmm_instance_id = instance_id
     assert xmp.xmpmm_instance_id == instance_id
-    xmp.set_xmpmm_instance_id(None)
+    xmp.xmpmm_instance_id = None
     assert xmp.xmpmm_instance_id is None
 
 
@@ -641,23 +641,23 @@ def test_xmp_information_set_pdfaid_fields():
     """Test setting PDF/A ID namespace metadata fields."""
     xmp = XmpInformation.create()
 
-    xmp.set_pdfaid_part("1")
+    xmp.pdfaid_part = "1"
     assert xmp.pdfaid_part == "1"
-    xmp.set_pdfaid_part(None)
+    xmp.pdfaid_part = None
     assert xmp.pdfaid_part is None
 
-    xmp.set_pdfaid_conformance("B")
+    xmp.pdfaid_conformance = "B"
     assert xmp.pdfaid_conformance == "B"
-    xmp.set_pdfaid_conformance(None)
+    xmp.pdfaid_conformance = None
     assert xmp.pdfaid_conformance is None
 
 
 def test_xmp_information_create_with_writer():
     """Test using XmpInformation.create() with PdfWriter."""
     xmp = XmpInformation.create()
-    xmp.set_dc_title({"x-default": "Created with pypdf"})
-    xmp.set_dc_creator(["pypdf user"])
-    xmp.set_pdf_producer("pypdf library")
+    xmp.dc_title = {"x-default": "Created with pypdf"}
+    xmp.dc_creator = ["pypdf user"]
+    xmp.pdf_producer = "pypdf library"
 
     writer = PdfWriter()
     writer.add_blank_page(612, 792)
@@ -689,112 +689,90 @@ def test_xmp_information_namespace_prefix():
 
 
 def test_xmp_information_owner_document_none_errors():
-    """Test error handling when ownerDocument is None."""
     xmp = XmpInformation.create()
 
-    # Save original owner document
     original_owner = xmp.rdf_root.ownerDocument
 
     try:
-        # Remove existing descriptions to force creation of new one
         for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
             xmp.rdf_root.removeChild(desc)
 
-        # Set ownerDocument to None to trigger error conditions
         xmp.rdf_root.ownerDocument = None
 
-        # Test _get_or_create_description error (lines 459-465)
         with pytest.raises(RuntimeError, match="XMP Document is None"):
             xmp._get_or_create_description()
 
-        # Test _update_stream error (line 597)
         with pytest.raises(RuntimeError, match="XMP Document is None"):
             xmp._update_stream()
 
-        # Restore owner document for other tests (but clear the descriptions again)
         xmp.rdf_root.ownerDocument = original_owner
         for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
             xmp.rdf_root.removeChild(desc)
         xmp.rdf_root.ownerDocument = None
 
-        # Test _set_single_value error (line 484) - this will try to create description
         with pytest.raises(RuntimeError, match="XMP Document is None"):
-            xmp.set_dc_coverage("test coverage")
+            xmp.dc_coverage = "test coverage"
 
-        # Restore and clear again for bag values test
         xmp.rdf_root.ownerDocument = original_owner
         for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
             xmp.rdf_root.removeChild(desc)
         xmp.rdf_root.ownerDocument = None
 
-        # Test _set_bag_values error (line 506)
         with pytest.raises(RuntimeError, match="XMP Document is None"):
-            xmp.set_dc_contributor(["contributor"])
+            xmp.dc_contributor = ["contributor"]
 
-        # Restore and clear again for seq values test
         xmp.rdf_root.ownerDocument = original_owner
         for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
             xmp.rdf_root.removeChild(desc)
         xmp.rdf_root.ownerDocument = None
 
-        # Test _set_seq_values error (line 535)
         with pytest.raises(RuntimeError, match="XMP Document is None"):
-            xmp.set_dc_creator(["creator"])
+            xmp.dc_creator = ["creator"]
 
-        # Restore and clear again for langalt values test
         xmp.rdf_root.ownerDocument = original_owner
         for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
             xmp.rdf_root.removeChild(desc)
         xmp.rdf_root.ownerDocument = None
 
-        # Test _set_langalt_values error (line 564)
         with pytest.raises(RuntimeError, match="XMP Document is None"):
-            xmp.set_dc_title({"x-default": "title"})
+            xmp.dc_title = {"x-default": "title"}
 
     finally:
-        # Restore original owner document
         xmp.rdf_root.ownerDocument = original_owner
 
 
 def test_xmp_information_remove_existing_attribute():
-    """Test removing existing attribute node (line 479)."""
     xmp = XmpInformation.create()
 
-    # Set a single value first to create an attribute
-    xmp.set_dc_coverage("initial coverage")
+    xmp.dc_coverage = "initial coverage"
     assert xmp.dc_coverage == "initial coverage"
 
-    # Set a different value to trigger attribute removal and replacement
-    xmp.set_dc_coverage("updated coverage")
+    xmp.dc_coverage = "updated coverage"
     assert xmp.dc_coverage == "updated coverage"
 
-    # Set to None to remove the attribute entirely
-    xmp.set_dc_coverage(None)
+    xmp.dc_coverage = None
     assert xmp.dc_coverage is None
 
 
 def test_xmp_information_edge_case_coverage():
-    """Test additional edge cases for complete coverage."""
     xmp = XmpInformation.create()
 
-    # Test setting empty values
-    xmp.set_dc_contributor([])
+    xmp.dc_contributor = []
     assert xmp.dc_contributor == []
 
-    xmp.set_dc_creator([])
+    xmp.dc_creator = []
     assert xmp.dc_creator == []
 
-    xmp.set_dc_title({})
+    xmp.dc_title = {}
     assert xmp.dc_title == {}
 
-    # Test setting None values
-    xmp.set_dc_contributor(None)
+    xmp.dc_contributor = None
     assert xmp.dc_contributor == []
 
-    xmp.set_dc_creator(None)
+    xmp.dc_creator = None
     assert xmp.dc_creator == []
 
-    xmp.set_dc_title(None)
+    xmp.dc_title = None
     assert xmp.dc_title == {}
 
 
@@ -802,15 +780,12 @@ def test_xmp_information_create_new_description():
     """Test creating new description elements (lines 462-465)."""
     xmp = XmpInformation.create()
 
-    # Remove all existing descriptions
     for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
         xmp.rdf_root.removeChild(desc)
 
-    # Create a new description with specific about URI (covers lines 462-465)
     desc = xmp._get_or_create_description("test-uri")
     assert desc.getAttributeNS(pypdf.xmp.RDF_NAMESPACE, "about") == "test-uri"
 
-    # Test that it creates the element with proper namespace
     assert desc.tagName == "rdf:Description"
     assert desc.namespaceURI == pypdf.xmp.RDF_NAMESPACE
 
@@ -819,62 +794,46 @@ def test_xmp_information_attribute_handling():
     """Test attribute node removal and creation (line 479, 484, 506, 535, 564)."""
     xmp = XmpInformation.create()
 
-    # Remove all existing descriptions first
     for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
         xmp.rdf_root.removeChild(desc)
 
-    # Test _set_single_value with new description creation (covers line 484 path where doc is not None)
-    xmp.set_dc_coverage("test coverage")
+    xmp.dc_coverage = "test coverage"
     assert xmp.dc_coverage == "test coverage"
 
-    # Test _set_bag_values with new description creation (covers line 506 path where doc is not None)
-    xmp.set_dc_contributor(["contributor1", "contributor2"])
+    xmp.dc_contributor = ["contributor1", "contributor2"]
     assert xmp.dc_contributor == ["contributor1", "contributor2"]
 
-    # Test _set_seq_values with new description creation (covers line 535 path where doc is not None)
-    xmp.set_dc_creator(["creator1", "creator2"])
+    xmp.dc_creator = ["creator1", "creator2"]
     assert xmp.dc_creator == ["creator1", "creator2"]
 
-    # Test _set_langalt_values with new description creation (covers line 564 path where doc is not None)
-    xmp.set_dc_title({"x-default": "Test Title", "en": "Test Title EN"})
+    xmp.dc_title = {"x-default": "Test Title", "en": "Test Title EN"}
     assert xmp.dc_title == {"x-default": "Test Title", "en": "Test Title EN"}
 
-    # Test attribute node removal (line 479) by setting an attribute first, then changing it
-    xmp.set_dc_format("application/pdf")
+    xmp.dc_format = "application/pdf"
     assert xmp.dc_format == "application/pdf"
 
-    # Change the value - this should trigger attribute node removal
-    xmp.set_dc_format("text/plain")
+    xmp.dc_format = "text/plain"
     assert xmp.dc_format == "text/plain"
 
 
 def test_xmp_information_complete_coverage():
-    """Test remaining uncovered lines for complete coverage."""
     xmp = XmpInformation.create()
 
-    # Test scenario where ownerDocument is available for all setter error paths
-    # First remove all descriptions to force new creation
     for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
         xmp.rdf_root.removeChild(desc)
 
-    # Test scenario where ownerDocument is available
-
-    # Test the case where ownerDocument is not None in _set_single_value (covers line 484 success path)
     desc = xmp._get_or_create_description()
     desc.setAttribute("test", "value")
-    # Now modify an existing attribute to test attribute removal (line 479)
-    xmp.set_dc_source("original")
-    xmp.set_dc_source("modified")  # This should trigger existing attribute removal
+    xmp.dc_source = "original"
+    xmp.dc_source = "modified"
     assert xmp.dc_source == "modified"
 
-    # Force recreate and test non-None document paths in other setters
     for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
         xmp.rdf_root.removeChild(desc)
 
-    # Test success paths (non-None document) for all setter types
-    xmp.set_dc_contributor(["test1"])  # covers line 506 success path
-    xmp.set_dc_creator(["test2"])      # covers line 535 success path
-    xmp.set_dc_title({"x-default": "test3"})  # covers line 564 success path
+    xmp.dc_contributor = ["test1"]
+    xmp.dc_creator = ["test2"]
+    xmp.dc_title = {"x-default": "test3"}
 
     assert xmp.dc_contributor == ["test1"]
     assert xmp.dc_creator == ["test2"]

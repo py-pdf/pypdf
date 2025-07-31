@@ -308,116 +308,260 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
                 text += child.data
         return text
 
-    dc_contributor = property(_getter_bag(DC_NAMESPACE, "contributor"))
-    """
-    Contributors to the resource (other than the authors).
+    @property
+    def dc_contributor(self) -> Optional[list[str]]:
+        """Contributors to the resource (other than the authors)."""
+        return _getter_bag(DC_NAMESPACE, "contributor")(self)
 
-    An unsorted array of names.
-    """
+    @dc_contributor.setter
+    def dc_contributor(self, values: Optional[list[str]]) -> None:
+        self._set_bag_values(DC_NAMESPACE, "contributor", values)
 
-    dc_coverage = property(_getter_single(DC_NAMESPACE, "coverage"))
-    """Text describing the extent or scope of the resource."""
+    @property
+    def dc_coverage(self) -> Optional[str]:
+        """Text describing the extent or scope of the resource."""
+        return _getter_single(DC_NAMESPACE, "coverage")(self)
 
-    dc_creator = property(_getter_seq(DC_NAMESPACE, "creator"))
-    """A sorted array of names of the authors of the resource, listed in order
-    of precedence."""
+    @dc_coverage.setter
+    def dc_coverage(self, value: Optional[str]) -> None:
+        self._set_single_value(DC_NAMESPACE, "coverage", value)
 
-    dc_date = property(_getter_seq(DC_NAMESPACE, "date", _converter_date))
-    """
-    A sorted array of dates (datetime.datetime instances) of significance to
-    the resource.
+    @property
+    def dc_creator(self) -> Optional[list[str]]:
+        """A sorted array of names of the authors of the resource, listed in order of precedence."""
+        return _getter_seq(DC_NAMESPACE, "creator")(self)
 
-    The dates and times are in UTC.
-    """
+    @dc_creator.setter
+    def dc_creator(self, values: Optional[list[str]]) -> None:
+        self._set_seq_values(DC_NAMESPACE, "creator", values)
 
-    dc_description = property(_getter_langalt(DC_NAMESPACE, "description"))
-    """A language-keyed dictionary of textual descriptions of the content of the
-    resource."""
+    @property
+    def dc_date(self) -> Optional[list[datetime.datetime]]:
+        """A sorted array of dates of significance to the resource. The dates and times are in UTC."""
+        return _getter_seq(DC_NAMESPACE, "date", _converter_date)(self)
 
-    dc_format = property(_getter_single(DC_NAMESPACE, "format"))
-    """The mime-type of the resource."""
+    @dc_date.setter
+    def dc_date(self, values: Optional[list[Union[str, datetime.datetime]]]) -> None:
+        if values is None:
+            self._set_seq_values(DC_NAMESPACE, "date", None)
+        else:
+            date_strings = []
+            for value in values:
+                if isinstance(value, datetime.datetime):
+                    date_strings.append(value.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+                else:
+                    date_strings.append(str(value))
+            self._set_seq_values(DC_NAMESPACE, "date", date_strings)
 
-    dc_identifier = property(_getter_single(DC_NAMESPACE, "identifier"))
-    """Unique identifier of the resource."""
+    @property
+    def dc_description(self) -> Optional[dict[str, str]]:
+        """A language-keyed dictionary of textual descriptions of the content of the resource."""
+        return _getter_langalt(DC_NAMESPACE, "description")(self)
 
-    dc_language = property(_getter_bag(DC_NAMESPACE, "language"))
-    """An unordered array specifying the languages used in the resource."""
+    @dc_description.setter
+    def dc_description(self, values: Optional[dict[str, str]]) -> None:
+        self._set_langalt_values(DC_NAMESPACE, "description", values)
 
-    dc_publisher = property(_getter_bag(DC_NAMESPACE, "publisher"))
-    """An unordered array of publisher names."""
+    @property
+    def dc_format(self) -> Optional[str]:
+        """The mime-type of the resource."""
+        return _getter_single(DC_NAMESPACE, "format")(self)
 
-    dc_relation = property(_getter_bag(DC_NAMESPACE, "relation"))
-    """An unordered array of text descriptions of relationships to other
-    documents."""
+    @dc_format.setter
+    def dc_format(self, value: Optional[str]) -> None:
+        self._set_single_value(DC_NAMESPACE, "format", value)
 
-    dc_rights = property(_getter_langalt(DC_NAMESPACE, "rights"))
-    """A language-keyed dictionary of textual descriptions of the rights the
-    user has to this resource."""
+    @property
+    def dc_identifier(self) -> Optional[str]:
+        """Unique identifier of the resource."""
+        return _getter_single(DC_NAMESPACE, "identifier")(self)
 
-    dc_source = property(_getter_single(DC_NAMESPACE, "source"))
-    """Unique identifier of the work from which this resource was derived."""
+    @dc_identifier.setter
+    def dc_identifier(self, value: Optional[str]) -> None:
+        self._set_single_value(DC_NAMESPACE, "identifier", value)
 
-    dc_subject = property(_getter_bag(DC_NAMESPACE, "subject"))
-    """An unordered array of descriptive phrases or keywords that specify the
-    topic of the content of the resource."""
+    @property
+    def dc_language(self) -> Optional[list[str]]:
+        """An unordered array specifying the languages used in the resource."""
+        return _getter_bag(DC_NAMESPACE, "language")(self)
 
-    dc_title = property(_getter_langalt(DC_NAMESPACE, "title"))
-    """A language-keyed dictionary of the title of the resource."""
+    @dc_language.setter
+    def dc_language(self, values: Optional[list[str]]) -> None:
+        self._set_bag_values(DC_NAMESPACE, "language", values)
 
-    dc_type = property(_getter_bag(DC_NAMESPACE, "type"))
-    """An unordered array of textual descriptions of the document type."""
+    @property
+    def dc_publisher(self) -> Optional[list[str]]:
+        """An unordered array of publisher names."""
+        return _getter_bag(DC_NAMESPACE, "publisher")(self)
 
-    pdf_keywords = property(_getter_single(PDF_NAMESPACE, "Keywords"))
-    """An unformatted text string representing document keywords."""
+    @dc_publisher.setter
+    def dc_publisher(self, values: Optional[list[str]]) -> None:
+        self._set_bag_values(DC_NAMESPACE, "publisher", values)
 
-    pdf_pdfversion = property(_getter_single(PDF_NAMESPACE, "PDFVersion"))
-    """The PDF file version, for example 1.0 or 1.3."""
+    @property
+    def dc_relation(self) -> Optional[list[str]]:
+        """An unordered array of text descriptions of relationships to other documents."""
+        return _getter_bag(DC_NAMESPACE, "relation")(self)
 
-    pdf_producer = property(_getter_single(PDF_NAMESPACE, "Producer"))
-    """The name of the tool that saved the document as a PDF."""
+    @dc_relation.setter
+    def dc_relation(self, values: Optional[list[str]]) -> None:
+        self._set_bag_values(DC_NAMESPACE, "relation", values)
 
-    xmp_create_date = property(
-        _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)
-    )
-    """
-    The date and time the resource was originally created.
+    @property
+    def dc_rights(self) -> Optional[dict[str, str]]:
+        """A language-keyed dictionary of textual descriptions of the rights the user has to this resource."""
+        return _getter_langalt(DC_NAMESPACE, "rights")(self)
 
-    The date and time are returned as a UTC datetime.datetime object.
-    """
+    @dc_rights.setter
+    def dc_rights(self, values: Optional[dict[str, str]]) -> None:
+        self._set_langalt_values(DC_NAMESPACE, "rights", values)
 
-    xmp_modify_date = property(
-        _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
-    )
-    """
-    The date and time the resource was last modified.
+    @property
+    def dc_source(self) -> Optional[str]:
+        """Unique identifier of the work from which this resource was derived."""
+        return _getter_single(DC_NAMESPACE, "source")(self)
 
-    The date and time are returned as a UTC datetime.datetime object.
-    """
+    @dc_source.setter
+    def dc_source(self, value: Optional[str]) -> None:
+        self._set_single_value(DC_NAMESPACE, "source", value)
 
-    xmp_metadata_date = property(
-        _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)
-    )
-    """
-    The date and time that any metadata for this resource was last changed.
+    @property
+    def dc_subject(self) -> Optional[list[str]]:
+        """An unordered array of descriptive phrases or keywords that specify the topic of the content."""
+        return _getter_bag(DC_NAMESPACE, "subject")(self)
 
-    The date and time are returned as a UTC datetime.datetime object.
-    """
+    @dc_subject.setter
+    def dc_subject(self, values: Optional[list[str]]) -> None:
+        self._set_bag_values(DC_NAMESPACE, "subject", values)
 
-    xmp_creator_tool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))
-    """The name of the first known tool used to create the resource."""
+    @property
+    def dc_title(self) -> Optional[dict[str, str]]:
+        """A language-keyed dictionary of the title of the resource."""
+        return _getter_langalt(DC_NAMESPACE, "title")(self)
 
-    xmpmm_document_id = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
-    """The common identifier for all versions and renditions of this resource."""
+    @dc_title.setter
+    def dc_title(self, values: Optional[dict[str, str]]) -> None:
+        self._set_langalt_values(DC_NAMESPACE, "title", values)
 
-    xmpmm_instance_id = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
-    """An identifier for a specific incarnation of a document, updated each
-    time a file is saved."""
+    @property
+    def dc_type(self) -> Optional[list[str]]:
+        """An unordered array of textual descriptions of the document type."""
+        return _getter_bag(DC_NAMESPACE, "type")(self)
 
-    pdfaid_part = property(_getter_single(PDFAID_NAMESPACE, "part"))
-    """The part of the PDF/A standard that the document conforms to (e.g., 1, 2, 3)."""
+    @dc_type.setter
+    def dc_type(self, values: Optional[list[str]]) -> None:
+        self._set_bag_values(DC_NAMESPACE, "type", values)
 
-    pdfaid_conformance = property(_getter_single(PDFAID_NAMESPACE, "conformance"))
-    """The conformance level within the PDF/A standard (e.g., 'A', 'B', 'U')."""
+    @property
+    def pdf_keywords(self) -> Optional[str]:
+        """An unformatted text string representing document keywords."""
+        return _getter_single(PDF_NAMESPACE, "Keywords")(self)
+
+    @pdf_keywords.setter
+    def pdf_keywords(self, value: Optional[str]) -> None:
+        self._set_single_value(PDF_NAMESPACE, "Keywords", value)
+
+    @property
+    def pdf_pdfversion(self) -> Optional[str]:
+        """The PDF file version, for example 1.0 or 1.3."""
+        return _getter_single(PDF_NAMESPACE, "PDFVersion")(self)
+
+    @pdf_pdfversion.setter
+    def pdf_pdfversion(self, value: Optional[str]) -> None:
+        self._set_single_value(PDF_NAMESPACE, "PDFVersion", value)
+
+    @property
+    def pdf_producer(self) -> Optional[str]:
+        """The name of the tool that saved the document as a PDF."""
+        return _getter_single(PDF_NAMESPACE, "Producer")(self)
+
+    @pdf_producer.setter
+    def pdf_producer(self, value: Optional[str]) -> None:
+        self._set_single_value(PDF_NAMESPACE, "Producer", value)
+
+    @property
+    def xmp_create_date(self) -> Optional[datetime.datetime]:
+        """The date and time the resource was originally created. Returned as a UTC datetime object."""
+        return _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)(self)
+
+    @xmp_create_date.setter
+    def xmp_create_date(self, value: Optional[datetime.datetime]) -> None:
+        if value:
+            date_str = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            self._set_single_value(XMP_NAMESPACE, "CreateDate", date_str)
+        else:
+            self._set_single_value(XMP_NAMESPACE, "CreateDate", None)
+
+    @property
+    def xmp_modify_date(self) -> Optional[datetime.datetime]:
+        """The date and time the resource was last modified. Returned as a UTC datetime object."""
+        return _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)(self)
+
+    @xmp_modify_date.setter
+    def xmp_modify_date(self, value: Optional[datetime.datetime]) -> None:
+        if value:
+            date_str = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            self._set_single_value(XMP_NAMESPACE, "ModifyDate", date_str)
+        else:
+            self._set_single_value(XMP_NAMESPACE, "ModifyDate", None)
+
+    @property
+    def xmp_metadata_date(self) -> Optional[datetime.datetime]:
+        """The date and time that any metadata for this resource was last changed. Returned as a UTC datetime object."""
+        return _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)(self)
+
+    @xmp_metadata_date.setter
+    def xmp_metadata_date(self, value: Optional[datetime.datetime]) -> None:
+        if value:
+            date_str = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            self._set_single_value(XMP_NAMESPACE, "MetadataDate", date_str)
+        else:
+            self._set_single_value(XMP_NAMESPACE, "MetadataDate", None)
+
+    @property
+    def xmp_creator_tool(self) -> Optional[str]:
+        """The name of the first known tool used to create the resource."""
+        return _getter_single(XMP_NAMESPACE, "CreatorTool")(self)
+
+    @xmp_creator_tool.setter
+    def xmp_creator_tool(self, value: Optional[str]) -> None:
+        self._set_single_value(XMP_NAMESPACE, "CreatorTool", value)
+
+    @property
+    def xmpmm_document_id(self) -> Optional[str]:
+        """The common identifier for all versions and renditions of this resource."""
+        return _getter_single(XMPMM_NAMESPACE, "DocumentID")(self)
+
+    @xmpmm_document_id.setter
+    def xmpmm_document_id(self, value: Optional[str]) -> None:
+        self._set_single_value(XMPMM_NAMESPACE, "DocumentID", value)
+
+    @property
+    def xmpmm_instance_id(self) -> Optional[str]:
+        """An identifier for a specific incarnation of a document, updated each time a file is saved."""
+        return _getter_single(XMPMM_NAMESPACE, "InstanceID")(self)
+
+    @xmpmm_instance_id.setter
+    def xmpmm_instance_id(self, value: Optional[str]) -> None:
+        self._set_single_value(XMPMM_NAMESPACE, "InstanceID", value)
+
+    @property
+    def pdfaid_part(self) -> Optional[str]:
+        """The part of the PDF/A standard that the document conforms to (e.g., 1, 2, 3)."""
+        return _getter_single(PDFAID_NAMESPACE, "part")(self)
+
+    @pdfaid_part.setter
+    def pdfaid_part(self, value: Optional[str]) -> None:
+        self._set_single_value(PDFAID_NAMESPACE, "part", value)
+
+    @property
+    def pdfaid_conformance(self) -> Optional[str]:
+        """The conformance level within the PDF/A standard (e.g., 'A', 'B', 'U')."""
+        return _getter_single(PDFAID_NAMESPACE, "conformance")(self)
+
+    @pdfaid_conformance.setter
+    def pdfaid_conformance(self, value: Optional[str]) -> None:
+        self._set_single_value(PDFAID_NAMESPACE, "conformance", value)
 
     @property
     def custom_properties(self) -> dict[Any, Any]:
@@ -597,122 +741,3 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
             raise RuntimeError("XMP Document is None")
         xml_data = doc.toxml(encoding="utf-8")
         self.stream.set_data(xml_data)
-
-    def set_dc_contributor(self, values: Optional[list[str]]) -> None:
-        """Set contributors to the resource (other than the authors)."""
-        self._set_bag_values(DC_NAMESPACE, "contributor", values)
-
-    def set_dc_coverage(self, value: Optional[str]) -> None:
-        """Set text describing the extent or scope of the resource."""
-        self._set_single_value(DC_NAMESPACE, "coverage", value)
-
-    def set_dc_creator(self, values: Optional[list[str]]) -> None:
-        """Set authors of the resource, listed in order of precedence."""
-        self._set_seq_values(DC_NAMESPACE, "creator", values)
-
-    def set_dc_date(self, values: Optional[list[Union[str, datetime.datetime]]]) -> None:
-        """Set dates of significance to the resource."""
-        if values is None:
-            date_strings = None
-        else:
-            date_strings = []
-            for value in values:
-                if isinstance(value, datetime.datetime):
-                    date_strings.append(value.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
-                else:
-                    date_strings.append(str(value))
-        self._set_seq_values(DC_NAMESPACE, "date", date_strings)
-
-    def set_dc_description(self, values: Optional[dict[str, str]]) -> None:
-        """Set language-keyed descriptions of the content of the resource."""
-        self._set_langalt_values(DC_NAMESPACE, "description", values)
-
-    def set_dc_format(self, value: Optional[str]) -> None:
-        """Set the mime-type of the resource."""
-        self._set_single_value(DC_NAMESPACE, "format", value)
-
-    def set_dc_identifier(self, value: Optional[str]) -> None:
-        """Set unique identifier of the resource."""
-        self._set_single_value(DC_NAMESPACE, "identifier", value)
-
-    def set_dc_language(self, values: Optional[list[str]]) -> None:
-        """Set languages used in the resource."""
-        self._set_bag_values(DC_NAMESPACE, "language", values)
-
-    def set_dc_publisher(self, values: Optional[list[str]]) -> None:
-        """Set publisher names."""
-        self._set_bag_values(DC_NAMESPACE, "publisher", values)
-
-    def set_dc_relation(self, values: Optional[list[str]]) -> None:
-        """Set text descriptions of relationships to other documents."""
-        self._set_bag_values(DC_NAMESPACE, "relation", values)
-
-    def set_dc_rights(self, values: Optional[dict[str, str]]) -> None:
-        """Set language-keyed descriptions of the rights the user has to this resource."""
-        self._set_langalt_values(DC_NAMESPACE, "rights", values)
-
-    def set_dc_source(self, value: Optional[str]) -> None:
-        """Set unique identifier of the work from which this resource was derived."""
-        self._set_single_value(DC_NAMESPACE, "source", value)
-
-    def set_dc_subject(self, values: Optional[list[str]]) -> None:
-        """Set descriptive phrases or keywords that specify the topic of the content."""
-        self._set_bag_values(DC_NAMESPACE, "subject", values)
-
-    def set_dc_title(self, values: Optional[dict[str, str]]) -> None:
-        """Set language-keyed title of the resource."""
-        self._set_langalt_values(DC_NAMESPACE, "title", values)
-
-    def set_dc_type(self, values: Optional[list[str]]) -> None:
-        """Set textual descriptions of the document type."""
-        self._set_bag_values(DC_NAMESPACE, "type", values)
-
-    def set_pdf_keywords(self, value: Optional[str]) -> None:
-        """Set document keywords."""
-        self._set_single_value(PDF_NAMESPACE, "Keywords", value)
-
-    def set_pdf_pdfversion(self, value: Optional[str]) -> None:
-        """Set the PDF file version."""
-        self._set_single_value(PDF_NAMESPACE, "PDFVersion", value)
-
-    def set_pdf_producer(self, value: Optional[str]) -> None:
-        """Set the name of the tool that saved the document as a PDF."""
-        self._set_single_value(PDF_NAMESPACE, "Producer", value)
-
-    def set_xmp_create_date(self, value: Optional[Union[str, datetime.datetime]]) -> None:
-        """Set the date and time the resource was originally created."""
-        if isinstance(value, datetime.datetime):
-            value = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        self._set_single_value(XMP_NAMESPACE, "CreateDate", value)
-
-    def set_xmp_modify_date(self, value: Optional[Union[str, datetime.datetime]]) -> None:
-        """Set the date and time the resource was last modified."""
-        if isinstance(value, datetime.datetime):
-            value = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        self._set_single_value(XMP_NAMESPACE, "ModifyDate", value)
-
-    def set_xmp_metadata_date(self, value: Optional[Union[str, datetime.datetime]]) -> None:
-        """Set the date and time that any metadata for this resource was last changed."""
-        if isinstance(value, datetime.datetime):
-            value = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        self._set_single_value(XMP_NAMESPACE, "MetadataDate", value)
-
-    def set_xmp_creator_tool(self, value: Optional[str]) -> None:
-        """Set the name of the first known tool used to create the resource."""
-        self._set_single_value(XMP_NAMESPACE, "CreatorTool", value)
-
-    def set_xmpmm_document_id(self, value: Optional[str]) -> None:
-        """Set the common identifier for all versions and renditions of this resource."""
-        self._set_single_value(XMPMM_NAMESPACE, "DocumentID", value)
-
-    def set_xmpmm_instance_id(self, value: Optional[str]) -> None:
-        """Set an identifier for a specific incarnation of a document."""
-        self._set_single_value(XMPMM_NAMESPACE, "InstanceID", value)
-
-    def set_pdfaid_part(self, value: Optional[str]) -> None:
-        """Set the part of the PDF/A standard that the document conforms to."""
-        self._set_single_value(PDFAID_NAMESPACE, "part", value)
-
-    def set_pdfaid_conformance(self, value: Optional[str]) -> None:
-        """Set the conformance level within the PDF/A standard."""
-        self._set_single_value(PDFAID_NAMESPACE, "conformance", value)
