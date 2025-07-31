@@ -30,9 +30,10 @@ import hashlib
 import re
 import sys
 from binascii import unhexlify
+from collections.abc import Sequence
 from math import log10
 from struct import iter_unpack
-from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Union, cast
+from typing import Any, Callable, ClassVar, Optional, Union, cast
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeGuard
@@ -787,7 +788,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     prefix = b"/"
-    renumber_table: ClassVar[Dict[str, bytes]] = {
+    renumber_table: ClassVar[dict[str, bytes]] = {
         **{chr(i): f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
