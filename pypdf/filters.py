@@ -797,7 +797,7 @@ def decode_stream_data(stream: Any) -> bytes:
     return data
 
 
-def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, Any]:
+def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
 
@@ -823,7 +823,7 @@ def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, 
 
     def _apply_alpha(
         img: Image.Image,
-        x_object_obj: dict[str, Any],
+        x_object: dict[str, Any],
         obj_as_text: str,
         image_format: str,
         extension: str,
