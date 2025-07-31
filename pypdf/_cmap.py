@@ -2,7 +2,7 @@ import binascii
 from binascii import Error as BinasciiError
 from binascii import unhexlify
 from math import ceil
-from typing import Any, Dict, List, Tuple, Union, cast
+from typing import Any, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
@@ -19,7 +19,7 @@ from .generic import (
 # code freely inspired from @twiggy ; see #711
 def build_char_map(
     font_name: str, space_width: float, obj: DictionaryObject
-) -> Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any], DictionaryObject]:
+) -> tuple[str, float, Union[str, dict[int, str]], dict[Any, Any], DictionaryObject]:
     """
     Determine information about a font.
 
@@ -42,7 +42,7 @@ def build_char_map(
 
 def build_char_map_from_dict(
     space_width: float, ft: DictionaryObject
-) -> Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]]:
+) -> tuple[str, float, Union[str, dict[int, str]], dict[Any, Any]]:
     """
     Determine information about a font.
 
@@ -73,7 +73,7 @@ def build_char_map_from_dict(
 
 
 # used when missing data, e.g. font def missing
-unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]] = (
+unknown_char_map: tuple[str, float, Union[str, dict[int, str]], dict[Any, Any]] = (
     "Unknown",
     9999,
     dict.fromkeys(range(256), "�"),
@@ -81,7 +81,7 @@ unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]] 
 )
 
 
-_predefined_cmap: Dict[str, str] = {
+_predefined_cmap: dict[str, str] = {
     "/Identity-H": "utf-16-be",
     "/Identity-V": "utf-16-be",
     "/GB-EUC-H": "gbk",
@@ -104,7 +104,7 @@ _predefined_cmap: Dict[str, str] = {
 }
 
 # manually extracted from http://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz
-_default_fonts_space_width: Dict[str, int] = {
+_default_fonts_space_width: dict[str, int] = {
     "/Courier": 600,
     "/Courier-Bold": 600,
     "/Courier-BoldOblique": 600,
@@ -128,7 +128,7 @@ _default_fonts_space_width: Dict[str, int] = {
 
 def get_encoding(
     ft: DictionaryObject
-) -> Tuple[Union[str, Dict[int, str]], Dict[Any, Any]]:
+) -> tuple[Union[str, dict[int, str]], dict[Any, Any]]:
     encoding = _parse_encoding(ft)
     map_dict, int_entry = _parse_to_unicode(ft)
 
@@ -146,8 +146,8 @@ def get_encoding(
 
 def _parse_encoding(
     ft: DictionaryObject
-) -> Union[str, Dict[int, str]]:
-    encoding: Union[str, List[str], Dict[int, str]] = []
+) -> Union[str, dict[int, str]]:
+    encoding: Union[str, list[str], dict[int, str]] = []
     if "/Encoding" not in ft:
         if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
             encoding = dict(
@@ -205,13 +205,13 @@ def _parse_encoding(
 
 def _parse_to_unicode(
     ft: DictionaryObject
-) -> Tuple[Dict[Any, Any], List[int]]:
+) -> tuple[dict[Any, Any], list[int]]:
     # will store all translation code
     # and map_dict[-1] we will have the number of bytes to convert
-    map_dict: Dict[Any, Any] = {}
+    map_dict: dict[Any, Any] = {}
 
     # will provide the list of cmap keys as int to correct encoding
-    int_entry: List[int] = []
+    int_entry: list[int] = []
 
     if "/ToUnicode" not in ft:
         if ft.get("/Subtype", "") == "/Type1":
@@ -220,7 +220,7 @@ def _parse_to_unicode(
     process_rg: bool = False
     process_char: bool = False
     multiline_rg: Union[
-        None, Tuple[int, int]
+        None, tuple[int, int]
     ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
@@ -237,7 +237,7 @@ def _parse_to_unicode(
 
 
 def get_actual_str_key(
-    value_char: str, encoding: Union[str, Dict[int, str]], map_dict: Dict[Any, Any]
+    value_char: str, encoding: Union[str, dict[int, str]], map_dict: dict[Any, Any]
 ) -> str:
     key_dict = {}
     if isinstance(encoding, dict):
@@ -292,10 +292,10 @@ def process_cm_line(
     line: bytes,
     process_rg: bool,
     process_char: bool,
-    multiline_rg: Union[None, Tuple[int, int]],
-    map_dict: Dict[Any, Any],
-    int_entry: List[int],
-) -> Tuple[bool, bool, Union[None, Tuple[int, int]]]:
+    multiline_rg: Union[None, tuple[int, int]],
+    map_dict: dict[Any, Any],
+    int_entry: list[int],
+) -> tuple[bool, bool, Union[None, tuple[int, int]]]:
     if line == b"" or line[0] == 37:  # 37 = %
         return process_rg, process_char, multiline_rg
     line = line.replace(b"\t", b" ")
@@ -319,10 +319,10 @@ def process_cm_line(
 
 def parse_bfrange(
     line: bytes,
-    map_dict: Dict[Any, Any],
-    int_entry: List[int],
-    multiline_rg: Union[None, Tuple[int, int]],
-) -> Union[None, Tuple[int, int]]:
+    map_dict: dict[Any, Any],
+    int_entry: list[int],
+    multiline_rg: Union[None, tuple[int, int]],
+) -> Union[None, tuple[int, int]]:
     lst = [x for x in line.split(b" ") if x]
     closure_found = False
     if multiline_rg is not None:
@@ -377,7 +377,7 @@ def parse_bfrange(
     return None if closure_found else (a, b)
 
 
-def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) -> None:
     lst = [x for x in line.split(b" ") if x]
     map_dict[-1] = len(lst[0]) // 2
     while len(lst) > 1:
@@ -401,8 +401,8 @@ def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) ->
 
 def build_font_width_map(
     ft: DictionaryObject, default_font_width: float
-) -> Dict[Any, float]:
-    font_width_map: Dict[Any, float] = {}
+) -> dict[Any, float]:
+    font_width_map: dict[Any, float] = {}
     st: int = 0
     en: int = 0
     try:
@@ -482,7 +482,7 @@ def build_font_width_map(
 
 
 def compute_space_width(
-    font_width_map: Dict[Any, float], space_char: str
+    font_width_map: dict[Any, float], space_char: str
 ) -> float:
     try:
         sp_width = font_width_map[space_char]
@@ -497,7 +497,7 @@ def compute_space_width(
 
 
 def compute_font_width(
-    font_width_map: Dict[Any, float],
+    font_width_map: dict[Any, float],
     char: str
 ) -> float:
     char_width: float = 0.0
@@ -513,9 +513,9 @@ def compute_font_width(
 
 def _type1_alternative(
     ft: DictionaryObject,
-    map_dict: Dict[Any, Any],
-    int_entry: List[int],
-) -> Tuple[Dict[Any, Any], List[int]]:
+    map_dict: dict[Any, Any],
+    int_entry: list[int],
+) -> tuple[dict[Any, Any], list[int]]:
     if "/FontDescriptor" not in ft:
         return map_dict, int_entry
     ft_desc = cast(DictionaryObject, ft["/FontDescriptor"]).get("/FontFile")

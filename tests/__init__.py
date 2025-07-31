@@ -3,7 +3,7 @@ import ssl
 import sys
 import urllib.request
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 from urllib.error import HTTPError
 
 if sys.version_info >= (3, 11):
@@ -84,7 +84,7 @@ def _strip_position(line: str) -> str:
     return " ".join(line.split(" ")[1:])
 
 
-def normalize_warnings(caplog_text: str) -> List[str]:
+def normalize_warnings(caplog_text: str) -> list[str]:
     return [_strip_position(line) for line in caplog_text.strip().split("\n")]
 
 
@@ -120,7 +120,7 @@ def is_sublist(child_list, parent_list):
     return is_sublist(child_list, parent_list[1:])
 
 
-def read_yaml_to_list_of_dicts(yaml_file: Path) -> List[Dict[str, str]]:
+def read_yaml_to_list_of_dicts(yaml_file: Path) -> list[dict[str, str]]:
     with open(yaml_file) as yaml_input:
         return yaml.safe_load(yaml_input)
 

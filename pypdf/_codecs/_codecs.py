@@ -7,7 +7,6 @@ the module should not do any PDF parsing.
 
 import io
 from abc import ABC, abstractmethod
-from typing import Dict, List
 
 from pypdf._utils import logger_warning
 
@@ -52,7 +51,7 @@ class LzwCodec(Codec):
 
     def _initialize_encoding_table(self) -> None:
         """Initialize the encoding table and state to initial conditions."""
-        self.encoding_table: Dict[bytes, int] = {bytes([i]): i for i in range(256)}
+        self.encoding_table: dict[bytes, int] = {bytes([i]): i for i in range(256)}
         self.next_code = self.EOD_MARKER + 1
         self.bits_per_code = self.INITIAL_BITS_PER_CODE
         self.max_code_value = (1 << self.bits_per_code) - 1
@@ -73,7 +72,7 @@ class LzwCodec(Codec):
 
         Taken from PDF 1.7 specs, "7.4.4.2 Details of LZW Encoding".
         """
-        result_codes: List[int] = []
+        result_codes: list[int] = []
 
         # The encoder shall begin by issuing a clear-table code
         result_codes.append(self.CLEAR_TABLE_MARKER)
@@ -109,7 +108,7 @@ class LzwCodec(Codec):
 
         return self._pack_codes_into_bytes(result_codes)
 
-    def _pack_codes_into_bytes(self, codes: List[int]) -> bytes:
+    def _pack_codes_into_bytes(self, codes: list[int]) -> bytes:
         """
         Convert the list of result codes into a continuous byte stream, with codes packed as per the code bit-width.
         The bit-width starts at 9 bits and expands as needed.
