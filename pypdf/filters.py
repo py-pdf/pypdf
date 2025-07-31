@@ -630,44 +630,20 @@ class CCITTFaxDecode:
         tiff_header_struct = "<2shlh" + "hhll" * 8 + "h"
         tiff_header = struct.pack(
             tiff_header_struct,
-            b"II",  # Byte order indication: Little endian
-            42,  # Version number (always 42)
-            8,  # Offset to first IFD
-            8,  # Number of tags in IFD
-            256,
-            4,
-            1,
-            params.columns,  # ImageWidth, LONG, 1, width
-            257,
-            4,
-            1,
-            params.rows,  # ImageLength, LONG, 1, length
-            258,
-            3,
-            1,
-            1,  # BitsPerSample, SHORT, 1, 1
-            259,
-            3,
-            1,
-            params.group,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
-            262,
-            3,
-            1,
-            0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
-            273,
-            4,
-            1,
-            struct.calcsize(
+            b"II",                      # Byte order indication: Little endian
+            42,                         # Version number (always 42)
+            8,                          # Offset to the first image file directory (IFD)
+            8,                          # Number of tags in IFD
+            256, 4, 1, params.columns,  # ImageWidth, LONG, 1, width
+            257, 4, 1, params.rows,     # ImageLength, LONG, 1, length
+            258, 3, 1, 1,               # BitsPerSample, SHORT, 1, 1
+            259, 3, 1, params.group,    # Compression, SHORT, 1, Compression Type
+            262, 3, 1, 0,               # Thresholding, SHORT, 1, 0 = BlackIs1
+            273, 4, 1, struct.calcsize(
                 tiff_header_struct
-            ),  # StripOffsets, LONG, 1, length of header
-            278,
-            4,
-            1,
-            params.rows,  # RowsPerStrip, LONG, 1, length
-            279,
-            4,
-            1,
-            img_size,  # StripByteCounts, LONG, 1, size of image
+            ),                          # StripOffsets, LONG, 1, length of header
+            278, 4, 1, params.rows,     # RowsPerStrip, LONG, 1, length
+            279, 4, 1, img_size,        # StripByteCounts, LONG, 1, size of image
             0,  # last IFD
         )
 
