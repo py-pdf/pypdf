@@ -89,7 +89,7 @@ except ImportError:
     Image = object  # type: ignore
     pil_not_imported = True  # error will be raised only when using images
 
-MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
+MERGE_CROP_BOX = "cropbox"  # pypdf <= 3.4.0 used "trimbox"
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -109,8 +109,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
 
 
 def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
-    name = NameObject(name)
-    self[name] = value
+    self[NameObject(name)] = value
 
 
 def _delete_rectangle(self: Any, name: str) -> None:
@@ -523,7 +522,7 @@ class PageObject(DictionaryObject):
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
-        data += b"%d" % id(self)
+        data += f"{id(self)}".encode()
         return data
 
     @property
