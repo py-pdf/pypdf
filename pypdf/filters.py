@@ -663,11 +663,11 @@ class CCITTFaxDecode:
             278,    # RowsPerStrip, LONG, 1, length
             4,
             1,
-            params.rows,    
+            params.rows,
             279,    # StripByteCounts, LONG, 1, size of image
             4,
             1,
-            img_size,      
+            img_size,
             0,      # last IFD
         )
 
