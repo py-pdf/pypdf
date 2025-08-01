@@ -52,6 +52,7 @@ from ._utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
     deprecate_with_replacement,
+    deprecation_no_replacement,
     logger_warning,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -618,7 +619,11 @@ class CCITTFaxDecode:
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused in function signature, parameters obtained below
+        # decode_parms is unused here
+        if isinstance(decode_parms, ArrayObject):  # deprecated
+            deprecation_no_replacement(
+                "decode_parms being an ArrayObject", removed_in="3.15.5"
+            )
         params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
