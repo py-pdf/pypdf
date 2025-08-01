@@ -637,29 +637,29 @@ class CCITTFaxDecode:
             256,    # ImageWidth, LONG, 1, width
             4,
             1,
-            params.columns,  
+            params.columns,
             257,    # ImageLength, LONG, 1, length
             4,
             1,
-            params.rows,     
+            params.rows,
             258,    # BitsPerSample, SHORT, 1, 1
             3,
             1,
-            1,              
+            1,
             259,    # Compression, SHORT, 1, compression Type
             3,
             1,
-            params.group,    
+            params.group,
             262,    # Thresholding, SHORT, 1, 0 = BlackIs1
             3,
             1,
-            0,               
+            0,
             273,    # StripOffsets, LONG, 1, length of header
             4,
             1,
               struct.calcsize(
                 tiff_header_struct
-            ),                         
+            ),
             278,    # RowsPerStrip, LONG, 1, length
             4,
             1,
