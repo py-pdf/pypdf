@@ -859,9 +859,8 @@ def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]
         else x_object.__repr__()
     )
 
+    # Get size and data
     size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
-
-    # Get data
     data = x_object.get_data()  # type: ignore
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
