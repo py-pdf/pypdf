@@ -654,7 +654,7 @@ class CCITTFaxDecode:
             262,
             3,
             1,
-            0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
+            0 if params.BlackIs1 is True or params.BlackIs1 is None else 1,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
             273,
             4,
             1,
