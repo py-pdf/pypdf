@@ -546,9 +546,10 @@ class CCITTParameters:
     K: int = 0
     columns: int = 0
     rows: int = 0
-    EndOfBlock: Union[int, None] = None
-    EndOfLine: Union[int, None] = None
-    EncodedByteAlign: Union[int, None] = None
+    EndOfLine: Union[bool, None] = None
+    EncodedByteAlign: Union[bool, None] = None
+    EndOfBlock: Union[bool, None] = None
+    BlackIs1: Union[bool, None] = None
     DamagedRowsBeforeError: Union[int, None] = None
 
     @property
@@ -653,7 +654,7 @@ class CCITTFaxDecode:
             262,
             3,
             1,
-            0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
+            0 if params.BlackIs1 is True or params.BlackIs1 is None else 1,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
             273,
             4,
             1,
