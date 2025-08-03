@@ -43,7 +43,6 @@ from typing import (
     IO,
     Any,
     Callable,
-    List,
     Optional,
     Union,
     cast,
