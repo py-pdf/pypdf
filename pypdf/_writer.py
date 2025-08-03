@@ -3087,7 +3087,7 @@ class PdfWriter(PdfDocCommon):
     ) -> list[Destination]:
         outlist = ArrayObject()
         if isinstance(annots, IndirectObject):
-            annots = cast("List[Any]", annots.get_object())
+            annots = cast("list[Any]", annots.get_object())
         if annots is None:
             return outlist
         if not isinstance(annots, list):
