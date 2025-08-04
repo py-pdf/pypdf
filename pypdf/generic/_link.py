@@ -100,8 +100,9 @@ def _build_link(indirect_object: IndirectObject, page: "PageObject") -> Optional
         if action.get("/S") != "/GoTo":
             return None
 
-        if "/D" in action:
-            return _create_link(action["/D"], src)
+        if "/D" not in action:
+            return None
+        return _create_link(action["/D"], src)
 
     if "/Dest" in link:
         return _create_link(link["/Dest"], src)
