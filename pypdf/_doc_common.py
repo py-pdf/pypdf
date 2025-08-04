@@ -53,13 +53,13 @@ from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
     GoToActionArguments,
+    PagesAttributes,
     UserAccessPermissions,
 )
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
-from .constants import PagesAttributes as PA
 from .errors import PdfReadError, PyPdfError
 from .generic import (
     ArrayObject,
@@ -476,9 +476,9 @@ class PdfDocCommon:
             return retval
         assert tree is not None, "mypy"
 
-        if PA.KIDS in tree:
+        if PagesAttributes.KIDS in tree:
             # recurse down the tree
-            for kid in cast(ArrayObject, tree[PA.KIDS]):
+            for kid in cast(ArrayObject, tree[PagesAttributes.KIDS]):
                 self._get_named_destinations(kid.get_object(), retval)
         # §7.9.6, entries in a name tree node dictionary
         elif CA.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
@@ -637,9 +637,9 @@ class PdfDocCommon:
             )
             return
         stack.append(tree)
-        if PA.KIDS in tree:
+        if PagesAttributes.KIDS in tree:
             # recurse down the tree
-            for kid in tree[PA.KIDS]:  # type: ignore
+            for kid in tree[PagesAttributes.KIDS]:  # type: ignore
                 kid = kid.get_object()
                 self.get_fields(kid, retval, fileobj, stack)
 
@@ -1157,10 +1157,10 @@ class PdfDocCommon:
                 raise PdfReadError("Invalid object in /Pages")
             self.flattened_pages = []
 
-        if PA.TYPE in pages:
-            t = cast(str, pages[PA.TYPE])
+        if PagesAttributes.TYPE in pages:
+            t = cast(str, pages[PagesAttributes.TYPE])
         # if the page tree node has no /Type, consider as a page if /Kids is also missing
-        elif PA.KIDS not in pages:
+        elif PagesAttributes.KIDS not in pages:
             t = "/Page"
         else:
             t = "/Pages"
@@ -1169,7 +1169,7 @@ class PdfDocCommon:
             for attr in inheritable_page_attributes:
                 if attr in pages:
                     inherit[attr] = pages[attr]
-            for page in cast(ArrayObject, pages[PA.KIDS]):
+            for page in cast(ArrayObject, pages[PagesAttributes.KIDS]):
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirect_reference"] = page

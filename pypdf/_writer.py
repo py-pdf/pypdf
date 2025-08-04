@@ -43,7 +43,6 @@ from typing import (
     IO,
     Any,
     Callable,
-    List,
     Optional,
     Union,
     cast,
@@ -73,13 +72,13 @@ from .constants import (
     InteractiveFormDictEntries,
     OutlineFontFlag,
     PageLabelStyle,
+    PagesAttributes,
     TypFitArguments,
     UserAccessPermissions,
 )
 from .constants import Core as CO
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
-from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
 from .errors import PyPdfError
 from .generic import (
@@ -264,9 +263,9 @@ class PdfWriter(PdfDocCommon):
         # The root of our page tree node
         pages = DictionaryObject(
             {
-                NameObject(PA.TYPE): NameObject("/Pages"),
-                NameObject(PA.COUNT): NumberObject(0),
-                NameObject(PA.KIDS): ArrayObject(),
+                NameObject(PagesAttributes.TYPE): NameObject("/Pages"),
+                NameObject(PagesAttributes.COUNT): NumberObject(0),
+                NameObject(PagesAttributes.KIDS): ArrayObject(),
             }
         )
         self.flattened_pages = []
@@ -282,7 +281,7 @@ class PdfWriter(PdfDocCommon):
             self._pages = self._add_object(pages)
             self._root_object = DictionaryObject(
                 {
-                    NameObject(PA.TYPE): NameObject(CO.CATALOG),
+                    NameObject(PagesAttributes.TYPE): NameObject(CO.CATALOG),
                     NameObject(CO.PAGES): self._pages,
                 }
             )
@@ -480,12 +479,12 @@ class PdfWriter(PdfDocCommon):
         index: int,
         excluded_keys: Iterable[str] = (),
     ) -> PageObject:
-        if not isinstance(page, PageObject) or page.get(PA.TYPE, None) != CO.PAGE:
+        if not isinstance(page, PageObject) or page.get(PagesAttributes.TYPE, None) != CO.PAGE:
             raise ValueError("Invalid page object")
         assert self.flattened_pages is not None, "for mypy"
         page_org = page
         excluded_keys = list(excluded_keys)
-        excluded_keys += [PA.PARENT, "/StructParents"]
+        excluded_keys += [PagesAttributes.PARENT, "/StructParents"]
         # Acrobat does not accept two indirect references pointing on the same
         # page; therefore in order to add multiple copies of the same
         # page, we need to create a new dictionary for the page, however the
@@ -505,19 +504,19 @@ class PdfWriter(PdfDocCommon):
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)
 
         node, idx = self._get_page_in_node(index)
-        page[NameObject(PA.PARENT)] = node.indirect_reference
+        page[NameObject(PagesAttributes.PARENT)] = node.indirect_reference
 
         if idx >= 0:
-            cast(ArrayObject, node[PA.KIDS]).insert(idx, page.indirect_reference)
+            cast(ArrayObject, node[PagesAttributes.KIDS]).insert(idx, page.indirect_reference)
             self.flattened_pages.insert(index, page)
         else:
-            cast(ArrayObject, node[PA.KIDS]).append(page.indirect_reference)
+            cast(ArrayObject, node[PagesAttributes.KIDS]).append(page.indirect_reference)
             self.flattened_pages.append(page)
         recurse = 0
         while not is_null_or_none(node):
             node = cast(DictionaryObject, node.get_object())
-            node[NameObject(PA.COUNT)] = NumberObject(cast(int, node[PA.COUNT]) + 1)
-            node = node.get(PA.PARENT, None)  # type: ignore[assignment]  # TODO: Fix.
+            node[NameObject(PagesAttributes.COUNT)] = NumberObject(cast(int, node[PagesAttributes.COUNT]) + 1)
+            node = node.get(PagesAttributes.PARENT, None)  # type: ignore[assignment]  # TODO: Fix.
             recurse += 1
             if recurse > 1000:
                 raise PyPdfError("Too many recursive calls!")
@@ -762,7 +761,7 @@ class PdfWriter(PdfDocCommon):
 
         js = DictionaryObject(
             {
-                NameObject(PA.TYPE): NameObject("/Action"),
+                NameObject(PagesAttributes.TYPE): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
                 NameObject("/JS"): TextStringObject(f"{javascript}"),
             }
@@ -2053,7 +2052,7 @@ class PdfWriter(PdfDocCommon):
         title: str,
         page_number: int,
     ) -> IndirectObject:
-        page_ref = self.get_object(self._pages)[PA.KIDS][page_number]  # type: ignore
+        page_ref = self.get_object(self._pages)[PagesAttributes.KIDS][page_number]  # type: ignore
         dest = DictionaryObject()
         dest.update(
             {
@@ -2386,7 +2385,7 @@ class PdfWriter(PdfDocCommon):
                 drawn if this argument is omitted.
 
         """
-        page_link = self.get_object(self._pages)[PA.KIDS][page_number]  # type: ignore
+        page_link = self.get_object(self._pages)[PagesAttributes.KIDS][page_number]  # type: ignore
         page_ref = cast(dict[str, Any], self.get_object(page_link))
 
         border_arr: BorderArrayType
@@ -3088,7 +3087,7 @@ class PdfWriter(PdfDocCommon):
     ) -> list[Destination]:
         outlist = ArrayObject()
         if isinstance(annots, IndirectObject):
-            annots = cast("List[Any]", annots.get_object())
+            annots = cast("list[Any]", annots.get_object())
         if annots is None:
             return outlist
         if not isinstance(annots, list):
