@@ -619,7 +619,6 @@ class CCITTFaxDecode:
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
         if isinstance(decode_parms, ArrayObject):  # deprecated
             deprecation_no_replacement(
                 "decode_parms being an ArrayObject", removed_in="3.15.5"
@@ -631,44 +630,44 @@ class CCITTFaxDecode:
         tiff_header = struct.pack(
             tiff_header_struct,
             b"II",  # Byte order indication: Little endian
-            42,  # Version number (always 42)
-            8,  # Offset to first IFD
-            8,  # Number of tags in IFD
-            256,
+            42,     # Version number (always 42)
+            8,      # Offset to the first image file directory (IFD)
+            8,      # Number of tags in IFD
+            256,    # ImageWidth, LONG, 1, width
             4,
             1,
-            params.columns,  # ImageWidth, LONG, 1, width
-            257,
+            params.columns,
+            257,    # ImageLength, LONG, 1, length
             4,
             1,
-            params.rows,  # ImageLength, LONG, 1, length
-            258,
+            params.rows,
+            258,    # BitsPerSample, SHORT, 1, 1
             3,
             1,
-            1,  # BitsPerSample, SHORT, 1, 1
-            259,
+            1,
+            259,    # Compression, SHORT, 1, compression Type
             3,
             1,
-            params.group,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
-            262,
+            params.group,
+            262,    # Thresholding, SHORT, 1, 0 = BlackIs1
             3,
             1,
-            0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
-            273,
+            0,
+            273,    # StripOffsets, LONG, 1, length of header
             4,
             1,
-            struct.calcsize(
+              struct.calcsize(
                 tiff_header_struct
-            ),  # StripOffsets, LONG, 1, length of header
-            278,
+            ),
+            278,    # RowsPerStrip, LONG, 1, length
             4,
             1,
-            params.rows,  # RowsPerStrip, LONG, 1, length
-            279,
+            params.rows,
+            279,    # StripByteCounts, LONG, 1, size of image
             4,
             1,
-            img_size,  # StripByteCounts, LONG, 1, size of image
-            0,  # last IFD
+            img_size,
+            0,      # last IFD
         )
 
         return tiff_header + data
@@ -797,7 +796,7 @@ def decode_stream_data(stream: Any) -> bytes:
     return data
 
 
-def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, Any]:
+def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
 
@@ -805,7 +804,7 @@ def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, 
     It might get removed at any point.
 
     Args:
-      x_object_obj:
+      x_object:
 
     Returns:
         Tuple[file extension, bytes, PIL.Image.Image]
@@ -823,20 +822,20 @@ def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, 
 
     def _apply_alpha(
         img: Image.Image,
-        x_object_obj: dict[str, Any],
+        x_object: dict[str, Any],
         obj_as_text: str,
         image_format: str,
         extension: str,
     ) -> tuple[Image.Image, str, str]:
         alpha = None
-        if IA.S_MASK in x_object_obj:  # add alpha channel
-            alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
+        if IA.S_MASK in x_object:  # add alpha channel
+            alpha = _xobj_to_image(x_object[IA.S_MASK])[2]
             if img.size != alpha.size:
                 logger_warning(
                     f"image and mask size not matching: {obj_as_text}", __name__
                 )
             else:
-                # TODO : implement mask
+                # TODO: implement mask
                 if alpha.mode != "L":
                     alpha = alpha.convert("L")
                 if img.mode == "P":
@@ -845,40 +844,40 @@ def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, 
                     img = img.convert("L")
                 img.putalpha(alpha)
             if "JPEG" in image_format:
-                extension = ".jp2"
                 image_format = "JPEG2000"
+                extension = ".jp2"
             else:
-                extension = ".png"
                 image_format = "PNG"
+                extension = ".png"
         return img, extension, image_format
 
-    # for error reporting
+    # For error reporting
     obj_as_text = (
-        x_object_obj.indirect_reference.__repr__()
-        if x_object_obj is None  # pragma: no cover
-        else x_object_obj.__repr__()
+        x_object.indirect_reference.__repr__()
+        if x_object is None  # pragma: no cover
+        else x_object.__repr__()
     )
 
     # Get size and data
-    size = (cast(int, x_object_obj[IA.WIDTH]), cast(int, x_object_obj[IA.HEIGHT]))
-    data = x_object_obj.get_data()  # type: ignore
+    size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
+    data = x_object.get_data()  # type: ignore
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
     if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'
         data = data[:-1]
 
     # Get color properties
-    colors = x_object_obj.get("/Colors", 1)
-    color_space: Any = x_object_obj.get("/ColorSpace", NullObject()).get_object()
+    colors = x_object.get("/Colors", 1)
+    color_space: Any = x_object.get("/ColorSpace", NullObject()).get_object()
     if isinstance(color_space, list) and len(color_space) == 1:
         color_space = color_space[0].get_object()
 
-    mode, invert_color = _get_mode_and_invert_color(x_object_obj, colors, color_space)
+    mode, invert_color = _get_mode_and_invert_color(x_object, colors, color_space)
 
     # Get filters
-    filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
+    filters = x_object.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
-    decode_parms = x_object_obj.get(SA.DECODE_PARMS, None)
+    decode_parms = x_object.get(SA.DECODE_PARMS, None)
     if decode_parms and isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
     else:
@@ -896,16 +895,16 @@ def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, 
             colors,
             obj_as_text,
         )
-    elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE, FT.CCITT_FAX_DECODE):
+    elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE):
         # I'm not sure if the following logic is correct.
         # There might not be any relationship between the filters and the
         # extension
-        if lfilters in (FT.LZW_DECODE, FT.CCITT_FAX_DECODE):
-            extension = ".tiff"  # mime_type = "image/tiff"
+        if lfilters == FT.LZW_DECODE:
             image_format = "TIFF"
+            extension = ".tiff"  # mime_type = "image/tiff"
         else:
-            extension = ".png"  # mime_type = "image/png"
             image_format = "PNG"
+            extension = ".png"  # mime_type = "image/png"
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
@@ -939,7 +938,7 @@ def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, 
             False,
         )
     elif mode == "":
-        raise PdfReadError(f"ColorSpace field not found in {x_object_obj}")
+        raise PdfReadError(f"ColorSpace field not found in {x_object}")
     else:
         img, image_format, extension, invert_color = (
             _extended_image_frombytes(mode, size, data),
@@ -948,9 +947,9 @@ def _xobj_to_image(x_object_obj: dict[str, Any]) -> tuple[Optional[str], bytes, 
             False,
         )
 
-    img = _apply_decode(img, x_object_obj, lfilters, color_space, invert_color)
+    img = _apply_decode(img, x_object, lfilters, color_space, invert_color)
     img, extension, image_format = _apply_alpha(
-        img, x_object_obj, obj_as_text, image_format, extension
+        img, x_object, obj_as_text, image_format, extension
     )
 
     if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
