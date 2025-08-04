@@ -1258,8 +1258,9 @@ def test_contentstream_arrayobject_containing_nullobject(caplog):
     assert caplog.text == ""
 
 
-def test_issue_3419_links_without_slash_d_can_be_copied():
-    reader = PdfReader(RESOURCE_ROOT / "issue-3419.pdf")
+@pytest.mark.enable_socket
+def test_build_link__go_to_action_without_destination():
+    reader = PdfReader(BytesIO(get_data_from_url(name="issue-3419.pdf")))
     writer = PdfWriter()
     for page in reader.pages:
         writer.add_page(page)
