@@ -1256,3 +1256,11 @@ def test_contentstream_arrayobject_containing_nullobject(caplog):
     content_stream = ContentStream(stream=input_stream, pdf=None)
     assert content_stream.get_data() == b"Hello World!\n"
     assert caplog.text == ""
+
+
+def test_issue_3419_links_without_slash_d_can_be_copied():
+    reader = PdfReader(RESOURCE_ROOT / "issue-3419.pdf")
+    writer = PdfWriter()
+    for page in reader.pages:
+        writer.add_page(page)
+    assert len(writer.pages) == len(reader.pages)
