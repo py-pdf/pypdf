@@ -604,15 +604,15 @@ class CCITTFaxDecode:
                         columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.K in decode_parm:
                         k = decode_parm[CCITT.K].get_object()
-                    if CCITT.BlackIs1 in decode_parm:
-                        black_is_1 = decode_parm[CCITT.BlackIs1].get_object().value()
+                    if CCITT.BLACK_IS_1 in decode_parm:
+                        black_is_1 = decode_parm[CCITT.BLACK_IS_1].get_object().value()
             else:
                 if CCITT.COLUMNS in parameters_unwrapped:
                     columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
                     k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
-                if CCITT.BlackIs1 in parameters_unwrapped:
-                    black_is_1 = parameters_unwrapped[CCITT.BlackIs1].get_object().value()  # type: ignore
+                if CCITT.BLACK_IS_1 in parameters_unwrapped:
+                    black_is_1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value()  # type: ignore
 
         return CCITTParameters(K=k, columns=columns, rows=int(rows), BlackIs1=black_is_1)
 
