@@ -545,10 +545,10 @@ class CCITTParameters:
     K: int = 0
     columns: int = 0
     rows: int = 0
-    EndOfLine: Union[bool, None] = None
-    EncodedByteAlign: Union[bool, None] = None
-    EndOfBlock: Union[bool, None] = None
-    BlackIs1: Union[bool, None] = None
+    EndOfLine: Union[bool, None] = False
+    EncodedByteAlign: Union[bool, None] = False
+    EndOfBlock: Union[bool, None] = True
+    BlackIs1: Union[bool, None] = False
     DamagedRowsBeforeError: Union[int, None] = None
 
     @property
