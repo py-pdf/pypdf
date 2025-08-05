@@ -548,7 +548,7 @@ class CCITTParameters:
     EndOfLine: Union[bool, None] = False
     EncodedByteAlign: Union[bool, None] = False
     EndOfBlock: Union[bool, None] = True
-    BlackIs1: Union[bool, None] = False
+    BlackIs1: bool = False
     DamagedRowsBeforeError: Union[int, None] = None
 
     @property
