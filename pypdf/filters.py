@@ -64,7 +64,6 @@ from .constants import StreamAttributes as SA
 from .errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
-    BooleanObject,
     DictionaryObject,
     IndirectObject,
     NullObject,
