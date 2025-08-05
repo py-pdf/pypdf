@@ -605,13 +605,17 @@ class CCITTFaxDecode:
                         columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.K in decode_parm:
                         k = decode_parm[CCITT.K].get_object()
+                    if CCITT.BlackIs1 in decode_parm:
+                        k = decode_parm[CCITT.BlackIs1].get_object()
             else:
                 if CCITT.COLUMNS in parameters_unwrapped:
                     columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
                     k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
+                if CCITT.BlackIs1 in parameters_unwrapped:
+                    k = parameters_unwrapped[CCITT.BlackIs1].get_object()  # type: ignore
 
-        return CCITTParameters(K=k, columns=columns, rows=int(rows))
+        return CCITTParameters(K=k, columns=columns, rows=int(rows), BlackIs1=BlackIs1)
 
     @staticmethod
     def decode(
@@ -952,10 +956,6 @@ def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]
     img, extension, image_format = _apply_alpha(
         img, x_object, obj_as_text, image_format, extension
     )
-
-    if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
-        from PIL import ImageOps  # noqa: PLC0415
-        img = ImageOps.invert(img)
 
     # Save image to bytes
     img_byte_arr = BytesIO()
