@@ -600,17 +600,17 @@ class CCITTFaxDecode:
             )
             if isinstance(parameters_unwrapped, ArrayObject):
                 for decode_parm in parameters_unwrapped:
-                    if CCITT.COLUMNS in decode_parm:
-                        columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.K in decode_parm:
                         k = decode_parm[CCITT.K].get_object()
+                    if CCITT.COLUMNS in decode_parm:
+                        columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.BLACK_IS_1 in decode_parm:
                         black_is_1 = decode_parm[CCITT.BLACK_IS_1].get_object().value()
             else:
-                if CCITT.COLUMNS in parameters_unwrapped:
-                    columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
                     k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
+                if CCITT.COLUMNS in parameters_unwrapped:
+                    columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.BLACK_IS_1 in parameters_unwrapped:
                     black_is_1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value()  # type: ignore
 
