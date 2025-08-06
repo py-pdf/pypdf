@@ -616,7 +616,7 @@ class CCITTFaxDecode:
                 if CCITT.BLACK_IS_1 in parameters_unwrapped:
                     black_is_1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore
 
-        return CCITTParameters(K=k, columns=columns, rows=int(rows), BlackIs1=black_is_1)
+        return ccitt_parameters
 
     @staticmethod
     def decode(
