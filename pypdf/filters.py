@@ -565,7 +565,7 @@ class CCITTParameters:
 
 def __create_old_class_instance(
     K: int = 0,
-    columns: int = 0,
+    columns: int = 1728,
     rows: int = 0
 ) -> CCITTParameters:
     deprecate_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
@@ -654,7 +654,7 @@ class CCITTFaxDecode:
             262,    # Thresholding, SHORT, 1, 0 = BlackIs1
             3,
             1,
-            int(params.BlackIs1),  # Thresholding, SHORT, 1, 0 = BlackIs1
+            int(not params.BlackIs1),  # Thresholding, SHORT, 1, 0 = BlackIs1
             273,    # StripOffsets, LONG, 1, length of header
             4,
             1,
