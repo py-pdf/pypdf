@@ -543,7 +543,7 @@ class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     K: int = 0
-    columns: int = 0
+    columns: int = 1728
     rows: int = 0
     EndOfLine: Union[bool, None] = False
     EncodedByteAlign: Union[bool, None] = False
@@ -592,8 +592,10 @@ class CCITTFaxDecode:
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
         # columns has a default value of 1728, whereas rows has a default value of 0
-        k = 0
-        columns = 1728
+        ccitt_parameters = CCITTParameters()
+        k = ccitt_parameters.K
+        columns = ccitt_parameters.columns
+        black_is_1 = CCITTParameters.BlackIs1
         if parameters:
             parameters_unwrapped = cast(
                 Union[ArrayObject, DictionaryObject], parameters.get_object()
