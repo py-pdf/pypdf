@@ -549,7 +549,7 @@ class CCITTParameters:
     EncodedByteAlign: Union[bool, None] = False
     EndOfBlock: Union[bool, None] = True
     BlackIs1: bool = False
-    DamagedRowsBeforeError: Union[int, None] = None
+    DamagedRowsBeforeError: Union[int, None] = 0
 
     @property
     def group(self) -> int:
@@ -654,7 +654,7 @@ class CCITTFaxDecode:
             262,    # Thresholding, SHORT, 1, 0 = BlackIs1
             3,
             1,
-            int(params.BlackIs1),  # Thresholding, SHORT, 1, 0 = BlackIs1
+            int(not params.BlackIs1),  # Thresholding, SHORT, 1, 0 = BlackIs1
             273,    # StripOffsets, LONG, 1, length of header
             4,
             1,
