@@ -592,6 +592,7 @@ class CCITTFaxDecode:
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
         ccitt_parameters = CCITTParameters()
+        ccitt_parameters.rows = int(rows)
         if parameters:
             parameters_unwrapped = cast(
                 Union[ArrayObject, DictionaryObject], parameters.get_object()
@@ -611,7 +612,6 @@ class CCITTFaxDecode:
                     ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()
                 if CCITT.BLACK_IS_1 in parameters_unwrapped:
                     ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value
-
         return ccitt_parameters
 
     @staticmethod
