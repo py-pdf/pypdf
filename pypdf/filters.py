@@ -591,7 +591,7 @@ class CCITTFaxDecode:
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
-        # §7.4.6, optional parameters for the CCITTFaxDecode filter
+        # columns has a default value of 1728, whereas rows has a default value of 0
         k = 0
         columns = 1728
         if parameters:
