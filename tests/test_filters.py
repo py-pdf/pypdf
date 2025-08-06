@@ -211,6 +211,7 @@ def test_ccitparameters():
 def test_ccittparameters():
     params = CCITTParameters()
     assert params.K == 0  # zero is the default according to page 78
+    assert params.BlackIs1 is False
     assert params.group == 3
 
 
