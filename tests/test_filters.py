@@ -220,10 +220,10 @@ def test_ccittparameters():
 @pytest.mark.parametrize(
     ("parameters", "expected"),
     [
-        (None, 0),
+        (None, [0, False]),
         (
-            ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}, {"/BlackIs1": BooleanObject(False)}]),
-            [1, False]
+            ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}, {"/BlackIs1": BooleanObject(True)}]),
+            [1, True]
         ),
     ],
 )
