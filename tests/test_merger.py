@@ -6,8 +6,7 @@ from pathlib import Path
 import pytest
 
 import pypdf
-from pypdf import PdfMerger, PdfReader, PdfWriter
-from pypdf.errors import DeprecationError
+from pypdf import PdfReader, PdfWriter
 from pypdf.generic import Destination, Fit
 
 from . import get_data_from_url
@@ -401,11 +400,6 @@ def test_articles_with_writer(caplog):
     assert r.threads[0].get_object()["/F"]["/P"] == r.pages[0]
 
 
-def test_deprecate_pdfmerger():
-    with pytest.raises(DeprecationError), PdfMerger() as merger:
-        merger.append(RESOURCE_ROOT / "crazyones.pdf")
-
-
 def test_get_reference():
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
     assert writer.get_reference(writer.pages[0]) == writer.pages[0].indirect_reference
@@ -505,11 +499,11 @@ def test_named_ref_to_page_that_is_gone(pdf_file_path):
     source = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
     buf = BytesIO()
     tmp = PdfWriter()
-    tmp.add_page(source.pages[2]) # we add only the page with the reference
+    tmp.add_page(source.pages[2])  # we add only the page with the reference
     tmp.write(buf)
 
     source = PdfReader(buf)
 
     writer = PdfWriter()
-    writer.add_page(source.pages[0]) # now references to non-existent page
-    writer.write(pdf_file_path) # don't crash
+    writer.add_page(source.pages[0])  # now references to non-existent page
+    writer.write(pdf_file_path)  # don't crash

@@ -144,14 +144,6 @@ class Resources:
     PROPERTIES = "/Properties"  # dictionary, optional
 
 
-class Ressources:  # deprecated
-    """
-    Use :class: `Resources` instead.
-
-    .. deprecated:: 5.0.0
-    """
-
-
 class PagesAttributes:
     """§7.7.3.2 of the 1.7 and 2.0 reference."""
 
