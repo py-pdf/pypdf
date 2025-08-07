@@ -20,7 +20,7 @@ from pypdf import (
     Transformation,
 )
 from pypdf.annotations import Link
-from pypdf.errors import PageSizeNotDefinedError, PyPdfError
+from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
@@ -2669,17 +2669,17 @@ def test_auto_write(tmp_path):
 def test_deprecate_with_as():
     """Yet another test for #2905"""
     with PdfWriter() as writer:
-        with pytest.warns(
-                expected_warning=DeprecationWarning,
-                match="with_as_usage is deprecated and will be removed in pypdf 6.0"
+        with pytest.raises(
+                expected_exception=DeprecationError,
+                match="with_as_usage is deprecated and was removed in pypdf 5.0"
         ):
-            val = writer.with_as_usage
-        assert val
-        with pytest.warns(
-                expected_warning=DeprecationWarning,
-                match="with_as_usage is deprecated and will be removed in pypdf 6.0"
+            _ = writer.with_as_usage
+
+        with pytest.raises(
+                expected_exception=DeprecationError,
+                match="with_as_usage is deprecated and was removed in pypdf 5.0"
         ):
-            writer.with_as_usage = val  # old code allowed setting this, so...
+            writer.with_as_usage = False  # old code allowed setting this, so...
 
 
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")

@@ -10,7 +10,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import CheckboxRadioButtonAttributes
-from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 from pypdf.generic import (
     ArrayObject,
     BooleanObject,
@@ -198,9 +198,9 @@ def test_name_object(caplog):
         NameObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "Name read error"
 
-    with pytest.warns(
-        DeprecationWarning,
-        match="surfix is deprecated and will be removed in pypdf 6.0.0. Use prefix instead.",
+    with pytest.raises(
+        DeprecationError,
+        match="surfix is deprecated and was removed in pypdf 5.0.0. Use prefix instead.",
     ):
         _ = NameObject.surfix
 
@@ -246,9 +246,9 @@ def test_name_object(caplog):
 
     caplog.clear()
     b = BytesIO()
-    with pytest.warns(
-            expected_warning=DeprecationWarning,
-            match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and will"
+    with pytest.raises(
+            expected_exception=DeprecationError,
+            match=r"Incorrect first char in NameObject, should start with '/': \(hello\) is deprecated and was"
     ):
         NameObject("hello").write_to_stream(b)
 
