@@ -50,9 +50,7 @@ from typing import Any, Optional, Union, cast
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
-    deprecate,
-    deprecate_with_replacement,
-    deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -61,7 +59,7 @@ from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
-from .errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
+from .errors import DependencyError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
     DictionaryObject,
@@ -144,9 +142,6 @@ class FlateDecode:
           PdfReadError:
 
         """
-        if isinstance(decode_parms, ArrayObject):
-            raise DeprecationError("decode_parms as ArrayObject is deprecated")
-
         str_data = decompress(data)
         predictor = 1
 
@@ -419,7 +414,7 @@ class LZWDecode:
             return _LzwCodec().decode(self.data)
 
     @staticmethod
-    def _decodeb(
+    def decode(
         data: bytes,
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
@@ -437,27 +432,6 @@ class LZWDecode:
         """
         # decode_parms is unused here
         return LZWDecode.Decoder(data).decode()
-
-    @staticmethod
-    def decode(
-        data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
-        **kwargs: Any,
-    ) -> str:  # deprecated
-        """
-        Decode an LZW encoded data stream.
-
-        Args:
-          data: ``bytes`` or ``str`` text to decode.
-          decode_parms: a dictionary of parameter values.
-
-        Returns:
-          decoded data.
-
-        """
-        # decode_parms is unused here
-        deprecate("LZWDecode.decode will return bytes instead of str in pypdf 6.0.0")
-        return LZWDecode.Decoder(data).decode().decode("latin-1")
 
 
 class ASCII85Decode:
@@ -568,7 +542,7 @@ def __create_old_class_instance(
     columns: int = 1728,
     rows: int = 0
 ) -> CCITTParameters:
-    deprecate_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
+    deprecation_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
     return CCITTParameters(K, columns, rows)
 
 
@@ -621,10 +595,6 @@ class CCITTFaxDecode:
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
-        if isinstance(decode_parms, ArrayObject):  # deprecated
-            deprecation_no_replacement(
-                "decode_parms being an ArrayObject", removed_in="3.15.5"
-            )
         params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
@@ -774,7 +744,7 @@ def decode_stream_data(stream: Any) -> bytes:
         elif filter_name in (FT.ASCII_85_DECODE, FTA.A85):
             data = ASCII85Decode.decode(data)
         elif filter_name in (FT.LZW_DECODE, FTA.LZW):
-            data = LZWDecode._decodeb(data, params)
+            data = LZWDecode.decode(data, params)
         elif filter_name in (FT.FLATE_DECODE, FTA.FL):
             data = FlateDecode.decode(data, params)
         elif filter_name in (FT.RUN_LENGTH_DECODE, FTA.RL):

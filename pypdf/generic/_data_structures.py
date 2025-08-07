@@ -48,7 +48,6 @@ from .._utils import (
     WHITESPACES,
     StreamType,
     deprecation_no_replacement,
-    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -997,12 +996,6 @@ class StreamObject(DictionaryObject):
         stream.write(b"\nstream\n")
         stream.write(self._data)
         stream.write(b"\nendstream")
-
-    @staticmethod
-    def initializeFromDictionary(data: dict[str, Any]) -> None:
-        deprecation_with_replacement(
-            "initializeFromDictionary", "initialize_from_dictionary", "5.0.0"
-        )  # pragma: no cover
 
     @staticmethod
     def initialize_from_dictionary(

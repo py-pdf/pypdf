@@ -44,7 +44,7 @@ from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
 from ._utils import (
-    deprecate_with_replacement,
+    deprecation_with_replacement,
     logger_warning,
     parse_iso8824_date,
 )
@@ -1259,7 +1259,7 @@ class PdfDocCommon:
         self, permissions_code: int
     ) -> dict[str, bool]:  # pragma: no cover
         """Take the permissions as an integer, return the allowed access."""
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             old_name="decode_permissions",
             new_name="user_access_permissions",
             removed_in="5.0.0",

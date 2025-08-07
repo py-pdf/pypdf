@@ -85,16 +85,6 @@ def test_flatedecode_unsupported_predictor():
             codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
 
 
-@pytest.mark.parametrize("params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}])])
-def test_flate_decode_decompress_with_array_params(params):
-    """FlateDecode decode() method works correctly with array parameters."""
-    codec = FlateDecode()
-    s = b""
-    encoded = codec.encode(s)
-    with pytest.raises(DeprecationError):
-        assert codec.decode(encoded, params) == s
-
-
 @pytest.mark.parametrize(
     ("data", "expected"),
     [
@@ -200,14 +190,11 @@ def test_ascii85decode_five_zero_bytes():
 
 
 def test_ccitparameters():
-    with pytest.warns(
-        DeprecationWarning,
-        match="CCITParameters is deprecated and will be removed in pypdf 6.0.0. Use CCITTParameters instead",
+    with pytest.raises(
+        DeprecationError,
+        match="CCITParameters is deprecated and was removed in pypdf 6.0.0. Use CCITTParameters instead",
     ):
-        params = CCITParameters()
-    assert params.K == 0  # zero is the default according to page 78
-    assert params.BlackIs1 is False
-    assert params.group == 3
+        CCITParameters()
 
 
 def test_ccittparameters():
