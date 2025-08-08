@@ -68,6 +68,7 @@ from .filters import _xobj_to_image
 from .generic import (
     ArrayObject,
     ContentStream,
+    DecodedStreamObject,
     DictionaryObject,
     EncodedStreamObject,
     FloatObject,
@@ -78,6 +79,7 @@ from .generic import (
     PdfObject,
     RectangleObject,
     StreamObject,
+    TextStringObject,
     is_null_or_none,
 )
 
@@ -2148,6 +2150,39 @@ class PageObject(DictionaryObject):
             del self[NameObject("/Annots")]
         else:
             self[NameObject("/Annots")] = value
+
+    def add_js(self, javascript: str, /, action_type: str = "O") -> None:
+        r"""
+        Add JavaScript which will launch on the open or close action of this
+        page.
+
+        Args:
+            javascript: Your JavaScript.
+            action_type: "/O" or "/C", for open or close action respectively.
+
+        >>> output.add_js('app.alert("This is page " + this.pageNum);', "/O")
+        # Example: This will display the page number when the page is opened.
+        >>> output.add_js('app.alert("This is page " + this.pageNum);', "/C")
+        # Example: This will display the page number when the page is closed.
+
+        Note that this will replace any existing open or close action on this page.
+        Currently only an open or close action can be added, not both.
+        """
+        if action_type not in {"/O", "/C"}:
+            raise ValueError('action_type must be "/O" or "/C"')
+
+        action = DictionaryObject()
+        self[NameObject("/AA")] = action
+        action[NameObject(action_type)] = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Action"),
+                NameObject("/S"): NameObject("/JavaScript"),
+                NameObject("/JS"): TextStringObject(f"{javascript}"),
+            }
+        )
+
+        javascript_object = DecodedStreamObject()
+        javascript_object.set_data(javascript.encode())
 
 
 class _VirtualList(Sequence[PageObject]):
