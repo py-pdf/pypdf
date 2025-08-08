@@ -26,11 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-Implementation of stream filters for PDF.
-
-See TABLE H.1 Abbreviations for standard filter names
-"""
+"""Implementation of stream filters for PDF."""
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -502,13 +498,12 @@ class JPXDecode:
 
         Args:
           data: text to decode.
-          decode_parms: a dictionary of parameter values.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           decoded data.
 
         """
-        # decode_parms: this filter does not use parameters
         return data
 
 
