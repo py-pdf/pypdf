@@ -58,6 +58,48 @@ For questions and answers, visit
 [StackOverflow](https://stackoverflow.com/questions/tagged/pypdf)
 (tagged with [pypdf](https://stackoverflow.com/questions/tagged/pypdf)).
 
+
+## Quick Usage Examples
+Here are a few common things you can do with pypdf:
+
+### Merge Multiple PDFs
+```python
+from pypdf import PdfMerger
+
+merger = PdfMerger()
+merger.append("file1.pdf")
+merger.append("file2.pdf")
+merger.write("merged.pdf")
+merger.close()
+```
+
+### Encrypt a PDF
+```python
+from pypdf import PdfWriter
+
+writer = PdfWriter()
+writer.append("file.pdf")
+writer.encrypt("secure-password")
+with open("encrypted.pdf", "wb") as f:
+    writer.write(f)
+```
+
+### Extract Images (from page resources)
+```python
+from pypdf import PdfReader
+
+reader = PdfReader("file.pdf")
+page = reader.pages[0]
+xObject = page["/Resources"]["/XObject"].get_object()
+for obj in xObject:
+    if xObject[obj]["/Subtype"] == "/Image":
+        data = xObject[obj].get_data()
+        with open(f"{obj[1:]}.jpg", "wb") as f:
+            f.write(data)
+```
+
+> See the full documentation for more use cases.
+
 ## Contributions
 
 Maintaining pypdf is a collaborative effort. You can support the project by
