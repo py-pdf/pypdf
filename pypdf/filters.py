@@ -539,7 +539,7 @@ class CCITTParameters:
 
 def __create_old_class_instance(
     K: int = 0,
-    columns: int = 1728,
+    columns: int = 0,
     rows: int = 0
 ) -> CCITTParameters:
     deprecation_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
