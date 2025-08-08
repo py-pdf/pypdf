@@ -26,11 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-Implementation of stream filters for PDF.
-
-See TABLE H.1 Abbreviations for standard filter names
-"""
+"""Implementation of stream filters for PDF."""
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
