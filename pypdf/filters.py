@@ -502,13 +502,12 @@ class JPXDecode:
 
         Args:
           data: text to decode.
-          decode_parms: a dictionary of parameter values.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           decoded data.
 
         """
-        # decode_parms: this filter does not use parameters
         return data
 
 
