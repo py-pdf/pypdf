@@ -62,7 +62,6 @@ from .constants import StreamAttributes as SA
 from .errors import DependencyError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
-    BooleanObject,
     DictionaryObject,
     IndirectObject,
     NullObject,
@@ -518,12 +517,13 @@ class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     K: int = 0
-    columns: int = 0
+    columns: int = 1728
     rows: int = 0
-    EndOfBlock: Union[int, None] = None
-    EndOfLine: Union[int, None] = None
-    EncodedByteAlign: Union[int, None] = None
-    DamagedRowsBeforeError: Union[int, None] = None
+    EndOfLine: Union[bool, None] = False
+    EncodedByteAlign: Union[bool, None] = False
+    EndOfBlock: Union[bool, None] = True
+    BlackIs1: bool = False
+    DamagedRowsBeforeError: Union[int, None] = 0
 
     @property
     def group(self) -> int:
@@ -565,26 +565,27 @@ class CCITTFaxDecode:
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
-        # §7.4.6, optional parameters for the CCITTFaxDecode filter
-        k = 0
-        columns = 1728
+        ccitt_parameters = CCITTParameters(rows=int(rows))
         if parameters:
             parameters_unwrapped = cast(
                 Union[ArrayObject, DictionaryObject], parameters.get_object()
             )
             if isinstance(parameters_unwrapped, ArrayObject):
                 for decode_parm in parameters_unwrapped:
-                    if CCITT.COLUMNS in decode_parm:
-                        columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.K in decode_parm:
-                        k = decode_parm[CCITT.K].get_object()
+                        ccitt_parameters.K = decode_parm[CCITT.K].get_object()
+                    if CCITT.COLUMNS in decode_parm:
+                        ccitt_parameters.columns = decode_parm[CCITT.COLUMNS].get_object()
+                    if CCITT.BLACK_IS_1 in decode_parm:
+                        ccitt_parameters.BlackIs1 = decode_parm[CCITT.BLACK_IS_1].get_object().value
             else:
-                if CCITT.COLUMNS in parameters_unwrapped:
-                    columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
-                    k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
-
-        return CCITTParameters(K=k, columns=columns, rows=int(rows))
+                    ccitt_parameters.K = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
+                if CCITT.COLUMNS in parameters_unwrapped:
+                    ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
+                if CCITT.BLACK_IS_1 in parameters_unwrapped:
+                    ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore
+        return ccitt_parameters
 
     @staticmethod
     def decode(
@@ -622,7 +623,7 @@ class CCITTFaxDecode:
             262,    # Thresholding, SHORT, 1, 0 = BlackIs1
             3,
             1,
-            0,
+            int(params.BlackIs1),
             273,    # StripOffsets, LONG, 1, length of header
             4,
             1,
@@ -921,10 +922,6 @@ def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]
     img, extension, image_format = _apply_alpha(
         img, x_object, obj_as_text, image_format, extension
     )
-
-    if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
-        from PIL import ImageOps  # noqa: PLC0415
-        img = ImageOps.invert(img)
 
     # Save image to bytes
     img_byte_arr = BytesIO()

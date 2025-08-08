@@ -26,6 +26,7 @@ from pypdf.filters import (
 )
 from pypdf.generic import (
     ArrayObject,
+    BooleanObject,
     ContentStream,
     DictionaryObject,
     IndirectObject,
@@ -199,19 +200,24 @@ def test_ccitparameters():
 def test_ccittparameters():
     params = CCITTParameters()
     assert params.K == 0  # zero is the default according to page 78
+    assert params.BlackIs1 is False
     assert params.group == 3
 
 
 @pytest.mark.parametrize(
-    ("parameters", "expected_k"),
+    ("parameters", "expected_k", "expected_black_is_1"),
     [
-        (None, 0),
-        (ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}]), 1),
+        (None, 0, False),
+        (
+            ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}, {"/BlackIs1": BooleanObject(True)}]),
+            1, True
+        ),
     ],
 )
-def test_ccitt_get_parameters(parameters, expected_k):
+def test_ccitt_get_parameters(parameters, expected_k, expected_black_is_1):
     parameters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
     assert parameters.K == expected_k  # noqa: SIM300
+    assert parameters.BlackIs1 == expected_black_is_1
 
 
 def test_ccitt_get_parameters__indirect_object():
