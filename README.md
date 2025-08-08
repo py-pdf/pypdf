@@ -58,7 +58,6 @@ For questions and answers, visit
 [StackOverflow](https://stackoverflow.com/questions/tagged/pypdf)
 (tagged with [pypdf](https://stackoverflow.com/questions/tagged/pypdf)).
 
-
 ## Quick Usage Examples
 Here are a few common things you can do with pypdf:
 
