@@ -565,8 +565,7 @@ class CCITTFaxDecode:
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
-        ccitt_parameters = CCITTParameters()
-        ccitt_parameters.rows = int(rows)
+        ccitt_parameters = CCITTParameters(rows=int(rows))
         if parameters:
             parameters_unwrapped = cast(
                 Union[ArrayObject, DictionaryObject], parameters.get_object()
