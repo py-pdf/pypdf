@@ -205,19 +205,19 @@ def test_ccittparameters():
 
 
 @pytest.mark.parametrize(
-    ("parameters", "expected"),
+    ("parameters", "expected_k", "expected_black_is_1"),
     [
-        (None, [0, False]),
+        (None, 0, False),
         (
             ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}, {"/BlackIs1": BooleanObject(True)}]),
-            [1, True]
+            1, True
         ),
     ],
 )
-def test_ccitt_get_parameters(parameters, expected):
+def test_ccitt_get_parameters(parameters, expected_k, expected_black_is_1):
     parameters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
-    assert parameters.K == expected[0]  # noqa: SIM300
-    assert parameters.BlackIs1 == expected[1]
+    assert parameters.K == expected_k  # noqa: SIM300
+    assert parameters.BlackIs1 == expected.black_is_1
 
 
 def test_ccitt_get_parameters__indirect_object():
