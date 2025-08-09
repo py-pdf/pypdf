@@ -74,8 +74,6 @@ PAGE_FIT = Fit.fit()
 
 
 __all__ = [
-    "_xobj_to_image",
-    "PAGE_FIT",
     "ArrayObject",
     "BooleanObject",
     "ByteStringObject",
@@ -96,6 +94,7 @@ __all__ = [
     "NumberObject",
     "OutlineFontFlag",
     "OutlineItem",
+    "PAGE_FIT",
     "PdfObject",
     "RectangleObject",
     "ReferenceLink",
@@ -103,7 +102,7 @@ __all__ = [
     "TextStringObject",
     "TreeObject",
     "ViewerPreferences",
-    # Utility functions
+    "_xobj_to_image",
     "create_string_object",
     "decode_pdfdocencoding",
     "encode_pdfdocencoding",
@@ -111,6 +110,7 @@ __all__ = [
     "hex_to_rgb",
     "is_null_or_none",
     "read_hex_string_from_stream",
+    # Utility functions
     # Data structures core functions
     "read_object",
     "read_string_from_stream",
