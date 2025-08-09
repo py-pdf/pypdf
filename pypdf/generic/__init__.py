@@ -74,6 +74,7 @@ PAGE_FIT = Fit.fit()
 
 
 __all__ = [
+    "_xobj_to_image",
     "PAGE_FIT",
     "ArrayObject",
     "BooleanObject",
