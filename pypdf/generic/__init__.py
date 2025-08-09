@@ -79,6 +79,7 @@ PAGE_FIT = Fit.fit()
 
 
 __all__ = [
+    "PAGE_FIT",
     "ArrayObject",
     "BooleanObject",
     "ByteStringObject",
@@ -99,7 +100,6 @@ __all__ = [
     "NumberObject",
     "OutlineFontFlag",
     "OutlineItem",
-    "PAGE_FIT",
     "PdfObject",
     "RectangleObject",
     "ReferenceLink",
