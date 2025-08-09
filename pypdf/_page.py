@@ -46,6 +46,7 @@ from typing import (
 from ._cmap import (
     build_char_map,
 )
+from ._image_xobject import _xobj_to_image
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     _layout_mode,
@@ -64,7 +65,6 @@ from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Resources as RES
 from .errors import PageSizeNotDefinedError, PdfReadError
-from .filters import _xobj_to_image
 from .generic import (
     ArrayObject,
     ContentStream,
