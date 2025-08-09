@@ -374,8 +374,7 @@ class ImageFile:
         from ._reader import PdfReader  # noqa: PLC0415
 
         # to prevent circular import
-        from .generic import _xobj_to_image  # noqa: PLC0415
-        from .generic import DictionaryObject, PdfObject  # noqa: PLC0415
+        from .generic import _xobj_to_image, DictionaryObject, PdfObject  # noqa: PLC0415
 
         if self.indirect_reference is None:
             raise TypeError("Cannot update an inline image.")
