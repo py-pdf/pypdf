@@ -64,7 +64,6 @@ from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Resources as RES
 from .errors import PageSizeNotDefinedError, PdfReadError
-from .filters import _xobj_to_image
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -79,6 +78,7 @@ from .generic import (
     RectangleObject,
     StreamObject,
     is_null_or_none,
+    xobject_to_image,
 )
 
 try:
@@ -374,8 +374,7 @@ class ImageFile:
         from ._reader import PdfReader  # noqa: PLC0415
 
         # to prevent circular import
-        from .filters import _xobj_to_image  # noqa: PLC0415
-        from .generic import DictionaryObject, PdfObject  # noqa: PLC0415
+        from .generic import DictionaryObject, PdfObject, xobject_to_image  # noqa: PLC0415
 
         if self.indirect_reference is None:
             raise TypeError("Cannot update an inline image.")
@@ -394,7 +393,7 @@ class ImageFile:
             PdfObject, self.indirect_reference.get_object()
         ).indirect_reference = self.indirect_reference
         # change the object attributes
-        extension, byte_stream, img = _xobj_to_image(
+        extension, byte_stream, img = xobject_to_image(
             cast(DictionaryObject, self.indirect_reference.get_object())
         )
         assert extension is not None
@@ -646,7 +645,7 @@ class PageObject(DictionaryObject):
                     raise KeyError("No inline image can be found")
                 return self.inline_images[id]
 
-            imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
+            imgd = xobject_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
             return ImageFile(
                 name=f"{id[1:]}{extension}",
@@ -749,7 +748,7 @@ class PageObject(DictionaryObject):
                 if k not in init:
                     init[k] = v
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
-            extension, byte_stream, img = _xobj_to_image(ii["object"])
+            extension, byte_stream, img = xobject_to_image(ii["object"])
             files[f"~{num}~"] = ImageFile(
                 name=f"~{num}~{extension}",
                 data=byte_stream,
