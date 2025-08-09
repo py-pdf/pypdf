@@ -395,7 +395,7 @@ def _get_mode_and_invert_color(
     return mode, invert_color
 
 
-def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]:
+def xobject_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
 

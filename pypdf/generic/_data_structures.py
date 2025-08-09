@@ -1058,7 +1058,7 @@ class StreamObject(DictionaryObject):
                 stops in your program.
 
         """
-        from ._image_xobject import _xobj_to_image  # noqa: PLC0415
+        from ._image_xobject import xobject_to_image  # noqa: PLC0415
 
         if self.get("/Subtype", "") != "/Image":
             try:
@@ -1066,7 +1066,7 @@ class StreamObject(DictionaryObject):
             except AttributeError:
                 msg = f"{self.__repr__()} object does not seem to be an Image"  # pragma: no cover
             logger_warning(msg, __name__)
-        extension, byte_stream, img = _xobj_to_image(self)
+        extension, byte_stream, img = xobject_to_image(self)
         if extension is None:
             return None  # pragma: no cover
         return img
