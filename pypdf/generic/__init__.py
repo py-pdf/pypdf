@@ -58,7 +58,12 @@ from ._data_structures import (
 from ._files import EmbeddedFile
 from ._fit import Fit
 from ._image_xobject import xobject_to_image
-from ._link import DirectReferenceLink, NamedReferenceLink, ReferenceLink, extract_links
+from ._link import (
+    DirectReferenceLink,
+    NamedReferenceLink,
+    ReferenceLink,
+    extract_links,
+)
 from ._outline import OutlineItem
 from ._rectangle import RectangleObject
 from ._utils import (

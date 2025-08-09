@@ -46,7 +46,6 @@ from typing import (
 from ._cmap import (
     build_char_map,
 )
-from ._image_xobject import xobject_to_image
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     _layout_mode,
