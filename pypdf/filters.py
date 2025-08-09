@@ -42,7 +42,6 @@ import subprocess
 import zlib
 from base64 import a85decode
 from dataclasses import dataclass
-from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Optional, Union, cast
