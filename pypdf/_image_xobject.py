@@ -1,4 +1,4 @@
-"""Code in here is only used by pypdf.filters._xobj_to_image"""
+"""Extract image from an image XObject"""
 
 import sys
 from io import BytesIO
