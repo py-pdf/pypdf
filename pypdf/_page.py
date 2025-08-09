@@ -79,7 +79,7 @@ from .generic import (
     RectangleObject,
     StreamObject,
     is_null_or_none,
-    _xobj_to_image,
+    xobject_to_image,
 )
 
 try:

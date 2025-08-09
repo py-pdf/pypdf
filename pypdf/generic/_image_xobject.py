@@ -418,7 +418,7 @@ def xobject_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, An
     ) -> tuple[Image.Image, str, str]:
         alpha = None
         if IA.S_MASK in x_object:  # add alpha channel
-            alpha = _xobj_to_image(x_object[IA.S_MASK])[2]
+            alpha = xobject_to_image(x_object[IA.S_MASK])[2]
             if img.size != alpha.size:
                 logger_warning(
                     f"image and mask size not matching: {obj_as_text}", __name__

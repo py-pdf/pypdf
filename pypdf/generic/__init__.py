@@ -109,9 +109,7 @@ __all__ = [
     "hex_to_rgb",
     "is_null_or_none",
     "read_hex_string_from_stream",
-    "xobject_to_image",
-    # Utility functions
-    # Data structures core functions
     "read_object",
     "read_string_from_stream",
+    "xobject_to_image",
 ]
