@@ -7,12 +7,10 @@ https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
 import datetime
 import decimal
 import re
+from collections.abc import Iterator
 from typing import (
     Any,
     Callable,
-    Dict,
-    Iterator,
-    List,
     Optional,
     TypeVar,
     Union,
@@ -21,7 +19,8 @@ from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
 
-from ._utils import StreamType, deprecate_no_replacement
+from ._protocols import XmpInformationProtocol
+from ._utils import StreamType, deprecate_with_replacement, deprecation_no_replacement
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
 
@@ -50,6 +49,9 @@ XMPMM_NAMESPACE = "http://ns.adobe.com/xap/1.0/mm/"
 # suggested by Adobe's own documentation on XMP under "Extensibility of
 # Schemas".
 PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"
+
+# PDF/A
+PDFAID_NAMESPACE = "http://www.aiim.org/pdfa/ns/id/"
 
 iso8601 = re.compile(
     """
@@ -105,21 +107,35 @@ def _converter_date(value: str) -> datetime.datetime:
     return dt
 
 
+def _generic_get(
+        element: XmlElement, self: "XmpInformation", list_type: str, converter: Callable[[Any], Any] = _identity
+) -> Optional[list[str]]:
+    containers = element.getElementsByTagNameNS(RDF_NAMESPACE, list_type)
+    retval: list[Any] = []
+    if len(containers):
+        for container in containers:
+            for item in container.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
+                value = self._get_text(item)
+                value = converter(value)
+                retval.append(value)
+        return retval
+    return None
+
+
 def _getter_bag(
     namespace: str, name: str
-) -> Callable[["XmpInformation"], Optional[List[str]]]:
-    def get(self: "XmpInformation") -> Optional[List[str]]:
+) -> Callable[["XmpInformation"], Optional[list[str]]]:
+    def get(self: "XmpInformation") -> Optional[list[str]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
-        retval = []
+        retval: list[str] = []
         for element in self.get_element("", namespace, name):
-            bags = element.getElementsByTagNameNS(RDF_NAMESPACE, "Bag")
-            if len(bags):
-                for bag in bags:
-                    for item in bag.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._get_text(item)
-                        retval.append(value)
+            if (bags := _generic_get(element, self, list_type="Bag")) is not None:
+                retval.extend(bags)
+            else:
+                value = self._get_text(element)
+                retval.append(value)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
         return retval
@@ -129,20 +145,24 @@ def _getter_bag(
 
 def _getter_seq(
     namespace: str, name: str, converter: Callable[[Any], Any] = _identity
-) -> Callable[["XmpInformation"], Optional[List[Any]]]:
-    def get(self: "XmpInformation") -> Optional[List[Any]]:
+) -> Callable[["XmpInformation"], Optional[list[Any]]]:
+    def get(self: "XmpInformation") -> Optional[list[Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         retval = []
         for element in self.get_element("", namespace, name):
-            seqs = element.getElementsByTagNameNS(RDF_NAMESPACE, "Seq")
-            if len(seqs):
-                for seq in seqs:
-                    for item in seq.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._get_text(item)
-                        value = converter(value)
-                        retval.append(value)
+            if (seqs := _generic_get(element, self, list_type="Seq", converter=converter)) is not None:
+                retval.extend(seqs)
+            elif (bags := _generic_get(element, self, list_type="Bag")) is not None:
+                # See issue at https://github.com/py-pdf/pypdf/issues/3324
+                # Some applications violate the XMP metadata standard regarding `dc:creator` which should
+                # be an "ordered array" and thus a sequence, but use an unordered array (bag) instead.
+                # This seems to stem from the fact that the original Dublin Core specification does indeed
+                # use bags or direct values, while PDFs are expected to follow the XMP standard and ignore
+                # the plain Dublin Core variant. For this reason, add a fallback here to deal with such
+                # issues accordingly.
+                retval.extend(bags)
             else:
                 value = converter(self._get_text(element))
                 retval.append(value)
@@ -155,8 +175,8 @@ def _getter_seq(
 
 def _getter_langalt(
     namespace: str, name: str
-) -> Callable[["XmpInformation"], Optional[Dict[Any, Any]]]:
-    def get(self: "XmpInformation") -> Optional[Dict[Any, Any]]:
+) -> Callable[["XmpInformation"], Optional[dict[Any, Any]]]:
+    def get(self: "XmpInformation") -> Optional[dict[Any, Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -200,7 +220,7 @@ def _getter_single(
     return get
 
 
-class XmpInformation(PdfObject):
+class XmpInformation(XmpInformationProtocol, PdfObject):
     """
     An object that represents Extensible Metadata Platform (XMP) metadata.
     Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`.
@@ -215,18 +235,23 @@ class XmpInformation(PdfObject):
         try:
             data = self.stream.get_data()
             doc_root: Document = parseString(data)  # noqa: S318
-        except ExpatError as e:
+        except (AttributeError, ExpatError) as e:
             raise PdfReadError(f"XML in XmpInformation was invalid: {e}")
         self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
             RDF_NAMESPACE, "RDF"
         )[0]
-        self.cache: Dict[Any, Any] = {}
+        self.cache: dict[Any, Any] = {}
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
+        deprecate_with_replacement(
+            "XmpInformation.write_to_stream",
+            "PdfWriter.xmp_metadata",
+            "6.0.0"
+        )
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         self.stream.write_to_stream(stream)
@@ -244,7 +269,7 @@ class XmpInformation(PdfObject):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 for i in range(desc.attributes.length):
                     attr = desc.attributes.item(i)
-                    if attr.namespaceURI == namespace:
+                    if attr and attr.namespaceURI == namespace:
                         yield attr
                 for child in desc.childNodes:
                     if child.namespaceURI == namespace:
@@ -362,8 +387,14 @@ class XmpInformation(PdfObject):
     """An identifier for a specific incarnation of a document, updated each
     time a file is saved."""
 
+    pdfaid_part = property(_getter_single(PDFAID_NAMESPACE, "part"))
+    """The part of the PDF/A standard that the document conforms to (e.g., 1, 2, 3)."""
+
+    pdfaid_conformance = property(_getter_single(PDFAID_NAMESPACE, "conformance"))
+    """The conformance level within the PDF/A standard (e.g., 'A', 'B', 'U')."""
+
     @property
-    def custom_properties(self) -> Dict[Any, Any]:
+    def custom_properties(self) -> dict[Any, Any]:
         """
         Retrieve custom metadata properties defined in the undocumented pdfx
         metadata schema.

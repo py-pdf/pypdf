@@ -3,7 +3,7 @@ import io
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 import pytest
 
@@ -14,6 +14,7 @@ from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
 from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
+    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
@@ -38,7 +39,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
-NestedList = Union[int, None, List["NestedList"]]
+NestedList = Union[int, None, list["NestedList"]]
 
 
 @pytest.mark.parametrize(
@@ -231,7 +232,7 @@ def test_get_outline(src, outline_elements):
     ],
 )
 def test_get_images(src, expected_images):
-    from PIL import Image
+    from PIL import Image  # noqa: PLC0415
 
     src_abs = RESOURCE_ROOT / src
     reader = PdfReader(src_abs)
@@ -742,17 +743,17 @@ def test_decode_permissions():
 
     print_ = base.copy()
     print_["print"] = True
-    with pytest.warns(
-        DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+    with pytest.raises(
+        DeprecationError,
+        match="decode_permissions is deprecated and was removed in pypdf 5.0.0. Use user_access_permissions instead",
     ):
         assert reader.decode_permissions(4) == print_
 
     modify = base.copy()
     modify["modify"] = True
-    with pytest.warns(
-        DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+    with pytest.raises(
+        DeprecationError,
+        match="decode_permissions is deprecated and was removed in pypdf 5.0.0. Use user_access_permissions instead",
     ):
         assert reader.decode_permissions(8) == modify
 

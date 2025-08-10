@@ -9,6 +9,8 @@ import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
+from pypdf.generic import NameObject, StreamObject
+from pypdf.xmp import XmpInformation
 
 from . import get_data_from_url
 
@@ -272,3 +274,144 @@ def test_xmp_getter_bag_function():
 
     assert xmp_info is not None
     f(xmp_info)
+
+
+@pytest.mark.samples
+def test_pdfa_xmp_metadata_with_values():
+    """Test PDF/A XMP metadata extraction from a file with PDF/A metadata."""
+    reader = PdfReader(SAMPLE_ROOT / "021-pdfa" / "crazyones-pdfa.pdf")
+    xmp = reader.xmp_metadata
+
+    assert xmp is not None
+    assert xmp.pdfaid_part == "1"
+    assert xmp.pdfaid_conformance == "B"
+
+
+@pytest.mark.samples
+def test_pdfa_xmp_metadata_without_values():
+    """Test PDF/A XMP metadata extraction from a file without PDF/A metadata."""
+    reader = PdfReader(SAMPLE_ROOT / "020-xmp" / "output_with_metadata_pymupdf.pdf")
+    xmp = reader.xmp_metadata
+
+    assert xmp is not None
+    assert xmp.pdfaid_part is None
+    assert xmp.pdfaid_conformance is None
+
+
+@pytest.mark.enable_socket
+def test_xmp_metadata__content_stream_is_dictionary_object():
+    url = "https://github.com/user-attachments/files/18943249/testing.pdf"
+    name = "issue3107.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    with pytest.raises(
+            PdfReadError,
+            match="XML in XmpInformation was invalid: 'DictionaryObject' object has no attribute 'get_data'"
+    ):
+        assert reader.xmp_metadata is not None
+
+
+@pytest.mark.enable_socket
+def test_dc_creator__bag_instead_of_seq():
+    url = "https://github.com/user-attachments/files/18381698/tika-924562.pdf"
+    name = "tika-924562.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    assert reader.xmp_metadata is not None
+    assert reader.xmp_metadata.dc_creator == ["William J. Hussar"]
+
+
+@pytest.mark.enable_socket
+def test_dc_language__no_bag_container():
+    reader = PdfReader(BytesIO(get_data_from_url(name="iss2138.pdf")))
+
+    assert reader.xmp_metadata is not None
+    assert reader.xmp_metadata.dc_language == ["x-unknown"]
+
+
+def test_reading_does_not_destroy_root_object():
+    """Test for #3391."""
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    xmp = writer.xmp_metadata
+    assert xmp is not None
+    assert not isinstance(writer.root_object["/Metadata"], XmpInformation)
+    assert isinstance(writer.root_object["/Metadata"].get_object(), StreamObject)
+
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    assert b"\n/Metadata 27 0 R\n" in output_bytes
+
+
+def test_xmp_information__write_to_stream():
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    xmp = writer.xmp_metadata
+
+    output = BytesIO()
+    with pytest.warns(
+            DeprecationWarning,
+            match=(
+                r"^XmpInformation\.write_to_stream is deprecated and will be removed in pypdf 6\.0\.0\. "
+                r"Use PdfWriter\.xmp_metadata instead\.$"
+            )
+    ):
+        xmp.write_to_stream(output)
+    output_bytes = output.getvalue()
+    assert output_bytes.startswith(b"<<\n/Type /Metadata\n/Subtype /XML\n/Length 2786\n>>\nstream\n<?xpacket begin")
+
+
+def test_pdf_writer__xmp_metadata_setter():
+    # Clear existing metadata.
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    assert writer.xmp_metadata is not None
+    original_metadata = writer.xmp_metadata.stream.get_data()
+    writer.xmp_metadata = None
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    reader = PdfReader(BytesIO(output_bytes))
+    assert reader.xmp_metadata is None
+
+    # Attempt to clear again.
+    writer = PdfWriter(clone_from=reader)
+    assert writer.xmp_metadata is None
+    writer.xmp_metadata = None
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    reader = PdfReader(BytesIO(output_bytes))
+    assert reader.xmp_metadata is None
+
+    # Set new metadata from bytes.
+    writer = PdfWriter(clone_from=reader)
+    assert writer.xmp_metadata is None
+    writer.xmp_metadata = original_metadata
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    reader = PdfReader(BytesIO(output_bytes))
+    assert get_all_tiff(reader.xmp_metadata) == {"tiff:Artist": ["me"]}
+
+    # Set metadata from XmpInformation.
+    writer = PdfWriter(clone_from=reader)
+    xmp_metadata = writer.xmp_metadata
+    assert get_all_tiff(xmp_metadata) == {"tiff:Artist": ["me"]}
+    new_metadata = original_metadata.replace(b"<tiff:Artist>me</tiff:Artist>", b"<tiff:Artist>Foo Bar</tiff:Artist>")
+    xmp_metadata.stream.set_data(new_metadata)
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    reader = PdfReader(BytesIO(output_bytes))
+    assert get_all_tiff(reader.xmp_metadata) == {"tiff:Artist": ["Foo Bar"]}
+
+    # Fix metadata not being an IndirectObject before.
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    writer.root_object[NameObject("/Metadata")] = writer.root_object["/Metadata"].get_object()
+    assert "/XML" in str(writer.root_object)
+    writer.xmp_metadata = new_metadata
+    output = BytesIO()
+    writer.write(output)
+    output_bytes = output.getvalue()
+    reader = PdfReader(BytesIO(output_bytes))
+    assert get_all_tiff(reader.xmp_metadata) == {"tiff:Artist": ["Foo Bar"]}
+    assert "/XML" not in str(writer.root_object)

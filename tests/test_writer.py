@@ -20,10 +20,12 @@ from pypdf import (
     Transformation,
 )
 from pypdf.annotations import Link
-from pypdf.errors import PageSizeNotDefinedError, PyPdfError
+from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
+    ByteStringObject,
     ContentStream,
+    DecodedStreamObject,
     Destination,
     DictionaryObject,
     Fit,
@@ -513,12 +515,12 @@ def test_fill_form(pdf_file_path):
     writer.append(RESOURCE_ROOT / "crazyones.pdf", [0])
 
     writer.update_page_form_field_values(
-        writer.pages[0], {"foo": "some filled in text"}, flags=1
+        writer.pages[0], {"foo": "some filled in text"}, flags=1, flatten=True
     )
 
     # check if no fields to fill in the page
     writer.update_page_form_field_values(
-        writer.pages[1], {"foo": "some filled in text"}, flags=1
+        writer.pages[1], {"foo": "some filled in text"}, flags=1, flatten=True
     )
 
     writer.update_page_form_field_values(
@@ -1526,12 +1528,20 @@ def test_update_form_fields(tmp_path):
             "DropList1": "DropListe3",
         },
         auto_regenerate=False,
+        flatten=True,
     )
     del writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"]
+    del writer.pages[0]["/Resources"]["/Font"]
     writer.update_page_form_field_values(
         writer.pages[0],
         {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
         auto_regenerate=False,
+    )
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Text1": None, "Text2": None},
+        auto_regenerate=False,
+        flatten=True,
     )
 
     writer.write(write_data_here)
@@ -1575,9 +1585,69 @@ def test_update_form_fields(tmp_path):
         None,
         {"Text1": "my Text1", "Text2": "ligne1\nligne2\nligne3"},
         auto_regenerate=False,
+        flatten=True
     )
 
     Path(write_data_here).unlink()
+
+
+def test_add_apstream_object():
+    writer = PdfWriter()
+    page = writer.add_blank_page(1000, 1000)
+    assert NameObject("/Contents") not in page
+    apstream_object = DecodedStreamObject.initialize_from_dictionary(
+        {
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Form"),
+            NameObject("/BBox"): RectangleObject([0.0, 0.0, 10.5, 10.5]),
+            "__streamdata__": ByteStringObject(b"BT /F1 12 Tf (Hello World) Tj ET")
+        }
+    )
+    writer._add_object(apstream_object)
+    object_name = "AA2342!@#$% ^^##aa:-)"
+    x_offset = 200
+    y_offset = 200
+    writer._add_apstream_object(page, apstream_object, object_name, x_offset, y_offset)
+    assert NameObject("/XObject") in page[NameObject("/Resources")]
+    assert "/Fm_AA2342__________aa_-_" in page[NameObject("/Resources")][NameObject("/XObject")]
+    assert NameObject("/Contents") in page
+    contents_obj = page[NameObject("/Contents")]
+    stream = contents_obj.get_object()
+    assert isinstance(stream, StreamObject)
+    assert stream.get_data() == (
+        b"q\n1.0000 0.0000 0.0000 1.0000 200.0000 200.0000 cm\n/Fm_AA2342__________aa_-_ Do\nQ"
+    )
+
+
+def test_merge_content_stream_to_page():
+    """Test that new content data is correctly added to page contents
+    in the form of an ArrayObject or StreamObject. The
+    test_add_apstream_object code already correctly checks that
+    _merge_content_stream_to_page works for an emtpy page.
+    """
+    writer = PdfWriter()
+    page = writer.add_blank_page(100, 100)
+    new_content = b"BT /F1 12 Tf (Hello World) Tj ET"
+    # Call the method under test
+    writer._merge_content_stream_to_page(page, new_content)
+    more_content = b"BT /F1 12 Tf (Hello Again, World) Tj ET"
+    writer._merge_content_stream_to_page(page, more_content)
+    contents_obj = page[NameObject("/Contents")]
+    stream = contents_obj.get_object()
+    assert isinstance(stream, StreamObject)
+    assert stream.get_data() == b"BT /F1 12 Tf (Hello World) Tj ET\nBT /F1 12 Tf (Hello Again, World) Tj ET"
+    new_stream_obj = StreamObject()
+    new_stream_obj.set_data(new_content)
+    content = ArrayObject()
+    content.append(new_stream_obj)
+    page[NameObject("/Contents")] = writer._add_object(content)
+    writer._merge_content_stream_to_page(page, more_content)
+    contents_obj = page[NameObject("/Contents")]
+    array = contents_obj.get_object()
+    assert isinstance(array, ArrayObject)
+    contents = page[NameObject("/Contents")].get_object()
+    assert contents[0].get_object().get_data() == new_content
+    assert contents[1].get_object().get_data() == more_content
 
 
 @pytest.mark.enable_socket
@@ -2144,14 +2214,14 @@ REFERENCES 76"""
 
 
 def test_merging_many_temporary_files(caplog):
-    def create_number_pdf(n) -> BytesIO:
+    def create_number_pdf(_n) -> BytesIO:
         pytest.importorskip("fpdf")
-        from fpdf import FPDF
+        from fpdf import FPDF  # noqa: PLC0415
 
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("helvetica", "B", 16)
-        pdf.cell(40, 10, str(n))
+        pdf.cell(40, 10, str(_n))
         byte_string = pdf.output()
         return BytesIO(byte_string)
 
@@ -2599,13 +2669,17 @@ def test_auto_write(tmp_path):
 def test_deprecate_with_as():
     """Yet another test for #2905"""
     with PdfWriter() as writer:
-        with pytest.warns(DeprecationWarning) as w:
-            val = writer.with_as_usage
-        assert "with_as_usage is deprecated" in w[0].message.args[0]
-        assert val
-        with pytest.warns(DeprecationWarning) as w:
-            writer.with_as_usage = val  # old code allowed setting this, so...
-        assert "with_as_usage is deprecated" in w[0].message.args[0]
+        with pytest.raises(
+                expected_exception=DeprecationError,
+                match="with_as_usage is deprecated and was removed in pypdf 5.0"
+        ):
+            _ = writer.with_as_usage
+
+        with pytest.raises(
+                expected_exception=DeprecationError,
+                match="with_as_usage is deprecated and was removed in pypdf 5.0"
+        ):
+            writer.with_as_usage = False  # old code allowed setting this, so...
 
 
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
@@ -2744,3 +2818,37 @@ def test_insert_filtered_annotations__link_without_destination():
         annots=annotations, page=writer.pages[0], pages={}, reader=reader
     )
     assert result == []
+
+
+@pytest.mark.enable_socket
+def test_insert_filtered_annotations__annotations_are_no_list(caplog):
+    """Tests for #3320"""
+    url = "https://github.com/user-attachments/files/20818089/bugpdf.pdf"
+    name = "issue3320.pdf"
+    source_data = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(source_data)
+    writer = PdfWriter()
+    writer.append(reader)
+    font_file2 = reader.get_object(36).indirect_reference
+    assert caplog.messages == [
+        (
+            f"Expected list of annotations, got {{'/FontFile2': {font_file2!r}, "
+            "'/Descent': -269, '/CapHeight': 714, '/FontWeight': 300, '/FontName': '/JQJGLF+OpenSans-Light', "
+            "'/ItalicAngle': 0, '/StemV': 48, '/Type': '/FontDescriptor', '/FontBBox': [-521, -269, 1140, 1048], "
+            "'/FontFamily': 'Open Sans Light', '/Flags': 32, '/XHeight': 531, '/Ascent': 1048, '/FontStretch': "
+            "'/Normal'} of type DictionaryObject."
+        )
+    ]
+
+
+def test_unterminated_object__with_incremental_writer():
+    """Test for #3118"""
+    reader = PdfReader(RESOURCE_ROOT / "bytes.pdf")
+    writer = PdfWriter(reader, incremental=True)
+
+    writer.add_blank_page(72, 72)
+
+    fi = BytesIO()
+    writer.write(fi)
+    b = fi.getvalue()
+    assert b[-39:] == b"\nendstream\nendobj\nstartxref\n1240\n%%EOF\n"

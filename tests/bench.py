@@ -11,8 +11,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 import pypdf
-from pypdf import PdfReader, PdfWriter, Transformation
-from pypdf._page import PageObject
+from pypdf import PageObject, PdfReader, PdfWriter, Transformation
 from pypdf.generic import Destination, read_string_from_stream
 
 from . import get_data_from_url
@@ -86,7 +85,7 @@ def merge():
     writer.append(reader)
 
     # PdfReader object:
-    writer.append(PdfReader(pdf_path, "rb"), outline_item="True")
+    writer.append(PdfReader(pdf_path), outline_item="True")
 
     # File handle
     with open(pdf_path, "rb") as fh:
@@ -203,7 +202,7 @@ def image_new_property(data):
     ]
     assert len(reader.pages[0].images.items()) == 36
     assert reader.pages[0].images[0].name == "I0.png"
-    assert len(reader.pages[0].images[-1].data) == 15168
+    assert len(reader.pages[0].images[-1].data) > 10000
     assert reader.pages[0].images["/TPL1", "/Image5"].image.format == "JPEG"
     assert (
         reader.pages[0].images["/I0"].indirect_reference.get_object()

@@ -2,7 +2,7 @@
 
 import sys
 from io import BytesIO
-from typing import Any, Dict, List, Literal, Tuple, Union, cast
+from typing import Any, Literal, Union, cast
 
 from ._utils import check_if_whitespace_only, logger_warning
 from .constants import ColorSpaces
@@ -13,9 +13,9 @@ from .generic import (
     ArrayObject,
     DecodedStreamObject,
     EncodedStreamObject,
-    IndirectObject,
     NullObject,
     TextStringObject,
+    is_null_or_none,
 )
 
 if sys.version_info[:2] >= (3, 10):
@@ -40,11 +40,11 @@ MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
 
 
 def _get_imagemode(
-    color_space: Union[str, List[Any], Any],
+    color_space: Union[str, list[Any], Any],
     color_components: int,
     prev_mode: mode_str_type,
     depth: int = 0,
-) -> Tuple[mode_str_type, bool]:
+) -> tuple[mode_str_type, bool]:
     """
     Returns:
         Image mode, not taking into account mask (transparency).
@@ -55,43 +55,40 @@ def _get_imagemode(
         raise PdfReadError(
             "Color spaces nested too deeply. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH."
         )
-    if isinstance(color_space, NullObject):
+    if is_null_or_none(color_space):
         return "", False
+    color_space_str: str = ""
     if isinstance(color_space, str):
-        pass
+        color_space_str = color_space
     elif not isinstance(color_space, list):
         raise PdfReadError(
             "Cannot interpret color space", color_space
         )  # pragma: no cover
     elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
-        color_space = "/Device" + color_space[0][4:]
+        color_space_str = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
         color_components = cast(int, icc_profile["/N"])
-        color_space = icc_profile.get("/Alternate", "")
+        color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
-        color_space = color_space[1].get_object()
+        color_space_str = color_space[1].get_object()
         mode, invert_color = _get_imagemode(
-            color_space, color_components, prev_mode, depth + 1
+            color_space_str, color_components, prev_mode, depth + 1
         )
         if mode in ("RGB", "CMYK"):
             mode = "P"
         return mode, invert_color
     elif color_space[0] == "/Separation":
-        color_space = color_space[2]
-        if isinstance(color_space, IndirectObject):
-            color_space = color_space.get_object()
+        color_space_str = color_space[2].get_object()
         mode, invert_color = _get_imagemode(
-            color_space, color_components, prev_mode, depth + 1
+            color_space_str, color_components, prev_mode, depth + 1
         )
         return mode, True
     elif color_space[0] == "/DeviceN":
         original_color_space = color_space
         color_components = len(color_space[1])
-        color_space = color_space[2]
-        if isinstance(color_space, IndirectObject):  # pragma: no cover
-            color_space = color_space.get_object()
-        if color_space == "/DeviceCMYK" and color_components == 1:
+        color_space_str = color_space[2].get_object()
+        if color_space_str == "/DeviceCMYK" and color_components == 1:
             if original_color_space[1][0] != "/Black":
                 logger_warning(
                     f"Color {original_color_space[1][0]} converted to Gray. Please share PDF with pypdf dev team",
@@ -99,11 +96,11 @@ def _get_imagemode(
                 )
             return "L", True
         mode, invert_color = _get_imagemode(
-            color_space, color_components, prev_mode, depth + 1
+            color_space_str, color_components, prev_mode, depth + 1
         )
         return mode, invert_color
 
-    mode_map: Dict[str, mode_str_type] = {
+    mode_map: dict[str, mode_str_type] = {
         "1bit": "1",  # must be zeroth position: color_components may index the values
         "/DeviceGray": "L",  # must be first position: color_components may index the values
         "palette": "P",  # must be second position: color_components may index the values
@@ -114,7 +111,7 @@ def _get_imagemode(
     }
 
     mode = (
-        mode_map.get(color_space)
+        mode_map.get(color_space_str)
         or list(mode_map.values())[color_components]
         or prev_mode
     )
@@ -122,7 +119,7 @@ def _get_imagemode(
     return mode, mode == "CMYK"
 
 
-def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
+def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
     mask = (1 << bits) - 1
     byte_buffer = bytearray(size[0] * size[1])
     data_index = 0
@@ -141,7 +138,7 @@ def bits2byte(data: bytes, size: Tuple[int, int], bits: int) -> bytes:
 
 
 def _extended_image_frombytes(
-    mode: str, size: Tuple[int, int], data: bytes
+    mode: str, size: tuple[int, int], data: bytes
 ) -> Image.Image:
     try:
         img = Image.frombytes(mode, size, data)
@@ -160,14 +157,32 @@ def _extended_image_frombytes(
     return img
 
 
+def __handle_flate__indexed(color_space: ArrayObject) -> tuple[Any, Any, Any, Any]:
+    count = len(color_space)
+    if count == 4:
+        color_space, base, hival, lookup = (value.get_object() for value in color_space)
+        return color_space, base, hival, lookup
+
+    # Deal with strange AutoDesk files where `base` and `hival` look like this:
+    #   /DeviceRGB\x00255
+    element1 = color_space[1]
+    element1 = element1 if isinstance(element1, str) else element1.get_object()
+    if count == 3 and "\x00" in element1:
+        color_space, lookup = color_space[0].get_object(), color_space[2].get_object()
+        base, hival = element1.split("\x00")
+        hival = int(hival)
+        return color_space, base, hival, lookup
+    raise PdfReadError(f"Expected color space with 4 values, got {count}: {color_space}")
+
+
 def _handle_flate(
-    size: Tuple[int, int],
+    size: tuple[int, int],
     data: bytes,
     mode: mode_str_type,
     color_space: str,
     colors: int,
     obj_as_text: str,
-) -> Tuple[Image.Image, str, str, bool]:
+) -> tuple[Image.Image, str, str, bool]:
     """
     Process image encoded in flateEncode
     Returns img, image_format, extension, color inversion
@@ -178,7 +193,7 @@ def _handle_flate(
     base: Any
     hival: Any
     if isinstance(color_space, ArrayObject) and color_space[0] == "/Indexed":
-        color_space, base, hival, lookup = (value.get_object() for value in color_space)
+        color_space, base, hival, lookup = __handle_flate__indexed(color_space)
     if mode == "2bits":
         mode = "P"
         data = bits2byte(data, size, 2)
@@ -272,12 +287,12 @@ def _handle_flate(
 
 
 def _handle_jpx(
-    size: Tuple[int, int],
+    size: tuple[int, int],
     data: bytes,
     mode: mode_str_type,
     color_space: str,
     colors: int,
-) -> Tuple[Image.Image, str, str, bool]:
+) -> tuple[Image.Image, str, str, bool]:
     """
     Process image encoded in flateEncode
     Returns img, image_format, extension, inversion
@@ -311,9 +326,9 @@ def _handle_jpx(
 
 def _apply_decode(
     img: Image.Image,
-    x_object_obj: Dict[str, Any],
+    x_object_obj: dict[str, Any],
     lfilters: FT,
-    color_space: Union[str, List[Any], Any],
+    color_space: Union[str, list[Any], Any],
     invert_color: bool,
 ) -> Image.Image:
     # CMYK image and other color spaces without decode
@@ -338,7 +353,7 @@ def _apply_decode(
     ):
         decode = [1.0, 0.0] * len(img.getbands())
     if decode is not None and not all(decode[i] == i % 2 for i in range(len(decode))):
-        lut: List[int] = []
+        lut: list[int] = []
         for i in range(0, len(decode), 2):
             dmin = decode[i]
             dmax = decode[i + 1]
@@ -350,8 +365,8 @@ def _apply_decode(
 
 
 def _get_mode_and_invert_color(
-    x_object_obj: Dict[str, Any], colors: int, color_space: Union[str, List[Any], Any]
-) -> Tuple[mode_str_type, bool]:
+    x_object_obj: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
+) -> tuple[mode_str_type, bool]:
     if (
         IA.COLOR_SPACE in x_object_obj
         and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
@@ -369,7 +384,7 @@ def _get_mode_and_invert_color(
             if (
                 colors == 1
                 and (
-                    not isinstance(color_space, NullObject)
+                    not is_null_or_none(color_space)
                     and "Gray" not in color_space
                 )
             )

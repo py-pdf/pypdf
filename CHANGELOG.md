@@ -1,5 +1,90 @@
 # CHANGELOG
 
+## Version 5.9.0, 2025-07-27
+
+### New Features (ENH)
+- Automatically preserve links in added pages (#3298)
+- Allow writing/updating all properties of an embedded file (#3374)
+
+### Bug Fixes (BUG)
+- Fix XMP handling dropping indirect references (#3392)
+
+### Robustness (ROB)
+- Deal with DecodeParms being empty list (#3388)
+
+### Documentation (DOC)
+- Document how to read and modify XMP metadata (#3383)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.8.0...5.9.0)
+
+## Version 5.8.0, 2025-07-13
+
+### New Features (ENH)
+- Implement flattening for writer (#3312)
+
+### Bug Fixes (BUG)
+- Unterminated object when using PdfWriter with incremental=True (#3345)
+
+### Robustness (ROB)
+- Resolve some image extraction edge cases (#3371)
+- Ignore faulty trailing newline during RLE decoding (#3355)
+- Gracefully handle odd-length strings in parse_bfchar (#3348)
+
+### Developer Experience (DEV)
+- Modernize license specifiers (#3338)
+
+### Maintenance (MAINT)
+- Reduce max-complexity of tool.ruff.lint.mccabe (#3365)
+- Refactor text extraction code
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.7.0...5.8.0)
+
+## Version 5.7.0, 2025-06-29
+
+### Performance Improvements (PI)
+- Performance optimization for LZW decoding (#3329)
+
+### Robustness (ROB)
+- Flate decoding for streams with faulty tail bytes (#3332)
+- dc_creator could be a Bag as well (#3333)
+- Handle tree being NullObject when retrieving named destinations (#3331)
+
+### Maintenance (MAINT)
+- Move inline-image mappings to constants (#3328)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.6.1...5.7.0)
+
+## Version 5.6.1, 2025-06-22
+
+### New Features (ENH)
+- Add PDF/A XMP metadata support (#3314)
+
+### Robustness (ROB)
+- Deal with annotations not being lists on merge (#3321)
+- Handle NullObject for cmap encoding Differences entry (#3317)
+
+### Developer Experience (DEV)
+- Update ruff to 0.12.0 (#3316)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.6.0...5.6.1)
+
+## Version 5.6.0, 2025-06-01
+
+### New Features (ENH)
+- Add basic support for JBIG2 by using jbig2dec (#3163)
+
+### Bug Fixes (BUG)
+- Fix crashes by removing unnecessary line (#3293)
+- Add delimiters to NameObject.renumber_table (#3286)
+
+### Robustness (ROB)
+- Handle DecodeParms being a NullObject (#3285)
+
+### Code Style (STY)
+- Update to mypy 1.16.0 (#3300)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.5.0...5.6.0)
+
 ## Version 5.5.0, 2025-05-11
 
 ### New Features (ENH)

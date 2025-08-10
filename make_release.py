@@ -5,7 +5,6 @@ import subprocess
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Dict, List, Tuple
 
 GH_ORG = "py-pdf"
 GH_PROJECT = "pypdf"
@@ -81,7 +80,7 @@ def adjust_version_py(version: str) -> None:
 
 def get_version_interactive(new_version: str, changes: str) -> str:
     """Get the new __version__ interactively."""
-    from rich.prompt import Prompt
+    from rich.prompt import Prompt  # noqa: PLC0415
 
     print("The changes are:")
     print(changes)
@@ -185,7 +184,7 @@ def write_changelog(new_changelog: str, changelog_path: str) -> None:
         fh.write(new_changelog)
 
 
-def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
+def get_formatted_changes(git_tag: str) -> tuple[str, str]:
     """
     Format the changes done since the last tag.
 
@@ -277,7 +276,7 @@ def get_most_recent_git_tag() -> str:
     ).strip()
 
 
-def get_author_mapping(line_count: int) -> Dict[str, str]:
+def get_author_mapping(line_count: int) -> dict[str, str]:
     """
     Get the authors for each commit.
 
@@ -291,7 +290,7 @@ def get_author_mapping(line_count: int) -> Dict[str, str]:
     """
     per_page = min(line_count, 100)
     page = 1
-    mapping: Dict[str, str] = {}
+    mapping: dict[str, str] = {}
     for _ in range(0, line_count, per_page):
         with urllib.request.urlopen(
             f"https://api.github.com/repos/{GH_ORG}/{GH_PROJECT}/commits?per_page={per_page}&page={page}"
@@ -303,7 +302,7 @@ def get_author_mapping(line_count: int) -> Dict[str, str]:
     return mapping
 
 
-def get_git_commits_since_tag(git_tag: str) -> List[Change]:
+def get_git_commits_since_tag(git_tag: str) -> list[Change]:
     """
     Get all commits since the last tag.
 
@@ -334,7 +333,7 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
     return [parse_commit_line(line, authors) for line in lines if line != ""]
 
 
-def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
+def parse_commit_line(line: str, authors: dict[str, str]) -> Change:
     """
     Parse the first line of a git commit message.
 

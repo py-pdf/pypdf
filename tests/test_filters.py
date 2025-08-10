@@ -6,6 +6,7 @@ import subprocess
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -21,15 +22,18 @@ from pypdf.filters import (
     CCITTParameters,
     FlateDecode,
     JBIG2Decode,
+    RunLengthDecode,
 )
 from pypdf.generic import (
     ArrayObject,
+    BooleanObject,
     ContentStream,
     DictionaryObject,
     IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
+    StreamObject,
 )
 
 from . import PILContext, get_data_from_url
@@ -79,16 +83,6 @@ def test_flatedecode_unsupported_predictor():
         s = s.encode()
         with pytest.raises(PdfReadError):
             codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
-
-
-@pytest.mark.parametrize("params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}])])
-def test_flate_decode_decompress_with_array_params(params):
-    """FlateDecode decode() method works correctly with array parameters."""
-    codec = FlateDecode()
-    s = b""
-    encoded = codec.encode(s)
-    with pytest.raises(DeprecationError):
-        assert codec.decode(encoded, params) == s
 
 
 @pytest.mark.parametrize(
@@ -196,31 +190,34 @@ def test_ascii85decode_five_zero_bytes():
 
 
 def test_ccitparameters():
-    with pytest.warns(
-        DeprecationWarning,
-        match="CCITParameters is deprecated and will be removed in pypdf 6.0.0. Use CCITTParameters instead",
+    with pytest.raises(
+        DeprecationError,
+        match="CCITParameters is deprecated and was removed in pypdf 6.0.0. Use CCITTParameters instead",
     ):
-        params = CCITParameters()
-        assert params.K == 0  # zero is the default according to page 78
-        assert params.group == 3
+        CCITParameters()
 
 
 def test_ccittparameters():
     params = CCITTParameters()
     assert params.K == 0  # zero is the default according to page 78
+    assert params.BlackIs1 is False
     assert params.group == 3
 
 
 @pytest.mark.parametrize(
-    ("parameters", "expected_k"),
+    ("parameters", "expected_k", "expected_black_is_1"),
     [
-        (None, 0),
-        (ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}]), 1),
+        (None, 0, False),
+        (
+            ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}, {"/BlackIs1": BooleanObject(True)}]),
+            1, True
+        ),
     ],
 )
-def test_ccitt_get_parameters(parameters, expected_k):
+def test_ccitt_get_parameters(parameters, expected_k, expected_black_is_1):
     parameters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
     assert parameters.K == expected_k  # noqa: SIM300
+    assert parameters.BlackIs1 == expected_black_is_1
 
 
 def test_ccitt_get_parameters__indirect_object():
@@ -345,8 +342,8 @@ def test_pa_image_extraction():
     assert images[0].name == "Im1.png"
 
     # Ensure visual appearance
-    data = get_data_from_url(name="issue-1801.png")
-    assert data == images[0].data
+    expected_data = BytesIO(get_data_from_url(name="issue-1801.png"))
+    assert image_similarity(expected_data, images[0].image) == 1
 
 
 @pytest.mark.enable_socket
@@ -416,7 +413,7 @@ def test_cmyk():
     """Decode CMYK"""
     # JPEG compression
     try:
-        from Crypto.Cipher import AES  # noqa: F401
+        from Crypto.Cipher import AES  # noqa: F401, PLC0415
     except ImportError:
         return  # the file is encrypted
     reader = PdfReader(BytesIO(get_data_from_url(name="Vitocal.pdf")))
@@ -699,13 +696,12 @@ def test_flate_decode__not_rectangular(caplog):
     decode_parms[NameObject("/Predictor")] = NumberObject(15)
     decode_parms[NameObject("/Columns")] = NumberObject(4881)
     actual = FlateDecode.decode(data=data, decode_parms=decode_parms)
-    actual_image = BytesIO()
-    Image.frombytes(mode="1", size=(4881, 81), data=actual).save(actual_image, format="png")
+    actual_image = Image.frombytes(mode="1", size=(4881, 81), data=actual)
 
     url = "https://github.com/user-attachments/assets/c5695850-c076-4255-ab72-7c86851a4a04"
     name = "issue3241.png"
-    expected = get_data_from_url(url, name=name)
-    assert actual_image.getvalue() == expected
+    expected_data = BytesIO(get_data_from_url(url, name=name))
+    assert image_similarity(expected_data, actual_image) == 1
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
 
@@ -790,3 +786,62 @@ def test_jbig2decode__edge_cases(caplog):
         "jbig2dec FATAL ERROR page has no image, cannot be completed",
         "jbig2dec WARNING unable to complete page"
     ]
+
+
+@pytest.mark.timeout(timeout=30, method="thread")
+@pytest.mark.enable_socket
+def test_flate_decode_stream_with_faulty_tail_bytes():
+    """
+    Test for #3332
+
+    The test ensures two things:
+        1. stream can be decoded at all
+        2. decoding doesn't falls through to last fallback in try-except blocks
+           that is too slow and takes ages for this stream
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/20901522/faulty_stream_tail_example.1.pdf",
+        name="faulty_stream_tail_example.1.pdf"
+    )
+    expected = get_data_from_url(
+        url="https://github.com/user-attachments/files/20941717/decoded.dat.txt",
+        name="faulty_stream_tail_example.1.decoded.dat"
+    )
+    reader = PdfReader(BytesIO(data))
+    obj = reader.get_object(IndirectObject(182, 0, reader))
+    assert cast(StreamObject, obj).get_data() == expected
+
+
+@pytest.mark.enable_socket
+def test_rle_decode_with_faulty_tail_byte_in_multi_encoded_stream(caplog):
+    """
+    Test for #3355
+
+    The test ensures that the inner RLE encoded stream can be decoded,
+    because this stream contains an extra faulty newline byte in the
+    end that can be ignored during decoding.
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/21038398/test_data_rle.txt",
+        name="multi_decoding_example_with_faulty_tail_byte.pdf"
+    )
+    reader = PdfReader(BytesIO(data))
+    obj = reader.get_object(IndirectObject(60, 0, reader))
+    cast(StreamObject, obj).get_data()
+    assert "Found trailing newline in stream data, check if output is OK" in caplog.messages
+
+
+@pytest.mark.enable_socket
+def test_rle_decode_exception_with_corrupted_stream():
+    """
+    Additional Test to #3355
+
+    This test must raise the EOD exception during RLE decoding and ensures
+    that we do not fail during code coverage analyses in the git PR pipeline.
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/21052626/rle_stream_with_error.txt",
+        name="rle_stream_with_error.txt"
+    )
+    with pytest.raises(PdfStreamError, match="Early EOD in RunLengthDecode"):
+        RunLengthDecode.decode(data)

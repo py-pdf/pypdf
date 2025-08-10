@@ -52,7 +52,7 @@ with open("output.pdf", "wb") as fp:
 
 The rotate method is typically preferred over the `page.add_transformation(Transformation().rotate())`
 method, because `rotate` will ensure that the page is still in the mediabox/cropbox.
-The transformation object operates on the coordinates of the pages
+The transformation object operates on the coordinates of the page
 contents and does not change the mediabox or cropbox.
 
 
@@ -108,7 +108,7 @@ with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
-If you add the expand parameter:
+If you add the `expand` parameter:
 
 ```python
 transformation = Transformation().rotate(45)
@@ -296,4 +296,4 @@ We get the expected result.
 
 ![](nup-dest2.png)
 
-There is still some work to do, for instance to insert margins between and around cards, but this is left as an exercise for the reader…
+There is still some work to do, for instance, to insert margins between and around cards, but this is left as an exercise for the reader…

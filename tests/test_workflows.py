@@ -250,9 +250,10 @@ def test_rotate_45():
         ),
     ],
 )
-def test_extract_textbench(enable, url, pages, print_result=False):
+def test_extract_textbench(enable, url, pages):
     if not enable:
         return
+    print_result = False
     try:
         reader = PdfReader(BytesIO(get_data_from_url(url, url.split("/")[-1])))
         for page_number in pages:
@@ -997,7 +998,7 @@ def test_replace_image(tmp_path):
         i.replace(reader.pages[0].images[0].image)
     assert exc.value.args[0] == "Cannot update an inline image."
 
-    import pypdf
+    import pypdf  # noqa: PLC0415
 
     try:
         pypdf._page.pil_not_imported = True

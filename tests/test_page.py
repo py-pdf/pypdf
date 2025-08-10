@@ -1,11 +1,12 @@
 """Test the pypdf._page module."""
 import json
+import logging
 import math
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from random import shuffle
-from typing import Any, List, Tuple
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -343,10 +344,10 @@ def test_page_rotation():
     # test transfer_rotate_to_content
     page.rotation -= 90
     page.transfer_rotation_to_content()
-    assert abs(float(page.mediabox.left) - 0) < 0.1
-    assert abs(float(page.mediabox.bottom) - 0) < 0.1
-    assert abs(float(page.mediabox.right) - 792) < 0.1
-    assert abs(float(page.mediabox.top) - 612) < 0.1
+    assert math.isclose(page.mediabox.left, 0, abs_tol=0.1)
+    assert math.isclose(page.mediabox.bottom, 0, abs_tol=0.1)
+    assert math.isclose(page.mediabox.right, 792, abs_tol=0.1)
+    assert math.isclose(page.mediabox.top, 612, abs_tol=0.1)
 
 
 def test_page_indirect_rotation():
@@ -469,8 +470,6 @@ def test_extract_text_visitor_callbacks():
     It extracts the labels of package-boxes in Figure 2.
     It extracts the texts in table "REVISION HISTORY".
     """
-    import logging
-
     class PositionedText:
         """
         Specify a text with coordinates, font-dictionary and font-size.
@@ -513,7 +512,7 @@ def test_extract_text_visitor_callbacks():
 
     def extract_text_and_rectangles(
         page: PageObject, rect_filter=None
-    ) -> Tuple[List[PositionedText], List[Rectangle]]:
+    ) -> tuple[list[PositionedText], list[Rectangle]]:
         """
         Extracts texts and rectangles of a page of type pypdf._page.PageObject.
 
@@ -562,8 +561,8 @@ def test_extract_text_visitor_callbacks():
         return (texts, rectangles)
 
     def extract_table(
-        texts: List[PositionedText], rectangles: List[Rectangle]
-    ) -> List[List[List[PositionedText]]]:
+        texts: list[PositionedText], rectangles: list[Rectangle]
+    ) -> list[list[list[PositionedText]]]:
         """
         Extracts a table containing text.
 
@@ -642,7 +641,7 @@ def test_extract_text_visitor_callbacks():
 
         return rows
 
-    def extract_cell_text(cell_texts: List[PositionedText]) -> str:
+    def extract_cell_text(cell_texts: list[PositionedText]) -> str:
         """Joins the text-objects of a cell."""
         return ("".join(t.text for t in cell_texts)).strip()
 
@@ -1297,7 +1296,7 @@ def test_compression():
 
     def create_stamp_pdf() -> BytesIO:
         pytest.importorskip("fpdf")
-        from fpdf import FPDF
+        from fpdf import FPDF  # noqa: PLC0415
 
         pdf = FPDF()
         pdf.add_page()

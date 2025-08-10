@@ -67,7 +67,7 @@ requirements:
 
 [VeraPDF](https://docs.verapdf.org/install/) is the go-to PDF/A validator.
 
-There are several online-validators which allow you to simply upload the document:
+There are several online validators that allow you to simply upload the document:
 
 * [pdfen.com](https://www.pdfen.com/pdf-a-validator)
 * [avepdf.com](https://avepdf.com/pdfa-validation) : Gives an error report

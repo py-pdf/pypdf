@@ -45,14 +45,12 @@ from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Optional, Union, cast
 
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
-    deprecate,
-    deprecate_with_replacement,
-    deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -61,10 +59,9 @@ from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
-from .errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
+from .errors import DependencyError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
-    BooleanObject,
     DictionaryObject,
     IndirectObject,
     NullObject,
@@ -95,6 +92,23 @@ def decompress(data: bytes) -> bytes:
             # For larger files, use decompression object to enable buffered reading
             return zlib.decompressobj().decompress(data)
         except zlib.error:
+            # First quick approach for known issue with faulty added bytes to the
+            # tail of the encoded stream from early Adobe Distiller or Pitstop versions
+            # with CR char as the default line separator (assumed by reverse engeneering)
+            # that breaks the decoding process in the end.
+            #
+            # Try first to cut off some of the tail byte by byte, however limited to not
+            # iterate through too many loops and kill the performance for large streams,
+            # to then allow the final fallback to run. Added this intermediate attempt,
+            # because starting from the head of the stream byte by byte kills completely
+            # the performace for large streams (e.g. 6 MB) with the tail-byte-issue
+            # and takes ages. This solution is really fast:
+            max_tail_cut_off_bytes: int = 8
+            for i in range(1, min(max_tail_cut_off_bytes + 1, len(data))):
+                try:
+                    return zlib.decompressobj().decompress(data[:-i])
+                except zlib.error:
+                    pass
             # If still failing, then try with increased window size
             d = zlib.decompressobj(zlib.MAX_WBITS | 32)
             result_str = b""
@@ -128,9 +142,6 @@ class FlateDecode:
           PdfReadError:
 
         """
-        if isinstance(decode_parms, ArrayObject):
-            raise DeprecationError("decode_parms as ArrayObject is deprecated")
-
         str_data = decompress(data)
         predictor = 1
 
@@ -194,7 +205,7 @@ class FlateDecode:
         prev_rowdata = (0,) * rowlength
         bpp = (rowlength - 1) // columns  # recomputed locally to not change params
         for row in range(0, len(data), rowlength):
-            rowdata: List[int] = list(data[row : row + rowlength])
+            rowdata: list[int] = list(data[row : row + rowlength])
             filter_byte = rowdata[0]
 
             if filter_byte == 0:
@@ -368,7 +379,16 @@ class RunLengthDecode:
             length = data[index]
             index += 1
             if length == 128:
-                if index < len(data):
+                data_length = len(data)
+                if index < data_length:
+                    # We should first check, if we have an inner stream from a multi-encoded
+                    # stream with a faulty trailing newline that we can decode properly.
+                    # We will just ignore the last byte and raise a warning ...
+                    if (index == data_length - 1) and (data[index : index+1] == b"\n"):
+                        logger_warning(
+                            "Found trailing newline in stream data, check if output is OK", __name__
+                        )
+                        break
                     raise PdfStreamError("Early EOD in RunLengthDecode")
                 break
             if length < 128:
@@ -394,7 +414,7 @@ class LZWDecode:
             return _LzwCodec().decode(self.data)
 
     @staticmethod
-    def _decodeb(
+    def decode(
         data: bytes,
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
@@ -412,27 +432,6 @@ class LZWDecode:
         """
         # decode_parms is unused here
         return LZWDecode.Decoder(data).decode()
-
-    @staticmethod
-    def decode(
-        data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
-        **kwargs: Any,
-    ) -> str:  # deprecated
-        """
-        Decode an LZW encoded data stream.
-
-        Args:
-          data: ``bytes`` or ``str`` text to decode.
-          decode_parms: a dictionary of parameter values.
-
-        Returns:
-          decoded data.
-
-        """
-        # decode_parms is unused here
-        deprecate("LZWDecode.decode will return bytes instead of str in pypdf 6.0.0")
-        return LZWDecode.Decoder(data).decode().decode("latin-1")
 
 
 class ASCII85Decode:
@@ -518,12 +517,13 @@ class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     K: int = 0
-    columns: int = 0
+    columns: int = 1728
     rows: int = 0
-    EndOfBlock: Union[int, None] = None
-    EndOfLine: Union[int, None] = None
-    EncodedByteAlign: Union[int, None] = None
-    DamagedRowsBeforeError: Union[int, None] = None
+    EndOfLine: Union[bool, None] = False
+    EncodedByteAlign: Union[bool, None] = False
+    EndOfBlock: Union[bool, None] = True
+    BlackIs1: bool = False
+    DamagedRowsBeforeError: Union[int, None] = 0
 
     @property
     def group(self) -> int:
@@ -542,7 +542,7 @@ def __create_old_class_instance(
     columns: int = 0,
     rows: int = 0
 ) -> CCITTParameters:
-    deprecate_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
+    deprecation_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
     return CCITTParameters(K, columns, rows)
 
 
@@ -565,26 +565,27 @@ class CCITTFaxDecode:
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
-        # §7.4.6, optional parameters for the CCITTFaxDecode filter
-        k = 0
-        columns = 1728
+        ccitt_parameters = CCITTParameters(rows=int(rows))
         if parameters:
             parameters_unwrapped = cast(
                 Union[ArrayObject, DictionaryObject], parameters.get_object()
             )
             if isinstance(parameters_unwrapped, ArrayObject):
                 for decode_parm in parameters_unwrapped:
-                    if CCITT.COLUMNS in decode_parm:
-                        columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.K in decode_parm:
-                        k = decode_parm[CCITT.K].get_object()
+                        ccitt_parameters.K = decode_parm[CCITT.K].get_object()
+                    if CCITT.COLUMNS in decode_parm:
+                        ccitt_parameters.columns = decode_parm[CCITT.COLUMNS].get_object()
+                    if CCITT.BLACK_IS_1 in decode_parm:
+                        ccitt_parameters.BlackIs1 = decode_parm[CCITT.BLACK_IS_1].get_object().value
             else:
-                if CCITT.COLUMNS in parameters_unwrapped:
-                    columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
-                    k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
-
-        return CCITTParameters(K=k, columns=columns, rows=int(rows))
+                    ccitt_parameters.K = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
+                if CCITT.COLUMNS in parameters_unwrapped:
+                    ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
+                if CCITT.BLACK_IS_1 in parameters_unwrapped:
+                    ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore
+        return ccitt_parameters
 
     @staticmethod
     def decode(
@@ -593,11 +594,6 @@ class CCITTFaxDecode:
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
-        # decode_parms is unused here
-        if isinstance(decode_parms, ArrayObject):  # deprecated
-            deprecation_no_replacement(
-                "decode_parms being an ArrayObject", removed_in="3.15.5"
-            )
         params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
@@ -605,44 +601,44 @@ class CCITTFaxDecode:
         tiff_header = struct.pack(
             tiff_header_struct,
             b"II",  # Byte order indication: Little endian
-            42,  # Version number (always 42)
-            8,  # Offset to first IFD
-            8,  # Number of tags in IFD
-            256,
+            42,     # Version number (always 42)
+            8,      # Offset to the first image file directory (IFD)
+            8,      # Number of tags in IFD
+            256,    # ImageWidth, LONG, 1, width
             4,
             1,
-            params.columns,  # ImageWidth, LONG, 1, width
-            257,
+            params.columns,
+            257,    # ImageLength, LONG, 1, length
             4,
             1,
-            params.rows,  # ImageLength, LONG, 1, length
-            258,
+            params.rows,
+            258,    # BitsPerSample, SHORT, 1, 1
             3,
             1,
-            1,  # BitsPerSample, SHORT, 1, 1
-            259,
+            1,
+            259,    # Compression, SHORT, 1, compression Type
             3,
             1,
-            params.group,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
-            262,
+            params.group,
+            262,    # Thresholding, SHORT, 1, 0 = BlackIs1
             3,
             1,
-            0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
-            273,
+            int(params.BlackIs1),
+            273,    # StripOffsets, LONG, 1, length of header
             4,
             1,
-            struct.calcsize(
+              struct.calcsize(
                 tiff_header_struct
-            ),  # StripOffsets, LONG, 1, length of header
-            278,
+            ),
+            278,    # RowsPerStrip, LONG, 1, length
             4,
             1,
-            params.rows,  # RowsPerStrip, LONG, 1, length
-            279,
+            params.rows,
+            279,    # StripByteCounts, LONG, 1, size of image
             4,
             1,
-            img_size,  # StripByteCounts, LONG, 1, size of image
-            0,  # last IFD
+            img_size,
+            0,      # last IFD
         )
 
         return tiff_header + data
@@ -663,7 +659,7 @@ class JBIG2Decode:
 
         with TemporaryDirectory() as tempdir:
             directory = Path(tempdir)
-            paths: List[Path] = []
+            paths: list[Path] = []
 
             if decode_parms and "/JBIG2Globals" in decode_parms:
                 jbig2_globals = decode_parms["/JBIG2Globals"]
@@ -705,7 +701,7 @@ class JBIG2Decode:
         )
         version = result.stdout.split(" ", maxsplit=1)[1]
 
-        from ._utils import Version
+        from ._utils import Version  # noqa: PLC0415
         return Version(version) >= Version("0.15")
 
 
@@ -747,7 +743,7 @@ def decode_stream_data(stream: Any) -> bytes:
         elif filter_name in (FT.ASCII_85_DECODE, FTA.A85):
             data = ASCII85Decode.decode(data)
         elif filter_name in (FT.LZW_DECODE, FTA.LZW):
-            data = LZWDecode._decodeb(data, params)
+            data = LZWDecode.decode(data, params)
         elif filter_name in (FT.FLATE_DECODE, FTA.FL):
             data = FlateDecode.decode(data, params)
         elif filter_name in (FT.RUN_LENGTH_DECODE, FTA.RL):
@@ -771,7 +767,7 @@ def decode_stream_data(stream: Any) -> bytes:
     return data
 
 
-def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, Any]:
+def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
 
@@ -779,13 +775,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
     It might get removed at any point.
 
     Args:
-      x_object_obj:
+      x_object:
 
     Returns:
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
-    from ._xobj_image_helpers import (
+    from ._xobj_image_helpers import (  # noqa: PLC0415
         Image,
         UnidentifiedImageError,
         _apply_decode,
@@ -797,20 +793,20 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
 
     def _apply_alpha(
         img: Image.Image,
-        x_object_obj: Dict[str, Any],
+        x_object: dict[str, Any],
         obj_as_text: str,
         image_format: str,
         extension: str,
-    ) -> Tuple[Image.Image, str, str]:
+    ) -> tuple[Image.Image, str, str]:
         alpha = None
-        if IA.S_MASK in x_object_obj:  # add alpha channel
-            alpha = _xobj_to_image(x_object_obj[IA.S_MASK])[2]
+        if IA.S_MASK in x_object:  # add alpha channel
+            alpha = _xobj_to_image(x_object[IA.S_MASK])[2]
             if img.size != alpha.size:
                 logger_warning(
                     f"image and mask size not matching: {obj_as_text}", __name__
                 )
             else:
-                # TODO : implement mask
+                # TODO: implement mask
                 if alpha.mode != "L":
                     alpha = alpha.convert("L")
                 if img.mode == "P":
@@ -819,41 +815,41 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
                     img = img.convert("L")
                 img.putalpha(alpha)
             if "JPEG" in image_format:
-                extension = ".jp2"
                 image_format = "JPEG2000"
+                extension = ".jp2"
             else:
-                extension = ".png"
                 image_format = "PNG"
+                extension = ".png"
         return img, extension, image_format
 
-    # for error reporting
+    # For error reporting
     obj_as_text = (
-        x_object_obj.indirect_reference.__repr__()
-        if x_object_obj is None  # pragma: no cover
-        else x_object_obj.__repr__()
+        x_object.indirect_reference.__repr__()
+        if x_object is None  # pragma: no cover
+        else x_object.__repr__()
     )
 
     # Get size and data
-    size = (cast(int, x_object_obj[IA.WIDTH]), cast(int, x_object_obj[IA.HEIGHT]))
-    data = x_object_obj.get_data()  # type: ignore
+    size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
+    data = x_object.get_data()  # type: ignore
     if isinstance(data, str):  # pragma: no cover
         data = data.encode()
     if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'
         data = data[:-1]
 
     # Get color properties
-    colors = x_object_obj.get("/Colors", 1)
-    color_space: Any = x_object_obj.get("/ColorSpace", NullObject()).get_object()
+    colors = x_object.get("/Colors", 1)
+    color_space: Any = x_object.get("/ColorSpace", NullObject()).get_object()
     if isinstance(color_space, list) and len(color_space) == 1:
         color_space = color_space[0].get_object()
 
-    mode, invert_color = _get_mode_and_invert_color(x_object_obj, colors, color_space)
+    mode, invert_color = _get_mode_and_invert_color(x_object, colors, color_space)
 
     # Get filters
-    filters = x_object_obj.get(SA.FILTER, NullObject()).get_object()
+    filters = x_object.get(SA.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
-    decode_parms = x_object_obj.get(SA.DECODE_PARMS, None)
-    if isinstance(decode_parms, (tuple, list)):
+    decode_parms = x_object.get(SA.DECODE_PARMS, None)
+    if decode_parms and isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
     else:
         decode_parms = {}
@@ -870,16 +866,16 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             colors,
             obj_as_text,
         )
-    elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE, FT.CCITT_FAX_DECODE):
+    elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE):
         # I'm not sure if the following logic is correct.
         # There might not be any relationship between the filters and the
         # extension
-        if lfilters in (FT.LZW_DECODE, FT.CCITT_FAX_DECODE):
-            extension = ".tiff"  # mime_type = "image/tiff"
+        if lfilters == FT.LZW_DECODE:
             image_format = "TIFF"
+            extension = ".tiff"  # mime_type = "image/tiff"
         else:
-            extension = ".png"  # mime_type = "image/png"
             image_format = "PNG"
+            extension = ".png"  # mime_type = "image/png"
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
@@ -913,7 +909,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             False,
         )
     elif mode == "":
-        raise PdfReadError(f"ColorSpace field not found in {x_object_obj}")
+        raise PdfReadError(f"ColorSpace field not found in {x_object}")
     else:
         img, image_format, extension, invert_color = (
             _extended_image_frombytes(mode, size, data),
@@ -922,14 +918,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
             False,
         )
 
-    img = _apply_decode(img, x_object_obj, lfilters, color_space, invert_color)
+    img = _apply_decode(img, x_object, lfilters, color_space, invert_color)
     img, extension, image_format = _apply_alpha(
-        img, x_object_obj, obj_as_text, image_format, extension
+        img, x_object, obj_as_text, image_format, extension
     )
-
-    if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
-        from PIL import ImageOps
-        img = ImageOps.invert(img)
 
     # Save image to bytes
     img_byte_arr = BytesIO()

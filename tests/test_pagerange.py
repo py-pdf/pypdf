@@ -10,6 +10,17 @@ def test_equality():
     assert pr1 == pr2
 
 
+def test_hash():
+    pr1 = PageRange(slice(0, 5))
+    pr2 = PageRange(slice(0, 5))
+    pr3 = PageRange(slice(10, 11))
+    pr4 = PageRange(slice(10, 11, 1))
+    assert hash(pr1) == hash(pr2)
+    assert hash(pr1) != hash(pr3)
+    # Consider this different for now, although slicing with step size of 1 and `None` should be identical.
+    assert hash(pr3) != hash(pr4)
+
+
 @pytest.mark.parametrize(
     ("page_range", "expected"),
     [(slice(0, 5), "0:5"), (slice(0, 5, 2), "0:5:2"), ("-1", "-1:"), ("0", "0")],

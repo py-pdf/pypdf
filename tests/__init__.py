@@ -3,7 +3,7 @@ import ssl
 import sys
 import urllib.request
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 from urllib.error import HTTPError
 
 if sys.version_info >= (3, 11):
@@ -84,7 +84,7 @@ def _strip_position(line: str) -> str:
     return " ".join(line.split(" ")[1:])
 
 
-def normalize_warnings(caplog_text: str) -> List[str]:
+def normalize_warnings(caplog_text: str) -> list[str]:
     return [_strip_position(line) for line in caplog_text.strip().split("\n")]
 
 
@@ -120,7 +120,7 @@ def is_sublist(child_list, parent_list):
     return is_sublist(child_list, parent_list[1:])
 
 
-def read_yaml_to_list_of_dicts(yaml_file: Path) -> List[Dict[str, str]]:
+def read_yaml_to_list_of_dicts(yaml_file: Path) -> list[dict[str, str]]:
     with open(yaml_file) as yaml_input:
         return yaml.safe_load(yaml_input)
 
@@ -158,13 +158,13 @@ class PILContext:
 
     def __enter__(self) -> Self:
         # Allow loading incomplete images.
-        from PIL import ImageFile
+        from PIL import ImageFile  # noqa: PLC0415
         self._saved_load_truncated_images = ImageFile.LOAD_TRUNCATED_IMAGES
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         return self
 
     def __exit__(self, type_, value, traceback) -> Optional[bool]:
-        from PIL import ImageFile
+        from PIL import ImageFile  # noqa: PLC0415
         ImageFile.LOAD_TRUNCATED_IMAGES = self._saved_load_truncated_images
         if type_:
             # Error.
