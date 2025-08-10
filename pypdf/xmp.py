@@ -20,7 +20,7 @@ from xml.dom.minidom import Element as XmlElement
 from xml.parsers.expat import ExpatError
 
 from ._protocols import XmpInformationProtocol
-from ._utils import StreamType, deprecate_no_replacement, deprecate_with_replacement
+from ._utils import StreamType, deprecate_with_replacement, deprecation_no_replacement
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
 
@@ -277,7 +277,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
             "6.0.0"
         )
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         self.stream.write_to_stream(stream)

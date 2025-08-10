@@ -50,9 +50,7 @@ from typing import Any, Optional, Union, cast
 from ._codecs._codecs import LzwCodec as _LzwCodec
 from ._utils import (
     WHITESPACES_AS_BYTES,
-    deprecate,
-    deprecate_with_replacement,
-    deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
 )
 from .constants import CcittFaxDecodeParameters as CCITT
@@ -61,10 +59,9 @@ from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
-from .errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
+from .errors import DependencyError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
-    BooleanObject,
     DictionaryObject,
     IndirectObject,
     NullObject,
@@ -145,9 +142,6 @@ class FlateDecode:
           PdfReadError:
 
         """
-        if isinstance(decode_parms, ArrayObject):
-            raise DeprecationError("decode_parms as ArrayObject is deprecated")
-
         str_data = decompress(data)
         predictor = 1
 
@@ -420,7 +414,7 @@ class LZWDecode:
             return _LzwCodec().decode(self.data)
 
     @staticmethod
-    def _decodeb(
+    def decode(
         data: bytes,
         decode_parms: Optional[DictionaryObject] = None,
         **kwargs: Any,
@@ -438,27 +432,6 @@ class LZWDecode:
         """
         # decode_parms is unused here
         return LZWDecode.Decoder(data).decode()
-
-    @staticmethod
-    def decode(
-        data: bytes,
-        decode_parms: Optional[DictionaryObject] = None,
-        **kwargs: Any,
-    ) -> str:  # deprecated
-        """
-        Decode an LZW encoded data stream.
-
-        Args:
-          data: ``bytes`` or ``str`` text to decode.
-          decode_parms: a dictionary of parameter values.
-
-        Returns:
-          decoded data.
-
-        """
-        # decode_parms is unused here
-        deprecate("LZWDecode.decode will return bytes instead of str in pypdf 6.0.0")
-        return LZWDecode.Decoder(data).decode().decode("latin-1")
 
 
 class ASCII85Decode:
@@ -544,12 +517,13 @@ class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
 
     K: int = 0
-    columns: int = 0
+    columns: int = 1728
     rows: int = 0
-    EndOfBlock: Union[int, None] = None
-    EndOfLine: Union[int, None] = None
-    EncodedByteAlign: Union[int, None] = None
-    DamagedRowsBeforeError: Union[int, None] = None
+    EndOfLine: Union[bool, None] = False
+    EncodedByteAlign: Union[bool, None] = False
+    EndOfBlock: Union[bool, None] = True
+    BlackIs1: bool = False
+    DamagedRowsBeforeError: Union[int, None] = 0
 
     @property
     def group(self) -> int:
@@ -568,7 +542,7 @@ def __create_old_class_instance(
     columns: int = 0,
     rows: int = 0
 ) -> CCITTParameters:
-    deprecate_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
+    deprecation_with_replacement("CCITParameters", "CCITTParameters", "6.0.0")
     return CCITTParameters(K, columns, rows)
 
 
@@ -591,26 +565,27 @@ class CCITTFaxDecode:
         parameters: Union[None, ArrayObject, DictionaryObject, IndirectObject],
         rows: Union[int, IndirectObject],
     ) -> CCITTParameters:
-        # §7.4.6, optional parameters for the CCITTFaxDecode filter
-        k = 0
-        columns = 1728
+        ccitt_parameters = CCITTParameters(rows=int(rows))
         if parameters:
             parameters_unwrapped = cast(
                 Union[ArrayObject, DictionaryObject], parameters.get_object()
             )
             if isinstance(parameters_unwrapped, ArrayObject):
                 for decode_parm in parameters_unwrapped:
-                    if CCITT.COLUMNS in decode_parm:
-                        columns = decode_parm[CCITT.COLUMNS].get_object()
                     if CCITT.K in decode_parm:
-                        k = decode_parm[CCITT.K].get_object()
+                        ccitt_parameters.K = decode_parm[CCITT.K].get_object()
+                    if CCITT.COLUMNS in decode_parm:
+                        ccitt_parameters.columns = decode_parm[CCITT.COLUMNS].get_object()
+                    if CCITT.BLACK_IS_1 in decode_parm:
+                        ccitt_parameters.BlackIs1 = decode_parm[CCITT.BLACK_IS_1].get_object().value
             else:
-                if CCITT.COLUMNS in parameters_unwrapped:
-                    columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
                 if CCITT.K in parameters_unwrapped:
-                    k = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
-
-        return CCITTParameters(K=k, columns=columns, rows=int(rows))
+                    ccitt_parameters.K = parameters_unwrapped[CCITT.K].get_object()  # type: ignore
+                if CCITT.COLUMNS in parameters_unwrapped:
+                    ccitt_parameters.columns = parameters_unwrapped[CCITT.COLUMNS].get_object()  # type: ignore
+                if CCITT.BLACK_IS_1 in parameters_unwrapped:
+                    ccitt_parameters.BlackIs1 = parameters_unwrapped[CCITT.BLACK_IS_1].get_object().value  # type: ignore
+        return ccitt_parameters
 
     @staticmethod
     def decode(
@@ -619,10 +594,6 @@ class CCITTFaxDecode:
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
-        if isinstance(decode_parms, ArrayObject):  # deprecated
-            deprecation_no_replacement(
-                "decode_parms being an ArrayObject", removed_in="3.15.5"
-            )
         params = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
@@ -652,7 +623,7 @@ class CCITTFaxDecode:
             262,    # Thresholding, SHORT, 1, 0 = BlackIs1
             3,
             1,
-            0,
+            int(params.BlackIs1),
             273,    # StripOffsets, LONG, 1, length of header
             4,
             1,
@@ -772,7 +743,7 @@ def decode_stream_data(stream: Any) -> bytes:
         elif filter_name in (FT.ASCII_85_DECODE, FTA.A85):
             data = ASCII85Decode.decode(data)
         elif filter_name in (FT.LZW_DECODE, FTA.LZW):
-            data = LZWDecode._decodeb(data, params)
+            data = LZWDecode.decode(data, params)
         elif filter_name in (FT.FLATE_DECODE, FTA.FL):
             data = FlateDecode.decode(data, params)
         elif filter_name in (FT.RUN_LENGTH_DECODE, FTA.RL):
@@ -951,10 +922,6 @@ def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]
     img, extension, image_format = _apply_alpha(
         img, x_object, obj_as_text, image_format, extension
     )
-
-    if lfilters == FT.CCITT_FAX_DECODE and decode_parms.get("/BlackIs1", BooleanObject(False)).value is True:
-        from PIL import ImageOps  # noqa: PLC0415
-        img = ImageOps.invert(img)
 
     # Save image to bytes
     img_byte_arr = BytesIO()
