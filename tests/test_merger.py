@@ -1,4 +1,4 @@
-"""Test the pypdf._merger module."""
+"""Test to do with merging PDFs."""
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -18,7 +18,6 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 sys.path.append(str(PROJECT_ROOT))
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def merger_operate(merger):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
