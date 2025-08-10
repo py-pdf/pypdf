@@ -1,4 +1,4 @@
-"""Test to do with merging PDFs."""
+"""Test merging PDF functionality."""
 import sys
 from io import BytesIO
 from pathlib import Path
