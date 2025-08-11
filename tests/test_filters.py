@@ -3,6 +3,7 @@ import os
 import shutil
 import string
 import subprocess
+import zlib
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
@@ -13,7 +14,7 @@ import pytest
 from PIL import Image, ImageOps
 
 from pypdf import PdfReader
-from pypdf.errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
+from pypdf.errors import DependencyError, DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -23,6 +24,7 @@ from pypdf.filters import (
     FlateDecode,
     JBIG2Decode,
     RunLengthDecode,
+    decompress,
 )
 from pypdf.generic import (
     ArrayObject,
@@ -675,12 +677,15 @@ def test_ccitt_fax_decode__black_is_1():
 def test_flate_decode__image_is_none_due_to_size_limit(caplog):
     url = "https://github.com/user-attachments/files/19464256/file.pdf"
     name = "issue3220.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    images = reader.pages[0].images
-    assert len(images) == 1
-    image = images[0]
-    assert image.name == "Im0.png"
-    assert image.image is None
+
+    with mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", 0):
+        reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+        images = reader.pages[0].images
+        assert len(images) == 1
+        image = images[0]
+        assert image.name == "Im0.png"
+        assert image.image is None
+
     assert (
         "Failed loading image: Image size (180000000 pixels) exceeds limit of "
         "178956970 pixels, could be decompression bomb DOS attack."
@@ -845,3 +850,25 @@ def test_rle_decode_exception_with_corrupted_stream():
     )
     with pytest.raises(PdfStreamError, match="Early EOD in RunLengthDecode"):
         RunLengthDecode.decode(data)
+
+
+def test_decompress():
+    data = string.printable.encode("utf-8") + string.printable[::-1].encode("utf-8")
+    compressed = FlateDecode.encode(data)
+
+    # # Decompress regularly.
+    decompressed = decompress(compressed)
+    assert decompressed == data
+
+    # # Decompress byte-wise.
+    with mock.patch("pypdf.filters._decompress_with_limit", side_effect=zlib.error):
+        decompressed = decompress(compressed)
+        assert decompressed == data
+
+    # Decompress byte-wise with very low output limit.
+    with mock.patch("pypdf.filters._decompress_with_limit", side_effect=zlib.error), \
+            mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", len(compressed) - 13), \
+            pytest.raises(
+                LimitReachedError, match=r"^Limit reached while decompressing\. 12 bytes remaining\."
+            ):
+        decompress(compressed)
