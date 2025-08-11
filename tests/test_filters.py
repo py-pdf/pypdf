@@ -859,7 +859,7 @@ def test_decompress():
     # # Decompress regularly.
     decompressed = decompress(compressed)
     assert decompressed == data
-    #
+
     # # Decompress byte-wise.
     with mock.patch("pypdf.filters._decompress_with_limit", side_effect=zlib.error):
         decompressed = decompress(compressed)
