@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## Version 6.0.0, 2025-08-11
+
+### Security (SEC)
+- Limit decompressed size for FlateDecode filter (#3430)
+
+### Deprecations (DEP)
+- Drop Python 3.8 support (#3412)
+
+### New Features (ENH)
+- Move BlackIs1 functionality to tiff_header (#3421)
+
+### Robustness (ROB)
+- Skip Go-To actions without a destination (#3420)
+
+### Developer Experience (DEV)
+- Update code style related libraries (#3414)
+- Update mypy to 1.17.0 (#3413)
+- Stop testing on Python 3.8 and start testing on Python 3.14 (#3411)
+
+### Maintenance (MAINT)
+- Cleanup deprecations (#3424)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.9.0...6.0.0)
+
 ## Version 5.9.0, 2025-07-27
 
 ### New Features (ENH)
