@@ -24,7 +24,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         submodules: 'recursive'
     - name: Setup Python (3.11+)
@@ -72,7 +72,7 @@ jobs:
       run:
         sudo apt-get install ghostscript jbig2dec poppler-utils
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         submodules: 'recursive'
     - name: Cache Downloaded Files
@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         submodules: 'recursive'
     - name: Setup Python 3.11
@@ -194,7 +194,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_LATEST }}
@@ -217,7 +217,7 @@ jobs:
     needs: tests
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           # Use the latest Python, so it understands all syntax.
