@@ -60,6 +60,7 @@ from ._utils import (
     _get_max_pdf_version_header,
     deprecation_no_replacement,
     logger_warning,
+    logger_error,
 )
 from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
@@ -1417,6 +1418,44 @@ class PdfWriter(PdfDocCommon):
                 continue
             new_link.patch_reference(self, new_page)
 
+    def remove_page(self, page: Union[int, PageObject, IndirectObject], clean: bool = False) -> None:
+        """
+        Override PdfDocCommon.remove_page to perform extra cleanup when requested.
+
+        Calls base implementation and then, if clean=True and the writer was already written to,
+        rebuilds the internal structure to remove orphan objects leftover from previous writes.
+        """
+        super().remove_page(page, clean=clean)
+
+        if clean and getattr(self, "_has_written", False):
+            try:
+                self._rebuild_via_io()
+            except Exception as e:
+                logger_warning(f"Failed to rebuild PdfWriter after remove_page with clean=True: {e}", __name__)
+                # No re-raise: keep remove_page robust, tests/CI should catch the error
+
+
+    def _rebuild_via_io(self) -> None:
+        """
+        Rebuild the writer by serializing to an in-memory buffer and re-reading.
+
+        This removes orphan objects that persist after intermediate writes.
+        """
+        from io import BytesIO
+        from pypdf import PdfReader
+
+        buf = BytesIO()
+        self.write(buf)
+        buf.seek(0)
+
+        reader = PdfReader(buf)
+        new_writer = PdfWriter()
+        new_writer.clone_document_from_reader(reader)
+
+        # Replace internal state of this instance with the new clean writer's state
+        self.__dict__.clear()
+        self.__dict__.update(new_writer.__dict__)
+
     def write_stream(self, stream: StreamType) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
@@ -1461,7 +1500,13 @@ class PdfWriter(PdfDocCommon):
             stream = FileIO(stream, "wb")
             my_file = True
 
-        self.write_stream(stream)
+        try:
+            self.write_stream(stream)
+        except Exception as err:
+            logger_error(f"Failed to write to {stream}", __name__)
+            raise err
+        else:
+            self._has_written = True
 
         if my_file:
             stream.close()

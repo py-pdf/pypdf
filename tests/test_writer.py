@@ -2485,6 +2485,61 @@ def test_compress_identical_objects():
     assert len(out2.getvalue()) > len(out3.getvalue())
 
 
+@pytest.mark.enable_socket
+def test_issue_3418_remove_after_writes_leaves_orphans():
+    """
+    Regression test for issue #3418.
+
+    Reproduces the original sequence: write after first append, write after second append,
+    then remove last page + compress. The expectation is that after remove+compress the
+    size is not larger than the original single-page output. If the bug is present,
+    the final size may be larger (i.e. objects were not cleaned up).
+    """
+    url = (
+        "https://github.com/py-pdf/sample-files/blob/main/001-trivial/minimal-document.pdf?raw=true"
+    )
+    name = "minimal-document.pdf"
+    data = BytesIO(get_data_from_url(url, name=name))
+    reader1 = PdfReader(data)
+
+    writer = PdfWriter()
+
+    # Append first page and write it out (this is important; it mutates writer state)
+    writer.append(reader1)
+    out1 = BytesIO()
+    writer.write(out1)
+    size_one_page = out1.tell()
+
+    # Append a second (identical) page and write again
+    # use a fresh reader to match the original issue's steps
+    reader2 = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer.append(reader2)
+    out2 = BytesIO()
+    writer.write(out2)
+    size_two_pages = out2.tell()
+
+    assert size_two_pages > size_one_page  # sanity check
+
+    # Now remove the last page and attempt to compress/clean
+    writer.remove_page(len(writer.pages) - 1, clean=True)
+    writer.compress_identical_objects(remove_orphans=True, remove_identicals=True)
+
+    out3 = BytesIO()
+    writer.write(out3)
+    size_after = out3.tell()
+
+    # Expected behavior: after removing + compressing, the size should be <= the original single-page PDF.
+    # This assertion should FAIL on the buggy implementation (showing the regression).
+    assert size_after <= size_one_page, (
+        "After remove + compress the PDF should be no larger than the single-page output. "
+        f"size_one_page={size_one_page}, size_after={size_after}"
+    )
+
+    # And, of course, the output must have one page
+    result_pdf = PdfReader(out3)
+    assert len(result_pdf.pages) == 1
+
+
 def test_set_need_appearances_writer():
     """Minimal test for coverage"""
     writer = PdfWriter()
