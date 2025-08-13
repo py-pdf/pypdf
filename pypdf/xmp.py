@@ -8,6 +8,7 @@ import datetime
 import decimal
 import re
 from collections.abc import Iterator
+from io import StringIO
 from typing import (
     Any,
     Callable,
@@ -99,7 +100,7 @@ MINIMAL_XMP = f"""<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>
         </rdf:Description>
     </rdf:RDF>
 </x:xmpmeta>
-<?xpacket end="w"?>"""
+<?xpacket end="r"?>"""
 
 
 def _identity(value: K) -> K:
@@ -730,5 +731,10 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         doc = self.rdf_root.ownerDocument
         if doc is None:
             raise XmpDocumentError("XMP Document is None")
-        xml_data = doc.toxml(encoding="utf-8")
-        self.stream.set_data(xml_data)
+
+        buffer = StringIO()
+        for child in doc.childNodes:
+            child.writexml(buffer, "", "", "")
+        xml_text = buffer.getvalue()
+        xml_text = xml_text.replace('<?xpacket end="w"?>', '<?xpacket end="r"?>')
+        self.stream.set_data(xml_text.encode("utf-8"))
