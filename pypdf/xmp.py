@@ -53,6 +53,16 @@ PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"
 # PDF/A
 PDFAID_NAMESPACE = "http://www.aiim.org/pdfa/ns/id/"
 
+# Internal mapping of namespace URI → prefix
+NAMESPACE_PREFIX_MAP = {
+    DC_NAMESPACE: "dc",
+    XMP_NAMESPACE: "xmp",
+    PDF_NAMESPACE: "pdf",
+    XMPMM_NAMESPACE: "xmpMM",
+    PDFAID_NAMESPACE: "pdfaid",
+    PDFX_NAMESPACE: "pdfx",
+}
+
 iso8601 = re.compile(
     """
         (?P<year>[0-9]{4})
@@ -711,15 +721,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
     def _get_namespace_prefix(self, namespace: str) -> str:
         """Get the appropriate namespace prefix for a given namespace URI."""
-        namespace_map = {
-            DC_NAMESPACE: "dc",
-            XMP_NAMESPACE: "xmp",
-            PDF_NAMESPACE: "pdf",
-            XMPMM_NAMESPACE: "xmpMM",
-            PDFAID_NAMESPACE: "pdfaid",
-            PDFX_NAMESPACE: "pdfx",
-        }
-        return namespace_map.get(namespace, "unknown")
+        return NAMESPACE_PREFIX_MAP.get(namespace, "unknown")
 
     def _update_stream(self) -> None:
         """Update the stream with the current XML content."""
