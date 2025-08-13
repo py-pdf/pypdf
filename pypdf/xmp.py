@@ -234,7 +234,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         ns_cache[name] = value
         return value
 
-    def _get_bag_values(self, namespace: str, name: str) -> Optional[list[str]]:
+    def _getter_bag(self, namespace: str, name: str) -> Optional[list[str]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -299,7 +299,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_contributor(self) -> Optional[list[str]]:
         """Contributors to the resource (other than the authors)."""
-        return self._get_bag_values(DC_NAMESPACE, "contributor")
+        return self._getter_bag(DC_NAMESPACE, "contributor")
 
     @dc_contributor.setter
     def dc_contributor(self, values: Optional[list[str]]) -> None:
@@ -371,7 +371,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_language(self) -> Optional[list[str]]:
         """An unordered array specifying the languages used in the resource."""
-        return self._get_bag_values(DC_NAMESPACE, "language")
+        return self._getter_bag(DC_NAMESPACE, "language")
 
     @dc_language.setter
     def dc_language(self, values: Optional[list[str]]) -> None:
@@ -380,7 +380,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_publisher(self) -> Optional[list[str]]:
         """An unordered array of publisher names."""
-        return self._get_bag_values(DC_NAMESPACE, "publisher")
+        return self._getter_bag(DC_NAMESPACE, "publisher")
 
     @dc_publisher.setter
     def dc_publisher(self, values: Optional[list[str]]) -> None:
@@ -389,7 +389,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_relation(self) -> Optional[list[str]]:
         """An unordered array of text descriptions of relationships to other documents."""
-        return self._get_bag_values(DC_NAMESPACE, "relation")
+        return self._getter_bag(DC_NAMESPACE, "relation")
 
     @dc_relation.setter
     def dc_relation(self, values: Optional[list[str]]) -> None:
@@ -416,7 +416,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_subject(self) -> Optional[list[str]]:
         """An unordered array of descriptive phrases or keywords that specify the topic of the content."""
-        return self._get_bag_values(DC_NAMESPACE, "subject")
+        return self._getter_bag(DC_NAMESPACE, "subject")
 
     @dc_subject.setter
     def dc_subject(self, values: Optional[list[str]]) -> None:
@@ -434,7 +434,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_type(self) -> Optional[list[str]]:
         """An unordered array of textual descriptions of the document type."""
-        return self._get_bag_values(DC_NAMESPACE, "type")
+        return self._getter_bag(DC_NAMESPACE, "type")
 
     @dc_type.setter
     def dc_type(self, values: Optional[list[str]]) -> None:
@@ -606,8 +606,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         for elem in existing_elements:
             desc.removeChild(elem)
 
-        existing_attr = desc.getAttributeNodeNS(namespace, name)
-        if existing_attr:
+        if existing_attr := desc.getAttributeNodeNS(namespace, name):
             desc.removeAttributeNode(existing_attr)
 
         if value is not None:
