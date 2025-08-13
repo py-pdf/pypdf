@@ -606,10 +606,15 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         self.rdf_root.appendChild(desc)
         return desc
 
+    def _clear_cache_entry(self, namespace: str, name: str) -> None:
+        """Remove a cached value for a given namespace/name if present."""
+        ns_cache = self.cache.get(namespace)
+        if ns_cache and name in ns_cache:
+            del ns_cache[name]
+
     def _set_single_value(self, namespace: str, name: str, value: Optional[str]) -> None:
         """Set or remove a single metadata value."""
-        if namespace in self.cache and name in self.cache[namespace]:
-            del self.cache[namespace][name]
+        self._clear_cache_entry(namespace, name)
         desc = self._get_or_create_description()
 
         existing_elements = list(desc.getElementsByTagNameNS(namespace, name))
@@ -633,8 +638,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
     def _set_bag_values(self, namespace: str, name: str, values: Optional[list[str]]) -> None:
         """Set or remove bag values (unordered array)."""
-        if namespace in self.cache and name in self.cache[namespace]:
-            del self.cache[namespace][name]
+        self._clear_cache_entry(namespace, name)
         desc = self._get_or_create_description()
 
         existing_elements = list(desc.getElementsByTagNameNS(namespace, name))
@@ -662,8 +666,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
     def _set_seq_values(self, namespace: str, name: str, values: Optional[list[str]]) -> None:
         """Set or remove sequence values (ordered array)."""
-        if namespace in self.cache and name in self.cache[namespace]:
-            del self.cache[namespace][name]
+        self._clear_cache_entry(namespace, name)
         desc = self._get_or_create_description()
 
         existing_elements = list(desc.getElementsByTagNameNS(namespace, name))
@@ -691,8 +694,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
     def _set_langalt_values(self, namespace: str, name: str, values: Optional[dict[str, str]]) -> None:
         """Set or remove language alternative values."""
-        if namespace in self.cache and name in self.cache[namespace]:
-            del self.cache[namespace][name]
+        self._clear_cache_entry(namespace, name)
         desc = self._get_or_create_description()
 
         existing_elements = list(desc.getElementsByTagNameNS(namespace, name))
