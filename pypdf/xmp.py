@@ -138,104 +138,6 @@ def _generic_get(
     return None
 
 
-def _getter_bag(
-    namespace: str, name: str
-) -> Callable[["XmpInformation"], Optional[list[str]]]:
-    def get(self: "XmpInformation") -> Optional[list[str]]:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cached
-        retval: list[str] = []
-        for element in self.get_element("", namespace, name):
-            if (bags := _generic_get(element, self, list_type="Bag")) is not None:
-                retval.extend(bags)
-            else:
-                value = self._get_text(element)
-                retval.append(value)
-        ns_cache = self.cache.setdefault(namespace, {})
-        ns_cache[name] = retval
-        return retval
-
-    return get
-
-
-def _getter_seq(
-    namespace: str, name: str, converter: Callable[[Any], Any] = _identity
-) -> Callable[["XmpInformation"], Optional[list[Any]]]:
-    def get(self: "XmpInformation") -> Optional[list[Any]]:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cached
-        retval = []
-        for element in self.get_element("", namespace, name):
-            if (seqs := _generic_get(element, self, list_type="Seq", converter=converter)) is not None:
-                retval.extend(seqs)
-            elif (bags := _generic_get(element, self, list_type="Bag")) is not None:
-                # See issue at https://github.com/py-pdf/pypdf/issues/3324
-                # Some applications violate the XMP metadata standard regarding `dc:creator` which should
-                # be an "ordered array" and thus a sequence, but use an unordered array (bag) instead.
-                # This seems to stem from the fact that the original Dublin Core specification does indeed
-                # use bags or direct values, while PDFs are expected to follow the XMP standard and ignore
-                # the plain Dublin Core variant. For this reason, add a fallback here to deal with such
-                # issues accordingly.
-                retval.extend(bags)
-            else:
-                value = converter(self._get_text(element))
-                retval.append(value)
-        ns_cache = self.cache.setdefault(namespace, {})
-        ns_cache[name] = retval
-        return retval
-
-    return get
-
-
-def _getter_langalt(
-    namespace: str, name: str
-) -> Callable[["XmpInformation"], Optional[dict[Any, Any]]]:
-    def get(self: "XmpInformation") -> Optional[dict[Any, Any]]:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cached
-        retval = {}
-        for element in self.get_element("", namespace, name):
-            alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
-            if len(alts):
-                for alt in alts:
-                    for item in alt.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._get_text(item)
-                        retval[item.getAttribute("xml:lang")] = value
-            else:
-                retval["x-default"] = self._get_text(element)
-        ns_cache = self.cache.setdefault(namespace, {})
-        ns_cache[name] = retval
-        return retval
-
-    return get
-
-
-def _getter_single(
-    namespace: str, name: str, converter: Callable[[str], Any] = _identity
-) -> Callable[["XmpInformation"], Optional[Any]]:
-    def get(self: "XmpInformation") -> Optional[Any]:
-        cached = self.cache.get(namespace, {}).get(name)
-        if cached:
-            return cached
-        value = None
-        for element in self.get_element("", namespace, name):
-            if element.nodeType == element.ATTRIBUTE_NODE:
-                value = element.nodeValue
-            else:
-                value = self._get_text(element)
-            break
-        if value is not None:
-            value = converter(value)
-        ns_cache = self.cache.setdefault(namespace, {})
-        ns_cache[name] = value
-        return value
-
-    return get
-
-
 class XmpInformation(XmpInformationProtocol, PdfObject):
     """
     An object that represents Extensible Metadata Platform (XMP) metadata.
@@ -310,10 +212,94 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
                 text += child.data
         return text
 
+    def _get_single_value(
+        self,
+        namespace: str,
+        name: str,
+        converter: Callable[[str], Any] = _identity,
+    ) -> Optional[Any]:
+        cached = self.cache.get(namespace, {}).get(name)
+        if cached:
+            return cached
+        value = None
+        for element in self.get_element("", namespace, name):
+            if element.nodeType == element.ATTRIBUTE_NODE:
+                value = element.nodeValue
+            else:
+                value = self._get_text(element)
+            break
+        if value is not None:
+            value = converter(value)
+        ns_cache = self.cache.setdefault(namespace, {})
+        ns_cache[name] = value
+        return value
+
+    def _get_bag_values(self, namespace: str, name: str) -> Optional[list[str]]:
+        cached = self.cache.get(namespace, {}).get(name)
+        if cached:
+            return cached
+        retval: list[str] = []
+        for element in self.get_element("", namespace, name):
+            if (bags := _generic_get(element, self, list_type="Bag")) is not None:
+                retval.extend(bags)
+            else:
+                value = self._get_text(element)
+                retval.append(value)
+        ns_cache = self.cache.setdefault(namespace, {})
+        ns_cache[name] = retval
+        return retval
+
+    def _get_seq_values(
+        self,
+        namespace: str,
+        name: str,
+        converter: Callable[[Any], Any] = _identity,
+    ) -> Optional[list[Any]]:
+        cached = self.cache.get(namespace, {}).get(name)
+        if cached:
+            return cached
+        retval: list[Any] = []
+        for element in self.get_element("", namespace, name):
+            if (seqs := _generic_get(element, self, list_type="Seq", converter=converter)) is not None:
+                retval.extend(seqs)
+            elif (bags := _generic_get(element, self, list_type="Bag")) is not None:
+                # See issue at https://github.com/py-pdf/pypdf/issues/3324
+                # Some applications violate the XMP metadata standard regarding `dc:creator` which should
+                # be an "ordered array" and thus a sequence, but use an unordered array (bag) instead.
+                # This seems to stem from the fact that the original Dublin Core specification does indeed
+                # use bags or direct values, while PDFs are expected to follow the XMP standard and ignore
+                # the plain Dublin Core variant. For this reason, add a fallback here to deal with such
+                # issues accordingly.
+                retval.extend(bags)
+            else:
+                value = converter(self._get_text(element))
+                retval.append(value)
+        ns_cache = self.cache.setdefault(namespace, {})
+        ns_cache[name] = retval
+        return retval
+
+    def _get_langalt_values(self, namespace: str, name: str) -> Optional[dict[Any, Any]]:
+        cached = self.cache.get(namespace, {}).get(name)
+        if cached:
+            return cached
+        retval: dict[Any, Any] = {}
+        for element in self.get_element("", namespace, name):
+            alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
+            if len(alts):
+                for alt in alts:
+                    for item in alt.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
+                        value = self._get_text(item)
+                        retval[item.getAttribute("xml:lang")] = value
+            else:
+                retval["x-default"] = self._get_text(element)
+        ns_cache = self.cache.setdefault(namespace, {})
+        ns_cache[name] = retval
+        return retval
+
     @property
     def dc_contributor(self) -> Optional[list[str]]:
         """Contributors to the resource (other than the authors)."""
-        return _getter_bag(DC_NAMESPACE, "contributor")(self)
+        return self._get_bag_values(DC_NAMESPACE, "contributor")
 
     @dc_contributor.setter
     def dc_contributor(self, values: Optional[list[str]]) -> None:
@@ -322,7 +308,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_coverage(self) -> Optional[str]:
         """Text describing the extent or scope of the resource."""
-        return _getter_single(DC_NAMESPACE, "coverage")(self)
+        return self._get_single_value(DC_NAMESPACE, "coverage")
 
     @dc_coverage.setter
     def dc_coverage(self, value: Optional[str]) -> None:
@@ -331,7 +317,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_creator(self) -> Optional[list[str]]:
         """A sorted array of names of the authors of the resource, listed in order of precedence."""
-        return _getter_seq(DC_NAMESPACE, "creator")(self)
+        return self._get_seq_values(DC_NAMESPACE, "creator")
 
     @dc_creator.setter
     def dc_creator(self, values: Optional[list[str]]) -> None:
@@ -340,7 +326,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_date(self) -> Optional[list[datetime.datetime]]:
         """A sorted array of dates of significance to the resource. The dates and times are in UTC."""
-        return _getter_seq(DC_NAMESPACE, "date", _converter_date)(self)
+        return self._get_seq_values(DC_NAMESPACE, "date", _converter_date)
 
     @dc_date.setter
     def dc_date(self, values: Optional[list[Union[str, datetime.datetime]]]) -> None:
@@ -358,7 +344,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_description(self) -> Optional[dict[str, str]]:
         """A language-keyed dictionary of textual descriptions of the content of the resource."""
-        return _getter_langalt(DC_NAMESPACE, "description")(self)
+        return self._get_langalt_values(DC_NAMESPACE, "description")
 
     @dc_description.setter
     def dc_description(self, values: Optional[dict[str, str]]) -> None:
@@ -367,7 +353,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_format(self) -> Optional[str]:
         """The mime-type of the resource."""
-        return _getter_single(DC_NAMESPACE, "format")(self)
+        return self._get_single_value(DC_NAMESPACE, "format")
 
     @dc_format.setter
     def dc_format(self, value: Optional[str]) -> None:
@@ -376,7 +362,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_identifier(self) -> Optional[str]:
         """Unique identifier of the resource."""
-        return _getter_single(DC_NAMESPACE, "identifier")(self)
+        return self._get_single_value(DC_NAMESPACE, "identifier")
 
     @dc_identifier.setter
     def dc_identifier(self, value: Optional[str]) -> None:
@@ -385,7 +371,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_language(self) -> Optional[list[str]]:
         """An unordered array specifying the languages used in the resource."""
-        return _getter_bag(DC_NAMESPACE, "language")(self)
+        return self._get_bag_values(DC_NAMESPACE, "language")
 
     @dc_language.setter
     def dc_language(self, values: Optional[list[str]]) -> None:
@@ -394,7 +380,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_publisher(self) -> Optional[list[str]]:
         """An unordered array of publisher names."""
-        return _getter_bag(DC_NAMESPACE, "publisher")(self)
+        return self._get_bag_values(DC_NAMESPACE, "publisher")
 
     @dc_publisher.setter
     def dc_publisher(self, values: Optional[list[str]]) -> None:
@@ -403,7 +389,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_relation(self) -> Optional[list[str]]:
         """An unordered array of text descriptions of relationships to other documents."""
-        return _getter_bag(DC_NAMESPACE, "relation")(self)
+        return self._get_bag_values(DC_NAMESPACE, "relation")
 
     @dc_relation.setter
     def dc_relation(self, values: Optional[list[str]]) -> None:
@@ -412,7 +398,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_rights(self) -> Optional[dict[str, str]]:
         """A language-keyed dictionary of textual descriptions of the rights the user has to this resource."""
-        return _getter_langalt(DC_NAMESPACE, "rights")(self)
+        return self._get_langalt_values(DC_NAMESPACE, "rights")
 
     @dc_rights.setter
     def dc_rights(self, values: Optional[dict[str, str]]) -> None:
@@ -421,7 +407,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_source(self) -> Optional[str]:
         """Unique identifier of the work from which this resource was derived."""
-        return _getter_single(DC_NAMESPACE, "source")(self)
+        return self._get_single_value(DC_NAMESPACE, "source")
 
     @dc_source.setter
     def dc_source(self, value: Optional[str]) -> None:
@@ -430,7 +416,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_subject(self) -> Optional[list[str]]:
         """An unordered array of descriptive phrases or keywords that specify the topic of the content."""
-        return _getter_bag(DC_NAMESPACE, "subject")(self)
+        return self._get_bag_values(DC_NAMESPACE, "subject")
 
     @dc_subject.setter
     def dc_subject(self, values: Optional[list[str]]) -> None:
@@ -439,7 +425,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_title(self) -> Optional[dict[str, str]]:
         """A language-keyed dictionary of the title of the resource."""
-        return _getter_langalt(DC_NAMESPACE, "title")(self)
+        return self._get_langalt_values(DC_NAMESPACE, "title")
 
     @dc_title.setter
     def dc_title(self, values: Optional[dict[str, str]]) -> None:
@@ -448,7 +434,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def dc_type(self) -> Optional[list[str]]:
         """An unordered array of textual descriptions of the document type."""
-        return _getter_bag(DC_NAMESPACE, "type")(self)
+        return self._get_bag_values(DC_NAMESPACE, "type")
 
     @dc_type.setter
     def dc_type(self, values: Optional[list[str]]) -> None:
@@ -457,7 +443,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def pdf_keywords(self) -> Optional[str]:
         """An unformatted text string representing document keywords."""
-        return _getter_single(PDF_NAMESPACE, "Keywords")(self)
+        return self._get_single_value(PDF_NAMESPACE, "Keywords")
 
     @pdf_keywords.setter
     def pdf_keywords(self, value: Optional[str]) -> None:
@@ -466,7 +452,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def pdf_pdfversion(self) -> Optional[str]:
         """The PDF file version, for example 1.0 or 1.3."""
-        return _getter_single(PDF_NAMESPACE, "PDFVersion")(self)
+        return self._get_single_value(PDF_NAMESPACE, "PDFVersion")
 
     @pdf_pdfversion.setter
     def pdf_pdfversion(self, value: Optional[str]) -> None:
@@ -475,7 +461,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def pdf_producer(self) -> Optional[str]:
         """The name of the tool that saved the document as a PDF."""
-        return _getter_single(PDF_NAMESPACE, "Producer")(self)
+        return self._get_single_value(PDF_NAMESPACE, "Producer")
 
     @pdf_producer.setter
     def pdf_producer(self, value: Optional[str]) -> None:
@@ -484,7 +470,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def xmp_create_date(self) -> Optional[datetime.datetime]:
         """The date and time the resource was originally created. Returned as a UTC datetime object."""
-        return _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)(self)
+        return self._get_single_value(XMP_NAMESPACE, "CreateDate", _converter_date)
 
     @xmp_create_date.setter
     def xmp_create_date(self, value: Optional[datetime.datetime]) -> None:
@@ -497,7 +483,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def xmp_modify_date(self) -> Optional[datetime.datetime]:
         """The date and time the resource was last modified. Returned as a UTC datetime object."""
-        return _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)(self)
+        return self._get_single_value(XMP_NAMESPACE, "ModifyDate", _converter_date)
 
     @xmp_modify_date.setter
     def xmp_modify_date(self, value: Optional[datetime.datetime]) -> None:
@@ -510,7 +496,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def xmp_metadata_date(self) -> Optional[datetime.datetime]:
         """The date and time that any metadata for this resource was last changed. Returned as a UTC datetime object."""
-        return _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)(self)
+        return self._get_single_value(XMP_NAMESPACE, "MetadataDate", _converter_date)
 
     @xmp_metadata_date.setter
     def xmp_metadata_date(self, value: Optional[datetime.datetime]) -> None:
@@ -523,7 +509,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def xmp_creator_tool(self) -> Optional[str]:
         """The name of the first known tool used to create the resource."""
-        return _getter_single(XMP_NAMESPACE, "CreatorTool")(self)
+        return self._get_single_value(XMP_NAMESPACE, "CreatorTool")
 
     @xmp_creator_tool.setter
     def xmp_creator_tool(self, value: Optional[str]) -> None:
@@ -532,7 +518,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def xmpmm_document_id(self) -> Optional[str]:
         """The common identifier for all versions and renditions of this resource."""
-        return _getter_single(XMPMM_NAMESPACE, "DocumentID")(self)
+        return self._get_single_value(XMPMM_NAMESPACE, "DocumentID")
 
     @xmpmm_document_id.setter
     def xmpmm_document_id(self, value: Optional[str]) -> None:
@@ -541,7 +527,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def xmpmm_instance_id(self) -> Optional[str]:
         """An identifier for a specific incarnation of a document, updated each time a file is saved."""
-        return _getter_single(XMPMM_NAMESPACE, "InstanceID")(self)
+        return self._get_single_value(XMPMM_NAMESPACE, "InstanceID")
 
     @xmpmm_instance_id.setter
     def xmpmm_instance_id(self, value: Optional[str]) -> None:
@@ -550,7 +536,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def pdfaid_part(self) -> Optional[str]:
         """The part of the PDF/A standard that the document conforms to (e.g., 1, 2, 3)."""
-        return _getter_single(PDFAID_NAMESPACE, "part")(self)
+        return self._get_single_value(PDFAID_NAMESPACE, "part")
 
     @pdfaid_part.setter
     def pdfaid_part(self, value: Optional[str]) -> None:
@@ -559,7 +545,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @property
     def pdfaid_conformance(self) -> Optional[str]:
         """The conformance level within the PDF/A standard (e.g., 'A', 'B', 'U')."""
-        return _getter_single(PDFAID_NAMESPACE, "conformance")(self)
+        return self._get_single_value(PDFAID_NAMESPACE, "conformance")
 
     @pdfaid_conformance.setter
     def pdfaid_conformance(self, value: Optional[str]) -> None:
