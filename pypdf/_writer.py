@@ -59,8 +59,8 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     deprecation_no_replacement,
-    logger_warning,
     logger_error,
+    logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
@@ -1441,9 +1441,6 @@ class PdfWriter(PdfDocCommon):
 
         This removes orphan objects that persist after intermediate writes.
         """
-        from io import BytesIO
-        from pypdf import PdfReader
-
         buf = BytesIO()
         self.write(buf)
         buf.seek(0)
