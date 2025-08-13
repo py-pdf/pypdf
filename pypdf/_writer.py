@@ -1430,8 +1430,8 @@ class PdfWriter(PdfDocCommon):
         if clean and getattr(self, "_has_written", False):
             try:
                 self._rebuild_via_io()
-            except Exception as e:
-                logger_warning(f"Failed to rebuild PdfWriter after remove_page with clean=True: {e}", __name__)
+            except Exception as exc:
+                logger_warning(f"Failed to rebuild PdfWriter after remove_page with clean=True: {exc}", __name__)
                 # No re-raise: keep remove_page robust, tests/CI should catch the error
 
 
