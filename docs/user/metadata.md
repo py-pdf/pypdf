@@ -228,6 +228,28 @@ xmp.dc_creator = None
 xmp.pdf_producer = None
 ```
 
+### Incrementally updating XMP values without overwriting existing data
+
+You often want to add a single entry to an XMP field and keep everything else untouched. `XmpInformation` offers simple helpers:
+
+```python
+from pypdf.xmp import XmpInformation
+
+xmp = XmpInformation.create()
+
+# Add/replace a single language entry while preserving others
+xmp.add_langalt_value(pypdf.xmp.DC_NAMESPACE, "title", "en", "English Title")
+xmp.add_langalt_value(pypdf.xmp.DC_NAMESPACE, "title", "fr", "Titre français")
+
+# Append an item to an unordered Bag (e.g., keywords/subject)
+xmp.append_bag_item(pypdf.xmp.DC_NAMESPACE, "subject", "keyword3")
+
+# Append an item to an ordered Seq (e.g., creators)
+xmp.append_seq_item(pypdf.xmp.DC_NAMESPACE, "creator", "Third Author")
+```
+
+These helpers read the current values, modify them in memory, and write back, so existing entries are preserved.
+
 ## Modifying XMP metadata
 
 Modifying XMP metadata is a bit more complicated.
