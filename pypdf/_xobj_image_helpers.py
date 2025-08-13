@@ -5,10 +5,12 @@ from io import BytesIO
 from typing import Any, Literal, Optional, Union, cast
 
 from ._utils import check_if_whitespace_only, logger_warning
-from .constants import ColorSpaces
-from .constants import FilterTypes as FT
-from .constants import ImageAttributes as IA
-from .constants import StreamAttributes
+from .constants import (
+    ColorSpaces,
+    FilterTypes as FT,
+    ImageAttributes as IA,
+    StreamAttributes,
+)
 from .errors import EmptyImageDataError, PdfReadError
 from .generic import (
     ArrayObject,
