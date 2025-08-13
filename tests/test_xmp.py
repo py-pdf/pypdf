@@ -392,11 +392,11 @@ def test_pdf_writer__xmp_metadata_setter():
     assert "/XML" not in str(writer.root_object)
 
 
-def test_xmp_information_create():
+def test_xmp_information__create():
     """Test XmpInformation.create() classmethod."""
     xmp = XmpInformation.create()
     assert xmp is not None
-    assert xmp.dc_title is None or xmp.dc_title == {}
+    assert xmp.dc_title == {}
     assert xmp.dc_creator is None or xmp.dc_creator == []
     assert xmp.dc_description is None or xmp.dc_description == {}
     assert xmp.xmp_create_date is None
