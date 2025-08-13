@@ -75,6 +75,22 @@ iso8601 = re.compile(
 
 K = TypeVar("K")
 
+# Minimal XMP template
+MINIMAL_XMP = f"""<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="pypdf">
+    <rdf:RDF xmlns:rdf="{RDF_NAMESPACE}">
+        <rdf:Description rdf:about=""
+            xmlns:dc="{DC_NAMESPACE}"
+            xmlns:xmp="{XMP_NAMESPACE}"
+            xmlns:pdf="{PDF_NAMESPACE}"
+            xmlns:xmpMM="{XMPMM_NAMESPACE}"
+            xmlns:pdfaid="{PDFAID_NAMESPACE}"
+            xmlns:pdfx="{PDFX_NAMESPACE}">
+        </rdf:Description>
+    </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>"""
+
 
 def _identity(value: K) -> K:
     return value
@@ -250,22 +266,8 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         Returns:
             A new XmpInformation instance with empty metadata fields.
         """
-        minimal_xmp = f"""<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>
-<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="pypdf">
-    <rdf:RDF xmlns:rdf="{RDF_NAMESPACE}">
-        <rdf:Description rdf:about=""
-            xmlns:dc="{DC_NAMESPACE}"
-            xmlns:xmp="{XMP_NAMESPACE}"
-            xmlns:pdf="{PDF_NAMESPACE}"
-            xmlns:xmpMM="{XMPMM_NAMESPACE}"
-            xmlns:pdfaid="{PDFAID_NAMESPACE}"
-            xmlns:pdfx="{PDFX_NAMESPACE}">
-        </rdf:Description>
-    </rdf:RDF>
-</x:xmpmeta>
-<?xpacket end="w"?>"""
         stream = ContentStream(None, None)
-        stream.set_data(minimal_xmp.encode("utf-8"))
+        stream.set_data(MINIMAL_XMP.encode("utf-8"))
         return cls(stream)
 
     def write_to_stream(
