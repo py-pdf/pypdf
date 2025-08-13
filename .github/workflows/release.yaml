@@ -22,7 +22,7 @@ jobs:
     if: "${{ startsWith(github.event.head_commit.message, 'REL: ') }}"
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Extract version from commit message
         id: extract_version

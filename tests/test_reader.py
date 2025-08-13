@@ -1842,3 +1842,18 @@ def test_trailer_cannot_be_read():
     with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Unexpected type '/Invalid'$"):
         reader = PdfReader(BytesIO(data))
         list(reader.pages)
+
+
+@pytest.mark.enable_socket
+def test_read_pdf15_xref_stream():
+    data = get_data_from_url(name="issue-3429.pdf")
+
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Size missing from XRef stream {"):
+        PdfReader(BytesIO(data))
+
+    data_modified = data.replace(b"/XRef/", b"/XRef/Size/2/")
+    with pytest.raises(
+            PdfReadError,
+            match=r"^Trailer cannot be read: Limit reached while decompressing\. 1545392 bytes remaining\.$"
+    ):
+        PdfReader(BytesIO(data_modified))

@@ -27,9 +27,10 @@
 
 
 """
-Implementation of stream filters for PDF.
+Implementation of stream filters; §7.4 Filters of the PDF 2.0 specification.
 
-See TABLE H.1 Abbreviations for standard filter names
+§8.9.7 Inline images of the PDF 2.0 specification has abbreviations that can be
+used for the names of filters in an inline image object.
 """
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
@@ -59,7 +60,7 @@ from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
-from .errors import DependencyError, PdfReadError, PdfStreamError
+from .errors import DependencyError, LimitReachedError, PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
     DictionaryObject,
@@ -68,6 +69,18 @@ from .generic import (
     StreamObject,
     is_null_or_none,
 )
+
+ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
+
+
+def _decompress_with_limit(data: bytes) -> bytes:
+    decompressor = zlib.decompressobj()
+    result = decompressor.decompress(data, max_length=ZLIB_MAX_OUTPUT_LENGTH)
+    if decompressor.unconsumed_tail:
+        raise LimitReachedError(
+            f"Limit reached while decompressing. {len(decompressor.unconsumed_tail)} bytes remaining."
+        )
+    return result
 
 
 def decompress(data: bytes) -> bytes:
@@ -78,6 +91,12 @@ def decompress(data: bytes) -> bytes:
     If the decompression fails due to a zlib error, it falls back
     to using a decompression object with a larger window size.
 
+    Please note that the output length is limited to avoid memory
+    issues. If you need to process larger content streams, consider
+    adapting ``pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH``. In case you
+    are only dealing with trusted inputs and/or want to disable these
+    limits, set the value to `0`.
+
     Args:
         data: The input data to be decompressed.
 
@@ -86,38 +105,43 @@ def decompress(data: bytes) -> bytes:
 
     """
     try:
-        return zlib.decompress(data)
+        return _decompress_with_limit(data)
     except zlib.error:
-        try:
-            # For larger files, use decompression object to enable buffered reading
-            return zlib.decompressobj().decompress(data)
-        except zlib.error:
-            # First quick approach for known issue with faulty added bytes to the
-            # tail of the encoded stream from early Adobe Distiller or Pitstop versions
-            # with CR char as the default line separator (assumed by reverse engeneering)
-            # that breaks the decoding process in the end.
-            #
-            # Try first to cut off some of the tail byte by byte, however limited to not
-            # iterate through too many loops and kill the performance for large streams,
-            # to then allow the final fallback to run. Added this intermediate attempt,
-            # because starting from the head of the stream byte by byte kills completely
-            # the performace for large streams (e.g. 6 MB) with the tail-byte-issue
-            # and takes ages. This solution is really fast:
-            max_tail_cut_off_bytes: int = 8
-            for i in range(1, min(max_tail_cut_off_bytes + 1, len(data))):
-                try:
-                    return zlib.decompressobj().decompress(data[:-i])
-                except zlib.error:
-                    pass
-            # If still failing, then try with increased window size
-            d = zlib.decompressobj(zlib.MAX_WBITS | 32)
-            result_str = b""
-            for b in [data[i : i + 1] for i in range(len(data))]:
-                try:
-                    result_str += d.decompress(b)
-                except zlib.error:
-                    pass
-            return result_str
+        # First quick approach: There are known issues with faulty added bytes to the
+        # tail of the encoded stream from early Adobe Distiller or Pitstop versions
+        # with CR char as the default line separator (assumed by reverse engineering)
+        # that breaks the decoding process in the end.
+        #
+        # Try first to cut off some of the tail byte by byte, but limited to not
+        # iterate through too many loops and kill the performance for large streams,
+        # to then allow the final fallback to run. Added this intermediate attempt,
+        # because starting from the head of the stream byte by byte kills completely
+        # the performance for large streams (e.g., 6 MB) with the tail-byte-issue
+        # and takes ages. This solution is really fast:
+        max_tail_cut_off_bytes: int = 8
+        for i in range(1, min(max_tail_cut_off_bytes + 1, len(data))):
+            try:
+                return _decompress_with_limit(data[:-i])
+            except zlib.error:
+                pass
+
+        # If still failing, then try with increased window size.
+        decompressor = zlib.decompressobj(zlib.MAX_WBITS | 32)
+        result_str = b""
+        remaining_limit = ZLIB_MAX_OUTPUT_LENGTH
+        data_single_bytes = [data[i : i + 1] for i in range(len(data))]
+        for index, b in enumerate(data_single_bytes):
+            try:
+                decompressed = decompressor.decompress(b, max_length=remaining_limit)
+                result_str += decompressed
+                remaining_limit -= len(decompressed)
+                if remaining_limit <= 0:
+                    raise LimitReachedError(
+                        f"Limit reached while decompressing. {len(data_single_bytes) - index} bytes remaining."
+                    )
+            except zlib.error:
+                pass
+        return result_str
 
 
 class FlateDecode:
@@ -502,13 +526,12 @@ class JPXDecode:
 
         Args:
           data: text to decode.
-          decode_parms: a dictionary of parameter values.
+          decode_parms: this filter does not use parameters.
 
         Returns:
           decoded data.
 
         """
-        # decode_parms: this filter does not use parameters
         return data
 
 
@@ -732,7 +755,7 @@ def decode_stream_data(stream: Any) -> bytes:
     if not isinstance(decode_parms, (list, tuple)):
         decode_parms = (decode_parms,)
     data: bytes = stream._data
-    # If there is not data to decode we should not try to decode the data.
+    # If there is no data to decode, we should not try to decode it.
     if not data:
         return data
     for filter_name, params in zip(filters, decode_parms):

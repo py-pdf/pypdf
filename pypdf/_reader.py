@@ -971,14 +971,20 @@ class PdfReader(PdfDocCommon):
         if cast(str, xrefstream["/Type"]) != "/XRef":
             raise PdfReadError(f"Unexpected type {xrefstream['/Type']!r}")
         self.cache_indirect_object(generation, idnum, xrefstream)
-        stream_data = BytesIO(xrefstream.get_data())
+
         # Index pairs specify the subsections in the dictionary.
         # If none, create one subsection that spans everything.
-        idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
+        if "/Size" not in xrefstream:
+            # According to table 17 of the PDF 2.0 specification, this key is required.
+            raise PdfReadError(f"Size missing from XRef stream {xrefstream!r}!")
+        idx_pairs = xrefstream.get("/Index", [0, xrefstream["/Size"]])
+
         entry_sizes = cast(dict[Any, Any], xrefstream.get("/W"))
         assert len(entry_sizes) >= 3
         if self.strict and len(entry_sizes) > 3:
             raise PdfReadError(f"Too many entry sizes: {entry_sizes}")
+
+        stream_data = BytesIO(xrefstream.get_data())
 
         def get_entry(i: int) -> Union[int, tuple[int, ...]]:
             # Reads the correct number of bytes for each entry. See the
