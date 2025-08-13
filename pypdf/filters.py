@@ -27,10 +27,10 @@
 
 
 """
-Implementation of stream filters. §7.4 Filters of the PDF 2.0 specification.
+Implementation of stream filters; §7.4 Filters of the PDF 2.0 specification.
 
-§8.9.7 Inline images of the PDF 2.0 specification. This has abbreviations that
-can be used for the names of filters in an inline image object.
+§8.9.7 Inline images of the PDF 2.0 specification has abbreviations that can be
+used for the names of filters in an inline image object. 
 """
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
