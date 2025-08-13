@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any, Optional
 
 
 @dataclass(frozen=True)
@@ -24,3 +25,12 @@ class FontDescriptor:
     bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
 
     character_widths: dict[str, int] = field(default_factory=dict)
+
+    @classmethod
+    def from_font_res(cls, pdf_font_dict: dict[str, Any]) -> "Optional[FontDescriptor]":
+        from pypdf._codecs.core_fontmetrics import CORE_FONT_METRICS  # noqa: PLC0415
+        # Prioritize information from the PDF font dictionary
+        font_name = pdf_font_dict.get("/BaseFont", "Unknown")
+        if font_name[1:] in CORE_FONT_METRICS:
+            return CORE_FONT_METRICS.get(font_name[1:])
+        return cls(name=font_name)
