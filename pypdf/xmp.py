@@ -21,7 +21,7 @@ from xml.parsers.expat import ExpatError
 
 from ._protocols import XmpInformationProtocol
 from ._utils import StreamType, deprecate_with_replacement, deprecation_no_replacement
-from .errors import PdfReadError
+from .errors import PdfReadError, XmpDocumentError
 from .generic import ContentStream, PdfObject
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -124,7 +124,7 @@ def _converter_date(value: str) -> datetime.datetime:
 
 
 def _generic_get(
-        element: XmlElement, self: "XmpInformation", list_type: str, converter: Callable[[Any], Any] = _identity
+        element: XmlElement, self: Any, list_type: str, converter: Callable[[Any], Any] = _identity
 ) -> Optional[list[str]]:
     containers = element.getElementsByTagNameNS(RDF_NAMESPACE, list_type)
     retval: list[Any] = []
@@ -590,7 +590,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
         doc = self.rdf_root.ownerDocument
         if doc is None:
-            raise RuntimeError("XMP Document is None")
+            raise XmpDocumentError("XMP Document is None")
         desc = doc.createElementNS(RDF_NAMESPACE, "rdf:Description")
         desc.setAttributeNS(RDF_NAMESPACE, "rdf:about", about_uri)
         self.rdf_root.appendChild(desc)
@@ -613,7 +613,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         if value is not None:
             doc = self.rdf_root.ownerDocument
             if doc is None:
-                raise RuntimeError("XMP Document is None")
+                raise XmpDocumentError("XMP Document is None")
             prefix = self._get_namespace_prefix(namespace)
             elem = doc.createElementNS(namespace, f"{prefix}:{name}")
             text_node = doc.createTextNode(str(value))
@@ -635,7 +635,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         if values:
             doc = self.rdf_root.ownerDocument
             if doc is None:
-                raise RuntimeError("XMP Document is None")
+                raise XmpDocumentError("XMP Document is None")
             prefix = self._get_namespace_prefix(namespace)
             elem = doc.createElementNS(namespace, f"{prefix}:{name}")
             bag = doc.createElementNS(RDF_NAMESPACE, "rdf:Bag")
@@ -664,7 +664,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         if values:
             doc = self.rdf_root.ownerDocument
             if doc is None:
-                raise RuntimeError("XMP Document is None")
+                raise XmpDocumentError("XMP Document is None")
             prefix = self._get_namespace_prefix(namespace)
             elem = doc.createElementNS(namespace, f"{prefix}:{name}")
             seq = doc.createElementNS(RDF_NAMESPACE, "rdf:Seq")
@@ -693,7 +693,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         if values:
             doc = self.rdf_root.ownerDocument
             if doc is None:
-                raise RuntimeError("XMP Document is None")
+                raise XmpDocumentError("XMP Document is None")
             prefix = self._get_namespace_prefix(namespace)
             elem = doc.createElementNS(namespace, f"{prefix}:{name}")
             alt = doc.createElementNS(RDF_NAMESPACE, "rdf:Alt")
@@ -726,6 +726,6 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         """Update the stream with the current XML content."""
         doc = self.rdf_root.ownerDocument
         if doc is None:
-            raise RuntimeError("XMP Document is None")
+            raise XmpDocumentError("XMP Document is None")
         xml_data = doc.toxml(encoding="utf-8")
         self.stream.set_data(xml_data)
