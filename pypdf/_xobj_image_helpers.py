@@ -415,6 +415,11 @@ def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
+        from ._xobj_image_helpers import (  # noqa: PLC0415
+        Image,
+        UnidentifiedImageError,
+    )
+
     def _apply_alpha(
         img: Image.Image,
         x_object: dict[str, Any],
