@@ -58,13 +58,13 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
+from ._xobj_image_helpers import _xobj_to_image
 from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING
 from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Resources as RES
 from .errors import PageSizeNotDefinedError, PdfReadError
-from ._xobj_image_helpers import _xobj_to_image
 from .generic import (
     ArrayObject,
     ContentStream,
