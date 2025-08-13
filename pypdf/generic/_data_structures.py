@@ -47,7 +47,6 @@ from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationPro
 from .._utils import (
     WHITESPACES,
     StreamType,
-    deprecation_no_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
