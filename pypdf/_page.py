@@ -58,13 +58,13 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
+from ._xobj_image_helpers import _xobj_to_image
 from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING
 from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Resources as RES
 from .errors import PageSizeNotDefinedError, PdfReadError
-from .filters import _xobj_to_image
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -374,7 +374,7 @@ class ImageFile:
         from ._reader import PdfReader  # noqa: PLC0415
 
         # to prevent circular import
-        from .filters import _xobj_to_image  # noqa: PLC0415
+        from ._xobj_image_helpers import _xobj_to_image  # noqa: PLC0415
         from .generic import DictionaryObject, PdfObject  # noqa: PLC0415
 
         if self.indirect_reference is None:
