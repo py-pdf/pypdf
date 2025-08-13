@@ -1,5 +1,3 @@
-from typing import Union
-
 from .._utils import StreamType
 from ._base import NameObject
 from ._data_structures import Destination
