@@ -199,6 +199,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_LATEST }}
 
+      - run: tar -tzf pypdf-6.0.0.tar.gz | grep -q 'CHANGELOG.md'
       - run: python -m pip install flit check-wheel-contents
       - run: flit build
       - run: ls -l dist
