@@ -273,7 +273,6 @@ def test_issue_399():
     reader.pages[1].extract_text()
 
 
-@pytest.mark.enable_socket
 def test_image_without_pillow(tmp_path):
     env = os.environ.copy()
     env["COVERAGE_PROCESS_START"] = "pyproject.toml"
