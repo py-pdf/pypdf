@@ -202,7 +202,12 @@ jobs:
       - run: python -m pip install flit check-wheel-contents
       - run: flit build
       - run: ls -l dist
-      - run: check-wheel-contents dist/*.whl
+
+      - name: Test CHANGELOG.md present in sdist
+        run: tar -tzf dist/*.tar.gz | grep -q 'CHANGELOG.md'
+
+      - name: Test of bdist
+        run: check-wheel-contents dist/*.whl
 
       - name: Test installing package
         run: python -m pip install .
