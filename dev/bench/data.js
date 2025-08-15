@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1755083900136,
+  "lastUpdate": 1755250574601,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -80657,6 +80657,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0033124899803922653",
             "extra": "mean: 652.4513316000139 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "120829237+j-t-1@users.noreply.github.com",
+            "name": "j-t-1",
+            "username": "j-t-1"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ffe831123e2d2d8b5afad1a383cc594a1f657d3c",
+          "message": "DEV: Delete MANIFEST.in (#3436)\n\nChecked that sdist contains CHANGELOG.md and LICENSE,\nwhereas the bdist contains just the LICENSE.",
+          "timestamp": "2025-08-15T11:33:38+02:00",
+          "tree_id": "e0d5d746710dafa902b4f2c9b5363555a09f1d3e",
+          "url": "https://github.com/py-pdf/pypdf/commit/ffe831123e2d2d8b5afad1a383cc594a1f657d3c"
+        },
+        "date": 1755250571179,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4692195308061975,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010470110504321855",
+            "extra": "mean: 288.24927079999867 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.336772896692977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00740885731459571",
+            "extra": "mean: 65.20276506250067 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2741853795785452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025949241972930887",
+            "extra": "mean: 3.647167480399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.96810413556102,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004429828869236991",
+            "extra": "mean: 55.654174333333295 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08341804397604854,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10434771374727181",
+            "extra": "mean: 11.987814054800008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5449637121966815,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031544208520888693",
+            "extra": "mean: 647.2643934000018 msec\nrounds: 5"
           }
         ]
       }
