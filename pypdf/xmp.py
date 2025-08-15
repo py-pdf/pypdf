@@ -722,24 +722,6 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
         self._update_stream()
 
-    def add_langalt_value(self, namespace: str, name: str, lang: str, value: str) -> None:
-        """Add or replace a single language alternative entry, preserving others."""
-        current = self._get_langalt_values(namespace, name) or {}
-        current[str(lang)] = str(value)
-        self._set_langalt_values(namespace, name, current)
-
-    def append_bag_item(self, namespace: str, name: str, value: str) -> None:
-        """Append a single value to an unordered Bag, preserving existing entries."""
-        current = self._getter_bag(namespace, name) or []
-        current.append(str(value))
-        self._set_bag_values(namespace, name, current)
-
-    def append_seq_item(self, namespace: str, name: str, value: str) -> None:
-        """Append a single value to an ordered Seq, preserving existing entries."""
-        current = self._get_seq_values(namespace, name) or []
-        current.append(str(value))
-        self._set_seq_values(namespace, name, current)
-
     def _get_namespace_prefix(self, namespace: str) -> str:
         """Get the appropriate namespace prefix for a given namespace URI."""
         return _NAMESPACE_PREFIX_MAP.get(namespace, "unknown")

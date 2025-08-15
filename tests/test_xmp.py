@@ -627,27 +627,6 @@ def test_xmp_information_set_pdfaid_fields():
     assert xmp.pdfaid_conformance is None
 
 
-def test_xmp_information_additive_helpers():
-    """Test additive helpers to update XMP incrementally without overwriting."""
-    xmp = XmpInformation.create()
-
-    xmp.add_langalt_value(pypdf.xmp.DC_NAMESPACE, "title", "en", "English Title")
-    assert xmp.dc_title == {"en": "English Title"}
-    xmp.add_langalt_value(pypdf.xmp.DC_NAMESPACE, "title", "fr", "Titre français")
-    assert xmp.dc_title == {"en": "English Title", "fr": "Titre français"}
-    xmp.add_langalt_value(pypdf.xmp.DC_NAMESPACE, "title", "en", "New EN")
-    assert xmp.dc_title == {"en": "New EN", "fr": "Titre français"}
-
-    xmp.append_bag_item(pypdf.xmp.DC_NAMESPACE, "subject", "keyword1")
-    assert xmp.dc_subject == ["keyword1"]
-    xmp.append_bag_item(pypdf.xmp.DC_NAMESPACE, "subject", "keyword2")
-    assert xmp.dc_subject == ["keyword1", "keyword2"]
-
-    xmp.append_seq_item(pypdf.xmp.DC_NAMESPACE, "creator", "Author One")
-    assert xmp.dc_creator == ["Author One"]
-    xmp.append_seq_item(pypdf.xmp.DC_NAMESPACE, "creator", "Author Two")
-    assert xmp.dc_creator == ["Author One", "Author Two"]
-
 def test_xmp_information_create_with_writer():
     """Test using XmpInformation.create() with PdfWriter."""
     xmp = XmpInformation.create()
