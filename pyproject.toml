@@ -82,7 +82,7 @@ exclude = [
     "sample-files/.pre-commit-config.yaml",
     "tests/pdf_cache/*",
 ]
-include = ["resources/", "tests/"]
+include = ["resources/", "tests/", "CHANGELOG.md"]
 
 [tool.pytest.ini_options]
 addopts = "--disable-socket"
