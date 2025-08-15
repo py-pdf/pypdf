@@ -55,7 +55,7 @@ PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"
 PDFAID_NAMESPACE = "http://www.aiim.org/pdfa/ns/id/"
 
 # Internal mapping of namespace URI → prefix
-NAMESPACE_PREFIX_MAP = {
+_NAMESPACE_PREFIX_MAP = {
     DC_NAMESPACE: "dc",
     XMP_NAMESPACE: "xmp",
     PDF_NAMESPACE: "pdf",
@@ -87,7 +87,7 @@ iso8601 = re.compile(
 K = TypeVar("K")
 
 # Minimal XMP template
-MINIMAL_XMP = f"""<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>
+_MINIMAL_XMP = f"""<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="pypdf">
     <rdf:RDF xmlns:rdf="{RDF_NAMESPACE}">
         <rdf:Description rdf:about=""
@@ -180,7 +180,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
             A new XmpInformation instance with empty metadata fields.
         """
         stream = ContentStream(None, None)
-        stream.set_data(MINIMAL_XMP.encode("utf-8"))
+        stream.set_data(_MINIMAL_XMP.encode("utf-8"))
         return cls(stream)
 
     def write_to_stream(
@@ -742,7 +742,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
 
     def _get_namespace_prefix(self, namespace: str) -> str:
         """Get the appropriate namespace prefix for a given namespace URI."""
-        return NAMESPACE_PREFIX_MAP.get(namespace, "unknown")
+        return _NAMESPACE_PREFIX_MAP.get(namespace, "unknown")
 
     def _update_stream(self) -> None:
         """Update the stream with the current XML content."""
