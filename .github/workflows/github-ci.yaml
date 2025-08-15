@@ -203,10 +203,10 @@ jobs:
       - run: flit build
       - run: ls -l dist
 
-      - name: Run check of CHANGELOG.md in sdist
+      - name: Test CHANGELOG.md present in sdist
       - run: tar -tzf dist/*.tar.gz | grep -q 'CHANGELOG.md'
 
-      - name: Run check of bdist
+      - name: Test of bdist
       - run: check-wheel-contents dist/*.whl
 
       - name: Test installing package
