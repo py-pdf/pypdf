@@ -278,20 +278,21 @@ def test_image_without_pillow(tmp_path):
     env["COVERAGE_PROCESS_START"] = "pyproject.toml"
 
     name = "tika-914102.pdf"
-    pdf_path = Path(__file__).parent / "pdf_cache" / name
-    pdf_path_str = pdf_path.resolve().as_posix()
 
     source_file = tmp_path / "script.py"
     source_file.write_text(
         f"""
 import sys
-from pypdf import PdfReader
+from io import BytesIO
 
 import pytest
 
+from pypdf import PdfReader
+from tests import get_data_from_url
+
 
 sys.modules["PIL"] = None
-reader = PdfReader("{pdf_path_str}", strict=True)
+reader = PdfReader(BytesIO(get_data_from_url(name="{name}")), strict=True)
 
 for page in reader.pages:
     with pytest.raises(ImportError) as exc:
