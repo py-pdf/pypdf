@@ -30,15 +30,6 @@ if sys.version_info[:2] >= (3, 10):
 else:
     from typing_extensions import TypeAlias
 
-
-try:
-    from PIL import Image, UnidentifiedImageError
-except ImportError:
-    raise ImportError(
-        "pillow is required to do image extraction. "
-        "It can be installed via 'pip install pypdf[image]'"
-    )
-
 mode_str_type: TypeAlias = Literal[
     "", "1", "RGB", "2bits", "4bits", "P", "L", "RGBA", "CMYK"
 ]
