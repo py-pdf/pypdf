@@ -1,4 +1,4 @@
-"""Code in here is only used by pypdf.filters._xobj_to_image"""
+"""Functions to convert an image XObject to an image"""
 
 import sys
 from io import BytesIO
@@ -405,9 +405,6 @@ def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]
     """
     Users need to have the pillow package installed.
 
-    It's unclear if pypdf will keep this function here, hence it's private.
-    It might get removed at any point.
-
     Args:
       x_object:
 
@@ -415,11 +412,6 @@ def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
-    from ._xobj_image_helpers import (  # noqa: PLC0415
-        Image,
-        UnidentifiedImageError,
-    )
-
     def _apply_alpha(
         img: Image.Image,
         x_object: dict[str, Any],
