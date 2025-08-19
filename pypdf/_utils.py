@@ -457,6 +457,20 @@ def logger_warning(msg: str, src: str) -> None:
     logging.getLogger(src).warning(msg)
 
 
+def logger_debug(msg: str, src: str) -> None:
+    """
+    Use this instead of logger.debug directly.
+
+    That allows people to overwrite it more easily.
+
+    ## Exception, warnings.warn, logger_warning, logger_debug
+    - Exceptions → cuando el usuario debe manejar el error (PDF roto).
+    - warnings.warn → cuando el usuario debe corregir su código (ej: DeprecationWarnings).
+    - logger_warning → cuando pypdf maneja un problema pero sigue funcionando (modo strict=False).
+    - logger_debug → para información de depuración detallada, útil para desarrolladores.
+    """
+    logging.getLogger(src).debug(msg)
+
 def rename_kwargs(
     func_name: str, kwargs: dict[str, Any], aliases: dict[str, str], fail: bool = False
 ) -> None:

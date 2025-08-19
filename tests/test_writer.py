@@ -2485,6 +2485,61 @@ def test_compress_identical_objects():
     assert len(out2.getvalue()) > len(out3.getvalue())
 
 
+@pytest.mark.enable_socket
+def test_compress_identical_objects_add_and_remove_page():
+    """
+    This test is a regression test for issue #3418.
+
+    compress_identical_objects restores the PDF size to approximately the single-page
+    size after removing a duplicated page.
+    """
+    SAMPLE_URLS = [
+        "https://raw.githubusercontent.com/py-pdf/sample-files/main/001-trivial/minimal-document.pdf",
+        "https://raw.githubusercontent.com/py-pdf/sample-files/main/011-google-doc-document/google-doc-document.pdf",
+    ]
+
+    for url in SAMPLE_URLS:
+        name = url.split("/")[-1]
+        in_bytes = BytesIO(get_data_from_url(url, name=name))
+
+        reader = PdfReader(in_bytes)
+
+        # baseline writer with 1 copy (single-page PDF)
+        writer_single = PdfWriter()
+        writer_single.append(reader)
+        out_single = BytesIO()
+        writer_single.write(out_single)
+        single_len = len(out_single.getvalue())
+
+        # writer with 2 copies (duplicated pages)
+        writer_double = PdfWriter()
+        writer_double.append(reader)
+        writer_double.append(reader)
+        out_double = BytesIO()
+        writer_double.write(out_double)
+        double_len = len(out_double.getvalue())
+
+        # remove duplicated page and compress
+        try:
+            writer_double.remove_page(len(writer_double.pages) - 1)
+        except TypeError:
+            writer_double.remove_page(len(writer_double.pages) - 1, True)
+
+        writer_double.compress_identical_objects(remove_orphans=True)
+
+        out_after = BytesIO()
+        writer_double.write(out_after)
+        after_len = len(out_after.getvalue())
+
+        # tolerance: 3% of single_len or 2000 bytes, whichever is greater
+        tol = max(int(0.03 * single_len), 2000)
+
+        assert abs(after_len - single_len) <= tol, (
+            f"[{url}] expected size ≈ {single_len} ± {tol} bytes, got {after_len} "
+            f"(1p={single_len}, 2p={double_len})"
+        )
+
+
 def test_set_need_appearances_writer():
     """Minimal test for coverage"""
     writer = PdfWriter()
