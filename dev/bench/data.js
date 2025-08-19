@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1755634183561,
+  "lastUpdate": 1755636508382,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -80855,6 +80855,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0023292046391226676",
             "extra": "mean: 648.1941726000002 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "19779+xnox@users.noreply.github.com",
+            "name": "Dimitri John Ledkov",
+            "username": "xnox"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bc318d7b260695957d6000d9419396b3cd45814b",
+          "message": "ENH: Add support for python in FIPS mode for document identifier (#3438)\n\nIn FIPS mode, md5 might be available and approved. It might also be\navailable, but only on opt-in basis for unapproved usage. And very\nstrict systems might not have md5 even on opt-in basis.\n\nPython has API to expose this as \"usedforsecurity=False\" argument, see\npython documentation.\n\nThe rolling document checksum is not used for cryptograpic protection,\nbut rather used out of convenience. Hence allow using MD5 on more FIPS\nsystems.\n\nThis is no effective change for regular non-fips python builds.",
+          "timestamp": "2025-08-19T22:46:00+02:00",
+          "tree_id": "d970ad1a0d7c4beade5704155bf7aaa869a74ba8",
+          "url": "https://github.com/py-pdf/pypdf/commit/bc318d7b260695957d6000d9419396b3cd45814b"
+        },
+        "date": 1755636504935,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4533624529971965,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010667006567578168",
+            "extra": "mean: 289.57284780000236 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.43594770291218,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007435472984939564",
+            "extra": "mean: 64.78384218750222 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2761913798029182,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02048428803746857",
+            "extra": "mean: 3.620677809400024 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.21854986998847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003911981055837878",
+            "extra": "mean: 54.88911066666762 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0815805220660574,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05931262832292008",
+            "extra": "mean: 12.257827906400006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5465891777152703,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036361765178644537",
+            "extra": "mean: 646.5841183999942 msec\nrounds: 5"
           }
         ]
       }
