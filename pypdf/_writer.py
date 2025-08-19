@@ -41,15 +41,12 @@ from re import Pattern
 from types import TracebackType
 from typing import (
     Any,
-    cast,
     Callable,
-    Dict,
+    cast,
     IO,
     Optional,
-    Tuple,
     Union,
 )
-
 from ._cmap import _default_fonts_space_width, build_char_map_from_dict
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
@@ -61,8 +58,8 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     deprecation_no_replacement,
-    logger_warning,
     logger_debug,
+    logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
 from .constants import CatalogAttributes as CA
@@ -83,7 +80,6 @@ from .constants import PageAttributes as PG
 from .constants import TrailerKeys as TK
 from .errors import PyPdfError
 from .generic import (
-    PAGE_FIT,
     ArrayObject,
     BooleanObject,
     ByteStringObject,
@@ -98,6 +94,7 @@ from .generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PAGE_FIT,
     PdfObject,
     RectangleObject,
     ReferenceLink,
@@ -1768,7 +1765,7 @@ class PdfWriter(PdfDocCommon):
         # -----
 
         # Map: hash_value -> (representative_indirect, [duplicate_indirects...])
-        self._idnum_hash: Dict[int, Tuple[IndirectObject, list[IndirectObject]]] = {}
+        self._idnum_hash: dict[int, tuple[IndirectObject, list[IndirectObject]]] = {}
         objects = list(self._objects)  # save copy
         orphans: Optional[list[bool]] = [True] * len(objects) if mark_orphans else None
 
