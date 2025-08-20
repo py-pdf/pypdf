@@ -2539,6 +2539,19 @@ def test_compress_identical_objects_add_and_remove_page():
             f"(1p={single_len}, 2p={double_len})"
         )
 
+def test_compress_identical_objects_noop(caplog):
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+
+    # Ejecutamos con ambos flags en False
+    with caplog.at_level("WARNING"):
+        writer.compress_identical_objects(remove_identicals=False, remove_orphans=False)
+
+    # Verificamos que el warning se haya emitido
+    assert "Nothing has been done" in caplog.text
+
+    # Verificamos que el documento sigue intacto (sigue teniendo 1 página)
+    assert len(writer.pages) == 1
 
 def test_set_need_appearances_writer():
     """Minimal test for coverage"""
