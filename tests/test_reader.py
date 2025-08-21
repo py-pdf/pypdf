@@ -6,6 +6,7 @@ import time
 from io import BytesIO
 from pathlib import Path
 from typing import Union
+from unittest import mock
 
 import pytest
 
@@ -2273,3 +2274,13 @@ def test_get_object_from_stream__size_limit(caplog):
         "NumberObject(b'') invalid; use 0 instead",
         "NumberObject(b'') invalid; use 0 instead",
     ]
+
+
+def test_named_destinations_cache():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+
+    with mock.patch("pypdf._doc_common.PdfDocCommon._get_named_destinations") as get_mock:
+        for _ix in range(20):
+            reader.named_destinations.get("foo")
+
+        get_mock.assert_called_once()
