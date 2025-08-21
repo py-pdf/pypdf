@@ -66,6 +66,7 @@ from .generic import (
     ArrayObject,
     ContentStream,
     DecodedStreamObject,
+    Destination,
     DictionaryObject,
     EncodedStreamObject,
     IndirectObject,
@@ -75,6 +76,7 @@ from .generic import (
     PdfObject,
     StreamObject,
     TextStringObject,
+    TreeObject,
     is_null_or_none,
     read_object,
 )
@@ -137,6 +139,8 @@ class PdfReader(PdfDocCommon):
             self._handle_encryption(password)
         elif password is not None:
             raise PdfReadError("Not an encrypted file")
+
+        self._named_destinations_cache: Optional[dict[str, Destination]] = None
 
     def _initialize_stream(self, stream: Union[StrByteType, Path]) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
@@ -1274,3 +1278,18 @@ class PdfReader(PdfDocCommon):
             data = {k: v for k, v in data.items() if k not in exclude}
 
         return data
+
+    def _get_named_destinations(
+        self,
+        tree: Union[TreeObject, None] = None,
+        retval: Optional[dict[str, Destination]] = None,
+    ) -> dict[str, Destination]:
+        """Override from PdfDocCommon. In the reader we can assume this is
+        static, but not in the writer.
+        """
+        if tree or retval:
+            return PdfDocCommon._get_named_destinations(self, tree, retval)
+
+        if self._named_destinations_cache is None:
+            self._named_destinations_cache = PdfDocCommon._get_named_destinations(self)
+        return self._named_destinations_cache
