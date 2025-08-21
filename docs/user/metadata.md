@@ -60,6 +60,10 @@ writer.add_metadata(
 # Save the new PDF to a file
 with open("meta-pdf.pdf", "wb") as f:
     writer.write(f)
+
+#Access new custom field (while standard fields like Author have primitive analogs and can be accessed like reader.metadata.author, custom fields do not)
+metareader = PdfReader("meta-pdf.pdf")
+print(metareader.metadata['/CustomField'])
 ```
 
 ## Updating metadata
