@@ -3052,7 +3052,14 @@ class PdfWriter(PdfDocCommon):
                         outlist.append(ano.clone(self).indirect_reference)
                 else:
                     d = cast("ArrayObject", d)
-                    p = self._get_cloned_page(d[0], pages, reader)
+                    try:
+                        p = self._get_cloned_page(d[0], pages, reader)
+                    except TypeError:
+                        # There are cases where the IndirectObject is not None, but d[0] will fail:
+                        # TypeError: 'NoneType' object is not subscriptable
+                        # in generic/_base.py, in __getitem__
+                        # at `return self._get_object_with_check()[key]`
+                        continue
                     if p is not None:
                         anc = ano.clone(self, ignore_fields=("/D",))
                         cast("DictionaryObject", anc["/A"])[
