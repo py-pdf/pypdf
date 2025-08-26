@@ -10,11 +10,12 @@ You can adjust the minimum log level of pypdf as follow:
 import logging
 from pypdf import PdfReader
 
-
+# Get the logger for the pypdf library
+# This allows you to configure its logging level independently
 logger = logging.getLogger("pypdf")
-logger.setLevel(logging.ERROR)  # <--- set the minimum level expected
+logger.setLevel(logging.ERROR)
 
-reader = PdfReader('file.pdf')
+reader = PdfReader("file.pdf")
 ```
 
 ## Temporarily Reducing Log Noise
@@ -41,7 +42,7 @@ def reduce_log_level(level=logging.ERROR):
 
 ```py
 from pypdf import PdfReader, PdfWriter
-from my_module import reduce_log_level  # adjust path to your module
+from my_module import reduce_log_level  # Adjust path to your module
 
 # Standard logging level applies
 reader = PdfReader("file.pdf")
@@ -51,10 +52,11 @@ page = reader.pages[0]
 writer.add_page(page)
 
 with reduce_log_level(level=logging.ERROR):
-    # Example: ignore warnings when adding annotations
-    for page, annotation in annotations:  # annotations must be defined
-        writer.add_annotation(page_number=page, annotation=annotation)
+    # Adjusted level applies
+    # Logs lower than ERROR will be filtered-out
+    do_something()
 
+# Original logging level applies
 with open("new_file.pdf", "wb") as fp:
     writer.write(fp)
 ```
@@ -68,37 +70,41 @@ import logging
 from pypdf import PdfReader
 
 class PypdfCustomLogger(logging.Logger):
-    def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None, sinfo=None):
-        if name == 'pypdf':
+    def makeRecord(self, name: str, level: int, *args, **kwargs):
+        if name == "pypdf":
             level_mapping = {
                 logging.NOTSET: logging.NOTSET,
                 logging.DEBUG: logging.DEBUG,
                 logging.INFO: logging.DEBUG,
                 logging.WARNING: logging.INFO,
                 logging.ERROR: logging.WARNING,
-                logging.CRITICAL: logging.ERROR
+                logging.CRITICAL: logging.ERROR,
             }
-            level = level_mapping.get(level, logging.DEBUG)
-        return super().makeRecord(name, new_level, fn, lno, msg, args, exc_info, func, extra, sinfo)
+            new_level = level_mapping.get(level, logging.DEBUG)
+        else:
+            new_level = level
+
+        # Generate a record using the new level defined
+        return super().makeRecord(name, new_level, *args, **kwargs)
 ```
 
 #### Usage:
 
 ```py
 import logging
-from my_module import PypdfCustomLogger  # adjust path to your module
+from my_module import PypdfCustomLogger  # Adjust path to your module
 
 logging.setLoggerClass(PypdfCustomLogger)
 logging.basicConfig()
 
-pdf_logger = logging.getLogger('pypdf')
-myapp_logger = logging.getLogger('myapp')
+pdf_logger = logging.getLogger("pypdf")
+other_logger = logging.getLogger("other_logger")
 
 # pypdf logger level is adjusted
 pdf_logger.info("This will be captured as a DEBUG message.")
 pdf_logger.warning("This will be captured as a INFO message.")
 pdf_logger.error("This will be captured as a WARNING message.")
 
-# other loggers are not impacted.
-myapp_logger.error("This will be captured as a ERROR message.")
+# Other loggers are not impacted
+other_logger.error("This will be captured as a ERROR message.")
 ```
