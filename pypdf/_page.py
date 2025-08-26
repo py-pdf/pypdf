@@ -2158,7 +2158,7 @@ class PageObject(DictionaryObject):
         else:
             self[NameObject("/Annots")] = value
 
-    def add_js(self, javascript: str, /, action_type: str = "O") -> None:
+    def add_js(self, javascript: str, /, action_type: Literal['O', 'C'] = "O") -> None:
         r"""
         Add JavaScript which will launch on the open or close action of this
         page.
