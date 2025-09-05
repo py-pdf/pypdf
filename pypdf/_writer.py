@@ -822,8 +822,7 @@ class PdfWriter(PdfDocCommon):
         new_content_data: bytes,
     ) -> None:
         """
-        Combines existing content stream(s) with new content (as bytes),
-        and returns a new single StreamObject.
+        Combines existing content stream(s) with new content (as bytes).
 
         Args:
             page: The page to which the new content data will be added.
