@@ -28,7 +28,6 @@
 
 from typing import (
     Any,
-    List,
     Optional,
 )
 
@@ -57,14 +56,14 @@ class ViewerPreferences(DictionaryObject):
     def _get_name(self, key: str, default: Optional[NameObject]) -> Optional[NameObject]:
         return self.get(key, default)
 
-    def _set_name(self, key: str, lst: List[str], v: NameObject) -> None:
+    def _set_name(self, key: str, lst: list[str], v: NameObject) -> None:
         if v[0] != "/":
             raise ValueError(f"{v} does not start with '/'")
         if lst != [] and v not in lst:
             raise ValueError(f"{v} is an unacceptable value")
         self[NameObject(key)] = NameObject(v)
 
-    def _get_arr(self, key: str, default: Optional[List[Any]]) -> Optional[ArrayObject]:
+    def _get_arr(self, key: str, default: Optional[list[Any]]) -> Optional[ArrayObject]:
         return self.get(key, None if default is None else ArrayObject(default))
 
     def _set_arr(self, key: str, v: Optional[ArrayObject]) -> None:
@@ -100,7 +99,7 @@ class ViewerPreferences(DictionaryObject):
             )
 
         def _add_prop_name(
-            key: str, lst: List[str], default: Optional[NameObject]
+            key: str, lst: list[str], default: Optional[NameObject]
         ) -> property:
             return property(
                 lambda self: self._get_name(key, default),

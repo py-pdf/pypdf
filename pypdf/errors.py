@@ -64,3 +64,7 @@ class EmptyImageDataError(PyPdfError):
 
 
 STREAM_TRUNCATED_PREMATURELY = "Stream has ended unexpectedly"
+
+
+class LimitReachedError(PyPdfError):
+    """Raised when a limit is reached."""

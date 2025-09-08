@@ -3,7 +3,7 @@ import io
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 import pytest
 
@@ -14,6 +14,7 @@ from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
 from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
+    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
@@ -38,7 +39,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
-NestedList = Union[int, None, List["NestedList"]]
+NestedList = Union[int, None, list["NestedList"]]
 
 
 @pytest.mark.parametrize(
@@ -742,17 +743,17 @@ def test_decode_permissions():
 
     print_ = base.copy()
     print_["print"] = True
-    with pytest.warns(
-        DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+    with pytest.raises(
+        DeprecationError,
+        match="decode_permissions is deprecated and was removed in pypdf 5.0.0. Use user_access_permissions instead",
     ):
         assert reader.decode_permissions(4) == print_
 
     modify = base.copy()
     modify["modify"] = True
-    with pytest.warns(
-        DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+    with pytest.raises(
+        DeprecationError,
+        match="decode_permissions is deprecated and was removed in pypdf 5.0.0. Use user_access_permissions instead",
     ):
         assert reader.decode_permissions(8) == modify
 
@@ -1841,3 +1842,18 @@ def test_trailer_cannot_be_read():
     with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Unexpected type '/Invalid'$"):
         reader = PdfReader(BytesIO(data))
         list(reader.pages)
+
+
+@pytest.mark.enable_socket
+def test_read_pdf15_xref_stream():
+    data = get_data_from_url(name="issue-3429.pdf")
+
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Size missing from XRef stream {"):
+        PdfReader(BytesIO(data))
+
+    data_modified = data.replace(b"/XRef/", b"/XRef/Size/2/")
+    with pytest.raises(
+            PdfReadError,
+            match=r"^Trailer cannot be read: Limit reached while decompressing\. 1545392 bytes remaining\.$"
+    ):
+        PdfReader(BytesIO(data_modified))

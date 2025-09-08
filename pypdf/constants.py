@@ -1,7 +1,6 @@
 """Various constants, enums, and flags to aid readability."""
 
 from enum import Enum, IntFlag, auto, unique
-from typing import Dict, Tuple
 
 
 class StrEnum(str, Enum):  # Once we are on Python 3.11+: enum.StrEnum
@@ -97,9 +96,9 @@ class UserAccessPermissions(IntFlag):
         """Check if the given reserved name defaults to 1 = active."""
         return name not in {"R1", "R2"}
 
-    def to_dict(self) -> Dict[str, bool]:
+    def to_dict(self) -> dict[str, bool]:
         """Convert the given flag value to a corresponding verbose name mapping."""
-        result: Dict[str, bool] = {}
+        result: dict[str, bool] = {}
         for name, flag in UserAccessPermissions.__members__.items():
             if UserAccessPermissions._is_reserved(name):
                 continue
@@ -107,7 +106,7 @@ class UserAccessPermissions(IntFlag):
         return result
 
     @classmethod
-    def from_dict(cls, value: Dict[str, bool]) -> "UserAccessPermissions":
+    def from_dict(cls, value: dict[str, bool]) -> "UserAccessPermissions":
         """Convert the verbose name mapping to the corresponding flag value."""
         value_copy = value.copy()
         result = cls(0)
@@ -143,14 +142,6 @@ class Resources:
     FONT = "/Font"  # dictionary, optional
     PROC_SET = "/ProcSet"  # array, optional
     PROPERTIES = "/Properties"  # dictionary, optional
-
-
-class Ressources:  # deprecated
-    """
-    Use :class: `Resources` instead.
-
-    .. deprecated:: 5.0.0
-    """
 
 
 class PagesAttributes:
@@ -451,7 +442,7 @@ class FieldDictionaryAttributes:
         """Ch"""
 
     @classmethod
-    def attributes(cls) -> Tuple[str, ...]:
+    def attributes(cls) -> tuple[str, ...]:
         """
         Get a tuple of all the attributes present in a Field Dictionary.
 
@@ -478,7 +469,7 @@ class FieldDictionaryAttributes:
         )
 
     @classmethod
-    def attributes_dict(cls) -> Dict[str, str]:
+    def attributes_dict(cls) -> dict[str, str]:
         """
         Get a dictionary of attribute keys and their human-readable names.
 
@@ -510,7 +501,7 @@ class CheckboxRadioButtonAttributes:
     Opt = "/Opt"  # Options, Optional
 
     @classmethod
-    def attributes(cls) -> Tuple[str, ...]:
+    def attributes(cls) -> tuple[str, ...]:
         """
         Get a tuple of all the attributes present in a Field Dictionary.
 
@@ -526,7 +517,7 @@ class CheckboxRadioButtonAttributes:
         return (cls.Opt,)
 
     @classmethod
-    def attributes_dict(cls) -> Dict[str, str]:
+    def attributes_dict(cls) -> dict[str, str]:
         """
         Get a dictionary of attribute keys and their human-readable names.
 
