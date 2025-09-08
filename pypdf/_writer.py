@@ -1718,7 +1718,7 @@ class PdfWriter(PdfDocCommon):
         - keeps the first occurrence as the representative,
         - for each duplicate sets self._objects[idx] = None (we do not insert an IndirectObject here),
         - updates references inside *live* objects so that any IndirectObject that previously
-        pointed to a duplicate will point to the representative.
+          pointed to a duplicate will point to the representative.
 
         IMPORTANT: This function does NOT remove unreachable objects (orphans).
         Removing unreachable objects is done by the orphan path (mark & sweep) outside.
