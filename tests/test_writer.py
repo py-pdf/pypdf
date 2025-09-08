@@ -2539,6 +2539,7 @@ def test_compress_identical_objects_add_and_remove_page():
             f"(1p={single_len}, 2p={double_len})"
         )
 
+
 def test_compress_identical_objects_noop(caplog):
     writer = PdfWriter()
     writer.add_blank_page(width=72, height=72)
