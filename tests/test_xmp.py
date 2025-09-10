@@ -8,7 +8,7 @@ import pytest
 import pypdf.generic
 import pypdf.xmp
 from pypdf import PdfReader, PdfWriter
-from pypdf.errors import PdfReadError
+from pypdf.errors import PdfReadError, XmpDocumentError
 from pypdf.generic import NameObject, StreamObject
 from pypdf.xmp import XmpInformation
 
@@ -674,10 +674,10 @@ def test_xmp_information_owner_document_none_errors():
 
         xmp.rdf_root.ownerDocument = None
 
-        with pytest.raises(RuntimeError, match="XMP Document is None"):
+        with pytest.raises(XmpDocumentError, match="XMP Document is None"):
             xmp._get_or_create_description()
 
-        with pytest.raises(RuntimeError, match="XMP Document is None"):
+        with pytest.raises(XmpDocumentError, match="XMP Document is None"):
             xmp._update_stream()
 
         xmp.rdf_root.ownerDocument = original_owner
@@ -685,7 +685,7 @@ def test_xmp_information_owner_document_none_errors():
             xmp.rdf_root.removeChild(desc)
         xmp.rdf_root.ownerDocument = None
 
-        with pytest.raises(RuntimeError, match="XMP Document is None"):
+        with pytest.raises(XmpDocumentError, match="XMP Document is None"):
             xmp.dc_coverage = "test coverage"
 
         xmp.rdf_root.ownerDocument = original_owner
@@ -693,7 +693,7 @@ def test_xmp_information_owner_document_none_errors():
             xmp.rdf_root.removeChild(desc)
         xmp.rdf_root.ownerDocument = None
 
-        with pytest.raises(RuntimeError, match="XMP Document is None"):
+        with pytest.raises(XmpDocumentError, match="XMP Document is None"):
             xmp.dc_contributor = ["contributor"]
 
         xmp.rdf_root.ownerDocument = original_owner
@@ -701,7 +701,7 @@ def test_xmp_information_owner_document_none_errors():
             xmp.rdf_root.removeChild(desc)
         xmp.rdf_root.ownerDocument = None
 
-        with pytest.raises(RuntimeError, match="XMP Document is None"):
+        with pytest.raises(XmpDocumentError, match="XMP Document is None"):
             xmp.dc_creator = ["creator"]
 
         xmp.rdf_root.ownerDocument = original_owner
@@ -709,7 +709,7 @@ def test_xmp_information_owner_document_none_errors():
             xmp.rdf_root.removeChild(desc)
         xmp.rdf_root.ownerDocument = None
 
-        with pytest.raises(RuntimeError, match="XMP Document is None"):
+        with pytest.raises(XmpDocumentError, match="XMP Document is None"):
             xmp.dc_title = {"x-default": "title"}
 
         xmp.rdf_root.ownerDocument = original_owner
@@ -717,28 +717,28 @@ def test_xmp_information_owner_document_none_errors():
         desc.setAttribute("test-attr", "test-value")
         xmp.rdf_root.ownerDocument = None
 
-        with pytest.raises(RuntimeError, match="XMP Document is None"):
+        with pytest.raises(XmpDocumentError, match="XMP Document is None"):
             xmp._set_single_value("test-namespace", "test-attr", "new-value")
 
         xmp.rdf_root.ownerDocument = original_owner
         desc = xmp._get_or_create_description()
         xmp.rdf_root.ownerDocument = None
 
-        with pytest.raises(RuntimeError, match="XMP Document is None"):
+        with pytest.raises(XmpDocumentError, match="XMP Document is None"):
             xmp._set_bag_values("test-namespace", "test-name", ["value"])
 
         xmp.rdf_root.ownerDocument = original_owner
         desc = xmp._get_or_create_description()
         xmp.rdf_root.ownerDocument = None
 
-        with pytest.raises(RuntimeError, match="XMP Document is None"):
+        with pytest.raises(XmpDocumentError, match="XMP Document is None"):
             xmp._set_seq_values("test-namespace", "test-name", ["value"])
 
         xmp.rdf_root.ownerDocument = original_owner
         desc = xmp._get_or_create_description()
         xmp.rdf_root.ownerDocument = None
 
-        with pytest.raises(RuntimeError, match="XMP Document is None"):
+        with pytest.raises(XmpDocumentError, match="XMP Document is None"):
             xmp._set_langalt_values("test-namespace", "test-name", {"x-default": "value"})
 
     finally:
