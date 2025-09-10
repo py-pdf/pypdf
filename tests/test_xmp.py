@@ -403,7 +403,7 @@ def test_xmp_information__create():
     assert xmp.pdf_producer is None
 
 
-def test_xmp_information_set_dc_title():
+def test_xmp_information__set_dc_title():
     """Test setting dc:title metadata."""
     xmp = XmpInformation.create()
 
@@ -415,7 +415,7 @@ def test_xmp_information_set_dc_title():
     assert xmp.dc_title is None or xmp.dc_title == {}
 
 
-def test_xmp_information_set_dc_creator():
+def test_xmp_information__set_dc_creator():
     """Test setting dc:creator metadata."""
     xmp = XmpInformation.create()
 
@@ -427,7 +427,7 @@ def test_xmp_information_set_dc_creator():
     assert xmp.dc_creator is None or xmp.dc_creator == []
 
 
-def test_xmp_information_set_dc_description():
+def test_xmp_information__set_dc_description():
     """Test setting dc:description metadata."""
     xmp = XmpInformation.create()
 
@@ -439,7 +439,7 @@ def test_xmp_information_set_dc_description():
     assert xmp.dc_description is None or xmp.dc_description == {}
 
 
-def test_xmp_information_set_dc_subject():
+def test_xmp_information__set_dc_subject():
     """Test setting dc:subject metadata."""
     xmp = XmpInformation.create()
 
@@ -451,7 +451,7 @@ def test_xmp_information_set_dc_subject():
     assert xmp.dc_subject is None or xmp.dc_subject == []
 
 
-def test_xmp_information_set_dc_date():
+def test_xmp_information__set_dc_date():
     """Test setting dc:date metadata."""
     xmp = XmpInformation.create()
 
@@ -469,7 +469,7 @@ def test_xmp_information_set_dc_date():
     assert xmp.dc_date is None or xmp.dc_date == []
 
 
-def test_xmp_information_set_single_fields():
+def test_xmp_information__set_single_fields():
     """Test setting single-value metadata fields."""
     xmp = XmpInformation.create()
 
@@ -494,7 +494,7 @@ def test_xmp_information_set_single_fields():
     assert xmp.dc_source is None
 
 
-def test_xmp_information_set_bag_fields():
+def test_xmp_information__set_bag_fields():
     """Test setting bag (unordered array) metadata fields."""
     xmp = XmpInformation.create()
 
@@ -529,7 +529,7 @@ def test_xmp_information_set_bag_fields():
     assert xmp.dc_type is None or xmp.dc_type == []
 
 
-def test_xmp_information_set_dc_rights():
+def test_xmp_information__set_dc_rights():
     """Test setting dc:rights metadata."""
     xmp = XmpInformation.create()
 
@@ -541,7 +541,7 @@ def test_xmp_information_set_dc_rights():
     assert xmp.dc_rights is None or xmp.dc_rights == {}
 
 
-def test_xmp_information_set_pdf_fields():
+def test_xmp_information__set_pdf_fields():
     """Test setting PDF namespace metadata fields."""
     xmp = XmpInformation.create()
 
@@ -561,7 +561,7 @@ def test_xmp_information_set_pdf_fields():
     assert xmp.pdf_producer is None
 
 
-def test_xmp_information_set_xmp_date_fields():
+def test_xmp_information__set_xmp_date_fields():
     """Test setting XMP date metadata fields."""
     xmp = XmpInformation.create()
     test_date = datetime(2023, 12, 25, 10, 30, 45)
@@ -585,7 +585,7 @@ def test_xmp_information_set_xmp_date_fields():
     assert xmp.xmp_metadata_date is None
 
 
-def test_xmp_information_set_xmp_creator_tool():
+def test_xmp_information__set_xmp_creator_tool():
     """Test setting xmp:CreatorTool metadata."""
     xmp = XmpInformation.create()
 
@@ -595,7 +595,7 @@ def test_xmp_information_set_xmp_creator_tool():
     assert xmp.xmp_creator_tool is None
 
 
-def test_xmp_information_set_xmpmm_fields():
+def test_xmp_information__set_xmpmm_fields():
     """Test setting XMPMM namespace metadata fields."""
     xmp = XmpInformation.create()
 
@@ -612,7 +612,7 @@ def test_xmp_information_set_xmpmm_fields():
     assert xmp.xmpmm_instance_id is None
 
 
-def test_xmp_information_set_pdfaid_fields():
+def test_xmp_information__set_pdfaid_fields():
     """Test setting PDF/A ID namespace metadata fields."""
     xmp = XmpInformation.create()
 
@@ -627,7 +627,7 @@ def test_xmp_information_set_pdfaid_fields():
     assert xmp.pdfaid_conformance is None
 
 
-def test_xmp_information_create_with_writer():
+def test_xmp_information__create_with_writer():
     """Test using XmpInformation.create() with PdfWriter."""
     xmp = XmpInformation.create()
     xmp.dc_title = {"x-default": "Created with pypdf"}
@@ -650,7 +650,7 @@ def test_xmp_information_create_with_writer():
     assert xmp_read.pdf_producer == "pypdf library"
 
 
-def test_xmp_information_namespace_prefix():
+def test_xmp_information__namespace_prefix():
     """Test _get_namespace_prefix method."""
     xmp = XmpInformation.create()
 
@@ -663,7 +663,7 @@ def test_xmp_information_namespace_prefix():
     assert xmp._get_namespace_prefix("unknown://namespace") == "unknown"
 
 
-def test_xmp_information_owner_document_none_errors():
+def test_xmp_information__owner_document_none_errors():
     xmp = XmpInformation.create()
 
     original_owner = xmp.rdf_root.ownerDocument
@@ -745,7 +745,7 @@ def test_xmp_information_owner_document_none_errors():
         xmp.rdf_root.ownerDocument = original_owner
 
 
-def test_xmp_information_remove_existing_attribute():
+def test_xmp_information__remove_existing_attribute():
     xmp = XmpInformation.create()
 
     xmp.dc_coverage = "initial coverage"
@@ -758,7 +758,7 @@ def test_xmp_information_remove_existing_attribute():
     assert xmp.dc_coverage is None
 
 
-def test_xmp_information_edge_case_coverage():
+def test_xmp_information__edge_case_coverage():
     xmp = XmpInformation.create()
 
     xmp.dc_contributor = []
@@ -780,7 +780,7 @@ def test_xmp_information_edge_case_coverage():
     assert xmp.dc_title == {}
 
 
-def test_xmp_information_create_new_description():
+def test_xmp_information__create_new_description():
     """Test creating new description elements (lines 462-465)."""
     xmp = XmpInformation.create()
 
@@ -794,7 +794,7 @@ def test_xmp_information_create_new_description():
     assert desc.namespaceURI == pypdf.xmp.RDF_NAMESPACE
 
 
-def test_xmp_information_attribute_handling():
+def test_xmp_information__attribute_handling():
     """Test attribute node removal and creation (line 479, 484, 506, 535, 564)."""
     xmp = XmpInformation.create()
 
@@ -820,7 +820,7 @@ def test_xmp_information_attribute_handling():
     assert xmp.dc_format == "text/plain"
 
 
-def test_xmp_information_complete_coverage():
+def test_xmp_information__complete_coverage():
     xmp = XmpInformation.create()
 
     for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
