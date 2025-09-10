@@ -397,8 +397,8 @@ def test_xmp_information__create():
     xmp = XmpInformation.create()
     assert xmp is not None
     assert xmp.dc_title == {}
-    assert xmp.dc_creator is None or xmp.dc_creator == []
-    assert xmp.dc_description is None or xmp.dc_description == {}
+    assert xmp.dc_creator == []
+    assert xmp.dc_description == {}
     assert xmp.xmp_create_date is None
     assert xmp.pdf_producer is None
 
