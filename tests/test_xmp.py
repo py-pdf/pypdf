@@ -757,6 +757,20 @@ def test_xmp_information__remove_existing_attribute():
     xmp.dc_coverage = None
     assert xmp.dc_coverage is None
 
+    desc = xmp._get_or_create_description()
+    desc.setAttributeNS(pypdf.xmp.DC_NAMESPACE, "dc:coverage", "original attribute")
+
+    assert desc.getAttributeNS(pypdf.xmp.DC_NAMESPACE, "coverage") == "original attribute"
+
+    xmp.dc_coverage = "new element value"
+    assert xmp.dc_coverage == "new element value"
+
+    assert desc.getAttributeNS(pypdf.xmp.DC_NAMESPACE, "coverage") == ""
+
+    elements = desc.getElementsByTagNameNS(pypdf.xmp.DC_NAMESPACE, "coverage")
+    assert len(elements) == 1
+    assert elements[0].firstChild.data == "new element value"
+
 
 def test_xmp_information__edge_case_coverage():
     xmp = XmpInformation.create()
