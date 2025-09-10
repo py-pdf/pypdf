@@ -8,7 +8,6 @@ import datetime
 import decimal
 import re
 from collections.abc import Iterator
-from io import StringIO
 from typing import (
     Any,
     Callable,
@@ -732,9 +731,5 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
         if doc is None:
             raise XmpDocumentError("XMP Document is None")
 
-        buffer = StringIO()
-        for child in doc.childNodes:
-            child.writexml(buffer, "", "", "")
-        xml_text = buffer.getvalue()
-        xml_text = xml_text.replace('<?xpacket end="w"?>', '<?xpacket end="r"?>')
-        self.stream.set_data(xml_text.encode("utf-8"))
+        xml_data = doc.toxml(encoding="utf-8")
+        self.stream.set_data(xml_data)

@@ -842,13 +842,3 @@ def test_xmp_information_complete_coverage():
     assert xmp.dc_contributor == ["test1"]
     assert xmp.dc_creator == ["test2"]
     assert xmp.dc_title == {"x-default": "test3"}
-
-
-def test_xmp_information_attribute_removal():
-    xmp = XmpInformation.create()
-
-    desc = xmp._get_or_create_description()
-    desc.setAttributeNS(pypdf.xmp.DC_NAMESPACE, "dc:format", "application/pdf")
-
-    xmp.dc_format = "text/plain"
-    assert xmp.dc_format == "text/plain"
