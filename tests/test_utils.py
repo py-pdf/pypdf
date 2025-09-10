@@ -360,6 +360,18 @@ def test_parse_datetime(text, expected):
     assert date_str == expected
 
 
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("", None),
+        (None, None),
+    ],
+)
+def test_parse_datetime_edge_cases(text, expected):
+    date = parse_iso8824_date(text)
+    assert date == expected
+
+
 def test_parse_datetime_err():
     with pytest.raises(ValueError) as ex:
         parse_iso8824_date("D:20210408T054711Z")
