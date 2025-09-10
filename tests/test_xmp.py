@@ -820,7 +820,7 @@ def test_xmp_information__attribute_handling():
     assert xmp.dc_format == "text/plain"
 
 
-def test_xmp_information__complete_coverage():
+def test_xmp_information__create_and_set_metadata():
     xmp = XmpInformation.create()
 
     for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):
