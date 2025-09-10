@@ -135,7 +135,7 @@ def _converter_date(value: str) -> datetime.datetime:
 
 
 def _generic_get(
-        element: XmlElement, self: Any, list_type: str, converter: Callable[[Any], Any] = _identity
+        element: XmlElement, self: "XmpInformation", list_type: str, converter: Callable[[Any], Any] = _identity
 ) -> Optional[list[str]]:
     containers = element.getElementsByTagNameNS(RDF_NAMESPACE, list_type)
     retval: list[Any] = []
