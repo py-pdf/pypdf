@@ -236,7 +236,7 @@ def test_deprecation_no_replacement():
 
     with pytest.raises(
         DeprecationError,
-        match="foo is deprecated and was removed in pypdf 4.3.2.",
+        match=r"foo is deprecated and was removed in pypdf 4\.3\.2\.",
     ):
         foo()
 
