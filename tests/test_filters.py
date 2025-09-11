@@ -194,7 +194,7 @@ def test_ascii85decode_five_zero_bytes():
 def test_ccitparameters():
     with pytest.raises(
         DeprecationError,
-        match="CCITParameters is deprecated and was removed in pypdf 6.0.0. Use CCITTParameters instead",
+        match=r"CCITParameters is deprecated and was removed in pypdf 6\.0\.0\. Use CCITTParameters instead",
     ):
         CCITParameters()
 
@@ -382,7 +382,7 @@ def test_iss1787():
     obj = data.indirect_reference.get_object()
     obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
     obj.decoded_self = None
-    with pytest.raises(expected_exception=PdfReadError, match="^Unsupported PNG filter 244$"):
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Unsupported PNG filter 244$"):
         _ = reader.pages[0].images[0]
 
 
@@ -712,7 +712,7 @@ def test_flate_decode__not_rectangular(caplog):
 
 def test_jbig2decode__binary_errors():
     with mock.patch("pypdf.filters.JBIG2DEC_BINARY", None), \
-            pytest.raises(DependencyError, match="jbig2dec binary is not available."):
+            pytest.raises(DependencyError, match=r"jbig2dec binary is not available\."):
         JBIG2Decode.decode(b"dummy")
 
     result = subprocess.CompletedProcess(
@@ -725,7 +725,7 @@ def test_jbig2decode__binary_errors():
     )
     with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
             mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
-            pytest.raises(DependencyError, match="jbig2dec>=0.15 is required."):
+            pytest.raises(DependencyError, match=r"jbig2dec>=0.15 is required\."):
         JBIG2Decode.decode(b"dummy")
 
 
@@ -785,7 +785,7 @@ def test_jbig2decode__edge_cases(caplog):
     caplog.clear()
 
     # Invalid input.
-    with pytest.raises(PdfStreamError, match="Unable to decode JBIG2 data. Exit code: 1"):
+    with pytest.raises(PdfStreamError, match=r"Unable to decode JBIG2 data\. Exit code: 1"):
         JBIG2Decode.decode(b"aaaaaa")
     assert caplog.messages == [
         "jbig2dec FATAL ERROR page has no image, cannot be completed",

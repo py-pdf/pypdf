@@ -1053,8 +1053,7 @@ class StreamObject(DictionaryObject):
         Returns:
             a PIL image if proper decoding has been found
         Raises:
-            Exception: (any)during decoding to to invalid object or
-                errors during decoding will be reported
+            Exception: Errors during decoding will be reported.
                 It is recommended to catch exceptions to prevent
                 stops in your program.
 
@@ -1067,7 +1066,7 @@ class StreamObject(DictionaryObject):
             except AttributeError:
                 msg = f"{self.__repr__()} object does not seem to be an Image"  # pragma: no cover
             logger_warning(msg, __name__)
-        extension, byte_stream, img = _xobj_to_image(self)
+        extension, _, img = _xobj_to_image(self)
         if extension is None:
             return None  # pragma: no cover
         return img

@@ -975,7 +975,7 @@ class PdfWriter(PdfDocCommon):
         font_res = dr.get(font_name, None)
         if not is_null_or_none(font_res):
             font_res = cast(DictionaryObject, font_res.get_object())
-            font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
+            _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
                 200, font_res
             )
             try:  # remove width stored in -1 key
@@ -2740,7 +2740,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(fileobj, PdfDocCommon):
             reader = fileobj
         else:
-            stream, encryption_obj = self._create_stream(fileobj)
+            stream, _encryption_obj = self._create_stream(fileobj)
             # Create a new PdfReader instance using the stream
             # (either file or BytesIO or StringIO) created above
             reader = PdfReader(stream, strict=False)  # type: ignore[arg-type]
