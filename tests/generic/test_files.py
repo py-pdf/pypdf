@@ -405,13 +405,11 @@ def test_embedded_file__delete_without_parent():
 def test_embedded_file__delete_known():
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
-    writer.add_attachment("test.txt", b"content")
+    attachment = writer.add_attachment("test.txt", b"content")
     writer.add_attachment("test2.txt", b"content2")
 
     attachments = list(writer.attachment_list)
     assert len(attachments) == 2
-    attachment = attachments[0]
-    assert attachment.name == "test.txt"
     attachment.delete()
     with pytest.raises(PdfReadError, match=r"^/EF entry not found: {}$"):
         _ = attachment.content
