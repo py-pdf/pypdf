@@ -71,3 +71,16 @@ embedded_file.write("output.pdf")
 
 The same functionality is available if you iterate over the attachments of a writer
 using `writer.attachment_list`.
+
+## Delete Attachments
+
+To delete an existing attachment, use the following code:
+
+```python
+from pypdf import PdfWriter
+
+writer = PdfWriter(clone_from="example.pdf")
+attachment = writer.add_attachment(filename="test.txt", data=b"Hello World!")
+attachment.delete()
+assert list(writer.attachment_list) == []
+```
