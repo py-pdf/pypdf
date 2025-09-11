@@ -1,5 +1,5 @@
 """Test the pypdf.xmp module."""
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
 
@@ -565,22 +565,32 @@ def test_xmp_information__set_xmp_date_fields():
     """Test setting XMP date metadata fields."""
     xmp = XmpInformation.create()
     test_date = datetime(2023, 12, 25, 10, 30, 45)
+    aware_date = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone(timedelta(hours=-5)))
 
     xmp.xmp_create_date = test_date
     stored_date = xmp.xmp_create_date
     assert isinstance(stored_date, datetime)
+    xmp.xmp_create_date = aware_date
+    stored_date = xmp.xmp_create_date
+    assert stored_date == datetime(2023, 1, 1, 17, 0, 0)
     xmp.xmp_create_date = None
     assert xmp.xmp_create_date is None
 
     xmp.xmp_modify_date = test_date
     stored_date = xmp.xmp_modify_date
     assert isinstance(stored_date, datetime)
+    xmp.xmp_modify_date = aware_date
+    stored_date = xmp.xmp_modify_date
+    assert stored_date == datetime(2023, 1, 1, 17, 0, 0)
     xmp.xmp_modify_date = None
     assert xmp.xmp_modify_date is None
 
     xmp.xmp_metadata_date = test_date
     stored_date = xmp.xmp_metadata_date
     assert isinstance(stored_date, datetime)
+    xmp.xmp_metadata_date = aware_date
+    stored_date = xmp.xmp_metadata_date
+    assert stored_date == datetime(2023, 1, 1, 17, 0, 0)
     xmp.xmp_metadata_date = None
     assert xmp.xmp_metadata_date is None
 
@@ -795,7 +805,7 @@ def test_xmp_information__edge_case_coverage():
 
 
 def test_xmp_information__create_new_description():
-    """Test creating new description elements (lines 462-465)."""
+    """Test creating new description elements."""
     xmp = XmpInformation.create()
 
     for desc in list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description")):

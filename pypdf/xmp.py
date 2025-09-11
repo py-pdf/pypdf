@@ -133,6 +133,19 @@ def _converter_date(value: str) -> datetime.datetime:
     return dt
 
 
+def _format_datetime_utc(value: datetime.datetime) -> str:
+    """Format a datetime as UTC with trailing 'Z'.
+
+    - If the input is timezone-aware, convert to UTC first.
+    - If naive, assume UTC.
+    """
+    if value.tzinfo is not None and value.utcoffset() is not None:
+        value = value.astimezone(datetime.timezone.utc)
+
+    value = value.replace(tzinfo=None)
+    return value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
 def _generic_get(
         element: XmlElement, self: "XmpInformation", list_type: str, converter: Callable[[Any], Any] = _identity
 ) -> Optional[list[str]]:
@@ -346,7 +359,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
             date_strings = []
             for value in values:
                 if isinstance(value, datetime.datetime):
-                    date_strings.append(value.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+                    date_strings.append(_format_datetime_utc(value))
                 else:
                     date_strings.append(str(value))
             self._set_seq_values(DC_NAMESPACE, "date", date_strings)
@@ -485,7 +498,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @xmp_create_date.setter
     def xmp_create_date(self, value: Optional[datetime.datetime]) -> None:
         if value:
-            date_str = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            date_str = _format_datetime_utc(value)
             self._set_single_value(XMP_NAMESPACE, "CreateDate", date_str)
         else:
             self._set_single_value(XMP_NAMESPACE, "CreateDate", None)
@@ -498,7 +511,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @xmp_modify_date.setter
     def xmp_modify_date(self, value: Optional[datetime.datetime]) -> None:
         if value:
-            date_str = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            date_str = _format_datetime_utc(value)
             self._set_single_value(XMP_NAMESPACE, "ModifyDate", date_str)
         else:
             self._set_single_value(XMP_NAMESPACE, "ModifyDate", None)
@@ -511,7 +524,7 @@ class XmpInformation(XmpInformationProtocol, PdfObject):
     @xmp_metadata_date.setter
     def xmp_metadata_date(self, value: Optional[datetime.datetime]) -> None:
         if value:
-            date_str = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            date_str = _format_datetime_utc(value)
             self._set_single_value(XMP_NAMESPACE, "MetadataDate", date_str)
         else:
             self._set_single_value(XMP_NAMESPACE, "MetadataDate", None)
