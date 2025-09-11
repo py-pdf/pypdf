@@ -7,7 +7,7 @@ from pypdf._utils import format_iso8824_date, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
 from pypdf.constants import FileSpecificationDictionaryEntries
 from pypdf.constants import PageAttributes as PG
-from pypdf.errors import PdfReadError
+from pypdf.errors import PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
@@ -36,14 +36,16 @@ class EmbeddedFile:
 
     Further information on embedded files can be found in section 7.11 of the PDF 2.0 specification.
     """
-    def __init__(self, name: str, pdf_object: DictionaryObject) -> None:
+    def __init__(self, name: str, pdf_object: DictionaryObject, parent: ArrayObject | None = None) -> None:
         """
         Args:
             name: The (primary) name as provided in the name tree.
             pdf_object: The corresponding PDF object to allow retrieving further data.
+            parent: The parent list.
         """
         self._name = name
         self.pdf_object = pdf_object
+        self._parent = parent
 
     @property
     def name(self) -> str:
@@ -105,7 +107,7 @@ class EmbeddedFile:
         names_array.extend([create_string_object(name), filespec])
 
         # Return an EmbeddedFile instance
-        return cls(name=name, pdf_object=filespec)
+        return cls(name=name, pdf_object=filespec, parent=names_array)
 
     @property
     def alternative_name(self) -> str | None:
@@ -276,6 +278,17 @@ class EmbeddedFile:
         else:
             params[NameObject("/CheckSum")] = value
 
+    def delete(self) -> None:
+        """Delete the file from the document."""
+        if not self._parent:
+            raise PyPdfError("Parent required to delete file from document.")
+        if self.pdf_object not in self._parent:
+            raise PyPdfError("File not found in parent object.")
+        index = self._parent.index(self.pdf_object)
+        self._parent.pop(index)  # Reference.
+        self._parent.pop(index - 1)  # Name.
+        self.pdf_object = DictionaryObject()  # Invalidate.
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} name={self.name!r}>"
 
@@ -296,7 +309,7 @@ class EmbeddedFile:
                 # Skip plain strings and retrieve them as `direct_name` by index.
                 file_dictionary = name.get_object()
                 direct_name = names[i - 1].get_object()
-                yield EmbeddedFile(name=direct_name, pdf_object=file_dictionary)
+                yield EmbeddedFile(name=direct_name, pdf_object=file_dictionary, parent=names)
 
     @classmethod
     def _load(cls, catalog: DictionaryObject) -> Generator[EmbeddedFile]:

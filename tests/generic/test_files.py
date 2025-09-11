@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.errors import PdfReadError
+from pypdf.errors import PdfReadError, PyPdfError
 from pypdf.generic import (
     ByteStringObject,
     DictionaryObject,
@@ -394,3 +394,32 @@ def test_embedded_file_null_object_handling():
     assert embedded_file.subtype is None
     assert embedded_file.size is None
     assert embedded_file.checksum is None
+
+
+def test_embedded_file__delete_without_parent():
+    attachment = EmbeddedFile(name="test.txt", pdf_object=DictionaryObject())
+    with pytest.raises(PyPdfError, match=r"^Parent required to delete file from document\.$"):
+        attachment.delete()
+
+
+def test_embedded_file__delete_known():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.add_attachment("test.txt", b"content")
+    writer.add_attachment("test2.txt", b"content2")
+
+    attachments = list(writer.attachment_list)
+    assert len(attachments) == 2
+    attachment = attachments[0]
+    assert attachment.name == "test.txt"
+    attachment.delete()
+    with pytest.raises(PdfReadError, match=r"^/EF entry not found: {}$"):
+        _ = attachment.content
+
+    attachments = list(writer.attachment_list)
+    assert len(attachments) == 1
+    assert attachments[0].name == "test2.txt"
+
+    # Delete second time.
+    with pytest.raises(PyPdfError, match=r"^File not found in parent object\.$"):
+        attachment.delete()
