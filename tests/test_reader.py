@@ -745,7 +745,10 @@ def test_decode_permissions():
     print_["print"] = True
     with pytest.raises(
         DeprecationError,
-        match="decode_permissions is deprecated and was removed in pypdf 5.0.0. Use user_access_permissions instead",
+            match=(
+                r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
+                r"Use user_access_permissions instead"
+            ),
     ):
         assert reader.decode_permissions(4) == print_
 
@@ -753,7 +756,10 @@ def test_decode_permissions():
     modify["modify"] = True
     with pytest.raises(
         DeprecationError,
-        match="decode_permissions is deprecated and was removed in pypdf 5.0.0. Use user_access_permissions instead",
+        match=(
+            r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
+            r"Use user_access_permissions instead"
+        ),
     ):
         assert reader.decode_permissions(8) == modify
 
@@ -1820,7 +1826,7 @@ def test_issue2886(caplog):
     url = "https://github.com/user-attachments/files/17187711/crash-e8a85d82de01cab5eb44e7993304d8b9d1544970.pdf"
     name = "issue2886.pdf"
 
-    with pytest.raises(PdfReadError, match="Unexpected empty line in Xref table."):
+    with pytest.raises(PdfReadError, match=r"Unexpected empty line in Xref table\."):
         _ = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
 

@@ -200,7 +200,7 @@ def test_name_object(caplog):
 
     with pytest.raises(
         DeprecationError,
-        match="surfix is deprecated and was removed in pypdf 5.0.0. Use prefix instead.",
+        match=r"surfix is deprecated and was removed in pypdf 5\.0\.0\. Use prefix instead\.",
     ):
         _ = NameObject.surfix
 
