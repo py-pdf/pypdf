@@ -709,7 +709,7 @@ def test_issue604(caplog, strict):
         pdf = PdfReader(f, strict=strict)
         outline = pdf.outline
         msg = [
-            "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
+            "Unknown destination: 'ms_Thyroid_2_2020_071520_watermarked.pdf' [0, 1]"
         ]
         assert normalize_warnings(caplog.text) == msg
 
