@@ -192,7 +192,7 @@ def test_named_destinations__tree_is_null_object():
 
 
 @pytest.mark.enable_socket
-def test_named_destinations__issue3462():
+def test_outline__issue3462():
     url = "https://github.com/user-attachments/files/22293402/e371fffe0b_a7cccde95a.pdf"
     name = "issue3462.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url=url, name=name)))
