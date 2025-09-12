@@ -350,7 +350,7 @@ class PdfWriter(PdfDocCommon):
         return cast(XmpInformation, self.root_object.xmp_metadata)
 
     @xmp_metadata.setter
-    def xmp_metadata(self, value: Optional[XmpInformation]) -> None:
+    def xmp_metadata(self, value: Union[XmpInformation, bytes, None]) -> None:
         """XMP (Extensible Metadata Platform) data."""
         if value is None:
             if "/Metadata" in self.root_object:
