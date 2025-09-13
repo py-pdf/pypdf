@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Optional
 
 from pypdf.generic import DictionaryObject
 
@@ -29,10 +28,10 @@ class FontDescriptor:
     character_widths: dict[str, int] = field(default_factory=dict)
 
     @classmethod
-    def from_font_resource(cls, pdf_font_dict: DictionaryObject) -> "Optional[FontDescriptor]":
+    def from_font_resource(cls, pdf_font_dict: DictionaryObject) -> "FontDescriptor":
         from pypdf._codecs.core_fontmetrics import CORE_FONT_METRICS  # noqa: PLC0415
         # Prioritize information from the PDF font dictionary
-        font_name = pdf_font_dict.get("/BaseFont", "Unknown")
-        if font_name[1:] in CORE_FONT_METRICS:
-            return CORE_FONT_METRICS.get(font_name[1:])
+        font_name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
+        if font_name in CORE_FONT_METRICS:
+            return CORE_FONT_METRICS[font_name]
         return cls(name=font_name)
