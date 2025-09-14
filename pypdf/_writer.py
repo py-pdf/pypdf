@@ -874,7 +874,6 @@ class PdfWriter(PdfDocCommon):
             object_name: str,
             x_offset: float,
             y_offset: float,
-            font_res: Optional[DictionaryObject] = None
         ) -> None:
         """
         Adds an appearance stream to the page content in the form of
@@ -886,17 +885,25 @@ class PdfWriter(PdfDocCommon):
             object_name: The name of the appearance stream.
             x_offset: The horizontal offset for the appearance stream.
             y_offset: The vertical offset for the appearance stream.
-            font_res: The appearance stream's font resource (if given).
         """
-        # Prepare XObject resource dictionary on the page
+        # Prepare XObject resource dictionary on the page. This currently
+        # only deals with font resources, but can easily be adapted to also
+        # include other resources.
         pg_res = cast(DictionaryObject, page[PG.RESOURCES])
-        if font_res is not None:
-            font_name = font_res["/BaseFont"]  # [/"Name"] often also exists, but is deprecated
+        if "/Resources" in appearance_stream_obj:
+            ap_stream_res = cast(DictionaryObject, appearance_stream_obj["/Resources"])
+            # No need to check "if "/Font" in ap_stream_res", because the only reason this
+            # code runs would be if we are flattening form fields, and the associated code
+            # either adds a Font resource or no resource at all. This probably needs to
+            # change if we want to use this method to flatten markup annotations.
+            ap_stream_font_dict = cast(DictionaryObject, ap_stream_res["/Font"])
             if "/Font" not in pg_res:
                 pg_res[NameObject("/Font")] = DictionaryObject()
-            pg_ft_res = cast(DictionaryObject, pg_res[NameObject("/Font")])
-            if font_name not in pg_ft_res:
-                pg_ft_res[NameObject(font_name)] = font_res
+            pg_font_res = cast(DictionaryObject, pg_res["/Font"])
+            # Merge fonts from the appearance stream into the page's font resources
+            for font_name, font_ref in ap_stream_font_dict.items():
+                if font_name not in pg_font_res:
+                    pg_font_res[font_name] = font_ref
         # Always add the resolved stream object to the writer to get a new IndirectObject.
         # This ensures we have a valid IndirectObject managed by *this* writer.
         xobject_ref = self._add_object(appearance_stream_obj)
@@ -922,8 +929,7 @@ class PdfWriter(PdfDocCommon):
         annotation: DictionaryObject,
         font_name: str = "",
         font_size: float = -1,
-        flatten: bool = False,
-    ) -> None:
+    ) -> StreamObject:
         # Calculate rectangle dimensions
         _rct = cast(RectangleObject, annotation[AA.Rect])
         rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
@@ -1065,9 +1071,7 @@ class PdfWriter(PdfDocCommon):
             self._objects[n - 1] = dct
             dct.indirect_reference = IndirectObject(n, 0, self)
 
-        if flatten:
-            field_name = self._get_qualified_field_name(annotation)
-            self._add_apstream_object(page, dct, field_name, _rct[0], _rct[1], font_res)
+        return dct
 
     FFBITS_NUL = FA.FfBits(0)
 
@@ -1139,6 +1143,7 @@ class PdfWriter(PdfDocCommon):
                 ).get_object()
 
             for field, value in fields.items():
+                rct = cast(RectangleObject, annotation[AA.Rect])
                 if not (
                     self._get_qualified_field_name(parent_annotation) == field
                     or parent_annotation.get("/T", None) == field
@@ -1175,7 +1180,6 @@ class PdfWriter(PdfDocCommon):
                     if flatten and appearance_stream_obj is not None:
                         # We basically copy the entire appearance stream, which should be an XObject that
                         # is already registered. No need to add font resources.
-                        rct = cast(RectangleObject, annotation[AA.Rect])
                         self._add_apstream_object(page, appearance_stream_obj, field, rct[0], rct[1])
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
@@ -1183,11 +1187,14 @@ class PdfWriter(PdfDocCommon):
                 ):
                     # textbox
                     if isinstance(value, tuple):
-                        self._update_field_annotation(
-                            page, parent_annotation, annotation, value[1], value[2], flatten=flatten
+                        dct = self._update_field_annotation(
+                            page, parent_annotation, annotation, value[1], value[2]
                         )
                     else:
-                        self._update_field_annotation(page, parent_annotation, annotation, flatten=flatten)
+                        dct = self._update_field_annotation(page, parent_annotation, annotation)
+                    if flatten:
+                        field_name = self._get_qualified_field_name(annotation)
+                        self._add_apstream_object(page, dct, field_name, rct[0], rct[1])
                 elif (
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
