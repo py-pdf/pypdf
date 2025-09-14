@@ -1156,6 +1156,7 @@ class PdfWriter(PdfDocCommon):
                     del parent_annotation["/I"]
                 if flags:
                     annotation[NameObject(FA.Ff)] = NumberObject(flags)
+                # Set the field value
                 if not (value is None and flatten):  # Only change values if given by user and not flattening.
                     if isinstance(value, list):
                         lst = ArrayObject(TextStringObject(v) for v in value)
@@ -1166,6 +1167,7 @@ class PdfWriter(PdfDocCommon):
                         )
                     else:
                         parent_annotation[NameObject(FA.V)] = TextStringObject(value)
+                # Get or create the field's appearance stream
                 if parent_annotation.get(FA.FT) == "/Btn":
                     # Checkbox button (no /FT found in Radio widgets)
                     v = NameObject(value)
@@ -1177,28 +1179,25 @@ class PdfWriter(PdfDocCommon):
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
-                    if flatten and appearance_stream_obj is not None:
-                        # We basically copy the entire appearance stream, which should be an XObject that
-                        # is already registered. No need to add font resources.
-                        self._add_apstream_object(page, appearance_stream_obj, field, rct[0], rct[1])
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
                 ):
                     # textbox
                     if isinstance(value, tuple):
-                        dct = self._update_field_annotation(
+                        appearance_stream_obj = self._update_field_annotation(
                             page, parent_annotation, annotation, value[1], value[2]
                         )
                     else:
-                        dct = self._update_field_annotation(page, parent_annotation, annotation)
-                    if flatten:
-                        field_name = self._get_qualified_field_name(annotation)
-                        self._add_apstream_object(page, dct, field_name, rct[0], rct[1])
+                        appearance_stream_obj = self._update_field_annotation(
+                            page, parent_annotation, annotation
+                            )
                 elif (
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
+                if flatten and appearance_stream_obj is not None:
+                    self._add_apstream_object(page, appearance_stream_obj, field, rct[0], rct[1])
 
     def reattach_fields(
         self, page: Optional[PageObject] = None
