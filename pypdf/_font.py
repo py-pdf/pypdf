@@ -35,3 +35,9 @@ class FontDescriptor:
         if font_name in CORE_FONT_METRICS:
             return CORE_FONT_METRICS[font_name]
         return cls(name=font_name)
+
+    def text_width(self, text: str) -> float:
+        """Sum of character widths specified in PDF font for the supplied text."""
+        return sum(
+            [self.character_widths.get(char, self.character_widths.get("default", 0)) for char in text], 0.0
+        )
