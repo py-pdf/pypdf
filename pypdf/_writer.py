@@ -105,7 +105,7 @@ from .generic import (
     hex_to_rgb,
     is_null_or_none,
 )
-from .generic._appearance_stream import update_field_annotation
+from .generic._appearance_stream import TextStreamAppearance
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
     AnnotationSubtype,
@@ -1034,12 +1034,12 @@ class PdfWriter(PdfDocCommon):
                 ):
                     # Textbox; we need to generate the appearance stream object
                     if isinstance(value, tuple):
-                        appearance_stream_obj = update_field_annotation(
-                            af, page, parent_annotation, annotation, value[1], value[2]
+                        appearance_stream_obj = TextStreamAppearance.from_text_annotation(
+                            af, parent_annotation, annotation, value[1], value[2]
                         )
                     else:
-                        appearance_stream_obj = update_field_annotation(
-                            af, page, parent_annotation, annotation
+                        appearance_stream_obj = TextStreamAppearance.from_text_annotation(
+                            af, parent_annotation, annotation
                         )
                     # Add the appearance stream object
                     if AA.AP not in annotation:
