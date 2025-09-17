@@ -1009,7 +1009,7 @@ def test_no_resources():
     page_one.merge_page(page_two)
 
 
-def test_merge_page_multiple_annotations():
+def test_merge_page_with_multiple_annotations():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
@@ -1019,10 +1019,10 @@ def test_merge_page_multiple_annotations():
     annotation_1 = Polygon(
         vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
     )
+    writer.add_annotation(0, annotation_1)
     annotation_2 = Polygon(
         vertices=[(40, 540), (200, 640), (70, 740), (50, 700)],
     )
-    writer.add_annotation(0, annotation_1)
     writer.add_annotation(0, annotation_2)
 
     page_one = writer.pages[0]
