@@ -1008,7 +1008,7 @@ def test_no_resources():
     page_one.merge_page(page_two)
 
 
-def test_multiple_annotations():
+def test_merge_page_coverage():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page_one = reader.pages[0]
