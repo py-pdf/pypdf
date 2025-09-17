@@ -844,6 +844,7 @@ def test_xmp_information__get_or_create_description_mismatch_about_uri():
     about_values = {d.getAttributeNS(pypdf.xmp.RDF_NAMESPACE, "about") for d in all_desc}
     assert {"foo-uri", "bar-uri"}.issubset(about_values)
 
+
 def test_xmp_information__attribute_handling():
     """Test attribute node removal and creation (line 479, 484, 506, 535, 564)."""
     xmp = XmpInformation.create()
