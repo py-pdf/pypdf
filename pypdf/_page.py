@@ -2151,38 +2151,42 @@ class PageObject(DictionaryObject):
         else:
             self[NameObject("/Annots")] = value
 
-    def add_action(self, javascript: str, /, action_type: Literal["O", "C"] = "O") -> None:
+    def add_action(self, event: Literal["O", "C"] = "O", action_type: Literal["JavaScript"] = "JavaScript", action: str = "") -> None:
         r"""
-        Add JavaScript which will launch on the open or close action of this
+        Add action which will launch on the open or close event of this
         page.
 
         Args:
-            javascript: Your JavaScript.
-            action_type: "/O" or "/C", for open or close action respectively.
+            event: "/O" or "/C", for open or close action respectively.
+            action_type: "JavaScript" is currently the only available action type.
+            action: Your JavaScript.
 
-        >>> output.add_action('app.alert("This is page " + this.pageNum);', "/O")
+        >>> output.add_action("/O", "JavaScript", 'app.alert("This is page " + this.pageNum);')
         # Example: This will display the page number when the page is opened.
-        >>> output.add_action('app.alert("This is page " + this.pageNum);', "/C")
+        >>> output.add_action("/C", "JavaScript", 'app.alert("This is page " + this.pageNum);')
         # Example: This will display the page number when the page is closed.
 
         Note that this will replace any existing open or close action on this page.
         Currently only an open or close action can be added, not both.
         """
-        if action_type not in {"/O", "/C"}:
-            raise ValueError('action_type must be "/O" or "/C"')
+        if event not in {"/O", "/C"}:
+            raise ValueError('event must be "/O" or "/C"')
 
-        action = DictionaryObject()
-        self[NameObject("/AA")] = action
-        action[NameObject(action_type)] = DictionaryObject(
+        if action_type != "JavaScript":
+            raise ValueError('Currently the only action_type supported is "JavaScript"')
+
+        additional_actions = DictionaryObject()
+        self[NameObject("/AA")] = additional_actions
+        additional_actions[NameObject(event)] = DictionaryObject(
             {
                 NameObject("/Type"): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
-                NameObject("/JS"): TextStringObject(f"{javascript}"),
+                NameObject("/JS"): TextStringObject(f"{action}"),
             }
         )
 
         javascript_object = DecodedStreamObject()
-        javascript_object.set_data(javascript.encode())
+        javascript_object.set_data(action.encode())
 
 
 class _VirtualList(Sequence[PageObject]):
