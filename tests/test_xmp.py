@@ -818,6 +818,32 @@ def test_xmp_information__create_new_description():
     assert desc.namespaceURI == pypdf.xmp.RDF_NAMESPACE
 
 
+def test_xmp_information__get_text_skips_non_text_nodes():
+    xmp = XmpInformation.create()
+
+    doc = xmp.rdf_root.ownerDocument
+    el = doc.createElementNS(pypdf.xmp.DC_NAMESPACE, "dc:test")
+    el.appendChild(doc.createTextNode("hello"))
+    el.appendChild(doc.createElement("ignored-node"))
+    el.appendChild(doc.createTextNode(" world"))
+
+    assert xmp._get_text(el) == "hello world"
+
+
+def test_xmp_information__get_or_create_description_mismatch_about_uri():
+    xmp = XmpInformation.create()
+
+    existing = xmp._get_or_create_description()
+    existing.setAttributeNS(pypdf.xmp.RDF_NAMESPACE, "rdf:about", "foo-uri")
+
+    new_desc = xmp._get_or_create_description("bar-uri")
+    assert new_desc is not existing
+    assert new_desc.getAttributeNS(pypdf.xmp.RDF_NAMESPACE, "about") == "bar-uri"
+
+    all_desc = list(xmp.rdf_root.getElementsByTagNameNS(pypdf.xmp.RDF_NAMESPACE, "Description"))
+    about_values = {d.getAttributeNS(pypdf.xmp.RDF_NAMESPACE, "about") for d in all_desc}
+    assert {"foo-uri", "bar-uri"}.issubset(about_values)
+
 def test_xmp_information__attribute_handling():
     """Test attribute node removal and creation (line 479, 484, 506, 535, 564)."""
     xmp = XmpInformation.create()
