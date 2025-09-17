@@ -1024,7 +1024,7 @@ def test_merge_page_multiple_annotations():
     )
     writer.add_annotation(0, annotation_1)
     writer.add_annotation(0, annotation_2)
-    
+
     page_one = writer.pages[0]
     page_two = writer.pages[0]
     page_one.merge_page(page_two)
