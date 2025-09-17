@@ -2151,7 +2151,7 @@ class PageObject(DictionaryObject):
         else:
             self[NameObject("/Annots")] = value
 
-    def add_js(self, javascript: str, /, action_type: Literal["O", "C"] = "O") -> None:
+    def add_action(self, javascript: str, /, action_type: Literal["O", "C"] = "O") -> None:
         r"""
         Add JavaScript which will launch on the open or close action of this
         page.
@@ -2160,9 +2160,9 @@ class PageObject(DictionaryObject):
             javascript: Your JavaScript.
             action_type: "/O" or "/C", for open or close action respectively.
 
-        >>> output.add_js('app.alert("This is page " + this.pageNum);', "/O")
+        >>> output.add_action('app.alert("This is page " + this.pageNum);', "/O")
         # Example: This will display the page number when the page is opened.
-        >>> output.add_js('app.alert("This is page " + this.pageNum);', "/C")
+        >>> output.add_action('app.alert("This is page " + this.pageNum);', "/C")
         # Example: This will display the page number when the page is closed.
 
         Note that this will replace any existing open or close action on this page.
