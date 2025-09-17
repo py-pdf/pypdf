@@ -2154,7 +2154,8 @@ class PageObject(DictionaryObject):
     def add_action(
             self,
             event: Literal["O", "C"] = "O",
-            action_type: Literal["JavaScript"] = "JavaScript", action: str = ""
+            action_type: Literal["JavaScript"] = "JavaScript",
+            action: str = ""
         ) -> None:
         r"""
         Add action which will launch on the open or close event of this
@@ -2170,8 +2171,8 @@ class PageObject(DictionaryObject):
         >>> output.add_action("/C", "JavaScript", 'app.alert("This is page " + this.pageNum);')
         # Example: This will display the page number when the page is closed.
 
-        Note that this will replace any existing open or close action on this page.
-        Currently only an open or close action can be added, not both.
+        Note that this will replace any existing open or close event on this page.
+        Currently only an open or close event can be added, not both.
         """
         if event not in {"/O", "/C"}:
             raise ValueError('event must be "/O" or "/C"')
@@ -2189,8 +2190,8 @@ class PageObject(DictionaryObject):
             }
         )
 
-        javascript_object = DecodedStreamObject()
-        javascript_object.set_data(action.encode())
+        action_object = DecodedStreamObject()
+        action_object.set_data(action.encode())
 
 
 class _VirtualList(Sequence[PageObject]):
