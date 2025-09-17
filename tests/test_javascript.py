@@ -56,13 +56,13 @@ def test_page_add_js(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
     with pytest.raises(ValueError) as exc:
-        page.add_action("/xyzzy", "JavaScript", 'app.alert("This is page " + this.pageNum);', )
+        page.add_action("/xyzzy", "JavaScript", 'app.alert("This is page " + this.pageNum);')
     assert (
         exc.value.args[0] == 'event must be "/O" or "/C"'
     )
 
     with pytest.raises(ValueError) as exc:
-        page.add_action("/O", "xyzzy", 'app.alert("This is page " + this.pageNum);', )
+        page.add_action("/O", "xyzzy", 'app.alert("This is page " + this.pageNum);')
     assert (
         exc.value.args[0] == 'Currently the only action_type supported is "JavaScript"'
     )
