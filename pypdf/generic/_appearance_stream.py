@@ -21,7 +21,7 @@ class TextStreamAppearance(DecodedStreamObject):
     This class is similar in form to the FreeText class in pypdf.
     """
 
-    def __init__(
+    def _generate_appearance_stream_data(
         self,
         text: str = "",
         selection: Optional[list[str]] = None,
@@ -30,8 +30,7 @@ class TextStreamAppearance(DecodedStreamObject):
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_size: float = 0,
         y_offset: float = 0,
-    ) -> None:
-        super().__init__()
+    ) -> bytes:
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
@@ -59,12 +58,32 @@ class TextStreamAppearance(DecodedStreamObject):
             else:
                 ap_stream += b"(" + b"".join(encoded_line) + b") Tj\n"
         ap_stream += b"ET\nQ\nEMC\nQ\n"
+        return ap_stream
+
+    def __init__(
+        self,
+        text: str = "",
+        selection: Optional[list[str]] = None,
+        default_appearance: str = "",
+        font_glyph_byte_map: Optional[dict[str, bytes]] = None,
+        rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
+        font_size: float = 0,
+        y_offset: float = 0,
+    ) -> None:
+        super().__init__()
+        font_glyph_byte_map = font_glyph_byte_map or {}
+        if isinstance(rectangle, tuple):
+            rectangle = RectangleObject(rectangle)
+
+        ap_stream_data = self._generate_appearance_stream_data(
+            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size, y_offset,
+        )
 
         self[NameObject("/Type")] = NameObject("/XObject")
         self[NameObject("/Subtype")] = NameObject("/Form")
         self[NameObject("/BBox")] = rectangle
-        self.set_data(ByteStringObject(ap_stream))
-        self[NameObject("/Length")] = NumberObject(len(ap_stream))
+        self.set_data(ByteStringObject(ap_stream_data))
+        self[NameObject("/Length")] = NumberObject(len(ap_stream_data))
 
     @classmethod
     def from_text_annotation(
