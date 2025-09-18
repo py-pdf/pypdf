@@ -16,15 +16,12 @@ DEFAULT_FONT_HEIGHT_IN_MULTILINE = 12
 
 
 class TextStreamAppearance(DecodedStreamObject):
-    """
-    A class representing the appearance stream for a text-based form field.
-    This class is similar in form to the FreeText class in pypdf.
-    """
+    """A class representing the appearance stream for a text-based form field."""
     def _appearance_stream_data(
         self,
         text: str = "",
         selection: Optional[list[str]] = None,
-        default_appearance: str = "",
+        default_appearance: str = "/Helv 0 Tf 0 g",
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rect: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_size: float = 0,
@@ -63,14 +60,14 @@ class TextStreamAppearance(DecodedStreamObject):
         default_appearance: str = "",
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rect: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
-        font_height: float = 0,
+        font_size: float = 0,
         y_offset: float = 0,
     ) -> None:
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rect, tuple):
             rect = RectangleObject(rect)
         ap_stream_data = self._appearance_stream_data(
-            text, selection, default_appearance, font_glyph_byte_map, rect, font_height, y_offset,
+            text, selection, default_appearance, font_glyph_byte_map, rect, font_size, y_offset,
         )
         super().__init__()
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -85,44 +82,58 @@ class TextStreamAppearance(DecodedStreamObject):
         acro_form: DictionaryObject,  # _root_object[CatalogDictionary.ACRO_FORM])
         field: DictionaryObject,
         annotation: DictionaryObject,
-        font_name: str = "",
-        font_size: float = -1,
+        user_font_name: str = "",
+        user_font_size: float = -1,
     ) -> "TextStreamAppearance":
         """Creates a TextStreamAppearance object from a given text field annotation."""
         # Calculate rectangle dimensions
         _rect = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
         rect = RectangleObject((0, 0, abs(_rect[2] - _rect[0]), abs(_rect[3] - _rect[1])))
 
-        # Extract font information
+        # Get default appearance dictionary from annotation
         default_appearance = annotation.get_inherited(
             AnnotationDictionaryAttributes.DA,
             acro_form.get(AnnotationDictionaryAttributes.DA, None),
         )
         if default_appearance is None:
+            # Create a default appearance if none was found in the annotation
             default_appearance = TextStringObject("/Helv 0 Tf 0 g")
         else:
             default_appearance = default_appearance.get_object()
+
+        # Embed user-provided font name and font size in the default appearance, also
+        # taking into account whether the field flags indicate a multiline field.
+        # Uses the variable font_properties as an intermediate.
         font_properties = default_appearance.replace("\n", " ").replace("\r", " ").split(" ")
         font_properties = [x for x in font_properties if x != ""]
-        if font_name:
-            font_properties[font_properties.index("Tf") - 2] = font_name
+        # Override default appearance font name with user provided font name, if given.
+        if user_font_name:
+            font_name = user_font_name
+            font_properties[font_properties.index("Tf") - 2] = user_font_name
         else:
+            # Indirectly this just reads font_name from default appearance.
             font_name = font_properties[font_properties.index("Tf") - 2]
-        font_height = (
-            font_size
-            if font_size >= 0
+        # Override default appearance font size with user provided font size, if given.
+        # Also rename font_size to font_height
+        font_size = (
+            user_font_size
+            if user_font_size >= 0
             else float(font_properties[font_properties.index("Tf") - 1])
         )
-        if font_height == 0:
+        # Parse the field flags to find whether we need to wrap text, find whether we need to scale font size
+        if font_size == 0:  # Only when not set and / or 0 in default appearance
             if field.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.Multiline:
-                font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE
+                font_size = DEFAULT_FONT_HEIGHT_IN_MULTILINE  # 12
             else:
-                font_height = rect.height - 2
-        font_properties[font_properties.index("Tf") - 1] = str(font_height)
+                font_size = rect.height - 2  # Set as large as possible
+        font_properties[font_properties.index("Tf") - 1] = str(font_size)
+        # Reconstruct default appearance with user info and flags information
         default_appearance = " ".join(font_properties)
-        y_offset = rect.height - 1 - font_height
 
-        # Retrieve font information from local DR ...
+        # Set the vertical offset
+        y_offset = rect.height - 1 - font_size
+
+        # Try to find a resource dictionary for the font
         document_resources: Any = cast(
             DictionaryObject,
             cast(
@@ -134,7 +145,7 @@ class TextStreamAppearance(DecodedStreamObject):
             ).get_object(),
         )
         document_font_resources = document_resources.get("/Font", DictionaryObject()).get_object()
-        # _default_fonts_space_width keys is the list of Standard fonts
+        # _default_fonts_space_width keys is the list of Standard fonts; Why check this only now?
         if font_name not in document_font_resources and font_name not in _default_fonts_space_width:
             # ...or AcroForm dictionary
             document_resources = cast(
@@ -143,6 +154,8 @@ class TextStreamAppearance(DecodedStreamObject):
             )
             document_font_resources = document_resources.get_object().get("/Font", DictionaryObject()).get_object()
         font_resource = document_font_resources.get(font_name, None)
+
+        # If this annotation has a font resources, get the font character map
         if not is_null_or_none(font_resource):
             font_resource = cast(DictionaryObject, font_resource.get_object())
             _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
@@ -177,12 +190,13 @@ class TextStreamAppearance(DecodedStreamObject):
         else:  # /Tx
             text = field.get("/V", "")
             selection = []
+
         # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
         text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
 
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
-            text, selection, default_appearance, font_glyph_byte_map, rect, font_height, y_offset
+            text, selection, default_appearance, font_glyph_byte_map, rect, font_size, y_offset
         )
 
         if AnnotationDictionaryAttributes.AP in annotation:
