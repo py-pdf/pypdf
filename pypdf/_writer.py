@@ -60,22 +60,22 @@ from ._utils import (
     deprecation_no_replacement,
     logger_warning,
 )
-from .constants import AnnotationDictionaryAttributes as AA
-from .constants import CatalogAttributes as CA
 from .constants import (
+    AnnotationDictionaryAttributes,
+    CatalogAttributes,
     CatalogDictionary,
+    FieldDictionaryAttributes,
     GoToActionArguments,
     ImageType,
     InteractiveFormDictEntries,
     OutlineFontFlag,
+    PageAttributes,
     PageLabelStyle,
     PagesAttributes,
     TypFitArguments,
     UserAccessPermissions,
 )
 from .constants import Core as CO
-from .constants import FieldDictionaryAttributes as FA
-from .constants import PageAttributes as PG
 from .constants import TrailerKeys as TK
 from .errors import PyPdfError
 from .generic import (
@@ -429,9 +429,9 @@ class PdfWriter(PdfDocCommon):
             return obj.indirect_reference  # type: ignore
         # check for /Contents in Pages (/Contents in annotations are strings)
         if isinstance(obj, DictionaryObject) and isinstance(
-            obj.get(PG.CONTENTS, None), (ArrayObject, DictionaryObject)
+            obj.get(PageAttributes.CONTENTS, None), (ArrayObject, DictionaryObject)
         ):
-            obj[NameObject(PG.CONTENTS)] = self._add_object(obj[PG.CONTENTS])
+            obj[NameObject(PageAttributes.CONTENTS)] = self._add_object(obj[PageAttributes.CONTENTS])
         self._objects.append(obj)
         obj.indirect_reference = IndirectObject(len(self._objects), 0, self)
         return obj.indirect_reference
@@ -743,8 +743,8 @@ class PdfWriter(PdfDocCommon):
         """
         # Names / JavaScript preferred to be able to add multiple scripts
         if "/Names" not in self._root_object:
-            self._root_object[NameObject(CA.NAMES)] = DictionaryObject()
-        names = cast(DictionaryObject, self._root_object[CA.NAMES])
+            self._root_object[NameObject(CatalogAttributes.NAMES)] = DictionaryObject()
+        names = cast(DictionaryObject, self._root_object[CatalogAttributes.NAMES])
         if "/JavaScript" not in names:
             names[NameObject("/JavaScript")] = DictionaryObject(
                 {NameObject("/Names"): ArrayObject()}
@@ -876,7 +876,7 @@ class PdfWriter(PdfDocCommon):
         # Prepare XObject resource dictionary on the page. This currently
         # only deals with font resources, but can easily be adapted to also
         # include other resources.
-        pg_res = cast(DictionaryObject, page[PG.RESOURCES])
+        pg_res = cast(DictionaryObject, page[PageAttributes.RESOURCES])
         if "/Resources" in appearance_stream_obj:
             ap_stream_res = cast(DictionaryObject, appearance_stream_obj["/Resources"])
             # No need to check "if "/Font" in ap_stream_res", because the only reason this
@@ -909,13 +909,13 @@ class PdfWriter(PdfDocCommon):
         xobject_drawing_commands = f"q\n{xobject_cm._to_cm()}\n{xobject_name} Do\nQ".encode()
         self._merge_content_stream_to_page(page, xobject_drawing_commands)
 
-    FFBITS_NUL = FA.FfBits(0)
+    FFBITS_NUL = FieldDictionaryAttributes.FfBits(0)
 
     def update_page_form_field_values(
         self,
         page: Union[PageObject, list[PageObject], None],
         fields: dict[str, Union[str, list[str], tuple[str, str, float]]],
-        flags: FA.FfBits = FFBITS_NUL,
+        flags: FieldDictionaryAttributes.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
         flatten: bool = False,
     ) -> None:
@@ -951,8 +951,8 @@ class PdfWriter(PdfDocCommon):
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
             raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
-        af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
-        if InteractiveFormDictEntries.Fields not in af:
+        acro_form = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        if InteractiveFormDictEntries.Fields not in acro_form:
             raise PyPdfError("No /Fields dictionary in PDF of PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
@@ -961,13 +961,13 @@ class PdfWriter(PdfDocCommon):
             page = list(self.pages)
         if isinstance(page, list):
             for p in page:
-                if PG.ANNOTS in p:  # just to prevent warnings
+                if PageAttributes.ANNOTS in p:  # just to prevent warnings
                     self.update_page_form_field_values(p, fields, flags, None, flatten=flatten)
             return
-        if PG.ANNOTS not in page:
+        if PageAttributes.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
-        for annotation in page[PG.ANNOTS]:  # type: ignore
+        for annotation in page[PageAttributes.ANNOTS]:  # type: ignore
             annotation = cast(DictionaryObject, annotation.get_object())
             if annotation.get("/Subtype", "") != "/Widget":
                 continue
@@ -975,11 +975,11 @@ class PdfWriter(PdfDocCommon):
                 parent_annotation = annotation
             else:
                 parent_annotation = annotation.get(
-                    PG.PARENT, DictionaryObject()
+                    PageAttributes.PARENT, DictionaryObject()
                 ).get_object()
 
             for field, value in fields.items():
-                rct = cast(RectangleObject, annotation[AA.Rect])
+                rct = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
                 if not (
                     self._get_qualified_field_name(parent_annotation) == field
                     or parent_annotation.get("/T", None) == field
@@ -991,60 +991,60 @@ class PdfWriter(PdfDocCommon):
                 ):
                     del parent_annotation["/I"]
                 if flags:
-                    annotation[NameObject(FA.Ff)] = NumberObject(flags)
+                    annotation[NameObject(FieldDictionaryAttributes.Ff)] = NumberObject(flags)
                 # Set the field value
                 if not (value is None and flatten):  # Only change values if given by user and not flattening.
                     if isinstance(value, list):
                         lst = ArrayObject(TextStringObject(v) for v in value)
-                        parent_annotation[NameObject(FA.V)] = lst
+                        parent_annotation[NameObject(FieldDictionaryAttributes.V)] = lst
                     elif isinstance(value, tuple):
-                        annotation[NameObject(FA.V)] = TextStringObject(
+                        annotation[NameObject(FieldDictionaryAttributes.V)] = TextStringObject(
                             value[0],
                         )
                     else:
-                        parent_annotation[NameObject(FA.V)] = TextStringObject(value)
+                        parent_annotation[NameObject(FieldDictionaryAttributes.V)] = TextStringObject(value)
                 # Get or create the field's appearance stream object
-                if parent_annotation.get(FA.FT) == "/Btn":
+                if parent_annotation.get(FieldDictionaryAttributes.FT) == "/Btn":
                     # Checkbox button (no /FT found in Radio widgets);
                     # We can find the associated appearance stream object
                     # within the annotation.
                     v = NameObject(value)
-                    ap = cast(DictionaryObject, annotation[NameObject(AA.AP)])
+                    ap = cast(DictionaryObject, annotation[NameObject(AnnotationDictionaryAttributes.AP)])
                     normal_ap = cast(DictionaryObject, ap["/N"])
                     if v not in normal_ap:
                         v = NameObject("/Off")
                     appearance_stream_obj = normal_ap.get(v)
                     # Other cases will be updated through the for loop
-                    annotation[NameObject(AA.AS)] = v
-                    annotation[NameObject(FA.V)] = v
+                    annotation[NameObject(AnnotationDictionaryAttributes.AS)] = v
+                    annotation[NameObject(FieldDictionaryAttributes.V)] = v
                 elif (
-                    parent_annotation.get(FA.FT) == "/Tx"
-                    or parent_annotation.get(FA.FT) == "/Ch"
+                    parent_annotation.get(FieldDictionaryAttributes.FT) == "/Tx"
+                    or parent_annotation.get(FieldDictionaryAttributes.FT) == "/Ch"
                 ):
                     # Textbox; we need to generate the appearance stream object
                     if isinstance(value, tuple):
                         appearance_stream_obj = TextStreamAppearance.from_text_annotation(
-                            af, parent_annotation, annotation, value[1], value[2]
+                            acro_form, parent_annotation, annotation, value[1], value[2]
                         )
                     else:
                         appearance_stream_obj = TextStreamAppearance.from_text_annotation(
-                            af, parent_annotation, annotation
+                            acro_form, parent_annotation, annotation
                         )
                     # Add the appearance stream object
-                    if AA.AP not in annotation:
-                        annotation[NameObject(AA.AP)] = DictionaryObject(
+                    if AnnotationDictionaryAttributes.AP not in annotation:
+                        annotation[NameObject(AnnotationDictionaryAttributes.AP)] = DictionaryObject(
                             {NameObject("/N"): self._add_object(appearance_stream_obj)}
                         )
-                    elif "/N" not in cast(DictionaryObject, annotation[AA.AP]):
-                        cast(DictionaryObject, annotation[NameObject(AA.AP)])[
+                    elif "/N" not in cast(DictionaryObject, annotation[AnnotationDictionaryAttributes.AP]):
+                        cast(DictionaryObject, annotation[NameObject(AnnotationDictionaryAttributes.AP)])[
                             NameObject("/N")
                         ] = self._add_object(appearance_stream_obj)
                     else:  # [/AP][/N] exists
-                        n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
+                        n = annotation[AnnotationDictionaryAttributes.AP]["/N"].indirect_reference.idnum  # type: ignore
                         self._objects[n - 1] = appearance_stream_obj
                         appearance_stream_obj.indirect_reference = IndirectObject(n, 0, self)
                 elif (
-                    annotation.get(FA.FT) == "/Sig"
+                    annotation.get(FieldDictionaryAttributes.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
                 if flatten and appearance_stream_obj is not None:
@@ -1891,15 +1891,15 @@ class PdfWriter(PdfDocCommon):
         subtypes: Optional[Iterable[str]],
     ) -> None:
         page = cast(DictionaryObject, page.get_object())
-        if PG.ANNOTS in page:
+        if PageAttributes.ANNOTS in page:
             i = 0
-            while i < len(cast(ArrayObject, page[PG.ANNOTS])):
-                an = cast(ArrayObject, page[PG.ANNOTS])[i]
+            while i < len(cast(ArrayObject, page[PageAttributes.ANNOTS])):
+                an = cast(ArrayObject, page[PageAttributes.ANNOTS])[i]
                 obj = cast(DictionaryObject, an.get_object())
                 if subtypes is None or cast(str, obj["/Subtype"]) in subtypes:
                     if isinstance(an, IndirectObject):
                         self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
-                    del page[PG.ANNOTS][i]  # type:ignore
+                    del page[PageAttributes.ANNOTS][i]  # type:ignore
                 else:
                     i += 1
 
@@ -2208,21 +2208,21 @@ class PdfWriter(PdfDocCommon):
         lnk = DictionaryObject()
         lnk.update(
             {
-                NameObject(AA.Type): NameObject("/Annot"),
-                NameObject(AA.Subtype): NameObject("/Link"),
-                NameObject(AA.P): page_link,
-                NameObject(AA.Rect): rect,
+                NameObject(AnnotationDictionaryAttributes.Type): NameObject("/Annot"),
+                NameObject(AnnotationDictionaryAttributes.Subtype): NameObject("/Link"),
+                NameObject(AnnotationDictionaryAttributes.P): page_link,
+                NameObject(AnnotationDictionaryAttributes.Rect): rect,
                 NameObject("/H"): NameObject("/I"),
-                NameObject(AA.Border): ArrayObject(border_arr),
+                NameObject(AnnotationDictionaryAttributes.Border): ArrayObject(border_arr),
                 NameObject("/A"): lnk2,
             }
         )
         lnk_ref = self._add_object(lnk)
 
-        if PG.ANNOTS in page_ref:
-            page_ref[PG.ANNOTS].append(lnk_ref)
+        if PageAttributes.ANNOTS in page_ref:
+            page_ref[PageAttributes.ANNOTS].append(lnk_ref)
         else:
-            page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
+            page_ref[NameObject(PageAttributes.ANNOTS)] = ArrayObject([lnk_ref])
 
     _valid_layouts = (
         "/NoLayout",
