@@ -1,3 +1,4 @@
+import re
 from typing import Any, Optional, Union, cast
 
 from .._cmap import _default_fonts_space_width, build_char_map_from_dict
@@ -25,14 +26,22 @@ class TextStreamAppearance(DecodedStreamObject):
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rect: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_size: float = 0,
+        multiline: bool = False
     ) -> bytes:
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rect, tuple):
             rect = RectangleObject(rect)
 
+        # If font_size is 0, apply the logic for multiline or large-as-possible font
+        if font_size == 0:
+            if multiline:
+                font_size = DEFAULT_FONT_HEIGHT_IN_MULTILINE
+            else:
+                font_size = rect.height - 2
+            default_appearance = re.sub(r"0.0 Tf", str(font_size) + r" Tf", default_appearance)
+
         # Set the vertical offset
         y_offset = rect.height - 1 - font_size
-
 
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rect.width - 1} {rect.height - 1} re\nW\nBT\n{default_appearance}\n".encode()
         for line_number, line in enumerate(text.replace("\n", "\r").split("\r")):
@@ -65,12 +74,13 @@ class TextStreamAppearance(DecodedStreamObject):
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rect: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_size: float = 0,
+        multiline: bool = False
     ) -> None:
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rect, tuple):
             rect = RectangleObject(rect)
         ap_stream_data = self._appearance_stream_data(
-            text, selection, default_appearance, font_glyph_byte_map, rect, font_size
+            text, selection, default_appearance, font_glyph_byte_map, rect, font_size, multiline
         )
         super().__init__()
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -104,9 +114,8 @@ class TextStreamAppearance(DecodedStreamObject):
         else:
             default_appearance = default_appearance.get_object()
 
-        # Embed user-provided font name and font size in the default appearance, also
-        # taking into account whether the field flags indicate a multiline field.
-        # Uses the variable font_properties as an intermediate.
+        # Derive font size. Also embed user-provided font name and font size in the default
+        # appearance, if given. Uses the variable font_properties as an intermediate.
         font_properties = default_appearance.replace("\n", " ").replace("\r", " ").split(" ")
         font_properties = [x for x in font_properties if x != ""]
         # Override default appearance font name with user provided font name, if given.
@@ -123,12 +132,6 @@ class TextStreamAppearance(DecodedStreamObject):
             if user_font_size >= 0
             else float(font_properties[font_properties.index("Tf") - 1])
         )
-        # Parse the field flags to find whether we need to wrap text, find whether we need to scale font size
-        if font_size == 0:  # Only when not set and / or 0 in default appearance
-            if field.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.Multiline:
-                font_size = DEFAULT_FONT_HEIGHT_IN_MULTILINE  # 12
-            else:
-                font_size = rect.height - 2  # Set as large as possible
         font_properties[font_properties.index("Tf") - 1] = str(font_size)
         # Reconstruct default appearance with user info and flags information
         default_appearance = " ".join(font_properties)
@@ -179,8 +182,11 @@ class TextStreamAppearance(DecodedStreamObject):
             logger_warning(f"Font dictionary for {font_name} not found.", __name__)
             font_glyph_byte_map = {}
 
-        # Retrieve field text and selected values
+        # Retrieve field text, selected values and formatting information
+        multiline = False
         field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
+        if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
+            multiline = True
         if (field.get(FieldDictionaryAttributes.FT, "/Tx") == "/Ch" and
             field_flags & FieldDictionaryAttributes.FfBits.Combo == 0):
             text = "\n".join(annotation.get_inherited(FieldDictionaryAttributes.Opt, []))
@@ -196,7 +202,7 @@ class TextStreamAppearance(DecodedStreamObject):
 
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
-            text, selection, default_appearance, font_glyph_byte_map, rect, font_size
+            text, selection, default_appearance, font_glyph_byte_map, rect, font_size, multiline
         )
 
         if AnnotationDictionaryAttributes.AP in annotation:
