@@ -1,3 +1,4 @@
+import re
 from typing import Any, Optional, Union, cast
 
 from .._cmap import _default_fonts_space_width, build_char_map_from_dict
@@ -29,10 +30,19 @@ class TextStreamAppearance(DecodedStreamObject):
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_size: float = 0,
+        multiline: bool = False
     ) -> bytes:
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
+
+        # If font_size is 0, apply the logic for multiline or large-as-possible font
+        if font_size == 0:
+            if multiline:
+                font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
+            else:
+                font_size = rectangle.height - 2
+            default_appearance = re.sub(r"0.0 Tf", str(font_size) + r" Tf", default_appearance)
 
         # Set the vertical offset
         y_offset = rectangle.height - 1 - font_size
@@ -72,6 +82,7 @@ class TextStreamAppearance(DecodedStreamObject):
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_size: float = 0,
+        multiline: bool = False
     ) -> None:
         super().__init__()
         font_glyph_byte_map = font_glyph_byte_map or {}
@@ -79,7 +90,7 @@ class TextStreamAppearance(DecodedStreamObject):
             rectangle = RectangleObject(rectangle)
 
         ap_stream_data = self._generate_appearance_stream_data(
-            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size,
+            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size, multiline
         )
 
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -132,12 +143,6 @@ class TextStreamAppearance(DecodedStreamObject):
             if user_font_size >= 0
             else float(font_properties[font_properties.index("Tf") - 1])
         )
-        # Parse the field flags to find whether we need to wrap text, find whether we need to scale font size
-        if font_size == 0:  # Only when not set and / or 0 in default appearance
-            if field.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.Multiline:
-                font_size = DEFAULT_FONT_SIZE_IN_MULTILINE  # 12
-            else:
-                font_size = rectangle.height - 2  # Set as large as possible
         font_properties[font_properties.index("Tf") - 1] = str(font_size)
         # Reconstruct default appearance with user info and flags information
         default_appearance = " ".join(font_properties)
@@ -188,8 +193,11 @@ class TextStreamAppearance(DecodedStreamObject):
             logger_warning(f"Font dictionary for {font_name} not found.", __name__)
             font_glyph_byte_map = {}
 
-        # Retrieve field text and selected values
+        # Retrieve field text, selected values and formatting information
+        multiline = False
         field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
+        if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
+            multiline = True
         if (
                 field.get(FieldDictionaryAttributes.FT, "/Tx") == "/Ch" and
                 field_flags & FieldDictionaryAttributes.FfBits.Combo == 0
@@ -207,7 +215,7 @@ class TextStreamAppearance(DecodedStreamObject):
 
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
-            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size
+            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size, multiline
         )
 
         if AnnotationDictionaryAttributes.AP in annotation:
