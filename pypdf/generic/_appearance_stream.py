@@ -29,15 +29,19 @@ class TextStreamAppearance(DecodedStreamObject):
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_size: float = 0,
-        y_offset: float = 0,
     ) -> bytes:
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
+
+        # Set the vertical offset
+        y_offset = rectangle.height - 1 - font_size
+
         ap_stream = (
             f"q\n/Tx BMC \nq\n1 1 {rectangle.width - 1} {rectangle.height - 1} "
             f"re\nW\nBT\n{default_appearance}\n"
         ).encode()
+
         for line_number, line in enumerate(text.replace("\n", "\r").split("\r")):
             if selection and line in selection:
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
@@ -68,7 +72,6 @@ class TextStreamAppearance(DecodedStreamObject):
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_size: float = 0,
-        y_offset: float = 0,
     ) -> None:
         super().__init__()
         font_glyph_byte_map = font_glyph_byte_map or {}
@@ -76,7 +79,7 @@ class TextStreamAppearance(DecodedStreamObject):
             rectangle = RectangleObject(rectangle)
 
         ap_stream_data = self._generate_appearance_stream_data(
-            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size, y_offset,
+            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size,
         )
 
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -138,9 +141,6 @@ class TextStreamAppearance(DecodedStreamObject):
         font_properties[font_properties.index("Tf") - 1] = str(font_size)
         # Reconstruct default appearance with user info and flags information
         default_appearance = " ".join(font_properties)
-
-        # Set the vertical offset
-        y_offset = rectangle.height - 1 - font_size
 
         # Try to find a resource dictionary for the font
         document_resources: Any = cast(
@@ -207,7 +207,7 @@ class TextStreamAppearance(DecodedStreamObject):
 
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
-            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size, y_offset
+            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size
         )
 
         if AnnotationDictionaryAttributes.AP in annotation:
