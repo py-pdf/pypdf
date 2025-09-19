@@ -25,11 +25,15 @@ class TextStreamAppearance(DecodedStreamObject):
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rect: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_size: float = 0,
-        y_offset: float = 0,
     ) -> bytes:
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rect, tuple):
             rect = RectangleObject(rect)
+
+        # Set the vertical offset
+        y_offset = rect.height - 1 - font_size
+
+
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rect.width - 1} {rect.height - 1} re\nW\nBT\n{default_appearance}\n".encode()
         for line_number, line in enumerate(text.replace("\n", "\r").split("\r")):
             if selection and line in selection:
@@ -61,13 +65,12 @@ class TextStreamAppearance(DecodedStreamObject):
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rect: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_size: float = 0,
-        y_offset: float = 0,
     ) -> None:
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rect, tuple):
             rect = RectangleObject(rect)
         ap_stream_data = self._appearance_stream_data(
-            text, selection, default_appearance, font_glyph_byte_map, rect, font_size, y_offset,
+            text, selection, default_appearance, font_glyph_byte_map, rect, font_size
         )
         super().__init__()
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -129,9 +132,6 @@ class TextStreamAppearance(DecodedStreamObject):
         font_properties[font_properties.index("Tf") - 1] = str(font_size)
         # Reconstruct default appearance with user info and flags information
         default_appearance = " ".join(font_properties)
-
-        # Set the vertical offset
-        y_offset = rect.height - 1 - font_size
 
         # Try to find a resource dictionary for the font
         document_resources: Any = cast(
@@ -196,7 +196,7 @@ class TextStreamAppearance(DecodedStreamObject):
 
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
-            text, selection, default_appearance, font_glyph_byte_map, rect, font_size, y_offset
+            text, selection, default_appearance, font_glyph_byte_map, rect, font_size
         )
 
         if AnnotationDictionaryAttributes.AP in annotation:
