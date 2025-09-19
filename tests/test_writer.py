@@ -2406,7 +2406,7 @@ def test_selfont():
         b"Text_1" in writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"].get_data()
     )
     assert (
-        b"/F3 12 Tf"
+        b"/F3 12.0 Tf"
         in writer.pages[0]["/Annots"][2].get_object()["/AP"]["/N"].get_data()
     )
     assert (

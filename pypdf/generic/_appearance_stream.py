@@ -26,10 +26,11 @@ class TextStreamAppearance(DecodedStreamObject):
         self,
         text: str = "",
         selection: Optional[list[str]] = None,
-        default_appearance: str = "",
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
-        font_size: float = 0,
+        font_name: str = "/Helv",
+        font_size: float = 0.0,
+        font_color: str = "0 g",
         multiline: bool = False
     ) -> bytes:
         font_glyph_byte_map = font_glyph_byte_map or {}
@@ -42,11 +43,11 @@ class TextStreamAppearance(DecodedStreamObject):
                 font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
             else:
                 font_size = rectangle.height - 2
-            default_appearance = re.sub(r"0.0 Tf", str(font_size) + r" Tf", default_appearance)
 
         # Set the vertical offset
         y_offset = rectangle.height - 1 - font_size
 
+        default_appearance = f"{font_name} {font_size} Tf {font_color}"
         ap_stream = (
             f"q\n/Tx BMC \nq\n1 1 {rectangle.width - 1} {rectangle.height - 1} "
             f"re\nW\nBT\n{default_appearance}\n"
@@ -78,10 +79,11 @@ class TextStreamAppearance(DecodedStreamObject):
         self,
         text: str = "",
         selection: Optional[list[str]] = None,
-        default_appearance: str = "",
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
-        font_size: float = 0,
+        font_name: str = "/Helv",
+        font_size: float = 0.0,
+        font_color: str = "0 g",
         multiline: bool = False
     ) -> None:
         super().__init__()
@@ -90,12 +92,19 @@ class TextStreamAppearance(DecodedStreamObject):
             rectangle = RectangleObject(rectangle)
 
         ap_stream_data = self._generate_appearance_stream_data(
-            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size, multiline
+            text,
+            selection,
+            font_glyph_byte_map,
+            rectangle,
+            font_name,
+            font_size,
+            font_color,
+            multiline
         )
 
         self[NameObject("/Type")] = NameObject("/XObject")
         self[NameObject("/Subtype")] = NameObject("/Form")
-        self[NameObject("/BBox")] = rectangle
+        self[NameObject("/BBox")] = RectangleObject(rectangle)
         self.set_data(ByteStringObject(ap_stream_data))
         self[NameObject("/Length")] = NumberObject(len(ap_stream_data))
 
@@ -119,33 +128,31 @@ class TextStreamAppearance(DecodedStreamObject):
             AnnotationDictionaryAttributes.DA,
             acro_form.get(AnnotationDictionaryAttributes.DA, None),
         )
-        if default_appearance is None:
+        if not default_appearance:
             # Create a default appearance if none was found in the annotation
             default_appearance = TextStringObject("/Helv 0 Tf 0 g")
         else:
             default_appearance = default_appearance.get_object()
 
-        # Embed user-provided font name and font size in the default appearance, also
-        # taking into account whether the field flags indicate a multiline field.
-        # Uses the variable font_properties as an intermediate.
-        font_properties = default_appearance.replace("\n", " ").replace("\r", " ").split(" ")
-        font_properties = [x for x in font_properties if x != ""]
-        # Override default appearance font name with user provided font name, if given.
+        # Derive font name, size and color from the default appearance. Also set
+        # user-provided font name and font size in the default appearance, if given.
+        # For a font name, this presumes that we can find an associated font resource
+        # dictionary. Uses the variable font_properties as an intermediate.
+        # As per the PDF spec:
+        # "At a minimum, the string [that is, default_appearance] shall include a Tf (text
+        # font) operator along with its two operands, font and size" (Section 12.7.4.3
+        # "Variable text" of the PDF 2.0 specification).
+        font_properties = [prop for prop in re.split(r"\s", default_appearance) if prop]
+        font_name = font_properties.pop(font_properties.index("Tf") - 2)
+        font_size = float(font_properties.pop(font_properties.index("Tf") - 1))
+        font_properties.remove("Tf")
+        font_color = " ".join(font_properties)
+        # Determine the font name to use, prioritizing the user's input
         if user_font_name:
             font_name = user_font_name
-            font_properties[font_properties.index("Tf") - 2] = user_font_name
-        else:
-            # Indirectly this just reads font_name from default appearance.
-            font_name = font_properties[font_properties.index("Tf") - 2]
-        # Override default appearance font size with user provided font size, if given.
-        font_size = (
-            user_font_size
-            if user_font_size >= 0
-            else float(font_properties[font_properties.index("Tf") - 1])
-        )
-        font_properties[font_properties.index("Tf") - 1] = str(font_size)
-        # Reconstruct default appearance with user info and flags information
-        default_appearance = " ".join(font_properties)
+        # Determine the font size to use, prioritizing the user's input
+        if user_font_size > 0:
+            font_size = user_font_size
 
         # Try to find a resource dictionary for the font
         document_resources: Any = cast(
@@ -215,7 +222,14 @@ class TextStreamAppearance(DecodedStreamObject):
 
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
-            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size, multiline
+            text,
+            selection,
+            font_glyph_byte_map,
+            rectangle,
+            font_name,
+            font_size,
+            font_color,
+            multiline
         )
 
         if AnnotationDictionaryAttributes.AP in annotation:
