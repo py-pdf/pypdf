@@ -19,9 +19,11 @@ DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 class TextStreamAppearance(DecodedStreamObject):
     """
     A class representing the appearance stream for a text-based form field.
-    This class is similar in form to the FreeText class in pypdf.
-    """
 
+    This class generates the content stream (the `ap_stream_data`) that dictates
+    how text is rendered within a form field's bounding box. It handles properties
+    like font, font size, color, multiline text, and text selection highlighting.
+    """
     def _generate_appearance_stream_data(
         self,
         text: str = "",
@@ -33,6 +35,31 @@ class TextStreamAppearance(DecodedStreamObject):
         font_color: str = "0 g",
         multiline: bool = False
     ) -> bytes:
+        """
+        Generates the raw bytes of the PDF appearance stream for a text field.
+
+        This private method assembles the PDF content stream operators to draw
+        the provided text within the specified rectangle. It handles text positioning,
+        font application, color, and special formatting like selected text.
+
+        Args:
+            text: The text to be rendered in the form field.
+            selection: An optional list of strings that should be highlighted as selected.
+            font_glyph_byte_map: An optional dictionary mapping characters to their
+                byte representation for glyph encoding.
+            rect: The bounding box of the form field. Can be a `RectangleObject`
+                or a tuple of four floats (x1, y1, x2, y2).
+            font_name: The name of the font resource to use (e.g., "/Helv").
+            font_size: The font size. If 0, it is automatically calculated
+                based on whether the field is multiline or not.
+            font_color: The color to apply to the font, represented as a PDF
+                graphics state string (e.g., "0 g" for black).
+            multiline: A boolean indicating if the text field is multiline.
+
+        Returns:
+            A byte string containing the PDF content stream data.
+
+        """
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
@@ -86,6 +113,25 @@ class TextStreamAppearance(DecodedStreamObject):
         font_color: str = "0 g",
         multiline: bool = False
     ) -> None:
+        """
+        Initializes a TextStreamAppearance object.
+
+        This constructor creates a new PDF stream object configured as an XObject
+        of subtype Form. It uses the `_appearance_stream_data` method to generate
+        the content for the stream.
+
+        Args:
+            text: The text to be rendered in the form field.
+            selection: An optional list of strings that should be highlighted as selected.
+            rect: The bounding box of the form field. Can be a `RectangleObject`
+                or a tuple of four floats (x1, y1, x2, y2).
+            font_resource: An optional variable that represents a PDF font dictionary.
+            font_name: The name of the font resource, e.g., "/Helv".
+            font_size: The font size. If 0, it's auto-calculated.
+            font_color: The font color string.
+            multiline: A boolean indicating if the text field is multiline.
+
+        """
         super().__init__()
 
         # If a font resource was added, get the font character map
@@ -151,8 +197,27 @@ class TextStreamAppearance(DecodedStreamObject):
         user_font_name: str = "",
         user_font_size: float = -1,
     ) -> "TextStreamAppearance":
-        """Creates a TextStreamAppearance object from a given text field annotation."""
+        """
+        Creates a TextStreamAppearance object from a text field annotation.
 
+        This class method is a factory for creating a `TextStreamAppearance`
+        instance by extracting all necessary information (bounding box, font,
+        text content, etc.) from the PDF field and annotation dictionaries.
+        It respects inheritance for properties like default appearance (`/DA`).
+
+        Args:
+            acro_form: The root AcroForm dictionary from the PDF catalog.
+            field: The field dictionary object.
+            annotation: The widget annotation dictionary object associated with the field.
+            user_font_name: An optional user-provided font name to override the
+                default. Defaults to an empty string.
+            user_font_size: An optional user-provided font size to override the
+                default. A value of -1 indicates no override.
+
+        Returns:
+            A new `TextStreamAppearance` instance configured for the given field.
+
+        """
         # Calculate rectangle dimensions
         _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
         rectangle = RectangleObject((0, 0, abs(_rectangle[2] - _rectangle[0]), abs(_rectangle[3] - _rectangle[1])))
