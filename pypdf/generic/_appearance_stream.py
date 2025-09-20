@@ -45,6 +45,8 @@ class TextStreamAppearance(DecodedStreamObject):
 
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rect.width - 1} {rect.height - 1} re\nW\nBT\n{default_appearance}\n".encode()
         for line_number, line in enumerate(text.replace("\n", "\r").split("\r")):
+            # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
+            line = line.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
             if selection and line in selection:
                 # may be improved but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
@@ -196,9 +198,6 @@ class TextStreamAppearance(DecodedStreamObject):
         else:  # /Tx
             text = field.get("/V", "")
             selection = []
-
-        # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
-        text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
 
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
