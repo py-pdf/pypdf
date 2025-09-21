@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1758133307036,
+  "lastUpdate": 1758461956508,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -81581,6 +81581,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0018942163384483674",
             "extra": "mean: 647.5496587999999 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "d40f3596872e1d4e0d53da61a29015fc84816f21",
+          "message": "REL: 6.1.0\n\n## What's new\n\n### New Features (ENH)\n- Enhance XMP metadata handling with creation and setter methods (#3410) by @Arya-A-Nair\n- Add all font metrics for base 14 Type 1 PDF fonts (#3363) by @PJBrs\n- Allow deleting embedded files (#3461) by @stefan6419846\n- Add support for Python in FIPS mode for document identifier (#3438) by @xnox\n\n### Bug Fixes (BUG)\n- Fix handling of UTF-16 encoded destination titles (#3463) by @stefan6419846\n- Guard empty input to prevent IndexError (#3448) by @KyleJung0828\n\n### Developer Experience (DEV)\n- Fix type hint for XMP metadata setter to add bytes type (#3464) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.0.0...6.1.0)",
+          "timestamp": "2025-09-21T15:36:22+02:00",
+          "tree_id": "95bf527935f2b604efa446907467e63151570ee0",
+          "url": "https://github.com/py-pdf/pypdf/commit/d40f3596872e1d4e0d53da61a29015fc84816f21"
+        },
+        "date": 1758461952778,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.3424804410712525,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011794392688604558",
+            "extra": "mean: 299.17901320000055 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.678150362238506,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011340622422153898",
+            "extra": "mean: 68.12847499999953 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2654540133287123,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02789409169091478",
+            "extra": "mean: 3.7671308392 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 16.81763696136915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005956527254596714",
+            "extra": "mean: 59.46138582352824 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08204151071112994,
+            "unit": "iter/sec",
+            "range": "stddev: 0.060916128680082886",
+            "extra": "mean: 12.18895156039999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.542267530137908,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016502083651814398",
+            "extra": "mean: 648.3959368000058 msec\nrounds: 5"
           }
         ]
       }
