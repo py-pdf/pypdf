@@ -28,8 +28,8 @@ class TextStreamAppearance(DecodedStreamObject):
         self,
         text: str = "",
         selection: Optional[list[str]] = None,
-        font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rect: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
+        font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
@@ -103,8 +103,8 @@ class TextStreamAppearance(DecodedStreamObject):
         self,
         text: str = "",
         selection: Optional[list[str]] = None,
-        font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rect: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
+        font_resource: Optional[DictionaryObject] = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
@@ -120,18 +120,41 @@ class TextStreamAppearance(DecodedStreamObject):
         Args:
             text: The text to be rendered in the form field.
             selection: An optional list of strings that should be highlighted as selected.
-            font_glyph_byte_map: A dictionary mapping characters to their byte representation.
             rect: The bounding box of the form field. Can be a `RectangleObject`
                 or a tuple of four floats (x1, y1, x2, y2).
+            font_resource: A font resource dictionary for a specific font
             font_name: The name of the font resource, e.g., "/Helv".
             font_size: The font size. If 0, it's auto-calculated.
             font_color: The font color string.
             multiline: A boolean indicating if the text field is multiline.
 
         """
-        font_glyph_byte_map = font_glyph_byte_map or {}
+        # If a font resource was added, get the font character map
+        if font_resource:
+            font_resource = cast(DictionaryObject, font_resource.get_object())
+            _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
+                200, font_resource
+            )
+            try:  # remove width stored in -1 key
+                del font_map[-1]
+            except KeyError:
+                pass
+            font_glyph_byte_map: dict[str, bytes]
+            if isinstance(font_encoding, str):
+                font_glyph_byte_map = {
+                    v: k.encode(font_encoding) for k, v in font_map.items()
+                }
+            else:
+                font_glyph_byte_map = {v: bytes((k,)) for k, v in font_encoding.items()}
+                font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
+                for key, value in font_map.items():
+                    font_glyph_byte_map[value] = font_encoding_rev.get(key, key)
+        else:
+            logger_warning(f"Font dictionary for {font_name} not found.", __name__)
+            font_glyph_byte_map = {}
+
         ap_stream_data = self._appearance_stream_data(
-            text, selection, font_glyph_byte_map, rect, font_name, font_size, font_color, multiline
+            text, selection, rect, font_glyph_byte_map, font_name, font_size, font_color, multiline
         )
         super().__init__()
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -139,6 +162,19 @@ class TextStreamAppearance(DecodedStreamObject):
         self[NameObject("/BBox")] = RectangleObject(rect)
         self.set_data(ByteStringObject(ap_stream_data))
         self[NameObject("/Length")] = NumberObject(len(ap_stream_data))
+        # Update Resources with font information if necessary
+        if font_resource is not None:
+            self[NameObject("/Resources")] = DictionaryObject(
+                {
+                    NameObject("/Font"): DictionaryObject(
+                        {
+                            NameObject(font_name): getattr(
+                                font_resource, "indirect_reference", font_resource
+                            )
+                        }
+                    )
+                }
+            )
 
     @classmethod
     def from_text_annotation(
@@ -185,8 +221,10 @@ class TextStreamAppearance(DecodedStreamObject):
         else:
             default_appearance = default_appearance.get_object()
 
-        # Derive font size. Also embed user-provided font name and font size in the default
-        # appearance, if given. Uses the variable font_properties as an intermediate.
+        # Derive font name, size and color from the default appearance. Also set
+        # user-provided font name and font size in the default appearance, if given.
+        # For a font name, this presumes that we can find an associated font resource
+        # dictionary. Uses the variable font_properties as an intermediate.
         # As per the PDF spec:
         # "At a minimum, the string [that is, default_appearance] shall include a Tf (text
         # font) operator along with its two operands, font and size" (p. 519 of Version 2.0).
@@ -214,7 +252,7 @@ class TextStreamAppearance(DecodedStreamObject):
             ).get_object(),
         )
         document_font_resources = document_resources.get("/Font", DictionaryObject()).get_object()
-        # _default_fonts_space_width keys is the list of Standard fonts; Why check this only now?
+        # _default_fonts_space_width keys is the list of Standard fonts
         if font_name not in document_font_resources and font_name not in _default_fonts_space_width:
             # ...or AcroForm dictionary
             document_resources = cast(
@@ -223,30 +261,8 @@ class TextStreamAppearance(DecodedStreamObject):
             )
             document_font_resources = document_resources.get_object().get("/Font", DictionaryObject()).get_object()
         font_resource = document_font_resources.get(font_name, None)
-
-        # If this annotation has a font resources, get the font character map
         if not is_null_or_none(font_resource):
             font_resource = cast(DictionaryObject, font_resource.get_object())
-            _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
-                200, font_resource
-            )
-            try:  # remove width stored in -1 key
-                del font_map[-1]
-            except KeyError:
-                pass
-            font_glyph_byte_map: dict[str, bytes]
-            if isinstance(font_encoding, str):
-                font_glyph_byte_map = {
-                    v: k.encode(font_encoding) for k, v in font_map.items()
-                }
-            else:
-                font_glyph_byte_map = {v: bytes((k,)) for k, v in font_encoding.items()}
-                font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
-                for key, value in font_map.items():
-                    font_glyph_byte_map[value] = font_encoding_rev.get(key, key)
-        else:
-            logger_warning(f"Font dictionary for {font_name} not found.", __name__)
-            font_glyph_byte_map = {}
 
         # Retrieve field text, selected values and formatting information
         multiline = False
@@ -265,26 +281,11 @@ class TextStreamAppearance(DecodedStreamObject):
 
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
-            text, selection, font_glyph_byte_map, rect, font_name, font_size, font_color, multiline
+            text, selection, rect, font_resource, font_name, font_size, font_color, multiline
         )
-
         if AnnotationDictionaryAttributes.AP in annotation:
             for k, v in cast(DictionaryObject, annotation[AnnotationDictionaryAttributes.AP]).get("/N", {}).items():
                 if k not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
                     new_appearance_stream[k] = v
-
-        # Update Resources with font information if necessary
-        if font_resource is not None:
-            new_appearance_stream[NameObject("/Resources")] = DictionaryObject(
-                {
-                    NameObject("/Font"): DictionaryObject(
-                        {
-                            NameObject(font_name): getattr(
-                                font_resource, "indirect_reference", font_resource
-                            )
-                        }
-                    )
-                }
-            )
 
         return new_appearance_stream
