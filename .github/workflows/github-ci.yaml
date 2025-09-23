@@ -28,7 +28,7 @@ jobs:
       with:
         submodules: 'recursive'
     - name: Setup Python (3.11+)
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: 3.13  # latest stable python
         allow-prereleases: true
@@ -82,14 +82,14 @@ jobs:
         path: '**/tests/pdf_cache/*'
         key: cache-downloaded-files
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       if: matrix.python-version == '3.9' || matrix.python-version == '3.10'
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci.txt'
     - name: Setup Python (3.11+)
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       if: matrix.python-version != '3.9' && matrix.python-version != '3.10'
       with:
         python-version: ${{ matrix.python-version }}
@@ -159,7 +159,7 @@ jobs:
       with:
         submodules: 'recursive'
     - name: Setup Python 3.11
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: "3.11"
         cache: 'pip'
@@ -195,14 +195,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_LATEST }}
 
       - run: python -m pip install flit check-wheel-contents
       - run: flit build
       - run: ls -l dist
-      - run: check-wheel-contents dist/*.whl
+
+      - name: Test CHANGELOG.md present in sdist
+        run: tar -tzf dist/*.tar.gz | grep -q 'CHANGELOG.md'
+
+      - name: Test of bdist
+        run: check-wheel-contents dist/*.whl
 
       - name: Test installing package
         run: python -m pip install .
@@ -218,7 +223,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           # Use the latest Python, so it understands all syntax.
           python-version: ${{ env.PYTHON_LATEST }}

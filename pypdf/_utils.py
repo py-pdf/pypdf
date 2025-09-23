@@ -77,7 +77,7 @@ StrByteType = Union[str, StreamType]
 
 def parse_iso8824_date(text: Optional[str]) -> Optional[datetime]:
     orgtext = text
-    if text is None:
+    if not text:
         return None
     if text[0].isdigit():
         text = "D:" + text

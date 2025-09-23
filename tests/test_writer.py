@@ -2671,13 +2671,13 @@ def test_deprecate_with_as():
     with PdfWriter() as writer:
         with pytest.raises(
                 expected_exception=DeprecationError,
-                match="with_as_usage is deprecated and was removed in pypdf 5.0"
+                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
         ):
             _ = writer.with_as_usage
 
         with pytest.raises(
                 expected_exception=DeprecationError,
-                match="with_as_usage is deprecated and was removed in pypdf 5.0"
+                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
         ):
             writer.with_as_usage = False  # old code allowed setting this, so...
 

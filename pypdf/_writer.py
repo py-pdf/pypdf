@@ -136,7 +136,7 @@ class ObjectDeletionFlag(enum.IntFlag):
 
 
 def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
-    hash = hashlib.md5()
+    hash = hashlib.md5(usedforsecurity=False)
     for block in iter(lambda: stream.read(blocksize), b""):
         hash.update(block)
     return hash.hexdigest()
@@ -350,7 +350,7 @@ class PdfWriter(PdfDocCommon):
         return cast(XmpInformation, self.root_object.xmp_metadata)
 
     @xmp_metadata.setter
-    def xmp_metadata(self, value: Optional[XmpInformation]) -> None:
+    def xmp_metadata(self, value: Union[XmpInformation, bytes, None]) -> None:
         """XMP (Extensible Metadata Platform) data."""
         if value is None:
             if "/Metadata" in self.root_object:
@@ -822,8 +822,7 @@ class PdfWriter(PdfDocCommon):
         new_content_data: bytes,
     ) -> None:
         """
-        Combines existing content stream(s) with new content (as bytes),
-        and returns a new single StreamObject.
+        Combines existing content stream(s) with new content (as bytes).
 
         Args:
             page: The page to which the new content data will be added.
@@ -975,7 +974,7 @@ class PdfWriter(PdfDocCommon):
         font_res = dr.get(font_name, None)
         if not is_null_or_none(font_res):
             font_res = cast(DictionaryObject, font_res.get_object())
-            font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
+            _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
                 200, font_res
             )
             try:  # remove width stored in -1 key
@@ -2740,7 +2739,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(fileobj, PdfDocCommon):
             reader = fileobj
         else:
-            stream, encryption_obj = self._create_stream(fileobj)
+            stream, _encryption_obj = self._create_stream(fileobj)
             # Create a new PdfReader instance using the stream
             # (either file or BytesIO or StringIO) created above
             reader = PdfReader(stream, strict=False)  # type: ignore[arg-type]

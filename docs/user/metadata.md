@@ -121,6 +121,141 @@ if meta:
     print(meta.xmp_create_date)
 ```
 
+## Creating XMP metadata
+
+You can create XMP metadata easily using the `XmpInformation.create()` method:
+
+```python
+from pypdf import PdfWriter
+from pypdf.xmp import XmpInformation
+
+# Create a new XMP metadata object
+xmp = XmpInformation.create()
+
+# Set metadata fields
+xmp.dc_title = {"x-default": "My Document Title"}
+xmp.dc_creator = ["Author One", "Author Two"]
+xmp.dc_description = {"x-default": "Document description"}
+xmp.dc_subject = ["keyword1", "keyword2", "keyword3"]
+xmp.pdf_producer = "pypdf"
+
+# Create a writer and add the metadata
+writer = PdfWriter()
+writer.add_blank_page(612, 792)  # Add a page
+writer.xmp_metadata = xmp
+writer.write("output.pdf")
+```
+
+## Setting XMP metadata fields
+
+The `XmpInformation` class provides property-based access for all supported metadata fields:
+
+### Dublin Core fields
+
+```python
+from datetime import datetime
+from pypdf.xmp import XmpInformation
+
+xmp = XmpInformation.create()
+
+# Single value fields
+xmp.dc_coverage = "Global coverage"
+xmp.dc_format = "application/pdf"
+xmp.dc_identifier = "unique-id-123"
+xmp.dc_source = "Original Source"
+
+# Array fields (bags - unordered)
+xmp.dc_contributor = ["Contributor One", "Contributor Two"]
+xmp.dc_language = ["en", "fr", "de"]
+xmp.dc_publisher = ["Publisher One"]
+xmp.dc_relation = ["Related Doc 1", "Related Doc 2"]
+xmp.dc_subject = ["keyword1", "keyword2"]
+xmp.dc_type = ["Document", "Text"]
+
+# Sequence fields (ordered arrays)
+xmp.dc_creator = ["Primary Author", "Secondary Author"]
+xmp.dc_date = [datetime.now()]
+
+# Language alternative fields
+xmp.dc_title = {"x-default": "Title", "en": "English Title", "fr": "Titre français"}
+xmp.dc_description = {"x-default": "Description", "en": "English Description"}
+xmp.dc_rights = {"x-default": "All rights reserved"}
+```
+
+### XMP fields
+
+```python
+from datetime import datetime
+
+# Date fields accept both datetime objects and strings
+xmp.xmp_create_date = datetime.now()
+xmp.xmp_modify_date = "2023-12-25T10:30:45Z"
+xmp.xmp_metadata_date = datetime.now()
+
+# Text field
+xmp.xmp_creator_tool = "pypdf"
+```
+
+### PDF fields
+
+```python
+xmp.pdf_keywords = "keyword1, keyword2, keyword3"
+xmp.pdf_pdfversion = "1.4"
+xmp.pdf_producer = "pypdf"
+```
+
+### XMP Media Management fields
+
+```python
+xmp.xmpmm_document_id = "uuid:12345678-1234-1234-1234-123456789abc"
+xmp.xmpmm_instance_id = "uuid:87654321-4321-4321-4321-cba987654321"
+```
+
+### PDF/A fields
+
+```python
+xmp.pdfaid_part = "1"
+xmp.pdfaid_conformance = "B"
+```
+
+### Clearing metadata fields
+
+You can clear any field by assigning `None`:
+
+```python
+xmp.dc_title = None
+xmp.dc_creator = None
+xmp.pdf_producer = None
+```
+
+### Incrementally updating XMP metadata fields
+
+When modifying existing XMP metadata, it is often necessary to add or update individual entries while preserving existing values. The XMP properties return standard Python data structures that can be manipulated directly:
+
+```python
+from pypdf.xmp import XmpInformation
+
+xmp = XmpInformation.create()
+
+# Language alternative fields return dictionaries
+title = xmp.dc_title or {}
+title["en"] = "English Title"
+title["fr"] = "Titre français"
+xmp.dc_title = title
+
+# Bag fields (unordered collections) return lists
+subjects = xmp.dc_subject or []
+subjects.append("new_keyword")
+xmp.dc_subject = subjects
+
+# Sequence fields (ordered collections) return lists
+creators = xmp.dc_creator or []
+creators.append("New Author")
+xmp.dc_creator = creators
+```
+
+This approach provides direct control over the data structures while maintaining the property-based interface.
+
 ## Modifying XMP metadata
 
 Modifying XMP metadata is a bit more complicated.
