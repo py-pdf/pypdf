@@ -81,6 +81,7 @@ class EmbeddedFile:
         # Create the filespec dictionary
         from pypdf.generic import create_string_object  # noqa: PLC0415
         filespec = DictionaryObject()
+        filespec_reference = writer._add_object(filespec)
         filespec.update(
             {
                 NameObject(PG.TYPE): NameObject("/Filespec"),
@@ -90,10 +91,10 @@ class EmbeddedFile:
         )
 
         # Add to the catalog's names tree
-        if CA.NAMES not in writer._root_object:
-            writer._root_object[NameObject(CA.NAMES)] = writer._add_object(DictionaryObject())
+        if CA.NAMES not in writer.root_object:
+            writer.root_object[NameObject(CA.NAMES)] = writer._add_object(DictionaryObject())
 
-        names_dict = cast(DictionaryObject, writer._root_object[CA.NAMES])
+        names_dict = cast(DictionaryObject, writer.root_object[CA.NAMES])
         if "/EmbeddedFiles" not in names_dict:
             embedded_files_names_dictionary = DictionaryObject(
                 {NameObject(CA.NAMES): ArrayObject()}
@@ -104,7 +105,7 @@ class EmbeddedFile:
 
         # Add the name and filespec to the names array
         names_array = cast(ArrayObject, embedded_files_names_dictionary[CA.NAMES])
-        names_array.extend([create_string_object(name), filespec])
+        names_array.extend([create_string_object(name), filespec_reference])
 
         # Return an EmbeddedFile instance
         return cls(name=name, pdf_object=filespec, parent=names_array)
@@ -130,10 +131,8 @@ class EmbeddedFile:
             if FileSpecificationDictionaryEntries.F in self.pdf_object:
                 self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = NullObject()
         else:
-            if FileSpecificationDictionaryEntries.UF in self.pdf_object:
-                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = value
-            if FileSpecificationDictionaryEntries.F in self.pdf_object:
-                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = value
+            self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = value
+            self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = value
 
     @property
     def description(self) -> str | None:
@@ -282,9 +281,15 @@ class EmbeddedFile:
         """Delete the file from the document."""
         if not self._parent:
             raise PyPdfError("Parent required to delete file from document.")
-        if self.pdf_object not in self._parent:
+        if self.pdf_object in self._parent:
+            index = self._parent.index(self.pdf_object)
+        elif (
+                (indirect_reference := getattr(self.pdf_object, "indirect_reference", None)) is not None
+                and indirect_reference in self._parent
+        ):
+            index = self._parent.index(indirect_reference)
+        else:
             raise PyPdfError("File not found in parent object.")
-        index = self._parent.index(self.pdf_object)
         self._parent.pop(index)  # Reference.
         self._parent.pop(index - 1)  # Name.
         self.pdf_object = DictionaryObject()  # Invalidate.

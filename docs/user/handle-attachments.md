@@ -84,3 +84,21 @@ attachment = writer.add_attachment(filename="test.txt", data=b"Hello World!")
 attachment.delete()
 assert list(writer.attachment_list) == []
 ```
+
+### PDF/A compliance
+
+The following example shows how to add an attachment to a PDF/A-3B compliant document
+without breaking compliance:
+
+```python
+from pypdf import PdfWriter
+from pypdf.generic import create_string_object, NameObject
+
+writer = PdfWriter(clone_from="pdf_a3b.pdf")
+attachment = writer.add_attachment(filename="test.txt", data="Hello World!")
+attachment.subtype = NameObject("/text/plain")
+attachment.associated_file_relationship = NameObject("/Supplement")
+attachment.alternative_name = create_string_object(attachment.name)
+
+writer.write("pdf_a3b_output.pdf")
+```
