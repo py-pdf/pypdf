@@ -193,7 +193,7 @@ def _handle_flate(
     Process image encoded in flateEncode
     Returns img, image_format, extension, color inversion
     """
-    extension = ".png"  # mime_type = "image/png"
+    extension = ".png"  # mime_type: "image/png"
     image_format = "PNG"
     lookup: Any
     base: Any
@@ -303,7 +303,7 @@ def _handle_jpx(
     Process image encoded in flateEncode
     Returns img, image_format, extension, inversion
     """
-    extension = ".jp2"  # mime_type = "image/x-jp2"
+    extension = ".jp2"  # mime_type: "image/x-jp2"
     img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
     mode, invert_color = _get_imagemode(color_space, colors, mode)
     if mode == "":
@@ -321,7 +321,7 @@ def _handle_jpx(
         img = Image.frombytes(mode, img1.size, img1.tobytes())
     else:  # pragma: no cover
         img = img1.convert(mode)
-    # for CMYK conversion :
+    # CMYK conversion:
     # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
     # not implemented for the moment as I need to get properly the ICC
     if img.mode == "CMYK":
@@ -502,10 +502,10 @@ def _xobj_to_image(x_object: dict[str, Any]) -> tuple[Optional[str], bytes, Any]
         # extension
         if lfilters == FT.LZW_DECODE:
             image_format = "TIFF"
-            extension = ".tiff"  # mime_type = "image/tiff"
+            extension = ".tiff"  # mime_type: "image/tiff"
         else:
             image_format = "PNG"
-            extension = ".png"  # mime_type = "image/png"
+            extension = ".png"  # mime_type: "image/png"
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
