@@ -425,3 +425,19 @@ def test_embedded_file__delete_known():
     # Delete second time.
     with pytest.raises(PyPdfError, match=r"^File not found in parent object\.$"):
         attachment.delete()
+
+
+def test_embedded_file__delete__no_indirect_reference():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+
+    # Add an attachment and replace the indirect reference in the name tree
+    # by the dictionary itself. This is how pypdf <= 6.1.0 would embed files
+    # and thus should be supported as well.
+    embedded_file = writer.add_attachment("test.txt", b"Hello, World!")
+    assert embedded_file.pdf_object.indirect_reference == IndirectObject(6, 0, writer)
+    embedded_file._parent[-1] = embedded_file.pdf_object.get_object()
+
+    embedded_file.delete()
+    attachments = list(writer.attachment_list)
+    assert len(attachments) == 0
