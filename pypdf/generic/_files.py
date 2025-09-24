@@ -92,7 +92,9 @@ class EmbeddedFile:
             }
         )
 
-        # Add the name and filespec to the names array
+        # Add the name and filespec to the names array.
+        # We use the inverse order for insertion, as this allows us to re-use the
+        # same index.
         names_array = cls._get_names_array(writer)
         insertion_index = cls._get_insertion_index(names_array, name_object)
         names_array.insert(insertion_index, filespec_reference)
