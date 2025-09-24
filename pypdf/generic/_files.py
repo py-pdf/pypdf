@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import bisect
 from functools import cached_property
 from typing import TYPE_CHECKING, cast
 
@@ -82,17 +83,20 @@ class EmbeddedFile:
         from pypdf.generic import create_string_object  # noqa: PLC0415
         filespec = DictionaryObject()
         filespec_reference = writer._add_object(filespec)
+        name_object = cast(TextStringObject, create_string_object(name))
         filespec.update(
             {
                 NameObject(PG.TYPE): NameObject("/Filespec"),
-                NameObject(FileSpecificationDictionaryEntries.F): create_string_object(name),
+                NameObject(FileSpecificationDictionaryEntries.F): name_object,
                 NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
             }
         )
 
         # Add the name and filespec to the names array
         names_array = cls._get_names_array(writer)
-        names_array.extend([create_string_object(name), filespec_reference])
+        insertion_index = cls._get_insertion_index(names_array, name_object)
+        names_array.insert(insertion_index, filespec_reference)
+        names_array.insert(insertion_index, name_object)
 
         # Return an EmbeddedFile instance
         return cls(name=name, pdf_object=filespec, parent=names_array)
@@ -140,6 +144,22 @@ class EmbeddedFile:
             for name in kid.get_object().get("/Names", []):
                 names.append(name)
         return names
+
+    @classmethod
+    def _get_insertion_index(cls, names_array: ArrayObject, name: str) -> int:
+        keys = [names_array[i].encode("utf-8") for i in range(0, len(names_array), 2)]
+        name_bytes = name.encode("utf-8")
+
+        start = bisect.bisect_left(keys, name_bytes)
+        end = bisect.bisect_right(keys, name_bytes)
+
+        if start != end:
+            return end * 2
+        if start == 0:
+            return 0
+        if start == (key_count := len(keys)):
+            return key_count * 2
+        return end * 2
 
     @property
     def alternative_name(self) -> str | None:
