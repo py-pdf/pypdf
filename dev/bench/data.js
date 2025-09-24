@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1758624026712,
+  "lastUpdate": 1758705239715,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -81713,6 +81713,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003397980865331501",
             "extra": "mean: 647.0441005999874 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e3a16d46ceeb62050393e33452a764bffa62b516",
+          "message": "BUG: Fix name tree handling for embedded files with Kids-based inputs (#3475)\n\nCloses #3473.",
+          "timestamp": "2025-09-24T11:11:24+02:00",
+          "tree_id": "d11fb3e10feee2c3455ebb1aa0638fb5ecb63646",
+          "url": "https://github.com/py-pdf/pypdf/commit/e3a16d46ceeb62050393e33452a764bffa62b516"
+        },
+        "date": 1758705235347,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.4694382582279832,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011187067436420126",
+            "extra": "mean: 288.23109839999006 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.436194327636958,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00764404638132264",
+            "extra": "mean: 64.782807133336 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27714136177897186,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02185953816592807",
+            "extra": "mean: 3.6082668915999934 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.815335653876172,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007739958622043154",
+            "extra": "mean: 56.131415058824615 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08215450263203873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03246718484812014",
+            "extra": "mean: 12.172187378199993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5517241934185546,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007903576061479363",
+            "extra": "mean: 644.4444213999986 msec\nrounds: 5"
           }
         ]
       }
