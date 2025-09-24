@@ -138,7 +138,8 @@ class TextStreamAppearance(DecodedStreamObject):
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
-        multiline: bool = False
+        multiline: bool = False,
+        alignment: int = 0
     ) -> bytes:
         """
         Generates the raw bytes of the PDF appearance stream for a text field.
@@ -198,6 +199,7 @@ class TextStreamAppearance(DecodedStreamObject):
         y_offset = rect.height - 1 - font_size
         default_appearance = f"{font_name} {font_size} Tf {font_color}"
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rect.width - 1} {rect.height - 1} re\nW\nBT\n{default_appearance}\n".encode()
+        current_x_pos : float = 0  # Initial virtual position within the text object.
         for line_number, (line_width, line) in enumerate(lines):
             # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
             line = line.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
@@ -207,11 +209,34 @@ class TextStreamAppearance(DecodedStreamObject):
                     f"1 {y_offset - (line_number * font_size * 1.4) - 1} {rect.width - 2} {font_size + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{default_appearance}\n"
                 ).encode()
+
+            # Calculate the desired absolute starting X for the current line
+            desired_abs_x_start : float = 0
+            if alignment == 2:  # Right aligned
+                desired_abs_x_start = rect.width - 2 - line_width
+            elif alignment == 1:  # Centered
+                desired_abs_x_start = (rect.width - line_width) / 2
+            else:  # Left aligned; default
+                desired_abs_x_start = 2
+            # Calculate x_rel_offset: how much to move from the current_x_pos
+            # to reach the desired_abs_x_start.
+            x_rel_offset = desired_abs_x_start - current_x_pos
+
+            # Y-offset:
+            y_rel_offset: float = 0
+
             if line_number == 0:
-                ap_stream += f"2 {y_offset} Td\n".encode()
+                y_rel_offset = y_offset # Initial vertical position
             else:
-                # Td is a relative translation
-                ap_stream += f"0 {-font_size * 1.4} Td\n".encode()
+                y_rel_offset = - font_size * 1.4 # Move down by line height
+
+            # Td is a relative translation (Tx and Ty).
+            # It updates the current text position.
+            ap_stream += f"{x_rel_offset} {y_rel_offset} Td\n".encode()
+            # Update current_x_pos based on the Td operation for the next iteration.
+            # This is the X position where the *current line* will start.
+            current_x_pos = desired_abs_x_start
+
             encoded_line: list[bytes] = [
                 font_glyph_byte_map.get(c, c.encode("utf-16-be")) for c in line
             ]
@@ -231,7 +256,8 @@ class TextStreamAppearance(DecodedStreamObject):
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
-        multiline: bool = False
+        multiline: bool = False,
+        alignment: int = 0
     ) -> None:
         """
         Initializes a TextStreamAppearance object.
@@ -287,7 +313,16 @@ class TextStreamAppearance(DecodedStreamObject):
                 font_glyph_byte_map[value] = font_encoding_rev.get(key, key)
 
         ap_stream_data = self._appearance_stream_data(
-            text, selection, rect, font_descriptor, font_glyph_byte_map, font_name, font_size, font_color, multiline
+            text,
+            selection,
+            rect,
+            font_descriptor,
+            font_glyph_byte_map,
+            font_name,
+            font_size,
+            font_color,
+            multiline,
+            alignment
         )
         super().__init__()
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -399,6 +434,7 @@ class TextStreamAppearance(DecodedStreamObject):
         # Retrieve field text, selected values and formatting information
         multiline = False
         field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
+        alignment = field.get("/Q", 0)
         if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
             multiline = True
         if (field.get(FieldDictionaryAttributes.FT, "/Tx") == "/Ch" and
@@ -413,7 +449,7 @@ class TextStreamAppearance(DecodedStreamObject):
 
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
-            text, selection, rect, font_resource, font_name, font_size, font_color, multiline
+            text, selection, rect, font_resource, font_name, font_size, font_color, multiline, alignment
         )
         if AnnotationDictionaryAttributes.AP in annotation:
             for k, v in cast(DictionaryObject, annotation[AnnotationDictionaryAttributes.AP]).get("/N", {}).items():
