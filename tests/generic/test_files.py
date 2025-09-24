@@ -10,6 +10,7 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError, PyPdfError
 from pypdf.generic import (
+    ArrayObject,
     ByteStringObject,
     DictionaryObject,
     EmbeddedFile,
@@ -489,3 +490,87 @@ def test_embedded_file__create__neither_kids_nor_names():
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Got neither Names nor Kids in embedded files tree\.$"):
         writer.add_attachment("test2.txt", b"content2")
+
+
+def test_embedded_file__get_insertion_index():
+    # Empty list.
+    assert EmbeddedFile._get_insertion_index(ArrayObject(), "test.txt") == 0
+
+    # One mismatching entry.
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("dummy.txt"), NullObject()]),
+        "test.txt"
+    ) == 2
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("xxx.txt"), NullObject()]),
+        "test.txt"
+    ) == 0
+
+    # Multiple entries.
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("dummy.txt"), NullObject(), TextStringObject("xxx.txt"), NullObject()]),
+        "test.txt"
+    ) == 2
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("xxx.txt"), NullObject(), TextStringObject("yyy.txt"), NullObject()]),
+        "test.txt"
+    ) == 0
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("aaa.txt"), NullObject(), TextStringObject("bbb.txt"), NullObject()]),
+        "test.txt"
+    ) == 4
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([
+            TextStringObject("aaa.txt"), NullObject(),
+            TextStringObject("test.txt"), NullObject(),
+            TextStringObject("zzz.txt"), NullObject()
+        ]),
+        "test.txt"
+    ) == 4
+
+    # Length.
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("a"), NullObject()]),
+        "aa"
+    ) == 2
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("a"), NullObject()]),
+        "a"
+    ) == 2
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("aaa"), NullObject()]),
+        "aa"
+    ) == 0
+
+    # Special characters.
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("café"), NullObject()]),
+        "cafe"
+    ) == 0
+    assert EmbeddedFile._get_insertion_index(
+        ArrayObject([TextStringObject("Tun"), NullObject()]),
+        "Tür"
+    ) == 2
+
+
+def test_embedded_file__order():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+
+    attachment1 = writer.add_attachment("test.txt", "content")
+    attachment2 = writer.add_attachment("abc.txt", "content")
+    attachment3 = writer.add_attachment("xyz.txt", "content")
+    attachment4 = writer.add_attachment("test.txt", "content2")
+
+    assert dict(writer.attachments) == {
+        "abc.txt": [b"content"],
+        "test.txt": [b"content", b"content2"],
+        "xyz.txt": [b"content"]
+    }
+
+    assert writer.root_object["/Names"]["/EmbeddedFiles"]["/Names"] == [
+        "abc.txt", attachment2.pdf_object.indirect_reference,
+        "test.txt", attachment1.pdf_object.indirect_reference,
+        "test.txt", attachment4.pdf_object.indirect_reference,
+        "xyz.txt", attachment3.pdf_object.indirect_reference,
+    ]
