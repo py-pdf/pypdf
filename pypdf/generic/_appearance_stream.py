@@ -2,6 +2,7 @@ import re
 from typing import Any, Optional, Union, cast
 
 from .._cmap import _default_fonts_space_width, build_char_map_from_dict
+from .._codecs.core_fontmetrics import CORE_FONT_METRICS
 from .._font import FontDescriptor
 from .._utils import logger_warning
 from ..constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes
@@ -14,7 +15,7 @@ from ..generic import (
 )
 from ..generic._base import ByteStringObject, TextStringObject, is_null_or_none
 
-DEFAULT_FONT_HEIGHT_IN_MULTILINE = 12
+DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 
 
 class TextStreamAppearance(DecodedStreamObject):
@@ -132,6 +133,7 @@ class TextStreamAppearance(DecodedStreamObject):
         text: str = "",
         selection: Optional[list[str]] = None,
         rect: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
+        font_descriptor: FontDescriptor = CORE_FONT_METRICS["Helvetica"],
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
@@ -169,16 +171,34 @@ class TextStreamAppearance(DecodedStreamObject):
 
         # If font_size is 0, apply the logic for multiline or large-as-possible font
         if font_size == 0:
+            if selection:          # Don't wrap text when dealing with a /Ch field, in order to prevent problems
+                multiline = False  # with matching "selection" with "line" later on.
             if multiline:
-                font_size = DEFAULT_FONT_HEIGHT_IN_MULTILINE
+                font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
             else:
                 font_size = rect.height - 2
+            lines, font_size = self._scale_text(
+                font_descriptor,
+                font_size,
+                rect.width - 3,    # One point margin left and right, and an additional point because the first offset
+                                   # takes one extra point (see below, under "line_number == 0:")
+                rect.height - 3,   # One point margin for top and bottom, one point extra for the first line
+                                   # (see y_offset)
+                text,
+                multiline,
+            )
+        else:
+            lines = [(
+                font_descriptor.text_width(line) * font_size / 1000,
+                line
+            ) for line in text.replace("\n", "\r").split("\r")]
+
 
         # Set the vertical offset
         y_offset = rect.height - 1 - font_size
         default_appearance = f"{font_name} {font_size} Tf {font_color}"
         ap_stream = f"q\n/Tx BMC \nq\n1 1 {rect.width - 1} {rect.height - 1} re\nW\nBT\n{default_appearance}\n".encode()
-        for line_number, line in enumerate(text.replace("\n", "\r").split("\r")):
+        for line_number, (line_width, line) in enumerate(lines):
             # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
             line = line.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
             if selection and line in selection:
@@ -235,6 +255,7 @@ class TextStreamAppearance(DecodedStreamObject):
         # If a font resource was added, get the font character map
         if font_resource:
             font_resource = cast(DictionaryObject, font_resource.get_object())
+            font_descriptor = FontDescriptor.from_font_resource(font_resource)
             _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
                 200, font_resource
             )
@@ -255,9 +276,10 @@ class TextStreamAppearance(DecodedStreamObject):
         else:
             logger_warning(f"Font dictionary for {font_name} not found.", __name__)
             font_glyph_byte_map = {}
+            font_descriptor = FontDescriptor()
 
         ap_stream_data = self._appearance_stream_data(
-            text, selection, rect, font_glyph_byte_map, font_name, font_size, font_color, multiline
+            text, selection, rect, font_descriptor, font_glyph_byte_map, font_name, font_size, font_color, multiline
         )
         super().__init__()
         self[NameObject("/Type")] = NameObject("/XObject")
