@@ -601,7 +601,7 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
-    # Test the owner password (stbytesr):
+    # Test the owner password (bytes):
     reader = PdfReader(pdf_file_path, password=b"ownerpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
@@ -688,7 +688,6 @@ def test_add_named_destination(pdf_file_path):
     assert root[4] == "A named dest3"
 
     # test get_object
-
     assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
     with pytest.raises(ValueError) as exc:
         writer.get_object(reader.pages[0].indirect_reference)
@@ -2416,7 +2415,7 @@ def test_selfont():
 
 
 @pytest.mark.enable_socket
-def test_no_ressource_for_14_std_fonts(caplog):
+def test_no_resource_for_14_std_fonts(caplog):
     """Cf #2670"""
     url = "https://github.com/py-pdf/pypdf/files/15405390/f1040.pdf"
     name = "iss2670.pdf"
