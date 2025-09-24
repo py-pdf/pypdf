@@ -144,7 +144,8 @@ class TextStreamAppearance(DecodedStreamObject):
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
-        is_multiline: bool = False
+        is_multiline: bool = False,
+        alignment: TextAlignment = TextAlignment.LEFT
     ) -> bytes:
         """
         Generates the raw bytes of the PDF appearance stream for a text field.
@@ -166,6 +167,7 @@ class TextStreamAppearance(DecodedStreamObject):
             font_color: The color to apply to the font, represented as a PDF
                 graphics state string (e.g., "0 g" for black).
             is_multiline: A boolean indicating if the text field is multiline.
+            alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER
 
         Returns:
             A byte string containing the PDF content stream data.
@@ -188,7 +190,7 @@ class TextStreamAppearance(DecodedStreamObject):
                 font_descriptor,
                 font_size,
                 rectangle.width - 3,   # One point margin left and right, and an additional point because the first
-                                       # offset takes one extra point (see below, under "line_number == 0:")
+                                       # offset takes one extra point (see below, "desired_abs_x_start")
                 rectangle.height - 3,  # One point margin for top and bottom, one point extra for the first line
                                        # (see y_offset)
                 text,
@@ -208,6 +210,7 @@ class TextStreamAppearance(DecodedStreamObject):
             f"q\n/Tx BMC \nq\n1 1 {rectangle.width - 1} {rectangle.height - 1} "
             f"re\nW\nBT\n{default_appearance}\n"
         ).encode()
+        current_x_pos: float = 0  # Initial virtual position within the text object.
 
         for line_number, (line_width, line) in enumerate(lines):
             if selection and line in selection:
@@ -216,11 +219,33 @@ class TextStreamAppearance(DecodedStreamObject):
                     f"1 {y_offset - (line_number * font_size * 1.4) - 1} {rectangle.width - 2} {font_size + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{default_appearance}\n"
                 ).encode()
+
+            # Calculate the desired absolute starting X for the current line
+            desired_abs_x_start: float = 0
+            if alignment == TextAlignment.RIGHT:
+                desired_abs_x_start = rectangle.width - 2 - line_width
+            elif alignment == TextAlignment.CENTER:
+                desired_abs_x_start = (rectangle.width - line_width) / 2
+            else:  # Left aligned; default
+                desired_abs_x_start = 2
+            # Calculate x_rel_offset: how much to move from the current_x_pos
+            # to reach the desired_abs_x_start.
+            x_rel_offset = desired_abs_x_start - current_x_pos
+
+            # Y-offset:
+            y_rel_offset: float = 0
             if line_number == 0:
-                ap_stream += f"2 {y_offset} Td\n".encode()
+                y_rel_offset = y_offset  # Initial vertical position
             else:
-                # Td is a relative translation
-                ap_stream += f"0 {-font_size * 1.4} Td\n".encode()
+                y_rel_offset = - font_size * 1.4  # Move down by line height
+
+            # Td is a relative translation (Tx and Ty).
+            # It updates the current text position.
+            ap_stream += f"{x_rel_offset} {y_rel_offset} Td\n".encode()
+            # Update current_x_pos based on the Td operation for the next iteration.
+            # This is the X position where the *current line* will start.
+            current_x_pos = desired_abs_x_start
+
             encoded_line: list[bytes] = [
                 font_glyph_byte_map.get(c, c.encode("utf-16-be")) for c in line
             ]
@@ -240,7 +265,8 @@ class TextStreamAppearance(DecodedStreamObject):
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
-        is_multiline: bool = False
+        is_multiline: bool = False,
+        alignment: TextAlignment = TextAlignment.LEFT
     ) -> None:
         """
         Initializes a TextStreamAppearance object.
@@ -259,6 +285,7 @@ class TextStreamAppearance(DecodedStreamObject):
             font_size: The font size. If 0, it's auto-calculated.
             font_color: The font color string.
             is_multiline: A boolean indicating if the text field is multiline.
+            alignment: Left-aligned (0), centered (1) or right-aligned (2) text.
 
         """
         super().__init__()
@@ -307,7 +334,8 @@ class TextStreamAppearance(DecodedStreamObject):
             font_name,
             font_size,
             font_color,
-            is_multiline
+            is_multiline,
+            alignment
         )
 
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -414,6 +442,7 @@ class TextStreamAppearance(DecodedStreamObject):
         # Retrieve field text, selected values and formatting information
         is_multiline = False
         field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
+        alignment = field.get("/Q", 0)
         if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
             is_multiline = True
         if (
@@ -440,7 +469,8 @@ class TextStreamAppearance(DecodedStreamObject):
             font_name,
             font_size,
             font_color,
-            is_multiline
+            is_multiline,
+            alignment
         )
         if AnnotationDictionaryAttributes.AP in annotation:
             for key, value in (
