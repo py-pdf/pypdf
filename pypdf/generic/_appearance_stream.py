@@ -2,6 +2,7 @@ import re
 from typing import Any, Optional, Union, cast
 
 from .._cmap import _default_fonts_space_width, build_char_map_from_dict
+from .._font import FontDescriptor
 from .._utils import logger_warning
 from ..constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes
 from ..generic import (
@@ -24,6 +25,104 @@ class TextStreamAppearance(DecodedStreamObject):
     how text is rendered within a form field's bounding box. It handles properties
     like font, font size, color, multiline text, and text selection highlighting.
     """
+
+    def _scale_text(
+        self,
+        font_descriptor: FontDescriptor,
+        font_size: float,
+        field_width: float,
+        field_height: float,
+        text: str,
+        is_multiline: bool,
+        min_font_size: float = 4.0,       # Minimum font size to attempt
+        font_size_step: float = 0.2       # How much to decrease font size by each step
+    ) -> tuple[list[tuple[float, str]], float]:
+        """
+        Takes a piece of text and scales it to field_width or field_height, given font_name
+        and font_size. For multiline fields, adds newlines to wrap the text.
+
+        Args:
+            font_descriptor: A FontDescriptor for the font to be used.
+            font_size: The font size in points.
+            field_width: The width of the field in which to fit the text.
+            field_height: The height of the field in which to fit the text.
+            text: The text to fit with the field.
+            is_multiline: Whether to scale and wrap the text, or only to scale.
+            min_font_size: The minimum font size at which to scale the text.
+            font_size_step: The amount by which to decrement font size per step while scaling.
+
+        Returns:
+            The text in the form of list of tuples, each tuple containing the length of a line
+            and its contents, and the font_size for these lines and lengths.
+        """
+        # Single line:
+        if not is_multiline:
+            test_width = font_descriptor.text_width(text) * font_size / 1000
+            if test_width > field_width or font_size > field_height:
+                new_font_size = font_size - font_size_step
+                if new_font_size >= min_font_size:
+                    # Text overflows height; Retry with smaller font size.
+                    return self._scale_text(
+                        font_descriptor,
+                        round(new_font_size, 1),
+                        field_width,
+                        field_height,
+                        text,
+                        is_multiline,
+                        min_font_size,
+                        font_size_step
+                    )
+            return [(test_width, text)], font_size
+        # Multiline:
+        orig_text = text
+        paragraphs = text.replace("\n", "\r").split("\r")
+        wrapped_lines = []
+        current_line_words: list[str] = []
+        current_line_width: float = 0
+        space_width = font_descriptor.text_width(" ") * font_size / 1000
+        for paragraph in paragraphs:
+            if not paragraph.strip():
+                wrapped_lines.append((0.0, ""))
+                continue
+            words = paragraph.split(" ")
+            for i, word in enumerate(words):
+                word_width = font_descriptor.text_width(word) * font_size / 1000
+                test_width = current_line_width + word_width + (space_width if i else 0)
+                if test_width > field_width and current_line_words:
+                    wrapped_lines.append((current_line_width, " ".join(current_line_words)))
+                    current_line_words = [word]
+                    current_line_width = word_width
+                elif not current_line_words and word_width > field_width:
+                    wrapped_lines.append((word_width, word))
+                    current_line_words = []
+                    current_line_width = 0
+                else:
+                    if current_line_words:
+                        current_line_width += space_width
+                    current_line_words.append(word)
+                    current_line_width += word_width
+            if current_line_words:
+                wrapped_lines.append((current_line_width, " ".join(current_line_words)))
+                current_line_words = []
+                current_line_width = 0
+        # Estimate total height.
+        # Assumes line spacing of 1.4
+        estimated_total_height = font_size + (len(wrapped_lines) - 1) * 1.4 * font_size
+        if estimated_total_height > field_height:
+            # Text overflows height; Retry with smaller font size.
+            new_font_size = font_size - font_size_step
+            if new_font_size >= min_font_size:
+                return self._scale_text(
+                    font_descriptor,
+                    round(new_font_size, 1),
+                    field_width,
+                    field_height,
+                    orig_text,
+                    is_multiline,
+                    min_font_size,
+                    font_size_step
+                )
+        return wrapped_lines, font_size
 
     def _generate_appearance_stream_data(
         self,
