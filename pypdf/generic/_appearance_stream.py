@@ -2,6 +2,7 @@ import re
 from typing import Any, Optional, Union, cast
 
 from .._cmap import _default_fonts_space_width, build_char_map_from_dict
+from .._codecs.core_fontmetrics import CORE_FONT_METRICS
 from .._font import FontDescriptor
 from .._utils import logger_warning
 from ..constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes
@@ -129,6 +130,7 @@ class TextStreamAppearance(DecodedStreamObject):
         text: str = "",
         selection: Optional[list[str]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
+        font_descriptor: Optional[FontDescriptor] = None,
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
@@ -163,13 +165,31 @@ class TextStreamAppearance(DecodedStreamObject):
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
+        font_descriptor = cast(FontDescriptor, font_descriptor)
 
         # If font_size is 0, apply the logic for multiline or large-as-possible font
         if font_size == 0:
+            if selection:              # Don't wrap text when dealing with a /Ch field, in order to prevent problems
+                is_multiline = False   # with matching "selection" with "line" later on.
             if is_multiline:
                 font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
             else:
                 font_size = rectangle.height - 2
+            lines, font_size = self._scale_text(
+                font_descriptor,
+                font_size,
+                rectangle.width - 3,   # One point margin left and right, and an additional point because the first
+                                       # offset takes one extra point (see below, under "line_number == 0:")
+                rectangle.height - 3,  # One point margin for top and bottom, one point extra for the first line
+                                       # (see y_offset)
+                text,
+                is_multiline,
+            )
+        else:
+            lines = [(
+                font_descriptor.text_width(line) * font_size / 1000,
+                line
+            ) for line in text.replace("\n", "\r").split("\r")]
 
         # Set the vertical offset
         y_offset = rectangle.height - 1 - font_size
@@ -180,7 +200,7 @@ class TextStreamAppearance(DecodedStreamObject):
             f"re\nW\nBT\n{default_appearance}\n"
         ).encode()
 
-        for line_number, line in enumerate(text.replace("\n", "\r").split("\r")):
+        for line_number, (line_width, line) in enumerate(lines):
             if selection and line in selection:
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
@@ -237,6 +257,7 @@ class TextStreamAppearance(DecodedStreamObject):
         # If a font resource was added, get the font character map
         if font_resource:
             font_resource = cast(DictionaryObject, font_resource.get_object())
+            font_descriptor = FontDescriptor.from_font_resource(font_resource)
             _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
                 200, font_resource
             )
@@ -257,11 +278,13 @@ class TextStreamAppearance(DecodedStreamObject):
         else:
             logger_warning(f"Font dictionary for {font_name} not found.", __name__)
             font_glyph_byte_map = {}
+            font_descriptor = FontDescriptor()
 
         ap_stream_data = self._generate_appearance_stream_data(
             text,
             selection,
             rectangle,
+            font_descriptor,
             font_glyph_byte_map,
             font_name,
             font_size,
