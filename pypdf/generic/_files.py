@@ -90,25 +90,56 @@ class EmbeddedFile:
             }
         )
 
-        # Add to the catalog's names tree
-        if CA.NAMES not in writer.root_object:
-            writer.root_object[NameObject(CA.NAMES)] = writer._add_object(DictionaryObject())
-
-        names_dict = cast(DictionaryObject, writer.root_object[CA.NAMES])
-        if "/EmbeddedFiles" not in names_dict:
-            embedded_files_names_dictionary = DictionaryObject(
-                {NameObject(CA.NAMES): ArrayObject()}
-            )
-            names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
-        else:
-            embedded_files_names_dictionary = cast(DictionaryObject, names_dict["/EmbeddedFiles"])
-
         # Add the name and filespec to the names array
-        names_array = cast(ArrayObject, embedded_files_names_dictionary[CA.NAMES])
+        names_array = cls._get_names_array(writer)
         names_array.extend([create_string_object(name), filespec_reference])
 
         # Return an EmbeddedFile instance
         return cls(name=name, pdf_object=filespec, parent=names_array)
+
+    @classmethod
+    def _get_names_array(cls, writer: PdfWriter) -> ArrayObject:
+        """Get the names array for embedded files, possibly creating and flattening it."""
+        if CA.NAMES not in writer.root_object:
+            # Add the /Names entry to the catalog.
+            writer.root_object[NameObject(CA.NAMES)] = writer._add_object(DictionaryObject())
+
+        names_dict = cast(DictionaryObject, writer.root_object[CA.NAMES])
+        if "/EmbeddedFiles" not in names_dict:
+            # We do not yet have an entry for embedded files. Create and return it.
+            names = ArrayObject()
+            embedded_files_names_dictionary = DictionaryObject(
+                {NameObject(CA.NAMES): names}
+            )
+            names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
+            return names
+
+        # We have an existing embedded files entry.
+        embedded_files_names_tree = cast(DictionaryObject, names_dict["/EmbeddedFiles"])
+        if "/Names" in embedded_files_names_tree:
+            # Simple case: We already have a flat list.
+            return cast(ArrayObject, embedded_files_names_tree[NameObject(CA.NAMES)])
+        if "/Kids" not in embedded_files_names_tree:
+            # Invalid case: This is no name tree.
+            raise PdfReadError("Got neither Names nor Kids in embedded files tree.")
+
+        # Complex case: Convert a /Kids-based name tree to a /Names-based one.
+        # /Name-based ones are much easier to handle and allow us to simplify the
+        # actual insertion logic by only having to consider one case.
+        names = ArrayObject()
+        kids = cast(ArrayObject, embedded_files_names_tree["/Kids"].get_object())
+        embedded_files_names_dictionary = DictionaryObject(
+            {NameObject(CA.NAMES): names}
+        )
+        names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
+        for kid in kids:
+            # Write the flattened file entries. As we do not change the actual files,
+            # this should not have any impact on references to them.
+            # There might be further (nested) kids here.
+            # Wait for an example before evaluating an implementation.
+            for name in kid.get_object().get("/Names", []):
+                names.append(name)
+        return names
 
     @property
     def alternative_name(self) -> str | None:
