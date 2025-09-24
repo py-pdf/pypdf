@@ -441,3 +441,51 @@ def test_embedded_file__delete__no_indirect_reference():
     embedded_file.delete()
     attachments = list(writer.attachment_list)
     assert len(attachments) == 0
+
+
+@pytest.mark.enable_socket
+def test_embedded_file__create__kids_based_name_tree():
+    """Test for issue #3473."""
+    url = "https://github.com/user-attachments/files/18691309/embedded_files_kids.pdf"
+    name = "embedded_files_kids.pdf"
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+
+    writer.add_attachment("test.pdf", b"content")
+
+    assert dict(writer.attachments) == {
+        "factur-x.xml": [
+            (
+                b"Hello World!\n\nLorem ipsum dolor sit amet, consetetur sad"
+                b"ipscing elitr, sed diam nonumy eirmod tempor\ninvidunt ut"
+                b" labore et dolore magna aliquyam erat, sed diam voluptua"
+                b". At vero eos et accusam\net justo duo dolores et ea rebu"
+                b"m. Stet clita kasd gubergren, no sea takimata sanctus es"
+                b"t Lorem\nipsum dolor sit amet. Lorem ipsum dolor sit amet"
+                b", consetetur sadipscing elitr, sed diam\nnonumy eirmod te"
+                b"mpor invidunt ut labore et dolore magna aliquyam erat, s"
+                b"ed diam voluptua.\nAt vero eos et accusam et justo duo do"
+                b"lores et ea rebum. Stet clita kasd gubergren, no sea\ntak"
+                b"imata sanctus est Lorem ipsum dolor sit amet.\n"
+            )
+        ],
+        "test.pdf": [b"content"]
+    }
+
+    attachments = list(writer.attachment_list)
+    assert len(attachments) == 2
+    assert writer.root_object["/Names"]["/EmbeddedFiles"]["/Names"] == [
+        "factur-x.xml", attachments[0].pdf_object.indirect_reference,
+        "test.pdf", attachments[1].pdf_object.indirect_reference,
+    ]
+
+
+def test_embedded_file__create__neither_kids_nor_names():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+
+    # Add an attachment and remove the corresponding /Names key.
+    writer.add_attachment("test.txt", b"Hello, World!")
+    del writer.root_object["/Names"]["/EmbeddedFiles"]["/Names"]
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Got neither Names nor Kids in embedded files tree\.$"):
+        writer.add_attachment("test2.txt", b"content2")
