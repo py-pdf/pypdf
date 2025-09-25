@@ -29,6 +29,7 @@
 
 import os
 import re
+from collections.abc import Iterable
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
 from types import TracebackType
@@ -36,13 +37,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    Iterable,
-    List,
     Optional,
-    Set,
-    Tuple,
-    Type,
     Union,
     cast,
 )
@@ -116,25 +111,25 @@ class PdfReader(PdfDocCommon):
         password: Union[None, str, bytes] = None,
     ) -> None:
         self.strict = strict
-        self.flattened_pages: Optional[List[PageObject]] = None
+        self.flattened_pages: Optional[list[PageObject]] = None
 
         #: Storage of parsed PDF objects.
-        self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
+        self.resolved_objects: dict[tuple[Any, Any], Optional[PdfObject]] = {}
 
         self._startxref: int = 0
         self.xref_index = 0
-        self.xref: Dict[int, Dict[Any, Any]] = {}
-        self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
-        self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
+        self.xref: dict[int, dict[Any, Any]] = {}
+        self.xref_free_entry: dict[int, dict[Any, Any]] = {}
+        self.xref_objStm: dict[int, tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
 
         # Map page indirect_reference number to page number
-        self._page_id2num: Optional[Dict[Any, Any]] = None
+        self._page_id2num: Optional[dict[Any, Any]] = None
 
         self._validated_root: Optional[DictionaryObject] = None
 
         self._initialize_stream(stream)
-        self._known_objects: Set[Tuple[int, int]] = set()
+        self._known_objects: set[tuple[int, int]] = set()
 
         self._override_encryption = False
         self._encryption: Optional[Encryption] = None
@@ -183,7 +178,7 @@ class PdfReader(PdfDocCommon):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
+        exc_type: Optional[type[BaseException]],
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> None:
@@ -527,7 +522,7 @@ class PdfReader(PdfDocCommon):
         )
         return retval
 
-    def read_object_header(self, stream: StreamType) -> Tuple[int, int]:
+    def read_object_header(self, stream: StreamType) -> tuple[int, int]:
         # Should never be necessary to read out whitespace, since the
         # cross-reference table should put us in the right spot to read the
         # object header. In reality some files have stupid cross-reference
@@ -906,7 +901,7 @@ class PdfReader(PdfDocCommon):
         stream.seek(-1, 1)
         read_non_whitespace(stream)
         stream.seek(-1, 1)
-        new_trailer = cast(Dict[str, Any], read_object(stream, self))
+        new_trailer = cast(dict[str, Any], read_object(stream, self))
         for key, value in new_trailer.items():
             if key not in self.trailer:
                 self.trailer[key] = value
@@ -976,16 +971,22 @@ class PdfReader(PdfDocCommon):
         if cast(str, xrefstream["/Type"]) != "/XRef":
             raise PdfReadError(f"Unexpected type {xrefstream['/Type']!r}")
         self.cache_indirect_object(generation, idnum, xrefstream)
-        stream_data = BytesIO(xrefstream.get_data())
+
         # Index pairs specify the subsections in the dictionary.
         # If none, create one subsection that spans everything.
-        idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
-        entry_sizes = cast(Dict[Any, Any], xrefstream.get("/W"))
+        if "/Size" not in xrefstream:
+            # According to table 17 of the PDF 2.0 specification, this key is required.
+            raise PdfReadError(f"Size missing from XRef stream {xrefstream!r}!")
+        idx_pairs = xrefstream.get("/Index", [0, xrefstream["/Size"]])
+
+        entry_sizes = cast(dict[Any, Any], xrefstream.get("/W"))
         assert len(entry_sizes) >= 3
         if self.strict and len(entry_sizes) > 3:
             raise PdfReadError(f"Too many entry sizes: {entry_sizes}")
 
-        def get_entry(i: int) -> Union[int, Tuple[int, ...]]:
+        stream_data = BytesIO(xrefstream.get_data())
+
+        def get_entry(i: int) -> Union[int, tuple[int, ...]]:
             # Reads the correct number of bytes for each entry. See the
             # discussion of the W parameter in PDF spec table 17.
             if entry_sizes[i] > 0:
@@ -998,7 +999,7 @@ class PdfReader(PdfDocCommon):
                 return 1  # First value defaults to 1
             return 0
 
-        def used_before(num: int, generation: Union[int, Tuple[int, ...]]) -> bool:
+        def used_before(num: int, generation: Union[int, tuple[int, ...]]) -> bool:
             # We move backwards through the xrefs, don't replace any.
             return num in self.xref.get(generation, []) or num in self.xref_objStm  # type: ignore
 
@@ -1090,16 +1091,16 @@ class PdfReader(PdfDocCommon):
         stream.seek(0, 0)
         for m in re.finditer(rb"[\r\n \t][ \t]*trailer[\r\n \t]*(<<)", f_):
             stream.seek(m.start(1), 0)
-            new_trailer = cast(Dict[Any, Any], read_object(stream, self))
+            new_trailer = cast(dict[Any, Any], read_object(stream, self))
             # Here, we are parsing the file from start to end, the new data have to erase the existing.
             for key, value in list(new_trailer.items()):
                 self.trailer[key] = value
 
     def _read_xref_subsections(
         self,
-        idx_pairs: List[int],
-        get_entry: Callable[[int], Union[int, Tuple[int, ...]]],
-        used_before: Callable[[int, Union[int, Tuple[int, ...]]], bool],
+        idx_pairs: list[int],
+        get_entry: Callable[[int], Union[int, tuple[int, ...]]],
+        used_before: Callable[[int, Union[int, tuple[int, ...]]], bool],
     ) -> None:
         """Read and process the subsections of the xref."""
         for start, size in self._pairs(idx_pairs):
@@ -1130,7 +1131,7 @@ class PdfReader(PdfDocCommon):
                 elif self.strict:
                     raise PdfReadError(f"Unknown xref type: {xref_type}")
 
-    def _pairs(self, array: List[int]) -> Iterable[Tuple[int, int]]:
+    def _pairs(self, array: list[int]) -> Iterable[tuple[int, int]]:
         """Iterate over pairs in the array."""
         i = 0
         while i + 1 < len(array):
@@ -1247,7 +1248,7 @@ class PdfReader(PdfDocCommon):
         self,
         include: Union[None, Iterable[str]] = None,
         exclude: Union[None, Iterable[str]] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Integration into Jupyter Notebooks.
 

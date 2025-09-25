@@ -20,7 +20,7 @@ from pypdf import (
     Transformation,
 )
 from pypdf.annotations import Link
-from pypdf.errors import PageSizeNotDefinedError, PyPdfError
+from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
@@ -601,7 +601,7 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
-    # Test the owner password (stbytesr):
+    # Test the owner password (bytes):
     reader = PdfReader(pdf_file_path, password=b"ownerpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
@@ -688,7 +688,6 @@ def test_add_named_destination(pdf_file_path):
     assert root[4] == "A named dest3"
 
     # test get_object
-
     assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
     with pytest.raises(ValueError) as exc:
         writer.get_object(reader.pages[0].indirect_reference)
@@ -2416,7 +2415,7 @@ def test_selfont():
 
 
 @pytest.mark.enable_socket
-def test_no_ressource_for_14_std_fonts(caplog):
+def test_no_resource_for_14_std_fonts(caplog):
     """Cf #2670"""
     url = "https://github.com/py-pdf/pypdf/files/15405390/f1040.pdf"
     name = "iss2670.pdf"
@@ -2669,17 +2668,17 @@ def test_auto_write(tmp_path):
 def test_deprecate_with_as():
     """Yet another test for #2905"""
     with PdfWriter() as writer:
-        with pytest.warns(
-                expected_warning=DeprecationWarning,
-                match="with_as_usage is deprecated and will be removed in pypdf 6.0"
+        with pytest.raises(
+                expected_exception=DeprecationError,
+                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
         ):
-            val = writer.with_as_usage
-        assert val
-        with pytest.warns(
-                expected_warning=DeprecationWarning,
-                match="with_as_usage is deprecated and will be removed in pypdf 6.0"
+            _ = writer.with_as_usage
+
+        with pytest.raises(
+                expected_exception=DeprecationError,
+                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
         ):
-            writer.with_as_usage = val  # old code allowed setting this, so...
+            writer.with_as_usage = False  # old code allowed setting this, so...
 
 
 @pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")

@@ -1,7 +1,7 @@
 # pre-commit run --all-files
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
     -   id: check-ast
     -   id: check-case-conflict
@@ -19,19 +19,19 @@ repos:
         args: ['--maxkb=1000']
 
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.12.0
+    rev: v0.13.0
     hooks:
-    -   id: ruff
+    -   id: ruff-check
         args: ['--fix']
 
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
+    rev: v3.20.0
     hooks:
     -   id: pyupgrade
-        args: [--py38-plus]
+        args: [--py39-plus]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.16.0'
+    rev: v1.17.1
     hooks:
       - id: mypy
         additional_dependencies: [types-Pillow==10.2.0.20240822]

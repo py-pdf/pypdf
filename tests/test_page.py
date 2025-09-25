@@ -6,7 +6,7 @@ from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from random import shuffle
-from typing import Any, List, Tuple
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -512,7 +512,7 @@ def test_extract_text_visitor_callbacks():
 
     def extract_text_and_rectangles(
         page: PageObject, rect_filter=None
-    ) -> Tuple[List[PositionedText], List[Rectangle]]:
+    ) -> tuple[list[PositionedText], list[Rectangle]]:
         """
         Extracts texts and rectangles of a page of type pypdf._page.PageObject.
 
@@ -561,8 +561,8 @@ def test_extract_text_visitor_callbacks():
         return (texts, rectangles)
 
     def extract_table(
-        texts: List[PositionedText], rectangles: List[Rectangle]
-    ) -> List[List[List[PositionedText]]]:
+        texts: list[PositionedText], rectangles: list[Rectangle]
+    ) -> list[list[list[PositionedText]]]:
         """
         Extracts a table containing text.
 
@@ -641,7 +641,7 @@ def test_extract_text_visitor_callbacks():
 
         return rows
 
-    def extract_cell_text(cell_texts: List[PositionedText]) -> str:
+    def extract_cell_text(cell_texts: list[PositionedText]) -> str:
         """Joins the text-objects of a cell."""
         return ("".join(t.text for t in cell_texts)).strip()
 

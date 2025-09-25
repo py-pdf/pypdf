@@ -18,6 +18,18 @@ For more details, see an excellent answer on
 [StackOverflow](https://stackoverflow.com/questions/3444645/merge-pdf-files)
 by Paul Rooney.
 
+```{note}
+Dealing with large PDF files might reach the recursion limit of the current
+Python interpreter. In these cases, increasing the limit might help:
+
+```python
+import sys
+
+# Example: Increase the current limit by factor 5.
+sys.setrecursionlimit(sys.getrecursionlimit() * 5)
+```
+```
+
 ## Showing more merging options
 
 ```python

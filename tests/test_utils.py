@@ -236,7 +236,7 @@ def test_deprecation_no_replacement():
 
     with pytest.raises(
         DeprecationError,
-        match="foo is deprecated and was removed in pypdf 4.3.2.",
+        match=r"foo is deprecated and was removed in pypdf 4\.3\.2\.",
     ):
         foo()
 
@@ -358,6 +358,18 @@ def test_parse_datetime(text, expected):
     date = parse_iso8824_date(text)
     date_str = (date.isoformat() + date.strftime("%z"))[: len(expected)]
     assert date_str == expected
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("", None),
+        (None, None),
+    ],
+)
+def test_parse_datetime_edge_cases(text, expected):
+    date = parse_iso8824_date(text)
+    assert date == expected
 
 
 def test_parse_datetime_err():

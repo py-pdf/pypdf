@@ -1,5 +1,63 @@
 # CHANGELOG
 
+## Version 6.1.0, 2025-09-21
+
+### New Features (ENH)
+- Enhance XMP metadata handling with creation and setter methods (#3410)
+- Add all font metrics for base 14 Type 1 PDF fonts (#3363)
+- Allow deleting embedded files (#3461)
+- Add support for Python in FIPS mode for document identifier (#3438)
+
+### Bug Fixes (BUG)
+- Fix handling of UTF-16 encoded destination titles (#3463)
+- Guard empty input to prevent IndexError (#3448)
+
+### Developer Experience (DEV)
+- Fix type hint for XMP metadata setter to add bytes type (#3464)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.0.0...6.1.0)
+
+## Version 6.0.0, 2025-08-11
+
+### Security (SEC)
+- Limit decompressed size for FlateDecode filter (#3430)
+
+### Deprecations (DEP)
+- Drop Python 3.8 support (#3412)
+
+### New Features (ENH)
+- Move BlackIs1 functionality to tiff_header (#3421)
+
+### Robustness (ROB)
+- Skip Go-To actions without a destination (#3420)
+
+### Developer Experience (DEV)
+- Update code style related libraries (#3414)
+- Update mypy to 1.17.0 (#3413)
+- Stop testing on Python 3.8 and start testing on Python 3.14 (#3411)
+
+### Maintenance (MAINT)
+- Cleanup deprecations (#3424)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.9.0...6.0.0)
+
+## Version 5.9.0, 2025-07-27
+
+### New Features (ENH)
+- Automatically preserve links in added pages (#3298)
+- Allow writing/updating all properties of an embedded file (#3374)
+
+### Bug Fixes (BUG)
+- Fix XMP handling dropping indirect references (#3392)
+
+### Robustness (ROB)
+- Deal with DecodeParms being empty list (#3388)
+
+### Documentation (DOC)
+- Document how to read and modify XMP metadata (#3383)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.8.0...5.9.0)
+
 ## Version 5.8.0, 2025-07-13
 
 ### New Features (ENH)
@@ -293,9 +351,8 @@
 
 This version drops support for Python 3.7 (not maintained since July 2023), PdfMerger (use PdfWriter instead) and AnnotationBuilder (use annotations instead).
 
-
 ### Deprecations (DEP)
-- Remove the deprecated PfdMerger and AnnotationBuilder classes and other deprecations cleanup (#2813)
+- Remove the deprecated PdfMerger and AnnotationBuilder classes and other deprecations cleanup (#2813)
 - Drop Python 3.7 support (#2793)
 
 ### New Features (ENH)

@@ -29,7 +29,7 @@ def test_get_imagemode_recursion_depth():
     reader = PdfReader(BytesIO(content.replace(source, target)))
     with pytest.raises(
         PdfReadError,
-        match="Color spaces nested too deeply. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH.",
+        match=r"Color spaces nested too deeply\. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH\.",
     ):
         reader.pages[0].images[0]
 
@@ -129,7 +129,7 @@ def test_extended_image_frombytes_zero_data():
     size = (1, 1)
     data = b""
 
-    with pytest.raises(EmptyImageDataError, match="Data is 0 bytes, cannot process an image from empty data."):
+    with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
         _extended_image_frombytes(mode, size, data)
 
 

@@ -31,17 +31,11 @@
 import struct
 import zlib
 from abc import abstractmethod
+from collections.abc import Generator, Iterable, Iterator, Mapping
 from datetime import datetime
 from typing import (
     Any,
-    Dict,
-    Generator,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
     Optional,
-    Tuple,
     Union,
     cast,
 )
@@ -50,7 +44,7 @@ from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
 from ._utils import (
-    deprecate_with_replacement,
+    deprecation_with_replacement,
     logger_warning,
     parse_iso8824_date,
 )
@@ -59,13 +53,13 @@ from .constants import CatalogDictionary as CD
 from .constants import (
     CheckboxRadioButtonAttributes,
     GoToActionArguments,
+    PagesAttributes,
     UserAccessPermissions,
 )
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
-from .constants import PagesAttributes as PA
 from .errors import PdfReadError, PyPdfError
 from .generic import (
     ArrayObject,
@@ -93,7 +87,7 @@ from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
 
 
-def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
+def convert_to_int(d: bytes, size: int) -> Union[int, tuple[Any, ...]]:
     if size > 8:
         raise PdfReadError("Invalid size in convert_to_int")
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
@@ -270,7 +264,7 @@ class PdfDocCommon:
 
     strict: bool = False  # default
 
-    flattened_pages: Optional[List[PageObject]] = None
+    flattened_pages: Optional[list[PageObject]] = None
 
     _encryption: Optional[Encryption] = None
 
@@ -377,7 +371,7 @@ class PdfDocCommon:
     def _get_page_in_node(
         self,
         page_number: int,
-    ) -> Tuple[DictionaryObject, int]:
+    ) -> tuple[DictionaryObject, int]:
         """
         Retrieve the node and position within the /Kids containing the page.
         If page_number is greater than the number of pages, it returns the top node, -1.
@@ -386,7 +380,7 @@ class PdfDocCommon:
 
         def recursive_call(
             node: DictionaryObject, mi: int
-        ) -> Tuple[Optional[PdfObject], int]:
+        ) -> tuple[Optional[PdfObject], int]:
             ma = cast(int, node.get("/Count", 1))  # default 1 for /Page types
             if node["/Type"] == "/Page":
                 if page_number == mi:
@@ -412,7 +406,7 @@ class PdfDocCommon:
         return node, idx
 
     @property
-    def named_destinations(self) -> Dict[str, Destination]:
+    def named_destinations(self) -> dict[str, Destination]:
         """A read-only dictionary which maps names to destinations."""
         return self._get_named_destinations()
 
@@ -453,8 +447,8 @@ class PdfDocCommon:
     def _get_named_destinations(
         self,
         tree: Union[TreeObject, None] = None,
-        retval: Optional[Dict[str, Destination]] = None,
-    ) -> Dict[str, Destination]:
+        retval: Optional[dict[str, Destination]] = None,
+    ) -> dict[str, Destination]:
         """
         Retrieve the named destinations present in the document.
 
@@ -482,20 +476,19 @@ class PdfDocCommon:
             return retval
         assert tree is not None, "mypy"
 
-        if PA.KIDS in tree:
+        if PagesAttributes.KIDS in tree:
             # recurse down the tree
-            for kid in cast(ArrayObject, tree[PA.KIDS]):
+            for kid in cast(ArrayObject, tree[PagesAttributes.KIDS]):
                 self._get_named_destinations(kid.get_object(), retval)
         # §7.9.6, entries in a name tree node dictionary
         elif CA.NAMES in tree:  # /Kids and /Names are exclusives (§7.9.6)
             names = cast(DictionaryObject, tree[CA.NAMES])
             i = 0
             while i < len(names):
-                original_key = names[i].get_object()
+                key = names[i].get_object()
                 i += 1
-                if not isinstance(original_key, (bytes, str)):
+                if not isinstance(key, (bytes, str)):
                     continue
-                key = str(original_key)
                 try:
                     value = names[i].get_object()
                 except IndexError:
@@ -508,7 +501,9 @@ class PdfDocCommon:
                         continue
                 dest = self._build_destination(key, value)
                 if dest is not None:
-                    retval[key] = dest
+                    retval[cast(str, dest["/Title"])] = dest
+                    # Remain backwards-compatible.
+                    retval[str(key)] = dest
         else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF 1.1)
             for k__, v__ in tree.items():
                 val = v__.get_object()
@@ -528,10 +523,10 @@ class PdfDocCommon:
     def get_fields(
         self,
         tree: Optional[TreeObject] = None,
-        retval: Optional[Dict[Any, Any]] = None,
+        retval: Optional[dict[Any, Any]] = None,
         fileobj: Optional[Any] = None,
-        stack: Optional[List[PdfObject]] = None,
-    ) -> Optional[Dict[str, Any]]:
+        stack: Optional[list[PdfObject]] = None,
+    ) -> Optional[dict[str, Any]]:
         """
         Extract field data if this PDF contains interactive form fields.
 
@@ -591,10 +586,10 @@ class PdfDocCommon:
     def _build_field(
         self,
         field: Union[TreeObject, DictionaryObject],
-        retval: Dict[Any, Any],
+        retval: dict[Any, Any],
         fileobj: Any,
         field_attributes: Any,
-        stack: List[PdfObject],
+        stack: list[PdfObject],
     ) -> None:
         if all(attr not in field for attr in ("/T", "/TM")):
             return
@@ -614,7 +609,7 @@ class PdfDocCommon:
             if "/Off" not in retval[key]["/_States_"]:
                 retval[key][NameObject("/_States_")].append(NameObject("/Off"))
         elif obj.get(FA.FT, "") == "/Btn" and obj.get(FA.Ff, 0) & FA.FfBits.Radio != 0:
-            states: List[str] = []
+            states: list[str] = []
             retval[key][NameObject("/_States_")] = ArrayObject(states)
             for k in obj.get(FA.Kids, {}):
                 k = k.get_object()
@@ -635,7 +630,7 @@ class PdfDocCommon:
         tree: Union[TreeObject, DictionaryObject],
         retval: Any,
         fileobj: Any,
-        stack: List[PdfObject],
+        stack: list[PdfObject],
     ) -> None:
         if tree in stack:
             logger_warning(
@@ -643,9 +638,9 @@ class PdfDocCommon:
             )
             return
         stack.append(tree)
-        if PA.KIDS in tree:
+        if PagesAttributes.KIDS in tree:
             # recurse down the tree
-            for kid in tree[PA.KIDS]:  # type: ignore
+            for kid in tree[PagesAttributes.KIDS]:  # type: ignore
                 kid = kid.get_object()
                 self.get_fields(kid, retval, fileobj, stack)
 
@@ -686,7 +681,7 @@ class PdfDocCommon:
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
 
-    def get_form_text_fields(self, full_qualified_name: bool = False) -> Dict[str, Any]:
+    def get_form_text_fields(self, full_qualified_name: bool = False) -> dict[str, Any]:
         """
         Retrieve form fields from the document with textual data.
 
@@ -702,7 +697,7 @@ class PdfDocCommon:
 
         """
 
-        def indexed_key(k: str, fields: Dict[Any, Any]) -> str:
+        def indexed_key(k: str, fields: dict[Any, Any]) -> str:
             if k not in fields:
                 return k
             return (
@@ -726,7 +721,7 @@ class PdfDocCommon:
 
     def get_pages_showing_field(
         self, field: Union[Field, PdfObject, IndirectObject]
-    ) -> List[PageObject]:
+    ) -> list[PageObject]:
         """
         Provides list of pages where the field is called.
 
@@ -867,7 +862,7 @@ class PdfDocCommon:
 
             # check for sub-outline
             if "/First" in node:
-                sub_outline: List[Any] = []
+                sub_outline: list[Any] = []
                 self._get_outline(cast(DictionaryObject, node["/First"]), sub_outline)
                 if sub_outline:
                     outline.append(sub_outline)
@@ -934,9 +929,9 @@ class PdfDocCommon:
 
     def _build_destination(
         self,
-        title: str,
+        title: Union[str, bytes],
         array: Optional[
-            List[
+            list[
                 Union[NumberObject, IndirectObject, None, NullObject, DictionaryObject]
             ]
         ],
@@ -954,7 +949,7 @@ class PdfDocCommon:
         try:
             return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
         except PdfReadError:
-            logger_warning(f"Unknown destination: {title} {array}", __name__)
+            logger_warning(f"Unknown destination: {title!r} {array}", __name__)
             if self.strict:
                 raise
             # create a link to first Page
@@ -1040,7 +1035,7 @@ class PdfDocCommon:
         return outline_item
 
     @property
-    def pages(self) -> List[PageObject]:
+    def pages(self) -> list[PageObject]:
         """
         Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`.
         This property allows to get a page or a range of pages.
@@ -1057,7 +1052,7 @@ class PdfDocCommon:
         return _VirtualList(self.get_num_pages, self.get_page)  # type: ignore
 
     @property
-    def page_labels(self) -> List[str]:
+    def page_labels(self) -> list[str]:
         """
         A list of labels for the pages in this document.
 
@@ -1124,7 +1119,7 @@ class PdfDocCommon:
         self,
         list_only: bool = False,
         pages: Union[None, DictionaryObject, PageObject] = None,
-        inherit: Optional[Dict[str, Any]] = None,
+        inherit: Optional[dict[str, Any]] = None,
         indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
         """
@@ -1163,10 +1158,10 @@ class PdfDocCommon:
                 raise PdfReadError("Invalid object in /Pages")
             self.flattened_pages = []
 
-        if PA.TYPE in pages:
-            t = cast(str, pages[PA.TYPE])
+        if PagesAttributes.TYPE in pages:
+            t = cast(str, pages[PagesAttributes.TYPE])
         # if the page tree node has no /Type, consider as a page if /Kids is also missing
-        elif PA.KIDS not in pages:
+        elif PagesAttributes.KIDS not in pages:
             t = "/Page"
         else:
             t = "/Pages"
@@ -1175,7 +1170,7 @@ class PdfDocCommon:
             for attr in inheritable_page_attributes:
                 if attr in pages:
                     inherit[attr] = pages[attr]
-            for page in cast(ArrayObject, pages[PA.KIDS]):
+            for page in cast(ArrayObject, pages[PagesAttributes.KIDS]):
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirect_reference"] = page
@@ -1263,9 +1258,9 @@ class PdfDocCommon:
 
     def decode_permissions(
         self, permissions_code: int
-    ) -> Dict[str, bool]:  # pragma: no cover
+    ) -> dict[str, bool]:  # pragma: no cover
         """Take the permissions as an integer, return the allowed access."""
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             old_name="decode_permissions",
             new_name="user_access_permissions",
             removed_in="5.0.0",
@@ -1307,9 +1302,9 @@ class PdfDocCommon:
         ...  # pragma: no cover
 
     @property
-    def xfa(self) -> Optional[Dict[str, Any]]:
+    def xfa(self) -> Optional[dict[str, Any]]:
         tree: Optional[TreeObject] = None
-        retval: Dict[str, Any] = {}
+        retval: dict[str, Any] = {}
         catalog = self.root_object
 
         if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
@@ -1331,7 +1326,7 @@ class PdfDocCommon:
         return retval
 
     @property
-    def attachments(self) -> Mapping[str, List[bytes]]:
+    def attachments(self) -> Mapping[str, list[bytes]]:
         """Mapping of attachment filenames to their content."""
         return LazyDict(
             {
@@ -1345,7 +1340,7 @@ class PdfDocCommon:
         """Iterable of attachment objects."""
         yield from EmbeddedFile._load(self.root_object)
 
-    def _list_attachments(self) -> List[str]:
+    def _list_attachments(self) -> list[str]:
         """
         Retrieves the list of filenames of file attachments.
 
@@ -1360,7 +1355,7 @@ class PdfDocCommon:
                 names.append(name)
         return names
 
-    def _get_attachment_list(self, name: str) -> List[bytes]:
+    def _get_attachment_list(self, name: str) -> list[bytes]:
         out = self._get_attachments(name)[name]
         if isinstance(out, list):
             return out
@@ -1368,7 +1363,7 @@ class PdfDocCommon:
 
     def _get_attachments(
         self, filename: Optional[str] = None
-    ) -> Dict[str, Union[bytes, List[bytes]]]:
+    ) -> dict[str, Union[bytes, list[bytes]]]:
         """
         Retrieves all or selected file attachments of the PDF as a dictionary of file names
         and the file data as a bytestring.
@@ -1384,7 +1379,7 @@ class PdfDocCommon:
             If the filename exists multiple times a list of the different versions will be provided.
 
         """
-        attachments: Dict[str, Union[bytes, List[bytes]]] = {}
+        attachments: dict[str, Union[bytes, list[bytes]]] = {}
         for entry in self.attachment_list:
             names = set()
             alternative_name = entry.alternative_name
@@ -1413,7 +1408,7 @@ class PdfDocCommon:
         self,
         include: Union[None, Iterable[str]] = None,
         exclude: Union[None, Iterable[str]] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Integration into Jupyter Notebooks.
 

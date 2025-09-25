@@ -58,7 +58,8 @@ a       Lowercase letters (a to z for the first 26 pages,
                            aa to zz for the next 26, and so on)
 """
 
-from typing import Iterator, List, Optional, Tuple, cast
+from collections.abc import Iterator
+from typing import Optional, cast
 
 from ._protocols import PdfCommonDocProtocol
 from ._utils import logger_warning
@@ -182,10 +183,10 @@ def index2label(reader: PdfCommonDocProtocol, index: int) -> str:
         # Limit maximum depth.
         level = 0
         while level < 100:
-            kids = cast(List[DictionaryObject], number_tree["/Kids"])
+            kids = cast(list[DictionaryObject], number_tree["/Kids"])
             for kid in kids:
                 # kid = {'/Limits': [0, 63], '/Nums': [0, {'/P': 'C1'}, ...]}
-                limits = cast(List[int], kid["/Limits"])
+                limits = cast(list[int], kid["/Limits"])
                 if limits[0] <= index <= limits[1]:
                     if not is_null_or_none(kid.get("/Kids", None)):
                         # Recursive definition.
@@ -268,7 +269,7 @@ def nums_clear_range(
 def nums_next(
     key: NumberObject,
     nums: ArrayObject,
-) -> Tuple[Optional[NumberObject], Optional[DictionaryObject]]:
+) -> tuple[Optional[NumberObject], Optional[DictionaryObject]]:
     """
     Return the (key, value) pair of the entry after the given one.
 
