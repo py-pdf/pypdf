@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.constants import AFRelationship
 from pypdf.errors import PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
@@ -43,7 +44,7 @@ def test_embedded_file__basic(tmpdir):
         assert attachment.name == "test.txt"
         assert attachment.alternative_name == "test.txt"
         assert attachment.description is None
-        assert attachment.associated_file_relationship == "/Unspecified"
+        assert attachment.associated_file_relationship == AFRelationship.UNSPECIFIED
         assert attachment.subtype is None
         assert attachment.content == b"Hello World\n"
         assert attachment.size == 12
@@ -101,7 +102,7 @@ def test_embedded_file__kids():
     assert attachment.name == "factur-x.xml"
     assert attachment.alternative_name == "factur-x.xml"
     assert attachment.description == "ZUGFeRD electronic invoice"
-    assert attachment.associated_file_relationship == "/Alternative"
+    assert attachment.associated_file_relationship == AFRelationship.ALTERNATIVE
     assert attachment.subtype == "/text/xml"
     assert attachment.content.startswith(b"Hello World!\n\nLorem ipsum dolor sit amet, ")
     assert attachment.content.endswith(b"\ntakimata sanctus est Lorem ipsum dolor sit amet.\n")
@@ -366,7 +367,7 @@ def test_embedded_file__setters_integration():
     modification_date = datetime.datetime(2023, 1, 2, 12, 0, 0)
     embedded_file.modification_date = modification_date
     embedded_file.checksum = ByteStringObject(b"checksum123")
-    embedded_file.associated_file_relationship = NameObject("/Data")
+    embedded_file.associated_file_relationship = NameObject(AFRelationship.DATA)
 
     # Make sure that this is an indirect object for PDF/A-3 compliance.
     assert embedded_file.pdf_object.indirect_reference == IndirectObject(6, 0, writer)
