@@ -1,7 +1,7 @@
 import re
 from typing import Any, Optional, Union, cast
 
-from .._cmap import _default_fonts_space_width, build_char_map_from_dict
+from .._cmap import build_char_map_from_dict
 from .._codecs.core_fontmetrics import CORE_FONT_METRICS
 from .._font import FontDescriptor
 from .._utils import logger_warning
@@ -419,8 +419,8 @@ class TextStreamAppearance(DecodedStreamObject):
             ).get_object(),
         )
         document_font_resources = document_resources.get("/Font", DictionaryObject()).get_object()
-        # _default_fonts_space_width keys is the list of Standard fonts
-        if font_name not in document_font_resources and font_name not in _default_fonts_space_width:
+        # CORE_FONT_METRICS is the dict with Standard font metrics
+        if font_name not in document_font_resources and font_name[1:] not in CORE_FONT_METRICS:
             # ...or AcroForm dictionary
             document_resources = cast(
                 dict[Any, Any],
