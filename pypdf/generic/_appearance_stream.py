@@ -256,27 +256,35 @@ class TextStreamAppearance(DecodedStreamObject):
         if font_resource:
             font_resource = cast(DictionaryObject, font_resource.get_object())
             font_descriptor = FontDescriptor.from_font_resource(font_resource)
-            _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
-                200, font_resource
-            )
-            try:  # remove width stored in -1 key
-                del font_map[-1]
-            except KeyError:
-                pass
-            font_glyph_byte_map: dict[str, bytes]
-            if isinstance(font_encoding, str):
-                font_glyph_byte_map = {
-                    v: k.encode(font_encoding) for k, v in font_map.items()
-                }
-            else:
-                font_glyph_byte_map = {v: bytes((k,)) for k, v in font_encoding.items()}
-                font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
-                for key, value in font_map.items():
-                    font_glyph_byte_map[value] = font_encoding_rev.get(key, key)
         else:
-            logger_warning(f"Font dictionary for {font_name} not found.", __name__)
-            font_glyph_byte_map = {}
-            font_descriptor = FontDescriptor()
+            logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
+            font_name = "/Helv"
+            font_resource = DictionaryObject()
+            font_resource[NameObject("/Type")] = NameObject("/Font")
+            font_resource[NameObject("/Subtype")] = NameObject("/Type1")
+            font_resource[NameObject("/Name")] = NameObject("/Helv")
+            font_resource[NameObject("/BaseFont")] = NameObject("/Helvetica")
+            font_resource[NameObject("/Encoding")] = NameObject("/MacRomanEncoding")
+            font_descriptor = CORE_FONT_METRICS["Helvetica"]
+
+        # Get the font glyph data
+        _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
+            200, font_resource
+        )
+        try:  # remove width stored in -1 key
+            del font_map[-1]
+        except KeyError:
+            pass
+        font_glyph_byte_map: dict[str, bytes]
+        if isinstance(font_encoding, str):
+            font_glyph_byte_map = {
+                v: k.encode(font_encoding) for k, v in font_map.items()
+            }
+        else:
+            font_glyph_byte_map = {v: bytes((k,)) for k, v in font_encoding.items()}
+            font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
+            for key, value in font_map.items():
+                font_glyph_byte_map[value] = font_encoding_rev.get(key, key)
 
         ap_stream_data = self._appearance_stream_data(
             text, selection, rect, font_descriptor, font_glyph_byte_map, font_name, font_size, font_color, multiline
@@ -287,19 +295,18 @@ class TextStreamAppearance(DecodedStreamObject):
         self[NameObject("/BBox")] = RectangleObject(rect)
         self.set_data(ByteStringObject(ap_stream_data))
         self[NameObject("/Length")] = NumberObject(len(ap_stream_data))
-        # Update Resources with font information if necessary
-        if font_resource is not None:
-            self[NameObject("/Resources")] = DictionaryObject(
-                {
-                    NameObject("/Font"): DictionaryObject(
-                        {
-                            NameObject(font_name): getattr(
-                                font_resource, "indirect_reference", font_resource
-                            )
-                        }
-                    )
-                }
-            )
+        # Update Resources with font information
+        self[NameObject("/Resources")] = DictionaryObject(
+            {
+                NameObject("/Font"): DictionaryObject(
+                    {
+                        NameObject(font_name): getattr(
+                            font_resource, "indirect_reference", font_resource
+                        )
+                    }
+                )
+            }
+        )
 
     @classmethod
     def from_text_annotation(
