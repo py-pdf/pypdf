@@ -30,6 +30,7 @@ writer.update_page_form_field_values(
     writer.pages[0],
     {"fieldname": "some filled in text"},
     auto_regenerate=False,
+    flatten=False,
 )
 
 with open("filled-out.pdf", "wb") as output_stream:
@@ -40,6 +41,12 @@ Generally speaking, you will always want to use `auto_regenerate=False`. The
 parameter is `True` by default for legacy compatibility, but this flags the PDF
 processor to recompute the field's rendering, and may trigger a "save changes"
 dialog for users who open the generated PDF.
+
+If you want to flatten your form, that is, keeping all form field contents while
+removing the form fields themselves, you can set `flatten=True` to convert form
+field contents to regular pdf content, and then use
+`writer.remove_annotations(subtypes="/Widget")` to remove all form fields. This
+will result in a flattened pdf.
 
 ## Some notes about form fields and annotations
 
