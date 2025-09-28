@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## Version 6.1.1, 2025-09-28
+
+### Bug Fixes (BUG)
+- Insert new embedded files in a sorted manner (#3477)
+- Fix name tree handling for embedded files with Kids-based inputs (#3475)
+- Make embedding files not break PDF/A-3 compliance (#3472)
+
+### Documentation (DOC)
+- Document AFRelationship handling for PDF/A and provide constants (#3478)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.0...6.1.1)
+
 ## Version 6.1.0, 2025-09-21
 
 ### New Features (ENH)
