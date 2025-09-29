@@ -199,7 +199,7 @@ class PdfWriter(PdfDocCommon):
 
         self._info_obj: Optional[PdfObject]
         """The PDF files's document information dictionary,
-        the Info entry in the PDF file's trailer dictionary."""
+        defined by Info in the PDF file's trailer dictionary."""
 
         self._ID: Union[ArrayObject, None] = None
         """The PDF file identifier,
@@ -615,7 +615,7 @@ class PdfWriter(PdfDocCommon):
         """
         assert self.flattened_pages is not None, "mypy"
         if index < 0:
-            index = len(self.flattened_pages) + index
+            index += len(self.flattened_pages)
         if index < 0:
             raise ValueError("Invalid index value")
         if index >= len(self.flattened_pages):
@@ -680,7 +680,7 @@ class PdfWriter(PdfDocCommon):
         """
         Insert a blank page to this PDF file and return it.
 
-        If no page size is specified, use the size of the last page.
+        If no page size is specified for a dimension, use the size of the last page.
 
         Args:
             width: The width of the new page expressed in default user
@@ -697,10 +697,12 @@ class PdfWriter(PdfDocCommon):
                 and previous page does not exist.
 
         """
-        if width is None or (height is None and index < self.get_num_pages()):
+        if (width is None or height is None) and index < self.get_num_pages():
             oldpage = self.pages[index]
-            width = oldpage.mediabox.width
-            height = oldpage.mediabox.height
+            if width is None:
+                width = oldpage.mediabox.width
+            if height is None:
+                height = oldpage.mediabox.height
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
         return page
