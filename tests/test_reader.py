@@ -1863,3 +1863,14 @@ def test_read_pdf15_xref_stream():
             match=r"^Trailer cannot be read: Limit reached while decompressing\. 1545392 bytes remaining\.$"
     ):
         PdfReader(BytesIO(data_modified))
+
+
+@pytest.mark.enable_socket
+def test_read_standard_xref_table__two_whitespace_characters_between_offset_and_generation():
+    """Tests for #3482"""
+    url = "https://github.com/user-attachments/files/22591813/helloworld.pdf"
+    name = "issue3482.pdf"
+
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert len(reader.pages) == 1
+    assert reader.pages[0].extract_text() == "Hello World!"
