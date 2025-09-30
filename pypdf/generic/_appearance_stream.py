@@ -12,7 +12,7 @@ from ..generic import (
 )
 from ..generic._base import ByteStringObject, TextStringObject, is_null_or_none
 
-DEFAULT_FONT_HEIGHT_IN_MULTILINE = 12
+DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 
 
 class TextStreamAppearance(DecodedStreamObject):
@@ -28,7 +28,7 @@ class TextStreamAppearance(DecodedStreamObject):
         default_appearance: str = "",
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
-        font_height: float = 0,
+        font_size: float = 0,
         y_offset: float = 0,
     ) -> None:
         super().__init__()
@@ -43,14 +43,14 @@ class TextStreamAppearance(DecodedStreamObject):
             if selection and line in selection:
                 # may be improved but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
-                    f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rectangle.width - 2} {font_height + 2} re\n"
+                    f"1 {y_offset - (line_number * font_size * 1.4) - 1} {rectangle.width - 2} {font_size + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{default_appearance}\n"
                 ).encode()
             if line_number == 0:
                 ap_stream += f"2 {y_offset} Td\n".encode()
             else:
                 # Td is a relative translation
-                ap_stream += f"0 {-font_height * 1.4} Td\n".encode()
+                ap_stream += f"0 {-font_size * 1.4} Td\n".encode()
             encoded_line: list[bytes] = [
                 font_glyph_byte_map.get(c, c.encode("utf-16-be")) for c in line
             ]
@@ -72,8 +72,8 @@ class TextStreamAppearance(DecodedStreamObject):
         acro_form: DictionaryObject,  # _root_object[CatalogDictionary.ACRO_FORM])
         field: DictionaryObject,
         annotation: DictionaryObject,
-        font_name: str = "",
-        font_size: float = -1,
+        user_font_name: str = "",
+        user_font_size: float = -1,
     ) -> "TextStreamAppearance":
         """Creates a TextStreamAppearance object from a given text field annotation."""
 
@@ -92,23 +92,25 @@ class TextStreamAppearance(DecodedStreamObject):
             default_appearance = default_appearance.get_object()
         font_properties = default_appearance.replace("\n", " ").replace("\r", " ").split(" ")
         font_properties = [x for x in font_properties if x != ""]
-        if font_name:
-            font_properties[font_properties.index("Tf") - 2] = font_name
+        if user_font_name:
+            font_name = user_font_name
+            font_properties[font_properties.index("Tf") - 2] = user_font_name
         else:
             font_name = font_properties[font_properties.index("Tf") - 2]
-        font_height = (
-            font_size
-            if font_size >= 0
+        font_size = (
+            user_font_size
+            if user_font_size >= 0
             else float(font_properties[font_properties.index("Tf") - 1])
         )
-        if font_height == 0:
+        if font_size == 0:  # Only when not set and / or 0 in default appearance
             if field.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.Multiline:
-                font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE
+                font_size = DEFAULT_FONT_SIZE_IN_MULTILINE  # 12
             else:
-                font_height = rectangle.height - 2
-        font_properties[font_properties.index("Tf") - 1] = str(font_height)
+                font_size = rectangle.height - 2  # Set as large as possible
+        font_properties[font_properties.index("Tf") - 1] = str(font_size)
         default_appearance = " ".join(font_properties)
-        y_offset = rectangle.height - 1 - font_height
+
+        y_offset = rectangle.height - 1 - font_size
 
         # Retrieve font information from local DR ...
         document_resources: Any = cast(
@@ -167,12 +169,13 @@ class TextStreamAppearance(DecodedStreamObject):
         else:  # /Tx
             text = field.get("/V", "")
             selection = []
+
         # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
         text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
 
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
-            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_height, y_offset
+            text, selection, default_appearance, font_glyph_byte_map, rectangle, font_size, y_offset
         )
 
         if AnnotationDictionaryAttributes.AP in annotation:
