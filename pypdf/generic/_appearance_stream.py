@@ -41,7 +41,7 @@ class TextStreamAppearance(DecodedStreamObject):
         ).encode()
         for line_number, line in enumerate(text.replace("\n", "\r").split("\r")):
             if selection and line in selection:
-                # may be improved but cannot find how to get fill working => replaced with lined box
+                # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
                     f"1 {y_offset - (line_number * font_size * 1.4) - 1} {rectangle.width - 2} {font_size + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{default_appearance}\n"
@@ -81,38 +81,49 @@ class TextStreamAppearance(DecodedStreamObject):
         _rectangle = cast(RectangleObject, annotation[AnnotationDictionaryAttributes.Rect])
         rectangle = RectangleObject((0, 0, abs(_rectangle[2] - _rectangle[0]), abs(_rectangle[3] - _rectangle[1])))
 
-        # Extract font information
+        # Get default appearance dictionary from annotation
         default_appearance = annotation.get_inherited(
             AnnotationDictionaryAttributes.DA,
             acro_form.get(AnnotationDictionaryAttributes.DA, None),
         )
         if default_appearance is None:
+            # Create a default appearance if none was found in the annotation
             default_appearance = TextStringObject("/Helv 0 Tf 0 g")
         else:
             default_appearance = default_appearance.get_object()
+
+        # Embed user-provided font name and font size in the default appearance, also
+        # taking into account whether the field flags indicate a multiline field.
+        # Uses the variable font_properties as an intermediate.
         font_properties = default_appearance.replace("\n", " ").replace("\r", " ").split(" ")
         font_properties = [x for x in font_properties if x != ""]
+        # Override default appearance font name with user provided font name, if given.
         if user_font_name:
             font_name = user_font_name
             font_properties[font_properties.index("Tf") - 2] = user_font_name
         else:
+            # Indirectly this just reads font_name from default appearance.
             font_name = font_properties[font_properties.index("Tf") - 2]
+        # Override default appearance font size with user provided font size, if given.
         font_size = (
             user_font_size
             if user_font_size >= 0
             else float(font_properties[font_properties.index("Tf") - 1])
         )
+        # Parse the field flags to find whether we need to wrap text, find whether we need to scale font size
         if font_size == 0:  # Only when not set and / or 0 in default appearance
             if field.get(FieldDictionaryAttributes.Ff, 0) & FieldDictionaryAttributes.FfBits.Multiline:
                 font_size = DEFAULT_FONT_SIZE_IN_MULTILINE  # 12
             else:
                 font_size = rectangle.height - 2  # Set as large as possible
         font_properties[font_properties.index("Tf") - 1] = str(font_size)
+        # Reconstruct default appearance with user info and flags information
         default_appearance = " ".join(font_properties)
 
+        # Set the vertical offset
         y_offset = rectangle.height - 1 - font_size
 
-        # Retrieve font information from local DR ...
+        # Try to find a resource dictionary for the font
         document_resources: Any = cast(
             DictionaryObject,
             cast(
@@ -133,6 +144,8 @@ class TextStreamAppearance(DecodedStreamObject):
             )
             document_font_resources = document_resources.get_object().get("/Font", DictionaryObject()).get_object()
         font_resource = document_font_resources.get(font_name, None)
+
+        # If this annotation has a font resources, get the font character map
         if not is_null_or_none(font_resource):
             font_resource = cast(DictionaryObject, font_resource.get_object())
             _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
