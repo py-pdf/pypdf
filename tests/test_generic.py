@@ -1275,4 +1275,4 @@ def test_dictionaryobject__length_0_stream():
     writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
     output = BytesIO()
     writer.write(output)
-    assert b"\n8 0 obj\n<<\n/Length 0\n>>\nendobj\n" in output.getvalue()
+    assert b"\n8 0 obj\n<<\n/Length 0\n>>\nstream\n\nendstream\nendobj\n" in output.getvalue()
