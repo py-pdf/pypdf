@@ -2161,7 +2161,7 @@ class PageObject(DictionaryObject):
         Add action which will launch on the open or close trigger event of this page.
 
         Args:
-            event: "/O" or "/C", for open or close trigger event respectively.
+            trigger: "/O" or "/C", for open or close trigger event respectively.
             action_type: "JavaScript" is currently the only available action type.
             action: Your JavaScript.
 
@@ -2174,7 +2174,7 @@ class PageObject(DictionaryObject):
         Currently only an open or close event can be added, not both.
         """
         if trigger not in {"/O", "/C"}:
-            raise ValueError('trigger must be "/O" or "/C"')
+            raise ValueError('The trigger must be "/O" or "/C"')
 
         if action_type != "JavaScript":
             raise ValueError('Currently the only action_type supported is "JavaScript"')
