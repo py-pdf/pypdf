@@ -2153,16 +2153,15 @@ class PageObject(DictionaryObject):
 
     def add_action(
             self,
-            event: Literal["O", "C"] = "O",
+            trigger: Literal["O", "C"] = "O",
             action_type: Literal["JavaScript"] = "JavaScript",
             action: str = ""
         ) -> None:
         r"""
-        Add action which will launch on the open or close event of this
-        page.
+        Add action which will launch on the open or close trigger event of this page.
 
         Args:
-            event: "/O" or "/C", for open or close action respectively.
+            event: "/O" or "/C", for open or close trigger event respectively.
             action_type: "JavaScript" is currently the only available action type.
             action: Your JavaScript.
 
@@ -2171,25 +2170,24 @@ class PageObject(DictionaryObject):
         >>> output.add_action("/C", "JavaScript", 'app.alert("This is page " + this.pageNum);')
         # Example: This will display the page number when the page is closed.
 
-        Note that this will replace any existing open or close event on this page.
+        Note that this will replace any existing open or close trigger event on this page.
         Currently only an open or close event can be added, not both.
         """
-        if event not in {"/O", "/C"}:
-            raise ValueError('event must be "/O" or "/C"')
+        if trigger not in {"/O", "/C"}:
+            raise ValueError('trigger must be "/O" or "/C"')
 
         if action_type != "JavaScript":
             raise ValueError('Currently the only action_type supported is "JavaScript"')
 
         additional_actions = DictionaryObject()
         self[NameObject("/AA")] = additional_actions
-        additional_actions[NameObject(event)] = DictionaryObject(
+        additional_actions[NameObject(trigger)] = DictionaryObject(
             {
                 NameObject("/Type"): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
                 NameObject("/JS"): TextStringObject(f"{action}"),
             }
         )
-
         action_object = DecodedStreamObject()
         action_object.set_data(action.encode())
 
