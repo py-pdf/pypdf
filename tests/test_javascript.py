@@ -58,7 +58,7 @@ def test_page_add_action(pdf_file_writer):
     with pytest.raises(ValueError) as exc:
         page.add_action("/xyzzy", "JavaScript", 'app.alert("This is page " + this.pageNum);')
     assert (
-        exc.value.args[0] == 'trigger must be "/O" or "/C"'
+        exc.value.args[0] == 'The trigger must be "/O" or "/C"'
     )
 
     with pytest.raises(ValueError) as exc:
