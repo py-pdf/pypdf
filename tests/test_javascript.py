@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.generic import NameObject
 
 # Configure path environment
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -49,3 +50,27 @@ def test_added_js(pdf_file_writer):
     assert (
         first_js != second_js
     ), "add_js should add to the previous script in the catalog."
+
+
+def test_page_add_action(pdf_file_writer):
+    page = pdf_file_writer.pages[0]
+
+    with pytest.raises(ValueError) as exc:
+        page.add_action("/xyzzy", "JavaScript", 'app.alert("This is page " + this.pageNum);')
+    assert (
+        exc.value.args[0] == 'The trigger must be "/O" or "/C"'
+    )
+
+    with pytest.raises(ValueError) as exc:
+        page.add_action("/O", "xyzzy", 'app.alert("This is page " + this.pageNum);')
+    assert (
+        exc.value.args[0] == 'Currently the only action_type supported is "JavaScript"'
+    )
+
+    page.add_action("/O", "JavaScript", 'app.alert("This is page " + this.pageNum);')
+    expected = {"/O": {"/Type": "/Action", "/S": "/JavaScript", "/JS": 'app.alert("This is page " + this.pageNum);'}}
+    assert page[NameObject("/AA")] == expected
+
+    page.add_action("/C", "JavaScript", 'app.alert("This is page " + this.pageNum);')
+    expected = {"/C": {"/Type": "/Action", "/S": "/JavaScript", "/JS": 'app.alert("This is page " + this.pageNum);'}}
+    assert page[NameObject("/AA")] == expected
