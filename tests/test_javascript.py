@@ -52,13 +52,13 @@ def test_added_js(pdf_file_writer):
     ), "add_js should add to the previous script in the catalog."
 
 
-def test_page_add_js(pdf_file_writer):
+def test_page_add_action(pdf_file_writer):
     page = pdf_file_writer.pages[0]
 
     with pytest.raises(ValueError) as exc:
         page.add_action("/xyzzy", "JavaScript", 'app.alert("This is page " + this.pageNum);')
     assert (
-        exc.value.args[0] == 'event must be "/O" or "/C"'
+        exc.value.args[0] == 'trigger must be "/O" or "/C"'
     )
 
     with pytest.raises(ValueError) as exc:
