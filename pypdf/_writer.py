@@ -33,7 +33,7 @@ import hashlib
 import re
 import struct
 import uuid
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
 from pathlib import Path
@@ -1062,7 +1062,7 @@ class PdfWriter(PdfDocCommon):
     def update_page_form_field_values(
         self,
         page: Union[PageObject, list[PageObject], None],
-        fields: dict[str, Union[str, list[str], tuple[str, str, float]]],
+        fields: Mapping[str, Union[str, list[str], tuple[str, str, float]]],
         flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
         flatten: bool = False,
