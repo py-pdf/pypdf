@@ -1512,10 +1512,10 @@ class PageObject(DictionaryObject):
 
         """
         self.add_transformation((sx, 0, 0, sy, 0, 0))
-        self.artbox = self.artbox.scale(sx, sy)
-        self.cropbox = self.cropbox.scale(sx, sy)
         self.bleedbox = self.bleedbox.scale(sx, sy)
         self.trimbox = self.trimbox.scale(sx, sy)
+        self.artbox = self.artbox.scale(sx, sy)
+        self.cropbox = self.cropbox.scale(sx, sy)
         self.mediabox = self.mediabox.scale(sx, sy)
 
         if PG.ANNOTS in self:
