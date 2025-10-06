@@ -1504,3 +1504,27 @@ def test_extract_text__none_type():
     page[NameObject("/Resources")] = resources
     with mock.patch.object(none_reference, "get_object", return_value=None):
         assert page.extract_text() == ""
+
+
+@pytest.mark.enable_socket
+def test_scale_by():
+    """Tests for #3487"""
+    url = "https://github.com/user-attachments/files/22685841/input.pdf"
+    name = "issue3487.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    original_box = RectangleObject((0, 0, 595.275604, 841.88974))
+    expected_box = RectangleObject((0.0, 0.0, 297.637802, 420.94487))
+    for page in reader.pages:
+        assert page.artbox == original_box
+        assert page.bleedbox == original_box
+        assert page.cropbox == original_box
+        assert page.mediabox == original_box
+        assert page.trimbox == original_box
+
+        page.scale_by(0.5)
+        assert page.artbox == expected_box
+        assert page.bleedbox == expected_box
+        assert page.cropbox == expected_box
+        assert page.mediabox == expected_box
+        assert page.trimbox == expected_box
