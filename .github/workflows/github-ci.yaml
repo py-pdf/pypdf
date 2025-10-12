@@ -30,7 +30,7 @@ jobs:
     - name: Setup Python (3.11+)
       uses: actions/setup-python@v6
       with:
-        python-version: 3.13  # latest stable python
+        python-version: 3.14  # latest stable python
         allow-prereleases: true
     - name: Upgrade pip
       run: |
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14-dev"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
         use-crypto-lib: ["cryptography"]
         include:
           - python-version: "3.9"
