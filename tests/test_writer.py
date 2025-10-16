@@ -20,7 +20,7 @@ from pypdf import (
     Transformation,
 )
 from pypdf.annotations import Link
-from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
+from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
@@ -2851,3 +2851,20 @@ def test_unterminated_object__with_incremental_writer():
     writer.write(fi)
     b = fi.getvalue()
     assert b[-39:] == b"\nendstream\nendobj\nstartxref\n1240\n%%EOF\n"
+
+
+def test_wrong_size_in_incremental_pdf(caplog):
+    source_data = RESOURCE_ROOT.joinpath("crazyones.pdf").read_bytes()
+    writer = PdfWriter(BytesIO(source_data), incremental=True)
+    writer._add_object(DictionaryObject())
+
+    incremental_data = BytesIO()
+    writer.write(incremental_data)
+    modified_data = incremental_data.getvalue().replace(b"/Size 25", b"/Size 2")
+
+    writer = PdfWriter(BytesIO(modified_data), incremental=False)
+    assert "Object count 19 exceeds defined trailer size 2" in caplog.text
+    assert len(writer._objects) == 20
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Got index error while flattening\.$"):
+        PdfWriter(BytesIO(modified_data), incremental=True)

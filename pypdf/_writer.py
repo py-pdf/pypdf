@@ -78,7 +78,7 @@ from .constants import Core as CO
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import TrailerKeys as TK
-from .errors import PyPdfError
+from .errors import PdfReadError, PyPdfError
 from .generic import (
     PAGE_FIT,
     ArrayObject,
@@ -1253,13 +1253,27 @@ class PdfWriter(PdfDocCommon):
         self._root_object = reader.root_object.clone(self)
         self._pages = self._root_object.raw_get("/Pages")
 
-        assert len(self._objects) <= cast(int, reader.trailer["/Size"])  # for pytest
+        if len(self._objects) > cast(int, reader.trailer["/Size"]):
+            if self.strict:
+                raise PdfReadError(
+                    f"Object count {len(self._objects)} exceeds defined trailer size {reader.trailer['/Size']}"
+                )
+            logger_warning(
+                f"Object count {len(self._objects)} exceeds defined trailer size {reader.trailer['/Size']}",
+                __name__
+            )
+
         # must be done here before rewriting
         if self.incremental:
             self._original_hash = [
                 (obj.hash_bin() if obj is not None else 0) for obj in self._objects
             ]
-        self._flatten()
+
+        try:
+            self._flatten()
+        except IndexError:
+            raise PdfReadError("Got index error while flattening.")
+
         assert self.flattened_pages is not None
         for p in self.flattened_pages:
             self._replace_object(cast(IndirectObject, p.indirect_reference).idnum, p)
