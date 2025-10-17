@@ -40,14 +40,13 @@ from pathlib import Path
 from re import Pattern
 from types import TracebackType
 from typing import (
-    IO,
     Any,
     Callable,
+    cast,
+    IO,
     Optional,
     Union,
-    cast,
 )
-
 from ._cmap import _default_fonts_space_width, build_char_map_from_dict
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
@@ -59,6 +58,7 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     deprecation_no_replacement,
+    logger_debug,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
@@ -80,7 +80,6 @@ from .constants import PageAttributes as PG
 from .constants import TrailerKeys as TK
 from .errors import PdfReadError, PyPdfError
 from .generic import (
-    PAGE_FIT,
     ArrayObject,
     BooleanObject,
     ByteStringObject,
@@ -95,6 +94,7 @@ from .generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PAGE_FIT,
     PdfObject,
     RectangleObject,
     ReferenceLink,
@@ -1692,74 +1692,213 @@ class PdfWriter(PdfDocCommon):
         remove_orphans: bool = True,
     ) -> None:
         """
-        Parse the PDF file and merge objects that have the same hash.
-        This will make objects common to multiple pages.
-        Recommended to be used just before writing output.
+        Compress identical objects in the PDF file.
 
         Args:
             remove_identicals: Remove identical objects.
             remove_orphans: Remove unreferenced objects.
-
         """
+        if not remove_identicals and not remove_orphans:
+            logger_warning(
+                "Remove identical objects and remove unreferenced objects are both disabled. Nothing has been done.",
+                __name__,
+            )
+            return
 
-        def replace_in_obj(
-            obj: PdfObject, crossref: dict[IndirectObject, IndirectObject]
+        orphans: Optional[list[bool]] = None
+
+        if remove_identicals:
+            # When remove_orphans=True, also mark reachability while rewriting refs
+            orphans = self._remove_identical_objects(mark_orphans=remove_orphans)
+
+        if remove_orphans:
+            if orphans is None:
+                # recursive DFS (mark phase)
+                orphans = self._perform_orphan_recursive_mark_phase()
+            # sweep phase
+            assert orphans is not None
+            self._perform_orphan_sweep_phase(orphans)
+
+
+    def _remove_identical_objects(self, mark_orphans: bool) -> Optional[list[bool]]:
+        """
+        Detect identical objects by hash and collapse duplicates.
+        If mark_orphans is True, mark reachable objects during the rewrite so that the caller
+        can later sweep truly unreachable ones.
+
+        This function:
+        - groups objects by obj.hash_value(),  ---  WARNING: this can cause collisions !!!
+        - keeps the first occurrence as the representative,
+        - for each duplicate sets self._objects[idx] = None (we do not insert an IndirectObject here),
+        - updates references inside *live* objects so that any IndirectObject that previously
+          pointed to a duplicate will point to the representative.
+
+        IMPORTANT: This function does NOT remove unreachable objects (orphans).
+        Removing unreachable objects is done by the orphan path (mark & sweep) outside.
+
+        Args:
+            mark_orphans: if True, mark reachability while rewriting references.
+
+        Returns:
+            Optional[list[bool]]: a boolean list the size of self._objects where True means
+            "unvisited (potential orphan)" and False means "reachable". Returns None if
+            mark_orphans is False.
+        """
+        # -----
+        def replace_indirect_object(
+            obj: PdfObject,
+            crossref: dict[IndirectObject, IndirectObject],
+            mark_orphans: bool,
         ) -> None:
-            if isinstance(obj, DictionaryObject):
-                key_val = obj.items()
+            """
+            Replace an indirect object with its representative.
+            If mark_orphans is True, mark reachable objects during the rewrite so that the caller
+            can later sweep truly unreachable ones.
+            
+            --- SECURITY CONCERN !!!
+            This function is recursive. A maliciusly crafted PDF file could cause an infinite loop
+            """
+            if isinstance(obj, (DictionaryObject, StreamObject)):
+                key_value_pairs = obj.items()
             elif isinstance(obj, ArrayObject):
-                key_val = enumerate(obj)  # type: ignore
-            else:
+                key_value_pairs = enumerate(obj)
+            else:  # primitives
                 return
-            assert isinstance(obj, (DictionaryObject, ArrayObject))
-            for k, v in key_val:
-                if isinstance(v, IndirectObject):
-                    orphans[v.idnum - 1] = False
-                    if v in crossref:
-                        obj[k] = crossref[v]
-                else:
-                    """the filtering on DictionaryObject and ArrayObject only
-                    will be performed within replace_in_obj"""
-                    replace_in_obj(v, crossref)
 
-        # _idnum_hash :dict[hash]=(1st_ind_obj,[other_indir_objs,...])
-        self._idnum_hash = {}
-        orphans = [True] * len(self._objects)
-        # look for similar objects
-        for idx, obj in enumerate(self._objects):
+            # Traverse nested containers
+            for key, value in key_value_pairs:
+                if isinstance(value, IndirectObject):
+                    if mark_orphans and orphans is not None:
+                        # idnum is 1-based; list is 0-based
+                        orphans[value.idnum - 1] = False
+                    if value in crossref:
+                        obj[key] = crossref[value]
+                else:
+                    replace_indirect_object(value, crossref, mark_orphans)
+        # -----
+
+        # Map: hash_value -> (representative_indirect, [duplicate_indirects...])
+        self._idnum_hash: dict[int, tuple[IndirectObject, list[IndirectObject]]] = {}
+        objects = list(self._objects)  # save copy
+        orphans: Optional[list[bool]] = [True] * len(objects) if mark_orphans else None
+
+        # PHASE 1: Group objects by hash and blank out duplicates
+        for idx, obj in enumerate(objects):
             if is_null_or_none(obj):
                 continue
-            assert obj is not None, "mypy"  # mypy: TypeGuard of `is_null_or_none` does not help here.
+            assert obj is not None
             assert isinstance(obj.indirect_reference, IndirectObject)
-            h = obj.hash_value()
-            if remove_identicals and h in self._idnum_hash:
-                self._idnum_hash[h][1].append(obj.indirect_reference)
+            hsh = obj.hash_value()
+            if hsh in self._idnum_hash:
+                # duplicate: record its indirect and clear the slot
+                self._idnum_hash[hsh][1].append(obj.indirect_reference)
                 self._objects[idx] = None
+                """
+                Here we are mutating self._objects in-place, while iterating at the
+                same time. If multi-threading is added in the future, this could
+                cause a race condition.
+                """
             else:
-                self._idnum_hash[h] = (obj.indirect_reference, [])
+                self._idnum_hash[hsh] = (obj.indirect_reference, [])
 
-        # generate the dict converting others to 1st
-        cnv = {v[0]: v[1] for v in self._idnum_hash.values() if len(v[1]) > 0}
+        # PHASE 2: Build reverse conversion map {dup_indirect -> rep_indirect}
         cnv_rev: dict[IndirectObject, IndirectObject] = {}
-        for k, v in cnv.items():
-            cnv_rev.update(zip(v, (k,) * len(v)))
+        for rep, dups in self._idnum_hash.values():
+            for dup in dups:
+                cnv_rev[dup] = rep
 
-        # replace reference to merged objects
+        # PHASE 3: Rewrite references inside remaining live container objects
         for obj in self._objects:
-            if isinstance(obj, (DictionaryObject, ArrayObject)):
-                replace_in_obj(obj, cnv_rev)
+            if isinstance(obj, (DictionaryObject, StreamObject, ArrayObject)):
+                replace_indirect_object(obj, cnv_rev, mark_orphans)
 
-        # remove orphans (if applicable)
-        orphans[self.root_object.indirect_reference.idnum - 1] = False  # type: ignore
+        if mark_orphans:
+            orphans[self.root_object.indirect_reference.idnum - 1] = False
+            orphans[self._info.indirect_reference.idnum - 1] = False
+            
+            try:
+                orphans[self._ID.indirect_reference.idnum - 1] = False
+            except AttributeError:
+                logger_debug(
+                    f"AttributeError: {__name__} has no attribute '_ID'.",
+                    __name__
+                )
+        return orphans
 
-        orphans[self._info.indirect_reference.idnum - 1] = False  # type: ignore
+    def _perform_orphan_recursive_mark_phase(
+        self
+    ) -> list[bool]:
+        """
+        Mark phase: mark reachable objects during the rewrite so that the caller
+        can later sweep truly unreachable ones.
 
+        Returns:
+            list[bool]: a boolean list the size of self._objects where True means
+            "unvisited (potential orphan)" and False means "reachable". Returns None if
+            mark_orphans is False.
+        """
+        # -----
+        def mark_orphans(
+            obj: PdfObject
+        )-> list[bool]:
+            """
+            Mark reachable objects during the rewrite so that the caller
+            can later sweep truly unreachable ones.
+            
+            --- SECURITY CONCERN !!!
+            This function is recursive. A maliciusly crafted PDF file could cause an infinite loop
+            """
+            if isinstance(obj, (DictionaryObject, StreamObject)):
+                key_value_pairs = obj.items()
+            elif isinstance(obj, ArrayObject):
+                key_value_pairs = enumerate(obj)
+            else:  # ignore primitives
+                return 
+            assert isinstance(obj, (DictionaryObject, StreamObject, ArrayObject))
+
+            for key, value in key_value_pairs:
+                if isinstance(value, IndirectObject):
+                    orphans[value.idnum - 1] = False
+                else:
+                    mark_orphans(value)
+        # -----
+        objects = list(self._objects)
+        orphans = [True] * len(objects)
+
+        for obj in self._objects:
+            if isinstance(obj, (DictionaryObject, StreamObject, ArrayObject)):
+                mark_orphans(obj)
+
+        orphans[self.root_object.indirect_reference.idnum - 1] = False
+        orphans[self._info.indirect_reference.idnum - 1] = False
+        
         try:
-            orphans[self._ID.indirect_reference.idnum - 1] = False  # type: ignore
+            orphans[self._ID.indirect_reference.idnum - 1] = False
         except AttributeError:
-            pass
+            logger_debug(
+                f"AttributeError: {__name__} has no attribute '_ID'.",
+                __name__
+            )
+        return orphans
+
+    def _perform_orphan_sweep_phase(
+        self,
+        orphans: list[bool],
+    ) -> None:
+        """
+        Perform orphan sweep phase removing the unreachable objects.
+
+        Args:
+            orphans (list[bool]): a boolean list the size of self._objects where True means
+            "unvisited (potential orphan)" and False means "reachable".
+        """
         for i in compress(range(len(self._objects)), orphans):
             self._objects[i] = None
+
+
+
+
+
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1
