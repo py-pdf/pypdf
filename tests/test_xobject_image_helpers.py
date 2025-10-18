@@ -5,10 +5,14 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader
-from pypdf._xobj_image_helpers import _extended_image_frombytes, _handle_flate
+from pypdf._xobj_image_helpers import (
+    _extended_image_frombytes,
+    _get_mode_and_invert_color,
+    _handle_flate,
+)
 from pypdf.errors import EmptyImageDataError, PdfReadError
-from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject
-
+from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NullObject, NumberObject
+from pypdf.constants import ColorSpaces, ImageAttributes as IA
 from . import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -160,3 +164,31 @@ def test_get_mode_and_invert_color():
     page = reader.pages[12]
     for _name, image in page.images.items():  # noqa: PERF102
         image.image.load()
+def test_get_mode_and_invert_color_prefers_color_space_hint():
+    x_object = {IA.COLOR_SPACE: ColorSpaces.DEVICE_RGB, "/BitsPerComponent": 8}
+    mode, invert_color = _get_mode_and_invert_color(
+        x_object, colors=3, color_space=NullObject()
+    )
+
+    assert mode == "RGB"
+    assert invert_color is False
+
+
+def test_get_mode_and_invert_color_prefers_gray():
+    x_object = {IA.COLOR_SPACE: ColorSpaces.DEVICE_GRAY, "/BitsPerComponent": 8}
+    mode, invert_color = _get_mode_and_invert_color(
+        x_object, colors=1, color_space=NullObject()
+    )
+
+    assert mode == "L"
+    assert invert_color is False
+
+
+def test_get_mode_and_invert_color_prefers_cmyk_sets_invert_flag():
+    x_object = {IA.COLOR_SPACE: ColorSpaces.DEVICE_CMYK, "/BitsPerComponent": 8}
+    mode, invert_color = _get_mode_and_invert_color(
+        x_object, colors=4, color_space=NullObject()
+    )
+
+    assert mode == "CMYK"
+    assert invert_color is True
