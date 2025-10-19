@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## Version 6.1.2, 2025-10-19
+
+### Bug Fixes (BUG)
+- Fix handling of zero-length StreamObject (#3485)
+
+### Robustness (ROB)
+- Deal with wrong size for incremental PDF files (#3495)
+- Improve handling for malformed cross-reference tables (#3483)
+
+### Developer Experience (DEV)
+- Use released Python 3.14
+- Use Mapping instead of dict in type hint of update_page_form_field_values (#3490)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.1...6.1.2)
+
 ## Version 6.1.1, 2025-09-28
 
 ### Bug Fixes (BUG)
