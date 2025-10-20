@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1760881642641,
+  "lastUpdate": 1760943398001,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -82505,6 +82505,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0026236534985070886",
             "extra": "mean: 648.6861864000048 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "30300755+Nid01@users.noreply.github.com",
+            "name": "Nid01",
+            "username": "Nid01"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e13a1e0d1b01454d68973662adbeecc08b623c22",
+          "message": "BUG: PageObject.scale() scales media box incorrectly (#3489)\n\nCloses #3487.\n\n---------\n\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2025-10-20T08:53:58+02:00",
+          "tree_id": "3176c13ed11c2f7f39c237053c8d9f7166947920",
+          "url": "https://github.com/py-pdf/pypdf/commit/e13a1e0d1b01454d68973662adbeecc08b623c22"
+        },
+        "date": 1760943393749,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.568582463778495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009827144413395536",
+            "extra": "mean: 280.22331280000117 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.653594527591284,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006764872091549581",
+            "extra": "mean: 63.883090764704775 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27799694867246477,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005585938304681913",
+            "extra": "mean: 3.597161784600007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.29587328614074,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007625377425684865",
+            "extra": "mean: 54.65713411764321 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0803001414064307,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13842712834406665",
+            "extra": "mean: 12.4532781946 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5024257970100336,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002168826293839235",
+            "extra": "mean: 665.5902754000181 msec\nrounds: 5"
           }
         ]
       }
