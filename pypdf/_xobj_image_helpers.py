@@ -367,16 +367,19 @@ def _apply_decode(
 def _get_mode_and_invert_color(
     x_object_obj: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
-    if (
-        IA.COLOR_SPACE in x_object_obj
-        and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
-    ):
-        # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: mode_str_type = "RGB"
+
+    preferred_mode: mode_str_type = ""
+    if IA.COLOR_SPACE in x_object_obj:
+        preferred_mode = {
+            ColorSpaces.DEVICE_RGB: "RGB",
+            ColorSpaces.DEVICE_GRAY: "L",
+            ColorSpaces.DEVICE_CMYK: "CMYK",
+        }.get(cast(str, x_object_obj[IA.COLOR_SPACE]), "")
+
     if x_object_obj.get("/BitsPerComponent", 8) < 8:
         mode, invert_color = _get_imagemode(
-            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
-        )
+            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, preferred_mode
+            )
     else:
         mode, invert_color = _get_imagemode(
             color_space,
@@ -389,6 +392,9 @@ def _get_mode_and_invert_color(
                 )
             )
             else colors,
-            "",
+            preferred_mode,
         )
+    if mode == "" and preferred_mode:
+        mode = preferred_mode
+        invert_color = preferred_mode == "CMYK"
     return mode, invert_color
