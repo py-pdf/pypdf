@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 6.1.3, 2025-10-22
+
+### Security (SEC)
+- Allow limiting size of LZWDecode streams (#3502)
+- Avoid infinite loop when reading broken DCT-based inline images (#3501)
+
+### Bug Fixes (BUG)
+- PageObject.scale() scales media box incorrectly (#3489)
+
+### Robustness (ROB)
+- Fail with explicit exception when image mode is an empty array (#3500)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.2...6.1.3)
+
 ## Version 6.1.2, 2025-10-19
 
 ### Bug Fixes (BUG)
