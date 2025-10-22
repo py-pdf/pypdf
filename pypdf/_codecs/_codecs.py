@@ -256,10 +256,10 @@ class LzwCodec(Codec):
                 self._add_entry_decode(self.decoding_table[old_code], decoded[0])
                 old_code = code
 
-            output_length += (current_length := len(decoded))
+            output_length += len(decoded)
             if output_length > self.max_output_length:
                 raise LimitReachedError(
-                    f"Limit reached while decompressing: {current_length} > {self.max_output_length}"
+                    f"Limit reached while decompressing: {output_length} > {self.max_output_length}"
                 )
 
         return output_stream.getvalue()
