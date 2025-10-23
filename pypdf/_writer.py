@@ -168,7 +168,10 @@ class PdfWriter(PdfDocCommon):
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
         incremental: bool = False,
         full: bool = False,
+        strict: bool = False,
     ) -> None:
+        self.strict = strict
+
         self.incremental = incremental or full
         """
         Returns if the PdfWriter object has been started in incremental mode.
