@@ -2232,6 +2232,7 @@ class PdfWriter(PdfDocCommon):
 
             clean(content, images, forms, text_filters)
             page.replace_contents(content)
+        return [], []  # type: ignore
 
     def remove_images(
         self,
@@ -3205,6 +3206,7 @@ class PdfWriter(PdfDocCommon):
                 o = cast(TreeObject, o["/Next"])
             else:
                 return None
+        return None  # This line may be unreachable?
 
     def reset_translation(
         self, reader: Union[None, PdfReader, IndirectObject] = None
