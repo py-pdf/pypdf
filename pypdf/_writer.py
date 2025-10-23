@@ -160,6 +160,10 @@ class PdfWriter(PdfDocCommon):
         full: If true, loads all the objects (always full if incremental = True).
             This parameter may allow loading large PDFs.
 
+        strict: If true, pypdf will raise an exception if a PDF does not follow the specification.
+            If false, pypdf will try to be forgiving and do something reasonable, but it will log
+            a warning message. It is a best-effort approach.
+
     """
 
     def __init__(
@@ -171,6 +175,11 @@ class PdfWriter(PdfDocCommon):
         strict: bool = False,
     ) -> None:
         self.strict = strict
+        """
+        If true, pypdf will raise an exception if a PDF does not follow the specification.
+        If false, pypdf will try to be forgiving and do something reasonable, but it will log
+        a warning message. It is a best-effort approach.
+        """
 
         self.incremental = incremental or full
         """

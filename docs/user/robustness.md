@@ -32,8 +32,7 @@ pypdf has two core objects:
 * {class}`~pypdf.PdfReader`
 * {class}`~pypdf.PdfWriter`
 
-Only the PdfReader has a `strict` parameter, since presumably you do not want
-to write a non-conforming PDF.
+PdfReader and PdfWriter both have a `strict` parameter.
 
 Choosing `strict=True` means that pypdf will raise an exception if a PDF does
 not follow the specification.
