@@ -367,20 +367,23 @@ def _apply_decode(
 def _get_mode_and_invert_color(
     x_object_obj: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
-
+    # Prefer the author-provided /ColorSpace hint when present (NameObject values)
     preferred_mode: mode_str_type = ""
     if IA.COLOR_SPACE in x_object_obj:
+        val = x_object_obj[IA.COLOR_SPACE]
         preferred_mode = {
             ColorSpaces.DEVICE_RGB: "RGB",
             ColorSpaces.DEVICE_GRAY: "L",
             ColorSpaces.DEVICE_CMYK: "CMYK",
-        }.get(cast(str, x_object_obj[IA.COLOR_SPACE]), "")
+        }.get(val, "")
 
     if x_object_obj.get("/BitsPerComponent", 8) < 8:
+        # Pass the preferred_mode through so 1/2/4-bit paths still honor the hint
         mode, invert_color = _get_imagemode(
             f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, preferred_mode
-            )
+        )
     else:
+        # Preserve the original "2 components if grayscale not declared" logic
         mode, invert_color = _get_imagemode(
             color_space,
             2
@@ -394,7 +397,12 @@ def _get_mode_and_invert_color(
             else colors,
             preferred_mode,
         )
+
+    # Fallback: if the derived mode is empty but we have a hint, use it.
+    # CMYK hint implies inverted channel interpretation downstream.
     if mode == "" and preferred_mode:
         mode = preferred_mode
         invert_color = preferred_mode == "CMYK"
+
     return mode, invert_color
+
