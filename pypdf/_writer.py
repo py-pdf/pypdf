@@ -962,8 +962,8 @@ class PdfWriter(PdfDocCommon):
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
             raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
-        af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
-        if InteractiveFormDictEntries.Fields not in af:
+        acro_form = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        if InteractiveFormDictEntries.Fields not in acro_form:
             raise PyPdfError("No /Fields dictionary in PDF of PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
@@ -990,7 +990,7 @@ class PdfWriter(PdfDocCommon):
                 ).get_object()
 
             for field, value in fields.items():
-                rct = cast(RectangleObject, annotation[AA.Rect])
+                rectangle = cast(RectangleObject, annotation[AA.Rect])
                 if not (
                     self._get_qualified_field_name(parent_annotation) == field
                     or parent_annotation.get("/T", None) == field
@@ -1035,11 +1035,11 @@ class PdfWriter(PdfDocCommon):
                     # Textbox; we need to generate the appearance stream object
                     if isinstance(value, tuple):
                         appearance_stream_obj = TextStreamAppearance.from_text_annotation(
-                            af, parent_annotation, annotation, value[1], value[2]
+                            acro_form, parent_annotation, annotation, value[1], value[2]
                         )
                     else:
                         appearance_stream_obj = TextStreamAppearance.from_text_annotation(
-                            af, parent_annotation, annotation
+                            acro_form, parent_annotation, annotation
                         )
                     # Add the appearance stream object
                     if AA.AP not in annotation:
@@ -1059,7 +1059,7 @@ class PdfWriter(PdfDocCommon):
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
                 if flatten and appearance_stream_obj is not None:
-                    self._add_apstream_object(page, appearance_stream_obj, field, rct[0], rct[1])
+                    self._add_apstream_object(page, appearance_stream_obj, field, rectangle[0], rectangle[1])
 
     def reattach_fields(
         self, page: Optional[PageObject] = None
