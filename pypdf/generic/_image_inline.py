@@ -148,18 +148,26 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
     Extract DCT (JPEG) stream from inline image.
     The stream will be moved onto the EI.
     """
+    def read(length: int) -> bytes:
+        # If 0 bytes are returned, and *size* was not 0, this indicates end of file.
+        # If the object is in non-blocking mode and no bytes are available, `None` is returned.
+        _result = stream.read(length)
+        if _result is None or len(_result) != length:
+            raise PdfReadError("Unexpected end of stream")
+        return _result
+
     data_out: bytes = b""
     # Read Blocks of data (ID/Size/data) up to ID=FF/D9
     # https://www.digicamsoft.com/itu/itu-t81-36.html
-    notfirst = False
+    not_first = False
     while True:
-        c = stream.read(1)
-        if notfirst or (c == b"\xff"):
+        c = read(1)
+        if not_first or (c == b"\xff"):
             data_out += c
         if c != b"\xff":
             continue
-        notfirst = True
-        c = stream.read(1)
+        not_first = True
+        c = read(1)
         data_out += c
         if c == b"\xff":
             stream.seek(-1, 1)  # pragma: no cover
@@ -172,10 +180,10 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
             b"\xda\xdb\xdc\xdd\xde\xdf"
             b"\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xfe"
         ):
-            c = stream.read(2)
+            c = read(2)
             data_out += c
             sz = c[0] * 256 + c[1]
-            data_out += stream.read(sz - 2)
+            data_out += read(sz - 2)
 
     ei_tok = read_non_whitespace(stream)
     ei_tok += stream.read(2)
