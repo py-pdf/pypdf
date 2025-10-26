@@ -400,4 +400,3 @@ def _get_mode_and_invert_color(
         mode = preferred_mode
         invert_color = preferred_mode == "CMYK"
     return mode, invert_color
-
