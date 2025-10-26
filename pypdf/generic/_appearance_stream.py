@@ -176,17 +176,11 @@ class TextStreamAppearance(DecodedStreamObject):
         self[NameObject("/Length")] = NumberObject(len(ap_stream_data))
         # Update Resources with font information if necessary
         if font_resource is not None:
-            self[NameObject("/Resources")] = DictionaryObject(
-                {
-                    NameObject("/Font"): DictionaryObject(
-                        {
-                            NameObject(font_name): getattr(
-                                font_resource, "indirect_reference", font_resource
-                            )
-                        }
-                    )
-                }
-            )
+            self[NameObject("/Resources")] = DictionaryObject({
+                NameObject("/Font"): DictionaryObject({
+                    NameObject(font_name): getattr(font_resource, "indirect_reference", font_resource)
+                })
+            })
 
     @classmethod
     def from_text_annotation(
