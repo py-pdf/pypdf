@@ -186,7 +186,7 @@ jobs:
         sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback --builder html docs build/sphinx/html
     - name: Test docs examples
       run: |
-        sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback --builder docstest docs build/sphinx/html
+        sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback --builder doctest docs build/sphinx/html
     - name: Check with pre-commit
       run: |
         pip install -r requirements/dev.txt
