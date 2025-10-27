@@ -53,6 +53,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
+    "sphinx.ext.doctest",
     # External
     "myst_parser",
 ]
