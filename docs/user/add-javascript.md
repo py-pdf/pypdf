@@ -7,7 +7,7 @@ Adobe has documentation on its support here:
 
 ## Launch print window on opening
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")

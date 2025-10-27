@@ -18,7 +18,7 @@ for installing the extra dependencies if interacting with PDFs that use AES.
 
 You can encrypt a PDF by using a password:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("example.pdf")
@@ -44,7 +44,7 @@ Since `RC4` is insecure, you should use `AES` algorithms.
 
 You can decrypt a PDF using the appropriate password:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("encrypted-pdf.pdf")

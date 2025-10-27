@@ -9,7 +9,7 @@ is a list.
 
 You can extract all attachments like this:
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
@@ -23,7 +23,7 @@ for name, content_list in reader.attachments.items():
 Alternatively, you can retrieve them in an object-oriented fashion if you need
 further details for these files:
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
@@ -36,7 +36,7 @@ for attachment in reader.attachment_list:
 
 To add a new attachment, use the following code:
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
@@ -47,7 +47,7 @@ As you can see, the basic attachment properties are its name and content. If you
 want to modify further properties of it, the returned object provides corresponding
 setters:
 
-```python
+```{testcode}
 import datetime
 import hashlib
 
@@ -76,7 +76,7 @@ using `writer.attachment_list`.
 
 To delete an existing attachment, use the following code:
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
@@ -95,7 +95,7 @@ for the corresponding definition yourself and delete it from the array.
 The following example shows how to add an attachment to a PDF/A-3B compliant document
 without breaking compliance:
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 from pypdf.constants import AFRelationship
 from pypdf.generic import create_string_object, ArrayObject, NameObject

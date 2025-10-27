@@ -10,7 +10,7 @@ The process of stamping and watermarking is the same, you just need to set `over
 
 You can use {func}`~pypdf._page.PageObject.merge_page` if you don't need to transform the stamp:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
 stamp = PdfReader("bg.pdf").pages[0]
@@ -23,7 +23,7 @@ writer.write("out.pdf")
 
 Otherwise use {func}`~pypdf._page.PageObject.merge_transformed_page` with {class}`~pypdf.Transformation` if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
 
-```python
+```{testcode}
 from pathlib import Path
 from typing import List, Union
 
@@ -73,7 +73,7 @@ However, you can easily convert an image to PDF image using
 [Pillow](https://pypi.org/project/Pillow/).
 
 
-```python
+```{testcode}
 from io import BytesIO
 from pathlib import Path
 from typing import List, Union

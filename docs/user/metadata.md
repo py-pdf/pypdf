@@ -4,7 +4,7 @@ PDF files can have two types of metadata: "Regular" and XMP ones. They can both 
 
 ## Reading metadata
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
@@ -23,7 +23,7 @@ print(meta.modification_date)
 
 ## Writing metadata
 
-```python
+```{testcode}
 from datetime import datetime
 from pypdf import PdfReader, PdfWriter
 
@@ -64,7 +64,7 @@ with open("meta-pdf.pdf", "wb") as f:
 
 ## Updating metadata
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
@@ -94,7 +94,7 @@ with open("meta-pdf.pdf", "wb") as f:
 
 ## Removing metadata entry
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter("example.pdf")
@@ -109,7 +109,7 @@ with open("meta-pdf.pdf", "wb") as f:
 
 ## Reading XMP metadata
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
@@ -125,7 +125,7 @@ if meta:
 
 You can create XMP metadata easily using the `XmpInformation.create()` method:
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 from pypdf.xmp import XmpInformation
 
@@ -152,7 +152,7 @@ The `XmpInformation` class provides property-based access for all supported meta
 
 ### Dublin Core fields
 
-```python
+```{testcode}
 from datetime import datetime
 from pypdf.xmp import XmpInformation
 
@@ -184,7 +184,7 @@ xmp.dc_rights = {"x-default": "All rights reserved"}
 
 ### XMP fields
 
-```python
+```{testcode}
 from datetime import datetime
 
 # Date fields accept both datetime objects and strings
@@ -198,7 +198,7 @@ xmp.xmp_creator_tool = "pypdf"
 
 ### PDF fields
 
-```python
+```{testcode}
 xmp.pdf_keywords = "keyword1, keyword2, keyword3"
 xmp.pdf_pdfversion = "1.4"
 xmp.pdf_producer = "pypdf"
@@ -206,14 +206,14 @@ xmp.pdf_producer = "pypdf"
 
 ### XMP Media Management fields
 
-```python
+```{testcode}
 xmp.xmpmm_document_id = "uuid:12345678-1234-1234-1234-123456789abc"
 xmp.xmpmm_instance_id = "uuid:87654321-4321-4321-4321-cba987654321"
 ```
 
 ### PDF/A fields
 
-```python
+```{testcode}
 xmp.pdfaid_part = "1"
 xmp.pdfaid_conformance = "B"
 ```
@@ -222,7 +222,7 @@ xmp.pdfaid_conformance = "B"
 
 You can clear any field by assigning `None`:
 
-```python
+```{testcode}
 xmp.dc_title = None
 xmp.dc_creator = None
 xmp.pdf_producer = None
@@ -232,7 +232,7 @@ xmp.pdf_producer = None
 
 When modifying existing XMP metadata, it is often necessary to add or update individual entries while preserving existing values. The XMP properties return standard Python data structures that can be manipulated directly:
 
-```python
+```{testcode}
 from pypdf.xmp import XmpInformation
 
 xmp = XmpInformation.create()
@@ -270,7 +270,7 @@ As an example, we want to add the following PDF/UA identifier section to the XMP
 
 This could be written like this:
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")

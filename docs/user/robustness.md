@@ -9,7 +9,7 @@ If a PDF file does not follow the specification, it is not always possible to
 be certain what the intended effect would be. Think of the following broken
 Python code as an example:
 
-```python
+```{testcode}
 # Broken
 function (foo, bar):
 

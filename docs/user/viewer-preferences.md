@@ -13,7 +13,7 @@ Otherwise, the {attr}`~pypdf.PdfReader.viewer_preferences` property will be set 
 
 ## Example
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 from pypdf.generic import ArrayObject, NumberObject
 

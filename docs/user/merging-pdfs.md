@@ -2,7 +2,7 @@
 
 ## Basic Example
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 merger = PdfWriter()
@@ -22,7 +22,7 @@ by Paul Rooney.
 Dealing with large PDF files might reach the recursion limit of the current
 Python interpreter. In these cases, increasing the limit might help:
 
-```python
+```{testcode}
 import sys
 
 # Example: Increase the current limit by factor 5.
@@ -32,7 +32,7 @@ sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 
 ## Showing more merging options
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 merger = PdfWriter()
@@ -65,7 +65,7 @@ output.close()
 
 ### Examples
 
-```python
+```{testcode}
 # Append the first 10 pages of source.pdf
 writer.append("source.pdf", (0, 10))
 
@@ -78,7 +78,7 @@ During merging, the relevant named destination will also be imported.
 If you want to insert pages in the middle of the destination, use `merge` (which provides an insertion position).
 You can insert the same page multiple times, if necessary, even using a list-based syntax:
 
-```python
+```{testcode}
 # Insert pages 2 and 3, with page 1 before, between, and after
 writer.append(reader, [0, 1, 0, 2, 0])
 ```
@@ -118,19 +118,19 @@ To prevent side effects between pages/objects and all objects linked cloning is 
 This process will be automatically applied if you use `PdfWriter.append/merge/add_page/insert_page`.
 If you want to clone an object before attaching it "manually," use the `clone` method of any *PdfObject*:
 
-```python
+```{testcode}
 cloned_object = object.clone(writer)
 ```
 
 If you try to clone an object already belonging to the writer, it will return the same object:
 
-```python
+```{testcode}
 assert cloned_object == object.clone(writer)
 ```
 
 The same holds true if you try to clone an object twice. It will return the previously cloned object:
 
-```python
+```{testcode}
 assert object.clone(writer) == object.clone(writer)
 ```
 
@@ -142,7 +142,7 @@ This means that you may copy lots of objects which will be saved in the output P
 
 To prevent this, you can provide the list of fields in the dictionaries to be ignored:
 
-```python
+```{testcode}
 new_page = writer.add_page(reader.pages[0], excluded_fields=["/B"])
 ```
 
@@ -151,7 +151,7 @@ new_page = writer.add_page(reader.pages[0], excluded_fields=["/B"])
 If you are working with rotated pages, you might want to call {func}`~pypdf._page.PageObject.transfer_rotation_to_content` on the page
 before merging to avoid wrongly rotated results:
 
-```python
+```{testcode}
 for page in writer.pages:
     if page.rotation != 0:
         page.transfer_rotation_to_content()

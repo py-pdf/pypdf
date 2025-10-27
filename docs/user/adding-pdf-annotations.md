@@ -12,7 +12,7 @@ To circumvent this, make sure to add the `/C` entry to the annotation, being an 
 
 ## Attachments
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter()
@@ -34,7 +34,7 @@ If you want to add text in a box like this
 
 you can use {class}`~pypdf.annotations.FreeText`:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import FreeText
 
@@ -83,7 +83,7 @@ If you want to add a line like this:
 
 you can use {class}`~pypdf.annotations.Line`:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Line
 
@@ -115,7 +115,7 @@ If you want to add a line like this:
 
 you can use {class}`~pypdf.annotations.PolyLine`:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import PolyLine
 from pypdf.generic import ArrayObject, FloatObject, NameObject
@@ -149,7 +149,7 @@ If you want to add a rectangle like this:
 
 you can use {class}`~pypdf.annotations.Rectangle`:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Rectangle
 
@@ -183,7 +183,7 @@ If you want to add a circle like this:
 
 you can use {class}`~pypdf.annotations.Ellipse`:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Ellipse
 
@@ -212,7 +212,7 @@ If you want to add a polygon like this:
 
 you can use {class}`~pypdf.annotations.Polygon`:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Polygon
 
@@ -241,7 +241,7 @@ Manage the Popup windows for markups, looks like this:
 
 you can use {py:class}`~pypdf.annotations.Popup`:
 
-```python
+```{testcode}
 from pypdf.annotations import Popup, Text
 
 # Arrange
@@ -274,7 +274,7 @@ the parent annotation with which this popup annotation shall be associated.
 
 If you want to add a link, you can use {class}`~pypdf.annotations.Link`:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Link
 
@@ -298,7 +298,7 @@ with open("annotated-pdf.pdf", "wb") as fp:
 
 You can also add internal links:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Link
 from pypdf.generic import Fit
@@ -337,7 +337,7 @@ If you want to highlight text like this:
 
 you can use {class}`~pypdf.annotations.Highlight`:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Highlight
 from pypdf.generic import ArrayObject, FloatObject

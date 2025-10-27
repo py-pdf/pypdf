@@ -8,7 +8,7 @@ dependencies, see [installation guide](installation.md).
 Every page of a PDF document can contain an arbitrary number of images.
 The names of the files may not be unique.
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
@@ -29,7 +29,7 @@ For example, this document contains such stamps:
 
 You can extract the image from the annotation with the following code:
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("test_stamp.pdf")

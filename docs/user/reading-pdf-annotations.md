@@ -33,7 +33,7 @@ PDF 2.0 defines the following annotation types:
 
 In general, annotations can be read like this:
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("annotated.pdf")
@@ -49,7 +49,7 @@ Examples of reading three of the most common annotations:
 
 ## Text
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
@@ -64,7 +64,7 @@ for page in reader.pages:
 
 ## Highlights
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
@@ -80,7 +80,7 @@ for page in reader.pages:
 
 ## Attachments
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")

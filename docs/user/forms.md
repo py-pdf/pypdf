@@ -2,7 +2,7 @@
 
 ## Reading form fields
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("form.pdf")
@@ -15,7 +15,7 @@ fields = reader.get_fields()
 
 ## Filling out forms
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("form.pdf")
@@ -71,14 +71,14 @@ To flesh out this overview:
 
 In _pypdf_ fields are extracted from the `/Fields` array:
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("form.pdf")
 fields = reader.get_fields()
 ```
 
-```python
+```{testcode}
 from pypdf import PdfReader
 from pypdf.constants import AnnotationDictionaryAttributes
 

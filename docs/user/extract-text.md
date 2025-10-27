@@ -2,7 +2,7 @@
 
 You can extract text from a PDF:
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
@@ -81,7 +81,7 @@ operator, operand-arguments, current transformation matrix, and text matrix.
 
 The following example reads the text of page four of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores the header (y > 720) and footer (y < 50).
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("GeoBase_NHNC1_Data_Model_UML_EN.pdf")
@@ -109,7 +109,7 @@ an [SVG file](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics).
 
 Such an SVG export may help to understand what is going on in a page.
 
-```python
+```{testcode}
 from pypdf import PdfReader
 import svgwrite
 

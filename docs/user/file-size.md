@@ -28,7 +28,7 @@ reduction (from 5.7 MB to 0.8 MB) within a real PDF.
 ## Removing Images
 
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
@@ -45,7 +45,7 @@ If we reduce the quality of the images within the PDF, we can **sometimes**
 reduce the file size of the PDF overall. That depends on how well the reduced
 quality image can be compressed.
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
@@ -67,7 +67,7 @@ the same.
 Deflate compression can be applied to a page via
 {meth}`page.compress_content_streams <pypdf._page.PageObject.compress_content_streams>`:
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
