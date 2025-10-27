@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1761221232886,
+  "lastUpdate": 1761552453246,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -82901,6 +82901,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0051238675167990895",
             "extra": "mean: 652.2256667999955 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a020ec8a731b551c7120fc0dffaa5b81eaa48db4",
+          "message": "DEV: Bump actions/upload-artifact from 4 to 5 (#3506)\n\nBumps [actions/upload-artifact](https://github.com/actions/upload-artifact) from 4 to 5.\n- [Release notes](https://github.com/actions/upload-artifact/releases)\n- [Commits](https://github.com/actions/upload-artifact/compare/v4...v5)\n\n---\nupdated-dependencies:\n- dependency-name: actions/upload-artifact\n  dependency-version: '5'\n  dependency-type: direct:production\n  update-type: version-update:semver-major\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2025-10-27T09:04:49+01:00",
+          "tree_id": "577328bee30e561af1ff07396640cdcebdc4d8bc",
+          "url": "https://github.com/py-pdf/pypdf/commit/a020ec8a731b551c7120fc0dffaa5b81eaa48db4"
+        },
+        "date": 1761552449257,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.430082444569824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01105028896917188",
+            "extra": "mean: 291.5381819999993 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.298981966248991,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007523760702784178",
+            "extra": "mean: 65.36382631250204 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26657319404861635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.050327161529158254",
+            "extra": "mean: 3.7513149195999986 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.315352057280446,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004516928811930816",
+            "extra": "mean: 57.75221876470817 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08078011319888517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08934978031554817",
+            "extra": "mean: 12.37928446 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.548908307337555,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015214393928285567",
+            "extra": "mean: 645.6160092000005 msec\nrounds: 5"
           }
         ]
       }
