@@ -403,7 +403,7 @@ def test_articles_with_writer(caplog):
 def test_null_articles_with_writer():
     data = get_data_from_url(name="issue-3508.pdf")
     m = PdfWriter()
-    m.append(PdfReader(BytesIO(data)))
+    m.append(BytesIO(data))
 
 
 def test_get_reference():
