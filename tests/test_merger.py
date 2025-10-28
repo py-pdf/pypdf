@@ -402,9 +402,8 @@ def test_articles_with_writer(caplog):
 @pytest.mark.enable_socket
 def test_null_articles_with_writer():
     data = get_data_from_url(name="issue-3508.pdf")
-    file = BytesIO(data)
-    merger = PdfWriter(file)
-    merger.append(file) # if this doesn't crash, the test has been successful
+    m = PdfWriter()
+    m.append(PdfReader(BytesIO(data)))
 
 
 def test_get_reference():
