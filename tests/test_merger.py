@@ -398,6 +398,15 @@ def test_articles_with_writer(caplog):
     assert len(r.threads) == 4
     assert r.threads[0].get_object()["/F"]["/P"] == r.pages[0]
 
+@pytest.mark.enable_socket
+def test_null_articles_with_writer():
+    data = get_data_from_url(name="issue-3508.pdf")
+    file = BytesIO(data)
+    merger = PdfWriter()
+    merger.append(file)
+    temp = BytesIO()
+    merger.write(temp)
+    # if this completes without error, the test was successful
 
 def test_get_reference():
     writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
