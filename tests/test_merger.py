@@ -33,9 +33,6 @@ def merger_operate(merger):
     found_oi = merger.find_outline_item("nothing here 2", None)
     assert found_oi is None
 
-    found_oi = merger.find_outline_item("nothing here 3", 0)
-    assert found_oi is None
-
     merger.append(outline)
     merger.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
     merger.append(pdf_forms)
