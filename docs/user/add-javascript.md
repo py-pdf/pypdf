@@ -10,7 +10,7 @@ Adobe has documentation on its support here:
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="example.pdf")
+writer = PdfWriter(clone_from="resources\side-by-side-subfig.pdf")
 
 # Add JavaScript to launch the print window on opening this PDF.
 writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")

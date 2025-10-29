@@ -9,7 +9,7 @@ away can still be restored.
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("example.pdf")
+reader = PdfReader("resources\side-by-side-subfig.pdf")
 writer = PdfWriter()
 
 # Add page 1 from reader to output document, unchanged.

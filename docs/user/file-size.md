@@ -31,7 +31,7 @@ reduction (from 5.7 MB to 0.8 MB) within a real PDF.
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="example.pdf")
+writer = PdfWriter(clone_from="resources\side-by-side-subfig.pdf")
 
 writer.remove_images()
 
@@ -48,7 +48,7 @@ quality image can be compressed.
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="example.pdf")
+writer = PdfWriter(clone_from="resources\side-by-side-subfig.pdf")
 
 for page in writer.pages:
     for img in page.images:
@@ -70,7 +70,7 @@ Deflate compression can be applied to a page via
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="example.pdf")
+writer = PdfWriter(clone_from="resources\side-by-side-subfig.pdf")
 
 for page in writer.pages:
     page.compress_content_streams()  # This is CPU intensive!

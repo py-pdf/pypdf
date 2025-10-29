@@ -5,7 +5,7 @@ You can extract text from a PDF:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("example.pdf")
+reader = PdfReader("resources\side-by-side-subfig.pdf")
 page = reader.pages[0]
 print(page.extract_text())
 

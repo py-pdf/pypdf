@@ -36,7 +36,7 @@ In general, annotations can be read like this:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/commented.pdf")
+reader = PdfReader("resources/commented.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
@@ -63,7 +63,7 @@ Examples of reading three of the most common annotations:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/commented.pdf")
+reader = PdfReader("resources/commented.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
@@ -91,7 +91,7 @@ Umlaut: äöüß
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/commented.pdf")
+reader = PdfReader("resources/commented.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
@@ -114,7 +114,7 @@ x1=176, y1=568, x2=203, y2=568, x3=176, y3=557, x4=203, y4=557
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/attachment.pdf")
+reader = PdfReader("resources/attachment.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
@@ -126,8 +126,6 @@ for page in reader.pages:
                 data = fileobj["/EF"]["/F"].get_data()
                 print(f"{name=} {len(data)=}")
 ```
-
-Output
 
 ```{testoutput}
 :hide:
