@@ -15,6 +15,11 @@ TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
+from pypdf._crypt_providers import crypt_provider
+USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
+USE_PYCRYPTODOME = crypt_provider[0] == "pycryptodome"
+HAS_AES = USE_CRYPTOGRAPHY or USE_PYCRYPTODOME
+
 sys.path.append(str(PROJECT_ROOT))
 
 
@@ -399,6 +404,7 @@ def test_articles_with_writer(caplog):
     assert r.threads[0].get_object()["/F"]["/P"] == r.pages[0]
 
 
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
 @pytest.mark.enable_socket
 def test_null_articles_with_writer():
     data = get_data_from_url(name="issue-3508.pdf")
