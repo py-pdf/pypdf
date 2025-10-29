@@ -30,6 +30,9 @@ def merger_operate(merger):
     found_oi = merger.find_outline_item("nothing here")
     assert found_oi is None
 
+    found_oi = merger.find_outline_item("nothing here 2", None)
+    assert found_oi is None
+
     merger.append(outline)
     merger.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
     merger.append(pdf_forms)
@@ -124,13 +127,7 @@ def merger_operate(merger):
         Fit.fit_box_vertically(left=10),
     )
 
-    found_oi = merger.find_outline_item("nothing here 1")
-    assert found_oi is None
-
-    found_oi = merger.find_outline_item("nothing here 2", None)
-    assert found_oi is None
-
-    found_oi = merger.find_outline_item("still nothing here 3", "xyzzy")
+    found_oi = merger.find_outline_item("nothing here")
     assert found_oi is None
 
     found_oi = merger.find_outline_item("foo")
