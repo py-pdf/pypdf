@@ -7,18 +7,14 @@ import pytest
 
 import pypdf
 from pypdf import PdfReader, PdfWriter
-from pypdf._crypt_providers import crypt_provider
 from pypdf.generic import Destination, Fit
 
 from . import get_data_from_url
+from .test_encryption import HAS_AES
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
-USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
-USE_PYCRYPTODOME = crypt_provider[0] == "pycryptodome"
-HAS_AES = USE_CRYPTOGRAPHY or USE_PYCRYPTODOME
 
 sys.path.append(str(PROJECT_ROOT))
 
@@ -408,8 +404,9 @@ def test_articles_with_writer(caplog):
 @pytest.mark.enable_socket
 def test_null_articles_with_writer():
     data = get_data_from_url(name="issue-3508.pdf")
-    m = PdfWriter()
-    m.append(BytesIO(data))
+    merger = PdfWriter()
+    merger.append(BytesIO(data))
+    assert len(merger.pages) == 98
 
 
 def test_get_reference():
