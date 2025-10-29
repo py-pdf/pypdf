@@ -21,8 +21,6 @@ print(meta.creation_date)
 print(meta.modification_date)
 ```
 
-Output
-
 ```{testoutput}
 :hide:
 
