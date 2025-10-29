@@ -24,13 +24,13 @@ print(meta.modification_date)
 ```{testoutput}
 :hide:
 
-PDF Example Document
 None
 None
 None
-Skia/PDF m103 Google Docs Renderer
-None
-None
+TeX
+pdfTeX-1.40.23
+2022-04-09 08:29:50+02:00
+2022-04-09 08:29:50+02:00
 ```
 
 ## Writing metadata
