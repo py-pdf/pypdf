@@ -11,7 +11,7 @@ The names of the files may not be unique.
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("resources\side-by-side-subfig.pdf")
+reader = PdfReader("resources/side-by-side-subfig.pdf")
 
 page = reader.pages[0]
 

@@ -7,7 +7,7 @@ PDF files can have two types of metadata: "Regular" and XMP ones. They can both 
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("resources\side-by-side-subfig.pdf")
+reader = PdfReader("resources/side-by-side-subfig.pdf")
 
 meta = reader.metadata
 
@@ -39,7 +39,7 @@ None
 from datetime import datetime
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("resources\side-by-side-subfig.pdf")
+reader = PdfReader("resources/side-by-side-subfig.pdf")
 writer = PdfWriter()
 
 # Add all pages to the writer
@@ -79,7 +79,7 @@ with open("meta-pdf.pdf", "wb") as f:
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="resources\side-by-side-subfig.pdf")
+writer = PdfWriter(clone_from="resources/side-by-side-subfig.pdf")
 
 # Change some values
 writer.add_metadata(
@@ -109,7 +109,7 @@ with open("meta-pdf.pdf", "wb") as f:
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter("resources\side-by-side-subfig.pdf")
+writer = PdfWriter("resources/side-by-side-subfig.pdf")
 
 # Remove Metadata (/Info entry)
 writer.metadata = None
@@ -124,7 +124,7 @@ with open("meta-pdf.pdf", "wb") as f:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("resources\side-by-side-subfig.pdf")
+reader = PdfReader("resources/side-by-side-subfig.pdf")
 
 meta = reader.xmp_metadata
 if meta:

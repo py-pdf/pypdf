@@ -12,7 +12,7 @@ You can extract all attachments like this:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("resources\side-by-side-subfig.pdf")
+reader = PdfReader("resources/side-by-side-subfig.pdf")
 
 for name, content_list in reader.attachments.items():
     for i, content in enumerate(content_list):
@@ -26,7 +26,7 @@ further details for these files:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("resources\side-by-side-subfig.pdf")
+reader = PdfReader("resources/side-by-side-subfig.pdf")
 
 for attachment in reader.attachment_list:
     print(attachment.name, attachment.alternative_name, attachment.content)
@@ -39,7 +39,7 @@ To add a new attachment, use the following code:
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="resources\side-by-side-subfig.pdf")
+writer = PdfWriter(clone_from="resources/side-by-side-subfig.pdf")
 writer.add_attachment(filename="test.txt", data=b"Hello World!")
 ```
 
@@ -55,7 +55,7 @@ from pypdf import PdfWriter
 from pypdf.generic import create_string_object, ByteStringObject, NameObject, NumberObject
 
 
-writer = PdfWriter(clone_from="resources\side-by-side-subfig.pdf")
+writer = PdfWriter(clone_from="resources/side-by-side-subfig.pdf")
 embedded_file = writer.add_attachment(filename="test.txt", data=b"Hello World!")
 
 embedded_file.size = NumberObject(len(b"Hello World!"))
@@ -79,7 +79,7 @@ To delete an existing attachment, use the following code:
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="resources\side-by-side-subfig.pdf")
+writer = PdfWriter(clone_from="resources/side-by-side-subfig.pdf")
 attachment = writer.add_attachment(filename="test.txt", data=b"Hello World!")
 attachment.delete()
 assert list(writer.attachment_list) == []
