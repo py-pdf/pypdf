@@ -3206,6 +3206,8 @@ class PdfWriter(PdfDocCommon):
                 o = cast(TreeObject, o["/Next"])
             else:
                 return None
+        # Explicit "return" at the end of function able to return non-"None" value.
+        # Unlikely to reach this line in a real PDF
         return None  # pragma: no cover
 
     def reset_translation(
