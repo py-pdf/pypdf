@@ -33,7 +33,7 @@ import hashlib
 import re
 import struct
 import uuid
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
 from pathlib import Path
@@ -78,7 +78,7 @@ from .constants import Core as CO
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import TrailerKeys as TK
-from .errors import PyPdfError
+from .errors import PdfReadError, PyPdfError
 from .generic import (
     PAGE_FIT,
     ArrayObject,
@@ -160,6 +160,10 @@ class PdfWriter(PdfDocCommon):
         full: If true, loads all the objects (always full if incremental = True).
             This parameter may allow loading large PDFs.
 
+        strict: If true, pypdf will raise an exception if a PDF does not follow the specification.
+            If false, pypdf will try to be forgiving and do something reasonable, but it will log
+            a warning message. It is a best-effort approach.
+
     """
 
     def __init__(
@@ -168,7 +172,15 @@ class PdfWriter(PdfDocCommon):
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
         incremental: bool = False,
         full: bool = False,
+        strict: bool = False,
     ) -> None:
+        self.strict = strict
+        """
+        If true, pypdf will raise an exception if a PDF does not follow the specification.
+        If false, pypdf will try to be forgiving and do something reasonable, but it will log
+        a warning message. It is a best-effort approach.
+        """
+
         self.incremental = incremental or full
         """
         Returns if the PdfWriter object has been started in incremental mode.
@@ -1062,7 +1074,7 @@ class PdfWriter(PdfDocCommon):
     def update_page_form_field_values(
         self,
         page: Union[PageObject, list[PageObject], None],
-        fields: dict[str, Union[str, list[str], tuple[str, str, float]]],
+        fields: Mapping[str, Union[str, list[str], tuple[str, str, float]]],
         flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
         flatten: bool = False,
@@ -1253,13 +1265,27 @@ class PdfWriter(PdfDocCommon):
         self._root_object = reader.root_object.clone(self)
         self._pages = self._root_object.raw_get("/Pages")
 
-        assert len(self._objects) <= cast(int, reader.trailer["/Size"])  # for pytest
+        if len(self._objects) > cast(int, reader.trailer["/Size"]):
+            if self.strict:
+                raise PdfReadError(
+                    f"Object count {len(self._objects)} exceeds defined trailer size {reader.trailer['/Size']}"
+                )
+            logger_warning(
+                f"Object count {len(self._objects)} exceeds defined trailer size {reader.trailer['/Size']}",
+                __name__
+            )
+
         # must be done here before rewriting
         if self.incremental:
             self._original_hash = [
                 (obj.hash_bin() if obj is not None else 0) for obj in self._objects
             ]
-        self._flatten()
+
+        try:
+            self._flatten()
+        except IndexError:
+            raise PdfReadError("Got index error while flattening.")
+
         assert self.flattened_pages is not None
         for p in self.flattened_pages:
             self._replace_object(cast(IndirectObject, p.indirect_reference).idnum, p)

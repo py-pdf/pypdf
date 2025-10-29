@@ -634,7 +634,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             if length is None:  # if the PDF is damaged
                 length = -1
             pstart = stream.tell()
-            if length > 0:
+            if length >= 0:
                 data["__streamdata__"] = stream.read(length)
             else:
                 data["__streamdata__"] = read_until_regex(
