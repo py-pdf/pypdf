@@ -9,6 +9,7 @@ import pypdf
 from pypdf import PdfReader, PdfWriter
 from pypdf._crypt_providers import crypt_provider
 from pypdf.generic import Destination, Fit
+
 from . import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
