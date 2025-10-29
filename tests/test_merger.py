@@ -7,15 +7,14 @@ import pytest
 
 import pypdf
 from pypdf import PdfReader, PdfWriter
+from pypdf._crypt_providers import crypt_provider
 from pypdf.generic import Destination, Fit
-
 from . import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
-from pypdf._crypt_providers import crypt_provider
 USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
 USE_PYCRYPTODOME = crypt_provider[0] == "pycryptodome"
 HAS_AES = USE_CRYPTOGRAPHY or USE_PYCRYPTODOME
