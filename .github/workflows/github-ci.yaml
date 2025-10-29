@@ -180,10 +180,12 @@ jobs:
     - name: Test with mypy
       run : |
         mypy pypdf
+    - name: Install dics requirements
+      run: |
+        pip install -r requirements/docs.txt
     - name: Test docs build
       working-directory: ./docs
       run: |
-        pip install -r requirements/docs.txt
         sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback -M html . _build
     - name: Test docs examples
       working-directory: ./docs
