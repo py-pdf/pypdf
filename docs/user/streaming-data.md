@@ -7,6 +7,7 @@ pypdf supports streaming data to a file-like object:
 
 ```{testcode}
 from io import BytesIO
+from pypdf import PdfReader, PdfWriter
 
 # Prepare example
 with open("example.pdf", "rb") as fh:
@@ -28,6 +29,8 @@ to write the document to a file first. We have the original PDF in `raw_bytes_da
 and want to set `my-secret-password`:
 
 ```{testcode}
+:skipif: True
+
 from io import BytesIO
 
 import boto3
@@ -62,6 +65,8 @@ Another option is to get a byte stream.
 For AWS S3 it works like this:
 
 ```{testcode}
+:skipif: True
+
 from io import BytesIO
 
 import boto3
@@ -76,6 +81,8 @@ reader = PdfReader(BytesIO(obj["Body"].read()))
 To use with Google Cloud storage:
 
 ```{testcode}
+:skipif: True
+
 from io import BytesIO
 
 from google.cloud import storage

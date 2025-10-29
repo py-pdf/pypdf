@@ -10,6 +10,8 @@ be certain what the intended effect would be. Think of the following broken
 Python code as an example:
 
 ```{testcode}
+:skipif: True
+
 # Broken
 function (foo, bar):
 

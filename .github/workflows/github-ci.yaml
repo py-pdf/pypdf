@@ -181,12 +181,14 @@ jobs:
       run : |
         mypy pypdf
     - name: Test docs build
+      working-directory: ./docs
       run: |
         pip install -r requirements/docs.txt
-        sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback --builder html docs build/sphinx/html
+        sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback -M html . _build
     - name: Test docs examples
+      working-directory: ./docs
       run: |
-        sphinx-build --builder doctest docs build/sphinx/html
+        sphinx-build -M doctest . _build
     - name: Check with pre-commit
       run: |
         pip install -r requirements/dev.txt

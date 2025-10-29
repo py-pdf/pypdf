@@ -21,6 +21,20 @@ print(meta.creation_date)
 print(meta.modification_date)
 ```
 
+Output
+
+```{testoutput}
+:hide:
+
+PDF Example Document
+None
+None
+None
+Skia/PDF m103 Google Docs Renderer
+None
+None
+```
+
 ## Writing metadata
 
 ```{testcode}
@@ -189,7 +203,7 @@ from datetime import datetime
 
 # Date fields accept both datetime objects and strings
 xmp.xmp_create_date = datetime.now()
-xmp.xmp_modify_date = "2023-12-25T10:30:45Z"
+xmp.xmp_modify_date = datetime.fromisoformat("2023-12-25T10:30:45Z")
 xmp.xmp_metadata_date = datetime.now()
 
 # Text field
@@ -273,7 +287,7 @@ This could be written like this:
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="example.pdf")
+writer = PdfWriter(clone_from="../resources/commented-xmp.pdf")
 
 metadata = writer.xmp_metadata
 assert metadata  # Ensure that it is not `None`.

@@ -1,3 +1,10 @@
 sphinx
 sphinx_rtd_theme
 myst_parser
+
+
+# Additional packages nessesary for executing all docs examples
+pdfminer.six
+# ... except those which require access to Cloud (AWS, GCP)
+# boto3
+# google-cloud-storage
