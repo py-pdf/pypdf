@@ -3206,7 +3206,7 @@ class PdfWriter(PdfDocCommon):
                 o = cast(TreeObject, o["/Next"])
             else:
                 return None
-        return None  # This line may be unreachable?
+        return None
 
     def reset_translation(
         self, reader: Union[None, PdfReader, IndirectObject] = None
