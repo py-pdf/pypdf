@@ -211,8 +211,8 @@ class Transformation:
         Example:
             >>> from pypdf import Transformation
             >>> from pypdf._page import PageObject
-            >>> height = 40
-            >>> width = 50
+            >>> height, width = 40, 50
+            >>> page = PageObject()
             >>> op = Transformation((1, 0, 0, -1, 0, height)) # vertical mirror
             >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, width, 0)))  # horizontal mirror
             >>> page.add_transformation(op)
