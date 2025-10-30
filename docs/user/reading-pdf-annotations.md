@@ -101,7 +101,7 @@ for page in reader.pages:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/attachment.pdf")
+reader = PdfReader("example.pdf")
 
 attachments = {}
 for page in reader.pages:
