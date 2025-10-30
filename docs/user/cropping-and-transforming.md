@@ -9,7 +9,7 @@ away can still be restored.
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("example.pdf")
+reader = PdfReader("../resources/Seige_of_Vicksburg_Sample_OCR.pdf")
 writer = PdfWriter()
 
 # Add page 1 from reader to output document, unchanged.
@@ -40,7 +40,7 @@ do that with the {func}`~pypdf._page.PageObject.rotate` method:
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("input.pdf")
+reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
 writer.add_page(reader.pages[0])
@@ -67,10 +67,10 @@ is the result of
 from pypdf import PdfReader, PdfWriter, Transformation
 
 # Get the data
-reader_base = PdfReader("labeled-edges-center-image.pdf")
+reader_base = PdfReader("../resources/labeled-edges-center-image.pdf")
 page_base = reader_base.pages[0]
 
-reader = PdfReader("box.pdf")
+reader = PdfReader("../resources/box.pdf")
 page_box = reader.pages[0]
 
 page_base.merge_page(page_box)
@@ -90,10 +90,10 @@ with open("merged-foo.pdf", "wb") as fp:
 from pypdf import PdfReader, PdfWriter, Transformation
 
 # Get the data
-reader_base = PdfReader("labeled-edges-center-image.pdf")
+reader_base = PdfReader("../resources/labeled-edges-center-image.pdf")
 page_base = reader_base.pages[0]
 
-reader = PdfReader("box.pdf")
+reader = PdfReader("../resources/box.pdf")
 page_box = reader.pages[0]
 
 # Apply the transformation
@@ -182,11 +182,7 @@ writer.write("out-pg-transform.pdf")
 To scale the page by `sx` in the X direction and `sy` in the Y direction:
 
 ```{testcode}
-from pypdf.generic import RectangleObject
-
-mb = page.mediabox
-
-page.mediabox = self.mediabox.scale(sx, sy)
+page.mediabox = page.mediabox.scale(sx=0.7, sy=0.7)
 ```
 
 If you wish to have more control, you can adjust the various page boxes directly:
@@ -212,6 +208,8 @@ In case anybody has good reasons to use/expect `trimbox`, you can add the
 following code to get the old behavior:
 
 ```{testcode}
+import pypdf
+
 pypdf._page.MERGE_CROP_BOX = "trimbox"
 ```
 
