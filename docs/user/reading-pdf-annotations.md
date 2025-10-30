@@ -36,7 +36,7 @@ In general, annotations can be read like this:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/commented.pdf")
+reader = PdfReader("example.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
@@ -48,12 +48,13 @@ for page in reader.pages:
 ```{testoutput}
 :hide:
 
-{'subtype': '/Text', 'location': [270.75, 596.25, 294.75, 620.25]}
-{'subtype': '/Popup', 'location': [294.75, 446.25, 494.75, 596.25]}
-{'subtype': '/Highlight', 'location': [176, 557, 203, 568]}
-{'subtype': '/Popup', 'location': [202, 413, 402, 563]}
-{'subtype': '/Text', 'location': [188.625, 485.25, 212.625, 509.25]}
-{'subtype': '/Popup', 'location': [212.625, 335.25, 412.625, 485.25]}
+{'subtype': '/Highlight', 'location': [376.771, 406.213, 413.78, 422.506]}
+{'subtype': '/Popup', 'location': [596, 330.026, 780, 422.026]}
+{'subtype': '/FileAttachment', 'location': [88.2923, 210.633, 95.2923, 227.633]}
+{'subtype': '/Stamp', 'location': [145.117, 188.132, 227.806, 254.997]}
+{'subtype': '/Popup', 'location': [612, 631.925, 816, 745.925]}
+{'subtype': '/Text', 'location': [334.863, 777.445, 358.863, 801.445]}
+{'subtype': '/Popup', 'location': [596, 709.445, 780, 801.445]}
 ```
 
 Examples of reading three of the most common annotations:
@@ -63,7 +64,7 @@ Examples of reading three of the most common annotations:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/commented.pdf")
+reader = PdfReader("example.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
@@ -76,14 +77,7 @@ for page in reader.pages:
 ```{testoutput}
 :hide:
 
-Note in second paragraph
-note over "kinds"
-
-Like in "kinds of people"
-
-----------
-
-Umlaut: äöüß
+Text comment
 ```
 
 ## Highlights
@@ -91,7 +85,7 @@ Umlaut: äöüß
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/commented.pdf")
+reader = PdfReader("example.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
