@@ -58,36 +58,6 @@ This is box text at bottom
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 (T) This is box text at top
 written down from top
  (B)
@@ -99,36 +69,6 @@ written down from top
 
 This is box text at bottom
  from bottom upwritten
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -150,22 +90,6 @@ on left
 
  ) This is box text
 written vertically to port (R
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
