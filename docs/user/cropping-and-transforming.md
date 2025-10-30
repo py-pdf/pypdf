@@ -143,7 +143,7 @@ Typically, you want to combine both.
 from pypdf import PdfReader, PdfWriter
 
 # Read the input
-reader = PdfReader("example.pdf")
+reader = PdfReader("../resources/side-by-side-subfig.pdf")
 page = reader.pages[0]
 
 # Scale
@@ -164,7 +164,7 @@ Typically, that is the lower-left corner.
 from pypdf import PdfReader, PdfWriter, Transformation
 
 # Read the input
-reader = PdfReader("example.pdf")
+reader = PdfReader("../resources/side-by-side-subfig.pdf")
 page = reader.pages[0]
 
 # Scale
