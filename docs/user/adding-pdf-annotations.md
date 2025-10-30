@@ -39,8 +39,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import FreeText
 
 # Fill the writer with the pages you want
-pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-reader = PdfReader(pdf_path)
+reader = PdfReader("../resources/crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
@@ -87,8 +86,7 @@ you can use {class}`~pypdf.annotations.Line`:
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Line
 
-pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-reader = PdfReader(pdf_path)
+reader = PdfReader("../resources/crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
@@ -120,8 +118,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import PolyLine
 from pypdf.generic import ArrayObject, FloatObject, NameObject
 
-pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-reader = PdfReader(pdf_path)
+reader = PdfReader("../resources/crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
@@ -153,8 +150,7 @@ you can use {class}`~pypdf.annotations.Rectangle`:
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Rectangle
 
-pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-reader = PdfReader(pdf_path)
+reader = PdfReader("../resources/crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
@@ -187,8 +183,7 @@ you can use {class}`~pypdf.annotations.Ellipse`:
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Ellipse
 
-pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-reader = PdfReader(pdf_path)
+reader = PdfReader("../resources/crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
@@ -216,8 +211,7 @@ you can use {class}`~pypdf.annotations.Polygon`:
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Polygon
 
-pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-reader = PdfReader(pdf_path)
+reader = PdfReader("../resources/crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
@@ -242,11 +236,12 @@ Manage the Popup windows for markups, looks like this:
 you can use {py:class}`~pypdf.annotations.Popup`:
 
 ```{testcode}
+from pypdf import PdfWriter
 from pypdf.annotations import Popup, Text
 
 # Arrange
-writer = pypdf.PdfWriter()
-writer.append(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), [0])
+writer = PdfWriter()
+writer.append("../resources/crazyones.pdf", [0])
 
 # Act
 text_annotation = writer.add_annotation(
@@ -278,8 +273,7 @@ If you want to add a link, you can use {class}`~pypdf.annotations.Link`:
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Link
 
-pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-reader = PdfReader(pdf_path)
+reader = PdfReader("../resources/crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
@@ -303,8 +297,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Link
 from pypdf.generic import Fit
 
-pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-reader = PdfReader(pdf_path)
+reader = PdfReader("../resources/crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
@@ -342,8 +335,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Highlight
 from pypdf.generic import ArrayObject, FloatObject
 
-pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-reader = PdfReader(pdf_path)
+reader = PdfReader("../resources/crazyones.pdf")
 page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
