@@ -30,17 +30,20 @@ See [the robustness page](robustness.md) for the related issues.
 As a user, you likely do not care about it. If it is readable in any way, you
 want the text. You might use pdfminer.six as a fallback and do this:
 
+% To execute this example we need to install "pdfminer.six" package via "requirements/docs.in"
 ```{testcode}
+:skipif: True
+
 from pypdf import PdfReader
 from pdfminer.high_level import extract_text as fallback_text_extraction
 
 text = ""
 try:
-    reader = PdfReader("resources/side-by-side-subfig.pdf")
+    reader = PdfReader("../resources/side-by-side-subfig.pdf")
     for page in reader.pages:
         text += page.extract_text()
 except Exception as exc:
-    text = fallback_text_extraction("resources/side-by-side-subfig.pdf")
+    text = fallback_text_extraction("../resources/side-by-side-subfig.pdf")
 ```
 
 You could also capture [`pypdf.errors.PyPdfError`](https://github.com/py-pdf/pypdf/blob/main/pypdf/errors.py)
