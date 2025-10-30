@@ -21,6 +21,7 @@ print(meta.creation_date)
 print(meta.modification_date)
 ```
 
+% Two last rows masked to allow to change example.pdf
 ```{testoutput}
 :hide:
 
@@ -29,8 +30,8 @@ None
 None
 None
 Skia/PDF m103 Google Docs Renderer
-2025-10-30 10:29:55+01:00
-2025-10-30 10:34:56+01:00
+...
+...
 ```
 
 ## Writing metadata

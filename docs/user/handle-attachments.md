@@ -66,7 +66,7 @@ embedded_file.checksum = ByteStringObject(hashlib.md5(b"Hello World!").digest())
 embedded_file.modification_date = datetime.datetime.now(tz=datetime.timezone.utc)
 # embedded_file.content = "My new content."
 
-embedded_file.write("output.pdf")
+writer.write("example-with-attachment.pdf")
 ```
 
 The same functionality is available if you iterate over the attachments of a writer
@@ -100,7 +100,7 @@ from pypdf import PdfWriter
 from pypdf.constants import AFRelationship
 from pypdf.generic import create_string_object, ArrayObject, NameObject
 
-writer = PdfWriter(clone_from="pdf_a3b.pdf")
+writer = PdfWriter(clone_from="example.pdf")
 attachment = writer.add_attachment(filename="test.txt", data="Hello World!")
 attachment.subtype = NameObject("/text/plain")
 attachment.associated_file_relationship = NameObject(AFRelationship.SUPPLEMENT)
@@ -110,10 +110,10 @@ if "/AF" in writer.root_object:
     af = writer.root_object["/AF"].get_object()
 else:
     af = ArrayObject()
-    writer.root_object["/AF"] = af
+    writer.root_object[NameObject("/AF")] = af
 af.append(attachment.pdf_object.indirect_reference)
 
-writer.write("pdf_a3b_output.pdf")
+writer.write("example-with-pdf-a3b-attachment.pdf")
 ```
 
 This example marks a relationship of the attachment to the whole document.

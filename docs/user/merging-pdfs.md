@@ -69,10 +69,12 @@ from pypdf import PdfWriter, PdfReader
 
 writer = PdfWriter()
 
-# Append the first 10 pages from pdf file
-writer.append("../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf", (0, 10))
+source_file_name = "../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf"
 
-reader = PdfReader("../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+# Append the first 10 pages from pdf file
+writer.append(source_file_name, (0, 10))
+
+reader = PdfReader(source_file_name)
 
 # Append the first and 10th page from reader and create an outline
 writer.append(reader, "page 1 and 10", [0, 9])
