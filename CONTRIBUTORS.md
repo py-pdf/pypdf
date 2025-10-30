@@ -39,6 +39,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Mérino, Antoine](https://github.com/Merinorus)
 * [Murphy, Kevin](https://github.com/kmurphy4)
 * [nalin-udhaar](https://github.com/nalin-udhaar)
+* [Noah-Houghton](https://github.com/Noah-Houghton) | [LinkedIn](https://www.linkedin.com/in/noah-h-554992a0/)
 * [Paramonov, Alexey](https://github.com/alexey-v-paramonov)
 * [Paternault, Louis](https://framagit.org/spalax)
 * [Perrensen, Olsen](https://github.com/olsonperrensen)
