@@ -3003,7 +3003,10 @@ class PdfWriter(PdfDocCommon):
         for p in pages.values():
             pp = p.original_page
             for a in pp.get("/B", ()):
-                thr = a.get_object().get("/T")
+                a_obj = a.get_object()
+                if is_null_or_none(a_obj):
+                    continue
+                thr = a_obj.get("/T")
                 if thr is None:
                     continue
                 thr = thr.get_object()

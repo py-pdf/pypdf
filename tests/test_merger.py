@@ -10,6 +10,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.generic import Destination, Fit
 
 from . import get_data_from_url
+from .test_encryption import HAS_AES
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -397,6 +398,15 @@ def test_articles_with_writer(caplog):
     r = PdfReader(b)
     assert len(r.threads) == 4
     assert r.threads[0].get_object()["/F"]["/P"] == r.pages[0]
+
+
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+@pytest.mark.enable_socket
+def test_null_articles_with_writer():
+    data = get_data_from_url(name="issue-3508.pdf")
+    merger = PdfWriter()
+    merger.append(BytesIO(data))
+    assert len(merger.pages) == 98
 
 
 def test_get_reference():
