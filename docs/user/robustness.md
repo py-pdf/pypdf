@@ -10,8 +10,6 @@ be certain what the intended effect would be. Think of the following broken
 Python code as an example:
 
 ```{testcode}
-:skipif: True
-
 # Broken
 function (foo, bar):
 
@@ -21,6 +19,14 @@ def function(foo, bar):
 
 # Also possible:
 function = (foo, bar)
+```
+
+```{testoutput}
+:hide:
+
+Traceback (most recent call last):
+    ...
+SyntaxError: invalid syntax
 ```
 
 Writing a parser, you can go two paths: Either you try to be forgiving and try
