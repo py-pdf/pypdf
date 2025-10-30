@@ -146,9 +146,8 @@ class Transformation:
 
 
     Example:
-        >>> from pypdf import Transformation
-        >>> from pypdf._page import PageObject
-        >>> page = PageObject()
+        >>> from pypdf import PdfWriter, Transformation
+        >>> page = PdfWriter().add_blank_page(800, 600)
         >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
         >>> page.add_transformation(op)
 
@@ -209,10 +208,9 @@ class Transformation:
             A new ``Transformation`` instance
 
         Example:
-            >>> from pypdf import Transformation
-            >>> from pypdf._page import PageObject
+            >>> from pypdf import PdfWriter, Transformation
             >>> height, width = 40, 50
-            >>> page = PageObject()
+            >>> page = PdfWriter().add_blank_page(800, 600)
             >>> op = Transformation((1, 0, 0, -1, 0, height)) # vertical mirror
             >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, width, 0)))  # horizontal mirror
             >>> page.add_transformation(op)
