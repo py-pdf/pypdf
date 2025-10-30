@@ -5,7 +5,7 @@
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("form.pdf")
+reader = PdfReader("../resources/form.pdf")
 fields = reader.get_form_text_fields()
 fields == {"key": "value", "key2": "value2"}
 
@@ -18,7 +18,7 @@ fields = reader.get_fields()
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("form.pdf")
+reader = PdfReader("../resources/form.pdf")
 writer = PdfWriter()
 
 page = reader.pages[0]
@@ -74,7 +74,7 @@ In _pypdf_ fields are extracted from the `/Fields` array:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("form.pdf")
+reader = PdfReader("../resources/form.pdf")
 fields = reader.get_fields()
 ```
 
@@ -82,7 +82,7 @@ fields = reader.get_fields()
 from pypdf import PdfReader
 from pypdf.constants import AnnotationDictionaryAttributes
 
-reader = PdfReader("form.pdf")
+reader = PdfReader("../resources/form.pdf")
 fields = []
 for page in reader.pages:
     for annot in page.annotations:

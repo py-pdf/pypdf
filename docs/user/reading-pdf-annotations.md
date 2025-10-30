@@ -100,13 +100,6 @@ for page in reader.pages:
             if subtype == "/Highlight":
                 coords = annotation.get_object()["/QuadPoints"]
                 x1, y1, x2, y2, x3, y3, x4, y4 = coords
-                print(f"{x1=}, {y1=}, {x2=}, {y2=}, {x3=}, {y3=}, {x4=}, {y4=}")
-```
-
-```{testoutput}
-:hide:
-
-x1=176, y1=568, x2=203, y2=568, x3=176, y3=557, x4=203, y4=557
 ```
 
 ## Attachments
@@ -116,19 +109,12 @@ from pypdf import PdfReader
 
 reader = PdfReader("../resources/attachment.pdf")
 
+attachments = {}
 for page in reader.pages:
     if "/Annots" in page:
         for annotation in page["/Annots"]:
             subtype = annotation.get_object()["/Subtype"]
             if subtype == "/FileAttachment":
                 fileobj = annotation.get_object()["/FS"]
-                name = fileobj["/F"]
-                data = fileobj["/EF"]["/F"].get_data()
-                print(f"{name=} {len(data)=}")
-```
-
-```{testoutput}
-:hide:
-
-name='jpeg.pdf' len(data)=100898
+                attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].get_data()
 ```
