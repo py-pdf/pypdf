@@ -52,7 +52,7 @@ def stamp(
     writer.write(pdf_result)
 
 
-stamp("../resources/side-by-side-subfig.pdf", "stamp.pdf", "out.pdf")
+stamp("example.pdf", "stamp.pdf", "out.pdf")
 ```
 
 If you are experiencing wrongly rotated watermarks/stamps, try to use
@@ -115,5 +115,5 @@ def stamp_img(
         writer.write(fp)
 
 
-stamp_img("../resources/side-by-side-subfig.pdf", "example.png", "out.pdf")
+stamp_img("example.pdf", "example.png", "out.pdf")
 ```

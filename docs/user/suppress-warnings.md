@@ -39,11 +39,11 @@ from pdfminer.high_level import extract_text as fallback_text_extraction
 
 text = ""
 try:
-    reader = PdfReader("../resources/side-by-side-subfig.pdf")
+    reader = PdfReader("example.pdf")
     for page in reader.pages:
         text += page.extract_text()
 except Exception as exc:
-    text = fallback_text_extraction("../resources/side-by-side-subfig.pdf")
+    text = fallback_text_extraction("example.pdf")
 ```
 
 You could also capture [`pypdf.errors.PyPdfError`](https://github.com/py-pdf/pypdf/blob/main/pypdf/errors.py)

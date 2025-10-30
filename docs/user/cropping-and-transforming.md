@@ -9,7 +9,7 @@ away can still be restored.
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("../resources/side-by-side-subfig.pdf")
+reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
 # Add page 1 from reader to output document, unchanged.
@@ -143,7 +143,7 @@ Typically, you want to combine both.
 from pypdf import PdfReader, PdfWriter
 
 # Read the input
-reader = PdfReader("../resources/side-by-side-subfig.pdf")
+reader = PdfReader("example.pdf")
 page = reader.pages[0]
 
 # Scale
@@ -164,7 +164,7 @@ Typically, that is the lower-left corner.
 from pypdf import PdfReader, PdfWriter, Transformation
 
 # Read the input
-reader = PdfReader("../resources/side-by-side-subfig.pdf")
+reader = PdfReader("example.pdf")
 page = reader.pages[0]
 
 # Scale

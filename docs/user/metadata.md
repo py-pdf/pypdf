@@ -7,7 +7,7 @@ PDF files can have two types of metadata: "Regular" and XMP ones. They can both 
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/side-by-side-subfig.pdf")
+reader = PdfReader("example.pdf")
 
 meta = reader.metadata
 
@@ -24,13 +24,13 @@ print(meta.modification_date)
 ```{testoutput}
 :hide:
 
+PDF Example Document
 None
 None
 None
-TeX
-pdfTeX-1.40.23
-2022-04-09 08:29:50+02:00
-2022-04-09 08:29:50+02:00
+Skia/PDF m103 Google Docs Renderer
+2025-10-30 10:29:55+01:00
+2025-10-30 10:34:56+01:00
 ```
 
 ## Writing metadata
@@ -39,7 +39,7 @@ pdfTeX-1.40.23
 from datetime import datetime
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("../resources/side-by-side-subfig.pdf")
+reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
 # Add all pages to the writer
@@ -79,7 +79,7 @@ with open("meta-pdf.pdf", "wb") as f:
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="../resources/side-by-side-subfig.pdf")
+writer = PdfWriter(clone_from="example.pdf")
 
 # Change some values
 writer.add_metadata(
@@ -109,7 +109,7 @@ with open("meta-pdf.pdf", "wb") as f:
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter("../resources/side-by-side-subfig.pdf")
+writer = PdfWriter("example.pdf")
 
 # Remove Metadata (/Info entry)
 writer.metadata = None
@@ -124,13 +124,21 @@ with open("meta-pdf.pdf", "wb") as f:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/side-by-side-subfig.pdf")
+reader = PdfReader("example.pdf")
 
 meta = reader.xmp_metadata
 if meta:
     print(meta.dc_title)
     print(meta.dc_description)
     print(meta.xmp_create_date)
+```
+
+```{testoutput}
+:hide:
+
+{'x-default': 'PDF Example Document'}
+{}
+2025-10-30 09:29:55
 ```
 
 ## Creating XMP metadata

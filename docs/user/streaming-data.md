@@ -10,7 +10,7 @@ from io import BytesIO
 from pypdf import PdfReader, PdfWriter
 
 # Prepare example
-with open("../resources/side-by-side-subfig.pdf", "rb") as fh:
+with open("example.pdf", "rb") as fh:
     bytes_stream = BytesIO(fh.read())
 
 # Read from bytes_stream

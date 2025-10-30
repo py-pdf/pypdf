@@ -21,7 +21,7 @@ You can encrypt a PDF by using a password:
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("../resources/side-by-side-subfig.pdf")
+reader = PdfReader("example.pdf")
 writer = PdfWriter(clone_from=reader)
 
 # Add a password to the new PDF
