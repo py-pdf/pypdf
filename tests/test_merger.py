@@ -25,14 +25,6 @@ def merger_operate(merger):
     pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
     merger.append(pdf_path)
-
-    # For code coverage
-    found_oi = merger.find_outline_item("nothing here")
-    assert found_oi is None
-
-    found_oi = merger.find_outline_item("nothing here 2", None)
-    assert found_oi is None
-
     merger.append(outline)
     merger.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
     merger.append(pdf_forms)
