@@ -31,6 +31,7 @@ print(page.extract_text(extraction_mode="layout", layout_mode_strip_rotated=Fals
 ```
 
 ```{testoutput}
+:options: +NORMALIZE_WHITESPACE
 :hide:
 
 
@@ -171,6 +172,7 @@ written vertically to port (R
 
 (T) This is box text at top
 written down from top
+
 ```
 
 Refer to {func}`~pypdf._page.PageObject.extract_text` for more details.
@@ -245,11 +247,9 @@ text_body = "".join(parts)
 print(text_body)
 ```
 
-
 ```{testoutput}
+:options: +NORMALIZE_WHITESPACE
 :hide:
-
-
 
 TABLE OF CONTENTS
 
@@ -264,9 +264,6 @@ TABLE OF CONTENTS
 3.1.4 Hydrographic ........................................................................................................................... 14
 3.1.5 Toponymy (external package) ................................................................................................. 18
 3.1.6 Metadata .................................................................................................................................. 19
-
-
-
 ```
 
 ### Example 2: Extract rectangles and texts into an SVG file
