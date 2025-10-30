@@ -750,8 +750,11 @@ class PdfWriter(PdfDocCommon):
         Args:
             javascript: Your JavaScript.
 
-        >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-        # Example: This will launch the print window when the PDF is opened.
+        Example:
+            This will launch the print window when the PDF is opened.
+            >>> from pypdf import PdfWriter
+            >>> output = PdfWriter()
+            >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
         """
         # Names / JavaScript preferred to be able to add multiple scripts
