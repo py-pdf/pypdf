@@ -7,7 +7,7 @@ from pypdf import PdfWriter
 
 merger = PdfWriter()
 
-for pdf in ["file1.pdf", "file2.pdf", "file3.pdf"]:
+for pdf in ["example.pdf", "../resources/hello-world.pdf", "../resources/jpeg.pdf"]:
     merger.append(pdf)
 
 merger.write("merged-pdf.pdf")
@@ -28,7 +28,6 @@ import sys
 # Example: Increase the current limit by factor 5.
 sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 ```
-```
 
 ## Showing more merging options
 
@@ -37,9 +36,9 @@ from pypdf import PdfWriter
 
 merger = PdfWriter()
 
-input1 = open("document1.pdf", "rb")
-input2 = open("document2.pdf", "rb")
-input3 = open("document3.pdf", "rb")
+input1 = open("../resources/Seige_of_Vicksburg_Sample_OCR.pdf", "rb")
+input2 = open("../resources/two-different-pages.pdf", "rb")
+input3 = open("example.pdf", "rb")
 
 # Add the first 3 pages of input1 document to output
 merger.append(fileobj=input1, pages=(0, 3))
@@ -66,8 +65,14 @@ output.close()
 ### Examples
 
 ```{testcode}
-# Append the first 10 pages of source.pdf
-writer.append("source.pdf", (0, 10))
+from pypdf import PdfWriter, PdfReader
+
+writer = PdfWriter()
+
+# Append the first 10 pages from pdf file
+writer.append("../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf", (0, 10))
+
+reader = PdfReader("../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf")
 
 # Append the first and 10th page from reader and create an outline
 writer.append(reader, "page 1 and 10", [0, 9])
@@ -116,9 +121,13 @@ To reset, call  `writer.reset_translation(reader)`.
 To prevent side effects between pages/objects and all objects linked cloning is done during the merge.
 
 This process will be automatically applied if you use `PdfWriter.append/merge/add_page/insert_page`.
-If you want to clone an object before attaching it "manually," use the `clone` method of any *PdfObject*:
+If you want to clone an object before attaching it "manually", use the `clone` method of any *PdfObject*:
 
 ```{testcode}
+from pypdf.generic import NameObject, NumberObject, StreamObject
+
+object = StreamObject()
+
 cloned_object = object.clone(writer)
 ```
 
@@ -143,7 +152,7 @@ This means that you may copy lots of objects which will be saved in the output P
 To prevent this, you can provide the list of fields in the dictionaries to be ignored:
 
 ```{testcode}
-new_page = writer.add_page(reader.pages[0], excluded_fields=["/B"])
+new_page = writer.add_page(reader.pages[0], excluded_keys=["/B"])
 ```
 
 ### Merging rotated pages
@@ -152,6 +161,8 @@ If you are working with rotated pages, you might want to call {func}`~pypdf._pag
 before merging to avoid wrongly rotated results:
 
 ```{testcode}
+background = PdfReader("../resources/jpeg.pdf").pages[0]
+
 for page in writer.pages:
     if page.rotation != 0:
         page.transfer_rotation_to_content()
