@@ -26,7 +26,7 @@ page3.mediabox.upper_right = (
 )
 writer.add_page(page3)
 
-writer.write("_build/doctest/pypdf-output.pdf")
+writer.write("_build/doctest/cropping-and-transforming-1.pdf")
 ```
 
 ## Page rotation
@@ -44,7 +44,7 @@ writer = PdfWriter()
 writer.add_page(reader.pages[0])
 writer.pages[0].rotate(90)
 
-writer.write("_build/doctest/output.pdf")
+writer.write("_build/doctest/cropping-and-transforming-2.pdf")
 ```
 
 The rotate method is typically preferred over the `page.add_transformation(Transformation().rotate())`
@@ -75,7 +75,7 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-writer.write("_build/doctest/merged-foo.pdf")
+writer.write("_build/doctest/cropping-and-transforming-merged-plain.pdf")
 ```
 
 ## Merge with Rotation
@@ -100,7 +100,7 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-writer.write("_build/doctest/merged-foo.pdf")
+writer.write("_build/doctest/cropping-and-transforming-merged-rotation.pdf")
 ```
 
 If you add the `expand` parameter:
@@ -147,7 +147,7 @@ page.scale_by(0.5)
 # Write the result to a file
 writer = PdfWriter()
 writer.add_page(page)
-writer.write("_build/doctest/out-scale.pdf")
+writer.write("_build/doctest/cropping-and-transforming-scale.pdf")
 ```
 
 ### Scaling the content only
@@ -169,7 +169,7 @@ page.add_transformation(op)
 # Write the result to a file
 writer = PdfWriter()
 writer.add_page(page)
-writer.write("_build/doctest/transform.pdf")
+writer.write("_build/doctest/cropping-and-transforming-transform.pdf")
 ```
 
 ### Scaling the page only
@@ -244,7 +244,7 @@ for x in range(4):
         destpage.merge_page(sourcepage)
 
 # Write file
-writer.write("_build/doctest/nup-dest1.pdf")
+writer.write("_build/doctest/cropping-and-transforming-nup-dest1.pdf")
 ```
 
 And the result is… unexpected.
@@ -280,7 +280,7 @@ for x in range(4):
         )
 
 # Write file
-writer.write("_build/doctest/nup-dest2.pdf")
+writer.write("_build/doctest/cropping-and-transforming-nup-dest2.pdf")
 ```
 
 We get the expected result.

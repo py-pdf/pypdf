@@ -28,7 +28,7 @@ writer = PdfWriter(clone_from=reader)
 writer.encrypt("my-secret-password", algorithm="AES-256")
 
 # Save the new PDF to a file
-writer.write("_build/doctest/encrypted-pdf.pdf")
+writer.write("_build/doctest/encryption-decription-encrypt.pdf")
 ```
 
 The algorithm can be one of `RC4-40`, `RC4-128`, `AES-128`, `AES-256-R5`, `AES-256`.
@@ -54,5 +54,5 @@ if reader.is_encrypted:
 writer = PdfWriter(clone_from=reader)
 
 # Save the new PDF to a file
-writer.write("_build/doctest/decrypted-file.pdf")
+writer.write("_build/doctest/encryption-decription-decrypt.pdf")
 ```

@@ -35,7 +35,7 @@ writer = PdfWriter(clone_from="example.pdf")
 
 writer.remove_images()
 
-writer.write("_build/doctest/out.pdf")
+writer.write("_build/doctest/file-size-1.pdf")
 ```
 
 ## Reducing Image Quality
@@ -53,7 +53,7 @@ for page in writer.pages:
     for img in page.images:
         img.replace(img.image, quality=80)
 
-writer.write("_build/doctest/out.pdf")
+writer.write("_build/doctest/file-size-2.pdf")
 ```
 
 ## Lossless Compression
@@ -73,7 +73,7 @@ writer = PdfWriter(clone_from="example.pdf")
 for page in writer.pages:
     page.compress_content_streams()  # This is CPU intensive!
 
-writer.write("_build/doctest/out.pdf")
+writer.write("_build/doctest/file-size-3.pdf")
 ```
 
 `page.compress_content_streams` uses [`zlib.compress`](https://docs.python.org/3/library/zlib.html#zlib.compress)

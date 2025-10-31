@@ -74,7 +74,7 @@ writer.viewer_preferences.num_copies = 2
 for i in range(40):
     writer.add_blank_page(10, 10)
 
-writer.write("_build/doctest/output.pdf")
+writer.write("_build/doctest/viewr-preferencies-out.pdf")
 ```
 
 The names beginning with a slash character are part of the PDF file format. They are

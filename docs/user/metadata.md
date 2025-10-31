@@ -71,7 +71,7 @@ writer.add_metadata(
 )
 
 # Save the new PDF to a file
-writer.write("_build/doctest/meta-pdf.pdf")
+writer.write("_build/doctest/metadata-1.pdf")
 ```
 
 ## Updating metadata
@@ -100,7 +100,7 @@ writer.metadata = {
 }
 
 # Save the new PDF to a file
-writer.write("_build/doctest/meta-pdf.pdf")
+writer.write("_build/doctest/metadata-2.pdf")
 ```
 
 ## Removing metadata entry
@@ -114,7 +114,7 @@ writer = PdfWriter("example.pdf")
 writer.metadata = None
 
 # Save the new PDF to a file
-writer.write("_build/doctest/meta-pdf.pdf")
+writer.write("_build/doctest/metadata-3.pdf")
 ```
 
 ## Reading XMP metadata
@@ -161,7 +161,7 @@ xmp.pdf_producer = "pypdf"
 writer = PdfWriter()
 writer.add_blank_page(612, 792)  # Add a page
 writer.xmp_metadata = xmp
-writer.write("_build/doctest/output.pdf")
+writer.write("_build/doctest/metadata-4.pdf")
 ```
 
 ## Setting XMP metadata fields
@@ -312,7 +312,7 @@ rdf_root.appendChild(pdfuaid_description)
 
 metadata.stream.set_data(xmp_document.toxml().encode("utf-8"))
 
-writer.write("_build/doctest/output.pdf")
+writer.write("_build/doctest/metadata-5.pdf")
 ```
 
 For further details on modifying the structure, please refer to {py:mod}`xml.dom.minidom`.

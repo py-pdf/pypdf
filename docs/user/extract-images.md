@@ -37,5 +37,5 @@ im = (
     .decode_as_image()
 )
 
-im.save("_build/doctest/out-stamp-image.png")
+im.save("_build/doctest/extract-images-stamp.png")
 ```
