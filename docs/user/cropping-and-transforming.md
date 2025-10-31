@@ -9,7 +9,7 @@ away can still be restored.
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("../resources/Seige_of_Vicksburg_Sample_OCR.pdf")
+reader = PdfReader("Seige_of_Vicksburg_Sample_OCR.pdf")
 writer = PdfWriter()
 
 # Add page 1 from reader to output document, unchanged.
@@ -26,7 +26,7 @@ page3.mediabox.upper_right = (
 )
 writer.add_page(page3)
 
-writer.write("_build/doctest/cropping-and-transforming-1.pdf")
+writer.write("cropping-and-transforming-1.pdf")
 ```
 
 ## Page rotation
@@ -44,7 +44,7 @@ writer = PdfWriter()
 writer.add_page(reader.pages[0])
 writer.pages[0].rotate(90)
 
-writer.write("_build/doctest/cropping-and-transforming-2.pdf")
+writer.write("cropping-and-transforming-2.pdf")
 ```
 
 The rotate method is typically preferred over the `page.add_transformation(Transformation().rotate())`
@@ -64,10 +64,10 @@ is the result of
 from pypdf import PdfReader, PdfWriter, Transformation
 
 # Get the data
-reader_base = PdfReader("../resources/labeled-edges-center-image.pdf")
+reader_base = PdfReader("labeled-edges-center-image.pdf")
 page_base = reader_base.pages[0]
 
-reader = PdfReader("../resources/box.pdf")
+reader = PdfReader("box.pdf")
 page_box = reader.pages[0]
 
 page_base.merge_page(page_box)
@@ -75,7 +75,7 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-writer.write("_build/doctest/cropping-and-transforming-merged-plain.pdf")
+writer.write("cropping-and-transforming-merged-plain.pdf")
 ```
 
 ## Merge with Rotation
@@ -86,10 +86,10 @@ writer.write("_build/doctest/cropping-and-transforming-merged-plain.pdf")
 from pypdf import PdfReader, PdfWriter, Transformation
 
 # Get the data
-reader_base = PdfReader("../resources/labeled-edges-center-image.pdf")
+reader_base = PdfReader("labeled-edges-center-image.pdf")
 page_base = reader_base.pages[0]
 
-reader = PdfReader("../resources/box.pdf")
+reader = PdfReader("box.pdf")
 page_box = reader.pages[0]
 
 # Apply the transformation
@@ -100,7 +100,7 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-writer.write("_build/doctest/cropping-and-transforming-merged-rotation.pdf")
+writer.write("cropping-and-transforming-merged-rotation.pdf")
 ```
 
 If you add the `expand` parameter:
@@ -138,7 +138,7 @@ Typically, you want to combine both.
 from pypdf import PdfReader, PdfWriter
 
 # Read the input
-reader = PdfReader("../resources/side-by-side-subfig.pdf")
+reader = PdfReader("side-by-side-subfig.pdf")
 page = reader.pages[0]
 
 # Scale
@@ -147,7 +147,7 @@ page.scale_by(0.5)
 # Write the result to a file
 writer = PdfWriter()
 writer.add_page(page)
-writer.write("_build/doctest/cropping-and-transforming-scale.pdf")
+writer.write("cropping-and-transforming-scale.pdf")
 ```
 
 ### Scaling the content only
@@ -159,7 +159,7 @@ Typically, that is the lower-left corner.
 from pypdf import PdfReader, PdfWriter, Transformation
 
 # Read the input
-reader = PdfReader("../resources/side-by-side-subfig.pdf")
+reader = PdfReader("side-by-side-subfig.pdf")
 page = reader.pages[0]
 
 # Scale
@@ -169,7 +169,7 @@ page.add_transformation(op)
 # Write the result to a file
 writer = PdfWriter()
 writer.add_page(page)
-writer.write("_build/doctest/cropping-and-transforming-transform.pdf")
+writer.write("cropping-and-transforming-transform.pdf")
 ```
 
 ### Scaling the page only
@@ -244,7 +244,7 @@ for x in range(4):
         destpage.merge_page(sourcepage)
 
 # Write file
-writer.write("_build/doctest/cropping-and-transforming-nup-dest1.pdf")
+writer.write("cropping-and-transforming-nup-dest1.pdf")
 ```
 
 And the result is… unexpected.
@@ -280,7 +280,7 @@ for x in range(4):
         )
 
 # Write file
-writer.write("_build/doctest/cropping-and-transforming-nup-dest2.pdf")
+writer.write("cropping-and-transforming-nup-dest2.pdf")
 ```
 
 We get the expected result.

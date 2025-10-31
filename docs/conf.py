@@ -12,6 +12,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import datetime
 import os
+import pathlib
 import shutil
 import sys
 
@@ -133,3 +134,29 @@ napoleon_google_docstring = True
 napoleon_numpy_docstring = False  # Explicitly prefer Google style docstring
 napoleon_use_param = True  # for type hint support
 napoleon_use_rtype = False  # False, so the return type is inline with the description.
+
+# -- Options for Doctest  ------------------------------------------------------
+
+# Most of doc examples use hardcoded input and output file names.
+# To execute these examples real files need to be read and written.
+#
+# By default docs executed with current working directory set to directory where "sphinx-build"
+# command was run. To avoid relative paths in docs and to allow to run "sphinx-build" command
+# from any directory, we modify current working directory for each test file. Tests are executed
+# against temporary directory where we have copied all resource files.
+
+pypdf_test_dir = os.path.abspath("_build/doctest/pypdf_test")
+if pathlib.Path(pypdf_test_dir).exists():
+    shutil.rmtree(pypdf_test_dir)
+shutil.copytree("../resources", pypdf_test_dir)
+shutil.copy("user/nup-source.png", pypdf_test_dir)
+
+doctest_global_setup = f"""
+import os as pypdf_test_os
+pypdf_orig_dir = pypdf_test_os.getcwd()
+pypdf_test_os.chdir({pypdf_test_dir.__repr__()})
+"""
+
+doctest_global_cleanup = """
+pypdf_test_os.chdir(pypdf_orig_dir)
+"""

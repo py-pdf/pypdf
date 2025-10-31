@@ -7,10 +7,10 @@ from pypdf import PdfWriter
 
 merger = PdfWriter()
 
-for pdf in ["example.pdf", "../resources/hello-world.pdf", "../resources/jpeg.pdf"]:
+for pdf in ["example.pdf", "hello-world.pdf", "jpeg.pdf"]:
     merger.append(pdf)
 
-merger.write("_build/doctest/merging-pdfs-out.pdf")
+merger.write("merging-pdfs-out.pdf")
 ```
 
 For more details, see an excellent answer on
@@ -35,8 +35,8 @@ from pypdf import PdfWriter
 
 merger = PdfWriter()
 
-input1 = open("../resources/Seige_of_Vicksburg_Sample_OCR.pdf", "rb")
-input2 = open("../resources/two-different-pages.pdf", "rb")
+input1 = open("Seige_of_Vicksburg_Sample_OCR.pdf", "rb")
+input2 = open("two-different-pages.pdf", "rb")
 input3 = open("example.pdf", "rb")
 
 # Add the first 3 pages of input1 document to output
@@ -49,7 +49,7 @@ merger.merge(position=2, fileobj=input2, pages=(0, 1))
 merger.append(input3)
 
 # Write to an output PDF document
-merger.write("_build/doctest/merging-pdfs-options.pdf")
+merger.write("merging-pdfs-options.pdf")
 ```
 
 ## append
@@ -63,7 +63,7 @@ from pypdf import PdfWriter, PdfReader
 
 writer = PdfWriter()
 
-source_file_name = "../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf"
+source_file_name = "GeoBase_NHNC1_Data_Model_UML_EN.pdf"
 
 # Append the first 10 pages from pdf file
 writer.append(source_file_name, (0, 10))
@@ -157,7 +157,7 @@ If you are working with rotated pages, you might want to call {func}`~pypdf._pag
 before merging to avoid wrongly rotated results:
 
 ```{testcode}
-background = PdfReader("../resources/jpeg.pdf").pages[0]
+background = PdfReader("jpeg.pdf").pages[0]
 
 for page in writer.pages:
     if page.rotation != 0:

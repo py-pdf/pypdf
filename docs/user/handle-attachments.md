@@ -66,7 +66,7 @@ embedded_file.checksum = ByteStringObject(hashlib.md5(b"Hello World!").digest())
 embedded_file.modification_date = datetime.datetime.now(tz=datetime.timezone.utc)
 # embedded_file.content = "My new content."
 
-writer.write("_build/doctest/handle-attachments-file.pdf")
+writer.write("handle-attachments-file.pdf")
 ```
 
 The same functionality is available if you iterate over the attachments of a writer
@@ -113,7 +113,7 @@ else:
     writer.root_object[NameObject("/AF")] = af
 af.append(attachment.pdf_object.indirect_reference)
 
-writer.write("_build/doctest/handle-attachments-a3b.pdf")
+writer.write("handle-attachments-a3b.pdf")
 ```
 
 This example marks a relationship of the attachment to the whole document.

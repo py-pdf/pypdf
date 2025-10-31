@@ -16,7 +16,7 @@ reader = PdfReader("example.pdf")
 page = reader.pages[0]
 
 for idx, image_file_object in enumerate(page.images):
-    file_name = "_build/doctest/extract-images-" + str(idx) + "-"+ image_file_object.name
+    file_name = "extract-images-" + str(idx) + "-"+ image_file_object.name
     with open(file_name, "wb") as fp:
         fp.write(image_file_object.data)
 ```
@@ -37,5 +37,5 @@ im = (
     .decode_as_image()
 )
 
-im.save("_build/doctest/extract-images-stamp.png")
+im.save("extract-images-stamp.png")
 ```

@@ -5,7 +5,7 @@
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/form.pdf")
+reader = PdfReader("form.pdf")
 fields = reader.get_form_text_fields()
 fields == {"key": "value", "key2": "value2"}
 
@@ -18,7 +18,7 @@ fields = reader.get_fields()
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("../resources/form.pdf")
+reader = PdfReader("form.pdf")
 writer = PdfWriter()
 
 page = reader.pages[0]
@@ -32,7 +32,7 @@ writer.update_page_form_field_values(
     auto_regenerate=False,
 )
 
-writer.write("_build/doctest/forms-out.pdf")
+writer.write("forms-out.pdf")
 ```
 
 Generally speaking, you will always want to use `auto_regenerate=False`. The
@@ -73,7 +73,7 @@ In _pypdf_ fields are extracted from the `/Fields` array:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/form.pdf")
+reader = PdfReader("form.pdf")
 fields = reader.get_fields()
 ```
 
@@ -81,7 +81,7 @@ fields = reader.get_fields()
 from pypdf import PdfReader
 from pypdf.constants import AnnotationDictionaryAttributes
 
-reader = PdfReader("../resources/form.pdf")
+reader = PdfReader("form.pdf")
 fields = []
 for page in reader.pages:
     for annot in page.annotations:

@@ -5,7 +5,7 @@ You can extract text from a PDF:
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/test Orient.pdf")
+reader = PdfReader("test Orient.pdf")
 page = reader.pages[0]
 print(page.extract_text())
 
@@ -153,7 +153,7 @@ The following example reads the text of page four of [this PDF document](https:/
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+reader = PdfReader("GeoBase_NHNC1_Data_Model_UML_EN.pdf")
 page = reader.pages[3]
 
 parts = []
@@ -204,7 +204,7 @@ Such an SVG export may help to understand what is going on in a page.
 from pypdf import PdfReader
 import svgwrite
 
-reader = PdfReader("../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+reader = PdfReader("GeoBase_NHNC1_Data_Model_UML_EN.pdf")
 page = reader.pages[2]
 
 dwg = svgwrite.Drawing("GeoBase_test.svg", profile="tiny")
