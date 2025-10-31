@@ -49,11 +49,11 @@ for page in reader.pages:
 :hide:
 
 {'subtype': '/Highlight', 'location': [376.771, 406.213, 413.78, 422.506]}
-{'subtype': '/Popup', 'location': [596, 330.026, 780, 422.026]}
-{'subtype': '/FileAttachment', 'location': [88.2923, 210.633, 95.2923, 227.633]}
-{'subtype': '/Stamp', 'location': [145.117, 188.132, 227.806, 254.997]}
+{'subtype': '/Popup', 'location': [531.053, 327.965, 715.198, 422.219]}
+{'subtype': '/FileAttachment', 'location': [245.819, 223.288, 252.819, 240.288]}
+{'subtype': '/Stamp', 'location': [68.7536, 187.259, 151.442, 254.124]}
 {'subtype': '/Popup', 'location': [612, 631.925, 816, 745.925]}
-{'subtype': '/Text', 'location': [334.863, 777.445, 358.863, 801.445]}
+{'subtype': '/Text', 'location': [176.9, 216.719, 200.9, 240.719]}
 {'subtype': '/Popup', 'location': [596, 709.445, 780, 801.445]}
 ```
 
