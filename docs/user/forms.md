@@ -32,7 +32,7 @@ writer.update_page_form_field_values(
     auto_regenerate=False,
 )
 
-with open("filled-out.pdf", "wb") as output_stream:
+with open("_build/doctest/filled-out.pdf", "wb") as output_stream:
     writer.write(output_stream)
 ```
 

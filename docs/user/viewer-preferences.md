@@ -74,7 +74,7 @@ writer.viewer_preferences.num_copies = 2
 for i in range(40):
     writer.add_blank_page(10, 10)
 
-with open("output.pdf", "wb") as output_stream:
+with open("_build/doctest/output.pdf", "wb") as output_stream:
     writer.write(output_stream)
 ```
 

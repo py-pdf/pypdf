@@ -10,7 +10,7 @@ merger = PdfWriter()
 for pdf in ["example.pdf", "../resources/hello-world.pdf", "../resources/jpeg.pdf"]:
     merger.append(pdf)
 
-merger.write("merged-pdf.pdf")
+merger.write("_build/doctest/merged-pdf.pdf")
 merger.close()
 ```
 
@@ -50,7 +50,7 @@ merger.merge(position=2, fileobj=input2, pages=(0, 1))
 merger.append(input3)
 
 # Write to an output PDF document
-output = open("document-output.pdf", "wb")
+output = open("_build/doctest/document-output.pdf", "wb")
 merger.write(output)
 
 # Close file descriptors

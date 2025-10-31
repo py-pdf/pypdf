@@ -21,7 +21,7 @@ writer.add_blank_page(width=200, height=200)
 data = b"any bytes - typically read from a file"
 writer.add_attachment("smile.png", data)
 
-with open("output.pdf", "wb") as output_stream:
+with open("_build/doctest/output.pdf", "wb") as output_stream:
     writer.write(output_stream)
 ```
 
@@ -64,7 +64,7 @@ annotation.flags = 4
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("annotated-pdf.pdf", "wb") as fp:
+with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -101,7 +101,7 @@ annotation = Line(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("annotated-pdf.pdf", "wb") as fp:
+with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -134,7 +134,7 @@ annotation[NameObject("/C")] = ArrayObject(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("annotated-pdf.pdf", "wb") as fp:
+with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -162,7 +162,7 @@ annotation = Rectangle(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("annotated-pdf.pdf", "wb") as fp:
+with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -195,7 +195,7 @@ annotation = Ellipse(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("annotated-pdf.pdf", "wb") as fp:
+with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -223,7 +223,7 @@ annotation = Polygon(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("annotated-pdf.pdf", "wb") as fp:
+with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -259,7 +259,7 @@ popup_annotation = Popup(
     parent=text_annotation,  # use the output of add_annotation
 )
 
-writer.write("annotated-pdf-popup.pdf")
+writer.write("_build/doctest/annotated-pdf-popup.pdf")
 ```
 
 You have to use the returned result from add_annotation() as it is
@@ -286,7 +286,7 @@ annotation = Link(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("annotated-pdf.pdf", "wb") as fp:
+with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -311,7 +311,7 @@ annotation = Link(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("annotated-pdf.pdf", "wb") as fp:
+with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -351,6 +351,6 @@ annotation = Highlight(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("annotated-pdf.pdf", "wb") as fp:
+with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```

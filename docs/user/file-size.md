@@ -35,7 +35,7 @@ writer = PdfWriter(clone_from="example.pdf")
 
 writer.remove_images()
 
-with open("out.pdf", "wb") as f:
+with open("_build/doctest/out.pdf", "wb") as f:
     writer.write(f)
 ```
 
@@ -54,7 +54,7 @@ for page in writer.pages:
     for img in page.images:
         img.replace(img.image, quality=80)
 
-with open("out.pdf", "wb") as f:
+with open("_build/doctest/out.pdf", "wb") as f:
     writer.write(f)
 ```
 
@@ -75,7 +75,7 @@ writer = PdfWriter(clone_from="example.pdf")
 for page in writer.pages:
     page.compress_content_streams()  # This is CPU intensive!
 
-with open("out.pdf", "wb") as f:
+with open("_build/doctest/out.pdf", "wb") as f:
     writer.write(f)
 ```
 

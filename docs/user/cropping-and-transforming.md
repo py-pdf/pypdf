@@ -27,7 +27,7 @@ page3.mediabox.upper_right = (
 writer.add_page(page3)
 
 # Write to pypdf-output.pdf.
-with open("pypdf-output.pdf", "wb") as fp:
+with open("_build/doctest/pypdf-output.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -46,7 +46,7 @@ writer = PdfWriter()
 writer.add_page(reader.pages[0])
 writer.pages[0].rotate(90)
 
-with open("output.pdf", "wb") as fp:
+with open("_build/doctest/output.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -78,7 +78,7 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-with open("merged-foo.pdf", "wb") as fp:
+with open("_build/doctest/merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -104,7 +104,7 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-with open("merged-foo.pdf", "wb") as fp:
+with open("_build/doctest/merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -152,7 +152,7 @@ page.scale_by(0.5)
 # Write the result to a file
 writer = PdfWriter()
 writer.add_page(page)
-writer.write("out.pdf")
+writer.write("_build/doctest/out-scale.pdf")
 ```
 
 ### Scaling the content only
@@ -174,7 +174,7 @@ page.add_transformation(op)
 # Write the result to a file
 writer = PdfWriter()
 writer.add_page(page)
-writer.write("out-pg-transform.pdf")
+writer.write("_build/doctest/transform.pdf")
 ```
 
 ### Scaling the page only
@@ -249,7 +249,7 @@ for x in range(4):
         destpage.merge_page(sourcepage)
 
 # Write file
-with open("nup-dest1.pdf", "wb") as fp:
+with open("_build/doctest/nup-dest1.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -286,7 +286,7 @@ for x in range(4):
         )
 
 # Write file
-with open("nup-dest2.pdf", "wb") as fp:
+with open("_build/doctest/nup-dest2.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
