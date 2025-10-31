@@ -26,9 +26,7 @@ page3.mediabox.upper_right = (
 )
 writer.add_page(page3)
 
-# Write to pypdf-output.pdf.
-with open("_build/doctest/pypdf-output.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/pypdf-output.pdf")
 ```
 
 ## Page rotation
@@ -46,8 +44,7 @@ writer = PdfWriter()
 writer.add_page(reader.pages[0])
 writer.pages[0].rotate(90)
 
-with open("_build/doctest/output.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/output.pdf")
 ```
 
 The rotate method is typically preferred over the `page.add_transformation(Transformation().rotate())`
@@ -78,8 +75,7 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-with open("_build/doctest/merged-foo.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/merged-foo.pdf")
 ```
 
 ## Merge with Rotation
@@ -104,8 +100,7 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-with open("_build/doctest/merged-foo.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/merged-foo.pdf")
 ```
 
 If you add the `expand` parameter:
@@ -249,8 +244,7 @@ for x in range(4):
         destpage.merge_page(sourcepage)
 
 # Write file
-with open("_build/doctest/nup-dest1.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/nup-dest1.pdf")
 ```
 
 And the result is… unexpected.
@@ -286,8 +280,7 @@ for x in range(4):
         )
 
 # Write file
-with open("_build/doctest/nup-dest2.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/nup-dest2.pdf")
 ```
 
 We get the expected result.

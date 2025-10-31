@@ -71,8 +71,7 @@ writer.add_metadata(
 )
 
 # Save the new PDF to a file
-with open("_build/doctest/meta-pdf.pdf", "wb") as f:
-    writer.write(f)
+writer.write("_build/doctest/meta-pdf.pdf")
 ```
 
 ## Updating metadata
@@ -101,8 +100,7 @@ writer.metadata = {
 }
 
 # Save the new PDF to a file
-with open("_build/doctest/meta-pdf.pdf", "wb") as f:
-    writer.write(f)
+writer.write("_build/doctest/meta-pdf.pdf")
 ```
 
 ## Removing metadata entry
@@ -116,8 +114,7 @@ writer = PdfWriter("example.pdf")
 writer.metadata = None
 
 # Save the new PDF to a file
-with open("_build/doctest/meta-pdf.pdf", "wb") as f:
-    writer.write(f)
+writer.write("_build/doctest/meta-pdf.pdf")
 ```
 
 ## Reading XMP metadata

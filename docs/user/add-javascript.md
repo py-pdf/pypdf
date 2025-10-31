@@ -15,7 +15,5 @@ writer = PdfWriter(clone_from="example.pdf")
 # Add JavaScript to launch the print window on opening this PDF.
 writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
-# Write to pypdf-output.pdf.
-with open("_build/doctest/pypdf-output.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/pypdf-output.pdf")
 ```

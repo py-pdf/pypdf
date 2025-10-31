@@ -21,8 +21,7 @@ writer.add_blank_page(width=200, height=200)
 data = b"any bytes - typically read from a file"
 writer.add_attachment("smile.png", data)
 
-with open("_build/doctest/output.pdf", "wb") as output_stream:
-    writer.write(output_stream)
+writer.write("_build/doctest/output.pdf")
 ```
 
 
@@ -64,8 +63,7 @@ annotation.flags = 4
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/annotated-pdf.pdf")
 ```
 
 ## Text
@@ -101,8 +99,7 @@ annotation = Line(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/annotated-pdf.pdf")
 ```
 
 ## PolyLine
@@ -134,8 +131,7 @@ annotation[NameObject("/C")] = ArrayObject(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/annotated-pdf.pdf")
 ```
 
 ## Rectangle
@@ -162,8 +158,7 @@ annotation = Rectangle(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/annotated-pdf.pdf")
 ```
 
 If you want the rectangle to be filled, use the `interiour_color="ff0000"` parameter.
@@ -195,8 +190,7 @@ annotation = Ellipse(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/annotated-pdf.pdf")
 ```
 
 ## Polygon
@@ -223,8 +217,7 @@ annotation = Polygon(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/annotated-pdf.pdf")
 ```
 
 ## Popup
@@ -286,8 +279,7 @@ annotation = Link(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/annotated-pdf.pdf")
 ```
 
 You can also add internal links:
@@ -311,8 +303,7 @@ annotation = Link(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/annotated-pdf.pdf")
 ```
 
 ## Text Markup Annotations
@@ -351,6 +342,5 @@ annotation = Highlight(
 writer.add_annotation(page_number=0, annotation=annotation)
 
 # Write the annotated file to disk
-with open("_build/doctest/annotated-pdf.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("_build/doctest/annotated-pdf.pdf")
 ```
