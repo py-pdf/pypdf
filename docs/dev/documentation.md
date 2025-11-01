@@ -16,7 +16,7 @@ CI pipeline is configured run test automatically for each PR. It is also possibl
    pip install -r requirements/docs.txt
    ```
 
-2. Make sure you have `sphinx-build` command line tool avaliable in your `venv`.
+2. Make sure you have `sphinx-build` command line tool avaliable in your venv.
 
    ```bash
    sphinx-build --version
