@@ -10,7 +10,7 @@ CI pipeline is configured to do it automatically for each PR.
 
 It is also possible to run locally:
 
-1. First you need to install `docs` requrements
+1. First you need to install docs requrements
 
    ```bash
    pip install -r requirements/docs.txt
@@ -34,7 +34,7 @@ It is also possible to run locally:
    make doctest
    ```
 
-5. If everything is Okay, then in output you shoud see `Doctest summary` wihout failures
+5. If everything is Okay you should see in output `Doctest summary` wihout failures
 
 ## API Reference
 
