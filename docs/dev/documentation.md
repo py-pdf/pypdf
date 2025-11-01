@@ -32,7 +32,9 @@ It is also possible to run it locally:
    cd docs
    ```
 
-4. Run `doctest` build. If you have issues check [Sphinx's docs](https://www.sphinx-doc.org/en/master/usage/quickstart.html#running-the-build)
+4. Run `doctest` build. It uses `sphinx-build` tool indirectly. See
+   [Sphinx's docs](https://www.sphinx-doc.org/en/master/usage/quickstart.html#running-the-build)
+   for details.
 
    ```bash
    make doctest
