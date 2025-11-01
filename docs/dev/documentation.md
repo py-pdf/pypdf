@@ -3,12 +3,12 @@
 This documentation is build with [Sphinx](https://www.sphinx-doc.org/) and
 hosted by [Read the Docs](https://about.readthedocs.com/)
 
-## Execute docs examples
+## Testing code snippets
 
-To make sure that python examples in documentation html have no typos or missed imports we test almost all code snippets using Sphinx's extension [sphinx.ext.doctest](https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html).
-CI pipeline is configured to do it automatically for each PR.
-
-It is also possible to run locally:
+Almost all python code snippets in documentation tested using Sphinx's extension
+[sphinx.ext.doctest](https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html).
+This allows to make sure that we have no typos, missed imports and other problems.
+CI pipeline is configured run test automatically for each PR. It is also possible to run locally:
 
 1. First you need to install docs requrements
 
