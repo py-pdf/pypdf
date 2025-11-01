@@ -7,12 +7,12 @@ hosted by [Read the Docs](https://about.readthedocs.com/)
 
 Almost all python code snippets in documentation tested using Sphinx's extension
 [sphinx.ext.doctest](https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html).
-This allows to make sure that we have no typos, missed imports and other problems.
-This includes:
-- Code snippets marked with `testcode` directive in `*.md` files
-- Code snippets from python's docstrings imported via `autoclass` directive in `*.rst` files
+This allows to make sure that we have no typos, missed imports and other problems in:
+- code snippets marked with `testcode` directive in `*.md` files
+- code snippets from python's docstrings imported via `autoclass` directive in `*.rst` files
 
-CI pipeline is configured run test automatically for each PR. It is also possible to run locally:
+CI pipeline is configured run Sphinx's `doctest` build automatically for each PR.
+It is also possible to run it locally:
 
 1. First you need to install docs requrements
 
