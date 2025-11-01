@@ -140,10 +140,10 @@ napoleon_use_rtype = False  # False, so the return type is inline with the descr
 # Most of doc examples use hardcoded input and output file names.
 # To execute these examples real files need to be read and written.
 #
-# By default docs executed with current working directory set to directory where "sphinx-build"
-# command was run. To avoid relative paths in docs and to allow to run "sphinx-build" command
-# from any directory, we modify current working directory for each test file. Tests are executed
-# against temporary directory where we have copied all resource files.
+# By default docs executed with current working directory where "sphinx-build" command was run.
+# To avoid relative paths in docs and to allow to run "sphinx-build" command from any directory,
+# we modify current working directory in each tested file. Tests are executed against our
+# temporary directory where we have copied all nessesary resources.
 
 pypdf_test_dir = os.path.abspath("_build/doctest/pypdf_test")
 if pathlib.Path(pypdf_test_dir).exists():

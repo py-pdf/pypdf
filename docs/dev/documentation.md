@@ -1,5 +1,41 @@
 # Documentation
 
+This documentation is build with [Sphinx](https://www.sphinx-doc.org/) and
+hosted by [Read the Docs](https://about.readthedocs.com/)
+
+## Execute docs examples
+
+To make sure that python examples in documentation html have no typos or missed imports we test almost all code snippets using Sphinx's extension [sphinx.ext.doctest](https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html).
+CI pipeline is configured to do it automatically for each PR.
+
+It is also possible to run locally:
+
+1. First you need to install `docs` requrements
+
+   ```bash
+   pip install -r requirements/docs.txt
+   ```
+
+2. Make sure you have `sphinx-build` command line tool avaliable in your `venv`.
+
+   ```bash
+   sphinx-build --version
+   ```
+
+3. Change current directory
+
+   ```bash
+   cd docs
+   ```
+
+4. Run `doctest` build. If you have issues check [Sphinx's docs](https://www.sphinx-doc.org/en/master/usage/quickstart.html#running-the-build)
+
+   ```bash
+   make doctest
+   ```
+
+5. If everything is Okay, then in output you shoud see `Doctest summary` wihout failures
+
 ## API Reference
 
 ### Method / Function Docstrings
