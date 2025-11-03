@@ -3206,7 +3206,7 @@ class PdfWriter(PdfDocCommon):
                 o = cast(TreeObject, o["/Next"])
             else:
                 return None
-        raise PyPdfError("This line is theoretically unreachable.")  # noqa: RET503
+        raise PyPdfError("This line is theoretically unreachable.")
 
     def reset_translation(
         self, reader: Union[None, PdfReader, IndirectObject] = None
