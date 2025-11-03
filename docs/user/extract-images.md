@@ -16,9 +16,8 @@ reader = PdfReader("example.pdf")
 page = reader.pages[0]
 
 for idx, image_file_object in enumerate(page.images):
-    file_name = "extract-images-" + str(idx) + "-"+ image_file_object.name
-    with open(file_name, "wb") as fp:
-        fp.write(image_file_object.data)
+    file_name = "extract-images-" + str(idx) + "-" + image_file_object.name
+    image_file_object.image.save(file_name)
 ```
 
 # Other images

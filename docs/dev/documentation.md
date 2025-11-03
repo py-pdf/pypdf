@@ -14,25 +14,20 @@ This allows to make sure that we have no typos, missed imports and other problem
 CI pipeline is configured run Sphinx's `doctest` build automatically for each PR.
 It is also possible to run it locally:
 
-1. First you need to install docs requrements
+1. First you need to install docs requirements
 
    ```bash
    pip install -r requirements/docs.txt
    ```
 
-2. Make sure you have `sphinx-build` command line tool avaliable in your venv.
-
-   ```bash
-   sphinx-build --version
-   ```
-
-3. Change current directory
+2. Change current directory
 
    ```bash
    cd docs
    ```
 
-4. Run `doctest` build. It uses `sphinx-build` tool indirectly. See
+3. Run `doctest` build. It uses indirectly `sphinx-build` command line tool
+    installed with docs requrements. See
    [Sphinx's docs](https://www.sphinx-doc.org/en/master/usage/quickstart.html#running-the-build)
    for details.
 
@@ -40,7 +35,7 @@ It is also possible to run it locally:
    make doctest
    ```
 
-5. If everything is Okay you should see in output `Doctest summary` wihout failures
+4. If everything is okay you should see in output `Doctest summary` without failures
 
 ## API Reference
 

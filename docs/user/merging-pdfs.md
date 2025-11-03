@@ -123,21 +123,21 @@ If you want to clone an object before attaching it "manually", use the `clone` m
 ```{testcode}
 from pypdf.generic import NameObject, NumberObject, StreamObject
 
-object = StreamObject()
+stream_object = StreamObject()
 
-cloned_object = object.clone(writer)
+cloned_object = stream_object.clone(writer)
 ```
 
 If you try to clone an object already belonging to the writer, it will return the same object:
 
 ```{testcode}
-assert cloned_object == object.clone(writer)
+assert cloned_object == stream_object.clone(writer)
 ```
 
 The same holds true if you try to clone an object twice. It will return the previously cloned object:
 
 ```{testcode}
-assert object.clone(writer) == object.clone(writer)
+assert stream_object.clone(writer) == stream_object.clone(writer)
 ```
 
 Please note that if you clone an object, you will clone all the objects below as well,

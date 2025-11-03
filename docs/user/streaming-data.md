@@ -28,9 +28,7 @@ Suppose you want to manipulate a PDF and write it directly to AWS S3 without hav
 to write the document to a file first. We have the original PDF in `raw_bytes_data` as `bytes`
 and want to set `my-secret-password`:
 
-% This docs example can be executed if we:
-% - install "boto3" package via "requirements/docs.in"
-% - configure access to AWS in CI pipeline
+% We prefer not to execute doc examples which require access to cloud providers
 ```{testcode}
 :skipif: True
 
@@ -67,9 +65,7 @@ Another option is to get a byte stream.
 
 For AWS S3 it works like this:
 
-% This docs example can be executed if we:
-% - install "boto3" package via "requirements/docs.in"
-% - configure access to AWS in CI pipeline
+% We prefer not to execute doc examples which require access to cloud providers
 ```{testcode}
 :skipif: True
 
@@ -86,9 +82,7 @@ reader = PdfReader(BytesIO(obj["Body"].read()))
 
 To use with Google Cloud storage:
 
-% This docs example can be executed if we:
-% - install "google-cloud-storage" package via "requirements/docs.in"
-% - configure access to GCP in CI pipeline
+% We prefer not to execute doc examples which require access to cloud providers
 ```{testcode}
 :skipif: True
 
