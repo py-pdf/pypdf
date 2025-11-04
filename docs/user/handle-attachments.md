@@ -9,6 +9,12 @@ is a list.
 
 You can extract all attachments like this:
 
+```{testsetup}
+pypdf_test_setup("user/handle-attachments", {
+    "../resources/example.pdf": "example.pdf",
+})
+```
+
 ```{testcode}
 from pypdf import PdfReader
 

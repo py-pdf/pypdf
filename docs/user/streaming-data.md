@@ -5,6 +5,13 @@ to disk, e.g. when you want to store the PDF in a database or AWS S3.
 
 pypdf supports streaming data to a file-like object:
 
+
+```{testsetup}
+pypdf_test_setup("user/streaming-data", {
+    "../resources/example.pdf": "example.pdf",
+})
+```
+
 ```{testcode}
 from io import BytesIO
 from pypdf import PdfReader, PdfWriter

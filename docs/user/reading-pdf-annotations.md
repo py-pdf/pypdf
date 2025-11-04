@@ -33,6 +33,12 @@ PDF 2.0 defines the following annotation types:
 
 In general, annotations can be read like this:
 
+```{testsetup}
+pypdf_test_setup("user/reading-pdf-annotations", {
+    "../resources/example.pdf": "example.pdf",
+})
+```
+
 ```{testcode}
 from pypdf import PdfReader
 

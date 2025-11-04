@@ -18,6 +18,13 @@ for installing the extra dependencies if interacting with PDFs that use AES.
 
 You can encrypt a PDF by using a password:
 
+```{testsetup}
+pypdf_test_setup("user/encryption-decryption", {
+    "../resources/example.pdf": "example.pdf",
+    "../resources/encrypted-file.pdf": "encrypted-file.pdf",
+})
+```
+
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 

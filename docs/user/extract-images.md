@@ -8,6 +8,12 @@ dependencies, see [installation guide](installation.md).
 Every page of a PDF document can contain an arbitrary number of images.
 The names of the files may not be unique.
 
+```{testsetup}
+pypdf_test_setup("user/extract-images", {
+    "../resources/example.pdf": "example.pdf",
+})
+```
+
 ```{testcode}
 from pypdf import PdfReader
 

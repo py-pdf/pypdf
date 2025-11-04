@@ -4,6 +4,13 @@ PDF files can have two types of metadata: "Regular" and XMP ones. They can both 
 
 ## Reading metadata
 
+```{testsetup}
+pypdf_test_setup("user/metadata", {
+    "../resources/example.pdf": "example.pdf",
+    "../resources/commented-xmp.pdf": "commented-xmp.pdf",
+})
+```
+
 ```{testcode}
 from pypdf import PdfReader
 

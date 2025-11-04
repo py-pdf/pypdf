@@ -2,6 +2,12 @@
 
 ## Reading form fields
 
+```{testsetup}
+pypdf_test_setup("user/forms", {
+    "../resources/form.pdf": "form.pdf",
+})
+```
+
 ```{testcode}
 from pypdf import PdfReader
 

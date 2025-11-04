@@ -10,6 +10,14 @@ The process of stamping and watermarking is the same, you just need to set `over
 
 You can use {func}`~pypdf._page.PageObject.merge_page` if you don't need to transform the stamp:
 
+```{testsetup}
+pypdf_test_setup("user/add-watermark", {
+    "../resources/crazyones.pdf": "crazyones.pdf",
+    "../docs/user/nup-source.png": "nup-source.png",
+    "../resources/jpeg.pdf": "jpeg.pdf",
+})
+```
+
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 

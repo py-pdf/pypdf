@@ -27,6 +27,11 @@ reduction (from 5.7 MB to 0.8 MB) within a real PDF.
 
 ## Removing Images
 
+```{testsetup}
+pypdf_test_setup("user/file-size", {
+    "../resources/example.pdf": "example.pdf",
+})
+```
 
 ```{testcode}
 from pypdf import PdfWriter

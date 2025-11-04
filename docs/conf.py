@@ -146,18 +146,59 @@ napoleon_use_rtype = False  # False, so the return type is inline with the descr
 # working directory in each tested file. Tests are executed against our
 # temporary directory where we have copied all nessesary resources.
 
-pypdf_test_dir = os.path.abspath("_build/doctest/pypdf_test")
-if Path(pypdf_test_dir).exists():
-    shutil.rmtree(pypdf_test_dir)
-shutil.copytree("../resources", pypdf_test_dir)
-shutil.copy("user/nup-source.png", pypdf_test_dir)
+pypdf_test_src_root_dir = os.path.abspath(".")
+pypdf_test_dst_root_dir = os.path.abspath("_build/doctest/pypdf_test")
+if Path(pypdf_test_dst_root_dir).exists():
+   shutil.rmtree(pypdf_test_dst_root_dir)
+Path(pypdf_test_dst_root_dir).mkdir(parents=True)
 
 doctest_global_setup = f"""
-import os as pypdf_test_os
-pypdf_orig_dir = pypdf_test_os.getcwd()
-pypdf_test_os.chdir({pypdf_test_dir.__repr__()})
+def pypdf_test_global_setup():
+    import os
+    import shutil
+    from pathlib import Path
+
+    src_root_dir = {pypdf_test_src_root_dir.__repr__()}
+    dst_root_dir = {pypdf_test_dst_root_dir.__repr__()}
+
+    global pypdf_test_setup
+    def pypdf_test_setup(group: str, resources: dict[str, str] = {{}}):
+        dst_dir = os.path.join(dst_root_dir, group)
+        Path(dst_dir).mkdir(parents=True)
+        os.chdir(dst_dir)
+
+        for (src_path, dst_path) in resources.items():
+            src = os.path.normpath(os.path.join(src_root_dir, src_path))
+            dst = os.path.join(dst_dir, dst_path or os.path.basename(src_path))
+
+            shutil.copyfile(src, dst)
+
+    global pypdf_test_orig_dir
+    pypdf_test_orig_dir = os.getcwd()
+    os.chdir(dst_root_dir)
+
+pypdf_test_global_setup()
 """
 
-doctest_global_cleanup = """
-pypdf_test_os.chdir(pypdf_orig_dir)
+doctest_global_cleanup = f"""
+def pypdf_test_global_cleanup():
+    import os
+
+    dst_root_dir = {pypdf_test_dst_root_dir.__repr__()}
+
+    has_files = False
+    for file_name in os.listdir(dst_root_dir):
+        file = os.path.join(dst_root_dir, file_name)
+        if os.path.isfile(file):
+            if not has_files:
+                print("Docs page was not configured propery for running code examples")
+                print("Please use 'pypdf_test_setup' function in 'testsetup' directive")
+                print("Deleting unexpected file(s) in " + dst_root_dir)
+                has_files = True
+            print(f"- {{file_name}}")
+            os.remove(file)
+
+    os.chdir(pypdf_test_orig_dir)
+
+pypdf_test_global_cleanup()
 """

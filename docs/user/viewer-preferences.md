@@ -13,6 +13,10 @@ Otherwise, the {attr}`~pypdf.PdfReader.viewer_preferences` property will be set 
 
 ## Example
 
+```{testsetup}
+pypdf_test_setup("user/viewer-preferences")
+```
+
 ```{testcode}
 from pypdf import PdfWriter
 from pypdf.generic import ArrayObject, NumberObject

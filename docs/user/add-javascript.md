@@ -7,6 +7,12 @@ Adobe has documentation on its support here:
 
 ## Launch print window on opening
 
+```{testsetup}
+pypdf_test_setup("user/add-javascript", {
+    "../resources/example.pdf": "example.pdf",
+})
+```
+
 ```{testcode}
 from pypdf import PdfWriter
 

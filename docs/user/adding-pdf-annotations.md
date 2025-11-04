@@ -12,6 +12,12 @@ To circumvent this, make sure to add the `/C` entry to the annotation, being an 
 
 ## Attachments
 
+```{testsetup}
+pypdf_test_setup("user/adding-pdf-annotations", {
+    "../resources/crazyones.pdf": "crazyones.pdf",
+})
+```
+
 ```{testcode}
 from pypdf import PdfWriter
 

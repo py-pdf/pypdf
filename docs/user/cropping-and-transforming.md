@@ -6,6 +6,17 @@ Cropping works by adjusting the viewbox. That means content that was cropped
 away can still be restored.
 ```
 
+```{testsetup}
+pypdf_test_setup("user/cropping-and-transforming", {
+    "../resources/example.pdf": "example.pdf",
+    "../resources/Seige_of_Vicksburg_Sample_OCR.pdf": "Seige_of_Vicksburg_Sample_OCR.pdf",
+    "../resources/labeled-edges-center-image.pdf": "labeled-edges-center-image.pdf",
+    "../resources/side-by-side-subfig.pdf": "side-by-side-subfig.pdf",
+    "../resources/nup-source.pdf": "nup-source.pdf",
+    "../resources/box.pdf": "box.pdf",
+})
+```
+
 ```{testcode}
 from pypdf import PdfReader, PdfWriter
 
