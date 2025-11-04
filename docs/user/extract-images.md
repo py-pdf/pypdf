@@ -42,5 +42,5 @@ im = (
     .decode_as_image()
 )
 
-im.save("out-annotation.png")
+im.save("out-annotation-image.png")
 ```

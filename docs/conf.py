@@ -161,6 +161,10 @@ def pypdf_test_global_setup():
     src_root_dir = {pypdf_test_src_root_dir.__repr__()}
     dst_root_dir = {pypdf_test_dst_root_dir.__repr__()}
 
+    global pypdf_test_orig_dir
+    pypdf_test_orig_dir = os.getcwd()
+    os.chdir(dst_root_dir)
+
     global pypdf_test_setup
     def pypdf_test_setup(group: str, resources: dict[str, str] = {{}}):
         dst_dir = os.path.join(dst_root_dir, group)
@@ -173,10 +177,6 @@ def pypdf_test_global_setup():
 
             shutil.copyfile(src, dst)
 
-    global pypdf_test_orig_dir
-    pypdf_test_orig_dir = os.getcwd()
-    os.chdir(dst_root_dir)
-
 pypdf_test_global_setup()
 """
 
@@ -185,6 +185,8 @@ def pypdf_test_global_cleanup():
     import os
 
     dst_root_dir = {pypdf_test_dst_root_dir.__repr__()}
+
+    os.chdir(pypdf_test_orig_dir)
 
     has_files = False
     for file_name in os.listdir(dst_root_dir):
@@ -196,9 +198,7 @@ def pypdf_test_global_cleanup():
                 print("Deleting unexpected file(s) in " + dst_root_dir)
                 has_files = True
             print(f"- {{file_name}}")
-            os.remove(file)
-
-    os.chdir(pypdf_test_orig_dir)
+            os.remove(file)  # We should not affect other tests
 
 pypdf_test_global_cleanup()
 """

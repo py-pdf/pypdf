@@ -26,7 +26,7 @@ writer = PdfWriter(clone_from="crazyones.pdf")
 for page in writer.pages:
     page.merge_page(stamp, over=False)  # here set to False for watermarking
 
-writer.write("out-stamp.pdf")
+writer.write("out-underlay.pdf")
 ```
 
 Otherwise use {func}`~pypdf._page.PageObject.merge_transformed_page` with {class}`~pypdf.Transformation` if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
