@@ -10,7 +10,7 @@ The names of the files may not be unique.
 
 ```{testsetup}
 pypdf_test_setup("user/extract-images", {
-    "../resources/example.pdf": "example.pdf",
+    "example.pdf": "../resources/example.pdf",
 })
 ```
 

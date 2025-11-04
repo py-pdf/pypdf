@@ -167,9 +167,9 @@ def pypdf_test_global_setup():
         Path(dst_dir).mkdir(parents=True)
         os.chdir(dst_dir)
 
-        for (src_path, dst_path) in resources.items():
+        for (dst_path, src_path) in resources.items():
             src = os.path.normpath(os.path.join(src_root_dir, src_path))
-            dst = os.path.join(dst_dir, dst_path or os.path.basename(src_path))
+            dst = os.path.join(dst_dir, dst_path)
 
             shutil.copyfile(src, dst)
 

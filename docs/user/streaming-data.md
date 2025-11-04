@@ -8,7 +8,7 @@ pypdf supports streaming data to a file-like object:
 
 ```{testsetup}
 pypdf_test_setup("user/streaming-data", {
-    "../resources/example.pdf": "example.pdf",
+    "example.pdf": "../resources/example.pdf",
 })
 ```
 

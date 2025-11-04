@@ -35,7 +35,7 @@ In general, annotations can be read like this:
 
 ```{testsetup}
 pypdf_test_setup("user/reading-pdf-annotations", {
-    "../resources/example.pdf": "example.pdf",
+    "example.pdf": "../resources/example.pdf",
 })
 ```
 

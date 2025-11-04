@@ -8,12 +8,12 @@ away can still be restored.
 
 ```{testsetup}
 pypdf_test_setup("user/cropping-and-transforming", {
-    "../resources/example.pdf": "example.pdf",
-    "../resources/Seige_of_Vicksburg_Sample_OCR.pdf": "Seige_of_Vicksburg_Sample_OCR.pdf",
-    "../resources/labeled-edges-center-image.pdf": "labeled-edges-center-image.pdf",
-    "../resources/side-by-side-subfig.pdf": "side-by-side-subfig.pdf",
-    "../resources/nup-source.pdf": "nup-source.pdf",
-    "../resources/box.pdf": "box.pdf",
+    "example.pdf": "../resources/example.pdf",
+    "Seige_of_Vicksburg_Sample_OCR.pdf": "../resources/Seige_of_Vicksburg_Sample_OCR.pdf",
+    "labeled-edges-center-image.pdf": "../resources/labeled-edges-center-image.pdf",
+    "side-by-side-subfig.pdf": "../resources/side-by-side-subfig.pdf",
+    "nup-source.pdf": "../resources/box.pdf",
+    "box.pdf": "../resources/box.pdf",
 })
 ```
 

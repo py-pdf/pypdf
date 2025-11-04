@@ -4,12 +4,12 @@
 
 ```{testsetup}
 pypdf_test_setup("user/merging-pdfs", {
-    "../resources/example.pdf": "example.pdf",
-    "../resources/hello-world.pdf": "hello-world.pdf",
-    "../resources/jpeg.pdf": "jpeg.pdf",
-    "../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf": "GeoBase_NHNC1_Data_Model_UML_EN.pdf",
-    "../resources/Seige_of_Vicksburg_Sample_OCR.pdf": "Seige_of_Vicksburg_Sample_OCR.pdf",
-    "../resources/two-different-pages.pdf": "two-different-pages.pdf",
+    "example.pdf": "../resources/example.pdf",
+    "hello-world.pdf": "../resources/hello-world.pdf",
+    "jpeg.pdf": "../resources/jpeg.pdf",
+    "GeoBase_NHNC1_Data_Model_UML_EN.pdf": "../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf",
+    "Seige_of_Vicksburg_Sample_OCR.pdf": "../resources/Seige_of_Vicksburg_Sample_OCR.pdf",
+    "two-different-pages.pdf": "../resources/two-different-pages.pdf",
 })
 ```
 

@@ -9,7 +9,7 @@ Adobe has documentation on its support here:
 
 ```{testsetup}
 pypdf_test_setup("user/add-javascript", {
-    "../resources/example.pdf": "example.pdf",
+    "example.pdf": "../resources/example.pdf",
 })
 ```
 

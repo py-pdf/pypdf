@@ -20,8 +20,8 @@ You can encrypt a PDF by using a password:
 
 ```{testsetup}
 pypdf_test_setup("user/encryption-decryption", {
-    "../resources/example.pdf": "example.pdf",
-    "../resources/encrypted-file.pdf": "encrypted-file.pdf",
+    "example.pdf": "../resources/example.pdf",
+    "encrypted-file.pdf": "../resources/encrypted-file.pdf",
 })
 ```
 

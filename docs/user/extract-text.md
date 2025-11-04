@@ -4,8 +4,8 @@ You can extract text from a PDF:
 
 ```{testsetup}
 pypdf_test_setup("user/extract-text", {
-    "../resources/test Orient.pdf": "test Orient.pdf",
-    "../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf": "GeoBase_NHNC1_Data_Model_UML_EN.pdf",
+    "test Orient.pdf": "../resources/test Orient.pdf",
+    "GeoBase_NHNC1_Data_Model_UML_EN.pdf": "../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf",
 })
 ```
 

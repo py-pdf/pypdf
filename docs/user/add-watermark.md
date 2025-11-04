@@ -12,9 +12,9 @@ You can use {func}`~pypdf._page.PageObject.merge_page` if you don't need to tran
 
 ```{testsetup}
 pypdf_test_setup("user/add-watermark", {
-    "../resources/crazyones.pdf": "crazyones.pdf",
-    "../docs/user/nup-source.png": "nup-source.png",
-    "../resources/jpeg.pdf": "jpeg.pdf",
+    "crazyones.pdf": "../resources/crazyones.pdf",
+    "nup-source.png": "../docs/user/nup-source.png",
+    "jpeg.pdf": "../resources/jpeg.pdf",
 })
 ```
 

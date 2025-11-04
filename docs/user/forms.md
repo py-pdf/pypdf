@@ -4,7 +4,7 @@
 
 ```{testsetup}
 pypdf_test_setup("user/forms", {
-    "../resources/form.pdf": "form.pdf",
+    "form.pdf": "../resources/form.pdf",
 })
 ```
 

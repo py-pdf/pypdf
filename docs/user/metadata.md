@@ -6,8 +6,8 @@ PDF files can have two types of metadata: "Regular" and XMP ones. They can both 
 
 ```{testsetup}
 pypdf_test_setup("user/metadata", {
-    "../resources/example.pdf": "example.pdf",
-    "../resources/commented-xmp.pdf": "commented-xmp.pdf",
+    "example.pdf": "../resources/example.pdf",
+    "commented-xmp.pdf": "../resources/commented-xmp.pdf",
 })
 ```
 
