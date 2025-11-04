@@ -38,7 +38,7 @@ writer.update_page_form_field_values(
     auto_regenerate=False,
 )
 
-writer.write("forms-out.pdf")
+writer.write("out.pdf")
 ```
 
 Generally speaking, you will always want to use `auto_regenerate=False`. The

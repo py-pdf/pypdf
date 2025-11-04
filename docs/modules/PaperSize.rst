@@ -8,22 +8,27 @@ The PaperSize Class
 
 Add blank page with PaperSize
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. code-block:: python
-    :linenos:
+
+.. testsetup ::
+
+    pypdf_test_setup("modules/PaperSize", {
+        "example.pdf": "../resources/example.pdf",
+    })
+
+.. testcode ::
 
     from pypdf import PaperSize, PdfWriter
 
-    writer = PdfWriter(clone_from="sample.pdf")
+    writer = PdfWriter(clone_from="example.pdf")
     writer.add_blank_page(PaperSize.A8.width, PaperSize.A8.height)
-    writer.write("paper-size-add-page.pdf")
+    writer.write("out-1-add-page.pdf")
 
 Insert blank page with PaperSize
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. code-block:: python
-    :linenos:
+.. testcode ::
 
     from pypdf import PaperSize, PdfWriter
 
-    writer = PdfWriter(clone_from="sample.pdf")
+    writer = PdfWriter(clone_from="example.pdf")
     writer.insert_blank_page(PaperSize.A8.width, PaperSize.A8.height, 1)
-    writer.write("paper-size-insert-size.pdf")
+    writer.write("out-2-insert-page.pdf")

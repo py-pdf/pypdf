@@ -37,7 +37,7 @@ page3.mediabox.upper_right = (
 )
 writer.add_page(page3)
 
-writer.write("cropping-and-transforming-1.pdf")
+writer.write("out-1.pdf")
 ```
 
 ## Page rotation
@@ -55,7 +55,7 @@ writer = PdfWriter()
 writer.add_page(reader.pages[0])
 writer.pages[0].rotate(90)
 
-writer.write("cropping-and-transforming-2.pdf")
+writer.write("out-2.pdf")
 ```
 
 The rotate method is typically preferred over the `page.add_transformation(Transformation().rotate())`
@@ -86,7 +86,7 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-writer.write("cropping-and-transforming-merged-plain.pdf")
+writer.write("out-3-plain-merge.pdf")
 ```
 
 ## Merge with Rotation
@@ -111,7 +111,7 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-writer.write("cropping-and-transforming-merged-rotation.pdf")
+writer.write("out-4-merge-with-rotation.pdf")
 ```
 
 If you add the `expand` parameter:
@@ -158,7 +158,7 @@ page.scale_by(0.5)
 # Write the result to a file
 writer = PdfWriter()
 writer.add_page(page)
-writer.write("cropping-and-transforming-scale.pdf")
+writer.write("out-5-scale.pdf")
 ```
 
 ### Scaling the content only
@@ -180,7 +180,7 @@ page.add_transformation(op)
 # Write the result to a file
 writer = PdfWriter()
 writer.add_page(page)
-writer.write("cropping-and-transforming-transform.pdf")
+writer.write("out-6-transform.pdf")
 ```
 
 ### Scaling the page only
@@ -255,7 +255,7 @@ for x in range(4):
         destpage.merge_page(sourcepage)
 
 # Write file
-writer.write("cropping-and-transforming-nup-dest1.pdf")
+writer.write("out-7-nup-dest1.pdf")
 ```
 
 And the result is… unexpected.
@@ -291,7 +291,7 @@ for x in range(4):
         )
 
 # Write file
-writer.write("cropping-and-transforming-nup-dest2.pdf")
+writer.write("out-8-nup-dest2.pdf")
 ```
 
 We get the expected result.

@@ -26,7 +26,7 @@ writer = PdfWriter(clone_from="crazyones.pdf")
 for page in writer.pages:
     page.merge_page(stamp, over=False)  # here set to False for watermarking
 
-writer.write("add-watermark-underlay.pdf")
+writer.write("out-1-underlay.pdf")
 ```
 
 Otherwise use {func}`~pypdf._page.PageObject.merge_transformed_page` with {class}`~pypdf.Transformation` if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
@@ -60,7 +60,7 @@ def stamp(
     writer.write(pdf_result)
 
 
-stamp("crazyones.pdf", "jpeg.pdf", "add-watermark-transform.pdf")
+stamp("crazyones.pdf", "jpeg.pdf", "out-2-scale.pdf")
 ```
 
 If you are experiencing wrongly rotated watermarks/stamps, try to use
@@ -122,5 +122,5 @@ def stamp_img(
     writer.write(pdf_result)
 
 
-stamp_img("crazyones.pdf", "nup-source.png", "add-watermark-direct.pdf")
+stamp_img("crazyones.pdf", "nup-source.png", "out-3.image.pdf")
 ```
