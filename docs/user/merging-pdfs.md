@@ -21,7 +21,7 @@ merger = PdfWriter()
 for pdf in ["example.pdf", "hello-world.pdf", "jpeg.pdf"]:
     merger.append(pdf)
 
-merger.write("out-1-basic.pdf")
+merger.write("out-basic.pdf")
 ```
 
 For more details, see an excellent answer on
@@ -62,7 +62,7 @@ with (
     merger.append(input3)
 
     # Write to an output PDF document
-    merger.write("out-2-options.pdf")
+    merger.write("out-advanced.pdf")
 ```
 
 ## append

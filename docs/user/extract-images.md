@@ -22,7 +22,7 @@ reader = PdfReader("example.pdf")
 page = reader.pages[0]
 
 for i, image_file_object in enumerate(page.images):
-    file_name = "out-1-" + str(i) + "-" + image_file_object.name
+    file_name = "out-image-" + str(i) + "-" + image_file_object.name
     image_file_object.image.save(file_name)
 ```
 
@@ -42,5 +42,5 @@ im = (
     .decode_as_image()
 )
 
-im.save("out-2-stamp.png")
+im.save("out-annotation.png")
 ```

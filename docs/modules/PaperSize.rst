@@ -21,7 +21,7 @@ Add blank page with PaperSize
 
     writer = PdfWriter(clone_from="example.pdf")
     writer.add_blank_page(PaperSize.A8.width, PaperSize.A8.height)
-    writer.write("out-1-add-page.pdf")
+    writer.write("out-add-page.pdf")
 
 Insert blank page with PaperSize
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -31,4 +31,4 @@ Insert blank page with PaperSize
 
     writer = PdfWriter(clone_from="example.pdf")
     writer.insert_blank_page(PaperSize.A8.width, PaperSize.A8.height, 1)
-    writer.write("out-2-insert-page.pdf")
+    writer.write("out-insert-page.pdf")

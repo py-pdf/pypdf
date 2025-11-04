@@ -22,7 +22,7 @@ reader = PdfReader("example.pdf")
 
 for name, content_list in reader.attachments.items():
     for i, content in enumerate(content_list):
-        with open(f"out-1-{i}-{name}", "wb") as fp:
+        with open(f"out-attachment-{i}-{name}", "wb") as fp:
             fp.write(content)
 ```
 
@@ -72,7 +72,7 @@ embedded_file.checksum = ByteStringObject(hashlib.md5(b"Hello World!").digest())
 embedded_file.modification_date = datetime.datetime.now(tz=datetime.timezone.utc)
 # embedded_file.content = "My new content."
 
-writer.write("out-2-file.pdf")
+writer.write("out-add-attachment.pdf")
 ```
 
 The same functionality is available if you iterate over the attachments of a writer
@@ -119,7 +119,7 @@ else:
     writer.root_object[NameObject("/AF")] = af
 af.append(attachment.pdf_object.indirect_reference)
 
-writer.write("out-3-a3b.pdf")
+writer.write("out-a3b.pdf")
 ```
 
 This example marks a relationship of the attachment to the whole document.
