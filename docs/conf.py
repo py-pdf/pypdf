@@ -12,9 +12,9 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import datetime
 import os
-import pathlib
 import shutil
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
@@ -147,7 +147,7 @@ napoleon_use_rtype = False  # False, so the return type is inline with the descr
 # temporary directory where we have copied all nessesary resources.
 
 pypdf_test_dir = os.path.abspath("_build/doctest/pypdf_test")
-if pathlib.Path(pypdf_test_dir).exists():
+if Path(pypdf_test_dir).exists():
     shutil.rmtree(pypdf_test_dir)
 shutil.copytree("../resources", pypdf_test_dir)
 shutil.copy("user/nup-source.png", pypdf_test_dir)

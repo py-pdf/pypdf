@@ -197,7 +197,7 @@ an [SVG file](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics).
 
 Such an SVG export may help to understand what is going on in a page.
 
-% This docs example can be executed if we install "svgwrite" package via "requirements/docs.in"
+% We prefer not to execute doc examples for unmaintained third-party package "svgwrite"
 ```{testcode}
 :skipif: True
 

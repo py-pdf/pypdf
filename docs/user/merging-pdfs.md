@@ -36,21 +36,22 @@ from pypdf import PdfWriter
 
 merger = PdfWriter()
 
-input1 = open("Seige_of_Vicksburg_Sample_OCR.pdf", "rb")
-input2 = open("two-different-pages.pdf", "rb")
-input3 = open("example.pdf", "rb")
+with (
+    open("Seige_of_Vicksburg_Sample_OCR.pdf", "rb") as input1,
+    open("two-different-pages.pdf", "rb") as input2,
+    open("example.pdf", "rb") as input3
+):
+    # Add the first 3 pages of input1 document to output
+    merger.append(fileobj=input1, pages=(0, 3))
 
-# Add the first 3 pages of input1 document to output
-merger.append(fileobj=input1, pages=(0, 3))
+    # Insert the first page of input2 into the output beginning after the second page
+    merger.merge(position=2, fileobj=input2, pages=(0, 1))
 
-# Insert the first page of input2 into the output beginning after the second page
-merger.merge(position=2, fileobj=input2, pages=(0, 1))
+    # Append entire input3 document to the end of the output document
+    merger.append(input3)
 
-# Append entire input3 document to the end of the output document
-merger.append(input3)
-
-# Write to an output PDF document
-merger.write("merging-pdfs-options.pdf")
+    # Write to an output PDF document
+    merger.write("merging-pdfs-options.pdf")
 ```
 
 ## append
