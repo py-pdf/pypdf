@@ -126,8 +126,6 @@ def test_get_formatted_changes():
 - Avoid catching not emitted warnings (#2429) by @stefan6419846
 """
     )
-
-
 def test_get_formatted_changes__other():
     make_release = pytest.importorskip("make_release")
 
@@ -182,4 +180,3 @@ def test_get_formatted_changes__other():
 - FIX: Broken test due to expired test file URL (#2468) by @pubpub-zz
 """
     )
-
