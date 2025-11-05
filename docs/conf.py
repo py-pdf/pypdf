@@ -211,16 +211,16 @@ def pypdf_test_global_cleanup():
     os.chdir(pypdf_test_orig_dir)
 
     has_files = False
-    for file_name in os.listdir(dst_root_dir):
-        file = os.path.join(dst_root_dir, file_name)
-        if os.path.isfile(file):
+    for name in os.listdir(dst_root_dir):
+        file_name = os.path.join(dst_root_dir, name)
+        if os.path.isfile(file_name):
             if not has_files:
                 print("Docs page was not configured propery for running code examples")
                 print("Please use 'pypdf_test_setup' function in 'testsetup' directive")
                 print("Deleting unexpected file(s) in " + dst_root_dir)
                 has_files = True
-            print(f"- {{file_name}}")
-            os.remove(file)  # We should not affect other tests
+            print(f"- {{name}}")
+            os.remove(file_name)  # Avoid side effects on other tests
 
 pypdf_test_global_cleanup()
 """

@@ -30,7 +30,7 @@ See [the robustness page](robustness.md) for the related issues.
 As a user, you likely do not care about it. If it is readable in any way, you
 want the text. You might use pdfminer.six as a fallback and do this:
 
-% We prefer not to execute doc examples for third-party package "pdfminer" used only in one code snippet
+% We prefer not to execute doc examples for third-party package "pdfminer.six" used in one code snippet only
 ```{testcode}
 :skipif: True
 
