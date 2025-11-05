@@ -64,7 +64,10 @@ class Font:
             for d_font_idx, d_font in enumerate(
                 self.font_dictionary["/DescendantFonts"]
             ):
-                d_font_object = d_font.get_object()
+                if isinstance(d_font, IndirectObject):
+                    d_font_object = d_font.get_object()
+                else:
+                    d_font_object = d_font
                 assert not isinstance(d_font_object, IndirectObject), d_font_object
                 self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font_object
                 ord_map = {
