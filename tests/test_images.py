@@ -32,9 +32,9 @@ def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
     else:
         if isinstance(path, Path):
             assert path.exists()
-        with Image.open(path) as img:
+        with Image.open(path) as img_opened:
             img = (
-                img.copy()
+                img_opened.copy()
             )  # Opened image should be copied to avoid issues with file closing
     return img
 

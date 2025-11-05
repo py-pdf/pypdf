@@ -191,8 +191,10 @@ def recurs_to_target_op(
             elif op == b"TD":
                 text_state_mgr.set_state_param(b"TL", -operands[1])
             elif op == b"T*":
-                operands = [0, -text_state_mgr.TL]
-            text_state_mgr.add_tm(operands)
+                operands_for_tm = [0, -text_state_mgr.TL]
+            else:
+                operands_for_tm = operands
+            text_state_mgr.add_tm(operands_for_tm)
         elif op == b"Tf":
             text_state_mgr.set_font(fonts[operands[0]], operands[1])
         else:  # handle Tc, Tw, Tz, TL, and Ts operators

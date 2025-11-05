@@ -64,9 +64,10 @@ class Font:
             for d_font_idx, d_font in enumerate(
                 self.font_dictionary["/DescendantFonts"]
             ):
-                while isinstance(d_font, IndirectObject):
-                    d_font = d_font.get_object()
-                self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font
+                d_font_val = d_font
+                while isinstance(d_font_val, IndirectObject):
+                    d_font_val = d_font_val.get_object()
+                self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font_val
                 ord_map = {
                     ord(_target): _surrogate
                     for _target, _surrogate in self.char_map.items()
@@ -80,18 +81,18 @@ class Font:
                 skip_count = 0
                 _w = d_font.get("/W", [])
                 for idx, w_entry in enumerate(_w):
-                    w_entry = w_entry.get_object()
+                    w_val = w_entry.get_object()
                     if skip_count:
                         skip_count -= 1
                         continue
-                    if not isinstance(w_entry, (int, float)):  # pragma: no cover
+                    if not isinstance(w_val, (int, float)):  # pragma: no cover
                         # We should never get here due to skip_count above. Add a
                         # warning and or use reader's "strict" to force an ex???
                         continue
                     # check for format (1): `int [int int int int ...]`
                     w_next_entry = _w[idx + 1].get_object()
                     if isinstance(w_next_entry, Sequence):
-                        start_idx, width_list = w_entry, w_next_entry
+                        start_idx, width_list = w_val, w_next_entry
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: _width
@@ -112,7 +113,7 @@ class Font:
                         _w[idx + 2].get_object(), (int, float)
                     ):
                         start_idx, stop_idx, const_width = (
-                            w_entry,
+                            w_val,
                             w_next_entry,
                             _w[idx + 2].get_object(),
                         )

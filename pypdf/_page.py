@@ -740,14 +740,14 @@ class PageObject(DictionaryObject):
                 if k in {"/Length", "/L"}:  # no length is expected
                     continue
                 if isinstance(v, list):
-                    v = ArrayObject(
+                    translated_v = ArrayObject(
                         [self._translate_value_inline_image(k, x) for x in v]
                     )
                 else:
-                    v = self._translate_value_inline_image(k, v)
-                k = NameObject(_INLINE_IMAGE_KEY_MAPPING[k])
-                if k not in init:
-                    init[k] = v
+                    translated_v = self._translate_value_inline_image(k, v)
+                mapped_k = NameObject(_INLINE_IMAGE_KEY_MAPPING[k])
+                if mapped_k not in init:
+                    init[mapped_k] = translated_v
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
             extension, byte_stream, img = _xobj_to_image(ii["object"])
             files[f"~{num}~"] = ImageFile(
@@ -1231,13 +1231,13 @@ class PageObject(DictionaryObject):
             else:
                 trsf = Transformation(ctm)
             for a in cast(ArrayObject, page2[PG.ANNOTS]):
-                a = a.get_object()
-                aa = a.clone(
+                a_obj = a.get_object()
+                aa = a_obj.clone(
                     pdf,
                     ignore_fields=("/P", "/StructParent", "/Parent"),
                     force_duplicate=True,
                 )
-                r = cast(ArrayObject, a["/Rect"])
+                r = cast(ArrayObject, a_obj["/Rect"])
                 pt1 = trsf.apply_on((r[0], r[1]), True)
                 pt2 = trsf.apply_on((r[2], r[3]), True)
                 aa[NameObject("/Rect")] = ArrayObject(
@@ -1248,8 +1248,8 @@ class PageObject(DictionaryObject):
                         max(pt1[1], pt2[1]),
                     )
                 )
-                if "/QuadPoints" in a:
-                    q = cast(ArrayObject, a["/QuadPoints"])
+                if "/QuadPoints" in a_obj:
+                    q = cast(ArrayObject, a_obj["/QuadPoints"])
                     aa[NameObject("/QuadPoints")] = ArrayObject(
                         trsf.apply_on((q[0], q[1]), True)
                         + trsf.apply_on((q[2], q[3]), True)

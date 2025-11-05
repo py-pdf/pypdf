@@ -41,11 +41,11 @@ def test_strip_header(data, expected):
 def test_get_git_commits_since_tag():
     make_release = pytest.importorskip("make_release")
 
-    with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, mock.patch(
-        "urllib.request.urlopen", side_effect=lambda _: commits
+    with open(COMMITS__VERSION_4_0_1, mode="rb") as commits_fh, mock.patch(
+        "urllib.request.urlopen", side_effect=lambda _: commits_fh
     ), mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1):
-        commits = make_release.get_git_commits_since_tag("4.0.1")
-    assert commits == [
+        commits_list = make_release.get_git_commits_since_tag("4.0.1")
+    assert commits_list == [
         make_release.Change(
             commit_hash="b7bfd0d7eddfd0865a94cc9e7027df6596242cf7",
             prefix="BUG",

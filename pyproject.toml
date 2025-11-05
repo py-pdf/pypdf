@@ -173,7 +173,6 @@ ignore = [
     "PERF203", # `try`-`except` within a loop incurs performance overhead
     "PGH003",  # Use specific rule codes when ignoring type issues
     "PLW1510", # `subprocess.run` without explicit `check` argument
-    "PLW2901", # `with` statement variable `img` overwritten by assignment target
     "PT011",   # `pytest.raises(ValueError)` is too broad, set the `match`
     "PT012",   # `pytest.raises()` block should contain a single simple statement
     "PT014",   # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`

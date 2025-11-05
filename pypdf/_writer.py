@@ -979,13 +979,13 @@ class PdfWriter(PdfDocCommon):
             logger_warning("No fields to update on this page", __name__)
             return
         for annotation in page[PG.ANNOTS]:  # type: ignore
-            annotation = cast(DictionaryObject, annotation.get_object())
-            if annotation.get("/Subtype", "") != "/Widget":
+            annotation_obj = cast(DictionaryObject, annotation.get_object())
+            if annotation_obj.get("/Subtype", "") != "/Widget":
                 continue
-            if "/FT" in annotation and "/T" in annotation:
-                parent_annotation = annotation
+            if "/FT" in annotation_obj and "/T" in annotation_obj:
+                parent_annotation = annotation_obj
             else:
-                parent_annotation = annotation.get(
+                parent_annotation = annotation_obj.get(
                     PG.PARENT, DictionaryObject()
                 ).get_object()
 
@@ -1098,17 +1098,17 @@ class PdfWriter(PdfDocCommon):
         annotations = cast(ArrayObject, page["/Annots"])
         for idx, annotation in enumerate(annotations):
             is_indirect = isinstance(annotation, IndirectObject)
-            annotation = cast(DictionaryObject, annotation.get_object())
-            if annotation.get("/Subtype", "") == "/Widget" and "/FT" in annotation:
+            annotation_obj = cast(DictionaryObject, annotation.get_object())
+            if annotation_obj.get("/Subtype", "") == "/Widget" and "/FT" in annotation_obj:
                 if (
-                    "indirect_reference" in annotation.__dict__
-                    and annotation.indirect_reference in fields
+                    "indirect_reference" in annotation_obj.__dict__
+                    and annotation_obj.indirect_reference in fields
                 ):
                     continue
                 if not is_indirect:
-                    annotations[idx] = self._add_object(annotation)
-                fields.append(annotation.indirect_reference)
-                lst.append(annotation)
+                    annotations[idx] = self._add_object(annotation_obj)
+                fields.append(annotation_obj.indirect_reference)
+                lst.append(annotation_obj)
         return lst
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
@@ -1469,8 +1469,10 @@ class PdfWriter(PdfDocCommon):
                 object_positions.append(stream.tell())
                 stream.write(f"{idnum} 0 obj\n".encode())
                 if self._encryption and obj != self._encrypt_entry:
-                    obj = self._encryption.encrypt_object(obj, idnum, 0)
-                obj.write_to_stream(stream)
+                    obj_to_write = self._encryption.encrypt_object(obj, idnum, 0)
+                else:
+                    obj_to_write = obj
+                obj_to_write.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
             else:
                 object_positions.append(-1)
@@ -1560,8 +1562,10 @@ class PdfWriter(PdfDocCommon):
             infos = cast(DictionaryObject, infos.get_object())
         for key, value in list(infos.items()):
             if isinstance(value, PdfObject):
-                value = value.get_object()
-            args[NameObject(key)] = create_string_object(str(value))
+                value_obj = value.get_object()
+            else:
+                value_obj = value
+            args[NameObject(key)] = create_string_object(str(value_obj))
         if self._info is None:
             self._info = DictionaryObject()
         self._info.update(args)
