@@ -33,7 +33,7 @@ class TextStreamAppearance(DecodedStreamObject):
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
-        multiline: bool = False
+        is_multiline: bool = False
     ) -> bytes:
         """
         Generates the raw bytes of the PDF appearance stream for a text field.
@@ -54,7 +54,7 @@ class TextStreamAppearance(DecodedStreamObject):
                 based on whether the field is multiline or not.
             font_color: The color to apply to the font, represented as a PDF
                 graphics state string (e.g., "0 g" for black).
-            multiline: A boolean indicating if the text field is multiline.
+            is_multiline: A boolean indicating if the text field is multiline.
 
         Returns:
             A byte string containing the PDF content stream data.
@@ -66,7 +66,7 @@ class TextStreamAppearance(DecodedStreamObject):
 
         # If font_size is 0, apply the logic for multiline or large-as-possible font
         if font_size == 0:
-            if multiline:
+            if is_multiline:
                 font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
             else:
                 font_size = rectangle.height - 2
@@ -111,7 +111,7 @@ class TextStreamAppearance(DecodedStreamObject):
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
-        multiline: bool = False
+        is_multiline: bool = False
     ) -> None:
         """
         Initializes a TextStreamAppearance object.
@@ -129,7 +129,7 @@ class TextStreamAppearance(DecodedStreamObject):
             font_name: The name of the font resource, e.g., "/Helv".
             font_size: The font size. If 0, it's auto-calculated.
             font_color: The font color string.
-            multiline: A boolean indicating if the text field is multiline.
+            is_multiline: A boolean indicating if the text field is multiline.
 
         """
         super().__init__()
@@ -166,7 +166,7 @@ class TextStreamAppearance(DecodedStreamObject):
             font_name,
             font_size,
             font_color,
-            multiline
+            is_multiline
         )
 
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -272,10 +272,10 @@ class TextStreamAppearance(DecodedStreamObject):
             font_resource = cast(DictionaryObject, font_resource.get_object())
 
         # Retrieve field text, selected values and formatting information
-        multiline = False
+        is_multiline = False
         field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
         if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
-            multiline = True
+            is_multiline = True
         if (
                 field.get(FieldDictionaryAttributes.FT, "/Tx") == "/Ch" and
                 field_flags & FieldDictionaryAttributes.FfBits.Combo == 0
@@ -300,7 +300,7 @@ class TextStreamAppearance(DecodedStreamObject):
             font_name,
             font_size,
             font_color,
-            multiline
+            is_multiline
         )
         if AnnotationDictionaryAttributes.AP in annotation:
             for key, value in (
