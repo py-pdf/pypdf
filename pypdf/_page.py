@@ -739,12 +739,13 @@ class PageObject(DictionaryObject):
             for k, v in ii["settings"].items():
                 if k in {"/Length", "/L"}:  # no length is expected
                     continue
+                value_for_init: Any
                 if isinstance(v, list):
-                    value_for_init: Any = ArrayObject(
+                    value_for_init = ArrayObject(
                         [self._translate_value_inline_image(k, x) for x in v]
                     )
                 else:
-                    value_for_init: Any = self._translate_value_inline_image(k, v)
+                    value_for_init = self._translate_value_inline_image(k, v)
                 mapped_k = NameObject(_INLINE_IMAGE_KEY_MAPPING[k])
                 if mapped_k not in init:
                     init[mapped_k] = value_for_init

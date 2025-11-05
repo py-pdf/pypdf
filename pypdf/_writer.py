@@ -978,14 +978,14 @@ class PdfWriter(PdfDocCommon):
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
-        for annotation in page[PG.ANNOTS]:  # type: ignore
-            annotation_obj = cast(DictionaryObject, annotation.get_object())
-            if annotation_obj.get("/Subtype", "") != "/Widget":
+        for annotation_ref in page[PG.ANNOTS]:  # type: ignore
+            annotation = cast(DictionaryObject, annotation_ref.get_object())
+            if annotation.get("/Subtype", "") != "/Widget":
                 continue
-            if "/FT" in annotation_obj and "/T" in annotation_obj:
-                parent_annotation = annotation_obj
+            if "/FT" in annotation and "/T" in annotation:
+                parent_annotation = annotation
             else:
-                parent_annotation = annotation_obj.get(
+                parent_annotation = annotation.get(
                     PG.PARENT, DictionaryObject()
                 ).get_object()
 
@@ -1003,7 +1003,6 @@ class PdfWriter(PdfDocCommon):
                     del parent_annotation["/I"]
                 if flags:
                     annotation[NameObject(FA.Ff)] = NumberObject(flags)
-                # Set the field value
                 if not (value is None and flatten):  # Only change values if given by user and not flattening.
                     if isinstance(value, list):
                         lst = ArrayObject(TextStringObject(v) for v in value)
@@ -1025,9 +1024,14 @@ class PdfWriter(PdfDocCommon):
                     if v not in normal_ap:
                         v = NameObject("/Off")
                     appearance_stream_obj = normal_ap.get(v)
-                    # Other cases will be updated through the for loop
+                    # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
+                    if flatten and appearance_stream_obj is not None:
+                        # We basically copy the entire appearance stream, which should be an XObject that
+                        # is already registered. No need to add font resources.
+                        rct = cast(RectangleObject, annotation[AA.Rect])
+                        self._add_apstream_object(page, appearance_stream_obj, field, rct[0], rct[1])
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
@@ -1046,7 +1050,7 @@ class PdfWriter(PdfDocCommon):
                         annotation[NameObject(AA.AP)] = DictionaryObject(
                             {NameObject("/N"): self._add_object(appearance_stream_obj)}
                         )
-                    elif "/N" not in (ap:= cast(DictionaryObject, annotation[AA.AP])):
+                    elif "/N" not in (ap := cast(DictionaryObject, annotation[AA.AP])):
                         cast(DictionaryObject, annotation[NameObject(AA.AP)])[
                             NameObject("/N")
                         ] = self._add_object(appearance_stream_obj)
