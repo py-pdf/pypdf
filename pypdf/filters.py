@@ -760,26 +760,30 @@ def decode_stream_data(stream: Any) -> bytes:
     if not data:
         return data
     for filter_name, params in zip(filters, decode_parms):
-        params_obj = {} if isinstance(params, NullObject) else params
+        params_typed: Optional[DictionaryObject]
+        if isinstance(params, NullObject):
+            params_typed = None
+        else:
+            params_typed = cast(Optional[DictionaryObject], params)
         if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
             data = ASCIIHexDecode.decode(data)
         elif filter_name in (FT.ASCII_85_DECODE, FTA.A85):
             data = ASCII85Decode.decode(data)
         elif filter_name in (FT.LZW_DECODE, FTA.LZW):
-            data = LZWDecode.decode(data, params_obj)
+            data = LZWDecode.decode(data, params_typed)
         elif filter_name in (FT.FLATE_DECODE, FTA.FL):
-            data = FlateDecode.decode(data, params_obj)
+            data = FlateDecode.decode(data, params_typed)
         elif filter_name in (FT.RUN_LENGTH_DECODE, FTA.RL):
             data = RunLengthDecode.decode(data)
         elif filter_name == FT.CCITT_FAX_DECODE:
             height = stream.get(IA.HEIGHT, ())
-            data = CCITTFaxDecode.decode(data, params_obj, height)
+            data = CCITTFaxDecode.decode(data, params_typed, height)
         elif filter_name == FT.DCT_DECODE:
             data = DCTDecode.decode(data)
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
         elif filter_name == FT.JBIG2_DECODE:
-            data = JBIG2Decode.decode(data, params_obj)
+            data = JBIG2Decode.decode(data, params_typed)
         elif filter_name == "/Crypt":
             if "/Name" in params or "/Type" in params:
                 raise NotImplementedError(

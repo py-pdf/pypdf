@@ -188,8 +188,10 @@ def recurs_to_target_op(
             text_state_mgr.reset_trm()
             if op == b"Tm":
                 text_state_mgr.reset_tm()
+                operands_for_tm = operands
             elif op == b"TD":
                 text_state_mgr.set_state_param(b"TL", -operands[1])
+                operands_for_tm = operands
             elif op == b"T*":
                 operands_for_tm = [0, -text_state_mgr.TL]
             else:

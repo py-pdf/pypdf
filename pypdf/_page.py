@@ -740,14 +740,14 @@ class PageObject(DictionaryObject):
                 if k in {"/Length", "/L"}:  # no length is expected
                     continue
                 if isinstance(v, list):
-                    translated_v = ArrayObject(
+                    value_for_init: Any = ArrayObject(
                         [self._translate_value_inline_image(k, x) for x in v]
                     )
                 else:
-                    translated_v = self._translate_value_inline_image(k, v)
+                    value_for_init: Any = self._translate_value_inline_image(k, v)
                 mapped_k = NameObject(_INLINE_IMAGE_KEY_MAPPING[k])
                 if mapped_k not in init:
-                    init[mapped_k] = translated_v
+                    init[mapped_k] = value_for_init
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
             extension, byte_stream, img = _xobj_to_image(ii["object"])
             files[f"~{num}~"] = ImageFile(
