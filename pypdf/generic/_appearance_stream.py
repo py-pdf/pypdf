@@ -24,6 +24,7 @@ class TextStreamAppearance(DecodedStreamObject):
     how text is rendered within a form field's bounding box. It handles properties
     like font, font size, color, multiline text, and text selection highlighting.
     """
+
     def _generate_appearance_stream_data(
         self,
         text: str = "",
