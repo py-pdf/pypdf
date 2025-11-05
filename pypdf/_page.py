@@ -739,7 +739,6 @@ class PageObject(DictionaryObject):
             for k, v in ii["settings"].items():
                 if k in {"/Length", "/L"}:  # no length is expected
                     continue
-                value_for_init: Any
                 if isinstance(v, list):
                     value_for_init = ArrayObject(
                         [self._translate_value_inline_image(k, x) for x in v]
@@ -1232,13 +1231,13 @@ class PageObject(DictionaryObject):
             else:
                 trsf = Transformation(ctm)
             for a in cast(ArrayObject, page2[PG.ANNOTS]):
-                a_obj = a.get_object()
-                aa = a_obj.clone(
+                annotation_object = a.get_object()
+                aa = annotation_object.clone(
                     pdf,
                     ignore_fields=("/P", "/StructParent", "/Parent"),
                     force_duplicate=True,
                 )
-                r = cast(ArrayObject, a_obj["/Rect"])
+                r = cast(ArrayObject, annotation_object["/Rect"])
                 pt1 = trsf.apply_on((r[0], r[1]), True)
                 pt2 = trsf.apply_on((r[2], r[3]), True)
                 aa[NameObject("/Rect")] = ArrayObject(
@@ -1249,8 +1248,8 @@ class PageObject(DictionaryObject):
                         max(pt1[1], pt2[1]),
                     )
                 )
-                if "/QuadPoints" in a_obj:
-                    q = cast(ArrayObject, a_obj["/QuadPoints"])
+                if "/QuadPoints" in annotation_object:
+                    q = cast(ArrayObject, annotation_object["/QuadPoints"])
                     aa[NameObject("/QuadPoints")] = ArrayObject(
                         trsf.apply_on((q[0], q[1]), True)
                         + trsf.apply_on((q[2], q[3]), True)

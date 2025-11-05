@@ -44,8 +44,8 @@ def test_get_git_commits_since_tag():
     with open(COMMITS__VERSION_4_0_1, mode="rb") as commits_fh, mock.patch(
         "urllib.request.urlopen", side_effect=lambda _: commits_fh
     ), mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1):
-        commits_list = make_release.get_git_commits_since_tag("4.0.1")
-    assert commits_list == [
+        commits = make_release.get_git_commits_since_tag("4.0.1")
+    assert commits == [
         make_release.Change(
             commit_hash="b7bfd0d7eddfd0865a94cc9e7027df6596242cf7",
             prefix="BUG",
@@ -87,8 +87,8 @@ def test_get_git_commits_since_tag():
 def test_get_formatted_changes():
     make_release = pytest.importorskip("make_release")
 
-    with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, mock.patch(
-        "urllib.request.urlopen", side_effect=lambda _: commits
+    with open(COMMITS__VERSION_4_0_1, mode="rb") as commits_fh, mock.patch(
+        "urllib.request.urlopen", side_effect=lambda _: commits_fh
     ), mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1):
         output, output_with_user = make_release.get_formatted_changes("4.0.1")
 
@@ -182,3 +182,4 @@ def test_get_formatted_changes__other():
 - FIX: Broken test due to expired test file URL (#2468) by @pubpub-zz
 """
     )
+

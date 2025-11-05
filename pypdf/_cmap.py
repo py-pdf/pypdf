@@ -460,11 +460,11 @@ def build_font_width_map(
             # will consider width of char as avg(width)
             m = 0
             cpt = 0
-            for xx in w:
-                xx_val = xx.get_object()
-                if xx_val > 0:
-                    m += xx_val
-                    cpt += 1
+        for xx in w:
+            xx_value = xx.get_object()
+            if xx_value > 0:
+                m += xx_value
+                cpt += 1
             font_width_map["default"] = m / max(1, cpt)
         st = cast(int, ft["/FirstChar"])
         en = cast(int, ft["/LastChar"])
