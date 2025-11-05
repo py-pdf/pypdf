@@ -2232,7 +2232,7 @@ class PdfWriter(PdfDocCommon):
 
             clean(content, images, forms, text_filters)
             page.replace_contents(content)
-        return [], []  # type: ignore
+        return [], []
 
     def remove_images(
         self,
