@@ -145,6 +145,28 @@ napoleon_use_rtype = False  # False, so the return type is inline with the descr
 # allow to run "sphinx-build" command from any directory, we modify the current
 # working directory in each tested file. Tests are executed against our
 # temporary directory where we have copied all nessesary resources.
+#
+# Each doc page that requires file operations must use "testsetup" directive
+# to call "pypdf_test_setup" function to prepare the test environment for that
+# page.
+#
+# def pypdf_test_setup(group: str, resources: dict[str, str] = {}) -> None
+#
+# Args:
+#   group: A unique name for group of tests. Typically we group tests by doc page.
+#       For each doc page we create a test folder under
+#       "_build/doctest/pypdf_test/<group>". This allows to avoid file name conflicts
+#       between different doc pages.
+#   resources: A dictionary of source files to copy into the test folder.
+#       Key is the destination file name (relative to the test folder).
+#       Value is the source file path (relative to the root folder).
+#
+# Examples:
+#   ```{testsetup}
+#   pypdf_test_setup("user/add-javascript", {
+#       "example.pdf": "../resources/example.pdf",
+#   })
+#   ```
 
 pypdf_test_src_root_dir = os.path.abspath(".")
 pypdf_test_dst_root_dir = os.path.abspath("_build/doctest/pypdf_test")
@@ -166,7 +188,7 @@ def pypdf_test_global_setup():
     os.chdir(dst_root_dir)
 
     global pypdf_test_setup
-    def pypdf_test_setup(group: str, resources: dict[str, str] = {{}}):
+    def pypdf_test_setup(group: str, resources: dict[str, str] = {{}}) -> None:
         dst_dir = os.path.join(dst_root_dir, group)
         Path(dst_dir).mkdir(parents=True)
         os.chdir(dst_dir)
