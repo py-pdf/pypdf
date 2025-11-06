@@ -1036,13 +1036,28 @@ class PdfWriter(PdfDocCommon):
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
                 ):
-                    # Textbox; update appearance via helper
+                    # Textbox; we need to generate the appearance stream object
                     if isinstance(value, tuple):
-                        self._update_field_annotation(
-                            page, parent_annotation, annotation, value[1], value[2], flatten=flatten
+                        appearance_stream_obj = TextStreamAppearance.from_text_annotation(
+                            acro_form, parent_annotation, annotation, value[1], value[2]
                         )
                     else:
-                        self._update_field_annotation(page, parent_annotation, annotation, flatten=flatten)
+                        appearance_stream_obj = TextStreamAppearance.from_text_annotation(
+                            acro_form, parent_annotation, annotation
+                        )
+                    # Add the appearance stream object
+                    if AA.AP not in annotation:
+                        annotation[NameObject(AA.AP)] = DictionaryObject(
+                            {NameObject("/N"): self._add_object(appearance_stream_obj)}
+                        )
+                    elif "/N" not in (ap := cast(DictionaryObject, annotation[AA.AP])):
+                        cast(DictionaryObject, annotation[NameObject(AA.AP)])[
+                            NameObject("/N")
+                        ] = self._add_object(appearance_stream_obj)
+                    else:  # [/AP][/N] exists
+                        n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
+                        self._objects[n - 1] = appearance_stream_obj
+                        appearance_stream_obj.indirect_reference = IndirectObject(n, 0, self)
                 elif (
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
