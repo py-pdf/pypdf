@@ -59,7 +59,7 @@ class Font:
 
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
         if "/DescendantFonts" in self.font_dictionary:
-            d_font: dict[Any, Any]
+            d_font: Any
             for d_font_idx, d_font in enumerate(
                 self.font_dictionary["/DescendantFonts"]
             ):
