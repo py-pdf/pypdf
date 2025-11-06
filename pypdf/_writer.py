@@ -2104,6 +2104,7 @@ class PdfWriter(PdfDocCommon):
 
             clean(content, images, forms, text_filters)
             page.replace_contents(content)
+        return [], []  # type: ignore[return-value]
 
     def remove_images(
         self,
@@ -3080,6 +3081,7 @@ class PdfWriter(PdfDocCommon):
                 o = cast(TreeObject, o["/Next"])
             else:
                 return None
+        raise PyPdfError("This line is theoretically unreachable.")  # pragma: no cover
 
     def reset_translation(
         self, reader: Union[None, PdfReader, IndirectObject] = None
