@@ -1027,11 +1027,6 @@ class PdfWriter(PdfDocCommon):
                     # other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
-                    if flatten and appearance_stream_obj is not None:
-                        # We basically copy the entire appearance stream, which should be an XObject that
-                        # is already registered. No need to add font resources.
-                        rct = cast(RectangleObject, annotation[AA.Rect])
-                        self._add_apstream_object(page, appearance_stream_obj, field, rct[0], rct[1])
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
@@ -1564,8 +1559,8 @@ class PdfWriter(PdfDocCommon):
         if isinstance(infos, PdfObject):
             infos = cast(DictionaryObject, infos.get_object())
         for key, value in list(infos.items()):
-            value_obj = value.get_object() if isinstance(value, PdfObject) else value
-            args[NameObject(key)] = create_string_object(str(value_obj))
+            value_object = value.get_object() if isinstance(value, PdfObject) else value
+            args[NameObject(key)] = create_string_object(str(value_object))
         if self._info is None:
             self._info = DictionaryObject()
         self._info.update(args)

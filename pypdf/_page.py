@@ -740,11 +740,8 @@ class PageObject(DictionaryObject):
                 if k in {"/Length", "/L"}:  # no length is expected
                     continue
                 if isinstance(v, list):
-                    value_for_init = cast(
-                        PdfObject,
-                        ArrayObject(
-                            [self._translate_value_inline_image(k, x) for x in v]
-                        ),
+                    value_for_init: PdfObject = ArrayObject(
+                        [self._translate_value_inline_image(k, x) for x in v]
                     )
                 else:
                     value_for_init = self._translate_value_inline_image(k, v)

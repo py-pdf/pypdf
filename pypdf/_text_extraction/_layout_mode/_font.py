@@ -6,7 +6,6 @@ from typing import Any, Union, cast
 
 from ..._codecs import adobe_glyphs
 from ...errors import ParseError
-from ...generic import IndirectObject
 from ._font_widths import STANDARD_WIDTHS
 
 
@@ -64,11 +63,7 @@ class Font:
             for d_font_idx, d_font in enumerate(
                 self.font_dictionary["/DescendantFonts"]
             ):
-                if isinstance(d_font, IndirectObject):
-                    d_font_object = d_font.get_object()
-                else:
-                    d_font_object = d_font
-                assert not isinstance(d_font_object, IndirectObject), d_font_object
+                d_font_object = d_font.get_object()
                 self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font_object
                 ord_map = {
                     ord(_target): _surrogate
@@ -81,7 +76,7 @@ class Font:
                 #   (2) A character start index, a character stop index, and a width, e.g.
                 #       `45 65 500` applies width 500 to characters 45-65.
                 skip_count = 0
-                _w = d_font.get("/W", [])
+                _w = d_font_object.get("/W", [])
                 for idx, w_entry in enumerate(_w):
                     w_value = w_entry.get_object()
                     if skip_count:
