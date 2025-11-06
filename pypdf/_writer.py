@@ -748,8 +748,12 @@ class PdfWriter(PdfDocCommon):
         Args:
             javascript: Your JavaScript.
 
-        >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-        # Example: This will launch the print window when the PDF is opened.
+        Example:
+            This will launch the print window when the PDF is opened.
+
+            >>> from pypdf import PdfWriter
+            >>> output = PdfWriter()
+            >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
         """
         # Names / JavaScript preferred to be able to add multiple scripts
@@ -2099,6 +2103,7 @@ class PdfWriter(PdfDocCommon):
 
             clean(content, images, forms, text_filters)
             page.replace_contents(content)
+        return [], []  # type: ignore[return-value]
 
     def remove_images(
         self,
@@ -3075,6 +3080,7 @@ class PdfWriter(PdfDocCommon):
                 o = cast(TreeObject, o["/Next"])
             else:
                 return None
+        raise PyPdfError("This line is theoretically unreachable.")  # pragma: no cover
 
     def reset_translation(
         self, reader: Union[None, PdfReader, IndirectObject] = None

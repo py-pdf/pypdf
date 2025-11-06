@@ -2,10 +2,17 @@
 
 You can extract text from a PDF:
 
-```python
+```{testsetup}
+pypdf_test_setup("user/extract-text", {
+    "test Orient.pdf": "../resources/test Orient.pdf",
+    "GeoBase_NHNC1_Data_Model_UML_EN.pdf": "../resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf",
+})
+```
+
+```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("example.pdf")
+reader = PdfReader("test Orient.pdf")
 page = reader.pages[0]
 print(page.extract_text())
 
@@ -28,6 +35,75 @@ print(page.extract_text(extraction_mode="layout", layout_mode_scale_weight=1.0))
 
 # exclude (default) or include (as shown below) text rotated w.r.t. the page
 print(page.extract_text(extraction_mode="layout", layout_mode_strip_rotated=False))
+```
+
+```{testoutput}
+:options: +NORMALIZE_WHITESPACE
+:hide:
+
+
+(T) This is box text at top
+written down from top
+(B)  This is box text at bottom written up from bottom
+(L) This is box text on left written vertically to starboard
+(R) This is box text on righy written vertically to port
+
+
+(T) This is box text at top
+written down from top
+
+
+(T) This is box text at top
+written down from top
+(L) This is box text on left written vertically to starboard
+
+ (B)
+
+This is box text at bottom
+ from bottom upwritten
+
+
+
+
+(T) This is box text at top
+written down from top
+ (B)
+This is box text at bottom
+ from bottom upwritten
+(T) This is box text at top
+written down from top
+ (B)
+
+This is box text at bottom
+ from bottom upwritten
+
+
+
+
+(T) This is box text at top
+written down from top
+ (B)
+
+This is box text at bottom
+ from bottom upwritten
+
+(L) This is box textwritten vertically to starboard
+
+
+ on righy
+
+
+on left
+
+ ) This is box text
+written vertically to port (R
+
+
+
+
+(T) This is box text at top
+written down from top
+
 ```
 
 Refer to {func}`~pypdf._page.PageObject.extract_text` for more details.
@@ -79,9 +155,9 @@ operator, operand-arguments, current transformation matrix, and text matrix.
 
 ### Example 1: Ignore header and footer
 
-The following example reads the text of page four of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores the header (y > 720) and footer (y < 50).
+The following example reads the text of page four of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores the header (y > 720) and footer (y < 50). In this file we also need to include new line characters (y == 0).
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("GeoBase_NHNC1_Data_Model_UML_EN.pdf")
@@ -91,8 +167,8 @@ parts = []
 
 
 def visitor_body(text, cm, tm, font_dict, font_size):
-    y = cm[5]
-    if 50 < y < 720:
+    y = tm[5]
+    if 50 < y < 720 or y == 0:
         parts.append(text)
 
 
@@ -102,6 +178,25 @@ text_body = "".join(parts)
 print(text_body)
 ```
 
+```{testoutput}
+:options: +NORMALIZE_WHITESPACE
+:hide:
+
+TABLE OF CONTENTS
+
+1 OVERVIEW ............................................................................................................................................ 6
+2 LRS ........................................................................................................................................................ 6
+2.1 LRS MODEL ...................................................................................................................................... 7
+3 MODEL .................................................................................................................................................. 8
+3.1 LRS MODEL ...................................................................................................................................... 9
+3.1.1 Logical view ............................................................................................................................... 9
+3.1.2 Hydro network.......................................................................................................................... 10
+3.1.3 Hydro events............................................................................................................................ 11
+3.1.4 Hydrographic ........................................................................................................................... 14
+3.1.5 Toponymy (external package) ................................................................................................. 18
+3.1.6 Metadata .................................................................................................................................. 19
+```
+
 ### Example 2: Extract rectangles and texts into an SVG file
 
 The following example converts page three of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf) into
@@ -109,7 +204,10 @@ an [SVG file](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics).
 
 Such an SVG export may help to understand what is going on in a page.
 
-```python
+% We prefer not to execute doc examples for unmaintained third-party package "svgwrite"
+```{testcode}
+:skipif: True
+
 from pypdf import PdfReader
 import svgwrite
 
