@@ -25,7 +25,6 @@ def merger_operate(merger):
     pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
     pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
-    # string path:
     merger.append(pdf_path)
     merger.append(outline)
     merger.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))

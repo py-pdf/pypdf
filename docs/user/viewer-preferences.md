@@ -13,7 +13,11 @@ Otherwise, the {attr}`~pypdf.PdfReader.viewer_preferences` property will be set 
 
 ## Example
 
-```python
+```{testsetup}
+pypdf_test_setup("user/viewer-preferences")
+```
+
+```{testcode}
 from pypdf import PdfWriter
 from pypdf.generic import ArrayObject, NumberObject
 
@@ -74,8 +78,7 @@ writer.viewer_preferences.num_copies = 2
 for i in range(40):
     writer.add_blank_page(10, 10)
 
-with open("output.pdf", "wb") as output_stream:
-    writer.write(output_stream)
+writer.write("out.pdf")
 ```
 
 The names beginning with a slash character are part of the PDF file format. They are
