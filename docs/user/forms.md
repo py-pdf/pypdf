@@ -2,7 +2,13 @@
 
 ## Reading form fields
 
-```python
+```{testsetup}
+pypdf_test_setup("user/forms", {
+    "form.pdf": "../resources/form.pdf",
+})
+```
+
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("form.pdf")
@@ -15,7 +21,7 @@ fields = reader.get_fields()
 
 ## Filling out forms
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("form.pdf")
@@ -32,8 +38,7 @@ writer.update_page_form_field_values(
     auto_regenerate=False,
 )
 
-with open("filled-out.pdf", "wb") as output_stream:
-    writer.write(output_stream)
+writer.write("out-filled-form.pdf")
 ```
 
 Generally speaking, you will always want to use `auto_regenerate=False`. The
@@ -71,14 +76,14 @@ To flesh out this overview:
 
 In _pypdf_ fields are extracted from the `/Fields` array:
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("form.pdf")
 fields = reader.get_fields()
 ```
 
-```python
+```{testcode}
 from pypdf import PdfReader
 from pypdf.constants import AnnotationDictionaryAttributes
 

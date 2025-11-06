@@ -30,7 +30,10 @@ See [the robustness page](robustness.md) for the related issues.
 As a user, you likely do not care about it. If it is readable in any way, you
 want the text. You might use pdfminer.six as a fallback and do this:
 
-```python
+% We prefer not to execute doc examples for third-party package "pdfminer.six" used in one code snippet only
+```{testcode}
+:skipif: True
+
 from pypdf import PdfReader
 from pdfminer.high_level import extract_text as fallback_text_extraction
 
@@ -51,7 +54,7 @@ if you prefer something more specific.
 The [`warnings` module](https://docs.python.org/3/library/warnings.html) allows
 you to ignore warnings:
 
-```python
+```{testcode}
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -66,7 +69,7 @@ Log messages can be noisy in some cases. pypdf hopefully has a reasonable
 level of log messages, but you can reduce which types of messages you want to
 see:
 
-```python
+```{testcode}
 import logging
 
 logger = logging.getLogger("pypdf")
