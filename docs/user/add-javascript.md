@@ -7,7 +7,13 @@ Adobe has documentation on its support here:
 
 ## Launch print window on opening
 
-```python
+```{testsetup}
+pypdf_test_setup("user/add-javascript", {
+    "example.pdf": "../resources/example.pdf",
+})
+```
+
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
@@ -15,7 +21,5 @@ writer = PdfWriter(clone_from="example.pdf")
 # Add JavaScript to launch the print window on opening this PDF.
 writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
-# Write to pypdf-output.pdf.
-with open("pypdf-output.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("out-print-window.pdf")
 ```

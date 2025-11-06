@@ -11,7 +11,7 @@ that you can find custom solutions that work better in your context.
 
 ## Ligature Replacement
 
-```python
+```{testcode}
 def replace_ligatures(text: str) -> str:
     ligatures = {
         "ﬀ": "ff",
@@ -34,7 +34,7 @@ def replace_ligatures(text: str) -> str:
 
 Hyphens are used to break words up so that the appearance of the page is nicer.
 
-```python
+```{testcode}
 from typing import List
 
 
@@ -81,7 +81,7 @@ The following header/footer removal has several drawbacks:
     * Even/odd pages have different headers.
     * Some pages, e.g., the first one or chapter pages, do not have a header.
 
-```python
+```{testcode}
 def remove_footer(extracted_texts: list[str], page_labels: list[str]):
     def remove_page_labels(extracted_texts, page_labels):
         processed = []

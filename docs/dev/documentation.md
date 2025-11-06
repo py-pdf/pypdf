@@ -1,5 +1,42 @@
 # Documentation
 
+This documentation is build with [Sphinx](https://www.sphinx-doc.org/) and
+hosted by [Read the Docs](https://about.readthedocs.com/)
+
+## Testing code snippets
+
+Almost all python code snippets in documentation tested using Sphinx's extension
+[sphinx.ext.doctest](https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html).
+This allows to make sure that we have no typos, missed imports and other problems in:
+- code snippets marked with `testcode` directive in `*.md` files
+- code snippets from python's docstrings imported via `autoclass` directive in `*.rst` files
+
+CI pipeline is configured run Sphinx's `doctest` build automatically for each PR.
+It is also possible to run it locally:
+
+1. First you need to install docs requirements
+
+   ```bash
+   pip install -r requirements/docs.txt
+   ```
+
+2. Change current directory
+
+   ```bash
+   cd docs
+   ```
+
+3. Run `doctest` build. It uses indirectly `sphinx-build` command line tool
+    installed with docs requrements. See
+   [Sphinx's docs](https://www.sphinx-doc.org/en/master/usage/quickstart.html#running-the-build)
+   for details.
+
+   ```bash
+   make doctest
+   ```
+
+4. If everything is okay you should see in output `Doctest summary` without failures
+
 ## API Reference
 
 ### Method / Function Docstrings

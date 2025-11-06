@@ -180,10 +180,17 @@ jobs:
     - name: Test with mypy
       run : |
         mypy pypdf
-    - name: Test docs build
+    - name: Install docs requirements
       run: |
         pip install -r requirements/docs.txt
-        sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback --builder html docs build/sphinx/html
+    - name: Test docs build
+      working-directory: ./docs
+      run: |
+        sphinx-build --nitpicky --fail-on-warning --keep-going --show-traceback -d _build/doctrees --builder html . _build/html
+    - name: Test docs examples
+      working-directory: ./docs
+      run: |
+        sphinx-build -d _build/doctrees --builder doctest . _build/doctest
     - name: Check with pre-commit
       run: |
         pip install -r requirements/dev.txt
