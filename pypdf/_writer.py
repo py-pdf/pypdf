@@ -1007,6 +1007,7 @@ class PdfWriter(PdfDocCommon):
                     del parent_annotation["/I"]
                 if flags:
                     annotation[NameObject(FA.Ff)] = NumberObject(flags)
+                # Set the field value
                 if not (value is None and flatten):  # Only change values if given by user and not flattening.
                     if isinstance(value, list):
                         lst = ArrayObject(TextStringObject(v) for v in value)
@@ -1028,7 +1029,7 @@ class PdfWriter(PdfDocCommon):
                     if v not in normal_ap:
                         v = NameObject("/Off")
                     appearance_stream_obj = normal_ap.get(v)
-                    # other cases will be updated through the for loop
+                    # Other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
                 elif (
