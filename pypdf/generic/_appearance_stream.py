@@ -1,4 +1,5 @@
 import re
+from enum import IntEnum
 from typing import Any, Optional, Union, cast
 
 from .._cmap import _default_fonts_space_width, build_char_map_from_dict
@@ -16,6 +17,14 @@ from ..generic import (
 from ..generic._base import ByteStringObject, TextStringObject, is_null_or_none
 
 DEFAULT_FONT_SIZE_IN_MULTILINE = 12
+
+
+class TextAlignment(IntEnum):
+    """Defines the alignment options for text within a form field's appearance stream."""
+
+    LEFT = 0
+    CENTER = 1
+    RIGHT = 2
 
 
 class TextStreamAppearance(DecodedStreamObject):
