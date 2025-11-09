@@ -179,7 +179,6 @@ ignore = [
     "PT014",   # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
     "PTH123",  # `open()` should be replaced by `Path.open()`
     "PYI042",  # Type alias `mode_str_type` should be CamelCase
-    "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",    # Use of `assert` detected
@@ -199,7 +198,6 @@ ignore = [
     "TRY301",  # Abstract `raise` to an inner function
     "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.11+
     "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.11+
-    "UP038",   # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604. While not on Python 3.10+
 ]
 
 [tool.ruff.lint.mccabe]

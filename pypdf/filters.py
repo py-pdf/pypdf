@@ -71,6 +71,7 @@ from .generic import (
 )
 
 ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
+LZW_MAX_OUTPUT_LENGTH = 1_000_000_000
 
 
 def _decompress_with_limit(data: bytes) -> bytes:
@@ -435,7 +436,7 @@ class LZWDecode:
             self.data = data
 
         def decode(self) -> bytes:
-            return _LzwCodec().decode(self.data)
+            return _LzwCodec(max_output_length=LZW_MAX_OUTPUT_LENGTH).decode(self.data)
 
     @staticmethod
     def decode(

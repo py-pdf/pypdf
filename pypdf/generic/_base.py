@@ -852,7 +852,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         Returns:
             NameObject with sanitized name.
         """
-        name = str(self)[1:]  # Remove leading forward slash
+        name = str(self).removeprefix("/")
         name = re.sub(r"\ ", "_", name)
         name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
         return NameObject("/" + name)

@@ -146,7 +146,8 @@ class Transformation:
 
 
     Example:
-        >>> from pypdf import Transformation
+        >>> from pypdf import PdfWriter, Transformation
+        >>> page = PdfWriter().add_blank_page(800, 600)
         >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
         >>> page.add_transformation(op)
 
@@ -207,7 +208,9 @@ class Transformation:
             A new ``Transformation`` instance
 
         Example:
-            >>> from pypdf import Transformation
+            >>> from pypdf import PdfWriter, Transformation
+            >>> height, width = 40, 50
+            >>> page = PdfWriter().add_blank_page(800, 600)
             >>> op = Transformation((1, 0, 0, -1, 0, height)) # vertical mirror
             >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, width, 0)))  # horizontal mirror
             >>> page.add_transformation(op)
@@ -1080,6 +1083,7 @@ class PageObject(DictionaryObject):
                 return self._merge_page_writer(
                     page2, page2transformation, ctm, over, expand
                 )
+                return None
         except (AssertionError, AttributeError):
             pass
 
@@ -1172,6 +1176,7 @@ class PageObject(DictionaryObject):
         self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
+        return None
 
     def _merge_page_writer(
         self,
@@ -1503,7 +1508,7 @@ class PageObject(DictionaryObject):
         Scale a page by the given factors by applying a transformation matrix
         to its content and updating the page size.
 
-        This updates the various page boundaries (mediabox, cropbox, etc.)
+        This updates the various page boundaries (bleedbox, trimbox, etc.)
         and the contents of the page.
 
         Args:
@@ -1512,11 +1517,11 @@ class PageObject(DictionaryObject):
 
         """
         self.add_transformation((sx, 0, 0, sy, 0, 0))
-        self.mediabox = self.mediabox.scale(sx, sy)
-        self.cropbox = self.cropbox.scale(sx, sy)
         self.bleedbox = self.bleedbox.scale(sx, sy)
         self.trimbox = self.trimbox.scale(sx, sy)
         self.artbox = self.artbox.scale(sx, sy)
+        self.cropbox = self.cropbox.scale(sx, sy)
+        self.mediabox = self.mediabox.scale(sx, sy)
 
         if PG.ANNOTS in self:
             annotations = self[PG.ANNOTS]

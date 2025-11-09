@@ -709,7 +709,7 @@ def test_issue604(caplog, strict):
         pdf = PdfReader(f, strict=strict)
         outline = pdf.outline
         msg = [
-            "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
+            "Unknown destination: 'ms_Thyroid_2_2020_071520_watermarked.pdf' [0, 1]"
         ]
         assert normalize_warnings(caplog.text) == msg
 
@@ -745,7 +745,10 @@ def test_decode_permissions():
     print_["print"] = True
     with pytest.raises(
         DeprecationError,
-        match="decode_permissions is deprecated and was removed in pypdf 5.0.0. Use user_access_permissions instead",
+            match=(
+                r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
+                r"Use user_access_permissions instead"
+            ),
     ):
         assert reader.decode_permissions(4) == print_
 
@@ -753,7 +756,10 @@ def test_decode_permissions():
     modify["modify"] = True
     with pytest.raises(
         DeprecationError,
-        match="decode_permissions is deprecated and was removed in pypdf 5.0.0. Use user_access_permissions instead",
+        match=(
+            r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
+            r"Use user_access_permissions instead"
+        ),
     ):
         assert reader.decode_permissions(8) == modify
 
@@ -1820,7 +1826,7 @@ def test_issue2886(caplog):
     url = "https://github.com/user-attachments/files/17187711/crash-e8a85d82de01cab5eb44e7993304d8b9d1544970.pdf"
     name = "issue2886.pdf"
 
-    with pytest.raises(PdfReadError, match="Unexpected empty line in Xref table."):
+    with pytest.raises(PdfReadError, match=r"Unexpected empty line in Xref table\."):
         _ = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
 
@@ -1857,3 +1863,14 @@ def test_read_pdf15_xref_stream():
             match=r"^Trailer cannot be read: Limit reached while decompressing\. 1545392 bytes remaining\.$"
     ):
         PdfReader(BytesIO(data_modified))
+
+
+@pytest.mark.enable_socket
+def test_read_standard_xref_table__two_whitespace_characters_between_offset_and_generation():
+    """Tests for #3482"""
+    url = "https://github.com/user-attachments/files/22591813/helloworld.pdf"
+    name = "issue3482.pdf"
+
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert len(reader.pages) == 1
+    assert reader.pages[0].extract_text() == "Hello World!"

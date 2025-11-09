@@ -29,7 +29,7 @@ def test_get_imagemode_recursion_depth():
     reader = PdfReader(BytesIO(content.replace(source, target)))
     with pytest.raises(
         PdfReadError,
-        match="Color spaces nested too deeply. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH.",
+        match=r"Color spaces nested too deeply\. If required, consider increasing MAX_IMAGE_MODE_NESTING_DEPTH\.",
     ):
         reader.pages[0].images[0]
 
@@ -129,7 +129,7 @@ def test_extended_image_frombytes_zero_data():
     size = (1, 1)
     data = b""
 
-    with pytest.raises(EmptyImageDataError, match="Data is 0 bytes, cannot process an image from empty data."):
+    with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
         _extended_image_frombytes(mode, size, data)
 
 
@@ -160,3 +160,14 @@ def test_get_mode_and_invert_color():
     page = reader.pages[12]
     for _name, image in page.images.items():  # noqa: PERF102
         image.image.load()
+
+
+@pytest.mark.enable_socket
+def test_get_imagemode__empty_array():
+    url = "https://github.com/user-attachments/files/23050451/poc.pdf"
+    name = "issue3499.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^ColorSpace field not found in .+"):
+        page.images[0].image.load()

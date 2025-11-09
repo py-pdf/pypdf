@@ -92,6 +92,7 @@ else:
     from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
+
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
@@ -210,8 +211,8 @@ class ArrayObject(list[Any], PdfObject):
         """Allow to remove items"""
         for x in self._to_lst(lst):
             try:
-                x = self.index(x)
-                del self[x]
+                index = self.index(x)
+                del self[index]
             except ValueError:
                 pass
         return self
@@ -318,11 +319,11 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             ignore_fields:
 
         """
-        # first we remove for the ignore_fields
+        # First we remove the ignore_fields
         # that are for a limited number of levels
-        x = 0
         assert ignore_fields is not None
         ignore_fields = list(ignore_fields)
+        x = 0
         while x < len(ignore_fields):
             if isinstance(ignore_fields[x], int):
                 if cast(int, ignore_fields[x]) <= 0:
@@ -331,7 +332,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                     continue
                 ignore_fields[x] -= 1  # type:ignore
             x += 1
-        #  First check if this is a chain list, we need to loop to prevent recur
+        #  Check if this is a chain list, we need to loop to prevent recur
         if any(
             field not in ignore_fields
             and field in src
@@ -354,8 +355,8 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                         and k not in self
                         and isinstance(src.raw_get(k), IndirectObject)
                         and isinstance(src[k], DictionaryObject)
-                        # IF need to go further the idea is to check
-                        # that the types are the same:
+                        # If need to go further the idea is to check
+                        # that the types are the same
                         and (
                             src.get("/Type", None) is None
                             or cast(DictionaryObject, src[k]).get("/Type", None) is None
@@ -374,7 +375,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
                                     cur_obj.__class__(), pdf_dest, force_duplicate
                                 ),
                             )
-                            # check to see if we've previously processed our item
+                            # Check to see if we've previously processed our item
                             if clon.indirect_reference is not None:
                                 idnum = clon.indirect_reference.idnum
                                 generation = clon.indirect_reference.generation
@@ -633,7 +634,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             if length is None:  # if the PDF is damaged
                 length = -1
             pstart = stream.tell()
-            if length > 0:
+            if length >= 0:
                 data["__streamdata__"] = stream.read(length)
             else:
                 data["__streamdata__"] = read_until_regex(
@@ -1052,8 +1053,7 @@ class StreamObject(DictionaryObject):
         Returns:
             a PIL image if proper decoding has been found
         Raises:
-            Exception: (any)during decoding to to invalid object or
-                errors during decoding will be reported
+            Exception: Errors during decoding will be reported.
                 It is recommended to catch exceptions to prevent
                 stops in your program.
 
@@ -1066,7 +1066,7 @@ class StreamObject(DictionaryObject):
             except AttributeError:
                 msg = f"{self.__repr__()} object does not seem to be an Image"  # pragma: no cover
             logger_warning(msg, __name__)
-        extension, byte_stream, img = _xobj_to_image(self)
+        extension, _, img = _xobj_to_image(self)
         if extension is None:
             return None  # pragma: no cover
         return img
@@ -1600,7 +1600,7 @@ class Destination(TreeObject):
 
     def __init__(
         self,
-        title: str,
+        title: Union[str, bytes],
         page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
         fit: Fit,
     ) -> None:

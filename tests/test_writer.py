@@ -20,7 +20,7 @@ from pypdf import (
     Transformation,
 )
 from pypdf.annotations import Link
-from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PyPdfError
+from pypdf.errors import DeprecationError, PageSizeNotDefinedError, PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
@@ -601,7 +601,7 @@ def test_encrypt(use_128bit, user_password, owner_password, pdf_file_path):
     assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
-    # Test the owner password (stbytesr):
+    # Test the owner password (bytes):
     reader = PdfReader(pdf_file_path, password=b"ownerpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "pypdf"
@@ -688,7 +688,6 @@ def test_add_named_destination(pdf_file_path):
     assert root[4] == "A named dest3"
 
     # test get_object
-
     assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
     with pytest.raises(ValueError) as exc:
         writer.get_object(reader.pages[0].indirect_reference)
@@ -2407,7 +2406,7 @@ def test_selfont():
         b"Text_1" in writer.pages[0]["/Annots"][1].get_object()["/AP"]["/N"].get_data()
     )
     assert (
-        b"/F3 12 Tf"
+        b"/F3 12.0 Tf"
         in writer.pages[0]["/Annots"][2].get_object()["/AP"]["/N"].get_data()
     )
     assert (
@@ -2416,7 +2415,7 @@ def test_selfont():
 
 
 @pytest.mark.enable_socket
-def test_no_ressource_for_14_std_fonts(caplog):
+def test_no_resource_for_14_std_fonts(caplog):
     """Cf #2670"""
     url = "https://github.com/py-pdf/pypdf/files/15405390/f1040.pdf"
     name = "iss2670.pdf"
@@ -2671,13 +2670,13 @@ def test_deprecate_with_as():
     with PdfWriter() as writer:
         with pytest.raises(
                 expected_exception=DeprecationError,
-                match="with_as_usage is deprecated and was removed in pypdf 5.0"
+                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
         ):
             _ = writer.with_as_usage
 
         with pytest.raises(
                 expected_exception=DeprecationError,
-                match="with_as_usage is deprecated and was removed in pypdf 5.0"
+                match=r"with_as_usage is deprecated and was removed in pypdf 5\.0"
         ):
             writer.with_as_usage = False  # old code allowed setting this, so...
 
@@ -2852,3 +2851,25 @@ def test_unterminated_object__with_incremental_writer():
     writer.write(fi)
     b = fi.getvalue()
     assert b[-39:] == b"\nendstream\nendobj\nstartxref\n1240\n%%EOF\n"
+
+
+def test_wrong_size_in_incremental_pdf(caplog):
+    source_data = RESOURCE_ROOT.joinpath("crazyones.pdf").read_bytes()
+    writer = PdfWriter(BytesIO(source_data), incremental=True)
+    writer._add_object(DictionaryObject())
+
+    incremental_data = BytesIO()
+    writer.write(incremental_data)
+    modified_data = incremental_data.getvalue().replace(b"/Size 25", b"/Size 2")
+
+    writer = PdfWriter(BytesIO(modified_data), incremental=False)
+    assert "Object count 19 exceeds defined trailer size 2" in caplog.text
+    assert len(writer._objects) == 20
+
+    caplog.clear()
+    writer = PdfWriter(incremental=False, strict=True)
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Object count 19 exceeds defined trailer size 2$"):
+        writer.clone_reader_document_root(reader=PdfReader(BytesIO(modified_data)))
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Got index error while flattening\.$"):
+        PdfWriter(BytesIO(modified_data), incremental=True)
