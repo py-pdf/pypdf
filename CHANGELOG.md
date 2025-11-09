@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Version 6.2.0, 2025-11-09
+
+### New Features (ENH)
+- Add 'strict' parameter to PDFWriter (#3503)
+
+### Bug Fixes (BUG)
+- PdfWriter.append fails when there are articles being None (#3509)
+
+### Documentation (DOC)
+- Execute docs examples in CI (#3507)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.3...6.2.0)
+
 ## Version 6.1.3, 2025-10-22
 
 ### Security (SEC)
