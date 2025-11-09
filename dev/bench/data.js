@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762443545353,
+  "lastUpdate": 1762686674835,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -83297,6 +83297,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09072873239348175",
             "extra": "mean: 704.3964115999927 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "85b53d8eb014d1c6363a71401cebfadd9d7300b0",
+          "message": "REL: 6.2.0\n\n## What's new\n\n### New Features (ENH)\n- Add 'strict' parameter to PDFWriter (#3503) by @Arya-A-Nair\n\n### Bug Fixes (BUG)\n- PdfWriter.append fails when there are articles being None (#3509) by @Noah-Houghton\n\n### Documentation (DOC)\n- Execute docs examples in CI (#3507) by @ievgen-kapinos\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.3...6.2.0)",
+          "timestamp": "2025-11-09T12:08:17+01:00",
+          "tree_id": "70bb78bb6607352df03f7ea455dce758aa5b3985",
+          "url": "https://github.com/py-pdf/pypdf/commit/85b53d8eb014d1c6363a71401cebfadd9d7300b0"
+        },
+        "date": 1762686671314,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.828168964068062,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0063200020611222036",
+            "extra": "mean: 261.22148980000475 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.992742380618616,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0026649489329953736",
+            "extra": "mean: 62.52836294117301 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28244490898704644,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013700355245011658",
+            "extra": "mean: 3.5405134530000053 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.0494330291043,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011053565539031335",
+            "extra": "mean: 55.403402333332174 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09126978405259635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023953080695015134",
+            "extra": "mean: 10.9565286078 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5049171364543137,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001857875050964776",
+            "extra": "mean: 664.4884131999902 msec\nrounds: 5"
           }
         ]
       }
