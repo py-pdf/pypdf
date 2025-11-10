@@ -26,4 +26,4 @@ mypy:
 	mypy pypdf --ignore-missing-imports --check-untyped --strict
 
 ruff:
-	ruff check pypdf tests make_release.py
+	ruff check --fix pypdf tests make_release.py
