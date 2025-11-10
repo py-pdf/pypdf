@@ -12,12 +12,14 @@ def test_scale_text():
         text, rectangle=rectangle, font_size=font_size, is_multiline=is_multiline
     )
     assert b"10.1 Tf" in appearance_stream.get_data()
+
     text = "This is a very very long sentence that probably will scale below the minimum font size"
     font_size = 0.0
     appearance_stream = TextStreamAppearance(
         text, rectangle=rectangle, font_size=font_size, is_multiline=is_multiline
     )
     assert b"4.0 Tf" in appearance_stream.get_data()
+
     rectangle = (0, 0, 160, 360)
     font_size = 0.0
     text = """Welcome to pypdf
@@ -33,11 +35,13 @@ See pdfly for a CLI application that uses pypdf to interact with PDFs.
     )
     assert b"12 Tf" in appearance_stream.get_data()
     assert b"pypdf is a free and open" in appearance_stream.get_data()
+
     rectangle = (0, 0, 160, 160)
     appearance_stream = TextStreamAppearance(
         text, rectangle=rectangle, font_size=font_size, is_multiline=is_multiline
     )
     assert b"8.8 Tf" in appearance_stream.get_data()
+
     rectangle = (0, 0, 160, 12)
     appearance_stream = TextStreamAppearance(
         text, rectangle=rectangle, font_size=font_size, is_multiline=is_multiline
@@ -49,11 +53,13 @@ Option D
 """
     selection = "Option A"
     assert b"4.0 Tf" in appearance_stream.get_data()
+
     text = "pneumonoultramicroscopicsilicovolcanoconiosis"
     appearance_stream = TextStreamAppearance(
         text, selection, rectangle=rectangle, font_size=font_size, is_multiline=is_multiline
     )
     assert b"7.2 Tf" in appearance_stream.get_data()
+
     rectangle = (0, 0, 10, 100)
     text = "OneWord"
     appearance_stream = TextStreamAppearance(
