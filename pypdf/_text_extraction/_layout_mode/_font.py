@@ -6,6 +6,7 @@ from typing import Any, Union, cast
 
 from ..._codecs import adobe_glyphs
 from ...errors import ParseError
+from ...generic import DictionaryObject, PdfObject
 from ._font_widths import STANDARD_WIDTHS
 
 
@@ -59,11 +60,11 @@ class Font:
 
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
         if "/DescendantFonts" in self.font_dictionary:
-            d_font: Any
+            d_font: PdfObject
             for d_font_idx, d_font in enumerate(
                 self.font_dictionary["/DescendantFonts"]
             ):
-                d_font_object = d_font.get_object()
+                d_font_object = cast(DictionaryObject, d_font.get_object())
                 self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font_object
                 ord_map = {
                     ord(_target): _surrogate
