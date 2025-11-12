@@ -794,7 +794,7 @@ def decode_stream_data(stream: Any) -> bytes:
 def _xobj_to_image(
         x_object: dict[str, Any],
         pillow_parameters: Union[dict[str, Any], None] = None
-    ) -> tuple[Optional[str], bytes, Any]:
+) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
 
@@ -955,10 +955,12 @@ def _xobj_to_image(
     if pillow_parameters is None:
         pillow_parameters = {}
     # Preserve JPEG image quality - see issue #3515.
-    if image_format == "JPEG" and "quality" not in pillow_parameters:
-        pillow_parameters["quality"] = "keep"
-    # This prevent: Cannot use 'keep' when original image is not a JPEG:
-    img.format = image_format  # type: ignore
+    if image_format == "JPEG":
+        # This prevents: Cannot use 'keep' when original image is not a JPEG:
+        # "JPEG" is the value of PIL.JpegImagePlugin.JpegImageFile.format
+        img.format = "JPEG"  # type: ignore[misc]
+        if "quality" not in pillow_parameters:
+            pillow_parameters["quality"] = "keep"
 
     # Save image to bytes
     img_byte_arr = BytesIO()
