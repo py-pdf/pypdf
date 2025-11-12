@@ -48,9 +48,10 @@ dialog for users who open the generated PDF.
 
 If you want to flatten your form, that is, keeping all form field contents while
 removing the form fields themselves, you can set the `flatten` parameter in
-`update_page_form_field_values()` to `True`, to convert form field contents to
-regular PDF content, and then use `writer.remove_annotations(subtypes="/Widget")`
-to remove all form fields. This will result in a flattened PDF.
+{func}`~pypdf.PdfWriter.update_page_form_field_values` to `True`. This
+will convert form field  contents to regular PDF content. Afterwards, use
+{func}`~pypdf.PdfWriter.remove_annotations` with `subtypes="/Widget"`
+to remove all form fields to get an actual flattened PDF.
 
 ## Some notes about form fields and annotations
 
