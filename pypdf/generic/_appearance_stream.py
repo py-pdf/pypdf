@@ -167,7 +167,7 @@ class TextStreamAppearance(DecodedStreamObject):
             font_color: The color to apply to the font, represented as a PDF
                 graphics state string (e.g., "0 g" for black).
             is_multiline: A boolean indicating if the text field is multiline.
-            alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER
+            alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER.
 
         Returns:
             A byte string containing the PDF content stream data.
@@ -285,7 +285,7 @@ class TextStreamAppearance(DecodedStreamObject):
             font_size: The font size. If 0, it's auto-calculated.
             font_color: The font color string.
             is_multiline: A boolean indicating if the text field is multiline.
-            alignment: Left-aligned (0), centered (1) or right-aligned (2) text.
+            alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER.
 
         """
         super().__init__()
@@ -442,7 +442,7 @@ class TextStreamAppearance(DecodedStreamObject):
         # Retrieve field text, selected values and formatting information
         is_multiline = False
         field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
-        alignment = field.get("/Q", 0)
+        alignment = field.get("/Q", TextAlignment.LEFT)
         if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
             is_multiline = True
         if (
