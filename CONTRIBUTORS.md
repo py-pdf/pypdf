@@ -13,6 +13,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 
 * [abyesilyurt](https://github.com/abyesilyurt)
 * [ArkieCoder](https://github.com/ArkieCoder)
+* [Beers, PJ](https://github.com/PJBrs)
 * [Clauss, Christian](https://github.com/cclauss)
 * [DL6ER](https://github.com/DL6ER)
 * [Duy, Phan Thanh](https://github.com/zuypt)
