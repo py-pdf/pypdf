@@ -3,6 +3,38 @@
 from pypdf.generic._appearance_stream import TextStreamAppearance
 
 
+def test_comb():
+    rectangle = (0.0, 0.0, 197.285, 18.455)
+    font_size = 10.0
+    text = "01234567"
+    max_length = 10
+    is_comb = True
+    appearance_stream = TextStreamAppearance(
+        text, rectangle=rectangle, font_size=font_size, is_comb=is_comb, max_length=max_length
+    )
+    assert appearance_stream.get_data() == (
+        b"q\n/Tx BMC \nq\n1 1 196.285 17.455 re\nW\nBT\n/Helv 10.0 Tf 0 g\n"
+        b"7.084250000000001 7.454999999999998 Td\n(0) Tj\n"
+        b"19.7285 0.0 Td\n(1) Tj\n"
+        b"19.728500000000004 0.0 Td\n(2) Tj\n"
+        b"19.728499999999997 0.0 Td\n(3) Tj\n"
+        b"19.728499999999997 0.0 Td\n(4) Tj\n"
+        b"19.728499999999997 0.0 Td\n(5) Tj\n"
+        b"19.72850000000001 0.0 Td\n(6) Tj\n"
+        b"19.728499999999997 0.0 Td\n(7) Tj\nET\nQ\nEMC\nQ\n"
+    )
+
+    rectangle = (0.0, 0.0, 20.852, 20.84)
+    text = "AA"
+    max_length = 1
+    appearance_stream = TextStreamAppearance(
+        text, rectangle=rectangle, font_size=font_size, is_comb=is_comb, max_length=max_length
+    )
+    assert appearance_stream.get_data() == (
+        b"q\n/Tx BMC \nq\n1 1 19.852 19.84 re\nW\nBT\n/Helv 10.0 Tf 0 g\n7.091 9.84 Td\n(A) Tj\nET\nQ\nEMC\nQ\n"
+    )
+
+
 def test_scale_text():
     rectangle = (0, 0, 9.1, 55.4)
     font_size = 10.1
