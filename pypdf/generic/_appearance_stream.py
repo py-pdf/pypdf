@@ -1,7 +1,10 @@
 import re
+from enum import IntEnum
 from typing import Any, Optional, Union, cast
 
-from .._cmap import _default_fonts_space_width, build_char_map_from_dict
+from .._cmap import build_char_map_from_dict
+from .._codecs.core_fontmetrics import CORE_FONT_METRICS
+from .._font import FontDescriptor
 from .._utils import logger_warning
 from ..constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes
 from ..generic import (
@@ -16,6 +19,14 @@ from ..generic._base import ByteStringObject, TextStringObject, is_null_or_none
 DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 
 
+class TextAlignment(IntEnum):
+    """Defines the alignment options for text within a form field's appearance stream."""
+
+    LEFT = 0
+    CENTER = 1
+    RIGHT = 2
+
+
 class TextStreamAppearance(DecodedStreamObject):
     """
     A class representing the appearance stream for a text-based form field.
@@ -25,16 +36,116 @@ class TextStreamAppearance(DecodedStreamObject):
     like font, font size, color, multiline text, and text selection highlighting.
     """
 
+    def _scale_text(
+        self,
+        font_descriptor: FontDescriptor,
+        font_size: float,
+        field_width: float,
+        field_height: float,
+        text: str,
+        is_multiline: bool,
+        min_font_size: float = 4.0,       # Minimum font size to attempt
+        font_size_step: float = 0.2       # How much to decrease font size by each step
+    ) -> tuple[list[tuple[float, str]], float]:
+        """
+        Takes a piece of text and scales it to field_width or field_height, given font_name
+        and font_size. For multiline fields, adds newlines to wrap the text.
+
+        Args:
+            font_descriptor: A FontDescriptor for the font to be used.
+            font_size: The font size in points.
+            field_width: The width of the field in which to fit the text.
+            field_height: The height of the field in which to fit the text.
+            text: The text to fit with the field.
+            is_multiline: Whether to scale and wrap the text, or only to scale.
+            min_font_size: The minimum font size at which to scale the text.
+            font_size_step: The amount by which to decrement font size per step while scaling.
+
+        Returns:
+            The text in the form of list of tuples, each tuple containing the length of a line
+            and its contents, and the font_size for these lines and lengths.
+        """
+        # Single line:
+        if not is_multiline:
+            test_width = font_descriptor.text_width(text) * font_size / 1000
+            if test_width > field_width or font_size > field_height:
+                new_font_size = font_size - font_size_step
+                if new_font_size >= min_font_size:
+                    # Text overflows height; Retry with smaller font size.
+                    return self._scale_text(
+                        font_descriptor,
+                        round(new_font_size, 1),
+                        field_width,
+                        field_height,
+                        text,
+                        is_multiline,
+                        min_font_size,
+                        font_size_step
+                    )
+            return [(test_width, text)], font_size
+        # Multiline:
+        orig_text = text
+        paragraphs = text.replace("\n", "\r").split("\r")
+        wrapped_lines = []
+        current_line_words: list[str] = []
+        current_line_width: float = 0
+        space_width = font_descriptor.text_width(" ") * font_size / 1000
+        for paragraph in paragraphs:
+            if not paragraph.strip():
+                wrapped_lines.append((0.0, ""))
+                continue
+            words = paragraph.split(" ")
+            for i, word in enumerate(words):
+                word_width = font_descriptor.text_width(word) * font_size / 1000
+                test_width = current_line_width + word_width + (space_width if i else 0)
+                if test_width > field_width and current_line_words:
+                    wrapped_lines.append((current_line_width, " ".join(current_line_words)))
+                    current_line_words = [word]
+                    current_line_width = word_width
+                elif not current_line_words and word_width > field_width:
+                    wrapped_lines.append((word_width, word))
+                    current_line_words = []
+                    current_line_width = 0
+                else:
+                    if current_line_words:
+                        current_line_width += space_width
+                    current_line_words.append(word)
+                    current_line_width += word_width
+            if current_line_words:
+                wrapped_lines.append((current_line_width, " ".join(current_line_words)))
+                current_line_words = []
+                current_line_width = 0
+        # Estimate total height.
+        # Assumes line spacing of 1.4
+        estimated_total_height = font_size + (len(wrapped_lines) - 1) * 1.4 * font_size
+        if estimated_total_height > field_height:
+            # Text overflows height; Retry with smaller font size.
+            new_font_size = font_size - font_size_step
+            if new_font_size >= min_font_size:
+                return self._scale_text(
+                    font_descriptor,
+                    round(new_font_size, 1),
+                    field_width,
+                    field_height,
+                    orig_text,
+                    is_multiline,
+                    min_font_size,
+                    font_size_step
+                )
+        return wrapped_lines, font_size
+
     def _generate_appearance_stream_data(
         self,
         text: str = "",
         selection: Optional[list[str]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
+        font_descriptor: Optional[FontDescriptor] = None,
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
-        is_multiline: bool = False
+        is_multiline: bool = False,
+        alignment: TextAlignment = TextAlignment.LEFT
     ) -> bytes:
         """
         Generates the raw bytes of the PDF appearance stream for a text field.
@@ -56,6 +167,7 @@ class TextStreamAppearance(DecodedStreamObject):
             font_color: The color to apply to the font, represented as a PDF
                 graphics state string (e.g., "0 g" for black).
             is_multiline: A boolean indicating if the text field is multiline.
+            alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER.
 
         Returns:
             A byte string containing the PDF content stream data.
@@ -64,13 +176,31 @@ class TextStreamAppearance(DecodedStreamObject):
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
+        font_descriptor = cast(FontDescriptor, font_descriptor)
 
         # If font_size is 0, apply the logic for multiline or large-as-possible font
         if font_size == 0:
+            if selection:              # Don't wrap text when dealing with a /Ch field, in order to prevent problems
+                is_multiline = False   # with matching "selection" with "line" later on.
             if is_multiline:
                 font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
             else:
                 font_size = rectangle.height - 2
+            lines, font_size = self._scale_text(
+                font_descriptor,
+                font_size,
+                rectangle.width - 3,   # One point margin left and right, and an additional point because the first
+                                       # offset takes one extra point (see below, "desired_abs_x_start")
+                rectangle.height - 3,  # One point margin for top and bottom, one point extra for the first line
+                                       # (see y_offset)
+                text,
+                is_multiline,
+            )
+        else:
+            lines = [(
+                font_descriptor.text_width(line) * font_size / 1000,
+                line
+            ) for line in text.replace("\n", "\r").split("\r")]
 
         # Set the vertical offset
         y_offset = rectangle.height - 1 - font_size
@@ -80,19 +210,42 @@ class TextStreamAppearance(DecodedStreamObject):
             f"q\n/Tx BMC \nq\n1 1 {rectangle.width - 1} {rectangle.height - 1} "
             f"re\nW\nBT\n{default_appearance}\n"
         ).encode()
+        current_x_pos: float = 0  # Initial virtual position within the text object.
 
-        for line_number, line in enumerate(text.replace("\n", "\r").split("\r")):
+        for line_number, (line_width, line) in enumerate(lines):
             if selection and line in selection:
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
                     f"1 {y_offset - (line_number * font_size * 1.4) - 1} {rectangle.width - 2} {font_size + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{default_appearance}\n"
                 ).encode()
+
+            # Calculate the desired absolute starting X for the current line
+            desired_abs_x_start: float = 0
+            if alignment == TextAlignment.RIGHT:
+                desired_abs_x_start = rectangle.width - 2 - line_width
+            elif alignment == TextAlignment.CENTER:
+                desired_abs_x_start = (rectangle.width - line_width) / 2
+            else:  # Left aligned; default
+                desired_abs_x_start = 2
+            # Calculate x_rel_offset: how much to move from the current_x_pos
+            # to reach the desired_abs_x_start.
+            x_rel_offset = desired_abs_x_start - current_x_pos
+
+            # Y-offset:
+            y_rel_offset: float = 0
             if line_number == 0:
-                ap_stream += f"2 {y_offset} Td\n".encode()
+                y_rel_offset = y_offset  # Initial vertical position
             else:
-                # Td is a relative translation
-                ap_stream += f"0 {-font_size * 1.4} Td\n".encode()
+                y_rel_offset = - font_size * 1.4  # Move down by line height
+
+            # Td is a relative translation (Tx and Ty).
+            # It updates the current text position.
+            ap_stream += f"{x_rel_offset} {y_rel_offset} Td\n".encode()
+            # Update current_x_pos based on the Td operation for the next iteration.
+            # This is the X position where the *current line* will start.
+            current_x_pos = desired_abs_x_start
+
             encoded_line: list[bytes] = [
                 font_glyph_byte_map.get(c, c.encode("utf-16-be")) for c in line
             ]
@@ -112,7 +265,8 @@ class TextStreamAppearance(DecodedStreamObject):
         font_name: str = "/Helv",
         font_size: float = 0.0,
         font_color: str = "0 g",
-        is_multiline: bool = False
+        is_multiline: bool = False,
+        alignment: TextAlignment = TextAlignment.LEFT
     ) -> None:
         """
         Initializes a TextStreamAppearance object.
@@ -131,6 +285,7 @@ class TextStreamAppearance(DecodedStreamObject):
             font_size: The font size. If 0, it's auto-calculated.
             font_color: The font color string.
             is_multiline: A boolean indicating if the text field is multiline.
+            alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER.
 
         """
         super().__init__()
@@ -138,36 +293,49 @@ class TextStreamAppearance(DecodedStreamObject):
         # If a font resource was added, get the font character map
         if font_resource:
             font_resource = cast(DictionaryObject, font_resource.get_object())
-            _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
-                200, font_resource
-            )
-            try:  # remove width stored in -1 key
-                del font_map[-1]
-            except KeyError:
-                pass
-            font_glyph_byte_map: dict[str, bytes]
-            if isinstance(font_encoding, str):
-                font_glyph_byte_map = {
-                    v: k.encode(font_encoding) for k, v in font_map.items()
-                }
-            else:
-                font_glyph_byte_map = {v: bytes((k,)) for k, v in font_encoding.items()}
-                font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
-                for key, value in font_map.items():
-                    font_glyph_byte_map[value] = font_encoding_rev.get(key, key)
+            font_descriptor = FontDescriptor.from_font_resource(font_resource)
         else:
-            logger_warning(f"Font dictionary for {font_name} not found.", __name__)
-            font_glyph_byte_map = {}
+            logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
+            font_name = "/Helv"
+            font_resource = DictionaryObject({
+                NameObject("/Subtype"): NameObject("/Type1"),
+                NameObject("/Name"): NameObject("/Helv"),
+                NameObject("/Type"): NameObject("/Font"),
+                NameObject("/BaseFont"): NameObject("/Helvetica"),
+                NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
+            })
+            font_descriptor = CORE_FONT_METRICS["Helvetica"]
+
+        # Get the font glyph data
+        _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
+            200, font_resource
+        )
+        try:  # remove width stored in -1 key
+            del font_map[-1]
+        except KeyError:
+            pass
+        font_glyph_byte_map: dict[str, bytes]
+        if isinstance(font_encoding, str):
+            font_glyph_byte_map = {
+                v: k.encode(font_encoding) for k, v in font_map.items()
+            }
+        else:
+            font_glyph_byte_map = {v: bytes((k,)) for k, v in font_encoding.items()}
+            font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
+            for key, value in font_map.items():
+                font_glyph_byte_map[value] = font_encoding_rev.get(key, key)
 
         ap_stream_data = self._generate_appearance_stream_data(
             text,
             selection,
             rectangle,
+            font_descriptor,
             font_glyph_byte_map,
             font_name,
             font_size,
             font_color,
-            is_multiline
+            is_multiline,
+            alignment
         )
 
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -175,13 +343,12 @@ class TextStreamAppearance(DecodedStreamObject):
         self[NameObject("/BBox")] = RectangleObject(rectangle)
         self.set_data(ByteStringObject(ap_stream_data))
         self[NameObject("/Length")] = NumberObject(len(ap_stream_data))
-        # Update Resources with font information if necessary
-        if font_resource is not None:
-            self[NameObject("/Resources")] = DictionaryObject({
-                NameObject("/Font"): DictionaryObject({
-                    NameObject(font_name): getattr(font_resource, "indirect_reference", font_resource)
-                })
+        # Update Resources with font information
+        self[NameObject("/Resources")] = DictionaryObject({
+            NameObject("/Font"): DictionaryObject({
+                NameObject(font_name): getattr(font_resource, "indirect_reference", font_resource)
             })
+        })
 
     @classmethod
     def from_text_annotation(
@@ -260,8 +427,8 @@ class TextStreamAppearance(DecodedStreamObject):
             ).get_object(),
         )
         document_font_resources = document_resources.get("/Font", DictionaryObject()).get_object()
-        # _default_fonts_space_width keys is the list of Standard fonts
-        if font_name not in document_font_resources and font_name not in _default_fonts_space_width:
+        # CORE_FONT_METRICS is the dict with Standard font metrics
+        if font_name not in document_font_resources and font_name.removeprefix("/") not in CORE_FONT_METRICS:
             # ...or AcroForm dictionary
             document_resources = cast(
                 dict[Any, Any],
@@ -275,6 +442,7 @@ class TextStreamAppearance(DecodedStreamObject):
         # Retrieve field text, selected values and formatting information
         is_multiline = False
         field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
+        alignment = field.get("/Q", TextAlignment.LEFT)
         if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
             is_multiline = True
         if (
@@ -301,7 +469,8 @@ class TextStreamAppearance(DecodedStreamObject):
             font_name,
             font_size,
             font_color,
-            is_multiline
+            is_multiline,
+            alignment
         )
         if AnnotationDictionaryAttributes.AP in annotation:
             for key, value in (
