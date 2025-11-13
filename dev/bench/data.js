@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762686674835,
+  "lastUpdate": 1763029711419,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -83363,6 +83363,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001857875050964776",
             "extra": "mean: 664.4884131999902 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "427035377b75561da191d0961e93068614b19a44",
+          "message": "ENH: Wrap and align text in flattened PDF forms (#3465)",
+          "timestamp": "2025-11-13T11:25:46+01:00",
+          "tree_id": "cfb865019bd397befe2feb1b54a7f2e820ae1e3f",
+          "url": "https://github.com/py-pdf/pypdf/commit/427035377b75561da191d0961e93068614b19a44"
+        },
+        "date": 1763029704820,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.72195275234655,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008197322825935707",
+            "extra": "mean: 268.67616720001024 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.76447763218991,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025309554405597533",
+            "extra": "mean: 63.43375425000275 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27511315517556506,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04236788981765086",
+            "extra": "mean: 3.6348679850000054 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.200038424126905,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001111483942615841",
+            "extra": "mean: 54.94493894443369 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09019923798418787,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022318459479946418",
+            "extra": "mean: 11.086568161200011 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.493664133209056,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0027208565781380286",
+            "extra": "mean: 669.4945522000012 msec\nrounds: 5"
           }
         ]
       }
