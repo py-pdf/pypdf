@@ -82,9 +82,9 @@ def test_flatedecode_unsupported_predictor():
     predictors = (-10, -1, 0, 9, 16, 20, 100)
 
     for predictor, s in cartesian_product(predictors, filter_inputs):
-        s = s.encode()
+        s_bytes = s.encode()
         with pytest.raises(PdfReadError):
-            codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
+            codec.decode(codec.encode(s_bytes), DictionaryObject({"/Predictor": predictor}))
 
 
 @pytest.mark.parametrize(

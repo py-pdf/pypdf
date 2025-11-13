@@ -461,9 +461,9 @@ def build_font_width_map(
             m = 0
             cpt = 0
             for xx in w:
-                xx = xx.get_object()
-                if xx > 0:
-                    m += xx
+                xx_value = xx.get_object()
+                if xx_value > 0:
+                    m += xx_value
                     cpt += 1
             font_width_map["default"] = m / max(1, cpt)
         st = cast(int, ft["/FirstChar"])
