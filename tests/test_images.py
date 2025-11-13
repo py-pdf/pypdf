@@ -488,7 +488,7 @@ def test_extract_jpeg_with_explicit_quality():
     image = x_object.decode_as_image()
     assert isinstance(image, Image.Image)
     assert image.format == "JPEG"
-    small_image = x_object.decode_as_image({"quality": 75})
+    small_image = x_object.decode_as_image(pillow_parameters={"quality": 75})
     assert image_size(small_image) < image_size(image)
 
 
