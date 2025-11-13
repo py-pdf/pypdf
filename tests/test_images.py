@@ -39,6 +39,12 @@ def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
     return img
 
 
+def image_size(image: Image.Image):
+    buffer = BytesIO()
+    image.save(buffer, format=image.format)
+    return buffer.tell()
+
+
 def image_similarity(
     path1: Union[Path, Image.Image, BytesIO], path2: Union[Path, Image.Image, BytesIO]
 ) -> float:
@@ -472,6 +478,18 @@ def test_extract_image_from_object(caplog):
         co = reader.pages[0].get_contents()
         co.decode_as_image()
     assert "does not seem to be an Image" in caplog.text
+
+
+def test_extract_jpeg_with_explicit_quality():
+    reader = PdfReader(RESOURCE_ROOT / "side-by-side-subfig.pdf")
+    page = reader.pages[0]
+    x_object = page["/Resources"]["/XObject"]["/Im1"]
+    assert x_object["/Filter"] == "/DCTDecode"
+    image = x_object.decode_as_image()
+    assert isinstance(image, Image.Image)
+    assert image.format == "JPEG"
+    small_image = x_object.decode_as_image(pillow_parameters={"quality": 75})
+    assert image_size(small_image) < image_size(image)
 
 
 @pytest.mark.enable_socket

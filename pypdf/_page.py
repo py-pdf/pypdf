@@ -389,16 +389,18 @@ class ImageFile:
         b = BytesIO()
         new_image.save(b, "PDF", **kwargs)
         reader = PdfReader(b)
-        assert reader.pages[0].images[0].indirect_reference is not None
+        page_image = reader.pages[0].images[0]
+        assert page_image.indirect_reference is not None
         self.indirect_reference.pdf._objects[self.indirect_reference.idnum - 1] = (
-            reader.pages[0].images[0].indirect_reference.get_object()
+            page_image.indirect_reference.get_object()
         )
         cast(
             PdfObject, self.indirect_reference.get_object()
         ).indirect_reference = self.indirect_reference
         # change the object attributes
         extension, byte_stream, img = _xobj_to_image(
-            cast(DictionaryObject, self.indirect_reference.get_object())
+            cast(DictionaryObject, self.indirect_reference.get_object()),
+            pillow_parameters=kwargs,
         )
         assert extension is not None
         self.name = self.name[: self.name.rfind(".")] + extension
