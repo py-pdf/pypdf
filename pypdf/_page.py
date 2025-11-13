@@ -1074,9 +1074,6 @@ class PageObject(DictionaryObject):
         over: bool = True,
         expand: bool = False,
     ) -> None:
-        # First we work on merging the resource dictionaries. This allows us
-        # to find out what symbols in the content streams we might need to
-        # rename.
         try:
             assert isinstance(self.indirect_reference, IndirectObject)
             if hasattr(
@@ -1089,47 +1086,43 @@ class PageObject(DictionaryObject):
         except (AssertionError, AttributeError):
             pass
 
-        new_resources = DictionaryObject()
-        rename = {}
+        # First we work on merging the resource dictionaries. This allows us
+        # to find out what symbols in the content streams we might need to
+        # rename.
         try:
             original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
         except KeyError:
             original_resources = DictionaryObject()
         try:
-            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+            page2_resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
         except KeyError:
-            page2resources = DictionaryObject()
-        new_annots = ArrayObject()
+            page2_resources = DictionaryObject()
 
-        for page in (self, page2):
-            if PG.ANNOTS in page:
-                annots = page[PG.ANNOTS]
-                if isinstance(annots, ArrayObject):
-                    new_annots.extend(annots)
-
+        new_resources = DictionaryObject()
+        rename = {}
         for res in (
             RES.EXT_G_STATE,
-            RES.FONT,
-            RES.XOBJECT,
             RES.COLOR_SPACE,
             RES.PATTERN,
             RES.SHADING,
+            RES.XOBJECT,
+            RES.FONT,
             RES.PROPERTIES,
         ):
-            new, newrename = self._merge_resources(
-                original_resources, page2resources, res
+            new, new_rename = self._merge_resources(
+                original_resources, page2_resources, res
             )
             if new:
                 new_resources[NameObject(res)] = new
-                rename.update(newrename)
+                rename.update(new_rename)
 
-        # Combine /ProcSet sets, making sure there's a consistent order
+        # Combine /ProcSet sets, making sure there is a consistent order
         new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
             sorted(
                 set(
                     original_resources.get(RES.PROC_SET, ArrayObject()).get_object()
                 ).union(
-                    set(page2resources.get(RES.PROC_SET, ArrayObject()).get_object())
+                    set(page2_resources.get(RES.PROC_SET, ArrayObject()).get_object())
                 )
             )
         )
@@ -1140,10 +1133,10 @@ class PageObject(DictionaryObject):
             original_content.isolate_graphics_state()
             new_content_array.append(original_content)
 
-        page2content = page2.get_contents()
-        if page2content is not None:
+        page2_content = page2.get_contents()
+        if page2_content is not None:
             rect = getattr(page2, MERGE_CROP_BOX)
-            page2content.operations.insert(
+            page2_content.operations.insert(
                 0,
                 (
                     map(
@@ -1158,25 +1151,32 @@ class PageObject(DictionaryObject):
                     b"re",
                 ),
             )
-            page2content.operations.insert(1, ([], b"W"))
-            page2content.operations.insert(2, ([], b"n"))
+            page2_content.operations.insert(1, ([], b"W"))
+            page2_content.operations.insert(2, ([], b"n"))
             if page2transformation is not None:
-                page2content = page2transformation(page2content)
-            page2content = PageObject._content_stream_rename(
-                page2content, rename, self.pdf
+                page2_content = page2transformation(page2_content)
+            page2_content = PageObject._content_stream_rename(
+                page2_content, rename, self.pdf
             )
-            page2content.isolate_graphics_state()
+            page2_content.isolate_graphics_state()
             if over:
-                new_content_array.append(page2content)
+                new_content_array.append(page2_content)
             else:
-                new_content_array.insert(0, page2content)
+                new_content_array.insert(0, page2_content)
 
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
             self._expand_mediabox(page2, ctm)
 
-        self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
+        self.replace_contents(ContentStream(new_content_array, self.pdf))
+
+        new_annots = ArrayObject()
+        for page in (self, page2):
+            if PG.ANNOTS in page:
+                annots = page[PG.ANNOTS]
+                if isinstance(annots, ArrayObject):
+                    new_annots.extend(annots)
         self[NameObject(PG.ANNOTS)] = new_annots
         return None
 
@@ -1194,7 +1194,6 @@ class PageObject(DictionaryObject):
         assert isinstance(self.indirect_reference, IndirectObject)
         pdf = self.indirect_reference.pdf
 
-        rename = {}
         if PG.RESOURCES not in self:
             self[NameObject(PG.RESOURCES)] = DictionaryObject()
         original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
@@ -1203,13 +1202,14 @@ class PageObject(DictionaryObject):
         else:
             page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
 
+        rename = {}
         for res in (
             RES.EXT_G_STATE,
-            RES.FONT,
-            RES.XOBJECT,
             RES.COLOR_SPACE,
             RES.PATTERN,
             RES.SHADING,
+            RES.XOBJECT,
+            RES.FONT,
             RES.PROPERTIES,
         ):
             if res in page2resources:
@@ -1219,7 +1219,7 @@ class PageObject(DictionaryObject):
                     original_resources, page2resources, res, False
                 )
                 rename.update(newrename)
-        # Combine /ProcSet sets.
+        # Combine /ProcSet sets
         if RES.PROC_SET in page2resources:
             if RES.PROC_SET not in original_resources:
                 original_resources[NameObject(RES.PROC_SET)] = ArrayObject()
