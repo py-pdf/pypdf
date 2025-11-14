@@ -43,13 +43,15 @@ from .test_encryption import HAS_AES
 from .test_images import image_similarity
 
 filter_inputs = (
+    string.ascii_letters,
     string.ascii_lowercase,
     string.ascii_uppercase,
-    string.ascii_letters,
     string.digits,
     string.hexdigits,
+    string.octdigits,
     string.punctuation,
-    string.whitespace,  # Add more...
+    string.printable,
+    string.whitespace,  # Add more
 )
 
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -72,11 +74,9 @@ def test_flatedecode_unsupported_predictor():
     """
     FlateDecode raises PdfReadError for unsupported predictors.
 
-    Predictors outside the [10, 15] range are not supported.
+    Predictor values outside the ranges [1, 2] and [10, 15] are not supported.
 
-    This test function checks that a PdfReadError is raised when decoding with
-    unsupported predictors. Once this predictor support is updated in the
-    future, this test case may be removed.
+    Checks that a PdfReadError is raised when decoding with unsupported predictors.
     """
     codec = FlateDecode()
     predictors = (-10, -1, 0, 9, 16, 20, 100)
@@ -133,11 +133,10 @@ def test_ascii_hex_decode_method(data, expected):
     assert ASCIIHexDecode.decode(data) == expected
 
 
-def test_ascii_hex_decode_missing_eod():
-    """ASCIIHexDecode.decode() raises error when no EOD character is present."""
-    # with pytest.raises(PdfStreamError) as exc:
+def test_ascii_hex_decode_missing_eod(caplog):
+    """ASCIIHexDecode.decode() logs warning when no EOD character is present."""
     ASCIIHexDecode.decode("")
-    # assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
+    assert "missing EOD in ASCIIHexDecode, check if output is OK" in caplog.text
 
 
 @pytest.mark.enable_socket
@@ -239,8 +238,6 @@ def test_ccitt_fax_decode():
         {"/K": NumberObject(-1), "/Columns": NumberObject(17)}
     )
 
-    # This was just the result pypdf 1.27.9 returned.
-    # It would be awesome if we could check if that is actually correct.
     assert CCITTFaxDecode.decode(data, parameters) == (
         b"II*\x00\x08\x00\x00\x00\x08\x00\x00\x01\x04\x00\x01\x00\x00\x00\x11\x00"
         b"\x00\x00\x01\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x01"
