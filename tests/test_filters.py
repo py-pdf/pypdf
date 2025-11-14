@@ -79,7 +79,7 @@ def test_flatedecode_unsupported_predictor():
     Checks that a PdfReadError is raised when decoding with unsupported predictors.
     """
     codec = FlateDecode()
-    predictors = (-10, -1, 0, 9, 16, 20, 100)
+    predictors = (-10, -1, 0, 3, 9, 16, 20, 100)
 
     for predictor, s in cartesian_product(predictors, filter_inputs):
         s = s.encode()
