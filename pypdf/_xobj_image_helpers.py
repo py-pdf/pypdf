@@ -369,15 +369,20 @@ def _apply_decode(
 def _get_mode_and_invert_color(
     x_object_obj: dict[str, Any], colors: int, color_space: Union[str, list[Any], Any]
 ) -> tuple[mode_str_type, bool]:
-    if (
-        IA.COLOR_SPACE in x_object_obj
-        and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
-    ):
-        # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
-        mode: mode_str_type = "RGB"
+    preferred_mode: mode_str_type = ""
+    if IA.COLOR_SPACE in x_object_obj:
+        val = x_object_obj[IA.COLOR_SPACE]
+        # Value type is explicitly mode_str_type, so .get(...) returns the right type
+        hint_map: dict[Any, mode_str_type] = {
+            ColorSpaces.DEVICE_RGB: "RGB",
+            ColorSpaces.DEVICE_GRAY: "L",
+            ColorSpaces.DEVICE_CMYK: "CMYK",
+        }
+        preferred_mode = hint_map.get(val, "")
+
     if x_object_obj.get("/BitsPerComponent", 8) < 8:
         mode, invert_color = _get_imagemode(
-            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
+            f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, preferred_mode
         )
     else:
         mode, invert_color = _get_imagemode(
@@ -385,12 +390,13 @@ def _get_mode_and_invert_color(
             2
             if (
                 colors == 1
-                and (
-                    not is_null_or_none(color_space)
-                    and "Gray" not in color_space
-                )
+                and (not is_null_or_none(color_space) and "Gray" not in color_space)
             )
             else colors,
-            "",
+            preferred_mode,
         )
+
+    if mode == "" and preferred_mode:
+        mode = preferred_mode
+        invert_color = preferred_mode == "CMYK"
     return mode, invert_color
