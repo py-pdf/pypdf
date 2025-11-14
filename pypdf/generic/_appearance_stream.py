@@ -139,13 +139,7 @@ class TextStreamAppearance(DecodedStreamObject):
         text: str = "",
         selection: Optional[list[str]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
-        font_descriptor: Optional[FontDescriptor] = None,
-        font_glyph_byte_map: Optional[dict[str, bytes]] = None,
-        font_name: str = "/Helv",
-        font_size: float = 0.0,
-        font_color: str = "0 g",
-        is_multiline: bool = False,
-        alignment: TextAlignment = TextAlignment.LEFT
+        **formatting_kwargs: Any
     ) -> bytes:
         """
         Generates the raw bytes of the PDF appearance stream for a text field.
@@ -157,26 +151,38 @@ class TextStreamAppearance(DecodedStreamObject):
         Args:
             text: The text to be rendered in the form field.
             selection: An optional list of strings that should be highlighted as selected.
-            font_glyph_byte_map: An optional dictionary mapping characters to their
-                byte representation for glyph encoding.
             rect: The bounding box of the form field. Can be a `RectangleObject`
                 or a tuple of four floats (x1, y1, x2, y2).
-            font_name: The name of the font resource to use (e.g., "/Helv").
-            font_size: The font size. If 0, it is automatically calculated
-                based on whether the field is multiline or not.
-            font_color: The color to apply to the font, represented as a PDF
-                graphics state string (e.g., "0 g" for black).
-            is_multiline: A boolean indicating if the text field is multiline.
-            alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER.
+            **formatting_kwargs: A series of keyword arguments that describe how the
+                appearance stream should be formatted. Can include the following:
+                font_descriptor: The font descriptor associated with the font resource.
+                font_glyph_byte_map: An optional dictionary mapping characters to their
+                    byte representation for glyph encoding.
+                font_name: The name of the font resource, e.g., "/Helv".
+                font_size: The font size. If 0, it's auto-calculated.
+                font_color: The font color string.
+                is_multiline: A boolean indicating if the text field is multiline.
+                alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER.
+                is_comb: Boolean that designates fixed-length fields, where every character
+                    fills one "cell", such as in a postcode.
+                max_length: Used if is_comb is set. The maximum number of characters for a fixed-
+                    length field.
 
         Returns:
             A byte string containing the PDF content stream data.
 
         """
-        font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
-        font_descriptor = cast(FontDescriptor, font_descriptor)
+        font_descriptor = cast(FontDescriptor, formatting_kwargs.get("font_descriptor"))
+        font_glyph_byte_map = formatting_kwargs.get("font_glyph_byte_map", {})
+        font_name = formatting_kwargs.get("font_name")
+        font_size = formatting_kwargs.get("font_size", 0.0)
+        font_color = formatting_kwargs.get("font_color", "0 g")
+        is_multiline = formatting_kwargs.get("is_multiline", False)
+        alignment = formatting_kwargs.get("alignment", TextAlignment.LEFT)
+        is_comb = formatting_kwargs.get("is_comb", False)
+        max_length = formatting_kwargs.get("max_length", len(text))
 
         # If font_size is 0, apply the logic for multiline or large-as-possible font
         if font_size == 0:
@@ -196,6 +202,17 @@ class TextStreamAppearance(DecodedStreamObject):
                 text,
                 is_multiline,
             )
+        elif is_comb:
+            if len(text) > max_length:
+                logger_warning (
+                    f"Length of text {text} exceeds maximum length ({max_length}) of field, input truncated.",
+                    __name__
+                )
+            # We act as if each character is one line, because we draw it separately later on
+            lines = [(
+                font_descriptor.text_width(char) * font_size / 1000,
+                char
+            ) for index, char in enumerate(text) if index < max_length]
         else:
             lines = [(
                 font_descriptor.text_width(line) * font_size / 1000,
@@ -222,7 +239,15 @@ class TextStreamAppearance(DecodedStreamObject):
 
             # Calculate the desired absolute starting X for the current line
             desired_abs_x_start: float = 0
-            if alignment == TextAlignment.RIGHT:
+            if is_comb and max_length:
+                # Calculate the width of a cell for one character
+                cell_width = rectangle.width / max_length
+                # Space from the left edge of the cell to the character's baseline start
+                # line_width here is the *actual* character width in points for the single character 'line'
+                centering_offset_in_cell = (cell_width - line_width) / 2
+                # Absolute start X = (Cell Index, i.e., line_number * Cell Width) + Centering Offset
+                desired_abs_x_start = (line_number * cell_width) + centering_offset_in_cell
+            elif alignment == TextAlignment.RIGHT:
                 desired_abs_x_start = rectangle.width - 2 - line_width
             elif alignment == TextAlignment.CENTER:
                 desired_abs_x_start = (rectangle.width - line_width) / 2
@@ -236,6 +261,8 @@ class TextStreamAppearance(DecodedStreamObject):
             y_rel_offset: float = 0
             if line_number == 0:
                 y_rel_offset = y_offset  # Initial vertical position
+            elif is_comb:
+                 y_rel_offset = 0.0  # DO NOT move vertically for subsequent characters
             else:
                 y_rel_offset = - font_size * 1.4  # Move down by line height
 
@@ -261,12 +288,7 @@ class TextStreamAppearance(DecodedStreamObject):
         text: str = "",
         selection: Optional[list[str]] = None,
         rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
-        font_resource: Optional[DictionaryObject] = None,
-        font_name: str = "/Helv",
-        font_size: float = 0.0,
-        font_color: str = "0 g",
-        is_multiline: bool = False,
-        alignment: TextAlignment = TextAlignment.LEFT
+        **formatting_kwargs: Any,
     ) -> None:
         """
         Initializes a TextStreamAppearance object.
@@ -278,24 +300,33 @@ class TextStreamAppearance(DecodedStreamObject):
         Args:
             text: The text to be rendered in the form field.
             selection: An optional list of strings that should be highlighted as selected.
-            rect: The bounding box of the form field. Can be a `RectangleObject`
+            rectangle: The bounding box of the form field. Can be a `RectangleObject`
                 or a tuple of four floats (x1, y1, x2, y2).
-            font_resource: An optional variable that represents a PDF font dictionary.
-            font_name: The name of the font resource, e.g., "/Helv".
-            font_size: The font size. If 0, it's auto-calculated.
-            font_color: The font color string.
-            is_multiline: A boolean indicating if the text field is multiline.
-            alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER.
-
+            **formatting_kwargs: A series of keyword arguments that describe how the
+                appearance stream should be formatted. Can include the following:
+                font_resource: An optional variable that represents a PDF font dictionary.
+                font_name: The name of the font resource, e.g., "/Helv".
+                font_size: The font size. If 0, it's auto-calculated.
+                font_color: The font color string.
+                is_multiline: A boolean indicating if the text field is multiline.
+                alignment: Text alignment, can be TextAlignment.LEFT, .RIGHT, or .CENTER.
+                is_comb: Boolean that designates fixed-length fields, where every character
+                    fills one "cell", such as in a postcode.
+                max_length: Used if is_comb is set. The maximum number of characters for a fixed-
+                    length field.
         """
         super().__init__()
 
         # If a font resource was added, get the font character map
-        if font_resource:
-            font_resource = cast(DictionaryObject, font_resource.get_object())
+        if formatting_kwargs.get("font_resource"):
+            font_resource = cast(DictionaryObject, formatting_kwargs["font_resource"].get_object())
             font_descriptor = FontDescriptor.from_font_resource(font_resource)
+            font_name = formatting_kwargs.get("font_name")
         else:
-            logger_warning(f"Font dictionary for {font_name} not found; defaulting to Helvetica.", __name__)
+            logger_warning(
+                f'Font dictionary for {formatting_kwargs.get("font_name")} not found; '
+                "defaulting to Helvetica.", __name__
+            )
             font_name = "/Helv"
             font_resource = DictionaryObject({
                 NameObject("/Subtype"): NameObject("/Type1"),
@@ -305,6 +336,9 @@ class TextStreamAppearance(DecodedStreamObject):
                 NameObject("/Encoding"): NameObject("/WinAnsiEncoding")
             })
             font_descriptor = CORE_FONT_METRICS["Helvetica"]
+
+        formatting_kwargs.pop("font_resource", None)
+        formatting_kwargs.pop("font_name", None)
 
         # Get the font glyph data
         _font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
@@ -329,13 +363,10 @@ class TextStreamAppearance(DecodedStreamObject):
             text,
             selection,
             rectangle,
-            font_descriptor,
-            font_glyph_byte_map,
-            font_name,
-            font_size,
-            font_color,
-            is_multiline,
-            alignment
+            font_descriptor=font_descriptor,
+            font_glyph_byte_map=font_glyph_byte_map,
+            font_name=font_name,
+            **formatting_kwargs
         )
 
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -439,12 +470,8 @@ class TextStreamAppearance(DecodedStreamObject):
         if not is_null_or_none(font_resource):
             font_resource = cast(DictionaryObject, font_resource.get_object())
 
-        # Retrieve field text, selected values and formatting information
-        is_multiline = False
+        # Retrieve field text and selected values
         field_flags = field.get(FieldDictionaryAttributes.Ff, 0)
-        alignment = field.get("/Q", TextAlignment.LEFT)
-        if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
-            is_multiline = True
         if (
                 field.get(FieldDictionaryAttributes.FT, "/Tx") == "/Ch" and
                 field_flags & FieldDictionaryAttributes.FfBits.Combo == 0
@@ -460,17 +487,30 @@ class TextStreamAppearance(DecodedStreamObject):
         # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
         text = text.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
 
+        # Retrieve formatting information
+        is_comb = False
+        max_length = None
+        if field_flags & FieldDictionaryAttributes.FfBits.Comb:
+            is_comb = True
+            max_length = annotation.get("/MaxLen")
+        is_multiline = False
+        if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
+            is_multiline = True
+        alignment = field.get("/Q", TextAlignment.LEFT)
+
         # Create the TextStreamAppearance instance
         new_appearance_stream = cls(
             text,
             selection,
             rectangle,
-            font_resource,
-            font_name,
-            font_size,
-            font_color,
-            is_multiline,
-            alignment
+            font_resource=font_resource,
+            font_name=font_name,
+            font_size=font_size,
+            font_color=font_color,
+            is_multiline=is_multiline,
+            alignment=alignment,
+            is_comb=is_comb,
+            max_length=max_length
         )
         if AnnotationDictionaryAttributes.AP in annotation:
             for key, value in (
