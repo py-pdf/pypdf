@@ -1,12 +1,12 @@
 """Test the pypdf.generic module."""
 
 import codecs
+import gc
+import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
-import weakref
-import gc
 
 import pytest
 
