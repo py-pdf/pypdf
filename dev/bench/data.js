@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763044989898,
+  "lastUpdate": 1763120793025,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -83561,6 +83561,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004559365804107564",
             "extra": "mean: 677.6226684000108 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "patrick.arminio@gmail.com",
+            "name": "Patrick Arminio",
+            "username": "patrick91"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "103f0f990fe46c28e6b4e08d15ef9ea8a8b6cc8a",
+          "message": "BUG: Fix missing \"PreventGC\" when cloning (#3520)\n\nCloses #3450.\n\n---------\n\nCo-authored-by: Thiago Bellini Ribeiro <thiago@bellini.dev>",
+          "timestamp": "2025-11-14T12:43:48+01:00",
+          "tree_id": "485fbe5fccf3ffc88993a6bb780d1c7ad77854e6",
+          "url": "https://github.com/py-pdf/pypdf/commit/103f0f990fe46c28e6b4e08d15ef9ea8a8b6cc8a"
+        },
+        "date": 1763120788886,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.8271364459916963,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005959057517642267",
+            "extra": "mean: 261.29196439999873 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.018725928301514,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023731092555928667",
+            "extra": "mean: 62.426937352940364 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2838141730014954,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006107533933002324",
+            "extra": "mean: 3.523432214199997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.042624907467843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000988114454153367",
+            "extra": "mean: 55.42430800000171 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09068203474590424,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02699484725857633",
+            "extra": "mean: 11.027542586600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4953615984199922,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025573075217207118",
+            "extra": "mean: 668.7345730000061 msec\nrounds: 5"
           }
         ]
       }
