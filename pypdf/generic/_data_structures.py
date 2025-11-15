@@ -1062,7 +1062,7 @@ class StreamObject(DictionaryObject):
                 stops in your program.
 
         """
-        from ..filters import _xobj_to_image  # noqa: PLC0415
+        from .._xobj_image_helpers import _xobj_to_image  # noqa: PLC0415
 
         if self.get("/Subtype", "") != "/Image":
             try:
