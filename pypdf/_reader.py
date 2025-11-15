@@ -803,6 +803,7 @@ class PdfReader(PdfDocCommon):
                         )
                         generation = 65535
                         offset = -1
+                        entry_type_b = b"f"
                     else:
                         logger_warning(
                             f"entry {num} in Xref table invalid but object found",

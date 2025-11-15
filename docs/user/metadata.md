@@ -4,7 +4,14 @@ PDF files can have two types of metadata: "Regular" and XMP ones. They can both 
 
 ## Reading metadata
 
-```python
+```{testsetup}
+pypdf_test_setup("user/metadata", {
+    "example.pdf": "../resources/example.pdf",
+    "commented-xmp.pdf": "../resources/commented-xmp.pdf",
+})
+```
+
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
@@ -21,9 +28,22 @@ print(meta.creation_date)
 print(meta.modification_date)
 ```
 
+% Two last rows masked to allow to change example.pdf
+```{testoutput}
+:hide:
+
+PDF Example Document
+None
+None
+None
+Skia/PDF m103 Google Docs Renderer
+...
+...
+```
+
 ## Writing metadata
 
-```python
+```{testcode}
 from datetime import datetime
 from pypdf import PdfReader, PdfWriter
 
@@ -58,13 +78,12 @@ writer.add_metadata(
 )
 
 # Save the new PDF to a file
-with open("meta-pdf.pdf", "wb") as f:
-    writer.write(f)
+writer.write("out-meta-create.pdf")
 ```
 
 ## Updating metadata
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter(clone_from="example.pdf")
@@ -88,13 +107,12 @@ writer.metadata = {
 }
 
 # Save the new PDF to a file
-with open("meta-pdf.pdf", "wb") as f:
-    writer.write(f)
+writer.write("out-meta-update.pdf")
 ```
 
 ## Removing metadata entry
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
 writer = PdfWriter("example.pdf")
@@ -103,13 +121,12 @@ writer = PdfWriter("example.pdf")
 writer.metadata = None
 
 # Save the new PDF to a file
-with open("meta-pdf.pdf", "wb") as f:
-    writer.write(f)
+writer.write("out-meta-remove.pdf")
 ```
 
 ## Reading XMP metadata
 
-```python
+```{testcode}
 from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
@@ -121,11 +138,19 @@ if meta:
     print(meta.xmp_create_date)
 ```
 
+```{testoutput}
+:hide:
+
+{'x-default': 'PDF Example Document'}
+{}
+2025-10-30 09:29:55
+```
+
 ## Creating XMP metadata
 
 You can create XMP metadata easily using the `XmpInformation.create()` method:
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 from pypdf.xmp import XmpInformation
 
@@ -143,7 +168,7 @@ xmp.pdf_producer = "pypdf"
 writer = PdfWriter()
 writer.add_blank_page(612, 792)  # Add a page
 writer.xmp_metadata = xmp
-writer.write("output.pdf")
+writer.write("out-xmp-create.pdf")
 ```
 
 ## Setting XMP metadata fields
@@ -152,7 +177,7 @@ The `XmpInformation` class provides property-based access for all supported meta
 
 ### Dublin Core fields
 
-```python
+```{testcode}
 from datetime import datetime
 from pypdf.xmp import XmpInformation
 
@@ -184,12 +209,12 @@ xmp.dc_rights = {"x-default": "All rights reserved"}
 
 ### XMP fields
 
-```python
+```{testcode}
 from datetime import datetime
 
 # Date fields accept both datetime objects and strings
 xmp.xmp_create_date = datetime.now()
-xmp.xmp_modify_date = "2023-12-25T10:30:45Z"
+xmp.xmp_modify_date = datetime.fromisoformat("2023-12-25T10:30:45Z")
 xmp.xmp_metadata_date = datetime.now()
 
 # Text field
@@ -198,7 +223,7 @@ xmp.xmp_creator_tool = "pypdf"
 
 ### PDF fields
 
-```python
+```{testcode}
 xmp.pdf_keywords = "keyword1, keyword2, keyword3"
 xmp.pdf_pdfversion = "1.4"
 xmp.pdf_producer = "pypdf"
@@ -206,14 +231,14 @@ xmp.pdf_producer = "pypdf"
 
 ### XMP Media Management fields
 
-```python
+```{testcode}
 xmp.xmpmm_document_id = "uuid:12345678-1234-1234-1234-123456789abc"
 xmp.xmpmm_instance_id = "uuid:87654321-4321-4321-4321-cba987654321"
 ```
 
 ### PDF/A fields
 
-```python
+```{testcode}
 xmp.pdfaid_part = "1"
 xmp.pdfaid_conformance = "B"
 ```
@@ -222,7 +247,7 @@ xmp.pdfaid_conformance = "B"
 
 You can clear any field by assigning `None`:
 
-```python
+```{testcode}
 xmp.dc_title = None
 xmp.dc_creator = None
 xmp.pdf_producer = None
@@ -232,7 +257,7 @@ xmp.pdf_producer = None
 
 When modifying existing XMP metadata, it is often necessary to add or update individual entries while preserving existing values. The XMP properties return standard Python data structures that can be manipulated directly:
 
-```python
+```{testcode}
 from pypdf.xmp import XmpInformation
 
 xmp = XmpInformation.create()
@@ -270,10 +295,10 @@ As an example, we want to add the following PDF/UA identifier section to the XMP
 
 This could be written like this:
 
-```python
+```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="example.pdf")
+writer = PdfWriter(clone_from="commented-xmp.pdf")
 
 metadata = writer.xmp_metadata
 assert metadata  # Ensure that it is not `None`.
@@ -294,7 +319,7 @@ rdf_root.appendChild(pdfuaid_description)
 
 metadata.stream.set_data(xmp_document.toxml().encode("utf-8"))
 
-writer.write("output.pdf")
+writer.write("out-xmp-update.pdf")
 ```
 
 For further details on modifying the structure, please refer to {py:mod}`xml.dom.minidom`.

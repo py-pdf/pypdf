@@ -70,6 +70,8 @@ def _get_imagemode(
         raise PdfReadError(
             "Cannot interpret color space", color_space
         )  # pragma: no cover
+    elif not color_space:
+        return "", False
     elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
         color_space_str = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":

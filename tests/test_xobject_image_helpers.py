@@ -160,3 +160,14 @@ def test_get_mode_and_invert_color():
     page = reader.pages[12]
     for _name, image in page.images.items():  # noqa: PERF102
         image.image.load()
+
+
+@pytest.mark.enable_socket
+def test_get_imagemode__empty_array():
+    url = "https://github.com/user-attachments/files/23050451/poc.pdf"
+    name = "issue3499.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^ColorSpace field not found in .+"):
+        page.images[0].image.load()

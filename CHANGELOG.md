@@ -1,5 +1,59 @@
 # CHANGELOG
 
+## Version 6.2.0, 2025-11-09
+
+### New Features (ENH)
+- Add 'strict' parameter to PDFWriter (#3503)
+
+### Bug Fixes (BUG)
+- PdfWriter.append fails when there are articles being None (#3509)
+
+### Documentation (DOC)
+- Execute docs examples in CI (#3507)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.3...6.2.0)
+
+## Version 6.1.3, 2025-10-22
+
+### Security (SEC)
+- Allow limiting size of LZWDecode streams (#3502)
+- Avoid infinite loop when reading broken DCT-based inline images (#3501)
+
+### Bug Fixes (BUG)
+- PageObject.scale() scales media box incorrectly (#3489)
+
+### Robustness (ROB)
+- Fail with explicit exception when image mode is an empty array (#3500)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.2...6.1.3)
+
+## Version 6.1.2, 2025-10-19
+
+### Bug Fixes (BUG)
+- Fix handling of zero-length StreamObject (#3485)
+
+### Robustness (ROB)
+- Deal with wrong size for incremental PDF files (#3495)
+- Improve handling for malformed cross-reference tables (#3483)
+
+### Developer Experience (DEV)
+- Use released Python 3.14
+- Use Mapping instead of dict in type hint of update_page_form_field_values (#3490)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.1...6.1.2)
+
+## Version 6.1.1, 2025-09-28
+
+### Bug Fixes (BUG)
+- Insert new embedded files in a sorted manner (#3477)
+- Fix name tree handling for embedded files with Kids-based inputs (#3475)
+- Make embedding files not break PDF/A-3 compliance (#3472)
+
+### Documentation (DOC)
+- Document AFRelationship handling for PDF/A and provide constants (#3478)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.0...6.1.1)
+
 ## Version 6.1.0, 2025-09-21
 
 ### New Features (ENH)

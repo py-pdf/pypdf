@@ -634,7 +634,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             if length is None:  # if the PDF is damaged
                 length = -1
             pstart = stream.tell()
-            if length > 0:
+            if length >= 0:
                 data["__streamdata__"] = stream.read(length)
             else:
                 data["__streamdata__"] = read_until_regex(
@@ -1046,9 +1046,13 @@ class StreamObject(DictionaryObject):
         retval._data = FlateDecode.encode(self._data, level)
         return retval
 
-    def decode_as_image(self) -> Any:
+    def decode_as_image(self, pillow_parameters: Union[dict[str, Any], None] = None) -> Any:
         """
         Try to decode the stream object as an image
+
+        Args:
+            pillow_parameters: parameters provided to Pillow Image.save() method,
+                cf. <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.save>
 
         Returns:
             a PIL image if proper decoding has been found
@@ -1066,7 +1070,7 @@ class StreamObject(DictionaryObject):
             except AttributeError:
                 msg = f"{self.__repr__()} object does not seem to be an Image"  # pragma: no cover
             logger_warning(msg, __name__)
-        extension, _, img = _xobj_to_image(self)
+        extension, _, img = _xobj_to_image(self, pillow_parameters)
         if extension is None:
             return None  # pragma: no cover
         return img
