@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763120793025,
+  "lastUpdate": 1763302015209,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -83627,6 +83627,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025573075217207118",
             "extra": "mean: 668.7345730000061 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "c0caa5d2c8a00ce8d9eaef6d4aa02bdb79c2ce7b",
+          "message": "REL: 6.3.0\n\n## What's new\n\n### New Features (ENH)\n- Wrap and align text in flattened PDF forms (#3465) by @PJBrs\n\n### Bug Fixes (BUG)\n- Fix missing \"PreventGC\" when cloning (#3520) by @patrick91\n- Preserve JPEG image quality by default (#3516) by @Lucas-C\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.2.0...6.3.0)",
+          "timestamp": "2025-11-16T15:03:52+01:00",
+          "tree_id": "1307eac0678d7054dbc2c2de3b6e58759566bd7f",
+          "url": "https://github.com/py-pdf/pypdf/commit/c0caa5d2c8a00ce8d9eaef6d4aa02bdb79c2ce7b"
+        },
+        "date": 1763302011490,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.794963674562194,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006998551232241101",
+            "extra": "mean: 263.50713359999816 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.900079471029711,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038030583408207148",
+            "extra": "mean: 62.89276741176178 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28163062332978056,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01074654943656826",
+            "extra": "mean: 3.5507502279999983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.953855637131195,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007909231252229927",
+            "extra": "mean: 55.69834247368315 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08456437396575814,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05262378268373402",
+            "extra": "mean: 11.825310743799992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4863351690901447,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014880096997316192",
+            "extra": "mean: 672.7957602000004 msec\nrounds: 5"
           }
         ]
       }
