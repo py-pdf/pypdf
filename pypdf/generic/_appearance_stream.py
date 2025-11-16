@@ -364,13 +364,13 @@ class TextStreamAppearance(DecodedStreamObject):
             rectangle,
             font_descriptor,
             font_glyph_byte_map,
-            font_name,
-            font_size,
-            font_color,
-            is_multiline,
-            alignment,
-            is_comb,
-            max_length
+            font_name=font_name,
+            font_size=font_size,
+            font_color=font_color,
+            is_multiline=is_multiline,
+            alignment=alignment,
+            is_comb=is_comb,
+            max_length=max_length
         )
 
         self[NameObject("/Type")] = NameObject("/XObject")
@@ -508,13 +508,13 @@ class TextStreamAppearance(DecodedStreamObject):
             selection,
             rectangle,
             font_resource,
-            font_name,
-            font_size,
-            font_color,
-            is_multiline,
-            alignment,
-            is_comb,
-            max_length
+            font_name=font_name,
+            font_size=font_size,
+            font_color=font_color,
+            is_multiline=is_multiline,
+            alignment=alignment,
+            is_comb=is_comb,
+            max_length=max_length
         )
         if AnnotationDictionaryAttributes.AP in annotation:
             for key, value in (
