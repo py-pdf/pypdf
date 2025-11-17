@@ -238,6 +238,7 @@ def test_ccitt_fax_decode():
         {"/K": NumberObject(-1), "/Columns": NumberObject(17)}
     )
 
+    # The decode an empty image is the header of the corresponding TIFF image
     assert CCITTFaxDecode.decode(data, parameters) == (
         b"II*\x00\x08\x00\x00\x00\x08\x00\x00\x01\x04\x00\x01\x00\x00\x00\x11\x00"
         b"\x00\x00\x01\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x01"
