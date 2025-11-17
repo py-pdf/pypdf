@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763302015209,
+  "lastUpdate": 1763398005061,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -83693,6 +83693,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0014880096997316192",
             "extra": "mean: 672.7957602000004 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bd433f7ae0ac105c12aa27396330bf1212bf4b7f",
+          "message": "ENH: Parse and format comb fields in text widget annotations (#3519)\n\nThis patch implements comb-formatted appearance streams.\n\nCloses #2153.",
+          "timestamp": "2025-11-17T17:44:02+01:00",
+          "tree_id": "72161d6b5da2c281ea14483dc822ef534c53a0dd",
+          "url": "https://github.com/py-pdf/pypdf/commit/bd433f7ae0ac105c12aa27396330bf1212bf4b7f"
+        },
+        "date": 1763398000727,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.825472620214524,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00543556559758254",
+            "extra": "mean: 261.4056089999991 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.08451947967776,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023948388701389334",
+            "extra": "mean: 62.17158064706041 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28509701860780384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02705601846659674",
+            "extra": "mean: 3.507577893599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.31109989241987,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004701078613898296",
+            "extra": "mean: 54.611683944445296 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09181059453092279,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022213425553447796",
+            "extra": "mean: 10.891989155600005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4971220665317357,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003742633320834937",
+            "extra": "mean: 667.9482069999949 msec\nrounds: 5"
           }
         ]
       }
