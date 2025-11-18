@@ -3,11 +3,14 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from pypdf import PdfReader
 from pypdf._xobj_image_helpers import _extended_image_frombytes, _handle_flate
+from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, PdfReadError
-from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject
+from pypdf.filters import _xobj_to_image
+from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
 
 from . import get_data_from_url
 
@@ -171,3 +174,43 @@ def test_get_imagemode__empty_array():
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^ColorSpace field not found in .+"):
         page.images[0].image.load()
+
+
+def test_p_image_with_alpha_mask():
+    # Generate the base image. Use TIFF as this is easy to do on the fly.
+    image = Image.new(mode="P", size=(10, 10), color=0)
+    image_data = BytesIO()
+    image.save(image_data, format="tiff")
+
+    # Set the common values.
+    x_object = StreamObject()
+    mask_object = StreamObject()
+    for obj in [x_object, mask_object]:
+        obj[NameObject(ImageAttributes.WIDTH)] = NumberObject(image.width)
+        obj[NameObject(ImageAttributes.HEIGHT)] = NumberObject(image.height)
+        obj[NameObject(StreamAttributes.FILTER)] = NameObject(FilterTypes.CCITT_FAX_DECODE)
+
+    # Set the basic image data.
+    x_object.set_data(image_data.getvalue())
+    x_object[NameObject(ImageAttributes.COLOR_SPACE)] = TextStringObject("palette")
+
+    # Generate the mask image. Will be a diagonal white stripe.
+    image = Image.new(mode="1", size=(image.width, image.height))
+    [image.putpixel((i, i), 1) for i in range(10)]
+    image_data = BytesIO()
+    image.save(image_data, format="tiff")
+
+    # Set the mask data.
+    mask_object.set_data(image_data.getvalue())
+    mask_object[NameObject(ImageAttributes.COLOR_SPACE)] = TextStringObject("1bit")
+
+    # Add the mask to the image.
+    x_object[NameObject("/SMask")] = mask_object
+
+    # Generate the output image and make sure that the diagonal stripe is present.
+    extension, data, image = _xobj_to_image(x_object)
+    assert extension == ".png"
+    assert data.startswith(b"\x89PNG")
+    for i in range(10):
+        for j in range(10):
+            assert image.getpixel((i, j)) == (0, 0, 0, 255 * (i == j))
