@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763398005061,
+  "lastUpdate": 1763476725375,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -83759,6 +83759,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003742633320834937",
             "extra": "mean: 667.9482069999949 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "905745a12c8d8a2cf667282bc6ae34c5c5422673",
+          "message": "TST: Add test for retrieving P image with alpha mask (#3525)",
+          "timestamp": "2025-11-18T15:36:02+01:00",
+          "tree_id": "c65d46acb3830a48b1e4a789acc27d97f7e6804e",
+          "url": "https://github.com/py-pdf/pypdf/commit/905745a12c8d8a2cf667282bc6ae34c5c5422673"
+        },
+        "date": 1763476721843,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.722986570683292,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012516363142761756",
+            "extra": "mean: 268.601559800004 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.876499141347999,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030145411029623872",
+            "extra": "mean: 62.986177941183996 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2780995513650368,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020870644588736227",
+            "extra": "mean: 3.5958346394000045 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.345973467835694,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010246921431618836",
+            "extra": "mean: 54.5078734444486 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09115465682613993,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023998482535762415",
+            "extra": "mean: 10.970366570599992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.488690192244449,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0020432952999140477",
+            "extra": "mean: 671.7314355999974 msec\nrounds: 5"
           }
         ]
       }
