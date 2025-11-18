@@ -144,7 +144,7 @@ napoleon_use_rtype = False  # False, so the return type is inline with the descr
 # "sphinx-build" command was invoked. To avoid relative paths in docs and to
 # allow to run "sphinx-build" command from any directory, we modify the current
 # working directory in each tested file. Tests are executed against our
-# temporary directory where we have copied all nessesary resources.
+# temporary directory where we have copied all necessary resources.
 #
 # Each doc page that requires file operations must use "testsetup" directive
 # to call "pypdf_test_setup" function to prepare the test environment for that
