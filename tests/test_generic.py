@@ -1,6 +1,8 @@
 """Test the pypdf.generic module."""
 
 import codecs
+import gc
+import weakref
 from base64 import a85encode
 from copy import deepcopy
 from io import BytesIO
@@ -914,6 +916,63 @@ def test_cloning(caplog):
     obj21 = obj20.clone(writer, ignore_fields=None)
     assert "/Test" in obj21
     assert isinstance(obj21.get("/Test2"), IndirectObject)
+
+
+def test_cloning_indirect_obj_keeps_hard_reference():
+    """
+    Reported in #3450
+
+    Ensure that cloning an IndirectObject keeps a hard reference to
+    the underlying object, preventing its deallocation, which could allow
+    `id(obj)` to return the same value for different objects.
+    """
+    writer1 = PdfWriter()
+    indirect_object = IndirectObject(1, 0, writer1)
+
+    # Create a weak reference to the underlying object to test later
+    # if it is still alive in memory or not
+    obj_weakref = weakref.ref(indirect_object.pdf)
+    assert obj_weakref() is not None
+
+    writer2 = PdfWriter()
+    indirect_object.clone(writer2)
+
+    # Mimic indirect_object/writer1 going out of scope and being
+    # garbage collected. Clone should have kept a hard reference to
+    # it, preventing its deallocation.
+    del indirect_object
+    del writer1
+    gc.collect()
+    assert obj_weakref() is not None
+
+
+def test_cloning_null_obj_keeps_hard_reference():
+    """
+    Ensure that cloning a NullObject keeps a hard reference to
+    the underlying object, preventing its deallocation, which could allow
+    `id(obj)` to return the same value for different objects.
+    """
+    writer1 = PdfWriter()
+    indirect_object = IndirectObject(1, 0, writer1)
+    null_obj = NullObject()
+    null_obj.indirect_reference = indirect_object
+
+    # Create a weak reference to the underlying object to test later
+    # if it is still alive in memory or not
+    obj_weakref = weakref.ref(indirect_object.pdf)
+    assert obj_weakref() is not None
+
+    writer2 = PdfWriter()
+    null_obj.clone(writer2)
+
+    # Mimic indirect_object/writer1 going out of scope and being
+    # garbage collected. Clone should have kept a hard reference to
+    # it, preventing its deallocation.
+    del indirect_object
+    del writer1
+    del null_obj
+    gc.collect()
+    assert obj_weakref() is not None
 
 
 @pytest.mark.enable_socket
