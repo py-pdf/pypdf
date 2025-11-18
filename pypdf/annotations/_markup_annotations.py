@@ -2,7 +2,6 @@ import sys
 from abc import ABC
 from typing import Any, Optional, Union
 
-from .._utils import deprecation_with_replacement
 from ..constants import AnnotationFlag
 from ..generic import ArrayObject, DictionaryObject
 from ..generic._base import (
@@ -217,10 +216,6 @@ class Rectangle(MarkupAnnotation):
         interior_color: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
-        if "interiour_color" in kwargs:
-            deprecation_with_replacement("interiour_color", "interior_color", "5.0.0")
-            interior_color = kwargs["interiour_color"]
-            del kwargs["interiour_color"]
         super().__init__(**kwargs)
         self.update(
             {
@@ -269,10 +264,6 @@ class Ellipse(MarkupAnnotation):
         interior_color: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
-        if "interiour_color" in kwargs:
-            deprecation_with_replacement("interiour_color", "interior_color", "5.0.0")
-            interior_color = kwargs["interiour_color"]
-            del kwargs["interiour_color"]
         super().__init__(**kwargs)
 
         self.update(

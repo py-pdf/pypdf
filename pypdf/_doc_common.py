@@ -44,7 +44,7 @@ from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
 from ._page_labels import index2label as page_index2page_label
 from ._utils import (
-    deprecate_with_replacement,
+    deprecation_with_replacement,
     logger_warning,
     parse_iso8824_date,
 )
@@ -485,11 +485,10 @@ class PdfDocCommon:
             names = cast(DictionaryObject, tree[CA.NAMES])
             i = 0
             while i < len(names):
-                original_key = names[i].get_object()
+                key = names[i].get_object()
                 i += 1
-                if not isinstance(original_key, (bytes, str)):
+                if not isinstance(key, (bytes, str)):
                     continue
-                key = str(original_key)
                 try:
                     value = names[i].get_object()
                 except IndexError:
@@ -502,7 +501,9 @@ class PdfDocCommon:
                         continue
                 dest = self._build_destination(key, value)
                 if dest is not None:
-                    retval[key] = dest
+                    retval[cast(str, dest["/Title"])] = dest
+                    # Remain backwards-compatible.
+                    retval[str(key)] = dest
         else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF 1.1)
             for k__, v__ in tree.items():
                 val = v__.get_object()
@@ -928,7 +929,7 @@ class PdfDocCommon:
 
     def _build_destination(
         self,
-        title: str,
+        title: Union[str, bytes],
         array: Optional[
             list[
                 Union[NumberObject, IndirectObject, None, NullObject, DictionaryObject]
@@ -948,7 +949,7 @@ class PdfDocCommon:
         try:
             return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
         except PdfReadError:
-            logger_warning(f"Unknown destination: {title} {array}", __name__)
+            logger_warning(f"Unknown destination: {title!r} {array}", __name__)
             if self.strict:
                 raise
             # create a link to first Page
@@ -1259,7 +1260,7 @@ class PdfDocCommon:
         self, permissions_code: int
     ) -> dict[str, bool]:  # pragma: no cover
         """Take the permissions as an integer, return the allowed access."""
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             old_name="decode_permissions",
             new_name="user_access_permissions",
             removed_in="5.0.0",

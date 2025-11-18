@@ -2,6 +2,8 @@
 import json
 import logging
 import math
+import shutil
+import subprocess
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -28,11 +30,13 @@ from pypdf.generic import (
 )
 
 from . import get_data_from_url, normalize_warnings
+from .test_images import image_similarity
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
 def get_all_sample_files():
@@ -1504,3 +1508,67 @@ def test_extract_text__none_type():
     page[NameObject("/Resources")] = resources
     with mock.patch.object(none_reference, "get_object", return_value=None):
         assert page.extract_text() == ""
+
+
+@pytest.mark.enable_socket
+def test_scale_by():
+    """Tests for #3487"""
+    url = "https://github.com/user-attachments/files/22685841/input.pdf"
+    name = "issue3487.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    original_box = RectangleObject((0, 0, 595.275604, 841.88974))
+    expected_box = RectangleObject((0.0, 0.0, 297.637802, 420.94487))
+    for page in reader.pages:
+        assert page.artbox == original_box
+        assert page.bleedbox == original_box
+        assert page.cropbox == original_box
+        assert page.mediabox == original_box
+        assert page.trimbox == original_box
+
+        page.scale_by(0.5)
+        assert page.artbox == expected_box
+        assert page.bleedbox == expected_box
+        assert page.cropbox == expected_box
+        assert page.mediabox == expected_box
+        assert page.trimbox == expected_box
+
+
+@pytest.mark.enable_socket
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+def test_box_rendering(tmp_path):
+    """Tests for issue #3487."""
+    url = "https://github.com/user-attachments/files/22685841/input.pdf"
+    name = "issue3487.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        page.scale_by(0.5)
+        writer.add_page(page)
+
+    target_png_path = tmp_path / "target.png"
+    url = "https://github.com/user-attachments/assets/e9c2271c-bfc3-4a6f-8c91-ffefa24502e2"
+    name = "issue3487.png"
+    target_png_path.write_bytes(get_data_from_url(url, name=name))
+
+    pdf_path = tmp_path / "out.pdf"
+    writer.write(pdf_path)
+
+    for box in ["Art", "Bleed", "Crop", "Media", "Trim"]:
+        png_path = tmp_path / f"{box}.png"
+        # False positive: https://github.com/PyCQA/bandit/issues/333
+        subprocess.run(  # noqa: S603
+            [
+                GHOSTSCRIPT_BINARY,
+                f"-dUse{box}Box",
+                "-dFirstPage=1",
+                "-dLastPage=1",
+                "-sDEVICE=pngalpha",
+                "-o",
+                png_path,
+                pdf_path,
+            ]
+        )
+        assert png_path.is_file(), box
+        assert image_similarity(png_path, target_png_path) >= 0.95, box

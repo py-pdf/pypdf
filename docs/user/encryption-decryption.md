@@ -18,7 +18,14 @@ for installing the extra dependencies if interacting with PDFs that use AES.
 
 You can encrypt a PDF by using a password:
 
-```python
+```{testsetup}
+pypdf_test_setup("user/encryption-decryption", {
+    "example.pdf": "../resources/example.pdf",
+    "encrypted-file.pdf": "../resources/encrypted-file.pdf",
+})
+```
+
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("example.pdf")
@@ -28,8 +35,7 @@ writer = PdfWriter(clone_from=reader)
 writer.encrypt("my-secret-password", algorithm="AES-256")
 
 # Save the new PDF to a file
-with open("encrypted-pdf.pdf", "wb") as f:
-    writer.write(f)
+writer.write("out-encrypt.pdf")
 ```
 
 The algorithm can be one of `RC4-40`, `RC4-128`, `AES-128`, `AES-256-R5`, `AES-256`.
@@ -44,17 +50,16 @@ Since `RC4` is insecure, you should use `AES` algorithms.
 
 You can decrypt a PDF using the appropriate password:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("encrypted-pdf.pdf")
+reader = PdfReader("encrypted-file.pdf")
 
 if reader.is_encrypted:
-    reader.decrypt("my-secret-password")
+    reader.decrypt("test")  # secret password
 
 writer = PdfWriter(clone_from=reader)
 
 # Save the new PDF to a file
-with open("decrypted-pdf.pdf", "wb") as f:
-    writer.write(f)
+writer.write("out-decrypt.pdf")
 ```

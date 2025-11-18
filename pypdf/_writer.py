@@ -33,7 +33,7 @@ import hashlib
 import re
 import struct
 import uuid
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from io import BytesIO, FileIO, IOBase
 from itertools import compress
 from pathlib import Path
@@ -43,13 +43,11 @@ from typing import (
     IO,
     Any,
     Callable,
-    List,
     Optional,
     Union,
     cast,
 )
 
-from ._cmap import _default_fonts_space_width, build_char_map_from_dict
 from ._doc_common import DocumentInformation, PdfDocCommon
 from ._encryption import EncryptAlgorithm, Encryption
 from ._page import PageObject, Transformation
@@ -59,9 +57,7 @@ from ._utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
-    deprecate,
-    deprecate_no_replacement,
-    deprecation_with_replacement,
+    deprecation_no_replacement,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes as AA
@@ -81,14 +77,13 @@ from .constants import Core as CO
 from .constants import FieldDictionaryAttributes as FA
 from .constants import PageAttributes as PG
 from .constants import TrailerKeys as TK
-from .errors import PyPdfError
+from .errors import PdfReadError, PyPdfError
 from .generic import (
     PAGE_FIT,
     ArrayObject,
     BooleanObject,
     ByteStringObject,
     ContentStream,
-    DecodedStreamObject,
     Destination,
     DictionaryObject,
     EmbeddedFile,
@@ -110,6 +105,7 @@ from .generic import (
     hex_to_rgb,
     is_null_or_none,
 )
+from .generic._appearance_stream import TextStreamAppearance
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
     AnnotationSubtype,
@@ -122,7 +118,6 @@ from .types import (
 from .xmp import XmpInformation
 
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions.all()
-DEFAULT_FONT_HEIGHT_IN_MULTILINE = 12
 
 
 class ObjectDeletionFlag(enum.IntFlag):
@@ -139,7 +134,7 @@ class ObjectDeletionFlag(enum.IntFlag):
 
 
 def _rolling_checksum(stream: BytesIO, blocksize: int = 65536) -> str:
-    hash = hashlib.md5()
+    hash = hashlib.md5(usedforsecurity=False)
     for block in iter(lambda: stream.read(blocksize), b""):
         hash.update(block)
     return hash.hexdigest()
@@ -163,6 +158,10 @@ class PdfWriter(PdfDocCommon):
         full: If true, loads all the objects (always full if incremental = True).
             This parameter may allow loading large PDFs.
 
+        strict: If true, pypdf will raise an exception if a PDF does not follow the specification.
+            If false, pypdf will try to be forgiving and do something reasonable, but it will log
+            a warning message. It is a best-effort approach.
+
     """
 
     def __init__(
@@ -171,7 +170,15 @@ class PdfWriter(PdfDocCommon):
         clone_from: Union[None, PdfReader, StrByteType, Path] = None,
         incremental: bool = False,
         full: bool = False,
+        strict: bool = False,
     ) -> None:
+        self.strict = strict
+        """
+        If true, pypdf will raise an exception if a PDF does not follow the specification.
+        If false, pypdf will try to be forgiving and do something reasonable, but it will log
+        a warning message. It is a best-effort approach.
+        """
+
         self.incremental = incremental or full
         """
         Returns if the PdfWriter object has been started in incremental mode.
@@ -353,7 +360,7 @@ class PdfWriter(PdfDocCommon):
         return cast(XmpInformation, self.root_object.xmp_metadata)
 
     @xmp_metadata.setter
-    def xmp_metadata(self, value: Optional[XmpInformation]) -> None:
+    def xmp_metadata(self, value: Union[XmpInformation, bytes, None]) -> None:
         """XMP (Extensible Metadata Platform) data."""
         if value is None:
             if "/Metadata" in self.root_object:
@@ -378,12 +385,12 @@ class PdfWriter(PdfDocCommon):
 
     @property
     def with_as_usage(self) -> bool:
-        deprecate_no_replacement("with_as_usage", "6.0")
+        deprecation_no_replacement("with_as_usage", "5.0")
         return self._with_as_usage
 
     @with_as_usage.setter
     def with_as_usage(self, value: bool) -> None:
-        deprecate_no_replacement("with_as_usage", "6.0")
+        deprecation_no_replacement("with_as_usage", "5.0")
         self._with_as_usage = value
 
     def __enter__(self) -> "PdfWriter":
@@ -743,8 +750,12 @@ class PdfWriter(PdfDocCommon):
         Args:
             javascript: Your JavaScript.
 
-        >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
-        # Example: This will launch the print window when the PDF is opened.
+        Example:
+            This will launch the print window when the PDF is opened.
+
+            >>> from pypdf import PdfWriter
+            >>> output = PdfWriter()
+            >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
         """
         # Names / JavaScript preferred to be able to add multiple scripts
@@ -827,8 +838,7 @@ class PdfWriter(PdfDocCommon):
         new_content_data: bytes,
     ) -> None:
         """
-        Combines existing content stream(s) with new content (as bytes),
-        and returns a new single StreamObject.
+        Combines existing content stream(s) with new content (as bytes).
 
         Args:
             page: The page to which the new content data will be added.
@@ -868,7 +878,6 @@ class PdfWriter(PdfDocCommon):
             object_name: str,
             x_offset: float,
             y_offset: float,
-            font_res: Optional[DictionaryObject] = None
         ) -> None:
         """
         Adds an appearance stream to the page content in the form of
@@ -880,17 +889,25 @@ class PdfWriter(PdfDocCommon):
             object_name: The name of the appearance stream.
             x_offset: The horizontal offset for the appearance stream.
             y_offset: The vertical offset for the appearance stream.
-            font_res: The appearance stream's font resource (if given).
         """
-        # Prepare XObject resource dictionary on the page
+        # Prepare XObject resource dictionary on the page. This currently
+        # only deals with font resources, but can easily be adapted to also
+        # include other resources.
         pg_res = cast(DictionaryObject, page[PG.RESOURCES])
-        if font_res is not None:
-            font_name = font_res["/BaseFont"]  # [/"Name"] often also exists, but is deprecated
+        if "/Resources" in appearance_stream_obj:
+            ap_stream_res = cast(DictionaryObject, appearance_stream_obj["/Resources"])
+            # No need to check "if "/Font" in ap_stream_res", because the only reason this
+            # code runs would be if we are flattening form fields, and the associated code
+            # either adds a Font resource or no resource at all. This probably needs to
+            # change if we want to use this method to flatten markup annotations.
+            ap_stream_font_dict = cast(DictionaryObject, ap_stream_res["/Font"])
             if "/Font" not in pg_res:
                 pg_res[NameObject("/Font")] = DictionaryObject()
-            pg_ft_res = cast(DictionaryObject, pg_res[NameObject("/Font")])
-            if font_name not in pg_ft_res:
-                pg_ft_res[NameObject(font_name)] = font_res
+            pg_font_res = cast(DictionaryObject, pg_res["/Font"])
+            # Merge fonts from the appearance stream into the page's font resources
+            for font_name, font_ref in ap_stream_font_dict.items():
+                if font_name not in pg_font_res:
+                    pg_font_res[font_name] = font_ref
         # Always add the resolved stream object to the writer to get a new IndirectObject.
         # This ensures we have a valid IndirectObject managed by *this* writer.
         xobject_ref = self._add_object(appearance_stream_obj)
@@ -909,166 +926,12 @@ class PdfWriter(PdfDocCommon):
         xobject_drawing_commands = f"q\n{xobject_cm._to_cm()}\n{xobject_name} Do\nQ".encode()
         self._merge_content_stream_to_page(page, xobject_drawing_commands)
 
-    def _update_field_annotation(
-        self,
-        page: PageObject,
-        field: DictionaryObject,
-        annotation: DictionaryObject,
-        font_name: str = "",
-        font_size: float = -1,
-        flatten: bool = False,
-    ) -> None:
-        # Calculate rectangle dimensions
-        _rct = cast(RectangleObject, annotation[AA.Rect])
-        rct = RectangleObject((0, 0, abs(_rct[2] - _rct[0]), abs(_rct[3] - _rct[1])))
-
-        # Extract font information
-        da = annotation.get_inherited(
-            AA.DA,
-            cast(DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]).get(
-                AA.DA, None
-            ),
-        )
-        if da is None:
-            da = TextStringObject("/Helv 0 Tf 0 g")
-        else:
-            da = da.get_object()
-        font_properties = da.replace("\n", " ").replace("\r", " ").split(" ")
-        font_properties = [x for x in font_properties if x != ""]
-        if font_name:
-            font_properties[font_properties.index("Tf") - 2] = font_name
-        else:
-            font_name = font_properties[font_properties.index("Tf") - 2]
-        font_height = (
-            font_size
-            if font_size >= 0
-            else float(font_properties[font_properties.index("Tf") - 1])
-        )
-        if font_height == 0:
-            if field.get(FA.Ff, 0) & FA.FfBits.Multiline:
-                font_height = DEFAULT_FONT_HEIGHT_IN_MULTILINE
-            else:
-                font_height = rct.height - 2
-        font_properties[font_properties.index("Tf") - 1] = str(font_height)
-        da = " ".join(font_properties)
-        y_offset = rct.height - 1 - font_height
-
-        # Retrieve font information from local DR ...
-        dr: Any = cast(
-            DictionaryObject,
-            cast(
-                DictionaryObject,
-                annotation.get_inherited(
-                    "/DR",
-                    cast(
-                        DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]
-                    ).get("/DR", DictionaryObject()),
-                ),
-            ).get_object(),
-        )
-        dr = dr.get("/Font", DictionaryObject()).get_object()
-        # _default_fonts_space_width keys is the list of Standard fonts
-        if font_name not in dr and font_name not in _default_fonts_space_width:
-            # ...or AcroForm dictionary
-            dr = cast(
-                dict[Any, Any],
-                cast(
-                    DictionaryObject, self.root_object[CatalogDictionary.ACRO_FORM]
-                ).get("/DR", {}),
-            )
-            dr = dr.get_object().get("/Font", DictionaryObject()).get_object()
-        font_res = dr.get(font_name, None)
-        if not is_null_or_none(font_res):
-            font_res = cast(DictionaryObject, font_res.get_object())
-            font_subtype, _, font_encoding, font_map = build_char_map_from_dict(
-                200, font_res
-            )
-            try:  # remove width stored in -1 key
-                del font_map[-1]
-            except KeyError:
-                pass
-            font_full_rev: dict[str, bytes]
-            if isinstance(font_encoding, str):
-                font_full_rev = {
-                    v: k.encode(font_encoding) for k, v in font_map.items()
-                }
-            else:
-                font_full_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
-                font_encoding_rev = {v: bytes((k,)) for k, v in font_encoding.items()}
-                for key, value in font_map.items():
-                    font_full_rev[value] = font_encoding_rev.get(key, key)
-        else:
-            logger_warning(f"Font dictionary for {font_name} not found.", __name__)
-            font_full_rev = {}
-
-        # Retrieve field text and selected values
-        field_flags = field.get(FA.Ff, 0)
-        if field.get(FA.FT, "/Tx") == "/Ch" and field_flags & FA.FfBits.Combo == 0:
-            txt = "\n".join(annotation.get_inherited(FA.Opt, []))
-            sel = field.get("/V", [])
-            if not isinstance(sel, list):
-                sel = [sel]
-        else:  # /Tx
-            txt = field.get("/V", "")
-            sel = []
-        # Escape parentheses (PDF 1.7 reference, table 3.2, Literal Strings)
-        txt = txt.replace("\\", "\\\\").replace("(", r"\(").replace(")", r"\)")
-        # Generate appearance stream
-        ap_stream = generate_appearance_stream(
-            txt, sel, da, font_full_rev, rct, font_height, y_offset
-        )
-
-        # Create appearance dictionary
-        dct = DecodedStreamObject.initialize_from_dictionary(
-            {
-                NameObject("/Type"): NameObject("/XObject"),
-                NameObject("/Subtype"): NameObject("/Form"),
-                NameObject("/BBox"): rct,
-                "__streamdata__": ByteStringObject(ap_stream),
-                "/Length": 0,
-            }
-        )
-        if AA.AP in annotation:
-            for k, v in cast(DictionaryObject, annotation[AA.AP]).get("/N", {}).items():
-                if k not in {"/BBox", "/Length", "/Subtype", "/Type", "/Filter"}:
-                    dct[k] = v
-
-        # Update Resources with font information if necessary
-        if font_res is not None:
-            dct[NameObject("/Resources")] = DictionaryObject(
-                {
-                    NameObject("/Font"): DictionaryObject(
-                        {
-                            NameObject(font_name): getattr(
-                                font_res, "indirect_reference", font_res
-                            )
-                        }
-                    )
-                }
-            )
-        if AA.AP not in annotation:
-            annotation[NameObject(AA.AP)] = DictionaryObject(
-                {NameObject("/N"): self._add_object(dct)}
-            )
-        elif "/N" not in cast(DictionaryObject, annotation[AA.AP]):
-            cast(DictionaryObject, annotation[NameObject(AA.AP)])[
-                NameObject("/N")
-            ] = self._add_object(dct)
-        else:  # [/AP][/N] exists
-            n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
-            self._objects[n - 1] = dct
-            dct.indirect_reference = IndirectObject(n, 0, self)
-
-        if flatten:
-            field_name = self._get_qualified_field_name(annotation)
-            self._add_apstream_object(page, dct, field_name, _rct[0], _rct[1], font_res)
-
     FFBITS_NUL = FA.FfBits(0)
 
     def update_page_form_field_values(
         self,
         page: Union[PageObject, list[PageObject], None],
-        fields: dict[str, Union[str, list[str], tuple[str, str, float]]],
+        fields: Mapping[str, Union[str, list[str], tuple[str, str, float]]],
         flags: FA.FfBits = FFBITS_NUL,
         auto_regenerate: Optional[bool] = True,
         flatten: bool = False,
@@ -1105,8 +968,8 @@ class PdfWriter(PdfDocCommon):
         """
         if CatalogDictionary.ACRO_FORM not in self._root_object:
             raise PyPdfError("No /AcroForm dictionary in PDF of PdfWriter Object")
-        af = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
-        if InteractiveFormDictEntries.Fields not in af:
+        acro_form = cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])
+        if InteractiveFormDictEntries.Fields not in acro_form:
             raise PyPdfError("No /Fields dictionary in PDF of PdfWriter Object")
         if isinstance(auto_regenerate, bool):
             self.set_need_appearances_writer(auto_regenerate)
@@ -1133,6 +996,7 @@ class PdfWriter(PdfDocCommon):
                 ).get_object()
 
             for field, value in fields.items():
+                rectangle = cast(RectangleObject, annotation[AA.Rect])
                 if not (
                     self._get_qualified_field_name(parent_annotation) == field
                     or parent_annotation.get("/T", None) == field
@@ -1145,6 +1009,7 @@ class PdfWriter(PdfDocCommon):
                     del parent_annotation["/I"]
                 if flags:
                     annotation[NameObject(FA.Ff)] = NumberObject(flags)
+                # Set the field value
                 if not (value is None and flatten):  # Only change values if given by user and not flattening.
                     if isinstance(value, list):
                         lst = ArrayObject(TextStringObject(v) for v in value)
@@ -1155,37 +1020,52 @@ class PdfWriter(PdfDocCommon):
                         )
                     else:
                         parent_annotation[NameObject(FA.V)] = TextStringObject(value)
+                # Get or create the field's appearance stream object
                 if parent_annotation.get(FA.FT) == "/Btn":
-                    # Checkbox button (no /FT found in Radio widgets)
+                    # Checkbox button (no /FT found in Radio widgets);
+                    # We can find the associated appearance stream object
+                    # within the annotation.
                     v = NameObject(value)
                     ap = cast(DictionaryObject, annotation[NameObject(AA.AP)])
                     normal_ap = cast(DictionaryObject, ap["/N"])
                     if v not in normal_ap:
                         v = NameObject("/Off")
                     appearance_stream_obj = normal_ap.get(v)
-                    # other cases will be updated through the for loop
+                    # Other cases will be updated through the for loop
                     annotation[NameObject(AA.AS)] = v
                     annotation[NameObject(FA.V)] = v
-                    if flatten and appearance_stream_obj is not None:
-                        # We basically copy the entire appearance stream, which should be an XObject that
-                        # is already registered. No need to add font resources.
-                        rct = cast(RectangleObject, annotation[AA.Rect])
-                        self._add_apstream_object(page, appearance_stream_obj, field, rct[0], rct[1])
                 elif (
                     parent_annotation.get(FA.FT) == "/Tx"
                     or parent_annotation.get(FA.FT) == "/Ch"
                 ):
-                    # textbox
+                    # Textbox; we need to generate the appearance stream object
                     if isinstance(value, tuple):
-                        self._update_field_annotation(
-                            page, parent_annotation, annotation, value[1], value[2], flatten=flatten
+                        appearance_stream_obj = TextStreamAppearance.from_text_annotation(
+                            acro_form, parent_annotation, annotation, value[1], value[2]
                         )
                     else:
-                        self._update_field_annotation(page, parent_annotation, annotation, flatten=flatten)
+                        appearance_stream_obj = TextStreamAppearance.from_text_annotation(
+                            acro_form, parent_annotation, annotation
+                        )
+                    # Add the appearance stream object
+                    if AA.AP not in annotation:
+                        annotation[NameObject(AA.AP)] = DictionaryObject(
+                            {NameObject("/N"): self._add_object(appearance_stream_obj)}
+                        )
+                    elif "/N" not in (ap:= cast(DictionaryObject, annotation[AA.AP])):
+                        cast(DictionaryObject, annotation[NameObject(AA.AP)])[
+                            NameObject("/N")
+                        ] = self._add_object(appearance_stream_obj)
+                    else:  # [/AP][/N] exists
+                        n = annotation[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
+                        self._objects[n - 1] = appearance_stream_obj
+                        appearance_stream_obj.indirect_reference = IndirectObject(n, 0, self)
                 elif (
                     annotation.get(FA.FT) == "/Sig"
                 ):  # deprecated  # not implemented yet
                     logger_warning("Signature forms not implemented yet", __name__)
+                if flatten and appearance_stream_obj is not None:
+                    self._add_apstream_object(page, appearance_stream_obj, field, rectangle[0], rectangle[1])
 
     def reattach_fields(
         self, page: Optional[PageObject] = None
@@ -1259,13 +1139,27 @@ class PdfWriter(PdfDocCommon):
         self._root_object = reader.root_object.clone(self)
         self._pages = self._root_object.raw_get("/Pages")
 
-        assert len(self._objects) <= cast(int, reader.trailer["/Size"])  # for pytest
+        if len(self._objects) > cast(int, reader.trailer["/Size"]):
+            if self.strict:
+                raise PdfReadError(
+                    f"Object count {len(self._objects)} exceeds defined trailer size {reader.trailer['/Size']}"
+                )
+            logger_warning(
+                f"Object count {len(self._objects)} exceeds defined trailer size {reader.trailer['/Size']}",
+                __name__
+            )
+
         # must be done here before rewriting
         if self.incremental:
             self._original_hash = [
                 (obj.hash_bin() if obj is not None else 0) for obj in self._objects
             ]
-        self._flatten()
+
+        try:
+            self._flatten()
+        except IndexError:
+            raise PdfReadError("Got index error while flattening.")
+
         assert self.flattened_pages is not None
         for p in self.flattened_pages:
             self._replace_object(cast(IndirectObject, p.indirect_reference).idnum, p)
@@ -1429,10 +1323,6 @@ class PdfWriter(PdfDocCommon):
                 "It may not be written to correctly.",
                 __name__,
             )
-        # deprecated to be removed in pypdf 6.0.0 :
-        # if not self._root:
-        #   self._root = self._add_object(self._root_object)
-        # self._sweep_indirect_references(self._root)
         self._resolve_links()
 
         if self.incremental:
@@ -1756,74 +1646,6 @@ class PdfWriter(PdfDocCommon):
             pass
         for i in compress(range(len(self._objects)), orphans):
             self._objects[i] = None
-
-    def _sweep_indirect_references(
-        self,
-        root: Union[
-            ArrayObject,
-            BooleanObject,
-            DictionaryObject,
-            FloatObject,
-            IndirectObject,
-            NameObject,
-            PdfObject,
-            NumberObject,
-            TextStringObject,
-            NullObject,
-        ],
-    ) -> None:  # deprecated
-        """
-        Resolving any circular references to Page objects.
-
-        Circular references to Page objects can arise when objects such as
-        annotations refer to their associated page. If these references are not
-        properly handled, the PDF file will contain multiple copies of the same
-        Page object. To address this problem, Page objects store their original
-        object reference number. This method adds the reference number of any
-        circularly referenced Page objects to an external reference map. This
-        ensures that self-referencing trees reference the correct new object
-        location, rather than copying in a new copy of the Page object.
-
-        Args:
-            root: The root of the PDF object tree to sweep.
-
-        """
-        deprecate(
-            "_sweep_indirect_references has been removed, please report to dev team if this warning is observed",
-        )
-
-    def _resolve_indirect_object(
-        self, data: IndirectObject
-    ) -> IndirectObject:  # deprecated
-        """
-        Resolves an indirect object to an indirect object in this PDF file.
-
-        If the input indirect object already belongs to this PDF file, it is
-        returned directly. Otherwise, the object is retrieved from the input
-        object's PDF file using the object's ID number and generation number. If
-        the object cannot be found, a warning is logged and a `NullObject` is
-        returned.
-
-        If the object is not already in this PDF file, it is added to the file's
-        list of objects and assigned a new ID number and generation number of 0.
-        The hash value of the object is then added to the `_idnum_hash`
-        dictionary, with the corresponding `IndirectObject` reference as the
-        value.
-
-        Args:
-            data: The `IndirectObject` to resolve.
-
-        Returns:
-            The resolved `IndirectObject` in this PDF file.
-
-        Raises:
-            ValueError: If the input stream is closed.
-
-        """
-        deprecate(
-            "_resolve_indirect_object has been removed, please report to dev team if this warning is observed",
-        )
-        return IndirectObject(0, 0, self)
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1
@@ -2284,6 +2106,7 @@ class PdfWriter(PdfDocCommon):
 
             clean(content, images, forms, text_filters)
             page.replace_contents(content)
+        return [], []  # type: ignore[return-value]
 
     def remove_images(
         self,
@@ -2817,7 +2640,7 @@ class PdfWriter(PdfDocCommon):
         if isinstance(fileobj, PdfDocCommon):
             reader = fileobj
         else:
-            stream, encryption_obj = self._create_stream(fileobj)
+            stream, _encryption_obj = self._create_stream(fileobj)
             # Create a new PdfReader instance using the stream
             # (either file or BytesIO or StringIO) created above
             reader = PdfReader(stream, strict=False)  # type: ignore[arg-type]
@@ -3055,7 +2878,10 @@ class PdfWriter(PdfDocCommon):
         for p in pages.values():
             pp = p.original_page
             for a in pp.get("/B", ()):
-                thr = a.get_object().get("/T")
+                a_obj = a.get_object()
+                if is_null_or_none(a_obj):
+                    continue
+                thr = a_obj.get("/T")
                 if thr is None:
                     continue
                 thr = thr.get_object()
@@ -3090,7 +2916,7 @@ class PdfWriter(PdfDocCommon):
     ) -> list[Destination]:
         outlist = ArrayObject()
         if isinstance(annots, IndirectObject):
-            annots = cast("List[Any]", annots.get_object())
+            annots = cast("list[Any]", annots.get_object())
         if annots is None:
             return outlist
         if not isinstance(annots, list):
@@ -3257,17 +3083,7 @@ class PdfWriter(PdfDocCommon):
                 o = cast(TreeObject, o["/Next"])
             else:
                 return None
-
-    def find_bookmark(
-        self,
-        outline_item: dict[str, Any],
-        root: Optional[OutlineType] = None,
-    ) -> None:  # deprecated
-        """
-        .. deprecated:: 2.9.0
-            Use :meth:`find_outline_item` instead.
-        """
-        deprecation_with_replacement("find_bookmark", "find_outline_item", "5.0.0")
+        raise PyPdfError("This line is theoretically unreachable.")  # pragma: no cover
 
     def reset_translation(
         self, reader: Union[None, PdfReader, IndirectObject] = None
@@ -3495,36 +3311,3 @@ def _create_outline_item(
             format_flag += OutlineFontFlag.bold
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
-
-
-def generate_appearance_stream(
-    txt: str,
-    sel: list[str],
-    da: str,
-    font_full_rev: dict[str, bytes],
-    rct: RectangleObject,
-    font_height: float,
-    y_offset: float,
-) -> bytes:
-    ap_stream = f"q\n/Tx BMC \nq\n1 1 {rct.width - 1} {rct.height - 1} re\nW\nBT\n{da}\n".encode()
-    for line_number, line in enumerate(txt.replace("\n", "\r").split("\r")):
-        if line in sel:
-            # may be improved but cannot find how to get fill working => replaced with lined box
-            ap_stream += (
-                f"1 {y_offset - (line_number * font_height * 1.4) - 1} {rct.width - 2} {font_height + 2} re\n"
-                f"0.5 0.5 0.5 rg s\n{da}\n"
-            ).encode()
-        if line_number == 0:
-            ap_stream += f"2 {y_offset} Td\n".encode()
-        else:
-            # Td is a relative translation
-            ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
-        enc_line: list[bytes] = [
-            font_full_rev.get(c, c.encode("utf-16-be")) for c in line
-        ]
-        if any(len(c) >= 2 for c in enc_line):
-            ap_stream += b"<" + (b"".join(enc_line)).hex().encode() + b"> Tj\n"
-        else:
-            ap_stream += b"(" + b"".join(enc_line) + b") Tj\n"
-    ap_stream += b"ET\nQ\nEMC\nQ\n"
-    return ap_stream

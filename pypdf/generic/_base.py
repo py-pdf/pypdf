@@ -45,8 +45,8 @@ from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
     classproperty,
-    deprecate_no_replacement,
-    deprecate_with_replacement,
+    deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -170,7 +170,7 @@ class PdfObject(PdfObjectProtocol):
         if ind is not None:
             if id(ind.pdf) not in pdf_dest._id_translated:
                 pdf_dest._id_translated[id(ind.pdf)] = {}
-                pdf_dest._id_translated[id(ind.pdf)]["PreventGC"] = ind.pdf  # type: ignore
+                pdf_dest._id_translated[id(ind.pdf)]["PreventGC"] = ind.pdf  # type: ignore[index]
             if (
                 not force_duplicate
                 and ind.idnum in pdf_dest._id_translated[id(ind.pdf)]
@@ -225,7 +225,7 @@ class NullObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(b"null")
@@ -290,7 +290,7 @@ class BooleanObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         if self.value:
@@ -346,6 +346,7 @@ class IndirectObject(PdfObject):
             return self
         if id(self.pdf) not in pdf_dest._id_translated:
             pdf_dest._id_translated[id(self.pdf)] = {}
+            pdf_dest._id_translated[id(self.pdf)]["PreventGC"] = self.pdf  # type: ignore[index]
 
         if self.idnum in pdf_dest._id_translated[id(self.pdf)]:
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
@@ -438,7 +439,7 @@ class IndirectObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(f"{self.idnum} {self.generation} R".encode())
@@ -527,7 +528,7 @@ class FloatObject(float, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(self.myrepr().encode("utf8"))
@@ -572,7 +573,7 @@ class NumberObject(int, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(repr(self).encode("utf8"))
@@ -627,7 +628,7 @@ class ByteStringObject(bytes, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(b"<")
@@ -767,7 +768,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         bytearr = self.get_encoded_bytes()
@@ -819,7 +820,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(self.renumber())
@@ -827,9 +828,9 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")
         if out != b"/":
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 f"Incorrect first char in NameObject, should start with '/': ({self})",
-                "6.0.0",
+                "5.0.0",
             )
         for c in self[1:]:
             if c > "~":
@@ -852,14 +853,14 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         Returns:
             NameObject with sanitized name.
         """
-        name = str(self)[1:]  # Remove leading forward slash
+        name = str(self).removeprefix("/")
         name = re.sub(r"\ ", "_", name)
         name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
         return NameObject("/" + name)
 
     @classproperty
     def surfix(cls) -> bytes:  # noqa: N805
-        deprecate_with_replacement("surfix", "prefix", "6.0.0")
+        deprecation_with_replacement("surfix", "prefix", "5.0.0")
         return b"/"
 
     @staticmethod
