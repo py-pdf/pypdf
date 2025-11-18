@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## Version 6.3.0, 2025-11-16
+
+### New Features (ENH)
+- Wrap and align text in flattened PDF forms (#3465)
+
+### Bug Fixes (BUG)
+- Fix missing "PreventGC" when cloning (#3520)
+- Preserve JPEG image quality by default (#3516)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.2.0...6.3.0)
+
 ## Version 6.2.0, 2025-11-09
 
 ### New Features (ENH)
