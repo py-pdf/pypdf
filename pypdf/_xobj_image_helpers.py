@@ -323,7 +323,7 @@ def _handle_jpx(
         img = Image.frombytes(mode, img1.size, img1.tobytes())
     else:  # pragma: no cover
         img = img1.convert(mode)
-    # CMYK conversion:
+    # CMYK conversion
     # https://stcom/questions/38855022/conversion-from-cmyk-to-rgb-with-pillow-is-different-from-that-of-photoshop
     # not implemented for the moment as I need to get properly the ICC
     if img.mode == "CMYK":
