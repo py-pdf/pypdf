@@ -272,7 +272,6 @@ def test_insert_blank_page():
     assert page.mediabox.width == 50
     assert page.mediabox.height == old_page.mediabox.height
 
-    old_page = writer.pages[0]
     page = writer.insert_blank_page(width=10, height=20, index=0)
     assert page.mediabox.width == 10
     assert page.mediabox.height == 20
