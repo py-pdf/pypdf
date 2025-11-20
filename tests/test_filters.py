@@ -652,7 +652,8 @@ def test_ascii85decode__non_recoverable(caplog):
 def test_ascii85decode__ignore_whitespaces(caplog):
     """Whitespace characters must be silently ignored"""
     data = b"Cqa;:3k~\n>"
-    ASCII85Decode.decode(data)
+    result = ASCII85Decode.decode(data)
+    assert result == b"l\xbe`\x8d:"
 
 
 @pytest.mark.enable_socket
