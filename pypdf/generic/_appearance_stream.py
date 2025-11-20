@@ -199,6 +199,10 @@ class TextStreamAppearance(BaseStreamAppearance):
             rectangle = RectangleObject(rectangle)
         font_descriptor = cast(FontDescriptor, font_descriptor)
 
+        # Set margins based on border width and style, but never less than 1 point
+        factor = 2 if self._layout.border_style in {"/B", "/I"} else 1
+        margin = max(self._layout.border_width * factor, 1)
+
         # If font_size is 0, apply the logic for multiline or large-as-possible font
         if font_size == 0:
             if selection:              # Don't wrap text when dealing with a /Ch field, in order to prevent problems
@@ -206,14 +210,12 @@ class TextStreamAppearance(BaseStreamAppearance):
             if is_multiline:
                 font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
             else:
-                font_size = rectangle.height - 2
+                font_size = rectangle.height - 2 * margin
             lines, font_size = self._scale_text(
                 font_descriptor,
                 font_size,
-                rectangle.width - 3,   # One point margin left and right, and an additional point because the first
-                                       # offset takes one extra point (see below, "desired_abs_x_start")
-                rectangle.height - 3,  # One point margin for top and bottom, one point extra for the first line
-                                       # (see y_offset)
+                rectangle.width - 4 * margin,
+                rectangle.height - 2 * margin,
                 text,
                 is_multiline,
             )
@@ -235,11 +237,11 @@ class TextStreamAppearance(BaseStreamAppearance):
             ) for line in text.replace("\n", "\r").split("\r")]
 
         # Set the vertical offset
-        y_offset = rectangle.height - 1 - font_size
+        y_offset = rectangle.height - margin - font_size
         default_appearance = f"{font_name} {font_size} Tf {font_color}"
 
         ap_stream = (
-            f"q\n/Tx BMC \nq\n1 1 {rectangle.width - 1} {rectangle.height - 1} "
+            f"q\n/Tx BMC \nq\n{2 * margin} {margin} {rectangle.width - 4 * margin} {rectangle.height - 2 * margin} "
             f"re\nW\nBT\n{default_appearance}\n"
         ).encode()
         current_x_pos: float = 0  # Initial virtual position within the text object.
@@ -263,11 +265,11 @@ class TextStreamAppearance(BaseStreamAppearance):
                 # Absolute start X = (Cell Index, i.e., line_number * Cell Width) + Centering Offset
                 desired_abs_x_start = (line_number * cell_width) + centering_offset_in_cell
             elif alignment == TextAlignment.RIGHT:
-                desired_abs_x_start = rectangle.width - 2 - line_width
+                desired_abs_x_start = rectangle.width - margin * 2 - line_width
             elif alignment == TextAlignment.CENTER:
                 desired_abs_x_start = (rectangle.width - line_width) / 2
             else:  # Left aligned; default
-                desired_abs_x_start = 2
+                desired_abs_x_start = margin * 2
             # Calculate x_rel_offset: how much to move from the current_x_pos
             # to reach the desired_abs_x_start.
             x_rel_offset = desired_abs_x_start - current_x_pos
@@ -511,6 +513,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         if field_flags & FieldDictionaryAttributes.FfBits.Multiline:
             is_multiline = True
         alignment = field.get("/Q", TextAlignment.LEFT)
+        border_width = 1
+        border_style = BorderStyles.SOLID
+        if "/BS" in field:
+            border_width = cast(DictionaryObject, field["/BS"]).get("/W", border_width)
+            border_style = cast(DictionaryObject, field["/BS"]).get("/S", border_style)
 
         # Create the TextStreamAppearance instance
         layout = BaseStreamConfig(rectangle=rectangle, border_width=border_width, border_style=border_style)
