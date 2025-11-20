@@ -57,6 +57,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         self,
         font_descriptor: FontDescriptor,
         font_size: float,
+        leading_factor: float,
         field_width: float,
         field_height: float,
         text: str,
@@ -71,6 +72,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         Args:
             font_descriptor: A FontDescriptor for the font to be used.
             font_size: The font size in points.
+            leading_factor: The line distance.
             field_width: The width of the field in which to fit the text.
             field_height: The height of the field in which to fit the text.
             text: The text to fit with the field.
@@ -92,6 +94,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                     return self._scale_text(
                         font_descriptor,
                         round(new_font_size, 1),
+                        leading_factor,
                         field_width,
                         field_height,
                         text,
@@ -133,8 +136,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                 current_line_words = []
                 current_line_width = 0
         # Estimate total height.
-        # Assumes line spacing of 1.4
-        estimated_total_height = font_size + (len(wrapped_lines) - 1) * 1.4 * font_size
+        estimated_total_height = font_size + (len(wrapped_lines) - 1) * leading_factor * font_size
         if estimated_total_height > field_height:
             # Text overflows height; Retry with smaller font size.
             new_font_size = font_size - font_size_step
@@ -142,6 +144,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                 return self._scale_text(
                     font_descriptor,
                     round(new_font_size, 1),
+                    leading_factor,
                     field_width,
                     field_height,
                     orig_text,
@@ -198,6 +201,7 @@ class TextStreamAppearance(BaseStreamAppearance):
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
         font_descriptor = cast(FontDescriptor, font_descriptor)
+        leading_factor = (font_descriptor.bbox[3] - font_descriptor.bbox[1]) / 1000.0
 
         # Set margins based on border width and style, but never less than 1 point
         factor = 2 if self._layout.border_style in {"/B", "/I"} else 1
@@ -214,6 +218,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             lines, font_size = self._scale_text(
                 font_descriptor,
                 font_size,
+                leading_factor,
                 rectangle.width - 4 * margin,
                 rectangle.height - 2 * margin,
                 text,
@@ -250,7 +255,8 @@ class TextStreamAppearance(BaseStreamAppearance):
             if selection and line in selection:
                 # Might be improved, but cannot find how to get fill working => replaced with lined box
                 ap_stream += (
-                    f"1 {y_offset - (line_number * font_size * 1.4) - 1} {rectangle.width - 2} {font_size + 2} re\n"
+                    f"1 {y_offset - (line_number * font_size * leading_factor) - 1} "
+                    f"{rectangle.width - 2} {font_size + 2} re\n"
                     f"0.5 0.5 0.5 rg s\n{default_appearance}\n"
                 ).encode()
 
@@ -281,7 +287,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             elif is_comb:
                 y_rel_offset = 0.0  # DO NOT move vertically for subsequent characters
             else:
-                y_rel_offset = - font_size * 1.4  # Move down by line height
+                y_rel_offset = - font_size * leading_factor  # Move down by line height
 
             # Td is a relative translation (Tx and Ty).
             # It updates the current text position.
