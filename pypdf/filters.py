@@ -482,7 +482,7 @@ class ASCII85Decode:
         if isinstance(data, str):
             data = data.encode()
         data = data.strip(WHITESPACES_AS_BYTES)
-        if len(data) > 1 and data.endswith(b">"):
+        if len(data) > 2 and data.endswith(b">"):
             data = data[:-1].rstrip(WHITESPACES_AS_BYTES) + data[-1:]
         try:
             return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
