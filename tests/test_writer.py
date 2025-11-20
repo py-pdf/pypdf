@@ -274,7 +274,7 @@ def test_insert_blank_page():
 
     old_page_count = len(writer.pages)
     page = writer.insert_blank_page(width=10, height=20, index=len(writer.pages))
-    assert len(writer.pages) == old_page_count + 1 
+    assert len(writer.pages) == old_page_count + 1
 
 
 @pytest.mark.parametrize(
