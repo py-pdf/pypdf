@@ -86,23 +86,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         """
         # Single line:
         if not is_multiline:
-            test_width = font_descriptor.text_width(text) * font_size / 1000
-            if test_width > field_width or font_size > field_height:
-                new_font_size = font_size - font_size_step
-                if new_font_size >= min_font_size:
-                    # Text overflows height; Retry with smaller font size.
-                    return self._scale_text(
-                        font_descriptor,
-                        round(new_font_size, 1),
-                        leading_factor,
-                        field_width,
-                        field_height,
-                        text,
-                        is_multiline,
-                        min_font_size,
-                        font_size_step
-                    )
-            return [(test_width, text)], font_size
+            max_vertical_size = field_height / leading_factor
+            text_width_unscaled = font_descriptor.text_width(text) / 1000
+            max_horizontal_size = field_width / (text_width_unscaled or 1)
+            font_size = round(max(min(max_vertical_size, max_horizontal_size), min_font_size), 1)
+            return [(text_width_unscaled * font_size, text)], font_size
         # Multiline:
         orig_text = text
         paragraphs = text.replace("\n", "\r").split("\r")
@@ -143,7 +131,7 @@ class TextStreamAppearance(BaseStreamAppearance):
             if new_font_size >= min_font_size:
                 return self._scale_text(
                     font_descriptor,
-                    round(new_font_size, 1),
+                    new_font_size,
                     leading_factor,
                     field_width,
                     field_height,
@@ -152,7 +140,7 @@ class TextStreamAppearance(BaseStreamAppearance):
                     min_font_size,
                     font_size_step
                 )
-        return wrapped_lines, font_size
+        return wrapped_lines, round(font_size, 1)
 
     def _generate_appearance_stream_data(
         self,
@@ -213,8 +201,6 @@ class TextStreamAppearance(BaseStreamAppearance):
                 is_multiline = False   # with matching "selection" with "line" later on.
             if is_multiline:
                 font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
-            else:
-                font_size = rectangle.height - 2 * margin
             lines, font_size = self._scale_text(
                 font_descriptor,
                 font_size,
