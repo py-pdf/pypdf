@@ -709,10 +709,8 @@ class PdfWriter(PdfDocCommon):
         """
         if width is None or (height is None and index < self.get_num_pages()):
             oldpage = self.pages[index]
-            if width is None:
-                width = oldpage.mediabox.width
-            if height is None:
-                height = oldpage.mediabox.height
+            width = oldpage.mediabox.width
+            height = oldpage.mediabox.height
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
         return page
