@@ -649,6 +649,12 @@ def test_ascii85decode__non_recoverable(caplog):
     assert caplog.text == ""
 
 
+def test_ascii85decode__ignore_whitespaces(caplog):
+    """Whitespace characters must be silently ignored"""
+    data = b'Cqa;:3k~\n>'
+    ASCII85Decode.decode(data)
+
+
 @pytest.mark.enable_socket
 def test_ccitt_fax_decode__black_is_1():
     url = "https://github.com/user-attachments/files/19288881/imagemagick-CCITTFaxDecode_BlackIs1-true.pdf"
