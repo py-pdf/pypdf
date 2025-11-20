@@ -272,6 +272,10 @@ def test_insert_blank_page():
     assert page.mediabox.width == 10
     assert page.mediabox.height == 20
 
+    old_page_count = len(writer.pages)
+    page = writer.insert_blank_page(width=10, height=20, index=len(writer.pages))
+    assert len(writer.pages) == old_page_count + 1 
+
 
 @pytest.mark.parametrize(
     ("convert", "needs_cleanup"),
