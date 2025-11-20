@@ -651,7 +651,7 @@ def test_ascii85decode__non_recoverable(caplog):
 
 def test_ascii85decode__ignore_whitespaces(caplog):
     """Whitespace characters must be silently ignored"""
-    data = b'Cqa;:3k~\n>'
+    data = b"Cqa;:3k~\n>"
     ASCII85Decode.decode(data)
 
 
