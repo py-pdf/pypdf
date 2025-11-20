@@ -31,7 +31,7 @@ else:
     from typing_extensions import TypeAlias
 
 try:
-    from PIL import Image, UnidentifiedImageError
+    from PIL import Image
 except ImportError:
     raise ImportError(
         "pillow is required to do image extraction. "
@@ -486,9 +486,9 @@ def _xobj_to_image(
     mode, invert_color = _get_mode_and_invert_color(x_object, colors, color_space)
 
     # Get filters
-    filters = x_object.get(SA.FILTER, NullObject()).get_object()
+    filters = x_object.get(StreamAttributes.FILTER, NullObject()).get_object()
     lfilters = filters[-1] if isinstance(filters, list) else filters
-    decode_parms = x_object.get(SA.DECODE_PARMS, None)
+    decode_parms = x_object.get(StreamAttributes.DECODE_PARMS, None)
     if decode_parms and isinstance(decode_parms, (tuple, list)):
         decode_parms = decode_parms[0]
     else:
