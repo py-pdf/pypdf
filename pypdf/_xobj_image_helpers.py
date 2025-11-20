@@ -31,7 +31,7 @@ else:
     from typing_extensions import TypeAlias
 
 try:
-    from PIL import Image
+    from PIL import Image, UnidentifiedImageError
 except ImportError:
     raise ImportError(
         "pillow is required to do image extraction. "
@@ -421,16 +421,6 @@ def _xobj_to_image(
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
-    from ._xobj_image_helpers import (  # noqa: PLC0415
-        Image,
-        UnidentifiedImageError,
-        _apply_decode,
-        _extended_image_frombytes,
-        _get_mode_and_invert_color,
-        _handle_flate,
-        _handle_jpx,
-    )
-
     def _apply_alpha(
         img: Image.Image,
         x_object: dict[str, Any],
