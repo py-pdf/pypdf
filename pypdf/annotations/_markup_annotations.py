@@ -1,5 +1,6 @@
 import sys
 from abc import ABC
+import inspect
 from typing import Any, Optional, Union
 
 from ..constants import AnnotationFlag
@@ -189,16 +190,22 @@ class Line(MarkupAnnotation):
 class PolyLine(MarkupAnnotation):
     def __init__(
         self,
-        vertices: list[Vertex],
+        vertices: list[Vertex] | ArrayObject[NumberObject],
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        if len(vertices) == 0:
-            raise ValueError("A polygon needs at least 1 vertex with two coordinates")
+        if len(vertices) == 0 or len(vertices) % 2 != 0:
+            raise ValueError("A polygon needs at least 1 vertex," \
+                " containing 1 horizontal and 1 vertical position")
         coord_list = []
-        for x, y in vertices:
-            coord_list.append(NumberObject(x))
-            coord_list.append(NumberObject(y))
+        if type(vertices) is ArrayObject:
+            import itertools
+            coord_list = vertices
+            vertices = [vertex for vertex in itertools.batched(vertices, 2)]
+        else:
+            for x, y in vertices:
+                coord_list.append(NumberObject(x))
+                coord_list.append(NumberObject(y))
         self.update(
             {
                 NameObject("/Subtype"): NameObject("/PolyLine"),
@@ -283,17 +290,23 @@ class Ellipse(MarkupAnnotation):
 class Polygon(MarkupAnnotation):
     def __init__(
         self,
-        vertices: list[tuple[float, float]],
+        vertices: list[Vertex] | ArrayObject[NumberObject],
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        if len(vertices) == 0:
-            raise ValueError("A polygon needs at least 1 vertex with two coordinates")
+        if len(vertices) == 0 or len(vertices) % 2 != 0:
+            raise ValueError("A polygon needs at least 1 vertex," \
+                " containing 1 horizontal and 1 vertical position")
 
         coord_list = []
-        for x, y in vertices:
-            coord_list.append(NumberObject(x))
-            coord_list.append(NumberObject(y))
+        if type(vertices) is ArrayObject:
+            import itertools
+            coord_list = vertices
+            vertices = [vertex for vertex in itertools.batched(vertices, 2)]
+        else:
+            for x, y in vertices:
+                coord_list.append(NumberObject(x))
+                coord_list.append(NumberObject(y))
         self.update(
             {
                 NameObject("/Type"): NameObject("/Annot"),
