@@ -713,12 +713,12 @@ class PdfWriter(PdfDocCommon):
                 and previous page does not exist.
 
         """
-        if not (width or height) and index < self.get_num_pages():
+        if (width is None or width <= 0) and index < self.get_num_pages():
             old_page = self.pages[index]
-            if width is None:
-                width = old_page.mediabox.width
-            if height is None:
-                height = old_page.mediabox.height
+            width = old_page.mediabox.width
+        if (height is None or height <= 0) and index < self.get_num_pages():
+            old_page = self.pages[index]
+            height = old_page.mediabox.height
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
         return page
