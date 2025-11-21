@@ -242,7 +242,10 @@ class TextStreamAppearance(BaseStreamAppearance):
             ) for line in text.replace("\n", "\r").split("\r")]
 
         # Set the vertical offset
-        y_offset = rectangle.height - margin - font_size
+        if is_multiline:
+            y_offset = rectangle.height + margin - font_descriptor.bbox[3] * font_size / 1000.0
+        else:
+            y_offset = margin + ((rectangle.height - 2 * margin - font_descriptor.ascent * font_size / 1000) / 2)
         default_appearance = f"{font_name} {font_size} Tf {font_color}"
 
         ap_stream = (
