@@ -296,8 +296,8 @@ def test_insert_blank_page():
     old_page = writer.pages[old_page_count - 1]
     page = writer.insert_blank_page(width=50, height=60, index=len(writer.pages))
     assert len(writer.pages) == old_page_count + 1
-    assert page.mediabox.width == old_page.mediabox.width
-    assert page.mediabox.height == old_page.mediabox.height
+    assert page.mediabox.width == 50
+    assert page.mediabox.height == 60
 
 
 @pytest.mark.parametrize(
