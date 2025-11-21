@@ -264,17 +264,40 @@ def test_insert_blank_page():
     assert page.mediabox.height == old_page.mediabox.height
 
     old_page = writer.pages[0]
-    page = writer.insert_blank_page(width=50, index=0)
-    assert page.mediabox.width == 50
+    page = writer.insert_blank_page(width=10, index=0)
+    assert page.mediabox.width == 10
     assert page.mediabox.height == old_page.mediabox.height
 
-    page = writer.insert_blank_page(width=10, height=20, index=0)
-    assert page.mediabox.width == 10
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(height=20, index=0)
+    assert page.mediabox.width == old_page.mediabox.width
     assert page.mediabox.height == 20
 
+    page = writer.insert_blank_page(width=30, height=40, index=0)
+    assert page.mediabox.width == 30
+    assert page.mediabox.height == 40
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=-10, index=0)
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(height=-20, index=0)
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
+    old_page = writer.pages[0]
+    page = writer.insert_blank_page(width=-30, height=-40, index=0)
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
+
     old_page_count = len(writer.pages)
-    page = writer.insert_blank_page(width=10, height=20, index=len(writer.pages))
+    old_page = writer.pages[old_page_count - 1]
+    page = writer.insert_blank_page(width=50, height=60, index=len(writer.pages))
     assert len(writer.pages) == old_page_count + 1
+    assert page.mediabox.width == old_page.mediabox.width
+    assert page.mediabox.height == old_page.mediabox.height
 
 
 @pytest.mark.parametrize(
