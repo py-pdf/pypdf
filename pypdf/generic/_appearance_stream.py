@@ -161,7 +161,7 @@ class TextStreamAppearance(DecodedStreamObject):
             selection: An optional list of strings that should be highlighted as selected.
             font_glyph_byte_map: An optional dictionary mapping characters to their
                 byte representation for glyph encoding.
-            rect: The bounding box of the form field. Can be a `RectangleObject`
+            rectangle: The bounding box of the form field. Can be a `RectangleObject`
                 or a tuple of four floats (x1, y1, x2, y2).
             font_name: The name of the font resource to use (e.g., "/Helv").
             font_size: The font size. If 0, it is automatically calculated
@@ -262,7 +262,7 @@ class TextStreamAppearance(DecodedStreamObject):
             if line_number == 0:
                 y_rel_offset = y_offset  # Initial vertical position
             elif is_comb:
-                 y_rel_offset = 0.0  # DO NOT move vertically for subsequent characters
+                y_rel_offset = 0.0  # DO NOT move vertically for subsequent characters
             else:
                 y_rel_offset = - font_size * 1.4  # Move down by line height
 
@@ -307,7 +307,7 @@ class TextStreamAppearance(DecodedStreamObject):
         Args:
             text: The text to be rendered in the form field.
             selection: An optional list of strings that should be highlighted as selected.
-            rect: The bounding box of the form field. Can be a `RectangleObject`
+            rectangle: The bounding box of the form field. Can be a `RectangleObject`
                 or a tuple of four floats (x1, y1, x2, y2).
             font_resource: An optional variable that represents a PDF font dictionary.
             font_name: The name of the font resource, e.g., "/Helv".
