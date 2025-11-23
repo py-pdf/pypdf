@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763906205290,
+  "lastUpdate": 1763906770860,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -84221,6 +84221,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005105000567000859",
             "extra": "mean: 673.7603164000006 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "310e571f2be1bc406a20b738e870d1b556d3c3a5",
+          "message": "REL: 6.4.0\n\n## What's new\n\n### Security (SEC)\n- Reduce default limit for LZW decoding by @stefan6419846\n\n### New Features (ENH)\n- Parse and format comb fields in text widget annotations (#3519) by @PJBrs\n\n### Robustness (ROB)\n- Silently ignore Adobe Ascii85 whitespace for suffix detection (#3528) by @mbierma\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.3.0...6.4.0)",
+          "timestamp": "2025-11-23T15:03:11+01:00",
+          "tree_id": "f9042273a88ac24b9754e6fd36be7e4eabf03af2",
+          "url": "https://github.com/py-pdf/pypdf/commit/310e571f2be1bc406a20b738e870d1b556d3c3a5"
+        },
+        "date": 1763906767107,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.6863598394062937,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0062798696082393204",
+            "extra": "mean: 271.2703164000004 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.274499870105396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038279272029102126",
+            "extra": "mean: 65.46859200000111 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26652082381377495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1182341596025241",
+            "extra": "mean: 3.7520520373999973 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.28809482847863,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00037823330862623265",
+            "extra": "mean: 57.8432736470593 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0904589995714095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026419734064388658",
+            "extra": "mean: 11.054732030399995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4877276449468695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003346953964804986",
+            "extra": "mean: 672.1660401999941 msec\nrounds: 5"
           }
         ]
       }
