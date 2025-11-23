@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763718747171,
+  "lastUpdate": 1763906032687,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -84089,6 +84089,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002807121740459972",
             "extra": "mean: 670.5173872000103 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "41e2e55c15ac523bfe504ebd2cfe83b777faeaac",
+          "message": "MAINT: Disable automated tagging on release\n\nThis workflow has been failing for many months anyway and requires further fixing. See #2753 for details.\r\n\r\nTo avoid spamming my inbox on each release and giving the impression that each release workflow is faulty, just disable it.",
+          "timestamp": "2025-11-23T14:51:10+01:00",
+          "tree_id": "a456797c2ceb3c048ba5b414aa2a1f36e8b7d9c8",
+          "url": "https://github.com/py-pdf/pypdf/commit/41e2e55c15ac523bfe504ebd2cfe83b777faeaac"
+        },
+        "date": 1763906028261,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.815938185012936,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00468236773501721",
+            "extra": "mean: 262.0587523999973 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.054754176257692,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0023517183749362214",
+            "extra": "mean: 62.286845941175066 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28188168319663753,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023766820644788893",
+            "extra": "mean: 3.5475877278000043 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.03613696956277,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000872030498135146",
+            "extra": "mean: 55.44424516666564 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09093109120715372,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013087712633819363",
+            "extra": "mean: 10.997338607999989 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4867714477725467,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017912150851835183",
+            "extra": "mean: 672.5983348 msec\nrounds: 5"
           }
         ]
       }
