@@ -6,7 +6,7 @@ from typing import Any, Union, cast
 
 from ..._codecs import adobe_glyphs
 from ...errors import ParseError
-from ...generic import IndirectObject
+from ...generic import DictionaryObject, PdfObject
 from ._font_widths import STANDARD_WIDTHS
 
 
@@ -60,13 +60,12 @@ class Font:
 
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
         if "/DescendantFonts" in self.font_dictionary:
-            d_font: dict[Any, Any]
+            d_font: PdfObject
             for d_font_idx, d_font in enumerate(
                 self.font_dictionary["/DescendantFonts"]
             ):
-                while isinstance(d_font, IndirectObject):
-                    d_font = d_font.get_object()
-                self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font
+                d_font_object = cast(DictionaryObject, d_font.get_object())
+                self.font_dictionary["/DescendantFonts"][d_font_idx] = d_font_object
                 ord_map = {
                     ord(_target): _surrogate
                     for _target, _surrogate in self.char_map.items()
@@ -78,20 +77,20 @@ class Font:
                 #   (2) A character start index, a character stop index, and a width, e.g.
                 #       `45 65 500` applies width 500 to characters 45-65.
                 skip_count = 0
-                _w = d_font.get("/W", [])
+                _w = d_font_object.get("/W", [])
                 for idx, w_entry in enumerate(_w):
-                    w_entry = w_entry.get_object()
+                    w_value = w_entry.get_object()
                     if skip_count:
                         skip_count -= 1
                         continue
-                    if not isinstance(w_entry, (int, float)):  # pragma: no cover
+                    if not isinstance(w_value, (int, float)):  # pragma: no cover
                         # We should never get here due to skip_count above. Add a
                         # warning and or use reader's "strict" to force an ex???
                         continue
                     # check for format (1): `int [int int int int ...]`
                     w_next_entry = _w[idx + 1].get_object()
                     if isinstance(w_next_entry, Sequence):
-                        start_idx, width_list = w_entry, w_next_entry
+                        start_idx, width_list = w_value, w_next_entry
                         self.width_map.update(
                             {
                                 ord_map[_cidx]: _width
@@ -112,7 +111,7 @@ class Font:
                         _w[idx + 2].get_object(), (int, float)
                     ):
                         start_idx, stop_idx, const_width = (
-                            w_entry,
+                            w_value,
                             w_next_entry,
                             _w[idx + 2].get_object(),
                         )

@@ -2422,10 +2422,10 @@ def test_no_resource_for_14_std_fonts(caplog):
     writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
     p = writer.pages[0]
     for a in p["/Annots"]:
-        a = a.get_object()
-        if a["/FT"] == "/Tx":
+        a_obj = a.get_object()
+        if a_obj["/FT"] == "/Tx":
             writer.update_page_form_field_values(
-                p, {a["/T"]: "Brooks"}, auto_regenerate=False
+                p, {a_obj["/T"]: "Brooks"}, auto_regenerate=False
             )
     assert "Font dictionary for /Helvetica not found; defaulting to Helvetica." in caplog.text
 
