@@ -42,7 +42,8 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    user/file-size
    user/pdf-version-support
    user/pdfa-compliance
-   user/outlines
+   user/reading-pdf-outlines
+   user/adding-pdf-outlines
 
 
 .. toctree::
@@ -66,6 +67,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    modules/errors
    modules/generic
    modules/PdfDocCommon
+ 
 
 .. toctree::
    :caption: Developer Guide
