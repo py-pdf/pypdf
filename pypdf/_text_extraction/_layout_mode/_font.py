@@ -5,9 +5,9 @@ from dataclasses import dataclass, field
 from typing import Any, Union, cast
 
 from ..._codecs import adobe_glyphs
+from ..._codecs.core_fontmetrics import CORE_FONT_METRICS
 from ...errors import ParseError
 from ...generic import IndirectObject
-from ._font_widths import STANDARD_WIDTHS
 
 
 @dataclass
@@ -134,9 +134,9 @@ class Font:
                         )  # pragma: no cover
 
         if not self.width_map and "/BaseFont" in self.font_dictionary:
-            for key in STANDARD_WIDTHS:
-                if self.font_dictionary["/BaseFont"].startswith(f"/{key}"):
-                    self.width_map = STANDARD_WIDTHS[key]
+            for key in CORE_FONT_METRICS:
+                if self.font_dictionary["/BaseFont"] == f"/{key}":
+                    self.width_map = CORE_FONT_METRICS[key].character_widths
                     break
 
     def word_width(self, word: str) -> float:
