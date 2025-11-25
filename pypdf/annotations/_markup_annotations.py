@@ -53,6 +53,28 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
             self[NameObject("/T")] = TextStringObject(title_bar)
 
 
+class AbstractPolyLine(MarkupAnnotation, ABC):
+    def __init__(self, vertices: list[Vertex] | ArrayObject[NumberObject], **kwargs):
+        super().__init__(**kwargs)
+        if len(vertices) == 0 or len(vertices) % 2 != 0:
+            raise ValueError("A polygon needs at least 1 vertex," \
+                " containing 1 horizontal and 1 vertical position")
+    
+    @staticmethod
+    def determineVertices(vertices: Union[list[Vertex], ArrayObject[NumberObject]]) -> tuple[list[Vertex], list[NumberObject]]:
+        coord_list = []
+        if type(vertices) is ArrayObject:
+            import itertools
+            coord_list = vertices
+            vertices = [vertex for vertex in itertools.batched(vertices, 2)]
+        else:
+            for x, y in vertices:
+                coord_list.append(NumberObject(x))
+                coord_list.append(NumberObject(y))
+        
+        return vertices, coord_list
+
+
 class Text(MarkupAnnotation):
     """
     A text annotation.
@@ -187,25 +209,15 @@ class Line(MarkupAnnotation):
         )
 
 
-class PolyLine(MarkupAnnotation):
+class PolyLine(AbstractPolyLine):
     def __init__(
         self,
         vertices: list[Vertex] | ArrayObject[NumberObject],
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        if len(vertices) == 0 or len(vertices) % 2 != 0:
-            raise ValueError("A polygon needs at least 1 vertex," \
-                " containing 1 horizontal and 1 vertical position")
-        coord_list = []
-        if type(vertices) is ArrayObject:
-            import itertools
-            coord_list = vertices
-            vertices = [vertex for vertex in itertools.batched(vertices, 2)]
-        else:
-            for x, y in vertices:
-                coord_list.append(NumberObject(x))
-                coord_list.append(NumberObject(y))
+
+        vertices, coord_list = self.determineVertices(vertices)
         self.update(
             {
                 NameObject("/Subtype"): NameObject("/PolyLine"),
@@ -287,26 +299,14 @@ class Ellipse(MarkupAnnotation):
             )
 
 
-class Polygon(MarkupAnnotation):
+class Polygon(AbstractPolyLine):
     def __init__(
         self,
         vertices: list[Vertex] | ArrayObject[NumberObject],
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        if len(vertices) == 0 or len(vertices) % 2 != 0:
-            raise ValueError("A polygon needs at least 1 vertex," \
-                " containing 1 horizontal and 1 vertical position")
-
-        coord_list = []
-        if type(vertices) is ArrayObject:
-            import itertools
-            coord_list = vertices
-            vertices = [vertex for vertex in itertools.batched(vertices, 2)]
-        else:
-            for x, y in vertices:
-                coord_list.append(NumberObject(x))
-                coord_list.append(NumberObject(y))
+        vertices, coord_list = self.determineVertices(vertices)
         self.update(
             {
                 NameObject("/Type"): NameObject("/Annot"),
