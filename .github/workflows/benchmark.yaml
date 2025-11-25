@@ -17,14 +17,14 @@ jobs:
         python-version: ["3.x"]
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: 'recursive'
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install requirements (Python 3)
+    - name: Install requirements
       run: |
         pip install -r requirements/ci-3.11.txt
     - name: Install pypdf
@@ -46,4 +46,3 @@ jobs:
         alert-threshold: '200%'
         comment-on-alert: true
         fail-on-alert: true
-        alert-comment-cc-users: '@MartinThoma'

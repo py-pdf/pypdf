@@ -1,7 +1,6 @@
 """Various constants, enums, and flags to aid readability."""
 
 from enum import Enum, IntFlag, auto, unique
-from typing import Dict, Tuple
 
 
 class StrEnum(str, Enum):  # Once we are on Python 3.11+: enum.StrEnum
@@ -20,12 +19,12 @@ class Core:
 
 
 class TrailerKeys:
-    ROOT = "/Root"
-    ENCRYPT = "/Encrypt"
-    ID = "/ID"
-    INFO = "/Info"
     SIZE = "/Size"
     PREV = "/Prev"
+    ROOT = "/Root"
+    ENCRYPT = "/Encrypt"
+    INFO = "/Info"
+    ID = "/ID"
 
 
 class CatalogAttributes:
@@ -42,7 +41,7 @@ class EncryptionDictAttributes:
     """
 
     R = "/R"  # number, required; revision of the standard security handler
-    O = "/O"  # 32-byte string, required  # noqa
+    O = "/O"  # 32-byte string, required  # noqa: E741
     U = "/U"  # 32-byte string, required
     P = "/P"  # integer flag, required; permitted operations
     ENCRYPT_METADATA = "/EncryptMetadata"  # boolean flag, optional
@@ -97,9 +96,9 @@ class UserAccessPermissions(IntFlag):
         """Check if the given reserved name defaults to 1 = active."""
         return name not in {"R1", "R2"}
 
-    def to_dict(self) -> Dict[str, bool]:
+    def to_dict(self) -> dict[str, bool]:
         """Convert the given flag value to a corresponding verbose name mapping."""
-        result: Dict[str, bool] = {}
+        result: dict[str, bool] = {}
         for name, flag in UserAccessPermissions.__members__.items():
             if UserAccessPermissions._is_reserved(name):
                 continue
@@ -107,7 +106,7 @@ class UserAccessPermissions(IntFlag):
         return result
 
     @classmethod
-    def from_dict(cls, value: Dict[str, bool]) -> "UserAccessPermissions":
+    def from_dict(cls, value: dict[str, bool]) -> "UserAccessPermissions":
         """Convert the verbose name mapping to the corresponding flag value."""
         value_copy = value.copy()
         result = cls(0)
@@ -143,14 +142,6 @@ class Resources:
     FONT = "/Font"  # dictionary, optional
     PROC_SET = "/ProcSet"  # array, optional
     PROPERTIES = "/Properties"  # dictionary, optional
-
-
-class Ressources:  # deprecated
-    """
-    Use :class: `Resources` instead.
-
-    .. deprecated:: 5.0.0
-    """
 
 
 class PagesAttributes:
@@ -240,11 +231,12 @@ class FilterTypes(StrEnum):
     ASCII_HEX_DECODE = "/ASCIIHexDecode"  # abbreviation: AHx
     ASCII_85_DECODE = "/ASCII85Decode"  # abbreviation: A85
     LZW_DECODE = "/LZWDecode"  # abbreviation: LZW
-    FLATE_DECODE = "/FlateDecode"  # abbreviation: Fl, PDF 1.2
+    FLATE_DECODE = "/FlateDecode"  # abbreviation: Fl
     RUN_LENGTH_DECODE = "/RunLengthDecode"  # abbreviation: RL
     CCITT_FAX_DECODE = "/CCITTFaxDecode"  # abbreviation: CCF
     DCT_DECODE = "/DCTDecode"  # abbreviation: DCT
     JPX_DECODE = "/JPXDecode"
+    JBIG2_DECODE = "/JBIG2Decode"
 
 
 class FilterTypeAbbreviations:
@@ -253,7 +245,7 @@ class FilterTypeAbbreviations:
     AHx = "/AHx"
     A85 = "/A85"
     LZW = "/LZW"
-    FL = "/Fl"  # FlateDecode
+    FL = "/Fl"
     RL = "/RL"
     CCF = "/CCF"
     DCT = "/DCT"
@@ -324,19 +316,20 @@ class TypArguments:
 class TypFitArguments:
     """Table 8.2 of the PDF 1.7 reference."""
 
-    FIT = "/Fit"
-    FIT_V = "/FitV"
-    FIT_BV = "/FitBV"
-    FIT_B = "/FitB"
-    FIT_H = "/FitH"
-    FIT_BH = "/FitBH"
-    FIT_R = "/FitR"
     XYZ = "/XYZ"
+    FIT = "/Fit"
+    FIT_H = "/FitH"
+    FIT_V = "/FitV"
+    FIT_R = "/FitR"
+    FIT_B = "/FitB"
+    FIT_BH = "/FitBH"
+    FIT_BV = "/FitBV"
 
 
 class GoToActionArguments:
     S = "/S"  # name, required: type of action
-    D = "/D"  # name / byte string /array, required: Destination to jump to
+    D = "/D"  # name, byte string, or array, required: destination to jump to
+    SD = "/SD"  # array, optional: structure destination to jump to
 
 
 class AnnotationDictionaryAttributes:
@@ -449,7 +442,7 @@ class FieldDictionaryAttributes:
         """Ch"""
 
     @classmethod
-    def attributes(cls) -> Tuple[str, ...]:
+    def attributes(cls) -> tuple[str, ...]:
         """
         Get a tuple of all the attributes present in a Field Dictionary.
 
@@ -476,7 +469,7 @@ class FieldDictionaryAttributes:
         )
 
     @classmethod
-    def attributes_dict(cls) -> Dict[str, str]:
+    def attributes_dict(cls) -> dict[str, str]:
         """
         Get a dictionary of attribute keys and their human-readable names.
 
@@ -508,7 +501,7 @@ class CheckboxRadioButtonAttributes:
     Opt = "/Opt"  # Options, Optional
 
     @classmethod
-    def attributes(cls) -> Tuple[str, ...]:
+    def attributes(cls) -> tuple[str, ...]:
         """
         Get a tuple of all the attributes present in a Field Dictionary.
 
@@ -524,7 +517,7 @@ class CheckboxRadioButtonAttributes:
         return (cls.Opt,)
 
     @classmethod
-    def attributes_dict(cls) -> Dict[str, str]:
+    def attributes_dict(cls) -> dict[str, str]:
         """
         Get a dictionary of attribute keys and their human-readable names.
 
@@ -720,3 +713,70 @@ class ImageType(IntFlag):
     DRAWING_IMAGES = auto()
     ALL = XOBJECT_IMAGES | INLINE_IMAGES | DRAWING_IMAGES
     IMAGES = ALL  # for consistency with ObjectDeletionFlag
+
+
+_INLINE_IMAGE_VALUE_MAPPING = {
+    "/G": "/DeviceGray",
+    "/RGB": "/DeviceRGB",
+    "/CMYK": "/DeviceCMYK",
+    "/I": "/Indexed",
+    "/AHx": "/ASCIIHexDecode",
+    "/A85": "/ASCII85Decode",
+    "/LZW": "/LZWDecode",
+    "/Fl": "/FlateDecode",
+    "/RL": "/RunLengthDecode",
+    "/CCF": "/CCITTFaxDecode",
+    "/DCT": "/DCTDecode",
+    "/DeviceGray": "/DeviceGray",
+    "/DeviceRGB": "/DeviceRGB",
+    "/DeviceCMYK": "/DeviceCMYK",
+    "/Indexed": "/Indexed",
+    "/ASCIIHexDecode": "/ASCIIHexDecode",
+    "/ASCII85Decode": "/ASCII85Decode",
+    "/LZWDecode": "/LZWDecode",
+    "/FlateDecode": "/FlateDecode",
+    "/RunLengthDecode": "/RunLengthDecode",
+    "/CCITTFaxDecode": "/CCITTFaxDecode",
+    "/DCTDecode": "/DCTDecode",
+    "/RelativeColorimetric": "/RelativeColorimetric",
+}
+
+_INLINE_IMAGE_KEY_MAPPING = {
+    "/BPC": "/BitsPerComponent",
+    "/CS": "/ColorSpace",
+    "/D": "/Decode",
+    "/DP": "/DecodeParms",
+    "/F": "/Filter",
+    "/H": "/Height",
+    "/W": "/Width",
+    "/I": "/Interpolate",
+    "/Intent": "/Intent",
+    "/IM": "/ImageMask",
+    "/BitsPerComponent": "/BitsPerComponent",
+    "/ColorSpace": "/ColorSpace",
+    "/Decode": "/Decode",
+    "/DecodeParms": "/DecodeParms",
+    "/Filter": "/Filter",
+    "/Height": "/Height",
+    "/Width": "/Width",
+    "/Interpolate": "/Interpolate",
+    "/ImageMask": "/ImageMask",
+}
+
+
+class AFRelationship:
+    """
+    Associated file relationship types, defining the relationship between
+    the PDF component and the associated file.
+
+    Defined in table 43 of the PDF 2.0 reference.
+    """
+
+    SOURCE = "/Source"  # Original content source
+    DATA = "/Data"  # Base data for visual presentation
+    ALTERNATIVE = "/Alternative"  # Alternative content representation
+    SUPPLEMENT = "/Supplement"  # Supplemental representation of original source/data
+    ENCRYPTED_PAYLOAD = "/EncryptedPayload"  # Encrypted payload document
+    FORM_DATA = "/FormData"  # Data associated with AcroForm of this PDF
+    SCHEMA = "/Schema"  # Schema definition for associated object
+    UNSPECIFIED = "/Unspecified"  # Not known or cannot be described with values

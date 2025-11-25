@@ -1,9 +1,10 @@
 """manage the PDF transform stack during "layout" mode text extraction"""
 
 from collections import ChainMap, Counter
-from typing import Any, Dict, List, MutableMapping, Union
-from typing import ChainMap as ChainMapType
-from typing import Counter as CounterType
+from collections import ChainMap as ChainMapType
+from collections import Counter as CounterType
+from collections.abc import MutableMapping
+from typing import Any, Union
 
 from ...errors import PdfReadError
 from .. import mult
@@ -43,10 +44,11 @@ class TextStateManager:
         self.Tz: float = 100.0
         self.TL: float = 0.0
         self.Ts: float = 0.0
+        self.font_stack: list[tuple[Union[Font, None], Union[int, float]]] = []
         self.font: Union[Font, None] = None
         self.font_size: Union[int, float] = 0
 
-    def set_state_param(self, op: bytes, value: Union[float, List[Any]]) -> None:
+    def set_state_param(self, op: bytes, value: Union[float, list[Any]]) -> None:
         """
         Set a text state parameter. Supports Tc, Tz, Tw, TL, and Ts operators.
 
@@ -130,7 +132,7 @@ class TextStateManager:
         _d: float = 1.0,
         _e: float = 0.0,
         _f: float = 0.0,
-    ) -> Dict[int, float]:
+    ) -> dict[int, float]:
         """Only a/b/c/d/e/f matrix params"""
         return dict(zip(range(6), map(float, (_a, _b, _c, _d, _e, _f))))
 
@@ -167,6 +169,7 @@ class TextStateManager:
 
     def remove_q(self) -> TextStateManagerChainMapType:
         """Rewind to stack prior state after closing a 'q' with internal 'cm' ops"""
+        self.font, self.font_size = self.font_stack.pop(-1)
         self.transform_stack = self.reset_tm()
         self.transform_stack.maps = self.transform_stack.maps[
             self.q_queue.pop(self.q_depth.pop(), 0) :
@@ -175,6 +178,7 @@ class TextStateManager:
 
     def add_q(self) -> None:
         """Add another level to q_queue"""
+        self.font_stack.append((self.font, self.font_size))
         self.q_depth.append(len(self.q_depth))
 
     def add_cm(self, *args: Any) -> TextStateManagerChainMapType:
@@ -184,13 +188,13 @@ class TextStateManager:
         self.transform_stack = self.transform_stack.new_child(self.new_transform(*args))
         return self.transform_stack
 
-    def _complete_matrix(self, operands: List[float]) -> List[float]:
+    def _complete_matrix(self, operands: list[float]) -> list[float]:
         """Adds a, b, c, and d to an "e/f only" operand set (e.g Td)"""
         if len(operands) == 2:  # this is a Td operator or equivalent
             operands = [1.0, 0.0, 0.0, 1.0, *operands]
         return operands
 
-    def add_tm(self, operands: List[float]) -> TextStateManagerChainMapType:
+    def add_tm(self, operands: list[float]) -> TextStateManagerChainMapType:
         """Append a text transform matrix"""
         self.transform_stack = self.transform_stack.new_child(
             self.new_transform(  # type: ignore[misc]
@@ -199,7 +203,7 @@ class TextStateManager:
         )
         return self.transform_stack
 
-    def add_trm(self, operands: List[float]) -> TextStateManagerChainMapType:
+    def add_trm(self, operands: list[float]) -> TextStateManagerChainMapType:
         """Append a text rendering transform matrix"""
         self.transform_stack = self.transform_stack.new_child(
             self.new_transform(  # type: ignore[misc]
@@ -209,7 +213,7 @@ class TextStateManager:
         return self.transform_stack
 
     @property
-    def effective_transform(self) -> List[float]:
+    def effective_transform(self) -> list[float]:
         """Current effective transform accounting for cm, tm, and trm transforms"""
         eff_transform = [*self.transform_stack.maps[0].values()]
         for transform in self.transform_stack.maps[1:]:

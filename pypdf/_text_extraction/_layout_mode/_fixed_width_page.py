@@ -1,9 +1,10 @@
 """Extract PDF text preserving the layout of the source PDF"""
 
+from collections.abc import Iterator
 from itertools import groupby
 from math import ceil
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, TypedDict
+from typing import Any, Literal, Optional, TypedDict
 
 from ..._utils import logger_warning
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
@@ -60,12 +61,12 @@ def bt_group(tj_op: TextStateParams, rendered_text: str, dispaced_tx: float) -> 
 
 
 def recurs_to_target_op(
-    ops: Iterator[Tuple[List[Any], bytes]],
+    ops: Iterator[tuple[list[Any], bytes]],
     text_state_mgr: TextStateManager,
     end_target: Literal[b"Q", b"ET"],
-    fonts: Dict[str, Font],
+    fonts: dict[str, Font],
     strip_rotated: bool = True,
-) -> Tuple[List[BTGroup], List[TextStateParams]]:
+) -> tuple[list[BTGroup], list[TextStateParams]]:
     """
     Recurse operators between BT/ET and/or q/Q operators managing the transform
     stack and capturing text positioning and rendering data.
@@ -81,20 +82,17 @@ def recurs_to_target_op(
 
     """
     # 1 entry per line of text rendered within each BT/ET operation.
-    bt_groups: List[BTGroup] = []
+    bt_groups: list[BTGroup] = []
 
     # 1 entry per text show operator (Tj/TJ/'/")
-    tj_ops: List[TextStateParams] = []
+    tj_ops: list[TextStateParams] = []
 
     if end_target == b"Q":
         # add new q level. cm's added at this level will be popped at next b'Q'
         text_state_mgr.add_q()
 
-    while True:
-        try:
-            operands, op = next(ops)
-        except StopIteration:
-            return bt_groups, tj_ops
+    for operands, op in ops:
+        # The loop is broken by the end target, or exits normally when there are no more ops.
         if op == end_target:
             if op == b"Q":
                 text_state_mgr.remove_q()
@@ -109,6 +107,8 @@ def recurs_to_target_op(
                     tj_ops
                 ):  # ... build text from new Tj operators
                     if strip_rotated and _tj.rotated:
+                        continue
+                    if not _tj.font.interpretable:  # generates warning
                         continue
                     # if the y position of the text is greater than the font height, assume
                     # the text is on a new line and start a new group
@@ -149,7 +149,7 @@ def recurs_to_target_op(
                 if _text:
                     bt_groups.append(bt_group(tj_ops[bt_idx], _text, last_displaced_tx))
                 text_state_mgr.reset_tm()
-            return bt_groups, tj_ops
+            break
         if op == b"q":
             bts, tjs = recurs_to_target_op(
                 ops, text_state_mgr, b"Q", fonts, strip_rotated
@@ -197,11 +197,17 @@ def recurs_to_target_op(
             text_state_mgr.set_font(fonts[operands[0]], operands[1])
         else:  # handle Tc, Tw, Tz, TL, and Ts operators
             text_state_mgr.set_state_param(op, operands)
+    else:
+        logger_warning(
+            f"Unbalanced target operations, expected {end_target!r}.",
+            __name__,
+        )
+    return bt_groups, tj_ops
 
 
 def y_coordinate_groups(
-    bt_groups: List[BTGroup], debug_path: Optional[Path] = None
-) -> Dict[int, List[BTGroup]]:
+    bt_groups: list[BTGroup], debug_path: Optional[Path] = None
+) -> dict[int, list[BTGroup]]:
     """
     Group text operations by rendered y coordinate, i.e. the line number.
 
@@ -239,7 +245,7 @@ def y_coordinate_groups(
             last_ty = ty
             last_txs = txs
     if debug_path:  # pragma: no cover
-        import json
+        import json  # noqa: PLC0415
 
         debug_path.joinpath("bt_groups.json").write_text(
             json.dumps(ty_groups, indent=2, default=str), "utf-8"
@@ -248,11 +254,11 @@ def y_coordinate_groups(
 
 
 def text_show_operations(
-    ops: Iterator[Tuple[List[Any], bytes]],
-    fonts: Dict[str, Font],
+    ops: Iterator[tuple[list[Any], bytes]],
+    fonts: dict[str, Font],
     strip_rotated: bool = True,
     debug_path: Optional[Path] = None,
-) -> List[BTGroup]:
+) -> list[BTGroup]:
     """
     Extract text from BT/ET operator pairs.
 
@@ -267,36 +273,33 @@ def text_show_operations(
 
     """
     state_mgr = TextStateManager()  # transformation stack manager
-    debug = bool(debug_path)
-    bt_groups: List[BTGroup] = []  # BT operator dict
-    tj_debug: List[TextStateParams] = []  # Tj/TJ operator data (debug only)
-    try:
-        warned_rotation = False
-        while True:
-            operands, op = next(ops)
-            if op in (b"BT", b"q"):
-                bts, tjs = recurs_to_target_op(
-                    ops, state_mgr, b"ET" if op == b"BT" else b"Q", fonts, strip_rotated
-                )
-                if not warned_rotation and any(tj.rotated for tj in tjs):
-                    warned_rotation = True
-                    if strip_rotated:
-                        logger_warning(
-                            "Rotated text discovered. Output will be incomplete.",
-                            __name__,
-                        )
-                    else:
-                        logger_warning(
-                            "Rotated text discovered. Layout will be degraded.",
-                            __name__,
-                        )
-                bt_groups.extend(bts)
-                if debug:  # pragma: no cover
-                    tj_debug.extend(tjs)
-            else:  # set Tc, Tw, Tz, TL, and Ts if required. ignores all other ops
-                state_mgr.set_state_param(op, operands)
-    except StopIteration:
-        pass
+    bt_groups: list[BTGroup] = []  # BT operator dict
+    tj_ops: list[TextStateParams] = []  # Tj/TJ operator data
+    for operands, op in ops:
+        if op in (b"BT", b"q"):
+            bts, tjs = recurs_to_target_op(
+                ops, state_mgr, b"ET" if op == b"BT" else b"Q", fonts, strip_rotated
+            )
+            bt_groups.extend(bts)
+            tj_ops.extend(tjs)
+        elif op == b"Tf":
+            state_mgr.set_font(fonts[operands[0]], operands[1])
+        else:  # set Tc, Tw, Tz, TL, and Ts if required. ignores all other ops
+            state_mgr.set_state_param(op, operands)
+
+    if any(tj.rotated for tj in tj_ops):
+        if strip_rotated:
+            logger_warning(
+                "Rotated text discovered. Output will be incomplete.", __name__
+            )
+        else:
+            logger_warning(
+                "Rotated text discovered. Layout will be degraded.", __name__
+            )
+    if not all(tj.font.interpretable for tj in tj_ops):
+        logger_warning(
+            "PDF contains an uninterpretable font. Output will be incomplete.", __name__
+        )
 
     # left align the data, i.e. decrement all tx values by min(tx)
     min_x = min((x["tx"] for x in bt_groups), default=0.0)
@@ -308,21 +311,21 @@ def text_show_operations(
     ]
 
     if debug_path:  # pragma: no cover
-        import json
+        import json  # noqa: PLC0415
 
         debug_path.joinpath("bts.json").write_text(
             json.dumps(bt_groups, indent=2, default=str), "utf-8"
         )
         debug_path.joinpath("tjs.json").write_text(
             json.dumps(
-                tj_debug, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)
+                tj_ops, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)
             ),
             "utf-8",
         )
     return bt_groups
 
 
-def fixed_char_width(bt_groups: List[BTGroup], scale_weight: float = 1.25) -> float:
+def fixed_char_width(bt_groups: list[BTGroup], scale_weight: float = 1.25) -> float:
     """
     Calculate average character width weighted by the length of the rendered
     text in each sample for conversion to fixed-width layout.
@@ -343,7 +346,7 @@ def fixed_char_width(bt_groups: List[BTGroup], scale_weight: float = 1.25) -> fl
 
 
 def fixed_width_page(
-    ty_groups: Dict[int, List[BTGroup]], char_width: float, space_vertically: bool, font_height_weight: float
+    ty_groups: dict[int, list[BTGroup]], char_width: float, space_vertically: bool, font_height_weight: float
 ) -> str:
     """
     Generate page text from text operations grouped by rendered y coordinate.
@@ -359,12 +362,13 @@ def fixed_width_page(
             layout in the source pdf.
 
     """
-    lines: List[str] = []
+    lines: list[str] = []
     last_y_coord = 0
     for y_coord, line_data in ty_groups.items():
         if space_vertically and lines:
-            blank_lines = (
-                int(abs(y_coord - last_y_coord) / (line_data[0]["font_height"] * font_height_weight)) - 1
+            fh = line_data[0]["font_height"]
+            blank_lines = 0 if fh == 0 else (
+                int(abs(y_coord - last_y_coord) / (fh * font_height_weight)) - 1
             )
             lines.extend([""] * blank_lines)
         line = ""

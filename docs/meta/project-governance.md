@@ -12,7 +12,7 @@ capable of splitting, merging, cropping, and transforming the pages of PDF files
   [the package on PyPI](https://pypi.org/project/pypdf/), and
   [the website on GitHub](https://py-pdf.github.io/pypdf/dev/bench/).
 * A **maintainer** is a person who has technical permissions to change one or
-  more part of the projects. It is a person who is driven to keep the project running
+  more parts of the projects. It is a person driven to keep the project running
   and improving.
 * A **contributor** is a person who contributes to the project. That could be
   through writing code - in the best case through forking and creating a pull
@@ -62,7 +62,7 @@ The project language is (american) English. All documentation and issues must
 be written in English to ensure that the community can understand it.
 
 We appreciate the fact that large parts of the community don't have English
-as their mother tongue. We try our best to understand others -
+as their native language. We try our best to understand others -
 [automatic translators](https://translate.google.com/) might help.
 
 
@@ -117,7 +117,7 @@ or "bump" comments for desired features. People can express this with 👍 / �
 reactions.
 
 [Discussions](https://github.com/py-pdf/pypdf/discussions) are open. No comments
-will be deleted there - except if they are clearly unrelated spam or only
+will be deleted there - except if they are unrelated spam or only
 try to insult people (luckily, the community was very respectful so far 🤞)
 
 
@@ -133,7 +133,9 @@ maintainers do their best to fix that in a timely manner - please
 
 ## People
 
-* Martin Thoma is benevolent dictator since April 2022.
+* [stefan6419846](https://github.com/stefan6419846) is the benevolent dictator since January 2025
+* [Martin Thoma](https://github.com/MartinThoma) was the benevolent dictator from April 2022 to January 2025.
+  He still has most of the permissions as a fallback.
 * Maintainers:
     * Matthew Stamy (mstamy2) was the benevolent dictator for a long time.
       He still is around on GitHub once in a while and has permissions on PyPI and GitHub.

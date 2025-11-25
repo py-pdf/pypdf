@@ -5,7 +5,6 @@ import subprocess
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Dict, List, Tuple
 
 GH_ORG = "py-pdf"
 GH_PROJECT = "pypdf"
@@ -81,7 +80,7 @@ def adjust_version_py(version: str) -> None:
 
 def get_version_interactive(new_version: str, changes: str) -> str:
     """Get the new __version__ interactively."""
-    from rich.prompt import Prompt
+    from rich.prompt import Prompt  # noqa: PLC0415
 
     print("The changes are:")
     print(changes)
@@ -138,7 +137,7 @@ def write_release_msg_file(
 
 def strip_header(md: str) -> str:
     """Remove the 'CHANGELOG' header."""
-    return md.lstrip("# CHANGELOG").lstrip()  # noqa
+    return md.removeprefix("# CHANGELOG").lstrip()
 
 
 def version_bump(git_tag: str) -> str:
@@ -169,8 +168,7 @@ def get_changelog(changelog_path: str) -> str:
 
     """
     with open(changelog_path, encoding="utf-8") as fh:
-        changelog = fh.read()
-    return changelog
+        return fh.read()
 
 
 def write_changelog(new_changelog: str, changelog_path: str) -> None:
@@ -186,7 +184,7 @@ def write_changelog(new_changelog: str, changelog_path: str) -> None:
         fh.write(new_changelog)
 
 
-def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
+def get_formatted_changes(git_tag: str) -> tuple[str, str]:
     """
     Format the changes done since the last tag.
 
@@ -255,8 +253,8 @@ def get_formatted_changes(git_tag: str) -> Tuple[str, str]:
     if grouped:
         output += "\n### Other\n"
         output_with_user += "\n### Other\n"
-        for prefix in grouped:
-            for commit in grouped[prefix]:
+        for prefix, commits in grouped.items():
+            for commit in commits:
                 output += f"- {prefix}: {commit['msg']}\n"
                 output_with_user += (
                     f"- {prefix}: {commit['msg']} by @{commit['author']}\n"
@@ -273,15 +271,12 @@ def get_most_recent_git_tag() -> str:
         Most recently created git tag.
 
     """
-    git_tag = str(
-        subprocess.check_output(
-            ["git", "describe", "--tag", "--abbrev=0"], stderr=subprocess.STDOUT
-        )
-    ).strip("'b\\n")
-    return git_tag
+    return subprocess.check_output(
+        ["git", "describe", "--tag", "--abbrev=0"], stderr=subprocess.STDOUT, text=True
+    ).strip()
 
 
-def get_author_mapping(line_count: int) -> Dict[str, str]:
+def get_author_mapping(line_count: int) -> dict[str, str]:
     """
     Get the authors for each commit.
 
@@ -295,7 +290,7 @@ def get_author_mapping(line_count: int) -> Dict[str, str]:
     """
     per_page = min(line_count, 100)
     page = 1
-    mapping: Dict[str, str] = {}
+    mapping: dict[str, str] = {}
     for _ in range(0, line_count, per_page):
         with urllib.request.urlopen(
             f"https://api.github.com/repos/{GH_ORG}/{GH_PROJECT}/commits?per_page={per_page}&page={page}"
@@ -307,7 +302,7 @@ def get_author_mapping(line_count: int) -> Dict[str, str]:
     return mapping
 
 
-def get_git_commits_since_tag(git_tag: str) -> List[Change]:
+def get_git_commits_since_tag(git_tag: str) -> list[Change]:
     """
     Get all commits since the last tag.
 
@@ -338,7 +333,7 @@ def get_git_commits_since_tag(git_tag: str) -> List[Change]:
     return [parse_commit_line(line, authors) for line in lines if line != ""]
 
 
-def parse_commit_line(line: str, authors: Dict[str, str]) -> Change:
+def parse_commit_line(line: str, authors: dict[str, str]) -> Change:
     """
     Parse the first line of a git commit message.
 

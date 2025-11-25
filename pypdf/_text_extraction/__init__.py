@@ -5,13 +5,13 @@ Some parts are still in _page.py. In doubt, they will stay there.
 """
 
 import math
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
 
 CUSTOM_RTL_MIN: int = -1
 CUSTOM_RTL_MAX: int = -1
-CUSTOM_RTL_SPECIAL_CHARS: List[int] = []
+CUSTOM_RTL_SPECIAL_CHARS: list[int] = []
 LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS: int = 5
 
 
@@ -22,8 +22,8 @@ class OrientationNotFoundError(Exception):
 def set_custom_rtl(
     _min: Union[str, int, None] = None,
     _max: Union[str, int, None] = None,
-    specials: Union[str, List[int], None] = None,
-) -> Tuple[int, int, List[int]]:
+    specials: Union[str, list[int], None] = None,
+) -> tuple[int, int, list[int]]:
     """
     Change the Right-To-Left and special characters custom parameters.
 
@@ -65,7 +65,7 @@ def set_custom_rtl(
     return CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
 
-def mult(m: List[float], n: List[float]) -> List[float]:
+def mult(m: list[float], n: list[float]) -> list[float]:
     return [
         m[0] * n[0] + m[1] * n[2],
         m[0] * n[1] + m[1] * n[3],
@@ -76,33 +76,32 @@ def mult(m: List[float], n: List[float]) -> List[float]:
     ]
 
 
-def orient(m: List[float]) -> int:
+def orient(m: list[float]) -> int:
     if m[3] > 1e-6:
         return 0
-    elif m[3] < -1e-6:
+    if m[3] < -1e-6:
         return 180
-    elif m[1] > 0:
+    if m[1] > 0:
         return 90
-    else:
-        return 270
+    return 270
 
 
 def crlf_space_check(
     text: str,
-    cmtm_prev: Tuple[List[float], List[float]],
-    cmtm_matrix: Tuple[List[float], List[float]],
-    memo_cmtm: Tuple[List[float], List[float]],
-    cmap: Tuple[
-        Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+    cmtm_prev: tuple[list[float], list[float]],
+    cmtm_matrix: tuple[list[float], list[float]],
+    memo_cmtm: tuple[list[float], list[float]],
+    cmap: tuple[
+        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
     ],
-    orientations: Tuple[int, ...],
+    orientations: tuple[int, ...],
     output: str,
     font_size: float,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
     str_widths: float,
     spacewidth: float,
     str_height: float,
-) -> Tuple[str, str, List[float], List[float]]:
+) -> tuple[str, str, list[float], list[float]]:
     cm_prev = cmtm_prev[0]
     tm_prev = cmtm_prev[1]
     cm_matrix = cmtm_matrix[0]
@@ -155,14 +154,14 @@ def crlf_space_check(
 
 
 def get_text_operands(
-    operands: List[Union[str, TextStringObject]],
-    cm_matrix: List[float],
-    tm_matrix: List[float],
-    cmap: Tuple[
-        Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+    operands: list[Union[str, TextStringObject]],
+    cm_matrix: list[float],
+    tm_matrix: list[float],
+    cmap: tuple[
+        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
     ],
-    orientations: Tuple[int, ...]
-) -> Tuple[str, bool]:
+    orientations: tuple[int, ...]
+) -> tuple[str, bool]:
     t: str = ""
     is_str_operands = False
     m = mult(tm_matrix, cm_matrix)
@@ -198,16 +197,16 @@ def get_text_operands(
 
 def get_display_str(
     text: str,
-    cm_matrix: List[float],
-    tm_matrix: List[float],
-    cmap: Tuple[
-        Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
+    cm_matrix: list[float],
+    tm_matrix: list[float],
+    cmap: tuple[
+        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
     ],
     text_operands: str,
     font_size: float,
     rtl_dir: bool,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
-) -> Tuple[str, bool]:
+) -> tuple[str, bool]:
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
     for x in [cmap[1].get(x, x) for x in text_operands]:
         # x can be a sequence of bytes ; ex: habibi.pdf

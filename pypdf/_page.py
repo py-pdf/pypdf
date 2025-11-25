@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
@@ -35,15 +36,8 @@ from pathlib import Path
 from typing import (
     Any,
     Callable,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
     Literal,
     Optional,
-    Sequence,
-    Set,
-    Tuple,
     Union,
     cast,
     overload,
@@ -51,20 +45,12 @@ from typing import (
 
 from ._cmap import (
     build_char_map,
-    build_font_width_map,
-    compute_font_width,
-    get_actual_str_key,
-    unknown_char_map,
 )
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
-    OrientationNotFoundError,
     _layout_mode,
-    crlf_space_check,
-    get_display_str,
-    get_text_operands,
-    mult,
 )
+from ._text_extraction._text_extractor import TextExtraction
 from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
@@ -72,6 +58,7 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
+from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING
 from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
@@ -91,7 +78,6 @@ from .generic import (
     PdfObject,
     RectangleObject,
     StreamObject,
-    TextStringObject,
     is_null_or_none,
 )
 
@@ -103,7 +89,7 @@ except ImportError:
     Image = object  # type: ignore
     pil_not_imported = True  # error will be raised only when using images
 
-MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
+MERGE_CROP_BOX = "cropbox"  # pypdf <= 3.4.0 used "trimbox"
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -123,8 +109,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
 
 
 def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
-    name = NameObject(name)
-    self[name] = value
+    self[NameObject(name)] = value
 
 
 def _delete_rectangle(self: Any, name: str) -> None:
@@ -144,7 +129,7 @@ class Transformation:
     Represent a 2D transformation.
 
     The transformation between two coordinate systems is represented by a 3-by-3
-    transformation matrix matrix with the following form::
+    transformation matrix with the following form::
 
         a b 0
         c d 0
@@ -161,15 +146,14 @@ class Transformation:
 
 
     Example:
-        >>> from pypdf import Transformation
+        >>> from pypdf import PdfWriter, Transformation
+        >>> page = PdfWriter().add_blank_page(800, 600)
         >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
         >>> page.add_transformation(op)
 
     """
 
-    # 9.5.4 Coordinate Systems for 3D
-    # 4.2.2 Common Transformations
-    def __init__(self, ctm: CompressedTransformationMatrix = (1, 0, 0, 1, 0, 0)):
+    def __init__(self, ctm: CompressedTransformationMatrix = (1, 0, 0, 1, 0, 0)) -> None:
         self.ctm = ctm
 
     @property
@@ -206,6 +190,13 @@ class Transformation:
             matrix[2][1],
         )
 
+    def _to_cm(self) -> str:
+        # Returns the cm operation string for the given transformation matrix
+        return (
+            f"{self.ctm[0]:.4f} {self.ctm[1]:.4f} {self.ctm[2]:.4f} "
+            f"{self.ctm[3]:.4f} {self.ctm[4]:.4f} {self.ctm[5]:.4f} cm"
+        )
+
     def transform(self, m: "Transformation") -> "Transformation":
         """
         Apply one transformation to another.
@@ -217,9 +208,11 @@ class Transformation:
             A new ``Transformation`` instance
 
         Example:
-            >>> from pypdf import Transformation
+            >>> from pypdf import PdfWriter, Transformation
+            >>> height, width = 40, 50
+            >>> page = PdfWriter().add_blank_page(800, 600)
             >>> op = Transformation((1, 0, 0, -1, 0, height)) # vertical mirror
-            >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, iwidth, 0))) # horizontal mirror
+            >>> op = Transformation().transform(Transformation((-1, 0, 0, 1, width, 0)))  # horizontal mirror
             >>> page.add_transformation(op)
 
         """
@@ -294,25 +287,26 @@ class Transformation:
         return f"Transformation(ctm={self.ctm})"
 
     @overload
-    def apply_on(self, pt: List[float], as_object: bool = False) -> List[float]:
+    def apply_on(self, pt: list[float], as_object: bool = False) -> list[float]:
         ...
 
     @overload
     def apply_on(
-        self, pt: Tuple[float, float], as_object: bool = False
-    ) -> Tuple[float, float]:
+        self, pt: tuple[float, float], as_object: bool = False
+    ) -> tuple[float, float]:
         ...
 
     def apply_on(
         self,
-        pt: Union[Tuple[float, float], List[float]],
+        pt: Union[tuple[float, float], list[float]],
         as_object: bool = False,
-    ) -> Union[Tuple[float, float], List[float]]:
+    ) -> Union[tuple[float, float], list[float]]:
         """
         Apply the transformation matrix on the given point.
 
         Args:
-            pt: A tuple or list representing the point in the form (x, y)
+            pt: A tuple or list representing the point in the form (x, y).
+            as_object: If True, return items as FloatObject, otherwise as plain floats.
 
         Returns:
             A tuple or list representing the transformed point in the form (x', y')
@@ -380,11 +374,11 @@ class ImageFile:
                 "It can be installed via 'pip install pypdf[image]'"
             )
 
-        from ._reader import PdfReader
+        from ._reader import PdfReader  # noqa: PLC0415
 
         # to prevent circular import
-        from .filters import _xobj_to_image
-        from .generic import DictionaryObject, PdfObject
+        from .filters import _xobj_to_image  # noqa: PLC0415
+        from .generic import DictionaryObject, PdfObject  # noqa: PLC0415
 
         if self.indirect_reference is None:
             raise TypeError("Cannot update an inline image.")
@@ -395,16 +389,18 @@ class ImageFile:
         b = BytesIO()
         new_image.save(b, "PDF", **kwargs)
         reader = PdfReader(b)
-        assert reader.pages[0].images[0].indirect_reference is not None
+        page_image = reader.pages[0].images[0]
+        assert page_image.indirect_reference is not None
         self.indirect_reference.pdf._objects[self.indirect_reference.idnum - 1] = (
-            reader.pages[0].images[0].indirect_reference.get_object()
+            page_image.indirect_reference.get_object()
         )
         cast(
             PdfObject, self.indirect_reference.get_object()
         ).indirect_reference = self.indirect_reference
         # change the object attributes
         extension, byte_stream, img = _xobj_to_image(
-            cast(DictionaryObject, self.indirect_reference.get_object())
+            cast(DictionaryObject, self.indirect_reference.get_object()),
+            pillow_parameters=kwargs,
         )
         assert extension is not None
         self.name = self.name[: self.name.rfind(".")] + extension
@@ -427,8 +423,8 @@ class VirtualListImages(Sequence[ImageFile]):
 
     def __init__(
         self,
-        ids_function: Callable[[], List[Union[str, List[str]]]],
-        get_function: Callable[[Union[str, List[str], Tuple[str]]], ImageFile],
+        ids_function: Callable[[], list[Union[str, list[str]]]],
+        get_function: Callable[[Union[str, list[str], tuple[str]]], ImageFile],
     ) -> None:
         self.ids_function = ids_function
         self.get_function = get_function
@@ -437,14 +433,14 @@ class VirtualListImages(Sequence[ImageFile]):
     def __len__(self) -> int:
         return len(self.ids_function())
 
-    def keys(self) -> List[Union[str, List[str]]]:
+    def keys(self) -> list[Union[str, list[str]]]:
         return self.ids_function()
 
-    def items(self) -> List[Tuple[Union[str, List[str]], ImageFile]]:
+    def items(self) -> list[tuple[Union[str, list[str]], ImageFile]]:
         return [(x, self[x]) for x in self.ids_function()]
 
     @overload
-    def __getitem__(self, index: Union[int, str, List[str]]) -> ImageFile:
+    def __getitem__(self, index: Union[int, str, list[str]]) -> ImageFile:
         ...
 
     @overload
@@ -452,7 +448,7 @@ class VirtualListImages(Sequence[ImageFile]):
         ...
 
     def __getitem__(
-        self, index: Union[int, slice, str, List[str], Tuple[str]]
+        self, index: Union[int, slice, str, list[str], tuple[str]]
     ) -> Union[ImageFile, Sequence[ImageFile]]:
         lst = self.ids_function()
         if isinstance(index, slice):
@@ -467,8 +463,8 @@ class VirtualListImages(Sequence[ImageFile]):
         len_self = len(lst)
         if index < 0:
             # support negative indexes
-            index = len_self + index
-        if index < 0 or index >= len_self:
+            index += len_self
+        if not (0 <= index < len_self):
             raise IndexError("Sequence index out of range")
         return self.get_function(lst[index])
 
@@ -507,13 +503,12 @@ class PageObject(DictionaryObject):
     ) -> None:
         DictionaryObject.__init__(self)
         self.pdf = pdf
-        self.inline_images: Optional[Dict[str, ImageFile]] = None
-        # below Union for mypy but actually Optional[List[str]]
+        self.inline_images: Optional[dict[str, ImageFile]] = None
         self.indirect_reference = indirect_reference
         if not is_null_or_none(indirect_reference):
             assert indirect_reference is not None, "mypy"
             self.update(cast(DictionaryObject, indirect_reference.get_object()))
-        self._font_width_maps: Dict[str, Tuple[Dict[str, float], str, float]] = {}
+        self._font_width_maps: dict[str, tuple[dict[str, float], str, float]] = {}
 
     def hash_bin(self) -> int:
         """
@@ -532,7 +527,7 @@ class PageObject(DictionaryObject):
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
-        data += b"%d" % id(self)
+        data += f"{id(self)}".encode()
         return data
 
     @property
@@ -575,7 +570,7 @@ class PageObject(DictionaryObject):
         """
         page = PageObject(pdf)
 
-        # Creates a new page (cf PDF Reference  7.7.3.3)
+        # Creates a new page (cf PDF Reference §7.7.3.3)
         page.__setitem__(NameObject(PG.TYPE), NameObject("/Page"))
         page.__setitem__(NameObject(PG.PARENT), NullObject())
         page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
@@ -595,50 +590,51 @@ class PageObject(DictionaryObject):
     def _get_ids_image(
         self,
         obj: Optional[DictionaryObject] = None,
-        ancest: Optional[List[str]] = None,
-        call_stack: Optional[List[Any]] = None,
-    ) -> List[Union[str, List[str]]]:
+        ancest: Optional[list[str]] = None,
+        call_stack: Optional[list[Any]] = None,
+    ) -> list[Union[str, list[str]]]:
         if call_stack is None:
             call_stack = []
         _i = getattr(obj, "indirect_reference", None)
         if _i in call_stack:
             return []
-        else:
-            call_stack.append(_i)
+        call_stack.append(_i)
         if self.inline_images is None:
             self.inline_images = self._get_inline_images()
         if obj is None:
             obj = self
         if ancest is None:
             ancest = []
-        lst: List[Union[str, List[str]]] = []
-        if PG.RESOURCES not in obj or RES.XOBJECT not in cast(
-            DictionaryObject, obj[PG.RESOURCES]
+        lst: list[Union[str, list[str]]] = []
+        if (
+                PG.RESOURCES not in obj or
+                is_null_or_none(resources := obj[PG.RESOURCES]) or
+                RES.XOBJECT not in cast(DictionaryObject, resources)
         ):
             return [] if self.inline_images is None else list(self.inline_images.keys())
 
-        x_object = obj[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
+        x_object = resources[RES.XOBJECT].get_object()  # type: ignore
         for o in x_object:
             if not isinstance(x_object[o], StreamObject):
                 continue
             if x_object[o][IA.SUBTYPE] == "/Image":
-                lst.append(o if len(ancest) == 0 else ancest + [o])
+                lst.append(o if len(ancest) == 0 else [*ancest, o])
             else:  # is a form with possible images inside
-                lst.extend(self._get_ids_image(x_object[o], ancest + [o], call_stack))
+                lst.extend(self._get_ids_image(x_object[o], [*ancest, o], call_stack))
         assert self.inline_images is not None
         lst.extend(list(self.inline_images.keys()))
         return lst
 
     def _get_image(
         self,
-        id: Union[str, List[str], Tuple[str]],
+        id: Union[str, list[str], tuple[str]],
         obj: Optional[DictionaryObject] = None,
     ) -> ImageFile:
         if obj is None:
             obj = cast(DictionaryObject, self)
         if isinstance(id, tuple):
             id = list(id)
-        if isinstance(id, List) and len(id) == 1:
+        if isinstance(id, list) and len(id) == 1:
             id = id[0]
         try:
             xobjs = cast(
@@ -657,16 +653,15 @@ class PageObject(DictionaryObject):
 
             imgd = _xobj_to_image(cast(DictionaryObject, xobjs[id]))
             extension, byte_stream = imgd[:2]
-            f = ImageFile(
+            return ImageFile(
                 name=f"{id[1:]}{extension}",
                 data=byte_stream,
                 image=imgd[2],
                 indirect_reference=xobjs[id].indirect_reference,
             )
-            return f
-        else:  # in a sub object
-            ids = id[1:]
-            return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
+        # in a subobject
+        ids = id[1:]
+        return self._get_image(ids, cast(DictionaryObject, xobjs[id[0]]))
 
     @property
     def images(self) -> VirtualListImages:
@@ -681,7 +676,7 @@ class PageObject(DictionaryObject):
         Examples:
             * `reader.pages[0].images[0]`        # return first image
             * `reader.pages[0].images['/I0']`    # return image '/I0'
-            * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' Xobject/Form
+            * `reader.pages[0].images['/TP1','/Image1']` # return image '/Image1' within '/TP1' XObject form
             * `for img in reader.pages[0].images:` # loops through all objects
 
         images.keys() and images.items() can be used.
@@ -690,7 +685,7 @@ class PageObject(DictionaryObject):
 
             * `.name` : name of the object
             * `.data` : bytes of the object
-            * `.image`  : PIL Image Object
+            * `.image` : PIL Image Object
             * `.indirect_reference` : object reference
 
         and the following methods:
@@ -700,7 +695,7 @@ class PageObject(DictionaryObject):
 
         Example usage:
 
-            reader.pages[0].images[0]=replace(Image.open("new_image.jpg", quality = 20)
+            reader.pages[0].images[0].replace(Image.open("new_image.jpg"), quality=20)
 
         Inline images are extracted and named ~0~, ~1~, ..., with the
         indirect_reference set to None.
@@ -708,35 +703,10 @@ class PageObject(DictionaryObject):
         """
         return VirtualListImages(self._get_ids_image, self._get_image)
 
-    def _translate_value_inlineimage(self, k: str, v: PdfObject) -> PdfObject:
+    def _translate_value_inline_image(self, k: str, v: PdfObject) -> PdfObject:
         """Translate values used in inline image"""
         try:
-            v = NameObject(
-                {
-                    "/G": "/DeviceGray",
-                    "/RGB": "/DeviceRGB",
-                    "/CMYK": "/DeviceCMYK",
-                    "/I": "/Indexed",
-                    "/AHx": "/ASCIIHexDecode",
-                    "/A85": "/ASCII85Decode",
-                    "/LZW": "/LZWDecode",
-                    "/Fl": "/FlateDecode",
-                    "/RL": "/RunLengthDecode",
-                    "/CCF": "/CCITTFaxDecode",
-                    "/DCT": "/DCTDecode",
-                    "/DeviceGray": "/DeviceGray",
-                    "/DeviceRGB": "/DeviceRGB",
-                    "/DeviceCMYK": "/DeviceCMYK",
-                    "/Indexed": "/Indexed",
-                    "/ASCIIHexDecode": "/ASCIIHexDecode",
-                    "/ASCII85Decode": "/ASCII85Decode",
-                    "/LZWDecode": "/LZWDecode",
-                    "/FlateDecode": "/FlateDecode",
-                    "/RunLengthDecode": "/RunLengthDecode",
-                    "/CCITTFaxDecode": "/CCITTFaxDecode",
-                    "/DCTDecode": "/DCTDecode",
-                }[cast(str, v)]
-            )
+            v = NameObject(_INLINE_IMAGE_VALUE_MAPPING[cast(str, v)])
         except (TypeError, KeyError):
             if isinstance(v, NameObject):
                 # It is a custom name, thus we have to look in resources.
@@ -748,7 +718,7 @@ class PageObject(DictionaryObject):
                     raise PdfReadError(f"Cannot find resource entry {v} for {k}")
         return v
 
-    def _get_inline_images(self) -> Dict[str, ImageFile]:
+    def _get_inline_images(self) -> dict[str, ImageFile]:
         """Load inline images. Entries will be identified as `~1~`."""
         content = self.get_contents()
         if is_null_or_none(content):
@@ -763,24 +733,8 @@ class PageObject(DictionaryObject):
             elif ope in (b"BI", b"EI", b"ID"):  # pragma: no cover
                 raise PdfReadError(
                     f"{ope!r} operator met whereas not expected, "
-                    "please share usecase with pypdf dev team"
+                    "please share use case with pypdf dev team"
                 )
-            """backup
-            elif ope == b"BI":
-                img_data["settings"] = {}
-            elif ope == b"EI":
-                imgs_data.append(img_data)
-                img_data = {}
-            elif ope == b"ID":
-                img_data["__streamdata__"] = b""
-            elif "__streamdata__" in img_data:
-                if len(img_data["__streamdata__"]) > 0:
-                    img_data["__streamdata__"] += b"\n"
-                    raise Exception("check append")
-                img_data["__streamdata__"] += param
-            elif "settings" in img_data:
-                img_data["settings"][ope.decode()] = param
-            """
         files = {}
         for num, ii in enumerate(imgs_data):
             init = {
@@ -792,33 +746,11 @@ class PageObject(DictionaryObject):
                     continue
                 if isinstance(v, list):
                     v = ArrayObject(
-                        [self._translate_value_inlineimage(k, x) for x in v]
+                        [self._translate_value_inline_image(k, x) for x in v]
                     )
                 else:
-                    v = self._translate_value_inlineimage(k, v)
-                k = NameObject(
-                    {
-                        "/BPC": "/BitsPerComponent",
-                        "/CS": "/ColorSpace",
-                        "/D": "/Decode",
-                        "/DP": "/DecodeParms",
-                        "/F": "/Filter",
-                        "/H": "/Height",
-                        "/W": "/Width",
-                        "/I": "/Interpolate",
-                        "/Intent": "/Intent",
-                        "/IM": "/ImageMask",
-                        "/BitsPerComponent": "/BitsPerComponent",
-                        "/ColorSpace": "/ColorSpace",
-                        "/Decode": "/Decode",
-                        "/DecodeParms": "/DecodeParms",
-                        "/Filter": "/Filter",
-                        "/Height": "/Height",
-                        "/Width": "/Width",
-                        "/Interpolate": "/Interpolate",
-                        "/ImageMask": "/ImageMask",
-                    }[k]
-                )
+                    v = self._translate_value_inline_image(k, v)
+                k = NameObject(_INLINE_IMAGE_KEY_MAPPING[k])
                 if k not in init:
                     init[k] = v
             ii["object"] = EncodedStreamObject.initialize_from_dictionary(init)
@@ -903,18 +835,18 @@ class PageObject(DictionaryObject):
         res2: DictionaryObject,
         resource: Any,
         new_res1: bool = True,
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         try:
             assert isinstance(self.indirect_reference, IndirectObject)
             pdf = self.indirect_reference.pdf
             is_pdf_writer = hasattr(
                 pdf, "_add_object"
-            )  # ---------- expect isinstance(pdf,PdfWriter)
+            )  # expect isinstance(pdf, PdfWriter)
         except (AssertionError, AttributeError):
             pdf = None
             is_pdf_writer = False
 
-        def compute_unique_key(base_key: str) -> Tuple[str, bool]:
+        def compute_unique_key(base_key: str) -> tuple[str, bool]:
             """
             Find a key that either doesn't already exist or has the same value
             (indicated by the bool)
@@ -929,8 +861,8 @@ class PageObject(DictionaryObject):
 
             """
             value = page2res.raw_get(base_key)
-            # TODO : possible improvement : in case of writer, the indirect_reference
-            # can not be found because translated : this may be improved
+            # TODO: a possible improvement for writer, the indirect_reference
+            # cannot be found because translated
 
             # try the current key first (e.g. "foo"), but otherwise iterate
             # through "foo-0", "foo-1", etc. new_res can contain only finitely
@@ -981,7 +913,7 @@ class PageObject(DictionaryObject):
     @staticmethod
     def _content_stream_rename(
         stream: ContentStream,
-        rename: Dict[Any, Any],
+        rename: dict[Any, Any],
         pdf: Optional[PdfCommonDocProtocol],
     ) -> ContentStream:
         if not rename:
@@ -1007,19 +939,11 @@ class PageObject(DictionaryObject):
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
         """Add transformation matrix at the beginning of the given contents stream."""
-        a, b, c, d, e, f = ctm
         contents = ContentStream(contents, pdf)
         contents.operations.insert(
             0,
             [
-                [
-                    FloatObject(a),
-                    FloatObject(b),
-                    FloatObject(c),
-                    FloatObject(d),
-                    FloatObject(e),
-                    FloatObject(f),
-                ],
+                [FloatObject(x) for x in ctm],
                 b"cm",
             ],
         )
@@ -1037,10 +961,8 @@ class PageObject(DictionaryObject):
             obj = self[PG.CONTENTS].get_object()
             if isinstance(obj, list):
                 return b"".join(x.get_object().get_data() for x in obj)
-            else:
-                return cast(EncodedStreamObject, obj).get_data()
-        else:
-            return None
+            return cast(EncodedStreamObject, obj).get_data()
+        return None
 
     def get_contents(self) -> Optional[ContentStream]:
         """
@@ -1056,13 +978,12 @@ class PageObject(DictionaryObject):
                 pdf = cast(IndirectObject, self.indirect_reference).pdf
             except AttributeError:
                 pdf = None
-            obj = self[PG.CONTENTS].get_object()
-            if isinstance(obj, NullObject):
+            obj = self[PG.CONTENTS]
+            if is_null_or_none(obj):
                 return None
-            else:
-                return ContentStream(obj, pdf)
-        else:
-            return None
+            resolved_object = obj.get_object()
+            return ContentStream(resolved_object, pdf)
+        return None
 
     def replace_contents(
         self, content: Union[None, ContentStream, EncodedStreamObject, ArrayObject]
@@ -1076,6 +997,7 @@ class PageObject(DictionaryObject):
             # the page is not attached : the content is directly attached.
             self[NameObject(PG.CONTENTS)] = content
             return
+
         if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
             for o in self[PG.CONTENTS]:  # type: ignore[attr-defined]
                 try:
@@ -1084,19 +1006,17 @@ class PageObject(DictionaryObject):
                     pass
 
         if isinstance(content, ArrayObject):
-            for i in range(len(content)):
-                content[i] = self.indirect_reference.pdf._add_object(content[i])
+            content = ArrayObject(self.indirect_reference.pdf._add_object(obj) for obj in content)
 
         if is_null_or_none(content):
             if PG.CONTENTS not in self:
                 return
-            else:
-                assert self.indirect_reference is not None
-                assert self[PG.CONTENTS].indirect_reference is not None
-                self.indirect_reference.pdf._objects[
-                    self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
-                ] = NullObject()
-                del self[PG.CONTENTS]
+            assert self.indirect_reference is not None
+            assert self[PG.CONTENTS].indirect_reference is not None
+            self.indirect_reference.pdf._objects[
+                self[PG.CONTENTS].indirect_reference.idnum - 1  # type: ignore
+            ] = NullObject()
+            del self[PG.CONTENTS]
         elif not hasattr(self.get(PG.CONTENTS, None), "indirect_reference"):
             try:
                 self[NameObject(PG.CONTENTS)] = self.indirect_reference.pdf._add_object(
@@ -1111,7 +1031,7 @@ class PageObject(DictionaryObject):
             assert content is not None, "mypy"
             content.indirect_reference = self[
                 PG.CONTENTS
-            ].indirect_reference  # TODO: in a future may required generation management
+            ].indirect_reference  # TODO: in the future may require generation management
             try:
                 self.indirect_reference.pdf._objects[
                     content.indirect_reference.idnum - 1  # type: ignore
@@ -1130,11 +1050,11 @@ class PageObject(DictionaryObject):
         """
         Merge the content streams of two pages into one.
 
-        Resource references
-        (i.e. fonts) are maintained from both pages. The mediabox/cropbox/etc
-        of this page are not altered. The parameter page's content stream will
-        be added to the end of this page's content stream, meaning that it will
-        be drawn after, or "on top" of this page.
+        Resource references (e.g. fonts) are maintained from both pages.
+        The mediabox, cropbox, etc of this page are not altered.
+        The parameter page's content stream will
+        be added to the end of this page's content stream,
+        meaning that it will be drawn after, or "on top" of this page.
 
         Args:
             page2: The page to be merged into this one. Should be
@@ -1161,10 +1081,11 @@ class PageObject(DictionaryObject):
             assert isinstance(self.indirect_reference, IndirectObject)
             if hasattr(
                 self.indirect_reference.pdf, "_add_object"
-            ):  # ---------- to detect PdfWriter
+            ):  # to detect PdfWriter
                 return self._merge_page_writer(
                     page2, page2transformation, ctm, over, expand
                 )
+                return None
         except (AssertionError, AttributeError):
             pass
 
@@ -1257,6 +1178,7 @@ class PageObject(DictionaryObject):
         self.replace_contents(ContentStream(new_content_array, self.pdf))
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
+        return None
 
     def _merge_page_writer(
         self,
@@ -1393,9 +1315,6 @@ class PageObject(DictionaryObject):
             self._expand_mediabox(page2, ctm)
 
         self.replace_contents(new_content_array)
-        # self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, pdf)
-        # self[NameObject(PG.RESOURCES)] = new_resources
-        # self[NameObject(PG.ANNOTS)] = new_annots
 
     def _expand_mediabox(
         self, page2: "PageObject", ctm: Optional[CompressedTransformationMatrix]
@@ -1465,7 +1384,7 @@ class PageObject(DictionaryObject):
         self._merge_page(
             page2,
             lambda page2Content: PageObject._add_transformation_matrix(
-                page2Content, page2.pdf, cast(CompressedTransformationMatrix, ctm)
+                page2Content, page2.pdf, ctm
             ),
             ctm,
             over,
@@ -1583,19 +1502,16 @@ class PageObject(DictionaryObject):
                 for i in range(0, 8, 2)
             ]
 
-            lowerleft = (min(new_x), min(new_y))
-            upperright = (max(new_x), max(new_y))
-
-            self.mediabox.lower_left = lowerleft
-            self.mediabox.upper_right = upperright
+            self.mediabox.lower_left = (min(new_x), min(new_y))
+            self.mediabox.upper_right = (max(new_x), max(new_y))
 
     def scale(self, sx: float, sy: float) -> None:
         """
         Scale a page by the given factors by applying a transformation matrix
         to its content and updating the page size.
 
-        This updates the mediabox, the cropbox, and the contents
-        of the page.
+        This updates the various page boundaries (bleedbox, trimbox, etc.)
+        and the contents of the page.
 
         Args:
             sx: The scaling factor on horizontal axis.
@@ -1603,10 +1519,10 @@ class PageObject(DictionaryObject):
 
         """
         self.add_transformation((sx, 0, 0, sy, 0, 0))
-        self.cropbox = self.cropbox.scale(sx, sy)
-        self.artbox = self.artbox.scale(sx, sy)
         self.bleedbox = self.bleedbox.scale(sx, sy)
         self.trimbox = self.trimbox.scale(sx, sy)
+        self.artbox = self.artbox.scale(sx, sy)
+        self.cropbox = self.cropbox.scale(sx, sy)
         self.mediabox = self.mediabox.scale(sx, sy)
 
         if PG.ANNOTS in self:
@@ -1697,17 +1613,16 @@ class PageObject(DictionaryObject):
         Read-only property which returns the page number within the PDF file.
 
         Returns:
-            int : page number; None if the page is not attached to a PDF.
+            Page number; None if the page is not attached to a PDF.
 
         """
         if self.indirect_reference is None:
             return None
-        else:
-            try:
-                lst = self.indirect_reference.pdf.pages
-                return lst.index(self)
-            except ValueError:
-                return None
+        try:
+            lst = self.indirect_reference.pdf.pages
+            return lst.index(self)
+        except ValueError:
+            return None
 
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
@@ -1747,83 +1662,11 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-    def _get_actual_font_widths(
-        self,
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
-        ],
-        text_operands: str,
-        font_size: float,
-        space_width: float
-    ) -> Tuple[float, float, float]:
-        font_widths: float = 0
-        font_name: str = cmap[2]
-        if font_name not in self._font_width_maps:
-            if cmap[3] is None:
-                font_width_map: Dict[Any, float] = {}
-                space_char = " "
-                actual_space_width: float = space_width
-                font_width_map["default"] = actual_space_width * 2
-            else:
-                space_char = get_actual_str_key(" ", cmap[0], cmap[1])
-                font_width_map = build_font_width_map(cmap[3], space_width * 2)
-                actual_space_width = compute_font_width(font_width_map, space_char)
-            if actual_space_width == 0:
-                actual_space_width = space_width
-            self._font_width_maps[font_name] = (font_width_map, space_char, actual_space_width)
-        font_width_map = self._font_width_maps[font_name][0]
-        space_char = self._font_width_maps[font_name][1]
-        actual_space_width = self._font_width_maps[font_name][2]
-
-        if text_operands:
-            for char in text_operands:
-                if char == space_char:
-                    font_widths += actual_space_width
-                    continue
-                font_widths += compute_font_width(font_width_map, char)
-        return (font_widths * font_size, space_width * font_size, font_size)
-
-    def _handle_tj(
-        self,
-        text: str,
-        operands: List[Union[str, TextStringObject]],
-        cm_matrix: List[float],
-        tm_matrix: List[float],
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
-        ],
-        orientations: Tuple[int, ...],
-        font_size: float,
-        rtl_dir: bool,
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
-        space_width: float,
-        actual_str_size: Dict[str, float]
-    ) -> Tuple[str, bool, Dict[str, float]]:
-        text_operands, is_str_operands = get_text_operands(
-            operands, cm_matrix, tm_matrix, cmap, orientations)
-        if is_str_operands:
-            text += text_operands
-        else:
-            text, rtl_dir = get_display_str(
-                text,
-                cm_matrix,
-                tm_matrix,  # text matrix
-                cmap,
-                text_operands,
-                font_size,
-                rtl_dir,
-                visitor_text)
-        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
-            self._get_actual_font_widths(cmap, text_operands, font_size, space_width))
-        actual_str_size["str_widths"] += font_widths
-
-        return text, rtl_dir, actual_str_size
-
     def _extract_text(
         self,
         obj: Any,
         pdf: Any,
-        orientations: Tuple[int, ...] = (0, 90, 180, 270),
+        orientations: tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
         content_key: Optional[str] = PG.CONTENTS,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
@@ -1835,295 +1678,101 @@ class PageObject(DictionaryObject):
 
         Args:
             content_key: indicate the default key where to extract data
-                None = the object; this allow to reuse the function on XObject
+                None = the object; this allows reusing the function on an XObject
                 default = "/Content"
 
         """
-        text: str = ""
-        output: str = ""
-        rtl_dir: bool = False  # right-to-left
-        cmaps: Dict[
+        extractor = TextExtraction()
+        cmaps: dict[
             str,
-            Tuple[
-                str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject
+            tuple[
+                str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject
             ],
         ] = {}
+
         try:
             objr = obj
             while NameObject(PG.RESOURCES) not in objr:
-                # /Resources can be inherited sometimes so we look to parents
+                # /Resources can be inherited so we look to parents
                 objr = objr["/Parent"].get_object()
-                # if no parents we will have no /Resources will be available
-                # => an exception will be raised
+                # If no parents then no /Resources will be available,
+                # so an exception will be raised
             resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
         except Exception:
-            # no resources means no text is possible (no font) we consider the
+            # No resources means no text is possible (no font); we consider the
             # file as not damaged, no need to check for TJ or Tj
             return ""
-        if "/Font" in resources_dict:
-            for f in cast(DictionaryObject, resources_dict["/Font"]):
-                cmaps[f] = build_char_map(f, space_width, obj)
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
-        ] = (
-            "charmap",
-            {},
-            "NotInitialized",
-            None,
-        )  # (encoding,CMAP,font resource name,dictionary-object of font)
+
+        if not is_null_or_none(resources_dict) and "/Font" in resources_dict and (font := resources_dict["/Font"]):
+            for f in cast(DictionaryObject, font):
+                try:
+                    cmaps[f] = build_char_map(f, space_width, obj)
+                except TypeError:
+                    pass
+
         try:
             content = (
                 obj[content_key].get_object() if isinstance(content_key, str) else obj
             )
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, pdf, "bytes")
-        except KeyError:  # it means no content can be extracted(certainly empty page)
+        except (AttributeError, KeyError):  # no content can be extracted (certainly empty page)
             return ""
-        # Note: we check all strings are TextStringObjects. ByteStringObjects
+        # We check all strings are TextStringObjects. ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
-        cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        cm_stack = []
-        tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-
-        # cm/tm_prev stores the last modified matrices can be an intermediate position
-        cm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        tm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-
-        # memo_cm/tm will be used to store the position at the beginning of building the text
-        memo_cm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        memo_tm: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        char_scale = 1.0
-        space_scale = 1.0
-        _space_width: float = 500.0  # will be set correctly at first Tf
-        _actual_str_size: Dict[str, float] = {
-            "str_widths": 0.0, "space_width": 0.0, "str_height": 0.0}  # will be set to string length calculation result
-        TL = 0.0
-        font_size = 12.0  # init just in case of
-
-        def compute_strwidths(str_widths: float) -> float:
-            return str_widths / 1000.0
-
-        def process_operation(operator: bytes, operands: List[Any]) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, cm_prev, tm_prev, memo_cm, memo_tm
-            nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
-            nonlocal orientations, rtl_dir, visitor_text, output, text, _actual_str_size
-            global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
-
-            check_crlf_space: bool = False
-            str_widths: float = 0.0
-            # Table 5.4 page 405
-            if operator == b"BT":
-                tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
-                return None
-            elif operator == b"ET":
-                output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
-            # table 4.7 "Graphics state operators", page 219
-            # cm_matrix calculation is a reserved for the moment
-            elif operator == b"q":
-                cm_stack.append(
-                    (
-                        cm_matrix,
-                        cmap,
-                        font_size,
-                        char_scale,
-                        space_scale,
-                        _space_width,
-                        TL,
-                    )
-                )
-            elif operator == b"Q":
-                try:
-                    (
-                        cm_matrix,
-                        cmap,
-                        font_size,
-                        char_scale,
-                        space_scale,
-                        _space_width,
-                        TL,
-                    ) = cm_stack.pop()
-                except Exception:
-                    cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-            elif operator == b"cm":
-                output += text
-                if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                cm_matrix = mult(
-                    [
-                        float(operands[0]),
-                        float(operands[1]),
-                        float(operands[2]),
-                        float(operands[3]),
-                        float(operands[4]),
-                        float(operands[5]),
-                    ],
-                    cm_matrix,
-                )
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
-            # Table 5.2 page 398
-            elif operator == b"Tz":
-                char_scale = float(operands[0]) / 100.0 if operands else 1.0
-            elif operator == b"Tw":
-                space_scale = 1.0 + float(operands[0] if operands else 0.0)
-            elif operator == b"TL":
-                scale_x = math.sqrt(tm_matrix[0]**2 + tm_matrix[2]**2)
-                TL = float(operands[0] if operands else 0.0) * font_size * scale_x
-            elif operator == b"Tf":
-                if text != "":
-                    output += text  # .translate(cmap)
-                    if visitor_text is not None:
-                        visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-                text = ""
-                memo_cm = cm_matrix.copy()
-                memo_tm = tm_matrix.copy()
-                try:
-                    # charMapTuple: font_type, float(sp_width / 2), encoding,
-                    #               map_dict, font-dictionary
-                    charMapTuple = cmaps[operands[0]]
-                    _space_width = charMapTuple[1]
-                    # current cmap: encoding, map_dict, font resource name
-                    #               (internal name, not the real font-name),
-                    # font-dictionary. The font-dictionary describes the font.
-                    cmap = (
-                        charMapTuple[2],
-                        charMapTuple[3],
-                        operands[0],
-                        charMapTuple[4],
-                    )
-                except KeyError:  # font not found
-                    _space_width = unknown_char_map[1]
-                    cmap = (
-                        unknown_char_map[2],
-                        unknown_char_map[3],
-                        f"???{operands[0]}",
-                        None,
-                    )
-                try:
-                    font_size = float(operands[1])
-                except Exception:
-                    pass  # keep previous size
-            # Table 5.5 page 406
-            elif operator == b"Td":
-                check_crlf_space = True
-                # A special case is a translating only tm:
-                # tm[0..5] = 1 0 0 1 e f,
-                # i.e. tm[4] += tx, tm[5] += ty.
-                tx = float(operands[0])
-                ty = float(operands[1])
-                tm_matrix[4] += tx * tm_matrix[0] + ty * tm_matrix[2]
-                tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
-                str_widths = compute_strwidths(_actual_str_size["str_widths"])
-                _actual_str_size["str_widths"] = 0.0
-            elif operator == b"Tm":
-                check_crlf_space = True
-                tm_matrix = [
-                    float(operands[0]),
-                    float(operands[1]),
-                    float(operands[2]),
-                    float(operands[3]),
-                    float(operands[4]),
-                    float(operands[5]),
-                ]
-                str_widths = compute_strwidths(_actual_str_size["str_widths"])
-                _actual_str_size["str_widths"] = 0.0
-            elif operator == b"T*":
-                check_crlf_space = True
-                tm_matrix[5] -= TL
-            elif operator == b"Tj":
-                check_crlf_space = True
-                text, rtl_dir, _actual_str_size = self._handle_tj(
-                    text,
-                    operands,
-                    cm_matrix,
-                    tm_matrix,  # text matrix
-                    cmap,
-                    orientations,
-                    font_size,
-                    rtl_dir,
-                    visitor_text,
-                    _space_width,
-                    _actual_str_size,
-                )
-            else:
-                return None
-            if check_crlf_space:
-                try:
-                    text, output, cm_prev, tm_prev = crlf_space_check(
-                        text,
-                        (cm_prev, tm_prev),
-                        (cm_matrix, tm_matrix),
-                        (memo_cm, memo_tm),
-                        cmap,
-                        orientations,
-                        output,
-                        font_size,
-                        visitor_text,
-                        str_widths,
-                        compute_strwidths(_actual_str_size["space_width"]),
-                        _actual_str_size["str_height"]
-                    )
-                    if text == "":
-                        memo_cm = cm_matrix.copy()
-                        memo_tm = tm_matrix.copy()
-                except OrientationNotFoundError:
-                    return None
+        # Initialize the extractor with the necessary parameters
+        extractor.initialize_extraction(orientations, visitor_text, cmaps)
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
-                visitor_operand_before(operator, operands, cm_matrix, tm_matrix)
-            # multiple operators are defined in here ####
+                visitor_operand_before(operator, operands, extractor.cm_matrix, extractor.tm_matrix)
+            # Multiple operators are handled here
             if operator == b"'":
-                process_operation(b"T*", [])
-                process_operation(b"Tj", operands)
+                extractor.process_operation(b"T*", [])
+                extractor.process_operation(b"Tj", operands)
             elif operator == b'"':
-                process_operation(b"Tw", [operands[0]])
-                process_operation(b"Tc", [operands[1]])
-                process_operation(b"T*", [])
-                process_operation(b"Tj", operands[2:])
-            elif operator == b"TD":
-                process_operation(b"TL", [-operands[1]])
-                process_operation(b"Td", operands)
+                extractor.process_operation(b"Tw", [operands[0]])
+                extractor.process_operation(b"Tc", [operands[1]])
+                extractor.process_operation(b"T*", [])
+                extractor.process_operation(b"Tj", operands[2:])
             elif operator == b"TJ":
                 # The space width may be smaller than the font width, so the width should be 95%.
-                _confirm_space_width = _space_width * 0.95
-                for op in operands[0]:
-                    if isinstance(op, (str, bytes)):
-                        process_operation(b"Tj", [op])
-                    if isinstance(op, (int, float, NumberObject, FloatObject)) and (
-                        (abs(float(op)) >= _confirm_space_width)
-                        and (len(text) > 0)
-                        and (text[-1] != " ")
-                    ):
-                        process_operation(b"Tj", [" "])
+                _confirm_space_width = extractor._space_width * 0.95
+                if operands:
+                    for op in operands[0]:
+                        if isinstance(op, (str, bytes)):
+                            extractor.process_operation(b"Tj", [op])
+                        if isinstance(op, (int, float, NumberObject, FloatObject)) and (
+                            abs(float(op)) >= _confirm_space_width
+                            and extractor.text
+                            and extractor.text[-1] != " "
+                        ):
+                            extractor.process_operation(b"Tj", [" "])
+            elif operator == b"TD":
+                extractor.process_operation(b"TL", [-operands[1]])
+                extractor.process_operation(b"Td", operands)
             elif operator == b"Do":
-                output += text
+                extractor.output += extractor.text
                 if visitor_text is not None:
-                    visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
+                    visitor_text(
+                        extractor.text,
+                        extractor.memo_cm,
+                        extractor.memo_tm,
+                        extractor.cmap[3],
+                        extractor.font_size,
+                    )
                 try:
-                    if output[-1] != "\n":
-                        output += "\n"
+                    if extractor.output[-1] != "\n":
+                        extractor.output += "\n"
                         if visitor_text is not None:
                             visitor_text(
                                 "\n",
-                                memo_cm,
-                                memo_tm,
-                                cmap[3],
-                                font_size,
+                                extractor.memo_cm,
+                                extractor.memo_tm,
+                                extractor.cmap[3],
+                                extractor.font_size,
                             )
                 except IndexError:
                     pass
@@ -2138,34 +1787,40 @@ class PageObject(DictionaryObject):
                             visitor_operand_after,
                             visitor_text,
                         )
-                        output += text
+                        extractor.output += text
                         if visitor_text is not None:
                             visitor_text(
                                 text,
-                                memo_cm,
-                                memo_tm,
-                                cmap[3],
-                                font_size,
+                                extractor.memo_cm,
+                                extractor.memo_tm,
+                                extractor.cmap[3],
+                                extractor.font_size,
                             )
-                except Exception:
+                except Exception as exception:
                     logger_warning(
-                        f" impossible to decode XFormObject {operands[0]}",
+                        f"Impossible to decode XFormObject {operands[0]}: {exception}",
                         __name__,
                     )
                 finally:
-                    text = ""
-                    memo_cm = cm_matrix.copy()
-                    memo_tm = tm_matrix.copy()
+                    extractor.text = ""
+                    extractor.memo_cm = extractor.cm_matrix.copy()
+                    extractor.memo_tm = extractor.tm_matrix.copy()
             else:
-                process_operation(operator, operands)
+                extractor.process_operation(operator, operands)
             if visitor_operand_after is not None:
-                visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
-        output += text  # just in case of
-        if text != "" and visitor_text is not None:
-            visitor_text(text, memo_cm, memo_tm, cmap[3], font_size)
-        return output
+                visitor_operand_after(operator, operands, extractor.cm_matrix, extractor.tm_matrix)
+        extractor.output += extractor.text  # just in case
+        if extractor.text != "" and visitor_text is not None:
+            visitor_text(
+                extractor.text,
+                extractor.memo_cm,
+                extractor.memo_tm,
+                extractor.cmap[3],
+                extractor.font_size,
+            )
+        return extractor.output
 
-    def _layout_mode_fonts(self) -> Dict[str, _layout_mode.Font]:
+    def _layout_mode_fonts(self) -> dict[str, _layout_mode.Font]:
         """
         Get fonts formatted for "layout" mode text extraction.
 
@@ -2175,7 +1830,7 @@ class PageObject(DictionaryObject):
         """
         # Font retrieval logic adapted from pypdf.PageObject._extract_text()
         objr: Any = self
-        fonts: Dict[str, _layout_mode.Font] = {}
+        fonts: dict[str, _layout_mode.Font] = {}
         while objr is not None:
             try:
                 resources_dict: Any = objr[PG.RESOURCES]
@@ -2237,7 +1892,7 @@ class PageObject(DictionaryObject):
         """
         fonts = self._layout_mode_fonts()
         if debug_path:  # pragma: no cover
-            import json
+            import json  # noqa: PLC0415
 
             debug_path.joinpath("fonts.json").write_text(
                 json.dumps(
@@ -2265,7 +1920,7 @@ class PageObject(DictionaryObject):
     def extract_text(
         self,
         *args: Any,
-        orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
+        orientations: Union[int, tuple[int, ...]] = (0, 90, 180, 270),
         space_width: float = 200.0,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
@@ -2401,7 +2056,7 @@ class PageObject(DictionaryObject):
     def extract_xform_text(
         self,
         xform: EncodedStreamObject,
-        orientations: Tuple[int, ...] = (0, 90, 270, 360),
+        orientations: tuple[int, ...] = (0, 90, 270, 360),
         space_width: float = 200.0,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
@@ -2433,18 +2088,18 @@ class PageObject(DictionaryObject):
             visitor_text,
         )
 
-    def _get_fonts(self) -> Tuple[Set[str], Set[str]]:
+    def _get_fonts(self) -> tuple[set[str], set[str]]:
         """
         Get the names of embedded fonts and unembedded fonts.
 
         Returns:
-            A tuple (Set of embedded fonts, set of unembedded fonts)
+            A tuple (set of embedded fonts, set of unembedded fonts)
 
         """
         obj = self.get_object()
         assert isinstance(obj, DictionaryObject)
-        fonts: Set[str] = set()
-        embedded: Set[str] = set()
+        fonts: set[str] = set()
+        embedded: set[str] = set()
         fonts, embedded = _get_fonts_walk(obj, fonts, embedded)
         unembedded = fonts - embedded
         return embedded, unembedded
@@ -2485,8 +2140,7 @@ class PageObject(DictionaryObject):
     def annotations(self) -> Optional[ArrayObject]:
         if "/Annots" not in self:
             return None
-        else:
-            return cast(ArrayObject, self["/Annots"])
+        return cast(ArrayObject, self["/Annots"])
 
     @annotations.setter
     def annotations(self, value: Optional[ArrayObject]) -> None:
@@ -2536,8 +2190,8 @@ class _VirtualList(Sequence[PageObject]):
         len_self = len(self)
         if index < 0:
             # support negative indexes
-            index = len_self + index
-        if index < 0 or index >= len_self:
+            index += len_self
+        if not (0 <= index < len_self):
             raise IndexError("Sequence index out of range")
         return self.get_function(index)
 
@@ -2555,8 +2209,8 @@ class _VirtualList(Sequence[PageObject]):
         len_self = len(self)
         if index < 0:
             # support negative indexes
-            index = len_self + index
-        if index < 0 or index >= len_self:
+            index += len_self
+        if not (0 <= index < len_self):
             raise IndexError("Index out of range")
         ind = self[index].indirect_reference
         assert ind is not None
@@ -2580,7 +2234,7 @@ class _VirtualList(Sequence[PageObject]):
                         cast(int, parent["/Count"]) - 1
                     )
                 if len(cast(ArrayObject, parent["/Kids"])) == 0:
-                    # No more objects in this part of this sub tree
+                    # No more objects in this part of this subtree
                     ind = parent.indirect_reference
                 parent = parent.get("/Parent", None)
             except ValueError:  # from index
@@ -2599,9 +2253,9 @@ class _VirtualList(Sequence[PageObject]):
 
 def _get_fonts_walk(
     obj: DictionaryObject,
-    fnt: Set[str],
-    emb: Set[str],
-) -> Tuple[Set[str], Set[str]]:
+    fnt: set[str],
+    emb: set[str],
+) -> tuple[set[str], set[str]]:
     """
     Get the set of all fonts and all embedded fonts.
 

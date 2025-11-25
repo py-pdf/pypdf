@@ -87,15 +87,14 @@ def test_encryption(name, requires_aes):
             dd = dict(ipdf.metadata)
         assert exc.value.args[0] == _DEPENDENCY_ERROR_STR
         return
+    ipdf = pypdf.PdfReader(inputfile)
+    if str(inputfile).endswith("unencrypted.pdf"):
+        assert not ipdf.is_encrypted
     else:
-        ipdf = pypdf.PdfReader(inputfile)
-        if str(inputfile).endswith("unencrypted.pdf"):
-            assert not ipdf.is_encrypted
-        else:
-            assert ipdf.is_encrypted
-            ipdf.decrypt("asdfzxcv")
-        assert len(ipdf.pages) == 1
-        dd = dict(ipdf.metadata)
+        assert ipdf.is_encrypted
+        ipdf.decrypt("asdfzxcv")
+    assert len(ipdf.pages) == 1
+    dd = dict(ipdf.metadata)
     # remove empty value entry
     dd = {x[0]: x[1] for x in dd.items() if x[1]}
     assert dd == {

@@ -9,7 +9,7 @@ If a PDF file does not follow the specification, it is not always possible to
 be certain what the intended effect would be. Think of the following broken
 Python code as an example:
 
-```python
+```{testcode}
 # Broken
 function (foo, bar):
 
@@ -21,7 +21,15 @@ def function(foo, bar):
 function = (foo, bar)
 ```
 
-Writing a parser you can go two paths: Either you try to be forgiving and try
+```{testoutput}
+:hide:
+
+Traceback (most recent call last):
+    ...
+SyntaxError: invalid syntax
+```
+
+Writing a parser, you can go two paths: Either you try to be forgiving and try
 to figure out what the user intended, or you are strict and just tell the user
 that they should fix their stuff.
 
@@ -32,8 +40,7 @@ pypdf has two core objects:
 * {class}`~pypdf.PdfReader`
 * {class}`~pypdf.PdfWriter`
 
-Only the PdfReader has a `strict` parameter, since presumably you do not want
-to write a non-conforming PDF.
+PdfReader and PdfWriter both have a `strict` parameter.
 
 Choosing `strict=True` means that pypdf will raise an exception if a PDF does
 not follow the specification.

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from ..generic._base import (
     BooleanObject,
@@ -16,16 +16,16 @@ class Link(AnnotationDictionary):
     def __init__(
         self,
         *,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         border: Optional[ArrayObject] = None,
         url: Optional[str] = None,
         target_page_index: Optional[int] = None,
         fit: Fit = DEFAULT_FIT,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         if TYPE_CHECKING:
-            from ..types import BorderArrayType
+            from ..types import BorderArrayType  # noqa: PLC0415
 
         is_external = url is not None
         is_internal = target_page_index is not None
@@ -80,11 +80,11 @@ class Popup(AnnotationDictionary):
     def __init__(
         self,
         *,
-        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        rect: Union[RectangleObject, tuple[float, float, float, float]],
         parent: Optional[DictionaryObject] = None,
         open: bool = False,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.update(
             {
@@ -98,7 +98,7 @@ class Popup(AnnotationDictionary):
             try:
                 self[NameObject("/Parent")] = parent.indirect_reference
             except AttributeError:
-                from .._utils import logger_warning
+                from .._utils import logger_warning  # noqa: PLC0415
 
                 logger_warning(
                     "Unregistered Parent object : No Parent field set",

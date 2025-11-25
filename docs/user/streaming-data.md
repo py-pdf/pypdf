@@ -1,12 +1,20 @@
 # Streaming Data with pypdf
 
-In some cases you might want to avoid saving things explicitly as a file
+In some cases, you might want to avoid saving things explicitly as a file
 to disk, e.g. when you want to store the PDF in a database or AWS S3.
 
 pypdf supports streaming data to a file-like object:
 
-```python
+
+```{testsetup}
+pypdf_test_setup("user/streaming-data", {
+    "example.pdf": "../resources/example.pdf",
+})
+```
+
+```{testcode}
 from io import BytesIO
+from pypdf import PdfReader, PdfWriter
 
 # Prepare example
 with open("example.pdf", "rb") as fh:
@@ -27,7 +35,10 @@ Suppose you want to manipulate a PDF and write it directly to AWS S3 without hav
 to write the document to a file first. We have the original PDF in `raw_bytes_data` as `bytes`
 and want to set `my-secret-password`:
 
-```python
+% We prefer not to execute doc examples which require access to cloud providers
+```{testcode}
+:skipif: True
+
 from io import BytesIO
 
 import boto3
@@ -61,7 +72,10 @@ Another option is to get a byte stream.
 
 For AWS S3 it works like this:
 
-```python
+% We prefer not to execute doc examples which require access to cloud providers
+```{testcode}
+:skipif: True
+
 from io import BytesIO
 
 import boto3
@@ -75,16 +89,18 @@ reader = PdfReader(BytesIO(obj["Body"].read()))
 
 To use with Google Cloud storage:
 
-```python
+% We prefer not to execute doc examples which require access to cloud providers
+```{testcode}
+:skipif: True
+
 from io import BytesIO
 
 from google.cloud import storage
 
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] must be set 
+# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] must be set
 storage_client = storage.Client()
 blob = storage_client.bucket("my-bucket").blob("mydoc.pdf")
 file_stream = BytesIO()
 blob.download_to_file(file_stream)
 reader = PdfReader(file_stream)
 ```
-

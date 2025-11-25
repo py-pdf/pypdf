@@ -12,8 +12,8 @@ binding to [QPDF].
 
 While both are excellent libraries for various use-cases, using them is
 not always possible even when they support the use-case. Both of them
-are powered by C libraries which makes installation harder and might
-cause security concerns. For MuPDF you might also need to buy a
+are powered by C libraries which make installation harder and might
+cause security concerns. For MuPDF, you might also need to buy a
 commercial license.
 
 A core feature of pypdf is that it's pure Python. That means there is
@@ -27,21 +27,21 @@ PyPDF2 was merged back into `pypdf`. The development continues at `pypdf`.
 ## PyPDF3 and PyPDF4
 
 Developing and maintaining open source software is extremely
-time-intensive and in the case of pypdf not paid at all. Having a
+time-intensive and in the case of pypdf not paid at all. Having
 continuous support is hard.
 
 pypdf was initially released in 2012 on PyPI and received releases
-until 2016. From 2016 to 2022 there was no update - but people were
+until 2016. From 2016 to 2022, there was no update - but people were
 still using it.
 
 As pypdf is free software, there were attempts to fork it and continue
 the development. PyPDF3 was first released in 2018 and still receives
 updates. PyPDF4 has only one release from 2018.
 
-I (Martin Thoma, the current maintainer of pypdf and PyPDF2), hope that we can
-bring the community back to one path of development. I deprecated PyPDF2 in
-favor of pypdf already and pypdf has now more features and a cleaner interface
-than PyPDF2. See [history of pypdf](history.md).
+Martin Thoma has worked on bringing the community back to one path of
+development. He deprecated PyPDF2 in favor of pypdf already, and pypdf has
+more features and a cleaner interface than PyPDF2 now. See [history of
+pypdf](history.md).
 
   [free]: https://en.wikipedia.org/wiki/Free_software
   [PyMuPDF]: https://pypi.org/project/PyMuPDF/

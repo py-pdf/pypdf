@@ -2,14 +2,14 @@
 
 What features should pypdf have and which features will it never have?
 
-pypdf aims at making interactions with PDF documents simpler. Core tasks that
+pypdf aims at simplifying interactions with PDF documents. Core tasks that
 pypdf can perform are:
 
 * Document manipulation: Splitting, merging, cropping, and transforming the pages of PDF files
 * Data Extraction: Extract text and metadata from PDF documents
 * Security: Decrypt / encrypt PDF documents
 
-Typical indicators that something should be done by pypdf:
+Typical indicators that pypdf should do something:
 
 * The task needs in-depth knowledge of the PDF format
 * It currently requires a lot of code or even is impossible to do with pypdf
@@ -22,7 +22,7 @@ welcome 😉)
 
 ## Belongs in user code
 
-Here are a few indicators that a feature belongs into users code (and not into pypdf):
+Here are a few indicators that a feature belongs into users' code (and not into pypdf):
 
 1. The use-case is very specific. Most people will not encounter the same need.
 2. It can be done without knowledge of the PDF specification
@@ -41,7 +41,7 @@ Those topics are out of scope for pypdf. They will never be part of pypdf:
    doing. Please note that images can be within PDF documents. In the case of
    scanned documents, the whole page is an image. Some scanners automatically
    execute OCR and add a text-layer behind the scanned page. That is something
-   pypdf can use, if it's present. As a rule-of-thumb: If you cannot mark/copy
+   pypdf can use if it's present. As a rule-of-thumb: If you cannot mark/copy
    the text, it's likely an image. A noteworthy open source OCR project is
    [tesseract](https://github.com/tesseract-ocr/tesseract).
 2. **Format Conversion**: Converting docx / HTML to PDF or PDF to those formats.
@@ -50,12 +50,10 @@ Those topics are out of scope for pypdf. They will never be part of pypdf:
 
 Out of scope for the moment, but might be added if there are enough contributors:
 
-* **Digital Signature Support** ([reference
-  ticket](https://github.com/py-pdf/pypdf/issues/302)): Cryptography is
+* **Digital Signature Support** ([reference ticket](https://github.com/py-pdf/pypdf/issues/302)): Cryptography is
   complicated. It's important to get it right. pypdf currently doesn't have
-  enough active contributors to properly add digital signautre support. For the
-  moment, [pyhanko](https://pypi.org/project/pyHanko/) seems to be the best
-  choice.
+  enough active contributors to properly add digital signature support. For the
+  moment, [pyhanko](https://pypi.org/project/pyHanko/) seems to be the best choice.
 * **PDF Generation from Scratch**: pypdf can manipulate existing PDF documents,
   add annotations, combine / split / crop / transform. It can add blank pages.
   But if you want to generate invoices, you might want to have a look at
@@ -64,21 +62,21 @@ Out of scope for the moment, but might be added if there are enough contributors
   [`pdfkit`](https://pypi.org/project/pdfkit/).
 * **Replacing words within a PDF**: [Extracting text from PDF is hard](../user/extract-text.md#why-text-extraction-is-hard).
    Replacing text in a reliable way is even harder. For example, one word might
-   be split into multiple tokens. Hence it's not a simple "search and replace"
+   be split into multiple tokens. Hence, it's not a simple "search and replace"
    in some cases.
 * **(Not) Extracting headers/footers/page numbers**: While you can apply
   heuristics, there is no way to always make it work. PDF documents simply
   don't contain the information what a header/footer/page number is.
 
 
-### Library vs Application
+### Library vs. Application
 
 It's also worth pointing out that `pypdf` is designed to be a library. It is not
 an application. That has several implications:
 
 * Execution: pypdf cannot be executed directly, but only be called from within
   a program written by a pypdf user. In contrast, an application is executed
-  by it's own.
+  on its own.
 * Dependencies: pypdf should have a minimal set of dependencies and only
   restrict them where it is strictly necessary. In contrast, applications should
   be installed in environments which are isolated from other applications. They

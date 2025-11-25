@@ -7,7 +7,7 @@ see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 """
 
 import re
-from typing import Any, List, Tuple, Union
+from typing import Any, Union
 
 from .errors import ParseError
 
@@ -68,7 +68,7 @@ class PageRange:
         m = isinstance(arg, str) and re.match(PAGE_RANGE_RE, arg)
         if not m:
             raise ParseError(arg)
-        elif m.group(2):
+        if m.group(2):
             # Special case: just an int means a range of one page.
             start = int(m.group(2))
             stop = start + 1 if start != -1 else None
@@ -99,7 +99,7 @@ class PageRange:
     def __str__(self) -> str:
         """A string like "1:2:3"."""
         s = self._slice
-        indices: Union[Tuple[int, int], Tuple[int, int, int]]
+        indices: Union[tuple[int, int], tuple[int, int, int]]
         if s.step is None:
             if s.start is not None and s.stop == s.start + 1:
                 return str(s.start)
@@ -113,7 +113,7 @@ class PageRange:
         """A string like "PageRange('1:2:3')"."""
         return "PageRange(" + repr(str(self)) + ")"
 
-    def indices(self, n: int) -> Tuple[int, int, int]:
+    def indices(self, n: int) -> tuple[int, int, int]:
         """
         Assuming a sequence of length n, calculate the start and stop indices,
         and the stride length of the PageRange.
@@ -133,6 +133,9 @@ class PageRange:
         if not isinstance(other, PageRange):
             return False
         return self._slice == other._slice
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, (self._slice.start, self._slice.stop, self._slice.step)))
 
     def __add__(self, other: "PageRange") -> "PageRange":
         if not isinstance(other, PageRange):
@@ -156,8 +159,8 @@ PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
 
 
 def parse_filename_page_ranges(
-    args: List[Union[str, PageRange, None]]
-) -> List[Tuple[str, PageRange]]:
+    args: list[Union[str, PageRange, None]]
+) -> list[tuple[str, PageRange]]:
     """
     Given a list of filenames and page ranges, return a list of (filename, page_range) pairs.
 
@@ -170,26 +173,28 @@ def parse_filename_page_ranges(
         A list of (filename, page_range) pairs.
 
     """
-    pairs: List[Tuple[str, PageRange]] = []
-    pdf_filename = None
+    pairs: list[tuple[str, PageRange]] = []
+    pdf_filename: Union[str, None] = None
     did_page_range = False
-    for arg in args + [None]:
+    for arg in [*args, None]:
         if PageRange.valid(arg):
             if not pdf_filename:
                 raise ValueError(
                     "The first argument must be a filename, not a page range."
                 )
 
+            assert arg is not None
             pairs.append((pdf_filename, PageRange(arg)))
             did_page_range = True
         else:
-            # New filename or end of list--do all of the previous file?
+            # New filename or end of list - use the complete previous file?
             if pdf_filename and not did_page_range:
                 pairs.append((pdf_filename, PAGE_RANGE_ALL))
 
+            assert not isinstance(arg, PageRange), arg
             pdf_filename = arg
             did_page_range = False
     return pairs
 
 
-PageRangeSpec = Union[str, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]]
+PageRangeSpec = Union[str, PageRange, tuple[int, int], tuple[int, int, int], list[int]]

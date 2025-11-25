@@ -30,9 +30,10 @@ import hashlib
 import re
 import sys
 from binascii import unhexlify
+from collections.abc import Sequence
 from math import log10
 from struct import iter_unpack
-from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Union, cast
+from typing import Any, Callable, ClassVar, Optional, Union, cast
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeGuard
@@ -43,7 +44,9 @@ from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
-    deprecate_no_replacement,
+    classproperty,
+    deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -167,7 +170,7 @@ class PdfObject(PdfObjectProtocol):
         if ind is not None:
             if id(ind.pdf) not in pdf_dest._id_translated:
                 pdf_dest._id_translated[id(ind.pdf)] = {}
-                pdf_dest._id_translated[id(ind.pdf)]["PreventGC"] = ind.pdf  # type: ignore
+                pdf_dest._id_translated[id(ind.pdf)]["PreventGC"] = ind.pdf  # type: ignore[index]
             if (
                 not force_duplicate
                 and ind.idnum in pdf_dest._id_translated[id(ind.pdf)]
@@ -222,7 +225,7 @@ class NullObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(b"null")
@@ -236,6 +239,12 @@ class NullObject(PdfObject):
 
     def __repr__(self) -> str:
         return "NullObject"
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, NullObject)
+
+    def __hash__(self) -> int:
+        return self.hash_bin()
 
 
 class BooleanObject(PdfObject):
@@ -267,10 +276,12 @@ class BooleanObject(PdfObject):
     def __eq__(self, o: object, /) -> bool:
         if isinstance(o, BooleanObject):
             return self.value == o.value
-        elif isinstance(o, bool):
+        if isinstance(o, bool):
             return self.value == o
-        else:
-            return False
+        return False
+
+    def __hash__(self) -> int:
+        return self.hash_bin()
 
     def __repr__(self) -> str:
         return "True" if self.value else "False"
@@ -279,7 +290,7 @@ class BooleanObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         if self.value:
@@ -292,11 +303,10 @@ class BooleanObject(PdfObject):
         word = stream.read(4)
         if word == b"true":
             return BooleanObject(True)
-        elif word == b"fals":
+        if word == b"fals":
             stream.read(1)
             return BooleanObject(False)
-        else:
-            raise PdfReadError("Could not read Boolean object")
+        raise PdfReadError("Could not read Boolean object")
 
 
 class IndirectObject(PdfObject):
@@ -336,6 +346,7 @@ class IndirectObject(PdfObject):
             return self
         if id(self.pdf) not in pdf_dest._id_translated:
             pdf_dest._id_translated[id(self.pdf)] = {}
+            pdf_dest._id_translated[id(self.pdf)]["PreventGC"] = self.pdf  # type: ignore[index]
 
         if self.idnum in pdf_dest._id_translated[id(self.pdf)]:
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
@@ -355,9 +366,8 @@ class IndirectObject(PdfObject):
             dup = pdf_dest._add_object(
                 obj.clone(pdf_dest, force_duplicate, ignore_fields)
             )
-        # asserts added to prevent errors in mypy
-        assert dup is not None
-        assert dup.indirect_reference is not None
+        assert dup is not None, "mypy"
+        assert dup.indirect_reference is not None, "mypy"
         return dup.indirect_reference
 
     @property
@@ -392,6 +402,12 @@ class IndirectObject(PdfObject):
         # items should be extracted from pointed Object
         return self._get_object_with_check()[key]  # type: ignore
 
+    def __contains__(self, key: Any) -> bool:
+        return key in self._get_object_with_check()  # type: ignore
+
+    def __iter__(self) -> Any:
+        return self._get_object_with_check().__iter__()  # type: ignore
+
     def __float__(self) -> str:
         # in this case we are looking for the pointed data
         return self.get_object().__float__()  # type: ignore
@@ -423,7 +439,7 @@ class IndirectObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(f"{self.idnum} {self.generation} R".encode())
@@ -500,8 +516,7 @@ class FloatObject(float, PdfObject):
         if self == 0:
             return "0.0"
         nb = FLOAT_WRITE_PRECISION - int(log10(abs(self)))
-        s = f"{self:.{max(1,nb)}f}".rstrip("0").rstrip(".")
-        return s
+        return f"{self:.{max(1, nb)}f}".rstrip("0").rstrip(".")
 
     def __repr__(self) -> str:
         return self.myrepr()  # repr(float(self))
@@ -513,7 +528,7 @@ class FloatObject(float, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(self.myrepr().encode("utf8"))
@@ -558,7 +573,7 @@ class NumberObject(int, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(repr(self).encode("utf8"))
@@ -566,7 +581,7 @@ class NumberObject(int, PdfObject):
     @staticmethod
     def read_from_stream(stream: StreamType) -> Union["NumberObject", "FloatObject"]:
         num = read_until_regex(stream, NumberObject.NumberPattern)
-        if num.find(b".") != -1:
+        if b"." in num:
             return FloatObject(num)
         return NumberObject(num)
 
@@ -613,7 +628,7 @@ class ByteStringObject(bytes, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(b"<")
@@ -621,7 +636,7 @@ class ByteStringObject(bytes, PdfObject):
         stream.write(b">")
 
     def __str__(self) -> str:
-        charset_to_try = ["utf-16"] + list(NameObject.CHARSETS)
+        charset_to_try = ["utf-16", *list(NameObject.CHARSETS)]
         for enc in charset_to_try:
             try:
                 return self.decode(enc)
@@ -655,7 +670,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         o.autodetect_pdfdocencoding = False
         o.utf16_bom = b""
         if o.startswith(("\xfe\xff", "\xff\xfe")):
-            assert org is not None  # for mypy
+            assert org is not None, "mypy"
             try:
                 o = str.__new__(cls, org.decode("utf-16"))
             except UnicodeDecodeError as exc:
@@ -712,8 +727,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         """
         if self._original_bytes is not None:
             return self._original_bytes
-        else:
-            return self.get_original_bytes()
+        return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:
         # We're a text string object, but the library is trying to get our raw
@@ -724,14 +738,12 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         if self.autodetect_utf16:
             if self.utf16_bom == codecs.BOM_UTF16_LE:
                 return codecs.BOM_UTF16_LE + self.encode("utf-16le")
-            elif self.utf16_bom == codecs.BOM_UTF16_BE:
+            if self.utf16_bom == codecs.BOM_UTF16_BE:
                 return codecs.BOM_UTF16_BE + self.encode("utf-16be")
-            else:
-                return self.encode("utf-16be")
-        elif self.autodetect_pdfdocencoding:
+            return self.encode("utf-16be")
+        if self.autodetect_pdfdocencoding:
             return encode_pdfdocencoding(self)
-        else:
-            raise Exception("no information about original bytes")  # pragma: no cover
+        raise Exception("no information about original bytes")  # pragma: no cover
 
     def get_encoded_bytes(self) -> bytes:
         # Try to write the string out as a PDFDocEncoding encoded string. It's
@@ -756,7 +768,7 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         bytearr = self.get_encoded_bytes()
@@ -776,13 +788,9 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
 
 class NameObject(str, PdfObject):  # noqa: SLOT000
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
-    surfix = b"/"
-    renumber_table: ClassVar[Dict[str, bytes]] = {
-        "#": b"#23",
-        "(": b"#28",
-        ")": b"#29",
-        "/": b"#2F",
-        "%": b"#25",
+    prefix = b"/"
+    renumber_table: ClassVar[dict[str, bytes]] = {
+        **{chr(i): f"#{i:02X}".encode() for i in b"#()<>[]{}/%"},
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
 
@@ -812,7 +820,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
         self, stream: StreamType, encryption_key: Union[None, str, bytes] = None
     ) -> None:
         if encryption_key is not None:  # deprecated
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 "the encryption_key parameter of write_to_stream", "5.0.0"
             )
         stream.write(self.renumber())
@@ -820,9 +828,9 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     def renumber(self) -> bytes:
         out = self[0].encode("utf-8")
         if out != b"/":
-            deprecate_no_replacement(
+            deprecation_no_replacement(
                 f"Incorrect first char in NameObject, should start with '/': ({self})",
-                "6.0.0",
+                "5.0.0",
             )
         for c in self[1:]:
             if c > "~":
@@ -834,6 +842,26 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                 except KeyError:
                     out += c.encode("utf-8")
         return out
+
+    def _sanitize(self) -> "NameObject":
+        """
+        Sanitize the NameObject's name to be a valid PDF name part
+        (alphanumeric, underscore, hyphen). The _sanitize method replaces
+        spaces and any non-alphanumeric/non-underscore/non-hyphen with
+        underscores.
+
+        Returns:
+            NameObject with sanitized name.
+        """
+        name = str(self).removeprefix("/")
+        name = re.sub(r"\ ", "_", name)
+        name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
+        return NameObject("/" + name)
+
+    @classproperty
+    def surfix(cls) -> bytes:  # noqa: N805
+        deprecation_with_replacement("surfix", "prefix", "5.0.0")
+        return b"/"
 
     @staticmethod
     def unnumber(sin: bytes) -> bytes:
@@ -853,7 +881,7 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
-        if name != NameObject.surfix:
+        if name != NameObject.prefix:
             raise PdfReadError("Name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
@@ -875,11 +903,10 @@ class NameObject(str, PdfObject):  # noqa: SLOT000
                     __name__,
                 )
                 return NameObject(name.decode("charmap"))
-            else:
-                raise PdfReadError(
-                    f"Illegal character in NameObject ({name!r}). "
-                    "You may need to adjust NameObject.CHARSETS.",
-                ) from e
+            raise PdfReadError(
+                f"Illegal character in NameObject ({name!r}). "
+                "You may need to adjust NameObject.CHARSETS.",
+            ) from e
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:

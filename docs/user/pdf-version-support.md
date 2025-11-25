@@ -18,15 +18,23 @@ all features of PDF 2.0.
 
 ## PDF Feature Support by pypdf
 
-| Feature                                 | PDF Version | pypdf Support  |
-| --------------------------------------- |:-----------:|:--------------:|
-| CMaps                                   | 1.4         | ✅             |
-| Transparent Graphics                    | 1.4         | ✅             |
-| Content Stream Compression              | 1.5         | ✅             |
-| Cross-reference Streams                 | 1.5         | ❓             |
-| Object Streams                          | 1.5         | ✅             |
-| Optional Content Groups (OCGs)          | 1.5         | ❓             |
-| AES Encryption                          | 1.6         | ✅             |
+| Feature                        | PDF Version | pypdf Support |
+|--------------------------------|:-----------:|:-------------:|
+| CMaps                          |     1.4     |       ✅       |
+| Transparent Graphics           |     1.4     |       ✅       |
+| Content Stream Compression     |     1.5     |       ✅       |
+| Cross-reference Streams        |     1.5     |       ✅       |
+| Object Streams                 |     1.5     |       ✅       |
+| Optional Content Groups (OCGs) |     1.5     |       ❓       |
+| AES Encryption                 |     1.6     |       ✅       |
+
+This table is not complete - if in doubt, consider having a look at the API documentation or
+inside the issues or try with a corresponding PDF file. In general, we are open to
+add support for missing features. Please open a new issue if it does not exist yet, and
+keep in mind that we rely on external contributors to support us with the implementation.
+
+One commonly requested feature is proper support reading/handling incremental PDF files, see
+[issue #3304](https://github.com/py-pdf/pypdf/issues/3304).
 
 See [History of PDF](https://en.wikipedia.org/wiki/History_of_PDF) for more
 features.

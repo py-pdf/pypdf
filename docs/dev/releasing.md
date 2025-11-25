@@ -6,12 +6,12 @@ A `pypdf` release contains the following artifacts:
 * A [release commit](https://github.com/py-pdf/pypdf/commit/91391b18bb8ec9e6e561e2795d988e8634a01a50)
     * Containing a changelog update
     * A new [git tag](https://github.com/py-pdf/pypdf/tags)
-        * A [Github release](https://github.com/py-pdf/pypdf/releases/tag/3.15.0)
+        * A [GitHub release](https://github.com/py-pdf/pypdf/releases/tag/3.15.0)
 
 ## Who does it?
 
 `pypdf` should typically only be released by one of the core maintainers / the
-core maintainer. At the moment, this is either Martin Thoma or pubpub-zz and stefan6419846.
+core maintainer. At the moment, this is either stefan6419846 or pubpub-zz and Martin Thoma.
 
 Any owner of the py-pdf organization also has the technical permissions to
 release.
@@ -47,7 +47,7 @@ The release contains the following steps:
 4. Wait for the approval of another eligible maintainer.
 5. Merge the pull request with the name being the PR title and the body being
    the content of `RELEASE_COMMIT_MSG.md`.
-7. CI now builds a source and a wheels package which it pushes to PyPI. It also
+6. CI now builds a source and a wheels package which it pushes to PyPI. It also
    creates the corresponding tag and a GitHub release.
 
 ### The Release Tag
@@ -61,5 +61,5 @@ The release contains the following steps:
 There is no need to wait for anything. If the CI is green (all tests succeeded),
 we can release.
 
-I (Martin Thoma) typically only release once a week, because it costs a little
-bit of time and I don't want to spam users with too many releases.
+At the moment, there is no fixed release cycle - except that we usually release
+on Sunday.

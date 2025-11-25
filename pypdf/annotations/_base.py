@@ -7,7 +7,9 @@ from ..generic._data_structures import DictionaryObject
 
 class AnnotationDictionary(DictionaryObject, ABC):
     def __init__(self) -> None:
-        from ..generic._base import NameObject
+        super().__init__()
+
+        from ..generic._base import NameObject  # noqa: PLC0415
 
         # /Rect should not be added here as Polygon and PolyLine can automatically set it
         self[NameObject("/Type")] = NameObject("/Annot")

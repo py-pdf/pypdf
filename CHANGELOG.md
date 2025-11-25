@@ -1,5 +1,367 @@
 # CHANGELOG
 
+## Version 6.4.0, 2025-11-23
+
+### Security (SEC)
+- Reduce default limit for LZW decoding
+
+### New Features (ENH)
+- Parse and format comb fields in text widget annotations (#3519)
+
+### Robustness (ROB)
+- Silently ignore Adobe Ascii85 whitespace for suffix detection (#3528)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.3.0...6.4.0)
+
+## Version 6.3.0, 2025-11-16
+
+### New Features (ENH)
+- Wrap and align text in flattened PDF forms (#3465)
+
+### Bug Fixes (BUG)
+- Fix missing "PreventGC" when cloning (#3520)
+- Preserve JPEG image quality by default (#3516)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.2.0...6.3.0)
+
+## Version 6.2.0, 2025-11-09
+
+### New Features (ENH)
+- Add 'strict' parameter to PDFWriter (#3503)
+
+### Bug Fixes (BUG)
+- PdfWriter.append fails when there are articles being None (#3509)
+
+### Documentation (DOC)
+- Execute docs examples in CI (#3507)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.3...6.2.0)
+
+## Version 6.1.3, 2025-10-22
+
+### Security (SEC)
+- Allow limiting size of LZWDecode streams (#3502)
+- Avoid infinite loop when reading broken DCT-based inline images (#3501)
+
+### Bug Fixes (BUG)
+- PageObject.scale() scales media box incorrectly (#3489)
+
+### Robustness (ROB)
+- Fail with explicit exception when image mode is an empty array (#3500)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.2...6.1.3)
+
+## Version 6.1.2, 2025-10-19
+
+### Bug Fixes (BUG)
+- Fix handling of zero-length StreamObject (#3485)
+
+### Robustness (ROB)
+- Deal with wrong size for incremental PDF files (#3495)
+- Improve handling for malformed cross-reference tables (#3483)
+
+### Developer Experience (DEV)
+- Use released Python 3.14
+- Use Mapping instead of dict in type hint of update_page_form_field_values (#3490)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.1...6.1.2)
+
+## Version 6.1.1, 2025-09-28
+
+### Bug Fixes (BUG)
+- Insert new embedded files in a sorted manner (#3477)
+- Fix name tree handling for embedded files with Kids-based inputs (#3475)
+- Make embedding files not break PDF/A-3 compliance (#3472)
+
+### Documentation (DOC)
+- Document AFRelationship handling for PDF/A and provide constants (#3478)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.0...6.1.1)
+
+## Version 6.1.0, 2025-09-21
+
+### New Features (ENH)
+- Enhance XMP metadata handling with creation and setter methods (#3410)
+- Add all font metrics for base 14 Type 1 PDF fonts (#3363)
+- Allow deleting embedded files (#3461)
+- Add support for Python in FIPS mode for document identifier (#3438)
+
+### Bug Fixes (BUG)
+- Fix handling of UTF-16 encoded destination titles (#3463)
+- Guard empty input to prevent IndexError (#3448)
+
+### Developer Experience (DEV)
+- Fix type hint for XMP metadata setter to add bytes type (#3464)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.0.0...6.1.0)
+
+## Version 6.0.0, 2025-08-11
+
+### Security (SEC)
+- Limit decompressed size for FlateDecode filter (#3430)
+
+### Deprecations (DEP)
+- Drop Python 3.8 support (#3412)
+
+### New Features (ENH)
+- Move BlackIs1 functionality to tiff_header (#3421)
+
+### Robustness (ROB)
+- Skip Go-To actions without a destination (#3420)
+
+### Developer Experience (DEV)
+- Update code style related libraries (#3414)
+- Update mypy to 1.17.0 (#3413)
+- Stop testing on Python 3.8 and start testing on Python 3.14 (#3411)
+
+### Maintenance (MAINT)
+- Cleanup deprecations (#3424)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.9.0...6.0.0)
+
+## Version 5.9.0, 2025-07-27
+
+### New Features (ENH)
+- Automatically preserve links in added pages (#3298)
+- Allow writing/updating all properties of an embedded file (#3374)
+
+### Bug Fixes (BUG)
+- Fix XMP handling dropping indirect references (#3392)
+
+### Robustness (ROB)
+- Deal with DecodeParms being empty list (#3388)
+
+### Documentation (DOC)
+- Document how to read and modify XMP metadata (#3383)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.8.0...5.9.0)
+
+## Version 5.8.0, 2025-07-13
+
+### New Features (ENH)
+- Implement flattening for writer (#3312)
+
+### Bug Fixes (BUG)
+- Unterminated object when using PdfWriter with incremental=True (#3345)
+
+### Robustness (ROB)
+- Resolve some image extraction edge cases (#3371)
+- Ignore faulty trailing newline during RLE decoding (#3355)
+- Gracefully handle odd-length strings in parse_bfchar (#3348)
+
+### Developer Experience (DEV)
+- Modernize license specifiers (#3338)
+
+### Maintenance (MAINT)
+- Reduce max-complexity of tool.ruff.lint.mccabe (#3365)
+- Refactor text extraction code
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.7.0...5.8.0)
+
+## Version 5.7.0, 2025-06-29
+
+### Performance Improvements (PI)
+- Performance optimization for LZW decoding (#3329)
+
+### Robustness (ROB)
+- Flate decoding for streams with faulty tail bytes (#3332)
+- dc_creator could be a Bag as well (#3333)
+- Handle tree being NullObject when retrieving named destinations (#3331)
+
+### Maintenance (MAINT)
+- Move inline-image mappings to constants (#3328)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.6.1...5.7.0)
+
+## Version 5.6.1, 2025-06-22
+
+### New Features (ENH)
+- Add PDF/A XMP metadata support (#3314)
+
+### Robustness (ROB)
+- Deal with annotations not being lists on merge (#3321)
+- Handle NullObject for cmap encoding Differences entry (#3317)
+
+### Developer Experience (DEV)
+- Update ruff to 0.12.0 (#3316)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.6.0...5.6.1)
+
+## Version 5.6.0, 2025-06-01
+
+### New Features (ENH)
+- Add basic support for JBIG2 by using jbig2dec (#3163)
+
+### Bug Fixes (BUG)
+- Fix crashes by removing unnecessary line (#3293)
+- Add delimiters to NameObject.renumber_table (#3286)
+
+### Robustness (ROB)
+- Handle DecodeParms being a NullObject (#3285)
+
+### Code Style (STY)
+- Update to mypy 1.16.0 (#3300)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.5.0...5.6.0)
+
+## Version 5.5.0, 2025-05-11
+
+### New Features (ENH)
+- Add support for IndirectObject.__iter__ (#3228)
+- Allow filtering by font when removing text (#3216)
+
+### Bug Fixes (BUG)
+- Add missing named destinations being ByteStringObjects (#3282)
+- Get font information more reliably when removing text (#3252)
+- T* 2D Translation consistent with PDF 1.7 Spec (#3250)
+- Add font stack to q/Q operations in layout mode (#3225)
+- Avoid completely hiding image loading issues like exceeding image size limits (#3221)
+- Using compress_identical_objects on transformed content duplicates differing content (#3197)
+- Consider BlackIs1 parameter for CCITTFaxDecode filter (#3196)
+
+### Robustness (ROB)
+- Deal with insufficient cm matrix during text extraction (#3283)
+- Allow merging when annotations miss D entry (#3281)
+- Fix merging documents if there are no Dests (#3280)
+- Fix crash on malformed action in outline (#3278)
+- Fix compression issues for removed images which might be None (#3246)
+- Attempt to deal with non-rectangular FlateDecode streams (#3245)
+- Handle some None values for broken PDF files (#3230)
+
+### Developer Experience (DEV)
+- Multiple style improvements
+- Update ruff to 0.11.0
+
+### Maintenance (MAINT)
+- Conform ASCIIHexDecode implementation to specification (#3274)
+- Modify comments of filters that do not use decode_parms (#3260)
+
+### Code Style (STY)
+- Simplify warnings & debugging in layout mode text extraction (#3271)
+- Standardize mypy assert statements (#3276)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.4.0...5.5.0)
+
+## Version 5.4.0, 2025-03-16
+
+### New Features (ENH)
+- Add support for `IndirectObject.__contains__` (#3155)
+
+### Bug Fixes (BUG)
+- Fix detection of inline images followed by names or numbers (#3173)
+
+### Robustness (ROB)
+- Consider root objects without catalog type as fallback (#3175)
+- Raise proper error on infinite loop when reading objects (#3169)
+
+### Documentation (DOC)
+- Mention memory consumption of text extraction (#3168)
+
+### Developer Experience (DEV)
+- Upgrade to ruff 0.10.0 (#3191)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.3.1...5.4.0)
+
+## Version 5.3.1, 2025-03-02
+
+### Bug Fixes (BUG)
+- Use the correct name StandardEncoding for the predefined cmap (#3156)
+- Handle inline images containing `EI ` sequences (#3152)
+- Fix check box value which should be name object (#3124)
+- Fix stream position on inline image fallback extraction (#3120)
+- Fix object count for incremental writer (#3117)
+
+### Robustness (ROB)
+- Avoid index errors on empty lines in xref table (#3162)
+- Improve handling of LZW decoder table overflow (#3159)
+- Ignore non-numbers for width when building font width map (#3158)
+- Avoid negative seek values when reading partially broken files (#3157)
+
+### Documentation (DOC)
+- Fixed PageObject.images example usage for replacing image (#3149)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.3.0...5.3.1)
+
+## Version 5.3.0, 2025-02-09
+
+### New Features (ENH)
+- Handle attachments in /Kids and provide object-oriented API (#3108)
+
+### Bug Fixes (BUG)
+- Handle annotations being None on merging (#3111)
+
+### Robustness (ROB)
+- Prevent excessive layout mode text output from Type3 fonts (#3082)
+
+### Documentation (DOC)
+- stefan6419846 becomes BDFL of pypdf (#3078)
+- Tidy the visitor function description (#3086)
+
+### Developer Experience (DEV)
+- Remove ignoring multiple Ruff rules
+- Remove unused mutmut configuration (#3092)
+
+### Testing (TST)
+- Fix warning assertions to use `pytest.warns()` (#3083)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.2.0...5.3.0)
+
+## Version 5.2.0, 2025-01-26
+
+### Deprecations (DEP)
+- Deprecate with replacement CCITParameters (#3019)
+- Correct deprecation of interiour_color (#2947)
+
+### New Features (ENH)
+- Support alternative (U)F names for embedded file retrieval (#3072)
+- Adding support for reading .metadata.keywords (#2939)
+
+### Bug Fixes (BUG)
+- Handle further Tf operators in text extraction layout mode (#3073)
+- Ensure `add_metadata` can deal with `_info = None` (#3040)
+- Handle IndirectObject in CCITTFaxDecode filter (#2965)
+- Handle chained colorspace for inline images when no filter is set (#3008)
+- Avoid extracting inline images twice and dropping other operators (#3002)
+- Fixed reference of value with `str.__new__` in TextStringObject (#2952)
+- Handle indirect objects in font width calculations (#2967)
+- Title sometimes is bytes and not str (#2930)
+- Fix undefined variable for text extraction (regression) (#2934)
+- Don't close stream passed to PdfWriter.write() (#2909)
+
+### Robustness (ROB)
+- Handle zero height fonts when extracting text (#3075)
+- Deal with content streams not containing streams (#3005)
+- Gracefully handle some text operators when the operands are missing (#3006)
+- Fall back to non-Adobe Ascii85 format for missing end markers (#3007)
+- Ignore odd-length strings when processing cmap lines (#3009)
+- Skip annotation destination being NullObject in PdfWriter (#2964)
+- Skip destination page being None in PdfWriter (#2963)
+- Fix infinite loop case when reading null objects within an Array
+- Fixing infinite loop in ArrayObject read_from_stream (#2928)
+
+### Documentation (DOC)
+- Add note about default line colors (#3014)
+
+### Developer Experience (DEV)
+- Remove ignoring Ruff rule PGH004 (#3071)
+- Tidy ignore array in tool.ruff.lint (#3069)
+- Move Windows CI to Python 3.13 (#3003)
+- Move to Ubuntu 22.04 (#3004)
+
+### Maintenance (MAINT)
+- Fix formatting of warning message and include exception message (#3076)
+- Narrow return type for `ContentStream.operations` (#2941)
+
+### Testing (TST)
+- Fix image similarity for upcoming Ubuntu 24.04 (#3039)
+- Replace broken Apache Tika Corpora urls (#3041)
+
+### Code Style (STY)
+- Add form feed to WHITESPACES (#3054)
+- Lots of small internal changes
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.1.0...5.2.0)
+
 ## Version 5.1.0, 2024-10-27
 
 ### New Features (ENH)
@@ -67,9 +429,8 @@
 
 This version drops support for Python 3.7 (not maintained since July 2023), PdfMerger (use PdfWriter instead) and AnnotationBuilder (use annotations instead).
 
-
 ### Deprecations (DEP)
-- Remove the deprecated PfdMerger and AnnotationBuilder classes and other deprecations cleanup (#2813)
+- Remove the deprecated PdfMerger and AnnotationBuilder classes and other deprecations cleanup (#2813)
 - Drop Python 3.7 support (#2793)
 
 ### New Features (ENH)

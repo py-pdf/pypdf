@@ -1,4 +1,5 @@
 """Test the `make_release.py` script."""
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -15,13 +16,33 @@ b7bfd0d7eddfd0865a94cc9e7027df6596242cf7:::BUG: Use NumberObject for /Border ele
 f851a532a5ec23b572d86bd7185b327a3fac6b58:::DEV: Bump codecov/codecov-action from 3 to 4 (#2430):::dependabot[bot]""".encode()  # noqa: E501
 
 COMMITS__VERSION_4_0_1 = DATA_PATH.joinpath("commits__version_4_0_1.json")
+VERSION_3_9_PLUS = sys.version_info[:2] >= (3, 9)
+
+
+@pytest.mark.skipif(not VERSION_3_9_PLUS, reason="Function uses method removeprefix added in Python 3.9")
+@pytest.mark.parametrize(
+    ("data", "expected"),
+    [
+        ("", ""),
+        ("# CHANGELOG", ""),
+        ("# CHANGELOG ", ""),
+        ("# CHANGELOG  ", ""),
+        ("## CHANGELOG", "## CHANGELOG"),
+        ("CHANGELOG", "CHANGELOG"),
+        ("# CHANGELOG #", "#"),
+    ]
+)
+def test_strip_header(data, expected):
+    """Removal of the 'CHANGELOG' header."""
+    make_release = pytest.importorskip("make_release")
+    assert make_release.strip_header(data) == expected
 
 
 def test_get_git_commits_since_tag():
     make_release = pytest.importorskip("make_release")
 
     with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, mock.patch(
-        "urllib.request.urlopen", side_effect=lambda n: commits
+        "urllib.request.urlopen", side_effect=lambda _: commits
     ), mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1):
         commits = make_release.get_git_commits_since_tag("4.0.1")
     assert commits == [
@@ -67,7 +88,7 @@ def test_get_formatted_changes():
     make_release = pytest.importorskip("make_release")
 
     with open(COMMITS__VERSION_4_0_1, mode="rb") as commits, mock.patch(
-        "urllib.request.urlopen", side_effect=lambda n: commits
+        "urllib.request.urlopen", side_effect=lambda _: commits
     ), mock.patch("subprocess.check_output", return_value=GIT_LOG__VERSION_4_0_1):
         output, output_with_user = make_release.get_formatted_changes("4.0.1")
 

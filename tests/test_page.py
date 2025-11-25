@@ -1,11 +1,15 @@
 """Test the pypdf._page module."""
 import json
+import logging
 import math
+import shutil
+import subprocess
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from random import shuffle
-from typing import List, Tuple
+from typing import Any
+from unittest import mock
 
 import pytest
 
@@ -26,11 +30,13 @@ from pypdf.generic import (
 )
 
 from . import get_data_from_url, normalize_warnings
+from .test_images import image_similarity
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
+GHOSTSCRIPT_BINARY = shutil.which("gs")
 
 
 def get_all_sample_files():
@@ -39,8 +45,7 @@ def get_all_sample_files():
         return {"data": []}
     with open(meta_file) as fp:
         data = fp.read()
-    meta = json.loads(data)
-    return meta
+    return json.loads(data)
 
 
 all_files_meta = get_all_sample_files()
@@ -343,10 +348,10 @@ def test_page_rotation():
     # test transfer_rotate_to_content
     page.rotation -= 90
     page.transfer_rotation_to_content()
-    assert abs(float(page.mediabox.left) - 0) < 0.1
-    assert abs(float(page.mediabox.bottom) - 0) < 0.1
-    assert abs(float(page.mediabox.right) - 792) < 0.1
-    assert abs(float(page.mediabox.top) - 612) < 0.1
+    assert math.isclose(page.mediabox.left, 0, abs_tol=0.1)
+    assert math.isclose(page.mediabox.bottom, 0, abs_tol=0.1)
+    assert math.isclose(page.mediabox.right, 792, abs_tol=0.1)
+    assert math.isclose(page.mediabox.top, 612, abs_tol=0.1)
 
 
 def test_page_indirect_rotation():
@@ -469,8 +474,6 @@ def test_extract_text_visitor_callbacks():
     It extracts the labels of package-boxes in Figure 2.
     It extracts the texts in table "REVISION HISTORY".
     """
-    import logging
-
     class PositionedText:
         """
         Specify a text with coordinates, font-dictionary and font-size.
@@ -479,7 +482,7 @@ def test_extract_text_visitor_callbacks():
         """
 
         def __init__(self, text, x, y, font_dict, font_size) -> None:
-            # TODO \0-replace: Encoding issue in some files?
+            # TODO: \0-replace: Encoding issue in some files?
             self.text = text.replace("\0", "")
             self.x = x
             self.y = y
@@ -513,7 +516,7 @@ def test_extract_text_visitor_callbacks():
 
     def extract_text_and_rectangles(
         page: PageObject, rect_filter=None
-    ) -> Tuple[List[PositionedText], List[Rectangle]]:
+    ) -> tuple[list[PositionedText], list[Rectangle]]:
         """
         Extracts texts and rectangles of a page of type pypdf._page.PageObject.
 
@@ -562,8 +565,8 @@ def test_extract_text_visitor_callbacks():
         return (texts, rectangles)
 
     def extract_table(
-        texts: List[PositionedText], rectangles: List[Rectangle]
-    ) -> List[List[List[PositionedText]]]:
+        texts: list[PositionedText], rectangles: list[Rectangle]
+    ) -> list[list[list[PositionedText]]]:
         """
         Extracts a table containing text.
 
@@ -642,7 +645,7 @@ def test_extract_text_visitor_callbacks():
 
         return rows
 
-    def extract_cell_text(cell_texts: List[PositionedText]) -> str:
+    def extract_cell_text(cell_texts: list[PositionedText]) -> str:
         """Joins the text-objects of a cell."""
         return ("".join(t.text for t in cell_texts)).strip()
 
@@ -1297,7 +1300,7 @@ def test_compression():
 
     def create_stamp_pdf() -> BytesIO:
         pytest.importorskip("fpdf")
-        from fpdf import FPDF
+        from fpdf import FPDF  # noqa: PLC0415
 
         pdf = FPDF()
         pdf.add_page()
@@ -1457,6 +1460,8 @@ def test_get_contents_as_bytes():
     assert writer.pages[0]._get_contents_as_bytes() == expected
     writer.pages[0][NameObject("/Contents")] = writer.pages[0]["/Contents"][0]
     assert writer.pages[0]._get_contents_as_bytes() == expected
+    del writer.pages[0]["/Contents"]
+    assert writer.pages[0]._get_contents_as_bytes() is None
 
 
 def test_recursive_get_page_from_node():
@@ -1470,3 +1475,100 @@ def test_recursive_get_page_from_node():
     writer.insert_page(writer.pages[0], -1)
     with pytest.raises(ValueError):
         writer.insert_page(writer.pages[0], -10)
+
+
+def test_get_contents__none_type():
+    # We can observe this in reality as well, but these documents might be
+    # confidential. Thus use a more complex dummy implementation here while
+    # assigning a value of `None` is not possible from code, but from PDFs
+    # itself.
+    class MyPage(PageObject):
+        def __contains__(self, item) -> bool:
+            assert item == "/Contents"
+            return True
+
+        def __getitem__(self, item) -> Any:
+            assert item == "/Contents"
+
+    page = MyPage()
+    assert page.get_contents() is None
+
+
+def test_extract_text__none_type():
+    class MyPage(PageObject):
+        def __getitem__(self, item) -> Any:
+            if item == "/Contents":
+                return None
+            return super().__getitem__(item)
+
+    page = MyPage()
+    resources = DictionaryObject()
+    none_reference = IndirectObject(1, 0, None)
+    resources[NameObject("/Font")] = none_reference
+    page[NameObject("/Resources")] = resources
+    with mock.patch.object(none_reference, "get_object", return_value=None):
+        assert page.extract_text() == ""
+
+
+@pytest.mark.enable_socket
+def test_scale_by():
+    """Tests for #3487"""
+    url = "https://github.com/user-attachments/files/22685841/input.pdf"
+    name = "issue3487.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    original_box = RectangleObject((0, 0, 595.275604, 841.88974))
+    expected_box = RectangleObject((0.0, 0.0, 297.637802, 420.94487))
+    for page in reader.pages:
+        assert page.artbox == original_box
+        assert page.bleedbox == original_box
+        assert page.cropbox == original_box
+        assert page.mediabox == original_box
+        assert page.trimbox == original_box
+
+        page.scale_by(0.5)
+        assert page.artbox == expected_box
+        assert page.bleedbox == expected_box
+        assert page.cropbox == expected_box
+        assert page.mediabox == expected_box
+        assert page.trimbox == expected_box
+
+
+@pytest.mark.enable_socket
+@pytest.mark.skipif(GHOSTSCRIPT_BINARY is None, reason="Requires Ghostscript")
+def test_box_rendering(tmp_path):
+    """Tests for issue #3487."""
+    url = "https://github.com/user-attachments/files/22685841/input.pdf"
+    name = "issue3487.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        page.scale_by(0.5)
+        writer.add_page(page)
+
+    target_png_path = tmp_path / "target.png"
+    url = "https://github.com/user-attachments/assets/e9c2271c-bfc3-4a6f-8c91-ffefa24502e2"
+    name = "issue3487.png"
+    target_png_path.write_bytes(get_data_from_url(url, name=name))
+
+    pdf_path = tmp_path / "out.pdf"
+    writer.write(pdf_path)
+
+    for box in ["Art", "Bleed", "Crop", "Media", "Trim"]:
+        png_path = tmp_path / f"{box}.png"
+        # False positive: https://github.com/PyCQA/bandit/issues/333
+        subprocess.run(  # noqa: S603
+            [
+                GHOSTSCRIPT_BINARY,
+                f"-dUse{box}Box",
+                "-dFirstPage=1",
+                "-dLastPage=1",
+                "-sDEVICE=pngalpha",
+                "-o",
+                png_path,
+                pdf_path,
+            ]
+        )
+        assert png_path.is_file(), box
+        assert image_similarity(png_path, target_png_path) >= 0.95, box

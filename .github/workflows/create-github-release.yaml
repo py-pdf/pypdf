@@ -15,13 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Prepare variables
         id: prepare_variables
         run: |
           git fetch --tags --force
           latest_tag=$(git describe --tags --abbrev=0)
-          echo "latest_tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
+          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "tag_body<<$EOF" >> "$GITHUB_ENV"

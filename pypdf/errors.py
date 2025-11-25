@@ -64,3 +64,11 @@ class EmptyImageDataError(PyPdfError):
 
 
 STREAM_TRUNCATED_PREMATURELY = "Stream has ended unexpectedly"
+
+
+class LimitReachedError(PyPdfError):
+    """Raised when a limit is reached."""
+
+
+class XmpDocumentError(PyPdfError, RuntimeError):
+    """Raised when the XMP XML document context is invalid or missing."""

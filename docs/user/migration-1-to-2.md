@@ -4,7 +4,7 @@
 is very different from `PyPDF2>=2.0.0` ([docs](../meta/history.md)).
 
 Luckily, most changes are simple naming adjustments. This guide helps you to
-make the step from `PyPDF2 1.x` (or even the original PyPpdf) to `PyPDF2>=2.0.0`.
+make the step from `PyPDF2 1.x` (or even the original PyPdf) to `PyPDF2>=2.0.0`.
 
 You can execute your code with the updated version and show deprecation warnings
 by running `python -W all your_code.py`.
@@ -19,7 +19,7 @@ by running `python -W all your_code.py`.
 
 ## Classes
 
-The base classes were renamed as they also allow to operate with ByteIO streams
+The base classes were renamed as they also allow operating with BytesIO streams
 instead of files. Also, the `strict` parameter changed the default value from
 `strict=True` to `strict=False`.
 
@@ -185,4 +185,4 @@ A few classes / functions were deprecated without replacement:
 * `PyPDF2.string_type`: Use `str` instead
 * `PyPDF2.isString(s)`: Use `instance(s, str)` instead
 * `PyPDF2._basestring`: Use `str` instead
-* `b_(...)` was removed. You should typically be able use the bytes object directly, otherwise you can [copy this](https://github.com/py-pdf/PyPDF2/pull/986#issuecomment-1230698069)
+* `b_(...)` was removed. You should typically be able to use the bytes object directly, otherwise you can [copy this](https://github.com/py-pdf/PyPDF2/pull/986#issuecomment-1230698069)

@@ -3,7 +3,7 @@ import io
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 import pytest
 
@@ -14,6 +14,7 @@ from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
 from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
+    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
@@ -38,7 +39,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
-NestedList = Union[int, None, List["NestedList"]]
+NestedList = Union[int, None, list["NestedList"]]
 
 
 @pytest.mark.parametrize(
@@ -155,7 +156,7 @@ def test_broken_meta_data(pdf_path):
     reader = PdfReader(BytesIO(b.replace(b"/Info 2 0 R", b"/Info 2    ")))
     with pytest.raises(PdfReadError) as exc:
         reader.metadata
-    assert "does not point to document information directory" in repr(exc)
+    assert "does not point to a document information dictionary" in repr(exc)
 
 
 @pytest.mark.parametrize(
@@ -231,7 +232,7 @@ def test_get_outline(src, outline_elements):
     ],
 )
 def test_get_images(src, expected_images):
-    from PIL import Image
+    from PIL import Image  # noqa: PLC0415
 
     src_abs = RESOURCE_ROOT / src
     reader = PdfReader(src_abs)
@@ -694,7 +695,7 @@ def test_reader_properties():
     [True, False],
 )
 def test_issue604(caplog, strict):
-    """Test with invalid destinations."""  # TODO
+    """Test with invalid destinations."""
     with open(RESOURCE_ROOT / "issue-604.pdf", "rb") as f:
         pdf = None
         outline = None
@@ -705,22 +706,20 @@ def test_issue604(caplog, strict):
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # outline is not correct
-        else:
-            pdf = PdfReader(f, strict=strict)
-            outline = pdf.outline
-            msg = [
-                "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
-            ]
-            assert normalize_warnings(caplog.text) == msg
+        pdf = PdfReader(f, strict=strict)
+        outline = pdf.outline
+        msg = [
+            "Unknown destination: 'ms_Thyroid_2_2020_071520_watermarked.pdf' [0, 1]"
+        ]
+        assert normalize_warnings(caplog.text) == msg
 
         def get_dest_pages(x) -> NestedList:
             if isinstance(x, list):
                 return [get_dest_pages(y) for y in x]
-            else:
-                destination_page_number = pdf.get_destination_page_number(x)
-                if destination_page_number is None:
-                    return destination_page_number
-                return destination_page_number + 1
+            destination_page_number = pdf.get_destination_page_number(x)
+            if destination_page_number is None:
+                return destination_page_number
+            return destination_page_number + 1
 
         out = []
 
@@ -745,16 +744,22 @@ def test_decode_permissions():
     print_ = base.copy()
     print_["print"] = True
     with pytest.raises(
-        DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+        DeprecationError,
+            match=(
+                r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
+                r"Use user_access_permissions instead"
+            ),
     ):
         assert reader.decode_permissions(4) == print_
 
     modify = base.copy()
     modify["modify"] = True
     with pytest.raises(
-        DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+        DeprecationError,
+        match=(
+            r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
+            r"Use user_access_permissions instead"
+        ),
     ):
         assert reader.decode_permissions(8) == modify
 
@@ -1760,7 +1765,7 @@ def test_repair_root(caplog):
     caplog.clear()
     reader = PdfReader(
         BytesIO(
-            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog/Pages 3 0 R", b"/Catalo ")
         )
     )
     with pytest.raises(PdfReadError):
@@ -1775,9 +1780,9 @@ def test_repair_root(caplog):
 
     # Invalid /Root Entry + error in get_object
     caplog.clear()
-    b = b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
-    b = b[:5124] + b"A" + b[5125:]
-    reader = PdfReader(BytesIO(b))
+    data = b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog/Pages 3 0 R", b"/Catalo ")
+    data = data[:5124] + b"A" + data[5125:]
+    reader = PdfReader(BytesIO(data))
     with pytest.raises(PdfReadError):
         len(reader.pages)
     assert all(
@@ -1787,3 +1792,85 @@ def test_repair_root(caplog):
             'Searching object with "/Catalog" key',
         )
     )
+
+    # Invalid /Root Entry without /Type, but /Pages.
+    caplog.clear()
+    reader = PdfReader(
+        BytesIO(
+            b.replace(b"/Root 1 0 R", b"/Root 2 0 R").replace(b"/Catalog", b"/Catalo ")
+        )
+    )
+    assert len(reader.pages) == 1
+    assert all(
+        msg in caplog.text
+        for msg in (
+            "Invalid Root object in trailer",
+            'Searching object with "/Catalog" key',
+            f"Possible root found at IndirectObject(2, 0, {id(reader)}), but missing /Catalog key"
+        )
+    )
+
+
+@pytest.mark.enable_socket
+def test_issue3151(caplog):
+    """Tests for #3151"""
+    url = "https://github.com/user-attachments/files/18941494/bible.pdf"
+    name = "issue3151.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert len(reader.pages) == 742
+
+
+@pytest.mark.enable_socket
+def test_issue2886(caplog):
+    """Tests for #2886"""
+    url = "https://github.com/user-attachments/files/17187711/crash-e8a85d82de01cab5eb44e7993304d8b9d1544970.pdf"
+    name = "issue2886.pdf"
+
+    with pytest.raises(PdfReadError, match=r"Unexpected empty line in Xref table\."):
+        _ = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+
+@pytest.mark.enable_socket
+def test_infinite_loop_for_length_value():
+    """Tests for #3112"""
+    url = "https://github.com/user-attachments/files/19106009/Special.n.15.du.jeudi.22.fevrier.2024.pdf"
+    name = "issue3112.pdf"
+
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+    with pytest.raises(PdfReadError, match=r"^Detected loop with self reference for IndirectObject\(165, 0, \d+\)\.$"):
+        writer.add_page(reader.pages[0])
+
+
+def test_trailer_cannot_be_read():
+    path = RESOURCE_ROOT / "crazyones.pdf"
+    data = path.read_bytes().replace(b"/Type/XRef", b"/Type/Invalid")
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Unexpected type '/Invalid'$"):
+        reader = PdfReader(BytesIO(data))
+        list(reader.pages)
+
+
+@pytest.mark.enable_socket
+def test_read_pdf15_xref_stream():
+    data = get_data_from_url(name="issue-3429.pdf")
+
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Size missing from XRef stream {"):
+        PdfReader(BytesIO(data))
+
+    data_modified = data.replace(b"/XRef/", b"/XRef/Size/2/")
+    with pytest.raises(
+            PdfReadError,
+            match=r"^Trailer cannot be read: Limit reached while decompressing\. 1545392 bytes remaining\.$"
+    ):
+        PdfReader(BytesIO(data_modified))
+
+
+@pytest.mark.enable_socket
+def test_read_standard_xref_table__two_whitespace_characters_between_offset_and_generation():
+    """Tests for #3482"""
+    url = "https://github.com/user-attachments/files/22591813/helloworld.pdf"
+    name = "issue3482.pdf"
+
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert len(reader.pages) == 1
+    assert reader.pages[0].extract_text() == "Hello World!"

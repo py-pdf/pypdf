@@ -6,10 +6,21 @@ Cropping works by adjusting the viewbox. That means content that was cropped
 away can still be restored.
 ```
 
-```python
+```{testsetup}
+pypdf_test_setup("user/cropping-and-transforming", {
+    "example.pdf": "../resources/example.pdf",
+    "Seige_of_Vicksburg_Sample_OCR.pdf": "../resources/Seige_of_Vicksburg_Sample_OCR.pdf",
+    "labeled-edges-center-image.pdf": "../resources/labeled-edges-center-image.pdf",
+    "side-by-side-subfig.pdf": "../resources/side-by-side-subfig.pdf",
+    "nup-source.pdf": "../resources/box.pdf",
+    "box.pdf": "../resources/box.pdf",
+})
+```
+
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("example.pdf")
+reader = PdfReader("Seige_of_Vicksburg_Sample_OCR.pdf")
 writer = PdfWriter()
 
 # Add page 1 from reader to output document, unchanged.
@@ -26,9 +37,7 @@ page3.mediabox.upper_right = (
 )
 writer.add_page(page3)
 
-# Write to pypdf-output.pdf.
-with open("pypdf-output.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("out-all-in-one.pdf")
 ```
 
 ## Page rotation
@@ -37,22 +46,21 @@ The most typical rotation is a clockwise rotation of the page by multiples of
 90 degrees. That is done when the orientation of the page is wrong. You can
 do that with the {func}`~pypdf._page.PageObject.rotate` method:
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("input.pdf")
+reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
 writer.add_page(reader.pages[0])
 writer.pages[0].rotate(90)
 
-with open("output.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("out-page-rotation.pdf")
 ```
 
 The rotate method is typically preferred over the `page.add_transformation(Transformation().rotate())`
 method, because `rotate` will ensure that the page is still in the mediabox/cropbox.
-The transformation object operates on the coordinates of the pages
+The transformation object operates on the coordinates of the page
 contents and does not change the mediabox or cropbox.
 
 
@@ -63,7 +71,7 @@ contents and does not change the mediabox or cropbox.
 
 is the result of
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter, Transformation
 
 # Get the data
@@ -78,15 +86,14 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-with open("merged-foo.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("out-plain-merge.pdf")
 ```
 
 ## Merge with Rotation
 
 ![](merge-45-deg-rot.png)
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter, Transformation
 
 # Get the data
@@ -104,13 +111,12 @@ page_base.merge_page(page_box)
 # Write the result back
 writer = PdfWriter()
 writer.add_page(page_base)
-with open("merged-foo.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("out-merge-with-rotation.pdf")
 ```
 
-If you add the expand parameter:
+If you add the `expand` parameter:
 
-```python
+```{testcode}
 transformation = Transformation().rotate(45)
 page_box.add_transformation(transformation)
 page_base.merge_page(page_box, expand=True)
@@ -122,7 +128,7 @@ you get:
 
 Alternatively, you can move the merged image a bit to the right by using
 
-```python
+```{testcode}
 op = Transformation().rotate(45).translate(tx=50)
 ```
 
@@ -131,18 +137,19 @@ op = Transformation().rotate(45).translate(tx=50)
 
 ## Scaling
 
-pypdf offers two ways to scale: The page itself and the contents on a page.
+In pypdf, the content and the page can either be scaled together or separately.
+Content scaling scales the contents on a page, and page scaling scales just the page size (the canvas).
 Typically, you want to combine both.
 
 ![](scaling.png)
 
-### Scaling a Page (the Canvas)
+### Scaling both the Page and contents together
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
 # Read the input
-reader = PdfReader("resources/side-by-side-subfig.pdf")
+reader = PdfReader("side-by-side-subfig.pdf")
 page = reader.pages[0]
 
 # Scale
@@ -151,13 +158,42 @@ page.scale_by(0.5)
 # Write the result to a file
 writer = PdfWriter()
 writer.add_page(page)
-writer.write("out.pdf")
+writer.write("out-scale-all.pdf")
 ```
 
-If you wish to have more control, you can adjust the various page boxes
-directly:
+### Scaling the content only
 
-```python
+The content is scaled around the origin of the coordinate system.
+Typically, that is the lower-left corner.
+
+```{testcode}
+from pypdf import PdfReader, PdfWriter, Transformation
+
+# Read the input
+reader = PdfReader("side-by-side-subfig.pdf")
+page = reader.pages[0]
+
+# Scale
+op = Transformation().scale(sx=0.7, sy=0.7)
+page.add_transformation(op)
+
+# Write the result to a file
+writer = PdfWriter()
+writer.add_page(page)
+writer.write("out-scale-content.pdf")
+```
+
+### Scaling the page only
+
+To scale the page by `sx` in the X direction and `sy` in the Y direction:
+
+```{testcode}
+page.mediabox = page.mediabox.scale(sx=0.7, sy=0.7)
+```
+
+If you wish to have more control, you can adjust the various page boxes directly:
+
+```{testcode}
 from pypdf.generic import RectangleObject
 
 mb = page.mediabox
@@ -169,38 +205,17 @@ page.bleedbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
 page.artbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
 ```
 
-### Scaling the content
-
-The content is scaled towards the origin of the coordinate system. Typically,
-that is the lower-left corner.
-
-```python
-from pypdf import PdfReader, PdfWriter, Transformation
-
-# Read the input
-reader = PdfReader("resources/side-by-side-subfig.pdf")
-page = reader.pages[0]
-
-# Scale
-op = Transformation().scale(sx=0.7, sy=0.7)
-page.add_transformation(op)
-
-# Write the result to a file
-writer = PdfWriter()
-writer.add_page(page)
-writer.write("out-pg-transform.pdf")
-```
-
 ### pypdf._page.MERGE_CROP_BOX
 
 `pypdf<=3.4.0` used to merge the other page with `trimbox`.
 `pypdf>3.4.0` changes this behavior to `cropbox`.
 
-In case anybody has good reasons to use/expect `trimbox`, please let me know via
-info@martin-thoma.de or via https://github.com/py-pdf/pypdf/pull/1622
-In the mean time, you can add the following code to get the old behavior:
+In case anybody has good reasons to use/expect `trimbox`, you can add the
+following code to get the old behavior:
 
-```python
+```{testcode}
+import pypdf
+
 pypdf._page.MERGE_CROP_BOX = "trimbox"
 ```
 
@@ -212,7 +227,7 @@ We have designed the following business card (A8 format) to advertise our new st
 
 We would like to copy this card sixteen times on an A4 page, to print it, cut it, and give it to all our friends. Having learned about the {func}`~pypdf._page.PageObject.merge_page` method and the {class}`~pypdf.Transformation` class, we run the following code. Notice that we had to tweak the media box of the source page to extend it, which is already a dirty hack (in this case).
 
-```python
+```{testcode}
 from pypdf import PaperSize, PdfReader, PdfWriter, Transformation
 
 # Read source file
@@ -240,8 +255,7 @@ for x in range(4):
         destpage.merge_page(sourcepage)
 
 # Write file
-with open("nup-dest1.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("out-nup-dest1.pdf")
 ```
 
 And the result is… unexpected.
@@ -254,7 +268,7 @@ We need a way to merge a transformed page, *without* modifying the source page. 
 - we no longer need the media box hack of our first try;
 - transformations are only applied *once*.
 
-```python
+```{testcode}
 from pypdf import PaperSize, PdfReader, PdfWriter, Transformation
 
 # Read source file
@@ -277,12 +291,11 @@ for x in range(4):
         )
 
 # Write file
-with open("nup-dest2.pdf", "wb") as fp:
-    writer.write(fp)
+writer.write("out-nup-dest2.pdf")
 ```
 
 We get the expected result.
 
 ![](nup-dest2.png)
 
-There is still some work to do, for instance to insert margins between and around cards, but this is left as an exercise for the reader…
+There is still some work to do, for instance, to insert margins between and around cards, but this is left as an exercise for the reader…
