@@ -64,9 +64,10 @@ class AbstractPolyLine(MarkupAnnotation, ABC):
     def determineVertices(vertices: Union[list[Vertex], ArrayObject[NumberObject]]) -> tuple[list[Vertex], list[NumberObject]]:
         coord_list = []
         if isinstance(vertices, ArrayObject):
-            import itertools
             coord_list = vertices
-            vertices = [vertex for vertex in itertools.batched(vertices, 2)]
+            args = [iter(vertices)] * 2 # Adapted def grouper() 
+            zip(*args)  # from https://docs.python.org/3.9/library/itertools.html#itertools-recipes
+
         else:
             for x, y in vertices:
                 coord_list.append(NumberObject(x))
