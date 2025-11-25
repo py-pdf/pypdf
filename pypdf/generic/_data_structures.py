@@ -293,10 +293,12 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         visited: set[tuple[int, int]] = set()  # (idnum, generation)
         import inspect
         kwargs = {}
-        for arg_name in inspect.getfullargspec(self.__class__.__init__).args:
-            for key, val in self.items():
-                if key.removeprefix("/").lower() == arg_name:  
-                    kwargs[arg_name] = val
+        inspector = inspect.getfullargspec(self.__class__.__init__)
+
+        for key, val in self.items():
+            key_stripped = key.removeprefix("/").lower()
+            if key_stripped in inspector.args or key_stripped in inspector.kwonlyargs:
+                kwargs[key_stripped] = val
 
         d__ = cast(
             "DictionaryObject",
