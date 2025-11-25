@@ -63,7 +63,7 @@ class AbstractPolyLine(MarkupAnnotation, ABC):
     @staticmethod
     def determineVertices(vertices: Union[list[Vertex], ArrayObject[NumberObject]]) -> tuple[list[Vertex], list[NumberObject]]:
         coord_list = []
-        if type(vertices) is ArrayObject:
+        if isinstance(vertices, ArrayObject):
             import itertools
             coord_list = vertices
             vertices = [vertex for vertex in itertools.batched(vertices, 2)]
@@ -215,7 +215,7 @@ class PolyLine(AbstractPolyLine):
         vertices: list[Vertex] | ArrayObject[NumberObject],
         **kwargs: Any,
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(vertices=vertices, **kwargs)
 
         vertices, coord_list = self.determineVertices(vertices)
         self.update(
@@ -305,7 +305,7 @@ class Polygon(AbstractPolyLine):
         vertices: list[Vertex] | ArrayObject[NumberObject],
         **kwargs: Any,
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(vertices=vertices, **kwargs)
         vertices, coord_list = self.determineVertices(vertices)
         self.update(
             {
