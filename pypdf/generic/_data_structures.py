@@ -291,9 +291,18 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             pass
 
         visited: set[tuple[int, int]] = set()  # (idnum, generation)
+        import inspect
+        kwargs = {}
+        inspector = inspect.getfullargspec(self.__class__.__init__)
+
+        for key, val in self.items():
+            key_stripped = key.removeprefix("/").lower()
+            if key_stripped in inspector.args or key_stripped in inspector.kwonlyargs:
+                kwargs[key_stripped] = val
+
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
+            self._reference_clone(self.__class__(**kwargs), pdf_dest, force_duplicate),
         )
         if ignore_fields is None:
             ignore_fields = []

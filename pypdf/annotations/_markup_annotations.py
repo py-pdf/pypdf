@@ -1,5 +1,6 @@
 import sys
 from abc import ABC
+import inspect
 from typing import Any, Optional, Union
 
 from ..constants import AnnotationFlag
@@ -50,6 +51,29 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
     def __init__(self, *, title_bar: Optional[str] = None) -> None:
         if title_bar is not None:
             self[NameObject("/T")] = TextStringObject(title_bar)
+
+
+class AbstractPolyLine(MarkupAnnotation, ABC):
+    def __init__(self, vertices: Union[list[Vertex], ArrayObject[NumberObject]], **kwargs):
+        super().__init__(**kwargs)
+        if len(vertices) == 0 or len(vertices) % 2 != 0:
+            raise ValueError("A polygon needs at least 1 vertex," \
+                " containing 1 horizontal and 1 vertical position")
+    
+    @staticmethod
+    def _determine_vertices(vertices: Union[list[Vertex], ArrayObject[NumberObject]]) -> tuple[list[Vertex], list[NumberObject]]:
+        coord_list = []
+        if isinstance(vertices, ArrayObject):
+            coord_list = vertices
+            args = [iter(vertices)] * 2 # Adapted def grouper() 
+            zip(*args)  # from https://docs.python.org/3.9/library/itertools.html#itertools-recipes
+
+        else:
+            for x, y in vertices:
+                coord_list.append(NumberObject(x))
+                coord_list.append(NumberObject(y))
+        
+        return vertices, coord_list
 
 
 class Text(MarkupAnnotation):
@@ -186,19 +210,15 @@ class Line(MarkupAnnotation):
         )
 
 
-class PolyLine(MarkupAnnotation):
+class PolyLine(AbstractPolyLine):
     def __init__(
         self,
-        vertices: list[Vertex],
+        vertices: Union[list[Vertex], ArrayObject[NumberObject]],
         **kwargs: Any,
     ) -> None:
-        super().__init__(**kwargs)
-        if len(vertices) == 0:
-            raise ValueError("A polygon needs at least 1 vertex with two coordinates")
-        coord_list = []
-        for x, y in vertices:
-            coord_list.append(NumberObject(x))
-            coord_list.append(NumberObject(y))
+        super().__init__(vertices=vertices, **kwargs)
+
+        vertices, coord_list = self._determine_vertices(vertices)
         self.update(
             {
                 NameObject("/Subtype"): NameObject("/PolyLine"),
@@ -280,20 +300,14 @@ class Ellipse(MarkupAnnotation):
             )
 
 
-class Polygon(MarkupAnnotation):
+class Polygon(AbstractPolyLine):
     def __init__(
         self,
-        vertices: list[tuple[float, float]],
+        vertices: Union[list[Vertex], ArrayObject[NumberObject]],
         **kwargs: Any,
     ) -> None:
-        super().__init__(**kwargs)
-        if len(vertices) == 0:
-            raise ValueError("A polygon needs at least 1 vertex with two coordinates")
-
-        coord_list = []
-        for x, y in vertices:
-            coord_list.append(NumberObject(x))
-            coord_list.append(NumberObject(y))
+        super().__init__(vertices=vertices, **kwargs)
+        vertices, coord_list = self._determine_vertices(vertices)
         self.update(
             {
                 NameObject("/Type"): NameObject("/Annot"),
