@@ -7,81 +7,85 @@ With pypdf, you can create simple or deeply nested outlines programmatically.
 
 ## `PdfWriter.add_outline_item()`
 
-**Source:** `pypdf/_writer.py`  
+**Source:** `pypdf/_writer.py`
 Adds an outline (bookmark) entry to the PDF document.
-
 
 ## **Syntax**
 
 ```python
 add_outline_item(
+    self,
     title: str,
-    page_number: int | None = None,
-    parent: Any | None = None,
-    color: tuple | None = None,
+    page_number: Union[None, PageObject, IndirectObject, int],
+    parent: Union[None, TreeObject, IndirectObject] = None,
+    before: Union[None, TreeObject, IndirectObject] = None,
+    color: Optional[Union[tuple[float, float, float], str]] = None,
     bold: bool = False,
     italic: bool = False,
+    fit: Fit = PAGE_FIT,
     is_open: bool = True,
-    fit: str | None = None,
-    zoom: float | None = None
-) -> Any
+) -> IndirectObject:
 ```
-
 
 ## Parameters
 
 The following parameters are available for `add_outline_item()`:
 
-| Name         | Type                     | Default | Description |
-|--------------|---------------------------|---------|-------------|
-| `title`      | `str`                     | —       | The visible text label shown in the PDF outline panel. |
-| `page_number`| `int`, optional           | `None`  | Zero-based target page index. If `None`, the item becomes a non-clickable parent/group header. |
-| `parent`     | `Any`, optional           | `None`  | The parent outline item under which this one will be nested. If omitted, this becomes a top-level outline. |
-| `color`      | `tuple`, optional         | `None`  | RGB color tuple with values between `0–1`. Example: `(1, 0, 0)` for red. |
-| `bold`       | `bool`                    | `False` | If `True`, the outline title is displayed in bold. |
-| `italic`     | `bool`                    | `False` | If `True`, the outline title is displayed in italic. |
-| `is_open`       | `bool`                    | `True`  | Whether the outline node is expanded when the PDF opens. |
-| `fit`        | `str`, optional           | `None`  | Controls how the destination page is displayed (Fit, FitH, FitV, FitR, XYZ). |
-| `zoom`       | `float`, optional         | `None`  | Used only when `fit="XYZ"`. Example: `1.0` = 100% zoom. |
+| Name          | Type                                             | Default    | Description                                                                                                                        |
+| ------------- | ------------------------------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `title`       | `str`                                            | —          | The visible text label shown in the PDF outline panel.                                                                             |
+| `page_number` | `None`, `int`, `PageObject`, or `IndirectObject` | —          | Destination page for the outline item. May be set to `None`, making the entry non-clickable and usable as a parent/group node.     |
+| `parent`      | `None`, `TreeObject`, or `IndirectObject`        | `None`     | Makes the outline item a child of the given parent outline node. If omitted, it becomes a top-level entry.                         |
+| `before`      | `None`, `TreeObject`, or `IndirectObject`        | `None`     | Inserts the outline item before another existing outline item at the same level. Used to control ordering.                         |
+| `color`       | `tuple[float, float, float]` or `str`, optional  | `None`     | Sets the outline text color. Tuples must use 0–1 float values (e.g., `(1, 0, 0)` for red). Some named colors may also be accepted. |
+| `bold`        | `bool`                                           | `False`    | Displays the outline title in bold.                                                                                                |
+| `italic`      | `bool`                                           | `False`    | Displays the outline title in italic.                                                                                              |
+| `fit`         | `Fit`                                            | `PAGE_FIT` | Determines how the destination page is displayed (Fit, FitH, FitV, FitR, XYZ, etc.).                                               |
+| `is_open`     | `bool`                                           | `True`     | Controls whether the outline node appears expanded in the PDF viewer when opened.                                                  |
+
 
 ### Fit Mode Options
 
-| Value  | Meaning |
-|--------|---------|
-| `"Fit"`  | Display the entire page. |
-| `"FitH"` | Fit to width, aligned at the top. |
-| `"FitV"` | Fit to height. |
-| `"FitR"` | Fit a specific rectangle region. |
-| `"XYZ"`  | Use a custom zoom level (`zoom=` required). |
+| Fit Method                                    | Meaning                                    |
+| --------------------------------------------- | ------------------------------------------ |
+| `Fit.fit()`                                   | Display the entire page.                   |
+| `Fit.fit_horizontally(top)`                   | Fit page width, aligned at the given top.  |
+| `Fit.fit_vertically(left)`                    | Fit page height, aligned at the given left.|
+| `Fit.fit_rectangle(left, bottom, right, top)` | Fit a specific rectangular region.         |
+| `Fit.xyz(left, top, zoom)`                    | Custom position and zoom level.            |
 
+## **Return Type:** `IndirectObject`
 
-
-## **Return Type:** `Any`
-
-The method returns a reference to the created outline item.  
-This reference is typically used when creating nested (child) outline items.
+Returns a reference to the created outline item, which can be used when adding nested children.
 
 ### Example
 ```python
-parent = writer.add_outline_item("Chapter 1", page_number=0)
-writer.add_outline_item("Section 1.1", page_number=1, parent=parent)
+chapter = writer.add_outline_item("Chapter 1", page_number=0)
+writer.add_outline_item("Section 1.1", page_number=1, parent=chapter)
 ```
-
 
 ## Exceptions
 
 The `add_outline_item()` method may raise the following exceptions:
 
-| Exception       | When it occurs |
-|-----------------|----------------|
-| `ValueError`    | Raised when `page_number` is out of range, `fit` is invalid, or `color` is not a valid `(r, g, b)` tuple (each value must be a float between 0–1). |
-| Internal errors | Occur if an invalid `parent` reference is passed, or if the outline tree becomes corrupted internally. |
-
-
+| Exception     | When it occurs |
+|---------------|----------------|
+| `ValueError`  | Raised when `page_number` is out of range, the `fit` argument is invalid, or when the `color` tuple contains values outside the 0–1 float range. |
+| `TypeError`   | Raised when arguments such as `parent`, `before`, or `color` are provided using unsupported types. |
+| `IndexError`  | May occur if a referenced page index is not available in the document. |
 
 ## Example: Full PDF Outline with All Parameters
 
-```python
+```{testsetup}
+pypdf_test_setup("user/adding-pdf-outlines", {
+    "output.pdf": "../resources/output.pdf",
+    "example1.pdf": "../resources/example1.pdf",
+    "input.pdf": "../resources/input.pdf"
+
+})
+```
+
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic._fit import Fit  # Use Fit only
 
@@ -105,7 +109,7 @@ chapter1 = writer.add_outline_item(
 
 # Section under Chapter 1 (dark green, italic, collapsed)
 section1_1 = writer.add_outline_item(
-    title="Section 1.1: Overview",
+    title="Section 1.1: Getting Started",
     page_number=1,
     parent=chapter1,
     color=(0, 0.5, 0),
@@ -117,7 +121,7 @@ section1_1 = writer.add_outline_item(
 
 # Section with custom zoom
 section1_2 = writer.add_outline_item(
-    title="Section 1.2: Details",
+    title="Section 1.2: Printing a Test Page",
     page_number=2,
     parent=chapter1,
     color=(1, 0, 0),
@@ -153,8 +157,6 @@ writer.add_outline_item(
 output_path = "output.pdf"
 with open(output_path, "wb") as f:
     writer.write(f)
-
-print(f"PDF with outlines created successfully: {output_path}")
 ```
 
 ### What this code demonstrates
@@ -165,11 +167,11 @@ print(f"PDF with outlines created successfully: {output_path}")
 * Using different page view modes: `Fit, FitH, FitV, XYZ.`
 * Produces a navigable outline tree in the PDF reader.
 
-
 ## Adding a Simple Outline
 
 Use this when you want a single top-level bookmark pointing to a page.
-```python
+
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("input.pdf")
@@ -198,18 +200,17 @@ with open("output.pdf", "wb") as f:
 
 ![PDF outline output](simple-outline.png)
 
-
 ## Adding Nested (Hierarchical) Outlines
 
 Nested outlines create structures like:
 
 ```text
-Chapter 1
+Introduction
 ├── Section 1.1
 └── Section 1.2
 ```
 
-```python
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("input.pdf")
@@ -219,35 +220,36 @@ writer = PdfWriter()
 for page in reader.pages:
     writer.add_page(page)
 
-# Add parent (chapter)
-chapter = writer.add_outline_item(
-    title="Chapter 1",
+# Add parent (Introduction)
+introduction = writer.add_outline_item(
+    title="Introduction",
     page_number=0
 )
 
 # Add children (sections)
 writer.add_outline_item(
-    title="Section 1.1",
+    title="Section 1",
     page_number=1,
-    parent=chapter
+    parent=introduction
 )
 
 writer.add_outline_item(
-    title="Section 1.2",
+    title="Section 2",
     page_number=2,
-    parent=chapter
+    parent=introduction
 )
 
 with open("output.pdf", "wb") as f:
     writer.write(f)
 ```
 
+
 ### What the nested outline code does
 
 * Copies all pages into the new PDF
-* Creates a top-level outline called Chapter 1
-* Adds Section 1.1 under that chapter
-* Adds Section 1.2 under the same chapter
+* Creates a top-level outline called Introduction
+* Adds Section 1 under that Introduction
+* Adds Section 2 under the same Introduction
 * Produces an outline tree like:
 
 ![PDF outline output](nested-outline.png)
@@ -260,7 +262,3 @@ with open("output.pdf", "wb") as f:
 - You can build multiple hierarchical levels (chapter → section → subsection → etc.).
 - A bookmark must point to a valid page, or the PDF reader may hide or ignore it.
 - Nested outlines improve navigation for large PDFs.
-
-
-
-

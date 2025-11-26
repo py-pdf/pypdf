@@ -67,7 +67,6 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    modules/errors
    modules/generic
    modules/PdfDocCommon
- 
 
 .. toctree::
    :caption: Developer Guide
