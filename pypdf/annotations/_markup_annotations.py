@@ -54,14 +54,14 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
 
 
 class AbstractPolyLine(MarkupAnnotation, ABC):
-    def __init__(self, vertices: list[Vertex] | ArrayObject[NumberObject], **kwargs):
+    def __init__(self, vertices: Union[list[Vertex], ArrayObject[NumberObject]], **kwargs):
         super().__init__(**kwargs)
         if len(vertices) == 0 or len(vertices) % 2 != 0:
             raise ValueError("A polygon needs at least 1 vertex," \
                 " containing 1 horizontal and 1 vertical position")
     
     @staticmethod
-    def determineVertices(vertices: Union[list[Vertex], ArrayObject[NumberObject]]) -> tuple[list[Vertex], list[NumberObject]]:
+    def _determine_vertices(vertices: Union[list[Vertex], ArrayObject[NumberObject]]) -> tuple[list[Vertex], list[NumberObject]]:
         coord_list = []
         if isinstance(vertices, ArrayObject):
             coord_list = vertices
@@ -213,12 +213,12 @@ class Line(MarkupAnnotation):
 class PolyLine(AbstractPolyLine):
     def __init__(
         self,
-        vertices: list[Vertex] | ArrayObject[NumberObject],
+        vertices: Union[list[Vertex], ArrayObject[NumberObject]],
         **kwargs: Any,
     ) -> None:
         super().__init__(vertices=vertices, **kwargs)
 
-        vertices, coord_list = self.determineVertices(vertices)
+        vertices, coord_list = self._determine_vertices(vertices)
         self.update(
             {
                 NameObject("/Subtype"): NameObject("/PolyLine"),
@@ -303,11 +303,11 @@ class Ellipse(MarkupAnnotation):
 class Polygon(AbstractPolyLine):
     def __init__(
         self,
-        vertices: list[Vertex] | ArrayObject[NumberObject],
+        vertices: Union[list[Vertex], ArrayObject[NumberObject]],
         **kwargs: Any,
     ) -> None:
         super().__init__(vertices=vertices, **kwargs)
-        vertices, coord_list = self.determineVertices(vertices)
+        vertices, coord_list = self._determine_vertices(vertices)
         self.update(
             {
                 NameObject("/Type"): NameObject("/Annot"),
