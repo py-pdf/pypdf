@@ -8,6 +8,7 @@ from pypdf.generic import (
     ArrayObject,
     DictionaryObject,
     NameObject,
+    NumberObject,
     StreamObject,
 )
 from pypdf.generic._base import IndirectObject
@@ -210,34 +211,28 @@ def test_populated_stream_deep_copy(create_pdf_writer):
     populated_stream = StreamObject()
     populated_stream.set_data(original_data)
 
-    # FIX: Convert the Python integer len(original_data) to a PdfObject (NumberObject)
-    populated_stream[NameObject("/Length")] = NameObject(len(original_data))
+    #Convert the Python integer len(original_data) to a PdfObject (NumberObject)
+    populated_stream[NameObject("/Length")] = NumberObject(len(original_data))
     populated_stream[NameObject("/Filter")] = NameObject("/FlateDecode")
 
     assert len(populated_stream) > 0 # Not falsy
     assert populated_stream.get_data() == original_data
 
-    # 2. Create a container dictionary
+    # Create a container dictionary
     container_dict = DictionaryObject({
         NameObject("/Populated"): populated_stream,
         NameObject("/Metadata"): NameObject("/Info")
     })
 
-    # 3. Clone the container to a new writer (forcing deep copy).
+    # Clone the container to a new writer (forcing deep copy).
     new_writer = create_pdf_writer
     cloned_container = container_dict.clone(pdf_dest=new_writer, force_duplicate=True)
 
     # Check results
     cloned_stream = cloned_container[NameObject("/Populated")]
-
-    # Must be a deep copy (different object ID)
     assert cloned_stream is not populated_stream
-
-    # Dictionary keys and data must be copied
     assert cloned_stream[NameObject("/Filter")] == NameObject("/FlateDecode")
     assert cloned_stream.get_data() == original_data
-
-    # Test isolation: Modify original, ensuring the clone is independent
     populated_stream.set_data(b"NEW MODIFIED DATA")
 
     # Change dictionary key
