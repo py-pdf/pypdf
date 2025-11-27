@@ -66,7 +66,7 @@ def _get_image_mode(
         )  # pragma: no cover
     elif not color_space:
         return "", False
-    elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
+    elif color_space[0].startswith("/Cal"):  # /CalRGB or /CalGray
         color_space_str = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
@@ -257,10 +257,10 @@ def _handle_flate(
                     logger_warning(f"Invalid Lookup Table in {obj_as_text}", __name__)
                     lookup = None
                 elif mode == "L":
-                    # gray lookup does not work : it is converted to a similar RGB lookup
+                    # gray lookup does not work: it is converted to a similar RGB lookup
                     lookup = b"".join([bytes([b, b, b]) for b in lookup])
                     mode = "RGB"
-                # TODO : cf https://github.com/py-pdf/pypdf/pull/2039
+                # TODO: https://github.com/py-pdf/pypdf/pull/2039
                 # this is a work around until PIL is able to process CMYK images
                 elif mode == "CMYK":
                     _rgb = []
