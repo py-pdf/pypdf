@@ -167,9 +167,10 @@ def test_polyline(pdf_file_path, caplog):
     writer = PdfWriter()
     writer.add_page(page)
 
-    PolyLine(
-        vertices=[],
-    )
+    with pytest.raises(ValueError):
+        PolyLine(
+            vertices=[],
+        )
     assert "A polyline needs at least 1 vertex with two coordinates" in caplog.text
 
     annotation = PolyLine(
