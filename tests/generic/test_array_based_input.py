@@ -72,7 +72,6 @@ def watermark_pdf_bytes(blank_pdf_writer):
     writer.write(output)
     return output.getvalue()
 
-# --- Test Cases for Watermarking ---
 
 def test_watermark_basic_application(blank_pdf_writer, watermark_pdf_bytes):
     """
@@ -141,7 +140,7 @@ def test_watermark_preserves_original_page(blank_pdf_writer, watermark_pdf_bytes
     
     # Attempt to modify the cloned page, and check if the original is safe
     page[NameObject("/Type")] = NameObject("/Modified")
-    # We must use get() because the reader's objects don't support direct NameObject keys
+
     assert watermark_page.get("/Type") != NameObject("/Modified")
 
 
@@ -165,8 +164,7 @@ def test_add_page_with_array_content_stream(array_content_pdf_bytes):
                     # Assign a dummy IndirectObject that points back to itself
                     stream_obj.indirect_reference = IndirectObject(i + 100, 0, reader)
             else:
-                 # Cannot directly modify the object from the reader, 
-                 # so we try to assign the attribute if it's missing.
+                 # Try to assign the attribute if it's missing.
                  setattr(stream_obj, 'indirect_reference', IndirectObject(i + 100, 0, reader))
     
     new_writer = PdfWriter()
