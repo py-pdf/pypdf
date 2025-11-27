@@ -297,7 +297,6 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         )
         if ignore_fields is None:
             ignore_fields = []
-
         if not d__ and hasattr(d__, "_clone"):
             d__._clone(self, pdf_dest, force_duplicate, ignore_fields, visited)
         return d__
@@ -1243,7 +1242,6 @@ class ContentStream(DecodedStreamObject):
         )
         if ignore_fields is None:
             ignore_fields = []
-            
         if hasattr(d__, "_clone"):
             d__._clone(self, pdf_dest, force_duplicate, ignore_fields, visited)
         return d__
