@@ -1,6 +1,8 @@
 """Test the watermarking functionality and array based input handling in pypdf."""
 from io import BytesIO
+
 import pytest
+
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import (
     ArrayObject,
@@ -9,6 +11,12 @@ from pypdf.generic import (
     StreamObject,
 )
 from pypdf.generic._base import IndirectObject
+
+
+@pytest.fixture
+def create_pdf_writer():
+    """Provides a simple PdfWriter instance."""
+    return PdfWriter()
 
 @pytest.fixture
 def blank_pdf_writer():
@@ -189,3 +197,52 @@ def test_add_page_with_array_content_stream_succeeds(array_content_pdf_bytes):
 
     # Check that the process completed successfully and resulted in a valid object type
     assert isinstance(content, (StreamObject, ArrayObject))
+
+def test_populated_stream_deep_copy(create_pdf_writer):
+    """
+    Tests that a populated StreamObject with dictionary keys and data is
+    correctly deep-cloned, ensuring the raw data is copied and isolated.
+    This covers the standard cloning path for StreamObjects.
+    """
+    original_data = b"BT /F0 12 Tf 50 50 Td (Test Content) Tj ET"
+
+    #Create a populated StreamObject (which is truthy: len() > 0)
+    populated_stream = StreamObject()
+    populated_stream.set_data(original_data)
+
+    # FIX: Convert the Python integer len(original_data) to a PdfObject (NumberObject)
+    populated_stream[NameObject("/Length")] = NameObject(len(original_data))
+    populated_stream[NameObject("/Filter")] = NameObject("/FlateDecode")
+
+    assert len(populated_stream) > 0 # Not falsy
+    assert populated_stream.get_data() == original_data
+
+    # 2. Create a container dictionary
+    container_dict = DictionaryObject({
+        NameObject("/Populated"): populated_stream,
+        NameObject("/Metadata"): NameObject("/Info")
+    })
+
+    # 3. Clone the container to a new writer (forcing deep copy).
+    new_writer = create_pdf_writer
+    cloned_container = container_dict.clone(pdf_dest=new_writer, force_duplicate=True)
+
+    # Check results
+    cloned_stream = cloned_container[NameObject("/Populated")]
+
+    # Must be a deep copy (different object ID)
+    assert cloned_stream is not populated_stream
+
+    # Dictionary keys and data must be copied
+    assert cloned_stream[NameObject("/Filter")] == NameObject("/FlateDecode")
+    assert cloned_stream.get_data() == original_data
+
+    # Test isolation: Modify original, ensuring the clone is independent
+    populated_stream.set_data(b"NEW MODIFIED DATA")
+
+    # Change dictionary key
+    populated_stream[NameObject("/Filter")] = NameObject("/LZWDecode")
+
+    # Clone should retain original values
+    assert cloned_stream.get_data() == original_data
+    assert cloned_stream[NameObject("/Filter")] == NameObject("/FlateDecode")
