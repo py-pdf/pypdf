@@ -159,7 +159,7 @@ def test_polygon(pdf_file_path):
         writer.write(fp)
 
 
-def test_polyline(pdf_file_path):
+def test_polyline(pdf_file_path, caplog):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -167,10 +167,10 @@ def test_polyline(pdf_file_path):
     writer = PdfWriter()
     writer.add_page(page)
 
-    with pytest.raises(ValueError):
-        PolyLine(
-            vertices=[],
-        )
+    PolyLine(
+        vertices=[],
+    )
+    assert "A polyline needs at least 1 vertex with two coordinates" in caplog.text
 
     annotation = PolyLine(
         vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
