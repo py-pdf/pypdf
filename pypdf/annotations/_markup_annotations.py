@@ -194,7 +194,7 @@ class PolyLine(MarkupAnnotation):
     ) -> None:
         super().__init__(**kwargs)
         if len(vertices) == 0:
-            raise ValueError("A polygon needs at least 1 vertex with two coordinates")
+            raise ValueError("A polyline needs at least 1 vertex with two coordinates")
         coord_list = []
         for x, y in vertices:
             coord_list.append(NumberObject(x))
