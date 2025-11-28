@@ -171,7 +171,7 @@ def test_polyline(pdf_file_path, caplog):
         PolyLine(
             vertices=[],
         )
-    assert "A polyline needs at least 1 vertex with two coordinates" in caplog.text
+        assert "A polyline needs at least 1 vertex with two coordinates" in caplog.text
 
     annotation = PolyLine(
         vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
