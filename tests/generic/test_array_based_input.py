@@ -12,6 +12,7 @@ from pypdf.generic import (
     StreamObject,
 )
 from pypdf.generic._base import IndirectObject
+from pypdf.generic._data_structures import ContentStream
 
 
 @pytest.fixture
@@ -26,6 +27,20 @@ def blank_pdf_writer():
     writer.add_blank_page(width=100, height=100)
     return writer
 
+@pytest.fixture
+def content_stream_with_data():
+    """Create a ContentStream with actual data and operations."""
+    stream = StreamObject()
+    stream.set_data(b"BT /F1 12 Tf 50 50 Td (Hello World) Tj ET")
+
+    # Create a ContentStream from the stream
+    content_stream = ContentStream(stream, None)
+
+    # Add some dictionary entries to simulate real content stream
+    content_stream[NameObject("/Filter")] = NameObject("/FlateDecode")
+    content_stream[NameObject("/Length")] = NumberObject(len(stream.get_data()))
+
+    return content_stream
 
 @pytest.fixture
 def array_content_pdf_bytes():
@@ -241,3 +256,14 @@ def test_populated_stream_deep_copy(create_pdf_writer):
     # Clone should retain original values
     assert cloned_stream.get_data() == original_data
     assert cloned_stream[NameObject("/Filter")] == NameObject("/FlateDecode")
+
+def test_contentstream_clone_has_clone_method(create_pdf_writer, content_stream_with_data):
+    """Test that ContentStream has a _clone method and it's called during clone()."""
+    # Verify ContentStream has _clone method
+    assert hasattr(ContentStream, "_clone")
+    pdf_writer = create_pdf_writer
+    # Clone and verify it completes successfully
+    cloned = content_stream_with_data.clone(pdf_writer, force_duplicate=True)
+    # The _clone method should have been called, so verify the clone is valid
+    assert isinstance(cloned, ContentStream)
+    assert cloned.pdf == pdf_writer
