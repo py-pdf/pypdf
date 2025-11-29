@@ -419,6 +419,11 @@ def test_get_page_of_encrypted_file(pdffile, password, should_fail):
             {},
             None,
         ),
+        (
+            "choice_field_without_opt_key.pdf",
+            {},
+            {"TN_Anrede": {"/FT": "/Ch", "/T": "TN_Anrede", "/V": ""}},
+        ),
     ],
 )
 def test_get_form(src, expected, expected_get_fields, txt_file_path):
