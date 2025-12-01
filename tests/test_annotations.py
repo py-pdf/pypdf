@@ -159,7 +159,7 @@ def test_polygon(pdf_file_path):
         writer.write(fp)
 
 
-def test_polyline(pdf_file_path, caplog):
+def test_polyline(pdf_file_path):
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
