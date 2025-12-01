@@ -595,9 +595,8 @@ def test_merge_page_with_annotation():
     page2 = writer2.pages[0]
     page2.merge_page(page1)
 
-    assert page2.annotations[0].get_object()['/Type'] == annotation['/Type']
-    assert page2.annotations[0].get_object()['/Subtype'] == annotation['/Subtype']
-    assert page2.annotations[0].get_object()['/Vertices'] == annotation['/Vertices']
-    assert page2.annotations[0].get_object()['/IT'] == annotation['/IT']
-    assert page2.annotations[0].get_object()['/Rect'] == annotation['/Rect']
-
+    assert page2.annotations[0].get_object()["/Type"] == annotation["/Type"]
+    assert page2.annotations[0].get_object()["/Subtype"] == annotation["/Subtype"]
+    assert page2.annotations[0].get_object()["/Vertices"] == annotation["/Vertices"]
+    assert page2.annotations[0].get_object()["/IT"] == annotation["/IT"]
+    assert page2.annotations[0].get_object()["/Rect"] == annotation["/Rect"]

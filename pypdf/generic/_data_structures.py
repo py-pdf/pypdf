@@ -29,6 +29,7 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import inspect
 import logging
 import re
 import sys
@@ -291,7 +292,7 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             pass
 
         visited: set[tuple[int, int]] = set()  # (idnum, generation)
-        import inspect
+
         kwargs = {}
         inspector = inspect.getfullargspec(self.__class__.__init__)
 
