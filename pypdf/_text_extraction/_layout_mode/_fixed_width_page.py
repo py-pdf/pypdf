@@ -364,6 +364,7 @@ def fixed_width_page(
     """
     lines: list[str] = []
     last_y_coord = 0
+    table = str.maketrans(dict.fromkeys(range(14, 32), " "))
     for y_coord, line_data in ty_groups.items():
         if space_vertically and lines:
             fh = line_data[0]["font_height"]
@@ -380,7 +381,7 @@ def fixed_width_page(
             last_disp = bt_op["displaced_tx"]
         if line.strip() or lines:
             lines.append(
-                "".join(c if ord(c) < 14 or ord(c) > 31 else " " for c in line)
+                line.translate(table)
             )
         last_y_coord = y_coord
     return "\n".join(ln.rstrip() for ln in lines if space_vertically or ln.strip())
