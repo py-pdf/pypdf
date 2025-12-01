@@ -447,6 +447,7 @@ def test_get_form(src, expected, expected_get_fields, txt_file_path):
                 field.additional_actions,
             ]
 
+
 @pytest.mark.enable_socket
 def test_reading_choice_field_without_opt_key():
     """Tests reading a choice field in a PDF without an /Opt key."""
