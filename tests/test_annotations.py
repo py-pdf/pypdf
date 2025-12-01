@@ -167,7 +167,10 @@ def test_polyline(pdf_file_path):
     writer = PdfWriter()
     writer.add_page(page)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+            ValueError,
+            match=r"A polyline needs at least 1 vertex with two coordinates",
+    ):
         PolyLine(
             vertices=[],
         )
