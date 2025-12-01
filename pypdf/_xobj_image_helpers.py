@@ -502,7 +502,7 @@ def _xobj_to_image(
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
-            img = _extended_image_frombytes(mode, size, data)
+            img = _extended_image_from_bytes(mode, size, data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged
@@ -526,7 +526,7 @@ def _xobj_to_image(
         )
     elif mode == "CMYK":
         img, image_format, extension, invert_color = (
-            _extended_image_frombytes(mode, size, data),
+            _extended_image_from_bytes(mode, size, data),
             "TIFF",
             ".tif",
             False,
@@ -535,7 +535,7 @@ def _xobj_to_image(
         raise PdfReadError(f"ColorSpace field not found in {x_object}")
     else:
         img, image_format, extension, invert_color = (
-            _extended_image_frombytes(mode, size, data),
+            _extended_image_from_bytes(mode, size, data),
             "PNG",
             ".png",
             False,
