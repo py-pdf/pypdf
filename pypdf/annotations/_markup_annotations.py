@@ -66,7 +66,7 @@ class AbstractPolyLine(MarkupAnnotation, ABC):
         if isinstance(vertices, ArrayObject):
             coord_list = vertices
             args = [iter(vertices)] * 2 # Adapted def grouper() 
-            zip(*args)  # from https://docs.python.org/3.9/library/itertools.html#itertools-recipes
+            vertices = list(zip(*args))  # from https://docs.python.org/3.9/library/itertools.html#itertools-recipes
 
         else:
             for x, y in vertices:
