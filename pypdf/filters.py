@@ -70,7 +70,7 @@ from .generic import (
 )
 
 ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
-LZW_MAX_OUTPUT_LENGTH = 1_000_000_000
+LZW_MAX_OUTPUT_LENGTH = 75_000_000
 
 
 def _decompress_with_limit(data: bytes) -> bytes:
@@ -481,6 +481,8 @@ class ASCII85Decode:
         if isinstance(data, str):
             data = data.encode()
         data = data.strip(WHITESPACES_AS_BYTES)
+        if len(data) > 2 and data.endswith(b">"):
+            data = data[:-1].rstrip(WHITESPACES_AS_BYTES) + data[-1:]
         try:
             return a85decode(data, adobe=True, ignorechars=WHITESPACES_AS_BYTES)
         except ValueError as error:
