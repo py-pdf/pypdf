@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764591833276,
+  "lastUpdate": 1764607241458,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -84353,6 +84353,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003382081112481665",
             "extra": "mean: 672.8973002000032 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "huberja1996@gmail.com",
+            "name": "Jakob Huber",
+            "username": "jhuber-de"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0b7346a05487dc55d21f7b1bc9d23441eaaf068e",
+          "message": "BUG: Do not fail on choice field without /Opt key (#3540)\n\nCloses #2838.\n\nAccording to the PDF 2.0 specification, the `/Opt` key is not required for choice fields.",
+          "timestamp": "2025-12-01T17:36:13+01:00",
+          "tree_id": "a224636be514f3119d67b06883dc8fb73f47a334",
+          "url": "https://github.com/py-pdf/pypdf/commit/0b7346a05487dc55d21f7b1bc9d23441eaaf068e"
+        },
+        "date": 1764607237883,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7654931876165914,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004603946484043688",
+            "extra": "mean: 265.56946199999913 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.00441984083548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0017999217042094938",
+            "extra": "mean: 62.4827397647047 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2796777872844289,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014043195091631183",
+            "extra": "mean: 3.5755431623999954 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.19898086859738,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007697851337304594",
+            "extra": "mean: 54.94813183333333 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.0906050375800401,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014912718412897758",
+            "extra": "mean: 11.036913914599996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4074590537733305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08717796845374948",
+            "extra": "mean: 710.5002432000049 msec\nrounds: 5"
           }
         ]
       }
