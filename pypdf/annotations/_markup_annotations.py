@@ -56,9 +56,8 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
 class AbstractPolyLine(MarkupAnnotation, ABC):
     def __init__(self, vertices: Union[list[Vertex], ArrayObject[NumberObject]], **kwargs):
         super().__init__(**kwargs)
-        if len(vertices) == 0 or len(vertices) % 2 != 0:
-            raise ValueError("A polygon needs at least 1 vertex," \
-                " containing 1 horizontal and 1 vertical position")
+        if len(vertices) == 0:
+            raise ValueError(f"A {type(self).__name__} needs at least 1 vertex with two coordinates")
     
     @staticmethod
     def _determine_vertices(vertices: Union[list[Vertex], ArrayObject[NumberObject]]) -> tuple[list[Vertex], list[NumberObject]]:
