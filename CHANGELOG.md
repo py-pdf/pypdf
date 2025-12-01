@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Version 6.4.0, 2025-11-23
+
+### Security (SEC)
+- Reduce default limit for LZW decoding
+
+### New Features (ENH)
+- Parse and format comb fields in text widget annotations (#3519)
+
+### Robustness (ROB)
+- Silently ignore Adobe Ascii85 whitespace for suffix detection (#3528)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.3.0...6.4.0)
+
 ## Version 6.3.0, 2025-11-16
 
 ### New Features (ENH)
