@@ -418,12 +418,7 @@ def test_get_page_of_encrypted_file(pdffile, password, should_fail):
             "crazyones.pdf",
             {},
             None,
-        ),
-        (
-            "choice_field_without_opt_key.pdf",
-            {},
-            {"TN_Anrede": {"/FT": "/Ch", "/T": "TN_Anrede", "/V": ""}},
-        ),
+        )
     ],
 )
 def test_get_form(src, expected, expected_get_fields, txt_file_path):
@@ -451,6 +446,20 @@ def test_get_form(src, expected, expected_get_fields, txt_file_path):
                 field.default_value,
                 field.additional_actions,
             ]
+
+@pytest.mark.enable_socket
+def test_reading_choice_field_without_opt_key():
+    """Tests reading a choice field in a PDF without an /Opt key."""
+    url = "https://github.com/user-attachments/files/23853677/Musterservicevertrag-HNRAGB_Okt2022-Blanko.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name="Musterservicevertrag-HNRAGB_Okt2022-Blanko.pdf")))
+    fields = reader.get_fields()
+
+    tn_anrede = fields.get("TN_Anrede")
+    assert tn_anrede is not None
+
+    # Ensure that parsing of a choice field without /Opt key worked
+    tn_anrede_opt = tn_anrede.get("/Opt")
+    assert tn_anrede_opt is None
 
 
 @pytest.mark.parametrize(
