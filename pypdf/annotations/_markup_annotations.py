@@ -1,6 +1,5 @@
 import sys
 from abc import ABC
-import inspect
 from typing import Any, Optional, Union
 
 from ..constants import AnnotationFlag
@@ -54,24 +53,30 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
 
 
 class AbstractPolyLine(MarkupAnnotation, ABC):
-    def __init__(self, vertices: Union[list[Vertex], ArrayObject[NumberObject]], **kwargs):
+    def __init__(
+            self,
+            vertices: Union[list[Vertex], ArrayObject],
+            **kwargs: Any
+        ) -> None:
         super().__init__(**kwargs)
         if len(vertices) == 0:
             raise ValueError(f"A {type(self).__name__} needs at least 1 vertex with two coordinates")
-    
+
     @staticmethod
-    def _determine_vertices(vertices: Union[list[Vertex], ArrayObject[NumberObject]]) -> tuple[list[Vertex], list[NumberObject]]:
-        coord_list = []
+    def _determine_vertices(
+            vertices: Union[list[Vertex], ArrayObject]
+        ) -> tuple[list[Vertex], list[NumberObject]]:
+        coord_list: ArrayObject = ArrayObject()
         if isinstance(vertices, ArrayObject):
             coord_list = vertices
-            args = [iter(vertices)] * 2 # Adapted def grouper() 
+            args = [iter(vertices)] * 2 # Adapted def grouper()
             vertices = list(zip(*args))  # from https://docs.python.org/3.9/library/itertools.html#itertools-recipes
 
         else:
             for x, y in vertices:
                 coord_list.append(NumberObject(x))
                 coord_list.append(NumberObject(y))
-        
+
         return vertices, coord_list
 
 
@@ -212,7 +217,7 @@ class Line(MarkupAnnotation):
 class PolyLine(AbstractPolyLine):
     def __init__(
         self,
-        vertices: Union[list[Vertex], ArrayObject[NumberObject]],
+        vertices: Union[list[Vertex], ArrayObject],
         **kwargs: Any,
     ) -> None:
         super().__init__(vertices=vertices, **kwargs)
@@ -302,7 +307,7 @@ class Ellipse(MarkupAnnotation):
 class Polygon(AbstractPolyLine):
     def __init__(
         self,
-        vertices: Union[list[Vertex], ArrayObject[NumberObject]],
+        vertices: Union[list[Vertex], ArrayObject],
         **kwargs: Any,
     ) -> None:
         super().__init__(vertices=vertices, **kwargs)
