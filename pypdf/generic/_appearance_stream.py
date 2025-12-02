@@ -61,13 +61,12 @@ class TextStreamAppearance(BaseStreamAppearance):
         field_width: float,
         field_height: float,
         text: str,
-        is_multiline: bool,
-        min_font_size: float = 4.0,       # Minimum font size to attempt
-        font_size_step: float = 0.2       # How much to decrease font size by each step
+        min_font_size: float,
+        font_size_step: float = 0.2
     ) -> tuple[list[tuple[float, str]], float]:
         """
         Takes a piece of text and scales it to field_width or field_height, given font_name
-        and font_size. For multiline fields, adds newlines to wrap the text.
+        and font_size. Wraps text where necessary.
 
         Args:
             font_descriptor: A FontDescriptor for the font to be used.
@@ -76,7 +75,6 @@ class TextStreamAppearance(BaseStreamAppearance):
             field_width: The width of the field in which to fit the text.
             field_height: The height of the field in which to fit the text.
             text: The text to fit with the field.
-            is_multiline: Whether to scale and wrap the text, or only to scale.
             min_font_size: The minimum font size at which to scale the text.
             font_size_step: The amount by which to decrement font size per step while scaling.
 
@@ -84,14 +82,6 @@ class TextStreamAppearance(BaseStreamAppearance):
             The text in the form of list of tuples, each tuple containing the length of a line
             and its contents, and the font_size for these lines and lengths.
         """
-        # Single line:
-        if not is_multiline:
-            max_vertical_size = field_height / leading_factor
-            text_width_unscaled = font_descriptor.text_width(text) / 1000
-            max_horizontal_size = field_width / (text_width_unscaled or 1)
-            font_size = round(max(min(max_vertical_size, max_horizontal_size), min_font_size), 1)
-            return [(text_width_unscaled * font_size, text)], font_size
-        # Multiline:
         orig_text = text
         paragraphs = text.replace("\n", "\r").split("\r")
         wrapped_lines = []
@@ -136,7 +126,6 @@ class TextStreamAppearance(BaseStreamAppearance):
                     field_width,
                     field_height,
                     orig_text,
-                    is_multiline,
                     min_font_size,
                     font_size_step
                 )
@@ -194,22 +183,31 @@ class TextStreamAppearance(BaseStreamAppearance):
         # Set margins based on border width and style, but never less than 1 point
         factor = 2 if self._layout.border_style in {"/B", "/I"} else 1
         margin = max(self._layout.border_width * factor, 1)
+        field_height = rectangle.height - 2 * margin
+        field_width = rectangle.width - 4 * margin
 
         # If font_size is 0, apply the logic for multiline or large-as-possible font
         if font_size == 0:
-            if selection:              # Don't wrap text when dealing with a /Ch field, in order to prevent problems
-                is_multiline = False   # with matching "selection" with "line" later on.
+            min_font_size = 4.0       # The mininum font size
+            if selection:             # Don't wrap text when dealing with a /Ch field, in order to prevent problems
+                is_multiline = False  # with matching "selection" with "line" later on.
             if is_multiline:
                 font_size = DEFAULT_FONT_SIZE_IN_MULTILINE
-            lines, font_size = self._scale_text(
-                font_descriptor,
-                font_size,
-                leading_factor,
-                rectangle.width - 4 * margin,
-                rectangle.height - 2 * margin,
-                text,
-                is_multiline,
-            )
+                lines, font_size = self._scale_text(
+                    font_descriptor,
+                    font_size,
+                    leading_factor,
+                    field_width,
+                    field_height,
+                    text,
+                    min_font_size
+                )
+            else:
+                max_vertical_size = field_height / leading_factor
+                text_width_unscaled = font_descriptor.text_width(text) / 1000
+                max_horizontal_size = field_width / (text_width_unscaled or 1)
+                font_size = round(max(min(max_vertical_size, max_horizontal_size), min_font_size), 1)
+                lines = [(text_width_unscaled * font_size, text)]
         elif is_comb:
             if max_length and len(text) > max_length:
                 logger_warning (
@@ -231,11 +229,11 @@ class TextStreamAppearance(BaseStreamAppearance):
         if is_multiline:
             y_offset = rectangle.height + margin - font_descriptor.bbox[3] * font_size / 1000.0
         else:
-            y_offset = margin + ((rectangle.height - 2 * margin - font_descriptor.ascent * font_size / 1000) / 2)
+            y_offset = margin + ((field_height - font_descriptor.ascent * font_size / 1000) / 2)
         default_appearance = f"{font_name} {font_size} Tf {font_color}"
 
         ap_stream = (
-            f"q\n/Tx BMC \nq\n{2 * margin} {margin} {rectangle.width - 4 * margin} {rectangle.height - 2 * margin} "
+            f"q\n/Tx BMC \nq\n{2 * margin} {margin} {field_width} {field_height} "
             f"re\nW\nBT\n{default_appearance}\n"
         ).encode()
         current_x_pos: float = 0  # Initial virtual position within the text object.
