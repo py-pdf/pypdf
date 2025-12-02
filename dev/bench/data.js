@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764681984280,
+  "lastUpdate": 1764682218613,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -84683,6 +84683,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04326592955660601",
             "extra": "mean: 695.4165412000009 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c90fb727b16a49eb6989260c6cf1fdbf3331aa17",
+          "message": "MAINT: Use CORE_FONT_METRICS for widths where possible (#3526)\n\nThis patch reads the character widths for the core 14\nType 1 PDF fonts from the _codecs/core_fontmetrics.py\nfile.\n\nThe _font_widths.py file contains a set of standard\nwidths for the core 14 Type 1 PDF fonts. However,\nit is incomplete; for instance, it sets all Helvetica\nvariants to the same set of widths. Since we have\nimported FONT_METRICS from the original Adobe core\nfot afm files now, which are complete, complete, port\nover the Font class to use that data.\n\nIt appears that, with the new font metrics  some space widths\nin two tests are recognised as slightly smaller than before.\nChange the associated tests accordingly.\n\nDefault width, if not given or defined in a font resource, is\ncalculated either by averaging all font widths or, in the case\nof unembedded fonts, calculated as the width of two spaces.\nPreviously, this width was part of a separate table in\n_cmap.py. This patch changes the associated logic and instead\nreads space width from CORE_FONT_METRICS, if a default width\nis not given or found elsewhere.\n\nNote that the patch removes the info for four space widths from\npypdf, i.e., the four Helvetica-Narrow fonts. However, these\nare not among the fourteen Adobe standard fonts, so, they\nshould be entirely embedded (and have a default value or be\nable to compute one by averaging all font widths).\n\nNote that it's slightly inconsistent now, that CID fonts that\ndon't have a default width defined will need to get it from\nthe value set by the user or when, by accident, the have the\nsame name as one of the fourteen Adobe standard fonts, whereas\nother embedded fonts get a default width equal to the average\ncharacter width, and the fourteen standard fonts get a default\nof two space widths. However, this inconsistency was already\npart of _cmap.py before.",
+          "timestamp": "2025-12-02T14:27:38+01:00",
+          "tree_id": "7b52bedeaaff39fbdc45f216d7e7993d2c521f50",
+          "url": "https://github.com/py-pdf/pypdf/commit/c90fb727b16a49eb6989260c6cf1fdbf3331aa17"
+        },
+        "date": 1764682214920,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7040549551194624,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0062781814039115725",
+            "extra": "mean: 269.97439620000137 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.782692115494992,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031055816414346593",
+            "extra": "mean: 63.36054664705959 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.277739539739764,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024609180081186625",
+            "extra": "mean: 3.600495633200006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.55875315125967,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011009822046231927",
+            "extra": "mean: 56.95165205555952 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09109485731422755,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016506460120642604",
+            "extra": "mean: 10.977568102999992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4795153738855722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004738653030670594",
+            "extra": "mean: 675.896998199994 msec\nrounds: 5"
           }
         ]
       }
