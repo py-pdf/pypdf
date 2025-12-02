@@ -394,8 +394,8 @@ class EmbeddedFile:
             for kid in cast(ArrayObject, container["/Kids"].get_object()):
                 # There might be further (nested) kids here.
                 # Wait for an example before evaluating an implementation.
-                kid = kid.get_object()
-                if "/Names" in kid:
-                    yield from cls._load_from_names(cast(ArrayObject, kid["/Names"]))
+                kid_object = kid.get_object()
+                if "/Names" in kid_object:
+                    yield from cls._load_from_names(cast(ArrayObject, kid_object["/Names"]))
         if "/Names" in container:
             yield from cls._load_from_names(cast(ArrayObject, container["/Names"]))

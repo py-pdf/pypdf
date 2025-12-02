@@ -982,8 +982,8 @@ class PdfWriter(PdfDocCommon):
         if PG.ANNOTS not in page:
             logger_warning("No fields to update on this page", __name__)
             return
-        for annotation in page[PG.ANNOTS]:  # type: ignore
-            annotation = cast(DictionaryObject, annotation.get_object())
+        for annotation_ref in page[PG.ANNOTS]:  # type: ignore
+            annotation = cast(DictionaryObject, annotation_ref.get_object())
             if annotation.get("/Subtype", "") != "/Widget":
                 continue
             if "/FT" in annotation and "/T" in annotation:
@@ -1050,7 +1050,7 @@ class PdfWriter(PdfDocCommon):
                         annotation[NameObject(AA.AP)] = DictionaryObject(
                             {NameObject("/N"): self._add_object(appearance_stream_obj)}
                         )
-                    elif "/N" not in (ap:= cast(DictionaryObject, annotation[AA.AP])):
+                    elif "/N" not in (ap := cast(DictionaryObject, annotation[AA.AP])):
                         cast(DictionaryObject, annotation[NameObject(AA.AP)])[
                             NameObject("/N")
                         ] = self._add_object(appearance_stream_obj)
@@ -1100,9 +1100,9 @@ class PdfWriter(PdfDocCommon):
         if "/Annots" not in page:
             return lst
         annotations = cast(ArrayObject, page["/Annots"])
-        for idx, annotation in enumerate(annotations):
-            is_indirect = isinstance(annotation, IndirectObject)
-            annotation = cast(DictionaryObject, annotation.get_object())
+        for idx, annotation_ref in enumerate(annotations):
+            is_indirect = isinstance(annotation_ref, IndirectObject)
+            annotation = cast(DictionaryObject, annotation_ref.get_object())
             if annotation.get("/Subtype", "") == "/Widget" and "/FT" in annotation:
                 if (
                     "indirect_reference" in annotation.__dict__
@@ -1472,9 +1472,10 @@ class PdfWriter(PdfDocCommon):
             if obj is not None:
                 object_positions.append(stream.tell())
                 stream.write(f"{idnum} 0 obj\n".encode())
+                object_to_write = obj
                 if self._encryption and obj != self._encrypt_entry:
-                    obj = self._encryption.encrypt_object(obj, idnum, 0)
-                obj.write_to_stream(stream)
+                    object_to_write = self._encryption.encrypt_object(obj, idnum, 0)
+                object_to_write.write_to_stream(stream)
                 stream.write(b"\nendobj\n")
             else:
                 object_positions.append(-1)
@@ -1563,9 +1564,8 @@ class PdfWriter(PdfDocCommon):
         if isinstance(infos, PdfObject):
             infos = cast(DictionaryObject, infos.get_object())
         for key, value in list(infos.items()):
-            if isinstance(value, PdfObject):
-                value = value.get_object()
-            args[NameObject(key)] = create_string_object(str(value))
+            value_object = value.get_object() if isinstance(value, PdfObject) else value
+            args[NameObject(key)] = create_string_object(str(value_object))
         if self._info is None:
             self._info = DictionaryObject()
         self._info.update(args)

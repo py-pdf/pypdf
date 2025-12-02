@@ -760,9 +760,10 @@ def decode_stream_data(stream: Any) -> bytes:
     # If there is no data to decode, we should not try to decode it.
     if not data:
         return data
-    for filter_name, params in zip(filters, decode_parms):
-        if isinstance(params, NullObject):
-            params = {}
+    for filter_name, params_untyped in zip(filters, decode_parms):
+        params: Optional[DictionaryObject] = None
+        if not isinstance(params_untyped, NullObject):
+            params = cast(Optional[DictionaryObject], params_untyped)
         if filter_name in (FT.ASCII_HEX_DECODE, FTA.AHx):
             data = ASCIIHexDecode.decode(data)
         elif filter_name in (FT.ASCII_85_DECODE, FTA.A85):
@@ -783,7 +784,7 @@ def decode_stream_data(stream: Any) -> bytes:
         elif filter_name == FT.JBIG2_DECODE:
             data = JBIG2Decode.decode(data, params)
         elif filter_name == "/Crypt":
-            if "/Name" in params or "/Type" in params:
+            if "/Name" in params_untyped or "/Type" in params_untyped:
                 raise NotImplementedError(
                     "/Crypt filter with /Name or /Type not supported yet"
                 )

@@ -391,8 +391,8 @@ class PdfDocCommon:
                     return top, -1
                 return None, mi + ma
             for idx, kid in enumerate(cast(ArrayObject, node["/Kids"])):
-                kid = cast(DictionaryObject, kid.get_object())
-                n, i = recursive_call(kid, mi)
+                kid_object = cast(DictionaryObject, kid.get_object())
+                n, i = recursive_call(kid_object, mi)
                 if n is not None:  # page has just been found ...
                     if i < 0:  # ... just below!
                         return node, idx
@@ -612,8 +612,8 @@ class PdfDocCommon:
             states: list[str] = []
             retval[key][NameObject("/_States_")] = ArrayObject(states)
             for k in obj.get(FA.Kids, {}):
-                k = k.get_object()
-                for s in list(k["/AP"]["/N"].keys()):
+                k_object = k.get_object()
+                for s in list(k_object["/AP"]["/N"].keys()):
                     if s not in states:
                         states.append(s)
                 retval[key][NameObject("/_States_")] = ArrayObject(states)
@@ -641,8 +641,8 @@ class PdfDocCommon:
         if PagesAttributes.KIDS in tree:
             # recurse down the tree
             for kid in tree[PagesAttributes.KIDS]:  # type: ignore
-                kid = kid.get_object()
-                self.get_fields(kid, retval, fileobj, stack)
+                kid_object = kid.get_object()
+                self.get_fields(kid_object, retval, fileobj, stack)
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
         field_attributes_tuple = FA.attributes()
@@ -771,16 +771,16 @@ class PdfDocCommon:
         else:
             kids = field.get("/Kids", ())
             for k in kids:
-                k = k.get_object()
-                if (k.get("/Subtype", "") == "/Widget") and ("/T" not in k):
+                k_object = k.get_object()
+                if (k_object.get("/Subtype", "") == "/Widget") and ("/T" not in k_object):
                     # Kid that is just a widget, not a field:
-                    if "/P" in k:
-                        ret += [k["/P"].get_object()]
+                    if "/P" in k_object:
+                        ret += [k_object["/P"].get_object()]
                     else:
                         ret += [
                             p
                             for p in self.pages
-                            if k.indirect_reference in p.get("/Annots", "")
+                            if k_object.indirect_reference in p.get("/Annots", "")
                         ]
         return [
             x
@@ -1317,9 +1317,9 @@ class PdfDocCommon:
             i = iter(fields)
             for f in i:
                 tag = f
-                f = next(i)
-                if isinstance(f, IndirectObject):
-                    field = cast(Optional[EncodedStreamObject], f.get_object())
+                field_value = next(i)
+                if isinstance(field_value, IndirectObject):
+                    field = cast(Optional[EncodedStreamObject], field_value.get_object())
                     if field:
                         es = zlib.decompress(field._data)
                         retval[tag] = es
