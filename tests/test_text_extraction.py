@@ -457,7 +457,7 @@ def test_extract_text__restore_cm_stack_pop_error():
     with pytest.raises(IndexError, match="list index out of range"):
         page.extract_text()
 
-@pytest.mark.timeout(180)
+@pytest.mark.timeout(60)
 def test_slow_huge_string():
     """Tests for #3541"""
     reader = PdfReader(RESOURCE_ROOT / "issue-3541.pdf")
