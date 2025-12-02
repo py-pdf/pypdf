@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764609253559,
+  "lastUpdate": 1764677709388,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -84551,6 +84551,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0026828968731872943",
             "extra": "mean: 671.7665522000004 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2ac3e22df8c47bda8b6f0f0db70ce89dc163e8ef",
+          "message": "DEV: Update pinned fontTools (#3544)\n\nEnsure we do not pin to vulnerable fontTools versions.\n\nAs the only suitable version of fontTools on Python 3.9 is not supported by fpdf2, do not run fpdf2 tests with Python 3.9 and Python 3.10 at all.",
+          "timestamp": "2025-12-02T13:12:30+01:00",
+          "tree_id": "b8cde7d69e8879c766653aa21022191b39cc208a",
+          "url": "https://github.com/py-pdf/pypdf/commit/2ac3e22df8c47bda8b6f0f0db70ce89dc163e8ef"
+        },
+        "date": 1764677705668,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.8045848496553787,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004328271103404693",
+            "extra": "mean: 262.84076700000014 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.940965197198793,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001937404161327102",
+            "extra": "mean: 62.73145870588337 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28222417807528816,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031403296107698187",
+            "extra": "mean: 3.5432825309999942 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.067855819996115,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010620313653680585",
+            "extra": "mean: 55.34691055555562 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09161321843109695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009884303035812017",
+            "extra": "mean: 10.915455401799994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.488852823129846,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036481299870948416",
+            "extra": "mean: 671.6580608000015 msec\nrounds: 5"
           }
         ]
       }
