@@ -12,16 +12,10 @@ coverage[toml]==7.6.1
     #   pytest-cov
 cryptography==44.0.1
     # via -r requirements/ci.in
-defusedxml==0.7.1
-    # via fpdf2
 exceptiongroup==1.2.2
     # via pytest
 execnet==2.1.1
     # via pytest-xdist
-fonttools==4.28.1
-    # via fpdf2
-fpdf2==2.8.1
-    # via -r requirements/ci.in
 importlib-metadata==8.5.0
     # via typeguard
 iniconfig==2.0.0
