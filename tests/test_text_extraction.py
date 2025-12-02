@@ -458,9 +458,13 @@ def test_extract_text__restore_cm_stack_pop_error():
         page.extract_text()
 
 @pytest.mark.timeout(60)
+@pytest.mark.enable_socket
 def test_slow_huge_string():
     """Tests for #3541"""
-    reader = PdfReader(RESOURCE_ROOT / "issue-3541.pdf")
+    url = "https://github.com/user-attachments/files/23855795/file.pdf"
+    name = "issue-3541.pdf"
+    stream = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(stream)
     page = reader.pages[0]
 
     _ = page.extract_text(extraction_mode="layout")
