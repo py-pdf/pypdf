@@ -6,7 +6,7 @@ import pytest
 from PIL import Image
 
 from pypdf import PdfReader
-from pypdf._xobj_image_helpers import _extended_image_frombytes, _handle_flate, _xobj_to_image
+from pypdf._xobj_image_helpers import _extended_image_from_bytes, _handle_flate, _xobj_to_image
 from pypdf.constants import FilterTypes, ImageAttributes, StreamAttributes
 from pypdf.errors import EmptyImageDataError, PdfReadError
 from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject, StreamObject, TextStringObject
@@ -132,7 +132,7 @@ def test_extended_image_frombytes_zero_data():
     data = b""
 
     with pytest.raises(EmptyImageDataError, match=r"Data is 0 bytes, cannot process an image from empty data\."):
-        _extended_image_frombytes(mode, size, data)
+        _extended_image_from_bytes(mode, size, data)
 
 
 def test_handle_flate__autodesk_indexed():
