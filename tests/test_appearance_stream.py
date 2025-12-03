@@ -2,10 +2,9 @@
 
 from pypdf.generic._appearance_stream import BaseStreamConfig, TextStreamAppearance
 
-layout=BaseStreamConfig()
 
 def test_comb():
-    layout.rectangle = (0.0, 0.0, 197.285, 18.455)
+    layout=BaseStreamConfig(rectangle=(0.0, 0.0, 197.285, 18.455))
     font_size = 10.0
     text = "01234567"
     max_length = 10
@@ -14,8 +13,8 @@ def test_comb():
         layout=layout, text=text, font_size=font_size, is_comb=is_comb, max_length=max_length
     )
     assert appearance_stream.get_data() == (
-        b"q\n/Tx BMC \nq\n1 1 196.285 17.455 re\nW\nBT\n/Helv 10.0 Tf 0 g\n"
-        b"7.084250000000001 7.454999999999998 Td\n(0) Tj\n"
+        b"q\n/Tx BMC \nq\n2 1 193.285 16.455 re\nW\nBT\n/Helv 10.0 Tf 0 g\n"
+        b"7.084250000000001 5.637499999999999 Td\n(0) Tj\n"
         b"19.7285 0.0 Td\n(1) Tj\n"
         b"19.728500000000004 0.0 Td\n(2) Tj\n"
         b"19.728499999999997 0.0 Td\n(3) Tj\n"
@@ -32,12 +31,12 @@ def test_comb():
         layout=layout, text=text, font_size=font_size, is_comb=is_comb, max_length=max_length
     )
     assert appearance_stream.get_data() == (
-        b"q\n/Tx BMC \nq\n1 1 19.852 19.84 re\nW\nBT\n/Helv 10.0 Tf 0 g\n7.091 9.84 Td\n(A) Tj\nET\nQ\nEMC\nQ\n"
+        b"q\n/Tx BMC \nq\n2 1 16.852 18.84 re\nW\nBT\n/Helv 10.0 Tf 0 g\n7.091 6.83 Td\n(A) Tj\nET\nQ\nEMC\nQ\n"
     )
 
 
 def test_scale_text():
-    layout.rectangle = (0, 0, 9.1, 55.4)
+    layout=BaseStreamConfig(rectangle=(0, 0, 9.1, 55.4))
     font_size = 10.1
     text = "Hello World"
     is_multiline = False
@@ -73,7 +72,7 @@ See pdfly for a CLI application that uses pypdf to interact with PDFs.
     appearance_stream = TextStreamAppearance(
         layout=layout, text=text, font_size=font_size, is_multiline=is_multiline
     )
-    assert b"8.8 Tf" in appearance_stream.get_data()
+    assert b"9.8 Tf" in appearance_stream.get_data()
 
     layout.rectangle = (0, 0, 160, 12)
     appearance_stream = TextStreamAppearance(
@@ -91,7 +90,7 @@ Option D
     appearance_stream = TextStreamAppearance(
         layout=layout, text=text, selection=selection, font_size=font_size, is_multiline=is_multiline
     )
-    assert b"7.2 Tf" in appearance_stream.get_data()
+    assert b"7.3 Tf" in appearance_stream.get_data()
 
     layout.rectangle = (0, 0, 10, 100)
     text = "OneWord"
