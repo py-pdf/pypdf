@@ -9,15 +9,15 @@ make the step from `PyPDF2 1.x` (or even the original PyPdf) to `PyPDF2>=2.0.0`.
 You can execute your code with the updated version and show deprecation warnings
 by running `python -W all your_code.py`.
 
-# Imports and Modules
+## Imports and Modules
 
 * `PyPDF2.utils` no longer exists
 * `PyPDF2.pdf` no longer exists. You can import from `PyPDF2` directly or from
   `PyPDF2.generic`
 
-# Naming Adjustments
+## Naming Adjustments
 
-## Classes
+### Classes
 
 The base classes were renamed as they also allow operating with BytesIO streams
 instead of files. Also, the `strict` parameter changed the default value from
@@ -30,7 +30,7 @@ instead of files. Also, the `strict` parameter changed the default value from
 PdfFileReader and PdfFileMerger no longer have the `overwriteWarnings`
 parameter. The new behavior is `overwriteWarnings=False`.
 
-## Function, Method, and Property Names
+### Function, Method, and Property Names
 
 In `PyPDF2.xmp.XmpInformation`:
 
@@ -158,7 +158,7 @@ utils.py:
   - `matrixMultiply` ➔ `matrix_multiply
   - `RC4_encrypt` is moved to the security module
 
-## Parameter Names
+### Parameter Names
 
 * `PdfWriter.get_page`: `pageNumber` ➔ `page_number`
 * `PyPDF2.filters` (all classes): `decodeParms` ➔ `decode_parms`
@@ -170,7 +170,7 @@ utils.py:
 * `PdfWriter.encrypt`: `user_pwd` ➔ `user_password`
 * `PdfWriter.encrypt`: `owner_pwd` ➔ `owner_password`
 
-## Deprecations
+### Deprecations
 
 A few classes / functions were deprecated without replacement:
 

@@ -21,7 +21,6 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    :maxdepth: 1
 
    user/installation
-   user/migration-1-to-2
    user/robustness
    user/security
    user/suppress-warnings
@@ -87,6 +86,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
 
    meta/CHANGELOG
    meta/changelog-v1
+   meta/migration-1-to-2
    meta/project-governance
    meta/taking-ownership
    meta/history
