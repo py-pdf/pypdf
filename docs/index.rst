@@ -23,6 +23,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    user/installation
    user/migration-1-to-2
    user/robustness
+   user/security
    user/suppress-warnings
    user/metadata
    user/extract-text
