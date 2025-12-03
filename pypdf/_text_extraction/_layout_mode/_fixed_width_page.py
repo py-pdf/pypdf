@@ -373,8 +373,8 @@ def fixed_width_page(
             )
             lines.extend([""] * blank_lines)
 
-        line_parts = [] # It uses a list to construct the line, avoiding string concatenation.
-        current_len = 0 # Track the size with int instead of len(str) giant.
+        line_parts = []  # It uses a list to construct the line, avoiding string concatenation.
+        current_len = 0  # Track the size with int instead of len(str) overhead.
         last_disp = 0.0
         for bt_op in line_data:
             tx = bt_op["tx"]
