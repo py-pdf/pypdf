@@ -42,6 +42,22 @@ class FontDescriptor:
         from pypdf._codecs.core_fontmetrics import CORE_FONT_METRICS  # noqa: PLC0415
         # Prioritize information from the PDF font dictionary
         font_name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
+
+        # Initialize font_kwargs with defaults.
+        font_kwargs: dict[str, Any] = {
+            "name": font_name,
+            "family": cls.family,
+            "weight": cls.weight,
+            "ascent": cls.ascent,
+            "descent": cls.descent,
+            "cap_height": cls.cap_height,
+            "x_height": cls.x_height,
+            "italic_angle": cls.italic_angle,
+            "flags": cls.flags,
+            "bbox": (-100.0, -200.0, 1000.0, 900.0),
+            "character_widths": {}
+        }
+
         if font_name in CORE_FONT_METRICS:
             return CORE_FONT_METRICS[font_name]
 
@@ -51,7 +67,7 @@ class FontDescriptor:
         # TrueType fonts have a /Widths array mapping character codes to widths
         if isinstance(encoding, dict) and "/Widths" in pdf_font_dict:
             first_char = pdf_font_dict.get("/FirstChar", 0)
-            character_widths = {
+            font_kwargs["character_widths"] = {
                 encoding.get(idx + first_char, chr(idx + first_char)): width
                 for idx, width in enumerate(cast(ArrayObject, pdf_font_dict["/Widths"]))
             }
@@ -90,7 +106,7 @@ class FontDescriptor:
                     w_next_entry = _w[idx + 1].get_object()
                     if isinstance(w_next_entry, Sequence):
                         start_idx, width_list = w_entry, w_next_entry
-                        character_widths.update(
+                        font_kwargs["character_widths"].update(
                             {
                                 ord_map[_cidx]: _width
                                 for _cidx, _width in zip(
@@ -114,7 +130,7 @@ class FontDescriptor:
                             w_next_entry,
                             _w[idx + 2].get_object(),
                         )
-                        character_widths.update(
+                        font_kwargs["character_widths"].update(
                             {
                                 ord_map[_cidx]: const_width
                                 for _cidx in range(
@@ -131,12 +147,12 @@ class FontDescriptor:
                             f"Invalid font width definition. Next elements: {w_entry}, {w_next_entry}, {_w[idx + 2]}"
                         )  # pragma: no cover
 
-        if not character_widths and "/BaseFont" in pdf_font_dict:
+        if not font_kwargs["character_widths"] and "/BaseFont" in pdf_font_dict:
             for key in CORE_FONT_METRICS:
                 if pdf_font_dict["/BaseFont"] == f"/{key}":
-                    character_widths = CORE_FONT_METRICS[key].character_widths
+                    font_kwargs["character_widths"] = CORE_FONT_METRICS[key].character_widths
                     break
-        return cls(name=font_name, character_widths=character_widths)
+        return cls(**font_kwargs)
 
     def text_width(self, text: str) -> float:
         """Sum of character widths specified in PDF font for the supplied text."""
