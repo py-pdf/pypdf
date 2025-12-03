@@ -457,6 +457,7 @@ def test_extract_text__restore_cm_stack_pop_error():
     with pytest.raises(IndexError, match="list index out of range"):
         page.extract_text()
 
+
 @pytest.mark.timeout(60)
 @pytest.mark.enable_socket
 def test_slow_huge_string():
