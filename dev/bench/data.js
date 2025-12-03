@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764759364212,
+  "lastUpdate": 1764768291956,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -84815,6 +84815,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002171922017580612",
             "extra": "mean: 638.034017800004 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "felipeemersson@gmail.com",
+            "name": "FelipeErmeson",
+            "username": "FelipeErmeson"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "66f97a3760cef7353d3820c2b698a25d37e0a7bc",
+          "message": "PI: Optimize loop for layout mode text extraction (#3543)\n\nRemoving the call to the ord function and creating an optimized table in C. It doesn't perform loops and is ideal for very large strings.\n\nCloses #3541.\n\n---------\n\nCo-authored-by: Felipe Silva <felipe.silva@ktgroup.com.br>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2025-12-03T14:22:10+01:00",
+          "tree_id": "b9698acd94b66189155aa9ef964889d3f60bb11f",
+          "url": "https://github.com/py-pdf/pypdf/commit/66f97a3760cef7353d3820c2b698a25d37e0a7bc"
+        },
+        "date": 1764768288095,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.75321457573913,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005701352958163908",
+            "extra": "mean: 266.43827039999906 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.792870159129045,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0021998155310102374",
+            "extra": "mean: 63.31971262500069 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2770500761852773,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01497865387950861",
+            "extra": "mean: 3.6094557842 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.226095406104296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007646788418645121",
+            "extra": "mean: 54.86638677777793 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09016813169333755,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016615872170848676",
+            "extra": "mean: 11.090392816400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4829941333004077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003600976995670941",
+            "extra": "mean: 674.3115010000054 msec\nrounds: 5"
           }
         ]
       }
