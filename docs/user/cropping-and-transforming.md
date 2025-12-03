@@ -299,3 +299,8 @@ We get the expected result.
 ![](nup-dest2.png)
 
 There is still some work to do, for instance, to insert margins between and around cards, but this is left as an exercise for the reader…
+
+# Possible issues
+
+Especially when combining :func:`~pypdf._page.PageObject.merge_page` with transformations, you might end up with a cropped PDF file.
+In these cases, consider setting `expand=True` to re-calculate the corresponding media box.
