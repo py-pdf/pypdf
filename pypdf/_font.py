@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Optional, Union, cast
 
-from pypdf.generic import DictionaryObject, IndirectObject
+from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject
 
 from .errors import ParseError
 
@@ -53,18 +53,18 @@ class FontDescriptor:
             first_char = pdf_font_dict.get("/FirstChar", 0)
             character_widths = {
                 encoding.get(idx + first_char, chr(idx + first_char)): width
-                for idx, width in enumerate(pdf_font_dict["/Widths"])
+                for idx, width in enumerate(cast(ArrayObject, pdf_font_dict["/Widths"]))
             }
 
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
         if "/DescendantFonts" in pdf_font_dict:
             d_font: dict[Any, Any]
             for d_font_idx, d_font in enumerate(
-                pdf_font_dict["/DescendantFonts"]
+                cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
             ):
                 while isinstance(d_font, IndirectObject):
                     d_font = d_font.get_object()
-                pdf_font_dict["/DescendantFonts"][d_font_idx] = d_font
+                cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
                 ord_map = {
                     ord(_target): _surrogate
                     for _target, _surrogate in char_map.items()
