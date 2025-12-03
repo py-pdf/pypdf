@@ -219,7 +219,7 @@ import pypdf
 pypdf._page.MERGE_CROP_BOX = "trimbox"
 ```
 
-# Transforming several copies of the same page
+## Transforming several copies of the same page
 
 We have designed the following business card (A8 format) to advertise our new startup.
 
@@ -300,7 +300,7 @@ We get the expected result.
 
 There is still some work to do, for instance, to insert margins between and around cards, but this is left as an exercise for the reader…
 
-# Possible issues
+## Possible issues
 
 Especially when combining :func:`~pypdf._page.PageObject.merge_page` with transformations, you might end up with a cropped PDF file.
 In these cases, consider setting `expand=True` to re-calculate the corresponding media box.
