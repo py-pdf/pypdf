@@ -12,6 +12,7 @@ from unittest.mock import patch
 import pytest
 
 from pypdf import PdfReader, mult
+from pypdf._font import FontDescriptor
 from pypdf._text_extraction import set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
 from pypdf.errors import ParseError, PdfReadError
@@ -129,7 +130,24 @@ def test_layout_mode_font_class_to_dict():
         "font_dictionary": {},
         "space_width": 8,
         "subtype": "foo",
-        "width_map": {},
+        "font_descriptor": FontDescriptor(
+            name="Unknown",
+            family="Unknown",
+            weight="Unknown",
+            ascent=700.0,
+            descent=-200.0,
+            cap_height=600.0,
+            x_height=500.0,
+            italic_angle=0.0,
+            flags=32,
+            bbox=(
+                -100.0,
+                -200.0,
+                1000.0,
+                900.0,
+            ),
+            character_widths={},
+        ),
         "interpretable": True,
     }
 
