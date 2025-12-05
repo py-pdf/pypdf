@@ -67,7 +67,7 @@ class AbstractPolyLine(MarkupAnnotation, ABC):
         ) -> None:
         super().__init__(**kwargs)
         if len(vertices) == 0:
-            raise ValueError(f"A {type(self).__name__} needs at least 1 vertex with two coordinates")
+            raise ValueError(f"A {type(self).__name__.lower()} needs at least 1 vertex with two coordinates")
 
     @staticmethod
     def _determine_vertices(
