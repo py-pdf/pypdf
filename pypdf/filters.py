@@ -537,6 +537,9 @@ class BrotliDecode:
     Returns:
         The decompressed data.
     """
+
+    # Maximum output size to prevent decompression bombs (10 GB)
+    MAX_OUTPUT_SIZE = 10 * 1024 * 1024 * 1024
     @staticmethod
     def decode(
         data: bytes,
@@ -544,7 +547,7 @@ class BrotliDecode:
         **kwargs: Any,
     ) -> bytes:
         """
-        Decode Brotli-compressed data.
+        Decode Brotli-compressed data with decompression bomb protection.
 
         Args:
             data: Brotli-compressed data.
@@ -555,10 +558,16 @@ class BrotliDecode:
 
         Raises:
             ImportError: If the 'brotli' library is not installed.
+            PdfStreamError: If decompressed data exceeds maximum allowed size.
         """
         if brotli is None:
             raise ImportError("Brotli library not installed. Required for BrotliDecode filter.")
-        return brotli.decompress(data)
+        result = brotli.decompress(data)
+        if len(result) > BrotliDecode.MAX_OUTPUT_SIZE:
+            raise PdfStreamError(
+                f"Decompressed data exceeds maximum allowed size of {BrotliDecode.MAX_OUTPUT_SIZE} bytes"
+            )
+        return result
 
     @staticmethod
     def encode(data: bytes, **kwargs: Any) -> bytes:

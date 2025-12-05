@@ -24,6 +24,7 @@ from pypdf.filters import (
     CCITTParameters,
     FlateDecode,
     JBIG2Decode,
+    decode_stream_data,
 )
 from pypdf.generic import (
     ArrayObject,
@@ -74,7 +75,6 @@ def test_flate_decode_encode(predictor, s):
 @pytest.mark.parametrize("s", filter_inputs)
 @pytest.mark.skipif(not HAS_BROTLI, reason="brotli library not installed")
 def test_brotli_decode_encode(s):
-
     codec = BrotliDecode()
     s_bytes = s.encode()
     encoded = codec.encode(s_bytes)
@@ -85,20 +85,15 @@ def test_brotli_decode_encode(s):
 
 @patch("pypdf.filters.brotli", None)
 def test_brotli_missing_installation():
-    from pypdf.filters import BrotliDecode, decode_stream_data  # noqa: PLC0415
-
-    # Test direct decode call
     codec = BrotliDecode()
     with pytest.raises(ImportError) as exc_info_decode:
         codec.decode(b"test data")
     assert "Brotli library not installed" in str(exc_info_decode.value)
 
-    # Test direct encode call
     with pytest.raises(ImportError) as exc_info_encode:
         codec.encode(b"test data")
     assert "Brotli library not installed" in str(exc_info_encode.value)
 
-    # Test call via decode_stream_data
     stream = DictionaryObject()
     stream[NameObject("/Filter")] = NameObject("/BrotliDecode")
     stream._data = b"dummy compressed data"
@@ -109,12 +104,21 @@ def test_brotli_missing_installation():
 
 @pytest.mark.skipif(not HAS_BROTLI, reason="brotli library not installed")
 def test_brotli_decode_encode_with_real_module():
-
     s = b"Hello, Brotli!"
     codec = BrotliDecode()
     encoded = codec.encode(s)
     assert encoded != s  # Ensure encoding actually happened
     assert codec.decode(encoded) == s
+
+
+@pytest.mark.skipif(not HAS_BROTLI, reason="brotli library not installed")
+def test_brotli_decode_max_output_size():
+    """BrotliDecode raises PdfStreamError when output exceeds MAX_OUTPUT_SIZE."""
+    large_data = b"A" * 1000
+    compressed = BrotliDecode.encode(large_data)
+    with patch.object(BrotliDecode, "MAX_OUTPUT_SIZE", 100), \
+            pytest.raises(PdfStreamError, match="exceeds maximum allowed size"):
+        BrotliDecode.decode(compressed)
 
 
 def test_flatedecode_unsupported_predictor():
@@ -770,21 +774,17 @@ def test_flate_decode__not_rectangular(caplog):
 
 @pytest.mark.skipif(not HAS_BROTLI, reason="brotli library not installed")
 def test_main_decode_brotli_installed():
-
     pdf_path = RESOURCE_ROOT / "brotli-test-pdfs" / "minimal-brotli-compressed.pdf"
-
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
-
-    # This test specifically exercises the BrotliDecode path in decode_stream_data function
-    # when processing a real PDF with BrotliDecode filter
     extracted_text = page.extract_text()
-
     assert extracted_text.strip() == "Hello, Brotli!"
 
 
 def test_brotli_module_importability():
     assert BrotliDecode is not None
+
+
 def test_jbig2decode__binary_errors():
     with mock.patch("pypdf.filters.JBIG2DEC_BINARY", None), \
             pytest.raises(DependencyError, match="jbig2dec binary is not available."):
