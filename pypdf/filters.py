@@ -73,7 +73,7 @@ try:
     import brotli
 except ImportError:
     brotli = None
-    
+
 ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
 LZW_MAX_OUTPUT_LENGTH = 75_000_000
 

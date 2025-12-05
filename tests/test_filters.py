@@ -26,8 +26,8 @@ from pypdf.filters import (
     CCITTParameters,
     FlateDecode,
     JBIG2Decode,
-    decode_stream_data,
     RunLengthDecode,
+    decode_stream_data,
     decompress,
 )
 from pypdf.generic import (
