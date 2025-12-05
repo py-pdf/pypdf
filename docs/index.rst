@@ -21,14 +21,14 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    :maxdepth: 1
 
    user/installation
-   user/migration-1-to-2
    user/robustness
+   user/security
    user/suppress-warnings
    user/metadata
    user/extract-text
    user/post-processing-in-text-extraction
    user/extract-images
-   user/extract-attachments
+   user/handle-attachments
    user/encryption-decryption
    user/merging-pdfs
    user/cropping-and-transforming
@@ -86,6 +86,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
 
    meta/CHANGELOG
    meta/changelog-v1
+   meta/migration-1-to-2
    meta/project-governance
    meta/taking-ownership
    meta/history

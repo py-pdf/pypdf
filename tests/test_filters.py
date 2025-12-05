@@ -4,9 +4,11 @@ import os
 import shutil
 import string
 import subprocess
+import zlib
 from io import BytesIO
 from itertools import product as cartesian_product
 from pathlib import Path
+from typing import cast
 from unittest import mock
 from unittest.mock import patch
 
@@ -14,7 +16,7 @@ import pytest
 from PIL import Image, ImageOps
 
 from pypdf import PdfReader
-from pypdf.errors import DependencyError, DeprecationError, PdfReadError, PdfStreamError
+from pypdf.errors import DependencyError, DeprecationError, LimitReachedError, PdfReadError, PdfStreamError
 from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -25,15 +27,19 @@ from pypdf.filters import (
     FlateDecode,
     JBIG2Decode,
     decode_stream_data,
+    RunLengthDecode,
+    decompress,
 )
 from pypdf.generic import (
     ArrayObject,
+    BooleanObject,
     ContentStream,
     DictionaryObject,
     IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
+    StreamObject,
 )
 
 from . import PILContext, get_data_from_url
@@ -47,13 +53,15 @@ except ImportError:
 from .test_images import image_similarity
 
 filter_inputs = (
+    string.ascii_letters,
     string.ascii_lowercase,
     string.ascii_uppercase,
-    string.ascii_letters,
     string.digits,
     string.hexdigits,
+    string.octdigits,
     string.punctuation,
-    string.whitespace,  # Add more...
+    string.printable,
+    string.whitespace,  # Add more
 )
 
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -125,29 +133,17 @@ def test_flatedecode_unsupported_predictor():
     """
     FlateDecode raises PdfReadError for unsupported predictors.
 
-    Predictors outside the [10, 15] range are not supported.
+    Predictor values outside the ranges [1, 2] and [10, 15] are not supported.
 
-    This test function checks that a PdfReadError is raised when decoding with
-    unsupported predictors. Once this predictor support is updated in the
-    future, this test case may be removed.
+    Checks that a PdfReadError is raised when decoding with unsupported predictors.
     """
     codec = FlateDecode()
-    predictors = (-10, -1, 0, 9, 16, 20, 100)
+    predictors = (-10, -1, 0, 3, 9, 16, 20, 100)
 
     for predictor, s in cartesian_product(predictors, filter_inputs):
         s = s.encode()
         with pytest.raises(PdfReadError):
             codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
-
-
-@pytest.mark.parametrize("params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}])])
-def test_flate_decode_decompress_with_array_params(params):
-    """FlateDecode decode() method works correctly with array parameters."""
-    codec = FlateDecode()
-    s = b""
-    encoded = codec.encode(s)
-    with pytest.raises(DeprecationError):
-        assert codec.decode(encoded, params) == s
 
 
 @pytest.mark.parametrize(
@@ -196,11 +192,10 @@ def test_ascii_hex_decode_method(data, expected):
     assert ASCIIHexDecode.decode(data) == expected
 
 
-def test_ascii_hex_decode_missing_eod():
-    """ASCIIHexDecode.decode() raises error when no EOD character is present."""
-    # with pytest.raises(PdfStreamError) as exc:
+def test_ascii_hex_decode_missing_eod(caplog):
+    """ASCIIHexDecode.decode() logs warning when no EOD character is present."""
     ASCIIHexDecode.decode("")
-    # assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
+    assert "missing EOD in ASCIIHexDecode, check if output is OK" in caplog.text
 
 
 @pytest.mark.enable_socket
@@ -255,31 +250,34 @@ def test_ascii85decode_five_zero_bytes():
 
 
 def test_ccitparameters():
-    with pytest.warns(
-        DeprecationWarning,
-        match="CCITParameters is deprecated and will be removed in pypdf 6.0.0. Use CCITTParameters instead",
+    with pytest.raises(
+        DeprecationError,
+        match=r"CCITParameters is deprecated and was removed in pypdf 6\.0\.0\. Use CCITTParameters instead",
     ):
-        params = CCITParameters()
-    assert params.K == 0  # zero is the default according to page 78
-    assert params.group == 3
+        CCITParameters()
 
 
 def test_ccittparameters():
     params = CCITTParameters()
     assert params.K == 0  # zero is the default according to page 78
+    assert params.BlackIs1 is False
     assert params.group == 3
 
 
 @pytest.mark.parametrize(
-    ("parameters", "expected_k"),
+    ("parameters", "expected_k", "expected_black_is_1"),
     [
-        (None, 0),
-        (ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}]), 1),
+        (None, 0, False),
+        (
+            ArrayObject([{"/K": NumberObject(1)}, {"/Columns": NumberObject(13)}, {"/BlackIs1": BooleanObject(True)}]),
+            1, True
+        ),
     ],
 )
-def test_ccitt_get_parameters(parameters, expected_k):
+def test_ccitt_get_parameters(parameters, expected_k, expected_black_is_1):
     parameters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
     assert parameters.K == expected_k  # noqa: SIM300
+    assert parameters.BlackIs1 == expected_black_is_1
 
 
 def test_ccitt_get_parameters__indirect_object():
@@ -299,8 +297,7 @@ def test_ccitt_fax_decode():
         {"/K": NumberObject(-1), "/Columns": NumberObject(17)}
     )
 
-    # This was just the result pypdf 1.27.9 returned.
-    # It would be awesome if we could check if that is actually correct.
+    # This is the header of an empty TIFF image.
     assert CCITTFaxDecode.decode(data, parameters) == (
         b"II*\x00\x08\x00\x00\x00\x08\x00\x00\x01\x04\x00\x01\x00\x00\x00\x11\x00"
         b"\x00\x00\x01\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x01"
@@ -404,8 +401,8 @@ def test_pa_image_extraction():
     assert images[0].name == "Im1.png"
 
     # Ensure visual appearance
-    data = get_data_from_url(name="issue-1801.png")
-    assert data == images[0].data
+    expected_data = BytesIO(get_data_from_url(name="issue-1801.png"))
+    assert image_similarity(expected_data, images[0].image) == 1
 
 
 @pytest.mark.enable_socket
@@ -442,9 +439,7 @@ def test_iss1787():
     obj = data.indirect_reference.get_object()
     obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
     obj.decoded_self = None
-    with pytest.raises(
-        expected_exception=PdfReadError, match="^Unsupported PNG filter 244$"
-    ):
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Unsupported PNG filter 244$"):
         _ = reader.pages[0].images[0]
 
 
@@ -713,6 +708,13 @@ def test_ascii85decode__non_recoverable(caplog):
     assert caplog.text == ""
 
 
+def test_ascii85decode__ignore_whitespaces(caplog):
+    """Whitespace characters must be silently ignored"""
+    data = b"Cqa;:3k~\n>"
+    result = ASCII85Decode.decode(data)
+    assert result == b"l\xbe`\x8d:"
+
+
 @pytest.mark.enable_socket
 def test_ccitt_fax_decode__black_is_1():
     url = "https://github.com/user-attachments/files/19288881/imagemagick-CCITTFaxDecode_BlackIs1-true.pdf"
@@ -739,12 +741,15 @@ def test_ccitt_fax_decode__black_is_1():
 def test_flate_decode__image_is_none_due_to_size_limit(caplog):
     url = "https://github.com/user-attachments/files/19464256/file.pdf"
     name = "issue3220.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    images = reader.pages[0].images
-    assert len(images) == 1
-    image = images[0]
-    assert image.name == "Im0.png"
-    assert image.image is None
+
+    with mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", 0):
+        reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+        images = reader.pages[0].images
+        assert len(images) == 1
+        image = images[0]
+        assert image.name == "Im0.png"
+        assert image.image is None
+
     assert (
         "Failed loading image: Image size (180000000 pixels) exceeds limit of "
         "178956970 pixels, could be decompression bomb DOS attack."
@@ -760,15 +765,12 @@ def test_flate_decode__not_rectangular(caplog):
     decode_parms[NameObject("/Predictor")] = NumberObject(15)
     decode_parms[NameObject("/Columns")] = NumberObject(4881)
     actual = FlateDecode.decode(data=data, decode_parms=decode_parms)
-    actual_image = BytesIO()
-    Image.frombytes(mode="1", size=(4881, 81), data=actual).save(
-        actual_image, format="png"
-    )
+    actual_image = Image.frombytes(mode="1", size=(4881, 81), data=actual)
 
     url = "https://github.com/user-attachments/assets/c5695850-c076-4255-ab72-7c86851a4a04"
     name = "issue3241.png"
-    expected = get_data_from_url(url, name=name)
-    assert actual_image.getvalue() == expected
+    expected_data = BytesIO(get_data_from_url(url, name=name))
+    assert image_similarity(expected_data, actual_image) == 1
     assert caplog.messages == ["Image data is not rectangular. Adding padding."]
 
 
@@ -787,7 +789,7 @@ def test_brotli_module_importability():
 
 def test_jbig2decode__binary_errors():
     with mock.patch("pypdf.filters.JBIG2DEC_BINARY", None), \
-            pytest.raises(DependencyError, match="jbig2dec binary is not available."):
+            pytest.raises(DependencyError, match=r"jbig2dec binary is not available\."):
         JBIG2Decode.decode(b"dummy")
 
     result = subprocess.CompletedProcess(
@@ -800,7 +802,7 @@ def test_jbig2decode__binary_errors():
     )
     with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
             mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
-            pytest.raises(DependencyError, match="jbig2dec>=0.15 is required."):
+            pytest.raises(DependencyError, match=r"jbig2dec>=0.15 is required\."):
         JBIG2Decode.decode(b"dummy")
 
 
@@ -860,9 +862,90 @@ def test_jbig2decode__edge_cases(caplog):
     caplog.clear()
 
     # Invalid input.
-    with pytest.raises(PdfStreamError, match="Unable to decode JBIG2 data. Exit code: 1"):
+    with pytest.raises(PdfStreamError, match=r"Unable to decode JBIG2 data\. Exit code: 1"):
         JBIG2Decode.decode(b"aaaaaa")
     assert caplog.messages == [
         "jbig2dec FATAL ERROR page has no image, cannot be completed",
         "jbig2dec WARNING unable to complete page"
     ]
+
+
+@pytest.mark.timeout(timeout=30, method="thread")
+@pytest.mark.enable_socket
+def test_flate_decode_stream_with_faulty_tail_bytes():
+    """
+    Test for #3332
+
+    The test ensures two things:
+        1. stream can be decoded at all
+        2. decoding doesn't falls through to last fallback in try-except blocks
+           that is too slow and takes ages for this stream
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/20901522/faulty_stream_tail_example.1.pdf",
+        name="faulty_stream_tail_example.1.pdf"
+    )
+    expected = get_data_from_url(
+        url="https://github.com/user-attachments/files/20941717/decoded.dat.txt",
+        name="faulty_stream_tail_example.1.decoded.dat"
+    )
+    reader = PdfReader(BytesIO(data))
+    obj = reader.get_object(IndirectObject(182, 0, reader))
+    assert cast(StreamObject, obj).get_data() == expected
+
+
+@pytest.mark.enable_socket
+def test_rle_decode_with_faulty_tail_byte_in_multi_encoded_stream(caplog):
+    """
+    Test for #3355
+
+    The test ensures that the inner RLE encoded stream can be decoded,
+    because this stream contains an extra faulty newline byte in the
+    end that can be ignored during decoding.
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/21038398/test_data_rle.txt",
+        name="multi_decoding_example_with_faulty_tail_byte.pdf"
+    )
+    reader = PdfReader(BytesIO(data))
+    obj = reader.get_object(IndirectObject(60, 0, reader))
+    cast(StreamObject, obj).get_data()
+    assert "Found trailing newline in stream data, check if output is OK" in caplog.messages
+
+
+@pytest.mark.enable_socket
+def test_rle_decode_exception_with_corrupted_stream():
+    """
+    Additional Test to #3355
+
+    This test must raise the EOD exception during RLE decoding and ensures
+    that we do not fail during code coverage analyses in the git PR pipeline.
+    """
+    data = get_data_from_url(
+        url="https://github.com/user-attachments/files/21052626/rle_stream_with_error.txt",
+        name="rle_stream_with_error.txt"
+    )
+    with pytest.raises(PdfStreamError, match="Early EOD in RunLengthDecode"):
+        RunLengthDecode.decode(data)
+
+
+def test_decompress():
+    data = string.printable.encode("utf-8") + string.printable[::-1].encode("utf-8")
+    compressed = FlateDecode.encode(data)
+
+    # # Decompress regularly.
+    decompressed = decompress(compressed)
+    assert decompressed == data
+
+    # # Decompress byte-wise.
+    with mock.patch("pypdf.filters._decompress_with_limit", side_effect=zlib.error):
+        decompressed = decompress(compressed)
+        assert decompressed == data
+
+    # Decompress byte-wise with very low output limit.
+    with mock.patch("pypdf.filters._decompress_with_limit", side_effect=zlib.error), \
+            mock.patch("pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH", len(compressed) - 13), \
+            pytest.raises(
+                LimitReachedError, match=r"^Limit reached while decompressing\. 12 bytes remaining\."
+            ):
+        decompress(compressed)

@@ -10,7 +10,7 @@ pypdf makes use of three mechanisms to show if something went wrong:
   functions / parameters. Another example is missing capabilities of pypdf.
   In those cases, pypdf users should adjust their code. Warnings
   are issued by the `warnings` module - those are different from the log-level
-  "warning".
+  "warning."
 * **Log messages** are informative messages that can be used for post-mortem
   analysis. Most of the time, users can ignore them. They come in different
   *levels*, such as info / warning / error indicating the severity.
@@ -23,14 +23,17 @@ pypdf makes use of three mechanisms to show if something went wrong:
 Exceptions need to be caught if you want to handle them. For example, you could
 want to read the text from a PDF as a part of a search function.
 
-Most PDF files do not follow the specification. In this case pypdf needs to
+Most PDF files do not follow the specification. In this case, pypdf needs to
 guess which kinds of mistakes were potentially done when the PDF file was created.
 See [the robustness page](robustness.md) for the related issues.
 
 As a user, you likely do not care about it. If it is readable in any way, you
 want the text. You might use pdfminer.six as a fallback and do this:
 
-```python
+% We prefer not to execute doc examples for third-party package "pdfminer.six" used in one code snippet only
+```{testcode}
+:skipif: True
+
 from pypdf import PdfReader
 from pdfminer.high_level import extract_text as fallback_text_extraction
 
@@ -51,7 +54,7 @@ if you prefer something more specific.
 The [`warnings` module](https://docs.python.org/3/library/warnings.html) allows
 you to ignore warnings:
 
-```python
+```{testcode}
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -66,7 +69,7 @@ Log messages can be noisy in some cases. pypdf hopefully has a reasonable
 level of log messages, but you can reduce which types of messages you want to
 see:
 
-```python
+```{testcode}
 import logging
 
 logger = logging.getLogger("pypdf")

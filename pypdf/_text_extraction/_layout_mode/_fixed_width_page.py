@@ -1,9 +1,10 @@
 """Extract PDF text preserving the layout of the source PDF"""
 
+from collections.abc import Iterator
 from itertools import groupby
 from math import ceil
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, TypedDict
+from typing import Any, Literal, Optional, TypedDict
 
 from ..._utils import logger_warning
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
@@ -60,12 +61,12 @@ def bt_group(tj_op: TextStateParams, rendered_text: str, dispaced_tx: float) -> 
 
 
 def recurs_to_target_op(
-    ops: Iterator[Tuple[List[Any], bytes]],
+    ops: Iterator[tuple[list[Any], bytes]],
     text_state_mgr: TextStateManager,
     end_target: Literal[b"Q", b"ET"],
-    fonts: Dict[str, Font],
+    fonts: dict[str, Font],
     strip_rotated: bool = True,
-) -> Tuple[List[BTGroup], List[TextStateParams]]:
+) -> tuple[list[BTGroup], list[TextStateParams]]:
     """
     Recurse operators between BT/ET and/or q/Q operators managing the transform
     stack and capturing text positioning and rendering data.
@@ -81,10 +82,10 @@ def recurs_to_target_op(
 
     """
     # 1 entry per line of text rendered within each BT/ET operation.
-    bt_groups: List[BTGroup] = []
+    bt_groups: list[BTGroup] = []
 
     # 1 entry per text show operator (Tj/TJ/'/")
-    tj_ops: List[TextStateParams] = []
+    tj_ops: list[TextStateParams] = []
 
     if end_target == b"Q":
         # add new q level. cm's added at this level will be popped at next b'Q'
@@ -205,8 +206,8 @@ def recurs_to_target_op(
 
 
 def y_coordinate_groups(
-    bt_groups: List[BTGroup], debug_path: Optional[Path] = None
-) -> Dict[int, List[BTGroup]]:
+    bt_groups: list[BTGroup], debug_path: Optional[Path] = None
+) -> dict[int, list[BTGroup]]:
     """
     Group text operations by rendered y coordinate, i.e. the line number.
 
@@ -253,11 +254,11 @@ def y_coordinate_groups(
 
 
 def text_show_operations(
-    ops: Iterator[Tuple[List[Any], bytes]],
-    fonts: Dict[str, Font],
+    ops: Iterator[tuple[list[Any], bytes]],
+    fonts: dict[str, Font],
     strip_rotated: bool = True,
     debug_path: Optional[Path] = None,
-) -> List[BTGroup]:
+) -> list[BTGroup]:
     """
     Extract text from BT/ET operator pairs.
 
@@ -272,8 +273,8 @@ def text_show_operations(
 
     """
     state_mgr = TextStateManager()  # transformation stack manager
-    bt_groups: List[BTGroup] = []  # BT operator dict
-    tj_ops: List[TextStateParams] = []  # Tj/TJ operator data
+    bt_groups: list[BTGroup] = []  # BT operator dict
+    tj_ops: list[TextStateParams] = []  # Tj/TJ operator data
     for operands, op in ops:
         if op in (b"BT", b"q"):
             bts, tjs = recurs_to_target_op(
@@ -324,7 +325,7 @@ def text_show_operations(
     return bt_groups
 
 
-def fixed_char_width(bt_groups: List[BTGroup], scale_weight: float = 1.25) -> float:
+def fixed_char_width(bt_groups: list[BTGroup], scale_weight: float = 1.25) -> float:
     """
     Calculate average character width weighted by the length of the rendered
     text in each sample for conversion to fixed-width layout.
@@ -345,7 +346,7 @@ def fixed_char_width(bt_groups: List[BTGroup], scale_weight: float = 1.25) -> fl
 
 
 def fixed_width_page(
-    ty_groups: Dict[int, List[BTGroup]], char_width: float, space_vertically: bool, font_height_weight: float
+    ty_groups: dict[int, list[BTGroup]], char_width: float, space_vertically: bool, font_height_weight: float
 ) -> str:
     """
     Generate page text from text operations grouped by rendered y coordinate.
@@ -361,8 +362,9 @@ def fixed_width_page(
             layout in the source pdf.
 
     """
-    lines: List[str] = []
+    lines: list[str] = []
     last_y_coord = 0
+    table = str.maketrans(dict.fromkeys(range(14, 32), " "))
     for y_coord, line_data in ty_groups.items():
         if space_vertically and lines:
             fh = line_data[0]["font_height"]
@@ -370,16 +372,29 @@ def fixed_width_page(
                 int(abs(y_coord - last_y_coord) / (fh * font_height_weight)) - 1
             )
             lines.extend([""] * blank_lines)
-        line = ""
+
+        line_parts = []  # It uses a list to construct the line, avoiding string concatenation.
+        current_len = 0  # Track the size with int instead of len(str) overhead.
         last_disp = 0.0
         for bt_op in line_data:
-            offset = int(bt_op["tx"] // char_width)
-            spaces = (offset - len(line)) * (ceil(last_disp) < int(bt_op["tx"]))
-            line = f"{line}{' ' * spaces}{bt_op['text']}"
+            tx = bt_op["tx"]
+            offset = int(tx // char_width)
+            needed_spaces = offset - current_len
+            if needed_spaces > 0 and ceil(last_disp) < int(tx):
+                padding = " " * needed_spaces
+                line_parts.append(padding)
+                current_len += needed_spaces
+
+            raw_text = bt_op["text"]
+            text = raw_text.translate(table)
+            line_parts.append(text)
+            current_len += len(text)
             last_disp = bt_op["displaced_tx"]
-        if line.strip() or lines:
-            lines.append(
-                "".join(c if ord(c) < 14 or ord(c) > 31 else " " for c in line)
-            )
+
+        full_line = "".join(line_parts).rstrip()
+        if full_line.strip() or (space_vertically and lines):
+            lines.append(full_line)
+
         last_y_coord = y_coord
-    return "\n".join(ln.rstrip() for ln in lines if space_vertically or ln.strip())
+
+    return "\n".join(lines)

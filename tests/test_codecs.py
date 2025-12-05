@@ -1,9 +1,14 @@
 """Test LZW-related code."""
+from io import BytesIO
 from pathlib import Path
 
 import pytest
 
+from pypdf import PdfReader
 from pypdf._codecs._codecs import LzwCodec
+from pypdf.errors import LimitReachedError
+
+from . import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -71,3 +76,22 @@ def test_lzw_decoder_table_overflow(caplog):
     )
     assert len(codec.decoding_table) == 4096
     assert "Ignoring too large LZW table index." in caplog.text
+
+
+@pytest.mark.enable_socket
+@pytest.mark.timeout(timeout=15, method="thread")
+def test_lzw_decoder_large_stream_performance(caplog):
+    LzwCodec().decode(get_data_from_url(name="large_lzw_example_encoded.dat"))
+
+
+@pytest.mark.enable_socket
+def test_lzw_decoder__output_limit():
+    url = "https://github.com/user-attachments/files/23057035/lzw__output_limit.pdf"
+    name = "lzw__output_limit.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    page = reader.pages[0]
+
+    with pytest.raises(
+            expected_exception=LimitReachedError, match=r"^Limit reached while decompressing: 75000828 > 75000000$"
+    ):
+        page.images[0].image.load()

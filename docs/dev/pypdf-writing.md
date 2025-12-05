@@ -43,11 +43,10 @@ our choices.
 with a serialize method which roughly maps to `pypdf.PdfObject.write_to_stream`.
 Some other similarities include:
 
-* [fpdf.output.OutputProducer.buffersize](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/output.py#L370-L485) vs {py:meth}`pypdf.PdfWriter.write_stream <pypdf.PdfWriter.write_stream>`
-* [fpdpf.syntax.Name](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py#L124) vs {py:class}`pypdf.generic.NameObject <pypdf.generic.NameObject>`
-* [fpdf.syntax.build_obj_dict](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py#L222) vs {py:class}`pypdf.generic.DictionaryObject <pypdf.generic.DictionaryObject>`
-* [fpdf.structure_tree.NumberTree](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/structure_tree.py#L17) vs
- {py:class}`pypdf.generic.TreeObject <pypdf.generic.TreeObject>`
+* [fpdf.output.OutputProducer.buffersize](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/output.py#L370-L485) vs. {py:meth}`pypdf.PdfWriter.write_stream <pypdf.PdfWriter.write_stream>`
+* [fpdpf.syntax.Name](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py#L124) vs. {py:class}`pypdf.generic.NameObject <pypdf.generic.NameObject>`
+* [fpdf.syntax.build_obj_dict](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/syntax.py#L222) vs. {py:class}`pypdf.generic.DictionaryObject <pypdf.generic.DictionaryObject>`
+* [fpdf.structure_tree.NumberTree](https://github.com/PyFPDF/fpdf2/blob/master/fpdf/structure_tree.py#L17) vs. {py:class}`pypdf.generic.TreeObject <pypdf.generic.TreeObject>`
 
 
 ### pdfrw
