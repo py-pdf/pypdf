@@ -842,19 +842,22 @@ def test_rle_decode_with_faulty_tail_byte_in_multi_encoded_stream(caplog):
 
 
 @pytest.mark.enable_socket
-def test_rle_decode_exception_with_corrupted_stream():
+def test_rle_decode_exception_with_corrupted_stream(caplog):
     """
     Additional Test to #3355
 
-    This test must raise the EOD exception during RLE decoding and ensures
+    This test must report the EOD warning during RLE decoding and ensures
     that we do not fail during code coverage analyses in the git PR pipeline.
     """
     data = get_data_from_url(
         url="https://github.com/user-attachments/files/21052626/rle_stream_with_error.txt",
         name="rle_stream_with_error.txt"
     )
-    with pytest.raises(PdfStreamError, match="Early EOD in RunLengthDecode"):
-        RunLengthDecode.decode(data)
+    decoded = RunLengthDecode.decode(data)
+    assert decoded.startswith(b"\x01\x01\x01\x01\x01\x01\x01\x02\x02\x02\x02\x02\x02\x02\x03\x03")
+    assert decoded.endswith(b"\x87\x83\x83\x83\x83\x83\x83\x83]]]]]]]RRRRRRRX\xa5")
+    assert len(decoded) == 1048576
+    assert caplog.messages == ["Early EOD in RunLengthDecode, check if output is OK"]
 
 
 def test_decompress():

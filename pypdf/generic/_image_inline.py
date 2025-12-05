@@ -33,6 +33,7 @@ from .._utils import (
     WHITESPACES,
     WHITESPACES_AS_BYTES,
     StreamType,
+    logger_warning,
     read_non_whitespace,
 )
 from ..errors import PdfReadError
@@ -44,7 +45,14 @@ logger = logging.getLogger(__name__)
 BUFFER_SIZE = 8192
 
 
-def extract_inline_AHx(stream: StreamType) -> bytes:
+def _check_end_image_marker(stream: StreamType) -> bool:
+    ei_tok = read_non_whitespace(stream)
+    ei_tok += stream.read(2)
+    stream.seek(-3, 1)
+    return ei_tok[:2] == b"EI" and (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES)
+
+
+def extract_inline__ascii_hex_decode(stream: StreamType) -> bytes:
     """
     Extract HexEncoded stream from inline image.
     The stream will be moved onto the EI.
@@ -77,15 +85,12 @@ def extract_inline_AHx(stream: StreamType) -> bytes:
         data_out += data_buffered[:-2]
         stream.seek(-2, 1)
 
-    ei_tok = read_non_whitespace(stream)
-    ei_tok += stream.read(2)
-    stream.seek(-3, 1)
-    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if not _check_end_image_marker(stream):
         raise PdfReadError("EI stream not found")
     return data_out
 
 
-def extract_inline_A85(stream: StreamType) -> bytes:
+def extract_inline__ascii85_decode(stream: StreamType) -> bytes:
     """
     Extract A85 stream from inline image.
     The stream will be moved onto the EI.
@@ -109,15 +114,12 @@ def extract_inline_A85(stream: StreamType) -> bytes:
         ]  # back by one char in case of in the middle of ~>
         stream.seek(-2, 1)
 
-    ei_tok = read_non_whitespace(stream)
-    ei_tok += stream.read(2)
-    stream.seek(-3, 1)
-    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if not _check_end_image_marker(stream):
         raise PdfReadError("EI stream not found")
     return data_out
 
 
-def extract_inline_RL(stream: StreamType) -> bytes:
+def extract_inline__run_length_decode(stream: StreamType) -> bytes:
     """
     Extract RL (RunLengthDecode) stream from inline image.
     The stream will be moved onto the EI.
@@ -130,20 +132,33 @@ def extract_inline_RL(stream: StreamType) -> bytes:
             raise PdfReadError("Unexpected end of stream")
         pos_tok = data_buffered.find(b"\x80")
         if pos_tok >= 0:  # found
-            data_out += data_buffered[: pos_tok + 1]
-            stream.seek(-len(data_buffered) + pos_tok + 1, 1)
+            # Ideally, we could just use plain run-length decoding here, where 80_16 = 128_10
+            # marks the EOD. But there apparently are cases like in issue #3517, where we have
+            # an inline image with up to 51 EOD markers. In these cases, be resilient here and
+            # use the default `EI` marker detection instead. Please note that this fallback
+            # still omits special `EI` handling within the stream, but for now assume that having
+            # both of these cases occur at the same time is very unlikely (and the image stream
+            # is broken anyway).
+            # For now, do not skip over more than one whitespace character.
+            after_token = data_buffered[pos_tok + 1 : pos_tok + 4]
+            if after_token.startswith(b"EI") or after_token.endswith(b"EI"):
+                data_out += data_buffered[: pos_tok + 1]
+                stream.seek(-len(data_buffered) + pos_tok + 1, 1)
+            else:
+                logger_warning("Early EOD in RunLengthDecode of inline image, using fallback.", __name__)
+                ei_marker = data_buffered.find(b"EI")
+                if ei_marker > 0:
+                    data_out += data_buffered[: ei_marker]
+                    stream.seek(-len(data_buffered) + ei_marker - 1, 1)
             break
         data_out += data_buffered
 
-    ei_tok = read_non_whitespace(stream)
-    ei_tok += stream.read(2)
-    stream.seek(-3, 1)
-    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if not _check_end_image_marker(stream):
         raise PdfReadError("EI stream not found")
     return data_out
 
 
-def extract_inline_DCT(stream: StreamType) -> bytes:
+def extract_inline__dct_decode(stream: StreamType) -> bytes:
     """
     Extract DCT (JPEG) stream from inline image.
     The stream will be moved onto the EI.
@@ -185,10 +200,7 @@ def extract_inline_DCT(stream: StreamType) -> bytes:
             sz = c[0] * 256 + c[1]
             data_out += read(sz - 2)
 
-    ei_tok = read_non_whitespace(stream)
-    ei_tok += stream.read(2)
-    stream.seek(-3, 1)
-    if ei_tok[:2] != b"EI" or not (ei_tok[2:3] == b"" or ei_tok[2:3] in WHITESPACES):
+    if not _check_end_image_marker(stream):
         raise PdfReadError("EI stream not found")
     return data_out
 
