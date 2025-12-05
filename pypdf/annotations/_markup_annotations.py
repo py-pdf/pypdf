@@ -38,14 +38,14 @@ def _get_bounding_rectangle(vertices: list[Vertex]) -> RectangleObject:
 
 
 class MarkupAnnotation(AnnotationDictionary, ABC):
-    """
-    Base class for all markup annotations.
+    # """
+    # Base class for all markup annotations.
 
-    Args:
-        title_bar: Text to be displayed in the title bar of the annotation;
-            by convention this is the name of the author
+    # Args:
+    #     title_bar: Text to be displayed in the title bar of the annotation;
+    #         by convention this is the name of the author
 
-    """
+    # """
 
     def __init__(self, *, title_bar: Optional[str] = None) -> None:
         if title_bar is not None:
@@ -53,6 +53,13 @@ class MarkupAnnotation(AnnotationDictionary, ABC):
 
 
 class AbstractPolyLine(MarkupAnnotation, ABC):
+    # """
+    # Base class for Polygon and PolyLine
+
+    # Args:
+    #     vertices: List of coordinates of each vertex;
+
+    # """
     def __init__(
             self,
             vertices: Union[list[Vertex], ArrayObject],
