@@ -78,3 +78,7 @@ AnnotationSubtype: TypeAlias = Literal[
     "/Projection",
     "/RichMedia",
 ]
+
+ActionSubtype: TypeAlias = Literal[
+    "/JavaScript",
+]
