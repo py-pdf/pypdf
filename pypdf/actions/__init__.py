@@ -13,9 +13,11 @@ events that can trigger the execution of an action. The document catalog
 dictionary may also contain an AA entry for trigger events affecting the
 document as a whole.
 ISO 32000-2:2020
+
 PDF includes a wide variety of standard action types, whose characteristics and
 behaviour are defined by an action dictionary. These are defined in this
 submodule.
+
 Trigger events, which are the other component of actions, are defined with their
 associated object, elsewhere in the codebase.
 """

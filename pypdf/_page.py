@@ -2156,10 +2156,12 @@ class PageObject(DictionaryObject):
     def add_action(self, trigger: Literal["open", "close"], action: ActionSubtype) -> None:
         """
         Add an action which will launch on the open or close trigger event of this page.
+
         Args:
             trigger: "open" or "close" trigger events.
             action: An instance of a subclass of Action;
                     JavaScript is currently the only available action type.
+
         # Example: Display the page number when the page is opened.
         >>> page.add_action("open", JavaScript('app.alert("This is page " + this.pageNum);'))
         # Example: Display the page number when the page is closed.
