@@ -136,3 +136,15 @@ def test_page_delete_action(pdf_file_writer):
         }
     }
     assert page[NameObject("/AA")] == expected
+    page.delete_action("open")
+    expected = {
+        "/C": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Page closed');"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
+    page.delete_action("closed")
+    assert page[NameObject("/AA")] is None
