@@ -83,6 +83,27 @@ def test_page_add_action(pdf_file_writer):
     }
     assert page[NameObject("/AA")] == expected
 
+    page.delete_action("open")
+    page.delete_action("close")
+    assert page.get(NameObject("/AA")) is None
+
+    page.add_action("open", JavaScript("app.alert('Page opened 1');"))
+    page.add_action("open", JavaScript("app.alert('Page opened 2');"))
+    expected = {
+        "/O": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Page opened 1');"
+        },
+        "/O": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Page opened 2');"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
 
 def test_page_delete_action(pdf_file_writer):
     page = pdf_file_writer.pages[0]
@@ -98,3 +119,21 @@ def test_page_delete_action(pdf_file_writer):
         match = "An additional-actions dictionary is absent; nothing to delete",
     ):
         page.delete_action("open")
+
+    page.add_action("open", JavaScript("app.alert('Page opened');"))
+    page.add_action("close", JavaScript("app.alert('Page closed');"))
+    expected = {
+        "/O": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Page opened');"
+        },
+        "/C": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('Page closed');"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
