@@ -92,16 +92,15 @@ def test_page_add_action(pdf_file_writer):
     expected = {
         "/O": {
             "/Type": "/Action",
-            "/Next": NullObject(),
+            "/Next": {
+                "/Type": "/Action",
+                "/Next": NullObject(),
+                "/S": "/JavaScript",
+                "/JS": "app.alert('Page opened 2');"
+            },
             "/S": "/JavaScript",
             "/JS": "app.alert('Page opened 1');"
         },
-        "/O": {
-            "/Type": "/Action",
-            "/Next": NullObject(),
-            "/S": "/JavaScript",
-            "/JS": "app.alert('Page opened 2');"
-        }
     }
     assert page[NameObject("/AA")] == expected
 
