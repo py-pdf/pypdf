@@ -58,6 +58,7 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
+from .actions import JavaScript
 from .constants import _INLINE_IMAGE_KEY_MAPPING, _INLINE_IMAGE_VALUE_MAPPING
 from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
@@ -79,6 +80,7 @@ from .generic import (
     StreamObject,
     is_null_or_none,
 )
+from .types import ActionSubtype
 
 try:
     from PIL.Image import Image
@@ -2150,6 +2152,98 @@ class PageObject(DictionaryObject):
             del self[NameObject("/Annots")]
         else:
             self[NameObject("/Annots")] = value
+
+    def add_action(self, trigger: Literal["open", "close"], action: ActionSubtype) -> None:
+        """
+        Add an action which will launch on the open or close trigger event of this page.
+        Args:
+            trigger: "open" or "close" trigger events.
+            action: An instance of a subclass of Action;
+                    JavaScript is currently the only available action type.
+        # Example: Display the page number when the page is opened.
+        >>> page.add_action("open", JavaScript('app.alert("This is page " + this.pageNum);'))
+        # Example: Display the page number when the page is closed.
+        >>> page.add_action("close", JavaScript('app.alert("This is page " + this.pageNum);'))
+        """
+        if trigger not in {"open", "close"}:
+            raise ValueError("The trigger must be 'open' or 'close'")
+
+        trigger_name = NameObject("/O") if trigger == "open" else NameObject("/C")
+
+        if not isinstance(action, JavaScript):
+            raise ValueError("Currently the only action type supported is JavaScript")
+
+        if NameObject("/AA") not in self:
+            # Additional actions key not present
+            self[NameObject("/AA")] = DictionaryObject(
+                {trigger_name: action}
+            )
+            return
+
+        if not isinstance(self[NameObject("/AA")], DictionaryObject):
+            self[NameObject("/AA")] = DictionaryObject()
+
+        additional_actions: DictionaryObject = cast(DictionaryObject, self[NameObject("/AA")])
+
+        if trigger_name not in additional_actions:
+            # Trigger event not present
+            additional_actions.update({trigger_name: action})
+            return
+
+        # Existing same trigger event: find last Next key in action dictionary chain
+        prev_action = additional_actions.get(trigger_name)
+        next = NameObject("/Next")
+        while True:
+            """
+            The action dictionary’s Next entry allows sequences of actions to be
+            chained together. For example, the effect of clicking a link
+            annotation with the mouse can be to play a sound, jump to a new
+            page, and start up a movie. Note that the Next entry is not
+            restricted to a single action but can contain an array of actions,
+            each of which in turn can have a Next entry of its own. The actions
+            can thus form a tree instead of a simple linked list. Actions within
+            each Next array are executed in order, each followed in turn by any
+            actions specified in its Next entry, and so on recursively. It is
+            recommended that interactive PDF processors attempt to provide
+            reasonable behaviour in anomalous situations. For example,
+            self-referential actions ought not be executed more than once, and
+            actions that close the document or otherwise render the next action
+            impossible ought to terminate the execution sequence. Applications
+            need also provide some mechanism for the user to interrupt and
+            manually terminate a sequence of actions.
+            ISO 32000-2:2020
+            """
+            assert isinstance(prev_action, (ArrayObject, DictionaryObject))
+
+            while isinstance(prev_action, ArrayObject):
+                # We have an array of actions; we take the last one
+                prev_action = prev_action[-1]
+
+            assert isinstance(prev_action, DictionaryObject)
+
+            if is_null_or_none(prev_action.get(next)):
+                break
+
+            prev_action = prev_action.get(next)
+
+        prev_action.update({next: action})
+        additional_actions.update({trigger_name: action})
+
+    def delete_action(self, trigger: Literal["open", "close"]) -> None:
+        if trigger not in {"open", "close"}:
+            raise ValueError("The trigger must be 'open' or 'close'")
+
+        trigger_name = NameObject("/O") if trigger == "open" else NameObject("/C")
+
+        if NameObject("/AA") not in self:
+            raise ValueError("An additional-actions dictionary is absent; nothing to delete")
+
+        additional_actions: DictionaryObject = cast(DictionaryObject, self[NameObject("/AA")])
+        if trigger_name in additional_actions:
+            del additional_actions[trigger_name]
+
+            if not additional_actions:
+                del self[NameObject("/AA")]
 
 
 class _VirtualList(Sequence[PageObject]):
