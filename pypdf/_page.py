@@ -2192,7 +2192,6 @@ class PageObject(DictionaryObject):
             additional_actions.update({trigger_name: action})
             return
 
-        assert False
         # Existing same trigger event: find last Next key in action dictionary chain
         prev_action = additional_actions.get(trigger_name)
         next = NameObject("/Next")
@@ -2230,7 +2229,9 @@ class PageObject(DictionaryObject):
             prev_action = prev_action.get(next)
 
         prev_action.update({next: action})
+        print(prev_action)
         additional_actions.update({trigger_name: action})
+        print(additional_actions)
 
     def delete_action(self, trigger: Literal["open", "close"]) -> None:
         if trigger not in {"open", "close"}:
