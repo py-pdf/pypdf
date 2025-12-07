@@ -2192,6 +2192,7 @@ class PageObject(DictionaryObject):
             additional_actions.update({trigger_name: action})
             return
 
+        assert False
         # Existing same trigger event: find last Next key in action dictionary chain
         prev_action = additional_actions.get(trigger_name)
         next = NameObject("/Next")
