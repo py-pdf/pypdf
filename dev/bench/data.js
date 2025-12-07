@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764771039042,
+  "lastUpdate": 1765117248664,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -85013,6 +85013,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0019628068526808995",
             "extra": "mean: 669.7994425999923 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "50ea3c63c155e36a880fa4a18d7552f6d42e7c2d",
+          "message": "REL: 6.4.1\n\n## What's new\n\n### Performance Improvements (PI)\n- Optimize loop for layout mode text extraction (#3543) by @FelipeErmeson\n\n### Bug Fixes (BUG)\n- Do not fail on choice field without /Opt key (#3540) by @jhuber-de\n\n### Documentation (DOC)\n- Document possible issues with merge_page and clipping (#3546) by @stefan6419846\n- Add some notes about library security (#3545) by @stefan6419846\n\n### Maintenance (MAINT)\n- Use CORE_FONT_METRICS for widths where possible (#3526) by @PJBrs\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.0...6.4.1)",
+          "timestamp": "2025-12-07T15:17:48+01:00",
+          "tree_id": "d5c4e2fbbda2047f8d75b33b3559d58ad1403c2e",
+          "url": "https://github.com/py-pdf/pypdf/commit/50ea3c63c155e36a880fa4a18d7552f6d42e7c2d"
+        },
+        "date": 1765117244741,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.829492625145512,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006448065577005057",
+            "extra": "mean: 261.1311987999983 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.873039838193206,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002875213796432197",
+            "extra": "mean: 62.99990488235477 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27637992333161454,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04771929531511618",
+            "extra": "mean: 3.6182078203999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.95483376860983,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009243658409606152",
+            "extra": "mean: 55.695308176469176 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08994423758241295,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024700899587861935",
+            "extra": "mean: 11.117999628200005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4808776809210547,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031509842050331427",
+            "extra": "mean: 675.2752187999988 msec\nrounds: 5"
           }
         ]
       }
