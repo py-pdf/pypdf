@@ -2873,3 +2873,25 @@ def test_wrong_size_in_incremental_pdf(caplog):
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Got index error while flattening\.$"):
         PdfWriter(BytesIO(modified_data), incremental=True)
+
+
+@pytest.mark.enable_socket
+def test_flatten_form_field_without_font_in_resources():
+    """
+    This test is a regression test for issue #3553.
+    Flatten form field with /Resources lacking /Font.
+    """
+    reader = PdfReader(BytesIO(get_data_from_url(name="issue-3553.pdf")))
+    writer = PdfWriter()
+    writer.append(reader)
+    writer.update_page_form_field_values(
+        writer.pages[0],
+        {"Unique reference numberRow1": "test"},
+        flatten=True,
+    )
+    b = BytesIO()
+    writer.write(b)
+
+    reader = PdfReader(b)
+    form_text_fields = reader.get_form_text_fields()
+    assert form_text_fields["Unique reference numberRow1"] == "test"
