@@ -64,13 +64,12 @@ class FontDescriptor:
 
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
         if "/DescendantFonts" in pdf_font_dict:
-            d_font: dict[Any, Any]
+            d_font: DictionaryObject
             for d_font_idx, d_font in enumerate(
                 cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
             ):
-                while isinstance(d_font, IndirectObject):
-                    d_font = d_font.get_object()
-                    font_descriptor_obj = d_font.get("/FontDescriptor")
+                d_font = cast(DictionaryObject, d_font.get_object())
+                font_descriptor_obj = d_font.get("/FontDescriptor")
                 cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
                 ord_map = {
                     ord(_target): _surrogate
