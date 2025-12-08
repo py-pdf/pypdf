@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## Version 6.4.1, 2025-12-07
+
+### Performance Improvements (PI)
+- Optimize loop for layout mode text extraction (#3543)
+
+### Bug Fixes (BUG)
+- Do not fail on choice field without /Opt key (#3540)
+
+### Documentation (DOC)
+- Document possible issues with merge_page and clipping (#3546)
+- Add some notes about library security (#3545)
+
+### Maintenance (MAINT)
+- Use CORE_FONT_METRICS for widths where possible (#3526)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.0...6.4.1)
+
 ## Version 6.4.0, 2025-11-23
 
 ### Security (SEC)

@@ -39,7 +39,7 @@ mode_str_type: TypeAlias = Literal[
 MAX_IMAGE_MODE_NESTING_DEPTH: int = 10
 
 
-def _get_imagemode(
+def _get_image_mode(
     color_space: Union[str, list[Any], Any],
     color_components: int,
     prev_mode: mode_str_type,
@@ -66,7 +66,7 @@ def _get_imagemode(
         )  # pragma: no cover
     elif not color_space:
         return "", False
-    elif color_space[0].startswith("/Cal"):  # /CalRGB and /CalGray
+    elif color_space[0].startswith("/Cal"):  # /CalRGB or /CalGray
         color_space_str = "/Device" + color_space[0][4:]
     elif color_space[0] == "/ICCBased":
         icc_profile = color_space[1].get_object()
@@ -74,7 +74,7 @@ def _get_imagemode(
         color_space_str = icc_profile.get("/Alternate", "")
     elif color_space[0] == "/Indexed":
         color_space_str = color_space[1].get_object()
-        mode, invert_color = _get_imagemode(
+        mode, invert_color = _get_image_mode(
             color_space_str, color_components, prev_mode, depth + 1
         )
         if mode in ("RGB", "CMYK"):
@@ -82,7 +82,7 @@ def _get_imagemode(
         return mode, invert_color
     elif color_space[0] == "/Separation":
         color_space_str = color_space[2].get_object()
-        mode, invert_color = _get_imagemode(
+        mode, invert_color = _get_image_mode(
             color_space_str, color_components, prev_mode, depth + 1
         )
         return mode, True
@@ -97,7 +97,7 @@ def _get_imagemode(
                     __name__,
                 )
             return "L", True
-        mode, invert_color = _get_imagemode(
+        mode, invert_color = _get_image_mode(
             color_space_str, color_components, prev_mode, depth + 1
         )
         return mode, invert_color
@@ -139,7 +139,7 @@ def bits2byte(data: bytes, size: tuple[int, int], bits: int) -> bytes:
     return bytes(byte_buffer)
 
 
-def _extended_image_frombytes(
+def _extended_image_from_bytes(
     mode: str, size: tuple[int, int], data: bytes
 ) -> Image.Image:
     try:
@@ -202,7 +202,7 @@ def _handle_flate(
     elif mode == "4bits":
         mode = "P"
         data = bits2byte(data, size, 4)
-    img = _extended_image_frombytes(mode, size, data)
+    img = _extended_image_from_bytes(mode, size, data)
     if color_space == "/Indexed":
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
@@ -217,7 +217,7 @@ def _handle_flate(
                 "P": (0, "", ""),
                 "RGB": (3, "P", "RGB"),
                 "CMYK": (4, "P", "CMYK"),
-            }[_get_imagemode(base, 0, "")[0]]
+            }[_get_image_mode(base, 0, "")[0]]
         except KeyError:  # pragma: no cover
             logger_warning(
                 f"Base {base} not coded please share the pdf file with pypdf dev team",
@@ -257,10 +257,10 @@ def _handle_flate(
                     logger_warning(f"Invalid Lookup Table in {obj_as_text}", __name__)
                     lookup = None
                 elif mode == "L":
-                    # gray lookup does not work : it is converted to a similar RGB lookup
+                    # gray lookup does not work: it is converted to a similar RGB lookup
                     lookup = b"".join([bytes([b, b, b]) for b in lookup])
                     mode = "RGB"
-                # TODO : cf https://github.com/py-pdf/pypdf/pull/2039
+                # TODO: https://github.com/py-pdf/pypdf/pull/2039
                 # this is a work around until PIL is able to process CMYK images
                 elif mode == "CMYK":
                     _rgb = []
@@ -277,9 +277,8 @@ def _handle_flate(
                     img.putpalette(lookup, rawmode=mode)
             img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
     elif not isinstance(color_space, NullObject) and color_space[0] == "/ICCBased":
-        # see Table 66 - Additional Entries Specific to an ICC Profile
-        # Stream Dictionary
-        mode2 = _get_imagemode(color_space, colors, mode)[0]
+        # Table 65 - Additional Entries Specific to an ICC Profile Stream Dictionary
+        mode2 = _get_image_mode(color_space, colors, mode)[0]
         if mode != mode2:
             img = Image.frombytes(mode2, size, data)  # reloaded as mode may have changed
     if mode == "CMYK":
@@ -301,7 +300,7 @@ def _handle_jpx(
     """
     extension = ".jp2"  # mime_type: "image/x-jp2"
     img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
-    mode, invert_color = _get_imagemode(color_space, colors, mode)
+    mode, invert_color = _get_image_mode(color_space, colors, mode)
     if mode == "":
         mode = cast(mode_str_type, img1.mode)
         invert_color = mode in ("CMYK",)
@@ -376,11 +375,11 @@ def _get_mode_and_invert_color(
         # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: mode_str_type = "RGB"
     if x_object_obj.get("/BitsPerComponent", 8) < 8:
-        mode, invert_color = _get_imagemode(
+        mode, invert_color = _get_image_mode(
             f"{x_object_obj.get('/BitsPerComponent', 8)}bit", 0, ""
         )
     else:
-        mode, invert_color = _get_imagemode(
+        mode, invert_color = _get_image_mode(
             color_space,
             2
             if (
@@ -503,7 +502,7 @@ def _xobj_to_image(
         try:
             img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
         except UnidentifiedImageError:
-            img = _extended_image_frombytes(mode, size, data)
+            img = _extended_image_from_bytes(mode, size, data)
     elif lfilters == FT.DCT_DECODE:
         img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
         # invert_color kept unchanged
@@ -527,7 +526,7 @@ def _xobj_to_image(
         )
     elif mode == "CMYK":
         img, image_format, extension, invert_color = (
-            _extended_image_frombytes(mode, size, data),
+            _extended_image_from_bytes(mode, size, data),
             "TIFF",
             ".tif",
             False,
@@ -536,7 +535,7 @@ def _xobj_to_image(
         raise PdfReadError(f"ColorSpace field not found in {x_object}")
     else:
         img, image_format, extension, invert_color = (
-            _extended_image_frombytes(mode, size, data),
+            _extended_image_from_bytes(mode, size, data),
             "PNG",
             ".png",
             False,

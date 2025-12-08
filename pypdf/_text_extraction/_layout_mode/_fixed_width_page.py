@@ -364,6 +364,7 @@ def fixed_width_page(
     """
     lines: list[str] = []
     last_y_coord = 0
+    table = str.maketrans(dict.fromkeys(range(14, 32), " "))
     for y_coord, line_data in ty_groups.items():
         if space_vertically and lines:
             fh = line_data[0]["font_height"]
@@ -371,16 +372,29 @@ def fixed_width_page(
                 int(abs(y_coord - last_y_coord) / (fh * font_height_weight)) - 1
             )
             lines.extend([""] * blank_lines)
-        line = ""
+
+        line_parts = []  # It uses a list to construct the line, avoiding string concatenation.
+        current_len = 0  # Track the size with int instead of len(str) overhead.
         last_disp = 0.0
         for bt_op in line_data:
-            offset = int(bt_op["tx"] // char_width)
-            spaces = (offset - len(line)) * (ceil(last_disp) < int(bt_op["tx"]))
-            line = f"{line}{' ' * spaces}{bt_op['text']}"
+            tx = bt_op["tx"]
+            offset = int(tx // char_width)
+            needed_spaces = offset - current_len
+            if needed_spaces > 0 and ceil(last_disp) < int(tx):
+                padding = " " * needed_spaces
+                line_parts.append(padding)
+                current_len += needed_spaces
+
+            raw_text = bt_op["text"]
+            text = raw_text.translate(table)
+            line_parts.append(text)
+            current_len += len(text)
             last_disp = bt_op["displaced_tx"]
-        if line.strip() or lines:
-            lines.append(
-                "".join(c if ord(c) < 14 or ord(c) > 31 else " " for c in line)
-            )
+
+        full_line = "".join(line_parts).rstrip()
+        if full_line.strip() or (space_vertically and lines):
+            lines.append(full_line)
+
         last_y_coord = y_coord
-    return "\n".join(ln.rstrip() for ln in lines if space_vertically or ln.strip())
+
+    return "\n".join(lines)
