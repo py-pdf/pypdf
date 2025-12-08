@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765118294473,
+  "lastUpdate": 1765192340788,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -85145,6 +85145,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004122458618960243",
             "extra": "mean: 670.176221600002 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jamesgillard@live.co.uk",
+            "name": "James Gillard",
+            "username": "jgillard"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2cd740963b43327e662728b449ea0f8941abc33b",
+          "message": "BUG: Fix KeyError when flattening form field without /Font in resources (#3554)\n\nCloses #3553.",
+          "timestamp": "2025-12-08T12:09:32+01:00",
+          "tree_id": "904e54cfa2de517a9fa65f128280e7fcc84bd94c",
+          "url": "https://github.com/py-pdf/pypdf/commit/2cd740963b43327e662728b449ea0f8941abc33b"
+        },
+        "date": 1765192333951,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7362435342714497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005875055400169194",
+            "extra": "mean: 267.6485060000232 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.769994474738647,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0027879038377369913",
+            "extra": "mean: 63.411563117657515 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27748925594983,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020872915970976704",
+            "extra": "mean: 3.6037431307999896 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.706875688568907,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014677769417409843",
+            "extra": "mean: 56.47523694118289 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09111233661808074,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017181748881864023",
+            "extra": "mean: 10.975462128599997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4884736116312367,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002723515636482932",
+            "extra": "mean: 671.8291760000284 msec\nrounds: 5"
           }
         ]
       }
