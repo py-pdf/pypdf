@@ -2153,6 +2153,8 @@ class PageObject(DictionaryObject):
         and only add the indirect object.
         """
         if value is None:
+            if "/Annots" not in self:
+                return
             del self[NameObject("/Annots")]
         else:
             self[NameObject("/Annots")] = value

@@ -96,7 +96,7 @@ if it exists. Deleting them as well would require us to know where this has
 been defined, which requires more complexity. For now, please consider looking
 for the corresponding definition yourself and delete it from the array.
 
-### PDF/A compliance
+## PDF/A compliance
 
 The following example shows how to add an attachment to a PDF/A-3B compliant document
 without breaking compliance:
