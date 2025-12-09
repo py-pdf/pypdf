@@ -1572,3 +1572,12 @@ def test_box_rendering(tmp_path):
         )
         assert png_path.is_file(), box
         assert image_similarity(png_path, target_png_path) >= 0.95, box
+
+
+def test_delete_non_existent_annotations():
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=100)
+    page = writer.pages[0]
+    assert page.annotations is None
+    page.annotations = None
+    assert page.annotations is None
