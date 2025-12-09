@@ -29,6 +29,7 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import inspect
 import logging
 import re
 import sys
@@ -263,6 +264,40 @@ class ArrayObject(list[Any], PdfObject):
 
 
 class DictionaryObject(dict[Any, Any], PdfObject):
+
+    _init_alt_arg_names_: Optional[dict[str, str]] = None
+
+
+    """
+    Used to map DictionaryObject keyword to __init__ arg names
+    when cloning. key -> arg_name.
+
+    Args:
+        key: string identifying DictionaryObject keyword
+        arg_name: string identifying argument name (value)
+    """
+    def set_alt_arg_name(self, key: str, arg_name: str) -> None:
+        if self._init_alt_arg_names_ is None:
+            self._init_alt_arg_names_ = {}
+
+        if not isinstance(key, str) or not isinstance(arg_name, str):
+            raise TypeError
+
+        self._init_alt_arg_names_[key] = arg_name
+
+    """
+    Used to return __init__ arg names when cloning
+    Args:
+        key: string identifying DictionaryObject keyword
+    Returns:
+        Returns None if not found, else the string representing the
+        argument name
+    """
+    def get_alt_arg_name(self, key: str) -> Optional[str]:
+        if self._init_alt_arg_names_ is None or not isinstance(key, str):
+            return None
+        return self._init_alt_arg_names_.get(key, None)
+
     def replicate(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -291,9 +326,22 @@ class DictionaryObject(dict[Any, Any], PdfObject):
             pass
 
         visited: set[tuple[int, int]] = set()  # (idnum, generation)
+
+        kwargs = {}
+        inspector = inspect.getfullargspec(self.__class__.__init__)
+
+        for key, val in self.items():
+            alt_arg_name = self.get_alt_arg_name(key)
+            key_stripped = key.removeprefix("/").lower()
+
+            if alt_arg_name:
+                kwargs[alt_arg_name] = val
+            elif key_stripped in inspector.args or key_stripped in inspector.kwonlyargs:
+                kwargs[key_stripped] = val
+
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
+            self._reference_clone(self.__class__(**kwargs), pdf_dest, force_duplicate),
         )
         if ignore_fields is None:
             ignore_fields = []

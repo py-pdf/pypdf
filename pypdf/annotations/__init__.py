@@ -13,6 +13,7 @@ does not implement a feature, users can easily extend the given functionality.
 
 from ._base import NO_FLAGS, AnnotationDictionary
 from ._markup_annotations import (
+    AbstractPolyLine,
     Ellipse,
     FreeText,
     Highlight,
@@ -27,6 +28,7 @@ from ._non_markup_annotations import Link, Popup
 
 __all__ = [
     "NO_FLAGS",
+    "AbstractPolyLine",
     "AnnotationDictionary",
     "Ellipse",
     "FreeText",
