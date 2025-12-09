@@ -10,20 +10,28 @@ The process of stamping and watermarking is the same, you just need to set `over
 
 You can use {func}`~pypdf._page.PageObject.merge_page` if you don't need to transform the stamp:
 
-```python
+```{testsetup}
+pypdf_test_setup("user/add-watermark", {
+    "crazyones.pdf": "../resources/crazyones.pdf",
+    "nup-source.png": "../docs/user/nup-source.png",
+    "jpeg.pdf": "../resources/jpeg.pdf",
+})
+```
+
+```{testcode}
 from pypdf import PdfReader, PdfWriter
 
-stamp = PdfReader("bg.pdf").pages[0]
-writer = PdfWriter(clone_from="source.pdf")
+stamp = PdfReader("jpeg.pdf").pages[0]
+writer = PdfWriter(clone_from="crazyones.pdf")
 for page in writer.pages:
     page.merge_page(stamp, over=False)  # here set to False for watermarking
 
-writer.write("out.pdf")
+writer.write("out-watermark.pdf")
 ```
 
 Otherwise use {func}`~pypdf._page.PageObject.merge_transformed_page` with {class}`~pypdf.Transformation` if you need to translate, rotate, scale, etc. the stamp before merging it to the content page.
 
-```python
+```{testcode}
 from pathlib import Path
 from typing import List, Union
 
@@ -52,7 +60,7 @@ def stamp(
     writer.write(pdf_result)
 
 
-stamp("example.pdf", "stamp.pdf", "out.pdf")
+stamp("crazyones.pdf", "jpeg.pdf", "out-scale.pdf")
 ```
 
 If you are experiencing wrongly rotated watermarks/stamps, try to use
@@ -73,7 +81,7 @@ However, you can easily convert an image to PDF image using
 [Pillow](https://pypi.org/project/Pillow/).
 
 
-```python
+```{testcode}
 from io import BytesIO
 from pathlib import Path
 from typing import List, Union
@@ -111,9 +119,8 @@ def stamp_img(
             Transformation(),
         )
 
-    with open(pdf_result, "wb") as fp:
-        writer.write(fp)
+    writer.write(pdf_result)
 
 
-stamp_img("example.pdf", "example.png", "out.pdf")
+stamp_img("crazyones.pdf", "nup-source.png", "out-image.pdf")
 ```

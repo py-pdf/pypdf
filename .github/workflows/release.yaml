@@ -4,10 +4,13 @@
 # This action only ensures the release is done with the proper contents
 # and that it's announced with a GitHub release.
 name: Create git tag
+# Disable for now and uses dummy `workflow_dispatch` trigger we usually do not use anyway.
+# To activate this again, we have to fix https://github.com/py-pdf/pypdf/issues/2753
 on:
-  push:
-    branches:
-      - main
+    workflow_dispatch:
+#   push:
+#     branches:
+#       - main
 
 permissions:
   contents: write
@@ -22,7 +25,7 @@ jobs:
     if: "${{ startsWith(github.event.head_commit.message, 'REL: ') }}"
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Extract version from commit message
         id: extract_version

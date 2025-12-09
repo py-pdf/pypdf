@@ -39,6 +39,12 @@ def open_image(path: Union[Path, Image.Image, BytesIO]) -> Image.Image:
     return img
 
 
+def image_size(image: Image.Image):
+    buffer = BytesIO()
+    image.save(buffer, format=image.format)
+    return buffer.tell()
+
+
 def image_similarity(
     path1: Union[Path, Image.Image, BytesIO], path2: Union[Path, Image.Image, BytesIO]
 ) -> float:
@@ -153,7 +159,15 @@ def test_image_new_property():
     ]
     assert len(reader.pages[0].images.items()) == 36
     assert reader.pages[0].images[0].name == "I0.png"
-    assert len(reader.pages[0].images[-1].data) == 15168
+
+    expected_image_url = "https://github.com/user-attachments/assets/3bf25760-2113-4e25-b4c2-fc1d3a84a263"
+    expected_image_name = "pdf_font_garbled_image30.png"
+    expected_image_data = BytesIO(get_data_from_url(url=expected_image_url, name=expected_image_name))
+    assert image_similarity(
+        expected_image_data,
+        reader.pages[0].images[-1].image
+    ) == 1
+
     assert reader.pages[0].images["/TPL1", "/Image5"].image.format == "JPEG"
     assert (
         reader.pages[0].images["/I0"].indirect_reference.get_object()
@@ -464,6 +478,18 @@ def test_extract_image_from_object(caplog):
         co = reader.pages[0].get_contents()
         co.decode_as_image()
     assert "does not seem to be an Image" in caplog.text
+
+
+def test_extract_jpeg_with_explicit_quality():
+    reader = PdfReader(RESOURCE_ROOT / "side-by-side-subfig.pdf")
+    page = reader.pages[0]
+    x_object = page["/Resources"]["/XObject"]["/Im1"]
+    assert x_object["/Filter"] == "/DCTDecode"
+    image = x_object.decode_as_image()
+    assert isinstance(image, Image.Image)
+    assert image.format == "JPEG"
+    small_image = x_object.decode_as_image(pillow_parameters={"quality": 75})
+    assert image_size(small_image) < image_size(image)
 
 
 @pytest.mark.enable_socket

@@ -7,9 +7,9 @@ the module should not do any PDF parsing.
 
 import io
 from abc import ABC, abstractmethod
-from typing import Dict, List
 
 from pypdf._utils import logger_warning
+from pypdf.errors import LimitReachedError
 
 
 class Codec(ABC):
@@ -50,9 +50,12 @@ class LzwCodec(Codec):
     INITIAL_BITS_PER_CODE = 9  # Initial code bit width
     MAX_BITS_PER_CODE = 12  # Maximum code bit width
 
+    def __init__(self, max_output_length: int = 75_000_000) -> None:
+        self.max_output_length = max_output_length
+
     def _initialize_encoding_table(self) -> None:
         """Initialize the encoding table and state to initial conditions."""
-        self.encoding_table: Dict[bytes, int] = {bytes([i]): i for i in range(256)}
+        self.encoding_table: dict[bytes, int] = {bytes([i]): i for i in range(256)}
         self.next_code = self.EOD_MARKER + 1
         self.bits_per_code = self.INITIAL_BITS_PER_CODE
         self.max_code_value = (1 << self.bits_per_code) - 1
@@ -73,7 +76,7 @@ class LzwCodec(Codec):
 
         Taken from PDF 1.7 specs, "7.4.4.2 Details of LZW Encoding".
         """
-        result_codes: List[int] = []
+        result_codes: list[int] = []
 
         # The encoder shall begin by issuing a clear-table code
         result_codes.append(self.CLEAR_TABLE_MARKER)
@@ -109,7 +112,7 @@ class LzwCodec(Codec):
 
         return self._pack_codes_into_bytes(result_codes)
 
-    def _pack_codes_into_bytes(self, codes: List[int]) -> bytes:
+    def _pack_codes_into_bytes(self, codes: list[int]) -> bytes:
         """
         Convert the list of result codes into a continuous byte stream, with codes packed as per the code bit-width.
         The bit-width starts at 9 bits and expands as needed.
@@ -218,6 +221,7 @@ class LzwCodec(Codec):
         self._next_bits = 0
 
         output_stream = io.BytesIO()
+        output_length = 0
 
         self._initialize_decoding_table()
         self._byte_pointer = 0
@@ -235,22 +239,28 @@ class LzwCodec(Codec):
                 code = self._next_code_decode(data)
                 if code == self.EOD_MARKER:
                     break
-                output_stream.write(self.decoding_table[code])
+                output_stream.write(decoded := self.decoding_table[code])
                 old_code = code
             elif code < self._table_index:
-                string = self.decoding_table[code]
-                output_stream.write(string)
+                decoded = self.decoding_table[code]
+                output_stream.write(decoded)
                 if old_code != self.CLEAR_TABLE_MARKER:
-                    self._add_entry_decode(self.decoding_table[old_code], string[0])
+                    self._add_entry_decode(self.decoding_table[old_code], decoded[0])
                 old_code = code
             else:
                 # The code is not in the table and not one of the special codes
-                string = (
+                decoded = (
                     self.decoding_table[old_code] + self.decoding_table[old_code][:1]
                 )
-                output_stream.write(string)
-                self._add_entry_decode(self.decoding_table[old_code], string[0])
+                output_stream.write(decoded)
+                self._add_entry_decode(self.decoding_table[old_code], decoded[0])
                 old_code = code
+
+            output_length += len(decoded)
+            if output_length > self.max_output_length:
+                raise LimitReachedError(
+                    f"Limit reached while decompressing: {output_length} > {self.max_output_length}"
+                )
 
         return output_stream.getvalue()
 

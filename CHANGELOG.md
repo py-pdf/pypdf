@@ -1,5 +1,141 @@
 # CHANGELOG
 
+## Version 6.4.1, 2025-12-07
+
+### Performance Improvements (PI)
+- Optimize loop for layout mode text extraction (#3543)
+
+### Bug Fixes (BUG)
+- Do not fail on choice field without /Opt key (#3540)
+
+### Documentation (DOC)
+- Document possible issues with merge_page and clipping (#3546)
+- Add some notes about library security (#3545)
+
+### Maintenance (MAINT)
+- Use CORE_FONT_METRICS for widths where possible (#3526)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.0...6.4.1)
+
+## Version 6.4.0, 2025-11-23
+
+### Security (SEC)
+- Reduce default limit for LZW decoding
+
+### New Features (ENH)
+- Parse and format comb fields in text widget annotations (#3519)
+
+### Robustness (ROB)
+- Silently ignore Adobe Ascii85 whitespace for suffix detection (#3528)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.3.0...6.4.0)
+
+## Version 6.3.0, 2025-11-16
+
+### New Features (ENH)
+- Wrap and align text in flattened PDF forms (#3465)
+
+### Bug Fixes (BUG)
+- Fix missing "PreventGC" when cloning (#3520)
+- Preserve JPEG image quality by default (#3516)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.2.0...6.3.0)
+
+## Version 6.2.0, 2025-11-09
+
+### New Features (ENH)
+- Add 'strict' parameter to PDFWriter (#3503)
+
+### Bug Fixes (BUG)
+- PdfWriter.append fails when there are articles being None (#3509)
+
+### Documentation (DOC)
+- Execute docs examples in CI (#3507)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.3...6.2.0)
+
+## Version 6.1.3, 2025-10-22
+
+### Security (SEC)
+- Allow limiting size of LZWDecode streams (#3502)
+- Avoid infinite loop when reading broken DCT-based inline images (#3501)
+
+### Bug Fixes (BUG)
+- PageObject.scale() scales media box incorrectly (#3489)
+
+### Robustness (ROB)
+- Fail with explicit exception when image mode is an empty array (#3500)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.2...6.1.3)
+
+## Version 6.1.2, 2025-10-19
+
+### Bug Fixes (BUG)
+- Fix handling of zero-length StreamObject (#3485)
+
+### Robustness (ROB)
+- Deal with wrong size for incremental PDF files (#3495)
+- Improve handling for malformed cross-reference tables (#3483)
+
+### Developer Experience (DEV)
+- Use released Python 3.14
+- Use Mapping instead of dict in type hint of update_page_form_field_values (#3490)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.1...6.1.2)
+
+## Version 6.1.1, 2025-09-28
+
+### Bug Fixes (BUG)
+- Insert new embedded files in a sorted manner (#3477)
+- Fix name tree handling for embedded files with Kids-based inputs (#3475)
+- Make embedding files not break PDF/A-3 compliance (#3472)
+
+### Documentation (DOC)
+- Document AFRelationship handling for PDF/A and provide constants (#3478)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.1.0...6.1.1)
+
+## Version 6.1.0, 2025-09-21
+
+### New Features (ENH)
+- Enhance XMP metadata handling with creation and setter methods (#3410)
+- Add all font metrics for base 14 Type 1 PDF fonts (#3363)
+- Allow deleting embedded files (#3461)
+- Add support for Python in FIPS mode for document identifier (#3438)
+
+### Bug Fixes (BUG)
+- Fix handling of UTF-16 encoded destination titles (#3463)
+- Guard empty input to prevent IndexError (#3448)
+
+### Developer Experience (DEV)
+- Fix type hint for XMP metadata setter to add bytes type (#3464)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.0.0...6.1.0)
+
+## Version 6.0.0, 2025-08-11
+
+### Security (SEC)
+- Limit decompressed size for FlateDecode filter (#3430)
+
+### Deprecations (DEP)
+- Drop Python 3.8 support (#3412)
+
+### New Features (ENH)
+- Move BlackIs1 functionality to tiff_header (#3421)
+
+### Robustness (ROB)
+- Skip Go-To actions without a destination (#3420)
+
+### Developer Experience (DEV)
+- Update code style related libraries (#3414)
+- Update mypy to 1.17.0 (#3413)
+- Stop testing on Python 3.8 and start testing on Python 3.14 (#3411)
+
+### Maintenance (MAINT)
+- Cleanup deprecations (#3424)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/5.9.0...6.0.0)
+
 ## Version 5.9.0, 2025-07-27
 
 ### New Features (ENH)
@@ -310,9 +446,8 @@
 
 This version drops support for Python 3.7 (not maintained since July 2023), PdfMerger (use PdfWriter instead) and AnnotationBuilder (use annotations instead).
 
-
 ### Deprecations (DEP)
-- Remove the deprecated PfdMerger and AnnotationBuilder classes and other deprecations cleanup (#2813)
+- Remove the deprecated PdfMerger and AnnotationBuilder classes and other deprecations cleanup (#2813)
 - Drop Python 3.7 support (#2793)
 
 ### New Features (ENH)

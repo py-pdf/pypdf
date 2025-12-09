@@ -11,18 +11,18 @@ readme = "README.md"
 dynamic = ["version"]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
@@ -82,7 +82,7 @@ exclude = [
     "sample-files/.pre-commit-config.yaml",
     "tests/pdf_cache/*",
 ]
-include = ["resources/", "tests/"]
+include = ["resources/", "tests/", "CHANGELOG.md"]
 
 [tool.pytest.ini_options]
 addopts = "--disable-socket"
@@ -179,7 +179,6 @@ ignore = [
     "PT014",   # Ruff bug: Duplicate of test case at index 1 in `@pytest_mark.parametrize`
     "PTH123",  # `open()` should be replaced by `Path.open()`
     "PYI042",  # Type alias `mode_str_type` should be CamelCase
-    "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
     "RUF001",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "RUF002",  # Detect confusable Unicode-to-Unicode units. Introduces bugs
     "S101",    # Use of `assert` detected
@@ -190,7 +189,6 @@ ignore = [
     "TC006",   # To discuss: Add quotes to type expression in `typing.cast()`
     "TD002",   # Authors of TODOs can be found via git
     "TD003",   # For the moment, fix it later: Missing issue link on the line following this TODO
-    "TD005",   # Missing issue description after `TODO`
     "TID252",  # We want relative imports
     "TRY002",  # Create your own exception
     "TRY003",  # Avoid specifying long messages outside the exception class
@@ -200,8 +198,6 @@ ignore = [
     "TRY301",  # Abstract `raise` to an inner function
     "UP006",   # Non-PEP 585 annotation. As long as we are not on Python 3.11+
     "UP007",   # Non-PEP 604 annotation. As long as we are not on Python 3.11+
-    "UP035",   # PEP 585. As long as we are not on Python 3.9+
-    "UP038",   # Use `X | Y` in `isinstance` call instead of `(X, Y)` - PEP 604. While not on Python 3.10+
 ]
 
 [tool.ruff.lint.mccabe]

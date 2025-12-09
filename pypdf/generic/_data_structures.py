@@ -32,18 +32,13 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import logging
 import re
 import sys
+from collections.abc import Iterable, Sequence
 from io import BytesIO
 from math import ceil
 from typing import (
     Any,
     Callable,
-    Dict,
-    Iterable,
-    List,
     Optional,
-    Sequence,
-    Set,
-    Tuple,
     Union,
     cast,
 )
@@ -53,7 +48,6 @@ from .._utils import (
     WHITESPACES,
     StreamType,
     deprecation_no_replacement,
-    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
@@ -98,10 +92,11 @@ else:
     from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
+
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
-class ArrayObject(List[Any], PdfObject):
+class ArrayObject(list[Any], PdfObject):
     def replicate(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -161,7 +156,7 @@ class ArrayObject(List[Any], PdfObject):
         """Emulate DictionaryObject.items for a list (index, object)."""
         return enumerate(self)
 
-    def _to_lst(self, lst: Any) -> List[Any]:
+    def _to_lst(self, lst: Any) -> list[Any]:
         # Convert to list, internal
         if isinstance(lst, (list, tuple, set)):
             pass
@@ -216,8 +211,8 @@ class ArrayObject(List[Any], PdfObject):
         """Allow to remove items"""
         for x in self._to_lst(lst):
             try:
-                x = self.index(x)
-                del self[x]
+                index = self.index(x)
+                del self[index]
             except ValueError:
                 pass
         return self
@@ -239,7 +234,7 @@ class ArrayObject(List[Any], PdfObject):
     def read_from_stream(
         stream: StreamType,
         pdf: Optional[PdfReaderProtocol],
-        forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
+        forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
     ) -> "ArrayObject":
         arr = ArrayObject()
         tmp = stream.read(1)
@@ -267,7 +262,7 @@ class ArrayObject(List[Any], PdfObject):
         return arr
 
 
-class DictionaryObject(Dict[Any, Any], PdfObject):
+class DictionaryObject(dict[Any, Any], PdfObject):
     def replicate(
         self,
         pdf_dest: PdfWriterProtocol,
@@ -295,7 +290,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         except Exception:
             pass
 
-        visited: Set[Tuple[int, int]] = set()  # (idnum, generation)
+        visited: set[tuple[int, int]] = set()  # (idnum, generation)
         d__ = cast(
             "DictionaryObject",
             self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
@@ -312,7 +307,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
         ignore_fields: Optional[Sequence[Union[str, int]]],
-        visited: Set[Tuple[int, int]],  # (idnum, generation)
+        visited: set[tuple[int, int]],  # (idnum, generation)
     ) -> None:
         """
         Update the object from src.
@@ -324,11 +319,11 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             ignore_fields:
 
         """
-        # first we remove for the ignore_fields
+        # First we remove the ignore_fields
         # that are for a limited number of levels
-        x = 0
         assert ignore_fields is not None
         ignore_fields = list(ignore_fields)
+        x = 0
         while x < len(ignore_fields):
             if isinstance(ignore_fields[x], int):
                 if cast(int, ignore_fields[x]) <= 0:
@@ -337,7 +332,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                     continue
                 ignore_fields[x] -= 1  # type:ignore
             x += 1
-        #  First check if this is a chain list, we need to loop to prevent recur
+        #  Check if this is a chain list, we need to loop to prevent recur
         if any(
             field not in ignore_fields
             and field in src
@@ -360,8 +355,8 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                         and k not in self
                         and isinstance(src.raw_get(k), IndirectObject)
                         and isinstance(src[k], DictionaryObject)
-                        # IF need to go further the idea is to check
-                        # that the types are the same:
+                        # If need to go further the idea is to check
+                        # that the types are the same
                         and (
                             src.get("/Type", None) is None
                             or cast(DictionaryObject, src[k]).get("/Type", None) is None
@@ -380,7 +375,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                                     cur_obj.__class__(), pdf_dest, force_duplicate
                                 ),
                             )
-                            # check to see if we've previously processed our item
+                            # Check to see if we've previously processed our item
                             if clon.indirect_reference is not None:
                                 idnum = clon.indirect_reference.idnum
                                 generation = clon.indirect_reference.generation
@@ -471,7 +466,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             raise ValueError("Key must be a PdfObject")
         if not isinstance(value, PdfObject):
             raise ValueError("Value must be a PdfObject")
-        return dict.setdefault(self, key, value)  # type: ignore
+        return dict.setdefault(self, key, value)
 
     def __getitem__(self, key: Any) -> PdfObject:
         return dict.__getitem__(self, key).get_object()
@@ -520,10 +515,10 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
     def read_from_stream(
         stream: StreamType,
         pdf: Optional[PdfReaderProtocol],
-        forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
+        forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
     ) -> "DictionaryObject":
         def get_next_obj_pos(
-            p: int, p1: int, rem_gens: List[int], pdf: PdfReaderProtocol
+            p: int, p1: int, rem_gens: list[int], pdf: PdfReaderProtocol
         ) -> int:
             out = p1
             for gen in rem_gens:
@@ -557,7 +552,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
                 f"Dictionary read error at byte {hex(stream.tell())}: "
                 "stream must begin with '<<'"
             )
-        data: Dict[Any, Any] = {}
+        data: dict[Any, Any] = {}
         while True:
             tok = read_non_whitespace(stream)
             if tok == b"\x00":
@@ -639,7 +634,7 @@ class DictionaryObject(Dict[Any, Any], PdfObject):
             if length is None:  # if the PDF is damaged
                 length = -1
             pstart = stream.tell()
-            if length > 0:
+            if length >= 0:
                 data["__streamdata__"] = stream.read(length)
             else:
                 data["__streamdata__"] = read_until_regex(
@@ -845,7 +840,7 @@ class TreeObject(DictionaryObject):
         prev_ref = None
         prev = None
         cur_ref: Optional[Any] = self[NameObject("/First")]
-        cur: Optional[Dict[str, Any]] = cur_ref.get_object()  # type: ignore
+        cur: Optional[dict[str, Any]] = cur_ref.get_object()  # type: ignore
         last_ref = self[NameObject("/Last")]
         last = last_ref.get_object()
         while cur is not None:
@@ -941,7 +936,7 @@ class StreamObject(DictionaryObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
         ignore_fields: Optional[Sequence[Union[str, int]]],
-        visited: Set[Tuple[int, int]],
+        visited: set[tuple[int, int]],
     ) -> None:
         """
         Update the object from src.
@@ -1004,14 +999,8 @@ class StreamObject(DictionaryObject):
         stream.write(b"\nendstream")
 
     @staticmethod
-    def initializeFromDictionary(data: Dict[str, Any]) -> None:
-        deprecation_with_replacement(
-            "initializeFromDictionary", "initialize_from_dictionary", "5.0.0"
-        )  # pragma: no cover
-
-    @staticmethod
     def initialize_from_dictionary(
-        data: Dict[str, Any]
+        data: dict[str, Any]
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
         retval: Union[EncodedStreamObject, DecodedStreamObject]
         if SA.FILTER in data:
@@ -1057,20 +1046,23 @@ class StreamObject(DictionaryObject):
         retval._data = FlateDecode.encode(self._data, level)
         return retval
 
-    def decode_as_image(self) -> Any:
+    def decode_as_image(self, pillow_parameters: Union[dict[str, Any], None] = None) -> Any:
         """
         Try to decode the stream object as an image
+
+        Args:
+            pillow_parameters: parameters provided to Pillow Image.save() method,
+                cf. <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.save>
 
         Returns:
             a PIL image if proper decoding has been found
         Raises:
-            Exception: (any)during decoding to to invalid object or
-                errors during decoding will be reported
+            Exception: Errors during decoding will be reported.
                 It is recommended to catch exceptions to prevent
                 stops in your program.
 
         """
-        from ..filters import _xobj_to_image  # noqa: PLC0415
+        from .._xobj_image_helpers import _xobj_to_image  # noqa: PLC0415
 
         if self.get("/Subtype", "") != "/Image":
             try:
@@ -1078,7 +1070,7 @@ class StreamObject(DictionaryObject):
             except AttributeError:
                 msg = f"{self.__repr__()} object does not seem to be an Image"  # pragma: no cover
             logger_warning(msg, __name__)
-        extension, byte_stream, img = _xobj_to_image(self)
+        extension, _, img = _xobj_to_image(self, pillow_parameters)
         if extension is None:
             return None  # pragma: no cover
         return img
@@ -1152,10 +1144,10 @@ class ContentStream(DecodedStreamObject):
         self,
         stream: Any,
         pdf: Any,
-        forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
+        forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
     ) -> None:
         self.pdf = pdf
-        self._operations: List[Tuple[Any, bytes]] = []
+        self._operations: list[tuple[Any, bytes]] = []
 
         # stream may be a StreamObject or an ArrayObject containing
         # StreamObjects to be concatenated together.
@@ -1241,7 +1233,7 @@ class ContentStream(DecodedStreamObject):
         except Exception:
             pass
 
-        visited: Set[Tuple[int, int]] = set()
+        visited: set[tuple[int, int]] = set()
         d__ = cast(
             "ContentStream",
             self._reference_clone(
@@ -1259,7 +1251,7 @@ class ContentStream(DecodedStreamObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool,
         ignore_fields: Optional[Sequence[Union[str, int]]],
-        visited: Set[Tuple[int, int]],
+        visited: set[tuple[int, int]],
     ) -> None:
         """
         Update the object from src.
@@ -1282,7 +1274,7 @@ class ContentStream(DecodedStreamObject):
     def _parse_content_stream(self, stream: StreamType) -> None:
         # 7.8.2 Content Streams
         stream.seek(0, 0)
-        operands: List[Union[int, str, PdfObject]] = []
+        operands: list[Union[int, str, PdfObject]] = []
         while True:
             peek = read_non_whitespace(stream)
             if peek in (b"", 0):
@@ -1310,7 +1302,7 @@ class ContentStream(DecodedStreamObject):
             else:
                 operands.append(read_object(stream, None, self.forced_encoding))
 
-    def _read_inline_image(self, stream: StreamType) -> Dict[str, Any]:
+    def _read_inline_image(self, stream: StreamType) -> dict[str, Any]:
         # begin reading just after the "BI" - begin image
         # first read the dictionary of settings.
         settings = DictionaryObject()
@@ -1413,14 +1405,14 @@ class ContentStream(DecodedStreamObject):
         self._operations = []
 
     @property
-    def operations(self) -> List[Tuple[Any, bytes]]:
+    def operations(self) -> list[tuple[Any, bytes]]:
         if not self._operations and self._data:
             self._parse_content_stream(BytesIO(self._data))
             self._data = b""
         return self._operations
 
     @operations.setter
-    def operations(self, operations: List[Tuple[Any, bytes]]) -> None:
+    def operations(self, operations: list[tuple[Any, bytes]]) -> None:
         self._operations = operations
         self._data = b""
 
@@ -1443,7 +1435,7 @@ class ContentStream(DecodedStreamObject):
 def read_object(
     stream: StreamType,
     pdf: Optional[PdfReaderProtocol],
-    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
+    forced_encoding: Union[None, str, list[str], dict[int, str]] = None,
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
@@ -1612,11 +1604,11 @@ class Destination(TreeObject):
 
     def __init__(
         self,
-        title: str,
+        title: Union[str, bytes],
         page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
         fit: Fit,
     ) -> None:
-        self._filtered_children: List[Any] = []  # used in PdfWriter
+        self._filtered_children: list[Any] = []  # used in PdfWriter
 
         typ = fit.fit_type
         args = fit.fit_args

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import bisect
 from functools import cached_property
-from typing import TYPE_CHECKING, Generator, cast
+from typing import TYPE_CHECKING, cast
 
 from pypdf._utils import format_iso8824_date, parse_iso8824_date
 from pypdf.constants import CatalogAttributes as CA
 from pypdf.constants import FileSpecificationDictionaryEntries
-from pypdf.constants import PageAttributes as PA
-from pypdf.errors import PdfReadError
+from pypdf.constants import PageAttributes as PG
+from pypdf.errors import PdfReadError, PyPdfError
 from pypdf.generic import (
     ArrayObject,
     ByteStringObject,
@@ -23,6 +24,7 @@ from pypdf.generic import (
 
 if TYPE_CHECKING:
     import datetime
+    from collections.abc import Generator
 
     from pypdf._writer import PdfWriter
 
@@ -35,14 +37,16 @@ class EmbeddedFile:
 
     Further information on embedded files can be found in section 7.11 of the PDF 2.0 specification.
     """
-    def __init__(self, name: str, pdf_object: DictionaryObject) -> None:
+    def __init__(self, name: str, pdf_object: DictionaryObject, parent: ArrayObject | None = None) -> None:
         """
         Args:
             name: The (primary) name as provided in the name tree.
             pdf_object: The corresponding PDF object to allow retrieving further data.
+            parent: The parent list.
         """
         self._name = name
         self.pdf_object = pdf_object
+        self._parent = parent
 
     @property
     def name(self) -> str:
@@ -69,7 +73,7 @@ class EmbeddedFile:
         # Create the file entry (the actual embedded file stream)
         file_entry = DecodedStreamObject()
         file_entry.set_data(content)
-        file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
+        file_entry.update({NameObject(PG.TYPE): NameObject("/EmbeddedFile")})
 
         # Create the /EF entry
         ef_entry = DictionaryObject()
@@ -78,33 +82,86 @@ class EmbeddedFile:
         # Create the filespec dictionary
         from pypdf.generic import create_string_object  # noqa: PLC0415
         filespec = DictionaryObject()
+        filespec_reference = writer._add_object(filespec)
+        name_object = cast(TextStringObject, create_string_object(name))
         filespec.update(
             {
-                NameObject(PA.TYPE): NameObject("/Filespec"),
-                NameObject(FileSpecificationDictionaryEntries.F): create_string_object(name),
+                NameObject(PG.TYPE): NameObject("/Filespec"),
+                NameObject(FileSpecificationDictionaryEntries.F): name_object,
                 NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
             }
         )
 
-        # Add to the catalog's names tree
-        if CA.NAMES not in writer._root_object:
-            writer._root_object[NameObject(CA.NAMES)] = writer._add_object(DictionaryObject())
-
-        names_dict = cast(DictionaryObject, writer._root_object[CA.NAMES])
-        if "/EmbeddedFiles" not in names_dict:
-            embedded_files_names_dictionary = DictionaryObject(
-                {NameObject(CA.NAMES): ArrayObject()}
-            )
-            names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
-        else:
-            embedded_files_names_dictionary = cast(DictionaryObject, names_dict["/EmbeddedFiles"])
-
-        # Add the name and filespec to the names array
-        names_array = cast(ArrayObject, embedded_files_names_dictionary[CA.NAMES])
-        names_array.extend([create_string_object(name), filespec])
+        # Add the name and filespec to the names array.
+        # We use the inverse order for insertion, as this allows us to re-use the
+        # same index.
+        names_array = cls._get_names_array(writer)
+        insertion_index = cls._get_insertion_index(names_array, name_object)
+        names_array.insert(insertion_index, filespec_reference)
+        names_array.insert(insertion_index, name_object)
 
         # Return an EmbeddedFile instance
-        return cls(name=name, pdf_object=filespec)
+        return cls(name=name, pdf_object=filespec, parent=names_array)
+
+    @classmethod
+    def _get_names_array(cls, writer: PdfWriter) -> ArrayObject:
+        """Get the names array for embedded files, possibly creating and flattening it."""
+        if CA.NAMES not in writer.root_object:
+            # Add the /Names entry to the catalog.
+            writer.root_object[NameObject(CA.NAMES)] = writer._add_object(DictionaryObject())
+
+        names_dict = cast(DictionaryObject, writer.root_object[CA.NAMES])
+        if "/EmbeddedFiles" not in names_dict:
+            # We do not yet have an entry for embedded files. Create and return it.
+            names = ArrayObject()
+            embedded_files_names_dictionary = DictionaryObject(
+                {NameObject(CA.NAMES): names}
+            )
+            names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
+            return names
+
+        # We have an existing embedded files entry.
+        embedded_files_names_tree = cast(DictionaryObject, names_dict["/EmbeddedFiles"])
+        if "/Names" in embedded_files_names_tree:
+            # Simple case: We already have a flat list.
+            return cast(ArrayObject, embedded_files_names_tree[NameObject(CA.NAMES)])
+        if "/Kids" not in embedded_files_names_tree:
+            # Invalid case: This is no name tree.
+            raise PdfReadError("Got neither Names nor Kids in embedded files tree.")
+
+        # Complex case: Convert a /Kids-based name tree to a /Names-based one.
+        # /Name-based ones are much easier to handle and allow us to simplify the
+        # actual insertion logic by only having to consider one case.
+        names = ArrayObject()
+        kids = cast(ArrayObject, embedded_files_names_tree["/Kids"].get_object())
+        embedded_files_names_dictionary = DictionaryObject(
+            {NameObject(CA.NAMES): names}
+        )
+        names_dict[NameObject("/EmbeddedFiles")] = writer._add_object(embedded_files_names_dictionary)
+        for kid in kids:
+            # Write the flattened file entries. As we do not change the actual files,
+            # this should not have any impact on references to them.
+            # There might be further (nested) kids here.
+            # Wait for an example before evaluating an implementation.
+            for name in kid.get_object().get("/Names", []):
+                names.append(name)
+        return names
+
+    @classmethod
+    def _get_insertion_index(cls, names_array: ArrayObject, name: str) -> int:
+        keys = [names_array[i].encode("utf-8") for i in range(0, len(names_array), 2)]
+        name_bytes = name.encode("utf-8")
+
+        start = bisect.bisect_left(keys, name_bytes)
+        end = bisect.bisect_right(keys, name_bytes)
+
+        if start != end:
+            return end * 2
+        if start == 0:
+            return 0
+        if start == (key_count := len(keys)):
+            return key_count * 2
+        return end * 2
 
     @property
     def alternative_name(self) -> str | None:
@@ -127,10 +184,8 @@ class EmbeddedFile:
             if FileSpecificationDictionaryEntries.F in self.pdf_object:
                 self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = NullObject()
         else:
-            if FileSpecificationDictionaryEntries.UF in self.pdf_object:
-                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = value
-            if FileSpecificationDictionaryEntries.F in self.pdf_object:
-                self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = value
+            self.pdf_object[NameObject(FileSpecificationDictionaryEntries.UF)] = value
+            self.pdf_object[NameObject(FileSpecificationDictionaryEntries.F)] = value
 
     @property
     def description(self) -> str | None:
@@ -275,6 +330,23 @@ class EmbeddedFile:
         else:
             params[NameObject("/CheckSum")] = value
 
+    def delete(self) -> None:
+        """Delete the file from the document."""
+        if not self._parent:
+            raise PyPdfError("Parent required to delete file from document.")
+        if self.pdf_object in self._parent:
+            index = self._parent.index(self.pdf_object)
+        elif (
+                (indirect_reference := getattr(self.pdf_object, "indirect_reference", None)) is not None
+                and indirect_reference in self._parent
+        ):
+            index = self._parent.index(indirect_reference)
+        else:
+            raise PyPdfError("File not found in parent object.")
+        self._parent.pop(index)  # Reference.
+        self._parent.pop(index - 1)  # Name.
+        self.pdf_object = DictionaryObject()  # Invalidate.
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} name={self.name!r}>"
 
@@ -295,7 +367,7 @@ class EmbeddedFile:
                 # Skip plain strings and retrieve them as `direct_name` by index.
                 file_dictionary = name.get_object()
                 direct_name = names[i - 1].get_object()
-                yield EmbeddedFile(name=direct_name, pdf_object=file_dictionary)
+                yield EmbeddedFile(name=direct_name, pdf_object=file_dictionary, parent=names)
 
     @classmethod
     def _load(cls, catalog: DictionaryObject) -> Generator[EmbeddedFile]:

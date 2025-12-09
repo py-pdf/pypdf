@@ -3,7 +3,7 @@ import io
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 import pytest
 
@@ -14,6 +14,7 @@ from pypdf.constants import ImageAttributes as IA
 from pypdf.constants import PageAttributes as PG
 from pypdf.constants import UserAccessPermissions as UAP
 from pypdf.errors import (
+    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
@@ -38,7 +39,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
-NestedList = Union[int, None, List["NestedList"]]
+NestedList = Union[int, None, list["NestedList"]]
 
 
 @pytest.mark.parametrize(
@@ -417,7 +418,7 @@ def test_get_page_of_encrypted_file(pdffile, password, should_fail):
             "crazyones.pdf",
             {},
             None,
-        ),
+        )
     ],
 )
 def test_get_form(src, expected, expected_get_fields, txt_file_path):
@@ -445,6 +446,21 @@ def test_get_form(src, expected, expected_get_fields, txt_file_path):
                 field.default_value,
                 field.additional_actions,
             ]
+
+
+@pytest.mark.enable_socket
+def test_reading_choice_field_without_opt_key():
+    """Tests reading a choice field in a PDF without an /Opt key."""
+    url = "https://github.com/user-attachments/files/23853677/Musterservicevertrag-HNRAGB_Okt2022-Blanko.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name="Musterservicevertrag-HNRAGB_Okt2022-Blanko.pdf")))
+    fields = reader.get_fields()
+
+    tn_anrede = fields.get("TN_Anrede")
+    assert tn_anrede is not None
+
+    # Ensure that parsing of a choice field without /Opt key worked
+    tn_anrede_opt = tn_anrede.get("/Opt")
+    assert tn_anrede_opt is None
 
 
 @pytest.mark.parametrize(
@@ -708,7 +724,7 @@ def test_issue604(caplog, strict):
         pdf = PdfReader(f, strict=strict)
         outline = pdf.outline
         msg = [
-            "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
+            "Unknown destination: 'ms_Thyroid_2_2020_071520_watermarked.pdf' [0, 1]"
         ]
         assert normalize_warnings(caplog.text) == msg
 
@@ -742,17 +758,23 @@ def test_decode_permissions():
 
     print_ = base.copy()
     print_["print"] = True
-    with pytest.warns(
-        DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+    with pytest.raises(
+        DeprecationError,
+            match=(
+                r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
+                r"Use user_access_permissions instead"
+            ),
     ):
         assert reader.decode_permissions(4) == print_
 
     modify = base.copy()
     modify["modify"] = True
-    with pytest.warns(
-        DeprecationWarning,
-        match="decode_permissions is deprecated and will be removed in pypdf 5.0.0. Use user_access_permissions instead",  # noqa: E501
+    with pytest.raises(
+        DeprecationError,
+        match=(
+            r"decode_permissions is deprecated and was removed in pypdf 5\.0\.0\. "
+            r"Use user_access_permissions instead"
+        ),
     ):
         assert reader.decode_permissions(8) == modify
 
@@ -1819,7 +1841,7 @@ def test_issue2886(caplog):
     url = "https://github.com/user-attachments/files/17187711/crash-e8a85d82de01cab5eb44e7993304d8b9d1544970.pdf"
     name = "issue2886.pdf"
 
-    with pytest.raises(PdfReadError, match="Unexpected empty line in Xref table."):
+    with pytest.raises(PdfReadError, match=r"Unexpected empty line in Xref table\."):
         _ = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
 
@@ -1841,3 +1863,29 @@ def test_trailer_cannot_be_read():
     with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Unexpected type '/Invalid'$"):
         reader = PdfReader(BytesIO(data))
         list(reader.pages)
+
+
+@pytest.mark.enable_socket
+def test_read_pdf15_xref_stream():
+    data = get_data_from_url(name="issue-3429.pdf")
+
+    with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Size missing from XRef stream {"):
+        PdfReader(BytesIO(data))
+
+    data_modified = data.replace(b"/XRef/", b"/XRef/Size/2/")
+    with pytest.raises(
+            PdfReadError,
+            match=r"^Trailer cannot be read: Limit reached while decompressing\. 1545392 bytes remaining\.$"
+    ):
+        PdfReader(BytesIO(data_modified))
+
+
+@pytest.mark.enable_socket
+def test_read_standard_xref_table__two_whitespace_characters_between_offset_and_generation():
+    """Tests for #3482"""
+    url = "https://github.com/user-attachments/files/22591813/helloworld.pdf"
+    name = "issue3482.pdf"
+
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    assert len(reader.pages) == 1
+    assert reader.pages[0].extract_text() == "Hello World!"

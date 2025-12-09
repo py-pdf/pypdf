@@ -1,4 +1,4 @@
-"""Test the pypdf._merger module."""
+"""Test merging PDF functionality."""
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -6,11 +6,11 @@ from pathlib import Path
 import pytest
 
 import pypdf
-from pypdf import PdfMerger, PdfReader, PdfWriter
-from pypdf.errors import DeprecationError
+from pypdf import PdfReader, PdfWriter
 from pypdf.generic import Destination, Fit
 
 from . import get_data_from_url
+from .test_encryption import HAS_AES
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -19,14 +19,12 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 sys.path.append(str(PROJECT_ROOT))
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def merger_operate(merger):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
     pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
     pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
-    # string path:
     merger.append(pdf_path)
     merger.append(outline)
     merger.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
@@ -401,9 +399,13 @@ def test_articles_with_writer(caplog):
     assert r.threads[0].get_object()["/F"]["/P"] == r.pages[0]
 
 
-def test_deprecate_pdfmerger():
-    with pytest.raises(DeprecationError), PdfMerger() as merger:
-        merger.append(RESOURCE_ROOT / "crazyones.pdf")
+@pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
+@pytest.mark.enable_socket
+def test_null_articles_with_writer():
+    data = get_data_from_url(name="issue-3508.pdf")
+    merger = PdfWriter()
+    merger.append(BytesIO(data))
+    assert len(merger.pages) == 98
 
 
 def test_get_reference():
@@ -505,11 +507,11 @@ def test_named_ref_to_page_that_is_gone(pdf_file_path):
     source = PdfReader(BytesIO(get_data_from_url(name="named-reference.pdf")))
     buf = BytesIO()
     tmp = PdfWriter()
-    tmp.add_page(source.pages[2]) # we add only the page with the reference
+    tmp.add_page(source.pages[2])  # we add only the page with the reference
     tmp.write(buf)
 
     source = PdfReader(buf)
 
     writer = PdfWriter()
-    writer.add_page(source.pages[0]) # now references to non-existent page
-    writer.write(pdf_file_path) # don't crash
+    writer.add_page(source.pages[0])  # now references to non-existent page
+    writer.write(pdf_file_path)  # don't crash
