@@ -54,6 +54,18 @@ PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
+class DummyDictObject(DictionaryObject):
+    def __init__(self, test_name: str) -> None:
+        super().__init__()
+        self.set_alt_arg_name("/TestName", "test_name")
+
+        self.update(
+            {
+                NameObject("/TestName"): test_name
+            }
+        )
+
+
 class ChildDummy(DictionaryObject):
     @property
     def indirect_reference(self):
@@ -1281,6 +1293,14 @@ def test_coverage_arrayobject():
     for k, v in aa.items():
         assert isinstance(k, int)
         assert isinstance(v, PdfObject)
+
+def test_alt_keyword_when_cloning():
+    obj = DummyDictObject(test_name="testval")
+    obj2: DummyDictObject = None
+
+    clone_obj = obj.clone(obj2)
+
+    assert clone_obj.get("/TestName") == "testval"
 
 
 def test_coverage_streamobject():
