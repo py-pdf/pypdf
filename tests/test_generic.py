@@ -1302,6 +1302,14 @@ def test_alt_keyword_when_cloning():
 
     assert clone_obj.get("/TestName") == "testval"
 
+def test_type_error_when_using_alt_arg_keys():
+    dict_obj = DictionaryObject()
+    with pytest.raises(TypeError):
+        dict_obj.set_alt_arg_name(1, "test_key")
+
+    with pytest.raises(TypeError):
+        dict_obj.set_alt_arg_name("test_key", 1)
+
 
 def test_coverage_streamobject():
     writer = PdfWriter()
