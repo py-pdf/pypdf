@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765282981268,
+  "lastUpdate": 1765525841760,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -85343,6 +85343,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0011894954285388692",
             "extra": "mean: 682.2277032000102 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8e974bee491bd7d69a40e9a96ef584aaccac39e0",
+          "message": "DEV: Update pyupgrade in pre-commit configuration to 3.21.2 (#3562)\n\nOtherwise, https://redirect.github.com/asottile/pyupgrade/issues/1038 is triggered for Python 3.14.2.",
+          "timestamp": "2025-12-12T08:47:56+01:00",
+          "tree_id": "8631b61c1f98fb671e55dca91975ad43eef50eed",
+          "url": "https://github.com/py-pdf/pypdf/commit/8e974bee491bd7d69a40e9a96ef584aaccac39e0"
+        },
+        "date": 1765525837384,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.8229728444880027,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0056953821929634635",
+            "extra": "mean: 261.5765376000013 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.94654595009054,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0031159607663518744",
+            "extra": "mean: 62.709504812502814 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27624290758841663,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03572615711330934",
+            "extra": "mean: 3.6200024417999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.634680254303692,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007354505355346426",
+            "extra": "mean: 56.70644352941716 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08843593699458595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10421541401356003",
+            "extra": "mean: 11.3076203406 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4869180004182734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00315682144587693",
+            "extra": "mean: 672.5320425999939 msec\nrounds: 5"
           }
         ]
       }
