@@ -44,32 +44,36 @@ class FontDescriptor:
         font_name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
 
         font_descriptor_obj: Optional[DictionaryObject] = None
-        if not (encoding and char_map):
-            encoding, char_map = get_encoding(pdf_font_dict)
 
-        if "/FontDescriptor" in pdf_font_dict:
-            font_descriptor_obj = pdf_font_dict.get("/FontDescriptor")
-        elif font_name in CORE_FONT_METRICS:
-            return CORE_FONT_METRICS[font_name]
-
-        font_kwargs: dict[str, Any] = {"character_widths": {}}
-
-        # TrueType and Type1 fonts have a /Widths array mapping character codes to widths
-        if isinstance(encoding, dict) and "/Widths" in pdf_font_dict:
-            first_char = pdf_font_dict.get("/FirstChar", 0)
-            font_kwargs["character_widths"] = {
-                encoding.get(idx + first_char, chr(idx + first_char)): width
-                for idx, width in enumerate(cast(ArrayObject, pdf_font_dict["/Widths"]))
-            }
-
+        # Deal with fonts by type; Type1, TrueType and certain Type3
+        if pdf_font_dict.get("/Subtype") in ("/Type1", "/MMType1", "/TrueType", "/Type3"):
+            if "/FontDescriptor" in pdf_font_dict:
+                font_kwargs: dict[str, Any] = {"character_widths": {}}
+                # Collect font descriptor object
+                font_descriptor_obj = pdf_font_dict.get("/FontDescriptor")
+                # Collect character widths - TrueType and Type1 fonts
+                # have a /Widths array mapping character codes to widths
+                if not (encoding and char_map):
+                    encoding, char_map = get_encoding(pdf_font_dict)
+                if isinstance(encoding, dict) and "/Widths" in pdf_font_dict:
+                    first_char = pdf_font_dict.get("/FirstChar", 0)
+                    font_kwargs["character_widths"] = {
+                        encoding.get(idx + first_char, chr(idx + first_char)): width
+                        for idx, width in enumerate(cast(ArrayObject, pdf_font_dict["/Widths"]))
+                    }
+            elif font_name in CORE_FONT_METRICS:
+                return CORE_FONT_METRICS[font_name]
+        # Composite font or CID font
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
-        if "/DescendantFonts" in pdf_font_dict:
+        elif "/DescendantFonts" in pdf_font_dict:
+            font_kwargs: dict[str, Any] = {"character_widths": {}}
+            if not (encoding and char_map):
+                encoding, char_map = get_encoding(pdf_font_dict)
             d_font: DictionaryObject
             for d_font_idx, d_font in enumerate(
                 cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
             ):
                 d_font = cast(DictionaryObject, d_font.get_object())
-                font_descriptor_obj = d_font.get("/FontDescriptor")
                 cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
                 ord_map = {
                     ord(_target): _surrogate
@@ -136,6 +140,7 @@ class FontDescriptor:
                         raise ParseError(
                             f"Invalid font width definition. Next elements: {w_entry}, {w_next_entry}, {_w[idx + 2]}"
                         )  # pragma: no cover
+                font_descriptor_obj = d_font.get("/FontDescriptor")
 
         if not font_kwargs["character_widths"] and "/BaseFont" in pdf_font_dict:
             for key in CORE_FONT_METRICS:
@@ -164,7 +169,6 @@ class FontDescriptor:
             ]:
                 if source_key in font_descriptor_dict:
                     font_kwargs[target_key] = font_descriptor_dict[source_key]
-
             # No need for an if statement here, bbox is a required key in a font descriptor
             bbox_tuple = tuple(map(float, font_kwargs["bbox"]))
             assert len(bbox_tuple) == 4, bbox_tuple
