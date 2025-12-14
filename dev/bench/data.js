@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765526970812,
+  "lastUpdate": 1765722744381,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -85475,6 +85475,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0018526094380924558",
             "extra": "mean: 669.4047215999944 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "0b3b6f7335dbb9ea6fca3042d3db5021d9caea31",
+          "message": "REL: 6.4.2\n\n## What's new\n\n### Bug Fixes (BUG)\n- Fix KeyError when flattening form field without /Font in resources (#3554) by @jgillard\n\n### Robustness (ROB)\n- Allow deleting non-existent annotations (#3559) by @stefan6419846\n\n### Documentation (DOC)\n- Fix level of attachment heading (#3560) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.1...6.4.2)",
+          "timestamp": "2025-12-14T15:29:29+01:00",
+          "tree_id": "153809e4f542f40308c983a0b5ddd48e040056fb",
+          "url": "https://github.com/py-pdf/pypdf/commit/0b3b6f7335dbb9ea6fca3042d3db5021d9caea31"
+        },
+        "date": 1765722740406,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.8346492553466787,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00493447127486708",
+            "extra": "mean: 260.78004359999625 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.247110558008888,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002503618475897501",
+            "extra": "mean: 61.54940575000012 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.287231309149439,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025384634314252485",
+            "extra": "mean: 3.4815146126000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.864350127870313,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007495069657425323",
+            "extra": "mean: 55.9774071176478 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08914012950876543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025241823169582123",
+            "extra": "mean: 11.218291980399993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4854127250658005,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005255063195848806",
+            "extra": "mean: 673.2135676000098 msec\nrounds: 5"
           }
         ]
       }
