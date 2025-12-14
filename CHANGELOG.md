@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Version 6.4.2, 2025-12-14
+
+### Bug Fixes (BUG)
+- Fix KeyError when flattening form field without /Font in resources (#3554)
+
+### Robustness (ROB)
+- Allow deleting non-existent annotations (#3559)
+
+### Documentation (DOC)
+- Fix level of attachment heading (#3560)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.1...6.4.2)
+
 ## Version 6.4.1, 2025-12-07
 
 ### Performance Improvements (PI)
