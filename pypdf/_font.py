@@ -58,6 +58,77 @@ class FontDescriptor:
         font_kwargs["bbox"] = bbox_tuple
         return font_kwargs
 
+    @staticmethod
+    def _collect_cid_character_widths(
+        d_font: DictionaryObject, char_map: dict[Any, Any], current_widths: dict[str, int]
+    ) -> None:
+        """Parses the /W array from a DescendantFont dictionary and updates character widths."""
+        ord_map = {
+            ord(_target): _surrogate
+            for _target, _surrogate in char_map.items()
+            if isinstance(_target, str)
+        }
+        # /W width definitions have two valid formats which can be mixed and matched:
+        #   (1) A character start index followed by a list of widths, e.g.
+        #       `45 [500 600 700]` applies widths 500, 600, 700 to characters 45-47.
+        #   (2) A character start index, a character stop index, and a width, e.g.
+        #       `45 65 500` applies width 500 to characters 45-65.
+        skip_count = 0
+        _w = d_font.get("/W", [])
+        for idx, w_entry in enumerate(_w):
+            w_entry = w_entry.get_object()
+            if skip_count:
+                skip_count -= 1
+                continue
+            if not isinstance(w_entry, (int, float)):  # pragma: no cover
+                # We should never get here due to skip_count above. Add a
+                # warning and or use reader's "strict" to force an ex???
+                continue
+            # check for format (1): `int [int int int int ...]`
+            w_next_entry = _w[idx + 1].get_object()
+            if isinstance(w_next_entry, Sequence):
+                start_idx, width_list = w_entry, w_next_entry
+                current_widths.update(
+                    {
+                        ord_map[_cidx]: _width
+                        for _cidx, _width in zip(
+                            range(
+                                cast(int, start_idx),
+                                cast(int, start_idx) + len(width_list),
+                                1,
+                            ),
+                            width_list,
+                        )
+                        if _cidx in ord_map
+                    }
+                )
+                skip_count = 1
+            # check for format (2): `int int int`
+            elif isinstance(w_next_entry, (int, float)) and isinstance(
+                _w[idx + 2].get_object(), (int, float)
+            ):
+                start_idx, stop_idx, const_width = (
+                    w_entry,
+                    w_next_entry,
+                    _w[idx + 2].get_object(),
+                )
+                current_widths.update(
+                    {
+                        ord_map[_cidx]: const_width
+                        for _cidx in range(
+                            cast(int, start_idx), cast(int, stop_idx + 1), 1
+                        )
+                        if _cidx in ord_map
+                    }
+                )
+                skip_count = 2
+            else:
+                # Note: this doesn't handle the case of out of bounds (reaching the end of the width definitions
+                # while expecting more elements). This raises an IndexError which is sufficient.
+                raise ParseError(
+                    f"Invalid font width definition. Next elements: {w_entry}, {w_next_entry}, {_w[idx + 2]}"
+                )  # pragma: no cover
+
     @classmethod
     def from_font_resource(
         cls,
@@ -102,71 +173,10 @@ class FontDescriptor:
             ):
                 d_font = cast(DictionaryObject, d_font.get_object())
                 cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
-                ord_map = {
-                    ord(_target): _surrogate
-                    for _target, _surrogate in char_map.items()
-                    if isinstance(_target, str)
-                }
-                # /W width definitions have two valid formats which can be mixed and matched:
-                #   (1) A character start index followed by a list of widths, e.g.
-                #       `45 [500 600 700]` applies widths 500, 600, 700 to characters 45-47.
-                #   (2) A character start index, a character stop index, and a width, e.g.
-                #       `45 65 500` applies width 500 to characters 45-65.
-                skip_count = 0
-                _w = d_font.get("/W", [])
-                for idx, w_entry in enumerate(_w):
-                    w_entry = w_entry.get_object()
-                    if skip_count:
-                        skip_count -= 1
-                        continue
-                    if not isinstance(w_entry, (int, float)):  # pragma: no cover
-                        # We should never get here due to skip_count above. Add a
-                        # warning and or use reader's "strict" to force an ex???
-                        continue
-                    # check for format (1): `int [int int int int ...]`
-                    w_next_entry = _w[idx + 1].get_object()
-                    if isinstance(w_next_entry, Sequence):
-                        start_idx, width_list = w_entry, w_next_entry
-                        font_kwargs["character_widths"].update(
-                            {
-                                ord_map[_cidx]: _width
-                                for _cidx, _width in zip(
-                                    range(
-                                        cast(int, start_idx),
-                                        cast(int, start_idx) + len(width_list),
-                                        1,
-                                    ),
-                                    width_list,
-                                )
-                                if _cidx in ord_map
-                            }
-                        )
-                        skip_count = 1
-                    # check for format (2): `int int int`
-                    elif isinstance(w_next_entry, (int, float)) and isinstance(
-                        _w[idx + 2].get_object(), (int, float)
-                    ):
-                        start_idx, stop_idx, const_width = (
-                            w_entry,
-                            w_next_entry,
-                            _w[idx + 2].get_object(),
-                        )
-                        font_kwargs["character_widths"].update(
-                            {
-                                ord_map[_cidx]: const_width
-                                for _cidx in range(
-                                    cast(int, start_idx), cast(int, stop_idx + 1), 1
-                                )
-                                if _cidx in ord_map
-                            }
-                        )
-                        skip_count = 2
-                    else:
-                        # Note: this doesn't handle the case of out of bounds (reaching the end of the width definitions
-                        # while expecting more elements). This raises an IndexError which is sufficient.
-                        raise ParseError(
-                            f"Invalid font width definition. Next elements: {w_entry}, {w_next_entry}, {_w[idx + 2]}"
-                        )  # pragma: no cover
+                # Collect character widths
+                cls._collect_cid_character_widths(
+                    d_font, char_map, font_kwargs["character_widths"]
+                )
                 # Collect font descriptor
                 font_kwargs = cls._parse_font_descriptor(
                     font_kwargs, d_font.get("/FontDescriptor", DictionaryObject())
