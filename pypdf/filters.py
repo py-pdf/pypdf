@@ -408,12 +408,17 @@ class RunLengthDecode:
                     # We should first check, if we have an inner stream from a multi-encoded
                     # stream with a faulty trailing newline that we can decode properly.
                     # We will just ignore the last byte and raise a warning ...
-                    if (index == data_length - 1) and (data[index : index+1] == b"\n"):
+                    if (index == data_length - 1) and (data[index : index + 1] == b"\n"):
                         logger_warning(
                             "Found trailing newline in stream data, check if output is OK", __name__
                         )
                         break
-                    raise PdfStreamError("Early EOD in RunLengthDecode")
+                    # Raising an exception here breaks all image extraction for this file, which might
+                    # not be desirable. For this reason, indicate that the output is most likely wrong,
+                    # as processing stopped after the first EOD marker. See issue #3517.
+                    logger_warning(
+                        "Early EOD in RunLengthDecode, check if output is OK", __name__
+                    )
                 break
             if length < 128:
                 length += 1

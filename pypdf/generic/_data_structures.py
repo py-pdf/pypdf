@@ -78,11 +78,11 @@ from ._base import (
 )
 from ._fit import Fit
 from ._image_inline import (
-    extract_inline_A85,
-    extract_inline_AHx,
-    extract_inline_DCT,
+    extract_inline__ascii85_decode,
+    extract_inline__ascii_hex_decode,
+    extract_inline__dct_decode,
+    extract_inline__run_length_decode,
     extract_inline_default,
-    extract_inline_RL,
 )
 from ._utils import read_hex_string_from_stream, read_string_from_stream
 
@@ -1325,13 +1325,13 @@ class ContentStream(DecodedStreamObject):
         if isinstance(filtr, list):
             filtr = filtr[0]  # used forencoding
         if "AHx" in filtr or "ASCIIHexDecode" in filtr:
-            data = extract_inline_AHx(stream)
+            data = extract_inline__ascii_hex_decode(stream)
         elif "A85" in filtr or "ASCII85Decode" in filtr:
-            data = extract_inline_A85(stream)
+            data = extract_inline__ascii85_decode(stream)
         elif "RL" in filtr or "RunLengthDecode" in filtr:
-            data = extract_inline_RL(stream)
+            data = extract_inline__run_length_decode(stream)
         elif "DCT" in filtr or "DCTDecode" in filtr:
-            data = extract_inline_DCT(stream)
+            data = extract_inline__dct_decode(stream)
         elif filtr == "not set":
             cs = settings.get("/CS", "")
             if isinstance(cs, list):
