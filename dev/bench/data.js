@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765782338479,
+  "lastUpdate": 1765808415123,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -85673,6 +85673,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003195483619093549",
             "extra": "mean: 670.6328005999808 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "98f9f6210b34cad08ac71995bd6446d964363e6a",
+          "message": "ROB: Use warning instead of error for early EOD for RunLengthDecode (#3548)\n\nCloses #3517.",
+          "timestamp": "2025-12-15T15:17:27+01:00",
+          "tree_id": "100b9492212719746f5be8a77c630a1cd7cf660d",
+          "url": "https://github.com/py-pdf/pypdf/commit/98f9f6210b34cad08ac71995bd6446d964363e6a"
+        },
+        "date": 1765808410545,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.7286440124432514,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00906516868307355",
+            "extra": "mean: 268.1940128000406 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.773195397888376,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003455093346055586",
+            "extra": "mean: 63.398694733336924 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2704049825099848,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03647329703335191",
+            "extra": "mean: 3.6981567081999858 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.231531341627555,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009411034507120216",
+            "extra": "mean: 58.033147500026416 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08989573470017678,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013533645425770246",
+            "extra": "mean: 11.123998300200038 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4696784779485268,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003709818879392662",
+            "extra": "mean: 680.4209321999906 msec\nrounds: 5"
           }
         ]
       }
