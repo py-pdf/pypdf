@@ -75,3 +75,14 @@ def test_extract_inline_dct__early_end_of_file():
 
     with pytest.raises(expected_exception=PdfReadError, match=r"^Unexpected end of stream$"):
         page.images[0].image.load()
+
+
+@pytest.mark.enable_socket
+def test_extract_inline_dct__multiple_eod():
+    url = "https://github.com/user-attachments/files/23900687/cedolini_esempio-1.pdf"
+    name = "issue3517.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+
+    for page in reader.pages:
+        for image in page.images:
+            _ = image.image.load()

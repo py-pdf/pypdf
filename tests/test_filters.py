@@ -747,7 +747,7 @@ def test_jbig2decode__edge_cases(caplog):
     content_stream = ContentStream(stream=None, pdf=None)
     content_stream.set_data(jbig2_globals)
     result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": content_stream}))
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == (255 if x < 3 else 0), (x, y)
@@ -755,7 +755,7 @@ def test_jbig2decode__edge_cases(caplog):
 
     # No decode_params. Completely white image.
     result = JBIG2Decode.decode(image_data)
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == 255, (x, y)
@@ -767,7 +767,7 @@ def test_jbig2decode__edge_cases(caplog):
 
     # JBIG2Globals is NULL. Completely white image.
     result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": NullObject()}))
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == 255, (x, y)
@@ -779,7 +779,7 @@ def test_jbig2decode__edge_cases(caplog):
 
     # JBIG2Globals is DictionaryObject. Completely white image.
     result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": DictionaryObject()}))
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == 255, (x, y)
@@ -842,19 +842,22 @@ def test_rle_decode_with_faulty_tail_byte_in_multi_encoded_stream(caplog):
 
 
 @pytest.mark.enable_socket
-def test_rle_decode_exception_with_corrupted_stream():
+def test_rle_decode_exception_with_corrupted_stream(caplog):
     """
     Additional Test to #3355
 
-    This test must raise the EOD exception during RLE decoding and ensures
+    This test must report the EOD warning during RLE decoding and ensures
     that we do not fail during code coverage analyses in the git PR pipeline.
     """
     data = get_data_from_url(
         url="https://github.com/user-attachments/files/21052626/rle_stream_with_error.txt",
         name="rle_stream_with_error.txt"
     )
-    with pytest.raises(PdfStreamError, match="Early EOD in RunLengthDecode"):
-        RunLengthDecode.decode(data)
+    decoded = RunLengthDecode.decode(data)
+    assert decoded.startswith(b"\x01\x01\x01\x01\x01\x01\x01\x02\x02\x02\x02\x02\x02\x02\x03\x03")
+    assert decoded.endswith(b"\x87\x83\x83\x83\x83\x83\x83\x83]]]]]]]RRRRRRRX\xa5")
+    assert len(decoded) == 1048576
+    assert caplog.messages == ["Early EOD in RunLengthDecode, check if output is OK"]
 
 
 def test_decompress():
