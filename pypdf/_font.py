@@ -159,12 +159,14 @@ class FontDescriptor:
                 font_kwargs = cls._parse_font_descriptor(
                     font_kwargs, pdf_font_dict.get("/FontDescriptor", DictionaryObject())
                 )
-            elif font_name in CORE_FONT_METRICS:
+                return cls(**font_kwargs)
+
+            if font_name in CORE_FONT_METRICS:
                 return CORE_FONT_METRICS[font_name]
 
         # Composite font or CID font
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
-        elif "/DescendantFonts" in pdf_font_dict:
+        if "/DescendantFonts" in pdf_font_dict:
             if not (encoding and char_map):
                 encoding, char_map = get_encoding(pdf_font_dict)
             d_font: DictionaryObject
@@ -181,12 +183,6 @@ class FontDescriptor:
                 font_kwargs = cls._parse_font_descriptor(
                     font_kwargs, d_font.get("/FontDescriptor", DictionaryObject())
                 )
-
-        if not font_kwargs["character_widths"] and "/BaseFont" in pdf_font_dict:
-            for key in CORE_FONT_METRICS:
-                if pdf_font_dict["/BaseFont"] == f"/{key}":
-                    font_kwargs["character_widths"] = CORE_FONT_METRICS[key].character_widths
-                    break
 
         return cls(**font_kwargs)
 
