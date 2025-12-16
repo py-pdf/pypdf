@@ -747,7 +747,7 @@ def test_jbig2decode__edge_cases(caplog):
     content_stream = ContentStream(stream=None, pdf=None)
     content_stream.set_data(jbig2_globals)
     result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": content_stream}))
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == (255 if x < 3 else 0), (x, y)
@@ -755,7 +755,7 @@ def test_jbig2decode__edge_cases(caplog):
 
     # No decode_params. Completely white image.
     result = JBIG2Decode.decode(image_data)
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == 255, (x, y)
@@ -767,7 +767,7 @@ def test_jbig2decode__edge_cases(caplog):
 
     # JBIG2Globals is NULL. Completely white image.
     result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": NullObject()}))
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == 255, (x, y)
@@ -779,7 +779,7 @@ def test_jbig2decode__edge_cases(caplog):
 
     # JBIG2Globals is DictionaryObject. Completely white image.
     result = JBIG2Decode.decode(image_data, decode_parms=DictionaryObject({"/JBIG2Globals": DictionaryObject()}))
-    image = Image.open(BytesIO(result), formats=("PNG",))
+    image = Image.open(BytesIO(result), formats=("PNG", "PPM"))
     for x in range(5):
         for y in range(5):
             assert image.getpixel((x, y)) == 255, (x, y)
