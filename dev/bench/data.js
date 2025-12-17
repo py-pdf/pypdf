@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765881198341,
+  "lastUpdate": 1765981976693,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -85871,6 +85871,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0043877673236623355",
             "extra": "mean: 670.2161778000004 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "33559c8eed34bf3ca0625a7b8948043c98ccd407",
+          "message": "ENH: FontDescriptor: Initiate from embedded font resource (#3551)\n\nThis patch copies over the logic for acquiring character widths\nfrom a pdf font dictionary fron the Font class in\npypdf/_text_extraction/_layout_mode/_font.py. Later on, this makes\nit possible to initiate a FontDescriptor from an embedded font.",
+          "timestamp": "2025-12-17T15:30:04+01:00",
+          "tree_id": "114b7b237968ff1e421c524c9d6973886cc38d78",
+          "url": "https://github.com/py-pdf/pypdf/commit/33559c8eed34bf3ca0625a7b8948043c98ccd407"
+        },
+        "date": 1765981972793,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.767853312605397,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00660002305921028",
+            "extra": "mean: 265.4031134000064 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.867843935389368,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0027159394116099576",
+            "extra": "mean: 63.02053411111154 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2767765712983766,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026927445110423064",
+            "extra": "mean: 3.613022573800001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.941380557896274,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006820388799438846",
+            "extra": "mean: 55.73707088888903 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08981777321960557,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02040762140391056",
+            "extra": "mean: 11.133653887799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4909882394071283,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025337049850296307",
+            "extra": "mean: 670.6961017999959 msec\nrounds: 5"
           }
         ]
       }
