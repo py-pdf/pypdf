@@ -37,7 +37,7 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
         raise ValueError("A name must always be specified")
 
     if os.getenv("GITHUB_JOB", None) is not None:
-        cache_dir = Path.home() / "pypdf" / "tests" / "pdf_cache"
+        cache_dir = Path.home() / "pypdf" / "pypdf" / "tests" / "pdf_cache"
     else:
         cache_dir = Path(__file__).parent / "pdf_cache"
     if not cache_dir.exists():
