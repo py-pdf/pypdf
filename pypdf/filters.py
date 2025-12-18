@@ -69,6 +69,11 @@ from .generic import (
     is_null_or_none,
 )
 
+try:
+    import brotli
+except ImportError:
+    brotli = None
+
 ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
 LZW_MAX_OUTPUT_LENGTH = 75_000_000
 
@@ -542,6 +547,77 @@ class JPXDecode:
         return data
 
 
+class BrotliDecode:
+    """
+    Decompress the given data using Brotli.
+
+    Decodes data that has been encoded using the Brotli compression algorithm.
+    Brotli is a general-purpose lossless compression algorithm that combines
+    LZ77 and Huffman coding. It typically achieves better compression ratios
+    than Flate encoding, though with slightly slower compression speeds.
+
+    See ISO 32000-2:2020, Section 7.4.11.
+
+    Args:
+        data: The input data to be decompressed.
+        decode_parms: Optional decoding parameters (currently unused).
+        **kwargs: Additional keyword arguments (currently unused).
+
+    Returns:
+        The decompressed data.
+    """
+
+    # Maximum output size to prevent decompression bombs (10 GB)
+    MAX_OUTPUT_SIZE = 10 * 1024 * 1024 * 1024
+    @staticmethod
+    def decode(
+        data: bytes,
+        decode_parms: Optional[DictionaryObject] = None,
+        **kwargs: Any,
+    ) -> bytes:
+        """
+        Decode Brotli-compressed data with decompression bomb protection.
+
+        Args:
+            data: Brotli-compressed data.
+            decode_parms: A dictionary of parameter values (unused).
+
+        Returns:
+            The decompressed data.
+
+        Raises:
+            ImportError: If the 'brotli' library is not installed.
+            PdfStreamError: If decompressed data exceeds maximum allowed size.
+        """
+        if brotli is None:
+            raise ImportError("Brotli library not installed. Required for BrotliDecode filter.")
+        result = brotli.decompress(data)
+        if len(result) > BrotliDecode.MAX_OUTPUT_SIZE:
+            raise PdfStreamError(
+                f"Decompressed data exceeds maximum allowed size of {BrotliDecode.MAX_OUTPUT_SIZE} bytes"
+            )
+        return result
+
+    @staticmethod
+    def encode(data: bytes, **kwargs: Any) -> bytes:
+        """
+        Encode data using Brotli compression.
+
+        Args:
+            data: The data to be compressed.
+            **kwargs: Additional keyword arguments (unused).
+
+        Returns:
+            The compressed data.
+
+        Raises:
+            ImportError: If the 'brotli' library is not installed.
+        """
+        if brotli is None:
+            raise ImportError("Brotli library not installed. Required for BrotliDecode filter.")
+        return brotli.compress(data)
+
+
 @dataclass
 class CCITTParameters:
     """§7.4.6, optional parameters for the CCITTFaxDecode filter."""
@@ -785,6 +861,8 @@ def decode_stream_data(stream: Any) -> bytes:
             data = DCTDecode.decode(data)
         elif filter_name == FT.JPX_DECODE:
             data = JPXDecode.decode(data)
+        elif filter_name == FT.BROTLI_DECODE:
+            data = BrotliDecode.decode(data)
         elif filter_name == FT.JBIG2_DECODE:
             data = JBIG2Decode.decode(data, params)
         elif filter_name == "/Crypt":

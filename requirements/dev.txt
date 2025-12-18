@@ -4,6 +4,8 @@
 #
 #    pip-compile requirements/dev.in
 #
+brotli==1.1.0
+    # via -r requirements/ci.in
 build==1.2.2.post1
     # via pip-tools
 certifi==2024.8.30
