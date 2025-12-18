@@ -44,7 +44,7 @@ class TextAlignment(IntEnum):
     RIGHT = 2
 
 
-class TextStreamAppearance(DecodedStreamObject):
+class TextStreamAppearance(BaseStreamAppearance):
     """
     A class representing the appearance stream for a text-based form field.
 
@@ -155,7 +155,6 @@ class TextStreamAppearance(DecodedStreamObject):
         self,
         text: str = "",
         selection: Optional[list[str]] = None,
-        rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_descriptor: Optional[FontDescriptor] = None,
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         font_name: str = "/Helv",
@@ -178,8 +177,6 @@ class TextStreamAppearance(DecodedStreamObject):
             selection: An optional list of strings that should be highlighted as selected.
             font_glyph_byte_map: An optional dictionary mapping characters to their
                 byte representation for glyph encoding.
-            rectangle: The bounding box of the form field. Can be a `RectangleObject`
-                or a tuple of four floats (x1, y1, x2, y2).
             font_name: The name of the font resource to use (e.g., "/Helv").
             font_size: The font size. If 0, it is automatically calculated
                 based on whether the field is multiline or not.
@@ -196,6 +193,7 @@ class TextStreamAppearance(DecodedStreamObject):
             A byte string containing the PDF content stream data.
 
         """
+        rectangle = self._layout.rectangle
         font_glyph_byte_map = font_glyph_byte_map or {}
         if isinstance(rectangle, tuple):
             rectangle = RectangleObject(rectangle)
@@ -302,9 +300,9 @@ class TextStreamAppearance(DecodedStreamObject):
 
     def __init__(
         self,
+        layout: Optional[BaseStreamConfig] = None,
         text: str = "",
         selection: Optional[list[str]] = None,
-        rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0),
         font_resource: Optional[DictionaryObject] = None,
         font_name: str = "/Helv",
         font_size: float = 0.0,
@@ -322,10 +320,9 @@ class TextStreamAppearance(DecodedStreamObject):
         the content for the stream.
 
         Args:
+            layout: The basic layout parameters.
             text: The text to be rendered in the form field.
             selection: An optional list of strings that should be highlighted as selected.
-            rectangle: The bounding box of the form field. Can be a `RectangleObject`
-                or a tuple of four floats (x1, y1, x2, y2).
             font_resource: An optional variable that represents a PDF font dictionary.
             font_name: The name of the font resource, e.g., "/Helv".
             font_size: The font size. If 0, it's auto-calculated.
@@ -338,7 +335,7 @@ class TextStreamAppearance(DecodedStreamObject):
                 length field.
 
         """
-        super().__init__()
+        super().__init__(layout)
 
         # If a font resource was added, get the font character map
         if font_resource:
@@ -378,7 +375,6 @@ class TextStreamAppearance(DecodedStreamObject):
         ap_stream_data = self._generate_appearance_stream_data(
             text,
             selection,
-            rectangle,
             font_descriptor,
             font_glyph_byte_map,
             font_name=font_name,
@@ -390,9 +386,6 @@ class TextStreamAppearance(DecodedStreamObject):
             max_length=max_length
         )
 
-        self[NameObject("/Type")] = NameObject("/XObject")
-        self[NameObject("/Subtype")] = NameObject("/Form")
-        self[NameObject("/BBox")] = RectangleObject(rectangle)
         self.set_data(ByteStringObject(ap_stream_data))
         self[NameObject("/Length")] = NumberObject(len(ap_stream_data))
         # Update Resources with font information
@@ -520,10 +513,11 @@ class TextStreamAppearance(DecodedStreamObject):
         alignment = field.get("/Q", TextAlignment.LEFT)
 
         # Create the TextStreamAppearance instance
+        layout = BaseStreamConfig(rectangle=rectangle, border_width=border_width, border_style=border_style)
         new_appearance_stream = cls(
+            layout,
             text,
             selection,
-            rectangle,
             font_resource,
             font_name=font_name,
             font_size=font_size,
