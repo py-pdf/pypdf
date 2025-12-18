@@ -1,5 +1,4 @@
 import concurrent.futures
-import os
 import ssl
 import sys
 import urllib.request
@@ -36,21 +35,16 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
     if name is None:
         raise ValueError("A name must always be specified")
 
-    if os.getenv("GITHUB_JOB", None) is not None:
-        cache_dir = Path(os.getenv("GITHUB_WORKSPACE", Path.home())) / "tests" / "pdf_cache"
-    else:
-        cache_dir = Path(__file__).parent / "pdf_cache"
+    cache_dir = Path(__file__).parent / "pdf_cache"
     if not cache_dir.exists():
         cache_dir.mkdir()
     cache_path = cache_dir / name
-    print(cache_path, url)
 
     if url is not None:
         if url.startswith("file://"):
             with open(url[7:].replace("\\", "/"), "rb") as fp:
                 return fp.read()
         if not cache_path.exists():
-            print("No cache hit for", cache_path)
             ssl._create_default_https_context = ssl._create_unverified_context
             attempts = 0
             while attempts < 3:
