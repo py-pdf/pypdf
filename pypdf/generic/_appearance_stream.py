@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import Any, Optional, Union, cast
 
@@ -6,7 +7,7 @@ from .._cmap import build_char_map_from_dict
 from .._codecs.core_fontmetrics import CORE_FONT_METRICS
 from .._font import FontDescriptor
 from .._utils import logger_warning
-from ..constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes
+from ..constants import AnnotationDictionaryAttributes, BorderStyles, FieldDictionaryAttributes
 from ..generic import (
     DecodedStreamObject,
     DictionaryObject,
@@ -17,6 +18,22 @@ from ..generic import (
 from ..generic._base import ByteStringObject, TextStringObject, is_null_or_none
 
 DEFAULT_FONT_SIZE_IN_MULTILINE = 12
+
+
+@dataclass
+class BaseStreamConfig:
+    rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0)
+    border_width: int = 1
+    border_style: str = BorderStyles.SOLID
+
+
+class BaseStreamAppearance(DecodedStreamObject):
+    def __init__(self, layout: Optional[BaseStreamConfig] = None) -> None:
+        super().__init__()
+        self._layout = layout or BaseStreamConfig()
+        self[NameObject("/Type")] = NameObject("/XObject")
+        self[NameObject("/Subtype")] = NameObject("/Form")
+        self[NameObject("/BBox")] = RectangleObject(self._layout.rectangle)
 
 
 class TextAlignment(IntEnum):
