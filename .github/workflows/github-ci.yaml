@@ -28,11 +28,11 @@ jobs:
       with:
         submodules: 'recursive'
     - name: Cache Downloaded Files
-      id: cache-downloaded-files
+      id: cache-downloaded-files-windows
       uses: actions/cache@v5
       with:
         path: '**/tests/pdf_cache/*'
-        key: cache-downloaded-files
+        key: cache-downloaded-files-windows
     - name: Setup Python
       uses: actions/setup-python@v6
       with:
@@ -66,11 +66,11 @@ jobs:
       with:
         submodules: 'recursive'
     - name: Cache Downloaded Files
-      id: cache-downloaded-files
+      id: cache-downloaded-files-mac
       uses: actions/cache@v5
       with:
         path: '**/tests/pdf_cache/*'
-        key: cache-downloaded-files
+        key: cache-downloaded-files-mac
     - name: Setup Python (3.11+)
       uses: actions/setup-python@v6
       with:
