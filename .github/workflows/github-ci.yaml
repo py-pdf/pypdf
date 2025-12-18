@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', 'pypy3.11']
         use-crypto-lib: ['cryptography']
         include:
           - python-version: '3.9'
@@ -180,10 +180,19 @@ jobs:
     - name: Test with pytest
       run: |
         python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+    - name: Test with pytest (PyPy, no coverage)
+      # Coverage on PyPy is skipped because running coverage with PyPy is slow and CPython test already provides
+      # complete coverage data for the same code
+      run: |
+        python -m pytest tests -n auto -vv -p no:benchmark
+      if: ${{ startsWith(matrix.python-version, 'pypy') }}
     - name: Rename coverage data file
       run: mv .coverage ".coverage.$RANDOM"
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
     - name: Upload coverage data
       uses: actions/upload-artifact@v6
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
       with:
         name: coverage-data.${{ matrix.python-version }}-${{ matrix.use-crypto-lib }}
         path: .coverage.*
