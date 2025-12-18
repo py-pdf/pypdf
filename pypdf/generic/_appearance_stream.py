@@ -22,13 +22,22 @@ DEFAULT_FONT_SIZE_IN_MULTILINE = 12
 
 @dataclass
 class BaseStreamConfig:
+    """A container representing the basic layout of an appearance stream."""
     rectangle: Union[RectangleObject, tuple[float, float, float, float]] = (0.0, 0.0, 0.0, 0.0)
-    border_width: int = 1
+    border_width: int = 1  # The width of the border in points
     border_style: str = BorderStyles.SOLID
 
 
 class BaseStreamAppearance(DecodedStreamObject):
+    """A class representing the very base of an appearance stream, that is, a rectangle and a border."""
+
     def __init__(self, layout: Optional[BaseStreamConfig] = None) -> None:
+        """
+        Takes the appearance stream layout as an argument.
+
+        Args:
+            layout: The basic layout parameters.
+        """
         super().__init__()
         self._layout = layout or BaseStreamConfig()
         self[NameObject("/Type")] = NameObject("/XObject")
