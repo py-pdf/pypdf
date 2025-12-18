@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1766079917675,
+  "lastUpdate": 1766080366025,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -86003,6 +86003,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001126070255186509",
             "extra": "mean: 669.151679600003 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "12d9488558c5ba64e230dbecf25b625ab3ab291a",
+          "message": "MAINT: Update filelock version to 3.20.1\n\nThis closes a GitHub dependency alert.\r\n\r\nPlease note that this update is not compatible\r\nwith Python 3.9 anymore. If you still develop on\r\nPython 3.9, consider using the `dev.in` file instead.\r\nIt should still be compatible as far as I am aware,\r\nbut please keep in mind that it might expose you\r\nto CVE-2025-68146.",
+          "timestamp": "2025-12-18T18:50:13+01:00",
+          "tree_id": "1692f7121891f1a968be748b408aeff9f929cae9",
+          "url": "https://github.com/py-pdf/pypdf/commit/12d9488558c5ba64e230dbecf25b625ab3ab291a"
+        },
+        "date": 1766080360602,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 4.377782763332969,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006853718341178128",
+            "extra": "mean: 228.4261358000009 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.76957404925484,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003392463475771512",
+            "extra": "mean: 50.5827792500007 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.31724052816669734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005097668539549507",
+            "extra": "mean: 3.1521823702000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.06038523353389,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007780667225879789",
+            "extra": "mean: 58.61532352941247 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09963272503943407,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025907883792324348",
+            "extra": "mean: 10.036862884200001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5431378172462142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00329409596195036",
+            "extra": "mean: 648.0302593999909 msec\nrounds: 5"
           }
         ]
       }
