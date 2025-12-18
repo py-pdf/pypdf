@@ -43,6 +43,7 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
     if not cache_dir.exists():
         cache_dir.mkdir()
     cache_path = cache_dir / name
+    print(cache_path, url)
 
     if url is not None:
         if url.startswith("file://"):
