@@ -45,6 +45,7 @@ def get_data_from_url(url: Optional[str] = None, name: Optional[str] = None) -> 
             with open(url[7:].replace("\\", "/"), "rb") as fp:
                 return fp.read()
         if not cache_path.exists():
+            print("No cache hit for", cache_path)
             ssl._create_default_https_context = ssl._create_unverified_context
             attempts = 0
             while attempts < 3:
