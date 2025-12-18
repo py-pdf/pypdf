@@ -4,6 +4,7 @@ from typing import Any, Optional, Union, cast
 
 from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject
 
+from ._codecs.adobe_glyphs import adobe_glyphs
 from .errors import ParseError
 
 
@@ -243,3 +244,57 @@ class FontDescriptor:
         return sum(
             [self.character_widths.get(char, self.character_widths.get("default", 0)) for char in text], 0.0
         )
+
+
+@dataclass
+class Font:
+    name: str
+    basefont: str
+    character_map: dict[Any, Any]
+    encoding: Union[str, dict[int, str]]
+    sub_type: str
+    font_descriptor: FontDescriptor
+    character_widths: dict[str, int] = field(default_factory=dict)
+    space_width: Union[float, int] = 250
+    interpretable: bool = True
+
+    @classmethod
+    def _from_font_resource(
+        cls,
+        pdf_font_dict: DictionaryObject,
+    ) -> "Font":
+        from pypdf._cmap import get_encoding  # noqa: PLC0415
+        # Can collect base_font, name and encoding directly from font resource
+        name = pdf_font_dict.get("/Name", "Unknown")
+        basefont = pdf_font_dict.get("/BaseFont", "Unknown")
+        sub_type = pdf_font_dict.get("/Subtype", "Unknown")
+        encoding, character_map = get_encoding(pdf_font_dict)
+
+        # Type3 fonts that do not specify a "/ToUnicode" mapping cannot be
+        # reliably converted into character codes unless all named chars
+        # in /CharProcs map to a standard adobe glyph. See §9.10.2 of the
+        # PDF 1.7 standard.
+        interpretable = True
+        if sub_type == "/Type3" and "/ToUnicode" not in pdf_font_dict:
+            interpretable = all(
+                cname in adobe_glyphs
+                for cname in pdf_font_dict.get("/CharProcs") or []
+            )
+
+        if interpretable:
+            font_descriptor = FontDescriptor.from_font_resource(pdf_font_dict, encoding, character_map)
+        else:
+            font_descriptor = FontDescriptor()  # Save some overhead if font is not interpretable
+        character_widths = font_descriptor.character_widths
+
+        return cls(
+            name=name,
+            sub_type=sub_type,
+            encoding=encoding,
+            font_descriptor=font_descriptor,
+            character_map=character_map,
+            basefont=basefont,
+            character_widths=character_widths,
+            interpretable=interpretable
+        )
+
