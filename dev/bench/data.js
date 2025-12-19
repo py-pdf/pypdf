@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1766140902018,
+  "lastUpdate": 1766144592162,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -86135,6 +86135,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003874256893206394",
             "extra": "mean: 671.4693116000035 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2430864c4a20b95886e7b1680937ab4986cf2588",
+          "message": "ENH: Limit jbig2dec memory usage (#3576)\n\njbig2dec has a dedicated parameter, thus we should allow users to actually use it, although the risks should be lower than for LZW and FLATE.",
+          "timestamp": "2025-12-19T12:40:28+01:00",
+          "tree_id": "5467bab1c9af2f332bbec2a1a6dc69a0f76e6812",
+          "url": "https://github.com/py-pdf/pypdf/commit/2430864c4a20b95886e7b1680937ab4986cf2588"
+        },
+        "date": 1766144587195,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.812327408170494,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005870934740614439",
+            "extra": "mean: 262.30695660000833 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.946155064686748,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0028186932388121764",
+            "extra": "mean: 62.71104199999478 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27885418375750487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024323101237463823",
+            "extra": "mean: 3.5861036278000142 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.612220985044797,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007293898828984031",
+            "extra": "mean: 56.77875611764909 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08947880789139462,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02874553074802062",
+            "extra": "mean: 11.175830608000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.448856172111842,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03388304309435013",
+            "extra": "mean: 690.1996341999961 msec\nrounds: 5"
           }
         ]
       }
