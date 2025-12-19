@@ -69,8 +69,10 @@ from .generic import (
     is_null_or_none,
 )
 
-ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
+JBIG2_MAX_OUTPUT_LENGTH = 75_000_000
 LZW_MAX_OUTPUT_LENGTH = 75_000_000
+ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
+
 
 
 def _decompress_with_limit(data: bytes) -> bytes:
@@ -707,12 +709,23 @@ class JBIG2Decode:
             environment = os.environ.copy()
             environment["LC_ALL"] = "C"
             result = subprocess.run(  # noqa: S603
-                [JBIG2DEC_BINARY, "--embedded", "--format", "png", "--output", "-", *paths],
+                [
+                    JBIG2DEC_BINARY,
+                    "--embedded",
+                    "--format", "png",
+                    "--output", "-",
+                    "-M", str(JBIG2_MAX_OUTPUT_LENGTH),
+                    *paths
+                ],
                 capture_output=True,
                 env=environment,
             )
-            if b"unrecognized option '--embedded'" in result.stderr:
-                raise DependencyError("jbig2dec>=0.15 is required.")
+            if b"unrecognized option '--embedded'" in result.stderr or b"unrecognized option '-M'" in result.stderr:
+                raise DependencyError("jbig2dec>=0.19 is required.")
+            if b"FATAL ERROR memory: limit reached: " in result.stderr:
+                raise LimitReachedError(
+                    f"Memory limit reached while reading JBIG2 data:\n{result.stderr.decode('utf-8')}"
+                )
             if result.stderr:
                 for line in result.stderr.decode("utf-8").splitlines():
                     logger_warning(line, __name__)
@@ -732,7 +745,7 @@ class JBIG2Decode:
         version = result.stdout.split(" ", maxsplit=1)[1]
 
         from ._utils import Version  # noqa: PLC0415
-        return Version(version) >= Version("0.15")
+        return Version(version) >= Version("0.19")
 
 
 def decode_stream_data(stream: Any) -> bytes:

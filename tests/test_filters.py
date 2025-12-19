@@ -730,7 +730,20 @@ def test_jbig2decode__binary_errors():
     )
     with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
             mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
-            pytest.raises(DependencyError, match=r"jbig2dec>=0.15 is required\."):
+            pytest.raises(DependencyError, match=r"jbig2dec>=0.19 is required\."):
+        JBIG2Decode.decode(b"dummy")
+
+    result = subprocess.CompletedProcess(
+        args=["dummy"], returncode=0, stdout=b"",
+        stderr=(
+            b"jbig2dec: unrecognized option '-M'\n"
+            b"Usage: jbig2dec [options] <file.jbig2>\n"
+            b"   or  jbig2dec [options] <global_stream> <page_stream>\n"
+        )
+    )
+    with mock.patch("pypdf.filters.subprocess.run", return_value=result), \
+            mock.patch("pypdf.filters.JBIG2DEC_BINARY", "/usr/bin/jbig2dec"), \
+            pytest.raises(DependencyError, match=r"jbig2dec>=0.19 is required\."):
         JBIG2Decode.decode(b"dummy")
 
 
