@@ -722,7 +722,7 @@ class JBIG2Decode:
             )
             if b"unrecognized option '--embedded'" in result.stderr or b"unrecognized option '-M'" in result.stderr:
                 raise DependencyError("jbig2dec>=0.19 is required.")
-            if b"FATAL ERROR memory: limit reached: " in result.stderr:
+            if b"FATAL ERROR failed to allocate image data buffer" in result.stderr:
                 raise LimitReachedError(
                     f"Memory limit reached while reading JBIG2 data:\n{result.stderr.decode('utf-8')}"
                 )

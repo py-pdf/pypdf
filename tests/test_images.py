@@ -606,16 +606,24 @@ def test_jbig2decode__jbig2globals():
 def test_jbig2decode__memory_limit():
     url = "https://github.com/py-pdf/pypdf/files/12090692/New.Jersey.Coinbase.staking.securities.charges.2023-0606_Coinbase-Penalty-and-C-D.pdf"
     name = "jbig2.pdf"
-    error_message = (
-        r"^Memory limit reached while reading JBIG2 data:\n"
-        r"jbig2dec FATAL ERROR memory: limit reached: limit: 5000000 \(4 Mbyte\) used: 4329386 \(4 Mbyte\) allocation: 4263106 \(4 Mbyte\)\n"  # noqa: E501
-        r"jbig2dec FATAL ERROR failed to allocate image data buffer \(stride=643, height=6630\)"
-    )
+    error_messages = [
+        # Version 0.20
+        (
+            r"^Memory limit reached while reading JBIG2 data:\n"
+            r"jbig2dec FATAL ERROR memory: limit reached: limit: 5000000 \(4 Mbyte\) used: 4329386 \(4 Mbyte\) allocation: 4263106 \(4 Mbyte\)\n"  # noqa: E501
+            r"jbig2dec FATAL ERROR failed to allocate image data buffer \(stride=643, height=6630\)"
+        ),
+        # Version 0.19
+        (
+            r"^Memory limit reached while reading JBIG2 data:\n"
+            r"jbig2dec FATAL ERROR failed to allocate image data buffer \(stride=643, height=6630\)"
+        ),
+    ]
 
     with mock.patch("pypdf.filters.JBIG2_MAX_OUTPUT_LENGTH", 5_000_000):
         reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
         page = reader.pages[0]
-        with pytest.raises(expected_exception=LimitReachedError, match=error_message):
+        with pytest.raises(expected_exception=LimitReachedError, match=rf"({'|'.join(error_messages)})"):
             _ = next(iter(page.images))
 
 
