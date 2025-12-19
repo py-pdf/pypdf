@@ -1,0 +1,15 @@
+name: 'URL Check'
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 6 * * 1
+
+jobs:
+  url-check:
+    name: URL check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+      - name: Check URLs
+        run: python .github/scripts/check_urls.py
