@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.annotations._markup_annotations import Polygon
 from pypdf.constants import AFRelationship
 from pypdf.errors import PdfReadError, PyPdfError
 from pypdf.generic import (
@@ -575,3 +576,27 @@ def test_embedded_file__order():
         "test.txt", attachment4.pdf_object.indirect_reference,
         "xyz.txt", attachment3.pdf_object.indirect_reference,
     ]
+
+
+def test_merge_page_with_annotation():
+    # added and adapted from issue #3467
+    writer = PdfWriter()
+    writer2 = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer2.add_blank_page(100, 100)
+
+    annotation = Polygon(
+        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+    )
+
+    writer.add_annotation(0, annotation)
+
+    page1 = writer.pages[0]
+    page2 = writer2.pages[0]
+    page2.merge_page(page1)
+
+    assert page2.annotations[0].get_object()["/Type"] == annotation["/Type"]
+    assert page2.annotations[0].get_object()["/Subtype"] == annotation["/Subtype"]
+    assert page2.annotations[0].get_object()["/Vertices"] == annotation["/Vertices"]
+    assert page2.annotations[0].get_object()["/IT"] == annotation["/IT"]
+    assert page2.annotations[0].get_object()["/Rect"] == annotation["/Rect"]

@@ -293,7 +293,9 @@ class DictionaryObject(dict[Any, Any], PdfObject):
         visited: set[tuple[int, int]] = set()  # (idnum, generation)
         d__ = cast(
             "DictionaryObject",
-            self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
+            self._reference_clone(self.__new__(self.__class__), pdf_dest, force_duplicate),
+            # self.__new__(self.__class__) because we want instance of type __class__,
+            # where we copy values into later below
         )
         if ignore_fields is None:
             ignore_fields = []
