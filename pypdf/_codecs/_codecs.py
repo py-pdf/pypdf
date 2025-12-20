@@ -50,7 +50,7 @@ class LzwCodec(Codec):
     INITIAL_BITS_PER_CODE = 9  # Initial code bit width
     MAX_BITS_PER_CODE = 12  # Maximum code bit width
 
-    def __init__(self, max_output_length: int = 1_000_000_000) -> None:
+    def __init__(self, max_output_length: int = 75_000_000) -> None:
         self.max_output_length = max_output_length
 
     def _initialize_encoding_table(self) -> None:

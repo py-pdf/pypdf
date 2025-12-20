@@ -18,7 +18,7 @@ exceptiongroup==1.2.2
     # via pytest
 execnet==2.1.1
     # via pytest-xdist
-fonttools==4.54.1
+fonttools==4.61.0
     # via fpdf2
 fpdf2==2.8.1
     # via -r requirements/ci.in

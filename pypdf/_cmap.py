@@ -5,6 +5,7 @@ from math import ceil
 from typing import Any, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
+from ._codecs.core_fontmetrics import CORE_FONT_METRICS
 from ._utils import logger_error, logger_warning
 from .generic import (
     ArrayObject,
@@ -101,28 +102,6 @@ _predefined_cmap: dict[str, str] = {
     "/UniGB-UTF16-H": "gb18030",
     "/UniGB-UTF16-V": "gb18030",
     # UCS2 in code
-}
-
-# manually extracted from http://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz
-_default_fonts_space_width: dict[str, int] = {
-    "/Courier": 600,
-    "/Courier-Bold": 600,
-    "/Courier-BoldOblique": 600,
-    "/Courier-Oblique": 600,
-    "/Helvetica": 278,
-    "/Helvetica-Bold": 278,
-    "/Helvetica-BoldOblique": 278,
-    "/Helvetica-Oblique": 278,
-    "/Helvetica-Narrow": 228,
-    "/Helvetica-NarrowBold": 228,
-    "/Helvetica-NarrowBoldOblique": 228,
-    "/Helvetica-NarrowOblique": 228,
-    "/Times-Roman": 250,
-    "/Times-Bold": 250,
-    "/Times-BoldItalic": 250,
-    "/Times-Italic": 250,
-    "/Symbol": 250,
-    "/ZapfDingbats": 278,
 }
 
 
@@ -405,10 +384,6 @@ def build_font_width_map(
     font_width_map: dict[Any, float] = {}
     st: int = 0
     en: int = 0
-    try:
-        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object())] * 2.0
-    except KeyError:
-        pass
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
         # §9.7.4.3 of the 1.7 reference ("Glyph Metrics in CIDFonts")
         # Widths for a CIDFont are defined using the DW and W entries.
@@ -417,7 +392,13 @@ def build_font_width_map(
         if "/DW" in ft1:
             font_width_map["default"] = cast(float, ft1["/DW"].get_object())
         else:
-            font_width_map["default"] = default_font_width
+            font_name = str(ft["/BaseFont"]).removeprefix("/")
+            if font_name in CORE_FONT_METRICS:
+                # This applies to test_tounicode_is_identity, which has a CID CourierNew font that
+                # apparently does not specify the width of a space.
+                font_width_map["default"] = CORE_FONT_METRICS[font_name].character_widths[" "] * 2
+            else:
+                font_width_map["default"] = default_font_width
         if "/W" in ft1:
             w = ft1["/W"].get_object()
         else:
@@ -476,8 +457,13 @@ def build_font_width_map(
                 # The PDF structure is invalid. The array is too small
                 # for the specified font width.
                 pass
+    else:
+        font_name = str(ft["/BaseFont"]).removeprefix("/")
+        if font_name in CORE_FONT_METRICS:
+            font_width_map = cast(dict[str, float], CORE_FONT_METRICS[font_name].character_widths)
+            font_width_map["default"] = font_width_map[" "] * 2
     if is_null_or_none(font_width_map.get("default")):
-        font_width_map["default"] = default_font_width if default_font_width else 0.0
+        font_width_map["default"] = 0
     return font_width_map
 
 
