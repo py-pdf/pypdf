@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1766144592162,
+  "lastUpdate": 1766315343897,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -86201,6 +86201,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03388304309435013",
             "extra": "mean: 690.1996341999961 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "52fb020800c61244c8b9e94e201150029919775d",
+          "message": "REL: 6.5.0\n\n## What's new\n\n### New Features (ENH)\n- Limit jbig2dec memory usage (#3576) by @stefan6419846\n- FontDescriptor: Initiate from embedded font resource (#3551) by @PJBrs\n\n### Robustness (ROB)\n- Allow fallback to PBM files for jbig2dec without PNG support (#3567) by @stefan6419846\n- Use warning instead of error for early EOD for RunLengthDecode (#3548) by @stefan6419846\n\n### Developer Experience (DEV)\n- Test with macOS as well (#3401) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.2...6.5.0)",
+          "timestamp": "2025-12-21T12:06:09+01:00",
+          "tree_id": "f6a6e85b59e861ff062301b94d0bcb5cba01336d",
+          "url": "https://github.com/py-pdf/pypdf/commit/52fb020800c61244c8b9e94e201150029919775d"
+        },
+        "date": 1766315339787,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.6946734292195336,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008224298883635238",
+            "extra": "mean: 270.65991600000245 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.428398301004304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002692658480242054",
+            "extra": "mean: 64.81554212499852 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28394200662762054,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04287223451753658",
+            "extra": "mean: 3.5218459286000012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.866310864480972,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011428803771069316",
+            "extra": "mean: 55.97126388235217 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.09004586251365625,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01859367426316513",
+            "extra": "mean: 11.1054519562 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.452851130892344,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03328263220506902",
+            "extra": "mean: 688.3017665999944 msec\nrounds: 5"
           }
         ]
       }
