@@ -16,8 +16,8 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install requirements
-        run: |
-          pip install -r requirements/dev.txt
+        run:
+          pip install pyyaml
       - name: Check URLs
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE"
