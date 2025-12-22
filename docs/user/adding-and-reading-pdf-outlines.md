@@ -193,7 +193,7 @@ def print_outline(outlines, reader, level=0):
                 page_num = None
 
             indent = "  " * level
-            
+
             if page_num is None:
                 print(f"{indent}- {item.title} (No page destination)")
             else:
@@ -214,4 +214,3 @@ print_outline(reader.outline, reader)
   - Section 2.1: The Balanced Plate Method (Page 3)
   - Section 2.2: Mindful Eating and Portion Control (Page 3)
 ```
-
