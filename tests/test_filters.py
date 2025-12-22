@@ -893,3 +893,12 @@ def test_decompress():
                 LimitReachedError, match=r"^Limit reached while decompressing\. 12 bytes remaining\."
             ):
         decompress(compressed)
+
+
+def test_decompress__logging_on_invalid_data(caplog):
+    """We do not like suddenly getting empty outputs for non-empty inputs without a warning."""
+    codec = FlateDecode()
+    encoded = codec.encode(b"My test string")
+    assert len(encoded) > 5
+    assert codec.decode(encoded[5:]) == b""
+    assert caplog.messages == ["Error -3 while decompressing data: incorrect header check"]
