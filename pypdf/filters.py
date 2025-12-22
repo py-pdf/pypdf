@@ -132,6 +132,7 @@ def decompress(data: bytes) -> bytes:
         result_str = b""
         remaining_limit = ZLIB_MAX_OUTPUT_LENGTH
         data_single_bytes = [data[i : i + 1] for i in range(len(data))]
+        known_errors = set()
         for index, b in enumerate(data_single_bytes):
             try:
                 decompressed = decompressor.decompress(b, max_length=remaining_limit)
@@ -141,8 +142,12 @@ def decompress(data: bytes) -> bytes:
                     raise LimitReachedError(
                         f"Limit reached while decompressing. {len(data_single_bytes) - index} bytes remaining."
                     )
-            except zlib.error:
-                pass
+            except zlib.error as error:
+                error_str = str(error)
+                if error_str in known_errors:
+                    continue
+                logger_warning(error_str, __name__)
+                known_errors.add(error_str)
         return result_str
 
 
