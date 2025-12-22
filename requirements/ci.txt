@@ -6,7 +6,7 @@
 #
 cffi==1.17.1
     # via cryptography
-coverage[toml]== 7.10.7
+coverage[toml]==7.10.7
     # via
     #   -r requirements/ci.in
     #   pytest-cov
