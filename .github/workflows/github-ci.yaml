@@ -108,13 +108,13 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
-        use-crypto-lib: ["cryptography"]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        use-crypto-lib: ['cryptography']
         include:
-          - python-version: "3.9"
-            use-crypto-lib: "pycryptodome"
-          - python-version: "3.9"
-            use-crypto-lib: "none"
+          - python-version: '3.9'
+            use-crypto-lib: 'pycryptodome'
+          - python-version: '3.9'
+            use-crypto-lib: 'none'
     steps:
     - name: Update APT packages
       run:
