@@ -11,5 +11,14 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install requirements
+        run:
+          pip install pyyaml
       - name: Check URLs
-        run: python .github/scripts/check_urls.py
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE"
+          python .github/scripts/check_urls.py
