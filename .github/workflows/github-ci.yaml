@@ -180,9 +180,6 @@ jobs:
     - name: Test with pytest
       run: |
         python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
-    - name: Combine coverage reports
-      run: |
-        python -m coverage combine
     - name: Rename coverage data file
       run: mv .coverage ".coverage.$RANDOM"
     - name: Upload coverage data
