@@ -303,6 +303,12 @@ class Font:
             interpretable=interpretable
         )
 
+    def text_width(self, text: str = "") -> float:
+        """Sum of character widths specified in PDF font for the supplied text."""
+        return sum(
+            [self.character_widths.get(char, self.space_width) for char in text], 0.0
+        )
+
     @staticmethod
     def to_dict(font_instance: "Font") -> dict[str, Any]:
         """Dataclass to dict for json.dumps serialization."""
