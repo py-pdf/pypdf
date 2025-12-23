@@ -60,6 +60,38 @@ class FontDescriptor:
         return font_kwargs
 
     @staticmethod
+    def _collect_tt_t1_character_widths(
+        pdf_font_dict: DictionaryObject,
+        char_map: dict[Any, Any],
+        encoding: Union[str, dict[int, str]],
+        current_widths: dict[str, int]
+    ) -> None:
+        """Parses a TrueType or Type1 font's /Widths array from a font dictionary and updates character widths"""
+        widths_array = cast(ArrayObject, pdf_font_dict["/Widths"])
+        first_char = pdf_font_dict.get("/FirstChar", 0)
+        if not isinstance(encoding, str):
+            # This means that encoding is a dict
+            current_widths.update({
+                encoding.get(idx + first_char, chr(idx + first_char)): width
+                for idx, width in enumerate(widths_array)
+            })
+            return
+
+        # We map the character code directly to the character
+        # using the string encoding
+        for idx, width in enumerate(widths_array):
+            # Often "idx == 0" will denote the .notdef character, but we add it anyway
+            char_code = idx + first_char  # This is a raw code
+            # Get the "raw" character or byte representation
+            raw_char = bytes([char_code]).decode(encoding, "surrogatepass")
+            # Translate raw_char to the REAL Unicode character using the char_map
+            unicode_char = char_map.get(raw_char)
+            if unicode_char:
+                current_widths[unicode_char] = int(width)
+            else:
+                current_widths[raw_char] = int(width)
+
+    @staticmethod
     def _collect_cid_character_widths(
         d_font: DictionaryObject, char_map: dict[Any, Any], current_widths: dict[str, int]
     ) -> None:
@@ -146,17 +178,12 @@ class FontDescriptor:
         # Deal with fonts by type; Type1, TrueType and certain Type3
         if pdf_font_dict.get("/Subtype") in ("/Type1", "/MMType1", "/TrueType", "/Type3"):
             if "/FontDescriptor" in pdf_font_dict:
-                # Collect character widths - TrueType and Type1 fonts
-                # have a /Widths array mapping character codes to widths
                 if not (encoding and char_map):
                     encoding, char_map = get_encoding(pdf_font_dict)
-                if isinstance(encoding, dict) and "/Widths" in pdf_font_dict:
-                    first_char = pdf_font_dict.get("/FirstChar", 0)
-                    font_kwargs["character_widths"] = {
-                        encoding.get(idx + first_char, chr(idx + first_char)): width
-                        for idx, width in enumerate(cast(ArrayObject, pdf_font_dict["/Widths"]))
-                    }
-                # Collect font descriptor
+                cls._collect_tt_t1_character_widths(
+                    pdf_font_dict, char_map, encoding, font_kwargs["character_widths"]
+                )
+                font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject())
                 font_kwargs = cls._parse_font_descriptor(
                     font_kwargs, pdf_font_dict.get("/FontDescriptor", DictionaryObject())
                 )
@@ -176,11 +203,9 @@ class FontDescriptor:
             ):
                 d_font = cast(DictionaryObject, d_font.get_object())
                 cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
-                # Collect character widths
                 cls._collect_cid_character_widths(
                     d_font, char_map, font_kwargs["character_widths"]
                 )
-                # Collect font descriptor
                 font_kwargs = cls._parse_font_descriptor(
                     font_kwargs, d_font.get("/FontDescriptor", DictionaryObject())
                 )
