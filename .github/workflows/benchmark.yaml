@@ -10,11 +10,16 @@ permissions:
 
 jobs:
   benchmark:
-    name: Run pytest-benchmark
+    name: "Benchmark ${{ matrix.name }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.x']
+        include:
+          - python-version: '3.x'
+            name: 'CPython'
+          - python-version: 'pypy3.11'
+            name: 'PyPy 3.11'
     steps:
     - name: Checkout Code
       uses: actions/checkout@v6
@@ -36,7 +41,7 @@ jobs:
     - name: Store benchmark result
       uses: benchmark-action/github-action-benchmark@v1
       with:
-        name: Python Benchmark with pytest-benchmark
+        name: "${{ matrix.name }} Benchmark"
         tool: 'pytest'
         output-file-path: output.json
         # Use personal access token instead of GITHUB_TOKEN due to https://github.community/t/github-action-not-triggering-gh-pages-upon-push/16096

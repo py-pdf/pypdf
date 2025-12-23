@@ -10,7 +10,7 @@ coverage[toml]==7.13.0
     # via
     #   -r requirements/ci.in
     #   pytest-cov
-cryptography==44.0.1
+cryptography==44.0.2
     # via -r requirements/ci.in
 defusedxml==0.7.1
     # via fpdf2
