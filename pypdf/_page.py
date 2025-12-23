@@ -29,6 +29,7 @@
 
 import math
 from collections.abc import Iterable, Iterator, Sequence
+from copy import deepcopy
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
@@ -55,6 +56,7 @@ from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
     _human_readable_bytes,
+    deprecate,
     logger_warning,
     matrix_multiply,
 )
@@ -999,10 +1001,20 @@ class PageObject(DictionaryObject):
             self[NameObject(PG.CONTENTS)] = content
             return
 
+        from pypdf._writer import PdfWriter  # noqa: PLC0415
+        if not isinstance(self.indirect_reference.pdf, PdfWriter):
+            deprecate(
+                "Calling `PageObject.replace_contents()` for pages not assigned to a writer is deprecated "
+                "and will be removed in pypdf 7.0.0. Attach the page to the writer first or use "
+                "`PdfWriter(clone_from=...)` directly. The existing approach has proved being unreliable."
+            )
+
         if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
             for o in self[PG.CONTENTS]:  # type: ignore[attr-defined]
                 try:
-                    self._objects[o.indirect_reference.idnum - 1] = NullObject()  # type: ignore
+                    self.indirect_reference.pdf._objects[
+                        o.indirect_reference.idnum - 1
+                    ] = NullObject()
                 except AttributeError:
                     pass
 
@@ -1086,7 +1098,6 @@ class PageObject(DictionaryObject):
                 return self._merge_page_writer(
                     page2, page2transformation, ctm, over, expand
                 )
-                return None
         except (AssertionError, AttributeError):
             pass
 
@@ -1238,7 +1249,9 @@ class PageObject(DictionaryObject):
                 trsf = Transformation()
             else:
                 trsf = Transformation(ctm)
-            for a in cast(ArrayObject, page2[PG.ANNOTS]):
+            # Ensure we are working on a copy of the list. Otherwise, if both pages
+            # are the same object, we might run into an infinite loop.
+            for a in cast(ArrayObject, deepcopy(page2[PG.ANNOTS])):
                 a = a.get_object()
                 aa = a.clone(
                     pdf,
