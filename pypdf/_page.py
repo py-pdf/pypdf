@@ -30,7 +30,7 @@
 import math
 from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
@@ -1894,10 +1894,8 @@ class PageObject(DictionaryObject):
             import json  # noqa: PLC0415
 
             debug_path.joinpath("fonts.json").write_text(
-                json.dumps(
-                    fonts, indent=2, default=lambda x: getattr(x, "to_dict", str)(x)
-                ),
-                "utf-8",
+                json.dumps(fonts, indent=2, default=asdict),
+                "utf-8"
             )
 
         ops = iter(

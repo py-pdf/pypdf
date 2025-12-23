@@ -5,6 +5,7 @@ The tested code might be in _page.py.
 """
 
 import re
+from dataclasses import asdict
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -12,7 +13,7 @@ from unittest.mock import patch
 import pytest
 
 from pypdf import PdfReader, PdfWriter, mult
-from pypdf._font import FontDescriptor
+from pypdf._font import Font
 from pypdf._text_extraction import set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
 from pypdf.errors import ParseError, PdfReadError
@@ -120,34 +121,38 @@ def test_issue_2336():
     assert "Beira Rio" in actual_text
 
 
-def test_layout_mode_font_class_to_dict():
-    from pypdf._text_extraction._layout_mode._font import Font  # noqa: PLC0415
-
-    font = Font("foo", space_width=8, encoding="utf-8", char_map={}, font_dictionary={})
-    assert Font.to_dict(font) == {
-        "char_map": {},
-        "encoding": "utf-8",
-        "font_dictionary": {},
-        "space_width": 8,
-        "subtype": "foo",
-        "font_descriptor": FontDescriptor(
-            name="Unknown",
-            family="Unknown",
-            weight="Unknown",
-            ascent=700.0,
-            descent=-200.0,
-            cap_height=600.0,
-            x_height=500.0,
-            italic_angle=0.0,
-            flags=32,
-            bbox=(
+def test_font_class_to_dict():
+    font = Font(
+        name = "Unknown",
+        space_width=8,
+        character_map={},
+        encoding = "utf-16-be"
+    )
+    assert asdict(font) == {
+        "name": "Unknown",
+        "character_map": {},
+        "encoding": "utf-16-be",
+        "sub_type": "Unknown",
+        "font_descriptor": {
+            "name": "Unknown",
+            "family": "Unknown",
+            "weight": "Unknown",
+            "ascent": 700.0,
+            "descent": -200.0,
+            "cap_height": 600.0,
+            "x_height": 500.0,
+            "italic_angle": 0.0,
+            "flags": 32,
+            "bbox": (
                 -100.0,
                 -200.0,
                 1000.0,
                 900.0,
             ),
-            character_widths={},
-        ),
+            "character_widths": {"default": 500},
+        },
+        "character_widths": {},
+        "space_width": 8,
         "interpretable": True,
     }
 
