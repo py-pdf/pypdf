@@ -108,13 +108,13 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
-        use-crypto-lib: ["cryptography"]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        use-crypto-lib: ['cryptography']
         include:
-          - python-version: "3.9"
-            use-crypto-lib: "pycryptodome"
-          - python-version: "3.9"
-            use-crypto-lib: "none"
+          - python-version: '3.9'
+            use-crypto-lib: 'pycryptodome'
+          - python-version: '3.9'
+            use-crypto-lib: 'none'
     steps:
     - name: Update APT packages
       run:
@@ -177,22 +177,9 @@ jobs:
     - name: Download test files
       run: |
         python -c "from tests import download_test_pdfs; download_test_pdfs()"
-    - name: Setup sitecustomize.py for coverage
-      run: |
-        SITE_PACKAGES="$(python -m site --user-site)"
-        SITECUSTOMIZE_PATH="$SITE_PACKAGES/sitecustomize.py"
-        mkdir -p $SITE_PACKAGES
-        touch $SITECUSTOMIZE_PATH
-        echo "try:" >> $SITECUSTOMIZE_PATH
-        echo "    import coverage" >> $SITECUSTOMIZE_PATH
-        echo "    coverage.process_startup()" >> $SITECUSTOMIZE_PATH
-        echo "except ImportError:" >> $SITECUSTOMIZE_PATH
-        echo "    pass" >> $SITECUSTOMIZE_PATH
     - name: Test with pytest
       run: |
         python -m pytest tests --cov=pypdf --cov-append -n auto -vv -p no:benchmark
-      env:
-        COVERAGE_PROCESS_START: 'pyproject.toml'
     - name: Rename coverage data file
       run: mv .coverage ".coverage.$RANDOM"
     - name: Upload coverage data

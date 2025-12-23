@@ -780,3 +780,17 @@ class AFRelationship:
     FORM_DATA = "/FormData"  # Data associated with AcroForm of this PDF
     SCHEMA = "/Schema"  # Schema definition for associated object
     UNSPECIFIED = "/Unspecified"  # Not known or cannot be described with values
+
+
+class BorderStyles:
+    """
+    A class defining border styles used in PDF documents.
+
+    Defined in table 168 of the PDF 2.0 reference.
+    """
+
+    BEVELED = "/B"
+    DASHED = "/D"
+    INSET = "/I"
+    SOLID = "/S"
+    UNDERLINED = "/U"

@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## Version 6.5.0, 2025-12-21
+
+### New Features (ENH)
+- Limit jbig2dec memory usage (#3576)
+- FontDescriptor: Initiate from embedded font resource (#3551)
+
+### Robustness (ROB)
+- Allow fallback to PBM files for jbig2dec without PNG support (#3567)
+- Use warning instead of error for early EOD for RunLengthDecode (#3548)
+
+### Developer Experience (DEV)
+- Test with macOS as well (#3401)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.2...6.5.0)
+
 ## Version 6.4.2, 2025-12-14
 
 ### Bug Fixes (BUG)
