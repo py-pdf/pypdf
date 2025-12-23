@@ -149,12 +149,29 @@ class FontDescriptor:
                 # have a /Widths array mapping character codes to widths
                 if not (encoding and char_map):
                     encoding, char_map = get_encoding(pdf_font_dict)
-                if isinstance(encoding, dict) and "/Widths" in pdf_font_dict:
-                    first_char = pdf_font_dict.get("/FirstChar", 0)
+                widths_array = cast(ArrayObject, pdf_font_dict["/Widths"])
+                first_char = pdf_font_dict.get("/FirstChar", 0)
+                if isinstance(encoding, str):
+                    # We map the character code directly to the character
+                    # using the encoding
+                    for idx, width in enumerate(widths_array):
+                        # Often "idx == 0" will denote the .notdef character, but we add it anyway
+                        char_code = idx + first_char  # This is a raw code
+                        try:
+                            char = bytes([char_code]).decode(encoding)
+                        except Exception:
+                            char = chr(char_code)
+                        if encoding != "charmap":
+                            unicode_char = char_map.get(char)  # Get the actual character from the char_map
+                        else:
+                            unicode_char = chr(char_code)  # Get the actual character as raw code
+                        font_kwargs["character_widths"][unicode_char] = width
+                elif isinstance(encoding, dict):
                     font_kwargs["character_widths"] = {
                         encoding.get(idx + first_char, chr(idx + first_char)): width
-                        for idx, width in enumerate(cast(ArrayObject, pdf_font_dict["/Widths"]))
+                        for idx, width in enumerate(widths_array)
                     }
+                font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject())
                 # Collect font descriptor
                 font_kwargs = cls._parse_font_descriptor(
                     font_kwargs, pdf_font_dict.get("/FontDescriptor", DictionaryObject())
