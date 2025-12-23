@@ -12,7 +12,7 @@ from unittest.mock import patch
 import pytest
 
 from pypdf import PdfReader, mult
-from pypdf._font import FontDescriptor
+from pypdf._font import Font, FontDescriptor
 from pypdf._text_extraction import set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
 from pypdf.errors import ParseError, PdfReadError
@@ -120,16 +120,22 @@ def test_issue_2336():
     assert "Beira Rio" in actual_text
 
 
-def test_layout_mode_font_class_to_dict():
-    from pypdf._text_extraction._layout_mode._font import Font  # noqa: PLC0415
-
-    font = Font("foo", space_width=8, encoding="utf-8", char_map={}, font_dictionary={})
+def test_font_class_to_dict():
+    font = Font(
+        "foo",
+        space_width=8,
+        sub_type="foo",
+        encoding="utf-8",
+        font_descriptor=FontDescriptor(),
+        basefont="foo",
+        character_map={}
+    )
     assert Font.to_dict(font) == {
-        "char_map": {},
+        "name": "foo",
+        "basefont": "foo",
+        "character_map": {},
         "encoding": "utf-8",
-        "font_dictionary": {},
-        "space_width": 8,
-        "subtype": "foo",
+        "sub_type": "foo",
         "font_descriptor": FontDescriptor(
             name="Unknown",
             family="Unknown",
@@ -148,6 +154,8 @@ def test_layout_mode_font_class_to_dict():
             ),
             character_widths={},
         ),
+        "character_widths": {},
+        "space_width": 8,
         "interpretable": True,
     }
 

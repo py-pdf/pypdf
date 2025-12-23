@@ -298,3 +298,9 @@ class Font:
             interpretable=interpretable
         )
 
+    @staticmethod
+    def to_dict(font_instance: "Font") -> dict[str, Any]:
+        """Dataclass to dict for json.dumps serialization."""
+        return {
+            k: getattr(font_instance, k) for k in font_instance.__dataclass_fields__
+        }
