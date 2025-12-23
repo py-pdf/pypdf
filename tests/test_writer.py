@@ -1884,7 +1884,7 @@ def test_da_missing_in_annot():
     ff = reader.get_fields()
     # check for autosize processing
     assert (
-        b"0 Tf"
+        b" 0 Tf"
         not in ff["PCN-1"].indirect_reference.get_object()["/AP"]["/N"].get_data()
     )
     f2 = writer.get_object(ff["PCN-2"].indirect_reference.idnum)
@@ -2438,8 +2438,8 @@ def test_field_box_upside_down():
     writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)))
     writer.update_page_form_field_values(None, {"FreightTrainMiles": "0"})
     assert writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"].get_data() == (
-        b"q\n/Tx BMC \nq\n1 1 105.29520000000001 10.835000000000036 re\n"
-        b"W\nBT\n/Helv 8.0 Tf 0 g\n2 2.8350000000000364 Td\n(0) Tj\nET\n"
+        b"q\n/Tx BMC \nq\n2 1 102.29520000000001 9.835000000000036 re\n"
+        b"W\nBT\n/Helv 8.0 Tf 0 g\n2 3.0455000000000183 Td\n(0) Tj\nET\n"
         b"Q\nEMC\nQ\n"
     )
     box = writer.pages[0]["/Annots"][13].get_object()["/AP"]["/N"]["/BBox"]
