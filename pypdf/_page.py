@@ -47,6 +47,7 @@ from typing import (
 from ._cmap import (
     build_char_map,
 )
+from ._font import Font
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
     _layout_mode,
@@ -1828,7 +1829,7 @@ class PageObject(DictionaryObject):
             )
         return extractor.output
 
-    def _layout_mode_fonts(self) -> dict[str, _layout_mode.Font]:
+    def _layout_mode_fonts(self) -> dict[str, Font]:
         """
         Get fonts formatted for "layout" mode text extraction.
 
@@ -1838,7 +1839,7 @@ class PageObject(DictionaryObject):
         """
         # Font retrieval logic adapted from pypdf.PageObject._extract_text()
         objr: Any = self
-        fonts: dict[str, _layout_mode.Font] = {}
+        fonts: dict[str, Font] = {}
         while objr is not None:
             try:
                 resources_dict: Any = objr[PG.RESOURCES]
@@ -1846,17 +1847,7 @@ class PageObject(DictionaryObject):
                 resources_dict = {}
             if "/Font" in resources_dict and self.pdf is not None:
                 for font_name in resources_dict["/Font"]:
-                    *cmap, font_dict_obj = build_char_map(font_name, 200.0, self)
-                    font_dict = {
-                        k: v.get_object()
-                        if isinstance(v, IndirectObject)
-                        else [_v.get_object() for _v in v]
-                        if isinstance(v, ArrayObject)
-                        else v
-                        for k, v in font_dict_obj.items()
-                    }
-                    # mypy really sucks at unpacking
-                    fonts[font_name] = _layout_mode.Font(*cmap, font_dict)  # type: ignore[call-arg,arg-type]
+                    fonts[font_name] = Font.from_font_resource(resources_dict["/Font"][font_name])
             try:
                 objr = objr["/Parent"].get_object()
             except KeyError:
