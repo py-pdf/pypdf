@@ -579,7 +579,6 @@ def test_embedded_file__order():
 
 
 def test_merge_page_with_annotation():
-    # added and adapted from issue #3467
     writer = PdfWriter()
     writer2 = PdfWriter()
     writer.add_blank_page(100, 100)
