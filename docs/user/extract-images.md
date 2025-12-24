@@ -26,7 +26,7 @@ for i, image_file_object in enumerate(page.images):
     image_file_object.image.save(file_name)
 ```
 
-# Other images
+## Other images
 
 Some other objects can contain images, such as stamp annotations.
 
@@ -43,4 +43,25 @@ im = (
 )
 
 im.save("out-annotation-image.png")
+```
+
+## Error handling
+
+Iterating over `page.images` directly will raise an exception on the first issue.
+If you expect some more or less broken PDF files, but still want to retrieve as many images as possible,
+consider making this a multistep process:
+
+```{testcode}
+from pypdf import PdfReader
+
+reader = PdfReader("example.pdf")
+
+for page in reader.pages:
+    for name in page.images.keys():
+        try:
+            # Try to retrieve actual image.
+            image = page.images[name]
+        except Exception as exception:
+            # Handle exceptions.
+            pass
 ```

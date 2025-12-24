@@ -43,7 +43,6 @@ import subprocess
 import zlib
 from base64 import a85decode
 from dataclasses import dataclass
-from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Optional, Union, cast
@@ -70,8 +69,10 @@ from .generic import (
     is_null_or_none,
 )
 
+JBIG2_MAX_OUTPUT_LENGTH = 75_000_000
+LZW_MAX_OUTPUT_LENGTH = 75_000_000
 ZLIB_MAX_OUTPUT_LENGTH = 75_000_000
-LZW_MAX_OUTPUT_LENGTH = 1_000_000_000
+
 
 
 def _decompress_with_limit(data: bytes) -> bytes:
@@ -131,6 +132,7 @@ def decompress(data: bytes) -> bytes:
         result_str = b""
         remaining_limit = ZLIB_MAX_OUTPUT_LENGTH
         data_single_bytes = [data[i : i + 1] for i in range(len(data))]
+        known_errors = set()
         for index, b in enumerate(data_single_bytes):
             try:
                 decompressed = decompressor.decompress(b, max_length=remaining_limit)
@@ -140,8 +142,12 @@ def decompress(data: bytes) -> bytes:
                     raise LimitReachedError(
                         f"Limit reached while decompressing. {len(data_single_bytes) - index} bytes remaining."
                     )
-            except zlib.error:
-                pass
+            except zlib.error as error:
+                error_str = str(error)
+                if error_str in known_errors:
+                    continue
+                logger_warning(error_str, __name__)
+                known_errors.add(error_str)
         return result_str
 
 
@@ -409,12 +415,17 @@ class RunLengthDecode:
                     # We should first check, if we have an inner stream from a multi-encoded
                     # stream with a faulty trailing newline that we can decode properly.
                     # We will just ignore the last byte and raise a warning ...
-                    if (index == data_length - 1) and (data[index : index+1] == b"\n"):
+                    if (index == data_length - 1) and (data[index : index + 1] == b"\n"):
                         logger_warning(
                             "Found trailing newline in stream data, check if output is OK", __name__
                         )
                         break
-                    raise PdfStreamError("Early EOD in RunLengthDecode")
+                    # Raising an exception here breaks all image extraction for this file, which might
+                    # not be desirable. For this reason, indicate that the output is most likely wrong,
+                    # as processing stopped after the first EOD marker. See issue #3517.
+                    logger_warning(
+                        "Early EOD in RunLengthDecode, check if output is OK", __name__
+                    )
                 break
             if length < 128:
                 length += 1
@@ -703,12 +714,23 @@ class JBIG2Decode:
             environment = os.environ.copy()
             environment["LC_ALL"] = "C"
             result = subprocess.run(  # noqa: S603
-                [JBIG2DEC_BINARY, "--embedded", "--format", "png", "--output", "-", *paths],
+                [
+                    JBIG2DEC_BINARY,
+                    "--embedded",
+                    "--format", "png",
+                    "--output", "-",
+                    "-M", str(JBIG2_MAX_OUTPUT_LENGTH),
+                    *paths
+                ],
                 capture_output=True,
                 env=environment,
             )
-            if b"unrecognized option '--embedded'" in result.stderr:
-                raise DependencyError("jbig2dec>=0.15 is required.")
+            if b"unrecognized option '--embedded'" in result.stderr or b"unrecognized option '-M'" in result.stderr:
+                raise DependencyError("jbig2dec>=0.19 is required.")
+            if b"FATAL ERROR failed to allocate image data buffer" in result.stderr:
+                raise LimitReachedError(
+                    f"Memory limit reached while reading JBIG2 data:\n{result.stderr.decode('utf-8')}"
+                )
             if result.stderr:
                 for line in result.stderr.decode("utf-8").splitlines():
                     logger_warning(line, __name__)
@@ -728,7 +750,7 @@ class JBIG2Decode:
         version = result.stdout.split(" ", maxsplit=1)[1]
 
         from ._utils import Version  # noqa: PLC0415
-        return Version(version) >= Version("0.15")
+        return Version(version) >= Version("0.19")
 
 
 def decode_stream_data(stream: Any) -> bytes:
@@ -791,195 +813,3 @@ def decode_stream_data(stream: Any) -> bytes:
         else:
             raise NotImplementedError(f"Unsupported filter {filter_name}")
     return data
-
-
-def _xobj_to_image(
-        x_object: dict[str, Any],
-        pillow_parameters: Union[dict[str, Any], None] = None
-) -> tuple[Optional[str], bytes, Any]:
-    """
-    Users need to have the pillow package installed.
-
-    It's unclear if pypdf will keep this function here, hence it's private.
-    It might get removed at any point.
-
-    Args:
-        x_object:
-        pillow_parameters: parameters provided to Pillow Image.save() method,
-            cf. <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.save>
-
-    Returns:
-        Tuple[file extension, bytes, PIL.Image.Image]
-
-    """
-    from ._xobj_image_helpers import (  # noqa: PLC0415
-        Image,
-        UnidentifiedImageError,
-        _apply_decode,
-        _extended_image_frombytes,
-        _get_mode_and_invert_color,
-        _handle_flate,
-        _handle_jpx,
-    )
-
-    def _apply_alpha(
-        img: Image.Image,
-        x_object: dict[str, Any],
-        obj_as_text: str,
-        image_format: str,
-        extension: str,
-    ) -> tuple[Image.Image, str, str]:
-        alpha = None
-        if IA.S_MASK in x_object:  # add alpha channel
-            alpha = _xobj_to_image(x_object[IA.S_MASK])[2]
-            if img.size != alpha.size:
-                logger_warning(
-                    f"image and mask size not matching: {obj_as_text}", __name__
-                )
-            else:
-                # TODO: implement mask
-                if alpha.mode != "L":
-                    alpha = alpha.convert("L")
-                if img.mode == "P":
-                    img = img.convert("RGB")
-                elif img.mode == "1":
-                    img = img.convert("L")
-                img.putalpha(alpha)
-            if "JPEG" in image_format:
-                image_format = "JPEG2000"
-                extension = ".jp2"
-            else:
-                image_format = "PNG"
-                extension = ".png"
-        return img, extension, image_format
-
-    # For error reporting
-    obj_as_text = (
-        x_object.indirect_reference.__repr__()
-        if x_object is None  # pragma: no cover
-        else x_object.__repr__()
-    )
-
-    # Get size and data
-    size = (cast(int, x_object[IA.WIDTH]), cast(int, x_object[IA.HEIGHT]))
-    data = x_object.get_data()  # type: ignore
-    if isinstance(data, str):  # pragma: no cover
-        data = data.encode()
-    if len(data) % (size[0] * size[1]) == 1 and data[-1] == 0x0A:  # ie. '\n'
-        data = data[:-1]
-
-    # Get color properties
-    colors = x_object.get("/Colors", 1)
-    color_space: Any = x_object.get("/ColorSpace", NullObject()).get_object()
-    if isinstance(color_space, list) and len(color_space) == 1:
-        color_space = color_space[0].get_object()
-
-    mode, invert_color = _get_mode_and_invert_color(x_object, colors, color_space)
-
-    # Get filters
-    filters = x_object.get(SA.FILTER, NullObject()).get_object()
-    lfilters = filters[-1] if isinstance(filters, list) else filters
-    decode_parms = x_object.get(SA.DECODE_PARMS, None)
-    if decode_parms and isinstance(decode_parms, (tuple, list)):
-        decode_parms = decode_parms[0]
-    else:
-        decode_parms = {}
-    if not isinstance(decode_parms, dict):
-        decode_parms = {}
-
-    extension = None
-    if lfilters in (FT.FLATE_DECODE, FT.RUN_LENGTH_DECODE):
-        img, image_format, extension, _ = _handle_flate(
-            size,
-            data,
-            mode,
-            color_space,
-            colors,
-            obj_as_text,
-        )
-    elif lfilters in (FT.LZW_DECODE, FT.ASCII_85_DECODE):
-        # I'm not sure if the following logic is correct.
-        # There might not be any relationship between the filters and the
-        # extension
-        if lfilters == FT.LZW_DECODE:
-            image_format = "TIFF"
-            extension = ".tiff"  # mime_type = "image/tiff"
-        else:
-            image_format = "PNG"
-            extension = ".png"  # mime_type = "image/png"
-        try:
-            img = Image.open(BytesIO(data), formats=("TIFF", "PNG"))
-        except UnidentifiedImageError:
-            img = _extended_image_frombytes(mode, size, data)
-    elif lfilters == FT.DCT_DECODE:
-        img, image_format, extension = Image.open(BytesIO(data)), "JPEG", ".jpg"
-        # invert_color kept unchanged
-    elif lfilters == FT.JPX_DECODE:
-        img, image_format, extension, invert_color = _handle_jpx(
-            size, data, mode, color_space, colors
-        )
-    elif lfilters == FT.CCITT_FAX_DECODE:
-        img, image_format, extension, invert_color = (
-            Image.open(BytesIO(data), formats=("TIFF",)),
-            "TIFF",
-            ".tiff",
-            False,
-        )
-    elif lfilters == FT.JBIG2_DECODE:
-        img, image_format, extension, invert_color = (
-            Image.open(BytesIO(data), formats=("PNG",)),
-            "PNG",
-            ".png",
-            False,
-        )
-    elif mode == "CMYK":
-        img, image_format, extension, invert_color = (
-            _extended_image_frombytes(mode, size, data),
-            "TIFF",
-            ".tif",
-            False,
-        )
-    elif mode == "":
-        raise PdfReadError(f"ColorSpace field not found in {x_object}")
-    else:
-        img, image_format, extension, invert_color = (
-            _extended_image_frombytes(mode, size, data),
-            "PNG",
-            ".png",
-            False,
-        )
-
-    img = _apply_decode(img, x_object, lfilters, color_space, invert_color)
-    img, extension, image_format = _apply_alpha(
-        img, x_object, obj_as_text, image_format, extension
-    )
-
-    if pillow_parameters is None:
-        pillow_parameters = {}
-    # Preserve JPEG image quality - see issue #3515.
-    if image_format == "JPEG":
-        # This prevents: Cannot use 'keep' when original image is not a JPEG:
-        # "JPEG" is the value of PIL.JpegImagePlugin.JpegImageFile.format
-        img.format = "JPEG"  # type: ignore[misc]
-        if "quality" not in pillow_parameters:
-            pillow_parameters["quality"] = "keep"
-
-    # Save image to bytes
-    img_byte_arr = BytesIO()
-    try:
-        img.save(img_byte_arr, format=image_format, **pillow_parameters)
-    except OSError:  # pragma: no cover  # covered with pillow 10.3
-        # in case of we convert to RGBA and then to PNG
-        img1 = img.convert("RGBA")
-        image_format = "PNG"
-        extension = ".png"
-        img_byte_arr = BytesIO()
-        img1.save(img_byte_arr, format=image_format)
-    data = img_byte_arr.getvalue()
-
-    try:  # temporary try/except until other fixes of images
-        img = Image.open(BytesIO(data))
-    except Exception as exception:
-        logger_warning(f"Failed loading image: {exception}", __name__)
-        img = None  # type: ignore
-    return extension, data, img

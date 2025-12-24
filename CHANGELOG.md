@@ -1,5 +1,63 @@
 # CHANGELOG
 
+## Version 6.5.0, 2025-12-21
+
+### New Features (ENH)
+- Limit jbig2dec memory usage (#3576)
+- FontDescriptor: Initiate from embedded font resource (#3551)
+
+### Robustness (ROB)
+- Allow fallback to PBM files for jbig2dec without PNG support (#3567)
+- Use warning instead of error for early EOD for RunLengthDecode (#3548)
+
+### Developer Experience (DEV)
+- Test with macOS as well (#3401)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.2...6.5.0)
+
+## Version 6.4.2, 2025-12-14
+
+### Bug Fixes (BUG)
+- Fix KeyError when flattening form field without /Font in resources (#3554)
+
+### Robustness (ROB)
+- Allow deleting non-existent annotations (#3559)
+
+### Documentation (DOC)
+- Fix level of attachment heading (#3560)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.1...6.4.2)
+
+## Version 6.4.1, 2025-12-07
+
+### Performance Improvements (PI)
+- Optimize loop for layout mode text extraction (#3543)
+
+### Bug Fixes (BUG)
+- Do not fail on choice field without /Opt key (#3540)
+
+### Documentation (DOC)
+- Document possible issues with merge_page and clipping (#3546)
+- Add some notes about library security (#3545)
+
+### Maintenance (MAINT)
+- Use CORE_FONT_METRICS for widths where possible (#3526)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.4.0...6.4.1)
+
+## Version 6.4.0, 2025-11-23
+
+### Security (SEC)
+- Reduce default limit for LZW decoding
+
+### New Features (ENH)
+- Parse and format comb fields in text widget annotations (#3519)
+
+### Robustness (ROB)
+- Silently ignore Adobe Ascii85 whitespace for suffix detection (#3528)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.3.0...6.4.0)
+
 ## Version 6.3.0, 2025-11-16
 
 ### New Features (ENH)
