@@ -302,6 +302,10 @@ class Font:
             font_descriptor = FontDescriptor()  # Save some overhead if font is not interpretable
         character_widths = font_descriptor.character_widths
 
+        space_width = font_descriptor.character_widths.get(" ")
+        if not space_width or space_width == 0:
+            space_width = font_descriptor.character_widths["default"] // 2
+
         return cls(
             name=name,
             sub_type=sub_type,
@@ -309,6 +313,7 @@ class Font:
             font_descriptor=font_descriptor,
             character_map=character_map,
             character_widths=character_widths,
+            space_width=space_width,
             interpretable=interpretable
         )
 
