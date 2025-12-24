@@ -499,8 +499,10 @@ class PageObject(DictionaryObject):
         # __new__ used here to make sure instance.pdf attribute
         # is set. related to #3467.
         instance = super().__new__(cls, *args, **kwargs)
-        if isinstance(instance, cls):
-            cls.__init__(instance, *args, **kwargs)
+
+        instance.pdf = None
+        instance.inline_images = None
+        instance.indirect_reference = None
 
         return instance
 
