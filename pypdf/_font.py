@@ -161,6 +161,20 @@ class FontDescriptor:
                     f"Invalid font width definition. Next elements: {w_entry}, {w_next_entry}, {_w[idx + 2]}"
                 )  # pragma: no cover
 
+    @staticmethod
+    def _add_default_width(current_widths: dict[str, int]) -> None:
+        if not current_widths:
+            current_widths["default"] = 400
+        if "default" not in current_widths:
+            if " " in current_widths and current_widths[" "] != 0:
+                # Setting default to twice the space width
+                current_widths["default"] = int(2 * current_widths[" "])
+            else:
+                # Using a true average of existing glyph widths
+                # will consider width of char as avg(width)
+                valid_widths = [w for w in current_widths.values() if w > 0]
+                current_widths["default"] = sum(valid_widths) // len(valid_widths) if valid_widths else 400
+
     @classmethod
     def from_font_resource(
         cls,
@@ -184,14 +198,19 @@ class FontDescriptor:
                     pdf_font_dict, char_map, encoding, font_kwargs["character_widths"]
                 )
                 font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject())
+                if "/MissingWidth" in font_descriptor_obj:
+                    font_kwargs["character_widths"]["default"] = font_descriptor_obj["/MissingWidth"].get_object()
+                else:
+                    cls._add_default_width(font_kwargs["character_widths"])
                 # Collect font descriptor
                 font_kwargs = cls._parse_font_descriptor(
                     font_kwargs, pdf_font_dict.get("/FontDescriptor", DictionaryObject())
                 )
                 return cls(**font_kwargs)
-
             if font_name in CORE_FONT_METRICS:
-                return CORE_FONT_METRICS[font_name]
+                font_descriptor = CORE_FONT_METRICS[font_name]
+                cls._add_default_width(font_descriptor.character_widths)
+                return font_descriptor
 
         # Composite font or CID font
         # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
@@ -208,6 +227,10 @@ class FontDescriptor:
                 cls._collect_cid_character_widths(
                     d_font, char_map, font_kwargs["character_widths"]
                 )
+                if "/DW" in d_font:
+                    font_kwargs["character_widths"]["default"] = d_font["/DW"].get_object()
+                else:
+                    cls._add_default_width(font_kwargs["character_widths"])
                 # Collect font descriptor
                 font_kwargs = cls._parse_font_descriptor(
                     font_kwargs, d_font.get("/FontDescriptor", DictionaryObject())
