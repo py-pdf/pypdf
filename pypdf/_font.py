@@ -59,6 +59,38 @@ class FontDescriptor:
         return font_kwargs
 
     @staticmethod
+    def _collect_tt_t1_character_widths(
+        pdf_font_dict: DictionaryObject,
+        char_map: dict[Any, Any],
+        encoding: Union[str, dict[int, str]],
+        current_widths: dict[str, int]
+    ) -> None:
+        """Parses a TrueType or Type1 font's /Widths array from a font dictionary and updates character widths"""
+        widths_array = cast(ArrayObject, pdf_font_dict["/Widths"])
+        first_char = pdf_font_dict.get("/FirstChar", 0)
+        if isinstance(encoding, str):
+            # We map the character code directly to the character
+            # using the encoding
+            for idx, width in enumerate(widths_array):
+                # Often "idx == 0" will denote the .notdef character, but we add it anyway
+                char_code = idx + first_char  # This is a raw code
+                try:
+                    char = bytes([char_code]).decode(encoding)
+                except Exception:
+                    char = chr(char_code)
+                if encoding != "charmap":
+                    unicode_char = char_map.get(char)  # Get the actual character from the char_map
+                else:
+                    unicode_char = chr(char_code)  # Get the actual character as raw code
+                if unicode_char:
+                    current_widths[unicode_char] = width
+        else:  # This means that encoding is a dict
+            current_widths.update({
+                encoding.get(idx + first_char, chr(idx + first_char)): width
+                for idx, width in enumerate(widths_array)
+            })
+
+    @staticmethod
     def _collect_cid_character_widths(
         d_font: DictionaryObject, char_map: dict[Any, Any], current_widths: dict[str, int]
     ) -> None:
@@ -145,32 +177,12 @@ class FontDescriptor:
         # Deal with fonts by type; Type1, TrueType and certain Type3
         if pdf_font_dict.get("/Subtype") in ("/Type1", "/MMType1", "/TrueType", "/Type3"):
             if "/FontDescriptor" in pdf_font_dict:
-                # Collect character widths - TrueType and Type1 fonts
-                # have a /Widths array mapping character codes to widths
                 if not (encoding and char_map):
                     encoding, char_map = get_encoding(pdf_font_dict)
-                widths_array = cast(ArrayObject, pdf_font_dict["/Widths"])
-                first_char = pdf_font_dict.get("/FirstChar", 0)
-                if isinstance(encoding, str):
-                    # We map the character code directly to the character
-                    # using the encoding
-                    for idx, width in enumerate(widths_array):
-                        # Often "idx == 0" will denote the .notdef character, but we add it anyway
-                        char_code = idx + first_char  # This is a raw code
-                        try:
-                            char = bytes([char_code]).decode(encoding)
-                        except Exception:
-                            char = chr(char_code)
-                        if encoding != "charmap":
-                            unicode_char = char_map.get(char)  # Get the actual character from the char_map
-                        else:
-                            unicode_char = chr(char_code)  # Get the actual character as raw code
-                        font_kwargs["character_widths"][unicode_char] = width
-                elif isinstance(encoding, dict):
-                    font_kwargs["character_widths"] = {
-                        encoding.get(idx + first_char, chr(idx + first_char)): width
-                        for idx, width in enumerate(widths_array)
-                    }
+                # Collect character widths
+                cls._collect_tt_t1_character_widths(
+                    pdf_font_dict, char_map, encoding, font_kwargs["character_widths"]
+                )
                 font_descriptor_obj = pdf_font_dict.get("/FontDescriptor", DictionaryObject())
                 # Collect font descriptor
                 font_kwargs = cls._parse_font_descriptor(
