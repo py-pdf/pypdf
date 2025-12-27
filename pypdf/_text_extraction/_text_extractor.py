@@ -31,6 +31,7 @@ import math
 from typing import Any, Callable, Optional, Union
 
 from .._cmap import build_font_width_map, compute_font_width, get_actual_str_key
+from .._font import Font
 from ..generic import DictionaryObject, TextStringObject
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
 
@@ -91,9 +92,16 @@ class TextExtraction:
             "NotInitialized",
             None,
         )  # (encoding, CMAP, font resource name, font)
+        self.font = Font(
+            name = "NotInitialized",
+            sub_type="Unknown",
+            encoding="charmap",
+            font_descriptor=FontDescriptor(),
+            )
         self.orientations: tuple[int, ...] = (0, 90, 180, 270)
         self.visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None
         self.cmaps: dict[str, tuple[str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject]] = {}
+        self.fonts: dict[str, Font] = {}
 
         self.operation_handlers = {
             b"BT": self._handle_bt,
@@ -118,11 +126,13 @@ class TextExtraction:
         cmaps: Optional[
             dict[str, tuple[str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject]]
         ] = None,
+        fonts: Optional[dict[str, Font]] = None
     ) -> None:
         """Initialize the extractor with extraction parameters."""
         self.orientations = orientations
         self.visitor_text = visitor_text
         self.cmaps = cmaps or {}
+        self.fonts = fonts or {}
 
         # Reset state
         self.text = ""

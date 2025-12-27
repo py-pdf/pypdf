@@ -1698,6 +1698,7 @@ class PageObject(DictionaryObject):
                 str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject
             ],
         ] = {}
+        fonts: dict[str, Font] = {}
 
         try:
             objr = obj
@@ -1712,10 +1713,16 @@ class PageObject(DictionaryObject):
             # file as not damaged, no need to check for TJ or Tj
             return ""
 
-        if not is_null_or_none(resources_dict) and "/Font" in resources_dict and (font := resources_dict["/Font"]):
-            for f in cast(DictionaryObject, font):
+        if (
+            not is_null_or_none(resources_dict)
+            and "/Font" in resources_dict
+            and (font_resources_dict := cast(DictionaryObject, resources_dict["/Font"]))
+        ):
+            for font_resource in font_resources_dict:
                 try:
-                    cmaps[f] = build_char_map(f, space_width, obj)
+                    cmaps[font_resource] = build_char_map(font_resource, space_width, obj)
+                    font_resource_object = cast(DictionaryObject, font_resources_dict[font_resource].get_object())
+                    fonts[font_resource] = Font.from_font_resource(font_resource_object)
                 except TypeError:
                     pass
 
@@ -1732,7 +1739,7 @@ class PageObject(DictionaryObject):
         # them to the text here would be gibberish.
 
         # Initialize the extractor with the necessary parameters
-        extractor.initialize_extraction(orientations, visitor_text, cmaps)
+        extractor.initialize_extraction(orientations, visitor_text, cmaps, fonts)
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
