@@ -191,10 +191,7 @@ def print_outline(
             # Recursively handle the nested list of children
             print_outline(item, reader, level + 1)
         else:
-            try:
-                page_number = reader.get_destination_page_number(item)
-            except Exception:
-                page_number = None
+            page_number = reader.get_destination_page_number(item)
 
             indent = "  " * level
 
