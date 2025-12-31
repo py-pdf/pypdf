@@ -16,6 +16,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
+from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
@@ -1612,3 +1613,37 @@ def test_replace_contents_on_reader__indirect_reference():
     lhs = reader.get_page(1)
     lhs.merge_page(PageObject.create_blank_page(reader))
     writer.add_page(lhs)
+
+
+def test_merge_page__coverage():
+    # Test with some otherwise untested cases.
+
+    # Own resources are missing.
+    page = PageObject.create_blank_page(width=10, height=10)
+    del page[PageAttributes.RESOURCES]
+    page.merge_page(PageObject.create_blank_page(width=10, height=10))
+
+    # Other resources are missing.
+    page = PageObject.create_blank_page(width=10, height=10)
+    del page[PageAttributes.RESOURCES]
+    PageObject.create_blank_page(width=10, height=10).merge_page(page)
+
+    # No expansion.
+    page = PageObject.create_blank_page(width=10, height=10)
+    page.merge_page(PageObject.create_blank_page(width=20, height=30))
+    assert page.mediabox == RectangleObject((0.0, 0.0, 10, 10))
+
+    # With expansion.
+    page = PageObject.create_blank_page(width=10, height=10)
+    page.merge_page(PageObject.create_blank_page(width=20, height=5), expand=True)
+    assert page.mediabox == RectangleObject((0.0, 0.0, 20, 10))
+
+    # With transformation.
+    page = PageObject.create_blank_page(width=10, height=10)
+    transformation = Transformation().rotate(90)
+    page.merge_transformed_page(PageObject.create_blank_page(width=20, height=5), ctm=transformation, expand=True)
+    assert page.mediabox == RectangleObject((-5, 0.0, 10, 20))
+
+    # Not over.
+    page = PageObject.create_blank_page(width=10, height=10)
+    page.merge_page(PageObject.create_blank_page(width=20, height=30), over=False)
