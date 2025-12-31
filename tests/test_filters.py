@@ -1,8 +1,8 @@
 """Test the pypdf.filters module."""
 import os
-import shutil
 import string
 import subprocess
+import sys
 import zlib
 from io import BytesIO
 from itertools import product as cartesian_product
@@ -307,7 +307,7 @@ for page in reader.pages:
     except KeyError:
         env["PYTHONPATH"] = "."
     result = subprocess.run(  # noqa: S603  # We have the control here.
-        [shutil.which("python"), source_file],
+        [sys.executable, source_file],
         capture_output=True,
         env=env,
     )
