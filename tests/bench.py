@@ -32,7 +32,7 @@ def page_ops(pdf_path, password):
         reader.decrypt(password)
 
     page = reader.pages[0]
-    writer.add_page(page)
+    page = writer.add_page(page)
 
     op = Transformation().rotate(90).scale(1.2)
     page.add_transformation(op)
@@ -106,7 +106,7 @@ def merge():
         # Check if outline is correct
         reader = PdfReader(write_path)
         assert [
-            el.title for el in reader._get_outline() if isinstance(el, Destination)
+            el.title for el in reader.outline if isinstance(el, Destination)
         ] == [
             "Foo",
             "Bar",
