@@ -2,7 +2,7 @@ window.BENCHMARK_DATA = {
   "lastUpdate": 1767175349951,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
-    "Python Benchmark with pytest-benchmark": [
+    "CPython Benchmark": [
       {
         "commit": {
           "author": {
@@ -86665,9 +86665,7 @@ window.BENCHMARK_DATA = {
             "extra": "mean: 635.0036485999908 msec\nrounds: 5"
           }
         ]
-      }
-    ],
-    "CPython Benchmark": [
+      },
       {
         "commit": {
           "author": {
