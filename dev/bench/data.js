@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1766502892939,
+  "lastUpdate": 1767169407998,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -86597,6 +86597,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004510542233222276",
             "extra": "mean: 673.1577797999876 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "08e951dea814420003d46d2f40a484b065e3ad76",
+          "message": "DEP: Block common page content modifications when assigned to reader (#3582)\n\nCloses #2260.\n\nThis would previously lead to pages being written uncompressed, although\nthe corresponding dictionary header declaring the filter to be\nFlateDecode. As a PdfReader is considered to be read-only, this change\nseems like the most suitable one for fixing this.\n\nWith this change, it might be required to change own code previously\nrelying on the more or less broken functionality, which is especially\nbad for shadow processing.\n\nPossible approaches to fix user code:\n\n  * Use `PdfWriter(clone_from=...)` to add all pages to the writer.\n  * Use the return value of `writer.add_page(page_from_reader)` which\n    correctly belongs to the writer to apply possible modifications\n    after adding the page itself (instead of before adding it).",
+          "timestamp": "2025-12-31T09:20:57+01:00",
+          "tree_id": "7781cd1b9e7b2c424435938c420cf16fdbde56e5",
+          "url": "https://github.com/py-pdf/pypdf/commit/08e951dea814420003d46d2f40a484b065e3ad76"
+        },
+        "date": 1767169403366,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.5114582175386735,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0050420852090126275",
+            "extra": "mean: 284.7819731999948 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.12376552772754,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0043822781968636156",
+            "extra": "mean: 49.69248914285697 msec\nrounds: 21"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3262229865144856,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014990851031978796",
+            "extra": "mean: 3.0653879136 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.146903733121118,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006005618539046771",
+            "extra": "mean: 55.10581941176189 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.10049497193521985,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01968882454628065",
+            "extra": "mean: 9.950746597000006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.574794101112216,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007507266984794469",
+            "extra": "mean: 635.0036485999908 msec\nrounds: 5"
           }
         ]
       }
