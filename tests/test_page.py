@@ -2,9 +2,11 @@
 import json
 import logging
 import math
+import os
 import re
 import shutil
 import subprocess
+import sys
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -1639,11 +1641,52 @@ def test_merge_page__coverage():
     assert page.mediabox == RectangleObject((0.0, 0.0, 20, 10))
 
     # With transformation.
-    page = PageObject.create_blank_page(width=10, height=10)
+    path = RESOURCE_ROOT / "crazyones.pdf"
+    page = PdfWriter(clone_from=path).pages[0]
+    page.indirect_reference = None
+    page2 = PageObject.create_blank_page(width=20, height=5)
     transformation = Transformation().rotate(90)
-    page.merge_transformed_page(PageObject.create_blank_page(width=20, height=5), ctm=transformation, expand=True)
-    assert page.mediabox == RectangleObject((-5, 0.0, 10, 20))
+    page2.merge_transformed_page(page, ctm=transformation, expand=True)
+    assert page2.mediabox == RectangleObject((-792, 0.0, 20, 612))
+
+    page2 = PageObject.create_blank_page(width=20, height=5)
+    page2.merge_transformed_page(page, ctm=transformation.ctm, expand=True)
+    assert page2.mediabox == RectangleObject((-792, 0.0, 20, 612))
 
     # Not over.
-    page = PageObject.create_blank_page(width=10, height=10)
-    page.merge_page(PageObject.create_blank_page(width=20, height=30), over=False)
+    page = PdfWriter(clone_from=path).pages[0]
+    page.indirect_reference = None
+    page2 = PageObject.create_blank_page(width=20, height=5)
+    page2.merge_page(page, over=False)
+
+
+@pytest.mark.enable_socket
+def test_importing_without_pillow(tmp_path):
+    env = os.environ.copy()
+    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
+
+    source_file = tmp_path / "script.py"
+    source_file.write_text(
+        """
+import sys
+sys.modules["PIL"] = None
+
+from pypdf import PageObject
+from pypdf._page import pil_not_imported
+
+print(pil_not_imported)
+"""
+    )
+
+    try:
+        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
+    except KeyError:
+        env["PYTHONPATH"] = "."
+    result = subprocess.run(  # noqa: S603  # We have the control here.
+        [sys.executable, source_file],
+        capture_output=True,
+        env=env,
+    )
+    assert result.returncode == 0
+    assert result.stdout == b"True\n"
+    assert result.stderr == b""
