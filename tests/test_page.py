@@ -1596,3 +1596,19 @@ def test_replace_contents_on_reader():
     )
     with pytest.warns(DeprecationWarning, match=rf"^{re.escape(expected_message)}$"):
         page.replace_contents(content_stream)
+
+
+@pytest.mark.enable_socket
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_replace_contents_on_reader__indirect_reference():
+    url = "https://github.com/user-attachments/files/24195534/test.pdf"
+    name = "issue3568.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+
+    lhs = reader.get_page(3)
+    writer.add_page(lhs)
+
+    lhs = reader.get_page(1)
+    lhs.merge_page(PageObject.create_blank_page(reader))
+    writer.add_page(lhs)
