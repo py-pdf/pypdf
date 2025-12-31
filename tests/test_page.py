@@ -1688,5 +1688,5 @@ print(pil_not_imported)
         env=env,
     )
     assert result.returncode == 0
-    assert result.stdout == b"True\n".replace(b"\r\n", b"\n")
+    assert result.stdout.replace(b"\r\n", b"\n") == b"True\n"
     assert result.stderr == b""
