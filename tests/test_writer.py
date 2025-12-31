@@ -1804,8 +1804,8 @@ def test_watermark_rendering(tmp_path):
     name = "srcwatermark.pdf"
     page = PdfReader(BytesIO(get_data_from_url(url, name=name))).pages[0]
     writer = PdfWriter()
+    page = writer.add_page(page)
     page.merge_page(watermark, over=False)
-    writer.add_page(page)
 
     target_png_path = tmp_path / "target.png"
     url = "https://github.com/py-pdf/pypdf/assets/96178532/d5c72d0e-7047-4504-bbf6-bc591c80d7c0"
@@ -1846,8 +1846,8 @@ def test_watermarking_reportlab_rendering(tmp_path):
     watermark = PdfReader(watermark_path).pages[0]
 
     writer = PdfWriter()
+    base_page = writer.add_page(base_page)
     base_page.merge_page(watermark)
-    writer.add_page(base_page)
 
     target_png_path = RESOURCE_ROOT / "test_watermarking_reportlab_rendering.png"
     pdf_path = tmp_path / "out.pdf"

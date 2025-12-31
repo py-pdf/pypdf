@@ -29,6 +29,7 @@
 
 import math
 from collections.abc import Iterable, Iterator, Sequence
+from copy import deepcopy
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
@@ -55,6 +56,7 @@ from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
     _human_readable_bytes,
+    deprecate,
     logger_warning,
     matrix_multiply,
 )
@@ -999,10 +1001,20 @@ class PageObject(DictionaryObject):
             self[NameObject(PG.CONTENTS)] = content
             return
 
+        from pypdf._writer import PdfWriter  # noqa: PLC0415
+        if not isinstance(self.indirect_reference.pdf, PdfWriter):
+            deprecate(
+                "Calling `PageObject.replace_contents()` for pages not assigned to a writer is deprecated "
+                "and will be removed in pypdf 7.0.0. Attach the page to the writer first or use "
+                "`PdfWriter(clone_from=...)` directly. The existing approach has proved being unreliable."
+            )
+
         if isinstance(self.get(PG.CONTENTS, None), ArrayObject):
             for o in self[PG.CONTENTS]:  # type: ignore[attr-defined]
                 try:
-                    self._objects[o.indirect_reference.idnum - 1] = NullObject()  # type: ignore
+                    self.indirect_reference.pdf._objects[
+                        o.indirect_reference.idnum - 1
+                    ] = NullObject()
                 except AttributeError:
                     pass
 
@@ -1086,20 +1098,13 @@ class PageObject(DictionaryObject):
                 return self._merge_page_writer(
                     page2, page2transformation, ctm, over, expand
                 )
-                return None
         except (AssertionError, AttributeError):
             pass
 
         new_resources = DictionaryObject()
         rename = {}
-        try:
-            original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
-        except KeyError:
-            original_resources = DictionaryObject()
-        try:
-            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
-        except KeyError:
-            page2resources = DictionaryObject()
+        original_resources = cast(DictionaryObject, self.get(PG.RESOURCES, DictionaryObject()).get_object())
+        page2resources = cast(DictionaryObject, page2.get(PG.RESOURCES, DictionaryObject()).get_object())
         new_annots = ArrayObject()
 
         for page in (self, page2):
@@ -1238,7 +1243,9 @@ class PageObject(DictionaryObject):
                 trsf = Transformation()
             else:
                 trsf = Transformation(ctm)
-            for a in cast(ArrayObject, page2[PG.ANNOTS]):
+            # Ensure we are working on a copy of the list. Otherwise, if both pages
+            # are the same object, we might run into an infinite loop.
+            for a in cast(ArrayObject, deepcopy(page2[PG.ANNOTS])):
                 a = a.get_object()
                 aa = a.clone(
                     pdf,
@@ -1384,8 +1391,8 @@ class PageObject(DictionaryObject):
             ctm = ctm.ctm
         self._merge_page(
             page2,
-            lambda page2Content: PageObject._add_transformation_matrix(
-                page2Content, page2.pdf, ctm
+            lambda page2_content: PageObject._add_transformation_matrix(
+                page2_content, page2.pdf, ctm
             ),
             ctm,
             over,
