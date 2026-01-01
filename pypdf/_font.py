@@ -208,7 +208,8 @@ class FontDescriptor:
 
                 return font_descriptor
 
-            if "/FontDescriptor" in pdf_font_dict:
+            if "/FontDescriptor" in pdf_font_dict:  # TODO: This does not account for some Type3 fonts;
+                                                    #       see tests/test_cmap.py::test_ascii_charset
                 font_descriptor_resource = pdf_font_dict.get("/FontDescriptor", DictionaryObject()).get_object()
                 font_descriptor_obj = cast(DictionaryObject, font_descriptor_resource)
                 if "/MissingWidth" in font_descriptor_obj:
