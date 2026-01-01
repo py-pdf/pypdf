@@ -519,7 +519,7 @@ def _xobj_to_image(
         )
     elif lfilters == FT.JBIG2_DECODE:
         img, image_format, extension, invert_color = (
-            Image.open(BytesIO(data), formats=("PNG",)),
+            Image.open(BytesIO(data), formats=("PNG", "PPM")),
             "PNG",
             ".png",
             False,
