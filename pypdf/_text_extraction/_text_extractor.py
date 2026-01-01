@@ -30,7 +30,6 @@
 import math
 from typing import Any, Callable, Optional, Union
 
-from .._cmap import build_font_width_map, compute_font_width, get_actual_str_key
 from .._font import Font, FontDescriptor
 from ..generic import DictionaryObject, TextStringObject
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
@@ -171,42 +170,6 @@ class TextExtraction:
                 self.memo_tm = self.tm_matrix.copy()
         except OrientationNotFoundError:
             pass
-
-    def _get_actual_font_widths(
-        self,
-        cmap: tuple[
-            Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-        ],
-        text_operands: str,
-        font_size: float,
-        space_width: float,
-    ) -> tuple[float, float, float]:
-        font_widths: float = 0
-        font_name: str = cmap[2]
-        if font_name not in self._font_width_maps:
-            if cmap[3] is None:
-                font_width_map: dict[Any, float] = {}
-                space_char = " "
-                actual_space_width: float = space_width
-                font_width_map["default"] = actual_space_width * 2
-            else:
-                space_char = get_actual_str_key(" ", cmap[0], cmap[1])
-                font_width_map = build_font_width_map(cmap[3], space_width * 2)
-                actual_space_width = compute_font_width(font_width_map, space_char)
-            if actual_space_width == 0:
-                actual_space_width = space_width
-            self._font_width_maps[font_name] = (font_width_map, space_char, actual_space_width)
-        font_width_map = self._font_width_maps[font_name][0]
-        space_char = self._font_width_maps[font_name][1]
-        actual_space_width = self._font_width_maps[font_name][2]
-
-        if text_operands:
-            for char in text_operands:
-                if char == space_char:
-                    font_widths += actual_space_width
-                    continue
-                font_widths += compute_font_width(font_width_map, char)
-        return (font_widths * font_size, space_width * font_size, font_size)
 
     def _get_actual_text_widths(
         self,
