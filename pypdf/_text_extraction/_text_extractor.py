@@ -204,7 +204,8 @@ class TextExtraction:
         actual_str_size: dict[str, float],
     ) -> tuple[str, bool, dict[str, float]]:
         text_operands, is_str_operands = get_text_operands(
-            operands, cm_matrix, tm_matrix, cmap, orientations)
+            operands, cm_matrix, tm_matrix, font, orientations
+        )
         previous_text = text
         if is_str_operands:
             text += text_operands

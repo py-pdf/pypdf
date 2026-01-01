@@ -7,6 +7,7 @@ Some parts are still in _page.py. In doubt, they will stay there.
 import math
 from typing import Any, Callable, Optional, Union
 
+from .._font import Font
 from ..generic import DictionaryObject, TextStringObject, encode_pdfdocencoding
 
 CUSTOM_RTL_MIN: int = -1
@@ -157,9 +158,7 @@ def get_text_operands(
     operands: list[Union[str, TextStringObject]],
     cm_matrix: list[float],
     tm_matrix: list[float],
-    cmap: tuple[
-        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-    ],
+    font: Font,
     orientations: tuple[int, ...]
 ) -> tuple[str, bool]:
     t: str = ""
@@ -177,20 +176,20 @@ def get_text_operands(
                 if isinstance(operands[0], str)
                 else operands[0]
             )
-            if isinstance(cmap[0], str):
+            if isinstance(font.encoding, str):
                 try:
-                    t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
+                    t = tt.decode(font.encoding, "surrogatepass")  # apply str encoding
                 except Exception:
                     # the data does not match the expectation,
                     # we use the alternative ;
                     # text extraction may not be good
                     t = tt.decode(
-                        "utf-16-be" if cmap[0] == "charmap" else "charmap",
+                        "utf-16-be" if font.encoding == "charmap" else "charmap",
                         "surrogatepass",
                     )  # apply str encoding
             else:  # apply dict encoding
                 t = "".join(
-                    [cmap[0][x] if x in cmap[0] else bytes((x,)).decode() for x in tt]
+                    [font.encoding[x] if x in font.encoding else bytes((x,)).decode() for x in tt]
                 )
     return (t, is_str_operands)
 
