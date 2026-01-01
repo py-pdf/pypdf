@@ -106,7 +106,7 @@ def test_page_add_action(pdf_file_writer):
     page.add_action("close", JavaScript("app.alert('Page closed 1');"))
     page.add_action("close", JavaScript("app.alert('Page closed 2');"))
     expected = {
-        "/O": {
+        "/C": {
             "/Type": "/Action",
             "/Next": {
                 "/Type": "/Action",
