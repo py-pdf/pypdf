@@ -16,7 +16,7 @@ from pypdf import PdfReader, PdfWriter, mult
 from pypdf._font import Font
 from pypdf._text_extraction import set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
-from pypdf.errors import ParseError, PdfReadError
+from pypdf.errors import PdfReadError
 from pypdf.generic import ContentStream
 
 from . import get_data_from_url
@@ -201,7 +201,7 @@ def test_layout_mode_type0_font_widths():
 
 
 @pytest.mark.enable_socket
-def test_layout_mode_indirect_sequence_font_widths():
+def test_layout_mode_indirect_sequence_font_widths(caplog):
     # Cover the situation where the sequence for font widths is an IndirectObject
     # https://github.com/py-pdf/pypdf/pull/2788
     url = "https://github.com/user-attachments/files/16491621/2788_example.pdf"
@@ -211,9 +211,8 @@ def test_layout_mode_indirect_sequence_font_widths():
     url = "https://github.com/user-attachments/files/16491619/2788_example_malformed.pdf"
     name = "2788_example_malformed.pdf"
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    with pytest.raises(ParseError) as exc:
-        reader.pages[0].extract_text(extraction_mode="layout")
-        assert str(exc.value).startswith("Invalid font width definition")
+    reader.pages[0].extract_text(extraction_mode="layout")
+    assert "Invalid font width definition" in caplog.text
 
 
 def dummy_visitor_text(text, ctm, tm, fd, fs):

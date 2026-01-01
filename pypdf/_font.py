@@ -5,7 +5,7 @@ from typing import Any, Optional, Union, cast
 from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject
 
 from ._codecs.adobe_glyphs import adobe_glyphs
-from .errors import ParseError
+from ._utils import logger_warning
 
 
 @dataclass(frozen=True)
@@ -156,11 +156,12 @@ class FontDescriptor:
                 )
                 skip_count = 2
             else:
-                # Note: this doesn't handle the case of out of bounds (reaching the end of the width definitions
-                # while expecting more elements). This raises an IndexError which is sufficient.
-                raise ParseError(
-                    f"Invalid font width definition. Next elements: {w_entry}, {w_next_entry}, {_w[idx + 2]}"
-                )  # pragma: no cover
+                # This handles the case of out of bounds (reaching the end of the width definitions
+                # while expecting more elements).
+                logger_warning(
+                    f"Invalid font width definition. Last element: {w_entry}.",
+                    __name__
+                )
 
     @staticmethod
     def _add_default_width(current_widths: dict[str, int]) -> None:
