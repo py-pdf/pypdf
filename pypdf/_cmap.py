@@ -482,21 +482,6 @@ def compute_space_width(
     return sp_width
 
 
-def compute_font_width(
-    font_width_map: dict[Any, float],
-    char: str
-) -> float:
-    char_width: float = 0.0
-    try:
-        char_width = font_width_map[char]
-    except KeyError:
-        char_width = (
-            font_width_map["default"]
-        )
-
-    return char_width
-
-
 def _type1_alternative(
     ft: DictionaryObject,
     map_dict: dict[Any, Any],
