@@ -208,6 +208,21 @@ class TextExtraction:
                 font_widths += compute_font_width(font_width_map, char)
         return (font_widths * font_size, space_width * font_size, font_size)
 
+    def _get_actual_text_widths(
+        self,
+        font: Font,
+        text: str,
+        font_size: float
+    ) -> tuple[float, float]:
+        font_widths: float = 0
+        if text:
+            for char in text:
+                if char == " ":
+                    font_widths += font.space_width
+                    continue
+                font_widths += font.text_width(char)
+        return (font_widths * font_size, font_size)
+
     def _handle_tj(
         self,
         text: str,
