@@ -147,4 +147,4 @@ def test_page_delete_action(pdf_file_writer):
     }
     assert page[NameObject("/AA")] == expected
     page.delete_action("close")
-    assert page[NameObject("/AA")] is None
+    assert page.get(NameObject("/AA")) is None
