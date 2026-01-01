@@ -54,6 +54,7 @@ class TextExtraction:
             tuple[
                 list[float],
                 tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]],
+                Font,
                 float,
                 float,
                 float,
@@ -255,6 +256,7 @@ class TextExtraction:
             (
                 self.cm_matrix,
                 self.cmap,
+                self.font,
                 self.font_size,
                 self.char_scale,
                 self.space_scale,
@@ -268,6 +270,7 @@ class TextExtraction:
             (
                 self.cm_matrix,
                 self.cmap,
+                self.font,
                 self.font_size,
                 self.char_scale,
                 self.space_scale,
