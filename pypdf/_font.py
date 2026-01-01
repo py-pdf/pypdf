@@ -187,12 +187,6 @@ class FontDescriptor:
 
         return cls(**font_kwargs)
 
-    def text_width(self, text: str) -> float:
-        """Sum of character widths specified in PDF font for the supplied text."""
-        return sum(
-            [self.character_widths.get(char, self.character_widths.get("default", 0)) for char in text], 0.0
-        )
-
 
 @dataclass
 class Font:
@@ -261,3 +255,8 @@ class Font:
             interpretable=interpretable
         )
 
+    def text_width(self, text: str = "") -> float:
+        """Sum of character widths specified in PDF font for the supplied text."""
+        return sum(
+            [self.character_widths.get(char, self.character_widths["default"]) for char in text], 0.0
+        )
