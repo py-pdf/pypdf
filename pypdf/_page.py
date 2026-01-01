@@ -1723,6 +1723,9 @@ class PageObject(DictionaryObject):
                     cmaps[font_resource] = build_char_map(font_resource, space_width, obj)
                     font_resource_object = cast(DictionaryObject, font_resources_dict[font_resource].get_object())
                     fonts[font_resource] = Font.from_font_resource(font_resource_object)
+                    # Override space width, if applicable
+                    if fonts[font_resource].character_widths.get(" ", 0) == 0:
+                        fonts[font_resource].space_width = space_width
                 except TypeError:
                     pass
 

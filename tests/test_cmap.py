@@ -304,7 +304,7 @@ def test_standard_encoding(caplog):
     reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
 
     page = reader.pages[0]
-    assert page.extract_text() == "Lorem ipsum "
+    assert page.extract_text() == "Lorem ipsum"
     assert "Advanced encoding" not in caplog.text
 
 

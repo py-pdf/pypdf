@@ -31,7 +31,7 @@ import math
 from typing import Any, Callable, Optional, Union
 
 from .._cmap import build_font_width_map, compute_font_width, get_actual_str_key
-from .._font import Font
+from .._font import Font, FontDescriptor
 from ..generic import DictionaryObject, TextStringObject
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
 
@@ -59,7 +59,6 @@ class TextExtraction:
                 float,
                 float,
                 float,
-                float,
             ]
         ] = []
 
@@ -76,7 +75,6 @@ class TextExtraction:
         self._space_width: float = 500.0  # will be set correctly at first Tf
         self._actual_str_size: dict[str, float] = {
             "str_widths": 0.0,
-            "space_width": 0.0,
             "str_height": 0.0,
         }  # will be set to string length calculation result
         self.TL = 0.0
@@ -165,7 +163,7 @@ class TextExtraction:
                 self.font_size,
                 self.visitor_text,
                 str_widths,
-                self.compute_str_widths(self._actual_str_size["space_width"]),
+                self.compute_str_widths(self.font_size * self._space_width),
                 self._actual_str_size["str_height"],
             )
             if self.text == "":
@@ -276,7 +274,6 @@ class TextExtraction:
                 self.font_size,
                 self.char_scale,
                 self.space_scale,
-                self._space_width,
                 self.TL,
             )
         )
@@ -290,7 +287,6 @@ class TextExtraction:
                 self.font_size,
                 self.char_scale,
                 self.space_scale,
-                self._space_width,
                 self.TL,
             ) = self.cm_stack.pop()
         except Exception:
@@ -351,7 +347,7 @@ class TextExtraction:
                 operands[0],
                 char_map_tuple[4],
             )
-            self._space_width = char_map_tuple[1]
+            self.font = self.fonts[operands[0]]
         except KeyError:  # font not found
             self.cmap = (
                 unknown_char_map[2],
@@ -359,7 +355,17 @@ class TextExtraction:
                 f"???{operands[0]}",
                 None,
             )
-            self._space_width = unknown_char_map[1]
+            font_descriptor = FontDescriptor()
+            self.font = Font(
+                "Unknown",
+                space_width=250,
+                encoding=dict.fromkeys(range(256), "�"),
+                font_descriptor=font_descriptor,
+                character_map={},
+                character_widths=font_descriptor.character_widths
+            )
+
+        self._space_width = self.font.space_width / 2  # Actually the width of _half_ a space...
         try:
             self.font_size = float(operands[1])
         except Exception:
