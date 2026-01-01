@@ -201,13 +201,14 @@ def get_display_str(
     cmap: tuple[
         Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
     ],
+    font: Font,
     text_operands: str,
     font_size: float,
     rtl_dir: bool,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
 ) -> tuple[str, bool]:
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
-    for x in [cmap[1].get(x, x) for x in text_operands]:
+    for x in [font.character_map.get(x, x) for x in text_operands]:
         # x can be a sequence of bytes ; ex: habibi.pdf
         if len(x) == 1:
             xx = ord(x)

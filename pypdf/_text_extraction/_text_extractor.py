@@ -215,6 +215,7 @@ class TextExtraction:
                 cm_matrix,
                 tm_matrix,  # text matrix
                 cmap,
+                font,
                 text_operands,
                 font_size,
                 rtl_dir,
