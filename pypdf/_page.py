@@ -2176,7 +2176,7 @@ class PageObject(DictionaryObject):
             raise ValueError("Currently the only action type supported is JavaScript")
 
         if NameObject("/AA") not in self:
-            # Additional actions key not present
+            # Additional actions key not present (not any pre-existing actions)
             self[NameObject("/AA")] = DictionaryObject(
                 {trigger_name: action}
             )
@@ -2190,11 +2190,12 @@ class PageObject(DictionaryObject):
         if trigger_name not in additional_actions:
             # Trigger event not present
             additional_actions.update({trigger_name: action})
+            self[NameObject("/AA")] = additional_actions
             return
 
         # Existing same trigger event: find last Next key in action dictionary chain
         prev_action = additional_actions.get(trigger_name)
-        next = NameObject("/Next")
+        next_action = NameObject("/Next")
         while True:
             """
             The action dictionary’s Next entry allows sequences of actions to be
@@ -2222,16 +2223,13 @@ class PageObject(DictionaryObject):
                 prev_action = prev_action[-1]
 
             assert isinstance(prev_action, DictionaryObject)
+            prev_action = prev_action.get(next_action)
 
-            if is_null_or_none(prev_action.get(next)):
+            if is_null_or_none(prev_action):
                 break
 
-            prev_action = prev_action.get(next)
-
-        prev_action.update({next: action})
-        print(prev_action)
+        prev_action.update({next_action: action})
         additional_actions.update({trigger_name: action})
-        print(additional_actions)
 
     def delete_action(self, trigger: Literal["open", "close"]) -> None:
         if trigger not in {"open", "close"}:
