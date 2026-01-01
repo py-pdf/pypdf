@@ -5,7 +5,6 @@ from math import ceil
 from typing import Any, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
-from ._codecs.core_fontmetrics import CORE_FONT_METRICS
 from ._utils import logger_error, logger_warning
 from .generic import (
     ArrayObject,
@@ -376,95 +375,6 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
         ] = map_to
         int_entry.append(int(lst[0], 16))
         lst = lst[2:]
-
-
-def build_font_width_map(
-    ft: DictionaryObject, default_font_width: float
-) -> dict[Any, float]:
-    font_width_map: dict[Any, float] = {}
-    st: int = 0
-    en: int = 0
-    if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
-        # §9.7.4.3 of the 1.7 reference ("Glyph Metrics in CIDFonts")
-        # Widths for a CIDFont are defined using the DW and W entries.
-        # DW2 and W2 are for vertical use. Vertical type is not implemented.
-        ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
-        if "/DW" in ft1:
-            font_width_map["default"] = cast(float, ft1["/DW"].get_object())
-        else:
-            font_name = str(ft["/BaseFont"]).removeprefix("/")
-            if font_name in CORE_FONT_METRICS:
-                # This applies to test_tounicode_is_identity, which has a CID CourierNew font that
-                # apparently does not specify the width of a space.
-                font_width_map["default"] = CORE_FONT_METRICS[font_name].character_widths[" "] * 2
-            else:
-                font_width_map["default"] = default_font_width
-        if "/W" in ft1:
-            w = ft1["/W"].get_object()
-        else:
-            w = []
-        while len(w) > 0:
-            st = w[0] if isinstance(w[0], int) else w[0].get_object()
-            second = w[1].get_object()
-            if isinstance(second, int):
-                # C_first C_last same_W
-                en = second
-                width = w[2].get_object()
-                if not isinstance(width, (int, float)):
-                    logger_warning(f"Expected numeric value for width, got {width}. Ignoring it.", __name__)
-                    w = w[3:]
-                    continue
-                for c_code in range(st, en + 1):
-                    font_width_map[chr(c_code)] = width
-                w = w[3:]
-            elif isinstance(second, list):
-                # Starting_C [W1 W2 ... Wn]
-                c_code = st
-                for ww in second:
-                    width = ww.get_object()
-                    font_width_map[chr(c_code)] = width
-                    c_code += 1
-                w = w[2:]
-            else:
-                logger_warning(
-                    "unknown widths : \n" + (ft1["/W"]).__repr__(),
-                    __name__,
-                )
-                break
-    elif "/Widths" in ft:
-        w = cast(ArrayObject, ft["/Widths"].get_object())
-        if "/FontDescriptor" in ft and "/MissingWidth" in cast(
-            DictionaryObject, ft["/FontDescriptor"]
-        ):
-            font_width_map["default"] = ft["/FontDescriptor"]["/MissingWidth"].get_object()  # type: ignore
-        else:
-            # will consider width of char as avg(width)
-            m = 0
-            cpt = 0
-            for xx in w:
-                xx = xx.get_object()
-                if xx > 0:
-                    m += xx
-                    cpt += 1
-            font_width_map["default"] = m / max(1, cpt)
-        st = cast(int, ft["/FirstChar"])
-        en = cast(int, ft["/LastChar"])
-        for c_code in range(st, en + 1):
-            try:
-                width = w[c_code - st].get_object()
-                font_width_map[chr(c_code)] = width
-            except (IndexError, KeyError):
-                # The PDF structure is invalid. The array is too small
-                # for the specified font width.
-                pass
-    else:
-        font_name = str(ft["/BaseFont"]).removeprefix("/")
-        if font_name in CORE_FONT_METRICS:
-            font_width_map = cast(dict[str, float], CORE_FONT_METRICS[font_name].character_widths)
-            font_width_map["default"] = font_width_map[" "] * 2
-    if is_null_or_none(font_width_map.get("default")):
-        font_width_map["default"] = 0
-    return font_width_map
 
 
 def compute_space_width(
