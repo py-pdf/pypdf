@@ -2223,10 +2223,11 @@ class PageObject(DictionaryObject):
                 prev_action = prev_action[-1]
 
             assert isinstance(prev_action, DictionaryObject)
-            prev_action = prev_action.get(next_action)
 
             if is_null_or_none(prev_action):
                 break
+
+            prev_action = prev_action.get(next_action)
 
         prev_action.update({next_action: action})
         additional_actions.update({trigger_name: action})
