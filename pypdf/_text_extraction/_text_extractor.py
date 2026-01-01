@@ -232,15 +232,16 @@ class TextExtraction:
         cmap: tuple[
             Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
         ],
+        font: Font,
         orientations: tuple[int, ...],
         font_size: float,
         rtl_dir: bool,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
-        space_width: float,
         actual_str_size: dict[str, float],
     ) -> tuple[str, bool, dict[str, float]]:
         text_operands, is_str_operands = get_text_operands(
             operands, cm_matrix, tm_matrix, cmap, orientations)
+        previous_text = text
         if is_str_operands:
             text += text_operands
         else:
@@ -254,8 +255,13 @@ class TextExtraction:
                 rtl_dir,
                 visitor_text,
             )
-        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
-            self._get_actual_font_widths(cmap, text_operands, font_size, space_width))
+        font_widths, actual_str_size["str_height"] = (
+            self._get_actual_text_widths(
+                font,
+                text.replace(previous_text, ""),
+                font_size,
+            )
+        )
         actual_str_size["str_widths"] += font_widths
 
         return text, rtl_dir, actual_str_size
@@ -421,11 +427,11 @@ class TextExtraction:
             self.cm_matrix,
             self.tm_matrix,
             self.cmap,
+            self.font,
             self.orientations,
             self.font_size,
             self.rtl_dir,
             self.visitor_text,
-            self._space_width,
             self._actual_str_size,
         )
         return 0.0  # str_widths will be handled in post-processing
