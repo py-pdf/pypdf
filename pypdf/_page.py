@@ -2194,9 +2194,8 @@ class PageObject(DictionaryObject):
             return
 
         # Existing trigger event: find last action in actions chain (which may or may not have a Next key)
-        prev_action = existing_action = additional_actions.get(trigger_name)
-        next_ = NameObject("/Next")
-        while True:
+        head = current = additional_actions.get(trigger_name)
+        while not is_null_or_none(current.get(NameObject("/Next"))):
             """
             The action dictionary’s Next entry allows sequences of actions to be
             chained together. For example, the effect of clicking a link
@@ -2216,18 +2215,18 @@ class PageObject(DictionaryObject):
             manually terminate a sequence of actions.
             ISO 32000-2:2020
             """
-            assert isinstance(prev_action, (ArrayObject, DictionaryObject))
-            while isinstance(prev_action, ArrayObject):
+
+            if not isinstance(current.get(NameObject("/Next")), (ArrayObject, DictionaryObject, type(None))):
+                raise TypeError("'Next' must be an ArrayObject, DictionaryObject, or None")
+
+            while isinstance(current, ArrayObject):
                 # We have an array of actions: take the last one
-                prev_action = prev_action[-1]
-            assert isinstance(prev_action, DictionaryObject)
+                current = current[-1]
 
-            if is_null_or_none(prev_action.get(next_)):
-                break
-            prev_action = prev_action.get(next_)
+            current = current.get(NameObject("/Next"))
 
-        prev_action.update({next_: action})
-        additional_actions.update({trigger_name: existing_action})
+        current[NameObject("/Next")] = action
+        additional_actions.update({trigger_name: head})
         self[NameObject("/AA")] = additional_actions
 
     def delete_action(self, trigger: Literal["open", "close"]) -> None:
