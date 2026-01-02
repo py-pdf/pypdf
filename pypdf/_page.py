@@ -1779,7 +1779,7 @@ class PageObject(DictionaryObject):
                         extractor.text,
                         extractor.memo_cm,
                         extractor.memo_tm,
-                        extractor.cmap[3],
+                        extractor.font_resource,
                         extractor.font_size,
                     )
                 try:
@@ -1790,7 +1790,7 @@ class PageObject(DictionaryObject):
                                 "\n",
                                 extractor.memo_cm,
                                 extractor.memo_tm,
-                                extractor.cmap[3],
+                                extractor.font_resource,
                                 extractor.font_size,
                             )
                 except IndexError:
@@ -1812,7 +1812,7 @@ class PageObject(DictionaryObject):
                                 text,
                                 extractor.memo_cm,
                                 extractor.memo_tm,
-                                extractor.cmap[3],
+                                extractor.font_resource,
                                 extractor.font_size,
                             )
                 except Exception as exception:
@@ -1834,7 +1834,7 @@ class PageObject(DictionaryObject):
                 extractor.text,
                 extractor.memo_cm,
                 extractor.memo_tm,
-                extractor.cmap[3],
+                extractor.font_resource,
                 extractor.font_size,
             )
         return extractor.output

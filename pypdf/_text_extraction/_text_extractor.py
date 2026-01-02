@@ -53,7 +53,7 @@ class TextExtraction:
         self.cm_stack: list[
             tuple[
                 list[float],
-                tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]],
+                Optional[DictionaryObject],
                 Font,
                 float,
                 float,
@@ -84,12 +84,7 @@ class TextExtraction:
         self.text: str = ""
         self.output: str = ""
         self.rtl_dir: bool = False  # right-to-left
-        self.cmap: tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]] = (
-            "charmap",
-            {},
-            "NotInitialized",
-            None,
-        )  # (encoding, CMAP, font resource name, font)
+        self.font_resource: Optional[DictionaryObject] = None
         self.font = Font(
             name = "NotInitialized",
             sub_type="Unknown",
@@ -157,7 +152,7 @@ class TextExtraction:
                 (self.cm_prev, self.tm_prev),
                 (self.cm_matrix, self.tm_matrix),
                 (self.memo_cm, self.memo_tm),
-                self.cmap[3],
+                self.font_resource,
                 self.orientations,
                 self.output,
                 self.font_size,
@@ -193,9 +188,7 @@ class TextExtraction:
         operands: list[Union[str, TextStringObject]],
         cm_matrix: list[float],
         tm_matrix: list[float],
-        cmap: tuple[
-            Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-        ],
+        font_resource: Optional[DictionaryObject],
         font: Font,
         orientations: tuple[int, ...],
         font_size: float,
@@ -214,7 +207,7 @@ class TextExtraction:
                 text,
                 cm_matrix,
                 tm_matrix,  # text matrix
-                cmap[3],
+                font_resource,
                 font,
                 text_operands,
                 font_size,
@@ -236,7 +229,7 @@ class TextExtraction:
         """Flush accumulated text to output and call visitor if present."""
         self.output += self.text
         if self.visitor_text is not None:
-            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.font_resource, self.font_size)
         self.text = ""
         self.memo_cm = self.cm_matrix.copy()
         self.memo_tm = self.tm_matrix.copy()
@@ -257,7 +250,7 @@ class TextExtraction:
         self.cm_stack.append(
             (
                 self.cm_matrix,
-                self.cmap,
+                self.font_resource,
                 self.font,
                 self.font_size,
                 self.char_scale,
@@ -271,7 +264,7 @@ class TextExtraction:
         try:
             (
                 self.cm_matrix,
-                self.cmap,
+                self.font_resource,
                 self.font,
                 self.font_size,
                 self.char_scale,
@@ -285,7 +278,7 @@ class TextExtraction:
         """Handle cm (Modify current matrix) operation - Table 4.7 page 219."""
         self.output += self.text
         if self.visitor_text is not None:
-            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.font_resource, self.font_size)
         self.text = ""
         try:
             self.cm_matrix = mult([float(operand) for operand in operands[:6]], self.cm_matrix)
@@ -312,38 +305,21 @@ class TextExtraction:
         if self.text != "":
             self.output += self.text  # .translate(cmap)
             if self.visitor_text is not None:
-                self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+                self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.font_resource, self.font_size)
         self.text = ""
         self.memo_cm = self.cm_matrix.copy()
         self.memo_tm = self.tm_matrix.copy()
         try:
-            # Import here to avoid circular imports
-            from .._cmap import unknown_char_map  # noqa: PLC0415
-
             # char_map_tuple: font_type,
             #                 float(sp_width / 2),
             #                 encoding,
             #                 map_dict,
             #                 font_dict (describes the font)
             char_map_tuple = self.cmaps[operands[0]]
-            # current cmap: encoding,
-            #               map_dict,
-            #               font resource name (internal name, not the real font name),
-            #               font_dict
-            self.cmap = (
-                char_map_tuple[2],
-                char_map_tuple[3],
-                operands[0],
-                char_map_tuple[4],
-            )
+            self.font_resource = char_map_tuple[4]
             self.font = self.fonts[operands[0]]
         except KeyError:  # font not found
-            self.cmap = (
-                unknown_char_map[2],
-                unknown_char_map[3],
-                f"???{operands[0]}",
-                None,
-            )
+            self.font_resource = None
             font_descriptor = FontDescriptor()
             self.font = Font(
                 "Unknown",
@@ -394,7 +370,7 @@ class TextExtraction:
             operands,
             self.cm_matrix,
             self.tm_matrix,
-            self.cmap,
+            self.font_resource,
             self.font,
             self.orientations,
             self.font_size,
