@@ -2,8 +2,11 @@
 import json
 import logging
 import math
+import os
+import re
 import shutil
 import subprocess
+import sys
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -15,6 +18,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf._page import PageObject
+from pypdf.constants import PageAttributes
 from pypdf.constants import PageAttributes as PG
 from pypdf.errors import PdfReadError, PdfReadWarning, PyPdfError
 from pypdf.generic import (
@@ -145,13 +149,13 @@ def test_mediabox_expansion_after_rotation(
     The test was validated against pillow (see PR #2282)
     """
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=pdf_path)
 
     transformation = Transformation().rotate(angle)
-    for page_box in reader.pages:
+    for page_box in writer.pages:
         page_box.add_transformation(transformation, expand=True)
 
-    mediabox = reader.pages[0].mediabox
+    mediabox = writer.pages[0].mediabox
 
     # Deviation of up to 2 pixels is acceptable
     assert math.isclose(mediabox.width, expected_width, abs_tol=2)
@@ -160,12 +164,12 @@ def test_mediabox_expansion_after_rotation(
 
 def test_transformation_equivalence():
     pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
-    reader_base = PdfReader(pdf_path)
-    page_base = reader_base.pages[0]
+    writer_base = PdfWriter(clone_from=pdf_path)
+    page_base = writer_base.pages[0]
 
     pdf_path = RESOURCE_ROOT / "box.pdf"
-    reader_add = PdfReader(pdf_path)
-    page_box = reader_add.pages[0]
+    writer_add = PdfWriter(clone_from=pdf_path)
+    page_box = writer_add.pages[0]
 
     op = Transformation().scale(2).rotate(45)
 
@@ -186,7 +190,7 @@ def test_transformation_equivalence():
     assert page_base1[NameObject(PG.CONTENTS)] == page_base2[NameObject(PG.CONTENTS)]
     assert page_base1.mediabox == page_base2.mediabox
     assert page_base1.trimbox == page_base2.trimbox
-    assert page_base1[NameObject(PG.ANNOTS)] == page_base2[NameObject(PG.ANNOTS)]
+    assert page_base1.get(NameObject(PG.ANNOTS)) == page_base2.get(NameObject(PG.ANNOTS))
     compare_dict_objects(
         page_base1[NameObject(PG.RESOURCES)], page_base2[NameObject(PG.RESOURCES)]
     )
@@ -261,9 +265,9 @@ def compare_dict_objects(d1, d2):
 @pytest.mark.slow
 def test_page_transformations():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    writer = PdfWriter(clone_from=pdf_path)
 
-    page: PageObject = reader.pages[0]
+    page: PageObject = writer.pages[0]
     page.merge_rotated_page(page, 90, expand=True)
 
     op = Transformation().rotate(90).scale(1, 1)
@@ -332,8 +336,8 @@ def test_page_properties():
 
 
 def test_page_rotation():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    page = reader.pages[0]
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
     with pytest.raises(ValueError) as exc:
         page.rotate(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
@@ -1006,9 +1010,9 @@ def test_read_link_annotation():
 def test_no_resources():
     url = "https://github.com/py-pdf/pypdf/files/9572045/108.pdf"
     name = "108.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    page_one = reader.pages[0]
-    page_two = reader.pages[0]
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    page_one = writer.pages[0]
+    page_two = writer.pages[0]
     page_one.merge_page(page_two)
 
 
@@ -1286,10 +1290,10 @@ def test_merge_with_stream_wrapped_in_save_restore():
     """Test for issue #2587"""
     url = "https://github.com/py-pdf/pypdf/files/14895914/blank_portrait.pdf"
     name = "blank_portrait.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    page_one = reader.pages[0]
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    page_one = writer.pages[0]
     assert page_one.get_contents().get_data() == b"q Q"
-    page_two = reader.pages[0]
+    page_two = writer.pages[0]
     page_one.merge_page(page_two)
     assert b"QQ" not in page_one.get_contents().get_data()
 
@@ -1515,11 +1519,11 @@ def test_scale_by():
     """Tests for #3487"""
     url = "https://github.com/user-attachments/files/22685841/input.pdf"
     name = "issue3487.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
 
     original_box = RectangleObject((0, 0, 595.275604, 841.88974))
     expected_box = RectangleObject((0.0, 0.0, 297.637802, 420.94487))
-    for page in reader.pages:
+    for page in writer.pages:
         assert page.artbox == original_box
         assert page.bleedbox == original_box
         assert page.cropbox == original_box
@@ -1540,12 +1544,10 @@ def test_box_rendering(tmp_path):
     """Tests for issue #3487."""
     url = "https://github.com/user-attachments/files/22685841/input.pdf"
     name = "issue3487.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    writer = PdfWriter()
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
 
-    for page in reader.pages:
+    for page in writer.pages:
         page.scale_by(0.5)
-        writer.add_page(page)
 
     target_png_path = tmp_path / "target.png"
     url = "https://github.com/user-attachments/assets/e9c2271c-bfc3-4a6f-8c91-ffefa24502e2"
@@ -1572,3 +1574,119 @@ def test_box_rendering(tmp_path):
         )
         assert png_path.is_file(), box
         assert image_similarity(png_path, target_png_path) >= 0.95, box
+
+
+def test_delete_non_existent_annotations():
+    writer = PdfWriter()
+    writer.add_blank_page(width=100, height=100)
+    page = writer.pages[0]
+    assert page.annotations is None
+    page.annotations = None
+    assert page.annotations is None
+
+
+def test_replace_contents_on_reader():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    content_stream = ContentStream(stream=None, pdf=reader)
+    content_stream.set_data(b"Test data")
+
+    expected_message = (
+        "Calling `PageObject.replace_contents()` for pages not assigned to a writer is deprecated and "
+        "will be removed in pypdf 7.0.0. Attach the page to the writer first or use `PdfWriter(clone_from=...)` "
+        "directly. The existing approach has proved being unreliable."
+    )
+    with pytest.warns(DeprecationWarning, match=rf"^{re.escape(expected_message)}$"):
+        page.replace_contents(content_stream)
+
+
+@pytest.mark.enable_socket
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_replace_contents_on_reader__indirect_reference():
+    url = "https://github.com/user-attachments/files/24195534/test.pdf"
+    name = "issue3568.pdf"
+    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
+    writer = PdfWriter()
+
+    lhs = reader.get_page(3)
+    writer.add_page(lhs)
+
+    lhs = reader.get_page(1)
+    lhs.merge_page(PageObject.create_blank_page(reader))
+    writer.add_page(lhs)
+
+
+def test_merge_page__coverage():
+    # Test with some otherwise untested cases.
+
+    # Own resources are missing.
+    page = PageObject.create_blank_page(width=10, height=10)
+    del page[PageAttributes.RESOURCES]
+    page.merge_page(PageObject.create_blank_page(width=10, height=10))
+
+    # Other resources are missing.
+    page = PageObject.create_blank_page(width=10, height=10)
+    del page[PageAttributes.RESOURCES]
+    PageObject.create_blank_page(width=10, height=10).merge_page(page)
+
+    # No expansion.
+    page = PageObject.create_blank_page(width=10, height=10)
+    page.merge_page(PageObject.create_blank_page(width=20, height=30))
+    assert page.mediabox == RectangleObject((0.0, 0.0, 10, 10))
+
+    # With expansion.
+    page = PageObject.create_blank_page(width=10, height=10)
+    page.merge_page(PageObject.create_blank_page(width=20, height=5), expand=True)
+    assert page.mediabox == RectangleObject((0.0, 0.0, 20, 10))
+
+    # With transformation.
+    path = RESOURCE_ROOT / "crazyones.pdf"
+    page = PdfWriter(clone_from=path).pages[0]
+    page.indirect_reference = None
+    page2 = PageObject.create_blank_page(width=20, height=5)
+    transformation = Transformation().rotate(90)
+    page2.merge_transformed_page(page, ctm=transformation, expand=True)
+    assert page2.mediabox == RectangleObject((-792, 0.0, 20, 612))
+
+    page2 = PageObject.create_blank_page(width=20, height=5)
+    page2.merge_transformed_page(page, ctm=transformation.ctm, expand=True)
+    assert page2.mediabox == RectangleObject((-792, 0.0, 20, 612))
+
+    # Not over.
+    page = PdfWriter(clone_from=path).pages[0]
+    page.indirect_reference = None
+    page2 = PageObject.create_blank_page(width=20, height=5)
+    page2.merge_page(page, over=False)
+
+
+@pytest.mark.enable_socket
+def test_importing_without_pillow(tmp_path):
+    env = os.environ.copy()
+    env["COVERAGE_PROCESS_START"] = "pyproject.toml"
+
+    source_file = tmp_path / "script.py"
+    source_file.write_text(
+        """
+import sys
+sys.modules["PIL"] = None
+
+from pypdf import PageObject
+from pypdf._page import pil_not_imported
+
+print(pil_not_imported)
+"""
+    )
+
+    try:
+        env["PYTHONPATH"] = "." + os.pathsep + env["PYTHONPATH"]
+    except KeyError:
+        env["PYTHONPATH"] = "."
+    result = subprocess.run(  # noqa: S603  # We have the control here.
+        [sys.executable, source_file],
+        capture_output=True,
+        env=env,
+    )
+    assert result.returncode == 0
+    assert result.stdout.replace(b"\r\n", b"\n") == b"True\n"
+    assert result.stderr == b""

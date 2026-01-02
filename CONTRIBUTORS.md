@@ -21,6 +21,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Ermeson, Felipe](https://github.com/FelipeErmeson)
 * [Freitag, François](https://github.com/francoisfreitag)
 * [Gagnon, William G.](https://github.com/williamgagnon)
+* [Gillard, James](https://github.com/jgillard)
 * [Górny, Michał](https://github.com/mgorny)
 * [Grillo, Miguel](https://github.com/Ineffable22)
 * [Gutteridge, David H.](https://github.com/dhgutteridge)

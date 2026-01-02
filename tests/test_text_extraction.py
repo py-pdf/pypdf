@@ -11,7 +11,8 @@ from unittest.mock import patch
 
 import pytest
 
-from pypdf import PdfReader, mult
+from pypdf import PdfReader, PdfWriter, mult
+from pypdf._font import FontDescriptor
 from pypdf._text_extraction import set_custom_rtl
 from pypdf._text_extraction._layout_mode._fixed_width_page import text_show_operations
 from pypdf.errors import ParseError, PdfReadError
@@ -129,7 +130,24 @@ def test_layout_mode_font_class_to_dict():
         "font_dictionary": {},
         "space_width": 8,
         "subtype": "foo",
-        "width_map": {},
+        "font_descriptor": FontDescriptor(
+            name="Unknown",
+            family="Unknown",
+            weight="Unknown",
+            ascent=700.0,
+            descent=-200.0,
+            cap_height=600.0,
+            x_height=500.0,
+            italic_angle=0.0,
+            flags=32,
+            bbox=(
+                -100.0,
+                -200.0,
+                1000.0,
+                900.0,
+            ),
+            character_widths={},
+        ),
         "interpretable": True,
     }
 
@@ -390,11 +408,11 @@ def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
 
 def test_process_operation__cm_multiplication_issue():
     """Test for #3262."""
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    page = reader.pages[0]
+    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    page = writer.pages[0]
     content = page.get_contents().get_data()
     content = content.replace(b" 1 0 0 1 72 720 cm ", b" 0.70278 65.3 163.36 cm ")
-    stream = ContentStream(stream=None, pdf=reader)
+    stream = ContentStream(stream=None, pdf=writer)
     stream.set_data(content)
     page.replace_contents(stream)
     assert page.extract_text().startswith("The Crazy Ones\nOctober 14, 1998\n")
@@ -405,8 +423,8 @@ def test_rotated_layout_mode(caplog):
     """Ensures text extraction of rotated pages, as in issue #3270."""
     url = "https://github.com/user-attachments/files/19981120/rotated-page.pdf"
     name = "rotated-page.pdf"
-    reader = PdfReader(BytesIO(get_data_from_url(url, name=name)))
-    page = reader.pages[0]
+    writer = PdfWriter(clone_from=BytesIO(get_data_from_url(url, name=name)))
+    page = writer.pages[0]
 
     page.transfer_rotation_to_content()
     text = page.extract_text(extraction_mode="layout")

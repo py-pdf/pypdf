@@ -5,7 +5,10 @@ from pypdf.generic import DictionaryObject, NameObject
 
 
 def test_font_descriptor():
-    font_res = DictionaryObject({NameObject("/BaseFont"): NameObject("/Helvetica")})
+    font_res = DictionaryObject({
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+        NameObject("/Subtype"): NameObject("/Type1")
+    })
     my_font = FontDescriptor.from_font_resource(font_res)
     assert my_font.family == "Helvetica"
     assert my_font.weight == "Medium"
@@ -16,11 +19,11 @@ def test_font_descriptor():
     charwidth = sum(my_font.character_widths[char] for char in test_string)
     assert charwidth == 19251
 
-    font_res = DictionaryObject({NameObject("/BaseFont"): NameObject("/Palatino")})
+    font_res[NameObject("/BaseFont")] = NameObject("/Palatino")
     my_font = FontDescriptor.from_font_resource(font_res)
     assert my_font.weight == "Unknown"
 
-    font_res = DictionaryObject({NameObject("/BaseFont"): NameObject("/Courier-Bold")})
+    font_res[NameObject("/BaseFont")] = NameObject("/Courier-Bold")
     my_font = FontDescriptor.from_font_resource(font_res)
     assert my_font.italic_angle == 0
     assert my_font.flags == 33

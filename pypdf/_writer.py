@@ -894,11 +894,7 @@ class PdfWriter(PdfDocCommon):
         pg_res = cast(DictionaryObject, page[PG.RESOURCES])
         if "/Resources" in appearance_stream_obj:
             ap_stream_res = cast(DictionaryObject, appearance_stream_obj["/Resources"])
-            # No need to check "if "/Font" in ap_stream_res", because the only reason this
-            # code runs would be if we are flattening form fields, and the associated code
-            # either adds a Font resource or no resource at all. This probably needs to
-            # change if we want to use this method to flatten markup annotations.
-            ap_stream_font_dict = cast(DictionaryObject, ap_stream_res["/Font"])
+            ap_stream_font_dict = cast(DictionaryObject, ap_stream_res.get("/Font", DictionaryObject()))
             if "/Font" not in pg_res:
                 pg_res[NameObject("/Font")] = DictionaryObject()
             pg_font_res = cast(DictionaryObject, pg_res["/Font"])
