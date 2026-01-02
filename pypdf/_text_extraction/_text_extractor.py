@@ -93,7 +93,7 @@ class TextExtraction:
             )
         self.orientations: tuple[int, ...] = (0, 90, 180, 270)
         self.visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None
-        self.cmaps: dict[str, tuple[str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject]] = {}
+        self.font_resources: dict[str, DictionaryObject] = {}
         self.fonts: dict[str, Font] = {}
 
         self.operation_handlers = {
@@ -116,15 +116,13 @@ class TextExtraction:
         self,
         orientations: tuple[int, ...] = (0, 90, 180, 270),
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
-        cmaps: Optional[
-            dict[str, tuple[str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject]]
-        ] = None,
+        font_resources: Optional[dict[str, DictionaryObject]] = None,
         fonts: Optional[dict[str, Font]] = None
     ) -> None:
         """Initialize the extractor with extraction parameters."""
         self.orientations = orientations
         self.visitor_text = visitor_text
-        self.cmaps = cmaps or {}
+        self.font_resources = font_resources or {}
         self.fonts = fonts or {}
 
         # Reset state
@@ -310,13 +308,7 @@ class TextExtraction:
         self.memo_cm = self.cm_matrix.copy()
         self.memo_tm = self.tm_matrix.copy()
         try:
-            # char_map_tuple: font_type,
-            #                 float(sp_width / 2),
-            #                 encoding,
-            #                 map_dict,
-            #                 font_dict (describes the font)
-            char_map_tuple = self.cmaps[operands[0]]
-            self.font_resource = char_map_tuple[4]
+            self.font_resource = self.font_resources[operands[0]]
             self.font = self.fonts[operands[0]]
         except KeyError:  # font not found
             self.font_resource = None

@@ -44,9 +44,6 @@ from typing import (
     overload,
 )
 
-from ._cmap import (
-    build_char_map,
-)
 from ._font import Font
 from ._protocols import PdfCommonDocProtocol
 from ._text_extraction import (
@@ -1692,12 +1689,7 @@ class PageObject(DictionaryObject):
 
         """
         extractor = TextExtraction()
-        cmaps: dict[
-            str,
-            tuple[
-                str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject
-            ],
-        ] = {}
+        font_resources: dict[str, DictionaryObject] = {}
         fonts: dict[str, Font] = {}
 
         try:
@@ -1720,13 +1712,13 @@ class PageObject(DictionaryObject):
         ):
             for font_resource in font_resources_dict:
                 try:
-                    cmaps[font_resource] = build_char_map(font_resource, space_width, obj)
                     font_resource_object = cast(DictionaryObject, font_resources_dict[font_resource].get_object())
+                    font_resources[font_resource] = font_resource_object
                     fonts[font_resource] = Font.from_font_resource(font_resource_object)
                     # Override space width, if applicable
                     if fonts[font_resource].character_widths.get(" ", 0) == 0:
                         fonts[font_resource].space_width = space_width
-                except TypeError:
+                except (AttributeError, TypeError):
                     pass
 
         try:
@@ -1742,7 +1734,7 @@ class PageObject(DictionaryObject):
         # them to the text here would be gibberish.
 
         # Initialize the extractor with the necessary parameters
-        extractor.initialize_extraction(orientations, visitor_text, cmaps, fonts)
+        extractor.initialize_extraction(orientations, visitor_text, font_resources, fonts)
 
         for operands, operator in content.operations:
             if visitor_operand_before is not None:
