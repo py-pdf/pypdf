@@ -7,79 +7,12 @@ from typing import Any, Union, cast
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_error, logger_warning
 from .generic import (
-    ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
     NullObject,
     StreamObject,
     is_null_or_none,
 )
-
-
-# code freely inspired from @twiggy ; see #711
-def build_char_map(
-    font_name: str, space_width: float, obj: DictionaryObject
-) -> tuple[str, float, Union[str, dict[int, str]], dict[Any, Any], DictionaryObject]:
-    """
-    Determine information about a font.
-
-    Args:
-        font_name: font name as a string
-        space_width: default space width if no data is found.
-        obj: XObject or Page where you can find a /Resource dictionary
-
-    Returns:
-        Font sub-type, space_width criteria (50% of width), encoding, map character-map, font-dictionary.
-        The font-dictionary itself is suitable for the curious.
-
-    """
-    ft: DictionaryObject = obj["/Resources"]["/Font"][font_name]  # type: ignore
-    font_subtype, font_halfspace, font_encoding, font_map = build_char_map_from_dict(
-        space_width, ft
-    )
-    return font_subtype, font_halfspace, font_encoding, font_map, ft
-
-
-def build_char_map_from_dict(
-    space_width: float, ft: DictionaryObject
-) -> tuple[str, float, Union[str, dict[int, str]], dict[Any, Any]]:
-    """
-    Determine information about a font.
-
-    Args:
-        space_width: default space with if no data found
-             (normally half the width of a character).
-        ft: Font Dictionary
-
-    Returns:
-        Font sub-type, space_width criteria(50% of width), encoding, map character-map.
-        The font-dictionary itself is suitable for the curious.
-
-    """
-    font_type = cast(str, ft["/Subtype"].get_object())
-    encoding, map_dict = get_encoding(ft)
-
-    space_key_char = get_actual_str_key(" ", encoding, map_dict)
-    font_width_map = build_font_width_map(ft, space_width * 2.0)
-    half_space_width = compute_space_width(font_width_map, space_key_char) / 2.0
-
-    return (
-        font_type,
-        half_space_width,
-        encoding,
-        # https://github.com/python/mypy/issues/4374
-        map_dict
-    )
-
-
-# used when missing data, e.g. font def missing
-unknown_char_map: tuple[str, float, Union[str, dict[int, str]], dict[Any, Any]] = (
-    "Unknown",
-    9999,
-    dict.fromkeys(range(256), "�"),
-    {},
-)
-
 
 _predefined_cmap: dict[str, str] = {
     "/Identity-H": "utf-16-be",
