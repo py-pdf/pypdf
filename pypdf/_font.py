@@ -220,27 +220,27 @@ class FontDescriptor:
 
             return cls(**font_kwargs)
 
-        # Composite font or CID font
-        # CID fonts have a /W array mapping character codes to widths stashed in /DescendantFonts
-        if "/DescendantFonts" in pdf_font_dict:
-            if not (encoding and char_map):
-                encoding, char_map = get_encoding(pdf_font_dict)
-            d_font: DictionaryObject
-            for d_font_idx, d_font in enumerate(
-                cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
-            ):
-                d_font = cast(DictionaryObject, d_font.get_object())
-                cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
-                cls._collect_cid_character_widths(
-                    d_font, char_map, font_kwargs["character_widths"]
-                )
-                if "/DW" in d_font:
-                    font_kwargs["character_widths"]["default"] = d_font["/DW"].get_object()
-                else:
-                    cls._add_default_width(font_kwargs["character_widths"])
-                font_kwargs = cls._parse_font_descriptor(
-                    font_kwargs, d_font.get("/FontDescriptor", DictionaryObject())
-                )
+        # Composite font or CID font - CID fonts have a /W array mapping character codes
+        # to widths stashed in /DescendantFonts. No need to test for /DescendantFonts though,
+        # because all other fonts have already been dealt with.
+        if not (encoding and char_map):
+            encoding, char_map = get_encoding(pdf_font_dict)
+        d_font: DictionaryObject
+        for d_font_idx, d_font in enumerate(
+            cast(ArrayObject, pdf_font_dict["/DescendantFonts"])
+        ):
+            d_font = cast(DictionaryObject, d_font.get_object())
+            cast(ArrayObject, pdf_font_dict["/DescendantFonts"])[d_font_idx] = d_font
+            cls._collect_cid_character_widths(
+                d_font, char_map, font_kwargs["character_widths"]
+            )
+            if "/DW" in d_font:
+                font_kwargs["character_widths"]["default"] = d_font["/DW"].get_object()
+            else:
+                cls._add_default_width(font_kwargs["character_widths"])
+            font_kwargs = cls._parse_font_descriptor(
+                font_kwargs, d_font.get("/FontDescriptor", DictionaryObject())
+            )
 
         return cls(**font_kwargs)
 
