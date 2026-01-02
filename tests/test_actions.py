@@ -123,12 +123,13 @@ def test_page_add_action(pdf_file_writer):
     expected = {
         "/C": {
             "/Type": "/Action",
-            "/Next": {
-                "/Type": "/Action",
-                "/Next": NullObject(),
-                "/S": "/JavaScript",
-                "/JS": "app.alert('Page closed 2');"
-            },
+            "/Next":
+                {
+                    "/Type": "/Action",
+                    "/Next": NullObject(),
+                    "/S": "/JavaScript",
+                    "/JS": "app.alert('Page closed 2');"
+                },
             "/S": "/JavaScript",
             "/JS": "app.alert('Page closed 1');"
         },
@@ -139,27 +140,29 @@ def test_page_add_action(pdf_file_writer):
 
     page[NameObject("/AA")] = ArrayObject(
         [
-            {"/O": {
-                "/Type": "/Action",
-                "/Next": NullObject(),
-                "/S": "/JavaScript",
-                "/JS": "app.alert('Open');"
+            {"/O":
+                {
+                    "/Type": "/Action",
+                    "/Next": NullObject(),
+                    "/S": "/JavaScript",
+                    "/JS": "app.alert('Open');"
+                },
             },
-            },
-            {"/C": {
-                "/Type": "/Action",
-                "/Next": NullObject(),
-                "/S": "/JavaScript",
-                "/JS": "app.alert('Close');"
-            },
+            {"/C":
+                {
+                    "/Type": "/Action",
+                    "/Next": NullObject(),
+                    "/S": "/JavaScript",
+                    "/JS": "app.alert('Close');"
+                },
             }
         ]
     )
     page.add_action("open", JavaScript("app.alert('Open 1');"))
-    expected = {'/O': {'/Type': '/Action', '/Next': NullObject(), '/S': '/JavaScript', '/JS': "app.alert('Open 1');"}}
+    expected = {"/O": {"/Type": "/Action", "/Next": NullObject(), "/S": "/JavaScript", "/JS": "app.alert('Open 1');"}}
     assert page[NameObject("/AA")] == expected
     page.delete_action("open")
-    #page.delete_action("close")
+    page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
 def test_page_delete_action(pdf_file_writer):
