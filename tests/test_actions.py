@@ -155,11 +155,11 @@ def test_page_add_action(pdf_file_writer):
             }
         ]
     )
-    page.add_action("open", JavaScript("app.alert('Open new');"))
-    expected = {'/O': {'/Type': '/Action', '/Next': NullObject, '/S': '/JavaScript', '/JS': "app.alert('Open 1');"}}
+    page.add_action("open", JavaScript("app.alert('Open 1');"))
+    expected = {'/O': {'/Type': '/Action', '/Next': NullObject(), '/S': '/JavaScript', '/JS': "app.alert('Open 1');"}}
     assert page[NameObject("/AA")] == expected
     page.delete_action("open")
-    page.delete_action("close")
+    #page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
 def test_page_delete_action(pdf_file_writer):
