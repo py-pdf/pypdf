@@ -113,9 +113,10 @@ class FontDescriptor:
             if skip_count:
                 skip_count -= 1
                 continue
-            if not isinstance(w_entry, (int, float)):  # pragma: no cover
-                # We should never get here due to skip_count above. Add a
-                # warning and or use reader's "strict" to force an ex???
+            if not isinstance(w_entry, (int, float)):
+                # We should never get here due to skip_count above. But
+                # sometimes we do.
+                logger_warning(f"Expected numeric value for width, got {w_entry}. Ignoring it.", __name__)
                 continue
             # check for format (1): `int [int int int int ...]`
             w_next_entry = _w[idx + 1].get_object()
