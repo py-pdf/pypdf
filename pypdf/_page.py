@@ -2194,8 +2194,7 @@ class PageObject(DictionaryObject):
             return
 
         # Existing trigger event: find last action in actions chain (which may or may not have a Next key)
-        existing_action = additional_actions.get(trigger_name)
-        prev_action = additional_actions.get(trigger_name)
+        prev_action = existing_action = additional_actions.get(trigger_name)
         next_ = NameObject("/Next")
         while True:
             """
@@ -2225,7 +2224,6 @@ class PageObject(DictionaryObject):
 
             if is_null_or_none(prev_action.get(next_)):
                 break
-
             prev_action = prev_action.get(next_)
 
         prev_action.update({next_: action})
