@@ -299,21 +299,6 @@ def parse_bfchar(line: bytes, map_dict: dict[Any, Any], int_entry: list[int]) ->
         lst = lst[2:]
 
 
-def compute_space_width(
-    font_width_map: dict[Any, float], space_char: str
-) -> float:
-    try:
-        sp_width = font_width_map[space_char]
-        if sp_width == 0:
-            raise ValueError("Zero width")
-    except (KeyError, ValueError):
-        sp_width = (
-            font_width_map["default"] / 2.0
-        )  # if using default we consider space will be only half size
-
-    return sp_width
-
-
 def _type1_alternative(
     ft: DictionaryObject,
     map_dict: dict[Any, Any],
