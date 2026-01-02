@@ -6,7 +6,7 @@ import pytest
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.actions import JavaScript
-from pypdf.generic import NameObject, NullObject
+from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NullObject
 
 # Configure path environment
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -84,6 +84,21 @@ def test_page_add_action(pdf_file_writer):
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
 
+    # Test when an additional-actions key exists, but is an empty dictionary
+    page[NameObject("/AA")] = DictionaryObject()
+    page.add_action("open", JavaScript("app.alert('This is page ' + this.pageNum);"))
+    expected = {
+        "/O": {
+            "/Type": "/Action",
+            "/Next": NullObject(),
+            "/S": "/JavaScript",
+            "/JS": "app.alert('This is page ' + this.pageNum);"
+        }
+    }
+    assert page[NameObject("/AA")] == expected
+    page.delete_action("open")
+    assert page.get(NameObject("/AA")) is None
+
     page.add_action("open", JavaScript("app.alert('Page opened 1');"))
     page.add_action("open", JavaScript("app.alert('Page opened 2');"))
     expected = {
@@ -121,6 +136,27 @@ def test_page_add_action(pdf_file_writer):
     assert page[NameObject("/AA")] == expected
     page.delete_action("close")
     assert page.get(NameObject("/AA")) is None
+
+    page[NameObject("/AA")] = ArrayObject(
+        [
+            {"/O": {
+                "/Type": "/Action",
+                "/Next": NullObject(),
+                "/S": "/JavaScript",
+                "/JS": "app.alert('Open');"
+            },
+            },
+            {"/C": {
+                "/Type": "/Action",
+                "/Next": NullObject(),
+                "/S": "/JavaScript",
+                "/JS": "app.alert('Close');"
+            },
+            }
+        ]
+    )
+    page.add_action("open", JavaScript("app.alert('Page opened 1');"))
+    print(page[NameObject("/AA")])
 
 def test_page_delete_action(pdf_file_writer):
     page = pdf_file_writer.pages[0]

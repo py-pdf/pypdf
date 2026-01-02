@@ -2193,7 +2193,8 @@ class PageObject(DictionaryObject):
             self[NameObject("/AA")] = additional_actions
             return
 
-        # Existing same trigger event: find last action in actions chain (which may or may not have a Next key)
+        # Existing trigger event: find last action in actions chain (which may or may not have a Next key)
+        existing_action = additional_actions.get(trigger_name)
         prev_action = additional_actions.get(trigger_name)
         next_ = NameObject("/Next")
         while True:
@@ -2228,6 +2229,8 @@ class PageObject(DictionaryObject):
             prev_action = prev_action.get(next_)
 
         prev_action.update({next_: action})
+        additional_actions.update({trigger_name: existing_action})
+        self[NameObject("/AA")] = additional_actions
 
     def delete_action(self, trigger: Literal["open", "close"]) -> None:
         if trigger not in {"open", "close"}:
