@@ -92,9 +92,7 @@ def crlf_space_check(
     cmtm_prev: tuple[list[float], list[float]],
     cmtm_matrix: tuple[list[float], list[float]],
     memo_cmtm: tuple[list[float], list[float]],
-    cmap: tuple[
-        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-    ],
+    font_resource: Optional[DictionaryObject],
     orientations: tuple[int, ...],
     output: str,
     font_size: float,
@@ -138,7 +136,7 @@ def crlf_space_check(
                         text + "\n",
                         memo_cm,
                         memo_tm,
-                        cmap[3],
+                        font_resource,
                         font_size,
                     )
                 text = ""
@@ -198,9 +196,7 @@ def get_display_str(
     text: str,
     cm_matrix: list[float],
     tm_matrix: list[float],
-    cmap: tuple[
-        Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-    ],
+    font_resource: Optional[DictionaryObject],
     font: Font,
     text_operands: str,
     font_size: float,
@@ -233,14 +229,14 @@ def get_display_str(
             if not rtl_dir:
                 rtl_dir = True
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                    visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                 text = ""
             text = x + text
         else:  # left-to-right
             if rtl_dir:
                 rtl_dir = False
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
+                    visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                 text = ""
             text = text + x
         # fmt: on

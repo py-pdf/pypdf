@@ -157,7 +157,7 @@ class TextExtraction:
                 (self.cm_prev, self.tm_prev),
                 (self.cm_matrix, self.tm_matrix),
                 (self.memo_cm, self.memo_tm),
-                self.cmap,
+                self.cmap[3],
                 self.orientations,
                 self.output,
                 self.font_size,
@@ -214,7 +214,7 @@ class TextExtraction:
                 text,
                 cm_matrix,
                 tm_matrix,  # text matrix
-                cmap,
+                cmap[3],
                 font,
                 text_operands,
                 font_size,
