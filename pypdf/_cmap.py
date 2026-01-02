@@ -147,17 +147,6 @@ def _parse_to_unicode(
     return map_dict, int_entry
 
 
-def get_actual_str_key(
-    value_char: str, encoding: Union[str, dict[int, str]], map_dict: dict[Any, Any]
-) -> str:
-    key_dict = {}
-    if isinstance(encoding, dict):
-        key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char}
-    else:
-        key_dict = {value: key for key, value in map_dict.items() if value == value_char}
-    return key_dict.get(value_char, value_char)
-
-
 def prepare_cm(ft: DictionaryObject) -> bytes:
     tu = ft["/ToUnicode"]
     cm: bytes
