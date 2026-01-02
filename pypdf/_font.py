@@ -4,6 +4,7 @@ from typing import Any, Optional, Union, cast
 
 from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject
 
+from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
 from ._utils import logger_warning
 
@@ -189,7 +190,6 @@ class FontDescriptor:
         encoding: Optional[Union[str, dict[int, str]]] = None,
         char_map: Optional[dict[Any, Any]] = None
     ) -> "FontDescriptor":
-        from pypdf._cmap import get_encoding  # noqa: PLC0415
         from pypdf._codecs.core_fontmetrics import CORE_FONT_METRICS  # noqa: PLC0415
         # Prioritize information from the PDF font dictionary
         font_name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
@@ -282,7 +282,6 @@ class Font:
         cls,
         pdf_font_dict: DictionaryObject,
     ) -> "Font":
-        from pypdf._cmap import get_encoding  # noqa: PLC0415
         # Can collect base_font, name and encoding directly from font resource
         name = pdf_font_dict.get("/BaseFont", "Unknown").removeprefix("/")
         sub_type = pdf_font_dict.get("/Subtype", "Unknown").removeprefix("/")
