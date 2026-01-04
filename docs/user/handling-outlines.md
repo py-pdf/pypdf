@@ -1,6 +1,6 @@
-# PDF Outlines
+# Handling Outlines
 
-PDF outlines — also known as bookmarks — provide a structured navigation panel in PDF readers. `pypdf` allows you to read, create, and modify both simple and deeply nested outlines.
+PDF outlines - also known as bookmarks - provide a structured navigation panel in PDF readers. `pypdf` allows you to read, create, and modify both simple and deeply nested outlines.
 
 ## Writing PDF Outlines
 
@@ -12,15 +12,16 @@ The following example shows how to add a single top-level bookmark. We add an ou
 
 
 ```{testsetup}
-pypdf_test_setup("user/pdf-outlines", {
-    "input.pdf": "../resources/input.pdf",
+pypdf_test_setup("user/handling-outlines", {
+    "crazyones.pdf":"../resources/crazyones.pdf",
+    "output.pdf": "../resources/output.pdf",
 })
 ```
 
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="input.pdf")
+writer = PdfWriter(clone_from="crazyones.pdf")
 
 # Add a top-level bookmark
 writer.add_outline_item(
@@ -28,8 +29,7 @@ writer.add_outline_item(
     page_number=0
 )
 
-with open("input.pdf", "wb") as f:
-    writer.write(f)
+writer.write("output-example.pdf")
 ```
 
 
@@ -42,7 +42,7 @@ In the example below, we create a root item "Introduction" and nest two sections
 ```{testcode}
 from pypdf import PdfWriter
 
-writer = PdfWriter(clone_from="input.pdf")
+writer = PdfWriter(clone_from="crazyones.pdf")
 
 # Add parent (Chapter)
 introduction = writer.add_outline_item(
@@ -63,8 +63,7 @@ writer.add_outline_item(
     parent=introduction
 )
 
-with open("input.pdf", "wb") as f:
-    writer.write(f)
+writer.write("output-example.pdf")
 ```
 
 
@@ -74,14 +73,14 @@ You can customize the appearance and behavior of bookmarks using optional parame
 
 For detailed information on all available parameters and their formats, please refer to the {meth}`~pypdf.PdfWriter.add_outline_item` API documentation.
 
-The `fit` parameter determines how the page is displayed when the user clicks the bookmark. You can use the {class}`~pypdf.generic.Fit` helper to specify modes like `Fit.fit()` (show whole page), `Fit.fit_horizontally()` (fit width), or `Fit.xyz()` (specific zoom and coordinates).
+The ``fit`` parameter determines how the page is displayed when the user clicks the bookmark. You can use the {class}`~pypdf.generic.Fit` helper to specify modes like {meth}`~pypdf.generic.Fit.fit`, {meth}`~pypdf.generic.Fit.fit_horizontally`, or {meth}`~pypdf.generic.Fit.xyz`.
 
 
 ```{testcode}
 from pypdf import PdfWriter
 from pypdf.generic import Fit
 
-writer = PdfWriter(clone_from="input.pdf")
+writer = PdfWriter(clone_from="crazyones.pdf")
 
 # Top-level chapter (Points to Page 3, Index 2)
 chapter2 = writer.add_outline_item(
@@ -118,8 +117,7 @@ section2_2 = writer.add_outline_item(
     fit=Fit.xyz(left=0, top=800, zoom=1.25)
 )
 
-with open("input.pdf", "wb") as f:
-    writer.write(f)
+writer.write("output-example.pdf")
 ```
 
 ```{figure} complete-outline.png
@@ -141,27 +139,23 @@ To extract only the top-level bookmarks (ignoring nested sections), you can iter
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("input.pdf")
+reader = PdfReader("output.pdf")
 
 print("Simple Outline (Top-Level Only):")
-print("-" * 30)
+print("-" * 32)
 
 for outline in reader.outline:
-    # 1. Check if the item is a list (which represents nested children)
+    # Check if the item is a list (which represents nested children)
     if isinstance(outline, list):
         continue  # Skip the nested parts completely
 
-    # 2. Process only the standard items
-    try:
-        page_number = reader.get_destination_page_number(outline)
-        print(f"{outline.title} -> page {page_number + 1}")
-    except Exception:
-        pass  # Ignore any broken links
+    page_number = reader.get_destination_page_number(outline)
+    print(f"{outline.title} -> page {page_number + 1}")
 ```
 
 ```{testoutput}
 Simple Outline (Top-Level Only):
-------------------------------
+--------------------------------
 Introduction -> page 1
 Chapter 1 -> page 2
 Chapter 2 -> page 3
@@ -181,7 +175,7 @@ from pypdf.generic import Destination
 
 
 def print_outline(
-    outlines: List[Union[Destination, List]],
+    outlines: List[Union[Destination, List[Destination]]],
     reader: PdfReader,
     level: int = 0
 ) -> None:
@@ -201,17 +195,17 @@ def print_outline(
                 print(f"{indent}- {item.title} (Page {page_number + 1})")
 
 
-reader = PdfReader("input.pdf")
+reader = PdfReader("output.pdf")
 
 print("Nested Outline Hierarchy:")
-print("-" * 30)
+print("-" * 25)
 
 print_outline(reader.outline, reader)
 ```
 
 ```{testoutput}
 Nested Outline Hierarchy:
-------------------------------
+-------------------------
 - Introduction (Page 1)
 - Chapter 1 (Page 2)
   - Section 1.1 (Page 2)
