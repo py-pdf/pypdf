@@ -245,7 +245,7 @@ def _handle_flate(
                 colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
                     b"".join(
-                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]  # type: ignore[operator]
+                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]  # type: ignore[operator,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
                         for x in range(img.size[0])
                     )
                     for y in range(img.size[1])
@@ -573,5 +573,5 @@ def _xobj_to_image(
         img = Image.open(BytesIO(data))
     except Exception as exception:
         logger_warning(f"Failed loading image: {exception}", __name__)
-        img = None  # type: ignore
+        img = None  # type: ignore[assignment,unused-ignore]  # TODO: Remove unused-ignore on Python 3.10
     return extension, data, img
