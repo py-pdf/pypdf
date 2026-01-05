@@ -42,7 +42,7 @@ packaging==24.1
     # via
     #   build
     #   pytest
-pillow==10.4.0
+pillow==11.3.0
     # via -r requirements/dev.in
 pip-tools==7.4.1
     # via -r requirements/dev.in
