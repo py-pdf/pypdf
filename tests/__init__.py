@@ -4,8 +4,10 @@ import ssl
 import sys
 import urllib.request
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 from urllib.error import HTTPError
+
+from PIL import Image
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -169,3 +171,13 @@ class PILContext:
             # Error.
             return None
         return True
+
+
+def get_image_data(
+        image: Image.Image, band: Union[int, None] = None
+) -> Union[tuple[tuple[int, ...], ...], tuple[float, ...]]:
+    try:
+        return image.get_flattened_data(band=band)
+    except AttributeError:
+        # For Pillow < 12.1.0
+        return tuple(image.getdata(band=band))

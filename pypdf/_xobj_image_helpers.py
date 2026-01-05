@@ -245,7 +245,7 @@ def _handle_flate(
                 colors_arr = [lookup[:nb], lookup[nb:]]
                 arr = b"".join(
                     b"".join(
-                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]
+                        colors_arr[1 if img.getpixel((x, y)) > 127 else 0]  # type: ignore[operator]
                         for x in range(img.size[0])
                     )
                     for y in range(img.size[1])
@@ -299,7 +299,7 @@ def _handle_jpx(
     Returns img, image_format, extension, inversion
     """
     extension = ".jp2"  # mime_type: "image/x-jp2"
-    img1 = Image.open(BytesIO(data), formats=("JPEG2000",))
+    img1: Image.Image = Image.open(BytesIO(data), formats=("JPEG2000",))
     mode, invert_color = _get_image_mode(color_space, colors, mode)
     if mode == "":
         mode = cast(mode_str_type, img1.mode)
@@ -552,7 +552,7 @@ def _xobj_to_image(
     if image_format == "JPEG":
         # This prevents: Cannot use 'keep' when original image is not a JPEG:
         # "JPEG" is the value of PIL.JpegImagePlugin.JpegImageFile.format
-        img.format = "JPEG"  # type: ignore[misc]
+        img.format = "JPEG"
         if "quality" not in pillow_parameters:
             pillow_parameters["quality"] = "keep"
 
