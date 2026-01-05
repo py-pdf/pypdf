@@ -19,7 +19,7 @@ from pypdf.errors import LimitReachedError
 from pypdf.filters import JBIG2Decode
 from pypdf.generic import ContentStream, NameObject, NullObject
 
-from . import get_data_from_url
+from . import get_data_from_url, get_image_data
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -71,7 +71,7 @@ def image_similarity(
 
     # Calculate the Mean Squared Error (MSE)
     diff = ImageChops.difference(image1, image2)
-    pixels = list(diff.getdata())
+    pixels = get_image_data(diff)
 
     if isinstance(pixels[0], tuple):
         mse = sum(sum((c / 255.0) ** 2 for c in p) for p in pixels) / (

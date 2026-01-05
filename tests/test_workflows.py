@@ -26,7 +26,7 @@ from pypdf.generic import (
     read_object,
 )
 
-from . import PILContext, get_data_from_url, normalize_warnings
+from . import PILContext, get_data_from_url, get_image_data, normalize_warnings
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -976,12 +976,12 @@ def test_replace_image(tmp_path):
         assert reader2.pages[0].images[0].image.mode == "RGBA"
     # very simple image distance evaluation
     diff = ImageChops.difference(reader2.pages[0].images[0].image, img)
-    d = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
+    d = sum(get_image_data(diff.convert("L"))) / (diff.size[0] * diff.size[1])
     assert d < 1.5
     img = img.convert("RGB")  # quality does not apply to RGBA/JP2
     writer.pages[0].images[0].replace(img, quality=20)
     diff = ImageChops.difference(writer.pages[0].images[0].image, img)
-    d1 = sum(diff.convert("L").getdata()) / (diff.size[0] * diff.size[1])
+    d1 = sum(get_image_data(diff.convert("L"))) / (diff.size[0] * diff.size[1])
     assert d1 > d
     # extra tests for coverage
     with pytest.raises(TypeError) as exc:
@@ -1015,7 +1015,7 @@ def test_inline_images():
     url = "https://github.com/py-pdf/pypdf/assets/4083478/28e8b87c-be2c-40d9-9c86-15c7819021bf"
     name = "inline4.png"
     img_ref = Image.open(BytesIO(get_data_from_url(url, name=name)))
-    assert list(reader.pages[1].images[4].image.getdata()) == list(img_ref.getdata())
+    assert get_image_data(reader.pages[1].images[4].image) == get_image_data(img_ref)
     with pytest.raises(KeyError):
         reader.pages[0].images["~999~"]
     del reader.pages[1]["/Resources"]["/ColorSpace"]["/R124"]

@@ -34,5 +34,4 @@ repos:
     rev: v1.17.1
     hooks:
       - id: mypy
-        additional_dependencies: [types-Pillow==10.2.0.20240822]
         files: ^pypdf/.*
