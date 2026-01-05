@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1767175349951,
+  "lastUpdate": 1767609227046,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -86795,6 +86795,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004596159546725394",
             "extra": "mean: 669.0469591999943 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6951bb7c039afd02bd273dda412c3f36df76eba3",
+          "message": "MAINT: Fix compatibility with Pillow >= 12.1.0 (#3590)\n\n`PIL.Image.Image.getdata()` has been deprecated. Additionally, the type\nhints in `types-Pillow` were outdated and replaced by the official type\nhints.",
+          "timestamp": "2026-01-05T11:31:01+01:00",
+          "tree_id": "710a3ff427a312fa08a85f1b370dd7e34ff7b72a",
+          "url": "https://github.com/py-pdf/pypdf/commit/6951bb7c039afd02bd273dda412c3f36df76eba3"
+        },
+        "date": 1767609223201,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.0692518229148247,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006093628035670733",
+            "extra": "mean: 325.81230139999207 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.313328574230635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0037726132636857618",
+            "extra": "mean: 61.29956835293877 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2826501939812938,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013844737604771161",
+            "extra": "mean: 3.537942026199994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 17.74775098453772,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011345763935114034",
+            "extra": "mean: 56.34516738888351 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08814593189374195,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03246258591384495",
+            "extra": "mean: 11.344823051000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.5011610855012865,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007187200332418652",
+            "extra": "mean: 666.1510277999696 msec\nrounds: 5"
           }
         ]
       }
