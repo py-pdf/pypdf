@@ -14,7 +14,6 @@ The following example shows how to add a single top-level bookmark. We add an ou
 ```{testsetup}
 pypdf_test_setup("user/handling-outlines", {
     "crazyones.pdf":"../resources/crazyones.pdf",
-    "output.pdf": "../resources/output.pdf",
 })
 ```
 
@@ -29,7 +28,7 @@ writer.add_outline_item(
     page_number=0
 )
 
-writer.write("output-example.pdf")
+writer.write("simple-example.pdf")
 ```
 
 
@@ -47,23 +46,23 @@ writer = PdfWriter(clone_from="crazyones.pdf")
 # Add parent (Chapter)
 introduction = writer.add_outline_item(
     title="Chapter 1",
-    page_number=1
+    page_number=0
 )
 
 # Add children (sections) nested under the introduction
 writer.add_outline_item(
     title="Section 1.1",
-    page_number=1,
+    page_number=0,
     parent=introduction
 )
 
 writer.add_outline_item(
     title="Section 1.2",
-    page_number=1,
+    page_number=0,
     parent=introduction
 )
 
-writer.write("output-example.pdf")
+writer.write("nested-example.pdf")
 ```
 
 
@@ -85,7 +84,7 @@ writer = PdfWriter(clone_from="crazyones.pdf")
 # Top-level chapter (Points to Page 3, Index 2)
 chapter2 = writer.add_outline_item(
     title="Chapter 2",
-    page_number=2,
+    page_number=0,
     color=(0, 0, 1),
     bold=True,
     italic=False,
@@ -96,7 +95,7 @@ chapter2 = writer.add_outline_item(
 # Section under Chapter 2 (Points to Page 3, Index 2)
 section2_1 = writer.add_outline_item(
     title="Section 2.1",
-    page_number=2,
+    page_number=0,
     parent=chapter2,
     color=(0, 0.5, 0),
     bold=False,
@@ -108,7 +107,7 @@ section2_1 = writer.add_outline_item(
 # Section with custom zoom (Points to Page 3, Index 2)
 section2_2 = writer.add_outline_item(
     title="Section 2.2",
-    page_number=2,
+    page_number=0,
     parent=chapter2,
     color=(1, 0, 0),
     bold=True,
@@ -117,10 +116,10 @@ section2_2 = writer.add_outline_item(
     fit=Fit.xyz(left=0, top=800, zoom=1.25)
 )
 
-writer.write("output-example.pdf")
+writer.write("advanced-example.pdf")
 ```
 
-```{figure} complete-outline.png
+```{figure} complete-outlines.png
 :alt: An annotated screenshot illustrating simple, nested, and advanced PDF bookmarks.
 
 An annotated screenshot illustrating simple, nested, and advanced PDF bookmarks in a Table of Contents.
@@ -139,7 +138,7 @@ To extract only the top-level bookmarks (ignoring nested sections), you can iter
 ```{testcode}
 from pypdf import PdfReader
 
-reader = PdfReader("output.pdf")
+reader = PdfReader("simple-example.pdf")
 
 print("Simple Outline (Top-Level Only):")
 print("-" * 32)
@@ -150,15 +149,17 @@ for outline in reader.outline:
         continue  # Skip the nested parts completely
 
     page_number = reader.get_destination_page_number(outline)
-    print(f"{outline.title} -> page {page_number + 1}")
+
+    if page_number is None:
+        print(f"{outline.title} -> No page destination")
+    else:
+        print(f"{outline.title} -> page {page_number + 1}")
 ```
 
 ```{testoutput}
 Simple Outline (Top-Level Only):
 --------------------------------
 Introduction -> page 1
-Chapter 1 -> page 2
-Chapter 2 -> page 3
 ```
 
 ### Reading Nested Outlines
@@ -195,7 +196,7 @@ def print_outline(
                 print(f"{indent}- {item.title} (Page {page_number + 1})")
 
 
-reader = PdfReader("output.pdf")
+reader = PdfReader("nested-example.pdf")
 
 print("Nested Outline Hierarchy:")
 print("-" * 25)
@@ -206,11 +207,7 @@ print_outline(reader.outline, reader)
 ```{testoutput}
 Nested Outline Hierarchy:
 -------------------------
-- Introduction (Page 1)
-- Chapter 1 (Page 2)
-  - Section 1.1 (Page 2)
-  - Section 1.2 (Page 2)
-- Chapter 2 (Page 3)
-  - Section 2.1 (Page 3)
-  - Section 2.2 (Page 3)
+- Chapter 1 (Page 1)
+  - Section 1.1 (Page 1)
+  - Section 1.2 (Page 1)
 ```
