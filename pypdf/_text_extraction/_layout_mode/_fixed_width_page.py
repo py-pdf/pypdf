@@ -173,7 +173,7 @@ def recurs_to_target_op(
                     _tj = text_state_mgr.text_state_params(tj_op)
                     tj_ops.append(_tj)
                 else:
-                    text_state_mgr.add_trm(_tj.displacement_matrix(TD_offset=tj_op))
+                    text_state_mgr.add_trm(_tj.displacement_matrix(td_offset=tj_op))
         elif op == b"'":
             text_state_mgr.reset_trm()
             text_state_mgr.add_tm([0, -text_state_mgr.TL])
