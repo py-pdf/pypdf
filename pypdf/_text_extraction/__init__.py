@@ -202,9 +202,9 @@ def get_display_str(
     font_size: float,
     rtl_dir: bool,
     visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]]
-) -> tuple[str, str, bool]:
+) -> tuple[str, bool, float]:
     # "\u0590 - \u08FF \uFB50 - \uFDFF"
-    new_text = ""
+    widths: float = 0.0
     for x in [font.character_map.get(x, x) for x in text_operands]:
         # x can be a sequence of bytes ; ex: habibi.pdf
         if len(x) == 1:
@@ -220,7 +220,7 @@ def get_display_str(
             or 0x20A0 <= xx <= 0x21FF           # but (numbers) indices/exponents
             or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
         ):
-            new_text = x + new_text if rtl_dir else new_text + x
+            text = x + text if rtl_dir else text + x
         elif (  # right-to-left characters set
             0x0590 <= xx <= 0x08FF
             or 0xFB1D <= xx <= 0xFDFF
@@ -232,13 +232,14 @@ def get_display_str(
                 if visitor_text is not None:
                     visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                 text = ""
-            new_text = x + new_text
+            text = x + text
         else:  # left-to-right
             if rtl_dir:
                 rtl_dir = False
                 if visitor_text is not None:
                     visitor_text(text, cm_matrix, tm_matrix, font_resource, font_size)
                 text = ""
-            new_text = new_text + x
+            text = text + x
+        widths += font.space_width if x == " " else font.text_width(x)
         # fmt: on
-    return text, new_text, rtl_dir
+    return text, rtl_dir, widths

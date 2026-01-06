@@ -165,21 +165,6 @@ class TextExtraction:
         except OrientationNotFoundError:
             pass
 
-    def _get_actual_text_widths(
-        self,
-        font: Font,
-        text: str,
-        font_size: float
-    ) -> tuple[float, float]:
-        font_widths: float = 0
-        if text:
-            for char in text:
-                if char == " ":
-                    font_widths += font.space_width
-                    continue
-                font_widths += font.text_width(char)
-        return (font_widths * font_size, font_size)
-
     def _handle_tj(
         self,
         text: str,
@@ -197,11 +182,11 @@ class TextExtraction:
         text_operands, is_str_operands = get_text_operands(
             operands, cm_matrix, tm_matrix, font, orientations
         )
-        new_text: str = ""
         if is_str_operands:
-            new_text = text_operands
+            text += text_operands
+            font_widths = sum([font.space_width if x == " " else font.text_width(x) for x in text_operands])
         else:
-            text, new_text, rtl_dir = get_display_str(
+            text, rtl_dir, font_widths = get_display_str(
                 text,
                 cm_matrix,
                 tm_matrix,  # text matrix
@@ -212,15 +197,8 @@ class TextExtraction:
                 rtl_dir,
                 visitor_text,
             )
-        font_widths, actual_str_size["str_height"] = (
-            self._get_actual_text_widths(
-                font,
-                new_text,
-                font_size,
-            )
-        )
-        actual_str_size["str_widths"] += font_widths
-        text = new_text + text if rtl_dir else text + new_text
+        actual_str_size["str_widths"] += font_widths * font_size
+        actual_str_size["str_height"] = font_size
         return text, rtl_dir, actual_str_size
 
     def _flush_text(self) -> None:
