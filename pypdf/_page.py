@@ -1836,7 +1836,7 @@ class PageObject(DictionaryObject):
         Get fonts formatted for "layout" mode text extraction.
 
         Returns:
-            Dict[str, Font]: dictionary of _layout_mode.Font instances keyed by font name
+            Dict[str, Font]: dictionary of Font instances keyed by font name
 
         """
         # Font retrieval logic adapted from pypdf.PageObject._extract_text()
