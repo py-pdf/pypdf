@@ -197,11 +197,11 @@ class TextExtraction:
         text_operands, is_str_operands = get_text_operands(
             operands, cm_matrix, tm_matrix, font, orientations
         )
-        previous_text = text
+        new_text: str = ""
         if is_str_operands:
-            text += text_operands
+            new_text = text_operands
         else:
-            text, rtl_dir = get_display_str(
+            text, new_text, rtl_dir = get_display_str(
                 text,
                 cm_matrix,
                 tm_matrix,  # text matrix
@@ -215,12 +215,12 @@ class TextExtraction:
         font_widths, actual_str_size["str_height"] = (
             self._get_actual_text_widths(
                 font,
-                text.replace(previous_text, ""),
+                new_text,
                 font_size,
             )
         )
         actual_str_size["str_widths"] += font_widths
-
+        text = new_text + text if rtl_dir else text + new_text
         return text, rtl_dir, actual_str_size
 
     def _flush_text(self) -> None:
