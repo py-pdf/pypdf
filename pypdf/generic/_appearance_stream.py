@@ -143,7 +143,7 @@ class TextStreamAppearance(BaseStreamAppearance):
     def _generate_appearance_stream_data(
         self,
         text: str,
-        selection: Optional[list[str]],
+        selection: Union[list[str], None],
         font: Font,
         font_glyph_byte_map: Optional[dict[str, bytes]] = None,
         font_name: str = "/Helv",
