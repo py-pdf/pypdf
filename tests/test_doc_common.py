@@ -11,7 +11,8 @@ from unittest import mock
 import pytest
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import EmbeddedFile, NullObject, TextStringObject, ViewerPreferences
+from pypdf.errors import PdfReadError
+from pypdf.generic import EmbeddedFile, NameObject, NullObject, TextStringObject, ViewerPreferences
 from tests import get_data_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -449,3 +450,19 @@ def test_outline__issue3462():
         "Page 1",
         "Page 2"
     ]
+
+
+def test_flatten__cyclic_references():
+    path = RESOURCES_ROOT / "crazyones.pdf"
+
+    reader = PdfReader(path)
+    assert len(reader.pages) == 1
+    reader._flatten()
+
+    # Make the first child point to the object itself.
+    pages_object = reader.get_object(10)
+    pages_object[NameObject("/Kids")][0].indirect_reference.idnum = 10
+    reader.resolved_objects[(10, 0)] = pages_object
+
+    with pytest.raises(expected_exception=PdfReadError, match=r"^Detected cyclic page references\.$"):
+        reader._flatten()
