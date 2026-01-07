@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1767778821357,
+  "lastUpdate": 1767778850642,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -87259,6 +87259,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028486500166668243",
             "extra": "mean: 804.2939334000039 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "PJBrs@users.noreply.github.com",
+            "name": "PJBrs",
+            "username": "PJBrs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d9ce594772717fdcfcd505d0309843461579bbf7",
+          "message": "MAINT: Converge on one shared Font class for text extraction and appearance streams (#3583)\n\n* MAINT: Port AppearanceStream to the Font class\n\nThis patch ports the AppearanceStream to the new Font class.\nThis is in hardly any way different from the original code,\nexcept making sure that a default width is set in the\ncharacter widths for the 14 Adobe core fonts. This is not in\nfact necessary at this point, but will be when the Font class\nsets default width itself, and other code begins to depend on\nthat.\n\n* ENH: Also collect character widths when encoding is a string\n\nThis patch ensures that character widths are collected\ncorrectly also for fonts that have encoding defined as\na string.\n\n* MAINT: Fix test output after fixing character widths\n\nPreviously, character widths were not computed for type1 and\nTrueType fonts when encoding was a string. For one test, that is,\ntest_text_extraction_layout_mode in tests/test_workflows.py, this\nmeant that all character widths were treated as one space width.\n\nNow, the real widths are used, which changes the output of the\ntest significantly, but in keeping with the intended output. This\npatch implements the new output.\n\nTo be sure, I counted the number of newlines and words in both\nversions, and they are exactly the same, so no spaces were\naccidentally omitted between words in the new version, nor were\nthey added, since the new version has fewer spaces than the old\none.\n\n* ENH: FontDescriptor: Add default width to character widths\n\n* ENH: Use space width from own calculations\n\nThis patch makes sure that the Font class has a way\nto compute space_width.\n\n* MAINT: FontDescriptor: Remove superfluous if condition\n\nThe FontDescriptor code deals with fonts by type. After\nhaving dealt with Type1, MMType1, Type3 and TrueType fonts,\nit is not necessary to check if the remaining fonts are\nCID or composite fonts, they all are.\n\n* MAINT: Layout mode text extraction: Port to new Font class\n\nThis patch ports the layout mode text extraction code to the new font class.\n\nThis introduces one test failure, which itself appears to derive from a\nmisconception about space width in the original Font class.\n\nPreviously, a layout mode font was initialized in _page.py as follows:\n  fonts[font_name] = _layout_mode.Font(*cmap, font_dict)\n\n*cmap, in this case was the return value of build_char_map, which consists of:\n  - Font sub-type;\n  - Space_width criteria (50% of width);\n  - Encoding map;\n  - Character-map; and\n  - Font-dictionary\n\nNotice that build_char_map does _not_ return the width of a space, but the\nwidth of _half_ a space. However, if we look at the arguments to the layout\nmode Font class, clearly the class expects to be passed the full width of a\nspace. This is also clear from the word_width method in the layout mode Font\nclass, which substitutes a missing width with 2 * space_width. It follows\nthat the layout mode Font class _expected_ to be passed a full space width,\nbut really was only passed the width of half a space.\n\nWhen porting to the new Font class, this becomes problematic when calculating\ntext width, because the new Font class uses self.character_widths[\"default\"]\nas a fallback for a missing width, which is approximately (and in many cases\nexactly) the width of two spaces. This in turn causes problems with text\nextraction in cases where the width of a space itself is missing (\"The Crazy\nOnes\"), and cases where a font with a missing character width is calculated\nwider than before.\n\nFor the first issue, this patch introduces a work-around that also exists in\nthe conventional text extraction code, that is, dealing with missing space\nwidth separately.\n\nFor the second issue - this causes one test to fail:\nthe test_layout_mode_text_state in tests/test_text_extraction.py. This is\nentirely due to the existence of a unicode private range character in the\nfile.\n\n* MAINT: tests/test_text_extraction.py: Ignore whitespace in test_layout_mode_text_state\n\nFor several reasons, the output of the test_layout_mode_text_state test has changed\nsignificantly with changing to the new Font class. Here's why:\n\n1. The original layout mode Font class set a space width that was actually half a\nspace wide in reality. In computing word with, a default fallback value was used of\n\"self.space_width * 2\", which in reality was just the width of one space.\n\n2. The new Font class uses \"self.character_widths[\"default\"]\" as a fallback value\nfor calculating word width. This value is calculated as follows:\n  - If a missing width is defined in a Font's font descriptor, set that as default\n    width\n  - Else if the width of a space is defined in a Font's character widths and it\n    is not zero, set the width of two spaces as default width\n  - Else calculate the average of all character widths and set that as default\n    width\n\nFor the document in test_layout_mode_text_state, this results in very different\ndefault character widths. In the original Font class, it set a space width of\n125, and used 250 as a fallback widht. With the new Font class, it reads a value\nof 1000 from missing width in a font descriptor.\n\nThe document contains one character from a private unicode range, the width of\nwhich is not defined. This character appears a number of times throughout the\ndocument. As a result, this character's width is calculated much wider with the\nnew code than with the old code. In all other respects, though, the output is the\nsame. So, the test_layout_mode_text_state's test goal - seeing whether a font\nchange within a q context is addressed correctly - still holds.\n\nThe expected output of this test is stored as a user attachment on github.\nInstead of replacing the document, just remove the space characters from the\nrendered output and check the result. This makes the test pass while keeping\nits intended purpose.\n\n* MAINT: Remove specific Font class from layout mode\n\n* MAINT: _page.py: Add asdict for json dumps of fonts\n\nThe layout-mode Font had a to_dict method that returned a json\nobject of a Font object. Instead if directly copying that method,\nuse asdict() from dataclasses in _page.py and use asdict in the\nassociated test in test_text_extraction.\n\nI DID NOT TEST THE DEBUG CODE IN PAGE.PY MYSELF.\n\n* ROB: FontDescriptor: Don't raise error on invalid font widths\n\nPreviously, when encountering an out-of-bounds width read\nwhile parsing character widths for a CID / composite font,\nwe raised a ParseError. However, this is incompatible with\nthe non-layout text extraction code. This patch emits a\nwarning instead, just like _cmap.py does in the same case.\n\n* MAINT: Text extraction: Pass along fonts with cmaps\n\nThis patch makes sure that Font classes are initialised and then\npassed along to the TextExtractor.\n\n* MAINT: TextExtractor: Set space_width from Font\n\nThis patch sets space width from font instead of from cmap in the\ntf operator handler.\n\nInterestingly, this changes the output of one test from\n\"Lorem ipsum \" to \"Lorem ipsum\". This actually represents a revert\nfrom an earlier change in which we introduced the 14 core font\ncharacter widths into the build_font_width_map code in _cmap.py.\nI'm now guessing that that earlier change was actually incorrent,\nbecause the CORE_FONT_METRICS - I think - use unicode characters\nin their character_widths, whereas the build_font_width_map just\nuses raw codes.\n\n* ENH: TextExtractor: Method for text width calculation based on Font\n\n* MAINT: TextExtractor: Use font for widths calculation\n\n* MAINT: TextExtractor: Remove _get_actual_font_widths method\n\nThis method has become superfluous after switching to the new\n_get_actual_text_widths method.\n\n* MAINT: TextExtractor: Save font in cm_stack\n\n* MAINT: TextExtractor: use font instead of cmap in get_text_operands\n\n* MAINT: TextExtractor: Use font character map in get_display_str\n\n* MAINT: _cmap.py: Remove compute_font_width\n\nThe compute_font_width method is no longer used and\ntherefore obsolete.\n\n* ENH: Placeholder commit Type3 Font Descriptor\n\n* MAINT: Text extraction init: remove cmap\n\n* MAINT: TextExtractor: Remove cmap attribute\n\n* ROB: FontDescriptor: Add warning about invalid width\n\nThis adds a warning to FontDescriptor that replicates a\nwarning originally in the build_font_width_map method in\ncmap.py. In tests/test_cmap.py, test_function_in_font_widths\nspecificallly tests for this warning. Adding this warning\nto FontDescriptor for the same problem case, the test keeps\nfulfilling its purpose, but now for the new Font class.\n\n* MAINT: TextExtractor: Remove cmaps, only pass font resources\n\nThis patch stops collecting character maps, space widths and\nencodings to the TextExtractor, keeping only the font resource\nthat is necessary in the TextExtractor class. All the other\naspects are now covered with the Font class.\n\nIncidentally, this should reduce the number of times that\nfont widths are collected during text extraction, which used\nto be once for every font resource (for collecting space\nwidth) and again during text extraction. Now it is only once,\nwhen the fonts are collected in page.py.\n\n* MAINT: _cmap.py: Remove build_font_width_map\n\nAfter moving the text extraction code to the font class, which\ncollects its own font width map, this code is not needed anymore.\n\n* MAINT: _cmap.py: Remove unused code\n\nThis removes three methods that have become obsolete since\nporting the non-layout text extraction code to the Font class.\n\n* MAINT: _cmap.py: Remove get_actual_str_key method\n\n* MAINT: _cmap.py: Remove compute_space_width\n\n* MAINT: test_cmaps.py: Port test for iss1533 to new Font code\n\nThe test for iss1533 was based on the old build_char_map code.\nNow that that code is removed, port the test to the new Font\nclass, which should cover the underlying issue just the same.\n\n* MAINT: font.py: Import _cmap's get_encoding in the normal way\n\nThis does not cause a circular import anymore after refactoring.\n\n* ENH: TextExtractor: Separate old and new text for width calculation\n\n* MAINT: No separate method for font width calculation\n\nThis reverts \"ENH: TextExtractor: Separate old and new text\nfor width calculation\" and embeds the font widths calculation\nwithin the _handle_tj() method in _text_extractor.py and in\nget_display_str() in _text_extraction/__init__.py instead.\n\nThis way, we get the character widths within the same loop\nin which we collect the unicode characters, without the need\nto keep track of old and new text, and having to add or\nseparate these later on.\n\nAlso, it actually takes so little code that this hardly\njustified the _get_actual_text_widths that did this before.\n\n* MAINT: _layout_mode: Rename TD_offset td_offset\n\n* MAINT: _generate_appearance_stream_data: Don't type Optional\n\n* MAINT: _page.py: Update comment that mentioned old Font class",
+          "timestamp": "2026-01-07T10:37:38+01:00",
+          "tree_id": "fa1fe0b667e63e3326ab5dbaab678d722c6a7c5f",
+          "url": "https://github.com/py-pdf/pypdf/commit/d9ce594772717fdcfcd505d0309843461579bbf7"
+        },
+        "date": 1767778845186,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.700112543382248,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003723488761886802",
+            "extra": "mean: 85.46926333333558 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.58268257065992,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006686421743017942",
+            "extra": "mean: 48.58453199999664 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.001259290417876,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035467496646787985",
+            "extra": "mean: 998.7422933999937 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.3786610946482625,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09410281172083439",
+            "extra": "mean: 2.640883930599995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.2012491301184457,
+            "unit": "iter/sec",
+            "range": "stddev: 0.28353198692823645",
+            "extra": "mean: 4.968965577199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3553777992872393,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008831586832777875",
+            "extra": "mean: 737.8016672000058 msec\nrounds: 5"
           }
         ]
       }
