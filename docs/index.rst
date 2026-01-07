@@ -38,10 +38,10 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    user/add-javascript
    user/viewer-preferences
    user/forms
+   user/handling-outlines
    user/streaming-data
    user/file-size
    user/pdf-version-support
-   user/handling-outlines
    user/pdfa-compliance
 
 
