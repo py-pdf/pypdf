@@ -38,7 +38,7 @@ from pypdf.generic import (
     StreamObject,
 )
 
-from . import PILContext, get_data_from_url
+from . import PILContext, get_data_from_url, get_image_data
 from .test_encryption import HAS_AES
 from .test_images import image_similarity
 
@@ -365,7 +365,7 @@ def test_png_transparency_reverse():
     data = reader.pages[0].images[0]
     img = Image.open(BytesIO(data.data))
     assert ".jp2" in data.name
-    assert list(img.getdata()) == list(refimg.getdata())
+    assert get_image_data(img) == get_image_data(refimg)
 
 
 @pytest.mark.enable_socket
@@ -376,7 +376,7 @@ def test_iss1787():
     data = reader.pages[0].images[0]
     img = Image.open(BytesIO(data.data))
     assert ".png" in data.name
-    assert list(img.getdata()) == list(refimg.getdata())
+    assert get_image_data(img) == get_image_data(refimg)
     obj = data.indirect_reference.get_object()
     obj["/DecodeParms"][NameObject("/Columns")] = NumberObject(1000)
     obj.decoded_self = None
@@ -392,7 +392,7 @@ def test_tiff_predictor():
     data = reader.pages[0].images[0]
     img = Image.open(BytesIO(data.data))
     assert ".png" in data.name
-    assert list(img.getdata()) == list(refimg.getdata())
+    assert get_image_data(img) == get_image_data(refimg)
 
 
 @pytest.mark.enable_socket
@@ -665,8 +665,8 @@ def test_ccitt_fax_decode__black_is_1():
 
     actual_image = reader.pages[0].images[0].image
     expected_image_inverted = other_reader.pages[0].images[0].image
-    expected_pixels = list(ImageOps.invert(expected_image_inverted).getdata())
-    actual_pixels = list(actual_image.getdata())
+    expected_pixels = get_image_data(ImageOps.invert(expected_image_inverted))
+    actual_pixels = get_image_data(actual_image)
     assert expected_pixels == actual_pixels
 
     # AttributeError: 'NullObject' object has no attribute 'get'

@@ -63,8 +63,6 @@ tomli==2.0.2
     #   pytest
 typeguard==4.3.0
     # via -r requirements/ci.in
-types-pillow==10.2.0.20240822
-    # via -r requirements/ci.in
 typing-extensions==4.12.2
     # via
     #   mypy
