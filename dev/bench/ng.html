@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes" />
+    <style>
+      /* CSS Variables for theming */
+      :root {
+        --bg-primary: #f8f9fa;
+        --bg-secondary: #eef1f4;
+        --bg-tertiary: #ffffff;
+        --text-primary: #24292f;
+        --text-secondary: #57606a;
+        --text-muted: #8c959f;
+        --border-color: #d0d7de;
+        --accent-color: #0969da;
+        --link-color: #0969da;
+        --link-hover: #0860ca;
+        --button-bg: #0969da;
+        --button-hover: #0860ca;
+        --shadow: 0 1px 3px rgba(31,35,40,0.12);
+        --radius: 6px;
+        --grid-color: rgba(0, 0, 0, 0.15);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg-primary: #0d1117;
+          --bg-secondary: #161b22;
+          --bg-tertiary: #21262d;
+          --text-primary: #c9d1d9;
+          --text-secondary: #8b949e;
+          --text-muted: #6e7681;
+          --border-color: #30363d;
+          --accent-color: #58a6ff;
+          --link-color: #58a6ff;
+          --link-hover: #79b8ff;
+          --button-bg: #238636;
+          --button-hover: #2ea043;
+          --shadow: 0 1px 3px rgba(0,0,0,0.5);
+          --grid-color: rgba(255, 255, 255, 0.1);
+        }
+      }
+
+      /* Manual dark mode override */
+      :root[data-theme="dark"] {
+        --bg-primary: #0d1117;
+        --bg-secondary: #161b22;
+        --bg-tertiary: #21262d;
+        --text-primary: #c9d1d9;
+        --text-secondary: #8b949e;
+        --text-muted: #6e7681;
+        --border-color: #30363d;
+        --accent-color: #58a6ff;
+        --link-color: #58a6ff;
+        --link-hover: #79b8ff;
+        --button-bg: #238636;
+        --button-hover: #2ea043;
+        --shadow: 0 1px 3px rgba(0,0,0,0.5);
+        --grid-color: rgba(255, 255, 255, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 16px;
+        width: 100%;
+      }
+
+      header {
+        background-color: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        padding: 16px 0;
+        margin-bottom: 24px;
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .header-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-primary);
+      }
+
+      .header-repo {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+
+      .header-spacer {
+        flex: 1;
+      }
+
+      .header-hint {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      main {
+        flex: 1;
+        width: 100%;
+      }
+
+      a {
+        color: var(--link-color);
+        text-decoration: none;
+      }
+
+      a:hover {
+        color: var(--link-hover);
+        text-decoration: underline;
+      }
+
+      button {
+        background-color: var(--button-bg);
+        color: white;
+        border: 1px solid var(--border-color);
+        padding: 6px 16px;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+      }
+
+      button:hover {
+        background-color: var(--button-hover);
+      }
+
+      .small {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+
+      footer {
+        background-color: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        margin-top: 48px;
+        padding: 24px 0;
+      }
+
+      .footer-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .footer-sep {
+        color: var(--text-muted);
+      }
+
+      .benchmark-set {
+        position: relative;
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: var(--shadow);
+      }
+
+      .benchmark-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-primary);
+      }
+
+      .benchmark-chart-wrapper {
+        width: 100%;
+        position: relative;
+      }
+
+      .benchmark-chart {
+        display: block;
+      }
+
+      .control-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .control-group label {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-primary);
+        cursor: pointer;
+      }
+
+      input[type="checkbox"] {
+        margin: 0;
+        cursor: pointer;
+      }
+
+      /* Commit details sidebar */
+      .commit-details {
+        position: fixed;
+        right: -400px;
+        top: 0;
+        width: 380px;
+        height: 100vh;
+        background: var(--bg-secondary);
+        border-left: 1px solid var(--border-color);
+        padding: 20px;
+        overflow-y: auto;
+        transition: right 0.3s ease;
+        z-index: 1000;
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .commit-details.show {
+        right: 0;
+      }
+
+      .commit-details-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .commit-details-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .commit-details-close {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .commit-details-close:hover {
+        color: var(--text-primary);
+      }
+
+      .commit-detail-row {
+        margin-bottom: 16px;
+      }
+
+      .commit-detail-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+      }
+
+      .commit-detail-value {
+        font-size: 14px;
+        color: var(--text-primary);
+        word-break: break-word;
+      }
+
+      .commit-detail-highlight {
+        background: var(--accent-color);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+
+      .commit-detail-link {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 6px 12px;
+        background: var(--button-bg);
+        color: white;
+        text-decoration: none;
+        border-radius: var(--radius);
+        font-size: 13px;
+        transition: background 0.2s;
+      }
+
+      .commit-detail-link:hover {
+        background: var(--button-hover);
+        text-decoration: none;
+      }
+
+      /* Markdown styling within commit details */
+      .commit-detail-value h1,
+      .commit-detail-value h2,
+      .commit-detail-value h3,
+      .commit-detail-value h4,
+      .commit-detail-value h5,
+      .commit-detail-value h6 {
+        margin: 8px 0 4px 0;
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      .commit-detail-value h1 { font-size: 18px; }
+      .commit-detail-value h2 { font-size: 16px; }
+      .commit-detail-value h3 { font-size: 14px; }
+      .commit-detail-value h4 { font-size: 13px; }
+
+      .commit-detail-value p {
+        margin: 4px 0;
+        line-height: 1.4;
+      }
+
+      .commit-detail-value code {
+        background: var(--bg-secondary);
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-family: 'Courier New', monospace;
+      }
+
+      .commit-detail-value pre {
+        background: var(--bg-secondary);
+        padding: 8px;
+        border-radius: var(--radius);
+        overflow-x: auto;
+        font-size: 12px;
+      }
+
+      .commit-detail-value ul,
+      .commit-detail-value ol {
+        margin: 4px 0;
+        padding-left: 20px;
+      }
+
+      .commit-detail-value li {
+        margin: 2px 0;
+        line-height: 1.4;
+      }
+
+      .commit-detail-value a {
+        color: var(--link-color);
+        text-decoration: none;
+      }
+
+      .commit-detail-value a:hover {
+        color: var(--link-hover);
+        text-decoration: underline;
+      }
+
+      .commit-detail-value blockquote {
+        margin: 8px 0;
+        padding-left: 12px;
+        border-left: 3px solid var(--border-color);
+        color: var(--text-secondary);
+        font-style: italic;
+      }
+
+      /* Quick zoom and control buttons */
+      .btn-secondary {
+        padding: 4px 12px;
+        font-size: 12px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        cursor: pointer;
+      }
+
+      .btn-secondary:hover {
+        background: var(--bg-secondary);
+      }
+
+      .btn-small {
+        padding: 3px 8px;
+        font-size: 12px;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 16px;
+        font-size: 14px;
+        color: var(--text-secondary);
+        cursor: pointer;
+      }
+
+      .text-muted {
+        color: var(--text-secondary);
+      }
+
+      .benchmark-header {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      /* Hover value display */
+      .hover-value {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 6px 10px;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-primary);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s;
+        z-index: 10;
+      }
+
+      .hover-value.visible {
+        opacity: 1;
+      }
+
+      /* Theme toggle */
+      .theme-toggle {
+        background: none;
+        border: none;
+        padding: 4px 8px;
+        cursor: pointer;
+        color: var(--text-secondary);
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: var(--radius);
+      }
+
+      .theme-toggle:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+
+      /* Settings panel grouping */
+      .settings-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding: 16px;
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius);
+        border: 1px solid var(--border-color);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .settings-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .settings-divider {
+        width: 1px;
+        height: 24px;
+        background: var(--border-color);
+        margin: 0 4px;
+      }
+
+      @media (max-width: 768px) {
+        .header-content {
+          flex-wrap: wrap;
+        }
+
+        .header-repo {
+          order: 3;
+          width: 100%;
+          margin-top: 4px;
+        }
+
+        .header-spacer {
+          display: none;
+        }
+
+        .settings-row {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .button-group {
+          flex-wrap: wrap;
+        }
+
+        .commit-details {
+          width: 100%;
+          right: -100%;
+        }
+      }
+    </style>
+    <title>Benchmarks</title>
+  </head>
+
+  <body>
+    <header id="header">
+      <div class="container">
+        <div class="header-content">
+          <h1 class="header-title">Benchmarks</h1>
+          <a id="repository-link" rel="noopener" class="header-repo"></a>
+          <div class="header-spacer"></div>
+          <span class="header-hint">Scroll to zoom · Drag to pan · Shift+drag to select</span>
+          <button id="theme-toggle" class="theme-toggle" title="Toggle theme (System/Light/Dark)">
+            <span id="theme-icon">◐</span>
+            <span id="theme-label">System</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main class="container" id="main">
+    </main>
+    
+    <!-- Commit details sidebar -->
+    <div class="commit-details" id="commitDetails">
+      <div class="commit-details-header">
+        <div class="commit-details-title">Commit Details</div>
+        <button class="commit-details-close" onclick="closeCommitDetails()">&times;</button>
+      </div>
+      <div id="commitDetailsContent"></div>
+    </div>
+    
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <span class="small">Last update: <span id="last-update"></span></span>
+          <span class="footer-sep">·</span>
+          <button id="dl-button" class="btn-secondary btn-small">Download JSON</button>
+          <span class="footer-sep">·</span>
+          <span class="small">Powered by <a rel="noopener" href="https://github.com/marketplace/actions/continuous-benchmark">github-action-benchmark</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Chart.js 4 with date adapter and zoom plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.7.2/build/global/luxon.min.js" integrity="sha384-MPG/j0tMZel8D/wdSK2M2n+fUXFQ6lHE3r5wnJZ25xVC8KKtBOvT9BGMOmLfSxGT" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js" integrity="sha384-7cWzHabR6ZyfMWzZgVssYaOQRTccHUWZ0F09AanlF3RAJ/JNyFnIma2JTYIVKEUP" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js" integrity="sha384-Cs3dgUx6+jDxxuqHvVH8Onpyj2LF1gKZurLDlhqzuJmUqVYMJ0THTWpxK5Z086Zm" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js" integrity="sha384-dwwI6ICEN/0ZQlS5owhUa/6ZzvwUPmjH45bFVCAcjgjTulbHJvlE+TGU3g1k0N3R" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js" integrity="sha384-3N9GHhCtN3CQef6tNfqgZlv7sQLYIkcChN+uaTZ7xVdzKYp/SjBNPxa92+hM7EAY" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@17.0.1/marked.min.js" integrity="sha384-tkjnnf9Tzhv5ZFrDroGvUExw9C3EVFo0RFRkzKR8ZX4b5Psoec4yb1PlD8Jh4j4H" crossorigin="anonymous"></script>
+    <script src="data.js"></script>
+    <script id="main-script">
+      'use strict';
+      (function() {
+        // Set Luxon to use browser locale
+        luxon.Settings.defaultLocale = navigator.language;
+
+        // Register Chart.js plugins
+        Chart.register(ChartZoom);
+        if (typeof window.chartjsPluginAnnotation !== 'undefined') {
+          Chart.register(window.chartjsPluginAnnotation.default || window.chartjsPluginAnnotation);
+        } else if (typeof window.ChartAnnotation !== 'undefined') {
+          Chart.register(window.ChartAnnotation);
+        }
+
+        // ============ Constants ============
+        const ZOOM_THRESHOLDS = {
+          MAJOR_ONLY_DAYS: 1000,
+          MAJOR_ONLY_COUNT: 15,
+          MAJOR_MINOR_DAYS: 365,
+          MAJOR_MINOR_COUNT: 8,
+          SELECTIVE_DAYS: 90
+        };
+
+        const RELEASE_COLORS = {
+          major: { border: 'rgba(239, 68, 68, 0.7)', bg: 'rgba(239, 68, 68, 0.9)' },
+          minor: { border: 'rgba(251, 146, 60, 0.7)', bg: 'rgba(251, 146, 60, 0.9)' },
+          patch: { border: 'rgba(34, 197, 94, 0.7)', bg: 'rgba(34, 197, 94, 0.9)' }
+        };
+
+        // Colors from https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
+        const toolColors = {
+          cargo: '#dea584',
+          go: '#00add8',
+          benchmarkjs: '#f1e05a',
+          benchmarkluau: '#000080',
+          pytest: '#3572a5',
+          googlecpp: '#f34b7d',
+          catch2: '#f34b7d',
+          julia: '#a270ba',
+          jmh: '#b07219',
+          benchmarkdotnet: '#178600',
+          customBiggerIsBetter: '#38ff38',
+          customSmallerIsBetter: '#ff3838',
+          _: '#333333'
+        };
+
+        // Generate a stable color from a string (suite name)
+        function stringToColor(str) {
+          // Simple hash function
+          let hash = 0;
+          for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            hash = hash & hash; // Convert to 32bit integer
+          }
+          // Generate HSL color with good saturation and lightness for visibility
+          const hue = Math.abs(hash) % 360;
+          const saturation = 65 + (Math.abs(hash >> 8) % 20); // 65-85%
+          const lightness = 45 + (Math.abs(hash >> 16) % 15);  // 45-60%
+          return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+
+        // Cache for suite colors to ensure consistency within a session
+        const suiteColorCache = new Map();
+
+        // Global state for charts
+        const charts = new Map();
+        let globalDataSets = [];
+        const releaseDataSet = new Set(); // Track releases by timestamp to avoid duplicates
+
+        // ============ Helper Functions ============
+        function formatDateISO(date) {
+          return date.toISOString().split('T')[0];
+        }
+
+        function getResetButtonId(chartName) {
+          return `reset-${chartName.replace(/\s+/g, '-')}`;
+        }
+
+        function getResetButton(chartName) {
+          return document.getElementById(getResetButtonId(chartName));
+        }
+
+        function isChartZoomed(chart) {
+          const xScale = chart.scales.x;
+          return xScale.min > window.dataMinDate.getTime() ||
+                 xScale.max < window.dataMaxDate.getTime();
+        }
+
+        function parseVersion(version) {
+          const parts = version.split('.').map(Number);
+          return {
+            major: parts[0] || 0,
+            minor: parts[1] || 0,
+            patch: parts.length > 2 ? (parts[2] || 0) : null  // null if no patch specified
+          };
+        }
+
+        function getReleaseType(version) {
+          const { minor, patch } = parseVersion(version);
+          if (minor === 0 && patch === 0) return 'major';
+          if (patch === 0 || patch === null) return 'minor';  // X.Y with no patch = minor
+          return 'patch';
+        }
+
+        function getSuiteColor(suiteName, suiteIndex, tool) {
+          // Check cache first for consistency
+          if (suiteColorCache.has(suiteName)) {
+            return suiteColorCache.get(suiteName);
+          }
+          // For single suite, use tool color if available
+          if (suiteIndex === 0 && tool && toolColors[tool]) {
+            suiteColorCache.set(suiteName, toolColors[tool]);
+            return toolColors[tool];
+          }
+          // Generate stable color from suite name
+          const color = stringToColor(suiteName);
+          suiteColorCache.set(suiteName, color);
+          return color;
+        }
+
+        // ============ Theme Management ============
+        // Theme can be: 'system', 'light', or 'dark'
+        function getStoredTheme() {
+          return localStorage.getItem('theme') || 'system';
+        }
+
+        function getEffectiveTheme(theme) {
+          if (theme === 'system') {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          return theme;
+        }
+
+        function applyTheme(theme) {
+          const effective = getEffectiveTheme(theme);
+          if (theme === 'system') {
+            document.documentElement.removeAttribute('data-theme');
+          } else {
+            document.documentElement.setAttribute('data-theme', theme);
+          }
+          localStorage.setItem('theme', theme);
+
+          // Update UI
+          const icon = document.getElementById('theme-icon');
+          const label = document.getElementById('theme-label');
+          if (icon) {
+            icon.textContent = theme === 'system' ? '◐' : (effective === 'dark' ? '☀' : '☾');
+          }
+          if (label) {
+            label.textContent = theme === 'system' ? 'System' : (theme === 'dark' ? 'Dark' : 'Light');
+          }
+
+          // Update chart grid colors
+          requestAnimationFrame(() => {
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
+            charts.forEach(chart => {
+              chart.options.scales.x.grid.color = gridColor;
+              chart.options.scales.y.grid.color = gridColor;
+              chart.update('none');
+            });
+          });
+        }
+
+        function cycleTheme() {
+          const current = getStoredTheme();
+          const next = current === 'system' ? 'light' : (current === 'light' ? 'dark' : 'system');
+          applyTheme(next);
+        }
+
+        // ============ URL State Management ============
+        function getUrlState() {
+          const hash = window.location.hash.slice(1);
+          if (!hash) return null;
+          const params = new URLSearchParams(hash);
+          const from = params.get('from');
+          const to = params.get('to');
+          if (from && to) {
+            return { from: new Date(from), to: new Date(to) };
+          }
+          return null;
+        }
+
+        function setUrlState(startDate, endDate) {
+          if (startDate && endDate) {
+            const hash = `from=${formatDateISO(startDate)}&to=${formatDateISO(endDate)}`;
+            history.replaceState(null, '', `#${hash}`);
+          } else {
+            history.replaceState(null, '', window.location.pathname);
+          }
+        }
+
+        // ============ Value Formatting ============
+        function formatValue(value, unit) {
+          if (typeof value !== 'number') return value;
+          let formatted;
+          if (value < 0.01) formatted = value.toExponential(2);
+          else if (value < 1) formatted = value.toFixed(4);
+          else if (value < 100) formatted = value.toFixed(2);
+          else formatted = value.toFixed(0);
+          return `${formatted} ${unit || ''}`.trim();
+        }
+
+        // Shared handler for zoom and pan completion events
+        function handleZoomPanComplete(context) {
+          const chart = context.chart;
+          const zoomed = isChartZoomed(chart);
+
+          updatePointVisibility(chart);
+
+          // Update release annotations if enabled
+          if (document.getElementById('showReleases')?.checked && window.updateReleaseAnnotations) {
+            window.updateReleaseAnnotations(true);
+          }
+
+          // Show/hide individual reset button based on zoom state
+          const chartName = Array.from(charts.entries()).find(([, c]) => c === chart)?.[0];
+          if (chartName) {
+            const resetBtn = getResetButton(chartName);
+            if (resetBtn) {
+              resetBtn.style.display = zoomed ? '' : 'none';
+            }
+          }
+        }
+
+        function init() {
+          function collectBenchesPerTestCase(entries) {
+            const map = new Map();
+            for (const entry of entries) {
+              const {commit, date, tool, benches} = entry;
+              for (const bench of benches) {
+                const result = { commit, date, tool, bench };
+                const arr = map.get(bench.name);
+                if (arr === undefined) {
+                  map.set(bench.name, [result]);
+                } else {
+                  arr.push(result);
+                }
+              }
+            }
+            return map;
+          }
+
+          const data = window.BENCHMARK_DATA;
+
+          // Render header
+          const repoLink = document.getElementById('repository-link');
+          repoLink.href = data.repoUrl;
+          // Show just the repo path, not full URL
+          const repoPath = data.repoUrl.replace(/^https?:\/\/github\.com\//, '');
+          repoLink.textContent = repoPath;
+
+          // Render footer - numeric format for language-neutral display
+          document.getElementById('last-update').textContent = new Date(data.lastUpdate).toLocaleString(undefined, {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit'
+          });
+          document.getElementById('dl-button').onclick = () => {
+            const dataUrl = 'data:,' + JSON.stringify(data, null, 2);
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'benchmark_data.json';
+            a.click();
+          };
+
+          // Initialize theme
+          applyTheme(getStoredTheme());
+          document.getElementById('theme-toggle').onclick = cycleTheme;
+
+          // Prepare data points for charts
+          return Object.keys(data.entries).map(name => ({
+            name,
+            dataSet: collectBenchesPerTestCase(data.entries[name]),
+          }));
+        }
+
+        function updateAllCharts() {
+          // Redraw all charts with updated settings
+          charts.forEach((chart, benchName) => {
+            updateChartOptions(chart, benchName);
+          });
+        }
+
+        function calculateTrendLine(data) {
+          // Simple linear regression
+          const n = data.length;
+          if (n < 2) return null;
+          
+          let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+          data.forEach((y, x) => {
+            sumX += x;
+            sumY += y;
+            sumXY += x * y;
+            sumX2 += x * x;
+          });
+          
+          const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+          const intercept = (sumY - slope * sumX) / n;
+          
+          return data.map((_, x) => slope * x + intercept);
+        }
+
+        function updateChartOptions(chart, benchName) {
+          // Rebuild datasets with current options
+          const datasets = [];
+          let suiteIndex = 0;
+
+          globalDataSets.forEach(dataSet => {
+            if (dataSet.dataSet.has(benchName)) {
+              const benchData = dataSet.dataSet.get(benchName);
+              const color = getSuiteColor(dataSet.name, suiteIndex, benchData[0]?.tool);
+              
+              const dataPoints = benchData.map(d => ({
+                x: new Date(d.date),
+                y: d.bench.value,
+                commit: d.commit,
+                bench: d.bench
+              }));
+              
+              datasets.push({
+                label: dataSet.name,
+                data: dataPoints,
+                borderColor: color,
+                backgroundColor: color,
+                borderDash: [],
+                borderWidth: 2.5,
+                pointRadius: dataPoints.length > 30 ? 0 : (dataPoints.length > 15 ? 1.5 : 2.5),
+                pointHoverRadius: 4,
+                pointStyle: 'circle',
+                pointBorderWidth: 0,
+                fill: false,
+                tension: 0,
+                hidden: false
+              });
+              
+              // Add trend line if requested
+              if (document.getElementById('showTrend').checked) {
+                const trendData = calculateTrendLine(dataPoints.map(p => p.y));
+                if (trendData) {
+                  datasets.push({
+                    label: `${dataSet.name} (trend)`,
+                    data: dataPoints.map((p, i) => ({
+                      x: p.x,
+                      y: trendData[i],
+                      commit: null,
+                      bench: null
+                    })),
+                    borderColor: color,
+                    borderDash: [10, 5],
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0,
+                    backgroundColor: 'transparent'
+                  });
+                }
+              }
+              
+              suiteIndex++;
+            }
+          });
+          
+          chart.data.datasets = datasets;
+          chart.update('none');  // Disable animation
+        }
+
+        // Function to update point visibility based on visible data points
+        function updatePointVisibility(chart) {
+          const xScale = chart.scales.x;
+          const min = xScale.min;
+          const max = xScale.max;
+          
+          chart.data.datasets.forEach((dataset, index) => {
+            // Skip trend lines
+            if (dataset.label && dataset.label.includes('trend')) return;
+            
+            // Count visible points in current zoom range
+            let visiblePoints = 0;
+            dataset.data.forEach(point => {
+              const x = point.x ? point.x : point;
+              if (x >= min && x <= max) {
+                visiblePoints++;
+              }
+            });
+            
+            // Update point radius function to preserve release point styling
+            const baseRadius = visiblePoints > 30 ? 2 : (visiblePoints > 15 ? 3 : 4);
+            chart.data.datasets[index].pointRadius = (context) => {
+              const point = context.parsed ? context.raw : context.element?.$context?.raw;
+              if (point?.isRelease) return 6; // Keep release points larger
+              return baseRadius;
+            };
+          });
+          
+          chart.update('none');
+        }
+        
+        // Function to show commit details in sidebar
+        function showCommitDetails(commit, clickedBench) {
+          const content = document.getElementById('commitDetailsContent');
+          
+          // Find all benchmark results for this commit across all suites
+          const allResults = [];
+          globalDataSets.forEach(dataSet => {
+            // Find the benchmark run that matches this commit
+            dataSet.dataSet.forEach((benchData, benchName) => {
+              const matchingRun = benchData.find(run => run.commit.id === commit.id);
+              if (matchingRun) {
+                allResults.push({
+                  suiteName: dataSet.name,
+                  benchName: benchName,
+                  bench: matchingRun.bench,
+                  isClicked: matchingRun.bench === clickedBench
+                });
+              }
+            });
+          });
+          
+          // Group by suite
+          const groupedResults = {};
+          allResults.forEach(result => {
+            if (!groupedResults[result.suiteName]) {
+              groupedResults[result.suiteName] = [];
+            }
+            groupedResults[result.suiteName].push(result);
+          });
+          
+          // Build the content
+          let benchmarkSection = '';
+          Object.entries(groupedResults).forEach(([suiteName, results]) => {
+            benchmarkSection += `
+              <div class="commit-detail-row">
+                <div class="commit-detail-label">${suiteName}</div>
+                ${results.map(result => `
+                  <div class="commit-detail-value ${result.isClicked ? 'commit-detail-highlight' : ''}" style="margin-bottom: 8px;">
+                    <strong>${result.benchName}:</strong> ${formatValue(result.bench.value, result.bench.unit)}
+                    ${result.bench.range ? `<br><small class="text-muted">${result.bench.range}</small>` : ''}
+                    ${result.bench.extra ? `<br><small class="text-muted">${result.bench.extra.split('\\n')[0]}</small>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          });
+          
+          content.innerHTML = `
+            <div class="commit-detail-row">
+              <div class="commit-detail-label">Commit ID</div>
+              <div class="commit-detail-value">${commit.id}</div>
+            </div>
+            
+            <div class="commit-detail-row">
+              <div class="commit-detail-label">Message</div>
+              <div class="commit-detail-value">${marked.parse(commit.message || '')}</div>
+            </div>
+            
+            <div class="commit-detail-row">
+              <div class="commit-detail-label">Author</div>
+              <div class="commit-detail-value">${commit.author.name}${commit.author.username ? ` (@${commit.author.username})` : ''}</div>
+            </div>
+            
+            <div class="commit-detail-row">
+              <div class="commit-detail-label">Date</div>
+              <div class="commit-detail-value">${new Date(commit.timestamp).toLocaleString(undefined, {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit'
+              })}</div>
+            </div>
+            
+            <div style="border-top: 1px solid var(--border-color); margin: 20px 0; padding-top: 16px;">
+              <div class="commit-detail-label" style="margin-bottom: 12px;">Benchmark Results</div>
+              ${benchmarkSection}
+            </div>
+            
+            ${commit.url ? `
+            <div class="commit-detail-row">
+              <a href="${commit.url}" target="_blank" class="commit-detail-link">View on GitHub</a>
+            </div>
+            ` : ''}
+          `;
+          
+          document.getElementById('commitDetails').classList.add('show');
+        }
+        
+        // Function to close commit details sidebar
+        window.closeCommitDetails = function() {
+          document.getElementById('commitDetails').classList.remove('show');
+        }
+        
+        function renderAllCharts(dataSets) {
+          // Store globally for comparison feature
+          globalDataSets = dataSets;
+          
+          // Calculate min and max dates from all data for zoom limits
+          let globalMinDate = new Date();
+          let globalMaxDate = new Date(0);
+          dataSets.forEach(dataSet => {
+            dataSet.dataSet.forEach((benchData) => {
+              benchData.forEach(d => {
+                const date = new Date(d.date);
+                if (date < globalMinDate) globalMinDate = date;
+                if (date > globalMaxDate) globalMaxDate = date;
+              });
+            });
+          });
+          
+          // Store globally for chart zoom limits
+          window.dataMinDate = globalMinDate;
+          window.dataMaxDate = globalMaxDate;
+
+          // Unified zoom management function using proper Chart.js zoom plugin API
+          window.setChartZoom = function(startDate, endDate) {
+            charts.forEach((chart, chartName) => {
+              const resetBtn = getResetButton(chartName);
+
+              if (startDate && endDate) {
+                chart.zoomScale('x', {
+                  min: startDate.getTime(),
+                  max: endDate.getTime()
+                }, 'none');
+                if (resetBtn) resetBtn.style.display = '';
+              } else {
+                chart.resetZoom('none');
+                if (resetBtn) resetBtn.style.display = 'none';
+              }
+              updatePointVisibility(chart);
+            });
+
+            // Update release annotations if enabled
+            if (document.getElementById('showReleases')?.checked && window.updateReleaseAnnotations) {
+              window.updateReleaseAnnotations(true);
+            }
+
+            // Update URL state
+            setUrlState(startDate, endDate);
+          };
+
+          function renderGraph(parent, benchName, allSuiteData) {
+            // Wrapper div handles sizing; Chart.js manages canvas dimensions
+            const wrapper = document.createElement('div');
+            wrapper.className = 'benchmark-chart-wrapper';
+            parent.appendChild(wrapper);
+
+            const canvas = document.createElement('canvas');
+            canvas.className = 'benchmark-chart';
+            wrapper.appendChild(canvas);
+
+            // Hover value display
+            const hoverDisplay = document.createElement('div');
+            hoverDisplay.className = 'hover-value';
+            wrapper.appendChild(hoverDisplay);
+
+            // Get theme-aware grid color
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
+
+            // Calculate Y-axis range from ALL data for this benchmark (for constant scaling)
+            let yMin = Infinity;
+            let yMax = -Infinity;
+            allSuiteData.forEach(benchData => {
+              benchData.forEach(d => {
+                if (d.bench.value < yMin) yMin = d.bench.value;
+                if (d.bench.value > yMax) yMax = d.bench.value;
+              });
+            });
+            // Add 10% padding to Y range
+            const yPadding = (yMax - yMin) * 0.1;
+            const yAxisMin = Math.max(0, yMin - yPadding);
+            const yAxisMax = yMax + yPadding;
+
+            // Build datasets for all suites that have this benchmark
+            const datasets = [];
+            let suiteIndex = 0;
+
+            // Each suite gets its own dataset with proper date/value pairs
+            allSuiteData.forEach((benchData, suiteName) => {
+              const color = getSuiteColor(suiteName, suiteIndex, benchData[0]?.tool);
+
+              // Create data points with actual dates for proper alignment
+              const dataPoints = benchData.map(d => ({
+                x: new Date(d.date),
+                y: d.bench.value,
+                commit: d.commit,
+                bench: d.bench
+              }));
+              
+              // Collect release data with version information (deduplicated by timestamp)
+              benchData.forEach(d => {
+                if (d.commit.message && d.commit.message.includes('REL:')) {
+                  const timestamp = new Date(d.date).getTime();
+                  // Skip if already collected this release
+                  if (releaseDataSet.has(timestamp)) return;
+                  releaseDataSet.add(timestamp);
+
+                  if (!window.releaseData) window.releaseData = [];
+                  // Match "REL: 1.2.3" or "REL: Version 1.2.3, ..." or similar patterns
+                  const versionMatch = d.commit.message.match(/REL:\s*(?:Version\s+)?v?(\d+\.\d+(?:\.\d+)?)/i);
+                  if (!versionMatch) return; // Skip releases without parseable version
+                  window.releaseData.push({
+                    timestamp,
+                    date: new Date(d.date),
+                    version: versionMatch[1],
+                    commit: d.commit
+                  });
+                }
+              });
+              
+              // Regular dataset - no special release styling
+              datasets.push({
+                label: suiteName,
+                data: dataPoints,
+                borderColor: color,
+                backgroundColor: color,
+                borderDash: [],
+                borderWidth: 2.5,
+                pointRadius: dataPoints.length > 30 ? 2 : (dataPoints.length > 15 ? 3 : 4),
+                pointHoverRadius: 8,
+                pointStyle: 'circle',
+                pointBorderWidth: 0,
+                fill: false,
+                tension: 0,
+                hidden: false
+              });
+              
+              suiteIndex++;
+            });
+
+            const unit = allSuiteData.values().next().value?.[0]?.bench.unit || 'Value';
+
+            const data = {
+              datasets: datasets
+            };
+            const options = {
+              responsive: true,
+              maintainAspectRatio: true,
+              clip: false,  // Don't clip content at chart area edges
+              layout: {
+                padding: {
+                  left: 10,
+                  right: 10,
+                  top: 20,
+                  bottom: 10
+                }
+              },
+              interaction: {
+                mode: 'point',
+                intersect: true,
+              },
+              scales: {
+                x: {
+                  type: 'time',
+                  time: {
+                    displayFormats: {
+                      hour: 't',      // Short localized time
+                      day: 'D',       // Localized numeric date
+                      week: 'D',
+                      month: 'LL/yyyy'
+                    },
+                    tooltipFormat: 'D t',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Date',
+                  },
+                  grid: {
+                    display: true,
+                    color: gridColor,
+                  },
+                },
+                y: {
+                  min: yAxisMin,
+                  max: yAxisMax,
+                  title: {
+                    display: true,
+                    text: unit,
+                  },
+                  grid: {
+                    display: true,
+                    color: gridColor,
+                  },
+                },
+              },
+              plugins: {
+                legend: {
+                  display: true,
+                  onClick: (e, legendItem, legend) => {
+                    // Default toggle behavior
+                    const index = legendItem.datasetIndex;
+                    const chart = legend.chart;
+                    chart.setDatasetVisibility(index, !chart.isDatasetVisible(index));
+                    chart.update();
+                  }
+                },
+                zoom: {
+                  limits: {
+                    y: {min: yAxisMin, max: yAxisMax},
+                    x: {min: window.dataMinDate, max: window.dataMaxDate}
+                  },
+                  zoom: {
+                    wheel: {
+                      enabled: true,
+                    },
+                    drag: {
+                      enabled: true,
+                      modifierKey: 'shift',  // Shift+drag to select range
+                      backgroundColor: 'rgba(9, 105, 218, 0.1)',
+                      borderColor: 'rgba(9, 105, 218, 0.5)',
+                      borderWidth: 1,
+                    },
+                    pinch: {
+                      enabled: true
+                    },
+                    mode: 'x',
+                    onZoomComplete: handleZoomPanComplete
+                  },
+                  pan: {
+                    enabled: true,
+                    mode: 'x',
+                    onPanComplete: handleZoomPanComplete
+                  },
+                },
+                annotation: {
+                  annotations: []
+                },
+                tooltip: {
+                  enabled: false
+                }
+              },
+              onClick: (_event, activeElems, chart) => {
+                if (activeElems.length > 0) {
+                  const point = activeElems[0].element.$context.raw;
+                  if (point.commit && point.bench) {
+                    showCommitDetails(point.commit, point.bench);
+                  }
+                }
+              },
+              onHover: (_event, activeElems, chart) => {
+                if (activeElems.length > 0) {
+                  const point = activeElems[0].element.$context.raw;
+                  if (point && point.bench) {
+                    hoverDisplay.textContent = formatValue(point.bench.value, point.bench.unit);
+                    hoverDisplay.classList.add('visible');
+                  }
+                } else {
+                  hoverDisplay.classList.remove('visible');
+                }
+              },
+            };
+
+            const chart = new Chart(canvas, {
+              type: 'line',
+              data,
+              options,
+            });
+
+            // Store chart reference for updates
+            charts.set(benchName, chart);
+          }
+
+          // Collect all unique benchmark names across all suites
+          const allBenchmarks = new Map();
+          
+          dataSets.forEach(({name: suiteName, dataSet}) => {
+            dataSet.forEach((benchData, benchName) => {
+              if (!allBenchmarks.has(benchName)) {
+                allBenchmarks.set(benchName, new Map());
+              }
+              allBenchmarks.get(benchName).set(suiteName, benchData);
+            });
+          });
+
+          // Create graphs directly in main
+          const main = document.getElementById('main');
+
+          const controlsContainer = document.createElement('div');
+          controlsContainer.className = 'settings-panel';
+          controlsContainer.innerHTML = `
+            <div class="settings-row">
+              <div class="button-group">
+                <button class="quick-zoom btn-secondary btn-small" data-days="30">30d</button>
+                <button class="quick-zoom btn-secondary btn-small" data-days="60">60d</button>
+                <button class="quick-zoom btn-secondary btn-small" data-days="90">90d</button>
+                <button class="quick-zoom btn-secondary btn-small" data-days="180">6m</button>
+                <button class="quick-zoom btn-secondary btn-small" data-days="365">1y</button>
+                <button id="reset-zoom" class="btn-secondary btn-small">All</button>
+              </div>
+              <div class="settings-divider"></div>
+              <label class="checkbox-label" style="margin-left: 0;">
+                <input type="checkbox" id="showTrend">
+                Trends
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="showReleases">
+                Releases
+              </label>
+            </div>
+          `;
+          
+          main.appendChild(controlsContainer);
+          
+          // Add event listeners for controls
+          document.getElementById('showTrend').addEventListener('change', updateAllCharts);
+          document.getElementById('showReleases').addEventListener('change', (e) => {
+            window.updateReleaseAnnotations(e.target.checked);
+          });
+          document.getElementById('reset-zoom').addEventListener('click', () => {
+            window.setChartZoom();
+          });
+
+          // Function to update release annotations based on zoom level and toggle state
+          window.updateReleaseAnnotations = function(show) {
+            if (!window.releaseData || window.releaseData.length === 0) return;
+
+            // Remove duplicates and sort by date
+            const uniqueReleases = Array.from(new Map(
+              window.releaseData.map(r => [r.timestamp, r])
+            ).values()).sort((a, b) => a.timestamp - b.timestamp);
+
+            charts.forEach(chart => {
+              if (!chart.options.plugins) chart.options.plugins = {};
+              if (!chart.options.plugins.annotation) chart.options.plugins.annotation = {};
+
+              if (show) {
+                const xScale = chart.scales.x;
+                const timeSpan = xScale.max - xScale.min;
+                const timeSpanDays = timeSpan / (1000 * 60 * 60 * 24);
+
+                // Filter releases in visible range
+                let filteredReleases = uniqueReleases.filter(r =>
+                  r.date >= xScale.min && r.date <= xScale.max
+                );
+
+                // Determine display strategy based on zoom level and count
+                let showStrategy;
+                if (timeSpanDays > ZOOM_THRESHOLDS.MAJOR_ONLY_DAYS ||
+                    filteredReleases.length > ZOOM_THRESHOLDS.MAJOR_ONLY_COUNT) {
+                  showStrategy = 'major-only';
+                  filteredReleases = filteredReleases.filter(r => getReleaseType(r.version) === 'major');
+                } else if (timeSpanDays > ZOOM_THRESHOLDS.MAJOR_MINOR_DAYS ||
+                           filteredReleases.length > ZOOM_THRESHOLDS.MAJOR_MINOR_COUNT) {
+                  showStrategy = 'major-minor';
+                  filteredReleases = filteredReleases.filter(r => getReleaseType(r.version) !== 'patch');
+                } else if (timeSpanDays > ZOOM_THRESHOLDS.SELECTIVE_DAYS) {
+                  showStrategy = 'selective';
+                  filteredReleases = filteredReleases.filter(r => getReleaseType(r.version) !== 'patch');
+                } else {
+                  showStrategy = 'all';
+                }
+
+                const annotations = filteredReleases.map(release => {
+                  const releaseType = getReleaseType(release.version);
+                  const { major, minor } = parseVersion(release.version);
+                  const colors = RELEASE_COLORS[releaseType];
+
+                  // Determine label based on strategy
+                  let label;
+                  if (showStrategy === 'major-only') {
+                    label = `v${major}`;
+                  } else if (showStrategy === 'major-minor' || showStrategy === 'selective') {
+                    label = releaseType === 'major' ? `v${major}` : `${major}.${minor}`;
+                  } else {
+                    label = release.version;
+                  }
+
+                  return {
+                    type: 'line',
+                    mode: 'vertical',
+                    scaleID: 'x',
+                    value: release.date,
+                    borderColor: colors.border,
+                    borderWidth: releaseType === 'major' ? 2 : 1,
+                    borderDash: releaseType === 'major' ? [6, 3] : [4, 4],
+                    label: {
+                      display: !!label,
+                      content: label,
+                      position: 'start',
+                      yAdjust: -10,
+                      backgroundColor: colors.bg,
+                      color: 'white',
+                      padding: 4,
+                      borderRadius: 3,
+                      font: {
+                        size: releaseType === 'major' ? 12 : 10,
+                        weight: releaseType === 'major' ? 'bold' : 'normal'
+                      }
+                    }
+                  };
+                });
+
+                chart.options.plugins.annotation.annotations = annotations;
+              } else {
+                chart.options.plugins.annotation.annotations = [];
+              }
+
+              chart.update('none');
+            });
+          };
+
+          // Add event handlers for quick zoom buttons
+          document.querySelectorAll('.quick-zoom').forEach(button => {
+            button.addEventListener('click', () => {
+              const days = parseInt(button.dataset.days);
+              const now = new Date();
+              const startDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
+              const endDate = new Date(now);
+              endDate.setHours(23, 59, 59, 999); // Include full day
+              
+              window.setChartZoom(startDate, endDate);
+            });
+          });
+
+          // Render each unique benchmark once with all suite data
+          allBenchmarks.forEach((suiteData, benchName) => {
+            const benchContainer = document.createElement('div');
+            benchContainer.className = 'benchmark-set';
+            main.appendChild(benchContainer);
+
+            // Create header with title and reset button
+            const titleContainer = document.createElement('div');
+            titleContainer.className = 'benchmark-header';
+
+            const benchTitle = document.createElement('h2');
+            benchTitle.className = 'benchmark-title';
+            benchTitle.textContent = benchName;
+            titleContainer.appendChild(benchTitle);
+
+            // Per-chart reset button (hidden by default)
+            const resetBtn = document.createElement('button');
+            resetBtn.className = 'btn-secondary btn-small';
+            resetBtn.textContent = 'Reset zoom';
+            resetBtn.title = `Reset ${benchName} to full range`;
+            resetBtn.style.display = 'none';
+            resetBtn.id = getResetButtonId(benchName);
+            titleContainer.appendChild(resetBtn);
+            
+            benchContainer.appendChild(titleContainer);
+            
+            renderGraph(benchContainer, benchName, suiteData);
+            
+            // Add reset functionality for this specific chart
+            const chart = charts.get(benchName);
+            resetBtn.addEventListener('click', () => {
+              chart.resetZoom('none');
+              updatePointVisibility(chart);
+              resetBtn.style.display = 'none';
+            });
+          });
+
+          // Apply URL state if present (after charts are created)
+          const urlState = getUrlState();
+          if (urlState) {
+            window.setChartZoom(urlState.from, urlState.to);
+          }
+        }
+
+        renderAllCharts(init()); // Start
+      })();
+    </script>
+  </body>
+</html>
