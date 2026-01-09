@@ -8,6 +8,7 @@ from typing import cast
 from zipfile import ZipFile
 
 from pypdf._codecs.adobe_glyphs import adobe_glyphs
+from pypdf.constants import FontFlags
 
 # FONT_LOC = "web.archive.org/web/20110531171921if_/http://www.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/Core14_AFMs.zip"
 FONT_LOC = "download.macromedia.com/pub/developer/opentype/tech-notes/Core14_AFMs.zip"
@@ -74,7 +75,7 @@ class Parser:
             if key == "FontName":
                 name = value
                 if "Times" in value:
-                    flags += 2
+                    flags += FontFlags.SERIF
             if key == "Weight":
                 weight = value
             if key == "FamilyName":
@@ -91,16 +92,16 @@ class Parser:
             if key == "ItalicAngle":
                 italic_angle = cast(float, value)
                 if value != "0":
-                    flags += 64
+                    flags += FontFlags.ITALIC
             if key == "IsFixedPitch":
-                flags += int(value.lower() == "true")
+                flags += int(value.lower() == "true") & FontFlags.FIXED_PITCH
             if key == "FontBBox":
                 bbox = tuple(map(float, value.split(" ")[:4]))  # type: ignore
             if key == "EncodingScheme":
                 if value == "FontSpecific":
-                    flags += 4
+                    flags += FontFlags.SYMBOLIC
                 else:
-                    flags += 32
+                    flags += FontFlags.NONSYMBOLIC
 
             # Add copyright information. This is available in two fields: "Comment" and "Notice".
             # However, all information available in "Comment" is also available in "Notice", and
@@ -126,23 +127,33 @@ class Parser:
                 character_widths[glyph.encode("unicode_escape").decode("utf-8")] = character_width_x
             if key == "CH":
                 raise NotImplementedError(name, line)
+            # Add default width
+            try:
+                if flags & FontFlags.FIXED_PITCH:
+                    character_widths["default"] = character_widths[" "]
+                else:
+                    character_widths["default"] = 2 * character_widths[" "]
+            except KeyError:
+                pass
 
         result = [
             f"    # Generated from {file_name}"
         ]
         for copyright_entry in sorted(set(copyrights)):
             result.extend(f"    # {line}" for line in textwrap.wrap(text=copyright_entry, width=95))
-        result.append(f'    "{name}": FontDescriptor(')
-        result.append(f'        name="{name}",')
-        result.append(f'        family="{family}",')
-        result.append(f'        weight="{weight}",')
-        result.append(f"        ascent={ascent},")
-        result.append(f"        descent={descent},")
-        result.append(f"        cap_height={cap_height},")
-        result.append(f"        x_height={x_height},")
-        result.append(f"        italic_angle={italic_angle},")
-        result.append(f"        flags={flags},")
-        result.append(f"        bbox=({', '.join(map(str, bbox))}),")
+        result.append(f'    "{name}": CoreFontMetrics(')
+        result.append("        font_descriptor=FontDescriptor(")
+        result.append(f'            name="{name}",')
+        result.append(f'            family="{family}",')
+        result.append(f'            weight="{weight}",')
+        result.append(f"            ascent={ascent},")
+        result.append(f"            descent={descent},")
+        result.append(f"            cap_height={cap_height},")
+        result.append(f"            x_height={x_height},")
+        result.append(f"            italic_angle={italic_angle},")
+        result.append(f"            flags={flags},")
+        result.append(f"            bbox=({', '.join(map(str, bbox))}),")
+        result.append("        ),")
         result.append("        character_widths={")
         for character, width in character_widths.items():
             d = '"'
@@ -158,8 +169,8 @@ class Parser:
 
     def get_font_data(self) -> str:
         data = [
-            "from pypdf._font import FontDescriptor\n\n"
-            "CORE_FONT_METRICS: dict[str, FontDescriptor] = {",
+            "from pypdf._font import CoreFontMetrics, FontDescriptor\n\n"
+            "CORE_FONT_METRICS: dict[str, CoreFontMetrics] = {",
         ]
         for name, font_data in self.files.items():
             data.extend(self._handle_font(name, font_data))

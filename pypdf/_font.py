@@ -249,6 +249,12 @@ class FontDescriptor:
         return cls(**font_kwargs)
 
 
+@dataclass(frozen=True)
+class CoreFontMetrics:
+    font_descriptor: FontDescriptor
+    character_widths: dict[str, int]
+
+
 @dataclass
 class Font:
     """
