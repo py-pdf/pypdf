@@ -1895,7 +1895,7 @@ def test_read_standard_xref_table__two_whitespace_characters_between_offset_and_
 
 @pytest.mark.enable_socket
 def test_root_object_recovery_limit(caplog):
-    url = ""
+    url = "https://github.com/user-attachments/files/24525509/root_object_recovery_limit.pdf"
     name = "root_object_recovery_limit.pdf"
     data = get_data_from_url(url, name=name)
 
