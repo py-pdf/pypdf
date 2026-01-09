@@ -660,36 +660,39 @@ class TextStringObject(str, PdfObject):  # noqa: SLOT000
     _original_bytes: Optional[bytes] = None
 
     def __new__(cls, value: Any) -> "TextStringObject":
-        org = None
+        original_bytes = None
         if isinstance(value, bytes):
-            org = value
+            original_bytes = value
             value = value.decode("charmap")
-        o = str.__new__(cls, value)
-        o._original_bytes = org
-        o.autodetect_utf16 = False
-        o.autodetect_pdfdocencoding = False
-        o.utf16_bom = b""
-        if o.startswith(("\xfe\xff", "\xff\xfe")):
-            assert org is not None, "mypy"
+        text_string_object = str.__new__(cls, value)
+        text_string_object._original_bytes = original_bytes
+        text_string_object.autodetect_utf16 = False
+        text_string_object.autodetect_pdfdocencoding = False
+        text_string_object.utf16_bom = b""
+        if original_bytes is not None and original_bytes[:2] in {codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE}:
+            # The value of `original_bytes` is only set for inputs being `bytes`.
+            # If this is UTF-16 data according to the BOM (first two characters),
+            # perform special handling. All other cases should not need any special conversion
+            # due to already being a string.
             try:
-                o = str.__new__(cls, org.decode("utf-16"))
-            except UnicodeDecodeError as exc:
+                text_string_object = str.__new__(cls, original_bytes.decode("utf-16"))
+            except UnicodeDecodeError as exception:
                 logger_warning(
-                    f"{exc!s}\ninitial string:{exc.object!r}",
+                    f"{exception!s}\ninitial string:{exception.object!r}",
                     __name__,
                 )
-                o = str.__new__(cls, exc.object[: exc.start].decode("utf-16"))
-            o._original_bytes = org
-            o.autodetect_utf16 = True
-            o.utf16_bom = org[:2]
+                text_string_object = str.__new__(cls, exception.object[: exception.start].decode("utf-16"))
+            text_string_object._original_bytes = original_bytes
+            text_string_object.autodetect_utf16 = True
+            text_string_object.utf16_bom = original_bytes[:2]
         else:
             try:
-                encode_pdfdocencoding(o)
-                o.autodetect_pdfdocencoding = True
+                encode_pdfdocencoding(text_string_object)
+                text_string_object.autodetect_pdfdocencoding = True
             except UnicodeEncodeError:
-                o.autodetect_utf16 = True
-                o.utf16_bom = codecs.BOM_UTF16_BE
-        return o
+                text_string_object.autodetect_utf16 = True
+                text_string_object.utf16_bom = codecs.BOM_UTF16_BE
+        return text_string_object
 
     def clone(
         self,

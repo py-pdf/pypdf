@@ -30,7 +30,7 @@
 import math
 from typing import Any, Callable, Optional, Union
 
-from .._cmap import build_font_width_map, compute_font_width, get_actual_str_key
+from .._font import Font, FontDescriptor
 from ..generic import DictionaryObject, TextStringObject
 from . import OrientationNotFoundError, crlf_space_check, get_display_str, get_text_operands, mult
 
@@ -53,8 +53,8 @@ class TextExtraction:
         self.cm_stack: list[
             tuple[
                 list[float],
-                tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]],
-                float,
+                Optional[DictionaryObject],
+                Font,
                 float,
                 float,
                 float,
@@ -75,7 +75,6 @@ class TextExtraction:
         self._space_width: float = 500.0  # will be set correctly at first Tf
         self._actual_str_size: dict[str, float] = {
             "str_widths": 0.0,
-            "space_width": 0.0,
             "str_height": 0.0,
         }  # will be set to string length calculation result
         self.TL = 0.0
@@ -85,15 +84,17 @@ class TextExtraction:
         self.text: str = ""
         self.output: str = ""
         self.rtl_dir: bool = False  # right-to-left
-        self.cmap: tuple[Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]] = (
-            "charmap",
-            {},
-            "NotInitialized",
-            None,
-        )  # (encoding, CMAP, font resource name, font)
+        self.font_resource: Optional[DictionaryObject] = None
+        self.font = Font(
+            name = "NotInitialized",
+            sub_type="Unknown",
+            encoding="charmap",
+            font_descriptor=FontDescriptor(),
+            )
         self.orientations: tuple[int, ...] = (0, 90, 180, 270)
         self.visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None
-        self.cmaps: dict[str, tuple[str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject]] = {}
+        self.font_resources: dict[str, DictionaryObject] = {}
+        self.fonts: dict[str, Font] = {}
 
         self.operation_handlers = {
             b"BT": self._handle_bt,
@@ -115,14 +116,14 @@ class TextExtraction:
         self,
         orientations: tuple[int, ...] = (0, 90, 180, 270),
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
-        cmaps: Optional[
-            dict[str, tuple[str, float, Union[str, dict[int, str]], dict[str, str], DictionaryObject]]
-        ] = None,
+        font_resources: Optional[dict[str, DictionaryObject]] = None,
+        fonts: Optional[dict[str, Font]] = None
     ) -> None:
         """Initialize the extractor with extraction parameters."""
         self.orientations = orientations
         self.visitor_text = visitor_text
-        self.cmaps = cmaps or {}
+        self.font_resources = font_resources or {}
+        self.fonts = fonts or {}
 
         # Reset state
         self.text = ""
@@ -149,13 +150,13 @@ class TextExtraction:
                 (self.cm_prev, self.tm_prev),
                 (self.cm_matrix, self.tm_matrix),
                 (self.memo_cm, self.memo_tm),
-                self.cmap,
+                self.font_resource,
                 self.orientations,
                 self.output,
                 self.font_size,
                 self.visitor_text,
                 str_widths,
-                self.compute_str_widths(self._actual_str_size["space_width"]),
+                self.compute_str_widths(self.font_size * self._space_width),
                 self._actual_str_size["str_height"],
             )
             if self.text == "":
@@ -164,84 +165,47 @@ class TextExtraction:
         except OrientationNotFoundError:
             pass
 
-    def _get_actual_font_widths(
-        self,
-        cmap: tuple[
-            Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-        ],
-        text_operands: str,
-        font_size: float,
-        space_width: float,
-    ) -> tuple[float, float, float]:
-        font_widths: float = 0
-        font_name: str = cmap[2]
-        if font_name not in self._font_width_maps:
-            if cmap[3] is None:
-                font_width_map: dict[Any, float] = {}
-                space_char = " "
-                actual_space_width: float = space_width
-                font_width_map["default"] = actual_space_width * 2
-            else:
-                space_char = get_actual_str_key(" ", cmap[0], cmap[1])
-                font_width_map = build_font_width_map(cmap[3], space_width * 2)
-                actual_space_width = compute_font_width(font_width_map, space_char)
-            if actual_space_width == 0:
-                actual_space_width = space_width
-            self._font_width_maps[font_name] = (font_width_map, space_char, actual_space_width)
-        font_width_map = self._font_width_maps[font_name][0]
-        space_char = self._font_width_maps[font_name][1]
-        actual_space_width = self._font_width_maps[font_name][2]
-
-        if text_operands:
-            for char in text_operands:
-                if char == space_char:
-                    font_widths += actual_space_width
-                    continue
-                font_widths += compute_font_width(font_width_map, char)
-        return (font_widths * font_size, space_width * font_size, font_size)
-
     def _handle_tj(
         self,
         text: str,
         operands: list[Union[str, TextStringObject]],
         cm_matrix: list[float],
         tm_matrix: list[float],
-        cmap: tuple[
-            Union[str, dict[int, str]], dict[str, str], str, Optional[DictionaryObject]
-        ],
+        font_resource: Optional[DictionaryObject],
+        font: Font,
         orientations: tuple[int, ...],
         font_size: float,
         rtl_dir: bool,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
-        space_width: float,
         actual_str_size: dict[str, float],
     ) -> tuple[str, bool, dict[str, float]]:
         text_operands, is_str_operands = get_text_operands(
-            operands, cm_matrix, tm_matrix, cmap, orientations)
+            operands, cm_matrix, tm_matrix, font, orientations
+        )
         if is_str_operands:
             text += text_operands
+            font_widths = sum([font.space_width if x == " " else font.text_width(x) for x in text_operands])
         else:
-            text, rtl_dir = get_display_str(
+            text, rtl_dir, font_widths = get_display_str(
                 text,
                 cm_matrix,
                 tm_matrix,  # text matrix
-                cmap,
+                font_resource,
+                font,
                 text_operands,
                 font_size,
                 rtl_dir,
                 visitor_text,
             )
-        font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
-            self._get_actual_font_widths(cmap, text_operands, font_size, space_width))
-        actual_str_size["str_widths"] += font_widths
-
+        actual_str_size["str_widths"] += font_widths * font_size
+        actual_str_size["str_height"] = font_size
         return text, rtl_dir, actual_str_size
 
     def _flush_text(self) -> None:
         """Flush accumulated text to output and call visitor if present."""
         self.output += self.text
         if self.visitor_text is not None:
-            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.font_resource, self.font_size)
         self.text = ""
         self.memo_cm = self.cm_matrix.copy()
         self.memo_tm = self.tm_matrix.copy()
@@ -262,11 +226,11 @@ class TextExtraction:
         self.cm_stack.append(
             (
                 self.cm_matrix,
-                self.cmap,
+                self.font_resource,
+                self.font,
                 self.font_size,
                 self.char_scale,
                 self.space_scale,
-                self._space_width,
                 self.TL,
             )
         )
@@ -276,11 +240,11 @@ class TextExtraction:
         try:
             (
                 self.cm_matrix,
-                self.cmap,
+                self.font_resource,
+                self.font,
                 self.font_size,
                 self.char_scale,
                 self.space_scale,
-                self._space_width,
                 self.TL,
             ) = self.cm_stack.pop()
         except Exception:
@@ -290,7 +254,7 @@ class TextExtraction:
         """Handle cm (Modify current matrix) operation - Table 4.7 page 219."""
         self.output += self.text
         if self.visitor_text is not None:
-            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+            self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.font_resource, self.font_size)
         self.text = ""
         try:
             self.cm_matrix = mult([float(operand) for operand in operands[:6]], self.cm_matrix)
@@ -317,39 +281,26 @@ class TextExtraction:
         if self.text != "":
             self.output += self.text  # .translate(cmap)
             if self.visitor_text is not None:
-                self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.cmap[3], self.font_size)
+                self.visitor_text(self.text, self.memo_cm, self.memo_tm, self.font_resource, self.font_size)
         self.text = ""
         self.memo_cm = self.cm_matrix.copy()
         self.memo_tm = self.tm_matrix.copy()
         try:
-            # Import here to avoid circular imports
-            from .._cmap import unknown_char_map  # noqa: PLC0415
-
-            # char_map_tuple: font_type,
-            #                 float(sp_width / 2),
-            #                 encoding,
-            #                 map_dict,
-            #                 font_dict (describes the font)
-            char_map_tuple = self.cmaps[operands[0]]
-            # current cmap: encoding,
-            #               map_dict,
-            #               font resource name (internal name, not the real font name),
-            #               font_dict
-            self.cmap = (
-                char_map_tuple[2],
-                char_map_tuple[3],
-                operands[0],
-                char_map_tuple[4],
-            )
-            self._space_width = char_map_tuple[1]
+            self.font_resource = self.font_resources[operands[0]]
+            self.font = self.fonts[operands[0]]
         except KeyError:  # font not found
-            self.cmap = (
-                unknown_char_map[2],
-                unknown_char_map[3],
-                f"???{operands[0]}",
-                None,
+            self.font_resource = None
+            font_descriptor = FontDescriptor()
+            self.font = Font(
+                "Unknown",
+                space_width=250,
+                encoding=dict.fromkeys(range(256), "�"),
+                font_descriptor=font_descriptor,
+                character_map={},
+                character_widths=font_descriptor.character_widths
             )
-            self._space_width = unknown_char_map[1]
+
+        self._space_width = self.font.space_width / 2  # Actually the width of _half_ a space...
         try:
             self.font_size = float(operands[1])
         except Exception:
@@ -389,12 +340,12 @@ class TextExtraction:
             operands,
             self.cm_matrix,
             self.tm_matrix,
-            self.cmap,
+            self.font_resource,
+            self.font,
             self.orientations,
             self.font_size,
             self.rtl_dir,
             self.visitor_text,
-            self._space_width,
             self._actual_str_size,
         )
         return 0.0  # str_widths will be handled in post-processing
