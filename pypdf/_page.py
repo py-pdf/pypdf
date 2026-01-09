@@ -35,6 +35,7 @@ from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Literal,
@@ -79,6 +80,9 @@ from .generic import (
     StreamObject,
     is_null_or_none,
 )
+
+# if TYPE_CHECKING:
+#     from PIL.Image import Image as PILImage
 
 try:
     from PIL.Image import Image
