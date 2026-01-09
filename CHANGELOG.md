@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## Version 6.6.0, 2026-01-09
+
+### Security (SEC)
+- Improve handling of partially broken PDF files (#3594)
+
+### Deprecations (DEP)
+- Block common page content modifications when assigned to reader (#3582)
+
+### New Features (ENH)
+- Embellishments to generated text appearance streams (#3571)
+
+### Bug Fixes (BUG)
+- Do not consider multi-byte BOM-like sequences as BOMs (#3589)
+
+### Robustness (ROB)
+- Avoid empty FlateDecode outputs without warning (#3579)
+
+### Documentation (DOC)
+- Add outlines documentation and link it in User Guide (#3511)
+
+### Developer Experience (DEV)
+- Add PyPy 3.11 to test matrix and benchmarks (#3574)
+
+### Maintenance (MAINT)
+- Fix compatibility with Pillow >= 12.1.0 (#3590)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.5.0...6.6.0)
+
 ## Version 6.5.0, 2025-12-21
 
 ### New Features (ENH)
