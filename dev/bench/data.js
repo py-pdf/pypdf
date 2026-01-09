@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1767957685533,
+  "lastUpdate": 1767957714064,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -87919,6 +87919,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004904122265700407",
             "extra": "mean: 741.8167686000061 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "stefan6419846",
+            "username": "stefan6419846"
+          },
+          "distinct": true,
+          "id": "10df9c72fa7fb9ab14101b9cb911d66e680282a8",
+          "message": "REL: 6.6.0\n\n## What's new\n\n### Security (SEC)\n- Improve handling of partially broken PDF files (#3594) by @stefan6419846\n\n### Deprecations (DEP)\n- Block common page content modifications when assigned to reader (#3582) by @stefan6419846\n\n### New Features (ENH)\n- Embellishments to generated text appearance streams (#3571) by @PJBrs\n\n### Bug Fixes (BUG)\n- Do not consider multi-byte BOM-like sequences as BOMs (#3589) by @stefan6419846\n\n### Robustness (ROB)\n- Avoid empty FlateDecode outputs without warning (#3579) by @stefan6419846\n\n### Documentation (DOC)\n- Add outlines documentation and link it in User Guide (#3511) by @mainuddin-md\n\n### Developer Experience (DEV)\n- Add PyPy 3.11 to test matrix and benchmarks (#3574) by @rassie\n\n### Maintenance (MAINT)\n- Fix compatibility with Pillow >= 12.1.0 (#3590) by @stefan6419846\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/6.5.0...6.6.0)",
+          "timestamp": "2026-01-09T12:18:19+01:00",
+          "tree_id": "e165b3fe6ec5e7a16a4b2177563816eddfe0c1a6",
+          "url": "https://github.com/py-pdf/pypdf/commit/10df9c72fa7fb9ab14101b9cb911d66e680282a8"
+        },
+        "date": 1767957706661,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.794181915471032,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016507866031462905",
+            "extra": "mean: 72.49433174999946 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.08089027342413,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013329684348995546",
+            "extra": "mean: 58.54495778571232 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1285893906681221,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03202573699490293",
+            "extra": "mean: 886.0618469999991 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5041551697226981,
+            "unit": "iter/sec",
+            "range": "stddev: 0.057464254824565776",
+            "extra": "mean: 1.9835163061999992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.18230329656494557,
+            "unit": "iter/sec",
+            "range": "stddev: 0.2233240996635882",
+            "extra": "mean: 5.4853643288 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.1880824270097772,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034565983783327515",
+            "extra": "mean: 841.6924426000037 msec\nrounds: 5"
           }
         ]
       }
