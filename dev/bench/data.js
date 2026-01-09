@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1767957338433,
+  "lastUpdate": 1767957361802,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -87787,6 +87787,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03678856411873381",
             "extra": "mean: 817.0479576000048 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "96178532+stefan6419846@users.noreply.github.com",
+            "name": "Stefan",
+            "username": "stefan6419846"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "294165726b646bb7799be1cc787f593f2fdbcf45",
+          "message": "SEC: Improve handling of partially broken PDF files (#3594)\n\nThis changes does indeed contain multiple fixes, but as all of them are\nabout partially broken PDF files and possibly security-related, I\ndecided to put them into one changeset.\n\nBesides renaming variables to make them more readable, this includes the\nfollowing changes:\n\n1. When searching through a PDF file which does not define a `/Root`\n   entry in the trailer, while employing a large `/Size` value inside\n   the trailer, this would lead to us trying to access each object\n   number until the limit defined by `/Size` has been reached.\n   This behavior can now be controlled by a new parameter to\n   `PdfReader` which defaults to a more sensible default.\n\n2. When a broken `startxref` table is discovered, we try to re-build\n   it from scratch. This used a regex-based approach, which turned out\n   to be problematic with files consisting of lots of whitespace\n   characters. By replacing the regex-based approach by a manual search\n   based upon `string.find()`, we were able to drastically improve the\n   performance in such cases.\n\n3. When flattening the pages of a PDF file, having one of the `/Kids`\n   of the `/Pages` catalog entry reference the `/Pages` entry again\n   would run until Python detects a recursion error itself. This has\n   been changed to explicitly check for such cyclic references.",
+          "timestamp": "2026-01-09T12:12:53+01:00",
+          "tree_id": "d154b18e04e0e579804b262ed55408f5d65531d7",
+          "url": "https://github.com/py-pdf/pypdf/commit/294165726b646bb7799be1cc787f593f2fdbcf45"
+        },
+        "date": 1767957352428,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 11.357927972291604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01702822979418744",
+            "extra": "mean: 88.04422799999827 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 22.563251025722693,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007475515042768811",
+            "extra": "mean: 44.31985438888989 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.0401800636402376,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03753137822178753",
+            "extra": "mean: 961.3720114000046 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.39852041141938777,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05913702934892046",
+            "extra": "mean: 2.509281761600005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.20275488854501647,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1882352041266464",
+            "extra": "mean: 4.9320635728000015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.3480417838049823,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004904122265700407",
+            "extra": "mean: 741.8167686000061 msec\nrounds: 5"
           }
         ]
       }
