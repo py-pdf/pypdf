@@ -5,9 +5,10 @@ from io import BytesIO
 from typing import Any, Literal, Optional, Union, cast
 
 from ._utils import check_if_whitespace_only, logger_warning
-from .constants import ColorSpaces, StreamAttributes
+from .constants import ColorSpaces
 from .constants import FilterTypes as FT
 from .constants import ImageAttributes as IA
+from .constants import StreamAttributes
 from .errors import EmptyImageDataError, PdfReadError
 from .generic import (
     ArrayObject,
@@ -174,14 +175,16 @@ def __handle_flate__indexed(color_space: ArrayObject) -> tuple[Any, Any, Any, An
         base, hival = element1.split("\x00")
         hival = int(hival)
         return color_space, base, hival, lookup
-    raise PdfReadError(f"Expected color space with 4 values, got {count}: {color_space}")
+    raise PdfReadError(
+        f"Expected color space with 4 values, got {count}: {color_space}"
+    )
 
 
 def _handle_flate(
     size: tuple[int, int],
     data: bytes,
     mode: mode_str_type,
-    color_space: str,
+    color_space: ArrayObject,
     colors: int,
     obj_as_text: str,
 ) -> tuple[Image.Image, str, str, bool]:
@@ -233,13 +236,13 @@ def _handle_flate(
                     if actual_count < expected_count:
                         logger_warning(
                             f"Not enough lookup values: Expected {expected_count}, got {actual_count}.",
-                            __name__
+                            __name__,
                         )
                         lookup += bytes([0] * (expected_count - actual_count))
                     elif not check_if_whitespace_only(lookup[expected_count:]):
                         logger_warning(
                             f"Too many lookup values: Expected {expected_count}, got {actual_count}.",
-                            __name__
+                            __name__,
                         )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]
@@ -280,7 +283,9 @@ def _handle_flate(
         # Table 65 - Additional Entries Specific to an ICC Profile Stream Dictionary
         mode2 = _get_image_mode(color_space, colors, mode)[0]
         if mode != mode2:
-            img = Image.frombytes(mode2, size, data)  # reloaded as mode may have changed
+            img = Image.frombytes(
+                mode2, size, data
+            )  # reloaded as mode may have changed
     if mode == "CMYK":
         extension = ".tif"
         image_format = "TIFF"
@@ -291,7 +296,7 @@ def _handle_jpx(
     size: tuple[int, int],
     data: bytes,
     mode: mode_str_type,
-    color_space: str,
+    color_space: ArrayObject,
     colors: int,
 ) -> tuple[Image.Image, str, str, bool]:
     """
@@ -336,12 +341,14 @@ def _apply_decode(
     # requires reverting scale (cf p243,2§ last sentence)
     decode = x_object_obj.get(
         IA.DECODE,
-        ([1.0, 0.0] * len(img.getbands()))
-        if (
-            (img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE))
-            or (invert_color and img.mode == "L")
-        )
-        else None,
+        (
+            ([1.0, 0.0] * len(img.getbands()))
+            if (
+                (img.mode == "CMYK" and lfilters in (FT.DCT_DECODE, FT.JPX_DECODE))
+                or (invert_color and img.mode == "L")
+            )
+            else None
+        ),
     )
     if (
         isinstance(color_space, ArrayObject)
@@ -381,23 +388,21 @@ def _get_mode_and_invert_color(
     else:
         mode, invert_color = _get_image_mode(
             color_space,
-            2
-            if (
-                colors == 1
-                and (
-                    not is_null_or_none(color_space)
-                    and "Gray" not in color_space
+            (
+                2
+                if (
+                    colors == 1
+                    and (not is_null_or_none(color_space) and "Gray" not in color_space)
                 )
-            )
-            else colors,
+                else colors
+            ),
             "",
         )
     return mode, invert_color
 
 
 def _xobj_to_image(
-        x_object: dict[str, Any],
-        pillow_parameters: Union[dict[str, Any], None] = None
+    x_object: dict[str, Any], pillow_parameters: Union[dict[str, Any], None] = None
 ) -> tuple[Optional[str], bytes, Any]:
     """
     Users need to have the pillow package installed.
@@ -414,6 +419,7 @@ def _xobj_to_image(
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
+
     def _apply_alpha(
         img: Image.Image,
         x_object: dict[str, Any],
@@ -462,7 +468,7 @@ def _xobj_to_image(
 
     # Get color properties
     colors = x_object.get("/Colors", 1)
-    color_space: Any = x_object.get("/ColorSpace", NullObject()).get_object()
+    color_space: ArrayObject = x_object.get("/ColorSpace", NullObject()).get_object()
     if isinstance(color_space, list) and len(color_space) == 1:
         color_space = color_space[0].get_object()
 

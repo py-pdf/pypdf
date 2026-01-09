@@ -35,15 +35,13 @@ import sys
 from collections.abc import Iterable, Sequence
 from io import BytesIO
 from math import ceil
-from typing import (
-    Any,
-    Callable,
-    Optional,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Optional, Union, cast
 
-from .._protocols import PdfReaderProtocol, PdfWriterProtocol, XmpInformationProtocol
+from .._protocols import (
+    PdfReaderProtocol,
+    PdfWriterProtocol,
+    XmpInformationProtocol,
+)
 from .._utils import (
     WHITESPACES,
     StreamType,
@@ -57,9 +55,9 @@ from .._utils import (
 from ..constants import (
     CheckboxRadioButtonAttributes,
     FieldDictionaryAttributes,
-    OutlineFontFlag,
 )
 from ..constants import FilterTypes as FT
+from ..constants import OutlineFontFlag
 from ..constants import StreamAttributes as SA
 from ..constants import TypArguments as TA
 from ..constants import TypFitArguments as TF
@@ -1000,7 +998,7 @@ class StreamObject(DictionaryObject):
 
     @staticmethod
     def initialize_from_dictionary(
-        data: dict[str, Any]
+        data: dict[str, Any],
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
         retval: Union[EncodedStreamObject, DecodedStreamObject]
         if SA.FILTER in data:
@@ -1046,7 +1044,9 @@ class StreamObject(DictionaryObject):
         retval._data = FlateDecode.encode(self._data, level)
         return retval
 
-    def decode_as_image(self, pillow_parameters: Union[dict[str, Any], None] = None) -> Any:
+    def decode_as_image(
+        self, pillow_parameters: Union[dict[str, Any], None] = None
+    ) -> Any:
         """
         Try to decode the stream object as an image
 
@@ -1166,7 +1166,7 @@ class ContentStream(DecodedStreamObject):
                         # seems to already be broken beforehand in these cases.
                         logger_warning(
                             f"Expected StreamObject, got {type(s_resolved).__name__} instead. Data might be wrong.",
-                            __name__
+                            __name__,
                         )
                     else:
                         data += s_resolved.get_data()
@@ -1598,9 +1598,9 @@ class Destination(TreeObject):
 
     """
 
-    node: Optional[
-        DictionaryObject
-    ] = None  # node provide access to the original Object
+    node: Optional[DictionaryObject] = (
+        None  # node provide access to the original Object
+    )
 
     def __init__(
         self,
