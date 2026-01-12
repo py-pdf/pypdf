@@ -17,7 +17,7 @@ jobs:
           python-version: '3.x'
       - name: Install requirements
         run:
-          pip install pyyaml
+          pip install pyyaml Pillow
       - name: Check URLs
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE"
