@@ -22,10 +22,10 @@ docutils==0.20.1
     # via flit
 exceptiongroup==1.2.2
     # via pytest
-filelock==3.20.1
+filelock==3.19.1
     # via virtualenv
 flit==3.11.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 flit-core==3.11.0
     # via flit
 identify==2.6.1
@@ -43,15 +43,15 @@ packaging==24.1
     #   build
     #   pytest
 pillow==11.3.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 pip-tools==7.4.1
-    # via -r requirements/dev.in
+    # via -r dev.in
 platformdirs==4.3.6
     # via virtualenv
 pluggy==1.5.0
     # via pytest
 pre-commit==3.5.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 pyproject-hooks==1.2.0
     # via
     #   build
@@ -59,7 +59,7 @@ pyproject-hooks==1.2.0
 pytest==8.3.3
     # via pytest-cov
 pytest-cov==5.0.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 pyyaml==6.0.2
     # via pre-commit
 requests==2.32.4
@@ -72,13 +72,15 @@ tomli==2.0.2
     #   pytest
 tomli-w==1.0.0
     # via flit
+typing-extensions==4.15.0
+    # via virtualenv
 urllib3==2.6.3
     # via requests
-virtualenv==20.27.0
+virtualenv==20.36.1
     # via pre-commit
 wheel==0.44.0
     # via
-    #   -r requirements/dev.in
+    #   -r dev.in
     #   pip-tools
 zipp==3.20.2
     # via importlib-metadata
