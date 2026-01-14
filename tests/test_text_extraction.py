@@ -493,3 +493,14 @@ def test_slow_huge_string():
     page = reader.pages[0]
 
     _ = page.extract_text(extraction_mode="layout")
+
+
+@pytest.mark.enable_socket
+def test_extract_text_with_missing_font_bbox():
+    url = "https://github.com/user-attachments/files/24611650/bbox_bug_emoji.pdf"
+    name = "issue-3599.pdf"
+    stream = BytesIO(get_data_from_url(url, name=name))
+    reader = PdfReader(stream)
+    page = reader.pages[0]
+    text = page.extract_text()
+    assert "🎉" in text
