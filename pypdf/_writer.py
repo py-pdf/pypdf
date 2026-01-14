@@ -2749,7 +2749,7 @@ class PdfWriter(PdfDocCommon):
                     pag[NameObject("/Annots")] = lst
                 self.clean_page(pag)
 
-        if "/AcroForm" in _ro and _ro["/AcroForm"] is not None:
+        if "/AcroForm" in _ro and not is_null_or_none(_ro["/AcroForm"]):
             if "/AcroForm" not in self._root_object:
                 self._root_object[NameObject("/AcroForm")] = self._add_object(
                     cast(
