@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1768378879467,
+  "lastUpdate": 1768411505939,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -87455,6 +87455,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0033531500410273335",
             "extra": "mean: 672.3523881999938 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "55979921+LudovA@users.noreply.github.com",
+            "name": "Ludo van Alst",
+            "username": "LudovA"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "26fd6388754ed167e862bdd7a3eba614da191d34",
+          "message": "ROB: Handle missing font bounding boxes gracefully (#3600)\n\nSome PDFs (e.g., Google Docs exports with emojis) have fonts without\nvalid bounding boxes in their font descriptors. pypdf now gracefully\nuses the default bbox when /FontBBox is missing instead of crashing\nwith KeyError: 'bbox'.\n\nCloses #3599.",
+          "timestamp": "2026-01-14T18:22:18+01:00",
+          "tree_id": "d424df8e135eaf0aab4674656ebded75563c3647",
+          "url": "https://github.com/py-pdf/pypdf/commit/26fd6388754ed167e862bdd7a3eba614da191d34"
+        },
+        "date": 1768411501081,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 3.1487698252853313,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005833196519692337",
+            "extra": "mean: 317.584344200003 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.94228055686907,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005004313408836858",
+            "extra": "mean: 62.726282882352656 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2847750239691863,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017611784952009404",
+            "extra": "mean: 3.511543906 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 18.164839817961496,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000966900073549994",
+            "extra": "mean: 55.05140755555655 msec\nrounds: 18"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.08961178035673117,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10073544006759262",
+            "extra": "mean: 11.159247099200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.4932565848188455,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002338290245720631",
+            "extra": "mean: 669.6772746000079 msec\nrounds: 5"
           }
         ]
       }
