@@ -12,6 +12,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 ## Contributors to the pypdf (formerly pyPdf / PyPDF2) project
 
 * [abyesilyurt](https://github.com/abyesilyurt)
+* [van Alst, Ludo](https://github.com/LudovA)
 * [ArkieCoder](https://github.com/ArkieCoder)
 * [Beers, PJ](https://github.com/PJBrs)
 * [Clauss, Christian](https://github.com/cclauss)
