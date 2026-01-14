@@ -503,5 +503,4 @@ def test_extract_text_with_missing_font_bbox():
     reader = PdfReader(stream)
     page = reader.pages[0]
     text = page.extract_text()
-    # The PDF contains an emoji, text extraction should complete without error
-    assert text is not None
+    assert "🎉" in text
