@@ -12,7 +12,6 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 ## Contributors to the pypdf (formerly pyPdf / PyPDF2) project
 
 * [abyesilyurt](https://github.com/abyesilyurt)
-* [van Alst, Ludo](https://github.com/LudovA)
 * [ArkieCoder](https://github.com/ArkieCoder)
 * [Beers, PJ](https://github.com/PJBrs)
 * [Clauss, Christian](https://github.com/cclauss)
@@ -66,6 +65,7 @@ history and [GitHub's 'Contributors' feature](https://github.com/py-pdf/pypdf/gr
 * [Thoma, Martin](https://github.com/MartinThoma): Maintainer of pypdf from April 2022 to January 2025. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
 * [Thomas, Reuben](https://github.com/rrthomas)
 * [Tobeabellwether](https://github.com/Tobeabellwether)
+* [van Alst, Ludo](https://github.com/LudovA)
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
 * [Wilson, Huon](https://github.com/huonw)
 * ztravis
