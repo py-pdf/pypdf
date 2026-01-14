@@ -54,10 +54,11 @@ class FontDescriptor:
         ]:
             if source_key in font_descriptor_dict:
                 font_kwargs[target_key] = font_descriptor_dict[source_key]
-        # No need for an if statement here, bbox is a required key in a font descriptor
-        bbox_tuple = tuple(map(float, font_kwargs["bbox"]))
-        assert len(bbox_tuple) == 4, bbox_tuple
-        font_kwargs["bbox"] = bbox_tuple
+        # Handle missing bbox gracefully - PDFs may have fonts without valid bounding boxes
+        if "bbox" in font_kwargs:
+            bbox_tuple = tuple(map(float, font_kwargs["bbox"]))
+            assert len(bbox_tuple) == 4, bbox_tuple
+            font_kwargs["bbox"] = bbox_tuple
         return font_kwargs
 
     @staticmethod
