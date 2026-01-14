@@ -498,7 +498,6 @@ def test_slow_huge_string():
 def test_extract_text_with_missing_font_bbox():
     reader = PdfReader(RESOURCE_ROOT / "missing_font_bbox.pdf")
     page = reader.pages[0]
-    # This should not raise KeyError: 'bbox'
     text = page.extract_text()
     # The PDF contains an emoji, text extraction should complete without error
     assert text is not None
