@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1768378859319,
+  "lastUpdate": 1768378879467,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "CPython Benchmark": [
@@ -88183,6 +88183,72 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03173503294831129",
             "extra": "mean: 807.6067327998317 msec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "affe8eddf185b2875dcfa45090b7d09f06d3ba12",
+          "message": "DEV: Bump virtualenv from 20.27.0 to 20.36.1 (#3597)\n\n* Bump virtualenv from 20.27.0 to 20.36.1 in /requirements\n\nBumps [virtualenv](https://github.com/pypa/virtualenv) from 20.27.0 to 20.36.1.\n- [Release notes](https://github.com/pypa/virtualenv/releases)\n- [Changelog](https://github.com/pypa/virtualenv/blob/main/docs/changelog.rst)\n- [Commits](https://github.com/pypa/virtualenv/compare/20.27.0...20.36.1)\n\n---\nupdated-dependencies:\n- dependency-name: virtualenv\n  dependency-version: 20.36.1\n  dependency-type: indirect\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\n\n* Update filelock version in dev requirements\n\nUpgrade filelock package version from 3.19.1 to 3.20.3.\r\n\r\nYes, this breaks Python 3.9 support for development if installing from this requirements file, but we want sane/secure defaults.\n\n---------\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>\nCo-authored-by: Stefan <96178532+stefan6419846@users.noreply.github.com>",
+          "timestamp": "2026-01-14T09:18:07+01:00",
+          "tree_id": "e331c0ac6d890f9c6f96bb79f9bd57e018fa76be",
+          "url": "https://github.com/py-pdf/pypdf/commit/affe8eddf185b2875dcfa45090b7d09f06d3ba12"
+        },
+        "date": 1768378872718,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 13.36059656930079,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01627625301530143",
+            "extra": "mean: 74.84695723076786 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.3816339507933,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009066796737109592",
+            "extra": "mean: 57.53199053845911 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 1.1381221305023201,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020389405932273407",
+            "extra": "mean: 878.6403262000022 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 0.5163900046523694,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08267404908306174",
+            "extra": "mean: 1.9365208292000033 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_image_new_property_performance",
+            "value": 0.1879728164982122,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06432034343223197",
+            "extra": "mean: 5.319918159600013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_large_compressed_image_performance",
+            "value": 1.2544175672537823,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033350634417426146",
+            "extra": "mean: 797.1827134000023 msec\nrounds: 5"
           }
         ]
       }
