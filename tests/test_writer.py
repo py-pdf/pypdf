@@ -2895,3 +2895,25 @@ def test_flatten_form_field_without_font_in_resources():
     reader = PdfReader(b)
     form_text_fields = reader.get_form_text_fields()
     assert form_text_fields["Unique reference numberRow1"] == "test"
+
+
+def test_merge_with_null_acroform_does_not_raise_typeerror():
+    """
+    Source PDFs may contain '/AcroForm null'.
+
+    Test for issue #3598.
+    """
+    src_writer = PdfWriter()
+    src_writer.add_blank_page(72, 72)
+    src_writer.root_object[NameObject("/AcroForm")] = NullObject()
+
+    src_bytes = BytesIO()
+    src_writer.write(src_bytes)
+    src_bytes.seek(0)
+
+    source = PdfReader(src_bytes)
+
+    target = PdfWriter()
+    target.merge(0, source)
+
+    assert "/AcroForm" not in target.root_object
