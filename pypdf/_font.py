@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Optional, Union, cast
 
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, PdfObject, StreamObject
+from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, StreamObject
 
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
