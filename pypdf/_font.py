@@ -3,11 +3,11 @@ from dataclasses import dataclass, field
 from typing import Any, Optional, Union, cast
 
 from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, StreamObject
-from pypdf.errors import PdfReadError
 
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
 from ._utils import logger_warning
+from .errors import PdfReadError
 
 
 @dataclass(frozen=True)
