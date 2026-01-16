@@ -65,10 +65,14 @@ class FontDescriptor:
         for source_key in ["/FontFile", "/FontFile2", "/FontFile3"]:
             if source_key in font_descriptor_dict:
                 if "font_file" in font_kwargs:
+                    import pdb;pdb.set_trace()
                     raise PdfReadError(f"More than one /FontFile found in {font_descriptor_obj}")
 
-                font_file = cast(PdfObject, font_descriptor_dict[source_key]).get_object()
-                font_kwargs["font_file"] = font_file
+                try:
+                    font_file = cast(PdfObject, font_descriptor_dict[source_key]).get_object()
+                    font_kwargs["font_file"] = font_file
+                except PdfReadError as e:
+                    logger_warning(f"Failed to get '{source_key}' in {font_descriptor_dict}", __name__)
 
         return font_kwargs
 
