@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Optional, Union, cast
 
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, StreamObject
+from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, PdfObject, StreamObject
 
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
@@ -67,7 +67,7 @@ class FontDescriptor:
                 if "font_file" in font_kwargs:
                     raise PdfReadError(f"More than one /FontFile found in {font_descriptor_obj}")
 
-                file = font_descriptor_dict[source_key]
+                file = cast(PdfObject, font_descriptor_dict[source_key])
                 file = file.get_object() if isinstance(file, IndirectObject) else file
                 font_kwargs["font_file"] = file
 
