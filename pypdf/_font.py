@@ -33,7 +33,7 @@ class FontDescriptor:
     bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
 
     character_widths: dict[str, int] = field(default_factory=lambda: {"default": 500})
-    font_file: StreamObject | None = None
+    font_file: Union[StreamObject, None] = None
 
     @staticmethod
     def _parse_font_descriptor(font_kwargs: dict[str, Any], font_descriptor_obj: DictionaryObject) -> dict[str, Any]:
