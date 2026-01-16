@@ -1,8 +1,6 @@
 """Test font-related functionality."""
 from pathlib import Path
 
-import pytest
-
 from pypdf import PdfReader
 from pypdf._font import Font, FontDescriptor
 from pypdf.generic import DictionaryObject, EncodedStreamObject, NameObject
