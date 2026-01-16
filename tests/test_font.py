@@ -1,8 +1,11 @@
 """Test font-related functionality."""
 from pathlib import Path
 
+import pytest
+
 from pypdf import PdfReader
 from pypdf._font import Font, FontDescriptor
+from pypdf.errors import PdfReadError
 from pypdf.generic import DictionaryObject, EncodedStreamObject, NameObject
 
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -45,9 +48,15 @@ def test_font_file():
     assert len(font.font_descriptor.font_file.get_data()) == 5116
 
     # /FontFile2
-    font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F1"])
+    font_resource = reader.pages[0]["/Resources"]["/Font"]["/F1"]
+    font = Font.from_font_resource(font_resource)
     assert type(font.font_descriptor.font_file) is EncodedStreamObject
     assert len(font.font_descriptor.font_file.get_data()) == 28464
+
+    with pytest.raises(PdfReadError) as exception:
+        font_resource[NameObject("/FontDescriptor")][NameObject("/FontFile")] = NameObject('xyz')
+        font = Font.from_font_resource(font_resource)
+    assert "More than one /FontFile" in exception.value.args[0]
 
     # /FontFile3
     reader = PdfReader(RESOURCE_ROOT / "attachment.pdf")
