@@ -1,7 +1,16 @@
 """Test font-related functionality."""
+from pathlib import Path
 
+import pytest
+
+from pypdf import PdfReader
 from pypdf._font import Font
-from pypdf.generic import DictionaryObject, NameObject
+from pypdf.errors import PdfReadError
+from pypdf.generic import DictionaryObject, EncodedStreamObject, NameObject
+
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 def test_font_descriptor():
@@ -28,3 +37,28 @@ def test_font_descriptor():
     assert my_font.font_descriptor.italic_angle == 0
     assert my_font.font_descriptor.flags == 33
     assert my_font.font_descriptor.bbox == (-113.0, -250.0, 749.0, 801.0)
+
+
+def test_font_file():
+    reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
+
+    # /FontFile
+    font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F2"])
+    assert type(font.font_descriptor.font_file) is EncodedStreamObject
+    assert len(font.font_descriptor.font_file.get_data()) == 5116
+
+    # /FontFile2
+    font_resource = reader.pages[0]["/Resources"]["/Font"]["/F1"]
+    font = Font.from_font_resource(font_resource)
+    assert type(font.font_descriptor.font_file) is EncodedStreamObject
+    assert len(font.font_descriptor.font_file.get_data()) == 28464
+
+    with pytest.raises(PdfReadError, match=r"^More than one /FontFile found in .+$"):
+        font_resource[NameObject("/FontDescriptor")][NameObject("/FontFile")] = NameObject("xyz")
+        font = Font.from_font_resource(font_resource)
+
+    # /FontFile3
+    reader = PdfReader(RESOURCE_ROOT / "attachment.pdf")
+    font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F1"])
+    assert type(font.font_descriptor.font_file) is EncodedStreamObject
+    assert len(font.font_descriptor.font_file.get_data()) == 2168
