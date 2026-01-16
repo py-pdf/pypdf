@@ -67,9 +67,8 @@ class FontDescriptor:
                 if "font_file" in font_kwargs:
                     raise PdfReadError(f"More than one /FontFile found in {font_descriptor_obj}")
 
-                file = cast(PdfObject, font_descriptor_dict[source_key])
-                file = file.get_object() if isinstance(file, IndirectObject) else file
-                font_kwargs["font_file"] = file
+                font_file = cast(PdfObject, font_descriptor_dict[source_key]).get_object()
+                font_kwargs["font_file"] = font_file
 
         return font_kwargs
 
