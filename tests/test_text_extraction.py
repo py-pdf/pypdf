@@ -143,6 +143,7 @@ def test_font_class_to_dict():
             "x_height": 500.0,
             "italic_angle": 0.0,
             "flags": 32,
+            "font_file": None,
             "bbox": (
                 -100.0,
                 -200.0,
