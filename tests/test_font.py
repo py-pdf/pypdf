@@ -54,7 +54,7 @@ def test_font_file():
     assert len(font.font_descriptor.font_file.get_data()) == 28464
 
     with pytest.raises(PdfReadError) as exception:
-        font_resource[NameObject("/FontDescriptor")][NameObject("/FontFile")] = NameObject('xyz')
+        font_resource[NameObject("/FontDescriptor")][NameObject("/FontFile")] = NameObject("xyz")
         font = Font.from_font_resource(font_resource)
     assert "More than one /FontFile" in exception.value.args[0]
 
