@@ -2,7 +2,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Optional, Union, cast
 
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject
+from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, StreamObject
+from pypdf.errors import PdfReadError
 
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
@@ -32,6 +33,7 @@ class FontDescriptor:
     bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
 
     character_widths: dict[str, int] = field(default_factory=lambda: {"default": 500})
+    font_file: StreamObject | None = None
 
     @staticmethod
     def _parse_font_descriptor(font_kwargs: dict[str, Any], font_descriptor_obj: DictionaryObject) -> dict[str, Any]:
@@ -59,6 +61,16 @@ class FontDescriptor:
             bbox_tuple = tuple(map(float, font_kwargs["bbox"]))
             assert len(bbox_tuple) == 4, bbox_tuple
             font_kwargs["bbox"] = bbox_tuple
+        # Find the binary stream for this font if there is one
+        for source_key in ["/FontFile", "/FontFile2", "/FontFile3"]:
+            if source_key in font_descriptor_dict:
+                if "font_file" in font_kwargs:
+                    raise PdfReadError(f"More than one /FontFile found in {font_descriptor_obj}")
+
+                file = font_descriptor_dict[source_key]
+                file = file.get_object() if isinstance(file, IndirectObject) else file
+                font_kwargs["font_file"] = file
+
         return font_kwargs
 
     @staticmethod
