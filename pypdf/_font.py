@@ -2,12 +2,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Union, cast
 
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject
+from pypdf.generic import ArrayObject, DictionaryObject, NameObject, StreamObject
 
 from ._cmap import get_encoding
 from ._codecs.adobe_glyphs import adobe_glyphs
 from ._utils import logger_warning
 from .constants import FontFlags
+from .errors import PdfReadError
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,7 @@ class FontDescriptor:
     italic_angle: float = 0.0  # Non-italic
     flags: int = 32  # Non-serif, non-symbolic, not fixed width
     bbox: tuple[float, float, float, float] = field(default_factory=lambda: (-100.0, -200.0, 1000.0, 900.0))
+    font_file: Union[StreamObject, None] = None
 
 
 @dataclass(frozen=True)
@@ -214,6 +216,18 @@ class Font:
             bbox_tuple = tuple(map(float, font_descriptor_kwargs["bbox"]))
             assert len(bbox_tuple) == 4, bbox_tuple
             font_descriptor_kwargs["bbox"] = bbox_tuple
+
+        # Find the binary stream for this font if there is one
+        for source_key in ["/FontFile", "/FontFile2", "/FontFile3"]:
+            if source_key in font_descriptor_obj:
+                if "font_file" in font_descriptor_kwargs:
+                    raise PdfReadError(f"More than one /FontFile found in {font_descriptor_obj}")
+
+                try:
+                    font_file = font_descriptor_obj[source_key].get_object()
+                    font_descriptor_kwargs["font_file"] = font_file
+                except PdfReadError as e:
+                    logger_warning(f"Failed to get '{source_key}' in {font_descriptor_obj}: {e}", __name__)
         return font_descriptor_kwargs
 
     @classmethod
