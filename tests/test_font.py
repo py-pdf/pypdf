@@ -38,7 +38,6 @@ def test_font_descriptor():
     assert my_font.bbox == (-113.0, -250.0, 749.0, 801.0)
 
 
-@pytest.mark.enable_socket
 def test_font_file():
     reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
 
