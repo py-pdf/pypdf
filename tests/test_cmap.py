@@ -139,7 +139,7 @@ def test_iss1533():
     reader.pages[0].extract_text()  # no error
     font = Font.from_font_resource(reader.pages[0]["/Resources"]["/Font"]["/F"])
     assert font.character_map["\x01"] == "Ü"
-    assert type(font.font_descriptor.font_file) == EncodedStreamObject
+    assert type(font.font_descriptor.font_file) is EncodedStreamObject
     assert font.font_descriptor.font_file["/Subtype"] == "/CIDFontType0C"
 
 

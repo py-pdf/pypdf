@@ -71,7 +71,7 @@ class FontDescriptor:
                     font_file = cast(PdfObject, font_descriptor_dict[source_key]).get_object()
                     font_kwargs["font_file"] = font_file
                 except PdfReadError as e:
-                    logger_warning(f"Failed to get '{source_key}' in {font_descriptor_dict}", __name__)
+                    logger_warning(f"Failed to get '{source_key}' in {font_descriptor_dict}: {e}", __name__)
 
         return font_kwargs
 
