@@ -130,12 +130,10 @@ def test_annotation_dictionary():
     assert a.flags == 123
 
 
-def test_polygon(pdf_file_path, crazyones_pdf_reader):
+def test_polygon(pdf_file_path, crazyones_pdf_page_one):
     # Arrange
-    reader = crazyones_pdf_reader
-    page = reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    writer.add_page(crazyones_pdf_page_one)
 
     with pytest.raises(ValueError):
         Polygon(
@@ -152,12 +150,10 @@ def test_polygon(pdf_file_path, crazyones_pdf_reader):
         writer.write(fp)
 
 
-def test_polyline(pdf_file_path, crazyones_pdf_reader):
+def test_polyline(pdf_file_path, crazyones_pdf_page_one):
     # Arrange
-    reader = crazyones_pdf_reader
-    page = reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    writer.add_page(crazyones_pdf_page_one)
 
     with pytest.raises(
             ValueError,
@@ -177,11 +173,10 @@ def test_polyline(pdf_file_path, crazyones_pdf_reader):
         writer.write(fp)
 
 
-def test_line(pdf_file_path, crazyones_pdf_reader):
+def test_line(pdf_file_path, crazyones_pdf_page_one):
     # Arrange
-    page = crazyones_pdf_reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    writer.add_page(crazyones_pdf_page_one)
 
     # Act
     line_annotation = Line(
@@ -197,11 +192,10 @@ def test_line(pdf_file_path, crazyones_pdf_reader):
         writer.write(fp)
 
 
-def test_rectangle(pdf_file_path, crazyones_pdf_reader):
+def test_rectangle(pdf_file_path, crazyones_pdf_page_one):
     # Arrange
-    page = crazyones_pdf_reader.pages[0]
     writer = PdfWriter()
-    writer.add_page(page)
+    writer.add_page(crazyones_pdf_page_one)
 
     # Act
     square_annotation = Rectangle(
@@ -217,9 +211,9 @@ def test_rectangle(pdf_file_path, crazyones_pdf_reader):
         writer.write(fp)
 
 
-def test_highlight(pdf_file_path, crazyones_pdf_reader):
+def test_highlight(pdf_file_path, crazyones_pdf_page_one):
     # Arrange
-    page = crazyones_pdf_reader.pages[0]
+    page = crazyones_pdf_page_one
     writer = PdfWriter()
     writer.add_page(page)
 
