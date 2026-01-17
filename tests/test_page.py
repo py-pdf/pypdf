@@ -838,8 +838,7 @@ def test_get_fonts2():
 
 
 def test_annotation_getter(resources_dir):
-    pdf_path = resources_dir / "commented.pdf"
-    reader = PdfReader(pdf_path)
+    reader = PdfReader(resources_dir / "commented.pdf")
     annotations = reader.pages[0].annotations
     assert annotations is not None
     assert isinstance(annotations[0], IndirectObject)
