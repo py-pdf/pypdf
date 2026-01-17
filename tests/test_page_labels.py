@@ -26,10 +26,6 @@ from pypdf.generic import (
 
 from . import get_data_from_url
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
 
 @pytest.mark.parametrize(
     ("number", "expected"),
@@ -181,11 +177,10 @@ def test_get_label_from_nums__empty_nums_list():
     assert get_label_from_nums(dictionary_object, 13) == "14"
 
 
-def test_index2label__empty_kids_list():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+def test_index2label__empty_kids_list(crazyones_pdf_reader):
     number_tree = DictionaryObject()
     number_tree[NameObject("/Kids")] = ArrayObject()
-    root = reader.root_object
+    root = crazyones_pdf_reader.root_object
     root[NameObject("/PageLabels")] = number_tree
 
     assert index2label(reader, 42) == "43"

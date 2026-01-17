@@ -38,7 +38,6 @@ from .test_images import image_similarity
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
 SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 GHOSTSCRIPT_BINARY = shutil.which("gs")
 
@@ -62,8 +61,8 @@ all_files_meta = get_all_sample_files()
     ids=[m["path"] for m in all_files_meta["data"] if not m["encrypted"]],
 )
 @pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
-def test_read(meta):
-    pdf_path = SAMPLE_ROOT / meta["path"]
+def test_read(meta, sample_files_dir):
+    pdf_path = sample_files_dir / meta["path"]
     reader = PdfReader(pdf_path)
     try:
         reader.pages[0]
@@ -1290,7 +1289,7 @@ def test_merge_with_stream_wrapped_in_save_restore():
 
 
 @pytest.mark.samples
-def test_compression():
+def test_compression(sample_files_dir):
     """Test for issue #1897"""
 
     def create_stamp_pdf() -> BytesIO:
@@ -1307,7 +1306,7 @@ def test_compression():
     template = PdfReader(create_stamp_pdf())
     template_page = template.pages[0]
     writer = PdfWriter()
-    writer.append(SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf", [1])
+    writer.append(sample_files_dir / "009-pdflatex-geotopo/GeoTopo.pdf", [1])
     nb1 = len(writer._objects)
 
     # 1 page only is modified

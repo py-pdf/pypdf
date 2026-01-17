@@ -36,10 +36,6 @@ from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 
 from . import is_sublist
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
 
 @pytest.mark.parametrize(
     ("stream", "expected"),
