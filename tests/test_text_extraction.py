@@ -256,9 +256,9 @@ def test_text_leading_height_unit(resources_dir):
     assert "Something[cited]\n" in extracted
 
 
-def test_layout_mode_space_vertically_font_height_weight(resources_dir):
+def test_layout_mode_space_vertically_font_height_weight(crazyones_pdf_path, resources_dir):
     """Tests layout mode with vertical space and font height weight (issue #2915)"""
-    with open(resources_dir / "crazyones.pdf", "rb") as inputfile:
+    with open(crazyones_pdf_path, "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
         page = reader.pages[0]
@@ -406,9 +406,9 @@ def test_layout_mode_warns_on_malformed_content_stream(op, msg, caplog):
     assert caplog.records[-1].msg == msg
 
 
-def test_process_operation__cm_multiplication_issue(resources_dir):
+def test_process_operation__cm_multiplication_issue(crazyones_pdf_path):
     """Test for #3262."""
-    writer = PdfWriter(clone_from=resources_dir / "crazyones.pdf")
+    writer = PdfWriter(clone_from=crazyones_pdf_path)
     page = writer.pages[0]
     content = page.get_contents().get_data()
     content = content.replace(b" 1 0 0 1 72 720 cm ", b" 0.70278 65.3 163.36 cm ")
