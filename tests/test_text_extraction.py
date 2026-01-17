@@ -85,7 +85,6 @@ def test_visitor_text_matrices(file_name, constraints, resources_dir):
     evaluate to `True` on its expected x,y-coordinates.
     """
     reader = PdfReader(resources_dir / file_name)
-
     lines = []
 
     def visitor_text(text, cm, tm, font_dict, font_size) -> None:
