@@ -640,11 +640,9 @@ def test_remove_child_found_in_tree():
     tree.empty_tree()
 
 
-def test_remove_child_in_tree():
-    pdf = RESOURCE_ROOT / "form.pdf"
-
+def test_remove_child_in_tree(resources_dir):
+    reader = PdfReader(resources_dir / "form.pdf")
     tree = TreeObject()
-    reader = PdfReader(pdf)
     writer = PdfWriter()
     writer._add_object(tree)
     writer.add_page(reader.pages[0])
