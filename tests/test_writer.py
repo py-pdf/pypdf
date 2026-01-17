@@ -1230,10 +1230,8 @@ def test_set_page_label(pdf_file_path, resources_dir, sample_files_dir):
 
     pdf_file_path.unlink()
 
-    src = (
-        sample_files_dir / "009-pdflatex-geotopo/GeoTopo.pdf"
-    )  # File with pre existing labels
-    reader = PdfReader(src)
+    # File with pre existing labels
+    reader = PdfReader(sample_files_dir / "009-pdflatex-geotopo/GeoTopo.pdf")
 
     # Tests adding labels to existing ones
     expected = ["i", "ii", "A", "B", "1"]
@@ -1254,8 +1252,7 @@ def test_set_page_label(pdf_file_path, resources_dir, sample_files_dir):
     pdf_file_path.unlink()
 
     # Tests prefix and start.
-    src = resources_dir / "issue-604.pdf"  # File without page labels
-    reader = PdfReader(src)
+    reader = PdfReader(resources_dir / "issue-604.pdf")  # File without page labels
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
