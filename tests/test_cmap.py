@@ -214,17 +214,15 @@ def test_eten_b5():
     reader.pages[0].extract_text().startswith("1/7 \n富邦新終身壽險")
 
 
-def test_missing_entries_in_cmap(resources_dir):
+def test_missing_entries_in_cmap(crazyones_pdf_reader):
     """
     Issue #2702: this issue is observed on damaged pdfs
     use of this file in test has been discarded as too slow/long
     we will create the same error from crazyones
     """
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    p = reader.pages[0]
+    p = crazyones_pdf_reader.pages[0]
     p["/Resources"]["/Font"]["/F1"][NameObject("/ToUnicode")] = IndirectObject(
-        99999999, 0, reader
+        99999999, 0, crazyones_pdf_reader
     )
     p.extract_text()
 

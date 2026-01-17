@@ -950,9 +950,8 @@ def test_write_dict_stream_object(pdf_file_path):
         assert k in objects_hash, f"Missing {v}"
 
 
-def test_add_single_annotation(pdf_file_path, resources_dir):
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_add_single_annotation(pdf_file_path, crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
@@ -1737,9 +1736,8 @@ def test_iss1862():
     writer.pages[0]["/Resources"]["/Font"]["/F1"]["/CharProcs"]["/B"].get_data()
 
 
-def test_empty_objects_before_cloning(resources_dir):
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_empty_objects_before_cloning(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     writer = PdfWriter(clone_from=reader)
     nb_obj_reader = len(reader.xref_objStm) + sum(
         len(reader.xref[i]) for i in reader.xref
@@ -2318,9 +2316,8 @@ def test_get_pagenumber_from_indirectobject(resources_dir):
     assert writer._get_page_number_by_indirect(ind.idnum + 1) is None
 
 
-def test_replace_object(resources_dir):
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_replace_object(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     writer = PdfWriter(clone_from=reader)
     with pytest.raises(ValueError):
         writer._replace_object(reader.pages[0].indirect_reference, reader.pages[0])
@@ -2343,18 +2340,16 @@ def test_replace_object(resources_dir):
     writer.add_page(pg)
 
 
-def test_mime_jupyter(resources_dir):
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_mime_jupyter(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     writer = PdfWriter(clone_from=reader)
     assert reader._repr_mimebundle_(("include",), ("exclude",)) == {}
     assert writer._repr_mimebundle_(("include",), ("exclude",)) == {}
 
 
-def test_init_without_named_arg(resources_dir):
+def test_init_without_named_arg(crazyones_pdf_reader):
     """Test to use file_obj argument and not clone_from"""
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    reader = PdfReader(crazyones_pdf_reader)
     writer = PdfWriter(clone_from=reader)
     nb = len(writer._objects)
     writer = PdfWriter(reader)

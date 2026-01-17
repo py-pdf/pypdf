@@ -25,10 +25,9 @@ from pypdf.generic import ArrayObject, FloatObject, NumberObject
 from . import get_data_from_url
 
 
-def test_ellipse(pdf_file_path, resources_dir):
+def test_ellipse(pdf_file_path, crazyones_pdf_reader):
     # Arrange
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    reader = crazyones_pdf_reader
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
@@ -66,10 +65,9 @@ def test_text(pdf_file_path, resources_dir):
         writer.write(fp)
 
 
-def test_free_text(pdf_file_path, resources_dir):
+def test_free_text(pdf_file_path, crazyones_pdf_reader):
     # Arrange
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    reader = crazyones_pdf_reader
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
@@ -132,10 +130,9 @@ def test_annotation_dictionary():
     assert a.flags == 123
 
 
-def test_polygon(pdf_file_path, resources_dir):
+def test_polygon(pdf_file_path, crazyones_pdf_reader):
     # Arrange
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    reader = crazyones_pdf_reader
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
@@ -155,10 +152,9 @@ def test_polygon(pdf_file_path, resources_dir):
         writer.write(fp)
 
 
-def test_polyline(pdf_file_path, resources_dir):
+def test_polyline(pdf_file_path, crazyones_pdf_reader):
     # Arrange
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+    reader = crazyones_pdf_reader
     page = reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
@@ -181,11 +177,9 @@ def test_polyline(pdf_file_path, resources_dir):
         writer.write(fp)
 
 
-def test_line(pdf_file_path, resources_dir):
+def test_line(pdf_file_path, crazyones_pdf_reader):
     # Arrange
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
+    page = crazyones_pdf_reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
 
@@ -203,11 +197,9 @@ def test_line(pdf_file_path, resources_dir):
         writer.write(fp)
 
 
-def test_rectangle(pdf_file_path, resources_dir):
+def test_rectangle(pdf_file_path, crazyones_pdf_reader):
     # Arrange
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
+    page = crazyones_pdf_reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
 
@@ -225,11 +217,9 @@ def test_rectangle(pdf_file_path, resources_dir):
         writer.write(fp)
 
 
-def test_highlight(pdf_file_path, resources_dir):
+def test_highlight(pdf_file_path, crazyones_pdf_reader):
     # Arrange
-    pdf_path = resources_dir / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
+    page = crazyones_pdf_reader.pages[0]
     writer = PdfWriter()
     writer.add_page(page)
 
