@@ -24,16 +24,13 @@ from pypdf.generic import (
 )
 from tests import get_data_from_url
 
-TESTS_ROOT = Path(__file__).parent.parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
-
 PDFATTACH_BINARY = shutil.which("pdfattach")
 
 
+@pytest.mark.samples
 @pytest.mark.skipif(PDFATTACH_BINARY is None, reason="Requires poppler-utils")
-def test_embedded_file__basic(tmpdir):
-    clean_path = SAMPLE_ROOT / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
+def test_embedded_file__basic(tmpdir, sample_files_dir):
+    clean_path = sample_files_dir / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
     attached_path = tmpdir / "attached.pdf"
     file_path = tmpdir / "test.txt"
     file_path.write_binary(b"Hello World\n")

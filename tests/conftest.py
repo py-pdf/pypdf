@@ -29,8 +29,13 @@ def crazyones_pdf_page_one(crazyones_pdf_reader) -> PageObject:
 
 
 @pytest.fixture
-def crazyones_pdf_reader(resources_dir) -> PdfReader:
-    return PdfReader(resources_dir / "crazyones.pdf")
+def crazyones_pdf_path(resources_dir) -> Path:
+    return resources_dir / "crazyones.pdf"
+
+
+@pytest.fixture
+def crazyones_pdf_reader(crazyones_pdf_path) -> PdfReader:
+    return PdfReader(crazyones_pdf_path)
 
 
 @pytest.fixture

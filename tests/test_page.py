@@ -464,7 +464,7 @@ def test_extract_text_operator_t_star():  # L1266, L1267
         page.extract_text()
 
 
-def test_extract_text_visitor_callbacks():
+def test_extract_text_visitor_callbacks(resources_dir):
     """
     Extract text in rectangle-objects or simple tables.
 
@@ -563,7 +563,7 @@ def test_extract_text_visitor_callbacks():
         return (texts, rectangles)
 
     def extract_table(
-        texts: list[PositionedText], rectangles: list[Rectangle], resources_dir
+        texts: list[PositionedText], rectangles: list[Rectangle]
     ) -> list[list[list[PositionedText]]]:
         """
         Extracts a table containing text.
@@ -959,10 +959,10 @@ def test_empyt_password_1088():
     len(reader.pages)
 
 
-@pytest.mark.enable_socket
-def test_old_habibi():
+@pytest.mark.samples
+def test_old_habibi(sample_files_dir):
     # this habibi has multiple characters associated with the h
-    reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
+    reader = PdfReader(sample_files_dir / "015-arabic/habibi.pdf")
     txt = reader.pages[0].extract_text()  # very odd file
     # extract from acrobat reader "حَبيبي habibi􀀃􀏲􀎒􀏴􀎒􀎣􀋴
     assert "habibi" in txt
@@ -970,8 +970,8 @@ def test_old_habibi():
 
 
 @pytest.mark.samples
-def test_read_link_annotation():
-    reader = PdfReader(SAMPLE_ROOT / "016-libre-office-link/libre-office-link.pdf")
+def test_read_link_annotation(sample_files_dir):
+    reader = PdfReader(sample_files_dir / "016-libre-office-link/libre-office-link.pdf")
     assert len(reader.pages[0].annotations) == 1
     annot = dict(reader.pages[0].annotations[0].get_object())
     expected = {

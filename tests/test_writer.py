@@ -2316,7 +2316,7 @@ def test_get_pagenumber_from_indirectobject(resources_dir):
     assert writer._get_page_number_by_indirect(ind.idnum + 1) is None
 
 
-def test_replace_object(crazyones_pdf_reader):
+def test_replace_object(crazyones_pdf_path, crazyones_pdf_reader):
     reader = crazyones_pdf_reader
     writer = PdfWriter(clone_from=reader)
     with pytest.raises(ValueError):
@@ -2326,7 +2326,7 @@ def test_replace_object(crazyones_pdf_reader):
     writer._replace_object(writer.pages[0].indirect_reference, pg)
 
     # mainly for coverage
-    reader = PdfReader(pdf_path)  # reload a new instance
+    reader = PdfReader(crazyones_pdf_path)  # reload a new instance
     with pytest.raises(ValueError):
         reader._replace_object(writer.pages[0].indirect_reference, reader.pages[0])
     with pytest.raises(ValueError):
@@ -2347,21 +2347,21 @@ def test_mime_jupyter(crazyones_pdf_reader):
     assert writer._repr_mimebundle_(("include",), ("exclude",)) == {}
 
 
-def test_init_without_named_arg(crazyones_pdf_reader):
+def test_init_without_named_arg(crazyones_pdf_path, crazyones_pdf_reader):
     """Test to use file_obj argument and not clone_from"""
-    reader = PdfReader(crazyones_pdf_reader)
+    reader = crazyones_pdf_reader
     writer = PdfWriter(clone_from=reader)
     nb = len(writer._objects)
     writer = PdfWriter(reader)
     assert len(writer._objects) == nb
-    with open(pdf_path, "rb") as f:
+    with open(crazyones_pdf_path, "rb") as f:
         writer = PdfWriter(f)
         f.seek(0, 0)
         by = BytesIO(f.read())
     assert len(writer._objects) == nb
-    writer = PdfWriter(pdf_path)
+    writer = PdfWriter(crazyones_pdf_path)
     assert len(writer._objects) == nb
-    writer = PdfWriter(str(pdf_path))
+    writer = PdfWriter(str(crazyones_pdf_path))
     assert len(writer._objects) == nb
     writer = PdfWriter(by)
     assert len(writer._objects) == nb

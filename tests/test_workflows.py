@@ -36,7 +36,7 @@ SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 sys.path.append(str(PROJECT_ROOT))
 
 
-def test_basic_features(crazyones_pdf_reader):
+def test_basic_features(crazyones_pdf_path, crazyones_pdf_reader, tmp_path):
     reader = crazyones_pdf_reader
     writer = PdfWriter()
     assert len(reader.pages) == 1
@@ -61,7 +61,7 @@ def test_basic_features(crazyones_pdf_reader):
     # add page 4 from input1, but first add a watermark from another PDF:
     page3 = reader.pages[0]
     page3 = writer.add_page(page3)
-    watermark_pdf = pdf_path
+    watermark_pdf = crazyones_pdf_path
     watermark = PdfReader(watermark_pdf)
     page3.merge_page(watermark.pages[0])
 
@@ -89,20 +89,20 @@ def test_dropdown_items(resources_dir):
     assert "/Opt" in fields["Nationality"]
 
 
-def test_pdfreader_file_load(resources_dir):
+def test_pdfreader_file_load(crazyones_pdf_path, resources_dir):
     """
     Test loading and parsing of a file.
 
     Extract text of the file and compare to expected textual output. Expected
     outcome: file loads, text matches expected.
     """
-    with open(resources_dir / "crazyones.pdf", "rb") as inputfile:
+    with open(crazyones_pdf_path, "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
         page = reader.pages[0]
 
         # Retrieve the text of the PDF
-        with open(RESOURCE_ROOT / "crazyones.txt", "rb") as pdftext_file:
+        with open(resources_dir / "crazyones.txt", "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
         text = page.extract_text().encode("utf-8")
@@ -592,10 +592,10 @@ def test_scale_rectangle_indirect_object():
         page.scale(sx=2, sy=3)
 
 
-def test_merge_output(caplog, resources_dir):
+def test_merge_output(caplog, crazyones_pdf_path, resources_dir):
     # Arrange
     base = resources_dir / "Seige_of_Vicksburg_Sample_OCR.pdf"
-    crazy = resources_dir / "crazyones.pdf"
+    crazy = crazyones_pdf_path
     expected = resources_dir / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
 
     # Act
@@ -960,9 +960,9 @@ def test_fields_returning_stream():
     assert "BtchIssQATit_time" in reader.get_form_text_fields()["TimeStampData"]
 
 
-def test_replace_image(tmp_path):
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "labeled-edges-center-image.pdf")
-    reader = PdfReader(RESOURCE_ROOT / "jpeg.pdf")
+def test_replace_image(resources_dir, tmp_path):
+    writer = PdfWriter(clone_from=resources_dir / "labeled-edges-center-image.pdf")
+    reader = PdfReader(resources_dir / "jpeg.pdf")
     img = reader.pages[0].images[0].image
     if int(pil_version.split(".")[0]) < 9:
         img = img.convert("RGB")
@@ -1098,11 +1098,11 @@ def test_text_extraction_layout_mode(pdf_path, expected_path):
 
 
 @pytest.mark.enable_socket
-def test_layout_mode_space_vertically():
+def test_layout_mode_space_vertically(resources_dir):
     reader = PdfReader(BytesIO(get_data_from_url(name="iss2138.pdf")))
     # remove automatically added final newline
     expected = (
-        (RESOURCE_ROOT / "AEO.1172.layout.txt").read_text(encoding="utf-8").rstrip()
+        (resources_dir / "AEO.1172.layout.txt").read_text(encoding="utf-8").rstrip()
     )
     assert expected == reader.pages[0].extract_text(
         extraction_mode="layout", layout_mode_space_vertically=False
@@ -1113,14 +1113,14 @@ def test_layout_mode_space_vertically():
 @pytest.mark.parametrize(
     ("rotation", "strip_rotated"), [(90, True), (180, False), (270, True)]
 )
-def test_layout_mode_rotations(rotation, strip_rotated):
+def test_layout_mode_rotations(rotation, strip_rotated, resources_dir):
     writer = PdfWriter(clone_from=BytesIO(get_data_from_url(name="iss2138.pdf")))
     rotated_page = writer.pages[0].rotate(rotation)
     rotated_page.transfer_rotation_to_content()
     expected = ""
     if not strip_rotated:
         expected = (
-            (RESOURCE_ROOT / "AEO.1172.layout.rot180.txt")
+            (resources_dir / "AEO.1172.layout.rot180.txt")
             .read_text(encoding="utf-8")
             .rstrip()
         )  # remove automatically added final newline
@@ -1131,11 +1131,9 @@ def test_layout_mode_rotations(rotation, strip_rotated):
     )
 
 
-def test_text_extraction_invalid_mode():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_text_extraction_invalid_mode(crazyones_pdf_reader):
     with pytest.raises(ValueError, match="Invalid text extraction mode"):
-        reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore
+        crazyones_pdf_reader.pages[0].extract_text(extraction_mode="foo")  # type: ignore
 
 
 @pytest.mark.enable_socket

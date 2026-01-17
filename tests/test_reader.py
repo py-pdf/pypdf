@@ -782,7 +782,7 @@ def test_decode_permissions(crazyones_pdf_reader):
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_user_access_permissions(crazyones_pdf_reader, resources_dir):
+def test_user_access_permissions(crazyones_pdf_path, crazyones_pdf_reader, resources_dir):
     # Not encrypted.
     assert crazyones_pdf_reader.user_access_permissions is None
 
@@ -791,7 +791,7 @@ def test_user_access_permissions(crazyones_pdf_reader, resources_dir):
     assert reader.user_access_permissions == UAP.all()
 
     # Custom writer permissions.
-    writer = PdfWriter(clone_from=resources_dir / "crazyones.pdf")
+    writer = PdfWriter(clone_from=crazyones_pdf_path)
     writer.encrypt(
         user_password="",
         owner_password="abc",
@@ -803,7 +803,7 @@ def test_user_access_permissions(crazyones_pdf_reader, resources_dir):
     assert reader.user_access_permissions == (UAP.PRINT | UAP.FILL_FORM_FIELDS)
 
     # All writer permissions.
-    writer = PdfWriter(clone_from=resources_dir / "crazyones.pdf")
+    writer = PdfWriter(clone_from=crazyones_pdf_path)
     writer.encrypt(
         user_password="",
         owner_password="abc",
