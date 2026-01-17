@@ -1,6 +1,5 @@
 """Test the pypdf._xobj_image_helpers module."""
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 from PIL import Image

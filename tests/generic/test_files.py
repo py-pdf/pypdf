@@ -3,7 +3,6 @@ import datetime
 import shutil
 import subprocess
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 

@@ -4,7 +4,6 @@ import re
 import shutil
 import subprocess
 from io import BytesIO
-from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 from unittest import mock

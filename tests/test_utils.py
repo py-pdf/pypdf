@@ -5,7 +5,6 @@ import re
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Any, Callable
 
 import pytest

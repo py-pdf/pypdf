@@ -1,7 +1,6 @@
 """Test the pypdf.xmp module."""
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 

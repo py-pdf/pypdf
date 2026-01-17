@@ -1,6 +1,5 @@
 """Test LZW-related code."""
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 

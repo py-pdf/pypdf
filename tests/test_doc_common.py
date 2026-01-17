@@ -5,7 +5,6 @@ import shutil
 import subprocess
 from io import BytesIO
 from operator import itemgetter
-from pathlib import Path
 from unittest import mock
 
 import pytest
