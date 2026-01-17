@@ -48,8 +48,8 @@ NestedList = Union[int, None, list["NestedList"]]
     ("src", "num_pages"),
     [("selenium-pypdf-issue-177.pdf", 1), ("pdflatex-outline.pdf", 4)],
 )
-def test_get_num_pages(src, num_pages):
-    src = RESOURCE_ROOT / src
+def test_get_num_pages(src, num_pages, resources_dir):
+    src = resources_dir / src
     with PdfReader(src) as reader:
         assert len(reader.pages) == num_pages
         # from #1911
@@ -60,7 +60,7 @@ def test_get_num_pages(src, num_pages):
     ("pdf_path", "expected"),
     [
         (
-            RESOURCE_ROOT / "crazyones.pdf",
+            "crazyones.pdf",
             {
                 "/CreationDate": "D:20150604133406-06'00'",
                 "/Creator": " XeTeX output 2015.06.04:1334",
@@ -68,7 +68,7 @@ def test_get_num_pages(src, num_pages):
             },
         ),
         (
-            RESOURCE_ROOT / "metadata.pdf",
+            "metadata.pdf",
             {
                 "/CreationDate": "D:20220415093243+02'00'",
                 "/ModDate": "D:20220415093243+02'00'",
@@ -89,8 +89,8 @@ def test_get_num_pages(src, num_pages):
     ],
     ids=["crazyones", "metadata"],
 )
-def test_read_metadata(pdf_path, expected):
-    with open(pdf_path, "rb") as inputfile:
+def test_read_metadata(pdf_path, expected, resources_dir):
+    with open(resources_dir / pdf_path, "rb") as inputfile:
         reader = PdfReader(inputfile)
         docinfo = reader.metadata
         assert docinfo is not None
@@ -117,16 +117,16 @@ def test_read_metadata(pdf_path, expected):
             assert metadict["/Title"] == docinfo.title
 
 
-def test_read_metadata_title_is_utf8():
-    with open(RESOURCE_ROOT / "bytes.pdf", "rb") as inputfile:
+def test_read_metadata_title_is_utf8(resources_dir):
+    with open(resources_dir / "bytes.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         title = reader.metadata.title
         # Should be a str.
         assert title == "Microsoft Word - トランスバース社買収電話会議英語Final.docx"
 
 
-def test_iss1943():
-    with PdfReader(RESOURCE_ROOT / "crazyones.pdf") as reader:
+def test_iss1943(crazyones_pdf_reader):
+    with crazyones_pdf_reader as reader:
         docinfo = reader.metadata
         docinfo.update(
             {
@@ -146,14 +146,14 @@ def test_iss1943():
 
 @pytest.mark.samples
 @pytest.mark.parametrize(
-    "pdf_path", [SAMPLE_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
+    "pdf_path", ["017-unreadable-meta-data/unreadablemetadata.pdf"]
 )
-def test_broken_meta_data(pdf_path):
-    with open(pdf_path, "rb") as f:
+def test_broken_meta_data(pdf_path, resources_dir, sample_files_dir):
+    with open(sample_files_dir / pdf_path, "rb") as f:
         reader = PdfReader(f)
         assert reader.metadata is None
 
-    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as f:
+    with open(resources_dir / "crazyones.pdf", "rb") as f:
         b = f.read(-1)
     reader = PdfReader(BytesIO(b.replace(b"/Info 2 0 R", b"/Info 2    ")))
     with pytest.raises(PdfReadError) as exc:
@@ -164,12 +164,12 @@ def test_broken_meta_data(pdf_path):
 @pytest.mark.parametrize(
     "src",
     [
-        RESOURCE_ROOT / "crazyones.pdf",
-        RESOURCE_ROOT / "commented.pdf",
+        "crazyones.pdf",
+        "commented.pdf",
     ],
 )
-def test_get_annotations(src):
-    with PdfReader(src) as reader:
+def test_get_annotations(src, resources_dir):
+    with PdfReader(resources_dir / src) as reader:
         for page in reader.pages:
             if PG.ANNOTS in page:
                 for annot in page[PG.ANNOTS]:
@@ -181,12 +181,12 @@ def test_get_annotations(src):
 @pytest.mark.parametrize(
     ("src", "nb_attachments"),
     [
-        (RESOURCE_ROOT / "attachment.pdf", 1),
-        (RESOURCE_ROOT / "crazyones.pdf", 0),
+        ("attachment.pdf", 1),
+        ("crazyones.pdf", 0),
     ],
 )
-def test_get_attachments(src, nb_attachments):
-    reader = PdfReader(src)
+def test_get_attachments(src, nb_attachments, resources_dir):
+    reader = PdfReader(resources_dir / src)
 
     attachments = {}
     for page in reader.pages:
@@ -202,12 +202,12 @@ def test_get_attachments(src, nb_attachments):
 @pytest.mark.parametrize(
     ("src", "outline_elements"),
     [
-        (RESOURCE_ROOT / "pdflatex-outline.pdf", 9),
-        (RESOURCE_ROOT / "crazyones.pdf", 0),
+        ("pdflatex-outline.pdf", 9),
+        ("crazyones.pdf", 0),
     ],
 )
-def test_get_outline(src, outline_elements):
-    reader = PdfReader(src)
+def test_get_outline(src, outline_elements, resources_dir):
+    reader = PdfReader(resources_dir / src)
     outline = reader.outline
     assert len(outline) == outline_elements
 
@@ -233,10 +233,10 @@ def test_get_outline(src, outline_elements):
         (SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf", ["X0.png"]),
     ],
 )
-def test_get_images(src, expected_images):
+def test_get_images(src, expected_images, resources_dir):
     from PIL import Image  # noqa: PLC0415
 
-    src_abs = RESOURCE_ROOT / src
+    src_abs = resources_dir / src
     reader = PdfReader(src_abs)
     page = reader.pages[0]
     images_extracted = page.images
@@ -360,8 +360,8 @@ def test_get_images_raw(
         assert normalize_warnings(caplog.text) == warning_msgs
 
 
-def test_issue297(caplog):
-    path = RESOURCE_ROOT / "issue-297.pdf"
+def test_issue297(caplog, resources_dir):
+    path = resources_dir / "issue-297.pdf"
     with pytest.raises(PdfReadError) as exc:
         reader = PdfReader(path, strict=True)
     assert caplog.text == ""
@@ -383,14 +383,14 @@ def test_issue297(caplog):
         ("encrypted-file.pdf", b"qwerty", True),
     ],
 )
-def test_get_page_of_encrypted_file(pdffile, password, should_fail):
+def test_get_page_of_encrypted_file(pdffile, password, should_fail, resources_dir):
     """
     Check if we can read a page of an encrypted file.
 
     This is a regression test for issue 327:
     IndexError for get_page() of decrypted file
     """
-    path = RESOURCE_ROOT / pdffile
+    path = resources_dir / pdffile
     if should_fail:
         with pytest.raises(PdfReadError):
             PdfReader(path, password=password)
@@ -423,9 +423,9 @@ def test_get_page_of_encrypted_file(pdffile, password, should_fail):
         )
     ],
 )
-def test_get_form(src, expected, expected_get_fields, txt_file_path):
+def test_get_form(src, expected, expected_get_fields, txt_file_path, resources_dir):
     """Check if we can read out form data."""
-    src = RESOURCE_ROOT / src
+    src = resources_dir / src
     reader = PdfReader(src)
     fields = reader.get_form_text_fields()
     assert fields == expected
@@ -472,8 +472,8 @@ def test_reading_choice_field_without_opt_key():
         ("pdflatex-outline.pdf", 2),
     ],
 )
-def test_get_page_number(src, page_number):
-    src = RESOURCE_ROOT / src
+def test_get_page_number(src, page_number, resources_dir):
+    src = resources_dir / src
     reader = PdfReader(src)
     reader.get_page(0)
     page = reader.pages[page_number]
@@ -484,8 +484,8 @@ def test_get_page_number(src, page_number):
     ("src", "expected"),
     [("form.pdf", None), ("AutoCad_Simple.pdf", "/SinglePage")],
 )
-def test_get_page_layout(src, expected):
-    src = RESOURCE_ROOT / src
+def test_get_page_layout(src, expected, resources_dir):
+    src = resources_dir / src
     reader = PdfReader(src)
     assert reader.page_layout == expected
 
@@ -497,8 +497,8 @@ def test_get_page_layout(src, expected):
         ("crazyones.pdf", None),
     ],
 )
-def test_get_page_mode(src, expected):
-    src = RESOURCE_ROOT / src
+def test_get_page_mode(src, expected, resources_dir):
+    src = resources_dir / src
     reader = PdfReader(src)
     assert reader.page_mode == expected
 
@@ -653,16 +653,16 @@ def test_read_unknown_zero_pages(caplog):
     assert exc.value.args[0] == "Invalid object in /Pages"
 
 
-def test_read_encrypted_without_decryption():
-    src = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
+def test_read_encrypted_without_decryption(resources_dir):
+    src = resources_dir / "libreoffice-writer-password.pdf"
     reader = PdfReader(src)
     with pytest.raises(FileNotDecryptedError) as exc:
         len(reader.pages)
     assert exc.value.args[0] == "File has not been decrypted"
 
 
-def test_get_destination_page_number():
-    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+def test_get_destination_page_number(resources_dir):
+    src = resources_dir / "pdflatex-outline.pdf"
     reader = PdfReader(src)
     outline = reader.outline
     for outline_item in outline:
@@ -686,20 +686,20 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
 
 
 @pytest.mark.enable_socket
-def test_decrypt_when_no_id():
+def test_decrypt_when_no_id(resources_dir):
     """
     Decrypt an encrypted file that's missing the 'ID' value in its trailer.
 
     https://github.com/py-pdf/pypdf/issues/608
     """
-    with open(RESOURCE_ROOT / "encrypted_doc_no_id.pdf", "rb") as inputfile:
+    with open(resources_dir / "encrypted_doc_no_id.pdf", "rb") as inputfile:
         ipdf = PdfReader(inputfile)
         ipdf.decrypt("")
         assert ipdf.metadata == {"/Producer": "European Patent Office"}
 
 
-def test_reader_properties():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+def test_reader_properties(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     assert reader.outline == []
     assert len(reader.pages) == 1
     assert reader.page_layout is None
@@ -711,9 +711,9 @@ def test_reader_properties():
     "strict",
     [True, False],
 )
-def test_issue604(caplog, strict):
+def test_issue604(caplog, strict, resources_dir):
     """Test with invalid destinations."""
-    with open(RESOURCE_ROOT / "issue-604.pdf", "rb") as f:
+    with open(resources_dir / "issue-604.pdf", "rb") as f:
         pdf = None
         outline = None
         if strict:
@@ -745,8 +745,8 @@ def test_issue604(caplog, strict):
             out.append(get_dest_pages(oi))  # noqa: PERF401
 
 
-def test_decode_permissions():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+def test_decode_permissions(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     base = {
         "accessability": False,  # Do not fix typo, as part of official, but deprecated API.
         "annotations": False,
@@ -782,17 +782,16 @@ def test_decode_permissions():
 
 
 @pytest.mark.skipif(not HAS_AES, reason="No AES implementation")
-def test_user_access_permissions():
+def test_user_access_permissions(crazyones_pdf_reader, resources_dir):
     # Not encrypted.
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    assert reader.user_access_permissions is None
+    assert crazyones_pdf_reader.user_access_permissions is None
 
     # Encrypted.
-    reader = PdfReader(RESOURCE_ROOT / "encryption" / "r6-owner-password.pdf")
+    reader = PdfReader(resources_dir / "encryption" / "r6-owner-password.pdf")
     assert reader.user_access_permissions == UAP.all()
 
     # Custom writer permissions.
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "crazyones.pdf")
     writer.encrypt(
         user_password="",
         owner_password="abc",
@@ -804,7 +803,7 @@ def test_user_access_permissions():
     assert reader.user_access_permissions == (UAP.PRINT | UAP.FILL_FORM_FIELDS)
 
     # All writer permissions.
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "crazyones.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "crazyones.pdf")
     writer.encrypt(
         user_password="",
         owner_password="abc",
@@ -816,9 +815,8 @@ def test_user_access_permissions():
     assert reader.user_access_permissions == UAP.all()
 
 
-def test_pages_attribute():
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    reader = PdfReader(pdf_path)
+def test_pages_attribute(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
 
     # Test if getting as slice throws an error
     assert len(reader.pages[:]) == 1
@@ -858,14 +856,14 @@ def test_iss925():
                 annot.get_object()
 
 
-def test_get_object():
-    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+def test_get_object(resources_dir):
+    reader = PdfReader(resources_dir / "hello-world.pdf")
     assert reader.get_object(22)["/Type"] == "/Catalog"
     assert reader._get_indirect_object(22, 0)["/Type"] == "/Catalog"
 
 
-def test_extract_text_hello_world():
-    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+def test_extract_text_hello_world(resources_dir):
+    reader = PdfReader(resources_dir / "hello-world.pdf")
     text = reader.pages[0].extract_text().split("\n")
     assert text == [
         "English:",
@@ -883,14 +881,12 @@ def test_extract_text_hello_world():
     ]
 
 
-def test_read_path():
-    path = Path(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfReader(path)
-    assert len(reader.pages) == 1
+def test_read_path(crazyones_pdf_reader):
+    assert len(crazyones_pdf_reader.pages) == 1
 
 
-def test_read_not_binary_mode(caplog):
-    with open(RESOURCE_ROOT / "crazyones.pdf") as f:
+def test_read_not_binary_mode(caplog, resources_dir):
+    with open(resources_dir / "crazyones.pdf") as f:
         msg = (
             "PdfReader stream/file object is not in binary mode. "
             "It may not be read correctly."
@@ -911,8 +907,8 @@ def test_read_form_416():
     assert len(fields) > 0
 
 
-def test_form_topname_with_and_without_acroform(caplog):
-    r = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+def test_form_topname_with_and_without_acroform(caplog, crazyones_pdf_reader, resources_dir):
+    r = crazyones_pdf_reader
     r.add_form_topname("no")
     r.rename_form_topname("renamed")
     assert "/AcroForm" not in r.trailer["/Root"]
@@ -921,7 +917,7 @@ def test_form_topname_with_and_without_acroform(caplog):
     r.rename_form_topname("renamed")
     assert len(r.get_fields()) == 0
 
-    r = PdfReader(RESOURCE_ROOT / "form.pdf")
+    r = PdfReader(resources_dir / "form.pdf")
     r.add_form_topname("top")
     flds = r.get_fields()
     assert "top" in flds
@@ -931,7 +927,7 @@ def test_form_topname_with_and_without_acroform(caplog):
     assert "renamed" in flds
     assert "renamed.foo" in flds
 
-    r = PdfReader(RESOURCE_ROOT / "form.pdf")
+    r = PdfReader(resources_dir / "form.pdf")
     r.get_fields()["foo"].indirect_reference.get_object()[
         NameObject("/Parent")
     ] = DictionaryObject()
@@ -1065,12 +1061,12 @@ def test_get_fields_read_write_report(txt_file_path):
 @pytest.mark.parametrize(
     "src",
     [
-        RESOURCE_ROOT / "crazyones.pdf",
-        RESOURCE_ROOT / "commented.pdf",
+        "crazyones.pdf",
+        "commented.pdf",
     ],
 )
-def test_xfa(src):
-    reader = PdfReader(src)
+def test_xfa(src, resources_dir):
+    reader = PdfReader(resources_dir / src)
     assert reader.xfa is None
 
 
@@ -1092,12 +1088,12 @@ def test_xfa_non_empty():
 @pytest.mark.parametrize(
     ("src", "pdf_header"),
     [
-        (RESOURCE_ROOT / "attachment.pdf", "%PDF-1.5"),
-        (RESOURCE_ROOT / "crazyones.pdf", "%PDF-1.5"),
+        ("attachment.pdf", "%PDF-1.5"),
+        ("crazyones.pdf", "%PDF-1.5"),
     ],
 )
-def test_header(src, pdf_header):
-    reader = PdfReader(src)
+def test_header(src, pdf_header, resources_dir):
+    reader = PdfReader(resources_dir / src)
 
     assert reader.pdf_header == pdf_header
 
@@ -1128,8 +1124,8 @@ def get_outline_property(outline, attribute_name: str):
 
 
 @pytest.mark.samples
-def test_outline_title_issue_1121():
-    reader = PdfReader(SAMPLE_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+def test_outline_title_issue_1121(sample_files_dir):
+    reader = PdfReader(sample_files_dir / "014-outlines/mistitled_outlines_example.pdf")
 
     assert get_outline_property(reader.outline, "title") == [
         "First",
@@ -1175,8 +1171,8 @@ def test_outline_title_issue_1121():
 
 
 @pytest.mark.samples
-def test_outline_count():
-    reader = PdfReader(SAMPLE_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+def test_outline_count(sample_files_dir):
+    reader = PdfReader(sample_files_dir / "014-outlines/mistitled_outlines_example.pdf")
 
     assert get_outline_property(reader.outline, "outline_count") == [
         5,
@@ -1221,15 +1217,15 @@ def test_outline_count():
     ]
 
 
-def test_outline_missing_title(caplog):
+def test_outline_missing_title(caplog, resources_dir):
     # Strict
-    reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=True)
+    reader = PdfReader(resources_dir / "outline-without-title.pdf", strict=True)
     with pytest.raises(PdfReadError) as exc:
         reader.outline
     assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
 
     # Non-strict : no errors
-    reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=False)
+    reader = PdfReader(resources_dir / "outline-without-title.pdf", strict=False)
     assert reader.outline[0]["/Title"] == ""
 
 
@@ -1275,8 +1271,8 @@ def test_outline_with_empty_action():
     assert reader.outline[-4].title == "Tables"
 
 
-def test_outline_with_invalid_destinations():
-    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
+def test_outline_with_invalid_destinations(resources_dir):
+    reader = PdfReader(resources_dir / "outlines-with-invalid-destinations.pdf")
     # contains 9 outline items, 6 with invalid destinations
     # caused by different malformations
     assert len(reader.outline) == 9
@@ -1294,8 +1290,8 @@ def test_pdfreader_multiple_definitions(caplog):
     ]
 
 
-def test_wrong_password_error():
-    encrypted_pdf_path = RESOURCE_ROOT / "encrypted-file.pdf"
+def test_wrong_password_error(resources_dir):
+    encrypted_pdf_path = resources_dir / "encrypted-file.pdf"
     with pytest.raises(WrongPasswordError):
         PdfReader(
             encrypted_pdf_path,
@@ -1303,9 +1299,8 @@ def test_wrong_password_error():
         )
 
 
-def test_get_page_number_by_indirect():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
-    reader._get_page_number_by_indirect(1)
+def test_get_page_number_by_indirect(crazyones_pdf_reader):
+    crazyones_pdf_reader._get_page_number_by_indirect(1)
 
 
 @pytest.mark.enable_socket
@@ -1859,8 +1854,8 @@ def test_infinite_loop_for_length_value():
         writer.add_page(reader.pages[0])
 
 
-def test_trailer_cannot_be_read():
-    path = RESOURCE_ROOT / "crazyones.pdf"
+def test_trailer_cannot_be_read(resources_dir):
+    path = resources_dir / "crazyones.pdf"
     data = path.read_bytes().replace(b"/Type/XRef", b"/Type/Invalid")
     with pytest.raises(PdfReadError, match=r"^Trailer cannot be read: Unexpected type '/Invalid'$"):
         reader = PdfReader(BytesIO(data))

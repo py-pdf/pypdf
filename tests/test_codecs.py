@@ -10,10 +10,6 @@ from pypdf.errors import LimitReachedError
 
 from . import get_data_from_url
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
 test_cases = [
     pytest.param(b"", id="Empty input"),
     pytest.param(b"A", id="Single character"),
@@ -68,8 +64,8 @@ def test_decode_lzw(encoded, expected_decoded):
     assert actual_decoded == expected_decoded
 
 
-def test_lzw_decoder_table_overflow(caplog):
-    path = RESOURCE_ROOT / "lzw_decoder_table_overflow.bin"
+def test_lzw_decoder_table_overflow(caplog, resources_dir):
+    path = resources_dir / "lzw_decoder_table_overflow.bin"
     codec = LzwCodec()
     assert codec.decode(path.read_bytes()).startswith(
         b'0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@'

@@ -15,18 +15,14 @@ from pypdf.errors import PdfReadError
 from pypdf.generic import EmbeddedFile, NameObject, NullObject, TextStringObject, ViewerPreferences
 from tests import get_data_from_url
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
-RESOURCES_ROOT = PROJECT_ROOT / "resources"
-
 PDFATTACH_BINARY = shutil.which("pdfattach")
 
 
+@pytest.mark.samples
 @pytest.mark.skipif(PDFATTACH_BINARY is None, reason="Requires poppler-utils")
-def test_attachments(tmpdir):
+def test_attachments(tmpdir, sample_files_dir):
     # No attachments.
-    clean_path = SAMPLE_ROOT / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
+    clean_path = sample_files_dir / "002-trivial-libre-office-writer" / "002-trivial-libre-office-writer.pdf"
     with PdfReader(clean_path) as pdf:
         assert pdf._list_attachments() == []
         assert list(pdf.attachment_list) == []
@@ -171,8 +167,8 @@ def test_byte_encoded_named_destinations():
     }
 
 
-def test_viewer_preferences__indirect_reference():
-    input_path = RESOURCES_ROOT / "git.pdf"
+def test_viewer_preferences__indirect_reference(resources_dir):
+    input_path = resources_dir / "git.pdf"
     reader = PdfReader(input_path)
     assert (0, 24) not in reader.resolved_objects
     viewer_preferences = reader.viewer_preferences
@@ -452,8 +448,8 @@ def test_outline__issue3462():
     ]
 
 
-def test_flatten__cyclic_references():
-    path = RESOURCES_ROOT / "crazyones.pdf"
+def test_flatten__cyclic_references(resources_dir):
+    path = resources_dir / "crazyones.pdf"
 
     reader = PdfReader(path)
     assert len(reader.pages) == 1

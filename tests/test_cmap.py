@@ -12,10 +12,6 @@ from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObj
 
 from . import get_data_from_url
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
 
 @pytest.mark.enable_socket
 @pytest.mark.slow
@@ -218,13 +214,13 @@ def test_eten_b5():
     reader.pages[0].extract_text().startswith("1/7 \n富邦新終身壽險")
 
 
-def test_missing_entries_in_cmap():
+def test_missing_entries_in_cmap(resources_dir):
     """
     Issue #2702: this issue is observed on damaged pdfs
     use of this file in test has been discarded as too slow/long
     we will create the same error from crazyones
     """
-    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    pdf_path = resources_dir / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     p = reader.pages[0]
     p["/Resources"]["/Font"]["/F1"][NameObject("/ToUnicode")] = IndirectObject(
@@ -233,9 +229,9 @@ def test_missing_entries_in_cmap():
     p.extract_text()
 
 
-def test_null_missing_width():
+def test_null_missing_width(resources_dir):
     """For coverage of #2792"""
-    writer = PdfWriter(RESOURCE_ROOT / "crazyones.pdf")
+    writer = PdfWriter(resources_dir / "crazyones.pdf")
     page = writer.pages[0]
     ft = page["/Resources"]["/Font"]["/F1"]
     ft[NameObject("/Widths")] = ArrayObject()
