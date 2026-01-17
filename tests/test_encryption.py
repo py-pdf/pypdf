@@ -14,10 +14,6 @@ from pypdf.errors import DependencyError, PdfReadError
 USE_CRYPTOGRAPHY = crypt_provider[0] == "cryptography"
 USE_PYCRYPTODOME = crypt_provider[0] == "pycryptodome"
 HAS_AES = USE_CRYPTOGRAPHY or USE_PYCRYPTODOME
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 @pytest.fixture
@@ -348,10 +344,10 @@ def test_aes_decrypt_corrupted_data():
 
 
 @pytest.mark.samples
-def test_encrypt_stream_dictionary(pdf_file_path):
+def test_encrypt_stream_dictionary(pdf_file_path, sample_files_dir):
     user_password = secrets.token_urlsafe(10)
 
-    reader = PdfReader(SAMPLE_ROOT / "023-cmyk-image/cmyk-image.pdf")
+    reader = PdfReader(sample_files_dir / "023-cmyk-image/cmyk-image.pdf")
     page = reader.pages[0]
     original_image_obj = reader.get_object(page.images["/I"].indirect_reference)
 
