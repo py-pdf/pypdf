@@ -3,7 +3,7 @@ from io import BytesIO
 
 import pytest
 
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader
 from pypdf._cmap import get_encoding, parse_bfchar
 from pypdf._codecs import charset_encoding
 from pypdf._font import Font
