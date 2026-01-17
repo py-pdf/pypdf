@@ -227,10 +227,9 @@ def test_missing_entries_in_cmap(crazyones_pdf_reader):
     p.extract_text()
 
 
-def test_null_missing_width(resources_dir):
+def test_null_missing_width(crazyones_pdf_writer):
     """For coverage of #2792"""
-    writer = PdfWriter(resources_dir / "crazyones.pdf")
-    page = writer.pages[0]
+    page = crazyones_pdf_writer.pages[0]
     ft = page["/Resources"]["/Font"]["/F1"]
     ft[NameObject("/Widths")] = ArrayObject()
     ft["/FontDescriptor"][NameObject("/MissingWidth")] = NullObject()

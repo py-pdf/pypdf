@@ -827,9 +827,8 @@ def test_io_streams(resources_dir):
         writer.write(output_stream)
 
 
-def test_regression_issue670(pdf_file_path, resources_dir):
-    filepath = resources_dir / "crazyones.pdf"
-    reader = PdfReader(filepath, strict=False)
+def test_regression_issue670(pdf_file_path, crazyones_pdf_path):
+    reader = PdfReader(crazyones_pdf_path, strict=False)
     for _ in range(2):
         writer = PdfWriter()
         writer.add_page(reader.pages[0])
@@ -2341,18 +2340,16 @@ def test_replace_object(crazyones_pdf_path, crazyones_pdf_reader):
 
 
 def test_mime_jupyter(crazyones_pdf_reader):
-    reader = crazyones_pdf_reader
-    writer = PdfWriter(clone_from=reader)
-    assert reader._repr_mimebundle_(("include",), ("exclude",)) == {}
+    writer = PdfWriter(clone_from=crazyones_pdf_reader)
+    assert crazyones_pdf_reader._repr_mimebundle_(("include",), ("exclude",)) == {}
     assert writer._repr_mimebundle_(("include",), ("exclude",)) == {}
 
 
 def test_init_without_named_arg(crazyones_pdf_path, crazyones_pdf_reader):
     """Test to use file_obj argument and not clone_from"""
-    reader = crazyones_pdf_reader
-    writer = PdfWriter(clone_from=reader)
+    writer = PdfWriter(clone_from=crazyones_pdf_reader)
     nb = len(writer._objects)
-    writer = PdfWriter(reader)
+    writer = PdfWriter(crazyones_pdf_reader)
     assert len(writer._objects) == nb
     with open(crazyones_pdf_path, "rb") as f:
         writer = PdfWriter(f)
@@ -2479,9 +2476,9 @@ def test_set_need_appearances_writer():
     writer.set_need_appearances_writer()
 
 
-def test_utf16_metadata(resources_dir):
+def test_utf16_metadata(crazyones_pdf_writer):
     """See #2754"""
-    writer = PdfWriter(resources_dir / "crazyones.pdf")
+    writer = crazyones_pdf_writer
     writer.add_metadata(
         {
             "/Subject": "Invoice №AI_047",
@@ -2501,7 +2498,7 @@ def test_utf16_metadata(resources_dir):
 
 
 @pytest.mark.enable_socket
-def test_increment_writer(caplog, resources_dir):
+def test_increment_writer(caplog, crazyones_pdf_path, resources_dir):
     """Tests for #2811"""
     writer = PdfWriter(
         resources_dir / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf",
@@ -2556,13 +2553,13 @@ def test_increment_writer(caplog, resources_dir):
     writer = PdfWriter(b, incremental=True)
     assert writer.list_objects_in_increment() == []  # no flowdown of properties
 
-    writer = PdfWriter(resources_dir / "crazyones.pdf", incremental=True)
+    writer = PdfWriter(crazyones_pdf_path, incremental=True)
     # 1 object is modified: page 0  inherits MediaBox so is changed
     assert len(writer.list_objects_in_increment()) == 1
     b = BytesIO()
     writer.write(b)
 
-    writer = PdfWriter(resources_dir / "crazyones.pdf", incremental=False)
+    writer = PdfWriter(crazyones_pdf_path, incremental=False)
     # 1 object is modified: page 0  inherits MediaBox so is changed
     assert len(writer.list_objects_in_increment()) == len(writer._objects)
 
@@ -2570,7 +2567,7 @@ def test_increment_writer(caplog, resources_dir):
     url = "https://github.com/py-pdf/pypdf/files/13946477/panda.pdf"
     name = "iss2343b.pdf"
     writer = PdfWriter(BytesIO(get_data_from_url(url, name=name)), incremental=True)
-    reader = PdfReader(resources_dir / "crazyones.pdf")
+    reader = PdfReader(crazyones_pdf_path)
     pg = writer.insert_page(reader.pages[0], 4)
     assert (
         pg.raw_get("/Parent")

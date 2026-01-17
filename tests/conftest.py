@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from pypdf._page import PageObject
 
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -36,6 +36,11 @@ def crazyones_pdf_path(resources_dir) -> Path:
 @pytest.fixture
 def crazyones_pdf_reader(crazyones_pdf_path) -> PdfReader:
     return PdfReader(crazyones_pdf_path)
+
+
+@pytest.fixture
+def crazyones_pdf_writer(crazyones_pdf_path) -> PdfWriter:
+    return PdfWriter(crazyones_pdf_path)
 
 
 @pytest.fixture

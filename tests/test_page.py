@@ -878,10 +878,9 @@ def test_annotation_getter(resources_dir):
     }
 
 
-def test_annotation_setter(pdf_file_path, crazyones_pdf_reader):
+def test_annotation_setter(pdf_file_path, crazyones_pdf_page_one):
     # Arange
-    reader = crazyones_pdf_reader
-    page = reader.pages[0]
+    page = crazyones_pdf_page_one
     writer = PdfWriter()
     writer.add_page(page)
     with pytest.raises(ValueError):
@@ -1447,8 +1446,8 @@ def test_negative_index(resources_dir):
     assert reader.pages[0] == reader.pages[-1]
 
 
-def test_get_contents_as_bytes(resources_dir):
-    writer = PdfWriter(resources_dir / "crazyones.pdf")
+def test_get_contents_as_bytes(crazyones_pdf_writer):
+    writer = crazyones_pdf_writer
     co = writer.pages[0]["/Contents"][0]
     expected = co.get_data()
     assert writer.pages[0]._get_contents_as_bytes() == expected
@@ -1458,14 +1457,14 @@ def test_get_contents_as_bytes(resources_dir):
     assert writer.pages[0]._get_contents_as_bytes() is None
 
 
-def test_recursive_get_page_from_node(resources_dir):
-    writer = PdfWriter(resources_dir / "crazyones.pdf", incremental=True)
+def test_recursive_get_page_from_node(crazyones_pdf_path):
+    writer = PdfWriter(crazyones_pdf_path, incremental=True)
     writer.root_object["/Pages"].get_object()[
         NameObject("/Parent")
     ] = writer.root_object["/Pages"].indirect_reference
     with pytest.raises(PyPdfError):
         writer.add_page(writer.pages[0])
-    writer = PdfWriter(resources_dir / "crazyones.pdf", incremental=True)
+    writer = PdfWriter(crazyones_pdf_path, incremental=True)
     writer.insert_page(writer.pages[0], -1)
     with pytest.raises(ValueError):
         writer.insert_page(writer.pages[0], -10)
