@@ -14,21 +14,16 @@ from pypdf.xmp import XmpInformation
 
 from . import get_data_from_url
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
-
 
 @pytest.mark.samples
 @pytest.mark.parametrize(
     "src",
     [
-        (SAMPLE_ROOT / "020-xmp/output_with_metadata_pymupdf.pdf"),
+        ("020-xmp/output_with_metadata_pymupdf.pdf"),
     ],
 )
-def test_read_xmp_metadata_samples(src):
-    reader = PdfReader(src)
+def test_read_xmp_metadata_samples(src, sample_files_dir):
+    reader = PdfReader(sample_files_dir / src)
     xmp = reader.xmp_metadata
     assert xmp
     assert xmp.dc_contributor == []
@@ -45,8 +40,8 @@ def test_read_xmp_metadata_samples(src):
 
 
 @pytest.mark.samples
-def test_writer_xmp_metadata_samples():
-    writer = PdfWriter(SAMPLE_ROOT / "020-xmp/output_with_metadata_pymupdf.pdf")
+def test_writer_xmp_metadata_samples(sample_files_dir):
+    writer = PdfWriter(sample_files_dir / "020-xmp/output_with_metadata_pymupdf.pdf")
     xmp = writer.xmp_metadata
     assert xmp
     assert xmp.dc_contributor == []
@@ -77,13 +72,13 @@ def test_writer_xmp_metadata_samples():
 @pytest.mark.parametrize(
     ("src", "has_xmp"),
     [
-        (RESOURCE_ROOT / "commented-xmp.pdf", True),
-        (RESOURCE_ROOT / "crazyones.pdf", False),
+        ("commented-xmp.pdf", True),
+        ("crazyones.pdf", False),
     ],
 )
-def test_read_xmp_metadata(src, has_xmp):
+def test_read_xmp_metadata(src, has_xmp, resources_dir):
     """Read XMP metadata from PDF files."""
-    reader = PdfReader(src)
+    reader = PdfReader(resources_dir / src)
     xmp = reader.xmp_metadata
     assert (xmp is None) == (not has_xmp)
     if has_xmp:
@@ -125,13 +120,13 @@ def test_converter_date():
     assert date == datetime(2021, 4, 28, 15, 23, 1)
 
 
-def test_modify_date():
+def test_modify_date(resources_dir):
     """
     xmp_modify_date is extracted correctly.
 
     This is a regression test for issue #914.
     """
-    path = RESOURCE_ROOT / "issue-914-xmp-data.pdf"
+    path = resources_dir / "issue-914-xmp-data.pdf"
     reader = PdfReader(path)
     assert reader.xmp_metadata.xmp_modify_date == datetime(2022, 4, 9, 15, 22, 43)
 
@@ -251,10 +246,11 @@ def test_invalid_xmp_information_handling():
         reader.xmp_metadata
     assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
 
+
 @pytest.mark.samples
-def test_pdfa_xmp_metadata_with_values():
+def test_pdfa_xmp_metadata_with_values(sample_files_dir):
     """Test PDF/A XMP metadata extraction from a file with PDF/A metadata."""
-    reader = PdfReader(SAMPLE_ROOT / "021-pdfa" / "crazyones-pdfa.pdf")
+    reader = PdfReader(sample_files_dir / "021-pdfa" / "crazyones-pdfa.pdf")
     xmp = reader.xmp_metadata
 
     assert xmp is not None
@@ -263,9 +259,9 @@ def test_pdfa_xmp_metadata_with_values():
 
 
 @pytest.mark.samples
-def test_pdfa_xmp_metadata_without_values():
+def test_pdfa_xmp_metadata_without_values(sample_files_dir):
     """Test PDF/A XMP metadata extraction from a file without PDF/A metadata."""
-    reader = PdfReader(SAMPLE_ROOT / "020-xmp" / "output_with_metadata_pymupdf.pdf")
+    reader = PdfReader(sample_files_dir / "020-xmp" / "output_with_metadata_pymupdf.pdf")
     xmp = reader.xmp_metadata
 
     assert xmp is not None
@@ -304,9 +300,9 @@ def test_dc_language__no_bag_container():
     assert reader.xmp_metadata.dc_language == ["x-unknown"]
 
 
-def test_reading_does_not_destroy_root_object():
+def test_reading_does_not_destroy_root_object(resources_dir):
     """Test for #3391."""
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "commented-xmp.pdf")
     xmp = writer.xmp_metadata
     assert xmp is not None
     assert not isinstance(writer.root_object["/Metadata"], XmpInformation)
@@ -318,8 +314,8 @@ def test_reading_does_not_destroy_root_object():
     assert b"\n/Metadata 27 0 R\n" in output_bytes
 
 
-def test_xmp_information__write_to_stream():
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+def test_xmp_information__write_to_stream(resources_dir):
+    writer = PdfWriter(clone_from=resources_dir / "commented-xmp.pdf")
     xmp = writer.xmp_metadata
 
     output = BytesIO()
@@ -335,9 +331,9 @@ def test_xmp_information__write_to_stream():
     assert output_bytes.startswith(b"<<\n/Type /Metadata\n/Subtype /XML\n/Length 2786\n>>\nstream\n<?xpacket begin")
 
 
-def test_pdf_writer__xmp_metadata_setter():
+def test_pdf_writer__xmp_metadata_setter(resources_dir):
     # Clear existing metadata.
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "commented-xmp.pdf")
     assert writer.xmp_metadata is not None
     original_metadata = writer.xmp_metadata.stream.get_data()
     writer.xmp_metadata = None
@@ -380,7 +376,7 @@ def test_pdf_writer__xmp_metadata_setter():
     assert get_all_tiff(reader.xmp_metadata) == {"tiff:Artist": ["Foo Bar"]}
 
     # Fix metadata not being an IndirectObject before.
-    writer = PdfWriter(clone_from=RESOURCE_ROOT / "commented-xmp.pdf")
+    writer = PdfWriter(clone_from=resources_dir / "commented-xmp.pdf")
     writer.root_object[NameObject("/Metadata")] = writer.root_object["/Metadata"].get_object()
     assert "/XML" in str(writer.root_object)
     writer.xmp_metadata = new_metadata

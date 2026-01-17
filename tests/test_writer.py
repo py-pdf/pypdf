@@ -1910,7 +1910,7 @@ def test_missing_fields(pdf_file_path, resources_dir):
     assert exc.value.args[0] == "No /Fields dictionary in PDF of PdfWriter Object"
 
 
-def test_missing_info(resources_dir):
+def test_missing_info(crazyones_pdf_reader, resources_dir):
     reader = PdfReader(resources_dir / "missing_info.pdf")
 
     writer = PdfWriter(clone_from=reader)
@@ -1920,7 +1920,7 @@ def test_missing_info(resources_dir):
     writer.write(b)
     assert b"/Info" not in b.getvalue()
 
-    reader = PdfReader(resources_dir / "crazyones.pdf")
+    reader = crazyones_pdf_reader
     writer.metadata = reader.metadata
     assert dict(writer._info) == dict(reader._info)
     assert writer.metadata == reader.metadata

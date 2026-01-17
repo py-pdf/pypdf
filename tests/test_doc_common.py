@@ -448,10 +448,8 @@ def test_outline__issue3462():
     ]
 
 
-def test_flatten__cyclic_references(resources_dir):
-    path = resources_dir / "crazyones.pdf"
-
-    reader = PdfReader(path)
+def test_flatten__cyclic_references(crazyones_pdf_reader):
+    reader = crazyones_pdf_reader
     assert len(reader.pages) == 1
     reader._flatten()
 
