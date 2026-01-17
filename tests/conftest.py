@@ -55,4 +55,4 @@ def resources_dir(project_dir) -> Path:
 
 @pytest.fixture
 def sample_files_dir(project_dir) -> Path:
-    return project_dir / "resources"
+    return project_dir / "sample-files"
