@@ -183,4 +183,4 @@ def test_index2label__empty_kids_list(crazyones_pdf_reader):
     root = crazyones_pdf_reader.root_object
     root[NameObject("/PageLabels")] = number_tree
 
-    assert index2label(reader, 42) == "43"
+    assert index2label(crazyones_pdf_reader, 42) == "43"

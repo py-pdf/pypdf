@@ -49,10 +49,6 @@ from pypdf.generic._image_inline import (
 
 from . import ReaderDummy, get_data_from_url
 
-TESTS_ROOT = Path(__file__).parent.resolve()
-PROJECT_ROOT = TESTS_ROOT.parent
-RESOURCE_ROOT = PROJECT_ROOT / "resources"
-
 
 class ChildDummy(DictionaryObject):
     @property
